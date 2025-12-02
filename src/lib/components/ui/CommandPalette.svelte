@@ -40,6 +40,7 @@
             e.preventDefault();
             isOpen = !isOpen;
             if (isOpen) {
+                // Small timeout to allow DOM to render before focusing
                 setTimeout(() => inputRef?.focus(), 50);
                 query = "";
                 selectedIndex = 0;
@@ -82,3 +83,34 @@
         }
     });
 </script>
+
+{#if isOpen}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50" onclick={handleBackdropClick}>
+        <div class="w-[600px] bg-[#252526] rounded-lg shadow-2xl border border-[#454545] overflow-hidden flex flex-col max-h-[60vh]">
+            <div class="p-2 border-b border-[#454545]">
+                <input bind:this={inputRef} bind:value={query} class="w-full bg-transparent text-white placeholder-gray-400 outline-none px-2 py-1 text-sm" placeholder="Type a command..." />
+            </div>
+            <div class="overflow-y-auto py-1">
+                {#if filteredCommands.length > 0}
+                    {#each filteredCommands as command, index}
+                        <button
+                            type="button"
+                            class="w-full text-left px-3 py-2 text-sm flex justify-between items-center hover:bg-[#2a2d2e]
+                            {index === selectedIndex ? 'bg-[#094771] text-white hover:bg-[#094771]' : 'text-[#cccccc]'}"
+                            onclick={() => execute(command)}
+                        >
+                            <span>{command.label}</span>
+                            {#if command.shortcut}
+                                <span class="text-xs opacity-60">{command.shortcut}</span>
+                            {/if}
+                        </button>
+                    {/each}
+                {:else}
+                    <div class="px-3 py-2 text-sm text-gray-500">No commands found</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+{/if}
