@@ -1,0 +1,49 @@
+{
+    "name": "markdown-rs",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite dev",
+        "build": "vite build",
+        "preview": "vite preview",
+        "check": "svelte-check --tsconfig ./tsconfig.json",
+        "format": "prettier --write .",
+        "tauri": "tauri"
+    },
+    "dependencies": {
+        "@codemirror/commands": "^6.10",
+        "@codemirror/lang-markdown": "^6.5",
+        "@codemirror/language": "^6.11",
+        "@codemirror/state": "^6.5",
+        "@codemirror/view": "^6.38",
+        "@tauri-apps/api": "^2.9",
+        "@tauri-apps/plugin-shell": "^2.3",
+        "@tauri-apps/plugin-fs": "^2.4",
+        "@tauri-apps/plugin-dialog": "^2.4",
+        "@tauri-apps/plugin-store": "^2.4",
+        "clsx": "^2.1",
+        "dompurify": "^3.3",
+        "lucide-svelte": "^0.555",
+        "marked": "^17.0",
+        "tailwind-merge": "^3.4",
+        "@tailwindcss/postcss": "^4.1"
+    },
+    "devDependencies": {
+        "@sveltejs/adapter-static": "^3.0",
+        "@sveltejs/kit": "^2.49",
+        "@sveltejs/vite-plugin-svelte": "^6.2",
+        "@tauri-apps/cli": "^2.9",
+        "@types/node": "^24.10",
+        "autoprefixer": "^10.4",
+        "postcss": "^8.5",
+        "prettier": "^3.7",
+        "prettier-plugin-svelte": "^3.4",
+        "svelte": "^5.45",
+        "svelte-check": "^4.3",
+        "tailwindcss": "^4.1",
+        "tslib": "^2.8",
+        "typescript": "^5.9",
+        "vite": "^7.2"
+    }
+}
