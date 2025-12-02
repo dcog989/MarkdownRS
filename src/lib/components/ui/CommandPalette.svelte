@@ -1,12 +1,12 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { openFile, saveCurrentFile } from "$lib/utils/fileSystem";
+    import { openFile, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { onDestroy, onMount } from "svelte";
 
     let isOpen = $state(false);
     let query = $state("");
-    let inputRef: HTMLInputElement;
+    let inputRef: HTMLInputElement | undefined = $state();
     let selectedIndex = $state(0);
 
     type Command = {
