@@ -21,6 +21,10 @@
         { id: "open", label: "File: Open File", shortcut: "Ctrl+O", action: () => openFile() },
         { id: "save", label: "File: Save", shortcut: "Ctrl+S", action: () => saveCurrentFile() },
         { id: "toggle-split", label: "View: Toggle Split Preview", shortcut: "Ctrl+\\", action: () => appState.toggleSplitView() },
+        { id: "ops-sort", label: "Edit: Sort Lines", action: () => appState.activeTabId && editorStore.sortLines(appState.activeTabId) },
+        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => appState.activeTabId && editorStore.trimWhitespace(appState.activeTabId) },
+        { id: "ops-upper", label: "Edit: To Upper Case", action: () => appState.activeTabId && editorStore.toUpperCase(appState.activeTabId) },
+        { id: "ops-lower", label: "Edit: To Lower Case", action: () => appState.activeTabId && editorStore.toLowerCase(appState.activeTabId) },
         { id: "theme-dark", label: "Theme: Dark", action: () => appState.setTheme("dark") },
         { id: "theme-light", label: "Theme: Light", action: () => appState.setTheme("light") },
         {
@@ -40,7 +44,6 @@
             e.preventDefault();
             isOpen = !isOpen;
             if (isOpen) {
-                // Small timeout to allow DOM to render before focusing
                 setTimeout(() => inputRef?.focus(), 50);
                 query = "";
                 selectedIndex = 0;

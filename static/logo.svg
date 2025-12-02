@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
+  <!-- Regular Pentagon Background (Vertically Centered) -->
+  <polygon points="256,30 494,203 403,482 109,482 18,203" fill="#7c5a73"/>
+  
+  <g fill="#ffffff">
+    <!-- Left Down Arrow -->
+    <path d="M 100 150 H 150 V 330 H 190 L 125 410 L 60 330 H 100 V 150 Z"/>
+    
+    <!-- Right Down Arrow -->
+    <path d="M 362 150 H 412 V 330 H 452 L 387 410 L 322 330 H 362 V 150 Z"/>
+    
+    <!-- Thick Center Chevron (The Diagonals) -->
+    <!-- Connects the inner edges of the two arrows -->
+    <path d="M 150 150 L 256 280 L 362 150 L 362 225 L 256 355 L 150 225 Z"/>
+  </g>
+</svg>

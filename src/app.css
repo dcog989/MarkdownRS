@@ -4,9 +4,31 @@
     background-color: #1e1e1e;
     color: #d4d4d4;
     font-family: ui-sans-serif, system-ui, sans-serif;
+    color-scheme: dark; /* Forces native scrollbars to be dark */
 }
 
 body {
     margin: 0;
     overflow: hidden;
+}
+
+/* Custom thin scrollbar styling for webkit engines */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background-color: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #424242;
+    border-radius: 5px;
+    border: 2px solid #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #4f4f4f;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #1e1e1e;
 }

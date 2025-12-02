@@ -41,6 +41,31 @@ export class EditorStore {
             tab.scrollPercentage = percentage;
         }
     }
+
+    // Text Operations
+    modifyContent(id: string, modifier: (text: string) => string) {
+        const tab = this.tabs.find(t => t.id === id);
+        if (tab) {
+            tab.content = modifier(tab.content);
+            tab.isDirty = true;
+        }
+    }
+
+    sortLines(id: string) {
+        this.modifyContent(id, (text) => text.split('\n').sort().join('\n'));
+    }
+
+    trimWhitespace(id: string) {
+        this.modifyContent(id, (text) => text.split('\n').map(line => line.trim()).join('\n'));
+    }
+
+    toUpperCase(id: string) {
+        this.modifyContent(id, (text) => text.toUpperCase());
+    }
+
+    toLowerCase(id: string) {
+        this.modifyContent(id, (text) => text.toLowerCase());
+    }
 }
 
 export const editorStore = new EditorStore();
