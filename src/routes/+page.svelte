@@ -1,12 +1,12 @@
 <script lang="ts">
     import Editor from "$lib/components/editor/Editor.svelte";
     import Preview from "$lib/components/preview/Preview.svelte";
+    import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem";
     import { FileText, Plus, X } from "lucide-svelte";
     import { onDestroy, onMount } from "svelte";
-    import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
-    import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem";
 
     let autoSaveInterval: number;
 
@@ -82,19 +82,18 @@
     <!-- Custom Titlebar / Tab Bar -->
     <div class="h-9 bg-[#252526] flex items-end px-2 gap-1 select-none overflow-x-auto border-b border-black">
         {#each editorStore.tabs as tab (tab.id)}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-                class="group relative h-8 px-3 min-w-[120px] max-w-[200px] flex items-center gap-2 text-xs cursor-pointer border-t border-r border-l border-transparent rounded-t-sm
+            <button
+                type="button"
+                class="group relative h-8 px-3 min-w-[120px] max-w-[200px] flex items-center gap-2 text-xs cursor-pointer border-t border-r border-l border-transparent rounded-t-sm outline-none text-left
                 {appState.activeTabId === tab.id ? 'bg-[#1e1e1e] text-white border-gray-800' : 'bg-[#2d2d2d] text-gray-400 hover:bg-[#2a2a2b]'}"
                 onclick={() => handleTabClick(tab.id)}
             >
-                <FileText size={14} class="opacity-70" />
+                <FileText size={14} class="opacity-70 flex-shrink-0" />
                 <span class="truncate flex-1">{tab.title}{tab.isDirty ? " ●" : ""}</span>
-                <button class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-600 rounded" onclick={(e) => handleCloseTab(e, tab.id)}>
+                <span role="button" tabindex="0" class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-600 rounded flex-shrink-0 flex items-center justify-center" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)}>
                     <X size={12} />
-                </button>
-            </div>
+                </span>
+            </button>
         {/each}
 
         <button class="h-7 w-7 flex items-center justify-center hover:bg-[#333] rounded text-gray-400" onclick={handleNewTab}>
@@ -133,12 +132,12 @@
         <div class="flex gap-4">
             <span>{appState.activeTabId ? "Markdown" : "Ready"}</span>
         </div>
-        <div class="flex gap-4">
+        <div class="flex gap-4 items-center">
             <span>Ln 1, Col 1</span>
             <span>UTF-8</span>
-            <span class="cursor-pointer hover:bg-blue-600 px-1 rounded" onclick={() => appState.toggleSplitView()}>
+            <button type="button" class="cursor-pointer hover:bg-blue-600 px-1 rounded bg-transparent border-none text-white text-xs" onclick={() => appState.toggleSplitView()}>
                 {appState.splitView ? "Hide Preview" : "Show Preview"}
-            </span>
+            </button>
         </div>
     </footer>
 </div>
