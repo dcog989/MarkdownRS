@@ -17,7 +17,6 @@ fn main() {
         .setup(|app| {
             let app_handle = app.handle();
 
-            // Resolve AppData/Roaming directory
             let base_dir = app_handle
                 .path()
                 .data_dir()
@@ -27,19 +26,17 @@ fn main() {
             let log_dir = app_dir.join("Logs");
             let db_dir = app_dir.join("Database");
 
-            // Create directories
             fs::create_dir_all(&log_dir).expect("failed to create log dir");
             fs::create_dir_all(&db_dir).expect("failed to create db dir");
 
-            // Initialize Logging
+            // Initialize Logging with LevelFilter::Debug
             let _ = WriteLogger::init(
-                LevelFilter::Info,
+                LevelFilter::Debug, // <--- CHANGED FROM Info TO Debug
                 Config::default(),
                 File::create(log_dir.join("markdown-rs.log"))
                     .unwrap_or_else(|_| File::create("markdown-rs-fallback.log").unwrap()),
             );
 
-            // Initialize DB
             let db_path = db_dir.join("session.db");
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
@@ -54,7 +51,8 @@ fn main() {
             app_commands::restore_session,
             app_commands::read_text_file,
             app_commands::write_text_file,
-            app_commands::get_file_metadata
+            app_commands::get_file_metadata,
+            app_commands::log_frontend
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,6 @@
 use crate::db::{Database, TabState};
 use chrono::{DateTime, Local};
+use log::{error, info};
 use std::fs;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -18,9 +19,17 @@ pub struct FileMetadata {
 fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     time.ok().map(|t| {
         let datetime: DateTime<Local> = t.into();
-        // Format: yyyymmdd / HHmmss
         datetime.format("%Y%m%d / %H%M%S").to_string()
     })
+}
+
+#[tauri::command]
+pub async fn log_frontend(level: String, message: String) -> Result<(), String> {
+    match level.as_str() {
+        "error" => error!("[Frontend] {}", message),
+        _ => info!("[Frontend] {}", message),
+    }
+    Ok(())
 }
 
 #[tauri::command]

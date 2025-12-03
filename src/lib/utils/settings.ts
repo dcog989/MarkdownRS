@@ -1,14 +1,20 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
 import { Store } from '@tauri-apps/plugin-store';
 
 let store: Store | null = null;
 const appWindow = getCurrentWindow();
 
+// Helper to pipe logs to Rust
+function log(msg: string, level: 'info' | 'error' = 'info') {
+    invoke('log_frontend', { level, message: msg }).catch(console.error);
+    console.log(`[Settings] ${msg}`);
+}
+
 export async function initSettings() {
     try {
         store = await Store.load('settings.json');
-        console.log("Settings: Store loaded");
 
         const saved = await store.get<{
             splitPercentage: number;
@@ -21,7 +27,7 @@ export async function initSettings() {
         }>('app-settings');
 
         if (saved) {
-            console.log("Settings: Found saved state", saved);
+            log(`Restoring state: Max=${saved.isMaximized}, Pos=${saved.x},${saved.y}, Size=${saved.width}x${saved.height}`);
 
             // Restore App State
             if (saved.splitPercentage) appState.splitPercentage = saved.splitPercentage;
@@ -29,50 +35,64 @@ export async function initSettings() {
 
             // Restore Window State
             if (saved.isMaximized) {
-                console.log("Settings: Restoring maximized");
                 await appWindow.maximize();
             } else if (saved.width && saved.height) {
-                console.log(`Settings: Restoring Size: ${saved.width}x${saved.height}`);
-                await appWindow.setSize(new PhysicalSize(saved.width, saved.height));
+                // Ensure we don't restore weird zero/negative values
+                if (saved.width > 0 && saved.height > 0) {
+                    await appWindow.setSize(new PhysicalSize(saved.width, saved.height));
+                }
 
                 if (saved.x != null && saved.y != null) {
-                    console.log(`Settings: Restoring Pos: ${saved.x}, ${saved.y}`);
                     await appWindow.setPosition(new PhysicalPosition(saved.x, saved.y));
                 }
             }
         } else {
-            console.log("Settings: No saved state found");
+            log("No saved settings found.");
         }
     } catch (err) {
-        console.error('Settings: Failed to load:', err);
+        log(`Failed to load settings: ${err}`, 'error');
     }
 }
 
 export async function saveSettings() {
-    if (!store) return;
+    if (!store) {
+        log("Store not initialized, cannot save", 'error');
+        return;
+    }
 
     try {
         const isMaximized = await appWindow.isMaximized();
 
-        // Use Physical (Pixel) values
-        const size = await appWindow.innerSize();
-        const pos = await appWindow.outerPosition();
+        // Prepare new settings object based on current store
+        // We fetch existing first to preserve non-overwritten values (like pre-maximize coords)
+        const currentStored = (await store.get('app-settings') as any) || {};
 
-        const settings = {
+        const newSettings = {
+            ...currentStored,
             splitPercentage: appState.splitPercentage,
             splitOrientation: appState.splitOrientation,
-            width: size.width,
-            height: size.height,
-            x: pos.x,
-            y: pos.y,
             isMaximized
         };
 
-        // console.log("Settings: Saving", settings); // Uncomment to debug save frequency
+        // ONLY update dimensions if NOT maximized.
+        // If maximized, we want to keep the "restore" dimensions that were saved previously.
+        if (!isMaximized) {
+            const size = await appWindow.innerSize();
+            const pos = await appWindow.outerPosition();
 
-        await store.set('app-settings', settings);
+            newSettings.width = size.width;
+            newSettings.height = size.height;
+            newSettings.x = pos.x;
+            newSettings.y = pos.y;
+
+            log(`Saving Window Geometry: ${pos.x},${pos.y} / ${size.width}x${size.height}`);
+        } else {
+            log(`Window is maximized, preserving previous geometry. Saving Max state only.`);
+        }
+
+        await store.set('app-settings', newSettings);
         await store.save();
     } catch (err) {
-        console.error('Settings: Failed to save:', err);
+        log(`Failed to save settings: ${err}`, 'error');
     }
 }
