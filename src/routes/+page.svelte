@@ -13,8 +13,6 @@
 
     let autoSaveInterval: number;
     let mainContainer: HTMLDivElement;
-
-    // Resizing State
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
@@ -45,29 +43,34 @@
     }
 
     onMount(async () => {
-        // 1. Initialize Settings (Restore Window Position/Size)
-        await initSettings();
-
-        // 2. Show Window (Now that it's positioned correctly)
-        // This eliminates the "Jump" and "White Flash"
-        await getCurrentWindow().show();
-        await getCurrentWindow().setFocus();
-
-        console.log("App mounted and visible");
-
-        // 3. Load Content
         try {
+            console.log("Mounting App...");
+
+            // 1. Initialize Settings (Safe Mode)
+            // We catch errors here specifically so the rest of the app loads even if settings fail
+            try {
+                await initSettings();
+            } catch (err) {
+                console.error("Critical: Failed to init settings", err);
+            }
+
+            // 2. Load Content
             await loadSession();
+
+            // 3. Ensure we have at least one tab
             if (editorStore.tabs.length === 0) {
+                // Ensure addTab generates the timestamp correctly
                 const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                 appState.activeTabId = id;
             }
-        } catch (error) {
-            console.error("Failed to load session:", error);
-            const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
-            appState.activeTabId = id;
+
+            // 4. Force window to foreground (fixes some focus issues)
+            await getCurrentWindow().setFocus();
+        } catch (e) {
+            console.error("App Startup Error:", e);
         }
 
+        // Auto-save Setup
         autoSaveInterval = window.setInterval(() => {
             persistSession();
             saveSettings();
@@ -89,27 +92,21 @@
         isDragging = true;
         dragStart = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
         initialSplit = appState.splitPercentage;
-
         window.addEventListener("mousemove", handleResize);
         window.addEventListener("mouseup", stopResize);
-
         document.body.style.cursor = appState.splitOrientation === "vertical" ? "col-resize" : "row-resize";
     }
 
     function handleResize(e: MouseEvent) {
         if (!isDragging || !mainContainer) return;
-
         const rect = mainContainer.getBoundingClientRect();
         const totalSize = appState.splitOrientation === "vertical" ? rect.width : rect.height;
         const currentPos = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
-
         const deltaPixels = currentPos - dragStart;
         const deltaPercent = deltaPixels / totalSize;
-
         let newSplit = initialSplit + deltaPercent;
         if (newSplit < 0.1) newSplit = 0.1;
         if (newSplit > 0.9) newSplit = 0.9;
-
         appState.splitPercentage = newSplit;
     }
 
@@ -129,37 +126,19 @@
 
     <Titlebar />
 
-    <!-- Main Workspace -->
     <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
         {#if appState.activeTabId}
             {#key appState.activeTabId}
                 <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
-                    <!-- EDITOR PANE -->
-                    <div
-                        style="
-                        flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'};
-                        height: 100%;
-                        overflow: hidden;
-                    "
-                    >
+                    <div style="flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
                         <Editor tabId={appState.activeTabId} />
                     </div>
 
-                    <!-- RESIZE HANDLE -->
                     {#if appState.splitView}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div
-                            class="z-20 hover:bg-[var(--accent-primary)] transition-colors duration-150"
-                            style="
-                                cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
-                                flex: 0 0 4px;
-                                background-color: var(--bg-panel);
-                            "
-                            onmousedown={startResize}
-                        ></div>
+                        <div class="z-20 hover:bg-[var(--accent-primary)] transition-colors duration-150" style="cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'}; flex: 0 0 4px; background-color: var(--bg-panel);" onmousedown={startResize}></div>
                     {/if}
 
-                    <!-- PREVIEW PANE -->
                     {#if appState.splitView}
                         <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
                             <Preview tabId={appState.activeTabId} />

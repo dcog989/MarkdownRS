@@ -20,7 +20,6 @@ export type EditorMetrics = {
     insertMode: 'INS' | 'OVR';
 };
 
-// Format: yyyymmdd / HHmmss
 function getCurrentTimestamp(): string {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -49,9 +48,6 @@ export class EditorStore {
     addTab(title: string = 'Untitled', content: string = '') {
         const id = crypto.randomUUID();
         const now = getCurrentTimestamp();
-
-        console.log(`Adding Tab: ${title}, Timestamp: ${now}`); // DIAGNOSTIC LOG
-
         this.tabs.push({
             id,
             title,

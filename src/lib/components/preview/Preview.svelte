@@ -38,9 +38,20 @@
     });
 </script>
 
+<!-- Parent must be relative -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group block" style="border-color: var(--border-main);">
-    <!-- Floating Switcher -->
-    <button class="absolute top-2 right-4 z-50 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100 cursor-pointer" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
+    <!-- Floating Switcher: Forced Absolute Positioning -->
+    <button
+        class="z-50 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100 cursor-pointer"
+        style="
+            position: absolute !important;
+            top: 10px !important;
+            right: 15px !important;
+            border-color: var(--border-main);
+        "
+        title="Switch Split Orientation"
+        onclick={() => appState.toggleOrientation()}
+    >
         {#if appState.splitOrientation === "vertical"}
             <PanelTop size={16} />
         {:else}
