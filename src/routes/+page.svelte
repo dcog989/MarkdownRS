@@ -48,7 +48,6 @@
             }
         } catch (error) {
             console.error("Failed to load session:", error);
-            // Fallback: create default tab
             const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
             appState.activeTabId = id;
         }
@@ -75,32 +74,43 @@
 
     function handleCloseTab(e: Event, id: string) {
         e.stopPropagation();
-        
-        // Don't close the last tab
-        if (editorStore.tabs.length === 1) {
-            return;
-        }
-        
+        if (editorStore.tabs.length === 1) return;
+
         editorStore.closeTab(id);
         if (appState.activeTabId === id) {
             appState.activeTabId = editorStore.tabs[0]?.id || null;
         }
     }
 
-    // Window Control Wrappers with Logging
+    // DIAGNOSTIC WRAPPERS
     async function minimize() {
-        console.log("Minimize clicked");
-        await appWindow.minimize();
+        try {
+            console.log("Minimize requested");
+            await appWindow.minimize();
+        } catch (e) {
+            console.error(e);
+            alert("Minimize Error: " + JSON.stringify(e));
+        }
     }
 
     async function toggleMaximize() {
-        console.log("Maximize clicked");
-        await appWindow.toggleMaximize();
+        try {
+            console.log("Maximize requested");
+            await appWindow.toggleMaximize();
+        } catch (e) {
+            console.error(e);
+            alert("Maximize Error: " + JSON.stringify(e));
+        }
     }
 
     async function closeApp() {
-        console.log("Close clicked");
-        await appWindow.close();
+        try {
+            console.log("Close requested");
+            await appWindow.close();
+        } catch (e) {
+            console.error(e);
+            alert("Close Error: " + JSON.stringify(e));
+        }
     }
 </script>
 
@@ -110,18 +120,23 @@
     <CommandPalette />
 
     <!-- Custom Titlebar -->
+    <!-- DIAGNOSTICS: If dragging fails, ensure 'z-0' is behind content and 'pointer-events-none' allows click-through -->
     <div class="h-10 bg-[#252526] relative flex items-center select-none border-b border-black w-full shrink-0">
-        <!-- Drag Region Layer (sits behind everything) -->
-        <div data-tauri-drag-region class="absolute inset-0 w-full h-full"></div>
+        <!-- 1. Drag Region Layer (Back) -->
+        <!-- Sits absolutely behind everything. Catches clicks that fall through. -->
+        <div data-tauri-drag-region class="absolute inset-0 w-full h-full z-0 cursor-default"></div>
 
-        <!-- Interactive Content Layer -->
-        <div class="relative flex w-full h-full">
-            <!-- Logo (Left) - draggable -->
-            <div data-tauri-drag-region class="pl-3 pr-2 flex items-center justify-center cursor-default">
+        <!-- 2. Interactive Content Layer (Front) -->
+        <!-- pointer-events-none ensures this container doesn't block the drag region behind it -->
+        <div class="relative flex w-full h-full z-10 pointer-events-none">
+            <!-- Logo (Left) -->
+            <!-- pointer-events-none allows dragging via the background layer behind the logo -->
+            <div class="pl-3 pr-2 flex items-center justify-center">
                 <img src="/logo.svg" alt="App Logo" class="h-5 w-5 pointer-events-none" />
             </div>
 
-            <!-- Tab Bar - interactive -->
+            <!-- Tab Bar -->
+            <!-- pointer-events-auto restores clicking for the tabs -->
             <div class="flex items-end overflow-x-auto no-scrollbar pt-1.5 flex-1 max-w-[calc(100%-140px)] pointer-events-auto" role="toolbar" tabindex="-1">
                 {#each editorStore.tabs as tab (tab.id)}
                     <button
@@ -143,10 +158,11 @@
                 </button>
             </div>
 
-            <!-- Empty draggable space between tabs and window controls -->
-            <div data-tauri-drag-region class="flex-1 min-w-0"></div>
+            <!-- Spacer -->
+            <div class="flex-1 min-w-0"></div>
 
-            <!-- Window Controls Container - interactive -->
+            <!-- Window Controls -->
+            <!-- pointer-events-auto restores clicking for these buttons -->
             <div class="flex h-full ml-auto bg-[#252526] pointer-events-auto">
                 <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" aria-label="Menu">
                     <Menu size={18} />
