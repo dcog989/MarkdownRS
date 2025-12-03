@@ -38,22 +38,18 @@
     });
 </script>
 
-<div class="flex flex-col w-full h-full bg-[#1e1e1e] border-l" style="border-color: var(--border-main);">
-    <!-- Preview Toolbar -->
-    <div class="h-8 flex items-center justify-end px-2 border-b shrink-0 select-none" style="background-color: var(--bg-panel); border-color: var(--border-main);">
-        <span class="text-xs mr-auto pl-2 font-medium opacity-50 tracking-wider">PREVIEW</span>
-
-        <button class="p-1 hover:bg-white/10 rounded text-[var(--fg-muted)] transition-colors" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
-            {#if appState.splitOrientation === "vertical"}
-                <PanelTop size={14} />
-            {:else}
-                <Columns size={14} />
-            {/if}
-        </button>
-    </div>
+<div class="relative w-full h-full bg-[#1e1e1e] border-l" style="border-color: var(--border-main);">
+    <!-- Floating Orientation Switcher (Top Right) -->
+    <button class="absolute top-2 right-4 z-10 p-1.5 rounded-md bg-[#252526] hover:bg-[#37373d] text-[var(--fg-muted)] transition-colors border shadow-sm opacity-50 hover:opacity-100" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
+        {#if appState.splitOrientation === "vertical"}
+            <PanelTop size={16} />
+        {:else}
+            <Columns size={16} />
+        {/if}
+    </button>
 
     <!-- Content -->
-    <div bind:this={container} class="flex-1 w-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none" style="background-color: var(--bg-main); color: var(--fg-default);">
+    <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none" style="background-color: var(--bg-main); color: var(--fg-default);">
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html htmlContent}
     </div>

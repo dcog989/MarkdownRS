@@ -1,15 +1,29 @@
 use crate::db::{Database, TabState};
+use chrono::{DateTime, Local};
 use std::fs;
 use std::sync::Mutex;
+use std::time::SystemTime;
 use tauri::State;
 
 pub struct AppState {
     pub db: Mutex<Database>,
 }
 
+#[derive(serde::Serialize)]
+pub struct FileMetadata {
+    pub created: Option<String>,
+    pub modified: Option<String>,
+}
+
+fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
+    time.ok().map(|t| {
+        let datetime: DateTime<Local> = t.into();
+        datetime.format("%Y-%m-%d %H:%M").to_string()
+    })
+}
+
 #[tauri::command]
 pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Result<(), String> {
-    // Acquire lock, handle potential poisoning
     let db = state
         .db
         .lock()
@@ -34,4 +48,14 @@ pub async fn read_text_file(path: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
     fs::write(&path, content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
+    let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
+
+    Ok(FileMetadata {
+        created: format_system_time(metadata.created()),
+        modified: format_system_time(metadata.modified()),
+    })
 }

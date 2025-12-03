@@ -3,13 +3,28 @@ import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 
+type FileMetadata = {
+    created?: string;
+    modified?: string;
+};
+
+// Helper to fetch and update metadata for a tab
+async function refreshMetadata(tabId: string, path: string) {
+    try {
+        const meta = await invoke<FileMetadata>('get_file_metadata', { path });
+        editorStore.updateMetadata(tabId, meta.created, meta.modified);
+    } catch (e) {
+        console.error("Failed to fetch metadata", e);
+    }
+}
+
 export async function openFile() {
     try {
         const selected = await open({
             multiple: false,
             filters: [{
                 name: 'Markdown',
-                extensions: ['md', 'markdown', 'txt']
+                extensions: ['md', 'markdown', 'txt', 'rs', 'js', 'ts', 'svelte', 'json']
             }]
         });
 
@@ -22,6 +37,7 @@ export async function openFile() {
             if (tab) {
                 tab.path = selected;
                 tab.isDirty = false;
+                await refreshMetadata(id, selected);
             }
             appState.activeTabId = id;
         }
@@ -54,17 +70,16 @@ export async function saveCurrentFile() {
             tab.path = savePath;
             tab.title = savePath.split(/[\\/]/).pop() || 'Untitled';
             tab.isDirty = false;
+            // Refresh modification time after save
+            await refreshMetadata(tabId, savePath);
         }
     } catch (err) {
         console.error('Failed to save file:', err);
     }
 }
 
-// Auto-save session logic
 export async function persistSession() {
     try {
-        // Convert proxy objects to plain objects for serialization
-        // Ensure field names match Rust 'TabState' struct (snake_case)
         const plainTabs = editorStore.tabs.map(t => ({
             id: t.id,
             path: t.path,
@@ -80,7 +95,6 @@ export async function persistSession() {
     }
 }
 
-// Type for the data coming from Rust (snake_case)
 type RustTabState = {
     id: string;
     title: string;
@@ -94,7 +108,6 @@ export async function loadSession() {
     try {
         const rustTabs = await invoke<RustTabState[]>('restore_session');
         if (rustTabs && rustTabs.length > 0) {
-            // Convert snake_case to camelCase
             const convertedTabs: EditorTab[] = rustTabs.map(t => ({
                 id: t.id,
                 title: t.title,
@@ -103,17 +116,20 @@ export async function loadSession() {
                 path: t.path,
                 scrollPercentage: t.scroll_percentage
             }));
-            
+
             editorStore.tabs = convertedTabs;
             appState.activeTabId = convertedTabs[0].id;
+
+            // Background refresh metadata for restored tabs that have paths
+            convertedTabs.forEach(t => {
+                if (t.path) refreshMetadata(t.id, t.path);
+            });
         } else {
-            // Default start state
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
             appState.activeTabId = id;
         }
     } catch (err) {
         console.error('Failed to restore session:', err);
-        // On error, create default tab
         const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
         appState.activeTabId = id;
     }

@@ -38,10 +38,17 @@
         const filename = currentTab?.title || "";
         previousTabId = tabId;
 
-        // Determine if we should use Markdown mode
-        // Logic: Assume markdown unless extension is explicit and non-markdown
         const ext = filename.split(".").pop()?.toLowerCase();
         const isMarkdown = !ext || ["md", "markdown", "txt", "rst"].includes(ext) || filename.startsWith("Untitled");
+
+        // Custom keymap to detect Insert Key
+        const insertKeyHandler = EditorView.domEventHandlers({
+            keydown: (event, _view) => {
+                if (event.key === "Insert") {
+                    editorStore.toggleInsertMode();
+                }
+            },
+        });
 
         const extensions = [
             lineNumbers(),
@@ -50,13 +57,13 @@
             keymap.of([...defaultKeymap, ...historyKeymap]),
             oneDark,
             EditorView.lineWrapping,
+            insertKeyHandler, // Attach handler
             EditorView.theme({
                 "&": { height: "100%", fontSize: "14px" },
                 ".cm-scroller": { fontFamily: "monospace", overflow: "auto" },
             }),
         ];
 
-        // Only add markdown extension if applicable
         if (isMarkdown) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
         }
@@ -77,6 +84,7 @@
                 }
             }
 
+            // Metrics calculation
             if (update.docChanged || update.selectionSet) {
                 const doc = update.state.doc;
                 const selection = update.state.selection.main;
@@ -85,14 +93,18 @@
                 const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
                 const sizeKB = new TextEncoder().encode(text).length / 1024;
 
+                // selection.head is the absolute offset in the document (0-based index)
+                const cursorOffset = selection.head;
+
                 editorStore.updateMetrics({
                     lineCount: doc.lines,
                     wordCount: wordCount,
                     charCount: text.length,
+                    cursorOffset: cursorOffset, // x
                     sizeKB: sizeKB,
                     cursorLine: cursorLine.number,
                     cursorCol: selection.head - cursorLine.from + 1,
-                    insertMode: "INS",
+                    // Note: insertMode is toggled via store action separately
                 });
             }
         });

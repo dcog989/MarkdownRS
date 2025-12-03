@@ -5,16 +5,20 @@ export type EditorTab = {
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
+    // Cache metadata per tab
+    created?: string;
+    modified?: string;
 };
 
 export type EditorMetrics = {
     lineCount: number;
     wordCount: number;
-    charCount: number;
+    charCount: number;      // Total characters
+    cursorOffset: number;   // Characters before caret
     sizeKB: number;
     cursorLine: number;
     cursorCol: number;
-    insertMode: string;
+    insertMode: 'INS' | 'OVR';
 };
 
 export class EditorStore {
@@ -25,10 +29,11 @@ export class EditorStore {
         lineCount: 1,
         wordCount: 0,
         charCount: 0,
+        cursorOffset: 0,
         sizeKB: 0,
         cursorLine: 1,
         cursorCol: 1,
-        insertMode: "INS"
+        insertMode: 'INS'
     });
 
     addTab(title: string = 'Untitled', content: string = '') {
@@ -63,8 +68,21 @@ export class EditorStore {
         }
     }
 
+    updateMetadata(id: string, created?: string, modified?: string) {
+        const tab = this.tabs.find(t => t.id === id);
+        if (tab) {
+            tab.created = created;
+            tab.modified = modified;
+        }
+    }
+
     updateMetrics(metrics: Partial<EditorMetrics>) {
         this.activeMetrics = { ...this.activeMetrics, ...metrics };
+    }
+
+    toggleInsertMode() {
+        const newMode = this.activeMetrics.insertMode === 'INS' ? 'OVR' : 'INS';
+        this.activeMetrics = { ...this.activeMetrics, insertMode: newMode };
     }
 
     // Text Operations
