@@ -52,10 +52,9 @@
     }
 
     async function scrollToActive() {
-        await tick(); // Wait for DOM update to ensure new tab exists
+        await tick();
         if (!scrollContainer) return;
 
-        // Find the active button via data attribute
         const activeEl = scrollContainer.querySelector('[data-active="true"]');
         if (activeEl) {
             activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
@@ -63,16 +62,24 @@
         setTimeout(checkScroll, 350);
     }
 
-    function handleTabClick(id: string) {
+    async function handleTabClick(id: string) {
         appState.activeTabId = id;
         editorStore.pushToMru(id);
-        scrollToActive();
+        await scrollToActive();
     }
 
-    function handleNewTab() {
+    async function handleNewTab() {
         const id = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
         appState.activeTabId = id;
-        scrollToActive();
+
+        // Wait for DOM to render the new tab, then scroll to end
+        await tick();
+        setTimeout(() => {
+            if (scrollContainer) {
+                scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: "smooth" });
+                checkScroll();
+            }
+        }, 50);
     }
 
     function handleCloseTab(e: Event, id: string) {

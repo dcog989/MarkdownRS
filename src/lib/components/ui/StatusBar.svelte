@@ -17,7 +17,7 @@
     <!-- Left: File Path (Accent Color) -->
     <div class="flex gap-4 overflow-hidden mr-4">
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>
-            <span style="color: var(--fg-muted); font-weight: normal;">{tabIndex}:</span>{displayPath}
+            <span style="color: var(--fg-muted); font-weight: normal;">{tabIndex}:&nbsp;</span>{displayPath}
         </span>
         <!-- Timestamp (No Label) -->
         {#if timestamp}

@@ -45,68 +45,27 @@
         const insertKeyHandler = EditorView.domEventHandlers({
             keydown: (event, _view) => {
                 if (event.key === "Insert") {
-                    event.preventDefault(); // Prevent default system behavior if any
+                    event.preventDefault();
                     editorStore.toggleInsertMode();
                 }
             },
         });
 
         // Basic Overwrite Behavior Extension
-        const overwriteModeExtension = EditorState.transactionFilter.of((tr) => {
-            if (editorStore.activeMetrics.insertMode === "OVR" && tr.isUserEvent("input.type") && !tr.selection) {
-                // If user is typing a character (insert) and has no selection range
-                // We want to replace the character at the cursor instead of inserting
-                let changes: any[] = [];
-                tr.changes.iterChanges((fromA, _toA, _fromB, _toB, inserted) => {
-                    if (inserted.length > 0) {
-                        // Check if we are at end of line; if so, standard insert. Otherwise replace next char.
-                        const doc = tr.startState.doc;
-                        const line = doc.lineAt(fromA);
-                        if (fromA < line.to) {
-                            // Replace next char
-                            changes.push({ from: fromA, to: fromA + inserted.length, insert: inserted });
-                        } else {
-                            // End of line, standard append
-                            changes.push({ from: fromA, to: fromA, insert: inserted });
-                        }
-                    }
-                });
-
-                if (changes.length > 0) {
-                    return [
-                        tr, // The original transaction (typing) - we modify it or replace it?
-                        // Actually better to completely replace the changes
-                        {
-                            changes: changes,
-                            selection: { anchor: changes[0].to },
-                            filter: false,
-                        },
-                    ];
-                }
-            }
-            return tr;
-        });
-
-        // Simpler approach for OVR: View Update Listener checks for input and modifies it?
-        // Transaction filters are cleaner but tricky.
-        // Let's use a standard input handler for overwrite.
-
         const inputHandler = EditorView.inputHandler.of((view, from, to, text) => {
             if (editorStore.activeMetrics.insertMode === "OVR" && from === to && text.length === 1) {
                 const doc = view.state.doc;
                 const line = doc.lineAt(from);
-
-                // If not at end of line, replace character
                 if (from < line.to) {
                     view.dispatch({
                         changes: { from, to: from + 1, insert: text },
                         selection: { anchor: from + 1 },
                         userEvent: "input.type",
                     });
-                    return true; // Handled
+                    return true;
                 }
             }
-            return false; // Let default handler run
+            return false;
         });
 
         const extensions = [
@@ -180,17 +139,9 @@
             state,
             parent: editorContainer,
         });
-    });
 
-    // Reactive update for Cursor Style when Insert Mode changes
-    $effect(() => {
-        // Accessing the store value triggers re-run
-        const mode = editorStore.activeMetrics.insertMode;
-        if (view) {
-            // We need to reconfigure the theme to change cursor style
-            // This is a bit heavy, strictly speaking, but effective.
-            // Alternatively we can toggle a class on the editorContainer
-        }
+        // FORCE FOCUS
+        view.focus();
     });
 
     onDestroy(() => {
@@ -206,7 +157,7 @@
     /* CSS override for cursor style when in overwrite mode */
     :global(.overwrite-mode .cm-cursor) {
         border-left: none !important;
-        border-bottom: 3px solid #eac55f !important; /* Block cursor look */
+        border-bottom: 3px solid #eac55f !important;
         width: 8px;
     }
 </style>
