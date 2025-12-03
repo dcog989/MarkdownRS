@@ -90,6 +90,9 @@ export async function saveCurrentFile() {
 }
 
 export async function persistSession() {
+    // Optimization: Skip database write if nothing changed
+    if (!editorStore.sessionDirty) return;
+
     try {
         // Map frontend tabs to RustTabState
         const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
@@ -104,6 +107,9 @@ export async function persistSession() {
         }));
 
         await invoke('save_session', { tabs: plainTabs });
+
+        // Reset dirty flag after successful save
+        editorStore.sessionDirty = false;
     } catch (err) {
         console.error('Failed to save session:', err);
     }
@@ -133,7 +139,6 @@ export async function loadSession() {
             });
         } else {
             // Default Start State
-            // editorStore.addTab handles the default timestamp generation
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
             appState.activeTabId = id;
         }

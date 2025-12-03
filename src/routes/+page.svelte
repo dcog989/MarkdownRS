@@ -41,11 +41,19 @@
         }
     }
 
-    onMount(async () => {
-        // 1. Initialize Layout Settings
-        await initSettings();
+    // Named function to allow proper cleanup
+    function handleAutoSave() {
+        persistSession();
+        saveSettings();
+    }
 
-        // 2. Load Content
+    onMount(async () => {
+        try {
+            await initSettings();
+        } catch (err) {
+            console.error("Settings init failed", err);
+        }
+
         try {
             await loadSession();
             if (editorStore.tabs.length === 0) {
@@ -59,19 +67,15 @@
         }
 
         // Auto-save Setup
-        autoSaveInterval = window.setInterval(() => {
-            persistSession();
-            saveSettings();
-        }, 30000);
-
-        window.addEventListener("blur", () => {
-            persistSession();
-            saveSettings();
-        });
+        autoSaveInterval = window.setInterval(handleAutoSave, 30000);
+        window.addEventListener("blur", handleAutoSave);
     });
 
     onDestroy(() => {
         if (autoSaveInterval) clearInterval(autoSaveInterval);
+        if (typeof window !== "undefined") {
+            window.removeEventListener("blur", handleAutoSave);
+        }
     });
 
     // --- Resizing Logic ---

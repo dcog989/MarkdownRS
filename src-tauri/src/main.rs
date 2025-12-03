@@ -30,7 +30,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_opener::init()) // Init Opener (v2 standard)
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let app_handle = app.handle();
 
@@ -69,10 +69,13 @@ fn main() {
             };
 
             // 4. Initialize Logging Plugin
-            // Standard behavior: Rotates based on file size automatically
             app_handle.plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log_level)
+                    // Suppress upstream noise, only show errors for these crates
+                    .level_for("tao", LevelFilter::Error)
+                    .level_for("wry", LevelFilter::Error)
+                    .level_for("move_resize", LevelFilter::Error)
                     .targets([
                         Target::new(TargetKind::Stdout),
                         Target::new(TargetKind::Folder {

@@ -34,6 +34,9 @@ function getCurrentTimestamp(): string {
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
 
+    // Track if any meaningful state changed since last session save
+    sessionDirty = $state(false);
+
     activeMetrics = $state<EditorMetrics>({
         lineCount: 1,
         wordCount: 0,
@@ -58,11 +61,13 @@ export class EditorStore {
             created: now,
             modified: now
         });
+        this.sessionDirty = true;
         return id;
     }
 
     closeTab(id: string) {
         this.tabs = this.tabs.filter(t => t.id !== id);
+        this.sessionDirty = true;
     }
 
     updateContent(id: string, content: string) {
@@ -71,6 +76,7 @@ export class EditorStore {
             tab.content = content;
             tab.isDirty = true;
             tab.modified = getCurrentTimestamp();
+            this.sessionDirty = true;
         }
     }
 
@@ -78,6 +84,7 @@ export class EditorStore {
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
             tab.scrollPercentage = percentage;
+            this.sessionDirty = true;
         }
     }
 
@@ -86,11 +93,13 @@ export class EditorStore {
         if (tab) {
             if (created) tab.created = created;
             if (modified) tab.modified = modified;
+            this.sessionDirty = true;
         }
     }
 
     updateMetrics(metrics: Partial<EditorMetrics>) {
         this.activeMetrics = { ...this.activeMetrics, ...metrics };
+        // Metrics updates (cursor pos) do not require session save
     }
 
     toggleInsertMode() {
@@ -105,6 +114,7 @@ export class EditorStore {
             tab.content = modifier(tab.content);
             tab.isDirty = true;
             tab.modified = getCurrentTimestamp();
+            this.sessionDirty = true;
         }
     }
 
