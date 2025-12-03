@@ -4,11 +4,12 @@
 
     let m = $derived(editorStore.activeMetrics);
 
-    // Derive active tab data
+    // Derive active tab data and index
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
+    let tabIndex = $derived(editorStore.tabs.findIndex((t) => t.id === appState.activeTabId) + 1);
     let displayPath = $derived(activeTab?.path || activeTab?.title || "Untitled");
 
-    // Timestamp: Use modified, fallback to created
+    // Timestamp
     let timestamp = $derived(activeTab?.modified || activeTab?.created || "");
 </script>
 
@@ -16,7 +17,7 @@
     <!-- Left: File Path (Accent Color) -->
     <div class="flex gap-4 overflow-hidden mr-4">
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>
-            {displayPath}
+            <span style="color: var(--fg-muted); font-weight: normal;">{tabIndex}:</span>{displayPath}
         </span>
         <!-- Timestamp (No Label) -->
         {#if timestamp}

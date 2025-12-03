@@ -39,7 +39,7 @@
                     style="
                         background-color: transparent;
                         border-color: var(--danger);
-                        color: var(--danger);
+                        color: var(--danger-text);
                     "
                     onmouseenter={(e) => {
                         e.currentTarget.style.backgroundColor = "var(--danger)";
@@ -47,7 +47,7 @@
                     }}
                     onmouseleave={(e) => {
                         e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "var(--danger)";
+                        e.currentTarget.style.color = "var(--danger-text)";
                     }}
                     onclick={() => dialogStore.resolve("discard")}
                 >

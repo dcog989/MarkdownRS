@@ -5,7 +5,7 @@
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { ChevronDown, ChevronLeft, ChevronRight, Columns, Copy, FileText, Menu, Minus, Plus, Square, X } from "lucide-svelte";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
@@ -38,6 +38,7 @@
     function checkScroll() {
         if (scrollContainer) {
             showLeftArrow = scrollContainer.scrollLeft > 0;
+            // 2px tolerance
             showRightArrow = Math.ceil(scrollContainer.scrollLeft + scrollContainer.clientWidth) < scrollContainer.scrollWidth - 2;
         }
     }
@@ -50,18 +51,28 @@
         }
     }
 
+    async function scrollToActive() {
+        await tick(); // Wait for DOM update to ensure new tab exists
+        if (!scrollContainer) return;
+
+        // Find the active button via data attribute
+        const activeEl = scrollContainer.querySelector('[data-active="true"]');
+        if (activeEl) {
+            activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+        setTimeout(checkScroll, 350);
+    }
+
     function handleTabClick(id: string) {
         appState.activeTabId = id;
         editorStore.pushToMru(id);
+        scrollToActive();
     }
 
     function handleNewTab() {
         const id = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
         appState.activeTabId = id;
-        setTimeout(() => {
-            if (scrollContainer) scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: "smooth" });
-            checkScroll();
-        }, 50);
+        scrollToActive();
     }
 
     function handleCloseTab(e: Event, id: string) {
@@ -123,6 +134,7 @@
                 {@const isActive = appState.activeTabId === tab.id}
                 <button
                     type="button"
+                    data-active={isActive}
                     class="group relative h-8 px-3 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
                     style="
                         background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
@@ -153,7 +165,6 @@
             </button>
         {/if}
 
-        <!-- Mini Tab Dropdown -->
         <div class="relative h-8 border-l border-[var(--border-main)]">
             <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)}>
                 <span>{editorStore.tabs.length}</span>
@@ -164,12 +175,12 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="fixed inset-0 z-40" onclick={() => (showDropdown = false)}></div>
-                <div class="absolute right-0 top-full mt-1 w-64 max-h-[300px] overflow-y-auto shadow-xl rounded-b-md z-50 py-1 border" style="background-color: var(--bg-panel); border-color: var(--border-main);">
+                <div class="absolute right-0 top-full mt-1 w-64 max-h-[300px] overflow-y-auto bg-[#252526] border border-[#333] shadow-xl rounded-b-md z-50 py-1">
                     {#each editorStore.tabs as tab}
                         <button type="button" class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" onclick={() => handleDropdownSelect(tab.id)}>
                             <FileText size={14} />
                             <span class="truncate flex-1">{tab.title}</span>
-                            {#if tab.isDirty}<span class="w-2 h-2 rounded-full" style="background-color: var(--fg-default)"></span>{/if}
+                            {#if tab.isDirty}<span class="w-2 h-2 rounded-full bg-white"></span>{/if}
                         </button>
                     {/each}
                 </div>

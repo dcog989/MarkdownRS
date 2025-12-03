@@ -28,8 +28,8 @@ export async function initSettings() {
         }>('app-settings');
 
         if (saved) {
-            log(`Restoring settings...`);
-            if (saved.splitPercentage) appState.splitPercentage = saved.splitPercentage;
+            log(`Restoring layout state...`);
+            if (saved.splitPercentage !== undefined) appState.splitPercentage = saved.splitPercentage;
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
             if (typeof saved.splitView === 'boolean') appState.splitView = saved.splitView;
             if (saved.tabCycling) appState.tabCycling = saved.tabCycling;

@@ -27,7 +27,7 @@
     --fg-muted: #9ca3af; /* Secondary text */
     --fg-inverse: #ffffff; /* Text on colored backgrounds */
 
-    /* Accents (Base - adjusted by JS) */
+    /* Accents */
     --accent-primary: #7c5a73;
     --accent-secondary: #7c5a73;
     --accent-file: #eac55f;
@@ -38,6 +38,7 @@
     --status-bar-fg: #ffffff;
     --danger: #e81123;
     --danger-hover: #c9101e;
+    --danger-text: #ff6b6b; /* Lighter red for text on dark backgrounds */
     --success: #0e639c;
     --success-hover: #1177bb;
 
@@ -64,9 +65,9 @@
     --fg-muted: #666666;
     --fg-inverse: #ffffff;
 
-    /* Re-calculate contrast for light mode logic later,
-       but basic mappings: */
     --accent-file: #a88d3e;
+
+    --danger-text: #e81123; /* Standard red works on light bg */
 }
 
 body {
