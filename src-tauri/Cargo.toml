@@ -1,6 +1,6 @@
 [package]
 name = "markdown-rs"
-version = "0.1.0"
+version = "0.1.22"
 description = "A fast, minimal markdown editor"
 authors = ["you"]
 edition = "2024"
