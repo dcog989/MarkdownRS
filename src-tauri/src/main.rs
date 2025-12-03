@@ -13,12 +13,16 @@ use tauri_plugin_log::{Target, TargetKind};
 #[derive(Debug, Serialize, Deserialize)]
 struct AppSettings {
     log_level: String,
+    tab_width_min: u32,
+    tab_width_max: u32,
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
             log_level: "debug".to_string(),
+            tab_width_min: 140,
+            tab_width_max: 220,
         }
     }
 }

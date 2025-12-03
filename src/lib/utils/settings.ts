@@ -17,7 +17,14 @@ export async function initSettings() {
             splitPercentage: number;
             splitOrientation: 'vertical' | 'horizontal';
             splitView: boolean;
-            tabCycling: 'mru' | 'sequential'; // Added
+            tabCycling: 'mru' | 'sequential';
+            tabWidthMin: number;
+            tabWidthMax: number;
+            width: number;
+            height: number;
+            x: number;
+            y: number;
+            isMaximized: boolean;
         }>('app-settings');
 
         if (saved) {
@@ -26,6 +33,8 @@ export async function initSettings() {
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
             if (typeof saved.splitView === 'boolean') appState.splitView = saved.splitView;
             if (saved.tabCycling) appState.tabCycling = saved.tabCycling;
+            if (saved.tabWidthMin) appState.tabWidthMin = saved.tabWidthMin;
+            if (saved.tabWidthMax) appState.tabWidthMax = saved.tabWidthMax;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
@@ -43,7 +52,9 @@ export async function saveSettings() {
             splitPercentage: appState.splitPercentage,
             splitOrientation: appState.splitOrientation,
             splitView: appState.splitView,
-            tabCycling: appState.tabCycling
+            tabCycling: appState.tabCycling,
+            tabWidthMin: appState.tabWidthMin,
+            tabWidthMax: appState.tabWidthMax
         };
 
         await store.set('app-settings', newSettings);

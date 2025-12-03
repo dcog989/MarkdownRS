@@ -10,7 +10,6 @@
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
 
-    // Tab Scrolling State
     let scrollContainer: HTMLDivElement;
     let showLeftArrow = $state(false);
     let showRightArrow = $state(false);
@@ -38,7 +37,8 @@
     function checkScroll() {
         if (scrollContainer) {
             showLeftArrow = scrollContainer.scrollLeft > 0;
-            showRightArrow = scrollContainer.scrollWidth > scrollContainer.clientWidth + 1;
+            // 2px tolerance for float math
+            showRightArrow = Math.ceil(scrollContainer.scrollLeft + scrollContainer.clientWidth) < scrollContainer.scrollWidth - 2;
         }
     }
 
@@ -46,7 +46,8 @@
         if (scrollContainer) {
             const amount = 200;
             scrollContainer.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
-            setTimeout(checkScroll, 300);
+            // Check scroll again after animation (approx 300ms)
+            setTimeout(checkScroll, 350);
         }
     }
 
@@ -100,7 +101,7 @@
         <div class="flex-1 flex items-center justify-center text-xs font-medium" style="color: var(--fg-muted);" data-tauri-drag-region>MarkdownRS</div>
         <div class="flex h-full pointer-events-auto items-center">
             <button class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors border-r" style="color: var(--fg-muted); border-color: var(--border-main);" onclick={() => appState.toggleSplitView()} title="Toggle Preview">
-                <Columns size={14} class={appState.splitView ? "text-[var(--fg-default)]" : ""} />
+                <Columns size={14} class={appState.splitView ? "text-[var(--fg-default)]" : "opacity-50"} />
             </button>
             <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={minimize}><Minus size={16} /></button>
             <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={toggleMaximize}>
@@ -123,12 +124,14 @@
                 {@const isActive = appState.activeTabId === tab.id}
                 <button
                     type="button"
-                    class="group relative h-8 px-3 min-w-[140px] max-w-[220px] flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
+                    class="group relative h-8 px-3 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
                     style="
                         background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
                         color: {isActive ? 'var(--fg-inverse)' : 'var(--fg-muted)'};
                         border-color: var(--border-main);
                         border-top: 2px solid {isActive ? 'var(--accent-secondary)' : 'transparent'};
+                        min-width: {appState.tabWidthMin}px;
+                        max-width: {appState.tabWidthMax}px;
                     "
                     onclick={() => handleTabClick(tab.id)}
                 >

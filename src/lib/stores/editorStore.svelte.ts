@@ -9,6 +9,7 @@ export type EditorTab = {
     scrollPercentage: number;
     created?: string;
     modified?: string;
+    originalTitle?: string; // To revert if content deleted
 };
 
 export type EditorMetrics = {
@@ -36,8 +37,6 @@ function getCurrentTimestamp(): string {
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
     sessionDirty = $state(false);
-
-    // MRU Stack: Index 0 is most recent
     mruStack = $state<string[]>([]);
 
     activeMetrics = $state<EditorMetrics>({
@@ -57,6 +56,7 @@ export class EditorStore {
         this.tabs.push({
             id,
             title,
+            originalTitle: title, // Track original "Untitled-X"
             content,
             isDirty: false,
             path: null,
@@ -75,11 +75,8 @@ export class EditorStore {
         this.sessionDirty = true;
     }
 
-    // Call this whenever a tab is activated
     pushToMru(id: string) {
-        // Remove existing occurrence
         this.mruStack = this.mruStack.filter(tId => tId !== id);
-        // Add to front
         this.mruStack.unshift(id);
     }
 
@@ -87,15 +84,12 @@ export class EditorStore {
         if (this.tabs.length <= 1) return currentId;
 
         if (appState.tabCycling === 'mru') {
-            // In MRU, if we just hit Ctrl+Tab (no shift), we want the 2nd item (index 1)
-            // If we are already at the top, index 1 is the previous one.
             if (this.mruStack.length > 1) {
-                // For simple toggling between two files:
                 return this.mruStack[1];
             }
             return this.mruStack[0] || null;
         } else {
-            // Sequential
+            // Sequential Cycling
             const currentIndex = this.tabs.findIndex(t => t.id === currentId);
             if (currentIndex === -1) return this.tabs[0]?.id || null;
 
@@ -117,6 +111,22 @@ export class EditorStore {
             tab.content = content;
             tab.isDirty = true;
             tab.modified = getCurrentTimestamp();
+
+            // Smart Title Logic for Untitled Docs
+            if (!tab.path) {
+                const trimmed = content.trim();
+                if (trimmed.length > 0) {
+                    // Get first line, max 20 chars
+                    const firstLine = trimmed.split('\n')[0].trim();
+                    let smartTitle = firstLine.substring(0, 20);
+                    if (firstLine.length > 20) smartTitle += "...";
+                    tab.title = smartTitle;
+                } else {
+                    // Revert to original Untitled-X if empty
+                    if (tab.originalTitle) tab.title = tab.originalTitle;
+                }
+            }
+
             this.sessionDirty = true;
         }
     }
@@ -150,10 +160,7 @@ export class EditorStore {
     modifyContent(id: string, modifier: (text: string) => string) {
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
-            tab.content = modifier(tab.content);
-            tab.isDirty = true;
-            tab.modified = getCurrentTimestamp();
-            this.sessionDirty = true;
+            this.updateContent(id, modifier(tab.content));
         }
     }
 

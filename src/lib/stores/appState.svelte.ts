@@ -8,7 +8,9 @@ export class AppState {
     splitOrientation = $state<'vertical' | 'horizontal'>('vertical');
 
     // Preferences
-    tabCycling = $state<'mru' | 'sequential'>('mru');
+    tabCycling = $state<'mru' | 'sequential'>('sequential'); // Default to sequential
+    tabWidthMin = $state(140);
+    tabWidthMax = $state(220);
 
     constructor() {
         // Initialization logic can go here
