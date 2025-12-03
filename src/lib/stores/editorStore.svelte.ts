@@ -1,3 +1,5 @@
+import { appState } from "./appState.svelte";
+
 export type EditorTab = {
     id: string;
     title: string;
@@ -33,9 +35,10 @@ function getCurrentTimestamp(): string {
 
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
-
-    // Track if any meaningful state changed since last session save
     sessionDirty = $state(false);
+
+    // MRU Stack: Index 0 is most recent
+    mruStack = $state<string[]>([]);
 
     activeMetrics = $state<EditorMetrics>({
         lineCount: 1,
@@ -61,13 +64,51 @@ export class EditorStore {
             created: now,
             modified: now
         });
+        this.pushToMru(id);
         this.sessionDirty = true;
         return id;
     }
 
     closeTab(id: string) {
         this.tabs = this.tabs.filter(t => t.id !== id);
+        this.mruStack = this.mruStack.filter(tId => tId !== id);
         this.sessionDirty = true;
+    }
+
+    // Call this whenever a tab is activated
+    pushToMru(id: string) {
+        // Remove existing occurrence
+        this.mruStack = this.mruStack.filter(tId => tId !== id);
+        // Add to front
+        this.mruStack.unshift(id);
+    }
+
+    getNextTabId(currentId: string | null, shiftKey: boolean): string | null {
+        if (this.tabs.length <= 1) return currentId;
+
+        if (appState.tabCycling === 'mru') {
+            // In MRU, if we just hit Ctrl+Tab (no shift), we want the 2nd item (index 1)
+            // If we are already at the top, index 1 is the previous one.
+            if (this.mruStack.length > 1) {
+                // For simple toggling between two files:
+                return this.mruStack[1];
+            }
+            return this.mruStack[0] || null;
+        } else {
+            // Sequential
+            const currentIndex = this.tabs.findIndex(t => t.id === currentId);
+            if (currentIndex === -1) return this.tabs[0]?.id || null;
+
+            let nextIndex;
+            if (shiftKey) {
+                nextIndex = currentIndex - 1;
+                if (nextIndex < 0) nextIndex = this.tabs.length - 1;
+            } else {
+                nextIndex = currentIndex + 1;
+                if (nextIndex >= this.tabs.length) nextIndex = 0;
+            }
+            return this.tabs[nextIndex].id;
+        }
     }
 
     updateContent(id: string, content: string) {
@@ -99,7 +140,6 @@ export class EditorStore {
 
     updateMetrics(metrics: Partial<EditorMetrics>) {
         this.activeMetrics = { ...this.activeMetrics, ...metrics };
-        // Metrics updates (cursor pos) do not require session save
     }
 
     toggleInsertMode() {
@@ -107,7 +147,6 @@ export class EditorStore {
         this.activeMetrics = { ...this.activeMetrics, insertMode: newMode };
     }
 
-    // Text Operations
     modifyContent(id: string, modifier: (text: string) => string) {
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
@@ -118,21 +157,10 @@ export class EditorStore {
         }
     }
 
-    sortLines(id: string) {
-        this.modifyContent(id, (text) => text.split('\n').sort().join('\n'));
-    }
-
-    trimWhitespace(id: string) {
-        this.modifyContent(id, (text) => text.split('\n').map(line => line.trim()).join('\n'));
-    }
-
-    toUpperCase(id: string) {
-        this.modifyContent(id, (text) => text.toUpperCase());
-    }
-
-    toLowerCase(id: string) {
-        this.modifyContent(id, (text) => text.toLowerCase());
-    }
+    sortLines(id: string) { this.modifyContent(id, (text) => text.split('\n').sort().join('\n')); }
+    trimWhitespace(id: string) { this.modifyContent(id, (text) => text.split('\n').map(line => line.trim()).join('\n')); }
+    toUpperCase(id: string) { this.modifyContent(id, (text) => text.toUpperCase()); }
+    toLowerCase(id: string) { this.modifyContent(id, (text) => text.toLowerCase()); }
 }
 
 export const editorStore = new EditorStore();

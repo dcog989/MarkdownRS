@@ -3,7 +3,6 @@ import { Store } from '@tauri-apps/plugin-store';
 
 let store: Store | null = null;
 
-// Simple logger wrapper. The Rust plugin captures console.* automatically.
 function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
     const output = `[Settings] ${msg}`;
     if (level === 'error') console.error(output);
@@ -18,6 +17,7 @@ export async function initSettings() {
             splitPercentage: number;
             splitOrientation: 'vertical' | 'horizontal';
             splitView: boolean;
+            tabCycling: 'mru' | 'sequential'; // Added
         }>('app-settings');
 
         if (saved) {
@@ -25,6 +25,7 @@ export async function initSettings() {
             if (saved.splitPercentage) appState.splitPercentage = saved.splitPercentage;
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
             if (typeof saved.splitView === 'boolean') appState.splitView = saved.splitView;
+            if (saved.tabCycling) appState.tabCycling = saved.tabCycling;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
@@ -42,6 +43,7 @@ export async function saveSettings() {
             splitPercentage: appState.splitPercentage,
             splitOrientation: appState.splitOrientation,
             splitView: appState.splitView,
+            tabCycling: appState.tabCycling
         };
 
         await store.set('app-settings', newSettings);

@@ -5,7 +5,10 @@ export class AppState {
 
     // Layout State
     splitPercentage = $state(0.5);
-    splitOrientation = $state<'vertical' | 'horizontal'>('vertical'); // Vertical = Side by Side
+    splitOrientation = $state<'vertical' | 'horizontal'>('vertical');
+
+    // Preferences
+    tabCycling = $state<'mru' | 'sequential'>('mru');
 
     constructor() {
         // Initialization logic can go here

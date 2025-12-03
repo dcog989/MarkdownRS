@@ -1,9 +1,8 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
-import { open, save } from '@tauri-apps/plugin-dialog';
+import { ask, open, save } from '@tauri-apps/plugin-dialog';
 
-// Define the shape that matches Rust's TabState
 type RustTabState = {
     id: string;
     title: string;
@@ -20,7 +19,6 @@ type FileMetadata = {
     modified?: string;
 };
 
-// Helper to fetch and update metadata for a tab
 async function refreshMetadata(tabId: string, path: string) {
     try {
         const meta = await invoke<FileMetadata>('get_file_metadata', { path });
@@ -52,6 +50,7 @@ export async function openFile() {
                 await refreshMetadata(id, selected);
             }
             appState.activeTabId = id;
+            editorStore.pushToMru(id);
         }
     } catch (err) {
         console.error('Failed to open file:', err);
@@ -60,20 +59,17 @@ export async function openFile() {
 
 export async function saveCurrentFile() {
     const tabId = appState.activeTabId;
-    if (!tabId) return;
+    if (!tabId) return false;
 
     const tab = editorStore.tabs.find(t => t.id === tabId);
-    if (!tab) return;
+    if (!tab) return false;
 
     try {
         let savePath = tab.path;
 
         if (!savePath) {
             savePath = await save({
-                filters: [{
-                    name: 'Markdown',
-                    extensions: ['md']
-                }]
+                filters: [{ name: 'Markdown', extensions: ['md'] }]
             });
         }
 
@@ -83,18 +79,58 @@ export async function saveCurrentFile() {
             tab.title = savePath.split(/[\\/]/).pop() || 'Untitled';
             tab.isDirty = false;
             await refreshMetadata(tabId, savePath);
+            return true;
         }
+        return false;
     } catch (err) {
         console.error('Failed to save file:', err);
+        return false;
+    }
+}
+
+// Robust Close Logic
+export async function requestCloseTab(id: string) {
+    const tab = editorStore.tabs.find(t => t.id === id);
+    if (!tab) return;
+
+    // Check if dirty and has content
+    if (tab.isDirty && tab.content.trim().length > 0) {
+        const answer = await ask(`Save changes to ${tab.title}?`, {
+            title: 'Unsaved Changes',
+            kind: 'warning',
+            okLabel: 'Save',
+            cancelLabel: 'Don\'t Save'
+        });
+
+        if (answer) {
+            // User wants to save
+            const prevActive = appState.activeTabId;
+            appState.activeTabId = id;
+            const saved = await saveCurrentFile();
+            if (!saved) {
+                appState.activeTabId = prevActive;
+                return;
+            }
+        }
+    }
+
+    editorStore.closeTab(id);
+
+    if (appState.activeTabId === id) {
+        const nextId = editorStore.mruStack[0];
+        appState.activeTabId = nextId || null;
+    }
+
+    if (editorStore.tabs.length === 0) {
+        const newId = editorStore.addTab();
+        appState.activeTabId = newId;
     }
 }
 
 export async function persistSession() {
-    // Optimization: Skip database write if nothing changed
     if (!editorStore.sessionDirty) return;
 
     try {
-        // Map frontend tabs to RustTabState
         const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
             id: t.id,
             path: t.path,
@@ -107,8 +143,6 @@ export async function persistSession() {
         }));
 
         await invoke('save_session', { tabs: plainTabs });
-
-        // Reset dirty flag after successful save
         editorStore.sessionDirty = false;
     } catch (err) {
         console.error('Failed to save session:', err);
@@ -133,12 +167,12 @@ export async function loadSession() {
             editorStore.tabs = convertedTabs;
             appState.activeTabId = convertedTabs[0].id;
 
-            // Background refresh metadata for file-backed tabs
+            editorStore.mruStack = convertedTabs.map(t => t.id);
+
             convertedTabs.forEach(t => {
                 if (t.path) refreshMetadata(t.id, t.path);
             });
         } else {
-            // Default Start State
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
             appState.activeTabId = id;
         }

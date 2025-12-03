@@ -6,7 +6,7 @@
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
@@ -16,7 +16,18 @@
     let dragStart = 0;
     let initialSplit = 0;
 
-    function handleGlobalKeydown(e: KeyboardEvent) {
+    async function handleGlobalKeydown(e: KeyboardEvent) {
+        if (e.key === "Tab" && e.ctrlKey) {
+            // Handle Ctrl+Tab (Next Tab) or Ctrl+Shift+Tab (Prev Tab - technically implied by cycling logic)
+            e.preventDefault();
+            const nextId = editorStore.getNextTabId(appState.activeTabId, e.shiftKey);
+            if (nextId) {
+                appState.activeTabId = nextId;
+                editorStore.pushToMru(nextId);
+            }
+            return;
+        }
+
         if (e.ctrlKey || e.metaKey) {
             if (e.key === "s") {
                 e.preventDefault();
@@ -30,21 +41,14 @@
                 appState.activeTabId = id;
             } else if (e.key === "w") {
                 e.preventDefault();
-                if (appState.activeTabId && editorStore.tabs.length > 1) {
-                    editorStore.closeTab(appState.activeTabId);
-                    appState.activeTabId = editorStore.tabs[0]?.id || null;
+                if (appState.activeTabId) {
+                    await requestCloseTab(appState.activeTabId);
                 }
             } else if (e.key === "\\") {
                 e.preventDefault();
                 appState.toggleSplitView();
             }
         }
-    }
-
-    // Named function to allow proper cleanup
-    function handleAutoSave() {
-        persistSession();
-        saveSettings();
     }
 
     onMount(async () => {
@@ -66,19 +70,21 @@
             appState.activeTabId = id;
         }
 
-        // Auto-save Setup
-        autoSaveInterval = window.setInterval(handleAutoSave, 30000);
-        window.addEventListener("blur", handleAutoSave);
+        autoSaveInterval = window.setInterval(() => {
+            persistSession();
+            saveSettings();
+        }, 30000);
+
+        window.addEventListener("blur", () => {
+            persistSession();
+            saveSettings();
+        });
     });
 
     onDestroy(() => {
         if (autoSaveInterval) clearInterval(autoSaveInterval);
-        if (typeof window !== "undefined") {
-            window.removeEventListener("blur", handleAutoSave);
-        }
     });
 
-    // --- Resizing Logic ---
     function startResize(e: MouseEvent) {
         e.preventDefault();
         isDragging = true;
