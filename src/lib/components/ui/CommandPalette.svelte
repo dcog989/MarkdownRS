@@ -17,7 +17,10 @@
     };
 
     const commands: Command[] = [
-        { id: "new", label: "File: New File", shortcut: "Ctrl+N", action: () => editorStore.addTab() },
+        { id: "new", label: "File: New File", shortcut: "Ctrl+N", action: () => {
+            const id = editorStore.addTab();
+            appState.activeTabId = id;
+        } },
         { id: "open", label: "File: Open File", shortcut: "Ctrl+O", action: () => openFile() },
         { id: "save", label: "File: Save", shortcut: "Ctrl+S", action: () => saveCurrentFile() },
         { id: "toggle-split", label: "View: Toggle Split Preview", shortcut: "Ctrl+\\", action: () => appState.toggleSplitView() },
@@ -32,7 +35,11 @@
             label: "File: Close Tab",
             shortcut: "Ctrl+W",
             action: () => {
-                if (appState.activeTabId) editorStore.closeTab(appState.activeTabId);
+                // Don't close the last tab
+                if (appState.activeTabId && editorStore.tabs.length > 1) {
+                    editorStore.closeTab(appState.activeTabId);
+                    appState.activeTabId = editorStore.tabs[0]?.id || null;
+                }
             },
         },
     ];

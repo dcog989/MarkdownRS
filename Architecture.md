@@ -54,7 +54,6 @@ We will use **CodeMirror 6** (headless, modular).
 - Custom user themes for fonts, colors
 - **Snippets & Templates:** Expandable text macros.
 - **Export:** PDF / PNG / HTML export via Rust libraries.
-- **Vim Mode:** Keybindings for power users.
 - **Git Integration:** Basic status and diff viewing.
 - colorize line numbers / content bg to show updated content
 - search / find / replace in all opened documents

@@ -9,7 +9,12 @@
         "preview": "vite preview",
         "check": "svelte-check --tsconfig ./tsconfig.json",
         "format": "prettier --write .",
-        "tauri": "tauri"
+        "tauri": "tauri",
+        "clean": "node -e \"require('fs').rmSync('build', {recursive: true, force: true}); require('fs').rmSync('src-tauri/target', {recursive: true, force: true});\"",
+        "clean:all": "node -e \"require('fs').rmSync('build', {recursive: true, force: true}); require('fs').rmSync('src-tauri/target', {recursive: true, force: true}); require('fs').rmSync('node_modules', {recursive: true, force: true});\"",
+        "clean:build": "node -e \"require('fs').rmSync('build', {recursive: true, force: true});\"",
+        "clean:rust": "node -e \"require('fs').rmSync('src-tauri/target', {recursive: true, force: true});\"",
+        "clean:modules": "node -e \"require('fs').rmSync('node_modules', {recursive: true, force: true});\""
     },
     "dependencies": {
         "@codemirror/commands": "^6.10",

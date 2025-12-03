@@ -1,5 +1,5 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
-import { editorStore } from '$lib/stores/editorStore.svelte.ts';
+import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 
@@ -80,12 +80,32 @@ export async function persistSession() {
     }
 }
 
+// Type for the data coming from Rust (snake_case)
+type RustTabState = {
+    id: string;
+    title: string;
+    content: string;
+    is_dirty: boolean;
+    path: string | null;
+    scroll_percentage: number;
+};
+
 export async function loadSession() {
     try {
-        const tabs = await invoke<any[]>('restore_session');
-        if (tabs && tabs.length > 0) {
-            editorStore.tabs = tabs;
-            appState.activeTabId = tabs[0].id;
+        const rustTabs = await invoke<RustTabState[]>('restore_session');
+        if (rustTabs && rustTabs.length > 0) {
+            // Convert snake_case to camelCase
+            const convertedTabs: EditorTab[] = rustTabs.map(t => ({
+                id: t.id,
+                title: t.title,
+                content: t.content,
+                isDirty: t.is_dirty,
+                path: t.path,
+                scrollPercentage: t.scroll_percentage
+            }));
+            
+            editorStore.tabs = convertedTabs;
+            appState.activeTabId = convertedTabs[0].id;
         } else {
             // Default start state
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
@@ -93,5 +113,8 @@ export async function loadSession() {
         }
     } catch (err) {
         console.error('Failed to restore session:', err);
+        // On error, create default tab
+        const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
+        appState.activeTabId = id;
     }
 }

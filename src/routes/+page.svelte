@@ -24,14 +24,31 @@
                 e.preventDefault();
                 const id = editorStore.addTab();
                 appState.activeTabId = id;
+            } else if (e.key === "w") {
+                e.preventDefault();
+                // Don't close the last tab
+                if (appState.activeTabId && editorStore.tabs.length > 1) {
+                    editorStore.closeTab(appState.activeTabId);
+                    appState.activeTabId = editorStore.tabs[0]?.id || null;
+                }
+            } else if (e.key === "\\") {
+                e.preventDefault();
+                appState.toggleSplitView();
             }
         }
     }
 
     onMount(async () => {
         console.log("App mounted");
-        await loadSession();
-        if (editorStore.tabs.length === 0) {
+        try {
+            await loadSession();
+            if (editorStore.tabs.length === 0) {
+                const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
+                appState.activeTabId = id;
+            }
+        } catch (error) {
+            console.error("Failed to load session:", error);
+            // Fallback: create default tab
             const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
             appState.activeTabId = id;
         }
@@ -58,6 +75,12 @@
 
     function handleCloseTab(e: Event, id: string) {
         e.stopPropagation();
+        
+        // Don't close the last tab
+        if (editorStore.tabs.length === 1) {
+            return;
+        }
+        
         editorStore.closeTab(id);
         if (appState.activeTabId === id) {
             appState.activeTabId = editorStore.tabs[0]?.id || null;
@@ -87,21 +110,19 @@
     <CommandPalette />
 
     <!-- Custom Titlebar -->
-    <!-- We use absolute positioning for the drag region to ensure it sits behind the interactive elements -->
     <div class="h-10 bg-[#252526] relative flex items-center select-none border-b border-black w-full shrink-0">
-        <!-- Drag Region Layer -->
-        <div data-tauri-drag-region class="absolute inset-0 w-full h-full z-0"></div>
+        <!-- Drag Region Layer (sits behind everything) -->
+        <div data-tauri-drag-region class="absolute inset-0 w-full h-full"></div>
 
         <!-- Interactive Content Layer -->
-        <div class="relative z-10 flex w-full h-full">
-            <!-- Logo (Left) -->
-            <div class="pl-3 pr-2 flex items-center justify-center pointer-events-none">
-                <img src="/logo.svg" alt="App Logo" class="h-5 w-5" />
+        <div class="relative flex w-full h-full">
+            <!-- Logo (Left) - draggable -->
+            <div data-tauri-drag-region class="pl-3 pr-2 flex items-center justify-center cursor-default">
+                <img src="/logo.svg" alt="App Logo" class="h-5 w-5 pointer-events-none" />
             </div>
 
-            <!-- Tab Bar -->
-            <!-- We stop propagation on clicks here to prevent drag start -->
-            <div class="flex items-end overflow-x-auto no-scrollbar pt-1.5 flex-1 max-w-[calc(100%-140px)]" role="toolbar" tabindex="-1" onmousedown={(e) => e.stopPropagation()}>
+            <!-- Tab Bar - interactive -->
+            <div class="flex items-end overflow-x-auto no-scrollbar pt-1.5 flex-1 max-w-[calc(100%-140px)] pointer-events-auto" role="toolbar" tabindex="-1">
                 {#each editorStore.tabs as tab (tab.id)}
                     <button
                         type="button"
@@ -122,18 +143,21 @@
                 </button>
             </div>
 
-            <!-- Window Controls Container -->
-            <div class="flex h-full ml-auto bg-[#252526]">
-                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none" aria-label="Menu">
+            <!-- Empty draggable space between tabs and window controls -->
+            <div data-tauri-drag-region class="flex-1 min-w-0"></div>
+
+            <!-- Window Controls Container - interactive -->
+            <div class="flex h-full ml-auto bg-[#252526] pointer-events-auto">
+                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" aria-label="Menu">
                     <Menu size={18} />
                 </button>
-                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none" onclick={minimize} aria-label="Minimize">
+                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={minimize} aria-label="Minimize">
                     <Minus size={18} />
                 </button>
-                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none" onclick={toggleMaximize} aria-label="Maximize">
+                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={toggleMaximize} aria-label="Maximize">
                     <Square size={16} />
                 </button>
-                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-gray-400 focus:outline-none" onclick={closeApp} aria-label="Close">
+                <button class="h-10 w-12 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-gray-400 focus:outline-none transition-colors" onclick={closeApp} aria-label="Close">
                     <X size={18} />
                 </button>
             </div>

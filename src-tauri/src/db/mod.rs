@@ -1,53 +1,90 @@
-use crate::db::{Database, TabState};
+use anyhow::Result;
 use log::{error, info};
-use std::fs;
-use std::sync::Mutex;
-use tauri::State;
+use rusqlite::{params, Connection};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
-pub struct AppState {
-    pub db: Mutex<Database>,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TabState {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+    pub is_dirty: bool,
+    pub path: Option<String>,
+    pub scroll_percentage: f64,
 }
 
-#[tauri::command]
-pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Result<(), String> {
-    info!("Saving session with {} tabs", tabs.len());
-    let db = state.db.lock().map_err(|_| {
-        error!("Failed to lock db for saving");
-        "Failed to lock db"
-    })?;
-    db.save_session(&tabs).map_err(|e| {
-        error!("Database save error: {}", e);
-        e.to_string()
-    })
+pub struct Database {
+    conn: Connection,
 }
 
-#[tauri::command]
-pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>, String> {
-    info!("Restoring session");
-    let db = state.db.lock().map_err(|_| {
-        error!("Failed to lock db for restoration");
-        "Failed to lock db"
-    })?;
-    db.load_session().map_err(|e| {
-        error!("Database load error: {}", e);
-        e.to_string()
-    })
-}
+impl Database {
+    pub fn new(db_path: PathBuf) -> Result<Self> {
+        info!("Initializing database at {:?}", db_path);
+        let conn = Connection::open(db_path)?;
 
-#[tauri::command]
-pub async fn read_text_file(path: String) -> Result<String, String> {
-    info!("Reading file: {}", path);
-    fs::read_to_string(&path).map_err(|e| {
-        error!("Failed to read file {}: {}", path, e);
-        e.to_string()
-    })
-}
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS tabs (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                is_dirty INTEGER NOT NULL,
+                path TEXT,
+                scroll_percentage REAL NOT NULL
+            )",
+            [],
+        )?;
 
-#[tauri::command]
-pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
-    info!("Writing file: {}", path);
-    fs::write(&path, content).map_err(|e| {
-        error!("Failed to write file {}: {}", path, e);
-        e.to_string()
-    })
+        Ok(Self { conn })
+    }
+
+    pub fn save_session(&self, tabs: &[TabState]) -> Result<()> {
+        info!("Saving {} tabs to database", tabs.len());
+        
+        // Clear existing tabs
+        self.conn.execute("DELETE FROM tabs", [])?;
+
+        // Insert new tabs
+        for tab in tabs {
+            self.conn.execute(
+                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage) 
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![
+                    &tab.id,
+                    &tab.title,
+                    &tab.content,
+                    if tab.is_dirty { 1 } else { 0 },
+                    &tab.path,
+                    tab.scroll_percentage
+                ],
+            )?;
+        }
+
+        info!("Session saved successfully");
+        Ok(())
+    }
+
+    pub fn load_session(&self) -> Result<Vec<TabState>> {
+        info!("Loading session from database");
+        
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, content, is_dirty, path, scroll_percentage FROM tabs"
+        )?;
+
+        let tabs = stmt
+            .query_map([], |row| {
+                Ok(TabState {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    content: row.get(2)?,
+                    is_dirty: row.get::<_, i32>(3)? != 0,
+                    path: row.get(4)?,
+                    scroll_percentage: row.get(5)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        info!("Loaded {} tabs from database", tabs.len());
+        Ok(tabs)
+    }
 }
