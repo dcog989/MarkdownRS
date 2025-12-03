@@ -38,9 +38,10 @@
     });
 </script>
 
-<div class="relative w-full h-full bg-[#1e1e1e] border-l" style="border-color: var(--border-main);">
-    <!-- Floating Orientation Switcher (Top Right) -->
-    <button class="absolute top-2 right-4 z-10 p-1.5 rounded-md bg-[#252526] hover:bg-[#37373d] text-[var(--fg-muted)] transition-colors border shadow-sm opacity-50 hover:opacity-100" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
+<div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
+    <!-- Floating Orientation Switcher -->
+    <!-- Positioned absolutely in the top-right corner. Z-Index ensures it floats above content. -->
+    <button class="absolute top-3 right-5 z-20 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
         {#if appState.splitOrientation === "vertical"}
             <PanelTop size={16} />
         {:else}
@@ -49,7 +50,7 @@
     </button>
 
     <!-- Content -->
-    <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none" style="background-color: var(--bg-main); color: var(--fg-default);">
+    <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-10" style="background-color: var(--bg-main); color: var(--fg-default);">
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html htmlContent}
     </div>

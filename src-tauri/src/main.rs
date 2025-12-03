@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod commands;
+mod app_commands;
 mod db;
 
 use simplelog::*;
@@ -43,18 +43,18 @@ fn main() {
             let db_path = db_dir.join("session.db");
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
-            app.manage(commands::AppState {
+            app.manage(app_commands::AppState {
                 db: std::sync::Mutex::new(db),
             });
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::save_session,
-            commands::restore_session,
-            commands::read_text_file,
-            commands::write_text_file,
-            commands::get_file_metadata
+            app_commands::save_session,
+            app_commands::restore_session,
+            app_commands::read_text_file,
+            app_commands::write_text_file,
+            app_commands::get_file_metadata
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -18,7 +18,8 @@ pub struct FileMetadata {
 fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     time.ok().map(|t| {
         let datetime: DateTime<Local> = t.into();
-        datetime.format("%Y-%m-%d %H:%M").to_string()
+        // Format: yyyymmdd / HHmmss
+        datetime.format("%Y%m%d / %H%M%S").to_string()
     })
 }
 
