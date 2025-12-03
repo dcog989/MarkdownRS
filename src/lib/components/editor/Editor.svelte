@@ -12,45 +12,73 @@
     let editorContainer: HTMLDivElement;
     let view: EditorView;
     let timer: number;
+    let previousTabId: string = "";
 
-    // React to active tab changes to restore content/state, but ignore internal updates
+    // 1. Safe Reactivity: Only update Editor content if the TAB ID changes.
+    // If we update on content change, we fight the debounce and revert user typing.
     $effect(() => {
-        const currentTab = editorStore.tabs.find((t) => t.id === tabId);
-        if (currentTab) {
-            untrack(() => {
-                if (view && view.state.doc.toString() !== currentTab.content) {
-                    view.dispatch({
-                        changes: {
-                            from: 0,
-                            to: view.state.doc.length,
-                            insert: currentTab.content,
-                        },
-                    });
-                }
-            });
+        if (tabId !== previousTabId) {
+            const currentTab = editorStore.tabs.find((t) => t.id === tabId);
+            if (currentTab && view) {
+                untrack(() => {
+                    const currentDoc = view.state.doc.toString();
+                    if (currentDoc !== currentTab.content) {
+                        view.dispatch({
+                            changes: { from: 0, to: currentDoc.length, insert: currentTab.content },
+                        });
+                        // Reset scroll
+                        // view.scrollDOM.scrollTop = ... (omitted for simplicity, relies on derived)
+                    }
+                });
+            }
+            previousTabId = tabId;
         }
     });
 
     onMount(() => {
         const currentTab = editorStore.tabs.find((t) => t.id === tabId);
         const initialContent = currentTab?.content || "";
+        previousTabId = tabId;
 
         const updateListener = EditorView.updateListener.of((update) => {
-            // Debounce store updates to prevent UI blocking during rapid typing
-            if (update.docChanged || update.view.scrollDOM) {
+            // 1. Handle Content Updates (Debounced)
+            if (update.docChanged) {
                 clearTimeout(timer);
                 timer = window.setTimeout(() => {
-                    if (update.docChanged) {
-                        editorStore.updateContent(tabId, update.state.doc.toString());
-                    }
-                    if (update.view.scrollDOM) {
-                        const scrollElement = update.view.scrollDOM;
-                        const percentage = scrollElement.scrollTop / (scrollElement.scrollHeight - scrollElement.clientHeight);
-                        if (!isNaN(percentage)) {
-                            editorStore.updateScroll(tabId, percentage);
-                        }
-                    }
+                    editorStore.updateContent(tabId, update.state.doc.toString());
                 }, 100);
+            }
+
+            // 2. Handle Scroll (Debounced)
+            if (update.view.scrollDOM) {
+                const scrollElement = update.view.scrollDOM;
+                const percentage = scrollElement.scrollTop / (scrollElement.scrollHeight - scrollElement.clientHeight);
+                if (!isNaN(percentage)) {
+                    // We can reuse the same timer or a separate one, but scroll needs to be snappy for preview sync
+                    // Ideally we update store scroll immediately or with very low debounce
+                    editorStore.updateScroll(tabId, percentage);
+                }
+            }
+
+            // 3. Handle Metrics (Immediate for UI responsiveness)
+            if (update.docChanged || update.selectionSet) {
+                const doc = update.state.doc;
+                const selection = update.state.selection.main;
+                const cursorLine = doc.lineAt(selection.head);
+
+                const text = doc.toString();
+                const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+                const sizeKB = new TextEncoder().encode(text).length / 1024;
+
+                editorStore.updateMetrics({
+                    lineCount: doc.lines,
+                    wordCount: wordCount,
+                    charCount: text.length,
+                    sizeKB: sizeKB,
+                    cursorLine: cursorLine.number,
+                    cursorCol: selection.head - cursorLine.from + 1,
+                    insertMode: "INS", // CodeMirror is always insert mode unless using Vim plugin
+                });
             }
         });
 

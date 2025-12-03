@@ -7,8 +7,29 @@ export type EditorTab = {
     scrollPercentage: number;
 };
 
+export type EditorMetrics = {
+    lineCount: number;
+    wordCount: number;
+    charCount: number;
+    sizeKB: number;
+    cursorLine: number;
+    cursorCol: number;
+    insertMode: string;
+};
+
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
+
+    // Transient state for the active tab's status bar
+    activeMetrics = $state<EditorMetrics>({
+        lineCount: 1,
+        wordCount: 0,
+        charCount: 0,
+        sizeKB: 0,
+        cursorLine: 1,
+        cursorCol: 1,
+        insertMode: "INS"
+    });
 
     addTab(title: string = 'Untitled', content: string = '') {
         const id = crypto.randomUUID();
@@ -40,6 +61,10 @@ export class EditorStore {
         if (tab) {
             tab.scrollPercentage = percentage;
         }
+    }
+
+    updateMetrics(metrics: Partial<EditorMetrics>) {
+        this.activeMetrics = { ...this.activeMetrics, ...metrics };
     }
 
     // Text Operations

@@ -24,16 +24,16 @@
     --fg-muted: #9ca3af; /* Secondary text */
     --fg-inverse: #ffffff; /* Text on colored backgrounds */
 
-    /* Accents */
-    --accent-primary: #007acc; /* Brand/Main actions */
-    --accent-secondary: #569cd6; /* Highlights */
-    --accent-file: #eac55f; /* File Icons */
-    --accent-link: #3794ff; /* Links */
+    /* Accents - These will be adjusted by JS at runtime */
+    --accent-primary: #7c5a73;
+    --accent-secondary: #7c5a73;
+    --accent-file: #eac55f;
+    --accent-link: #3794ff;
 
     /* Functional */
-    --status-bar-bg: #007acc;
+    --status-bar-bg: #7c5a73;
     --status-bar-fg: #ffffff;
-    --danger: #e81123; /* Close buttons */
+    --danger: #e81123;
 
     /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
@@ -67,6 +67,3 @@ body {
 ::-webkit-scrollbar-corner {
     background-color: var(--bg-main);
 }
-
-/* Utility classes for binding CSS vars to Tailwind arbitrary values if needed,
-   though typically we use style="background-color: var(...)" for dynamic themes */
