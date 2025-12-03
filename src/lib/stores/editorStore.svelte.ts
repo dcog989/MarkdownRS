@@ -13,13 +13,24 @@ export type EditorTab = {
 export type EditorMetrics = {
     lineCount: number;
     wordCount: number;
-    charCount: number;      // Total characters
-    cursorOffset: number;   // Characters before caret
+    charCount: number;
+    cursorOffset: number;
     sizeKB: number;
     cursorLine: number;
     cursorCol: number;
     insertMode: 'INS' | 'OVR';
 };
+
+function getCurrentTimestamp(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const HH = String(d.getHours()).padStart(2, '0');
+    const MM = String(d.getMinutes()).padStart(2, '0');
+    const SS = String(d.getSeconds()).padStart(2, '0');
+    return `${yyyy}${mm}${dd} / ${HH}${MM}${SS}`;
+}
 
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
@@ -44,7 +55,8 @@ export class EditorStore {
             content,
             isDirty: false,
             path: null,
-            scrollPercentage: 0
+            scrollPercentage: 0,
+            modified: getCurrentTimestamp() // Initialize timestamp for new docs
         });
         return id;
     }
@@ -58,6 +70,11 @@ export class EditorStore {
         if (tab) {
             tab.content = content;
             tab.isDirty = true;
+            // Optionally update modified time on every keystroke?
+            // Usually editors don't do this until save, but user asked for "app maintains timestamp".
+            // We'll stick to creation time or save time to avoid constant UI jitter,
+            // unless the user specifically meant "time of last edit".
+            // Given "timestamp if it is created by the app", initialization is the key.
         }
     }
 

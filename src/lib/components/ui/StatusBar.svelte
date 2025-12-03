@@ -8,9 +8,8 @@
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
     let displayPath = $derived(activeTab?.path || activeTab?.title || "Untitled");
 
-    // Format Timestamps (from Rust backend)
-    let created = $derived(activeTab?.created ? `${activeTab.created}` : "");
-    let modified = $derived(activeTab?.modified ? `${activeTab.modified}` : "");
+    // Timestamp
+    let modified = $derived(activeTab?.modified || "");
 </script>
 
 <footer class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden" style="background-color: var(--bg-panel); border-color: var(--border-main); color: var(--fg-muted);">
@@ -19,12 +18,9 @@
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>
             {displayPath}
         </span>
-        <!-- Timestamp Metadata -->
-        {#if activeTab?.modified}
-            <span class="hidden md:inline opacity-70" title="Last Modified" style="color: var(--fg-muted)">Upd: {modified}</span>
-        {/if}
-        {#if activeTab?.created}
-            <span class="hidden lg:inline opacity-50" title="Created" style="color: var(--fg-muted)">Cre: {created}</span>
+        <!-- Modified Timestamp (No Label) -->
+        {#if modified}
+            <span class="hidden md:inline opacity-70" title="Last Modified" style="color: var(--fg-muted)">{modified}</span>
         {/if}
     </div>
 

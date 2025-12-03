@@ -38,10 +38,11 @@
     });
 </script>
 
+<!-- Parent container must be relative for absolute children to position correctly -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
     <!-- Floating Orientation Switcher -->
-    <!-- Positioned absolutely in the top-right corner. Z-Index ensures it floats above content. -->
-    <button class="absolute top-3 right-5 z-20 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
+    <!-- Positioned absolutely top-right. Using z-50 to ensure it's clickable above prose content if overlapping. -->
+    <button class="absolute top-2 right-2 z-50 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
         {#if appState.splitOrientation === "vertical"}
             <PanelTop size={16} />
         {:else}
@@ -50,7 +51,8 @@
     </button>
 
     <!-- Content -->
-    <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-10" style="background-color: var(--bg-main); color: var(--fg-default);">
+    <!-- z-0 ensures it sits 'behind' the floating button in stacking context -->
+    <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default);">
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html htmlContent}
     </div>
