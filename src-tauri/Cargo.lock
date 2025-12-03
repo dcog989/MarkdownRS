@@ -1903,6 +1903,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-store",
  "thiserror 2.0.17",
+ "toml 0.9.8",
 ]
 
 [[package]]

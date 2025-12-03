@@ -1,6 +1,6 @@
 use crate::db::{Database, TabState};
 use chrono::{DateTime, Local};
-use log::{error, info};
+use log::{debug, error, info, warn};
 use std::fs;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -25,8 +25,10 @@ fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
 
 #[tauri::command]
 pub async fn log_frontend(level: String, message: String) -> Result<(), String> {
-    match level.as_str() {
+    match level.to_lowercase().as_str() {
         "error" => error!("[Frontend] {}", message),
+        "warn" => warn!("[Frontend] {}", message),
+        "debug" => debug!("[Frontend] {}", message),
         _ => info!("[Frontend] {}", message),
     }
     Ok(())

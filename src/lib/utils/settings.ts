@@ -7,9 +7,12 @@ let store: Store | null = null;
 const appWindow = getCurrentWindow();
 
 // Helper to pipe logs to Rust
-function log(msg: string, level: 'info' | 'error' = 'info') {
+// Default to DEBUG level for verbose settings tracing
+function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
     invoke('log_frontend', { level, message: msg }).catch(console.error);
-    console.log(`[Settings] ${msg}`);
+    // Optional: Keep console log for devtools
+    if (level === 'error') console.error(`[Settings] ${msg}`);
+    else console.log(`[Settings] ${msg}`);
 }
 
 export async function initSettings() {
@@ -29,19 +32,15 @@ export async function initSettings() {
         if (saved) {
             log(`Restoring state: Max=${saved.isMaximized}, Pos=${saved.x},${saved.y}, Size=${saved.width}x${saved.height}`);
 
-            // Restore App State
             if (saved.splitPercentage) appState.splitPercentage = saved.splitPercentage;
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
 
-            // Restore Window State
             if (saved.isMaximized) {
                 await appWindow.maximize();
             } else if (saved.width && saved.height) {
-                // Ensure we don't restore weird zero/negative values
                 if (saved.width > 0 && saved.height > 0) {
                     await appWindow.setSize(new PhysicalSize(saved.width, saved.height));
                 }
-
                 if (saved.x != null && saved.y != null) {
                     await appWindow.setPosition(new PhysicalPosition(saved.x, saved.y));
                 }
@@ -56,15 +55,12 @@ export async function initSettings() {
 
 export async function saveSettings() {
     if (!store) {
-        log("Store not initialized, cannot save", 'error');
+        log("Store not initialized", 'error');
         return;
     }
 
     try {
         const isMaximized = await appWindow.isMaximized();
-
-        // Prepare new settings object based on current store
-        // We fetch existing first to preserve non-overwritten values (like pre-maximize coords)
         const currentStored = (await store.get('app-settings') as any) || {};
 
         const newSettings = {
@@ -74,8 +70,6 @@ export async function saveSettings() {
             isMaximized
         };
 
-        // ONLY update dimensions if NOT maximized.
-        // If maximized, we want to keep the "restore" dimensions that were saved previously.
         if (!isMaximized) {
             const size = await appWindow.innerSize();
             const pos = await appWindow.outerPosition();
@@ -85,9 +79,9 @@ export async function saveSettings() {
             newSettings.x = pos.x;
             newSettings.y = pos.y;
 
-            log(`Saving Window Geometry: ${pos.x},${pos.y} / ${size.width}x${size.height}`);
+            log(`Saving Geometry: ${pos.x},${pos.y} / ${size.width}x${size.height}`);
         } else {
-            log(`Window is maximized, preserving previous geometry. Saving Max state only.`);
+            log(`Window maximized, preserving previous geometry.`);
         }
 
         await store.set('app-settings', newSettings);
