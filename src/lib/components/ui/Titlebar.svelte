@@ -2,9 +2,22 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { FileText, Menu, Minus, Plus, Square, X } from "lucide-svelte";
+    import { Columns, Copy, FileText, Menu, Minus, Plus, Square, X } from "lucide-svelte";
+    import { onMount } from "svelte";
 
     const appWindow = getCurrentWindow();
+    let isMaximized = $state(false);
+
+    onMount(async () => {
+        isMaximized = await appWindow.isMaximized();
+        // Listen for resize to update icon state
+        const unlisten = await appWindow.onResized(async () => {
+            isMaximized = await appWindow.isMaximized();
+        });
+        return () => {
+            unlisten();
+        };
+    });
 
     function handleTabClick(id: string) {
         appState.activeTabId = id;
@@ -29,8 +42,9 @@
         appWindow.minimize();
     }
 
-    function toggleMaximize() {
-        appWindow.toggleMaximize();
+    async function toggleMaximize() {
+        await appWindow.toggleMaximize();
+        isMaximized = await appWindow.isMaximized();
     }
 
     function closeApp() {
@@ -52,15 +66,25 @@
         <!-- Draggable Title Area -->
         <div class="flex-1 flex items-center justify-center text-xs text-gray-500 font-medium" data-tauri-drag-region>MarkdownRS</div>
 
-        <!-- Window Controls -->
-        <div class="flex h-full pointer-events-auto">
-            <button class="w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={minimize} aria-label="Minimize">
+        <!-- Window Controls Area -->
+        <div class="flex h-full pointer-events-auto items-center">
+            <!-- Toggle Preview Button (Left of controls) -->
+            <button class="h-full px-3 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors border-r border-[#333]" onclick={() => appState.toggleSplitView()} title={appState.splitView ? "Hide Preview" : "Show Preview"}>
+                <Columns size={14} class={appState.splitView ? "text-white" : ""} />
+            </button>
+
+            <!-- Standard Controls -->
+            <button class="h-full w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={minimize} aria-label="Minimize">
                 <Minus size={16} />
             </button>
-            <button class="w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={toggleMaximize} aria-label="Maximize">
-                <Square size={14} />
+            <button class="h-full w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={toggleMaximize} aria-label="Maximize">
+                {#if isMaximized}
+                    <Copy size={14} class="rotate-180" /> <!-- makeshift restore icon -->
+                {:else}
+                    <Square size={14} />
+                {/if}
             </button>
-            <button class="w-12 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-gray-400 focus:outline-none transition-colors" onclick={closeApp} aria-label="Close">
+            <button class="h-full w-12 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-gray-400 focus:outline-none transition-colors" onclick={closeApp} aria-label="Close">
                 <X size={16} />
             </button>
         </div>
@@ -71,11 +95,11 @@
         {#each editorStore.tabs as tab (tab.id)}
             <button
                 type="button"
-                class="group relative h-8 px-3 min-w-[140px] max-w-[220px] flex items-center gap-2 text-xs cursor-pointer border-r border-transparent outline-none text-left
+                class="group relative h-8 px-3 min-w-[140px] max-w-[220px] flex items-center gap-2 text-xs cursor-pointer border-r border-[#1e1e1e] outline-none text-left
                 {appState.activeTabId === tab.id ? 'bg-[#1e1e1e] text-white border-t-2 border-t-[#569cd6]' : 'bg-[#2d2d2d] text-gray-400 hover:bg-[#2a2a2b] border-t-2 border-t-transparent'}"
                 onclick={() => handleTabClick(tab.id)}
             >
-                <FileText size={14} class="{appState.activeTabId === tab.id ? 'text-[#569cd6]' : 'opacity-70'} flex-shrink-0" />
+                <FileText size={14} class="{appState.activeTabId === tab.id ? 'text-[#eac55f]' : 'opacity-70'} flex-shrink-0" />
                 <span class="truncate flex-1">{tab.title}{tab.isDirty ? " ●" : ""}</span>
                 <span role="button" tabindex="0" class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-600 rounded flex-shrink-0 flex items-center justify-center" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)}>
                     <X size={12} />

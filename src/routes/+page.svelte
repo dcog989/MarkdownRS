@@ -2,6 +2,7 @@
     import Editor from "$lib/components/editor/Editor.svelte";
     import Preview from "$lib/components/preview/Preview.svelte";
     import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
+    import StatusBar from "$lib/components/ui/StatusBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
@@ -67,6 +68,7 @@
 <div class="h-screen w-screen flex flex-col bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden border border-[#333]">
     <CommandPalette />
 
+    <!-- Top Section: Titlebar + Tabs -->
     <Titlebar />
 
     <!-- Main Workspace -->
@@ -94,16 +96,5 @@
     </div>
 
     <!-- Status Bar -->
-    <footer class="h-6 bg-[#7c5a73] text-white flex items-center px-3 text-xs select-none justify-between shrink-0 z-50">
-        <div class="flex gap-4">
-            <span>{appState.activeTabId ? "Markdown" : "Ready"}</span>
-        </div>
-        <div class="flex gap-4 items-center">
-            <span>Ln 1, Col 1</span>
-            <span>UTF-8</span>
-            <button type="button" class="cursor-pointer hover:bg-black/20 px-1 rounded bg-transparent border-none text-white text-xs" onclick={() => appState.toggleSplitView()}>
-                {appState.splitView ? "Hide Preview" : "Show Preview"}
-            </button>
-        </div>
-    </footer>
+    <StatusBar />
 </div>

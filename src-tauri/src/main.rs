@@ -9,14 +9,6 @@ use std::fs::{self, File};
 use tauri::Manager;
 
 fn main() {
-    // Initialize logging
-    let _ = WriteLogger::init(
-        LevelFilter::Info,
-        Config::default(),
-        File::create("markdown-rs.log")
-            .unwrap_or_else(|_| File::create("markdown-rs-fallback.log").unwrap()),
-    );
-
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
@@ -24,17 +16,32 @@ fn main() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .setup(|app| {
             let app_handle = app.handle();
-            let app_dir = app_handle
+
+            // Resolve AppData/Roaming directory
+            // On Windows: C:\Users\User\AppData\Roaming
+            let base_dir = app_handle
                 .path()
-                .app_data_dir()
-                .expect("failed to get app data dir");
+                .data_dir()
+                .expect("failed to get data dir");
 
-            // Ensure app data dir exists
-            if !app_dir.exists() {
-                fs::create_dir_all(&app_dir).expect("failed to create app data dir");
-            }
+            let app_dir = base_dir.join("MarkdownRS");
+            let log_dir = app_dir.join("Logs");
+            let db_dir = app_dir.join("Database");
 
-            let db_path = app_dir.join("session.db");
+            // Create directories
+            fs::create_dir_all(&log_dir).expect("failed to create log dir");
+            fs::create_dir_all(&db_dir).expect("failed to create db dir");
+
+            // Initialize Logging to Roaming/MarkdownRS/Logs
+            let _ = WriteLogger::init(
+                LevelFilter::Info,
+                Config::default(),
+                File::create(log_dir.join("markdown-rs.log"))
+                    .unwrap_or_else(|_| File::create("markdown-rs-fallback.log").unwrap()),
+            );
+
+            // Initialize DB to Roaming/MarkdownRS/Database
+            let db_path = db_dir.join("session.db");
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
             app.manage(commands::AppState {
