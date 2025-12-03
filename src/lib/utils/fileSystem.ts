@@ -1,6 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
-import { editorStore } from '$lib/stores/editorStore.svelte.ts';
+import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 
@@ -93,7 +93,6 @@ export async function requestCloseTab(id: string) {
     const tab = editorStore.tabs.find(t => t.id === id);
     if (!tab) return;
 
-    // Check if dirty and has content
     if (tab.isDirty && tab.content.trim().length > 0) {
         const confirmed = await dialogStore.confirm({
             title: 'Unsaved Changes',
@@ -108,34 +107,18 @@ export async function requestCloseTab(id: string) {
             const saved = await saveCurrentFile();
             if (!saved) {
                 appState.activeTabId = prevActive;
-                return; // Cancel close
+                return;
             }
         }
-        // If confirmed is false (Don't Save), proceed to close
-        // Note: The UI has a 3rd implicit option (Clicking backdrop/Esc) which returns false in current logic.
-        // If we want "Cancel" (Stay in editor), we need 3 states.
-        // For now, based on "close confirmation should offer 'Cancel'",
-        // I will assume the prompt is [Save] [Don't Save].
-        // If user clicks backdrop, it currently resolves false (Don't Save).
-        // Standard behavior is usually [Save] [Don't Save] [Cancel].
-        // Let's refine DialogStore to support 3 states if needed, but for now strict boolean.
     }
 
     editorStore.closeTab(id);
 
-    // If we closed the active tab, find new active
     if (appState.activeTabId === id) {
-        // For sequential logic, finding the 'nearest' neighbor is better,
-        // but MRU stack is a safe fallback for now.
         let nextId = editorStore.mruStack[0];
-
-        // If sequential mode, maybe try to select the one to the right or left?
-        // editorStore does not easily expose index-based neighbors in closeTab.
-        // Sticking to MRU fallback for close behavior is standard in many editors.
         appState.activeTabId = nextId || null;
     }
 
-    // Always create a new blank tab if we closed the last one
     if (editorStore.tabs.length === 0) {
         const newId = editorStore.addTab();
         appState.activeTabId = newId;
@@ -176,8 +159,7 @@ export async function loadSession() {
                 path: t.path,
                 scrollPercentage: t.scroll_percentage,
                 created: t.created || undefined,
-                modified: t.modified || undefined,
-                originalTitle: t.title // Assume loaded title is original
+                modified: t.modified || undefined
             }));
 
             editorStore.tabs = convertedTabs;
