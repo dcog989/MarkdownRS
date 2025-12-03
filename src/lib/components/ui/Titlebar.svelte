@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { Columns, Copy, FileText, Menu, Minus, Plus, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -8,15 +9,9 @@
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
 
-    // FIX: onMount expects a synchronous return of the cleanup function.
-    // We handle the async setup internally with .then() to avoid returning a Promise to Svelte.
     onMount(() => {
         let unlisten: (() => void) | undefined;
-
-        // 1. Initial Check
         appWindow.isMaximized().then((m) => (isMaximized = m));
-
-        // 2. Setup Listener
         appWindow
             .onResized(async () => {
                 isMaximized = await appWindow.isMaximized();
@@ -25,7 +20,6 @@
                 unlisten = u;
             });
 
-        // 3. Return Synchronous Cleanup
         return () => {
             if (unlisten) unlisten();
         };
@@ -59,8 +53,10 @@
         isMaximized = await appWindow.isMaximized();
     }
 
-    function closeApp() {
-        appWindow.close();
+    async function closeApp() {
+        // Explicitly save settings before closing to ensure position is remembered
+        await saveSettings();
+        await appWindow.close();
     }
 </script>
 

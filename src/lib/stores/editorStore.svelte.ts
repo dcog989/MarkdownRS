@@ -5,7 +5,6 @@ export type EditorTab = {
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
-    // Cache metadata per tab
     created?: string;
     modified?: string;
 };
@@ -21,6 +20,7 @@ export type EditorMetrics = {
     insertMode: 'INS' | 'OVR';
 };
 
+// Format: yyyymmdd / HHmmss
 function getCurrentTimestamp(): string {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -35,7 +35,6 @@ function getCurrentTimestamp(): string {
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
 
-    // Transient state for the active tab's status bar
     activeMetrics = $state<EditorMetrics>({
         lineCount: 1,
         wordCount: 0,
@@ -49,6 +48,10 @@ export class EditorStore {
 
     addTab(title: string = 'Untitled', content: string = '') {
         const id = crypto.randomUUID();
+        const now = getCurrentTimestamp();
+
+        console.log(`Adding Tab: ${title}, Timestamp: ${now}`); // DIAGNOSTIC LOG
+
         this.tabs.push({
             id,
             title,
@@ -56,7 +59,8 @@ export class EditorStore {
             isDirty: false,
             path: null,
             scrollPercentage: 0,
-            modified: getCurrentTimestamp() // Initialize timestamp for new docs
+            created: now,
+            modified: now
         });
         return id;
     }
@@ -70,11 +74,7 @@ export class EditorStore {
         if (tab) {
             tab.content = content;
             tab.isDirty = true;
-            // Optionally update modified time on every keystroke?
-            // Usually editors don't do this until save, but user asked for "app maintains timestamp".
-            // We'll stick to creation time or save time to avoid constant UI jitter,
-            // unless the user specifically meant "time of last edit".
-            // Given "timestamp if it is created by the app", initialization is the key.
+            tab.modified = getCurrentTimestamp();
         }
     }
 
@@ -88,8 +88,8 @@ export class EditorStore {
     updateMetadata(id: string, created?: string, modified?: string) {
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
-            tab.created = created;
-            tab.modified = modified;
+            if (created) tab.created = created;
+            if (modified) tab.modified = modified;
         }
     }
 
@@ -108,6 +108,7 @@ export class EditorStore {
         if (tab) {
             tab.content = modifier(tab.content);
             tab.isDirty = true;
+            tab.modified = getCurrentTimestamp();
         }
     }
 

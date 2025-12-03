@@ -3,6 +3,18 @@ import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 
+// Define the shape that matches Rust's TabState
+type RustTabState = {
+    id: string;
+    title: string;
+    content: string;
+    is_dirty: boolean;
+    path: string | null;
+    scroll_percentage: number;
+    created: string | null;
+    modified: string | null;
+};
+
 type FileMetadata = {
     created?: string;
     modified?: string;
@@ -70,7 +82,6 @@ export async function saveCurrentFile() {
             tab.path = savePath;
             tab.title = savePath.split(/[\\/]/).pop() || 'Untitled';
             tab.isDirty = false;
-            // Refresh modification time after save
             await refreshMetadata(tabId, savePath);
         }
     } catch (err) {
@@ -80,13 +91,16 @@ export async function saveCurrentFile() {
 
 export async function persistSession() {
     try {
-        const plainTabs = editorStore.tabs.map(t => ({
+        // Map frontend tabs to RustTabState
+        const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
             id: t.id,
             path: t.path,
             title: t.title,
             content: t.content,
             is_dirty: t.isDirty,
-            scroll_percentage: t.scrollPercentage
+            scroll_percentage: t.scrollPercentage,
+            created: t.created || null,
+            modified: t.modified || null
         }));
 
         await invoke('save_session', { tabs: plainTabs });
@@ -94,15 +108,6 @@ export async function persistSession() {
         console.error('Failed to save session:', err);
     }
 }
-
-type RustTabState = {
-    id: string;
-    title: string;
-    content: string;
-    is_dirty: boolean;
-    path: string | null;
-    scroll_percentage: number;
-};
 
 export async function loadSession() {
     try {
@@ -114,17 +119,21 @@ export async function loadSession() {
                 content: t.content,
                 isDirty: t.is_dirty,
                 path: t.path,
-                scrollPercentage: t.scroll_percentage
+                scrollPercentage: t.scroll_percentage,
+                created: t.created || undefined,
+                modified: t.modified || undefined
             }));
 
             editorStore.tabs = convertedTabs;
             appState.activeTabId = convertedTabs[0].id;
 
-            // Background refresh metadata for restored tabs that have paths
+            // Background refresh metadata for file-backed tabs
             convertedTabs.forEach(t => {
                 if (t.path) refreshMetadata(t.id, t.path);
             });
         } else {
+            // Default Start State
+            // editorStore.addTab handles the default timestamp generation
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
             appState.activeTabId = id;
         }

@@ -12,6 +12,9 @@ pub struct TabState {
     pub is_dirty: bool,
     pub path: Option<String>,
     pub scroll_percentage: f64,
+    // New fields
+    pub created: Option<String>,
+    pub modified: Option<String>,
 }
 
 pub struct Database {
@@ -23,6 +26,10 @@ impl Database {
         info!("Initializing database at {:?}", db_path);
         let conn = Connection::open(db_path)?;
 
+        // DEV MODE: Drop table to force schema update
+        // In production, we would use migrations.
+        conn.execute("DROP TABLE IF EXISTS tabs", [])?;
+
         conn.execute(
             "CREATE TABLE IF NOT EXISTS tabs (
                 id TEXT PRIMARY KEY,
@@ -30,7 +37,9 @@ impl Database {
                 content TEXT NOT NULL,
                 is_dirty INTEGER NOT NULL,
                 path TEXT,
-                scroll_percentage REAL NOT NULL
+                scroll_percentage REAL NOT NULL,
+                created TEXT,
+                modified TEXT
             )",
             [],
         )?;
@@ -45,15 +54,17 @@ impl Database {
 
         for tab in tabs {
             self.conn.execute(
-                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
                     &tab.id,
                     &tab.title,
                     &tab.content,
                     if tab.is_dirty { 1 } else { 0 },
                     &tab.path,
-                    tab.scroll_percentage
+                    tab.scroll_percentage,
+                    &tab.created,
+                    &tab.modified
                 ],
             )?;
         }
@@ -65,9 +76,9 @@ impl Database {
     pub fn load_session(&self) -> Result<Vec<TabState>> {
         info!("Loading session from database");
 
-        let mut stmt = self
-            .conn
-            .prepare("SELECT id, title, content, is_dirty, path, scroll_percentage FROM tabs")?;
+        let mut stmt = self.conn.prepare(
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified FROM tabs"
+        )?;
 
         let tabs = stmt
             .query_map([], |row| {
@@ -78,6 +89,8 @@ impl Database {
                     is_dirty: row.get::<_, i32>(3)? != 0,
                     path: row.get(4)?,
                     scroll_percentage: row.get(5)?,
+                    created: row.get(6)?,
+                    modified: row.get(7)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

@@ -38,9 +38,8 @@
     });
 </script>
 
-<!-- Outer container: Relative to allow absolute positioning of children -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group block" style="border-color: var(--border-main);">
-    <!-- Floating Switcher: Absolute, Z-Index 50 -->
+    <!-- Floating Switcher -->
     <button class="absolute top-2 right-4 z-50 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100 cursor-pointer" style="border-color: var(--border-main);" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
         {#if appState.splitOrientation === "vertical"}
             <PanelTop size={16} />
@@ -49,7 +48,7 @@
         {/if}
     </button>
 
-    <!-- Content: Absolute/Full or Block/Full. Using block h-full with overflow. -->
+    <!-- Content -->
     <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default);">
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html htmlContent}
