@@ -1,21 +1,13 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { Store } from '@tauri-apps/plugin-store';
-// We use the official log plugin to write explicit entries if needed,
-// OR just rely on console.log which is now piped.
-import { error, info } from '@tauri-apps/plugin-log';
 
 let store: Store | null = null;
 
-// The plugin automatically captures console.log, but we can use explicit Rust logger
-// for structured output if preferred. Here we use the plugin's direct exports.
+// Simple logger wrapper. The Rust plugin captures console.* automatically.
 function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
-    if (level === 'error') {
-        console.error(`[Settings] ${msg}`);
-        error(`[Settings] ${msg}`);
-    } else {
-        console.log(`[Settings] ${msg}`);
-        info(`[Settings] ${msg}`);
-    }
+    const output = `[Settings] ${msg}`;
+    if (level === 'error') console.error(output);
+    else console.log(output);
 }
 
 export async function initSettings() {

@@ -33,19 +33,21 @@ fn main() {
         .setup(|app| {
             let app_handle = app.handle();
 
-            // 1. Resolve Paths
+            // 1. Resolve Roaming Paths
             let base_dir = app_handle
                 .path()
                 .data_dir()
                 .expect("failed to get data dir");
             let app_dir = base_dir.join("MarkdownRS");
             let db_dir = app_dir.join("Database");
+            let log_dir = app_dir.join("Logs"); // Force Roaming/MarkdownRS/Logs
             let config_path = app_dir.join("settings.toml");
 
-            // 2. Create DB Directory (Plugin handles Logs directory)
+            // 2. Create Directories
             fs::create_dir_all(&db_dir).expect("failed to create db dir");
+            fs::create_dir_all(&log_dir).expect("failed to create log dir");
 
-            // 3. Load/Create Settings.toml for Log Level
+            // 3. Load/Create Settings.toml
             let settings: AppSettings = if config_path.exists() {
                 let content = fs::read_to_string(&config_path).unwrap_or_default();
                 toml::from_str(&content).unwrap_or_default()
@@ -65,22 +67,23 @@ fn main() {
                 _ => LevelFilter::Debug,
             };
 
-            // 4. Manual Plugin Init to inject dynamic LevelFilter
-            // We use builder here to attach targets based on config
+            // 4. Initialize Logging with Custom Target
             app_handle.plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log_level)
                     .targets([
                         Target::new(TargetKind::Stdout),
-                        Target::new(TargetKind::LogDir {
+                        // Explicitly use the Roaming/MarkdownRS/Logs folder
+                        Target::new(TargetKind::Folder {
+                            path: log_dir.clone(),
                             file_name: Some("markdown-rs".into()),
                         }),
-                        Target::new(TargetKind::Webview), // Pipes frontend console.log
+                        Target::new(TargetKind::Webview),
                     ])
                     .build(),
             )?;
 
-            info!("Application started. Log Level: {:?}", log_level);
+            info!("Application started. Logs writing to: {:?}", log_dir);
 
             // 5. Initialize DB
             let db_path = db_dir.join("session.db");
@@ -98,7 +101,6 @@ fn main() {
             app_commands::read_text_file,
             app_commands::write_text_file,
             app_commands::get_file_metadata,
-            // app_commands::log_frontend -> REMOVED, plugin handles this
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -20,7 +20,7 @@
         "shell:allow-open",
         "dialog:default",
         "store:default",
-        "log:default",
-        "window-state:default"
+        "window-state:default",
+        "log:default"
     ]
 }
