@@ -3,6 +3,10 @@ export class AppState {
     splitView = $state(true);
     theme = $state<'dark' | 'light'>('dark');
 
+    // Layout State
+    splitPercentage = $state(0.5);
+    splitOrientation = $state<'vertical' | 'horizontal'>('vertical'); // Vertical = Side by Side
+
     constructor() {
         // Initialization logic can go here
     }
@@ -13,6 +17,10 @@ export class AppState {
 
     setTheme(newTheme: 'dark' | 'light') {
         this.theme = newTheme;
+    }
+
+    toggleOrientation() {
+        this.splitOrientation = this.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
     }
 }
 

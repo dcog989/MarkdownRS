@@ -7,9 +7,16 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number;
+    let mainContainer: HTMLDivElement;
+
+    // Resizing State
+    let isDragging = $state(false);
+    let dragStart = 0;
+    let initialSplit = 0;
 
     function handleGlobalKeydown(e: KeyboardEvent) {
         if (e.ctrlKey || e.metaKey) {
@@ -25,7 +32,6 @@
                 appState.activeTabId = id;
             } else if (e.key === "w") {
                 e.preventDefault();
-                // Don't close the last tab
                 if (appState.activeTabId && editorStore.tabs.length > 1) {
                     editorStore.closeTab(appState.activeTabId);
                     appState.activeTabId = editorStore.tabs[0]?.id || null;
@@ -39,6 +45,11 @@
 
     onMount(async () => {
         console.log("App mounted");
+
+        // Load Settings (Window State & Layout)
+        await initSettings();
+
+        // Load Session (Tabs)
         try {
             await loadSession();
             if (editorStore.tabs.length === 0) {
@@ -50,17 +61,67 @@
             const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
             appState.activeTabId = id;
         }
-        autoSaveInterval = window.setInterval(() => persistSession(), 30000);
-        window.addEventListener("blur", persistSession);
+
+        autoSaveInterval = window.setInterval(() => {
+            persistSession();
+            saveSettings(); // Save layout periodically
+        }, 30000);
+
+        window.addEventListener("blur", () => {
+            persistSession();
+            saveSettings();
+        });
     });
 
     onDestroy(() => {
         if (autoSaveInterval) clearInterval(autoSaveInterval);
         if (typeof window !== "undefined") {
-            window.removeEventListener("blur", persistSession);
-            persistSession();
+            // Logic handled by event listeners, just need to remove them if we had named functions
         }
     });
+
+    // --- Resizing Logic ---
+    function startResize(e: MouseEvent) {
+        e.preventDefault();
+        isDragging = true;
+        dragStart = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
+        initialSplit = appState.splitPercentage;
+
+        // Add global listeners
+        window.addEventListener("mousemove", handleResize);
+        window.addEventListener("mouseup", stopResize);
+
+        // Add overlay to prevent iframe/webview events stealing mouse
+        document.body.style.cursor = appState.splitOrientation === "vertical" ? "col-resize" : "row-resize";
+    }
+
+    function handleResize(e: MouseEvent) {
+        if (!isDragging || !mainContainer) return;
+
+        const rect = mainContainer.getBoundingClientRect();
+        const totalSize = appState.splitOrientation === "vertical" ? rect.width : rect.height;
+        const currentPos = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
+
+        // Calculate delta percentage
+        const deltaPixels = currentPos - dragStart;
+        const deltaPercent = deltaPixels / totalSize;
+
+        let newSplit = initialSplit + deltaPercent;
+
+        // Clamp between 10% and 90%
+        if (newSplit < 0.1) newSplit = 0.1;
+        if (newSplit > 0.9) newSplit = 0.9;
+
+        appState.splitPercentage = newSplit;
+    }
+
+    function stopResize() {
+        isDragging = false;
+        window.removeEventListener("mousemove", handleResize);
+        window.removeEventListener("mouseup", stopResize);
+        document.body.style.cursor = "default";
+        saveSettings(); // Save immediately after resize
+    }
 </script>
 
 <svelte:window onkeydown={handleGlobalKeydown} />
@@ -71,20 +132,43 @@
     <Titlebar />
 
     <!-- Main Workspace -->
-    <div class="flex-1 flex overflow-hidden relative z-0">
+    <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
         {#if appState.activeTabId}
             {#key appState.activeTabId}
-                <!-- Editor Pane -->
-                <div class="{appState.splitView ? 'w-1/2' : 'w-full'} h-full border-r" style="border-color: var(--border-main);">
-                    <Editor tabId={appState.activeTabId} />
-                </div>
-
-                <!-- Preview Pane -->
-                {#if appState.splitView}
-                    <div class="w-1/2 h-full" style="background-color: var(--bg-main);">
-                        <Preview tabId={appState.activeTabId} />
+                <!-- Dynamic Layout Container -->
+                <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
+                    <!-- EDITOR PANE -->
+                    <div
+                        style="
+                        flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'};
+                        height: 100%;
+                        overflow: hidden;
+                    "
+                    >
+                        <Editor tabId={appState.activeTabId} />
                     </div>
-                {/if}
+
+                    <!-- RESIZE HANDLE (Only visible if split view is active) -->
+                    {#if appState.splitView}
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div
+                            class="z-20 hover:bg-[var(--accent-primary)] transition-colors duration-150"
+                            style="
+                                cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
+                                flex: 0 0 4px;
+                                background-color: var(--bg-panel);
+                            "
+                            onmousedown={startResize}
+                        ></div>
+                    {/if}
+
+                    <!-- PREVIEW PANE -->
+                    {#if appState.splitView}
+                        <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
+                            <Preview tabId={appState.activeTabId} />
+                        </div>
+                    {/if}
+                </div>
             {/key}
         {:else}
             <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--fg-muted)">

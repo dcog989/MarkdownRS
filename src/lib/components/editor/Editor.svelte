@@ -14,8 +14,7 @@
     let timer: number;
     let previousTabId: string = "";
 
-    // 1. Safe Reactivity: Only update Editor content if the TAB ID changes.
-    // If we update on content change, we fight the debounce and revert user typing.
+    // 1. Safe Reactivity for Tab Switching
     $effect(() => {
         if (tabId !== previousTabId) {
             const currentTab = editorStore.tabs.find((t) => t.id === tabId);
@@ -26,8 +25,6 @@
                         view.dispatch({
                             changes: { from: 0, to: currentDoc.length, insert: currentTab.content },
                         });
-                        // Reset scroll
-                        // view.scrollDOM.scrollTop = ... (omitted for simplicity, relies on derived)
                     }
                 });
             }
@@ -38,10 +35,33 @@
     onMount(() => {
         const currentTab = editorStore.tabs.find((t) => t.id === tabId);
         const initialContent = currentTab?.content || "";
+        const filename = currentTab?.title || "";
         previousTabId = tabId;
 
+        // Determine if we should use Markdown mode
+        // Logic: Assume markdown unless extension is explicit and non-markdown
+        const ext = filename.split(".").pop()?.toLowerCase();
+        const isMarkdown = !ext || ["md", "markdown", "txt", "rst"].includes(ext) || filename.startsWith("Untitled");
+
+        const extensions = [
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            history(),
+            keymap.of([...defaultKeymap, ...historyKeymap]),
+            oneDark,
+            EditorView.lineWrapping,
+            EditorView.theme({
+                "&": { height: "100%", fontSize: "14px" },
+                ".cm-scroller": { fontFamily: "monospace", overflow: "auto" },
+            }),
+        ];
+
+        // Only add markdown extension if applicable
+        if (isMarkdown) {
+            extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
+        }
+
         const updateListener = EditorView.updateListener.of((update) => {
-            // 1. Handle Content Updates (Debounced)
             if (update.docChanged) {
                 clearTimeout(timer);
                 timer = window.setTimeout(() => {
@@ -49,23 +69,18 @@
                 }, 100);
             }
 
-            // 2. Handle Scroll (Debounced)
             if (update.view.scrollDOM) {
                 const scrollElement = update.view.scrollDOM;
                 const percentage = scrollElement.scrollTop / (scrollElement.scrollHeight - scrollElement.clientHeight);
                 if (!isNaN(percentage)) {
-                    // We can reuse the same timer or a separate one, but scroll needs to be snappy for preview sync
-                    // Ideally we update store scroll immediately or with very low debounce
                     editorStore.updateScroll(tabId, percentage);
                 }
             }
 
-            // 3. Handle Metrics (Immediate for UI responsiveness)
             if (update.docChanged || update.selectionSet) {
                 const doc = update.state.doc;
                 const selection = update.state.selection.main;
                 const cursorLine = doc.lineAt(selection.head);
-
                 const text = doc.toString();
                 const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
                 const sizeKB = new TextEncoder().encode(text).length / 1024;
@@ -77,27 +92,16 @@
                     sizeKB: sizeKB,
                     cursorLine: cursorLine.number,
                     cursorCol: selection.head - cursorLine.from + 1,
-                    insertMode: "INS", // CodeMirror is always insert mode unless using Vim plugin
+                    insertMode: "INS",
                 });
             }
         });
 
+        extensions.push(updateListener);
+
         const state = EditorState.create({
             doc: initialContent,
-            extensions: [
-                lineNumbers(),
-                highlightActiveLineGutter(),
-                history(),
-                keymap.of([...defaultKeymap, ...historyKeymap]),
-                markdown({ base: markdownLanguage, codeLanguages: languages }),
-                oneDark,
-                EditorView.lineWrapping,
-                updateListener,
-                EditorView.theme({
-                    "&": { height: "100%", fontSize: "14px" },
-                    ".cm-scroller": { fontFamily: "monospace", overflow: "auto" },
-                }),
-            ],
+            extensions: extensions,
         });
 
         view = new EditorView({
@@ -112,4 +116,4 @@
     });
 </script>
 
-<div class="w-full h-full overflow-hidden" bind:this={editorContainer}></div>
+<div class="w-full h-full overflow-hidden bg-[#1e1e1e]" bind:this={editorContainer}></div>

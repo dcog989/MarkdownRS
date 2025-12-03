@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { renderMarkdown } from "$lib/utils/markdown";
+    import { Columns, PanelTop } from "lucide-svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
 
-    // Reactively get content
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
     let scrollPercentage = $derived(tab?.scrollPercentage || 0);
@@ -37,17 +38,28 @@
     });
 </script>
 
-<div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none" style="background-color: var(--bg-main); color: var(--fg-default);">
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html htmlContent}
+<div class="flex flex-col w-full h-full bg-[#1e1e1e] border-l" style="border-color: var(--border-main);">
+    <!-- Preview Toolbar -->
+    <div class="h-8 flex items-center justify-end px-2 border-b shrink-0 select-none" style="background-color: var(--bg-panel); border-color: var(--border-main);">
+        <span class="text-xs mr-auto pl-2 font-medium opacity-50 tracking-wider">PREVIEW</span>
+
+        <button class="p-1 hover:bg-white/10 rounded text-[var(--fg-muted)] transition-colors" title="Switch Split Orientation" onclick={() => appState.toggleOrientation()}>
+            {#if appState.splitOrientation === "vertical"}
+                <PanelTop size={14} />
+            {:else}
+                <Columns size={14} />
+            {/if}
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div bind:this={container} class="flex-1 w-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none" style="background-color: var(--bg-main); color: var(--fg-default);">
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        {@html htmlContent}
+    </div>
 </div>
 
 <style>
-    /*
-      We use CSS variables inside the standard prose classes.
-      Note: 'prose-invert' defaults strictly to tailwind colors,
-      so we override specific elements to use our custom vars.
-    */
     :global(.prose) {
         color: var(--fg-default);
     }
@@ -69,7 +81,7 @@
         background-color: var(--bg-hover);
         padding: 0.2em 0.4em;
         border-radius: 3px;
-        color: #ce9178; /* Keep specific syntax highlighting color for now */
+        color: #ce9178;
         font-weight: normal;
     }
     :global(.prose pre) {
