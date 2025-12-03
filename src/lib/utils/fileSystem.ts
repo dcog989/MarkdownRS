@@ -94,31 +94,37 @@ export async function requestCloseTab(id: string) {
     if (!tab) return;
 
     if (tab.isDirty && tab.content.trim().length > 0) {
-        const confirmed = await dialogStore.confirm({
+        const result = await dialogStore.confirm({
             title: 'Unsaved Changes',
             message: `Do you want to save changes to ${tab.title}?`,
-            okLabel: 'Save',
-            cancelLabel: "Don't Save"
         });
 
-        if (confirmed) {
+        if (result === 'cancel') {
+            return; // Abort closing
+        }
+
+        if (result === 'save') {
             const prevActive = appState.activeTabId;
             appState.activeTabId = id;
             const saved = await saveCurrentFile();
             if (!saved) {
                 appState.activeTabId = prevActive;
-                return;
+                return; // Abort if save failed/cancelled
             }
         }
+        // If result === 'discard', we just proceed
     }
 
     editorStore.closeTab(id);
 
+    // If we closed the active tab, find new active
     if (appState.activeTabId === id) {
+        // Fallback to MRU top
         let nextId = editorStore.mruStack[0];
         appState.activeTabId = nextId || null;
     }
 
+    // Always create a new blank tab if we closed the last one
     if (editorStore.tabs.length === 0) {
         const newId = editorStore.addTab();
         appState.activeTabId = newId;

@@ -18,7 +18,6 @@
 
     async function handleGlobalKeydown(e: KeyboardEvent) {
         if (e.key === "Tab" && e.ctrlKey) {
-            // Handle Ctrl+Tab (Next Tab) or Ctrl+Shift+Tab (Prev Tab - technically implied by cycling logic)
             e.preventDefault();
             const nextId = editorStore.getNextTabId(appState.activeTabId, e.shiftKey);
             if (nextId) {
@@ -139,7 +138,18 @@
 
                     {#if appState.splitView}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="z-20 hover:bg-[var(--accent-primary)] transition-colors duration-150" style="cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'}; flex: 0 0 4px; background-color: var(--bg-panel);" onmousedown={startResize} ondblclick={resetSplit}></div>
+                        <div
+                            class="z-20 transition-colors duration-150"
+                            style="
+                                cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
+                                flex: 0 0 4px;
+                                background-color: var(--bg-panel);
+                            "
+                            onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-primary)")}
+                            onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--bg-panel)")}
+                            onmousedown={startResize}
+                            ondblclick={resetSplit}
+                        ></div>
                     {/if}
 
                     {#if appState.splitView}

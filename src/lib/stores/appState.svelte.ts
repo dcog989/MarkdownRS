@@ -8,12 +8,12 @@ export class AppState {
     splitOrientation = $state<'vertical' | 'horizontal'>('vertical');
 
     // Preferences
-    tabCycling = $state<'mru' | 'sequential'>('sequential'); // Default to sequential
-    tabWidthMin = $state(140);
-    tabWidthMax = $state(220);
+    tabCycling = $state<'mru' | 'sequential'>('sequential');
+    tabWidthMin = $state(100);
+    tabWidthMax = $state(200);
 
     constructor() {
-        // Initialization logic can go here
+        // Initialization logic
     }
 
     toggleSplitView() {

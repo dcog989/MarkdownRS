@@ -1,18 +1,22 @@
+export type DialogResult = 'save' | 'discard' | 'cancel';
+
 export type DialogOptions = {
     title: string;
     message: string;
-    okLabel?: string;
+    saveLabel?: string;
+    discardLabel?: string;
     cancelLabel?: string;
 };
 
 class DialogStore {
     isOpen = $state(false);
     options = $state<DialogOptions>({ title: '', message: '' });
-    resolvePromise: ((value: boolean) => void) | null = null;
+    resolvePromise: ((value: DialogResult) => void) | null = null;
 
-    confirm(options: DialogOptions): Promise<boolean> {
+    confirm(options: DialogOptions): Promise<DialogResult> {
         this.options = {
-            okLabel: 'Yes',
+            saveLabel: 'Save',
+            discardLabel: "Don't Save",
             cancelLabel: 'Cancel',
             ...options
         };
@@ -23,7 +27,7 @@ class DialogStore {
         });
     }
 
-    resolve(result: boolean) {
+    resolve(result: DialogResult) {
         this.isOpen = false;
         if (this.resolvePromise) {
             this.resolvePromise(result);

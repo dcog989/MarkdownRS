@@ -27,17 +27,17 @@
                 unlisten = u;
             });
 
-        setTimeout(checkScroll, 100);
+        const interval = setInterval(checkScroll, 500);
 
         return () => {
             if (unlisten) unlisten();
+            clearInterval(interval);
         };
     });
 
     function checkScroll() {
         if (scrollContainer) {
             showLeftArrow = scrollContainer.scrollLeft > 0;
-            // 2px tolerance for float math
             showRightArrow = Math.ceil(scrollContainer.scrollLeft + scrollContainer.clientWidth) < scrollContainer.scrollWidth - 2;
         }
     }
@@ -46,7 +46,6 @@
         if (scrollContainer) {
             const amount = 200;
             scrollContainer.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
-            // Check scroll again after animation (approx 300ms)
             setTimeout(checkScroll, 350);
         }
     }
@@ -127,7 +126,7 @@
                     class="group relative h-8 px-3 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
                     style="
                         background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
-                        color: {isActive ? 'var(--fg-inverse)' : 'var(--fg-muted)'};
+                        color: {isActive ? 'var(--fg-default)' : 'var(--fg-muted)'};
                         border-color: var(--border-main);
                         border-top: 2px solid {isActive ? 'var(--accent-secondary)' : 'transparent'};
                         min-width: {appState.tabWidthMin}px;
@@ -154,6 +153,7 @@
             </button>
         {/if}
 
+        <!-- Mini Tab Dropdown -->
         <div class="relative h-8 border-l border-[var(--border-main)]">
             <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)}>
                 <span>{editorStore.tabs.length}</span>
@@ -164,12 +164,12 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="fixed inset-0 z-40" onclick={() => (showDropdown = false)}></div>
-                <div class="absolute right-0 top-full mt-1 w-64 max-h-[300px] overflow-y-auto bg-[#252526] border border-[#333] shadow-xl rounded-b-md z-50 py-1">
+                <div class="absolute right-0 top-full mt-1 w-64 max-h-[300px] overflow-y-auto shadow-xl rounded-b-md z-50 py-1 border" style="background-color: var(--bg-panel); border-color: var(--border-main);">
                     {#each editorStore.tabs as tab}
                         <button type="button" class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" onclick={() => handleDropdownSelect(tab.id)}>
                             <FileText size={14} />
                             <span class="truncate flex-1">{tab.title}</span>
-                            {#if tab.isDirty}<span class="w-2 h-2 rounded-full bg-white"></span>{/if}
+                            {#if tab.isDirty}<span class="w-2 h-2 rounded-full" style="background-color: var(--fg-default)"></span>{/if}
                         </button>
                     {/each}
                 </div>

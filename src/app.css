@@ -5,18 +5,21 @@
 }
 
 :root {
-    /* Semantic Color Palette */
+    /* --- Dark Mode (Default) --- */
 
     /* Backgrounds */
     --bg-main: #1e1e1e; /* Editor background */
     --bg-panel: #252526; /* Tab bar, Sidebars */
+    --bg-header: #2d2d2d; /* Modal Headers */
     --bg-titlebar: #181818; /* System Drag Area */
     --bg-hover: #2a2d2e; /* List items hover */
     --bg-active: #37373d; /* Active items */
+    --bg-input: #3c3c3c; /* Inputs */
+    --bg-backdrop: rgba(0, 0, 0, 0.6);
 
     /* Borders */
     --border-main: #333333; /* Standard borders */
-    --border-light: #454545; /* Lighter borders */
+    --border-light: #454545; /* Lighter borders (modals) */
     --border-focus: #007fd4; /* Focus rings */
 
     /* Text */
@@ -24,7 +27,7 @@
     --fg-muted: #9ca3af; /* Secondary text */
     --fg-inverse: #ffffff; /* Text on colored backgrounds */
 
-    /* Accents - These will be adjusted by JS at runtime */
+    /* Accents (Base - adjusted by JS) */
     --accent-primary: #7c5a73;
     --accent-secondary: #7c5a73;
     --accent-file: #eac55f;
@@ -34,10 +37,36 @@
     --status-bar-bg: #7c5a73;
     --status-bar-fg: #ffffff;
     --danger: #e81123;
+    --danger-hover: #c9101e;
+    --success: #0e639c;
+    --success-hover: #1177bb;
 
     /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
     color-scheme: dark;
+}
+
+/* --- Light Mode Override --- */
+[data-theme="light"] {
+    --bg-main: #ffffff;
+    --bg-panel: #f3f3f3;
+    --bg-header: #e5e5e5;
+    --bg-titlebar: #dddddd;
+    --bg-hover: #e8e8e8;
+    --bg-active: #d4d4d4;
+    --bg-input: #ffffff;
+    --bg-backdrop: rgba(0, 0, 0, 0.3);
+
+    --border-main: #e5e5e5;
+    --border-light: #cccccc;
+
+    --fg-default: #333333;
+    --fg-muted: #666666;
+    --fg-inverse: #ffffff;
+
+    /* Re-calculate contrast for light mode logic later,
+       but basic mappings: */
+    --accent-file: #a88d3e;
 }
 
 body {
@@ -55,13 +84,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #424242;
+    background-color: var(--border-light);
     border-radius: 5px;
     border: 2px solid var(--bg-main);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #4f4f4f;
+    background-color: var(--fg-muted);
 }
 
 ::-webkit-scrollbar-corner {
