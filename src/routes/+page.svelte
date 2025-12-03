@@ -8,7 +8,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
+    import { invoke } from "@tauri-apps/api/core";
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number;
@@ -16,6 +16,10 @@
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
+
+    function log(msg: string) {
+        invoke("log_frontend", { level: "info", message: `[App] ${msg}` }).catch(console.error);
+    }
 
     function handleGlobalKeydown(e: KeyboardEvent) {
         if (e.ctrlKey || e.metaKey) {
@@ -43,34 +47,28 @@
     }
 
     onMount(async () => {
+        log("Mounting...");
+
         try {
-            console.log("Mounting App...");
+            await initSettings();
+            log("Settings Init Complete");
+        } catch (err) {
+            log(`Settings Init Failed: ${err}`);
+        }
 
-            // 1. Initialize Settings (Safe Mode)
-            // We catch errors here specifically so the rest of the app loads even if settings fail
-            try {
-                await initSettings();
-            } catch (err) {
-                console.error("Critical: Failed to init settings", err);
-            }
-
-            // 2. Load Content
+        try {
             await loadSession();
-
-            // 3. Ensure we have at least one tab
+            log("Session Loaded");
             if (editorStore.tabs.length === 0) {
-                // Ensure addTab generates the timestamp correctly
                 const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                 appState.activeTabId = id;
             }
-
-            // 4. Force window to foreground (fixes some focus issues)
-            await getCurrentWindow().setFocus();
-        } catch (e) {
-            console.error("App Startup Error:", e);
+        } catch (error) {
+            log(`Session Load Failed: ${error}`);
+            const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
+            appState.activeTabId = id;
         }
 
-        // Auto-save Setup
         autoSaveInterval = window.setInterval(() => {
             persistSession();
             saveSettings();
@@ -117,6 +115,11 @@
         document.body.style.cursor = "default";
         saveSettings();
     }
+
+    function resetSplit() {
+        appState.splitPercentage = 0.5;
+        saveSettings();
+    }
 </script>
 
 <svelte:window onkeydown={handleGlobalKeydown} />
@@ -136,7 +139,7 @@
 
                     {#if appState.splitView}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="z-20 hover:bg-[var(--accent-primary)] transition-colors duration-150" style="cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'}; flex: 0 0 4px; background-color: var(--bg-panel);" onmousedown={startResize}></div>
+                        <div class="z-20 hover:bg-[var(--accent-primary)] transition-colors duration-150" style="cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'}; flex: 0 0 4px; background-color: var(--bg-panel);" onmousedown={startResize} ondblclick={resetSplit}></div>
                     {/if}
 
                     {#if appState.splitView}
