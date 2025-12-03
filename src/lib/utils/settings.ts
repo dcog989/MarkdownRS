@@ -20,19 +20,15 @@ export async function initSettings() {
             tabCycling: 'mru' | 'sequential';
             tabWidthMin: number;
             tabWidthMax: number;
-            width: number;
-            height: number;
-            x: number;
-            y: number;
-            isMaximized: boolean;
         }>('app-settings');
 
         if (saved) {
-            log(`Restoring layout state...`);
+            log(`Restoring app preferences...`);
             if (saved.splitPercentage !== undefined) appState.splitPercentage = saved.splitPercentage;
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
             if (typeof saved.splitView === 'boolean') appState.splitView = saved.splitView;
             if (saved.tabCycling) appState.tabCycling = saved.tabCycling;
+
             if (saved.tabWidthMin) appState.tabWidthMin = saved.tabWidthMin;
             if (saved.tabWidthMax) appState.tabWidthMax = saved.tabWidthMax;
         }

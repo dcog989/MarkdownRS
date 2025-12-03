@@ -89,8 +89,9 @@ export function ensureContrast(fgHex: string, bgHex: string, ratio: number = 5.0
     const bgLum = getLuminance(bgHex);
     let attempts = 0;
 
-    // Assuming dark background for this specific app theme, we lighten.
-    // If we support light mode later, we'd need logic to decide direction.
+    // For dark mode (low bg lum), we lighten. For light mode, we darken.
+    const lighten = bgLum < 0.5;
+
     while (attempts < 20) {
         const fgLum = getLuminance(currentHex);
         const currentRatio = getContrast(fgLum, bgLum);
@@ -99,29 +100,31 @@ export function ensureContrast(fgHex: string, bgHex: string, ratio: number = 5.0
             return currentHex;
         }
 
-        // Lighten by 5%
-        currentHex = adjustLightness(currentHex, 0.05);
+        // Adjust by 5%
+        currentHex = adjustLightness(currentHex, lighten ? 0.05 : -0.05);
         attempts++;
     }
 
-    // Fallback if we max out (white)
-    return "#ffffff";
+    return lighten ? "#ffffff" : "#000000";
 }
 
 /**
  * Applies the calculated theme to the document root
  */
 export function applyTheme() {
-    // These would ideally come from user settings in the future
+    // We start with the brand colors desired
     const baseAccent = "#7c5a73";
+    // In a real app, we might read the computed background from the DOM if it varies,
+    // but for the core theme check, we check against the known dark background.
     const bgMain = "#1e1e1e";
 
     const safeAccent = ensureContrast(baseAccent, bgMain, 5.0);
     const safeFileIcon = ensureContrast("#eac55f", bgMain, 4.5);
     const safeLink = ensureContrast("#3794ff", bgMain, 4.5);
 
+    // Apply overrides if the base colors failed the check
     document.documentElement.style.setProperty("--accent-primary", safeAccent);
-    document.documentElement.style.setProperty("--accent-secondary", safeAccent); // Reuse for now
+    document.documentElement.style.setProperty("--accent-secondary", safeAccent);
     document.documentElement.style.setProperty("--accent-file", safeFileIcon);
     document.documentElement.style.setProperty("--accent-link", safeLink);
 }
