@@ -30,17 +30,18 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_opener::init()) // Init Opener (v2 standard)
         .setup(|app| {
             let app_handle = app.handle();
 
-            // 1. Resolve Roaming Paths
+            // 1. Resolve Paths
             let base_dir = app_handle
                 .path()
                 .data_dir()
                 .expect("failed to get data dir");
             let app_dir = base_dir.join("MarkdownRS");
             let db_dir = app_dir.join("Database");
-            let log_dir = app_dir.join("Logs"); // Force Roaming/MarkdownRS/Logs
+            let log_dir = app_dir.join("Logs");
             let config_path = app_dir.join("settings.toml");
 
             // 2. Create Directories
@@ -67,13 +68,13 @@ fn main() {
                 _ => LevelFilter::Debug,
             };
 
-            // 4. Initialize Logging with Custom Target
+            // 4. Initialize Logging Plugin
+            // Standard behavior: Rotates based on file size automatically
             app_handle.plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log_level)
                     .targets([
                         Target::new(TargetKind::Stdout),
-                        // Explicitly use the Roaming/MarkdownRS/Logs folder
                         Target::new(TargetKind::Folder {
                             path: log_dir.clone(),
                             file_name: Some("markdown-rs".into()),

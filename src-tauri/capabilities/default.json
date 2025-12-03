@@ -18,6 +18,7 @@
         "fs:allow-read-text-file",
         "fs:allow-write-text-file",
         "shell:allow-open",
+        "opener:default",
         "dialog:default",
         "store:default",
         "window-state:default",

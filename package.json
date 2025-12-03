@@ -30,6 +30,7 @@
         "@tauri-apps/plugin-dialog": "^2.4",
         "@tauri-apps/plugin-store": "^2.4",
         "@tauri-apps/plugin-log": "^2.7",
+        "@tauri-apps/plugin-opener": "^2.5",
         "clsx": "^2.1",
         "dompurify": "^3.3",
         "lucide-svelte": "^0.555",
