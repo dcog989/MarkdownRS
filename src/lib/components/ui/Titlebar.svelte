@@ -38,23 +38,44 @@
     }
 </script>
 
-<div class="h-10 bg-[#252526] flex items-center select-none border-b border-black w-full shrink-0">
-    <!-- Left Logo Region: Explicitly Draggable -->
-    <div data-tauri-drag-region class="pl-3 pr-2 h-full flex items-center justify-center cursor-default">
-        <img src="/logo.svg" alt="App Logo" class="h-5 w-5 pointer-events-none" />
+<div class="flex flex-col w-full shrink-0">
+    <!-- ROW 1: System Titlebar (Draggable) -->
+    <div class="h-9 bg-[#181818] flex items-center select-none w-full" data-tauri-drag-region>
+        <!-- App Icon & Menu Trigger -->
+        <div class="flex items-center px-3 gap-3 pointer-events-auto">
+            <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
+            <button class="hover:bg-[#333] rounded p-1 text-gray-400 pointer-events-auto" aria-label="Menu">
+                <Menu size={14} />
+            </button>
+        </div>
+
+        <!-- Draggable Title Area -->
+        <div class="flex-1 flex items-center justify-center text-xs text-gray-500 font-medium" data-tauri-drag-region>MarkdownRS</div>
+
+        <!-- Window Controls -->
+        <div class="flex h-full pointer-events-auto">
+            <button class="w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={minimize} aria-label="Minimize">
+                <Minus size={16} />
+            </button>
+            <button class="w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={toggleMaximize} aria-label="Maximize">
+                <Square size={14} />
+            </button>
+            <button class="w-12 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-gray-400 focus:outline-none transition-colors" onclick={closeApp} aria-label="Close">
+                <X size={16} />
+            </button>
+        </div>
     </div>
 
-    <!-- Tab Bar: Interactive (Not Draggable) -->
-    <!-- We do not add data-tauri-drag-region here so tabs can be clicked and the area scrolled -->
-    <div class="flex items-end overflow-x-auto no-scrollbar pt-1.5 flex-1 max-w-[calc(100%-140px)]" role="toolbar" tabindex="-1">
+    <!-- ROW 2: Document Tabs (Interactive) -->
+    <div class="h-9 bg-[#252526] flex items-end w-full overflow-x-auto no-scrollbar border-b border-[#1e1e1e]">
         {#each editorStore.tabs as tab (tab.id)}
             <button
                 type="button"
-                class="group relative h-8 px-3 min-w-[120px] max-w-[200px] flex items-center gap-2 text-xs cursor-pointer border-t border-r border-l border-transparent rounded-t-sm outline-none text-left ml-1
-                {appState.activeTabId === tab.id ? 'bg-[#1e1e1e] text-white border-gray-800' : 'bg-[#2d2d2d] text-gray-400 hover:bg-[#2a2a2b]'}"
+                class="group relative h-8 px-3 min-w-[140px] max-w-[220px] flex items-center gap-2 text-xs cursor-pointer border-r border-transparent outline-none text-left
+                {appState.activeTabId === tab.id ? 'bg-[#1e1e1e] text-white border-t-2 border-t-[#569cd6]' : 'bg-[#2d2d2d] text-gray-400 hover:bg-[#2a2a2b] border-t-2 border-t-transparent'}"
                 onclick={() => handleTabClick(tab.id)}
             >
-                <FileText size={14} class="opacity-70 flex-shrink-0" />
+                <FileText size={14} class="{appState.activeTabId === tab.id ? 'text-[#569cd6]' : 'opacity-70'} flex-shrink-0" />
                 <span class="truncate flex-1">{tab.title}{tab.isDirty ? " ●" : ""}</span>
                 <span role="button" tabindex="0" class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-600 rounded flex-shrink-0 flex items-center justify-center" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)}>
                     <X size={12} />
@@ -62,28 +83,9 @@
             </button>
         {/each}
 
-        <button class="h-7 w-7 flex items-center justify-center hover:bg-[#333] rounded text-gray-400 ml-1 mb-0.5 flex-shrink-0" onclick={handleNewTab}>
+        <!-- New Tab Button -->
+        <button class="h-8 w-8 flex items-center justify-center hover:bg-[#333] text-gray-400 ml-1" onclick={handleNewTab}>
             <Plus size={16} />
-        </button>
-    </div>
-
-    <!-- Spacer: Explicitly Draggable -->
-    <!-- This fills the remaining space between tabs and window controls -->
-    <div data-tauri-drag-region class="flex-1 h-full min-w-0"></div>
-
-    <!-- Window Controls: Interactive -->
-    <div class="flex h-full ml-auto bg-[#252526]">
-        <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" aria-label="Menu">
-            <Menu size={18} />
-        </button>
-        <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={minimize} aria-label="Minimize">
-            <Minus size={18} />
-        </button>
-        <button class="h-10 w-12 flex items-center justify-center hover:bg-[#333] text-gray-400 focus:outline-none transition-colors" onclick={toggleMaximize} aria-label="Maximize">
-            <Square size={16} />
-        </button>
-        <button class="h-10 w-12 flex items-center justify-center hover:bg-[#e81123] hover:text-white text-gray-400 focus:outline-none transition-colors" onclick={closeApp} aria-label="Close">
-            <X size={18} />
         </button>
     </div>
 </div>
