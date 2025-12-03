@@ -3,6 +3,7 @@
     import Preview from "$lib/components/preview/Preview.svelte";
     import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
     import StatusBar from "$lib/components/ui/StatusBar.svelte";
+    import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
@@ -126,8 +127,11 @@
 <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
     <CommandPalette />
 
+    <!-- Header Section -->
     <Titlebar />
+    <TabBar />
 
+    <!-- Main Workspace -->
     <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
         {#if appState.activeTabId}
             {#key appState.activeTabId}
