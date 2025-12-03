@@ -2,7 +2,7 @@
 name = "markdown-rs"
 version = "0.1.22"
 description = "A fast, minimal markdown editor"
-authors = ["you"]
+authors = ["dcog989"]
 edition = "2024"
 
 [build-dependencies]

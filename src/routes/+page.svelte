@@ -8,6 +8,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
+    import { getCurrentWindow } from "@tauri-apps/api/window";
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number;
@@ -44,12 +45,17 @@
     }
 
     onMount(async () => {
-        console.log("App mounted");
-
-        // Load Settings (Window State & Layout)
+        // 1. Initialize Settings (Restore Window Position/Size)
         await initSettings();
 
-        // Load Session (Tabs)
+        // 2. Show Window (Now that it's positioned correctly)
+        // This eliminates the "Jump" and "White Flash"
+        await getCurrentWindow().show();
+        await getCurrentWindow().setFocus();
+
+        console.log("App mounted and visible");
+
+        // 3. Load Content
         try {
             await loadSession();
             if (editorStore.tabs.length === 0) {
@@ -64,7 +70,7 @@
 
         autoSaveInterval = window.setInterval(() => {
             persistSession();
-            saveSettings(); // Save layout periodically
+            saveSettings();
         }, 30000);
 
         window.addEventListener("blur", () => {
@@ -75,9 +81,6 @@
 
     onDestroy(() => {
         if (autoSaveInterval) clearInterval(autoSaveInterval);
-        if (typeof window !== "undefined") {
-            // Logic handled by event listeners, just need to remove them if we had named functions
-        }
     });
 
     // --- Resizing Logic ---
@@ -87,11 +90,9 @@
         dragStart = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
         initialSplit = appState.splitPercentage;
 
-        // Add global listeners
         window.addEventListener("mousemove", handleResize);
         window.addEventListener("mouseup", stopResize);
 
-        // Add overlay to prevent iframe/webview events stealing mouse
         document.body.style.cursor = appState.splitOrientation === "vertical" ? "col-resize" : "row-resize";
     }
 
@@ -102,13 +103,10 @@
         const totalSize = appState.splitOrientation === "vertical" ? rect.width : rect.height;
         const currentPos = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
 
-        // Calculate delta percentage
         const deltaPixels = currentPos - dragStart;
         const deltaPercent = deltaPixels / totalSize;
 
         let newSplit = initialSplit + deltaPercent;
-
-        // Clamp between 10% and 90%
         if (newSplit < 0.1) newSplit = 0.1;
         if (newSplit > 0.9) newSplit = 0.9;
 
@@ -120,7 +118,7 @@
         window.removeEventListener("mousemove", handleResize);
         window.removeEventListener("mouseup", stopResize);
         document.body.style.cursor = "default";
-        saveSettings(); // Save immediately after resize
+        saveSettings();
     }
 </script>
 
@@ -135,7 +133,6 @@
     <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
         {#if appState.activeTabId}
             {#key appState.activeTabId}
-                <!-- Dynamic Layout Container -->
                 <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
                     <!-- EDITOR PANE -->
                     <div
@@ -148,7 +145,7 @@
                         <Editor tabId={appState.activeTabId} />
                     </div>
 
-                    <!-- RESIZE HANDLE (Only visible if split view is active) -->
+                    <!-- RESIZE HANDLE -->
                     {#if appState.splitView}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div

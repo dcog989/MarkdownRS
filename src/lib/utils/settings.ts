@@ -7,10 +7,8 @@ let store: Store | null = null;
 const appWindow = getCurrentWindow();
 
 // Helper to pipe logs to Rust
-// Default to DEBUG level for verbose settings tracing
 function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
     invoke('log_frontend', { level, message: msg }).catch(console.error);
-    // Optional: Keep console log for devtools
     if (level === 'error') console.error(`[Settings] ${msg}`);
     else console.log(`[Settings] ${msg}`);
 }
@@ -30,7 +28,7 @@ export async function initSettings() {
         }>('app-settings');
 
         if (saved) {
-            log(`Restoring state: Max=${saved.isMaximized}, Pos=${saved.x},${saved.y}, Size=${saved.width}x${saved.height}`);
+            log(`Restoring state: Max=${saved.isMaximized}, Pos=${saved.x},${saved.y}, Size=${saved.width}x${saved.height} (Physical)`);
 
             if (saved.splitPercentage) appState.splitPercentage = saved.splitPercentage;
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
@@ -38,9 +36,11 @@ export async function initSettings() {
             if (saved.isMaximized) {
                 await appWindow.maximize();
             } else if (saved.width && saved.height) {
+                // Ensure we don't restore weird zero/negative values
                 if (saved.width > 0 && saved.height > 0) {
                     await appWindow.setSize(new PhysicalSize(saved.width, saved.height));
                 }
+
                 if (saved.x != null && saved.y != null) {
                     await appWindow.setPosition(new PhysicalPosition(saved.x, saved.y));
                 }
@@ -79,7 +79,7 @@ export async function saveSettings() {
             newSettings.x = pos.x;
             newSettings.y = pos.y;
 
-            log(`Saving Geometry: ${pos.x},${pos.y} / ${size.width}x${size.height}`);
+            log(`Saving Geometry (Physical): ${pos.x},${pos.y} / ${size.width}x${size.height}`);
         } else {
             log(`Window maximized, preserving previous geometry.`);
         }
