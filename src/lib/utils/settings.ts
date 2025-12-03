@@ -1,13 +1,21 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
-import { invoke } from '@tauri-apps/api/core';
 import { Store } from '@tauri-apps/plugin-store';
+// We use the official log plugin to write explicit entries if needed,
+// OR just rely on console.log which is now piped.
+import { error, info } from '@tauri-apps/plugin-log';
 
 let store: Store | null = null;
 
+// The plugin automatically captures console.log, but we can use explicit Rust logger
+// for structured output if preferred. Here we use the plugin's direct exports.
 function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
-    invoke('log_frontend', { level, message: msg }).catch(console.error);
-    if (level === 'error') console.error(`[Settings] ${msg}`);
-    else console.log(`[Settings] ${msg}`);
+    if (level === 'error') {
+        console.error(`[Settings] ${msg}`);
+        error(`[Settings] ${msg}`);
+    } else {
+        console.log(`[Settings] ${msg}`);
+        info(`[Settings] ${msg}`);
+    }
 }
 
 export async function initSettings() {

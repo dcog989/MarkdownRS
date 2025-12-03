@@ -19,6 +19,8 @@
         "fs:allow-write-text-file",
         "shell:allow-open",
         "dialog:default",
-        "store:default"
+        "store:default",
+        "log:default",
+        "window-state:default"
     ]
 }
