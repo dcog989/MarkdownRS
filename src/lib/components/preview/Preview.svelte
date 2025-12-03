@@ -5,31 +5,28 @@
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
 
-    // Reactively get content. If tab doesn't exist, default to empty.
+    // Reactively get content
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
     let scrollPercentage = $derived(tab?.scrollPercentage || 0);
 
     let htmlContent = $state("");
 
-    // Update HTML when content changes
     $effect(() => {
-        // Wrap in immediate async to ensure reactivity works
         (async () => {
             if (!content) {
-                htmlContent = "<p class='text-gray-500 italic mt-4'>Start typing to preview...</p>";
+                htmlContent = "<p style='color: var(--fg-muted); font-style: italic; margin-top: 1rem;'>Start typing to preview...</p>";
                 return;
             }
             try {
                 htmlContent = await renderMarkdown(content);
             } catch (e) {
                 console.error("Markdown Render Error:", e);
-                htmlContent = `<p class='text-red-500'>Error rendering markdown</p>`;
+                htmlContent = `<p style='color: var(--danger)'>Error rendering markdown</p>`;
             }
         })();
     });
 
-    // Handle Scroll Sync
     $effect(() => {
         if (container && scrollPercentage >= 0) {
             const targetScroll = (container.scrollHeight - container.clientHeight) * scrollPercentage;
@@ -40,55 +37,57 @@
     });
 </script>
 
-<div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none bg-[#1e1e1e] text-[#d4d4d4]">
+<div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none" style="background-color: var(--bg-main); color: var(--fg-default);">
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html htmlContent}
 </div>
 
 <style>
-    /* Custom Markdown Styling Overrides */
-    :global(.prose h1) {
-        color: #569cd6;
+    /*
+      We use CSS variables inside the standard prose classes.
+      Note: 'prose-invert' defaults strictly to tailwind colors,
+      so we override specific elements to use our custom vars.
+    */
+    :global(.prose) {
+        color: var(--fg-default);
+    }
+    :global(.prose h1),
+    :global(.prose h2),
+    :global(.prose h3),
+    :global(.prose h4) {
+        color: var(--accent-secondary);
         margin-top: 0;
     }
-    :global(.prose h2) {
-        color: #569cd6;
-    }
-    :global(.prose h3) {
-        color: #569cd6;
-    }
     :global(.prose a) {
-        color: #3794ff;
+        color: var(--accent-link);
         text-decoration: none;
     }
     :global(.prose a:hover) {
         text-decoration: underline;
     }
     :global(.prose code) {
-        background-color: #2d2d2d;
+        background-color: var(--bg-hover);
         padding: 0.2em 0.4em;
         border-radius: 3px;
-        color: #ce9178;
+        color: #ce9178; /* Keep specific syntax highlighting color for now */
         font-weight: normal;
     }
     :global(.prose pre) {
-        background-color: #1e1e1e;
-        border: 1px solid #333;
+        background-color: var(--bg-main);
+        border: 1px solid var(--border-main);
     }
     :global(.prose blockquote) {
-        border-left-color: #007acc;
-        color: #858585;
+        border-left-color: var(--accent-primary);
+        color: var(--fg-muted);
     }
-    :global(.prose ul > li::marker) {
-        color: #608b4e;
-    }
+    :global(.prose ul > li::marker),
     :global(.prose ol > li::marker) {
-        color: #608b4e;
+        color: var(--fg-muted);
     }
     :global(.prose hr) {
-        border-color: #333;
+        border-color: var(--border-main);
     }
     :global(.prose strong) {
-        color: #569cd6;
+        color: var(--fg-inverse);
     }
 </style>

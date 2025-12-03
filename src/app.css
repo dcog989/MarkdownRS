@@ -1,32 +1,63 @@
 @import "tailwindcss";
 
 @theme {
-  /* You can add custom theme values here if needed */
+    /* Future Tailwind theme extensions */
 }
 
 :root {
-    background-color: #1e1e1e;
-    color: #d4d4d4;
+    /* Semantic Color Palette */
+
+    /* Backgrounds */
+    --bg-main: #1e1e1e; /* Editor background */
+    --bg-panel: #252526; /* Tab bar, Sidebars */
+    --bg-titlebar: #181818; /* System Drag Area */
+    --bg-hover: #2a2d2e; /* List items hover */
+    --bg-active: #37373d; /* Active items */
+
+    /* Borders */
+    --border-main: #333333; /* Standard borders */
+    --border-light: #454545; /* Lighter borders */
+    --border-focus: #007fd4; /* Focus rings */
+
+    /* Text */
+    --fg-default: #d4d4d4; /* Primary text */
+    --fg-muted: #9ca3af; /* Secondary text */
+    --fg-inverse: #ffffff; /* Text on colored backgrounds */
+
+    /* Accents */
+    --accent-primary: #007acc; /* Brand/Main actions */
+    --accent-secondary: #569cd6; /* Highlights */
+    --accent-file: #eac55f; /* File Icons */
+    --accent-link: #3794ff; /* Links */
+
+    /* Functional */
+    --status-bar-bg: #007acc;
+    --status-bar-fg: #ffffff;
+    --danger: #e81123; /* Close buttons */
+
+    /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
-    color-scheme: dark; /* Forces native scrollbars to be dark */
+    color-scheme: dark;
 }
 
 body {
     margin: 0;
     overflow: hidden;
+    background-color: var(--bg-main);
+    color: var(--fg-default);
 }
 
-/* Custom thin scrollbar styling for webkit engines */
+/* Custom thin scrollbar styling */
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
-    background-color: #1e1e1e;
+    background-color: var(--bg-main);
 }
 
 ::-webkit-scrollbar-thumb {
     background-color: #424242;
     border-radius: 5px;
-    border: 2px solid #1e1e1e;
+    border: 2px solid var(--bg-main);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -34,5 +65,8 @@ body {
 }
 
 ::-webkit-scrollbar-corner {
-    background-color: #1e1e1e;
+    background-color: var(--bg-main);
 }
+
+/* Utility classes for binding CSS vars to Tailwind arbitrary values if needed,
+   though typically we use style="background-color: var(...)" for dynamic themes */

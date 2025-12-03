@@ -65,10 +65,9 @@
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
-<div class="h-screen w-screen flex flex-col bg-[#1e1e1e] text-[#d4d4d4] overflow-hidden border border-[#333]">
+<div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
     <CommandPalette />
 
-    <!-- Top Section: Titlebar + Tabs -->
     <Titlebar />
 
     <!-- Main Workspace -->
@@ -76,25 +75,24 @@
         {#if appState.activeTabId}
             {#key appState.activeTabId}
                 <!-- Editor Pane -->
-                <div class="{appState.splitView ? 'w-1/2' : 'w-full'} h-full border-r border-[#333]">
+                <div class="{appState.splitView ? 'w-1/2' : 'w-full'} h-full border-r" style="border-color: var(--border-main);">
                     <Editor tabId={appState.activeTabId} />
                 </div>
 
                 <!-- Preview Pane -->
                 {#if appState.splitView}
-                    <div class="w-1/2 h-full bg-[#1e1e1e]">
+                    <div class="w-1/2 h-full" style="background-color: var(--bg-main);">
                         <Preview tabId={appState.activeTabId} />
                     </div>
                 {/if}
             {/key}
         {:else}
-            <div class="flex-1 flex items-center justify-center text-gray-600 select-none flex-col">
+            <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--fg-muted)">
                 <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
                 <p class="text-sm">Ctrl+N to create a new file</p>
             </div>
         {/if}
     </div>
 
-    <!-- Status Bar -->
     <StatusBar />
 </div>
