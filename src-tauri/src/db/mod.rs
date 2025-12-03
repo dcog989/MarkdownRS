@@ -1,6 +1,6 @@
 use anyhow::Result;
-use log::{error, info};
-use rusqlite::{params, Connection};
+use log::info;
+use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -40,14 +40,12 @@ impl Database {
 
     pub fn save_session(&self, tabs: &[TabState]) -> Result<()> {
         info!("Saving {} tabs to database", tabs.len());
-        
-        // Clear existing tabs
+
         self.conn.execute("DELETE FROM tabs", [])?;
 
-        // Insert new tabs
         for tab in tabs {
             self.conn.execute(
-                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage) 
+                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
                 params![
                     &tab.id,
@@ -66,10 +64,10 @@ impl Database {
 
     pub fn load_session(&self) -> Result<Vec<TabState>> {
         info!("Loading session from database");
-        
-        let mut stmt = self.conn.prepare(
-            "SELECT id, title, content, is_dirty, path, scroll_percentage FROM tabs"
-        )?;
+
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, title, content, is_dirty, path, scroll_percentage FROM tabs")?;
 
         let tabs = stmt
             .query_map([], |row| {

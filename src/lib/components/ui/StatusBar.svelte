@@ -19,11 +19,12 @@
         <span class="truncate max-w-[40vw] font-medium" style="color: var(--accent-link)" title={displayPath}>
             {displayPath}
         </span>
+        <!-- Timestamp Metadata -->
         {#if activeTab?.modified}
-            <span class="hidden md:inline opacity-70" title="Last Modified">{modified}</span>
+            <span class="hidden md:inline opacity-70" title="Last Modified" style="color: var(--fg-muted)">{modified}</span>
         {/if}
         {#if activeTab?.created}
-            <span class="hidden lg:inline opacity-50" title="Created">{created}</span>
+            <span class="hidden lg:inline opacity-50" title="Created" style="color: var(--fg-muted)">{created}</span>
         {/if}
     </div>
 
@@ -32,8 +33,15 @@
         <!-- Chars: x / y -->
         <span title="Position / Total Characters">{m.cursorOffset} / {m.charCount} chars</span>
 
+        <!-- Word Count (Restored) -->
+        <span>{m.wordCount} words</span>
+
         <span class="hidden sm:inline">{m.sizeKB.toFixed(2)} KB</span>
         <span class="hidden sm:inline">Ln {m.cursorLine}, Col {m.cursorCol}</span>
-        <span class="font-bold" style="color: {m.insertMode === 'OVR' ? 'var(--danger)' : 'inherit'}">{m.insertMode}</span>
+
+        <!-- Insert Mode Indicator -->
+        <span class="font-bold w-8 text-center" style="color: {m.insertMode === 'OVR' ? 'var(--danger)' : 'var(--accent-secondary)'}">
+            {m.insertMode}
+        </span>
     </div>
 </footer>

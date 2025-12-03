@@ -18,7 +18,6 @@ fn main() {
             let app_handle = app.handle();
 
             // Resolve AppData/Roaming directory
-            // On Windows: C:\Users\User\AppData\Roaming
             let base_dir = app_handle
                 .path()
                 .data_dir()
@@ -32,7 +31,7 @@ fn main() {
             fs::create_dir_all(&log_dir).expect("failed to create log dir");
             fs::create_dir_all(&db_dir).expect("failed to create db dir");
 
-            // Initialize Logging to Roaming/MarkdownRS/Logs
+            // Initialize Logging
             let _ = WriteLogger::init(
                 LevelFilter::Info,
                 Config::default(),
@@ -40,7 +39,7 @@ fn main() {
                     .unwrap_or_else(|_| File::create("markdown-rs-fallback.log").unwrap()),
             );
 
-            // Initialize DB to Roaming/MarkdownRS/Database
+            // Initialize DB
             let db_path = db_dir.join("session.db");
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
@@ -54,7 +53,8 @@ fn main() {
             commands::save_session,
             commands::restore_session,
             commands::read_text_file,
-            commands::write_text_file
+            commands::write_text_file,
+            commands::get_file_metadata
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

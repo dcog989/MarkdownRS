@@ -2,11 +2,14 @@ import { appState } from '$lib/stores/appState.svelte.ts';
 import { getCurrentWindow, LogicalPosition, LogicalSize } from '@tauri-apps/api/window';
 import { Store } from '@tauri-apps/plugin-store';
 
-const store = new Store('settings.json');
+let store: Store | null = null;
 const appWindow = getCurrentWindow();
 
 export async function initSettings() {
     try {
+        // Use static load method instead of new Store()
+        store = await Store.load('settings.json');
+
         const saved = await store.get<{
             splitPercentage: number;
             splitOrientation: 'vertical' | 'horizontal';
@@ -38,15 +41,14 @@ export async function initSettings() {
 }
 
 export async function saveSettings() {
+    if (!store) return;
+
     try {
         const isMaximized = await appWindow.isMaximized();
         const factor = await appWindow.scaleFactor();
         const size = await appWindow.innerSize();
         const pos = await appWindow.outerPosition();
 
-        // Convert physical pixels to logical for storage if needed,
-        // but Tauri usually handles LogicalSize setters well.
-        // We'll store logical to be safe across DPI changes.
         const logicalSize = size.toLogical(factor);
         const logicalPos = pos.toLogical(factor);
 
