@@ -8,7 +8,6 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
-    import { invoke } from "@tauri-apps/api/core";
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number;
@@ -16,10 +15,6 @@
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
-
-    function log(msg: string) {
-        invoke("log_frontend", { level: "info", message: `[App] ${msg}` }).catch(console.error);
-    }
 
     function handleGlobalKeydown(e: KeyboardEvent) {
         if (e.ctrlKey || e.metaKey) {
@@ -47,28 +42,23 @@
     }
 
     onMount(async () => {
-        log("Mounting...");
+        // 1. Initialize Layout Settings
+        await initSettings();
 
-        try {
-            await initSettings();
-            log("Settings Init Complete");
-        } catch (err) {
-            log(`Settings Init Failed: ${err}`);
-        }
-
+        // 2. Load Content
         try {
             await loadSession();
-            log("Session Loaded");
             if (editorStore.tabs.length === 0) {
                 const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                 appState.activeTabId = id;
             }
         } catch (error) {
-            log(`Session Load Failed: ${error}`);
+            console.error("Failed to load session:", error);
             const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
             appState.activeTabId = id;
         }
 
+        // Auto-save Setup
         autoSaveInterval = window.setInterval(() => {
             persistSession();
             saveSettings();

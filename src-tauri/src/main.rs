@@ -30,6 +30,8 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        // Initialize Window State Plugin
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .setup(|app| {
             let app_handle = app.handle();
 
@@ -75,7 +77,7 @@ fn main() {
                 "info" => LevelFilter::Info,
                 "trace" => LevelFilter::Trace,
                 "off" => LevelFilter::Off,
-                _ => LevelFilter::Debug, // Default to debug
+                _ => LevelFilter::Debug,
             };
 
             let _ = WriteLogger::init(
@@ -85,9 +87,6 @@ fn main() {
             );
 
             info!("Application started. Log Level: {:?}", log_level);
-            if !config_path.exists() {
-                warn!("Settings file created at {:?}", config_path);
-            }
 
             // 6. Initialize DB
             let db_path = db_dir.join("session.db");
