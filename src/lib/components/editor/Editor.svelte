@@ -3,7 +3,7 @@
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
-    import { EditorState } from "@codemirror/state";
+    import { EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
     import { onDestroy, onMount, untrack } from "svelte";
@@ -43,6 +43,13 @@
                             changes: { from: 0, to: currentDoc.length, insert: currentTab.content },
                         });
                     }
+                    // Restore scroll position
+                    setTimeout(() => {
+                        if (view.scrollDOM && currentTab.scrollPercentage > 0) {
+                            const scrollHeight = view.scrollDOM.scrollHeight - view.scrollDOM.clientHeight;
+                            view.scrollDOM.scrollTop = scrollHeight * currentTab.scrollPercentage;
+                        }
+                    }, 0);
                 });
             }
             previousTabId = tabId;
@@ -58,15 +65,43 @@
         const ext = filename.split(".").pop()?.toLowerCase();
         const isMarkdown = !ext || ["md", "markdown", "txt", "rst"].includes(ext) || filename.startsWith("Untitled");
 
-        // Custom keymap to detect Insert Key
-        const insertKeyHandler = EditorView.domEventHandlers({
-            keydown: (event, _view) => {
-                if (event.key === "Insert") {
-                    event.preventDefault();
+        // Custom keymap to detect Insert Key and force End/Home behaviors
+        const customKeymap = [
+            {
+                key: "Insert",
+                run: () => {
                     editorStore.toggleInsertMode();
-                }
+                    return true;
+                },
             },
-        });
+            {
+                key: "Mod-End",
+                run: (view: EditorView) => {
+                    const doc = view.state.doc;
+                    view.dispatch({
+                        selection: EditorSelection.cursor(doc.length),
+                        scrollIntoView: true,
+                        userEvent: "select",
+                    });
+                    // Force DOM scroll as fallback for large docs
+                    setTimeout(() => {
+                        view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
+                    }, 10);
+                    return true;
+                },
+            },
+            {
+                key: "Mod-Home",
+                run: (view: EditorView) => {
+                    view.dispatch({
+                        selection: EditorSelection.cursor(0),
+                        scrollIntoView: true,
+                        userEvent: "select",
+                    });
+                    return true;
+                },
+            },
+        ];
 
         // Basic Overwrite Behavior Extension
         const inputHandler = EditorView.inputHandler.of((view, from, to, text) => {
@@ -89,10 +124,9 @@
             lineNumbers(),
             highlightActiveLineGutter(),
             history(),
-            keymap.of([...defaultKeymap, ...historyKeymap]),
+            keymap.of([...customKeymap, ...defaultKeymap, ...historyKeymap]),
             oneDark,
             EditorView.lineWrapping,
-            insertKeyHandler,
             inputHandler,
             EditorView.theme({
                 "&": { height: "100%", fontSize: "14px" },
@@ -118,6 +152,7 @@
                 }, 100);
             }
 
+            // Scroll updates - Low latency (10ms) for sync
             if (update.view.scrollDOM) {
                 if (scrollUpdateTimer !== null) clearTimeout(scrollUpdateTimer);
                 scrollUpdateTimer = window.setTimeout(() => {
@@ -130,7 +165,7 @@
                         }
                     }
                     scrollUpdateTimer = null;
-                }, 150);
+                }, 10);
             }
 
             if (update.docChanged || update.selectionSet) {
@@ -171,8 +206,16 @@
             parent: editorContainer,
         });
 
-        // FORCE FOCUS
         view.focus();
+
+        // Initial scroll restore
+        if (currentTab && currentTab.scrollPercentage > 0) {
+            setTimeout(() => {
+                const dom = view.scrollDOM;
+                const scrollHeight = dom.scrollHeight - dom.clientHeight;
+                dom.scrollTop = scrollHeight * currentTab.scrollPercentage;
+            }, 50);
+        }
     });
 
     onDestroy(() => {

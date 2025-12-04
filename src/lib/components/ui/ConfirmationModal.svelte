@@ -1,6 +1,15 @@
 <script lang="ts">
     import { dialogStore } from "$lib/stores/dialogStore.svelte.ts";
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (dialogStore.isOpen && e.key === "Escape") {
+            e.stopPropagation();
+            dialogStore.resolve("cancel");
+        }
+    }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if dialogStore.isOpen}
     <!-- Backdrop -->
