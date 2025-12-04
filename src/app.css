@@ -70,11 +70,14 @@
     --danger-text: #e81123; /* Standard red works on light bg */
 }
 
+html,
 body {
     margin: 0;
     overflow: hidden;
     background-color: var(--bg-main);
     color: var(--fg-default);
+    height: 100%;
+    width: 100%;
 }
 
 /* Custom thin scrollbar styling */

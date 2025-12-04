@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
+use window_shadows_v2::set_shadows;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AppSettings {
@@ -36,6 +37,13 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            // Enable Native Window Shadows (Fixes artifacts on borderless windows)
+            #[cfg(any(windows, target_os = "macos"))]
+            {
+                // We ignore the result to avoid type mismatches if the crate signature varies
+                let _ = set_shadows(app, true);
+            }
+
             let app_handle = app.handle();
 
             // 1. Resolve Paths
