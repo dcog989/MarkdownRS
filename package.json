@@ -32,6 +32,7 @@
         "@tauri-apps/plugin-log": "^2.7",
         "@tauri-apps/plugin-opener": "^2.5",
         "clsx": "^2.1",
+        "color": "^5.0",
         "dompurify": "^3.3",
         "lucide-svelte": "^0.555",
         "marked": "^17.0",
