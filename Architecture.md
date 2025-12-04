@@ -8,6 +8,10 @@
 - **Design:** Clean, clutter-free, dark-mode native. Repurpose titlebar.
 - **Stack:** Rust (Tauri v2) + Svelte 5 (Runes) + TypeScript, versions correct as of December 2025.
 
+## Standards
+
+Ensure that coding is correct to current standards for December 2025 for Svelte 5 / Runes, Tauri v2, Rust 2024 edition (v1.91), TS 5.9, etc.
+
 ## Core Architecture Decisions
 
 ### 1. The Editor Engine: CodeMirror 6
