@@ -7,6 +7,7 @@
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
     let renderError = $state<string | null>(null);
+    let isRendering = $state(false);
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
@@ -15,16 +16,20 @@
     let htmlContent = $state("");
 
     $effect(() => {
-        (async () => {
+        // Defer rendering to unblock the main thread during UI toggles/resizes
+        isRendering = true;
+        const timer = setTimeout(async () => {
             renderError = null;
 
             if (!content || content.trim().length === 0) {
                 htmlContent = "";
+                isRendering = false;
                 return;
             }
 
             try {
-                htmlContent = await renderMarkdown(content);
+                const rendered = await renderMarkdown(content);
+                htmlContent = rendered;
             } catch (e) {
                 console.error("Markdown Render Error:", e);
                 renderError = e instanceof Error ? e.message : "Unknown rendering error";
@@ -33,19 +38,21 @@
                     <strong>Error rendering markdown:</strong><br/>
                     <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
                 </div>`;
+            } finally {
+                isRendering = false;
             }
-        })();
+        }, 10); // 10ms delay allows the UI layout shift to complete first
+
+        return () => clearTimeout(timer);
     });
 
     $effect(() => {
         if (!container) return;
 
-        // Ensure JS scroll takes precedence over any CSS smooth scrolling
-        container.style.scrollBehavior = "auto";
-
         const maxScroll = container.scrollHeight - container.clientHeight;
 
         if (maxScroll > 0) {
+            // Strict precise clamping to edges based on the store value
             if (scrollPercentage <= 0.001) {
                 if (container.scrollTop !== 0) container.scrollTop = 0;
             } else if (scrollPercentage >= 0.999) {
@@ -82,8 +89,10 @@
     </button>
 
     <!-- Content -->
-    <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default);">
-        {#if !htmlContent}
+    <div bind:this={container} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default);">
+        {#if isRendering && !htmlContent}
+            <div class="absolute inset-0 flex items-center justify-center text-[var(--fg-muted)] opacity-50">Loading...</div>
+        {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-30 pointer-events-none select-none">
                 <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
                 <h1 class="text-3xl font-bold tracking-tight" style="color: var(--fg-muted); margin: 0;">MarkdownRS</h1>
@@ -100,6 +109,10 @@
 </div>
 
 <style>
+    .preview-container {
+        scroll-behavior: auto !important;
+    }
+
     :global(.prose) {
         color: var(--fg-default);
     }
