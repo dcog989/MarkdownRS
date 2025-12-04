@@ -53,17 +53,20 @@ export class EditorStore {
     addTab(title: string = 'Untitled', content: string = '') {
         const id = crypto.randomUUID();
         const now = getCurrentTimestamp();
-        this.tabs.push({
+
+        const newTab: EditorTab = {
             id,
             title,
-            originalTitle: title, // Track original "Untitled-X"
+            originalTitle: title,
             content,
             isDirty: false,
             path: null,
             scrollPercentage: 0,
             created: now,
             modified: now
-        });
+        };
+
+        this.tabs = [...this.tabs, newTab];
         this.pushToMru(id);
         this.sessionDirty = true;
         return id;
@@ -76,8 +79,8 @@ export class EditorStore {
     }
 
     pushToMru(id: string) {
-        this.mruStack = this.mruStack.filter(tId => tId !== id);
-        this.mruStack.unshift(id);
+        const filtered = this.mruStack.filter(tId => tId !== id);
+        this.mruStack = [id, ...filtered];
     }
 
     getNextTabId(currentId: string | null, shiftKey: boolean): string | null {
@@ -107,28 +110,28 @@ export class EditorStore {
 
     updateContent(id: string, content: string) {
         const tab = this.tabs.find(t => t.id === id);
-        if (tab) {
-            tab.content = content;
-            tab.isDirty = true;
-            tab.modified = getCurrentTimestamp();
+        if (!tab) return;
 
-            // Smart Title Logic for Untitled Docs
-            if (!tab.path) {
-                const trimmed = content.trim();
-                if (trimmed.length > 0) {
-                    // Get first line, max 20 chars
-                    const firstLine = trimmed.split('\n')[0].trim();
-                    let smartTitle = firstLine.substring(0, 20);
-                    if (firstLine.length > 20) smartTitle += "...";
-                    tab.title = smartTitle;
-                } else {
-                    // Revert to original Untitled-X if empty
-                    if (tab.originalTitle) tab.title = tab.originalTitle;
-                }
+        tab.content = content;
+        tab.isDirty = true;
+        tab.modified = getCurrentTimestamp();
+
+        // Smart Title Logic for Untitled Docs
+        if (!tab.path) {
+            const trimmed = content.trim();
+            if (trimmed.length > 0) {
+                // Get first line, max 20 chars
+                const firstLine = trimmed.split('\n')[0].trim();
+                let smartTitle = firstLine.substring(0, 20);
+                if (firstLine.length > 20) smartTitle += "...";
+                tab.title = smartTitle;
+            } else {
+                // Revert to original Untitled-X if empty
+                if (tab.originalTitle) tab.title = tab.originalTitle;
             }
-
-            this.sessionDirty = true;
         }
+
+        this.sessionDirty = true;
     }
 
     updateScroll(id: string, percentage: number) {
@@ -149,12 +152,11 @@ export class EditorStore {
     }
 
     updateMetrics(metrics: Partial<EditorMetrics>) {
-        this.activeMetrics = { ...this.activeMetrics, ...metrics };
+        Object.assign(this.activeMetrics, metrics);
     }
 
     toggleInsertMode() {
-        const newMode = this.activeMetrics.insertMode === 'INS' ? 'OVR' : 'INS';
-        this.activeMetrics = { ...this.activeMetrics, insertMode: newMode };
+        this.activeMetrics.insertMode = this.activeMetrics.insertMode === 'INS' ? 'OVR' : 'INS';
     }
 
     modifyContent(id: string, modifier: (text: string) => string) {
@@ -164,10 +166,37 @@ export class EditorStore {
         }
     }
 
-    sortLines(id: string) { this.modifyContent(id, (text) => text.split('\n').sort().join('\n')); }
-    trimWhitespace(id: string) { this.modifyContent(id, (text) => text.split('\n').map(line => line.trim()).join('\n')); }
-    toUpperCase(id: string) { this.modifyContent(id, (text) => text.toUpperCase()); }
-    toLowerCase(id: string) { this.modifyContent(id, (text) => text.toLowerCase()); }
+    sortLines(id: string) {
+        try {
+            this.modifyContent(id, (text) => text.split('\n').sort().join('\n'));
+        } catch (err) {
+            console.error('Failed to sort lines:', err);
+        }
+    }
+
+    trimWhitespace(id: string) {
+        try {
+            this.modifyContent(id, (text) => text.split('\n').map(line => line.trim()).join('\n'));
+        } catch (err) {
+            console.error('Failed to trim whitespace:', err);
+        }
+    }
+
+    toUpperCase(id: string) {
+        try {
+            this.modifyContent(id, (text) => text.toUpperCase());
+        } catch (err) {
+            console.error('Failed to convert to uppercase:', err);
+        }
+    }
+
+    toLowerCase(id: string) {
+        try {
+            this.modifyContent(id, (text) => text.toLowerCase());
+        } catch (err) {
+            console.error('Failed to convert to lowercase:', err);
+        }
+    }
 }
 
 export const editorStore = new EditorStore();

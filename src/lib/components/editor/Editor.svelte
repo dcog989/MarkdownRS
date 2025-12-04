@@ -11,12 +11,29 @@
     let { tabId } = $props<{ tabId: string }>();
     let editorContainer: HTMLDivElement;
     let view: EditorView;
-    let timer: number;
+    let contentUpdateTimer: number | null = null;
+    let scrollUpdateTimer: number | null = null;
+    let metricsUpdateTimer: number | null = null;
     let previousTabId: string = "";
 
-    // 1. Safe Reactivity for Tab Switching
+    function clearAllTimers() {
+        if (contentUpdateTimer !== null) {
+            clearTimeout(contentUpdateTimer);
+            contentUpdateTimer = null;
+        }
+        if (scrollUpdateTimer !== null) {
+            clearTimeout(scrollUpdateTimer);
+            scrollUpdateTimer = null;
+        }
+        if (metricsUpdateTimer !== null) {
+            clearTimeout(metricsUpdateTimer);
+            metricsUpdateTimer = null;
+        }
+    }
+
     $effect(() => {
         if (tabId !== previousTabId) {
+            clearAllTimers(); // Clear all pending updates
             const currentTab = editorStore.tabs.find((t) => t.id === tabId);
             if (currentTab && view) {
                 untrack(() => {
@@ -92,39 +109,53 @@
         }
 
         const updateListener = EditorView.updateListener.of((update) => {
+            // Content updates - 100ms debounce
             if (update.docChanged) {
-                clearTimeout(timer);
-                timer = window.setTimeout(() => {
+                if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
+                contentUpdateTimer = window.setTimeout(() => {
                     editorStore.updateContent(tabId, update.state.doc.toString());
+                    contentUpdateTimer = null;
                 }, 100);
             }
 
             if (update.view.scrollDOM) {
-                const scrollElement = update.view.scrollDOM;
-                const percentage = scrollElement.scrollTop / (scrollElement.scrollHeight - scrollElement.clientHeight);
-                if (!isNaN(percentage)) {
-                    editorStore.updateScroll(tabId, percentage);
-                }
+                if (scrollUpdateTimer !== null) clearTimeout(scrollUpdateTimer);
+                scrollUpdateTimer = window.setTimeout(() => {
+                    const scrollElement = update.view.scrollDOM;
+                    const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
+                    if (scrollHeight > 0) {
+                        const percentage = scrollElement.scrollTop / scrollHeight;
+                        if (!isNaN(percentage) && isFinite(percentage)) {
+                            editorStore.updateScroll(tabId, Math.max(0, Math.min(1, percentage)));
+                        }
+                    }
+                    scrollUpdateTimer = null;
+                }, 150);
             }
 
             if (update.docChanged || update.selectionSet) {
-                const doc = update.state.doc;
-                const selection = update.state.selection.main;
-                const cursorLine = doc.lineAt(selection.head);
-                const text = doc.toString();
-                const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-                const sizeKB = new TextEncoder().encode(text).length / 1024;
-                const cursorOffset = selection.head;
+                if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
+                metricsUpdateTimer = window.setTimeout(() => {
+                    const doc = update.state.doc;
+                    const selection = update.state.selection.main;
+                    const cursorLine = doc.lineAt(selection.head);
+                    const text = doc.toString();
+                    const trimmedText = text.trim();
+                    const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
+                    const sizeKB = new TextEncoder().encode(text).length / 1024;
+                    const cursorOffset = selection.head;
 
-                editorStore.updateMetrics({
-                    lineCount: doc.lines,
-                    wordCount: wordCount,
-                    charCount: text.length,
-                    cursorOffset: cursorOffset,
-                    sizeKB: sizeKB,
-                    cursorLine: cursorLine.number,
-                    cursorCol: selection.head - cursorLine.from + 1,
-                });
+                    editorStore.updateMetrics({
+                        lineCount: doc.lines,
+                        wordCount: wordCount,
+                        charCount: text.length,
+                        cursorOffset: cursorOffset,
+                        sizeKB: sizeKB,
+                        cursorLine: cursorLine.number,
+                        cursorCol: selection.head - cursorLine.from + 1,
+                    });
+                    metricsUpdateTimer = null;
+                }, 200);
             }
         });
 
@@ -145,8 +176,8 @@
     });
 
     onDestroy(() => {
+        clearAllTimers();
         if (view) view.destroy();
-        clearTimeout(timer);
     });
 </script>
 

@@ -20,6 +20,9 @@ type FileMetadata = {
     modified?: string;
 };
 
+let isSaving = false;
+let pendingSave = false;
+
 async function refreshMetadata(tabId: string, path: string) {
     try {
         const meta = await invoke<FileMetadata>('get_file_metadata', { path });
@@ -27,6 +30,11 @@ async function refreshMetadata(tabId: string, path: string) {
     } catch (e) {
         console.error("Failed to fetch metadata", e);
     }
+}
+
+function sanitizePath(path: string): string {
+    // Remove any null bytes and normalize path separators
+    return path.replace(/\0/g, '').replace(/\\/g, '/');
 }
 
 export async function openFile() {
@@ -40,15 +48,16 @@ export async function openFile() {
         });
 
         if (selected && typeof selected === 'string') {
-            const content = await invoke<string>('read_text_file', { path: selected });
-            const fileName = selected.split(/[\\/]/).pop() || 'Untitled';
+            const sanitizedPath = sanitizePath(selected);
+            const content = await invoke<string>('read_text_file', { path: sanitizedPath });
+            const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
             const id = editorStore.addTab(fileName, content);
             const tab = editorStore.tabs.find(t => t.id === id);
             if (tab) {
-                tab.path = selected;
+                tab.path = sanitizedPath;
                 tab.isDirty = false;
-                await refreshMetadata(id, selected);
+                await refreshMetadata(id, sanitizedPath);
             }
             appState.activeTabId = id;
             editorStore.pushToMru(id);
@@ -75,11 +84,12 @@ export async function saveCurrentFile() {
         }
 
         if (savePath) {
-            await invoke('write_text_file', { path: savePath, content: tab.content });
-            tab.path = savePath;
-            tab.title = savePath.split(/[\\/]/).pop() || 'Untitled';
+            const sanitizedPath = sanitizePath(savePath);
+            await invoke('write_text_file', { path: sanitizedPath, content: tab.content });
+            tab.path = sanitizedPath;
+            tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
             tab.isDirty = false;
-            await refreshMetadata(tabId, savePath);
+            await refreshMetadata(tabId, sanitizedPath);
             return true;
         }
         return false;
@@ -134,6 +144,14 @@ export async function requestCloseTab(id: string) {
 export async function persistSession() {
     if (!editorStore.sessionDirty) return;
 
+    // If already saving, mark that another save is pending
+    if (isSaving) {
+        pendingSave = true;
+        return;
+    }
+
+    isSaving = true;
+
     try {
         const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
             id: t.id,
@@ -148,8 +166,17 @@ export async function persistSession() {
 
         await invoke('save_session', { tabs: plainTabs });
         editorStore.sessionDirty = false;
+
+        // If another save was requested while we were saving, do it now
+        if (pendingSave) {
+            pendingSave = false;
+            isSaving = false;
+            await persistSession();
+        }
     } catch (err) {
         console.error('Failed to save session:', err);
+    } finally {
+        isSaving = false;
     }
 }
 
@@ -172,9 +199,14 @@ export async function loadSession() {
             appState.activeTabId = convertedTabs[0].id;
             editorStore.mruStack = convertedTabs.map(t => t.id);
 
-            convertedTabs.forEach(t => {
-                if (t.path) refreshMetadata(t.id, t.path);
-            });
+            // Refresh metadata for all tabs with paths
+            const metadataPromises = convertedTabs
+                .filter(t => t.path)
+                .map(t => refreshMetadata(t.id, t.path!));
+
+            Promise.all(metadataPromises).catch(err =>
+                console.error('Failed to refresh metadata for some tabs:', err)
+            );
         } else {
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
             appState.activeTabId = id;

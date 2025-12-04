@@ -4,13 +4,13 @@ A fast, minimal, cross-platform desktop markdown editor built with Tauri v2, Sve
 
 ## Features
 
-- 🚀 **Fast & Performant**: Built with Rust backend for instant startup and smooth editing
-- 📝 **Live Preview**: Split view with synchronized scrolling
-- 💾 **Auto-Save**: Session persistence with hot-exit support - never lose your work
-- 🎨 **Clean UI**: Dark-mode native interface with minimal distractions
-- ⌨️ **Keyboard Shortcuts**: Efficient navigation with command palette (Ctrl+P)
-- 📂 **Multi-Tab**: Work on multiple documents simultaneously
-- 🔧 **Text Operations**: Sort lines, trim whitespace, change case, and more
+- **Fast & Performant**: Built with Rust backend for instant startup and smooth editing
+- **Live Preview**: Split view with synchronized scrolling
+- **Auto-Save**: Session persistence with hot-exit support - never lose your work
+- **Clean UI**: Dark-mode native interface with minimal distractions
+-  **Keyboard Shortcuts**: Efficient navigation with command palette (Ctrl+P)
+- **Multi-Tab**: Work on multiple documents simultaneously
+- **Text Operations**: Sort lines, trim whitespace, change case, and more
 
 ## Development
 
@@ -110,15 +110,14 @@ MarkdownRS/
 - Custom themes
 - Snippets & templates
 - Export to PDF/PNG/HTML
-- Vim mode
 - Git integration
 - Find & replace across all documents
 - Context menu with "Send to..." options
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request or submit an issue for bugs and feature requests.

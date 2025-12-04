@@ -40,21 +40,22 @@ We will use **CodeMirror 6** (headless, modular).
 - **Backend (Rust):**
   - **File I/O:** Atomic reads/writes, Encoding detection (UTF-8/ANSI).
   - **Heavy Lifting:** Global search (Ripgrep), text manipulation (sorting/deduping).
-  - **Session Management:** Auto-saving unsaved buffers to SQLite for crash recovery ("Hot Exit").
+  - **Session Management:** Auto-saving unsaved buffers to IndexedDB / SQLite for crash recovery ("Hot Exit").
 
 ## v1 Feature Set
 - **Split View Interface:** Editor + Live Preview with synchronized scrolling.
 - **Multi-tab Interface:** Draggable tabs, dirty state indicators.
-- **Command Palette:** `Ctrl/Cmd+P` approach to replace cluttered toolbars.
+- **Command Palette:** `SHIFT+Ctrl/Cmd+P` approach to replace cluttered toolbars. Search bar input at centre of titlebar.
 - **Auto-Save / Hot Exit:** Never lose data. App state restores on relaunch.
 - **Text Ops:** Sort lines, Trim whitespace, Change Case.
 - **Log Rotation:** Integrated Rust logging.
+- Custom user themes for fonts, colors
+- colorize line numbers / content bg to show updated content
+- search / find / replace in current document
 
 ## v2 Features (Post-Launch)
-- Custom user themes for fonts, colors
 - **Snippets & Templates:** Expandable text macros.
 - **Export:** PDF / PNG / HTML export via Rust libraries.
 - **Git Integration:** Basic status and diff viewing.
-- colorize line numbers / content bg to show updated content
 - search / find / replace in all opened documents
 - context 'Send To...' menu - browser / configurable app list

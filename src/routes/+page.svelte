@@ -11,11 +11,14 @@
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
-    let autoSaveInterval: number;
+    let autoSaveInterval: number | null = null;
     let mainContainer: HTMLDivElement;
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
+
+    let isInitialized = $state(false);
+    let initError = $state<string | null>(null);
 
     async function handleGlobalKeydown(e: KeyboardEvent) {
         if (e.key === "Tab" && e.ctrlKey) {
@@ -31,10 +34,10 @@
         if (e.ctrlKey || e.metaKey) {
             if (e.key === "s") {
                 e.preventDefault();
-                saveCurrentFile();
+                await saveCurrentFile();
             } else if (e.key === "o") {
                 e.preventDefault();
-                openFile();
+                await openFile();
             } else if (e.key === "n") {
                 e.preventDefault();
                 const id = editorStore.addTab();
@@ -53,21 +56,27 @@
 
     onMount(async () => {
         try {
+            // Initialize settings first
             await initSettings();
-        } catch (err) {
-            console.error("Settings init failed", err);
-        }
 
-        try {
+            // Load session
             await loadSession();
+
+            // Ensure at least one tab exists
             if (editorStore.tabs.length === 0) {
                 const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                 appState.activeTabId = id;
             }
+
+            isInitialized = true;
         } catch (error) {
-            console.error("Failed to load session:", error);
+            console.error("Initialization failed:", error);
+            initError = error instanceof Error ? error.message : "Unknown initialization error";
+
+            // Create emergency tab even if initialization failed
             const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
             appState.activeTabId = id;
+            isInitialized = true;
         }
 
         autoSaveInterval = window.setInterval(() => {
@@ -75,14 +84,27 @@
             saveSettings();
         }, 30000);
 
-        window.addEventListener("blur", () => {
+        const handleBlur = () => {
             persistSession();
             saveSettings();
-        });
+        };
+
+        window.addEventListener("blur", handleBlur);
+
+        // Return cleanup function
+        return () => {
+            window.removeEventListener("blur", handleBlur);
+        };
     });
 
     onDestroy(() => {
-        if (autoSaveInterval) clearInterval(autoSaveInterval);
+        if (autoSaveInterval !== null) {
+            clearInterval(autoSaveInterval);
+            autoSaveInterval = null;
+        }
+        // Final save before unmount
+        persistSession();
+        saveSettings();
     });
 
     function startResize(e: MouseEvent) {
@@ -103,12 +125,13 @@
         const deltaPixels = currentPos - dragStart;
         const deltaPercent = deltaPixels / totalSize;
         let newSplit = initialSplit + deltaPercent;
-        if (newSplit < 0.1) newSplit = 0.1;
-        if (newSplit > 0.9) newSplit = 0.9;
+
+        newSplit = Math.max(0.1, Math.min(0.9, newSplit));
         appState.splitPercentage = newSplit;
     }
 
     function stopResize() {
+        if (!isDragging) return;
         isDragging = false;
         window.removeEventListener("mousemove", handleResize);
         window.removeEventListener("mouseup", stopResize);
@@ -124,52 +147,64 @@
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
-<div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
-    <CommandPalette />
-
-    <!-- Header Section -->
-    <Titlebar />
-    <TabBar />
-
-    <!-- Main Workspace -->
-    <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
-        {#if appState.activeTabId}
-            {#key appState.activeTabId}
-                <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
-                    <div style="flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
-                        <Editor tabId={appState.activeTabId} />
-                    </div>
-
-                    {#if appState.splitView}
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div
-                            class="z-20 transition-colors duration-150"
-                            style="
-                                cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
-                                flex: 0 0 4px;
-                                background-color: var(--bg-panel);
-                            "
-                            onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-primary)")}
-                            onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--bg-panel)")}
-                            onmousedown={startResize}
-                            ondblclick={resetSplit}
-                        ></div>
-                    {/if}
-
-                    {#if appState.splitView}
-                        <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
-                            <Preview tabId={appState.activeTabId} />
-                        </div>
-                    {/if}
-                </div>
-            {/key}
-        {:else}
-            <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--fg-muted)">
-                <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
-                <p class="text-sm">Ctrl+N to create a new file</p>
-            </div>
-        {/if}
+{#if !isInitialized}
+    <div class="h-screen w-screen flex items-center justify-center" style="background-color: var(--bg-main); color: var(--fg-default);">
+        <div class="text-center">
+            <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 mx-auto opacity-50 animate-pulse" />
+            <p class="text-sm" style="color: var(--fg-muted)">Loading MarkdownRS...</p>
+            {#if initError}
+                <p class="text-xs mt-2" style="color: var(--danger-text)">{initError}</p>
+            {/if}
+        </div>
     </div>
+{:else}
+    <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
+        <CommandPalette />
 
-    <StatusBar />
-</div>
+        <!-- Header Section -->
+        <Titlebar />
+        <TabBar />
+
+        <!-- Main Workspace -->
+        <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
+            {#if appState.activeTabId}
+                {#key appState.activeTabId}
+                    <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
+                        <div style="flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
+                            <Editor tabId={appState.activeTabId} />
+                        </div>
+
+                        {#if appState.splitView}
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div
+                                class="z-20 transition-colors duration-150"
+                                style="
+                                    cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
+                                    flex: 0 0 4px;
+                                    background-color: var(--bg-panel);
+                                "
+                                onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-primary)")}
+                                onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--bg-panel)")}
+                                onmousedown={startResize}
+                                ondblclick={resetSplit}
+                            ></div>
+                        {/if}
+
+                        {#if appState.splitView}
+                            <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
+                                <Preview tabId={appState.activeTabId} />
+                            </div>
+                        {/if}
+                    </div>
+                {/key}
+            {:else}
+                <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--fg-muted)">
+                    <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
+                    <p class="text-sm">Ctrl+N to create a new file</p>
+                </div>
+            {/if}
+        </div>
+
+        <StatusBar />
+    </div>
+{/if}

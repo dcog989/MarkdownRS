@@ -22,9 +22,23 @@ fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     })
 }
 
+fn validate_path(path: &str) -> Result<(), String> {
+    // Check for null bytes
+    if path.contains('\0') {
+        return Err("Invalid path: contains null bytes".to_string());
+    }
+
+    // Check for suspicious path patterns
+    if path.contains("..") {
+        return Err("Invalid path: contains parent directory references".to_string());
+    }
+
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Result<(), String> {
-    let db = state
+    let mut db = state
         .db
         .lock()
         .map_err(|_| "Failed to lock db".to_string())?;
@@ -42,16 +56,40 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>
 
 #[tauri::command]
 pub async fn read_text_file(path: String) -> Result<String, String> {
+    validate_path(&path)?;
+
+    let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
+    const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+
+    if metadata.len() > MAX_FILE_SIZE {
+        return Err(format!(
+            "File too large: {} MB (max {} MB)",
+            metadata.len() / 1024 / 1024,
+            MAX_FILE_SIZE / 1024 / 1024
+        ));
+    }
+
     fs::read_to_string(&path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
-    fs::write(&path, content).map_err(|e| e.to_string())
+    validate_path(&path)?;
+
+    // Write to temp file first, then rename
+    let temp_path = format!("{}.tmp", path);
+    fs::write(&temp_path, &content).map_err(|e| e.to_string())?;
+    fs::rename(&temp_path, &path).map_err(|e| {
+        // Clean up temp file on error
+        let _ = fs::remove_file(&temp_path);
+        e.to_string()
+    })
 }
 
 #[tauri::command]
 pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
+    validate_path(&path)?;
+
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
 
     Ok(FileMetadata {

@@ -6,6 +6,7 @@
 
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
+    let renderError = $state<string | null>(null);
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
@@ -15,24 +16,47 @@
 
     $effect(() => {
         (async () => {
+            renderError = null; // Clear previous errors
+
             if (!content) {
                 htmlContent = "<p style='color: var(--fg-muted); font-style: italic; margin-top: 1rem;'>Start typing to preview...</p>";
                 return;
             }
+
             try {
                 htmlContent = await renderMarkdown(content);
             } catch (e) {
                 console.error("Markdown Render Error:", e);
-                htmlContent = `<p style='color: var(--danger)'>Error rendering markdown</p>`;
+                renderError = e instanceof Error ? e.message : "Unknown rendering error";
+                const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
+                    <strong>Error rendering markdown:</strong><br/>
+                    <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
+                </div>`;
             }
         })();
     });
 
+    let lastScrollUpdate = 0;
+    const SCROLL_THROTTLE_MS = 16; // ~60fps
+
     $effect(() => {
         if (container && scrollPercentage >= 0) {
-            const targetScroll = (container.scrollHeight - container.clientHeight) * scrollPercentage;
-            if (Math.abs(container.scrollTop - targetScroll) > 10) {
-                container.scrollTop = targetScroll;
+            const now = Date.now();
+            if (now - lastScrollUpdate < SCROLL_THROTTLE_MS) {
+                return;
+            }
+            lastScrollUpdate = now;
+
+            const maxScroll = container.scrollHeight - container.clientHeight;
+            if (maxScroll > 0) {
+                const targetScroll = maxScroll * scrollPercentage;
+                const currentScroll = container.scrollTop;
+
+                // Only update if difference is significant (reduces jitter)
+                if (Math.abs(currentScroll - targetScroll) > 10) {
+                    container.scrollTop = targetScroll;
+                }
             }
         }
     });
@@ -61,6 +85,12 @@
 
     <!-- Content -->
     <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default);">
+        {#if renderError}
+            <div role="alert" aria-live="polite">
+                <!-- Error is already sanitized and included in htmlContent -->
+            </div>
+        {/if}
+
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html htmlContent}
     </div>

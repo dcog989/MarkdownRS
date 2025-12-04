@@ -12,7 +12,6 @@ pub struct TabState {
     pub is_dirty: bool,
     pub path: Option<String>,
     pub scroll_percentage: f64,
-    // New fields
     pub created: Option<String>,
     pub modified: Option<String>,
 }
@@ -25,35 +24,87 @@ impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         info!("Initializing database at {:?}", db_path);
         let conn = Connection::open(db_path)?;
+        let version = Self::get_schema_version(&conn)?;
 
-        // DEV MODE: Drop table to force schema update
-        // In production, we would use migrations.
-        conn.execute("DROP TABLE IF EXISTS tabs", [])?;
+        match version {
+            0 => {
+                // Initial schema creation
+                info!("Creating initial database schema");
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS tabs (
+                        id TEXT PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        is_dirty INTEGER NOT NULL,
+                        path TEXT,
+                        scroll_percentage REAL NOT NULL,
+                        created TEXT,
+                        modified TEXT
+                    )",
+                    [],
+                )?;
 
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS tabs (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                is_dirty INTEGER NOT NULL,
-                path TEXT,
-                scroll_percentage REAL NOT NULL,
-                created TEXT,
-                modified TEXT
-            )",
-            [],
-        )?;
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS schema_version (
+                        version INTEGER PRIMARY KEY
+                    )",
+                    [],
+                )?;
+
+                conn.execute("INSERT INTO schema_version (version) VALUES (?1)", [1])?;
+            }
+            1 => {
+                // Current version, no migration needed
+                info!("Database schema is up to date (version {})", version);
+            }
+            _ => {
+                // Future migrations would go here
+                info!("Unknown schema version {}, attempting to continue", version);
+            }
+        }
 
         Ok(Self { conn })
     }
 
-    pub fn save_session(&self, tabs: &[TabState]) -> Result<()> {
+    fn get_schema_version(conn: &Connection) -> Result<i32> {
+        let version = conn.query_row(
+            "SELECT version FROM schema_version ORDER BY version DESC LIMIT 1",
+            [],
+            |row| row.get(0),
+        );
+
+        match version {
+            Ok(v) => Ok(v),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(0),
+            Err(_) => {
+                // Table doesn't exist, check if tabs table exists
+                let tabs_exists: bool = conn.query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='tabs'",
+                    [],
+                    |row| {
+                        let count: i32 = row.get(0)?;
+                        Ok(count > 0)
+                    },
+                )?;
+
+                if tabs_exists {
+                    Ok(0) // Old schema without version table
+                } else {
+                    Ok(0) // Fresh database
+                }
+            }
+        }
+    }
+
+    pub fn save_session(&mut self, tabs: &[TabState]) -> Result<()> {
         info!("Saving {} tabs to database", tabs.len());
 
-        self.conn.execute("DELETE FROM tabs", [])?;
+        let tx = self.conn.transaction()?;
+
+        tx.execute("DELETE FROM tabs", [])?;
 
         for tab in tabs {
-            self.conn.execute(
+            tx.execute(
                 "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![
@@ -69,6 +120,7 @@ impl Database {
             )?;
         }
 
+        tx.commit()?;
         info!("Session saved successfully");
         Ok(())
     }
@@ -97,5 +149,12 @@ impl Database {
 
         info!("Loaded {} tabs from database", tabs.len());
         Ok(tabs)
+    }
+
+    #[allow(dead_code)]
+    pub fn clear_session(&self) -> Result<()> {
+        info!("Clearing session data");
+        self.conn.execute("DELETE FROM tabs", [])?;
+        Ok(())
     }
 }
