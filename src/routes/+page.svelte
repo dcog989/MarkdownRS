@@ -1,10 +1,4 @@
 <script lang="ts">
-    import Editor from "$lib/components/editor/Editor.svelte";
-    import Preview from "$lib/components/preview/Preview.svelte";
-    import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
-    import StatusBar from "$lib/components/ui/StatusBar.svelte";
-    import TabBar from "$lib/components/ui/TabBar.svelte";
-    import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
@@ -12,7 +6,7 @@
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number | null = null;
-    let mainContainer: HTMLDivElement;
+    let mainContainer = $state<HTMLDivElement>();
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
@@ -54,30 +48,33 @@
         }
     }
 
-    onMount(async () => {
-        try {
-            // Initialize settings first
-            await initSettings();
+    onMount(() => {
+        // Initialization logic (async IIFE)
+        (async () => {
+            try {
+                // Initialize settings first
+                await initSettings();
 
-            // Load session
-            await loadSession();
+                // Load session
+                await loadSession();
 
-            // Ensure at least one tab exists
-            if (editorStore.tabs.length === 0) {
+                // Ensure at least one tab exists
+                if (editorStore.tabs.length === 0) {
+                    const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
+                    appState.activeTabId = id;
+                }
+
+                isInitialized = true;
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                initError = error instanceof Error ? error.message : "Unknown initialization error";
+
+                // Create emergency tab even if initialization failed
                 const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                 appState.activeTabId = id;
+                isInitialized = true;
             }
-
-            isInitialized = true;
-        } catch (error) {
-            console.error("Initialization failed:", error);
-            initError = error instanceof Error ? error.message : "Unknown initialization error";
-
-            // Create emergency tab even if initialization failed
-            const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
-            appState.activeTabId = id;
-            isInitialized = true;
-        }
+        })();
 
         autoSaveInterval = window.setInterval(() => {
             persistSession();
@@ -144,67 +141,3 @@
         saveSettings();
     }
 </script>
-
-<svelte:window onkeydown={handleGlobalKeydown} />
-
-{#if !isInitialized}
-    <div class="h-screen w-screen flex items-center justify-center" style="background-color: var(--bg-main); color: var(--fg-default);">
-        <div class="text-center">
-            <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 mx-auto opacity-50 animate-pulse" />
-            <p class="text-sm" style="color: var(--fg-muted)">Loading MarkdownRS...</p>
-            {#if initError}
-                <p class="text-xs mt-2" style="color: var(--danger-text)">{initError}</p>
-            {/if}
-        </div>
-    </div>
-{:else}
-    <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
-        <CommandPalette />
-
-        <!-- Header Section -->
-        <Titlebar />
-        <TabBar />
-
-        <!-- Main Workspace -->
-        <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
-            {#if appState.activeTabId}
-                {#key appState.activeTabId}
-                    <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
-                        <div style="flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
-                            <Editor tabId={appState.activeTabId} />
-                        </div>
-
-                        {#if appState.splitView}
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div
-                                class="z-20 transition-colors duration-150"
-                                style="
-                                    cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
-                                    flex: 0 0 4px;
-                                    background-color: var(--bg-panel);
-                                "
-                                onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-primary)")}
-                                onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--bg-panel)")}
-                                onmousedown={startResize}
-                                ondblclick={resetSplit}
-                            ></div>
-                        {/if}
-
-                        {#if appState.splitView}
-                            <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
-                                <Preview tabId={appState.activeTabId} />
-                            </div>
-                        {/if}
-                    </div>
-                {/key}
-            {:else}
-                <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--fg-muted)">
-                    <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
-                    <p class="text-sm">Ctrl+N to create a new file</p>
-                </div>
-            {/if}
-        </div>
-
-        <StatusBar />
-    </div>
-{/if}

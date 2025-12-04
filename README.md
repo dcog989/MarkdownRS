@@ -8,7 +8,7 @@ A fast, minimal, cross-platform desktop markdown editor built with Tauri v2, Sve
 - **Live Preview**: Split view with synchronized scrolling
 - **Auto-Save**: Session persistence with hot-exit support - never lose your work
 - **Clean UI**: Dark-mode native interface with minimal distractions
--  **Keyboard Shortcuts**: Efficient navigation with command palette (Ctrl+P)
+- **Keyboard Shortcuts**: Efficient navigation with command palette (Ctrl+P)
 - **Multi-Tab**: Work on multiple documents simultaneously
 - **Text Operations**: Sort lines, trim whitespace, change case, and more
 
@@ -74,7 +74,7 @@ npm run tauri build
 
 ### Backend (Rust + Tauri)
 - **File I/O**: Atomic file operations
-- **Session Management**: SQLite for crash recovery and hot-exit
+- **Session Management**: IndexedDB / SQLite for crash recovery and hot-exit
 - **Logging**: Comprehensive logging for debugging
 
 ## Project Structure
