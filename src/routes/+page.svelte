@@ -21,9 +21,12 @@
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    async function handleGlobalKeydown(e: KeyboardEvent) {
+    // Use capturing listener to catch events before CodeMirror consumes them
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        // Allow Tab to work normally in editor unless Ctrl is pressed
         if (e.key === "Tab" && e.ctrlKey) {
             e.preventDefault();
+            e.stopPropagation();
             const nextId = editorStore.getNextTabId(appState.activeTabId, e.shiftKey);
             if (nextId) {
                 appState.activeTabId = nextId;
@@ -35,21 +38,26 @@
         if (e.ctrlKey || e.metaKey) {
             if (e.key === "s") {
                 e.preventDefault();
-                await saveCurrentFile();
+                e.stopPropagation();
+                saveCurrentFile();
             } else if (e.key === "o") {
                 e.preventDefault();
-                await openFile();
+                e.stopPropagation();
+                openFile();
             } else if (e.key === "n") {
                 e.preventDefault();
+                e.stopPropagation();
                 const id = editorStore.addTab();
                 appState.activeTabId = id;
             } else if (e.key === "w") {
                 e.preventDefault();
+                e.stopPropagation();
                 if (appState.activeTabId) {
-                    await requestCloseTab(appState.activeTabId);
+                    requestCloseTab(appState.activeTabId);
                 }
             } else if (e.key === "\\") {
                 e.preventDefault();
+                e.stopPropagation();
                 appState.toggleSplitView();
             }
         }
@@ -59,13 +67,9 @@
         // Initialization logic
         (async () => {
             try {
-                // Initialize settings first
                 await initSettings();
-
-                // Load session
                 await loadSession();
 
-                // Ensure at least one tab exists
                 if (editorStore.tabs.length === 0) {
                     const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                     appState.activeTabId = id;
@@ -73,7 +77,6 @@
 
                 isInitialized = true;
 
-                // Wait for DOM paint before showing window to prevent artifacts
                 requestAnimationFrame(() => {
                     requestAnimationFrame(async () => {
                         const win = getCurrentWindow();
@@ -85,7 +88,6 @@
                 console.error("Initialization failed:", error);
                 initError = error instanceof Error ? error.message : "Unknown initialization error";
 
-                // Create emergency tab
                 const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                 appState.activeTabId = id;
                 isInitialized = true;
@@ -96,6 +98,9 @@
                 });
             }
         })();
+
+        // Register global shortcuts with capture: true
+        window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
 
         autoSaveInterval = window.setInterval(() => {
             persistSession();
@@ -110,6 +115,7 @@
         window.addEventListener("blur", handleBlur);
 
         return () => {
+            window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
             window.removeEventListener("blur", handleBlur);
         };
     });
@@ -160,8 +166,6 @@
         saveSettings();
     }
 </script>
-
-<svelte:window onkeydown={handleGlobalKeydown} />
 
 {#if !isInitialized}
     <div class="h-screen w-screen flex items-center justify-center flex-col" style="background-color: var(--bg-main); color: var(--fg-default);">

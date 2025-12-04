@@ -2,7 +2,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { renderMarkdown } from "$lib/utils/markdown";
-    import { Columns, PanelTop } from "lucide-svelte";
+    import { SquareSplitHorizontal, SquareSplitVertical } from "lucide-svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
@@ -16,10 +16,10 @@
 
     $effect(() => {
         (async () => {
-            renderError = null; // Clear previous errors
+            renderError = null;
 
-            if (!content) {
-                htmlContent = "<p style='color: var(--fg-muted); font-style: italic; margin-top: 1rem;'>Start typing to preview...</p>";
+            if (!content || content.trim().length === 0) {
+                htmlContent = "";
                 return;
             }
 
@@ -38,10 +38,10 @@
     });
 
     let lastScrollUpdate = 0;
-    const SCROLL_THROTTLE_MS = 16; // ~60fps
+    const SCROLL_THROTTLE_MS = 16;
 
     $effect(() => {
-        if (container && scrollPercentage >= 0) {
+        if (container) {
             const now = Date.now();
             if (now - lastScrollUpdate < SCROLL_THROTTLE_MS) {
                 return;
@@ -49,13 +49,19 @@
             lastScrollUpdate = now;
 
             const maxScroll = container.scrollHeight - container.clientHeight;
-            if (maxScroll > 0) {
-                const targetScroll = maxScroll * scrollPercentage;
-                const currentScroll = container.scrollTop;
 
-                // Only update if difference is significant (reduces jitter)
-                if (Math.abs(currentScroll - targetScroll) > 10) {
-                    container.scrollTop = targetScroll;
+            if (maxScroll > 0) {
+                // Exact start/end pinning to fix sync issues
+                if (scrollPercentage <= 0.01) {
+                    container.scrollTop = 0;
+                } else if (scrollPercentage >= 0.99) {
+                    container.scrollTop = maxScroll;
+                } else {
+                    const targetScroll = maxScroll * scrollPercentage;
+                    // Only update if difference is significant to avoid jitter
+                    if (Math.abs(container.scrollTop - targetScroll) > 5) {
+                        container.scrollTop = targetScroll;
+                    }
                 }
             }
         }
@@ -64,7 +70,7 @@
 
 <!-- Parent must be relative -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group block" style="border-color: var(--border-main);">
-    <!-- Floating Switcher: Forced Absolute Positioning -->
+    <!-- Floating Switcher -->
     <button
         class="z-50 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100 cursor-pointer"
         style="
@@ -77,22 +83,27 @@
         onclick={() => appState.toggleOrientation()}
     >
         {#if appState.splitOrientation === "vertical"}
-            <PanelTop size={16} />
+            <SquareSplitVertical size={16} />
         {:else}
-            <Columns size={16} />
+            <SquareSplitHorizontal size={16} />
         {/if}
     </button>
 
     <!-- Content -->
     <div bind:this={container} class="w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default);">
-        {#if renderError}
-            <div role="alert" aria-live="polite">
-                <!-- Error is already sanitized and included in htmlContent -->
+        {#if !htmlContent}
+            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-30 pointer-events-none select-none">
+                <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
+                <h1 class="text-3xl font-bold tracking-tight" style="color: var(--fg-muted); margin: 0;">MarkdownRS</h1>
             </div>
-        {/if}
+        {:else}
+            {#if renderError}
+                <div role="alert" aria-live="polite"></div>
+            {/if}
 
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html htmlContent}
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html htmlContent}
+        {/if}
     </div>
 </div>
 

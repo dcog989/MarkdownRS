@@ -2,7 +2,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Columns, Copy, Menu, Minus, Square, X } from "lucide-svelte";
+    import { Copy, Eye, Menu, Minus, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
 
     const appWindow = getCurrentWindow();
@@ -53,7 +53,7 @@
     <!-- Controls -->
     <div class="flex h-full pointer-events-auto items-center">
         <button class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors border-r" style="color: var(--fg-muted); border-color: var(--border-main);" onclick={() => appState.toggleSplitView()} title="Toggle Preview">
-            <Columns size={14} class={appState.splitView ? "text-[var(--fg-default)]" : "opacity-50"} />
+            <Eye size={14} class={appState.splitView ? "text-[var(--fg-default)]" : "opacity-50"} />
         </button>
 
         <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={minimize}><Minus size={16} /></button>
