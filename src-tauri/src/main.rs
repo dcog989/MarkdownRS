@@ -37,10 +37,9 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // Enable Native Window Shadows (Fixes artifacts on borderless windows)
+            // Enable Native Window Shadows
             #[cfg(any(windows, target_os = "macos"))]
             {
-                // We ignore the result to avoid type mismatches if the crate signature varies
                 let _ = set_shadows(app, true);
             }
 
@@ -84,7 +83,6 @@ fn main() {
             app_handle.plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log_level)
-                    // Suppress upstream noise, only show errors for these crates
                     .level_for("tao", LevelFilter::Error)
                     .level_for("wry", LevelFilter::Error)
                     .level_for("move_resize", LevelFilter::Error)

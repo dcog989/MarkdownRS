@@ -37,31 +37,26 @@
         })();
     });
 
-    let lastScrollUpdate = 0;
-    const SCROLL_THROTTLE_MS = 16;
-
     $effect(() => {
-        if (container) {
-            const now = Date.now();
-            if (now - lastScrollUpdate < SCROLL_THROTTLE_MS) {
-                return;
-            }
-            lastScrollUpdate = now;
+        if (!container) return;
 
-            const maxScroll = container.scrollHeight - container.clientHeight;
+        const maxScroll = container.scrollHeight - container.clientHeight;
 
-            if (maxScroll > 0) {
-                // Exact start/end pinning to fix sync issues
-                if (scrollPercentage <= 0.01) {
+        if (maxScroll > 0) {
+            if (scrollPercentage === 0) {
+                if (container.scrollTop !== 0) {
+                    // info("[Preview] Hard Lock Top");
                     container.scrollTop = 0;
-                } else if (scrollPercentage >= 0.99) {
+                }
+            } else if (scrollPercentage === 1) {
+                if (container.scrollTop !== maxScroll) {
+                    // info("[Preview] Hard Lock Bottom");
                     container.scrollTop = maxScroll;
-                } else {
-                    const targetScroll = maxScroll * scrollPercentage;
-                    // Only update if difference is significant to avoid jitter
-                    if (Math.abs(container.scrollTop - targetScroll) > 5) {
-                        container.scrollTop = targetScroll;
-                    }
+                }
+            } else {
+                const target = maxScroll * scrollPercentage;
+                if (Math.abs(container.scrollTop - target) > 2) {
+                    container.scrollTop = target;
                 }
             }
         }

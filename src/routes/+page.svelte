@@ -10,6 +10,7 @@
     import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
+    import { error, info } from "@tauri-apps/plugin-log";
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number | null = null;
@@ -21,9 +22,30 @@
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    // Use capturing listener to catch events before CodeMirror consumes them
-    function handleGlobalKeydown(e: KeyboardEvent) {
-        // Allow Tab to work normally in editor unless Ctrl is pressed
+    // DIAGNOSTICS STATE
+    let debugInfo = $state({
+        hasFocus: false,
+        visibility: "unknown",
+        activeElement: "none",
+        lastEvent: "none",
+    });
+
+    function updateDebug() {
+        const ae = document.activeElement;
+        debugInfo = {
+            hasFocus: document.hasFocus(),
+            visibility: document.visibilityState,
+            activeElement: ae ? `${ae.tagName}.${ae.className.split(" ")[0]}` : "null",
+            lastEvent: debugInfo.lastEvent,
+        };
+    }
+
+    // Capture global keys to confirm window is receiving input
+    async function handleGlobalKeydown(e: KeyboardEvent) {
+        debugInfo.lastEvent = `Key: ${e.key}`;
+        updateDebug();
+
+        // Tab Cycling (Ctrl+Tab)
         if (e.key === "Tab" && e.ctrlKey) {
             e.preventDefault();
             e.stopPropagation();
@@ -35,36 +57,45 @@
             return;
         }
 
+        // App Shortcuts
         if (e.ctrlKey || e.metaKey) {
-            if (e.key === "s") {
-                e.preventDefault();
-                e.stopPropagation();
-                saveCurrentFile();
-            } else if (e.key === "o") {
-                e.preventDefault();
-                e.stopPropagation();
-                openFile();
-            } else if (e.key === "n") {
-                e.preventDefault();
-                e.stopPropagation();
-                const id = editorStore.addTab();
-                appState.activeTabId = id;
-            } else if (e.key === "w") {
-                e.preventDefault();
-                e.stopPropagation();
-                if (appState.activeTabId) {
-                    requestCloseTab(appState.activeTabId);
-                }
-            } else if (e.key === "\\") {
-                e.preventDefault();
-                e.stopPropagation();
-                appState.toggleSplitView();
+            switch (e.key.toLowerCase()) {
+                case "s":
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await saveCurrentFile();
+                    break;
+                case "o":
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await openFile();
+                    break;
+                case "n":
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const id = editorStore.addTab();
+                    appState.activeTabId = id;
+                    break;
+                case "w":
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (appState.activeTabId) {
+                        await requestCloseTab(appState.activeTabId);
+                    }
+                    break;
+                case "\\":
+                    e.preventDefault();
+                    e.stopPropagation();
+                    appState.toggleSplitView();
+                    break;
             }
         }
     }
 
     onMount(() => {
-        // Initialization logic
+        // Polling for debug overlay
+        const interval = setInterval(updateDebug, 250);
+
         (async () => {
             try {
                 await initSettings();
@@ -76,31 +107,35 @@
                 }
 
                 isInitialized = true;
+                info("[App] Initialized.");
 
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(async () => {
-                        const win = getCurrentWindow();
-                        await win.show();
-                        await win.setFocus();
-                    });
-                });
-            } catch (error) {
-                console.error("Initialization failed:", error);
-                initError = error instanceof Error ? error.message : "Unknown initialization error";
-
-                const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
-                appState.activeTabId = id;
+                // MANUALLY SHOW AND FOCUS WINDOW
+                // This prevents the "flash" of incorrect position by waiting for init
+                const win = getCurrentWindow();
+                await win.show();
+                await win.setFocus();
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                error(`[App] Init Failed: ${msg}`);
+                initError = msg;
                 isInitialized = true;
 
-                requestAnimationFrame(async () => {
-                    const win = getCurrentWindow();
-                    await win.show();
-                });
+                // Ensure window shows even on error
+                const win = getCurrentWindow();
+                await win.show();
+                await win.setFocus();
             }
         })();
 
-        // Register global shortcuts with capture: true
         window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
+        window.addEventListener("focus", () => {
+            info("[Window] Focus");
+            updateDebug();
+        });
+        window.addEventListener("blur", () => {
+            info("[Window] Blur");
+            updateDebug();
+        });
 
         autoSaveInterval = window.setInterval(() => {
             persistSession();
@@ -117,6 +152,7 @@
         return () => {
             window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
             window.removeEventListener("blur", handleBlur);
+            clearInterval(interval);
         };
     });
 
@@ -167,6 +203,14 @@
     }
 </script>
 
+<!-- DIAGNOSTIC OVERLAY -->
+<div class="fixed top-12 right-4 bg-black/90 text-red-500 p-2 z-[9999] border border-red-500 font-mono text-[10px] pointer-events-auto">
+    <div>Focus: {debugInfo.hasFocus}</div>
+    <div>Vis: {debugInfo.visibility}</div>
+    <div>Active: {debugInfo.activeElement}</div>
+    <div>Event: {debugInfo.lastEvent}</div>
+</div>
+
 {#if !isInitialized}
     <div class="h-screen w-screen flex items-center justify-center flex-col" style="background-color: var(--bg-main); color: var(--fg-default);">
         <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 animate-pulse" />
@@ -184,7 +228,7 @@
         <TabBar />
 
         <!-- Main Workspace -->
-        <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
+        <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer} tabindex="-1">
             {#if appState.activeTabId}
                 {#key appState.activeTabId}
                     <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">

@@ -6,24 +6,21 @@
     import { EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
+    import { info } from "@tauri-apps/plugin-log";
     import { onDestroy, onMount, untrack } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let editorContainer: HTMLDivElement;
     let view: EditorView;
     let contentUpdateTimer: number | null = null;
-    let scrollUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
+    let lastScrollTime = 0;
     let previousTabId: string = "";
 
     function clearAllTimers() {
         if (contentUpdateTimer !== null) {
             clearTimeout(contentUpdateTimer);
             contentUpdateTimer = null;
-        }
-        if (scrollUpdateTimer !== null) {
-            clearTimeout(scrollUpdateTimer);
-            scrollUpdateTimer = null;
         }
         if (metricsUpdateTimer !== null) {
             clearTimeout(metricsUpdateTimer);
@@ -33,7 +30,7 @@
 
     $effect(() => {
         if (tabId !== previousTabId) {
-            clearAllTimers(); // Clear all pending updates
+            clearAllTimers();
             const currentTab = editorStore.tabs.find((t) => t.id === tabId);
             if (currentTab && view) {
                 untrack(() => {
@@ -45,9 +42,12 @@
                     }
                     // Restore scroll position
                     setTimeout(() => {
-                        if (view.scrollDOM && currentTab.scrollPercentage > 0) {
-                            const scrollHeight = view.scrollDOM.scrollHeight - view.scrollDOM.clientHeight;
-                            view.scrollDOM.scrollTop = scrollHeight * currentTab.scrollPercentage;
+                        if (view.scrollDOM && currentTab.scrollPercentage >= 0) {
+                            const dom = view.scrollDOM;
+                            const scrollHeight = dom.scrollHeight - dom.clientHeight;
+                            if (scrollHeight > 0) {
+                                dom.scrollTop = scrollHeight * currentTab.scrollPercentage;
+                            }
                         }
                     }, 0);
                 });
@@ -65,7 +65,6 @@
         const ext = filename.split(".").pop()?.toLowerCase();
         const isMarkdown = !ext || ["md", "markdown", "txt", "rst"].includes(ext) || filename.startsWith("Untitled");
 
-        // Custom keymap to detect Insert Key and force End/Home behaviors
         const customKeymap = [
             {
                 key: "Insert",
@@ -83,9 +82,9 @@
                         scrollIntoView: true,
                         userEvent: "select",
                     });
-                    // Force DOM scroll as fallback for large docs
+                    // Fallback scroll
                     setTimeout(() => {
-                        view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
+                        if (view.scrollDOM) view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
                     }, 10);
                     return true;
                 },
@@ -103,7 +102,6 @@
             },
         ];
 
-        // Basic Overwrite Behavior Extension
         const inputHandler = EditorView.inputHandler.of((view, from, to, text) => {
             if (editorStore.activeMetrics.insertMode === "OVR" && from === to && text.length === 1) {
                 const doc = view.state.doc;
@@ -136,6 +134,14 @@
                 },
                 ".cm-scroller": { fontFamily: "monospace", overflow: "auto" },
             }),
+            EditorView.domEventHandlers({
+                focus: () => {
+                    info("[Editor] Focus");
+                },
+                blur: () => {
+                    info("[Editor] Blur");
+                },
+            }),
         ];
 
         if (isMarkdown) {
@@ -143,7 +149,6 @@
         }
 
         const updateListener = EditorView.updateListener.of((update) => {
-            // Content updates - 100ms debounce
             if (update.docChanged) {
                 if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
                 contentUpdateTimer = window.setTimeout(() => {
@@ -152,20 +157,32 @@
                 }, 100);
             }
 
-            // Scroll updates - Low latency (10ms) for sync
+            // Scroll Calculation
             if (update.view.scrollDOM) {
-                if (scrollUpdateTimer !== null) clearTimeout(scrollUpdateTimer);
-                scrollUpdateTimer = window.setTimeout(() => {
+                const now = Date.now();
+                if (now - lastScrollTime > 16) {
                     const scrollElement = update.view.scrollDOM;
                     const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
+
                     if (scrollHeight > 0) {
-                        const percentage = scrollElement.scrollTop / scrollHeight;
-                        if (!isNaN(percentage) && isFinite(percentage)) {
-                            editorStore.updateScroll(tabId, Math.max(0, Math.min(1, percentage)));
+                        let percentage = scrollElement.scrollTop / scrollHeight;
+
+                        // Aggressive Clamping (5px buffer)
+                        if (scrollElement.scrollTop <= 5) {
+                            percentage = 0;
+                        } else if (Math.abs(scrollElement.scrollTop - scrollHeight) <= 5) {
+                            percentage = 1;
                         }
+
+                        // Bounds check
+                        percentage = Math.max(0, Math.min(1, percentage));
+
+                        editorStore.updateScroll(tabId, percentage);
+                        lastScrollTime = now;
+                    } else {
+                        editorStore.updateScroll(tabId, 0);
                     }
-                    scrollUpdateTimer = null;
-                }, 10);
+                }
             }
 
             if (update.docChanged || update.selectionSet) {
@@ -207,15 +224,6 @@
         });
 
         view.focus();
-
-        // Initial scroll restore
-        if (currentTab && currentTab.scrollPercentage > 0) {
-            setTimeout(() => {
-                const dom = view.scrollDOM;
-                const scrollHeight = dom.scrollHeight - dom.clientHeight;
-                dom.scrollTop = scrollHeight * currentTab.scrollPercentage;
-            }, 50);
-        }
     });
 
     onDestroy(() => {
@@ -224,11 +232,9 @@
     });
 </script>
 
-<!-- Add a dynamic class based on insert mode for CSS styling of cursor -->
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer}></div>
 
 <style>
-    /* CSS override for cursor style when in overwrite mode */
     :global(.overwrite-mode .cm-cursor) {
         border-left: none !important;
         border-bottom: 3px solid #eac55f !important;
