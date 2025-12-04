@@ -13,7 +13,6 @@
     let view: EditorView;
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
-    let lastScrollTime = 0;
     let previousTabId: string = "";
 
     function clearAllTimers() {
@@ -39,7 +38,6 @@
                             changes: { from: 0, to: currentDoc.length, insert: currentTab.content },
                         });
                     }
-                    // Restore scroll position
                     setTimeout(() => {
                         if (view.scrollDOM && currentTab.scrollPercentage >= 0) {
                             const dom = view.scrollDOM;
@@ -59,10 +57,6 @@
         const currentTab = editorStore.tabs.find((t) => t.id === tabId);
         const initialContent = currentTab?.content || "";
         const filename = currentTab?.title || "";
-        previousTabId = tabId;
-
-        const ext = filename.split(".").pop()?.toLowerCase();
-        const isMarkdown = !ext || ["md", "markdown", "txt", "rst"].includes(ext) || filename.startsWith("Untitled");
 
         const customKeymap = [
             {
@@ -81,9 +75,6 @@
                         scrollIntoView: true,
                         userEvent: "select",
                     });
-                    setTimeout(() => {
-                        if (view.scrollDOM) view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
-                    }, 10);
                     return true;
                 },
             },
@@ -116,6 +107,25 @@
             return false;
         });
 
+        const eventHandlers = EditorView.domEventHandlers({
+            scroll: (event, view) => {
+                const dom = view.scrollDOM;
+                const maxScroll = dom.scrollHeight - dom.clientHeight;
+
+                if (maxScroll > 0) {
+                    let percentage = dom.scrollTop / maxScroll;
+
+                    if (dom.scrollTop <= 2) percentage = 0;
+                    else if (Math.abs(dom.scrollTop - maxScroll) <= 2) percentage = 1;
+
+                    percentage = Math.max(0, Math.min(1, percentage));
+                    editorStore.updateScroll(tabId, percentage);
+                } else {
+                    editorStore.updateScroll(tabId, 0);
+                }
+            },
+        });
+
         const extensions = [
             lineNumbers(),
             highlightActiveLineGutter(),
@@ -124,6 +134,7 @@
             oneDark,
             EditorView.lineWrapping,
             inputHandler,
+            eventHandlers,
             EditorView.theme({
                 "&": { height: "100%", fontSize: "14px" },
                 ".cm-cursor": {
@@ -134,7 +145,7 @@
             }),
         ];
 
-        if (isMarkdown) {
+        if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
         }
 
@@ -145,30 +156,6 @@
                     editorStore.updateContent(tabId, update.state.doc.toString());
                     contentUpdateTimer = null;
                 }, 100);
-            }
-
-            if (update.view.scrollDOM) {
-                const now = Date.now();
-                if (now - lastScrollTime > 16) {
-                    const scrollElement = update.view.scrollDOM;
-                    const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
-
-                    if (scrollHeight > 0) {
-                        let percentage = scrollElement.scrollTop / scrollHeight;
-
-                        if (scrollElement.scrollTop <= 5) {
-                            percentage = 0;
-                        } else if (Math.abs(scrollElement.scrollTop - scrollHeight) <= 5) {
-                            percentage = 1;
-                        }
-
-                        percentage = Math.max(0, Math.min(1, percentage));
-                        editorStore.updateScroll(tabId, percentage);
-                        lastScrollTime = now;
-                    } else {
-                        editorStore.updateScroll(tabId, 0);
-                    }
-                }
             }
 
             if (update.docChanged || update.selectionSet) {
@@ -209,7 +196,6 @@
             parent: editorContainer,
         });
 
-        // Reclaim focus when window receives focus (Standard for Custom Editors)
         const handleWindowFocus = () => {
             if (view && !view.hasFocus) {
                 view.focus();
@@ -234,7 +220,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
+<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
 
 <style>
     :global(.overwrite-mode .cm-cursor) {

@@ -40,12 +40,15 @@
     $effect(() => {
         if (!container) return;
 
+        // Ensure JS scroll takes precedence over any CSS smooth scrolling
+        container.style.scrollBehavior = "auto";
+
         const maxScroll = container.scrollHeight - container.clientHeight;
 
         if (maxScroll > 0) {
-            if (scrollPercentage === 0) {
+            if (scrollPercentage <= 0.001) {
                 if (container.scrollTop !== 0) container.scrollTop = 0;
-            } else if (scrollPercentage === 1) {
+            } else if (scrollPercentage >= 0.999) {
                 if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
             } else {
                 const target = maxScroll * scrollPercentage;
