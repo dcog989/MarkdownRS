@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
-    import { EditorSelection, EditorState } from "@codemirror/state";
+    import { EditorSelection, EditorState, Compartment } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
     import { onDestroy, onMount, untrack } from "svelte";
@@ -14,6 +15,7 @@
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
     let previousTabId: string = "";
+    let themeCompartment = new Compartment();
 
     function clearAllTimers() {
         if (contentUpdateTimer !== null) {
@@ -25,6 +27,23 @@
             metricsUpdateTimer = null;
         }
     }
+
+    // React to font settings changes
+    $effect(() => {
+        if (view) {
+            const newTheme = EditorView.theme({
+                "&": { height: "100%", fontSize: `${appState.editorFontSize}px` },
+                ".cm-cursor": {
+                    borderLeftColor: editorStore.activeMetrics.insertMode === "OVR" ? "transparent" : "white",
+                    borderBottom: editorStore.activeMetrics.insertMode === "OVR" ? "2px solid white" : "none",
+                },
+                ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
+            });
+            view.dispatch({
+                effects: themeCompartment.reconfigure(newTheme)
+            });
+        }
+    });
 
     $effect(() => {
         if (tabId !== previousTabId) {
@@ -135,14 +154,14 @@
             EditorView.lineWrapping,
             inputHandler,
             eventHandlers,
-            EditorView.theme({
-                "&": { height: "100%", fontSize: "14px" },
+            themeCompartment.of(EditorView.theme({
+                "&": { height: "100%", fontSize: `${appState.editorFontSize}px` },
                 ".cm-cursor": {
                     borderLeftColor: editorStore.activeMetrics.insertMode === "OVR" ? "transparent" : "white",
                     borderBottom: editorStore.activeMetrics.insertMode === "OVR" ? "2px solid white" : "none",
                 },
-                ".cm-scroller": { fontFamily: "monospace", overflow: "auto" },
-            }),
+                ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
+            })),
         ];
 
         if (!filename.endsWith(".txt")) {

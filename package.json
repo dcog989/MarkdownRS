@@ -1,6 +1,6 @@
 {
     "name": "markdown-rs",
-    "version": "0.1.32",
+    "version": "0.1.52",
     "private": true,
     "type": "module",
     "scripts": {

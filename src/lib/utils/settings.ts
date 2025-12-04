@@ -20,6 +20,11 @@ export async function initSettings() {
             tabCycling: 'mru' | 'sequential';
             tabWidthMin: number;
             tabWidthMax: number;
+            editorFontFamily: string;
+            editorFontSize: number;
+            previewFontFamily: string;
+            previewFontSize: number;
+            logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error';
         }>('app-settings');
 
         if (saved) {
@@ -31,6 +36,12 @@ export async function initSettings() {
 
             if (saved.tabWidthMin) appState.tabWidthMin = saved.tabWidthMin;
             if (saved.tabWidthMax) appState.tabWidthMax = saved.tabWidthMax;
+
+            if (saved.editorFontFamily) appState.editorFontFamily = saved.editorFontFamily;
+            if (saved.editorFontSize) appState.editorFontSize = saved.editorFontSize;
+            if (saved.previewFontFamily) appState.previewFontFamily = saved.previewFontFamily;
+            if (saved.previewFontSize) appState.previewFontSize = saved.previewFontSize;
+            if (saved.logLevel) appState.logLevel = saved.logLevel;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
@@ -50,7 +61,12 @@ export async function saveSettings() {
             splitView: appState.splitView,
             tabCycling: appState.tabCycling,
             tabWidthMin: appState.tabWidthMin,
-            tabWidthMax: appState.tabWidthMax
+            tabWidthMax: appState.tabWidthMax,
+            editorFontFamily: appState.editorFontFamily,
+            editorFontSize: appState.editorFontSize,
+            previewFontFamily: appState.previewFontFamily,
+            previewFontSize: appState.previewFontSize,
+            logLevel: appState.logLevel
         };
 
         await store.set('app-settings', newSettings);

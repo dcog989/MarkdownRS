@@ -12,6 +12,15 @@ export class AppState {
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
 
+    // Editor & Preview Settings
+    editorFontFamily = $state("Consolas, 'Courier New', monospace");
+    editorFontSize = $state(14);
+    previewFontFamily = $state("system-ui, -apple-system, sans-serif");
+    previewFontSize = $state(16);
+    
+    // Advanced Settings
+    logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');
+
     constructor() {
         // Initialization logic
     }

@@ -1,7 +1,6 @@
 <script lang="ts">
     import Editor from "$lib/components/editor/Editor.svelte";
     import Preview from "$lib/components/preview/Preview.svelte";
-    import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
     import StatusBar from "$lib/components/ui/StatusBar.svelte";
     import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
@@ -167,8 +166,6 @@
     </div>
 {:else}
     <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
-        <CommandPalette />
-
         <!-- Header Section -->
         <Titlebar />
         <TabBar />
