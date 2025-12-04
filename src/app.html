@@ -4,6 +4,18 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
+
+    <!-- Critical CSS: Prevents white flash on startup -->
+    <style>
+        html,
+        body {
+            background-color: #1e1e1e;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+
     %sveltekit.head%
 </head>
 

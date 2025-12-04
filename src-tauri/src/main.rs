@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
-use window_shadows_v2::set_shadows;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AppSettings {
@@ -37,12 +36,6 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // Enable Native Window Shadows (Crucial for borderless window behavior)
-            #[cfg(any(windows, target_os = "macos"))]
-            {
-                let _ = set_shadows(app, true);
-            }
-
             let app_handle = app.handle();
             let window = app.get_webview_window("main").unwrap();
 
@@ -108,18 +101,16 @@ fn main() {
                 db: std::sync::Mutex::new(db),
             });
 
-            // 6. ASYNC SHOW & FOCUS
-            // Delays showing the window until after initialization to prevent flash.
-            // Explicitly sets focus to ensure the OS grants input rights to the borderless window.
+            // 6. Async Show & Focus (Prevents Flash + Ghost Focus)
             tauri::async_runtime::spawn(async move {
-                // Wait for window-state plugin to restore position
+                // Wait for window-state to restore position
                 std::thread::sleep(std::time::Duration::from_millis(150));
 
                 if let Err(e) = window.show() {
                     log::error!("Failed to show window: {}", e);
                 }
 
-                // Small buffer to let the OS process the visibility change before requesting focus
+                // Buffer for OS visibility
                 std::thread::sleep(std::time::Duration::from_millis(50));
 
                 if let Err(e) = window.set_focus() {
