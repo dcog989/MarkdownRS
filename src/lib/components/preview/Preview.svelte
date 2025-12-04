@@ -44,15 +44,9 @@
 
         if (maxScroll > 0) {
             if (scrollPercentage === 0) {
-                if (container.scrollTop !== 0) {
-                    // info("[Preview] Hard Lock Top");
-                    container.scrollTop = 0;
-                }
+                if (container.scrollTop !== 0) container.scrollTop = 0;
             } else if (scrollPercentage === 1) {
-                if (container.scrollTop !== maxScroll) {
-                    // info("[Preview] Hard Lock Bottom");
-                    container.scrollTop = maxScroll;
-                }
+                if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
             } else {
                 const target = maxScroll * scrollPercentage;
                 if (Math.abs(container.scrollTop - target) > 2) {

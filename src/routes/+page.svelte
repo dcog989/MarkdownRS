@@ -9,7 +9,6 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
-    import { error, info } from "@tauri-apps/plugin-log";
     import { onDestroy, onMount } from "svelte";
 
     let autoSaveInterval: number | null = null;
@@ -73,7 +72,6 @@
     onMount(() => {
         (async () => {
             try {
-                info("[App] Initializing...");
                 await initSettings();
                 await loadSession();
 
@@ -83,12 +81,10 @@
                 }
 
                 isInitialized = true;
-                info("[App] Initialized.");
-
-                // Note: Window visibility and focus is handled by Rust in main.rs
+                // Window visibility is handled by Rust backend to prevent flash
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                error(`[App] Init Failed: ${msg}`);
+                console.error("Initialization Failed:", msg);
                 initError = msg;
                 isInitialized = true;
             }
@@ -178,7 +174,7 @@
         <TabBar />
 
         <!-- Main Workspace -->
-        <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
+        <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer}>
             {#if appState.activeTabId}
                 {#key appState.activeTabId}
                     <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">

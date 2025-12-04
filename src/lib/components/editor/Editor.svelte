@@ -6,7 +6,6 @@
     import { EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
-    import { info } from "@tauri-apps/plugin-log";
     import { onDestroy, onMount, untrack } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
@@ -133,14 +132,6 @@
                 },
                 ".cm-scroller": { fontFamily: "monospace", overflow: "auto" },
             }),
-            EditorView.domEventHandlers({
-                focus: () => {
-                    info("[Editor] Focus");
-                },
-                blur: () => {
-                    info("[Editor] Blur");
-                },
-            }),
         ];
 
         if (isMarkdown) {
@@ -218,8 +209,7 @@
             parent: editorContainer,
         });
 
-        // STANDARD WEB API: Reclaim focus when window receives focus
-        // This is required for non-native inputs (like CodeMirror) to handle Alt-Tab correctly
+        // Reclaim focus when window receives focus (Standard for Custom Editors)
         const handleWindowFocus = () => {
             if (view && !view.hasFocus) {
                 view.focus();
