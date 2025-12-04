@@ -82,7 +82,6 @@
                         scrollIntoView: true,
                         userEvent: "select",
                     });
-                    // Fallback scroll
                     setTimeout(() => {
                         if (view.scrollDOM) view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
                     }, 10);
@@ -157,7 +156,6 @@
                 }, 100);
             }
 
-            // Scroll Calculation
             if (update.view.scrollDOM) {
                 const now = Date.now();
                 if (now - lastScrollTime > 16) {
@@ -167,16 +165,13 @@
                     if (scrollHeight > 0) {
                         let percentage = scrollElement.scrollTop / scrollHeight;
 
-                        // Aggressive Clamping (5px buffer)
                         if (scrollElement.scrollTop <= 5) {
                             percentage = 0;
                         } else if (Math.abs(scrollElement.scrollTop - scrollHeight) <= 5) {
                             percentage = 1;
                         }
 
-                        // Bounds check
                         percentage = Math.max(0, Math.min(1, percentage));
-
                         editorStore.updateScroll(tabId, percentage);
                         lastScrollTime = now;
                     } else {
@@ -223,7 +218,22 @@
             parent: editorContainer,
         });
 
+        // STANDARD WEB API: Reclaim focus when window receives focus
+        // This is required for non-native inputs (like CodeMirror) to handle Alt-Tab correctly
+        const handleWindowFocus = () => {
+            if (view && !view.hasFocus) {
+                view.focus();
+            }
+        };
+        window.addEventListener("focus", handleWindowFocus);
+
         view.focus();
+
+        return () => {
+            window.removeEventListener("focus", handleWindowFocus);
+            if (view) view.destroy();
+            clearAllTimers();
+        };
     });
 
     onDestroy(() => {
@@ -232,7 +242,9 @@
     });
 </script>
 
-<div class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer}></div>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
 
 <style>
     :global(.overwrite-mode .cm-cursor) {

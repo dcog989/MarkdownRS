@@ -9,7 +9,6 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
     import { error, info } from "@tauri-apps/plugin-log";
     import { onDestroy, onMount } from "svelte";
 
@@ -22,29 +21,8 @@
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    // DIAGNOSTICS STATE
-    let debugInfo = $state({
-        hasFocus: false,
-        visibility: "unknown",
-        activeElement: "none",
-        lastEvent: "none",
-    });
-
-    function updateDebug() {
-        const ae = document.activeElement;
-        debugInfo = {
-            hasFocus: document.hasFocus(),
-            visibility: document.visibilityState,
-            activeElement: ae ? `${ae.tagName}.${ae.className.split(" ")[0]}` : "null",
-            lastEvent: debugInfo.lastEvent,
-        };
-    }
-
-    // Capture global keys to confirm window is receiving input
+    // Global Shortcut Handler (Capturing Phase)
     async function handleGlobalKeydown(e: KeyboardEvent) {
-        debugInfo.lastEvent = `Key: ${e.key}`;
-        updateDebug();
-
         // Tab Cycling (Ctrl+Tab)
         if (e.key === "Tab" && e.ctrlKey) {
             e.preventDefault();
@@ -93,11 +71,9 @@
     }
 
     onMount(() => {
-        // Polling for debug overlay
-        const interval = setInterval(updateDebug, 250);
-
         (async () => {
             try {
+                info("[App] Initializing...");
                 await initSettings();
                 await loadSession();
 
@@ -109,33 +85,16 @@
                 isInitialized = true;
                 info("[App] Initialized.");
 
-                // MANUALLY SHOW AND FOCUS WINDOW
-                // This prevents the "flash" of incorrect position by waiting for init
-                const win = getCurrentWindow();
-                await win.show();
-                await win.setFocus();
+                // Note: Window visibility and focus is handled by Rust in main.rs
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 error(`[App] Init Failed: ${msg}`);
                 initError = msg;
                 isInitialized = true;
-
-                // Ensure window shows even on error
-                const win = getCurrentWindow();
-                await win.show();
-                await win.setFocus();
             }
         })();
 
         window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
-        window.addEventListener("focus", () => {
-            info("[Window] Focus");
-            updateDebug();
-        });
-        window.addEventListener("blur", () => {
-            info("[Window] Blur");
-            updateDebug();
-        });
 
         autoSaveInterval = window.setInterval(() => {
             persistSession();
@@ -152,7 +111,6 @@
         return () => {
             window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
             window.removeEventListener("blur", handleBlur);
-            clearInterval(interval);
         };
     });
 
@@ -203,14 +161,6 @@
     }
 </script>
 
-<!-- DIAGNOSTIC OVERLAY -->
-<div class="fixed top-12 right-4 bg-black/90 text-red-500 p-2 z-[9999] border border-red-500 font-mono text-[10px] pointer-events-auto">
-    <div>Focus: {debugInfo.hasFocus}</div>
-    <div>Vis: {debugInfo.visibility}</div>
-    <div>Active: {debugInfo.activeElement}</div>
-    <div>Event: {debugInfo.lastEvent}</div>
-</div>
-
 {#if !isInitialized}
     <div class="h-screen w-screen flex items-center justify-center flex-col" style="background-color: var(--bg-main); color: var(--fg-default);">
         <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 animate-pulse" />
@@ -228,7 +178,7 @@
         <TabBar />
 
         <!-- Main Workspace -->
-        <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer} tabindex="-1">
+        <div class="flex-1 flex overflow-hidden relative z-0" bind:this={mainContainer}>
             {#if appState.activeTabId}
                 {#key appState.activeTabId}
                     <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">

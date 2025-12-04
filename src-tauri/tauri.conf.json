@@ -17,10 +17,8 @@
                 "width": 1200,
                 "height": 800,
                 "resizable": true,
-                "fullscreen": false,
                 "decorations": false,
-                "transparent": true,
-                "backgroundColor": "#00000000",
+                "transparent": false,
                 "visible": false
             }
         ],
