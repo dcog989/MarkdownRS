@@ -78,6 +78,8 @@ body {
     color: var(--fg-default);
     height: 100%;
     width: 100%;
+    /* Creates a new stacking context to prevent GPU artifacts/tearing */
+    isolation: isolate;
 }
 
 /* Custom thin scrollbar styling */

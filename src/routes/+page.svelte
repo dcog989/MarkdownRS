@@ -73,10 +73,14 @@
 
                 isInitialized = true;
 
-                // Explicitly show window after initialization is complete
-                const win = getCurrentWindow();
-                await win.show();
-                await win.setFocus();
+                // Wait for DOM paint before showing window to prevent artifacts
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(async () => {
+                        const win = getCurrentWindow();
+                        await win.show();
+                        await win.setFocus();
+                    });
+                });
             } catch (error) {
                 console.error("Initialization failed:", error);
                 initError = error instanceof Error ? error.message : "Unknown initialization error";
@@ -86,9 +90,10 @@
                 appState.activeTabId = id;
                 isInitialized = true;
 
-                // Show window even on error
-                const win = getCurrentWindow();
-                await win.show();
+                requestAnimationFrame(async () => {
+                    const win = getCurrentWindow();
+                    await win.show();
+                });
             }
         })();
 
