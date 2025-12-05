@@ -36,8 +36,8 @@
     /* Functional */
     --status-bar-bg: #7c5a73;
     --status-bar-fg: #ffffff;
-    --danger: #e81123;
-    --danger-hover: #c9101e;
+    --danger: #fc707b;
+    --danger-hover: #ef3746;
     --danger-text: #ff6b6b; /* Lighter red for text on dark backgrounds */
     --success: #0e639c;
     --success-hover: #1177bb;

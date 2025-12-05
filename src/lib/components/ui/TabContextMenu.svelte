@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { appState } from "$lib/stores/appState.svelte.ts";
+    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
-    import { save } from "@tauri-apps/plugin-dialog";
     import { invoke } from "@tauri-apps/api/core";
+    import { save } from "@tauri-apps/plugin-dialog";
     import { Pin, PinOff } from "lucide-svelte";
 
     interface Props {
@@ -209,6 +209,6 @@
 
         <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {tab?.path ? 'var(--danger)' : 'var(--fg-muted)'};" disabled={!tab?.path} onclick={handleSendToRecycleBin}>Send to Recycle Bin</button>
+        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {tab?.path ? 'var(--danger)' : 'var(--fg-muted)'};" disabled={!tab?.path} onclick={handleSendToRecycleBin}>Delete to Recycle Bin</button>
     </div>
 </div>
