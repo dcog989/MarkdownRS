@@ -4,7 +4,7 @@
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
-    import { EditorSelection, EditorState, Compartment } from "@codemirror/state";
+    import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
     import { onDestroy, onMount, untrack } from "svelte";
@@ -40,7 +40,7 @@
                 ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
             });
             view.dispatch({
-                effects: themeCompartment.reconfigure(newTheme)
+                effects: themeCompartment.reconfigure(newTheme),
             });
         }
     });
@@ -152,16 +152,19 @@
             keymap.of([...customKeymap, ...defaultKeymap, ...historyKeymap]),
             oneDark,
             EditorView.lineWrapping,
+            EditorView.contentAttributes.of({ spellcheck: "true" }),
             inputHandler,
             eventHandlers,
-            themeCompartment.of(EditorView.theme({
-                "&": { height: "100%", fontSize: `${appState.editorFontSize}px` },
-                ".cm-cursor": {
-                    borderLeftColor: editorStore.activeMetrics.insertMode === "OVR" ? "transparent" : "white",
-                    borderBottom: editorStore.activeMetrics.insertMode === "OVR" ? "2px solid white" : "none",
-                },
-                ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
-            })),
+            themeCompartment.of(
+                EditorView.theme({
+                    "&": { height: "100%", fontSize: `${appState.editorFontSize}px` },
+                    ".cm-cursor": {
+                        borderLeftColor: editorStore.activeMetrics.insertMode === "OVR" ? "transparent" : "white",
+                        borderBottom: editorStore.activeMetrics.insertMode === "OVR" ? "2px solid white" : "none",
+                    },
+                    ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
+                })
+            ),
         ];
 
         if (!filename.endsWith(".txt")) {

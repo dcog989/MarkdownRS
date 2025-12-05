@@ -54,11 +54,15 @@ export async function openFile() {
             const content = await invoke<string>('read_text_file', { path: sanitizedPath });
             const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
+            // Detect Line Ending
+            const hasCRLF = content.includes('\r\n');
+
             const id = editorStore.addTab(fileName, content);
             const tab = editorStore.tabs.find(t => t.id === id);
             if (tab) {
                 tab.path = sanitizedPath;
                 tab.isDirty = false;
+                tab.lineEnding = hasCRLF ? 'CRLF' : 'LF';
                 await refreshMetadata(id, sanitizedPath);
             }
             appState.activeTabId = id;
@@ -87,7 +91,14 @@ export async function saveCurrentFile() {
 
         if (savePath) {
             const sanitizedPath = sanitizePath(savePath);
-            await invoke('write_text_file', { path: sanitizedPath, content: tab.content });
+
+            // Handle Line Endings
+            let contentToSave = tab.content;
+            if (tab.lineEnding === 'CRLF') {
+                contentToSave = contentToSave.replace(/\n/g, '\r\n');
+            }
+
+            await invoke('write_text_file', { path: sanitizedPath, content: contentToSave });
             tab.path = sanitizedPath;
             tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
             tab.isDirty = false;
@@ -104,7 +115,7 @@ export async function saveCurrentFile() {
 export async function requestCloseTab(id: string, force = false) {
     const tab = editorStore.tabs.find(t => t.id === id);
     if (!tab) return;
-    
+
     // Don't close pinned tabs unless forced
     if (tab.isPinned && !force) return;
 
@@ -201,7 +212,9 @@ export async function loadSession() {
                 created: t.created || undefined,
                 modified: t.modified || undefined,
                 isPinned: t.is_pinned,
-                customTitle: t.custom_title || undefined
+                customTitle: t.custom_title || undefined,
+                lineEnding: 'LF', // Default, as backend doesn't persist this yet
+                encoding: 'UTF-8'
             }));
 
             editorStore.tabs = convertedTabs;

@@ -12,8 +12,27 @@
     // Timestamp
     let timestamp = $derived(activeTab?.modified || activeTab?.created || "");
 
+    // Settings
+    let lineEnding = $derived(activeTab?.lineEnding || "LF");
+    let encoding = $derived(activeTab?.encoding || "UTF-8");
+
     // Calculate base opacity: 1 - (transparency / 100).
     let baseOpacity = $derived(1 - appState.statusBarTransparency / 100);
+
+    function toggleLineEnding() {
+        if (activeTab) {
+            activeTab.lineEnding = activeTab.lineEnding === "LF" ? "CRLF" : "LF";
+            editorStore.sessionDirty = true;
+        }
+    }
+
+    function toggleEncoding() {
+        if (activeTab) {
+            // Currently only UTF-8 is supported by the backend, but we provide the hook here
+            // activeTab.encoding = ...
+            alert("Only UTF-8 encoding is currently supported.");
+        }
+    }
 </script>
 
 <footer
@@ -46,6 +65,16 @@
 
         <span class="hidden sm:inline">{m.sizeKB.toFixed(2)} KB</span>
         <span class="hidden sm:inline">Ln {m.cursorLine}, Col {m.cursorCol}</span>
+
+        <!-- Line Ending -->
+        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={toggleLineEnding} title="Toggle Line Ending">
+            {lineEnding}
+        </button>
+
+        <!-- Encoding -->
+        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={toggleEncoding} title="Change Encoding">
+            {encoding}
+        </button>
 
         <!-- Insert Mode Indicator -->
         <span class="font-bold w-8 text-center" style="color: {m.insertMode === 'OVR' ? 'var(--danger)' : 'var(--accent-secondary)'}">

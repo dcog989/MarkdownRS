@@ -9,9 +9,11 @@ export type EditorTab = {
     scrollPercentage: number;
     created?: string;
     modified?: string;
-    originalTitle?: string; // To revert if content deleted
-    isPinned?: boolean; // Pinned tabs cannot be closed with Ctrl+W
-    customTitle?: string; // User-renamed title
+    originalTitle?: string;
+    isPinned?: boolean;
+    customTitle?: string;
+    lineEnding: 'LF' | 'CRLF';
+    encoding: string;
 };
 
 export type ClosedTab = {
@@ -71,7 +73,9 @@ export class EditorStore {
             path: null,
             scrollPercentage: 0,
             created: now,
-            modified: now
+            modified: now,
+            lineEnding: 'LF',
+            encoding: 'UTF-8'
         };
 
         this.tabs = [...this.tabs, newTab];
@@ -84,9 +88,7 @@ export class EditorStore {
         const index = this.tabs.findIndex(t => t.id === id);
         if (index !== -1) {
             const tab = this.tabs[index];
-            // Save to history for reopening
             this.closedTabsHistory.unshift({ tab: { ...tab }, index });
-            // Keep only last 10 closed tabs
             if (this.closedTabsHistory.length > 10) {
                 this.closedTabsHistory.pop();
             }
@@ -99,7 +101,6 @@ export class EditorStore {
     reopenLastClosed() {
         const lastClosed = this.closedTabsHistory.shift();
         if (lastClosed) {
-            // Restore the tab at its original position
             const insertIndex = Math.min(lastClosed.index, this.tabs.length);
             this.tabs.splice(insertIndex, 0, lastClosed.tab);
             this.pushToMru(lastClosed.tab.id);
@@ -121,7 +122,6 @@ export class EditorStore {
             }
             return this.mruStack[0] || null;
         } else {
-            // Sequential Cycling
             const currentIndex = this.tabs.findIndex(t => t.id === currentId);
             if (currentIndex === -1) return this.tabs[0]?.id || null;
 
@@ -145,17 +145,14 @@ export class EditorStore {
         tab.isDirty = true;
         tab.modified = getCurrentTimestamp();
 
-        // Smart Title Logic for Untitled Docs
         if (!tab.path) {
             const trimmed = content.trim();
             if (trimmed.length > 0) {
-                // Get first line, max 20 chars
                 const firstLine = trimmed.split('\n')[0].trim();
                 let smartTitle = firstLine.substring(0, 20);
                 if (firstLine.length > 20) smartTitle += "...";
                 tab.title = smartTitle;
             } else {
-                // Revert to original Untitled-X if empty
                 if (tab.originalTitle) tab.title = tab.originalTitle;
             }
         }
