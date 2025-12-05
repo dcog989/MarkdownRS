@@ -32,8 +32,7 @@
 
         const interval = setInterval(() => {
             scheduleCheckScroll();
-            // Force reactivity for time-based colors every minute
-            editorStore.tabs = [...editorStore.tabs];
+            editorStore.tabs = [...editorStore.tabs]; // Force reactivity
         }, 60000);
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -215,7 +214,7 @@
             <button
                 type="button"
                 data-active={isActive}
-                class="group relative h-8 px-2 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
+                class="group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
                 style="
                     background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
                     color: {isActive ? 'var(--fg-default)' : 'var(--fg-muted)'};
@@ -242,7 +241,9 @@
 
                 <!-- Pin Icon (Static) -->
                 {#if tab.isPinned}
-                    <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+                    <div class="w-6 flex items-center justify-center">
+                        <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+                    </div>
                 {/if}
 
                 <!-- Close Button (Overlay on Right) -->
