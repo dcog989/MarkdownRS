@@ -173,12 +173,11 @@
     function getIconColor(tab: EditorTab, isActive: boolean): string {
         if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
 
-        // Parse "YYYYMMDD / HHMMSS"
         const parts = tab.modified.split(" / ");
         if (parts.length !== 2) return isActive ? "#ffffff" : "var(--fg-muted)";
 
-        const dStr = parts[0]; // YYYYMMDD
-        const tStr = parts[1]; // HHMMSS
+        const dStr = parts[0];
+        const tStr = parts[1];
 
         const year = parseInt(dStr.substring(0, 4));
         const month = parseInt(dStr.substring(4, 6)) - 1;
@@ -192,8 +191,8 @@
         const diffMs = now.getTime() - modDate.getTime();
         const diffHours = diffMs / (1000 * 60 * 60);
 
-        if (diffHours <= 1) return "#5deb47"; // Bright Green
-        if (diffHours <= 24) return "#c2f7ba"; // Light Green
+        if (diffHours <= 1) return "#5deb47";
+        if (diffHours <= 24) return "#c2f7ba";
 
         return isActive ? "#ffffff" : "var(--fg-muted)";
     }
@@ -216,7 +215,7 @@
             <button
                 type="button"
                 data-active={isActive}
-                class="group relative h-8 px-2 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
+                class="group relative h-8 px-2 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
                 style="
                     background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
                     color: {isActive ? 'var(--fg-default)' : 'var(--fg-muted)'};
@@ -238,19 +237,22 @@
                     <File size={14} class="flex-shrink-0" style="color: {iconColor}" />
                 {/if}
 
-                <!-- Title -->
+                <!-- Title (Full Width) -->
                 <span class="truncate flex-1 w-full text-left">{tab.customTitle || tab.title}</span>
 
-                <!-- Right Side: Pin Icon or Close Button -->
-                <div class="flex items-center justify-center w-5 h-5 shrink-0">
-                    {#if tab.isPinned}
-                        <Pin size={12} style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
-                    {:else}
-                        <span role="button" tabindex="0" class="hidden group-hover:flex p-1 rounded hover:bg-white/10 transition-colors items-center justify-center" style="color: var(--fg-muted);" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
-                            <X size={12} />
+                <!-- Pin Icon (Static) -->
+                {#if tab.isPinned}
+                    <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+                {/if}
+
+                <!-- Close Button (Overlay on Right) -->
+                {#if !tab.isPinned}
+                    <div class="absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" style="background: linear-gradient(to right, transparent 0%, {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'} 30%);">
+                        <span role="button" tabindex="0" class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center" style="color: var(--fg-muted);" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
+                            <X size={12} class="hover:text-[var(--danger-text)]" />
                         </span>
-                    {/if}
-                </div>
+                    </div>
+                {/if}
             </button>
         {/each}
 

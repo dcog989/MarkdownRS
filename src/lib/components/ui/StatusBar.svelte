@@ -27,11 +27,7 @@
     }
 
     function toggleEncoding() {
-        if (activeTab) {
-            // Currently only UTF-8 is supported by the backend, but we provide the hook here
-            // activeTab.encoding = ...
-            alert("Only UTF-8 encoding is currently supported.");
-        }
+        // Encoding change unimplemented in backend currently
     }
 </script>
 
@@ -72,7 +68,7 @@
         </button>
 
         <!-- Encoding -->
-        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={toggleEncoding} title="Change Encoding">
+        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={toggleEncoding} title="Encoding (UTF-8 only)">
             {encoding}
         </button>
 

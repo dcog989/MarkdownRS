@@ -213,7 +213,7 @@ export async function loadSession() {
                 modified: t.modified || undefined,
                 isPinned: t.is_pinned,
                 customTitle: t.custom_title || undefined,
-                lineEnding: 'LF', // Default, as backend doesn't persist this yet
+                lineEnding: t.content.includes('\r\n') ? 'CRLF' : 'LF',
                 encoding: 'UTF-8'
             }));
 

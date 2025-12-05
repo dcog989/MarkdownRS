@@ -48,6 +48,7 @@ fn main() {
             let db_dir = app_dir.join("Database");
             let log_dir = app_dir.join("Logs");
             let config_path = app_dir.join("settings.toml");
+            let dict_path = app_dir.join("dictionary.txt");
 
             // 2. Create Directories
             fs::create_dir_all(&db_dir).expect("failed to create db dir");
@@ -63,6 +64,11 @@ fn main() {
                 let _ = fs::write(&config_path, toml_string);
                 defaults
             };
+
+            // Create empty dictionary file if not exists
+            if !dict_path.exists() {
+                let _ = fs::write(&dict_path, "");
+            }
 
             let log_level = match settings.log_level.to_lowercase().as_str() {
                 "error" => LevelFilter::Error,
