@@ -192,8 +192,8 @@
         const diffMs = now.getTime() - modDate.getTime();
         const diffHours = diffMs / (1000 * 60 * 60);
 
-        if (diffHours <= 1) return "#4ade80"; // Bright Green
-        if (diffHours <= 24) return "#86efac"; // Light Green
+        if (diffHours <= 1) return "#5deb47"; // Bright Green
+        if (diffHours <= 24) return "#c2f7ba"; // Light Green
 
         return isActive ? "#ffffff" : "var(--fg-muted)";
     }
