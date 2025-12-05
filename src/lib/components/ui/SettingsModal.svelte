@@ -24,7 +24,6 @@
         { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "sequential", options: ["sequential", "mru"] },
         { key: "newTabPosition", label: "Open New Tabs", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
-        { key: "splitOrientation", label: "Split Orientation", type: "select", category: "Layout", defaultValue: "vertical", options: ["vertical", "horizontal"] },
     ];
 
     // Reset search on close
