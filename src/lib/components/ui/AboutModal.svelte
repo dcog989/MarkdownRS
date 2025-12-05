@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { X } from "lucide-svelte";
     import { invoke } from "@tauri-apps/api/core";
+    import { X } from "lucide-svelte";
     import { onMount } from "svelte";
 
     interface Props {
@@ -100,11 +100,7 @@
                     <p class="text-xs mt-1" style="color: var(--fg-muted);">© 2025 MarkdownRS. All rights reserved.</p>
                 </div>
             </div>
-
-            <!-- Footer -->
-            <div class="px-4 py-3 border-t flex justify-end" style="background-color: var(--bg-header); border-color: var(--border-light);">
-                <button class="px-4 py-2 rounded text-sm font-medium transition-colors" style="background-color: var(--accent-primary); color: var(--fg-inverse);" onclick={onClose}>Close</button>
-            </div>
+            <!-- Footer removed -->
         </div>
     </div>
 {/if}

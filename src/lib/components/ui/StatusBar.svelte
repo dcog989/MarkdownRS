@@ -11,13 +11,20 @@
 
     // Timestamp
     let timestamp = $derived(activeTab?.modified || activeTab?.created || "");
+
+    // Calculate opacity: 1 - (transparency / 100). Default transparency 0 = opacity 1.
+    let baseOpacity = $derived(1 - appState.statusBarTransparency / 100);
 </script>
 
-<footer 
-    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-opacity duration-200 group" 
-    class:opacity-50={appState.statusBarTransparent}
-    class:hover:opacity-100={appState.statusBarTransparent}
-    style="background-color: var(--bg-panel); border-color: var(--border-main); color: var(--fg-muted);">
+<footer
+    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-opacity duration-200 group hover:opacity-100"
+    style="
+        background-color: var(--bg-panel);
+        border-color: var(--border-main);
+        color: var(--fg-muted);
+        opacity: {baseOpacity};
+    "
+>
     <!-- Left: File Path (Accent Color) -->
     <div class="flex gap-4 overflow-hidden mr-4">
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>

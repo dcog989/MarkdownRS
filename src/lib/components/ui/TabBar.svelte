@@ -3,7 +3,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { ChevronDown, ChevronLeft, ChevronRight, FileText, Loader2, Pin, Plus, X } from "lucide-svelte";
+    import { ChevronDown, ChevronLeft, ChevronRight, File, FileText, Pin, Plus, X } from "lucide-svelte";
     import { onMount, tick } from "svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -202,9 +202,9 @@
                 oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
                 aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
-                <!-- Left icon: Loader for unsaved, Pin for pinned, File otherwise -->
+                <!-- Left icon: File for unsaved, Pin for pinned, FileText for saved -->
                 {#if tab.isDirty}
-                    <Loader2 size={14} class="flex-shrink-0 animate-spin" style="color: {isActive ? 'var(--accent-warning)' : 'var(--fg-muted)'}" />
+                    <File size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-warning)' : 'var(--fg-muted)'}" />
                 {:else if tab.isPinned}
                     <Pin size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
                 {:else}
@@ -256,7 +256,7 @@
                             <FileText size={14} />
                         {/if}
                         <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
-                        {#if tab.isDirty}<Loader2 size={12} class="animate-spin" aria-label="Modified" />{/if}
+                        {#if tab.isDirty}<div class="w-2 h-2 rounded-full bg-[var(--accent-warning)]" aria-label="Modified"></div>{/if}
                     </button>
                 {/each}
             </div>

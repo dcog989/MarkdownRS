@@ -11,7 +11,7 @@ export class AppState {
     tabCycling = $state<'mru' | 'sequential'>('sequential');
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
-    statusBarTransparent = $state(false);
+    statusBarTransparency = $state(0); // 0 to 100
     newTabPosition = $state<'right' | 'end'>('end');
 
     // Editor & Preview Settings
@@ -19,7 +19,7 @@ export class AppState {
     editorFontSize = $state(14);
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
-    
+
     // Advanced Settings
     logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');
 

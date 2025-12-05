@@ -25,6 +25,7 @@ export async function initSettings() {
             previewFontFamily: string;
             previewFontSize: number;
             logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error';
+            statusBarTransparency: number;
         }>('app-settings');
 
         if (saved) {
@@ -42,6 +43,7 @@ export async function initSettings() {
             if (saved.previewFontFamily) appState.previewFontFamily = saved.previewFontFamily;
             if (saved.previewFontSize) appState.previewFontSize = saved.previewFontSize;
             if (saved.logLevel) appState.logLevel = saved.logLevel;
+            if (saved.statusBarTransparency !== undefined) appState.statusBarTransparency = saved.statusBarTransparency;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
@@ -66,7 +68,8 @@ export async function saveSettings() {
             editorFontSize: appState.editorFontSize,
             previewFontFamily: appState.previewFontFamily,
             previewFontSize: appState.previewFontSize,
-            logLevel: appState.logLevel
+            logLevel: appState.logLevel,
+            statusBarTransparency: appState.statusBarTransparency
         };
 
         await store.set('app-settings', newSettings);
