@@ -5,8 +5,8 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { ChevronDown, ChevronLeft, ChevronRight, FileText, Loader2, Pin, Plus, X } from "lucide-svelte";
     import { onMount, tick } from "svelte";
-    import TabContextMenu from "./TabContextMenu.svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
+    import TabContextMenu from "./TabContextMenu.svelte";
 
     let scrollContainer: HTMLDivElement;
     let showLeftArrow = $state(false);
@@ -127,7 +127,7 @@
 
     function handleNewTab() {
         const newId = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
-        
+
         // Insert tab based on preference
         if (appState.newTabPosition === "right") {
             const currentIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
@@ -139,7 +139,7 @@
                 }
             }
         }
-        
+
         appState.activeTabId = newId;
     }
 
@@ -279,18 +279,5 @@
     .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .animate-spin {
-        animation: spin 1s linear infinite;
     }
 </style>
