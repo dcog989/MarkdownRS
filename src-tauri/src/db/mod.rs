@@ -14,6 +14,10 @@ pub struct TabState {
     pub scroll_percentage: f64,
     pub created: Option<String>,
     pub modified: Option<String>,
+    #[serde(default)]
+    pub is_pinned: bool,
+    #[serde(default)]
+    pub custom_title: Option<String>,
 }
 
 pub struct Database {
@@ -39,7 +43,9 @@ impl Database {
                         path TEXT,
                         scroll_percentage REAL NOT NULL,
                         created TEXT,
-                        modified TEXT
+                        modified TEXT,
+                        is_pinned INTEGER DEFAULT 0,
+                        custom_title TEXT
                     )",
                     [],
                 )?;
@@ -51,9 +57,16 @@ impl Database {
                     [],
                 )?;
 
-                conn.execute("INSERT INTO schema_version (version) VALUES (?1)", [1])?;
+                conn.execute("INSERT INTO schema_version (version) VALUES (?1)", [2])?;
             }
             1 => {
+                // Migration from v1 to v2: Add is_pinned and custom_title columns
+                info!("Migrating database schema from version 1 to 2");
+                conn.execute("ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0", [])?;
+                conn.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
+                conn.execute("UPDATE schema_version SET version = 2", [])?;
+            }
+            2 => {
                 // Current version, no migration needed
                 info!("Database schema is up to date (version {})", version);
             }
@@ -105,8 +118,8 @@ impl Database {
 
         for tab in tabs {
             tx.execute(
-                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
                 params![
                     &tab.id,
                     &tab.title,
@@ -115,7 +128,9 @@ impl Database {
                     &tab.path,
                     tab.scroll_percentage,
                     &tab.created,
-                    &tab.modified
+                    &tab.modified,
+                    if tab.is_pinned { 1 } else { 0 },
+                    &tab.custom_title
                 ],
             )?;
         }
@@ -129,7 +144,7 @@ impl Database {
         info!("Loading session from database");
 
         let mut stmt = self.conn.prepare(
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified FROM tabs"
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title FROM tabs"
         )?;
 
         let tabs = stmt
@@ -143,6 +158,8 @@ impl Database {
                     scroll_percentage: row.get(5)?,
                     created: row.get(6)?,
                     modified: row.get(7)?,
+                    is_pinned: row.get::<_, i32>(8).unwrap_or(0) != 0,
+                    custom_title: row.get(9).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

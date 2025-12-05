@@ -7,13 +7,17 @@
     // Derive active tab data and index
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
     let tabIndex = $derived(editorStore.tabs.findIndex((t) => t.id === appState.activeTabId) + 1);
-    let displayPath = $derived(activeTab?.path || activeTab?.title || "Untitled");
+    let displayPath = $derived(activeTab?.customTitle || activeTab?.path || activeTab?.title || "Untitled");
 
     // Timestamp
     let timestamp = $derived(activeTab?.modified || activeTab?.created || "");
 </script>
 
-<footer class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden" style="background-color: var(--bg-panel); border-color: var(--border-main); color: var(--fg-muted);">
+<footer 
+    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-opacity duration-200 group" 
+    class:opacity-50={appState.statusBarTransparent}
+    class:hover:opacity-100={appState.statusBarTransparent}
+    style="background-color: var(--bg-panel); border-color: var(--border-main); color: var(--fg-muted);">
     <!-- Left: File Path (Accent Color) -->
     <div class="flex gap-4 overflow-hidden mr-4">
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>

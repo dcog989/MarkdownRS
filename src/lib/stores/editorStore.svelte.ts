@@ -10,6 +10,13 @@ export type EditorTab = {
     created?: string;
     modified?: string;
     originalTitle?: string; // To revert if content deleted
+    isPinned?: boolean; // Pinned tabs cannot be closed with Ctrl+W
+    customTitle?: string; // User-renamed title
+};
+
+export type ClosedTab = {
+    tab: EditorTab;
+    index: number;
 };
 
 export type EditorMetrics = {
@@ -38,6 +45,7 @@ export class EditorStore {
     tabs = $state<EditorTab[]>([]);
     sessionDirty = $state(false);
     mruStack = $state<string[]>([]);
+    closedTabsHistory = $state<ClosedTab[]>([]);
 
     activeMetrics = $state<EditorMetrics>({
         lineCount: 1,
@@ -73,9 +81,30 @@ export class EditorStore {
     }
 
     closeTab(id: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index !== -1) {
+            const tab = this.tabs[index];
+            // Save to history for reopening
+            this.closedTabsHistory.unshift({ tab: { ...tab }, index });
+            // Keep only last 10 closed tabs
+            if (this.closedTabsHistory.length > 10) {
+                this.closedTabsHistory.pop();
+            }
+        }
         this.tabs = this.tabs.filter(t => t.id !== id);
         this.mruStack = this.mruStack.filter(tId => tId !== id);
         this.sessionDirty = true;
+    }
+
+    reopenLastClosed() {
+        const lastClosed = this.closedTabsHistory.shift();
+        if (lastClosed) {
+            // Restore the tab at its original position
+            const insertIndex = Math.min(lastClosed.index, this.tabs.length);
+            this.tabs.splice(insertIndex, 0, lastClosed.tab);
+            this.pushToMru(lastClosed.tab.id);
+            this.sessionDirty = true;
+        }
     }
 
     pushToMru(id: string) {

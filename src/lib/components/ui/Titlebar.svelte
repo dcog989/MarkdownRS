@@ -2,13 +2,15 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Copy, Eye, Menu, Minus, Search, Square, X } from "lucide-svelte";
+    import { Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
     import SettingsModal from "./SettingsModal.svelte";
+    import AboutModal from "./AboutModal.svelte";
 
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
     let showSettingsModal = $state(false);
+    let showAboutModal = $state(false);
     let showCommandPalette = $state(false);
     let commandSearchQuery = $state("");
     let commandInputRef: HTMLInputElement | undefined = $state();
@@ -123,11 +125,13 @@
 </script>
 
 <div class="h-9 flex items-center select-none w-full border-b shrink-0" style="background-color: var(--bg-titlebar); border-color: var(--border-main);" data-tauri-drag-region>
-    <!-- Logo / Menu -->
+    <!-- Logo / Settings -->
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
-        <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => showSettingsModal = true} aria-label="Menu">
-            <Menu size={14} />
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => showAboutModal = true} aria-label="About">
+            <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
+        </button>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => showSettingsModal = true} aria-label="Settings">
+            <Settings size={14} />
         </button>
     </div>
 
@@ -203,3 +207,6 @@
 
 <!-- Settings Modal -->
 <SettingsModal bind:isOpen={showSettingsModal} onClose={() => showSettingsModal = false} />
+
+<!-- About Modal -->
+<AboutModal bind:isOpen={showAboutModal} onClose={() => showAboutModal = false} />

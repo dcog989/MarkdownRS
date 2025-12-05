@@ -13,6 +13,8 @@ type RustTabState = {
     scroll_percentage: number;
     created: string | null;
     modified: string | null;
+    is_pinned: boolean;
+    custom_title: string | null;
 };
 
 type FileMetadata = {
@@ -99,9 +101,12 @@ export async function saveCurrentFile() {
     }
 }
 
-export async function requestCloseTab(id: string) {
+export async function requestCloseTab(id: string, force = false) {
     const tab = editorStore.tabs.find(t => t.id === id);
     if (!tab) return;
+    
+    // Don't close pinned tabs unless forced
+    if (tab.isPinned && !force) return;
 
     if (tab.isDirty && tab.content.trim().length > 0) {
         const result = await dialogStore.confirm({
@@ -161,7 +166,9 @@ export async function persistSession() {
             is_dirty: t.isDirty,
             scroll_percentage: t.scrollPercentage,
             created: t.created || null,
-            modified: t.modified || null
+            modified: t.modified || null,
+            is_pinned: t.isPinned || false,
+            custom_title: t.customTitle || null
         }));
 
         await invoke('save_session', { tabs: plainTabs });
@@ -192,7 +199,9 @@ export async function loadSession() {
                 path: t.path,
                 scrollPercentage: t.scroll_percentage,
                 created: t.created || undefined,
-                modified: t.modified || undefined
+                modified: t.modified || undefined,
+                isPinned: t.is_pinned,
+                customTitle: t.custom_title || undefined
             }));
 
             editorStore.tabs = convertedTabs;

@@ -97,3 +97,39 @@ pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
         modified: format_system_time(metadata.modified()),
     })
 }
+
+#[derive(serde::Serialize)]
+pub struct AppInfo {
+    pub name: String,
+    pub version: String,
+    pub install_path: String,
+    pub data_path: String,
+}
+
+#[tauri::command]
+pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, String> {
+    let install_path = std::env::current_exe()
+        .map(|p| p.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default())
+        .unwrap_or_default();
+
+    let data_path = app_handle
+        .path()
+        .data_dir()
+        .map(|p| p.join("MarkdownRS").to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    Ok(AppInfo {
+        name: "MarkdownRS".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        install_path,
+        data_path,
+    })
+}
+
+#[tauri::command]
+pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
+    validate_path(&path)?;
+
+    // Use trash crate for cross-platform recycle bin support
+    trash::delete(&path).map_err(|e| format!("Failed to send file to recycle bin: {}", e))
+}

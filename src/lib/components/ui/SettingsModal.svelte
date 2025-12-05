@@ -22,6 +22,8 @@
         { key: "tabWidthMin", label: "Tab Width: Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
         { key: "tabWidthMax", label: "Tab Width: Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
         { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "sequential", options: ["sequential", "mru"] },
+        { key: "newTabPosition", label: "Open New Tabs", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
+        { key: "statusBarTransparent", label: "Status Bar: 50% Transparent", type: "boolean", category: "Interface", defaultValue: false },
         { key: "splitOrientation", label: "Split Orientation", type: "select", category: "Layout", defaultValue: "vertical", options: ["vertical", "horizontal"] },
     ];
 
@@ -118,6 +120,15 @@
                                                 class="w-full px-2 py-1 rounded text-sm outline-none"
                                                 style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);"
                                             />
+                                        {:else if setting.type === "boolean"}
+                                            <input
+                                                id={setting.key}
+                                                type="checkbox"
+                                                checked={getSettingValue(setting.key, setting.defaultValue)}
+                                                onchange={(e) => updateSetting(setting.key, e.currentTarget.checked, setting.type)}
+                                                class="w-4 h-4 rounded cursor-pointer"
+                                                style="accent-color: var(--accent-primary);"
+                                            />
                                         {:else if setting.type === "select"}
                                             <select
                                                 id={setting.key}
@@ -126,8 +137,8 @@
                                                 class="w-full px-2 py-1 rounded text-sm outline-none"
                                                 style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);"
                                             >
-                                                {#each setting.options as option}
-                                                    <option value={option}>{option}</option>
+                                                {#each setting.options as option, idx}
+                                                    <option value={option}>{setting.optionLabels?.[idx] || option}</option>
                                                 {/each}
                                             </select>
                                         {/if}

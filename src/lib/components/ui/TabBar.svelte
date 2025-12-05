@@ -3,14 +3,26 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { ChevronDown, ChevronLeft, ChevronRight, FileText, Plus, X } from "lucide-svelte";
+    import { ChevronDown, ChevronLeft, ChevronRight, FileText, Loader2, Pin, Plus, X } from "lucide-svelte";
     import { onMount, tick } from "svelte";
+    import TabContextMenu from "./TabContextMenu.svelte";
+    import MruTabsPopup from "./MruTabsPopup.svelte";
 
     let scrollContainer: HTMLDivElement;
     let showLeftArrow = $state(false);
     let showRightArrow = $state(false);
     let showDropdown = $state(false);
     let checkScrollTimeout: number | null = null;
+
+    // Context menu state
+    let contextMenuTabId: string | null = $state(null);
+    let contextMenuX = $state(0);
+    let contextMenuY = $state(0);
+
+    // MRU popup state
+    let showMruPopup = $state(false);
+    let mruTimeout: number | null = null;
+    let tabKeyHeld = $state(false);
 
     onMount(() => {
         const appWindow = getCurrentWindow();
@@ -20,12 +32,52 @@
 
         const interval = setInterval(scheduleCheckScroll, 500);
 
+        // Listen for Ctrl+Tab for MRU switching
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === "Tab") {
+                e.preventDefault();
+                if (!showMruPopup) {
+                    showMruPopup = true;
+                    tabKeyHeld = true;
+                } else {
+                    // Cycle through MRU
+                    cycleNextMru();
+                }
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (!e.ctrlKey && tabKeyHeld) {
+                tabKeyHeld = false;
+                if (mruTimeout) clearTimeout(mruTimeout);
+                mruTimeout = window.setTimeout(() => {
+                    showMruPopup = false;
+                }, 150);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+
         return () => {
             if (unlisten) unlisten();
             clearInterval(interval);
             if (checkScrollTimeout) clearTimeout(checkScrollTimeout);
+            if (mruTimeout) clearTimeout(mruTimeout);
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
         };
     });
+
+    function cycleNextMru() {
+        const currentActive = appState.activeTabId;
+        const currentIndex = editorStore.mruStack.findIndex((id) => id === currentActive);
+        const nextIndex = (currentIndex + 1) % editorStore.mruStack.length;
+        const nextTabId = editorStore.mruStack[nextIndex];
+        if (nextTabId) {
+            appState.activeTabId = nextTabId;
+        }
+    }
 
     function scheduleCheckScroll() {
         if (checkScrollTimeout) return;
@@ -74,19 +126,51 @@
     }
 
     function handleNewTab() {
-        const id = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
-        appState.activeTabId = id;
+        const newId = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
+        
+        // Insert tab based on preference
+        if (appState.newTabPosition === "right") {
+            const currentIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
+            if (currentIndex !== -1) {
+                const newTab = editorStore.tabs.find((t) => t.id === newId);
+                if (newTab) {
+                    editorStore.tabs = editorStore.tabs.filter((t) => t.id !== newId);
+                    editorStore.tabs.splice(currentIndex + 1, 0, newTab);
+                }
+            }
+        }
+        
+        appState.activeTabId = newId;
     }
 
     function handleCloseTab(e: Event, id: string) {
         e.stopPropagation();
+        const tab = editorStore.tabs.find((t) => t.id === id);
+        if (tab?.isPinned) return; // Don't close pinned tabs
         requestCloseTab(id);
         setTimeout(() => scheduleCheckScroll(), 50);
+    }
+
+    function handleTabContextMenu(e: MouseEvent, id: string) {
+        e.preventDefault();
+        e.stopPropagation();
+        contextMenuTabId = id;
+        contextMenuX = e.clientX;
+        contextMenuY = e.clientY;
+    }
+
+    function closeContextMenu() {
+        contextMenuTabId = null;
     }
 
     function handleDropdownSelect(id: string) {
         handleTabClick(id);
         showDropdown = false;
+    }
+
+    function handleMruSelect(tabId: string) {
+        appState.activeTabId = tabId;
+        editorStore.pushToMru(tabId);
     }
 
     let tabCount = $derived(editorStore.tabs.length);
@@ -115,13 +199,30 @@
                     max-width: {appState.tabWidthMax}px;
                 "
                 onclick={() => handleTabClick(tab.id)}
-                aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}`}
+                oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
+                aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
-                <FileText size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-file)' : 'var(--fg-muted)'}" />
-                <span class="truncate flex-1">{tab.title}{tab.isDirty ? " ●" : ""}</span>
-                <span role="button" tabindex="0" class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded flex-shrink-0 flex items-center justify-center" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
-                    <X size={12} />
-                </span>
+                <!-- Left icon: Loader for unsaved, Pin for pinned, File otherwise -->
+                {#if tab.isDirty}
+                    <Loader2 size={14} class="flex-shrink-0 animate-spin" style="color: {isActive ? 'var(--accent-warning)' : 'var(--fg-muted)'}" />
+                {:else if tab.isPinned}
+                    <Pin size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+                {:else}
+                    <FileText size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-file)' : 'var(--fg-muted)'}" />
+                {/if}
+
+                <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+
+                <!-- Close button or pin icon -->
+                {#if tab.isPinned}
+                    <span class="flex-shrink-0 flex items-center justify-center w-4">
+                        <Pin size={12} style="color: var(--accent-secondary)" />
+                    </span>
+                {:else}
+                    <span role="button" tabindex="0" class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded flex-shrink-0 flex items-center justify-center" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
+                        <X size={12} />
+                    </span>
+                {/if}
             </button>
         {/each}
 
@@ -149,15 +250,27 @@
             <div class="absolute right-0 top-full mt-1 w-64 max-h-[300px] overflow-y-auto bg-[#252526] border border-[#333] shadow-xl rounded-b-md z-50 py-1" role="menu">
                 {#each editorStore.tabs as tab}
                     <button type="button" class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" onclick={() => handleDropdownSelect(tab.id)} role="menuitem">
-                        <FileText size={14} />
-                        <span class="truncate flex-1">{tab.title}</span>
-                        {#if tab.isDirty}<span class="w-2 h-2 rounded-full bg-white" aria-label="Modified"></span>{/if}
+                        {#if tab.isPinned}
+                            <Pin size={14} />
+                        {:else}
+                            <FileText size={14} />
+                        {/if}
+                        <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+                        {#if tab.isDirty}<Loader2 size={12} class="animate-spin" aria-label="Modified" />{/if}
                     </button>
                 {/each}
             </div>
         {/if}
     </div>
 </div>
+
+<!-- Tab Context Menu -->
+{#if contextMenuTabId}
+    <TabContextMenu tabId={contextMenuTabId} x={contextMenuX} y={contextMenuY} onClose={closeContextMenu} />
+{/if}
+
+<!-- MRU Tabs Popup -->
+<MruTabsPopup isOpen={showMruPopup} onClose={() => (showMruPopup = false)} onSelect={handleMruSelect} />
 
 <style>
     .no-scrollbar::-webkit-scrollbar {
@@ -166,5 +279,18 @@
     .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
     }
 </style>

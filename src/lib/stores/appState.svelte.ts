@@ -11,6 +11,8 @@ export class AppState {
     tabCycling = $state<'mru' | 'sequential'>('sequential');
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
+    statusBarTransparent = $state(false);
+    newTabPosition = $state<'right' | 'end'>('end');
 
     // Editor & Preview Settings
     editorFontFamily = $state("Consolas, 'Courier New', monospace");
