@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { message } from "@tauri-apps/plugin-dialog";
 
     let m = $derived(editorStore.activeMetrics);
 
@@ -16,7 +17,7 @@
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
 
-    // Calculate base opacity: 1 - (transparency / 100).
+    // Calculate base opacity
     let baseOpacity = $derived(1 - appState.statusBarTransparency / 100);
 
     function toggleLineEnding() {
@@ -26,8 +27,8 @@
         }
     }
 
-    function toggleEncoding() {
-        // Encoding change unimplemented in backend currently
+    async function handleEncodingClick() {
+        await message("Only UTF-8 encoding is currently supported.", { title: "Encoding", kind: "info" });
     }
 </script>
 
@@ -68,7 +69,7 @@
         </button>
 
         <!-- Encoding -->
-        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={toggleEncoding} title="Encoding (UTF-8 only)">
+        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={handleEncodingClick} title="Encoding (UTF-8 only)">
             {encoding}
         </button>
 
