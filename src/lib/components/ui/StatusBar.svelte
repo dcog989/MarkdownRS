@@ -12,17 +12,17 @@
     // Timestamp
     let timestamp = $derived(activeTab?.modified || activeTab?.created || "");
 
-    // Calculate opacity: 1 - (transparency / 100). Default transparency 0 = opacity 1.
+    // Calculate base opacity: 1 - (transparency / 100).
     let baseOpacity = $derived(1 - appState.statusBarTransparency / 100);
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-opacity duration-200 group hover:opacity-100"
+    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-opacity duration-200 group status-bar"
     style="
         background-color: var(--bg-panel);
         border-color: var(--border-main);
         color: var(--fg-muted);
-        opacity: {baseOpacity};
+        --sb-opacity: {baseOpacity};
     "
 >
     <!-- Left: File Path (Accent Color) -->
@@ -53,3 +53,12 @@
         </span>
     </div>
 </footer>
+
+<style>
+    .status-bar {
+        opacity: var(--sb-opacity);
+    }
+    .status-bar:hover {
+        opacity: 1 !important;
+    }
+</style>

@@ -1,9 +1,9 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { ChevronDown, ChevronLeft, ChevronRight, File, FileText, Pin, Plus, X } from "lucide-svelte";
+    import { ChevronDown, ChevronLeft, ChevronRight, File, FileText, Pencil, Pin, Plus, X } from "lucide-svelte";
     import { onMount, tick } from "svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -30,9 +30,12 @@
 
         appWindow.onResized(() => scheduleCheckScroll()).then((u) => (unlisten = u));
 
-        const interval = setInterval(scheduleCheckScroll, 500);
+        const interval = setInterval(() => {
+            scheduleCheckScroll();
+            // Force reactivity for time-based colors every minute
+            editorStore.tabs = [...editorStore.tabs];
+        }, 60000);
 
-        // Listen for Ctrl+Tab for MRU switching
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
@@ -40,7 +43,6 @@
                     showMruPopup = true;
                     tabKeyHeld = true;
                 } else {
-                    // Cycle through MRU
                     cycleNextMru();
                 }
             }
@@ -104,7 +106,6 @@
 
     async function scrollToActive() {
         await tick();
-        // Wait for layout reflow
         setTimeout(() => {
             if (!scrollContainer) return;
             const activeEl = scrollContainer.querySelector('[data-active="true"]');
@@ -115,7 +116,6 @@
         }, 100);
     }
 
-    // Scroll to new tab when active tab changes
     $effect(() => {
         if (appState.activeTabId) scrollToActive();
     });
@@ -127,8 +127,6 @@
 
     function handleNewTab() {
         const newId = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
-
-        // Insert tab based on preference
         if (appState.newTabPosition === "right") {
             const currentIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
             if (currentIndex !== -1) {
@@ -139,14 +137,13 @@
                 }
             }
         }
-
         appState.activeTabId = newId;
     }
 
     function handleCloseTab(e: Event, id: string) {
         e.stopPropagation();
         const tab = editorStore.tabs.find((t) => t.id === id);
-        if (tab?.isPinned) return; // Don't close pinned tabs
+        if (tab?.isPinned) return;
         requestCloseTab(id);
         setTimeout(() => scheduleCheckScroll(), 50);
     }
@@ -173,6 +170,34 @@
         editorStore.pushToMru(tabId);
     }
 
+    function getIconColor(tab: EditorTab, isActive: boolean): string {
+        if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
+
+        // Parse "YYYYMMDD / HHMMSS"
+        const parts = tab.modified.split(" / ");
+        if (parts.length !== 2) return isActive ? "#ffffff" : "var(--fg-muted)";
+
+        const dStr = parts[0]; // YYYYMMDD
+        const tStr = parts[1]; // HHMMSS
+
+        const year = parseInt(dStr.substring(0, 4));
+        const month = parseInt(dStr.substring(4, 6)) - 1;
+        const day = parseInt(dStr.substring(6, 8));
+        const hour = parseInt(tStr.substring(0, 2));
+        const min = parseInt(tStr.substring(2, 4));
+        const sec = parseInt(tStr.substring(4, 6));
+
+        const modDate = new Date(year, month, day, hour, min, sec);
+        const now = new Date();
+        const diffMs = now.getTime() - modDate.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        if (diffHours <= 1) return "#4ade80"; // Bright Green
+        if (diffHours <= 24) return "#86efac"; // Light Green
+
+        return isActive ? "#ffffff" : "var(--fg-muted)";
+    }
+
     let tabCount = $derived(editorStore.tabs.length);
 </script>
 
@@ -186,10 +211,12 @@
     <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full" onscroll={() => scheduleCheckScroll()}>
         {#each editorStore.tabs as tab (tab.id)}
             {@const isActive = appState.activeTabId === tab.id}
+            {@const iconColor = getIconColor(tab, isActive)}
+
             <button
                 type="button"
                 data-active={isActive}
-                class="group relative h-8 px-3 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
+                class="group relative h-8 px-2 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0"
                 style="
                     background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
                     color: {isActive ? 'var(--fg-default)' : 'var(--fg-muted)'};
@@ -202,27 +229,28 @@
                 oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
                 aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
-                <!-- Left icon: File for unsaved, Pin for pinned, FileText for saved -->
-                {#if tab.isDirty}
-                    <File size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-warning)' : 'var(--fg-muted)'}" />
-                {:else if tab.isPinned}
-                    <Pin size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+                <!-- File Type Icon -->
+                {#if tab.path && tab.isDirty}
+                    <Pencil size={14} class="flex-shrink-0" style="color: {iconColor}" />
+                {:else if tab.path}
+                    <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />
                 {:else}
-                    <FileText size={14} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-file)' : 'var(--fg-muted)'}" />
+                    <File size={14} class="flex-shrink-0" style="color: {iconColor}" />
                 {/if}
 
-                <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+                <!-- Title -->
+                <span class="truncate flex-1 w-full text-left">{tab.customTitle || tab.title}</span>
 
-                <!-- Close button or pin icon -->
-                {#if tab.isPinned}
-                    <span class="flex-shrink-0 flex items-center justify-center w-4">
-                        <Pin size={12} style="color: var(--accent-secondary)" />
-                    </span>
-                {:else}
-                    <span role="button" tabindex="0" class="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded flex-shrink-0 flex items-center justify-center" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
-                        <X size={12} />
-                    </span>
-                {/if}
+                <!-- Right Side: Pin Icon or Close Button -->
+                <div class="flex items-center justify-center w-5 h-5 shrink-0">
+                    {#if tab.isPinned}
+                        <Pin size={12} style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+                    {:else}
+                        <span role="button" tabindex="0" class="hidden group-hover:flex p-1 rounded hover:bg-white/10 transition-colors items-center justify-center" style="color: var(--fg-muted);" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
+                            <X size={12} />
+                        </span>
+                    {/if}
+                </div>
             </button>
         {/each}
 
@@ -252,11 +280,14 @@
                     <button type="button" class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" onclick={() => handleDropdownSelect(tab.id)} role="menuitem">
                         {#if tab.isPinned}
                             <Pin size={14} />
-                        {:else}
+                        {:else if tab.path && tab.isDirty}
+                            <Pencil size={14} />
+                        {:else if tab.path}
                             <FileText size={14} />
+                        {:else}
+                            <File size={14} />
                         {/if}
                         <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
-                        {#if tab.isDirty}<div class="w-2 h-2 rounded-full bg-[var(--accent-warning)]" aria-label="Modified"></div>{/if}
                     </button>
                 {/each}
             </div>
