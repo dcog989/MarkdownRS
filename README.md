@@ -90,11 +90,11 @@ MarkdownRS/
 ├── src-tauri/               # Rust backend
 │   ├── src/
 │   │   ├── commands/        # Tauri commands
-│   │   ├── db/             # Database logic
-│   │   └── main.rs         # Entry point
-│   └── tauri.conf.json     # Tauri configuration
+│   │   ├── db/              # Database logic
+│   │   └── main.rs          # Entry point
+│   └── tauri.conf.json      # Tauri configuration
 ├── static/                  # Static assets
-└── package.json            # Node dependencies & scripts
+└── package.json             # Node dependencies & scripts
 ```
 
 ## Roadmap
