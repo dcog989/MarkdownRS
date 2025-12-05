@@ -70,7 +70,7 @@
             <div class="p-6 flex flex-col items-center gap-4">
                 <img src="/logo.svg" alt="MarkdownRS Logo" class="w-20 h-20" />
                 <h1 class="text-2xl font-bold" style="color: var(--fg-default);">{appInfo.name}</h1>
-                <p class="text-sm" style="color: var(--fg-muted);">Fast, minimal, cross-platform markdown editor</p>
+                <p class="text-sm" style="color: var(--fg-muted);">The only markdown editor you need.</p>
 
                 <div class="w-full mt-4 space-y-3">
                     <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-main);">

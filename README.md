@@ -1,6 +1,8 @@
 # MarkdownRS
 
-A fast, minimal, cross-platform desktop markdown editor built with Tauri v2, Svelte 5, and Rust.
+A fast, slim, minimal UI, cross-platform desktop markdown editor. It's built with the latest Rust / Tauri / Svelte stack.
+
+The only markdown editor you need.
 
 ## Features
 
