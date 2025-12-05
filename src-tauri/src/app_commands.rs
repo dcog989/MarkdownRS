@@ -3,7 +3,7 @@ use chrono::{DateTime, Local};
 use std::fs;
 use std::sync::Mutex;
 use std::time::SystemTime;
-use tauri::State;
+use tauri::{Manager, State};
 
 pub struct AppState {
     pub db: Mutex<Database>,
@@ -109,7 +109,11 @@ pub struct AppInfo {
 #[tauri::command]
 pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, String> {
     let install_path = std::env::current_exe()
-        .map(|p| p.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default())
+        .map(|p| {
+            p.parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default()
+        })
         .unwrap_or_default();
 
     let data_path = app_handle
