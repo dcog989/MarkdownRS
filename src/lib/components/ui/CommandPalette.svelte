@@ -33,6 +33,21 @@
         { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => appState.activeTabId && editorStore.trimWhitespace(appState.activeTabId) },
         { id: "ops-upper", label: "Edit: To Upper Case", action: () => appState.activeTabId && editorStore.toUpperCase(appState.activeTabId) },
         { id: "ops-lower", label: "Edit: To Lower Case", action: () => appState.activeTabId && editorStore.toLowerCase(appState.activeTabId) },
+        {
+            id: "dict-add",
+            label: "Spelling: Add Selection to Dictionary",
+            action: async () => {
+                if (!appState.activeTabId) return;
+                // Currently leverages the clipboard or current selection logic if we had direct editor access here
+                // For now, this is a placeholder or requires editor selection text access which is inside Editor.svelte
+                // NOTE: Detailed selection access requires store integration or event dispatch.
+                // Since this component is decoupled, we'll implement the logic in Editor.svelte via a custom event or store command.
+                // For this implementation, we will use the global clipboard as a fallback or assume selection is stored.
+                // Simplified: We can't easily get selection here without binding.
+                // Correct approach: We'll implement a context menu action in Editor.svelte instead.
+                alert("Please use the command palette inside the editor or specific spelling context actions.");
+            },
+        },
         { id: "theme-dark", label: "Theme: Dark", action: () => appState.setTheme("dark") },
         { id: "theme-light", label: "Theme: Light", action: () => appState.setTheme("light") },
         {

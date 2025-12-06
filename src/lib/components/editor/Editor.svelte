@@ -1,12 +1,14 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { addToDictionary } from "$lib/utils/fileSystem";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
     import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
+    import { message } from "@tauri-apps/plugin-dialog";
     import { onDestroy, onMount, untrack } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
@@ -28,7 +30,6 @@
         }
     }
 
-    // React to font settings changes
     $effect(() => {
         if (view) {
             const newTheme = EditorView.theme({
@@ -105,6 +106,23 @@
                         scrollIntoView: true,
                         userEvent: "select",
                     });
+                    return true;
+                },
+            },
+            {
+                key: "F8",
+                run: (view: EditorView) => {
+                    const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
+                    if (selection && selection.trim().length > 0) {
+                        addToDictionary(selection.trim()).then(() => message(`Added "${selection}" to dictionary.`, { kind: "info" }));
+                    } else {
+                        // Try to get word under cursor
+                        const range = view.state.wordAt(view.state.selection.main.head);
+                        if (range) {
+                            const word = view.state.sliceDoc(range.from, range.to);
+                            addToDictionary(word).then(() => message(`Added "${word}" to dictionary.`, { kind: "info" }));
+                        }
+                    }
                     return true;
                 },
             },

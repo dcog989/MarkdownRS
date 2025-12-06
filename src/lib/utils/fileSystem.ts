@@ -22,6 +22,11 @@ type FileMetadata = {
     modified?: string;
 };
 
+type FileContent = {
+    content: string;
+    encoding: string;
+};
+
 let isSaving = false;
 let pendingSave = false;
 
@@ -35,7 +40,6 @@ async function refreshMetadata(tabId: string, path: string) {
 }
 
 function sanitizePath(path: string): string {
-    // Remove any null bytes and normalize path separators
     return path.replace(/\0/g, '').replace(/\\/g, '/');
 }
 
@@ -51,18 +55,20 @@ export async function openFile() {
 
         if (selected && typeof selected === 'string') {
             const sanitizedPath = sanitizePath(selected);
-            const content = await invoke<string>('read_text_file', { path: sanitizedPath });
+            const result = await invoke<FileContent>('read_text_file', { path: sanitizedPath });
             const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
-            // Detect Line Ending
-            const hasCRLF = content.includes('\r\n');
+            // Detect Line Ending based on raw content existence
+            // Note: We prioritize \r\n detection.
+            const hasCRLF = result.content.indexOf('\r\n') !== -1;
 
-            const id = editorStore.addTab(fileName, content);
+            const id = editorStore.addTab(fileName, result.content);
             const tab = editorStore.tabs.find(t => t.id === id);
             if (tab) {
                 tab.path = sanitizedPath;
                 tab.isDirty = false;
                 tab.lineEnding = hasCRLF ? 'CRLF' : 'LF';
+                tab.encoding = result.encoding.toUpperCase();
                 await refreshMetadata(id, sanitizedPath);
             }
             appState.activeTabId = id;
@@ -95,7 +101,11 @@ export async function saveCurrentFile() {
             // Handle Line Endings
             let contentToSave = tab.content;
             if (tab.lineEnding === 'CRLF') {
-                contentToSave = contentToSave.replace(/\n/g, '\r\n');
+                // Ensure LF -> CRLF (CodeMirror normalizes to LF internally)
+                contentToSave = contentToSave.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+            } else {
+                // Ensure LF
+                contentToSave = contentToSave.replace(/\r\n/g, '\n');
             }
 
             await invoke('write_text_file', { path: sanitizedPath, content: contentToSave });
@@ -116,7 +126,6 @@ export async function requestCloseTab(id: string, force = false) {
     const tab = editorStore.tabs.find(t => t.id === id);
     if (!tab) return;
 
-    // Don't close pinned tabs unless forced
     if (tab.isPinned && !force) return;
 
     if (tab.isDirty && tab.content.trim().length > 0) {
@@ -126,7 +135,7 @@ export async function requestCloseTab(id: string, force = false) {
         });
 
         if (result === 'cancel') {
-            return; // Abort closing
+            return;
         }
 
         if (result === 'save') {
@@ -135,32 +144,37 @@ export async function requestCloseTab(id: string, force = false) {
             const saved = await saveCurrentFile();
             if (!saved) {
                 appState.activeTabId = prevActive;
-                return; // Abort if save failed/cancelled
+                return;
             }
         }
-        // If result === 'discard', we just proceed
     }
 
     editorStore.closeTab(id);
 
-    // If we closed the active tab, find new active
     if (appState.activeTabId === id) {
-        // Fallback to MRU top
         let nextId = editorStore.mruStack[0];
         appState.activeTabId = nextId || null;
     }
 
-    // Always create a new blank tab if we closed the last one
     if (editorStore.tabs.length === 0) {
         const newId = editorStore.addTab();
         appState.activeTabId = newId;
     }
 }
 
+export async function addToDictionary(word: string) {
+    try {
+        await invoke('add_to_dictionary', { word });
+        return true;
+    } catch (err) {
+        console.error("Failed to add to dictionary:", err);
+        return false;
+    }
+}
+
 export async function persistSession() {
     if (!editorStore.sessionDirty) return;
 
-    // If already saving, mark that another save is pending
     if (isSaving) {
         pendingSave = true;
         return;
@@ -185,7 +199,6 @@ export async function persistSession() {
         await invoke('save_session', { tabs: plainTabs });
         editorStore.sessionDirty = false;
 
-        // If another save was requested while we were saving, do it now
         if (pendingSave) {
             pendingSave = false;
             isSaving = false;
@@ -213,15 +226,14 @@ export async function loadSession() {
                 modified: t.modified || undefined,
                 isPinned: t.is_pinned,
                 customTitle: t.custom_title || undefined,
-                lineEnding: t.content.includes('\r\n') ? 'CRLF' : 'LF',
-                encoding: 'UTF-8'
+                lineEnding: t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
+                encoding: 'UTF-8' // Default from DB until we persist it
             }));
 
             editorStore.tabs = convertedTabs;
             appState.activeTabId = convertedTabs[0].id;
             editorStore.mruStack = convertedTabs.map(t => t.id);
 
-            // Refresh metadata for all tabs with paths
             const metadataPromises = convertedTabs
                 .filter(t => t.path)
                 .map(t => refreshMetadata(t.id, t.path!));

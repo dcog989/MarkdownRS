@@ -1,6 +1,8 @@
 use crate::db::{Database, TabState};
 use chrono::{DateTime, Local};
-use std::fs;
+use encoding_rs::{Encoding, UTF_8, WINDOWS_1252};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::sync::Mutex;
 use std::time::SystemTime;
 use tauri::{Manager, State};
@@ -15,6 +17,12 @@ pub struct FileMetadata {
     pub modified: Option<String>,
 }
 
+#[derive(serde::Serialize)]
+pub struct FileContent {
+    pub content: String,
+    pub encoding: String,
+}
+
 fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     time.ok().map(|t| {
         let datetime: DateTime<Local> = t.into();
@@ -23,16 +31,12 @@ fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
 }
 
 fn validate_path(path: &str) -> Result<(), String> {
-    // Check for null bytes
     if path.contains('\0') {
         return Err("Invalid path: contains null bytes".to_string());
     }
-
-    // Check for suspicious path patterns
     if path.contains("..") {
         return Err("Invalid path: contains parent directory references".to_string());
     }
-
     Ok(())
 }
 
@@ -55,7 +59,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>
 }
 
 #[tauri::command]
-pub async fn read_text_file(path: String) -> Result<String, String> {
+pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     validate_path(&path)?;
 
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
@@ -69,7 +73,34 @@ pub async fn read_text_file(path: String) -> Result<String, String> {
         ));
     }
 
-    fs::read_to_string(&path).map_err(|e| e.to_string())
+    let bytes = fs::read(&path).map_err(|e| e.to_string())?;
+
+    // 1. Check for BOM (Byte Order Mark)
+    if let Some((encoding, _)) = Encoding::for_bom(&bytes) {
+        let (cow, _) = encoding.decode_with_bom_removal(&bytes);
+        return Ok(FileContent {
+            content: cow.into_owned(),
+            encoding: encoding.name().to_string(),
+        });
+    }
+
+    // 2. Try UTF-8 (Standard)
+    // We attempt to decode as UTF-8. If it fails (had_errors=true), it's likely a legacy encoding.
+    let (cow, _, had_errors) = UTF_8.decode(&bytes);
+    if !had_errors {
+        return Ok(FileContent {
+            content: cow.into_owned(),
+            encoding: "UTF-8".to_string(),
+        });
+    }
+
+    // 3. Fallback to Windows-1252 (ANSI / Latin1)
+    // This is the standard fallback for web browsers when encoding is undefined and not UTF-8.
+    let (cow, _, _) = WINDOWS_1252.decode(&bytes);
+    Ok(FileContent {
+        content: cow.into_owned(),
+        encoding: "WINDOWS-1252".to_string(),
+    })
 }
 
 #[tauri::command]
@@ -78,9 +109,11 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
 
     // Write to temp file first, then rename
     let temp_path = format!("{}.tmp", path);
+
+    // Always write UTF-8 for now (Text editors typically normalize to UTF-8 on save)
     fs::write(&temp_path, &content).map_err(|e| e.to_string())?;
+
     fs::rename(&temp_path, &path).map_err(|e| {
-        // Clean up temp file on error
         let _ = fs::remove_file(&temp_path);
         e.to_string()
     })
@@ -133,7 +166,29 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
 #[tauri::command]
 pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
     validate_path(&path)?;
-
-    // Use trash crate for cross-platform recycle bin support
     trash::delete(&path).map_err(|e| format!("Failed to send file to recycle bin: {}", e))
+}
+
+#[tauri::command]
+pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
+    let data_dir = app_handle.path().data_dir().map_err(|e| e.to_string())?;
+    let dict_path = data_dir.join("MarkdownRS").join("dictionary.txt");
+
+    // Check if directory exists
+    let parent = dict_path.parent().ok_or("Invalid path")?;
+    if !parent.exists() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dict_path)
+        .map_err(|e| e.to_string())?;
+
+    if let Err(e) = writeln!(file, "{}", word) {
+        return Err(format!("Failed to write to dictionary: {}", e));
+    }
+
+    Ok(())
 }

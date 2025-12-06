@@ -2,7 +2,6 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { renderMarkdown } from "$lib/utils/markdown";
-    import { SquareSplitHorizontal, SquareSplitVertical } from "lucide-svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
@@ -41,7 +40,7 @@
             } finally {
                 isRendering = false;
             }
-        }, 10); // 10ms delay allows the UI layout shift to complete first
+        }, 10);
 
         return () => clearTimeout(timer);
     });
@@ -52,14 +51,14 @@
         const maxScroll = container.scrollHeight - container.clientHeight;
 
         if (maxScroll > 0) {
-            // Strict precise clamping to edges based on the store value
+            // Strict precise clamping
             if (scrollPercentage <= 0.001) {
                 if (container.scrollTop !== 0) container.scrollTop = 0;
             } else if (scrollPercentage >= 0.999) {
                 if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
             } else {
                 const target = maxScroll * scrollPercentage;
-                if (Math.abs(container.scrollTop - target) > 2) {
+                if (Math.abs(container.scrollTop - target) > 5) {
                     container.scrollTop = target;
                 }
             }
@@ -69,25 +68,6 @@
 
 <!-- Parent must be relative -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group block" style="border-color: var(--border-main);">
-    <!-- Floating Switcher -->
-    <button
-        class="z-50 p-1.5 rounded-md bg-[#252526] text-[var(--fg-muted)] transition-all border shadow-md opacity-30 hover:opacity-100 cursor-pointer"
-        style="
-            position: absolute !important;
-            top: 10px !important;
-            right: 15px !important;
-            border-color: var(--border-main);
-        "
-        title="Switch Split Orientation"
-        onclick={() => appState.toggleOrientation()}
-    >
-        {#if appState.splitOrientation === "vertical"}
-            <SquareSplitVertical size={16} />
-        {:else}
-            <SquareSplitHorizontal size={16} />
-        {/if}
-    </button>
-
     <!-- Content -->
     <div bind:this={container} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}
