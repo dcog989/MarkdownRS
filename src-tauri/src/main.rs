@@ -29,6 +29,14 @@ impl Default for AppSettings {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // When a second instance is launched, focus the existing window
+            let windows = app.webview_windows();
+            if let Some((_, window)) = windows.iter().next() {
+                let _ = window.set_focus();
+                let _ = window.unminimize();
+            }
+        }))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -48,7 +56,7 @@ fn main() {
             let db_dir = app_dir.join("Database");
             let log_dir = app_dir.join("Logs");
             let config_path = app_dir.join("settings.toml");
-            let dict_path = app_dir.join("dictionary.txt");
+            let dict_path = app_dir.join("custom-spelling.dic");
 
             // 2. Create Directories
             fs::create_dir_all(&db_dir).expect("failed to create db dir");

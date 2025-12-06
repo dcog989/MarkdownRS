@@ -2,15 +2,17 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
+    import { Copy, Eye, Minus, Search, Settings, Square, X, Sparkles } from "lucide-svelte";
     import { onMount } from "svelte";
     import SettingsModal from "./SettingsModal.svelte";
     import AboutModal from "./AboutModal.svelte";
+    import TextTransformModal from "./TextTransformModal.svelte";
 
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
     let showSettingsModal = $state(false);
     let showAboutModal = $state(false);
+    let showTransformModal = $state(false);
     let showCommandPalette = $state(false);
     let commandSearchQuery = $state("");
     let commandInputRef: HTMLInputElement | undefined = $state();
@@ -40,10 +42,11 @@
         { id: "open", label: "File: Open File", shortcut: "Ctrl+O", action: () => { openFile(); showCommandPalette = false; } },
         { id: "save", label: "File: Save", shortcut: "Ctrl+S", action: () => { saveCurrentFile(); showCommandPalette = false; } },
         { id: "toggle-split", label: "View: Toggle Split Preview", shortcut: "Ctrl+\\", action: () => { appState.toggleSplitView(); showCommandPalette = false; } },
-        { id: "ops-sort", label: "Edit: Sort Lines", action: () => { if(appState.activeTabId) editorStore.sortLines(appState.activeTabId); showCommandPalette = false; } },
-        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => { if(appState.activeTabId) editorStore.trimWhitespace(appState.activeTabId); showCommandPalette = false; } },
-        { id: "ops-upper", label: "Edit: To Upper Case", action: () => { if(appState.activeTabId) editorStore.toUpperCase(appState.activeTabId); showCommandPalette = false; } },
-        { id: "ops-lower", label: "Edit: To Lower Case", action: () => { if(appState.activeTabId) editorStore.toLowerCase(appState.activeTabId); showCommandPalette = false; } },
+        { id: "transform", label: "Edit: Text Transformations...", shortcut: "Ctrl+T", action: () => { showTransformModal = true; showCommandPalette = false; } },
+        { id: "ops-sort", label: "Edit: Sort Lines (A-Z)", action: () => { editorStore.sortLines(); showCommandPalette = false; } },
+        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => { editorStore.trimWhitespace(); showCommandPalette = false; } },
+        { id: "ops-upper", label: "Edit: To Upper Case", action: () => { editorStore.toUpperCase(); showCommandPalette = false; } },
+        { id: "ops-lower", label: "Edit: To Lower Case", action: () => { editorStore.toLowerCase(); showCommandPalette = false; } },
         { id: "theme-dark", label: "Theme: Dark", action: () => { appState.setTheme("dark"); showCommandPalette = false; } },
         { id: "theme-light", label: "Theme: Light", action: () => { appState.setTheme("light"); showCommandPalette = false; } },
         {
@@ -69,9 +72,20 @@
                 isMaximized = await appWindow.isMaximized();
             })
             .then((u) => (unlisten = u));
+        
+        // Global keyboard shortcut for Text Transformations
+        const handleKeydown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') {
+                e.preventDefault();
+                showTransformModal = true;
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeydown);
 
         return () => {
             if (unlisten) unlisten();
+            window.removeEventListener('keydown', handleKeydown);
         };
     });
 
@@ -130,8 +144,9 @@
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => showAboutModal = true} aria-label="About">
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => showSettingsModal = true} aria-label="Settings">
+        <button class="hover:bg-white/10 rounded px-2 py-1 pointer-events-auto text-[var(--fg-muted)] flex items-center gap-1.5 text-xs" onclick={() => showSettingsModal = true} aria-label="Settings">
             <Settings size={14} />
+            <span>Settings</span>
         </button>
     </div>
 
@@ -210,3 +225,6 @@
 
 <!-- About Modal -->
 <AboutModal bind:isOpen={showAboutModal} onClose={() => showAboutModal = false} />
+
+<!-- Text Transform Modal -->
+<TextTransformModal isOpen={showTransformModal} onClose={() => showTransformModal = false} />

@@ -43,11 +43,69 @@ function getCurrentTimestamp(): string {
     return `${yyyy}${mm}${dd} / ${HH}${MM}${SS}`;
 }
 
+// Event system for text operations
+type TextOperationCallback = (operation: TextOperation) => void;
+
+export type TextOperation = 
+    // Sort operations
+    | { type: 'sort-asc' }
+    | { type: 'sort-desc' }
+    | { type: 'sort-numeric-asc' }
+    | { type: 'sort-numeric-desc' }
+    | { type: 'sort-length-asc' }
+    | { type: 'sort-length-desc' }
+    | { type: 'reverse' }
+    | { type: 'shuffle' }
+    // Remove operations
+    | { type: 'remove-duplicates' }
+    | { type: 'remove-unique' }
+    | { type: 'remove-blank' }
+    | { type: 'remove-trailing-spaces' }
+    | { type: 'remove-leading-spaces' }
+    | { type: 'remove-all-spaces' }
+    // Case operations
+    | { type: 'uppercase' }
+    | { type: 'lowercase' }
+    | { type: 'title-case' }
+    | { type: 'sentence-case' }
+    | { type: 'camel-case' }
+    | { type: 'pascal-case' }
+    | { type: 'snake-case' }
+    | { type: 'kebab-case' }
+    | { type: 'constant-case' }
+    | { type: 'invert-case' }
+    // Markdown operations
+    | { type: 'add-bullets' }
+    | { type: 'add-numbers' }
+    | { type: 'add-checkboxes' }
+    | { type: 'remove-bullets' }
+    | { type: 'blockquote' }
+    | { type: 'remove-blockquote' }
+    | { type: 'add-code-fence' }
+    | { type: 'increase-heading' }
+    | { type: 'decrease-heading' }
+    // Text manipulation
+    | { type: 'trim-whitespace' }
+    | { type: 'normalize-whitespace' }
+    | { type: 'join-lines' }
+    | { type: 'split-sentences' }
+    | { type: 'wrap-quotes' }
+    | { type: 'add-line-numbers' }
+    | { type: 'indent-lines' }
+    | { type: 'unindent-lines' }
+    // Legacy (kept for compatibility)
+    | { type: 'sort-lines' }
+    | { type: 'to-uppercase' }
+    | { type: 'to-lowercase' };
+
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
     sessionDirty = $state(false);
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
+    
+    // Callback for text operations that need to run on the editor
+    private textOperationCallback: TextOperationCallback | null = null;
 
     activeMetrics = $state<EditorMetrics>({
         lineCount: 1,
@@ -59,6 +117,14 @@ export class EditorStore {
         cursorCol: 1,
         insertMode: 'INS'
     });
+    
+    registerTextOperationCallback(callback: TextOperationCallback) {
+        this.textOperationCallback = callback;
+    }
+    
+    unregisterTextOperationCallback() {
+        this.textOperationCallback = null;
+    }
 
     addTab(title: string = 'Untitled', content: string = '') {
         const id = crypto.randomUUID();
@@ -185,42 +251,35 @@ export class EditorStore {
         this.activeMetrics.insertMode = this.activeMetrics.insertMode === 'INS' ? 'OVR' : 'INS';
     }
 
-    modifyContent(id: string, modifier: (text: string) => string) {
-        const tab = this.tabs.find(t => t.id === id);
-        if (tab) {
-            this.updateContent(id, modifier(tab.content));
+    // Text operations now delegate to the active editor
+    sortLines() {
+        if (this.textOperationCallback) {
+            this.textOperationCallback({ type: 'sort-asc' });
         }
     }
 
-    sortLines(id: string) {
-        try {
-            this.modifyContent(id, (text) => text.split('\n').sort().join('\n'));
-        } catch (err) {
-            console.error('Failed to sort lines:', err);
+    trimWhitespace() {
+        if (this.textOperationCallback) {
+            this.textOperationCallback({ type: 'trim-whitespace' });
         }
     }
 
-    trimWhitespace(id: string) {
-        try {
-            this.modifyContent(id, (text) => text.split('\n').map(line => line.trim()).join('\n'));
-        } catch (err) {
-            console.error('Failed to trim whitespace:', err);
+    toUpperCase() {
+        if (this.textOperationCallback) {
+            this.textOperationCallback({ type: 'uppercase' });
         }
     }
 
-    toUpperCase(id: string) {
-        try {
-            this.modifyContent(id, (text) => text.toUpperCase());
-        } catch (err) {
-            console.error('Failed to convert to uppercase:', err);
+    toLowerCase() {
+        if (this.textOperationCallback) {
+            this.textOperationCallback({ type: 'lowercase' });
         }
     }
-
-    toLowerCase(id: string) {
-        try {
-            this.modifyContent(id, (text) => text.toLowerCase());
-        } catch (err) {
-            console.error('Failed to convert to lowercase:', err);
+    
+    // New unified method for all transformations
+    performTextTransform(operationId: string) {
+        if (this.textOperationCallback) {
+            this.textOperationCallback({ type: operationId as any });
         }
     }
 }

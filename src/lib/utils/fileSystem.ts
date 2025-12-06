@@ -59,15 +59,25 @@ export async function openFile() {
             const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
             // Detect Line Ending based on raw content existence
-            // Note: We prioritize \r\n detection.
-            const hasCRLF = result.content.indexOf('\r\n') !== -1;
+            // CRITICAL: Must check BEFORE any normalization happens
+            // Check for CRLF first, then fall back to LF
+            const hasCRLF = result.content.includes('\r\n');
+            const hasLF = result.content.includes('\n');
+            
+            // Determine line ending: if has CRLF anywhere, it's CRLF; otherwise check for LF
+            let detectedLineEnding: 'LF' | 'CRLF' = 'LF';
+            if (hasCRLF) {
+                detectedLineEnding = 'CRLF';
+            } else if (hasLF) {
+                detectedLineEnding = 'LF';
+            }
 
             const id = editorStore.addTab(fileName, result.content);
             const tab = editorStore.tabs.find(t => t.id === id);
             if (tab) {
                 tab.path = sanitizedPath;
                 tab.isDirty = false;
-                tab.lineEnding = hasCRLF ? 'CRLF' : 'LF';
+                tab.lineEnding = detectedLineEnding;
                 tab.encoding = result.encoding.toUpperCase();
                 await refreshMetadata(id, sanitizedPath);
             }

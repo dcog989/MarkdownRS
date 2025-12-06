@@ -172,7 +172,7 @@ pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
     let data_dir = app_handle.path().data_dir().map_err(|e| e.to_string())?;
-    let dict_path = data_dir.join("MarkdownRS").join("dictionary.txt");
+    let dict_path = data_dir.join("MarkdownRS").join("custom-spelling.dic");
 
     // Check if directory exists
     let parent = dict_path.parent().ok_or("Invalid path")?;

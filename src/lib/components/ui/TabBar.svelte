@@ -13,6 +13,10 @@
     let showRightArrow = $state(false);
     let showDropdown = $state(false);
     let checkScrollTimeout: number | null = null;
+    
+    // Drag and drop state
+    let draggedTabId: string | null = $state(null);
+    let draggedOverTabId: string | null = $state(null);
 
     // Context menu state
     let contextMenuTabId: string | null = $state(null);
@@ -169,6 +173,48 @@
         editorStore.pushToMru(tabId);
     }
 
+    function handleDragStart(e: DragEvent, tabId: string) {
+        if (!e.dataTransfer) return;
+        draggedTabId = tabId;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', tabId);
+    }
+
+    function handleDragOver(e: DragEvent, tabId: string) {
+        e.preventDefault();
+        if (!e.dataTransfer || draggedTabId === tabId) return;
+        e.dataTransfer.dropEffect = 'move';
+        draggedOverTabId = tabId;
+    }
+
+    function handleDragLeave(e: DragEvent) {
+        draggedOverTabId = null;
+    }
+
+    function handleDrop(e: DragEvent, targetTabId: string) {
+        e.preventDefault();
+        if (!draggedTabId || draggedTabId === targetTabId) return;
+
+        const fromIndex = editorStore.tabs.findIndex(t => t.id === draggedTabId);
+        const toIndex = editorStore.tabs.findIndex(t => t.id === targetTabId);
+
+        if (fromIndex !== -1 && toIndex !== -1) {
+            const tabs = [...editorStore.tabs];
+            const [movedTab] = tabs.splice(fromIndex, 1);
+            tabs.splice(toIndex, 0, movedTab);
+            editorStore.tabs = tabs;
+            editorStore.sessionDirty = true;
+        }
+
+        draggedTabId = null;
+        draggedOverTabId = null;
+    }
+
+    function handleDragEnd() {
+        draggedTabId = null;
+        draggedOverTabId = null;
+    }
+
     function getIconColor(tab: EditorTab, isActive: boolean): string {
         if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
 
@@ -214,6 +260,7 @@
             <button
                 type="button"
                 data-active={isActive}
+                draggable="true"
                 class="group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
                 style="
                     background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
@@ -222,9 +269,16 @@
                     border-top: 2px solid {isActive ? 'var(--accent-secondary)' : 'transparent'};
                     min-width: {appState.tabWidthMin}px;
                     max-width: {appState.tabWidthMax}px;
+                    opacity: {draggedTabId === tab.id ? '0.5' : '1'};
+                    {draggedOverTabId === tab.id ? 'border-left: 2px solid var(--accent-primary);' : ''}
                 "
                 onclick={() => handleTabClick(tab.id)}
                 oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
+                ondragstart={(e) => handleDragStart(e, tab.id)}
+                ondragover={(e) => handleDragOver(e, tab.id)}
+                ondragleave={handleDragLeave}
+                ondrop={(e) => handleDrop(e, tab.id)}
+                ondragend={handleDragEnd}
                 aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
                 <!-- File Type Icon -->

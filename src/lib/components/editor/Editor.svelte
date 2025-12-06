@@ -1,7 +1,9 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
+    import { transformText } from "$lib/utils/textTransforms";
+    import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
@@ -18,6 +20,13 @@
     let metricsUpdateTimer: number | null = null;
     let previousTabId: string = "";
     let themeCompartment = new Compartment();
+    
+    // Context menu state
+    let showContextMenu = $state(false);
+    let contextMenuX = $state(0);
+    let contextMenuY = $state(0);
+    let contextSelectedText = $state("");
+    let contextWordUnderCursor = $state("");
 
     function clearAllTimers() {
         if (contentUpdateTimer !== null) {
@@ -28,6 +37,23 @@
             clearTimeout(metricsUpdateTimer);
             metricsUpdateTimer = null;
         }
+    }
+    
+    function handleTextOperation(operation: TextOperation) {
+        if (!view) return;
+        
+        const state = view.state;
+        const doc = state.doc;
+        const text = doc.toString();
+        
+        // Use the centralized transformation utility
+        const newText = transformText(text, operation.type);
+        
+        // Use a transaction to support undo/redo
+        view.dispatch({
+            changes: { from: 0, to: doc.length, insert: newText },
+            userEvent: 'input.complete'
+        });
     }
 
     $effect(() => {
@@ -74,6 +100,9 @@
     });
 
     onMount(() => {
+        // Register text operation callback
+        editorStore.registerTextOperationCallback(handleTextOperation);
+        
         const currentTab = editorStore.tabs.find((t) => t.id === tabId);
         const initialContent = currentTab?.content || "";
         const filename = currentTab?.title || "";
@@ -145,6 +174,27 @@
         });
 
         const eventHandlers = EditorView.domEventHandlers({
+            contextmenu: (event, view) => {
+                event.preventDefault();
+                const selection = view.state.selection.main;
+                const selectedText = view.state.sliceDoc(selection.from, selection.to);
+                
+                let wordUnderCursor = "";
+                if (!selectedText) {
+                    const range = view.state.wordAt(selection.head);
+                    if (range) {
+                        wordUnderCursor = view.state.sliceDoc(range.from, range.to);
+                    }
+                }
+                
+                contextSelectedText = selectedText;
+                contextWordUnderCursor = wordUnderCursor;
+                contextMenuX = event.clientX;
+                contextMenuY = event.clientY;
+                showContextMenu = true;
+                
+                return true;
+            },
             scroll: (event, view) => {
                 const dom = view.scrollDOM;
                 const maxScroll = dom.scrollHeight - dom.clientHeight;
@@ -249,18 +299,30 @@
             window.removeEventListener("focus", handleWindowFocus);
             if (view) view.destroy();
             clearAllTimers();
+            editorStore.unregisterTextOperationCallback();
         };
     });
 
     onDestroy(() => {
         clearAllTimers();
         if (view) view.destroy();
+        editorStore.unregisterTextOperationCallback();
     });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
+
+{#if showContextMenu}
+    <EditorContextMenu 
+        x={contextMenuX} 
+        y={contextMenuY} 
+        selectedText={contextSelectedText}
+        wordUnderCursor={contextWordUnderCursor}
+        onClose={() => showContextMenu = false}
+    />
+{/if}
 
 <style>
     :global(.overwrite-mode .cm-cursor) {

@@ -45,24 +45,34 @@
         return () => clearTimeout(timer);
     });
 
+    // Scroll sync effect - sync preview to editor scroll
     $effect(() => {
+        // Watch scrollPercentage and container
         if (!container) return;
+        
+        // Access scrollPercentage to create dependency
+        const currentScrollPercentage = scrollPercentage;
 
-        const maxScroll = container.scrollHeight - container.clientHeight;
+        // Wait for next tick to ensure content is rendered
+        setTimeout(() => {
+            if (!container) return;
+            
+            const maxScroll = container.scrollHeight - container.clientHeight;
 
-        if (maxScroll > 0) {
-            // Strict precise clamping
-            if (scrollPercentage <= 0.001) {
-                if (container.scrollTop !== 0) container.scrollTop = 0;
-            } else if (scrollPercentage >= 0.999) {
-                if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
-            } else {
-                const target = maxScroll * scrollPercentage;
-                if (Math.abs(container.scrollTop - target) > 5) {
-                    container.scrollTop = target;
+            if (maxScroll > 0) {
+                // Strict precise clamping
+                if (currentScrollPercentage <= 0.001) {
+                    if (container.scrollTop !== 0) container.scrollTop = 0;
+                } else if (currentScrollPercentage >= 0.999) {
+                    if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
+                } else {
+                    const target = maxScroll * currentScrollPercentage;
+                    if (Math.abs(container.scrollTop - target) > 5) {
+                        container.scrollTop = target;
+                    }
                 }
             }
-        }
+        }, 0);
     });
 </script>
 
