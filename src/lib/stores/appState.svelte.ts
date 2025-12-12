@@ -23,6 +23,14 @@ export class AppState {
     // Advanced Settings
     logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');
 
+    // Formatter Settings
+    formatOnSave = $state(false);
+    formatOnPaste = $state(false);
+    formatterListIndent = $state(2);
+    formatterBulletChar = $state<'-' | '*' | '+'>('-');
+    formatterCodeFence = $state<'```' | '~~~'>('```');
+    formatterTableAlignment = $state(true);
+
     constructor() {
         // Initialization logic
     }

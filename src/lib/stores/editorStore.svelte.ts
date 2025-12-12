@@ -93,6 +93,8 @@ export type TextOperation =
     | { type: 'add-line-numbers' }
     | { type: 'indent-lines' }
     | { type: 'unindent-lines' }
+    // Formatter
+    | { type: 'format-document' }
     // Legacy (kept for compatibility)
     | { type: 'sort-lines' }
     | { type: 'to-uppercase' }

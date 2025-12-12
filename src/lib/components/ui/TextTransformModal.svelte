@@ -1,6 +1,6 @@
 <script lang="ts">
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { AlignLeft, ArrowDown01, ArrowDown10, ArrowDownAz, ArrowDownZa, CaseSensitive, Eraser, FilterX, Hash, List, MinusCircle, Trash2, Type, X } from "lucide-svelte";
+    import { AlignLeft, ArrowDown01, ArrowDown10, ArrowDownAZ, ArrowDownZA, CaseSensitive, Eraser, FilterX, Hash, List, MinusCircle, Trash2, Type, X } from "lucide-svelte";
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
@@ -18,15 +18,15 @@
     const categories: TransformCategory[] = [
         {
             title: "Sort & Order",
-            icon: ArrowDownAz,
+            icon: ArrowDownAZ,
             operations: [
-                { id: "sort-asc", label: "Sort Ascending (A-Z)", description: "Sort lines alphabetically A to Z", icon: ArrowDownAz },
-                { id: "sort-desc", label: "Sort Descending (Z-A)", description: "Sort lines alphabetically Z to A", icon: ArrowDownZa },
-                { id: "sort-numeric-asc", label: "Sort Numeric Ascending", description: "Sort lines numerically (1-9)", icon: ArrowDown01 },
-                { id: "sort-numeric-desc", label: "Sort Numeric Descending", description: "Sort lines numerically (9-1)", icon: ArrowDown10 },
-                { id: "sort-length-asc", label: "Sort by Length (Short to Long)", description: "Sort by line length ascending", icon: ArrowDownAz },
-                { id: "sort-length-desc", label: "Sort by Length (Long to Short)", description: "Sort by line length descending", icon: ArrowDownZa },
-                { id: "reverse", label: "Reverse Lines", description: "Reverse the order of all lines", icon: ArrowDownZa },
+                { id: "sort-asc", label: "Sort Ascending (A-Z)", description: "Sort lines alphabetically A to Z", icon: ArrowDownAZ },
+                { id: "sort-desc", label: "Sort Descending (Z-A)", description: "Sort lines alphabetically Z to A", icon: ArrowDownZA },
+                { id: "sort-numeric-asc", label: "Sort Numeric Ascending", description: "Sort lines numerically (0-9)", icon: ArrowDown01 },
+                { id: "sort-numeric-desc", label: "Sort Numeric Descending", description: "Sort lines numerically (9-0)", icon: ArrowDown10 },
+                { id: "sort-length-asc", label: "Sort by Length (Short to Long)", description: "Sort by line length ascending", icon: ArrowDownAZ },
+                { id: "sort-length-desc", label: "Sort by Length (Long to Short)", description: "Sort by line length descending", icon: ArrowDownZA },
+                { id: "reverse", label: "Reverse Lines", description: "Reverse the order of all lines", icon: ArrowDownZA },
                 { id: "shuffle", label: "Shuffle Lines", description: "Randomly shuffle line order", icon: FilterX },
             ],
         },

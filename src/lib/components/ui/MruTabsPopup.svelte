@@ -7,9 +7,10 @@
         isOpen: boolean;
         onClose: () => void;
         onSelect: (tabId: string) => void;
+        currentActiveId: string | null;
     }
 
-    let { isOpen, onClose, onSelect }: Props = $props();
+    let { isOpen, onClose, onSelect, currentActiveId }: Props = $props();
 
     let mruTabs = $derived(
         editorStore.mruStack
@@ -48,36 +49,36 @@
                         type="button"
                         class="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-white/10 transition-colors"
                         style="
-                            background-color: {index === 0 ? 'var(--accent-primary)' : 'transparent'};
-                            color: {index === 0 ? 'var(--fg-inverse)' : 'var(--fg-default)'};
+                            background-color: {tab.id === currentActiveId ? 'var(--accent-primary)' : 'transparent'};
+                            color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--fg-default)'};
                         "
                         onclick={() => handleSelect(tab.id)}
                     >
                         <div
                             class="w-6 h-6 rounded flex items-center justify-center text-xs font-semibold shrink-0"
                             style="
-                                background-color: {index === 0 ? 'var(--fg-inverse)' : 'var(--accent-secondary)'};
-                                color: {index === 0 ? 'var(--accent-primary)' : 'var(--fg-inverse)'};
+                                background-color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'};
+                                color: {tab.id === currentActiveId ? 'var(--accent-primary)' : 'var(--fg-inverse)'};
                             "
                         >
                             {index + 1}
                         </div>
 
-                        <FileText size={14} class="shrink-0" style="color: {index === 0 ? 'var(--fg-inverse)' : 'var(--accent-file)'}" />
+                        <FileText size={14} class="shrink-0" style="color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-file)'}" />
 
                         <div class="flex-1 min-w-0">
                             <div class="truncate font-medium">{tab.title}</div>
                             {#if tab.path}
-                                <div class="text-xs truncate opacity-70" style="color: {index === 0 ? 'var(--fg-inverse)' : 'var(--fg-muted)'};">{tab.path}</div>
+                                <div class="text-xs truncate opacity-70" style="color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--fg-muted)'};">{tab.path}</div>
                             {/if}
                         </div>
 
                         {#if tab.isDirty}
-                            <div class="w-2 h-2 rounded-full shrink-0" style="background-color: {index === 0 ? 'var(--fg-inverse)' : 'var(--accent-secondary)'};" title="Modified"></div>
+                            <div class="w-2 h-2 rounded-full shrink-0" style="background-color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'};" title="Modified"></div>
                         {/if}
 
                         {#if tab.isPinned}
-                            <div class="text-xs shrink-0" style="color: {index === 0 ? 'var(--fg-inverse)' : 'var(--accent-secondary)'}" title="Pinned">📌</div>
+                            <div class="text-xs shrink-0" style="color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'}" title="Pinned">📌</div>
                         {/if}
                     </button>
                 {/each}

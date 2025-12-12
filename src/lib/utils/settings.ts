@@ -1,4 +1,5 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
+import { debounce } from './async';
 import { Store } from '@tauri-apps/plugin-store';
 
 let store: Store | null = null;
@@ -26,6 +27,13 @@ export async function initSettings() {
             previewFontSize: number;
             logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error';
             statusBarTransparency: number;
+            newTabPosition: 'right' | 'end';
+            formatOnSave: boolean;
+            formatOnPaste: boolean;
+            formatterListIndent: number;
+            formatterBulletChar: '-' | '*' | '+';
+            formatterCodeFence: '```' | '~~~';
+            formatterTableAlignment: boolean;
         }>('app-settings');
 
         if (saved) {
@@ -44,13 +52,20 @@ export async function initSettings() {
             if (saved.previewFontSize) appState.previewFontSize = saved.previewFontSize;
             if (saved.logLevel) appState.logLevel = saved.logLevel;
             if (saved.statusBarTransparency !== undefined) appState.statusBarTransparency = saved.statusBarTransparency;
+            if (saved.newTabPosition) appState.newTabPosition = saved.newTabPosition;
+            if (saved.formatOnSave !== undefined) appState.formatOnSave = saved.formatOnSave;
+            if (saved.formatOnPaste !== undefined) appState.formatOnPaste = saved.formatOnPaste;
+            if (saved.formatterListIndent) appState.formatterListIndent = saved.formatterListIndent;
+            if (saved.formatterBulletChar) appState.formatterBulletChar = saved.formatterBulletChar;
+            if (saved.formatterCodeFence) appState.formatterCodeFence = saved.formatterCodeFence;
+            if (saved.formatterTableAlignment !== undefined) appState.formatterTableAlignment = saved.formatterTableAlignment;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
     }
 }
 
-export async function saveSettings() {
+async function saveSettingsImmediate() {
     if (!store) return;
 
     try {
@@ -69,7 +84,14 @@ export async function saveSettings() {
             previewFontFamily: appState.previewFontFamily,
             previewFontSize: appState.previewFontSize,
             logLevel: appState.logLevel,
-            statusBarTransparency: appState.statusBarTransparency
+            statusBarTransparency: appState.statusBarTransparency,
+            newTabPosition: appState.newTabPosition,
+            formatOnSave: appState.formatOnSave,
+            formatOnPaste: appState.formatOnPaste,
+            formatterListIndent: appState.formatterListIndent,
+            formatterBulletChar: appState.formatterBulletChar,
+            formatterCodeFence: appState.formatterCodeFence,
+            formatterTableAlignment: appState.formatterTableAlignment
         };
 
         await store.set('app-settings', newSettings);
@@ -78,3 +100,9 @@ export async function saveSettings() {
         log(`Failed to save settings: ${err}`, 'error');
     }
 }
+
+// Debounced version for frequent updates (e.g., sliders)
+export const saveSettings = debounce(saveSettingsImmediate, 500);
+
+// Immediate version for critical saves (e.g., window close)
+export const saveSettingsNow = saveSettingsImmediate;

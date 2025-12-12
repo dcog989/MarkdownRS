@@ -18,8 +18,13 @@
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
 
-    // Calculate base opacity
-    let baseOpacity = $derived(1 - appState.statusBarTransparency / 100);
+    // Calculate opacity for both text and background
+    let opacity = $derived(1 - appState.statusBarTransparency / 100);
+    
+    // Convert --bg-panel to rgba with transparency
+    // --bg-panel is #252526 in dark mode
+    let bgWithAlpha = $derived(`rgba(37, 37, 38, ${opacity})`);
+    let textColor = $derived(`rgba(156, 163, 175, ${opacity})`); // --fg-muted is #9ca3af
 
     function toggleLineEnding() {
         if (activeTab) {
@@ -47,12 +52,11 @@
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-opacity duration-200 group status-bar"
+    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-all duration-200 status-bar"
     style="
-        background-color: var(--bg-panel);
+        background-color: {bgWithAlpha};
         border-color: var(--border-main);
-        color: var(--fg-muted);
-        --sb-opacity: {baseOpacity};
+        color: {textColor};
     "
 >
     <!-- Left: File Path (Accent Color) -->
@@ -139,10 +143,8 @@
 {/if}
 
 <style>
-    .status-bar {
-        opacity: var(--sb-opacity);
-    }
     .status-bar:hover {
-        opacity: 1 !important;
+        background-color: var(--bg-panel) !important;
+        color: var(--fg-muted) !important;
     }
 </style>

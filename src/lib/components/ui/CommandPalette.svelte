@@ -29,25 +29,15 @@
         { id: "open", label: "File: Open File", shortcut: "Ctrl+O", action: () => openFile() },
         { id: "save", label: "File: Save", shortcut: "Ctrl+S", action: () => saveCurrentFile() },
         { id: "toggle-split", label: "View: Toggle Split Preview", shortcut: "Ctrl+\\", action: () => appState.toggleSplitView() },
-        { id: "ops-sort", label: "Edit: Sort Lines", action: () => appState.activeTabId && editorStore.sortLines(appState.activeTabId) },
-        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => appState.activeTabId && editorStore.trimWhitespace(appState.activeTabId) },
-        { id: "ops-upper", label: "Edit: To Upper Case", action: () => appState.activeTabId && editorStore.toUpperCase(appState.activeTabId) },
-        { id: "ops-lower", label: "Edit: To Lower Case", action: () => appState.activeTabId && editorStore.toLowerCase(appState.activeTabId) },
-        {
-            id: "dict-add",
-            label: "Spelling: Add Selection to Dictionary",
-            action: async () => {
-                if (!appState.activeTabId) return;
-                // Currently leverages the clipboard or current selection logic if we had direct editor access here
-                // For now, this is a placeholder or requires editor selection text access which is inside Editor.svelte
-                // NOTE: Detailed selection access requires store integration or event dispatch.
-                // Since this component is decoupled, we'll implement the logic in Editor.svelte via a custom event or store command.
-                // For this implementation, we will use the global clipboard as a fallback or assume selection is stored.
-                // Simplified: We can't easily get selection here without binding.
-                // Correct approach: We'll implement a context menu action in Editor.svelte instead.
-                alert("Please use the command palette inside the editor or specific spelling context actions.");
-            },
-        },
+        { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform('format-document') },
+        { id: "ops-sort", label: "Edit: Sort Lines (A→Z)", action: () => editorStore.performTextTransform('sort-asc') },
+        { id: "ops-sort-desc", label: "Edit: Sort Lines (Z→A)", action: () => editorStore.performTextTransform('sort-desc') },
+        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => editorStore.performTextTransform('trim-whitespace') },
+        { id: "ops-upper", label: "Edit: To UPPERCASE", action: () => editorStore.performTextTransform('uppercase') },
+        { id: "ops-lower", label: "Edit: To lowercase", action: () => editorStore.performTextTransform('lowercase') },
+        { id: "ops-title", label: "Edit: To Title Case", action: () => editorStore.performTextTransform('title-case') },
+        { id: "ops-remove-dupes", label: "Edit: Remove Duplicate Lines", action: () => editorStore.performTextTransform('remove-duplicates') },
+        { id: "ops-remove-blank", label: "Edit: Remove Blank Lines", action: () => editorStore.performTextTransform('remove-blank') },
         { id: "theme-dark", label: "Theme: Dark", action: () => appState.setTheme("dark") },
         { id: "theme-light", label: "Theme: Light", action: () => appState.setTheme("light") },
         {

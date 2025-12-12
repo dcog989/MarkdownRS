@@ -3,14 +3,15 @@
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { transformText } from "$lib/utils/textTransforms";
+    import { formatMarkdown } from "$lib/utils/formatter";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
+    import { search, highlightSelectionMatches } from "@codemirror/search";
     import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
-    import { message } from "@tauri-apps/plugin-dialog";
     import { onDestroy, onMount, untrack } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
@@ -27,6 +28,17 @@
     let contextMenuY = $state(0);
     let contextSelectedText = $state("");
     let contextWordUnderCursor = $state("");
+    
+    // Function to trigger spellcheck refresh
+    function refreshSpellcheck() {
+        if (!view) return;
+        // Force DOM to re-render spellcheck by toggling and restoring spellcheck attribute
+        const container = view.dom;
+        container.spellcheck = false;
+        setTimeout(() => {
+            container.spellcheck = true;
+        }, 0);
+    }
 
     function clearAllTimers() {
         if (contentUpdateTimer !== null) {
@@ -46,8 +58,20 @@
         const doc = state.doc;
         const text = doc.toString();
         
-        // Use the centralized transformation utility
-        const newText = transformText(text, operation.type);
+        let newText: string;
+        
+        // Handle format-document specially
+        if (operation.type === 'format-document') {
+            newText = formatMarkdown(text, {
+                listIndent: appState.formatterListIndent || 2,
+                bulletChar: appState.formatterBulletChar || '-',
+                codeBlockFence: appState.formatterCodeFence || '```',
+                tableAlignment: appState.formatterTableAlignment !== false
+            });
+        } else {
+            // Use the centralized transformation utility
+            newText = transformText(text, operation.type);
+        }
         
         // Use a transaction to support undo/redo
         view.dispatch({
@@ -143,13 +167,25 @@
                 run: (view: EditorView) => {
                     const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
                     if (selection && selection.trim().length > 0) {
-                        addToDictionary(selection.trim()).then(() => message(`Added "${selection}" to dictionary.`, { kind: "info" }));
+                        // Extract words from selection
+                        const words = selection
+                            .split(/\s+/)
+                            .map(w => w.replace(/[^a-zA-Z0-9'-]/g, ''))
+                            .filter(w => w.length > 0)
+                            .filter((word, index, self) => self.indexOf(word) === index);
+                        
+                        // Add all words
+                        Promise.all(words.map(w => addToDictionary(w))).then(() => {
+                            refreshSpellcheck();
+                        });
                     } else {
                         // Try to get word under cursor
                         const range = view.state.wordAt(view.state.selection.main.head);
                         if (range) {
                             const word = view.state.sliceDoc(range.from, range.to);
-                            addToDictionary(word).then(() => message(`Added "${word}" to dictionary.`, { kind: "info" }));
+                            addToDictionary(word).then(() => {
+                                refreshSpellcheck();
+                            });
                         }
                     }
                     return true;
@@ -217,6 +253,10 @@
             lineNumbers(),
             highlightActiveLineGutter(),
             history(),
+            search({
+                top: true,
+            }),
+            highlightSelectionMatches(),
             keymap.of([...customKeymap, ...defaultKeymap, ...historyKeymap]),
             oneDark,
             EditorView.lineWrapping,
@@ -231,6 +271,20 @@
                         borderBottom: editorStore.activeMetrics.insertMode === "OVR" ? "2px solid white" : "none",
                     },
                     ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
+                    ".cm-search": {
+                        backgroundColor: "var(--bg-panel)",
+                        borderBottom: "1px solid var(--border-main)",
+                    },
+                    ".cm-search input": {
+                        backgroundColor: "var(--bg-main)",
+                        color: "var(--fg-default)",
+                        border: "1px solid var(--border-light)",
+                    },
+                    ".cm-search button": {
+                        backgroundColor: "var(--bg-main)",
+                        color: "var(--fg-default)",
+                        border: "1px solid var(--border-light)",
+                    },
                 })
             ),
         ];
@@ -305,7 +359,10 @@
 
     onDestroy(() => {
         clearAllTimers();
-        if (view) view.destroy();
+        if (view) {
+            view.destroy();
+            view = null as any; // Ensure garbage collection
+        }
         editorStore.unregisterTextOperationCallback();
     });
 </script>
@@ -321,6 +378,7 @@
         selectedText={contextSelectedText}
         wordUnderCursor={contextWordUnderCursor}
         onClose={() => showContextMenu = false}
+        onDictionaryUpdate={refreshSpellcheck}
     />
 {/if}
 

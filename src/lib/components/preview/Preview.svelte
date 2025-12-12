@@ -2,22 +2,29 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { renderMarkdown } from "$lib/utils/markdown";
+    import { FlipHorizontal, FlipVertical } from "lucide-svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container: HTMLDivElement;
     let renderError = $state<string | null>(null);
     let isRendering = $state(false);
+    let scrollSyncTimeout: number | null = null;
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
     let scrollPercentage = $derived(tab?.scrollPercentage || 0);
 
     let htmlContent = $state("");
+    let renderDebounceTimer: number | null = null;
 
     $effect(() => {
-        // Defer rendering to unblock the main thread during UI toggles/resizes
+        // Debounce markdown rendering to improve typing performance
+        if (renderDebounceTimer !== null) {
+            clearTimeout(renderDebounceTimer);
+        }
+
         isRendering = true;
-        const timer = setTimeout(async () => {
+        renderDebounceTimer = window.setTimeout(async () => {
             renderError = null;
 
             if (!content || content.trim().length === 0) {
@@ -40,21 +47,28 @@
             } finally {
                 isRendering = false;
             }
-        }, 10);
+        }, 300); // 300ms debounce for better performance
 
-        return () => clearTimeout(timer);
+        return () => {
+            if (renderDebounceTimer !== null) {
+                clearTimeout(renderDebounceTimer);
+            }
+        };
     });
 
-    // Scroll sync effect - sync preview to editor scroll
+    // Scroll sync effect - sync preview to editor scroll (debounced)
     $effect(() => {
-        // Watch scrollPercentage and container
         if (!container) return;
         
         // Access scrollPercentage to create dependency
         const currentScrollPercentage = scrollPercentage;
 
-        // Wait for next tick to ensure content is rendered
-        setTimeout(() => {
+        // Debounce scroll sync to improve performance
+        if (scrollSyncTimeout !== null) {
+            clearTimeout(scrollSyncTimeout);
+        }
+        
+        scrollSyncTimeout = window.setTimeout(() => {
             if (!container) return;
             
             const maxScroll = container.scrollHeight - container.clientHeight;
@@ -72,12 +86,29 @@
                     }
                 }
             }
-        }, 0);
+            scrollSyncTimeout = null;
+        }, 16); // ~60fps debounce
     });
 </script>
 
 <!-- Parent must be relative -->
-<div class="relative w-full h-full bg-[#1e1e1e] border-l group block" style="border-color: var(--border-main);">
+<div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
+    <!-- Orientation Toggle Button -->
+    <button
+        type="button"
+        class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20"
+        style="background-color: var(--bg-panel); border: 1px solid var(--border-main);"
+        onclick={() => appState.toggleOrientation()}
+        title="Toggle split orientation (vertical/horizontal)"
+        aria-label="Toggle split orientation"
+    >
+        {#if appState.splitOrientation === 'vertical'}
+            <FlipVertical size={16} style="color: var(--fg-default);" />
+        {:else}
+            <FlipHorizontal size={16} style="color: var(--fg-default);" />
+        {/if}
+    </button>
+    
     <!-- Content -->
     <div bind:this={container} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}

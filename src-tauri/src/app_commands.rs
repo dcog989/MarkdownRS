@@ -180,14 +180,28 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
 
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(dict_path)
-        .map_err(|e| e.to_string())?;
+    // Read existing words to check for duplicates
+    let existing_words = if dict_path.exists() {
+        fs::read_to_string(&dict_path)
+            .map_err(|e| e.to_string())?
+            .lines()
+            .map(|line| line.trim().to_lowercase())
+            .collect::<std::collections::HashSet<_>>()
+    } else {
+        std::collections::HashSet::new()
+    };
 
-    if let Err(e) = writeln!(file, "{}", word) {
-        return Err(format!("Failed to write to dictionary: {}", e));
+    // Only add if word doesn't already exist (case-insensitive)
+    if !existing_words.contains(&word.to_lowercase()) {
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(dict_path)
+            .map_err(|e| e.to_string())?;
+
+        if let Err(e) = writeln!(file, "{}", word) {
+            return Err(format!("Failed to write to dictionary: {}", e));
+        }
     }
 
     Ok(())

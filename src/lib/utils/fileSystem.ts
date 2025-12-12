@@ -1,6 +1,7 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { formatMarkdown } from './formatter';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 
@@ -28,7 +29,7 @@ type FileContent = {
 };
 
 let isSaving = false;
-let pendingSave = false;
+let saveQueue: (() => Promise<void>)[] = [];
 
 async function refreshMetadata(tabId: string, path: string) {
     try {
@@ -108,8 +109,26 @@ export async function saveCurrentFile() {
         if (savePath) {
             const sanitizedPath = sanitizePath(savePath);
 
-            // Handle Line Endings
+            // Apply formatter if enabled and not a plain text file
             let contentToSave = tab.content;
+            if (appState.formatOnSave && !sanitizedPath.endsWith('.txt')) {
+                try {
+                    contentToSave = formatMarkdown(contentToSave, {
+                        listIndent: appState.formatterListIndent,
+                        bulletChar: appState.formatterBulletChar,
+                        codeBlockFence: appState.formatterCodeFence,
+                        tableAlignment: appState.formatterTableAlignment
+                    });
+                    // Update tab content with formatted version
+                    tab.content = contentToSave;
+                } catch (err) {
+                    console.error('Format on save failed:', err);
+                    // Continue with original content if formatting fails
+                    contentToSave = tab.content;
+                }
+            }
+
+            // Handle Line Endings
             if (tab.lineEnding === 'CRLF') {
                 // Ensure LF -> CRLF (CodeMirror normalizes to LF internally)
                 contentToSave = contentToSave.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
@@ -172,6 +191,16 @@ export async function requestCloseTab(id: string, force = false) {
     }
 }
 
+/**
+ * Adds a word to the custom dictionary file.
+ * 
+ * NOTE: Browser's native spellcheck does not read this custom dictionary file.
+ * This function stores words for reference but won't affect the built-in spellchecker.
+ * Words added will be tracked but will still show as misspelled in the editor.
+ * 
+ * To implement full custom dictionary support, a CodeMirror spellcheck extension
+ * would need to be created that reads from this file.
+ */
 export async function addToDictionary(word: string) {
     try {
         await invoke('add_to_dictionary', { word });
@@ -182,43 +211,50 @@ export async function addToDictionary(word: string) {
     }
 }
 
+async function processSaveQueue() {
+    while (saveQueue.length > 0) {
+        const saveTask = saveQueue.shift();
+        if (saveTask) {
+            await saveTask();
+        }
+    }
+    isSaving = false;
+}
+
 export async function persistSession() {
     if (!editorStore.sessionDirty) return;
 
+    const saveTask = async () => {
+        try {
+            const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
+                id: t.id,
+                path: t.path,
+                title: t.title,
+                content: t.content,
+                is_dirty: t.isDirty,
+                scroll_percentage: t.scrollPercentage,
+                created: t.created || null,
+                modified: t.modified || null,
+                is_pinned: t.isPinned || false,
+                custom_title: t.customTitle || null
+            }));
+
+            await invoke('save_session', { tabs: plainTabs });
+            editorStore.sessionDirty = false;
+        } catch (err) {
+            console.error('Failed to save session:', err);
+        }
+    };
+
     if (isSaving) {
-        pendingSave = true;
+        // Add to queue if already saving
+        saveQueue.push(saveTask);
         return;
     }
 
     isSaving = true;
-
-    try {
-        const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
-            id: t.id,
-            path: t.path,
-            title: t.title,
-            content: t.content,
-            is_dirty: t.isDirty,
-            scroll_percentage: t.scrollPercentage,
-            created: t.created || null,
-            modified: t.modified || null,
-            is_pinned: t.isPinned || false,
-            custom_title: t.customTitle || null
-        }));
-
-        await invoke('save_session', { tabs: plainTabs });
-        editorStore.sessionDirty = false;
-
-        if (pendingSave) {
-            pendingSave = false;
-            isSaving = false;
-            await persistSession();
-        }
-    } catch (err) {
-        console.error('Failed to save session:', err);
-    } finally {
-        isSaving = false;
-    }
+    await saveTask();
+    await processSaveQueue();
 }
 
 export async function loadSession() {

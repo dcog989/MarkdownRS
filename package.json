@@ -1,6 +1,6 @@
 {
     "name": "markdown-rs",
-    "version": "0.1.66",
+    "version": "0.1.72",
     "private": true,
     "type": "module",
     "scripts": {
@@ -19,6 +19,7 @@
         "@codemirror/lang-markdown": "^6.5",
         "@codemirror/language": "^6.11",
         "@codemirror/language-data": "^6.5",
+        "@codemirror/search": "^6.5",
         "@codemirror/state": "^6.5",
         "@codemirror/theme-one-dark": "^6.1",
         "@codemirror/view": "^6.38",

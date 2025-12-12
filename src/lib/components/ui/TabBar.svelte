@@ -42,10 +42,24 @@
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
-                if (!showMruPopup) {
-                    showMruPopup = true;
+                
+                if (!tabKeyHeld) {
+                    // First Ctrl+Tab: just switch to last used tab, DON'T show popup yet
                     tabKeyHeld = true;
+                    
+                    // Switch to MRU index 1 (last used tab)
+                    if (editorStore.mruStack.length >= 2) {
+                        const lastUsedTab = editorStore.mruStack[1];
+                        if (lastUsedTab) {
+                            appState.activeTabId = lastUsedTab;
+                        }
+                    }
+                } else if (tabKeyHeld && !showMruPopup) {
+                    // Second Ctrl+Tab while still holding Ctrl: NOW show popup and cycle
+                    showMruPopup = true;
+                    cycleNextMru();
                 } else {
+                    // Already in MRU mode: continue cycling
                     cycleNextMru();
                 }
             }
@@ -54,6 +68,10 @@
         const handleKeyUp = (e: KeyboardEvent) => {
             if (!e.ctrlKey && tabKeyHeld) {
                 tabKeyHeld = false;
+                // When Ctrl is released, commit the selection to MRU
+                if (appState.activeTabId) {
+                    editorStore.pushToMru(appState.activeTabId);
+                }
                 if (mruTimeout) clearTimeout(mruTimeout);
                 mruTimeout = window.setTimeout(() => {
                     showMruPopup = false;
@@ -75,11 +93,21 @@
     });
 
     function cycleNextMru() {
+        // MRU stack is ordered: [most recent, previous, ...]
+        // When cycling, skip the current (index 0) and go to next in stack
+        if (editorStore.mruStack.length < 2) return;
+        
         const currentActive = appState.activeTabId;
         const currentIndex = editorStore.mruStack.findIndex((id) => id === currentActive);
+        
+        // If we're at the start, go to second item (last used)
+        // Otherwise, cycle through the stack
         const nextIndex = (currentIndex + 1) % editorStore.mruStack.length;
         const nextTabId = editorStore.mruStack[nextIndex];
-        if (nextTabId) {
+        
+        if (nextTabId && nextTabId !== currentActive) {
+            // Update activeTabId but DON'T update MRU stack yet
+            // MRU stack will be updated when Ctrl is released
             appState.activeTabId = nextTabId;
         }
     }
@@ -111,9 +139,23 @@
         await tick();
         setTimeout(() => {
             if (!scrollContainer) return;
-            const activeEl = scrollContainer.querySelector('[data-active="true"]');
-            if (activeEl) {
-                activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+            const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
+            if (!activeEl) return;
+            
+            // Check if tab is already fully visible
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const tabRect = activeEl.getBoundingClientRect();
+            const isFullyVisible = tabRect.left >= containerRect.left && tabRect.right <= containerRect.right;
+            
+            // Only scroll if tab is not fully visible
+            if (!isFullyVisible) {
+                // Determine which edge to align to
+                const isCloserToLeft = tabRect.left < containerRect.left;
+                activeEl.scrollIntoView({ 
+                    behavior: "smooth", 
+                    block: "nearest", 
+                    inline: isCloserToLeft ? "start" : "end"
+                });
             }
             scheduleCheckScroll();
         }, 100);
@@ -175,42 +217,95 @@
 
     function handleDragStart(e: DragEvent, tabId: string) {
         if (!e.dataTransfer) return;
+        const tab = editorStore.tabs.find(t => t.id === tabId);
+        if (tab?.isPinned) {
+            e.preventDefault();
+            return;
+        }
+        
+        console.log('Drag started:', tabId);
         draggedTabId = tabId;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', tabId);
+        
+        // Make the drag image semi-transparent
+        const target = e.currentTarget as HTMLElement;
+        if (target) {
+            target.style.opacity = '0.4';
+        }
     }
 
     function handleDragOver(e: DragEvent, tabId: string) {
+        if (!draggedTabId || draggedTabId === tabId) return;
+        
         e.preventDefault();
-        if (!e.dataTransfer || draggedTabId === tabId) return;
-        e.dataTransfer.dropEffect = 'move';
+        e.stopPropagation();
+        
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'move';
+        }
+        
         draggedOverTabId = tabId;
     }
 
-    function handleDragLeave(e: DragEvent) {
-        draggedOverTabId = null;
+    function handleDragEnter(e: DragEvent, tabId: string) {
+        if (!draggedTabId || draggedTabId === tabId) return;
+        e.preventDefault();
+        draggedOverTabId = tabId;
+    }
+
+    function handleDragLeave(e: DragEvent, tabId: string) {
+        // Only clear if we're actually leaving this tab
+        const relatedTarget = e.relatedTarget as HTMLElement;
+        const currentTarget = e.currentTarget as HTMLElement;
+        
+        // Check if we're leaving to a child element
+        if (relatedTarget && currentTarget.contains(relatedTarget)) {
+            return;
+        }
+        
+        if (draggedOverTabId === tabId) {
+            draggedOverTabId = null;
+        }
     }
 
     function handleDrop(e: DragEvent, targetTabId: string) {
         e.preventDefault();
-        if (!draggedTabId || draggedTabId === targetTabId) return;
+        e.stopPropagation();
+        
+        console.log('Drop on:', targetTabId, 'from:', draggedTabId);
+        
+        if (!draggedTabId || draggedTabId === targetTabId) {
+            draggedTabId = null;
+            draggedOverTabId = null;
+            return;
+        }
 
         const fromIndex = editorStore.tabs.findIndex(t => t.id === draggedTabId);
         const toIndex = editorStore.tabs.findIndex(t => t.id === targetTabId);
 
-        if (fromIndex !== -1 && toIndex !== -1) {
+        console.log('Moving tab from index', fromIndex, 'to', toIndex);
+
+        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
             const tabs = [...editorStore.tabs];
             const [movedTab] = tabs.splice(fromIndex, 1);
             tabs.splice(toIndex, 0, movedTab);
             editorStore.tabs = tabs;
             editorStore.sessionDirty = true;
+            console.log('Tab reordered successfully');
         }
 
         draggedTabId = null;
         draggedOverTabId = null;
     }
 
-    function handleDragEnd() {
+    function handleDragEnd(e: DragEvent) {
+        console.log('Drag ended');
+        // Reset visual feedback
+        const target = e.currentTarget as HTMLElement;
+        if (target) {
+            target.style.opacity = '1';
+        }
         draggedTabId = null;
         draggedOverTabId = null;
     }
@@ -245,14 +340,14 @@
     let tabCount = $derived(editorStore.tabs.length);
 </script>
 
-<div class="h-9 flex items-end w-full border-b relative shrink-0" style="background-color: var(--bg-panel); border-color: var(--border-main);">
+<div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--bg-panel); border-color: var(--border-main);">
     {#if showLeftArrow}
         <button class="h-8 w-6 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)] z-10 bg-[var(--bg-panel)] border-r border-[var(--border-main)]" onclick={() => scroll("left")} aria-label="Scroll tabs left">
             <ChevronLeft size={14} />
         </button>
     {/if}
 
-    <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full" onscroll={() => scheduleCheckScroll()}>
+    <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container" onscroll={() => scheduleCheckScroll()}>
         {#each editorStore.tabs as tab (tab.id)}
             {@const isActive = appState.activeTabId === tab.id}
             {@const iconColor = getIconColor(tab, isActive)}
@@ -276,9 +371,10 @@
                 oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
                 ondragstart={(e) => handleDragStart(e, tab.id)}
                 ondragover={(e) => handleDragOver(e, tab.id)}
-                ondragleave={handleDragLeave}
+                ondragenter={(e) => handleDragEnter(e, tab.id)}
+                ondragleave={(e) => handleDragLeave(e, tab.id)}
                 ondrop={(e) => handleDrop(e, tab.id)}
-                ondragend={handleDragEnd}
+                ondragend={(e) => handleDragEnd(e)}
                 aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
                 <!-- File Type Icon -->
@@ -358,7 +454,7 @@
 {/if}
 
 <!-- MRU Tabs Popup -->
-<MruTabsPopup isOpen={showMruPopup} onClose={() => (showMruPopup = false)} onSelect={handleMruSelect} />
+<MruTabsPopup isOpen={showMruPopup} onClose={() => (showMruPopup = false)} onSelect={handleMruSelect} currentActiveId={appState.activeTabId} />
 
 <style>
     .no-scrollbar::-webkit-scrollbar {
@@ -367,5 +463,28 @@
     .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
+    }
+    
+    /* Explicitly allow drag and drop on tabs */
+    .tab-bar-container,
+    .tab-scroll-container {
+        -webkit-app-region: no-drag;
+        -webkit-user-drag: none;
+    }
+    
+    button[draggable="true"] {
+        -webkit-app-region: no-drag;
+        -webkit-user-drag: element;
+        cursor: grab;
+        user-select: none;
+    }
+    
+    button[draggable="true"]:active {
+        cursor: grabbing;
+    }
+    
+    /* Allow pointer events on interactive elements during drag */
+    button[draggable="true"] .truncate {
+        pointer-events: none;
     }
 </style>

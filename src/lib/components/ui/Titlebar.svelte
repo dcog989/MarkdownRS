@@ -2,17 +2,19 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Copy, Eye, Minus, Search, Settings, Square, X, Sparkles } from "lucide-svelte";
+    import { Copy, Eye, Keyboard, Minus, Search, Settings, Square, X, Sparkles } from "lucide-svelte";
     import { onMount } from "svelte";
     import SettingsModal from "./SettingsModal.svelte";
     import AboutModal from "./AboutModal.svelte";
     import TextTransformModal from "./TextTransformModal.svelte";
+    import ShortcutsModal from "./ShortcutsModal.svelte";
 
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
     let showSettingsModal = $state(false);
     let showAboutModal = $state(false);
     let showTransformModal = $state(false);
+    let showShortcutsModal = $state(false);
     let showCommandPalette = $state(false);
     let commandSearchQuery = $state("");
     let commandInputRef: HTMLInputElement | undefined = $state();
@@ -79,6 +81,10 @@
                 e.preventDefault();
                 showTransformModal = true;
             }
+            if (e.key === 'F1') {
+                e.preventDefault();
+                showShortcutsModal = true;
+            }
         };
         
         window.addEventListener('keydown', handleKeydown);
@@ -144,9 +150,11 @@
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => showAboutModal = true} aria-label="About">
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded px-2 py-1 pointer-events-auto text-[var(--fg-muted)] flex items-center gap-1.5 text-xs" onclick={() => showSettingsModal = true} aria-label="Settings">
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => showSettingsModal = true} aria-label="Settings">
             <Settings size={14} />
-            <span>Settings</span>
+        </button>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => showShortcutsModal = true} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
+            <Keyboard size={14} />
         </button>
     </div>
 
@@ -228,3 +236,6 @@
 
 <!-- Text Transform Modal -->
 <TextTransformModal isOpen={showTransformModal} onClose={() => showTransformModal = false} />
+
+<!-- Shortcuts Modal -->
+<ShortcutsModal bind:isOpen={showShortcutsModal} onClose={() => showShortcutsModal = false} />

@@ -21,15 +21,9 @@
 
     // Global Shortcut Handler (Capturing Phase)
     async function handleGlobalKeydown(e: KeyboardEvent) {
-        // Tab Cycling (Ctrl+Tab)
+        // Tab Cycling (Ctrl+Tab) - Let TabBar component handle this
         if (e.key === "Tab" && e.ctrlKey) {
-            e.preventDefault();
-            e.stopPropagation();
-            const nextId = editorStore.getNextTabId(appState.activeTabId, e.shiftKey);
-            if (nextId) {
-                appState.activeTabId = nextId;
-                editorStore.pushToMru(nextId);
-            }
+            // Don't handle here - TabBar will handle MRU switching
             return;
         }
 
@@ -63,6 +57,13 @@
                     e.preventDefault();
                     e.stopPropagation();
                     appState.toggleSplitView();
+                    break;
+                case "f":
+                    if (e.shiftKey && e.altKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        editorStore.performTextTransform('format-document');
+                    }
                     break;
             }
         }
