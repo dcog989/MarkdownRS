@@ -1,14 +1,14 @@
 <script lang="ts">
+    import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
-    import { transformText } from "$lib/utils/textTransforms";
     import { formatMarkdown } from "$lib/utils/formatter";
-    import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
+    import { transformText } from "$lib/utils/textTransforms";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
-    import { search, highlightSelectionMatches } from "@codemirror/search";
+    import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
     import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
@@ -21,22 +21,23 @@
     let metricsUpdateTimer: number | null = null;
     let previousTabId: string = "";
     let themeCompartment = new Compartment();
-    
+    let isRemoteScrolling = false;
+    let scrollDebounce: number | null = null;
+
     // Configuration constants
     const CONTENT_UPDATE_DEBOUNCE_MS = 100;
     const METRICS_UPDATE_DEBOUNCE_MS = 200;
-    
+
     // Context menu state
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
     let contextSelectedText = $state("");
     let contextWordUnderCursor = $state("");
-    
+
     // Function to trigger spellcheck refresh
     function refreshSpellcheck() {
         if (!view) return;
-        // Force DOM to re-render spellcheck by toggling and restoring spellcheck attribute
         const container = view.dom;
         container.spellcheck = false;
         setTimeout(() => {
@@ -54,33 +55,30 @@
             metricsUpdateTimer = null;
         }
     }
-    
+
     function handleTextOperation(operation: TextOperation) {
         if (!view) return;
-        
+
         const state = view.state;
         const doc = state.doc;
         const text = doc.toString();
-        
+
         let newText: string;
-        
-        // Handle format-document specially
-        if (operation.type === 'format-document') {
+
+        if (operation.type === "format-document") {
             newText = formatMarkdown(text, {
                 listIndent: appState.formatterListIndent || 2,
-                bulletChar: appState.formatterBulletChar || '-',
-                codeBlockFence: appState.formatterCodeFence || '```',
-                tableAlignment: appState.formatterTableAlignment !== false
+                bulletChar: appState.formatterBulletChar || "-",
+                codeBlockFence: appState.formatterCodeFence || "```",
+                tableAlignment: appState.formatterTableAlignment !== false,
             });
         } else {
-            // Use the centralized transformation utility
             newText = transformText(text, operation.type);
         }
-        
-        // Use a transaction to support undo/redo
+
         view.dispatch({
             changes: { from: 0, to: doc.length, insert: newText },
-            userEvent: 'input.complete'
+            userEvent: "input.complete",
         });
     }
 
@@ -117,7 +115,9 @@
                             const dom = view.scrollDOM;
                             const scrollHeight = dom.scrollHeight - dom.clientHeight;
                             if (scrollHeight > 0) {
+                                isRemoteScrolling = true;
                                 dom.scrollTop = scrollHeight * currentTab.scrollPercentage;
+                                setTimeout(() => (isRemoteScrolling = false), 50);
                             }
                         }
                     }, 0);
@@ -127,10 +127,38 @@
         }
     });
 
+    // Bidirectional scroll sync (Incoming)
+    // React to changes in the store's scroll percentage (e.g. from Preview)
+    let currentTabState = $derived(editorStore.tabs.find((t) => t.id === tabId));
+    let targetScrollPercentage = $derived(currentTabState?.scrollPercentage ?? 0);
+
+    $effect(() => {
+        const target = targetScrollPercentage; // create dependency
+        if (!view || !view.scrollDOM) return;
+
+        const dom = view.scrollDOM;
+        const maxScroll = dom.scrollHeight - dom.clientHeight;
+        if (maxScroll <= 0) return;
+
+        const currentScroll = dom.scrollTop;
+        const targetScroll = maxScroll * target;
+
+        // Only update if difference is significant (prevents jitter/loops)
+        // 1% threshold
+        if (Math.abs(currentScroll - targetScroll) > maxScroll * 0.01) {
+            isRemoteScrolling = true;
+            dom.scrollTop = targetScroll;
+            // Debounce the release of the lock
+            if (scrollDebounce) clearTimeout(scrollDebounce);
+            scrollDebounce = window.setTimeout(() => {
+                isRemoteScrolling = false;
+            }, 50);
+        }
+    });
+
     onMount(() => {
-        // Register text operation callback
         editorStore.registerTextOperationCallback(handleTextOperation);
-        
+
         const currentTab = editorStore.tabs.find((t) => t.id === tabId);
         const initialContent = currentTab?.content || "";
         const filename = currentTab?.title || "";
@@ -171,19 +199,16 @@
                 run: (view: EditorView) => {
                     const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
                     if (selection && selection.trim().length > 0) {
-                        // Extract words from selection
                         const words = selection
                             .split(/\s+/)
-                            .map(w => w.replace(/[^a-zA-Z0-9'-]/g, ''))
-                            .filter(w => w.length > 0)
+                            .map((w) => w.replace(/[^a-zA-Z0-9'-]/g, ""))
+                            .filter((w) => w.length > 0)
                             .filter((word, index, self) => self.indexOf(word) === index);
-                        
-                        // Add all words
-                        Promise.all(words.map(w => addToDictionary(w))).then(() => {
+
+                        Promise.all(words.map((w) => addToDictionary(w))).then(() => {
                             refreshSpellcheck();
                         });
                     } else {
-                        // Try to get word under cursor
                         const range = view.state.wordAt(view.state.selection.main.head);
                         if (range) {
                             const word = view.state.sliceDoc(range.from, range.to);
@@ -218,7 +243,7 @@
                 event.preventDefault();
                 const selection = view.state.selection.main;
                 const selectedText = view.state.sliceDoc(selection.from, selection.to);
-                
+
                 let wordUnderCursor = "";
                 if (!selectedText) {
                     const range = view.state.wordAt(selection.head);
@@ -226,16 +251,19 @@
                         wordUnderCursor = view.state.sliceDoc(range.from, range.to);
                     }
                 }
-                
+
                 contextSelectedText = selectedText;
                 contextWordUnderCursor = wordUnderCursor;
                 contextMenuX = event.clientX;
                 contextMenuY = event.clientY;
                 showContextMenu = true;
-                
+
                 return true;
             },
             scroll: (event, view) => {
+                // Prevent circular updates if scrolling was triggered programmatically
+                if (isRemoteScrolling) return;
+
                 const dom = view.scrollDOM;
                 const maxScroll = dom.scrollHeight - dom.clientHeight;
 
@@ -357,18 +385,19 @@
             window.removeEventListener("focus", handleWindowFocus);
             clearAllTimers();
             editorStore.unregisterTextOperationCallback();
-            // View cleanup is handled in onDestroy to prevent double-destroy
+            if (view) {
+                view.destroy();
+                view = null as any;
+            }
         };
     });
 
     onDestroy(() => {
         clearAllTimers();
         editorStore.unregisterTextOperationCallback();
-        
-        // Cleanup view after callback unregistration to prevent race conditions
         if (view) {
             view.destroy();
-            view = null as any; // Ensure garbage collection
+            view = null as any;
         }
     });
 </script>
@@ -378,14 +407,7 @@
 <div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
 
 {#if showContextMenu}
-    <EditorContextMenu 
-        x={contextMenuX} 
-        y={contextMenuY} 
-        selectedText={contextSelectedText}
-        wordUnderCursor={contextWordUnderCursor}
-        onClose={() => showContextMenu = false}
-        onDictionaryUpdate={refreshSpellcheck}
-    />
+    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={refreshSpellcheck} />
 {/if}
 
 <style>

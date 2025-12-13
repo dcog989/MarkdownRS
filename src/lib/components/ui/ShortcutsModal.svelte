@@ -10,7 +10,7 @@
 
     // Manually defined shortcuts for display
     const shortcutsByCategory = {
-        "File": [
+        File: [
             { description: "Create new file", shortcut: "Ctrl+N" },
             { description: "Open file", shortcut: "Ctrl+O" },
             { description: "Save file", shortcut: "Ctrl+S" },
@@ -18,7 +18,7 @@
             { description: "Cycle tabs (sequential)", shortcut: "Ctrl+Tab" },
             { description: "Cycle tabs backward", shortcut: "Ctrl+Shift+Tab" },
         ],
-        "Edit": [
+        Edit: [
             { description: "Format document", shortcut: "Shift+Alt+F" },
             { description: "Text transformations", shortcut: "Ctrl+T" },
             { description: "Add to dictionary", shortcut: "F8" },
@@ -26,15 +26,15 @@
             { description: "Jump to end", shortcut: "Ctrl+End" },
             { description: "Toggle insert/overwrite", shortcut: "Insert" },
         ],
-        "View": [
+        View: [
             { description: "Toggle split preview", shortcut: "Ctrl+\\" },
             { description: "Search commands", shortcut: "Ctrl+Shift+P" },
             { description: "Command palette", shortcut: "Ctrl+P" },
         ],
-        "Help": [
+        Help: [
             { description: "Keyboard shortcuts", shortcut: "F1" },
             { description: "Settings", shortcut: "Click gear icon" },
-        ]
+        ],
     };
 
     function handleBackdropClick(e: MouseEvent) {
@@ -97,11 +97,6 @@
                         <p class="text-sm">No shortcuts registered</p>
                     </div>
                 {/if}
-            </div>
-
-            <!-- Footer -->
-            <div class="px-6 py-3 border-t text-xs" style="background-color: var(--bg-header); border-color: var(--border-light); color: var(--fg-muted);">
-                <p>Tip: Press <kbd class="px-2 py-0.5 rounded" style="background-color: var(--bg-input); border: 1px solid var(--border-main);">ESC</kbd> to close this dialog</p>
             </div>
         </div>
     </div>

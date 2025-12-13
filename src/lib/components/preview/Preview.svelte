@@ -11,7 +11,11 @@
     let isRendering = $state(false);
     let scrollSyncTimeout: number | null = null;
     let renderErrorCount = $state(0);
-    
+
+    // Flag to differentiate manual user scrolling from programmatic sync scrolling
+    let isSyncingScroll = false;
+    let syncLockTimeout: number | null = null;
+
     // Configuration constants
     const MAX_RENDER_ERRORS = 3;
     const RENDER_DEBOUNCE_MS = 300;
@@ -24,7 +28,6 @@
     let renderDebounceTimer: number | null = null;
 
     $effect(() => {
-        // Debounce markdown rendering to improve typing performance
         if (renderDebounceTimer !== null) {
             clearTimeout(renderDebounceTimer);
         }
@@ -36,20 +39,19 @@
             if (!content || content.trim().length === 0) {
                 htmlContent = "";
                 isRendering = false;
-                renderErrorCount = 0; // Reset on empty content
+                renderErrorCount = 0;
                 return;
             }
 
             try {
                 const rendered = await renderMarkdown(content);
                 htmlContent = rendered;
-                renderErrorCount = 0; // Reset on successful render
+                renderErrorCount = 0;
             } catch (e) {
                 renderErrorCount++;
-                AppError.log('Markdown:Render', e, { tabId, contentLength: content.length });
+                AppError.log("Markdown:Render", e, { tabId, contentLength: content.length });
                 renderError = e instanceof Error ? e.message : "Unknown rendering error";
-                
-                // Error boundary: stop attempting to render after multiple failures
+
                 if (renderErrorCount >= MAX_RENDER_ERRORS) {
                     const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
                     htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
@@ -60,7 +62,7 @@
                     isRendering = false;
                     return;
                 }
-                
+
                 const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
                     <strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
@@ -69,7 +71,7 @@
             } finally {
                 isRendering = false;
             }
-        }, RENDER_DEBOUNCE_MS); // 300ms debounce for better performance
+        }, RENDER_DEBOUNCE_MS);
 
         return () => {
             if (renderDebounceTimer !== null) {
@@ -78,41 +80,39 @@
         };
     });
 
-    // Scroll sync effect - sync preview to editor scroll
+    // Incoming Scroll Sync: Editor -> Preview
     $effect(() => {
         if (!container) return;
-        
-        // Access scrollPercentage to create dependency
+
         const currentScrollPercentage = scrollPercentage;
 
-        // Use requestAnimationFrame for smoother scrolling
         if (scrollSyncTimeout !== null) {
             cancelAnimationFrame(scrollSyncTimeout);
         }
-        
+
         scrollSyncTimeout = requestAnimationFrame(() => {
             if (!container) return;
-            
-            const maxScroll = container.scrollHeight - container.clientHeight;
 
-            if (maxScroll > 0) {
-                // Strict precise clamping with threshold to avoid jitter
-                if (currentScrollPercentage <= 0.001) {
-                    if (container.scrollTop !== 0) container.scrollTop = 0;
-                } else if (currentScrollPercentage >= 0.999) {
-                    if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
-                } else {
-                    const target = Math.round(maxScroll * currentScrollPercentage);
-                    // Only update if difference is significant to prevent micro-jitter
-                    if (Math.abs(container.scrollTop - target) > 1) {
-                        container.scrollTop = target;
-                    }
-                }
+            const maxScroll = container.scrollHeight - container.clientHeight;
+            if (maxScroll <= 0) return;
+
+            const currentScroll = container.scrollTop;
+            const targetScroll = Math.round(maxScroll * currentScrollPercentage);
+
+            // Sync if difference is significant
+            if (Math.abs(currentScroll - targetScroll) > 10) {
+                isSyncingScroll = true;
+                container.scrollTop = targetScroll;
+
+                // Release lock after scroll event has fired
+                if (syncLockTimeout) clearTimeout(syncLockTimeout);
+                syncLockTimeout = window.setTimeout(() => {
+                    isSyncingScroll = false;
+                }, 50);
             }
             scrollSyncTimeout = null;
-        }) as any; // requestAnimationFrame returns number, not NodeJS.Timeout
-        
-        // Cleanup function
+        }) as any;
+
         return () => {
             if (scrollSyncTimeout !== null) {
                 cancelAnimationFrame(scrollSyncTimeout);
@@ -120,28 +120,38 @@
             }
         };
     });
+
+    // Outgoing Scroll Sync: Preview -> Editor
+    function handleScroll() {
+        if (!container || isSyncingScroll) return;
+
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        if (maxScroll <= 0) return;
+
+        let percentage = container.scrollTop / maxScroll;
+
+        // Clamp
+        if (container.scrollTop <= 2) percentage = 0;
+        else if (Math.abs(container.scrollTop - maxScroll) <= 2) percentage = 1;
+        percentage = Math.max(0, Math.min(1, percentage));
+
+        editorStore.updateScroll(tabId, percentage);
+    }
 </script>
 
 <!-- Parent must be relative -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
     <!-- Orientation Toggle Button -->
-    <button
-        type="button"
-        class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20"
-        style="background-color: var(--bg-panel); border: 1px solid var(--border-main);"
-        onclick={() => appState.toggleOrientation()}
-        title="Toggle split orientation (vertical/horizontal)"
-        aria-label="Toggle split orientation"
-    >
-        {#if appState.splitOrientation === 'vertical'}
+    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" onclick={() => appState.toggleOrientation()} title="Toggle split orientation (vertical/horizontal)" aria-label="Toggle split orientation">
+        {#if appState.splitOrientation === "vertical"}
             <FlipVertical size={16} style="color: var(--fg-default);" />
         {:else}
             <FlipHorizontal size={16} style="color: var(--fg-default);" />
         {/if}
     </button>
-    
+
     <!-- Content -->
-    <div bind:this={container} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
+    <div bind:this={container} onscroll={handleScroll} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}
             <div class="absolute inset-0 flex items-center justify-center text-[var(--fg-muted)] opacity-50">Loading...</div>
         {:else if !htmlContent}

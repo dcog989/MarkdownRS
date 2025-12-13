@@ -14,7 +14,7 @@
     let showDropdown = $state(false);
     let checkScrollTimeout: number | null = null;
     let currentTime = $state(Date.now()); // For reactive time-based updates
-    
+
     // Drag and drop state
     let draggedTabId: string | null = $state(null);
     let draggedOverTabId: string | null = $state(null);
@@ -26,7 +26,8 @@
 
     // MRU popup state
     let showMruPopup = $state(false);
-    let mruTimeout: number | null = null;
+    let mruPopupTimeout: number | null = null;
+    let mruCleanupTimeout: number | null = null;
     let tabKeyHeld = $state(false);
 
     onMount(() => {
@@ -37,28 +38,35 @@
 
         const interval = setInterval(() => {
             scheduleCheckScroll();
-            // Update timestamp to trigger icon color recalculation without forcing full re-render
             currentTime = Date.now();
         }, 60000);
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
-                
+
                 if (!tabKeyHeld) {
-                    // First Ctrl+Tab: Switch to MRU[1] and show popup immediately
+                    // Start of Ctrl+Tab sequence
                     tabKeyHeld = true;
-                    showMruPopup = true;
-                    
-                    // Switch to MRU index 1 (last used tab)
+
+                    // Switch to MRU[1] immediately (quick switch behavior)
                     if (editorStore.mruStack.length >= 2) {
                         const lastUsedTab = editorStore.mruStack[1];
                         if (lastUsedTab && lastUsedTab !== appState.activeTabId) {
                             appState.activeTabId = lastUsedTab;
                         }
                     }
+
+                    // CRITICAL: Only show the MRU dialog if the user holds Ctrl for a moment.
+                    // This prevents the visual noise of the popup flashing during a quick toggle.
+                    if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
+                    mruPopupTimeout = window.setTimeout(() => {
+                        if (tabKeyHeld) {
+                            showMruPopup = true;
+                        }
+                    }, 200); // 200ms delay
                 } else {
-                    // Already holding Ctrl: continue cycling through MRU stack
+                    // Already holding Ctrl and popup is likely showing (or about to), cycle
                     cycleNextMru();
                 }
             }
@@ -67,14 +75,23 @@
         const handleKeyUp = (e: KeyboardEvent) => {
             if (!e.ctrlKey && tabKeyHeld) {
                 tabKeyHeld = false;
+
+                // Clear the delay timer so popup doesn't appear if released quickly
+                if (mruPopupTimeout) {
+                    clearTimeout(mruPopupTimeout);
+                    mruPopupTimeout = null;
+                }
+
                 // When Ctrl is released, commit the selection to MRU
                 if (appState.activeTabId) {
                     editorStore.pushToMru(appState.activeTabId);
                 }
-                if (mruTimeout) clearTimeout(mruTimeout);
-                mruTimeout = window.setTimeout(() => {
+
+                // Close popup
+                if (mruCleanupTimeout) clearTimeout(mruCleanupTimeout);
+                mruCleanupTimeout = window.setTimeout(() => {
                     showMruPopup = false;
-                }, 150);
+                }, 100);
             }
         };
 
@@ -85,28 +102,23 @@
             if (unlisten) unlisten();
             clearInterval(interval);
             if (checkScrollTimeout) clearTimeout(checkScrollTimeout);
-            if (mruTimeout) clearTimeout(mruTimeout);
+            if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
+            if (mruCleanupTimeout) clearTimeout(mruCleanupTimeout);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
     });
 
     function cycleNextMru() {
-        // MRU stack is ordered: [most recent, previous, ...]
-        // When cycling, skip the current (index 0) and go to next in stack
         if (editorStore.mruStack.length < 2) return;
-        
+
         const currentActive = appState.activeTabId;
         const currentIndex = editorStore.mruStack.findIndex((id) => id === currentActive);
-        
-        // If we're at the start, go to second item (last used)
-        // Otherwise, cycle through the stack
+
         const nextIndex = (currentIndex + 1) % editorStore.mruStack.length;
         const nextTabId = editorStore.mruStack[nextIndex];
-        
+
         if (nextTabId && nextTabId !== currentActive) {
-            // Update activeTabId but DON'T update MRU stack yet
-            // MRU stack will be updated when Ctrl is released
             appState.activeTabId = nextTabId;
         }
     }
@@ -140,20 +152,17 @@
             if (!scrollContainer) return;
             const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
             if (!activeEl) return;
-            
-            // Check if tab is already fully visible
+
             const containerRect = scrollContainer.getBoundingClientRect();
             const tabRect = activeEl.getBoundingClientRect();
             const isFullyVisible = tabRect.left >= containerRect.left && tabRect.right <= containerRect.right;
-            
-            // Only scroll if tab is not fully visible
+
             if (!isFullyVisible) {
-                // Determine which edge to align to
                 const isCloserToLeft = tabRect.left < containerRect.left;
-                activeEl.scrollIntoView({ 
-                    behavior: "smooth", 
-                    block: "nearest", 
-                    inline: isCloserToLeft ? "start" : "end"
+                activeEl.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: isCloserToLeft ? "start" : "end",
                 });
             }
             scheduleCheckScroll();
@@ -216,34 +225,32 @@
 
     function handleDragStart(e: DragEvent, tabId: string) {
         if (!e.dataTransfer) return;
-        const tab = editorStore.tabs.find(t => t.id === tabId);
+        const tab = editorStore.tabs.find((t) => t.id === tabId);
         if (tab?.isPinned) {
             e.preventDefault();
             return;
         }
-        
-        console.log('Drag started:', tabId);
+
         draggedTabId = tabId;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', tabId);
-        
-        // Make the drag image semi-transparent
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", tabId);
+
         const target = e.currentTarget as HTMLElement;
         if (target) {
-            target.style.opacity = '0.4';
+            target.style.opacity = "0.4";
         }
     }
 
     function handleDragOver(e: DragEvent, tabId: string) {
         if (!draggedTabId || draggedTabId === tabId) return;
-        
+
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (e.dataTransfer) {
-            e.dataTransfer.dropEffect = 'move';
+            e.dataTransfer.dropEffect = "move";
         }
-        
+
         draggedOverTabId = tabId;
     }
 
@@ -254,15 +261,13 @@
     }
 
     function handleDragLeave(e: DragEvent, tabId: string) {
-        // Only clear if we're actually leaving this tab
         const relatedTarget = e.relatedTarget as HTMLElement;
         const currentTarget = e.currentTarget as HTMLElement;
-        
-        // Check if we're leaving to a child element
+
         if (relatedTarget && currentTarget.contains(relatedTarget)) {
             return;
         }
-        
+
         if (draggedOverTabId === tabId) {
             draggedOverTabId = null;
         }
@@ -271,48 +276,43 @@
     function handleDrop(e: DragEvent, targetTabId: string) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (!draggedTabId || draggedTabId === targetTabId) {
             draggedTabId = null;
             draggedOverTabId = null;
             return;
         }
 
-        const fromIndex = editorStore.tabs.findIndex(t => t.id === draggedTabId);
-        const toIndex = editorStore.tabs.findIndex(t => t.id === targetTabId);
+        const fromIndex = editorStore.tabs.findIndex((t) => t.id === draggedTabId);
+        const toIndex = editorStore.tabs.findIndex((t) => t.id === targetTabId);
 
         if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
             const tabs = [...editorStore.tabs];
             const [movedTab] = tabs.splice(fromIndex, 1);
-            
-            // Adjust target index if dragging from left to right
+
             const adjustedToIndex = fromIndex < toIndex ? toIndex : toIndex;
             tabs.splice(adjustedToIndex, 0, movedTab);
-            
+
             editorStore.tabs = tabs;
             editorStore.sessionDirty = true;
         }
 
-        // Clear drag state
         draggedTabId = null;
         draggedOverTabId = null;
     }
 
     function handleDragEnd(e: DragEvent) {
-        console.log('Drag ended');
-        // Reset visual feedback
         const target = e.currentTarget as HTMLElement;
         if (target) {
-            target.style.opacity = '1';
+            target.style.opacity = "1";
         }
         draggedTabId = null;
         draggedOverTabId = null;
     }
 
     function getIconColor(tab: EditorTab, isActive: boolean): string {
-        // Create reactivity dependency on currentTime
         const _ = currentTime;
-        
+
         if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
 
         const parts = tab.modified.split(" / ");
@@ -466,26 +466,24 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    
-    /* Explicitly allow drag and drop on tabs */
+
     .tab-bar-container,
     .tab-scroll-container {
         -webkit-app-region: no-drag;
         -webkit-user-drag: none;
     }
-    
+
     button[draggable="true"] {
         -webkit-app-region: no-drag;
         -webkit-user-drag: element;
         cursor: grab;
         user-select: none;
     }
-    
+
     button[draggable="true"]:active {
         cursor: grabbing;
     }
-    
-    /* Allow pointer events on interactive elements during drag */
+
     button[draggable="true"] .truncate {
         pointer-events: none;
     }
