@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { AppError } from "$lib/utils/errorHandling";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
 
@@ -9,6 +10,11 @@
     let renderError = $state<string | null>(null);
     let isRendering = $state(false);
     let scrollSyncTimeout: number | null = null;
+    let renderErrorCount = $state(0);
+    
+    // Configuration constants
+    const MAX_RENDER_ERRORS = 3;
+    const RENDER_DEBOUNCE_MS = 300;
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
@@ -30,24 +36,40 @@
             if (!content || content.trim().length === 0) {
                 htmlContent = "";
                 isRendering = false;
+                renderErrorCount = 0; // Reset on empty content
                 return;
             }
 
             try {
                 const rendered = await renderMarkdown(content);
                 htmlContent = rendered;
+                renderErrorCount = 0; // Reset on successful render
             } catch (e) {
-                console.error("Markdown Render Error:", e);
+                renderErrorCount++;
+                AppError.log('Markdown:Render', e, { tabId, contentLength: content.length });
                 renderError = e instanceof Error ? e.message : "Unknown rendering error";
+                
+                // Error boundary: stop attempting to render after multiple failures
+                if (renderErrorCount >= MAX_RENDER_ERRORS) {
+                    const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
+                        <strong>Rendering failed multiple times (${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
+                        <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
+                        <p style='margin-top: 0.5rem; font-size: 0.9em;'>Please check your markdown syntax. Further render attempts have been paused to prevent performance issues.</p>
+                    </div>`;
+                    isRendering = false;
+                    return;
+                }
+                
                 const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
-                    <strong>Error rendering markdown:</strong><br/>
+                    <strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
                     <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
                 </div>`;
             } finally {
                 isRendering = false;
             }
-        }, 300); // 300ms debounce for better performance
+        }, RENDER_DEBOUNCE_MS); // 300ms debounce for better performance
 
         return () => {
             if (renderDebounceTimer !== null) {
@@ -56,38 +78,47 @@
         };
     });
 
-    // Scroll sync effect - sync preview to editor scroll (debounced)
+    // Scroll sync effect - sync preview to editor scroll
     $effect(() => {
         if (!container) return;
         
         // Access scrollPercentage to create dependency
         const currentScrollPercentage = scrollPercentage;
 
-        // Debounce scroll sync to improve performance
+        // Use requestAnimationFrame for smoother scrolling
         if (scrollSyncTimeout !== null) {
-            clearTimeout(scrollSyncTimeout);
+            cancelAnimationFrame(scrollSyncTimeout);
         }
         
-        scrollSyncTimeout = window.setTimeout(() => {
+        scrollSyncTimeout = requestAnimationFrame(() => {
             if (!container) return;
             
             const maxScroll = container.scrollHeight - container.clientHeight;
 
             if (maxScroll > 0) {
-                // Strict precise clamping
+                // Strict precise clamping with threshold to avoid jitter
                 if (currentScrollPercentage <= 0.001) {
                     if (container.scrollTop !== 0) container.scrollTop = 0;
                 } else if (currentScrollPercentage >= 0.999) {
                     if (container.scrollTop !== maxScroll) container.scrollTop = maxScroll;
                 } else {
-                    const target = maxScroll * currentScrollPercentage;
-                    if (Math.abs(container.scrollTop - target) > 5) {
+                    const target = Math.round(maxScroll * currentScrollPercentage);
+                    // Only update if difference is significant to prevent micro-jitter
+                    if (Math.abs(container.scrollTop - target) > 1) {
                         container.scrollTop = target;
                     }
                 }
             }
             scrollSyncTimeout = null;
-        }, 16); // ~60fps debounce
+        }) as any; // requestAnimationFrame returns number, not NodeJS.Timeout
+        
+        // Cleanup function
+        return () => {
+            if (scrollSyncTimeout !== null) {
+                cancelAnimationFrame(scrollSyncTimeout);
+                scrollSyncTimeout = null;
+            }
+        };
     });
 </script>
 

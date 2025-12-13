@@ -1,15 +1,15 @@
 [package]
 name = "markdown-rs"
-version = "0.1.72"
+version = "0.1.73"
 description = "The only markdown editor you need."
 authors = ["dcog989"]
 edition = "2024"
 
 [build-dependencies]
-tauri-build = { version = "2.3", features = [] }
+tauri-build = { version = "2.5", features = [] }
 
 [dependencies]
-tauri = { version = "2.5", features = [] }
+tauri = { version = "2.9", features = [] }
 tauri-plugin-shell = "2.3"
 tauri-plugin-fs = "2.4"
 tauri-plugin-dialog = "2.4"

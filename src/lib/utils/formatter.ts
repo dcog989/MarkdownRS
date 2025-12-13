@@ -239,13 +239,47 @@ export class MarkdownFormatter {
 // Default formatter instance
 export const defaultFormatter = new MarkdownFormatter();
 
+// Formatter cache for memoization
+const formatterCache = new Map<string, MarkdownFormatter>();
+const MAX_CACHE_SIZE = 10;
+
 /**
- * Quick format function
+ * Quick format function with memoization.
+ * Caches formatter instances to avoid recreating them with identical options.
  */
 export function formatMarkdown(content: string, options?: Partial<FormatterOptions>): string {
-    const formatter = options
-        ? new MarkdownFormatter(options)
-        : defaultFormatter;
+    // Use default formatter if no options provided
+    if (!options) {
+        return defaultFormatter.format(content);
+    }
+    
+    // Create cache key from options
+    const cacheKey = JSON.stringify(options);
+    
+    // Check cache for existing formatter
+    let formatter = formatterCache.get(cacheKey);
+    
+    if (!formatter) {
+        // Create new formatter and cache it
+        formatter = new MarkdownFormatter(options);
+        formatterCache.set(cacheKey, formatter);
+        
+        // Limit cache size using LRU eviction
+        if (formatterCache.size > MAX_CACHE_SIZE) {
+            const firstKey = formatterCache.keys().next().value;
+            if (firstKey) {
+                formatterCache.delete(firstKey);
+            }
+        }
+    }
 
     return formatter.format(content);
+}
+
+/**
+ * Clear the formatter cache.
+ * Useful for testing or memory management.
+ */
+export function clearFormatterCache(): void {
+    formatterCache.clear();
 }

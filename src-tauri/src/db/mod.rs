@@ -27,14 +27,17 @@ pub struct Database {
 impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         info!("Initializing database at {:?}", db_path);
-        let conn = Connection::open(db_path)?;
+        let mut conn = Connection::open(db_path)?;
         let version = Self::get_schema_version(&conn)?;
 
+        // Use transaction for all schema changes to enable rollback on error
+        let tx = conn.transaction()?;
+        
         match version {
             0 => {
                 // Initial schema creation
                 info!("Creating initial database schema");
-                conn.execute(
+                tx.execute(
                     "CREATE TABLE IF NOT EXISTS tabs (
                         id TEXT PRIMARY KEY,
                         title TEXT NOT NULL,
@@ -50,21 +53,23 @@ impl Database {
                     [],
                 )?;
 
-                conn.execute(
+                tx.execute(
                     "CREATE TABLE IF NOT EXISTS schema_version (
                         version INTEGER PRIMARY KEY
                     )",
                     [],
                 )?;
 
-                conn.execute("INSERT INTO schema_version (version) VALUES (?1)", [2])?;
+                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [2])?;
+                info!("Initial schema created successfully (version 2)");
             }
             1 => {
                 // Migration from v1 to v2: Add is_pinned and custom_title columns
                 info!("Migrating database schema from version 1 to 2");
-                conn.execute("ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0", [])?;
-                conn.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
-                conn.execute("UPDATE schema_version SET version = 2", [])?;
+                tx.execute("ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0", [])?;
+                tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
+                tx.execute("UPDATE schema_version SET version = 2", [])?;
+                info!("Migration to version 2 completed successfully");
             }
             2 => {
                 // Current version, no migration needed
@@ -75,6 +80,11 @@ impl Database {
                 info!("Unknown schema version {}, attempting to continue", version);
             }
         }
+
+        // Commit transaction - if any error occurred above, this won't execute
+        // and the transaction will rollback automatically when dropped
+        tx.commit()?;
+        info!("Database initialization completed successfully");
 
         Ok(Self { conn })
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { AlignLeft, ArrowDown01, ArrowDown10, ArrowDownAZ, ArrowDownZA, CaseSensitive, Eraser, FilterX, Hash, List, MinusCircle, Trash2, Type, X } from "lucide-svelte";
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
@@ -8,7 +8,7 @@
         title: string;
         icon: any;
         operations: {
-            id: string;
+            id: OperationTypeString;
             label: string;
             description: string;
             icon: any;
@@ -89,7 +89,7 @@
         },
     ];
 
-    function handleOperation(operationId: string) {
+    function handleOperation(operationId: OperationTypeString) {
         editorStore.performTextTransform(operationId);
         onClose();
     }

@@ -13,6 +13,7 @@
     let showRightArrow = $state(false);
     let showDropdown = $state(false);
     let checkScrollTimeout: number | null = null;
+    let currentTime = $state(Date.now()); // For reactive time-based updates
     
     // Drag and drop state
     let draggedTabId: string | null = $state(null);
@@ -36,7 +37,8 @@
 
         const interval = setInterval(() => {
             scheduleCheckScroll();
-            editorStore.tabs = [...editorStore.tabs]; // Force reactivity
+            // Update timestamp to trigger icon color recalculation without forcing full re-render
+            currentTime = Date.now();
         }, 60000);
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,22 +46,19 @@
                 e.preventDefault();
                 
                 if (!tabKeyHeld) {
-                    // First Ctrl+Tab: just switch to last used tab, DON'T show popup yet
+                    // First Ctrl+Tab: Switch to MRU[1] and show popup immediately
                     tabKeyHeld = true;
+                    showMruPopup = true;
                     
                     // Switch to MRU index 1 (last used tab)
                     if (editorStore.mruStack.length >= 2) {
                         const lastUsedTab = editorStore.mruStack[1];
-                        if (lastUsedTab) {
+                        if (lastUsedTab && lastUsedTab !== appState.activeTabId) {
                             appState.activeTabId = lastUsedTab;
                         }
                     }
-                } else if (tabKeyHeld && !showMruPopup) {
-                    // Second Ctrl+Tab while still holding Ctrl: NOW show popup and cycle
-                    showMruPopup = true;
-                    cycleNextMru();
                 } else {
-                    // Already in MRU mode: continue cycling
+                    // Already holding Ctrl: continue cycling through MRU stack
                     cycleNextMru();
                 }
             }
@@ -273,8 +272,6 @@
         e.preventDefault();
         e.stopPropagation();
         
-        console.log('Drop on:', targetTabId, 'from:', draggedTabId);
-        
         if (!draggedTabId || draggedTabId === targetTabId) {
             draggedTabId = null;
             draggedOverTabId = null;
@@ -284,17 +281,19 @@
         const fromIndex = editorStore.tabs.findIndex(t => t.id === draggedTabId);
         const toIndex = editorStore.tabs.findIndex(t => t.id === targetTabId);
 
-        console.log('Moving tab from index', fromIndex, 'to', toIndex);
-
         if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
             const tabs = [...editorStore.tabs];
             const [movedTab] = tabs.splice(fromIndex, 1);
-            tabs.splice(toIndex, 0, movedTab);
+            
+            // Adjust target index if dragging from left to right
+            const adjustedToIndex = fromIndex < toIndex ? toIndex : toIndex;
+            tabs.splice(adjustedToIndex, 0, movedTab);
+            
             editorStore.tabs = tabs;
             editorStore.sessionDirty = true;
-            console.log('Tab reordered successfully');
         }
 
+        // Clear drag state
         draggedTabId = null;
         draggedOverTabId = null;
     }
@@ -311,6 +310,9 @@
     }
 
     function getIconColor(tab: EditorTab, isActive: boolean): string {
+        // Create reactivity dependency on currentTime
+        const _ = currentTime;
+        
         if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
 
         const parts = tab.modified.split(" / ");

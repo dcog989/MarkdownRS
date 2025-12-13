@@ -15,6 +15,10 @@
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
+    
+    // Configuration constants
+    const AUTO_SAVE_INTERVAL_MS = 30000; // 30 seconds
+    const INIT_DELAY_MS = 150; // Window state restoration delay
 
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
@@ -95,7 +99,7 @@
         autoSaveInterval = window.setInterval(() => {
             persistSession();
             saveSettings();
-        }, 30000);
+        }, AUTO_SAVE_INTERVAL_MS);
 
         const handleBlur = () => {
             persistSession();

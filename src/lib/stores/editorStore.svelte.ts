@@ -46,66 +46,42 @@ function getCurrentTimestamp(): string {
 // Event system for text operations
 type TextOperationCallback = (operation: TextOperation) => void;
 
-export type TextOperation = 
+// Type-safe operation type strings
+export type OperationTypeString =
     // Sort operations
-    | { type: 'sort-asc' }
-    | { type: 'sort-desc' }
-    | { type: 'sort-numeric-asc' }
-    | { type: 'sort-numeric-desc' }
-    | { type: 'sort-length-asc' }
-    | { type: 'sort-length-desc' }
-    | { type: 'reverse' }
-    | { type: 'shuffle' }
+    | 'sort-asc' | 'sort-desc' | 'sort-numeric-asc' | 'sort-numeric-desc'
+    | 'sort-length-asc' | 'sort-length-desc' | 'reverse' | 'shuffle'
     // Remove operations
-    | { type: 'remove-duplicates' }
-    | { type: 'remove-unique' }
-    | { type: 'remove-blank' }
-    | { type: 'remove-trailing-spaces' }
-    | { type: 'remove-leading-spaces' }
-    | { type: 'remove-all-spaces' }
+    | 'remove-duplicates' | 'remove-unique' | 'remove-blank'
+    | 'remove-trailing-spaces' | 'remove-leading-spaces' | 'remove-all-spaces'
     // Case operations
-    | { type: 'uppercase' }
-    | { type: 'lowercase' }
-    | { type: 'title-case' }
-    | { type: 'sentence-case' }
-    | { type: 'camel-case' }
-    | { type: 'pascal-case' }
-    | { type: 'snake-case' }
-    | { type: 'kebab-case' }
-    | { type: 'constant-case' }
-    | { type: 'invert-case' }
+    | 'uppercase' | 'lowercase' | 'title-case' | 'sentence-case'
+    | 'camel-case' | 'pascal-case' | 'snake-case' | 'kebab-case'
+    | 'constant-case' | 'invert-case'
     // Markdown operations
-    | { type: 'add-bullets' }
-    | { type: 'add-numbers' }
-    | { type: 'add-checkboxes' }
-    | { type: 'remove-bullets' }
-    | { type: 'blockquote' }
-    | { type: 'remove-blockquote' }
-    | { type: 'add-code-fence' }
-    | { type: 'increase-heading' }
-    | { type: 'decrease-heading' }
+    | 'add-bullets' | 'add-numbers' | 'add-checkboxes' | 'remove-bullets'
+    | 'blockquote' | 'remove-blockquote' | 'add-code-fence'
+    | 'increase-heading' | 'decrease-heading'
     // Text manipulation
-    | { type: 'trim-whitespace' }
-    | { type: 'normalize-whitespace' }
-    | { type: 'join-lines' }
-    | { type: 'split-sentences' }
-    | { type: 'wrap-quotes' }
-    | { type: 'add-line-numbers' }
-    | { type: 'indent-lines' }
-    | { type: 'unindent-lines' }
+    | 'trim-whitespace' | 'normalize-whitespace' | 'join-lines'
+    | 'split-sentences' | 'wrap-quotes' | 'add-line-numbers'
+    | 'indent-lines' | 'unindent-lines'
     // Formatter
-    | { type: 'format-document' }
+    | 'format-document'
     // Legacy (kept for compatibility)
-    | { type: 'sort-lines' }
-    | { type: 'to-uppercase' }
-    | { type: 'to-lowercase' };
+    | 'sort-lines' | 'to-uppercase' | 'to-lowercase';
+
+// Simplified TextOperation to match the usage in performTextTransform
+export type TextOperation = {
+    type: OperationTypeString;
+};
 
 export class EditorStore {
     tabs = $state<EditorTab[]>([]);
     sessionDirty = $state(false);
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
-    
+
     // Callback for text operations that need to run on the editor
     private textOperationCallback: TextOperationCallback | null = null;
 
@@ -119,11 +95,11 @@ export class EditorStore {
         cursorCol: 1,
         insertMode: 'INS'
     });
-    
+
     registerTextOperationCallback(callback: TextOperationCallback) {
         this.textOperationCallback = callback;
     }
-    
+
     unregisterTextOperationCallback() {
         this.textOperationCallback = null;
     }
@@ -277,11 +253,14 @@ export class EditorStore {
             this.textOperationCallback({ type: 'lowercase' });
         }
     }
-    
-    // New unified method for all transformations
-    performTextTransform(operationId: string) {
+
+    /**
+     * Perform a text transformation on the active editor
+     * @param operationId - The operation type to perform
+     */
+    performTextTransform(operationId: OperationTypeString) {
         if (this.textOperationCallback) {
-            this.textOperationCallback({ type: operationId as any });
+            this.textOperationCallback({ type: operationId });
         }
     }
 }

@@ -22,6 +22,10 @@
     let previousTabId: string = "";
     let themeCompartment = new Compartment();
     
+    // Configuration constants
+    const CONTENT_UPDATE_DEBOUNCE_MS = 100;
+    const METRICS_UPDATE_DEBOUNCE_MS = 200;
+    
     // Context menu state
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
@@ -299,7 +303,7 @@
                 contentUpdateTimer = window.setTimeout(() => {
                     editorStore.updateContent(tabId, update.state.doc.toString());
                     contentUpdateTimer = null;
-                }, 100);
+                }, CONTENT_UPDATE_DEBOUNCE_MS);
             }
 
             if (update.docChanged || update.selectionSet) {
@@ -324,7 +328,7 @@
                         cursorCol: selection.head - cursorLine.from + 1,
                     });
                     metricsUpdateTimer = null;
-                }, 200);
+                }, METRICS_UPDATE_DEBOUNCE_MS);
             }
         });
 
@@ -351,19 +355,21 @@
 
         return () => {
             window.removeEventListener("focus", handleWindowFocus);
-            if (view) view.destroy();
             clearAllTimers();
             editorStore.unregisterTextOperationCallback();
+            // View cleanup is handled in onDestroy to prevent double-destroy
         };
     });
 
     onDestroy(() => {
         clearAllTimers();
+        editorStore.unregisterTextOperationCallback();
+        
+        // Cleanup view after callback unregistration to prevent race conditions
         if (view) {
             view.destroy();
             view = null as any; // Ensure garbage collection
         }
-        editorStore.unregisterTextOperationCallback();
     });
 </script>
 
