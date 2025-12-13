@@ -28,6 +28,16 @@ impl Default for AppSettings {
 }
 
 fn main() {
+    // Fix for Windows MPO (Multi-Plane Overlay) causing flickering/white artifacts
+    // when the window is in the top half of the screen.
+    #[cfg(target_os = "windows")]
+    unsafe {
+        std::env::set_var(
+            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+            "--disable-features=CalculateNativeWinOcclusion --disable-direct-composition",
+        );
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // When a second instance is launched, focus the existing window
