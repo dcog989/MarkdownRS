@@ -14,6 +14,8 @@ export type EditorTab = {
     customTitle?: string;
     lineEnding: 'LF' | 'CRLF';
     encoding: string;
+    fileCheckFailed?: boolean;
+    fileCheckPerformed?: boolean;
 };
 
 export type ClosedTab = {

@@ -2,8 +2,9 @@
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
-    import { addToDictionary } from "$lib/utils/fileSystem";
+    import { addToDictionary, checkFileExists } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatter";
+    import { refreshCustomDictionary } from "$lib/utils/spellcheck";
     import { transformText } from "$lib/utils/textTransforms";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -21,6 +22,7 @@
     let metricsUpdateTimer: number | null = null;
     let previousTabId: string = "";
     let themeCompartment = new Compartment();
+    let lineWrappingCompartment = new Compartment();
     let isRemoteScrolling = false;
     let scrollDebounce: number | null = null;
 
@@ -36,13 +38,22 @@
     let contextWordUnderCursor = $state("");
 
     // Function to trigger spellcheck refresh
-    function refreshSpellcheck() {
+    async function refreshSpellcheck() {
         if (!view) return;
+        
+        // Refresh custom dictionary
+        await refreshCustomDictionary();
+        
+        // Force browser spell check to re-evaluate
         const container = view.dom;
         container.spellcheck = false;
         setTimeout(() => {
             container.spellcheck = true;
-        }, 0);
+            // Force a re-render by triggering a dummy transaction
+            view.dispatch({
+                changes: { from: 0, to: 0, insert: '' }
+            });
+        }, 100);
     }
 
     function clearAllTimers() {
@@ -98,6 +109,17 @@
         }
     });
 
+    // Effect to handle word wrap changes
+    $effect(() => {
+        if (view) {
+            view.dispatch({
+                effects: lineWrappingCompartment.reconfigure(
+                    appState.editorWordWrap ? EditorView.lineWrapping : []
+                ),
+            });
+        }
+    });
+
     $effect(() => {
         if (tabId !== previousTabId) {
             clearAllTimers();
@@ -122,6 +144,9 @@
                         }
                     }, 0);
                 });
+                
+                // Check if file exists when tab is first focused
+                checkFileExists(tabId);
             }
             previousTabId = tabId;
         }
@@ -291,7 +316,7 @@
             highlightSelectionMatches(),
             keymap.of([...customKeymap, ...defaultKeymap, ...historyKeymap]),
             oneDark,
-            EditorView.lineWrapping,
+            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
             EditorView.contentAttributes.of({ spellcheck: "true" }),
             inputHandler,
             eventHandlers,

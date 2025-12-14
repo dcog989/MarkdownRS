@@ -18,6 +18,10 @@ pub struct TabState {
     pub is_pinned: bool,
     #[serde(default)]
     pub custom_title: Option<String>,
+    #[serde(default)]
+    pub file_check_failed: bool,
+    #[serde(default)]
+    pub file_check_performed: bool,
 }
 
 pub struct Database {
@@ -48,7 +52,9 @@ impl Database {
                         created TEXT,
                         modified TEXT,
                         is_pinned INTEGER DEFAULT 0,
-                        custom_title TEXT
+                        custom_title TEXT,
+                        file_check_failed INTEGER DEFAULT 0,
+                        file_check_performed INTEGER DEFAULT 0
                     )",
                     [],
                 )?;
@@ -60,18 +66,34 @@ impl Database {
                     [],
                 )?;
 
-                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [2])?;
-                info!("Initial schema created successfully (version 2)");
+                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [3])?;
+                info!("Initial schema created successfully (version 3)");
             }
-            1 => {
-                // Migration from v1 to v2: Add is_pinned and custom_title columns
-                info!("Migrating database schema from version 1 to 2");
-                tx.execute("ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0", [])?;
-                tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
-                tx.execute("UPDATE schema_version SET version = 2", [])?;
-                info!("Migration to version 2 completed successfully");
+            v if v < 3 => {
+                // Progressive migrations
+                let mut current_version = v;
+                
+                if current_version < 2 {
+                    // Migration from v1 to v2: Add is_pinned and custom_title columns
+                    info!("Migrating database schema from version {} to 2", current_version);
+                    tx.execute("ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0", [])?;
+                    tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
+                    current_version = 2;
+                    info!("Migration to version 2 completed successfully");
+                }
+                
+                if current_version < 3 {
+                    // Migration from v2 to v3: Add file_check_failed and file_check_performed columns
+                    info!("Migrating database schema from version {} to 3", current_version);
+                    tx.execute("ALTER TABLE tabs ADD COLUMN file_check_failed INTEGER DEFAULT 0", [])?;
+                    tx.execute("ALTER TABLE tabs ADD COLUMN file_check_performed INTEGER DEFAULT 0", [])?;
+                    current_version = 3;
+                    info!("Migration to version 3 completed successfully");
+                }
+                
+                tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
             }
-            2 => {
+            3 => {
                 // Current version, no migration needed
                 info!("Database schema is up to date (version {})", version);
             }
@@ -128,8 +150,8 @@ impl Database {
 
         for tab in tabs {
             tx.execute(
-                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
                 params![
                     &tab.id,
                     &tab.title,
@@ -140,7 +162,9 @@ impl Database {
                     &tab.created,
                     &tab.modified,
                     if tab.is_pinned { 1 } else { 0 },
-                    &tab.custom_title
+                    &tab.custom_title,
+                    if tab.file_check_failed { 1 } else { 0 },
+                    if tab.file_check_performed { 1 } else { 0 }
                 ],
             )?;
         }
@@ -154,7 +178,7 @@ impl Database {
         info!("Loading session from database");
 
         let mut stmt = self.conn.prepare(
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title FROM tabs"
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed FROM tabs"
         )?;
 
         let tabs = stmt
@@ -170,6 +194,8 @@ impl Database {
                     modified: row.get(7)?,
                     is_pinned: row.get::<_, i32>(8).unwrap_or(0) != 0,
                     custom_title: row.get(9).ok(),
+                    file_check_failed: row.get::<_, i32>(10).unwrap_or(0) != 0,
+                    file_check_performed: row.get::<_, i32>(11).unwrap_or(0) != 0,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

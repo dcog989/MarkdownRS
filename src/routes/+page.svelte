@@ -31,6 +31,35 @@
             return;
         }
 
+        // Tab Navigation (Ctrl+Left/Right)
+        if (e.ctrlKey && appState.tabNavigationMode === 'arrow-keys') {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const currentIndex = editorStore.tabs.findIndex(t => t.id === appState.activeTabId);
+                if (currentIndex === -1) return;
+                
+                let newIndex;
+                if (e.key === 'ArrowLeft') {
+                    // Navigate to previous tab
+                    newIndex = currentIndex - 1;
+                    if (newIndex < 0) newIndex = editorStore.tabs.length - 1; // Wrap to end
+                } else {
+                    // Navigate to next tab
+                    newIndex = currentIndex + 1;
+                    if (newIndex >= editorStore.tabs.length) newIndex = 0; // Wrap to start
+                }
+                
+                const newTab = editorStore.tabs[newIndex];
+                if (newTab) {
+                    appState.activeTabId = newTab.id;
+                    editorStore.pushToMru(newTab.id);
+                }
+                return;
+            }
+        }
+
         // App Shortcuts
         if (e.ctrlKey || e.metaKey) {
             switch (e.key.toLowerCase()) {
@@ -175,8 +204,8 @@
         <Titlebar />
         <TabBar />
 
-        <!-- Main Workspace -->
-        <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer}>
+        <!-- Main Workspace with StatusBar positioned on top -->
+        <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer} style="position: relative;">
             {#if appState.activeTabId}
                 {#key appState.activeTabId}
                     <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
@@ -213,8 +242,11 @@
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}
+            
+            <!-- StatusBar positioned absolutely at bottom of main workspace -->
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 100;">
+                <StatusBar />
+            </div>
         </div>
-
-        <StatusBar />
     </div>
 {/if}

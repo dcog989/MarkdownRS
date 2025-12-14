@@ -3,17 +3,16 @@
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { ChevronDown, ChevronLeft, ChevronRight, File, FileText, Pencil, Pin, Plus, X } from "lucide-svelte";
+    import { AlertCircle, ChevronDown, File, FileText, Pencil, Pin, Plus, Search, X } from "lucide-svelte";
     import { onMount, tick } from "svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
 
     let scrollContainer: HTMLDivElement;
-    let showLeftArrow = $state(false);
-    let showRightArrow = $state(false);
     let showDropdown = $state(false);
-    let checkScrollTimeout: number | null = null;
     let currentTime = $state(Date.now()); // For reactive time-based updates
+    let tabSearchQuery = $state("");
+    let searchInputRef = $state<HTMLInputElement>();
 
     // Drag and drop state
     let draggedTabId: string | null = $state(null);
@@ -34,10 +33,9 @@
         const appWindow = getCurrentWindow();
         let unlisten: (() => void) | undefined;
 
-        appWindow.onResized(() => scheduleCheckScroll()).then((u) => (unlisten = u));
+        appWindow.onResized(() => {}).then((u) => (unlisten = u));
 
         const interval = setInterval(() => {
-            scheduleCheckScroll();
             currentTime = Date.now();
         }, 60000);
 
@@ -101,7 +99,6 @@
         return () => {
             if (unlisten) unlisten();
             clearInterval(interval);
-            if (checkScrollTimeout) clearTimeout(checkScrollTimeout);
             if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
             if (mruCleanupTimeout) clearTimeout(mruCleanupTimeout);
             window.removeEventListener("keydown", handleKeyDown);
@@ -120,29 +117,6 @@
 
         if (nextTabId && nextTabId !== currentActive) {
             appState.activeTabId = nextTabId;
-        }
-    }
-
-    function scheduleCheckScroll() {
-        if (checkScrollTimeout) return;
-        checkScrollTimeout = window.setTimeout(() => {
-            checkScroll();
-            checkScrollTimeout = null;
-        }, 50);
-    }
-
-    function checkScroll() {
-        if (scrollContainer) {
-            showLeftArrow = scrollContainer.scrollLeft > 0;
-            showRightArrow = Math.ceil(scrollContainer.scrollLeft + scrollContainer.clientWidth) < scrollContainer.scrollWidth - 2;
-        }
-    }
-
-    function scroll(direction: "left" | "right") {
-        if (scrollContainer) {
-            const amount = 200;
-            scrollContainer.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
-            setTimeout(() => scheduleCheckScroll(), 350);
         }
     }
 
@@ -165,7 +139,6 @@
                     inline: isCloserToLeft ? "start" : "end",
                 });
             }
-            scheduleCheckScroll();
         }, 100);
     }
 
@@ -195,10 +168,10 @@
 
     function handleCloseTab(e: Event, id: string) {
         e.stopPropagation();
+        e.preventDefault();
         const tab = editorStore.tabs.find((t) => t.id === id);
         if (tab?.isPinned) return;
         requestCloseTab(id);
-        setTimeout(() => scheduleCheckScroll(), 50);
     }
 
     function handleTabContextMenu(e: MouseEvent, id: string) {
@@ -216,7 +189,28 @@
     function handleDropdownSelect(id: string) {
         handleTabClick(id);
         showDropdown = false;
+        tabSearchQuery = "";
     }
+
+    function toggleDropdown() {
+        showDropdown = !showDropdown;
+        if (showDropdown) {
+            setTimeout(() => searchInputRef?.focus(), 50);
+        } else {
+            tabSearchQuery = "";
+        }
+    }
+
+    let filteredTabs = $derived(
+        tabSearchQuery.trim() === ""
+            ? editorStore.tabs
+            : editorStore.tabs.filter((tab) => {
+                  const query = tabSearchQuery.toLowerCase();
+                  const title = (tab.customTitle || tab.title).toLowerCase();
+                  const path = (tab.path || "").toLowerCase();
+                  return title.includes(query) || path.includes(query);
+              })
+    );
 
     function handleMruSelect(tabId: string) {
         appState.activeTabId = tabId;
@@ -340,25 +334,104 @@
     }
 
     let tabCount = $derived(editorStore.tabs.length);
+    
+    // Get tab number for a given tab ID
+    function getTabNumber(tabId: string): number {
+        return editorStore.tabs.findIndex(t => t.id === tabId) + 1;
+    }
+
+    // Check if file exists for tabs with paths
+    function isFileMissing(tab: EditorTab): boolean {
+        return tab.fileCheckFailed === true;
+    }
 </script>
 
 <div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--bg-panel); border-color: var(--border-main);">
-    {#if showLeftArrow}
-        <button class="h-8 w-6 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)] z-10 bg-[var(--bg-panel)] border-r border-[var(--border-main)]" onclick={() => scroll("left")} aria-label="Scroll tabs left">
-            <ChevronLeft size={14} />
+    <!-- Tab Switcher Dropdown - Always Visible on Far Left -->
+    <div class="relative h-8 border-r border-[var(--border-main)]">
+        <button 
+            class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" 
+            onclick={toggleDropdown} 
+            aria-label={`${tabCount} tabs open`}
+        >
+            <span>{tabCount}</span>
+            <ChevronDown size={12} />
         </button>
-    {/if}
 
-    <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container" onscroll={() => scheduleCheckScroll()}>
+        {#if showDropdown}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="fixed inset-0 z-40" onclick={toggleDropdown}></div>
+            <div class="absolute left-0 top-full mt-1 w-64 max-h-[400px] bg-[#252526] border border-[#333] shadow-xl rounded-b-md z-50 overflow-hidden flex flex-col" role="menu">
+                <!-- Search Input -->
+                <div class="p-2 border-b border-[#333] flex items-center gap-2">
+                    <Search size={14} class="text-[var(--fg-muted)]" />
+                    <input
+                        bind:this={searchInputRef}
+                        bind:value={tabSearchQuery}
+                        type="text"
+                        placeholder="Filter tabs..."
+                        class="flex-1 bg-transparent text-xs outline-none"
+                        style="color: var(--fg-default);"
+                        onclick={(e) => e.stopPropagation()}
+                    />
+                    {#if tabSearchQuery}
+                        <button
+                            class="hover:text-[var(--fg-default)]"
+                            style="color: var(--fg-muted);"
+                            onclick={(e) => { e.stopPropagation(); tabSearchQuery = ""; }}
+                        >
+                            <X size={12} />
+                        </button>
+                    {/if}
+                </div>
+                
+                <!-- Tab List -->
+                <div class="overflow-y-auto py-1">
+                    {#if filteredTabs.length === 0}
+                        <div class="px-3 py-4 text-xs text-center" style="color: var(--fg-muted);">
+                            No tabs match your search
+                        </div>
+                    {:else}
+                        {#each filteredTabs as tab}
+                            <button 
+                                type="button" 
+                                class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" 
+                                style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'};" 
+                                onclick={() => handleDropdownSelect(tab.id)} 
+                                role="menuitem"
+                            >
+                                {#if isFileMissing(tab)}
+                                    <AlertCircle size={14} style="color: var(--danger-text);" />
+                                {:else if tab.isPinned}
+                                    <Pin size={14} />
+                                {:else if tab.path && tab.isDirty}
+                                    <Pencil size={14} />
+                                {:else if tab.path}
+                                    <FileText size={14} />
+                                {:else}
+                                    <File size={14} />
+                                {/if}
+                                <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+                            </button>
+                        {/each}
+                    {/if}
+                </div>
+            </div>
+        {/if}
+    </div>
+
+    <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container">
         {#each editorStore.tabs as tab (tab.id)}
             {@const isActive = appState.activeTabId === tab.id}
             {@const iconColor = getIconColor(tab, isActive)}
 
-            <button
-                type="button"
+            <div
                 data-active={isActive}
-                draggable="true"
-                class="group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
+                data-tab-index={getTabNumber(tab.id)}
+                data-tab-id={tab.id}
+                draggable={!tab.isPinned}
+                class="tab-button group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
                 style="
                     background-color: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
                     color: {isActive ? 'var(--fg-default)' : 'var(--fg-muted)'};
@@ -369,6 +442,8 @@
                     opacity: {draggedTabId === tab.id ? '0.5' : '1'};
                     {draggedOverTabId === tab.id ? 'border-left: 2px solid var(--accent-primary);' : ''}
                 "
+                role="button"
+                tabindex="0"
                 onclick={() => handleTabClick(tab.id)}
                 oncontextmenu={(e) => handleTabContextMenu(e, tab.id)}
                 ondragstart={(e) => handleDragStart(e, tab.id)}
@@ -376,11 +451,14 @@
                 ondragenter={(e) => handleDragEnter(e, tab.id)}
                 ondragleave={(e) => handleDragLeave(e, tab.id)}
                 ondrop={(e) => handleDrop(e, tab.id)}
-                ondragend={(e) => handleDragEnd(e)}
+                ondragend={handleDragEnd}
+                onkeydown={(e) => e.key === 'Enter' && handleTabClick(tab.id)}
                 aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
                 <!-- File Type Icon -->
-                {#if tab.path && tab.isDirty}
+                {#if isFileMissing(tab)}
+                    <AlertCircle size={14} class="flex-shrink-0" style="color: var(--danger-text);" />
+                {:else if tab.path && tab.isDirty}
                     <Pencil size={14} class="flex-shrink-0" style="color: {iconColor}" />
                 {:else if tab.path}
                     <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />
@@ -400,53 +478,29 @@
 
                 <!-- Close Button (Overlay on Right) -->
                 {#if !tab.isPinned}
-                    <div class="absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" style="background: linear-gradient(to right, transparent 0%, {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'} 30%);">
-                        <span role="button" tabindex="0" class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center" style="color: var(--fg-muted);" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
+                    <div 
+                        class="absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" 
+                        style="background: linear-gradient(to right, transparent 0%, {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'} 30%);"
+                    >
+                        <span 
+                            role="button" 
+                            tabindex="0" 
+                            class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center" 
+                            style="color: var(--fg-muted);" 
+                            onclick={(e) => handleCloseTab(e, tab.id)} 
+                            onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} 
+                            aria-label={`Close ${tab.title}`}
+                        >
                             <X size={12} class="hover:text-[var(--danger-text)]" />
                         </span>
                     </div>
                 {/if}
-            </button>
+            </div>
         {/each}
 
         <button class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-[var(--fg-muted)] shrink-0" onclick={handleNewTab} aria-label="New tab">
             <Plus size={16} />
         </button>
-    </div>
-
-    {#if showRightArrow}
-        <button class="h-8 w-6 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)] z-10 bg-[var(--bg-panel)] border-l border-[var(--border-main)]" onclick={() => scroll("right")} aria-label="Scroll tabs right">
-            <ChevronRight size={14} />
-        </button>
-    {/if}
-
-    <div class="relative h-8 border-l border-[var(--border-main)]">
-        <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)} aria-label={`${tabCount} tabs open`}>
-            <span>{tabCount}</span>
-            <ChevronDown size={12} />
-        </button>
-
-        {#if showDropdown}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="fixed inset-0 z-40" onclick={() => (showDropdown = false)}></div>
-            <div class="absolute right-0 top-full mt-1 w-64 max-h-[300px] overflow-y-auto bg-[#252526] border border-[#333] shadow-xl rounded-b-md z-50 py-1" role="menu">
-                {#each editorStore.tabs as tab}
-                    <button type="button" class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" onclick={() => handleDropdownSelect(tab.id)} role="menuitem">
-                        {#if tab.isPinned}
-                            <Pin size={14} />
-                        {:else if tab.path && tab.isDirty}
-                            <Pencil size={14} />
-                        {:else if tab.path}
-                            <FileText size={14} />
-                        {:else}
-                            <File size={14} />
-                        {/if}
-                        <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
-                    </button>
-                {/each}
-            </div>
-        {/if}
     </div>
 </div>
 
@@ -473,18 +527,26 @@
         -webkit-user-drag: none;
     }
 
-    button[draggable="true"] {
+    .tab-button {
         -webkit-app-region: no-drag;
-        -webkit-user-drag: element;
-        cursor: grab;
         user-select: none;
     }
 
-    button[draggable="true"]:active {
+    .tab-button[draggable="true"] {
+        cursor: default;
+    }
+
+    .tab-button[draggable="true"]:active {
         cursor: grabbing;
     }
 
-    button[draggable="true"] .truncate {
+    .tab-button .truncate {
         pointer-events: none;
+    }
+
+    /* Search input styling */
+    input::placeholder {
+        color: var(--fg-muted);
+        opacity: 0.5;
     }
 </style>

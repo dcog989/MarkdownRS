@@ -2,6 +2,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { message } from "@tauri-apps/plugin-dialog";
+    import { WrapText } from "lucide-svelte";
 
     let m = $derived(editorStore.activeMetrics);
     let showEncodingDialog = $state(false);
@@ -19,18 +20,22 @@
     let encoding = $derived(activeTab?.encoding || "UTF-8");
 
     // Calculate opacity for both text and background
-    let opacity = $derived(1 - appState.statusBarTransparency / 100);
+    let opacity = $derived(appState.statusBarTransparency / 100);
     
     // Convert --bg-panel to rgba with transparency
-    // --bg-panel is #252526 in dark mode
-    let bgWithAlpha = $derived(`rgba(37, 37, 38, ${opacity})`);
-    let textColor = $derived(`rgba(156, 163, 175, ${opacity})`); // --fg-muted is #9ca3af
+    // --bg-panel is #252526 (37, 37, 38) in dark mode
+    let bgWithAlpha = $derived(`rgba(37, 37, 38, ${1 - opacity})`);
+    let textOpacity = $derived(1 - opacity);
 
     function toggleLineEnding() {
         if (activeTab) {
             activeTab.lineEnding = activeTab.lineEnding === "LF" ? "CRLF" : "LF";
             editorStore.sessionDirty = true;
         }
+    }
+
+    function toggleWordWrap() {
+        appState.editorWordWrap = !appState.editorWordWrap;
     }
 
     function handleEncodingClick() {
@@ -41,12 +46,27 @@
         showEncodingDialog = false;
     }
 
-    function selectEncoding(enc: string) {
-        // For now, only UTF-8 is supported for saving
-        message(`${enc} encoding is displayed for information only. Files are saved as UTF-8.`, { 
-            title: "Encoding", 
-            kind: "info" 
-        });
+    async function selectEncoding(enc: string) {
+        if (!activeTab) {
+            showEncodingDialog = false;
+            return;
+        }
+        
+        // Update the tab's encoding preference
+        activeTab.encoding = enc;
+        editorStore.sessionDirty = true;
+        
+        // Show info message about UTF-8 limitation for saving
+        if (enc !== 'UTF-8') {
+            await message(
+                `Encoding changed to ${enc} for display.\n\nNote: Files are currently saved as UTF-8 regardless of the selected encoding. This encoding affects how the file is interpreted when opened.`,
+                { 
+                    title: "Encoding Changed", 
+                    kind: "info" 
+                }
+            );
+        }
+        
         showEncodingDialog = false;
     }
 </script>
@@ -56,11 +76,10 @@
     style="
         background-color: {bgWithAlpha};
         border-color: var(--border-main);
-        color: {textColor};
     "
 >
     <!-- Left: File Path (Accent Color) -->
-    <div class="flex gap-4 overflow-hidden mr-4">
+    <div class="flex gap-4 overflow-hidden mr-4 status-bar-section" style="opacity: {textOpacity};">
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>
             <span style="color: var(--fg-muted); font-weight: normal;">{tabIndex}:&nbsp;</span>{displayPath}
         </span>
@@ -71,7 +90,7 @@
     </div>
 
     <!-- Right: Metrics -->
-    <div class="flex gap-4 items-center flex-shrink-0">
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section" style="opacity: {textOpacity}; color: var(--fg-muted);">
         <!-- Chars: x / y -->
         <span title="Position / Total Characters">{m.cursorOffset} / {m.charCount} chars</span>
 
@@ -81,13 +100,23 @@
         <span class="hidden sm:inline">{m.sizeKB.toFixed(2)} KB</span>
         <span class="hidden sm:inline">Ln {m.cursorLine}, Col {m.cursorCol}</span>
 
+        <!-- Word Wrap Toggle -->
+        <button 
+            class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" 
+            onclick={toggleWordWrap} 
+            title="Toggle Word Wrap"
+            style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};"
+        >
+            <WrapText size={14} />
+        </button>
+
         <!-- Line Ending -->
-        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={toggleLineEnding} title="Toggle Line Ending">
+        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} title="Toggle Line Ending">
             {lineEnding}
         </button>
 
         <!-- Encoding -->
-        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer" onclick={handleEncodingClick} title="Encoding (UTF-8 only)">
+        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={handleEncodingClick} title="Encoding (UTF-8 only)">
             {encoding}
         </button>
 
@@ -143,8 +172,23 @@
 {/if}
 
 <style>
+    .status-bar {
+        pointer-events: none;
+    }
+    
+    .status-bar-section {
+        pointer-events: auto;
+    }
+    
     .status-bar:hover {
         background-color: var(--bg-panel) !important;
-        color: var(--fg-muted) !important;
+    }
+    
+    .status-bar:hover .status-bar-section {
+        opacity: 1 !important;
+    }
+
+    button {
+        pointer-events: auto;
     }
 </style>

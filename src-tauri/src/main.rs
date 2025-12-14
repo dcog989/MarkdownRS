@@ -153,6 +153,7 @@ fn main() {
             app_commands::get_app_info,
             app_commands::send_to_recycle_bin,
             app_commands::add_to_dictionary,
+            app_commands::get_custom_dictionary,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

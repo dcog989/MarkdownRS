@@ -17,6 +17,8 @@ type RustTabState = {
     modified: string | null;
     is_pinned: boolean;
     custom_title: string | null;
+    file_check_failed?: boolean;
+    file_check_performed?: boolean;
 };
 
 type FileMetadata = {
@@ -209,12 +211,12 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 /**
  * Add a word to the custom dictionary file.
  * 
- * NOTE: Browser's native spellcheck does not read this custom dictionary file.
- * This function stores words for reference but won't affect the built-in spellchecker.
- * Words added will be tracked but will still show as misspelled in the editor.
+ * NOTE: Browser's native spellcheck does not natively support custom dictionary files.
+ * This function stores words in a custom dictionary file that can be read by
+ * a CodeMirror extension to supplement the browser's spell checking.
  * 
- * To implement full custom dictionary support, a CodeMirror spellcheck extension
- * would need to be created that reads from this file.
+ * After adding a word, the spell checker should be manually refreshed by calling
+ * refreshCustomDictionary() from the spellcheck utility.
  * 
  * @param word - The word to add to the dictionary
  * @returns true if successful, false otherwise
@@ -262,7 +264,9 @@ export async function persistSession(): Promise<void> {
                 created: t.created || null,
                 modified: t.modified || null,
                 is_pinned: t.isPinned || false,
-                custom_title: t.customTitle || null
+                custom_title: t.customTitle || null,
+                file_check_failed: t.fileCheckFailed || false,
+                file_check_performed: t.fileCheckPerformed || false
             }));
 
             await invoke('save_session', { tabs: plainTabs });
@@ -291,6 +295,30 @@ export async function persistSession(): Promise<void> {
 }
 
 /**
+ * Check if a file exists for a specific tab
+ * Only checks once per tab (unless fileCheckPerformed is reset)
+ */
+export async function checkFileExists(tabId: string): Promise<void> {
+    const tab = editorStore.tabs.find(t => t.id === tabId);
+    if (!tab || !tab.path || tab.fileCheckPerformed) {
+        return;
+    }
+    
+    tab.fileCheckPerformed = true;
+    
+    try {
+        // Try to check if file exists by getting metadata
+        await invoke('get_file_metadata', { path: tab.path });
+        tab.fileCheckFailed = false;
+        editorStore.sessionDirty = true;
+    } catch (err) {
+        // File doesn't exist or can't be accessed
+        tab.fileCheckFailed = true;
+        editorStore.sessionDirty = true;
+    }
+}
+
+/**
  * Load the saved session from the database and restore all tabs
  */
 export async function loadSession(): Promise<void> {
@@ -309,12 +337,30 @@ export async function loadSession(): Promise<void> {
                 isPinned: t.is_pinned,
                 customTitle: t.custom_title || undefined,
                 lineEnding: t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
-                encoding: 'UTF-8' // Default from DB until we persist it
+                encoding: 'UTF-8', // Default from DB until we persist it
+                fileCheckFailed: t.file_check_failed || false,
+                fileCheckPerformed: t.file_check_performed || false
             }));
 
             editorStore.tabs = convertedTabs;
-            appState.activeTabId = convertedTabs[0].id;
             editorStore.mruStack = convertedTabs.map(t => t.id);
+
+            // Handle startup behavior
+            switch (appState.startupBehavior) {
+                case 'first':
+                    appState.activeTabId = convertedTabs[0].id;
+                    break;
+                case 'last-focused':
+                    // MRU stack should have last focused tab first
+                    appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id;
+                    break;
+                case 'new':
+                    const newId = editorStore.addTab('Untitled');
+                    appState.activeTabId = newId;
+                    break;
+                default:
+                    appState.activeTabId = convertedTabs[0].id;
+            }
 
             const metadataPromises = convertedTabs
                 .filter(t => t.path)

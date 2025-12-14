@@ -1,6 +1,6 @@
 # MarkdownRS Architecture
 
-*MarkdownRS* is a fast, minimal, cross-platform desktop notepad focused on correct, standard markdown editing.
+*MarkdownRS* is a cross-platform desktop notepad, focused on correct, standard markdown editing. It aims to be feature-rich with a clean, minimal UI.
 
 ## Core Goals
 - **Performance:** Instant startup, handles large files (100k+ lines) gracefully.
@@ -25,7 +25,7 @@ We will use **CodeMirror 6** (headless, modular).
   - **Pane B:** HTML Preview (Sanitized, Rendered Markdown).
 - **Syncing:** **Synchronized Scrolling** is required.
   - The Markdown parser will inject source line numbers (e.g., `data-source-line`) into the generated HTML.
-  - Svelte will track scroll events to ensure Pane B matches the viewport of Pane A.
+  - Svelte will track scroll events to ensure Pane B matches the viewport of Pane A and vice versa.
 - **Security:** Preview content must be sanitized (e.g., DOMPurify) to prevent XSS from malicious markdown files.
 
 ### 3. Syntax & Enforcement
@@ -51,15 +51,16 @@ We will use **CodeMirror 6** (headless, modular).
 - **Multi-tab Interface:** Draggable tabs, dirty state indicators.
 - **Command Palette:** `SHIFT+Ctrl/Cmd+P` approach to replace cluttered toolbars. Search bar input at centre of titlebar.
 - **Auto-Save / Hot Exit:** Never lose data. App state restores on relaunch.
-- **Text Ops:** Sort lines, Trim whitespace, Change Case.
+- **Text Ops:** Sort lines, Trim whitespace, Change Case, etc.
 - **Log Rotation:** Integrated Rust logging.
 - Custom user themes for fonts, colors
 - colorize line numbers / content bg to show updated content
-- search / find / replace in current document
+- find / replace in current document
+- Highlight current line (fg / bg color)
 
 ## v2 Features (Post-Launch)
 - **Snippets & Templates:** Expandable text macros.
 - **Export:** PDF / PNG / HTML export via Rust libraries.
 - **Git Integration:** Basic status and diff viewing.
-- search / find / replace in all opened documents
+- find / replace in all open documents
 - context 'Send To...' menu - browser / configurable app list

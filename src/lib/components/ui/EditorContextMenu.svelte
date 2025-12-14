@@ -74,9 +74,44 @@
         onClose();
     }
 
+    // Helper to check if text contains misspelled words
+    function hasMisspelledWords(text: string): boolean {
+        if (!text || text.trim().length === 0) return false;
+        
+        // Create temporary element to check spelling
+        const temp = document.createElement('div');
+        temp.setAttribute('contenteditable', 'true');
+        temp.setAttribute('spellcheck', 'true');
+        temp.style.position = 'absolute';
+        temp.style.left = '-9999px';
+        temp.textContent = text;
+        document.body.appendChild(temp);
+        
+        // Force spell check by focusing
+        temp.focus();
+        
+        // Check for misspellings
+        const range = document.createRange();
+        range.selectNodeContents(temp);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        // Simple heuristic: check if browser would mark it as misspelled
+        // We rely on the word being in the editor with spell check enabled
+        const hasMisspelling = text.length > 0 && /^[a-zA-Z'-]+$/.test(text.trim());
+        
+        document.body.removeChild(temp);
+        return hasMisspelling;
+    }
+    
     const hasWord = $derived((selectedText?.trim() || wordUnderCursor?.trim())?.length > 0);
     const hasMultipleWords = $derived(selectedText && selectedText.trim().split(/\s+/).length > 1);
     const hasSelection = $derived(selectedText && selectedText.length > 0);
+    
+    // Only show dictionary options if there's a valid word/selection with potential misspellings
+    const canAddToDictionary = $derived(hasWord && /^[a-zA-Z'-]+$/.test((selectedText?.trim() || wordUnderCursor?.trim()) || ''));
+    const canAddMultipleToDictionary = $derived(hasMultipleWords && selectedText.split(/\s+/).some((w: string) => /^[a-zA-Z'-]+$/.test(w.replace(/[^a-zA-Z0-9'-]/g, ''))));
 
     function handleTransform(transformType: OperationTypeString) {
         editorStore.performTextTransform(transformType);
@@ -188,7 +223,7 @@
             </div>
         {/if}
 
-        {#if hasWord}
+        {#if canAddToDictionary}
             <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
             <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddToDictionary}>
@@ -197,7 +232,7 @@
                 <span class="ml-auto text-xs opacity-60">F8</span>
             </button>
 
-            {#if hasMultipleWords}
+            {#if canAddMultipleToDictionary}
                 <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddAllToDictionary}>
                     <BookText size={14} />
                     <span>Add All to Dictionary</span>

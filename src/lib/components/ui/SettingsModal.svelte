@@ -16,6 +16,7 @@
     const settingsDefinitions = [
         { key: "editorFontFamily", label: "Editor: Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
         { key: "editorFontSize", label: "Editor: Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
+        { key: "editorWordWrap", label: "Editor: Word Wrap", type: "boolean", category: "Editor", defaultValue: false },
         { key: "previewFontFamily", label: "Preview: Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
         { key: "previewFontSize", label: "Preview: Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
         { key: "formatOnSave", label: "Format: Auto-format on Save", type: "boolean", category: "Formatter", defaultValue: false },
@@ -28,7 +29,9 @@
         { key: "tabWidthMin", label: "Tab Width: Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
         { key: "tabWidthMax", label: "Tab Width: Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
         { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "sequential", options: ["sequential", "mru"] },
+        { key: "tabNavigationMode", label: "Tab Navigation (Ctrl+Left/Right)", type: "select", category: "Interface", defaultValue: "arrow-keys", options: ["arrow-keys", "disabled"], optionLabels: ["Enabled", "Disabled"] },
         { key: "newTabPosition", label: "Open New Tabs", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
+        { key: "startupBehavior", label: "On Startup", type: "select", category: "Interface", defaultValue: "last-focused", options: ["first", "last-focused", "new"], optionLabels: ["Show First Tab", "Show Last Focused Tab", "Create New Tab"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
     ];
 

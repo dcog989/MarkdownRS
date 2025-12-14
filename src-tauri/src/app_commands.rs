@@ -206,3 +206,22 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let data_dir = app_handle.path().data_dir().map_err(|e| e.to_string())?;
+    let dict_path = data_dir.join("MarkdownRS").join("custom-spelling.dic");
+
+    if !dict_path.exists() {
+        return Ok(Vec::new());
+    }
+
+    let content = fs::read_to_string(&dict_path).map_err(|e| e.to_string())?;
+    let words: Vec<String> = content
+        .lines()
+        .map(|line| line.trim().to_string())
+        .filter(|line| !line.is_empty())
+        .collect();
+
+    Ok(words)
+}

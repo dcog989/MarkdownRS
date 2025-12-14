@@ -19,10 +19,12 @@ export async function initSettings() {
             splitOrientation: 'vertical' | 'horizontal';
             splitView: boolean;
             tabCycling: 'mru' | 'sequential';
+            tabNavigationMode: 'arrow-keys' | 'disabled';
             tabWidthMin: number;
             tabWidthMax: number;
             editorFontFamily: string;
             editorFontSize: number;
+            editorWordWrap: boolean;
             previewFontFamily: string;
             previewFontSize: number;
             logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error';
@@ -34,6 +36,7 @@ export async function initSettings() {
             formatterBulletChar: '-' | '*' | '+';
             formatterCodeFence: '```' | '~~~';
             formatterTableAlignment: boolean;
+            startupBehavior: 'first' | 'last-focused' | 'new';
         }>('app-settings');
 
         if (saved) {
@@ -42,12 +45,14 @@ export async function initSettings() {
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
             if (typeof saved.splitView === 'boolean') appState.splitView = saved.splitView;
             if (saved.tabCycling) appState.tabCycling = saved.tabCycling;
+            if (saved.tabNavigationMode) appState.tabNavigationMode = saved.tabNavigationMode;
 
             if (saved.tabWidthMin) appState.tabWidthMin = saved.tabWidthMin;
             if (saved.tabWidthMax) appState.tabWidthMax = saved.tabWidthMax;
 
             if (saved.editorFontFamily) appState.editorFontFamily = saved.editorFontFamily;
             if (saved.editorFontSize) appState.editorFontSize = saved.editorFontSize;
+            if (saved.editorWordWrap !== undefined) appState.editorWordWrap = saved.editorWordWrap;
             if (saved.previewFontFamily) appState.previewFontFamily = saved.previewFontFamily;
             if (saved.previewFontSize) appState.previewFontSize = saved.previewFontSize;
             if (saved.logLevel) appState.logLevel = saved.logLevel;
@@ -59,6 +64,7 @@ export async function initSettings() {
             if (saved.formatterBulletChar) appState.formatterBulletChar = saved.formatterBulletChar;
             if (saved.formatterCodeFence) appState.formatterCodeFence = saved.formatterCodeFence;
             if (saved.formatterTableAlignment !== undefined) appState.formatterTableAlignment = saved.formatterTableAlignment;
+            if (saved.startupBehavior) appState.startupBehavior = saved.startupBehavior;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
@@ -77,10 +83,12 @@ async function saveSettingsImmediate() {
             splitOrientation: appState.splitOrientation,
             splitView: appState.splitView,
             tabCycling: appState.tabCycling,
+            tabNavigationMode: appState.tabNavigationMode,
             tabWidthMin: appState.tabWidthMin,
             tabWidthMax: appState.tabWidthMax,
             editorFontFamily: appState.editorFontFamily,
             editorFontSize: appState.editorFontSize,
+            editorWordWrap: appState.editorWordWrap,
             previewFontFamily: appState.previewFontFamily,
             previewFontSize: appState.previewFontSize,
             logLevel: appState.logLevel,
@@ -91,7 +99,8 @@ async function saveSettingsImmediate() {
             formatterListIndent: appState.formatterListIndent,
             formatterBulletChar: appState.formatterBulletChar,
             formatterCodeFence: appState.formatterCodeFence,
-            formatterTableAlignment: appState.formatterTableAlignment
+            formatterTableAlignment: appState.formatterTableAlignment,
+            startupBehavior: appState.startupBehavior
         };
 
         await store.set('app-settings', newSettings);

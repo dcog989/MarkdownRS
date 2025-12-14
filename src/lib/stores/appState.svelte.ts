@@ -9,14 +9,17 @@ export class AppState {
 
     // Preferences
     tabCycling = $state<'mru' | 'sequential'>('sequential');
+    tabNavigationMode = $state<'arrow-keys' | 'disabled'>('arrow-keys'); // Ctrl+Left/Right for tab navigation
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
     statusBarTransparency = $state(0); // 0 to 100
     newTabPosition = $state<'right' | 'end'>('end');
+    startupBehavior = $state<'first' | 'last-focused' | 'new'>('last-focused');
 
     // Editor & Preview Settings
     editorFontFamily = $state("Consolas, 'Courier New', monospace");
     editorFontSize = $state(14);
+    editorWordWrap = $state(false); // Word wrap setting
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
 
