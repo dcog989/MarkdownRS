@@ -29,6 +29,10 @@
     let mruCleanupTimeout: number | null = null;
     let tabKeyHeld = $state(false);
 
+    // Track mouse position to prevent scroll-induced hover events
+    let lastClientX = 0;
+    let lastClientY = 0;
+
     onMount(() => {
         const appWindow = getCurrentWindow();
         let unlisten: (() => void) | undefined;
@@ -152,6 +156,10 @@
         requestCloseTab(tabId);
     }
 
+    function closeContextMenu() {
+        contextMenuTabId = null;
+    }
+
     function handleTabContextMenu(e: MouseEvent, tabId: string) {
         e.preventDefault();
         e.stopPropagation();
@@ -209,6 +217,9 @@
         showDropdown = !showDropdown;
         if (showDropdown) {
             selectedDropdownIndex = 0;
+            // Reset tracking so we don't immediately select what's under mouse
+            lastClientX = 0;
+            lastClientY = 0;
             setTimeout(() => searchInputRef?.focus(), 50);
         } else {
             tabSearchQuery = "";
@@ -218,6 +229,16 @@
     function handleDropdownSelect(id: string) {
         handleTabClick(id);
         showDropdown = false;
+    }
+
+    function handleDropdownHover(index: number, e: MouseEvent) {
+        // Prevent scroll from triggering selection changes
+        // Only update if the mouse actually moved
+        if (e.clientX === lastClientX && e.clientY === lastClientY) return;
+
+        lastClientX = e.clientX;
+        lastClientY = e.clientY;
+        selectedDropdownIndex = index;
     }
 
     function handleDropdownKeydown(e: KeyboardEvent) {
@@ -290,9 +311,9 @@
                     <input bind:this={searchInputRef} bind:value={tabSearchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--fg-default);" onkeydown={handleDropdownKeydown} />
                 </div>
                 <div bind:this={dropdownListRef} class="overflow-y-auto py-1 relative">
-                    {#each filteredTabs as tab, index}
-                        <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2" style="background-color: {index === selectedDropdownIndex ? 'var(--accent-primary)' : 'transparent'}; color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)'};" onclick={() => handleDropdownSelect(tab.id)} onmouseenter={() => (selectedDropdownIndex = index)} role="menuitem">
-            <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+                    {#each filteredTabs as tab, index (tab.id)}
+                        <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2" style="background-color: {index === selectedDropdownIndex ? 'var(--accent-primary)' : 'transparent'}; color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : tab.fileCheckFailed ? 'var(--danger-text)' : appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)'};" onclick={() => handleDropdownSelect(tab.id)} onmousemove={(e) => handleDropdownHover(index, e)} role="menuitem">
+                            <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
                         </button>
                     {/each}
                 </div>

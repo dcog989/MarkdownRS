@@ -1,10 +1,10 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import { AppError } from './errorHandling';
-import { formatMarkdown } from './formatter';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
+import { AppError } from './errorHandling';
+import { formatMarkdown } from './formatter';
 
 type RustTabState = {
     id: string;
@@ -76,7 +76,7 @@ export async function openFile(): Promise<void> {
             const crlfCount = (result.content.match(/\r\n/g) || []).length;
             const lfCount = (result.content.match(/\n/g) || []).length;
             const lfOnlyCount = lfCount - crlfCount; // Subtract CRLF from total LF count
-            
+
             // If CRLF is majority, use CRLF
             const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > lfOnlyCount ? 'CRLF' : 'LF';
 
@@ -89,7 +89,7 @@ export async function openFile(): Promise<void> {
                 tab.encoding = result.encoding.toUpperCase();
                 tab.fileCheckPerformed = false; // Reset file check so it can be performed again
                 await refreshMetadata(id, sanitizedPath);
-                
+
                 // Check if file exists
                 await checkFileExists(id);
             }
@@ -215,14 +215,14 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
 /**
  * Add a word to the custom dictionary file.
- * 
+ *
  * NOTE: Browser's native spellcheck does not natively support custom dictionary files.
  * This function stores words in a custom dictionary file that can be read by
  * a CodeMirror extension to supplement the browser's spell checking.
- * 
+ *
  * After adding a word, the spell checker should be manually refreshed by calling
  * refreshCustomDictionary() from the spellcheck utility.
- * 
+ *
  * @param word - The word to add to the dictionary
  * @returns true if successful, false otherwise
  */
@@ -312,12 +312,12 @@ export async function persistSession(): Promise<void> {
  */
 export async function checkFileExists(tabId: string): Promise<void> {
     const tab = editorStore.tabs.find(t => t.id === tabId);
-    if (!tab || !tab.path || tab.fileCheckPerformed) {
+    if (!tab || !tab.path) {
         return;
     }
-    
+
     tab.fileCheckPerformed = true;
-    
+
     try {
         // Try to check if file exists by getting metadata
         await invoke('get_file_metadata', { path: tab.path });
@@ -355,13 +355,13 @@ export async function loadSession(): Promise<void> {
             }));
 
             editorStore.tabs = convertedTabs;
-            
+
             // Restore MRU stack from mru_position
             const tabsWithMruPosition = rustTabs
                 .map((t, index) => ({ tab: t, originalIndex: index }))
                 .filter(item => item.tab.mru_position !== null && item.tab.mru_position !== undefined)
                 .sort((a, b) => (a.tab.mru_position || 0) - (b.tab.mru_position || 0));
-            
+
             if (tabsWithMruPosition.length > 0) {
                 editorStore.mruStack = tabsWithMruPosition.map(item => item.tab.id);
             } else {
