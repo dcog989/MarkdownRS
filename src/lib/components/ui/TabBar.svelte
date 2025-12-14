@@ -13,6 +13,7 @@
     let currentTime = $state(Date.now()); // For reactive time-based updates
     let tabSearchQuery = $state("");
     let searchInputRef = $state<HTMLInputElement>();
+    let selectedDropdownIndex = $state(0);
 
     // Drag and drop state
     let draggedTabId: string | null = $state(null);
@@ -129,9 +130,20 @@
 
             const containerRect = scrollContainer.getBoundingClientRect();
             const tabRect = activeEl.getBoundingClientRect();
+            
+            // Get all tabs for edge detection
+            const allTabs = Array.from(scrollContainer.querySelectorAll('[data-tab-id]')) as HTMLElement[];
+            const activeIndex = allTabs.findIndex(el => el === activeEl);
+            
+            // Check if active tab is at the edges
+            const isLeftmostVisible = activeIndex === 0;
+            const isRightmostVisible = activeIndex === allTabs.length - 1;
+            
+            // Calculate if tab is visible
             const isFullyVisible = tabRect.left >= containerRect.left && tabRect.right <= containerRect.right;
 
             if (!isFullyVisible) {
+                // Scroll the active tab into view first
                 const isCloserToLeft = tabRect.left < containerRect.left;
                 activeEl.scrollIntoView({
                     behavior: "smooth",
@@ -139,6 +151,36 @@
                     inline: isCloserToLeft ? "start" : "end",
                 });
             }
+            
+            // Show peek of adjacent tabs after main scroll completes
+            setTimeout(() => {
+                if (!scrollContainer) return;
+                
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const tabRect = activeEl.getBoundingClientRect();
+                
+                // If this is the rightmost tab and there are tabs to the left
+                if (isRightmostVisible && activeIndex > 0) {
+                    // Scroll slightly left to show part of the tab to the left
+                    const leftTab = allTabs[activeIndex - 1];
+                    if (leftTab) {
+                        const leftRect = leftTab.getBoundingClientRect();
+                        const peekAmount = leftRect.width * 0.5; // Show 50% of adjacent tab
+                        scrollContainer.scrollLeft -= peekAmount;
+                    }
+                }
+                
+                // If this is the leftmost tab and there are tabs to the right
+                if (isLeftmostVisible && activeIndex < allTabs.length - 1) {
+                    // Scroll slightly right to show part of the tab to the right
+                    const rightTab = allTabs[activeIndex + 1];
+                    if (rightTab) {
+                        const rightRect = rightTab.getBoundingClientRect();
+                        const peekAmount = rightRect.width * 0.5; // Show 50% of adjacent tab
+                        scrollContainer.scrollLeft += peekAmount;
+                    }
+                }
+            }, 350); // Wait for smooth scroll to complete
         }, 100);
     }
 
@@ -190,14 +232,17 @@
         handleTabClick(id);
         showDropdown = false;
         tabSearchQuery = "";
+        selectedDropdownIndex = 0;
     }
 
     function toggleDropdown() {
         showDropdown = !showDropdown;
         if (showDropdown) {
+            selectedDropdownIndex = 0;
             setTimeout(() => searchInputRef?.focus(), 50);
         } else {
             tabSearchQuery = "";
+            selectedDropdownIndex = 0;
         }
     }
 
@@ -211,6 +256,31 @@
                   return title.includes(query) || path.includes(query);
               })
     );
+
+    // Reset selected index when filtered tabs change
+    $effect(() => {
+        if (filteredTabs.length > 0 && selectedDropdownIndex >= filteredTabs.length) {
+            selectedDropdownIndex = 0;
+        }
+    });
+
+    function handleDropdownKeydown(e: KeyboardEvent) {
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            selectedDropdownIndex = (selectedDropdownIndex + 1) % filteredTabs.length;
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            selectedDropdownIndex = (selectedDropdownIndex - 1 + filteredTabs.length) % filteredTabs.length;
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (filteredTabs[selectedDropdownIndex]) {
+                handleDropdownSelect(filteredTabs[selectedDropdownIndex].id);
+            }
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            toggleDropdown();
+        }
+    }
 
     function handleMruSelect(tabId: string) {
         appState.activeTabId = tabId;
@@ -362,47 +432,42 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div class="fixed inset-0 z-40" onclick={toggleDropdown}></div>
-            <div class="absolute left-0 top-full mt-1 w-64 max-h-[400px] bg-[#252526] border border-[#333] shadow-xl rounded-b-md z-50 overflow-hidden flex flex-col" role="menu">
+            <div class="absolute left-0 top-full mt-1 w-80 max-h-[500px] rounded-lg shadow-2xl border overflow-hidden flex flex-col z-50" style="background-color: var(--bg-panel); border-color: var(--border-light);" role="menu">
                 <!-- Search Input -->
-                <div class="p-2 border-b border-[#333] flex items-center gap-2">
-                    <Search size={14} class="text-[var(--fg-muted)]" />
+                <div class="p-2 border-b" style="border-color: var(--border-light);">
                     <input
                         bind:this={searchInputRef}
                         bind:value={tabSearchQuery}
                         type="text"
                         placeholder="Filter tabs..."
-                        class="flex-1 bg-transparent text-xs outline-none"
+                        class="w-full bg-transparent outline-none px-2 py-1 text-sm"
                         style="color: var(--fg-default);"
                         onclick={(e) => e.stopPropagation()}
+                        onkeydown={handleDropdownKeydown}
                     />
-                    {#if tabSearchQuery}
-                        <button
-                            class="hover:text-[var(--fg-default)]"
-                            style="color: var(--fg-muted);"
-                            onclick={(e) => { e.stopPropagation(); tabSearchQuery = ""; }}
-                        >
-                            <X size={12} />
-                        </button>
-                    {/if}
                 </div>
                 
                 <!-- Tab List -->
                 <div class="overflow-y-auto py-1">
                     {#if filteredTabs.length === 0}
-                        <div class="px-3 py-4 text-xs text-center" style="color: var(--fg-muted);">
+                        <div class="px-3 py-4 text-sm text-center" style="color: var(--fg-muted);">
                             No tabs match your search
                         </div>
                     {:else}
-                        {#each filteredTabs as tab}
+                        {#each filteredTabs as tab, index}
                             <button 
                                 type="button" 
-                                class="w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10" 
-                                style="color: {appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-muted)'};" 
+                                class="w-full text-left px-3 py-2 text-sm flex items-center gap-2" 
+                                style="
+                                    background-color: {index === selectedDropdownIndex ? 'var(--accent-primary)' : 'transparent'};
+                                    color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : (appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)')};
+                                " 
                                 onclick={() => handleDropdownSelect(tab.id)} 
+                                onmouseenter={() => (selectedDropdownIndex = index)}
                                 role="menuitem"
                             >
                                 {#if isFileMissing(tab)}
-                                    <AlertCircle size={14} style="color: var(--danger-text);" />
+                                    <AlertCircle size={14} style="color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : 'var(--danger-text)'};" />
                                 {:else if tab.isPinned}
                                     <Pin size={14} />
                                 {:else if tab.path && tab.isDirty}

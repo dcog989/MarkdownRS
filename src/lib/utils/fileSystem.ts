@@ -19,6 +19,7 @@ type RustTabState = {
     custom_title: string | null;
     file_check_failed?: boolean;
     file_check_performed?: boolean;
+    mru_position?: number | null;
 };
 
 type FileMetadata = {
@@ -88,7 +89,11 @@ export async function openFile(): Promise<void> {
                 tab.isDirty = false;
                 tab.lineEnding = detectedLineEnding;
                 tab.encoding = result.encoding.toUpperCase();
+                tab.fileCheckPerformed = false; // Reset file check so it can be performed again
                 await refreshMetadata(id, sanitizedPath);
+                
+                // Check if file exists
+                await checkFileExists(id);
             }
             appState.activeTabId = id;
             editorStore.pushToMru(id);
@@ -153,6 +158,8 @@ export async function saveCurrentFile(): Promise<boolean> {
             tab.path = sanitizedPath;
             tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
             tab.isDirty = false;
+            tab.fileCheckPerformed = false; // Reset so file existence can be verified
+            tab.fileCheckFailed = false; // Reset failed status since we just saved
             await refreshMetadata(tabId, sanitizedPath);
             return true;
         }
@@ -254,6 +261,12 @@ export async function persistSession(): Promise<void> {
 
     const saveTask = async () => {
         try {
+            // Create MRU position map
+            const mruPositionMap = new Map<string, number>();
+            editorStore.mruStack.forEach((tabId, index) => {
+                mruPositionMap.set(tabId, index);
+            });
+
             const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
                 id: t.id,
                 path: t.path,
@@ -266,7 +279,8 @@ export async function persistSession(): Promise<void> {
                 is_pinned: t.isPinned || false,
                 custom_title: t.customTitle || null,
                 file_check_failed: t.fileCheckFailed || false,
-                file_check_performed: t.fileCheckPerformed || false
+                file_check_performed: t.fileCheckPerformed || false,
+                mru_position: mruPositionMap.get(t.id) ?? null
             }));
 
             await invoke('save_session', { tabs: plainTabs });
@@ -343,7 +357,19 @@ export async function loadSession(): Promise<void> {
             }));
 
             editorStore.tabs = convertedTabs;
-            editorStore.mruStack = convertedTabs.map(t => t.id);
+            
+            // Restore MRU stack from mru_position
+            const tabsWithMruPosition = rustTabs
+                .map((t, index) => ({ tab: t, originalIndex: index }))
+                .filter(item => item.tab.mru_position !== null && item.tab.mru_position !== undefined)
+                .sort((a, b) => (a.tab.mru_position || 0) - (b.tab.mru_position || 0));
+            
+            if (tabsWithMruPosition.length > 0) {
+                editorStore.mruStack = tabsWithMruPosition.map(item => item.tab.id);
+            } else {
+                // Fallback to tab order if no MRU data
+                editorStore.mruStack = convertedTabs.map(t => t.id);
+            }
 
             // Handle startup behavior
             switch (appState.startupBehavior) {
@@ -362,12 +388,20 @@ export async function loadSession(): Promise<void> {
                     appState.activeTabId = convertedTabs[0].id;
             }
 
-            const metadataPromises = convertedTabs
+            // Refresh metadata and check file existence for all tabs with paths
+            const checkPromises = convertedTabs
                 .filter(t => t.path)
-                .map(t => refreshMetadata(t.id, t.path!));
+                .map(async (t) => {
+                    try {
+                        await refreshMetadata(t.id, t.path!);
+                        await checkFileExists(t.id);
+                    } catch (err) {
+                        console.error(`Failed to check tab ${t.id}:`, err);
+                    }
+                });
 
-            Promise.all(metadataPromises).catch(err =>
-                console.error('Failed to refresh metadata for some tabs:', err)
+            Promise.all(checkPromises).catch(err =>
+                console.error('Failed to check some tabs:', err)
             );
         } else {
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');

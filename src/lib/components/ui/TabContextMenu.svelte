@@ -156,7 +156,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="fixed inset-0 z-50" onclick={handleBackdropClick}>
     <div
-        class="absolute w-56 rounded shadow-xl border py-1"
+        class="absolute min-w-[200px] rounded-md shadow-xl border py-1"
         style="
             left: {x}px;
             top: {y}px;
@@ -164,12 +164,12 @@
             border-color: var(--border-light);
         "
     >
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: var(--fg-default);" onclick={handleSave}>Save</button>
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: var(--fg-default);" onclick={handleSaveAs}>Save As...</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleSave}>Save</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleSaveAs}>Save As...</button>
 
         <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center gap-2" style="color: var(--fg-default);" onclick={handlePin}>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2" style="color: var(--fg-default);" onclick={handlePin}>
             {#if isPinned}
                 <PinOff size={12} />
                 <span>Unpin</span>
@@ -181,34 +181,34 @@
 
         <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: var(--fg-default);" onclick={handleClose}>Close</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleClose}>Close</button>
 
         <div class="relative group">
-            <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10 flex items-center justify-between" style="color: var(--fg-default);">
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 flex items-center justify-between" style="color: var(--fg-default);">
                 <span>Close Many</span>
                 <span class="text-[10px]">›</span>
             </button>
 
             <!-- Submenu -->
-            <div class="absolute left-full top-0 ml-1 w-48 rounded shadow-xl border py-1 hidden group-hover:block" style="background-color: var(--bg-panel); border-color: var(--border-light);">
-                <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCloseAll}>Close All</button>
+            <div class="absolute left-full top-0 ml-1 min-w-[180px] rounded-md shadow-xl border py-1 hidden group-hover:block" style="background-color: var(--bg-panel); border-color: var(--border-light);">
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCloseAll}>Close All</button>
             </div>
         </div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {editorStore.closedTabsHistory.length > 0 ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={editorStore.closedTabsHistory.length === 0} onclick={handleReopenLast}>Reopen Last Closed</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {editorStore.closedTabsHistory.length > 0 ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={editorStore.closedTabsHistory.length === 0} onclick={handleReopenLast}>Reopen Last Closed</button>
 
         <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: var(--fg-default);" onclick={handleRename}>Rename</button>
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCopyFileName}>Copy File Name</button>
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {tab?.path ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!tab?.path} onclick={handleCopyFullPath}>Copy Full Path</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleRename}>Rename</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCopyFileName}>Copy File Name</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {tab?.path ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!tab?.path} onclick={handleCopyFullPath}>Copy Full Path</button>
 
         <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-xs hover:bg-white/10" style="color: {tab?.path ? 'var(--danger)' : 'var(--fg-muted)'};" disabled={!tab?.path} onclick={handleSendToRecycleBin}>Delete to Recycle Bin</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {tab?.path ? 'var(--danger)' : 'var(--fg-muted)'};" disabled={!tab?.path} onclick={handleSendToRecycleBin}>Delete to Recycle Bin</button>
     </div>
 </div>

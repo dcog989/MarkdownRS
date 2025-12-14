@@ -22,6 +22,8 @@ pub struct TabState {
     pub file_check_failed: bool,
     #[serde(default)]
     pub file_check_performed: bool,
+    #[serde(default)]
+    pub mru_position: Option<i32>,
 }
 
 pub struct Database {
@@ -54,7 +56,8 @@ impl Database {
                         is_pinned INTEGER DEFAULT 0,
                         custom_title TEXT,
                         file_check_failed INTEGER DEFAULT 0,
-                        file_check_performed INTEGER DEFAULT 0
+                        file_check_performed INTEGER DEFAULT 0,
+                        mru_position INTEGER
                     )",
                     [],
                 )?;
@@ -66,10 +69,10 @@ impl Database {
                     [],
                 )?;
 
-                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [3])?;
-                info!("Initial schema created successfully (version 3)");
+                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [4])?;
+                info!("Initial schema created successfully (version 4)");
             }
-            v if v < 3 => {
+            v if v < 4 => {
                 // Progressive migrations
                 let mut current_version = v;
                 
@@ -91,9 +94,17 @@ impl Database {
                     info!("Migration to version 3 completed successfully");
                 }
                 
+                if current_version < 4 {
+                    // Migration from v3 to v4: Add mru_position column
+                    info!("Migrating database schema from version {} to 4", current_version);
+                    tx.execute("ALTER TABLE tabs ADD COLUMN mru_position INTEGER", [])?;
+                    current_version = 4;
+                    info!("Migration to version 4 completed successfully");
+                }
+                
                 tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
             }
-            3 => {
+            4 => {
                 // Current version, no migration needed
                 info!("Database schema is up to date (version {})", version);
             }
@@ -150,8 +161,8 @@ impl Database {
 
         for tab in tabs {
             tx.execute(
-                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
                 params![
                     &tab.id,
                     &tab.title,
@@ -164,7 +175,8 @@ impl Database {
                     if tab.is_pinned { 1 } else { 0 },
                     &tab.custom_title,
                     if tab.file_check_failed { 1 } else { 0 },
-                    if tab.file_check_performed { 1 } else { 0 }
+                    if tab.file_check_performed { 1 } else { 0 },
+                    &tab.mru_position
                 ],
             )?;
         }
@@ -178,7 +190,7 @@ impl Database {
         info!("Loading session from database");
 
         let mut stmt = self.conn.prepare(
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed FROM tabs"
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position FROM tabs ORDER BY ROWID"
         )?;
 
         let tabs = stmt
@@ -196,6 +208,7 @@ impl Database {
                     custom_title: row.get(9).ok(),
                     file_check_failed: row.get::<_, i32>(10).unwrap_or(0) != 0,
                     file_check_performed: row.get::<_, i32>(11).unwrap_or(0) != 0,
+                    mru_position: row.get(12).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;

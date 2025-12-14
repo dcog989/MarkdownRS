@@ -1,7 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
-    import { Search, X, Settings } from "lucide-svelte";
+    import { Keyboard, Search, Settings, X } from "lucide-svelte";
 
     interface Props {
         isOpen: boolean;
@@ -76,6 +76,12 @@
             onClose();
         }
     }
+    
+    function openShortcuts() {
+        // Emit event or use a store to open shortcuts from settings
+        const event = new CustomEvent('open-shortcuts');
+        window.dispatchEvent(event);
+    }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -96,6 +102,10 @@
                     <Search size={14} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
                     <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1.5 rounded outline-none text-sm" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
                 </div>
+
+                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
+                    <Keyboard size={18} />
+                </button>
 
                 <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--fg-muted);" onclick={onClose} aria-label="Close Settings">
                     <X size={18} />

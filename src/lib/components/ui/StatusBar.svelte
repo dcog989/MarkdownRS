@@ -72,14 +72,14 @@
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden transition-all duration-200 status-bar"
+    class="h-6 border-t flex items-center px-3 text-xs select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden status-bar pointer-events-auto"
     style="
         background-color: {bgWithAlpha};
         border-color: var(--border-main);
     "
 >
     <!-- Left: File Path (Accent Color) -->
-    <div class="flex gap-4 overflow-hidden mr-4 status-bar-section" style="opacity: {textOpacity};">
+    <div class="flex gap-4 overflow-hidden mr-4 status-bar-section pointer-events-auto" style="opacity: {textOpacity};">
         <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" title={displayPath}>
             <span style="color: var(--fg-muted); font-weight: normal;">{tabIndex}:&nbsp;</span>{displayPath}
         </span>
@@ -90,7 +90,7 @@
     </div>
 
     <!-- Right: Metrics -->
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section" style="opacity: {textOpacity}; color: var(--fg-muted);">
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
         <!-- Chars: x / y -->
         <span title="Position / Total Characters">{m.cursorOffset} / {m.charCount} chars</span>
 
@@ -173,11 +173,11 @@
 
 <style>
     .status-bar {
-        pointer-events: none;
+        transition: background-color 200ms ease-in-out;
     }
     
     .status-bar-section {
-        pointer-events: auto;
+        transition: opacity 200ms ease-in-out;
     }
     
     .status-bar:hover {

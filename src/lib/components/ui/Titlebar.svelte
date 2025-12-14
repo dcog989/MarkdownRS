@@ -2,7 +2,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Copy, Eye, Keyboard, Minus, Search, Settings, Square, X } from "lucide-svelte";
+    import { Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
     import AboutModal from "./AboutModal.svelte";
     import SettingsModal from "./SettingsModal.svelte";
@@ -142,6 +142,15 @@
                 showCommandPalette = false;
             },
         },
+        {
+            id: "shortcuts",
+            label: "Keyboard Shortcuts",
+            shortcut: "F1",
+            action: () => {
+                showShortcutsModal = true;
+                showCommandPalette = false;
+            },
+        },
     ];
 
     let filteredCommands = $derived(commands.filter((c) => c.label.toLowerCase().includes(commandSearchQuery.toLowerCase())));
@@ -233,9 +242,6 @@
         </button>
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => (showSettingsModal = true)} aria-label="Settings">
             <Settings size={14} />
-        </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => (showShortcutsModal = true)} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
-            <Keyboard size={14} />
         </button>
     </div>
 

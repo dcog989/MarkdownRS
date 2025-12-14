@@ -67,11 +67,15 @@
                     e.preventDefault();
                     e.stopPropagation();
                     await saveCurrentFile();
+                    // Persist session after save to ensure path is stored
+                    await persistSession();
                     break;
                 case "o":
                     e.preventDefault();
                     e.stopPropagation();
                     await openFile();
+                    // Persist session after opening file to store it immediately
+                    await persistSession();
                     break;
                 case "n":
                     e.preventDefault();
