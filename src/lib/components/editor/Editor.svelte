@@ -67,6 +67,10 @@
             clearTimeout(metricsUpdateTimer);
             metricsUpdateTimer = null;
         }
+        if (scrollDebounce !== null) {
+            clearTimeout(scrollDebounce);
+            scrollDebounce = null;
+        }
     }
 
     function handleTextOperation(operation: TextOperation) {
@@ -438,7 +442,6 @@
             editorStore.unregisterTextOperationCallback();
             if (view) {
                 view.destroy();
-                view = null as any;
             }
         };
     });
@@ -448,7 +451,6 @@
         editorStore.unregisterTextOperationCallback();
         if (view) {
             view.destroy();
-            view = null as any;
         }
     });
 </script>

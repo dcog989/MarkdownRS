@@ -71,16 +71,14 @@ export async function openFile(): Promise<void> {
             const result = await invoke<FileContent>('read_text_file', { path: sanitizedPath });
             const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
-            // Detect Line Ending based on raw content
-            // More robust detection: count occurrences and use majority
+            // Fixed: Improved line ending detection
+            // Count CRLF vs LF occurrences separately
             const crlfCount = (result.content.match(/\r\n/g) || []).length;
-            const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
+            const lfCount = (result.content.match(/\n/g) || []).length;
+            const lfOnlyCount = lfCount - crlfCount; // Subtract CRLF from total LF count
             
-            // If more than 50% of line breaks are CRLF, consider it a CRLF file
-            let detectedLineEnding: 'LF' | 'CRLF' = 'LF';
-            if (crlfCount > 0 && crlfCount >= lfOnlyCount) {
-                detectedLineEnding = 'CRLF';
-            }
+            // If CRLF is majority, use CRLF
+            const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > lfOnlyCount ? 'CRLF' : 'LF';
 
             const id = editorStore.addTab(fileName, result.content);
             const tab = editorStore.tabs.find(t => t.id === id);
@@ -205,7 +203,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     editorStore.closeTab(id);
 
     if (appState.activeTabId === id) {
-        let nextId = editorStore.mruStack[0];
+        const nextId = editorStore.mruStack[0];
         appState.activeTabId = nextId || null;
     }
 

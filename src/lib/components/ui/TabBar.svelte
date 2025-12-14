@@ -76,6 +76,8 @@
         return () => {
             if (unlisten) unlisten();
             clearInterval(interval);
+            if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
+            if (mruCleanupTimeout) clearTimeout(mruCleanupTimeout);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
@@ -158,12 +160,7 @@
         contextMenuY = e.clientY;
     }
 
-    function closeContextMenu() {
-        contextMenuTabId = null;
-    }
-
     function handleDragStart(e: DragEvent, tabId: string) {
-        console.error("TabBar: DragStart", tabId);
         if (!e.dataTransfer) return;
         draggedTabId = tabId;
         e.dataTransfer.effectAllowed = "move";
@@ -185,7 +182,6 @@
     }
 
     function handleDrop(e: DragEvent, targetTabId: string) {
-        console.error("TabBar: Drop", targetTabId);
         if (!draggedTabId || draggedTabId === targetTabId) {
             draggedTabId = null;
             draggedOverTabId = null;
@@ -296,7 +292,7 @@
                 <div bind:this={dropdownListRef} class="overflow-y-auto py-1 relative">
                     {#each filteredTabs as tab, index}
                         <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2" style="background-color: {index === selectedDropdownIndex ? 'var(--accent-primary)' : 'transparent'}; color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)'};" onclick={() => handleDropdownSelect(tab.id)} onmouseenter={() => (selectedDropdownIndex = index)} role="menuitem">
-                            <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+            <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
                         </button>
                     {/each}
                 </div>

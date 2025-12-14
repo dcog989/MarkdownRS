@@ -112,12 +112,16 @@
                 }, 50);
             }
             scrollSyncTimeout = null;
-        }) as any;
+        }) as number;
 
         return () => {
             if (scrollSyncTimeout !== null) {
                 cancelAnimationFrame(scrollSyncTimeout);
                 scrollSyncTimeout = null;
+            }
+            if (syncLockTimeout !== null) {
+                clearTimeout(syncLockTimeout);
+                syncLockTimeout = null;
             }
         };
     });
