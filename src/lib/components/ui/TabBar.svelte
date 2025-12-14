@@ -3,8 +3,9 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { ChevronDown, Plus } from "lucide-svelte";
+    import { AlertCircle, ChevronDown, File, FileText, Pencil, Plus } from "lucide-svelte";
     import { onMount, tick } from "svelte";
+    import CustomScrollbar from "./CustomScrollbar.svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabButton from "./TabButton.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -310,12 +311,39 @@
                 <div class="p-2 border-b" style="border-color: var(--border-light);">
                     <input bind:this={searchInputRef} bind:value={tabSearchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--fg-default);" onkeydown={handleDropdownKeydown} />
                 </div>
-                <div bind:this={dropdownListRef} class="overflow-y-auto py-1 relative">
-                    {#each filteredTabs as tab, index (tab.id)}
-                        <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2" style="background-color: {index === selectedDropdownIndex ? 'var(--accent-primary)' : 'transparent'}; color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : tab.fileCheckFailed ? 'var(--danger-text)' : appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)'};" onclick={() => handleDropdownSelect(tab.id)} onmousemove={(e) => handleDropdownHover(index, e)} role="menuitem">
-                            <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
-                        </button>
-                    {/each}
+
+                <!-- Wrapper for Custom Scrollbar -->
+                <div class="relative min-h-0 flex-1">
+                    <div bind:this={dropdownListRef} class="overflow-y-auto py-1 no-scrollbar relative max-h-[440px]">
+                        {#each filteredTabs as tab, index (tab.id)}
+                            {@const isSelected = index === selectedDropdownIndex}
+                            {@const isActive = appState.activeTabId === tab.id}
+                            <button
+                                type="button"
+                                class="w-full text-left px-3 py-2 text-sm flex items-center gap-2"
+                                style="
+                                    background-color: {isSelected ? 'var(--accent-primary)' : 'transparent'};
+                                    color: {isSelected ? 'var(--fg-inverse)' : isActive ? 'var(--accent-secondary)' : 'var(--fg-default)'};
+                                "
+                                onclick={() => handleDropdownSelect(tab.id)}
+                                onmousemove={(e) => handleDropdownHover(index, e)}
+                                role="menuitem"
+                            >
+                                {#if tab.fileCheckFailed}
+                                    <AlertCircle size={14} class="shrink-0" style="color: var(--danger-text);" />
+                                {:else if tab.path && tab.isDirty}
+                                    <Pencil size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : '#5deb47'};" />
+                                {:else if tab.path}
+                                    <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : 'var(--fg-muted)'};" />
+                                {:else}
+                                    <File size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : 'var(--fg-muted)'};" />
+                                {/if}
+                                <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+                            </button>
+                        {/each}
+                    </div>
+                    <!-- Pass content={dropdownListRef} to trigger update on resize -->
+                    <CustomScrollbar viewport={dropdownListRef} content={dropdownListRef} />
                 </div>
             </div>
         {/if}
