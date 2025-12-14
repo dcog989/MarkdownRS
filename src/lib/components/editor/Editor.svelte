@@ -40,10 +40,10 @@
     // Function to trigger spellcheck refresh
     async function refreshSpellcheck() {
         if (!view) return;
-        
+
         // Refresh custom dictionary
         await refreshCustomDictionary();
-        
+
         // Force browser spell check to re-evaluate
         const container = view.dom;
         container.spellcheck = false;
@@ -51,7 +51,7 @@
             container.spellcheck = true;
             // Force a re-render by triggering a dummy transaction
             view.dispatch({
-                changes: { from: 0, to: 0, insert: '' }
+                changes: { from: 0, to: 0, insert: "" },
             });
         }, 100);
     }
@@ -93,15 +93,35 @@
         });
     }
 
+    // Effect to handle Theme and Font changes
     $effect(() => {
+        // Capture dependencies immediately so Svelte tracks them even if view is undefined
+        const fontSize = appState.editorFontSize;
+        const fontFamily = appState.editorFontFamily;
+        const insertMode = editorStore.activeMetrics.insertMode;
+
         if (view) {
             const newTheme = EditorView.theme({
-                "&": { height: "100%", fontSize: `${appState.editorFontSize}px` },
+                "&": { height: "100%", fontSize: `${fontSize}px` },
                 ".cm-cursor": {
-                    borderLeftColor: editorStore.activeMetrics.insertMode === "OVR" ? "transparent" : "white",
-                    borderBottom: editorStore.activeMetrics.insertMode === "OVR" ? "2px solid white" : "none",
+                    borderLeftColor: insertMode === "OVR" ? "transparent" : "white",
+                    borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
                 },
-                ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
+                ".cm-scroller": { fontFamily: fontFamily, overflow: "auto" },
+                ".cm-search": {
+                    backgroundColor: "var(--bg-panel)",
+                    borderBottom: "1px solid var(--border-main)",
+                },
+                ".cm-search input": {
+                    backgroundColor: "var(--bg-main)",
+                    color: "var(--fg-default)",
+                    border: "1px solid var(--border-light)",
+                },
+                ".cm-search button": {
+                    backgroundColor: "var(--bg-main)",
+                    color: "var(--fg-default)",
+                    border: "1px solid var(--border-light)",
+                },
             });
             view.dispatch({
                 effects: themeCompartment.reconfigure(newTheme),
@@ -111,11 +131,12 @@
 
     // Effect to handle word wrap changes
     $effect(() => {
+        // Capture dependency immediately
+        const wordWrap = appState.editorWordWrap;
+
         if (view) {
             view.dispatch({
-                effects: lineWrappingCompartment.reconfigure(
-                    appState.editorWordWrap ? EditorView.lineWrapping : []
-                ),
+                effects: lineWrappingCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : []),
             });
         }
     });
@@ -144,7 +165,7 @@
                         }
                     }, 0);
                 });
-                
+
                 // Check if file exists when tab is first focused
                 checkFileExists(tabId);
             }

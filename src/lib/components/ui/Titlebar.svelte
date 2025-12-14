@@ -258,7 +258,15 @@
 
     <!-- Controls -->
     <div class="flex h-full pointer-events-auto items-center">
-        <button class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors border-r" style="color: var(--fg-muted); border-color: var(--border-main);" onclick={() => appState.toggleSplitView()} title="Toggle Preview">
+        <button
+            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors border-r"
+            style="color: var(--fg-muted); border-color: var(--border-main);"
+            onclick={() => {
+                appState.toggleSplitView();
+                saveSettings();
+            }}
+            title="Toggle Preview"
+        >
             <Eye size={14} class={appState.splitView ? "text-[var(--fg-default)]" : "opacity-50"} />
         </button>
 

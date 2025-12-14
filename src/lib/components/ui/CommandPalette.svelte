@@ -2,6 +2,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { openFile, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
     let isOpen = $state(false);
@@ -28,18 +29,40 @@
         },
         { id: "open", label: "File: Open File", shortcut: "Ctrl+O", action: () => openFile() },
         { id: "save", label: "File: Save", shortcut: "Ctrl+S", action: () => saveCurrentFile() },
-        { id: "toggle-split", label: "View: Toggle Split Preview", shortcut: "Ctrl+\\", action: () => appState.toggleSplitView() },
-        { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform('format-document') },
-        { id: "ops-sort", label: "Edit: Sort Lines (A→Z)", action: () => editorStore.performTextTransform('sort-asc') },
-        { id: "ops-sort-desc", label: "Edit: Sort Lines (Z→A)", action: () => editorStore.performTextTransform('sort-desc') },
-        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => editorStore.performTextTransform('trim-whitespace') },
-        { id: "ops-upper", label: "Edit: To UPPERCASE", action: () => editorStore.performTextTransform('uppercase') },
-        { id: "ops-lower", label: "Edit: To lowercase", action: () => editorStore.performTextTransform('lowercase') },
-        { id: "ops-title", label: "Edit: To Title Case", action: () => editorStore.performTextTransform('title-case') },
-        { id: "ops-remove-dupes", label: "Edit: Remove Duplicate Lines", action: () => editorStore.performTextTransform('remove-duplicates') },
-        { id: "ops-remove-blank", label: "Edit: Remove Blank Lines", action: () => editorStore.performTextTransform('remove-blank') },
-        { id: "theme-dark", label: "Theme: Dark", action: () => appState.setTheme("dark") },
-        { id: "theme-light", label: "Theme: Light", action: () => appState.setTheme("light") },
+        {
+            id: "toggle-split",
+            label: "View: Toggle Split Preview",
+            shortcut: "Ctrl+\\",
+            action: () => {
+                appState.toggleSplitView();
+                saveSettings();
+            },
+        },
+        { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform("format-document") },
+        { id: "ops-sort", label: "Edit: Sort Lines (A→Z)", action: () => editorStore.performTextTransform("sort-asc") },
+        { id: "ops-sort-desc", label: "Edit: Sort Lines (Z→A)", action: () => editorStore.performTextTransform("sort-desc") },
+        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => editorStore.performTextTransform("trim-whitespace") },
+        { id: "ops-upper", label: "Edit: To UPPERCASE", action: () => editorStore.performTextTransform("uppercase") },
+        { id: "ops-lower", label: "Edit: To lowercase", action: () => editorStore.performTextTransform("lowercase") },
+        { id: "ops-title", label: "Edit: To Title Case", action: () => editorStore.performTextTransform("title-case") },
+        { id: "ops-remove-dupes", label: "Edit: Remove Duplicate Lines", action: () => editorStore.performTextTransform("remove-duplicates") },
+        { id: "ops-remove-blank", label: "Edit: Remove Blank Lines", action: () => editorStore.performTextTransform("remove-blank") },
+        {
+            id: "theme-dark",
+            label: "Theme: Dark",
+            action: () => {
+                appState.setTheme("dark");
+                saveSettings();
+            },
+        },
+        {
+            id: "theme-light",
+            label: "Theme: Light",
+            action: () => {
+                appState.setTheme("light");
+                saveSettings();
+            },
+        },
         {
             id: "close",
             label: "File: Close Tab",

@@ -15,7 +15,7 @@
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
-    
+
     // Configuration constants
     const AUTO_SAVE_INTERVAL_MS = 30000; // 30 seconds
     const INIT_DELAY_MS = 150; // Window state restoration delay
@@ -32,16 +32,16 @@
         }
 
         // Tab Navigation (Ctrl+Left/Right)
-        if (e.ctrlKey && appState.tabNavigationMode === 'arrow-keys') {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        if (e.ctrlKey && appState.tabNavigationMode === "arrow-keys") {
+            if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                const currentIndex = editorStore.tabs.findIndex(t => t.id === appState.activeTabId);
+
+                const currentIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
                 if (currentIndex === -1) return;
-                
+
                 let newIndex;
-                if (e.key === 'ArrowLeft') {
+                if (e.key === "ArrowLeft") {
                     // Navigate to previous tab
                     newIndex = currentIndex - 1;
                     if (newIndex < 0) newIndex = editorStore.tabs.length - 1; // Wrap to end
@@ -50,7 +50,7 @@
                     newIndex = currentIndex + 1;
                     if (newIndex >= editorStore.tabs.length) newIndex = 0; // Wrap to start
                 }
-                
+
                 const newTab = editorStore.tabs[newIndex];
                 if (newTab) {
                     appState.activeTabId = newTab.id;
@@ -94,12 +94,13 @@
                     e.preventDefault();
                     e.stopPropagation();
                     appState.toggleSplitView();
+                    saveSettings();
                     break;
                 case "f":
                     if (e.shiftKey && e.altKey) {
                         e.preventDefault();
                         e.stopPropagation();
-                        editorStore.performTextTransform('format-document');
+                        editorStore.performTextTransform("format-document");
                     }
                     break;
             }
@@ -246,7 +247,7 @@
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}
-            
+
             <!-- StatusBar positioned absolutely at bottom of main workspace -->
             <div style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 100;">
                 <StatusBar />

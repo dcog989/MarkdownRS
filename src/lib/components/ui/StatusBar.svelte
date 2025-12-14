@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { saveSettings } from "$lib/utils/settings";
     import { message } from "@tauri-apps/plugin-dialog";
     import { WrapText } from "lucide-svelte";
 
@@ -21,7 +22,7 @@
 
     // Calculate opacity for both text and background
     let opacity = $derived(appState.statusBarTransparency / 100);
-    
+
     // Convert --bg-panel to rgba with transparency
     // --bg-panel is #252526 (37, 37, 38) in dark mode
     let bgWithAlpha = $derived(`rgba(37, 37, 38, ${1 - opacity})`);
@@ -36,6 +37,7 @@
 
     function toggleWordWrap() {
         appState.editorWordWrap = !appState.editorWordWrap;
+        saveSettings();
     }
 
     function handleEncodingClick() {
@@ -51,22 +53,19 @@
             showEncodingDialog = false;
             return;
         }
-        
+
         // Update the tab's encoding preference
         activeTab.encoding = enc;
         editorStore.sessionDirty = true;
-        
+
         // Show info message about UTF-8 limitation for saving
-        if (enc !== 'UTF-8') {
-            await message(
-                `Encoding changed to ${enc} for display.\n\nNote: Files are currently saved as UTF-8 regardless of the selected encoding. This encoding affects how the file is interpreted when opened.`,
-                { 
-                    title: "Encoding Changed", 
-                    kind: "info" 
-                }
-            );
+        if (enc !== "UTF-8") {
+            await message(`Encoding changed to ${enc} for display.\n\nNote: Files are currently saved as UTF-8 regardless of the selected encoding. This encoding affects how the file is interpreted when opened.`, {
+                title: "Encoding Changed",
+                kind: "info",
+            });
         }
-        
+
         showEncodingDialog = false;
     }
 </script>
@@ -101,12 +100,7 @@
         <span class="hidden sm:inline">Ln {m.cursorLine}, Col {m.cursorCol}</span>
 
         <!-- Word Wrap Toggle -->
-        <button 
-            class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" 
-            onclick={toggleWordWrap} 
-            title="Toggle Word Wrap"
-            style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};"
-        >
+        <button class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} title="Toggle Word Wrap" style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};">
             <WrapText size={14} />
         </button>
 
@@ -131,41 +125,26 @@
 {#if showEncodingDialog}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div 
-        class="fixed inset-0 z-50 flex items-center justify-center" 
-        style="background-color: var(--bg-backdrop);" 
-        onclick={closeEncodingDialog}
-    >
-        <div 
-            class="w-[400px] rounded-lg shadow-2xl border overflow-hidden" 
-            style="background-color: var(--bg-panel); border-color: var(--border-light);"
-            onclick={(e) => e.stopPropagation()}
-        >
+    <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--bg-backdrop);" onclick={closeEncodingDialog}>
+        <div class="w-[400px] rounded-lg shadow-2xl border overflow-hidden" style="background-color: var(--bg-panel); border-color: var(--border-light);" onclick={(e) => e.stopPropagation()}>
             <div class="p-4 border-b" style="border-color: var(--border-light);">
                 <h2 class="text-lg font-semibold" style="color: var(--fg-default);">Select Encoding</h2>
             </div>
             <div class="p-2">
-                {#each ['UTF-8', 'UTF-16 LE', 'UTF-16 BE', 'Windows-1252', 'ISO-8859-1'] as enc}
-                    <button
-                        type="button"
-                        class="w-full text-left px-4 py-3 text-sm flex justify-between items-center hover:bg-white/10 rounded"
-                        style="color: {enc === encoding ? 'var(--accent-secondary)' : 'var(--fg-default)'};" 
-                        onclick={() => selectEncoding(enc)}
-                    >
+                {#each ["UTF-8", "UTF-16 LE", "UTF-16 BE", "Windows-1252", "ISO-8859-1"] as enc}
+                    <button type="button" class="w-full text-left px-4 py-3 text-sm flex justify-between items-center hover:bg-white/10 rounded" style="color: {enc === encoding ? 'var(--accent-secondary)' : 'var(--fg-default)'};" onclick={() => selectEncoding(enc)}>
                         <span>{enc}</span>
                         {#if enc === encoding}
                             <span class="text-xs" style="color: var(--accent-secondary);">✓ Current</span>
                         {/if}
-                        {#if enc !== 'UTF-8'}
+                        {#if enc !== "UTF-8"}
                             <span class="text-xs opacity-50">(Display only)</span>
                         {/if}
                     </button>
                 {/each}
             </div>
             <div class="p-4 border-t" style="border-color: var(--border-light);">
-                <p class="text-xs opacity-70" style="color: var(--fg-muted);">
-                    Note: Files are currently saved as UTF-8 regardless of the original encoding. Other encodings are detected and displayed for reference.
-                </p>
+                <p class="text-xs opacity-70" style="color: var(--fg-muted);">Note: Files are currently saved as UTF-8 regardless of the original encoding. Other encodings are detected and displayed for reference.</p>
             </div>
         </div>
     </div>
@@ -175,15 +154,15 @@
     .status-bar {
         transition: background-color 200ms ease-in-out;
     }
-    
+
     .status-bar-section {
         transition: opacity 200ms ease-in-out;
     }
-    
+
     .status-bar:hover {
         background-color: var(--bg-panel) !important;
     }
-    
+
     .status-bar:hover .status-bar-section {
         opacity: 1 !important;
     }
