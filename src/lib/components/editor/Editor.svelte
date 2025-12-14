@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
@@ -18,6 +19,7 @@
     let { tabId } = $props<{ tabId: string }>();
     let editorContainer: HTMLDivElement;
     let view: EditorView;
+    let scrollDOM = $state<HTMLElement | null>(null);
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
     let previousTabId: string = "";
@@ -418,6 +420,9 @@
             parent: editorContainer,
         });
 
+        // Expose scroll DOM for the custom scrollbar
+        scrollDOM = view.scrollDOM;
+
         const handleWindowFocus = () => {
             if (view && !view.hasFocus) {
                 view.focus();
@@ -450,7 +455,11 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
+<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] relative {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}>
+    {#if scrollDOM}
+        <CustomScrollbar viewport={scrollDOM} />
+    {/if}
+</div>
 
 {#if showContextMenu}
     <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={refreshSpellcheck} />
@@ -461,5 +470,13 @@
         border-left: none !important;
         border-bottom: 3px solid #eac55f !important;
         width: 8px;
+    }
+
+    /* Hide native scrollbars for CodeMirror scroller */
+    :global(.cm-scroller) {
+        scrollbar-width: none;
+    }
+    :global(.cm-scroller::-webkit-scrollbar) {
+        display: none;
     }
 </style>

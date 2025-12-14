@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { AppError } from "$lib/utils/errorHandling";
@@ -6,7 +7,7 @@
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
 
     let { tabId } = $props<{ tabId: string }>();
-    let container: HTMLDivElement;
+    let container = $state<HTMLDivElement>();
     let renderError = $state<string | null>(null);
     let isRendering = $state(false);
     let scrollSyncTimeout: number | null = null;
@@ -168,11 +169,19 @@
             {@html htmlContent}
         {/if}
     </div>
+
+    {#if container}
+        <CustomScrollbar viewport={container} />
+    {/if}
 </div>
 
 <style>
     .preview-container {
         scroll-behavior: auto !important;
+        scrollbar-width: none;
+    }
+    .preview-container::-webkit-scrollbar {
+        display: none;
     }
 
     :global(.prose) {
