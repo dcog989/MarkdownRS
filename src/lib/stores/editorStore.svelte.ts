@@ -155,8 +155,11 @@ export class EditorStore {
     }
 
     pushToMru(id: string) {
+        if (this.mruStack.length > 0 && this.mruStack[0] === id) return;
+
         const filtered = this.mruStack.filter(tId => tId !== id);
         this.mruStack = [id, ...filtered];
+        this.sessionDirty = true;
     }
 
     getNextTabId(currentId: string | null, shiftKey: boolean): string | null {

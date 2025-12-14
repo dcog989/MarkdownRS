@@ -21,7 +21,7 @@
     let selectedCommandIndex = $state(0);
 
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { openFile, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
 
     type Command = {
         id: string;
@@ -195,6 +195,8 @@
     }
 
     async function closeApp() {
+        // Ensure session data (MRU, active tab, content) is saved before closing
+        await persistSession();
         await saveSettings();
         await appWindow.close();
     }
