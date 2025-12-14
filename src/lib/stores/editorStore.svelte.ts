@@ -106,7 +106,7 @@ export class EditorStore {
         this.textOperationCallback = null;
     }
 
-    addTab(title: string = 'Untitled', content: string = '') {
+    addTab(title: string = 'Untitled', content: string = '# New') {
         const id = crypto.randomUUID();
         const now = getCurrentTimestamp();
 
