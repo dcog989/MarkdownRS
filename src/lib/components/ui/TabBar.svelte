@@ -3,7 +3,7 @@
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { AlertCircle, ChevronDown, File, FileText, Pencil, Pin, Plus, Search, X } from "lucide-svelte";
+    import { AlertCircle, ChevronDown, File, FileText, Pencil, Pin, Plus, X } from "lucide-svelte";
     import { onMount, tick } from "svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -128,60 +128,66 @@
             const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
             if (!activeEl) return;
 
+            // Use getBoundingClientRect to calculate positions independent of offsetParent hierarchies
             const containerRect = scrollContainer.getBoundingClientRect();
             const tabRect = activeEl.getBoundingClientRect();
-            
-            // Get all tabs for edge detection
-            const allTabs = Array.from(scrollContainer.querySelectorAll('[data-tab-id]')) as HTMLElement[];
-            const activeIndex = allTabs.findIndex(el => el === activeEl);
-            
-            // Check if active tab is at the edges
-            const isLeftmostVisible = activeIndex === 0;
-            const isRightmostVisible = activeIndex === allTabs.length - 1;
-            
-            // Calculate if tab is visible
-            const isFullyVisible = tabRect.left >= containerRect.left && tabRect.right <= containerRect.right;
 
-            if (!isFullyVisible) {
-                // Scroll the active tab into view first
-                const isCloserToLeft = tabRect.left < containerRect.left;
-                activeEl.scrollIntoView({
+            // Calculate visual position relative to the container's visible area
+            const relativeLeft = tabRect.left - containerRect.left;
+            const relativeRight = tabRect.right - containerRect.left;
+            const containerWidth = containerRect.width;
+
+            const currentScroll = scrollContainer.scrollLeft;
+
+            // Calculate absolute position within the scrollable content
+            const absTabLeft = currentScroll + relativeLeft;
+            const absTabRight = currentScroll + relativeRight;
+
+            // Check for adjacent elements
+            const nextEl = activeEl.nextElementSibling as HTMLElement;
+            const prevEl = activeEl.previousElementSibling as HTMLElement;
+
+            const hasNext = nextEl && (nextEl.hasAttribute("data-tab-id") || nextEl.tagName === "BUTTON");
+            const hasPrev = prevEl && prevEl.hasAttribute("data-tab-id");
+
+            const PEEK = 40; // Pixels to show of adjacent tab
+
+            let targetScroll = currentScroll;
+
+            // 1. Calculate required scroll to satisfy Right Edge constraints
+            // We want (AbsoluteRight + Peek) to be <= (TargetScroll + Width)
+            // Therefore: TargetScroll >= AbsoluteRight + Peek - Width
+            const minScrollForRight = absTabRight + (hasNext ? PEEK : 0) - containerWidth;
+
+            // 2. Calculate required scroll to satisfy Left Edge constraints
+            // We want (AbsoluteLeft - Peek) to be >= TargetScroll
+            // Therefore: TargetScroll <= AbsoluteLeft - Peek
+            const maxScrollForLeft = absTabLeft - (hasPrev ? PEEK : 0);
+
+            // Apply constraints
+            // If current scroll is too far left (hiding right side), push it right
+            if (targetScroll < minScrollForRight) {
+                targetScroll = minScrollForRight;
+            }
+
+            // If current/new scroll is too far right (hiding left side), push it left
+            // This takes priority to ensure the start of the tab is always visible
+            if (targetScroll > maxScrollForLeft) {
+                targetScroll = maxScrollForLeft;
+            }
+
+            // Clamp to valid bounds
+            const maxPossibleScroll = scrollContainer.scrollWidth - containerWidth;
+            targetScroll = Math.max(0, Math.min(targetScroll, maxPossibleScroll));
+
+            // Only scroll if difference is noticeable
+            if (Math.abs(currentScroll - targetScroll) > 1) {
+                scrollContainer.scrollTo({
+                    left: targetScroll,
                     behavior: "smooth",
-                    block: "nearest",
-                    inline: isCloserToLeft ? "start" : "end",
                 });
             }
-            
-            // Show peek of adjacent tabs after main scroll completes
-            setTimeout(() => {
-                if (!scrollContainer) return;
-                
-                const containerRect = scrollContainer.getBoundingClientRect();
-                const tabRect = activeEl.getBoundingClientRect();
-                
-                // If this is the rightmost tab and there are tabs to the left
-                if (isRightmostVisible && activeIndex > 0) {
-                    // Scroll slightly left to show part of the tab to the left
-                    const leftTab = allTabs[activeIndex - 1];
-                    if (leftTab) {
-                        const leftRect = leftTab.getBoundingClientRect();
-                        const peekAmount = leftRect.width * 0.5; // Show 50% of adjacent tab
-                        scrollContainer.scrollLeft -= peekAmount;
-                    }
-                }
-                
-                // If this is the leftmost tab and there are tabs to the right
-                if (isLeftmostVisible && activeIndex < allTabs.length - 1) {
-                    // Scroll slightly right to show part of the tab to the right
-                    const rightTab = allTabs[activeIndex + 1];
-                    if (rightTab) {
-                        const rightRect = rightTab.getBoundingClientRect();
-                        const peekAmount = rightRect.width * 0.5; // Show 50% of adjacent tab
-                        scrollContainer.scrollLeft += peekAmount;
-                    }
-                }
-            }, 350); // Wait for smooth scroll to complete
-        }, 100);
+        }, 50);
     }
 
     $effect(() => {
@@ -404,10 +410,10 @@
     }
 
     let tabCount = $derived(editorStore.tabs.length);
-    
+
     // Get tab number for a given tab ID
     function getTabNumber(tabId: string): number {
-        return editorStore.tabs.findIndex(t => t.id === tabId) + 1;
+        return editorStore.tabs.findIndex((t) => t.id === tabId) + 1;
     }
 
     // Check if file exists for tabs with paths
@@ -419,11 +425,7 @@
 <div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--bg-panel); border-color: var(--border-main);">
     <!-- Tab Switcher Dropdown - Always Visible on Far Left -->
     <div class="relative h-8 border-r border-[var(--border-main)]">
-        <button 
-            class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" 
-            onclick={toggleDropdown} 
-            aria-label={`${tabCount} tabs open`}
-        >
+        <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={toggleDropdown} aria-label={`${tabCount} tabs open`}>
             <span>{tabCount}</span>
             <ChevronDown size={12} />
         </button>
@@ -435,34 +437,23 @@
             <div class="absolute left-0 top-full mt-1 w-80 max-h-[500px] rounded-lg shadow-2xl border overflow-hidden flex flex-col z-50" style="background-color: var(--bg-panel); border-color: var(--border-light);" role="menu">
                 <!-- Search Input -->
                 <div class="p-2 border-b" style="border-color: var(--border-light);">
-                    <input
-                        bind:this={searchInputRef}
-                        bind:value={tabSearchQuery}
-                        type="text"
-                        placeholder="Filter tabs..."
-                        class="w-full bg-transparent outline-none px-2 py-1 text-sm"
-                        style="color: var(--fg-default);"
-                        onclick={(e) => e.stopPropagation()}
-                        onkeydown={handleDropdownKeydown}
-                    />
+                    <input bind:this={searchInputRef} bind:value={tabSearchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--fg-default);" onclick={(e) => e.stopPropagation()} onkeydown={handleDropdownKeydown} />
                 </div>
-                
+
                 <!-- Tab List -->
                 <div class="overflow-y-auto py-1">
                     {#if filteredTabs.length === 0}
-                        <div class="px-3 py-4 text-sm text-center" style="color: var(--fg-muted);">
-                            No tabs match your search
-                        </div>
+                        <div class="px-3 py-4 text-sm text-center" style="color: var(--fg-muted);">No tabs match your search</div>
                     {:else}
                         {#each filteredTabs as tab, index}
-                            <button 
-                                type="button" 
-                                class="w-full text-left px-3 py-2 text-sm flex items-center gap-2" 
+                            <button
+                                type="button"
+                                class="w-full text-left px-3 py-2 text-sm flex items-center gap-2"
                                 style="
                                     background-color: {index === selectedDropdownIndex ? 'var(--accent-primary)' : 'transparent'};
-                                    color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : (appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)')};
-                                " 
-                                onclick={() => handleDropdownSelect(tab.id)} 
+                                    color: {index === selectedDropdownIndex ? 'var(--fg-inverse)' : appState.activeTabId === tab.id ? 'var(--accent-secondary)' : 'var(--fg-default)'};
+                                "
+                                onclick={() => handleDropdownSelect(tab.id)}
                                 onmouseenter={() => (selectedDropdownIndex = index)}
                                 role="menuitem"
                             >
@@ -517,7 +508,7 @@
                 ondragleave={(e) => handleDragLeave(e, tab.id)}
                 ondrop={(e) => handleDrop(e, tab.id)}
                 ondragend={handleDragEnd}
-                onkeydown={(e) => e.key === 'Enter' && handleTabClick(tab.id)}
+                onkeydown={(e) => e.key === "Enter" && handleTabClick(tab.id)}
                 aria-label={`${tab.title}${tab.isDirty ? " (modified)" : ""}${tab.isPinned ? " (pinned)" : ""}`}
             >
                 <!-- File Type Icon -->
@@ -543,19 +534,8 @@
 
                 <!-- Close Button (Overlay on Right) -->
                 {#if !tab.isPinned}
-                    <div 
-                        class="absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" 
-                        style="background: linear-gradient(to right, transparent 0%, {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'} 30%);"
-                    >
-                        <span 
-                            role="button" 
-                            tabindex="0" 
-                            class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center" 
-                            style="color: var(--fg-muted);" 
-                            onclick={(e) => handleCloseTab(e, tab.id)} 
-                            onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} 
-                            aria-label={`Close ${tab.title}`}
-                        >
+                    <div class="absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" style="background: linear-gradient(to right, transparent 0%, {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'} 30%);">
+                        <span role="button" tabindex="0" class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center" style="color: var(--fg-muted);" onclick={(e) => handleCloseTab(e, tab.id)} onkeydown={(e) => e.key === "Enter" && handleCloseTab(e, tab.id)} aria-label={`Close ${tab.title}`}>
                             <X size={12} class="hover:text-[var(--danger-text)]" />
                         </span>
                     </div>
