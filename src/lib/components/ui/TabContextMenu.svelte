@@ -5,6 +5,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { save } from "@tauri-apps/plugin-dialog";
     import { Pin, PinOff } from "lucide-svelte";
+    import { untrack } from "svelte";
 
     interface Props {
         tabId: string;
@@ -14,6 +15,44 @@
     }
 
     let { tabId, x, y, onClose }: Props = $props();
+
+    let menuEl = $state<HTMLDivElement>();
+    // Use untrack to explicitly initialize with the current prop value,
+    // acknowledging that subsequent prop changes are handled by the effect below.
+    let adjustedX = $state(untrack(() => x));
+    let adjustedY = $state(untrack(() => y));
+    let submenuSide = $state<"left" | "right">("right");
+
+    $effect(() => {
+        // We depend on x and y here to update position if props change
+        if (menuEl && (x || y)) {
+            const rect = menuEl.getBoundingClientRect();
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
+
+            let newX = x;
+            let newY = y;
+
+            // Prevent overflowing right edge
+            if (newX + rect.width > winWidth) {
+                newX = winWidth - rect.width - 5;
+            }
+            // Prevent overflowing bottom edge
+            if (newY + rect.height > winHeight) {
+                newY = winHeight - rect.height - 5;
+            }
+
+            adjustedX = newX;
+            adjustedY = newY;
+
+            // Determine if submenu should open to the left
+            if (newX + rect.width + 180 > winWidth) {
+                submenuSide = "left";
+            } else {
+                submenuSide = "right";
+            }
+        }
+    });
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
@@ -156,10 +195,11 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="fixed inset-0 z-50" onclick={handleBackdropClick}>
     <div
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1"
+        bind:this={menuEl}
+        class="absolute w-48 rounded-md shadow-xl border py-1"
         style="
-            left: {x}px;
-            top: {y}px;
+            left: {adjustedX}px;
+            top: {adjustedY}px;
             background-color: var(--bg-panel);
             border-color: var(--border-light);
         "
@@ -190,7 +230,14 @@
             </button>
 
             <!-- Submenu -->
-            <div class="absolute left-full top-0 ml-1 min-w-[180px] rounded-md shadow-xl border py-1 hidden group-hover:block" style="background-color: var(--bg-panel); border-color: var(--border-light);">
+            <div
+                class="absolute top-0 min-w-[180px] rounded-md shadow-xl border py-1 hidden group-hover:block"
+                style="
+                    background-color: var(--bg-panel);
+                    border-color: var(--border-light);
+                    {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
+                "
+            >
                 <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
