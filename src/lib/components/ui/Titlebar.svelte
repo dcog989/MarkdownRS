@@ -177,11 +177,17 @@
             }
         };
 
+        const handleOpenShortcuts = () => {
+            showShortcutsModal = true;
+        };
+
         window.addEventListener("keydown", handleKeydown);
+        window.addEventListener("open-shortcuts", handleOpenShortcuts);
 
         return () => {
             if (unlisten) unlisten();
             window.removeEventListener("keydown", handleKeydown);
+            window.removeEventListener("open-shortcuts", handleOpenShortcuts);
         };
     });
 
