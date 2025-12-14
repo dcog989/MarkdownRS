@@ -14,6 +14,7 @@
     let tabSearchQuery = $state("");
     let searchInputRef = $state<HTMLInputElement>();
     let selectedDropdownIndex = $state(0);
+    let dropdownListRef = $state<HTMLDivElement>();
 
     // Drag and drop state
     let draggedTabId: string | null = $state(null);
@@ -270,13 +271,44 @@
         }
     });
 
+    async function scrollToSelectedDropdownItem() {
+        await tick();
+        if (!dropdownListRef) return;
+
+        const buttons = dropdownListRef.querySelectorAll('button[role="menuitem"]');
+        const selectedButton = buttons[selectedDropdownIndex] as HTMLElement;
+
+        if (selectedButton) {
+            const container = dropdownListRef;
+
+            // Get positions relative to the container (requires container to be positioned relative)
+            const itemTop = selectedButton.offsetTop;
+            const itemBottom = itemTop + selectedButton.offsetHeight;
+            const containerTop = container.scrollTop;
+            const containerBottom = containerTop + container.clientHeight;
+
+            // Scroll up if item is above visible area
+            if (itemTop < containerTop) {
+                container.scrollTop = itemTop;
+            }
+            // Scroll down if item is below visible area
+            else if (itemBottom > containerBottom) {
+                container.scrollTop = itemBottom - container.clientHeight;
+            }
+        }
+    }
+
     function handleDropdownKeydown(e: KeyboardEvent) {
+        if (filteredTabs.length === 0) return;
+
         if (e.key === "ArrowDown") {
             e.preventDefault();
             selectedDropdownIndex = (selectedDropdownIndex + 1) % filteredTabs.length;
+            scrollToSelectedDropdownItem();
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             selectedDropdownIndex = (selectedDropdownIndex - 1 + filteredTabs.length) % filteredTabs.length;
+            scrollToSelectedDropdownItem();
         } else if (e.key === "Enter") {
             e.preventDefault();
             if (filteredTabs[selectedDropdownIndex]) {
@@ -441,7 +473,7 @@
                 </div>
 
                 <!-- Tab List -->
-                <div class="overflow-y-auto py-1">
+                <div bind:this={dropdownListRef} class="overflow-y-auto py-1 relative">
                     {#if filteredTabs.length === 0}
                         <div class="px-3 py-4 text-sm text-center" style="color: var(--fg-muted);">No tabs match your search</div>
                     {:else}
