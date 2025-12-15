@@ -1,47 +1,45 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
+/* Tailwind Configuration */
 @theme {
-    /* Future Tailwind theme extensions */
+    /* Backgrounds */
+    --color-bg-main: #1e1e1e;
+    --color-bg-panel: #252526;
+    --color-bg-header: #2d2d2d;
+    --color-bg-titlebar: #181818;
+    --color-bg-hover: #343434;
+    --color-bg-active: #434343;
+    --color-bg-input: #3c3c3c;
+    --color-bg-backdrop: rgba(0, 0, 0, 0.6);
+
+    /* Borders */
+    --color-border-main: #333333;
+    --color-border-light: #454545;
+    --color-border-focus: #6c6c6c;
+
+    /* Text */
+    --color-fg-default: #d4d4d4;
+    --color-fg-muted: #9ca3af;
+    --color-fg-inverse: #ffffff;
+
+    /* Accents */
+    --color-accent-primary: #7c5a73;
+    --color-accent-secondary: #ae8da6;
+    --color-accent-file: #eac55f;
+    --color-accent-link: #3794ff;
+
+    /* Functional */
+    --color-status-bar-bg: #7c5a73;
+    --color-status-bar-fg: #ffffff;
+    --color-danger: #ff8892;
+    --color-danger-hover: #eb626e;
+    --color-danger-text: #ff6b6b;
+    --color-success: #0e639c;
+    --color-success-hover: #1177bb;
 }
 
 :root {
-    /* --- Dark Mode (Default) --- */
-
-    /* Backgrounds */
-    --bg-main: #1e1e1e; /* Editor background */
-    --bg-panel: #252526; /* Tab bar, Sidebars */
-    --bg-header: #2d2d2d; /* Modal Headers */
-    --bg-titlebar: #181818; /* System Drag Area */
-    --bg-hover: #343434; /* List items hover */
-    --bg-active: #434343; /* Active items */
-    --bg-input: #3c3c3c; /* Inputs */
-    --bg-backdrop: rgba(0, 0, 0, 0.6);
-
-    /* Borders */
-    --border-main: #333333; /* Standard borders */
-    --border-light: #454545; /* Lighter borders (modals) */
-    --border-focus: #6c6c6c; /* Focus rings */
-
-    /* Text */
-    --fg-default: #d4d4d4; /* Primary text */
-    --fg-muted: #9ca3af; /* Secondary text */
-    --fg-inverse: #ffffff; /* Text on colored backgrounds */
-
-    /* Accents */
-    --accent-primary: #7c5a73;
-    --accent-secondary: #ae8da6;
-    --accent-file: #eac55f;
-    --accent-link: #3794ff;
-
-    /* Functional */
-    --status-bar-bg: #7c5a73;
-    --status-bar-fg: #ffffff;
-    --danger: #ff8892;
-    --danger-hover: #eb626e;
-    --danger-text: #ff6b6b; /* Lighter red for text on dark backgrounds */
-    --success: #0e639c;
-    --success-hover: #1177bb;
-
     /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
     color-scheme: dark;
@@ -49,25 +47,49 @@
 
 /* --- Light Mode Override --- */
 [data-theme="light"] {
-    --bg-main: #ffffff;
-    --bg-panel: #f3f3f3;
-    --bg-header: #e5e5e5;
-    --bg-titlebar: #dddddd;
-    --bg-hover: #e8e8e8;
-    --bg-active: #d4d4d4;
-    --bg-input: #ffffff;
-    --bg-backdrop: rgba(0, 0, 0, 0.3);
+    --color-bg-main: #ffffff;
+    --color-bg-panel: #f3f3f3;
+    --color-bg-header: #e5e5e5;
+    --color-bg-titlebar: #dddddd;
+    --color-bg-hover: #e8e8e8;
+    --color-bg-active: #d4d4d4;
+    --color-bg-input: #ffffff;
+    --color-bg-backdrop: rgba(0, 0, 0, 0.3);
 
-    --border-main: #e5e5e5;
-    --border-light: #cccccc;
+    --color-border-main: #e5e5e5;
+    --color-border-light: #cccccc;
 
-    --fg-default: #333333;
-    --fg-muted: #666666;
-    --fg-inverse: #ffffff;
+    --color-fg-default: #333333;
+    --color-fg-muted: #666666;
+    --color-fg-inverse: #ffffff;
 
-    --accent-file: #a88d3e;
+    --color-accent-file: #a88d3e;
 
-    --danger-text: #e81123; /* Standard red works on light bg */
+    --color-danger-text: #e81123;
+}
+
+/* Map Tailwind theme variables to standard CSS variables for non-Tailwind usage if needed,
+   though v4 allows using --color-* directly in utilities like bg-bg-main */
+:root {
+    --bg-main: var(--color-bg-main);
+    --bg-panel: var(--color-bg-panel);
+    --bg-header: var(--color-bg-header);
+    --bg-titlebar: var(--color-bg-titlebar);
+    --bg-hover: var(--color-bg-hover);
+    --bg-active: var(--color-bg-active);
+    --bg-input: var(--color-bg-input);
+    --bg-backdrop: var(--color-bg-backdrop);
+    --border-main: var(--color-border-main);
+    --border-light: var(--color-border-light);
+    --fg-default: var(--color-fg-default);
+    --fg-muted: var(--color-fg-muted);
+    --fg-inverse: var(--color-fg-inverse);
+    --accent-primary: var(--color-accent-primary);
+    --accent-secondary: var(--color-accent-secondary);
+    --accent-file: var(--color-accent-file);
+    --accent-link: var(--color-accent-link);
+    --danger: var(--color-danger);
+    --danger-text: var(--color-danger-text);
 }
 
 html,

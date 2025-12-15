@@ -171,12 +171,12 @@
     :global(.prose) {
         color: var(--fg-default);
     }
+    /* Updated: Removed margin-top: 0 to restore vertical spacing */
     :global(.prose h1),
     :global(.prose h2),
     :global(.prose h3),
     :global(.prose h4) {
         color: var(--accent-secondary);
-        margin-top: 0;
     }
     :global(.prose a) {
         color: var(--accent-link);
