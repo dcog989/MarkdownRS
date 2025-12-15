@@ -186,13 +186,21 @@ impl Database {
 
         let tx = self.conn.transaction()?;
 
+        // Wipe existing state to ensure clean slate (simple synchronization)
         tx.execute("DELETE FROM tabs", [])?;
 
-        for tab in tabs {
-            tx.execute(
-                "INSERT INTO tabs (id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-                params![
+        // Prepare the statement ONCE to avoid recompiling SQL for every tab
+        {
+            let mut stmt = tx.prepare_cached(
+                "INSERT INTO tabs (
+                    id, title, content, is_dirty, path, scroll_percentage,
+                    created, modified, is_pinned, custom_title,
+                    file_check_failed, file_check_performed, mru_position
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            )?;
+
+            for tab in tabs {
+                stmt.execute(params![
                     &tab.id,
                     &tab.title,
                     &tab.content,
@@ -206,8 +214,8 @@ impl Database {
                     if tab.file_check_failed { 1 } else { 0 },
                     if tab.file_check_performed { 1 } else { 0 },
                     &tab.mru_position
-                ],
-            )?;
+                ])?;
+            }
         }
 
         tx.commit()?;
