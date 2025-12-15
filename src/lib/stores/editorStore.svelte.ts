@@ -4,6 +4,7 @@ export type EditorTab = {
     id: string;
     title: string;
     content: string;
+    lastSavedContent: string;
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
@@ -45,6 +46,10 @@ function getCurrentTimestamp(): string {
     return `${yyyy}${mm}${dd} / ${HH}${MM}${SS}`;
 }
 
+function normalizeLineEndings(text: string): string {
+    return text.replace(/\r\n/g, '\n');
+}
+
 // Event system for text operations
 type TextOperationCallback = (operation: TextOperation) => void;
 
@@ -84,7 +89,7 @@ export class EditorStore {
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
 
-    // Callback for text operations that need to run on the editor
+    // Callback for text operations that need to run on the active editor
     private textOperationCallback: TextOperationCallback | null = null;
 
     activeMetrics = $state<EditorMetrics>({
@@ -110,11 +115,15 @@ export class EditorStore {
         const id = crypto.randomUUID();
         const now = getCurrentTimestamp();
 
+        // Normalize content to LF immediately to match CodeMirror's internal state
+        const normalizedContent = normalizeLineEndings(content);
+
         const newTab: EditorTab = {
             id,
             title,
             originalTitle: title,
-            content,
+            content: normalizedContent,
+            lastSavedContent: normalizedContent, // Initialize as clean
             isDirty: false,
             path: null,
             scrollPercentage: 0,
@@ -190,8 +199,13 @@ export class EditorStore {
         const tab = this.tabs.find(t => t.id === id);
         if (!tab) return;
 
+        // CodeMirror returns LF content.
         tab.content = content;
-        tab.isDirty = true;
+
+        // Auto-detect dirty state by comparing with saved version
+        // Ensure comparison is robust against line endings
+        tab.isDirty = content !== tab.lastSavedContent;
+
         tab.modified = getCurrentTimestamp();
 
         if (!tab.path) {
@@ -207,6 +221,16 @@ export class EditorStore {
         }
 
         this.sessionDirty = true;
+    }
+
+    markAsSaved(id: string) {
+        const tab = this.tabs.find(t => t.id === id);
+        if (tab) {
+            // Update the baseline "clean" content to current state
+            tab.lastSavedContent = tab.content;
+            tab.isDirty = false;
+            this.sessionDirty = true;
+        }
     }
 
     updateScroll(id: string, percentage: number) {

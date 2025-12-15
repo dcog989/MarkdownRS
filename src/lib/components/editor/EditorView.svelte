@@ -67,7 +67,6 @@
                 borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
             },
             ".cm-scroller": { fontFamily: fontFamily, overflow: "auto" },
-            // Added opacity to selection to ensure underlines show through
             ".cm-selectionBackground": { backgroundColor: "rgba(100, 150, 255, 0.3) !important" },
             ".cm-search": {
                 backgroundColor: "var(--bg-panel)",
@@ -94,7 +93,6 @@
 
     // Effect to handle Theme and Font changes
     $effect(() => {
-        // Calling getTheme() inside the effect registers the dependencies (fontSize, etc.)
         const newTheme = getTheme();
         if (view) {
             view.dispatch({
@@ -147,22 +145,7 @@
             },
         ];
 
-        const extensions = [
-            lineNumbers(),
-            highlightActiveLineGutter(),
-            history(),
-            search({ top: true }),
-            highlightSelectionMatches(),
-            keymap.of([...builtInKeymap, ...customKeymap, ...defaultKeymap, ...historyKeymap]),
-            oneDark,
-            spellCheckLinter,
-            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
-            EditorView.contentAttributes.of({ spellcheck: "false" }),
-            inputHandler,
-            eventHandlers,
-            // Initialize with current theme settings immediately
-            themeCompartment.of(getTheme()),
-        ];
+        const extensions = [lineNumbers(), highlightActiveLineGutter(), history(), search({ top: true }), highlightSelectionMatches(), keymap.of([...builtInKeymap, ...customKeymap, ...defaultKeymap, ...historyKeymap]), oneDark, spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), inputHandler, eventHandlers, themeCompartment.of(getTheme())];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
@@ -170,11 +153,24 @@
 
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-                if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
-                contentUpdateTimer = window.setTimeout(() => {
-                    onContentChange(update.state.doc.toString());
-                    contentUpdateTimer = null;
-                }, CONTENT_UPDATE_DEBOUNCE_MS);
+                // Check if the change was caused by a user event or specific input
+                // Programmatic dispatches (like tab switching) usually lack these annotations
+                const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
+
+                if (isUserUpdate) {
+                    if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
+                    contentUpdateTimer = window.setTimeout(() => {
+                        onContentChange(update.state.doc.toString());
+                        contentUpdateTimer = null;
+                    }, CONTENT_UPDATE_DEBOUNCE_MS);
+                } else {
+                    // Programmatic update (e.g., load file) - cancel any pending user debounce
+                    // to prevent overwriting the new content with old pending state
+                    if (contentUpdateTimer !== null) {
+                        clearTimeout(contentUpdateTimer);
+                        contentUpdateTimer = null;
+                    }
+                }
             }
             if (update.docChanged || update.selectionSet) {
                 if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
@@ -231,7 +227,6 @@
         if (view) view.destroy();
     });
 
-    // Export view for parent access
     export function getView() {
         return view;
     }
