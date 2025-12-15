@@ -2,7 +2,7 @@
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, WrapText } from "lucide-svelte";
-    import { untrack } from "svelte";
+    import { onDestroy } from "svelte";
 
     let {
         x = 0,
@@ -25,51 +25,77 @@
     let showCaseMenu = $state(false);
     let showTransformMenu = $state(false);
 
-    // Position state
     let menuEl = $state<HTMLDivElement>();
-    let menuWidth = $state(0);
-    let menuHeight = $state(0);
-
-    // Initialize adjusted coordinates
-    let adjustedX = $state(untrack(() => x));
-    let adjustedY = $state(untrack(() => y));
     let submenuSide = $state<"left" | "right">("right");
+    let resizeObserver: ResizeObserver | null = null;
 
-    $effect(() => {
-        // Track dependencies
-        const _deps = [x, y, menuWidth, menuHeight];
+    function updatePosition() {
+        if (!menuEl) return;
 
-        if (!menuEl || menuHeight === 0) return;
-
+        const rect = menuEl.getBoundingClientRect();
         const winWidth = window.innerWidth;
         const winHeight = window.innerHeight;
 
         let newX = x;
         let newY = y;
 
-        // Prevent overflowing right edge
-        if (newX + menuWidth > winWidth) {
-            newX = winWidth - menuWidth - 5;
+        // Account for status bar (h-6 = 24px) + padding
+        const BOTTOM_MARGIN = 32;
+
+        // 1. Horizontal constraint
+        if (newX + rect.width > winWidth) {
+            newX = winWidth - rect.width - 5;
         }
 
-        // Prevent overflowing bottom edge
-        if (newY + menuHeight > winHeight) {
-            newY = winHeight - menuHeight - 5;
+        // 2. Vertical constraint
+        if (newY + rect.height > winHeight - BOTTOM_MARGIN) {
+            newY = winHeight - rect.height - BOTTOM_MARGIN;
         }
 
-        // Ensure it doesn't go off top/left
-        if (newX < 5) newX = 5;
-        if (newY < 5) newY = 5;
+        // 3. Top/Left safety guard
+        newX = Math.max(5, newX);
+        newY = Math.max(5, newY);
 
-        adjustedX = newX;
-        adjustedY = newY;
+        // Apply
+        menuEl.style.left = `${newX}px`;
+        menuEl.style.top = `${newY}px`;
 
-        // Determine if submenu should open to the left
-        if (newX + menuWidth + 200 > winWidth) {
+        // Determine submenu direction based on available space
+        if (newX + rect.width + 200 > winWidth) {
             submenuSide = "left";
         } else {
             submenuSide = "right";
         }
+
+        // Reveal
+        menuEl.style.visibility = "visible";
+    }
+
+    $effect(() => {
+        if (menuEl) {
+            // Setup ResizeObserver to handle content loading/size changes
+            if (resizeObserver) resizeObserver.disconnect();
+
+            resizeObserver = new ResizeObserver(() => {
+                updatePosition();
+            });
+
+            resizeObserver.observe(menuEl);
+
+            // Initial position update
+            updatePosition();
+        }
+    });
+
+    // React to prop changes (x/y updates)
+    $effect(() => {
+        const _ = { x, y, selectedText }; // Dependency tracking
+        // Force update if menu exists
+        if (menuEl) updatePosition();
+    });
+
+    onDestroy(() => {
+        if (resizeObserver) resizeObserver.disconnect();
     });
 
     function handleBackdropContextMenu(e: MouseEvent) {
@@ -139,16 +165,14 @@
 <div class="fixed inset-0 z-50" onclick={onClose} oncontextmenu={handleBackdropContextMenu} role="presentation">
     <div
         bind:this={menuEl}
-        bind:offsetWidth={menuWidth}
-        bind:offsetHeight={menuHeight}
         class="absolute min-w-[200px] rounded-md shadow-xl border py-1 custom-scrollbar"
         style="
-            opacity: {menuHeight > 0 ? 1 : 0};
-            left: {adjustedX}px;
-            top: {adjustedY}px;
+            visibility: hidden; /* Start hidden for measurement */
+            top: 0;
+            left: 0;
             background-color: var(--bg-panel);
             border-color: var(--border-light);
-            max-height: calc(100vh - 10px);
+            max-height: calc(100vh - 40px); /* Ensure it fits with margins */
             overflow-y: auto;
         "
         onclick={(e) => e.stopPropagation()}
