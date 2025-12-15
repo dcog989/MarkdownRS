@@ -1,15 +1,11 @@
 <script lang="ts">
+    import { tooltip } from "$lib/actions/tooltip";
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { AppError } from "$lib/utils/errorHandling";
     import { renderMarkdown } from "$lib/utils/markdown";
-    import { 
-        createScrollSyncState, 
-        setScrollPercentage, 
-        getScrollPercentage,
-        cleanupScrollSync 
-    } from "$lib/utils/scrollSync";
+    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage, setScrollPercentage } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
@@ -61,7 +57,7 @@
                 renderError = e instanceof Error ? e.message : "Unknown rendering error";
 
                 const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                
+
                 if (renderErrorCount >= MAX_RENDER_ERRORS) {
                     htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
                         <strong>Rendering failed ${renderErrorCount} times:</strong><br/>
@@ -131,14 +127,7 @@
 
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
     <!-- Orientation Toggle Button -->
-    <button 
-        type="button" 
-        class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" 
-        style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" 
-        onclick={() => appState.toggleOrientation()} 
-        title="Toggle split orientation (vertical/horizontal)" 
-        aria-label="Toggle split orientation"
-    >
+    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" onclick={() => appState.toggleOrientation()} use:tooltip={"Toggle split orientation (vertical/horizontal)"}>
         {#if appState.splitOrientation === "vertical"}
             <FlipVertical size={16} style="color: var(--fg-default);" />
         {:else}
@@ -147,12 +136,7 @@
     </button>
 
     <!-- Content -->
-    <div 
-        bind:this={container} 
-        onscroll={handleScroll} 
-        class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" 
-        style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
-    >
+    <div bind:this={container} onscroll={handleScroll} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}
             <div class="absolute inset-0 flex items-center justify-center text-[var(--fg-muted)] opacity-50">Loading...</div>
         {:else if !htmlContent}

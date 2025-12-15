@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tooltip } from "$lib/actions/tooltip";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -41,6 +42,8 @@
                 showCommandPalette = false;
             },
         },
+        // ... (Commands list truncated for brevity, identical to previous) ...
+        // Re-adding essential commands for context if needed, but assuming logic remains same
         {
             id: "open",
             label: "File: Open File",
@@ -74,38 +77,6 @@
             shortcut: "Ctrl+T",
             action: () => {
                 showTransformModal = true;
-                showCommandPalette = false;
-            },
-        },
-        {
-            id: "ops-sort",
-            label: "Edit: Sort Lines (A-Z)",
-            action: () => {
-                editorStore.sortLines();
-                showCommandPalette = false;
-            },
-        },
-        {
-            id: "ops-trim",
-            label: "Edit: Trim Whitespace",
-            action: () => {
-                editorStore.trimWhitespace();
-                showCommandPalette = false;
-            },
-        },
-        {
-            id: "ops-upper",
-            label: "Edit: To Upper Case",
-            action: () => {
-                editorStore.toUpperCase();
-                showCommandPalette = false;
-            },
-        },
-        {
-            id: "ops-lower",
-            label: "Edit: To Lower Case",
-            action: () => {
-                editorStore.toLowerCase();
                 showCommandPalette = false;
             },
         },
@@ -152,8 +123,44 @@
             },
         },
     ];
+    // Adding back missing ops commands to ensure functionality
+    const opsCommands: Command[] = [
+        {
+            id: "ops-sort",
+            label: "Edit: Sort Lines (A-Z)",
+            action: () => {
+                editorStore.sortLines();
+                showCommandPalette = false;
+            },
+        },
+        {
+            id: "ops-trim",
+            label: "Edit: Trim Whitespace",
+            action: () => {
+                editorStore.trimWhitespace();
+                showCommandPalette = false;
+            },
+        },
+        {
+            id: "ops-upper",
+            label: "Edit: To Upper Case",
+            action: () => {
+                editorStore.toUpperCase();
+                showCommandPalette = false;
+            },
+        },
+        {
+            id: "ops-lower",
+            label: "Edit: To Lower Case",
+            action: () => {
+                editorStore.toLowerCase();
+                showCommandPalette = false;
+            },
+        },
+    ];
+    const allCommands = [...commands, ...opsCommands];
 
-    let filteredCommands = $derived(commands.filter((c) => c.label.toLowerCase().includes(commandSearchQuery.toLowerCase())));
+    let filteredCommands = $derived(allCommands.filter((c) => c.label.toLowerCase().includes(commandSearchQuery.toLowerCase())));
 
     onMount(() => {
         let unlisten: (() => void) | undefined;
@@ -165,7 +172,6 @@
             })
             .then((u) => (unlisten = u));
 
-        // Global keyboard shortcut for Text Transformations
         const handleKeydown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "t") {
                 e.preventDefault();
@@ -201,7 +207,6 @@
     }
 
     async function closeApp() {
-        // Ensure session data (MRU, active tab, content) is saved before closing
         await persistSession();
         await saveSettings();
         await appWindow.close();
@@ -245,17 +250,17 @@
 <div class="h-9 flex items-center select-none w-full border-b shrink-0" style="background-color: var(--bg-titlebar); border-color: var(--border-main); transform: translateZ(0);" data-tauri-drag-region>
     <!-- Logo / Settings -->
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => (showAboutModal = true)} aria-label="About">
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => (showSettingsModal = true)} aria-label="Settings">
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
             <Settings size={14} />
         </button>
     </div>
 
     <!-- Command Palette Search (Center) -->
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto" data-tauri-drag-region>
-        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--bg-input); color: var(--fg-muted); border: 1px solid var(--border-main);" onclick={openCommandPalette}>
+        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--bg-input); color: var(--fg-muted); border: 1px solid var(--border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
             <Search size={12} />
             <span class="flex-1 text-left">Search commands...</span>
             <span class="text-[10px] opacity-60">Ctrl+Shift+P</span>
@@ -271,16 +276,16 @@
                 appState.toggleSplitView();
                 saveSettings();
             }}
-            title="Toggle Preview"
+            use:tooltip={"Toggle Split Preview (Ctrl+\\)"}
         >
             <Eye size={14} class={appState.splitView ? "text-[var(--fg-default)]" : "opacity-50"} />
         </button>
 
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={minimize}><Minus size={16} /></button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={toggleMaximize}>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={minimize} use:tooltip={"Minimize"}><Minus size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={toggleMaximize} use:tooltip={"Maximize / Restore"}>
             {#if isMaximized}<Copy size={14} class="rotate-180" />{:else}<Square size={14} />{/if}
         </button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--danger)] hover:text-white text-[var(--fg-muted)]" onclick={closeApp}><X size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--danger)] hover:text-white text-[var(--fg-muted)]" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
     </div>
 </div>
 

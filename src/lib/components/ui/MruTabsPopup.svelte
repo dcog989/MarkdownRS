@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { tooltip } from "$lib/actions/tooltip";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { appState } from "$lib/stores/appState.svelte.ts";
     import { FileText } from "lucide-svelte";
 
     interface Props {
@@ -74,11 +74,11 @@
                         </div>
 
                         {#if tab.isDirty}
-                            <div class="w-2 h-2 rounded-full shrink-0" style="background-color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'};" title="Modified"></div>
+                            <div class="w-2 h-2 rounded-full shrink-0" style="background-color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'};" use:tooltip={"Modified"}></div>
                         {/if}
 
                         {#if tab.isPinned}
-                            <div class="text-xs shrink-0" style="color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'}" title="Pinned">📌</div>
+                            <div class="text-xs shrink-0" style="color: {tab.id === currentActiveId ? 'var(--fg-inverse)' : 'var(--accent-secondary)'}" use:tooltip={"Pinned"}>📌</div>
                         {/if}
                     </button>
                 {/each}
