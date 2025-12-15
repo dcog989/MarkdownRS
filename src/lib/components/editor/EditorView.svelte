@@ -1,25 +1,25 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
-    import { EditorView, keymap, lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
-    import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
+    import { appState } from "$lib/stores/appState.svelte.ts";
+    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
-    import { oneDark } from "@codemirror/theme-one-dark";
     import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
+    import { oneDark } from "@codemirror/theme-one-dark";
+    import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
+    import { onDestroy, onMount } from "svelte";
 
-    let { 
-        tabId, 
-        initialContent = "", 
+    let {
+        tabId,
+        initialContent = "",
         filename = "",
         onContentChange,
         onMetricsChange,
         customKeymap = [],
         spellCheckLinter,
         inputHandler,
-        eventHandlers
+        eventHandlers,
     } = $props<{
         tabId: string;
         initialContent?: string;
@@ -55,39 +55,44 @@
         }
     }
 
-    // Effect to handle Theme and Font changes
-    $effect(() => {
+    function getTheme() {
         const fontSize = appState.editorFontSize;
         const fontFamily = appState.editorFontFamily;
         const insertMode = editorStore.activeMetrics.insertMode;
 
+        return EditorView.theme({
+            "&": { height: "100%", fontSize: `${fontSize}px` },
+            ".cm-cursor": {
+                borderLeftColor: insertMode === "OVR" ? "transparent" : "white",
+                borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
+            },
+            ".cm-scroller": { fontFamily: fontFamily, overflow: "auto" },
+            ".cm-search": {
+                backgroundColor: "var(--bg-panel)",
+                borderBottom: "1px solid var(--border-main)",
+            },
+            ".cm-search input": {
+                backgroundColor: "var(--bg-main)",
+                color: "var(--fg-default)",
+                border: "1px solid var(--border-light)",
+            },
+            ".cm-search button": {
+                backgroundColor: "var(--bg-main)",
+                color: "var(--fg-default)",
+                border: "1px solid var(--border-light)",
+            },
+            ".cm-lintRange-warning": {
+                backgroundImage: "none",
+                borderBottom: "2px dotted var(--danger)",
+            },
+        });
+    }
+
+    // Effect to handle Theme and Font changes
+    $effect(() => {
+        // Calling getTheme() inside the effect registers the dependencies (fontSize, etc.)
+        const newTheme = getTheme();
         if (view) {
-            const newTheme = EditorView.theme({
-                "&": { height: "100%", fontSize: `${fontSize}px` },
-                ".cm-cursor": {
-                    borderLeftColor: insertMode === "OVR" ? "transparent" : "white",
-                    borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
-                },
-                ".cm-scroller": { fontFamily: fontFamily, overflow: "auto" },
-                ".cm-search": {
-                    backgroundColor: "var(--bg-panel)",
-                    borderBottom: "1px solid var(--border-main)",
-                },
-                ".cm-search input": {
-                    backgroundColor: "var(--bg-main)",
-                    color: "var(--fg-default)",
-                    border: "1px solid var(--border-light)",
-                },
-                ".cm-search button": {
-                    backgroundColor: "var(--bg-main)",
-                    color: "var(--fg-default)",
-                    border: "1px solid var(--border-light)",
-                },
-                ".cm-lintRange-warning": {
-                    backgroundImage: "none",
-                    borderBottom: "2px dotted var(--danger)",
-                },
-            });
             view.dispatch({
                 effects: themeCompartment.reconfigure(newTheme),
             });
@@ -151,7 +156,8 @@
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             inputHandler,
             eventHandlers,
-            themeCompartment.of(EditorView.theme({})),
+            // Initialize with current theme settings immediately
+            themeCompartment.of(getTheme()),
         ];
 
         if (!filename.endsWith(".txt")) {
@@ -233,12 +239,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div 
-    role="none" 
-    class="w-full h-full overflow-hidden bg-[#1e1e1e] relative {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" 
-    bind:this={editorContainer} 
-    onclick={() => view?.focus()}
-></div>
+<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] relative {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
 
 <style>
     :global(.overwrite-mode .cm-cursor) {
