@@ -104,6 +104,7 @@ fn main() {
                     .level_for("tao", LevelFilter::Error)
                     .level_for("wry", LevelFilter::Error)
                     .level_for("move_resize", LevelFilter::Error)
+                    .max_file_size(10 * 1024 * 1024) // 10MB
                     .targets([
                         Target::new(TargetKind::Stdout),
                         Target::new(TargetKind::Folder {

@@ -34,11 +34,22 @@ impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         info!("Initializing database at {:?}", db_path);
         let mut conn = Connection::open(db_path)?;
+
+        // Performance & Maintenance Optimization
+        // WAL: Better concurrency for auto-saves
+        // FULL: Reclaims disk space automatically after the frequent DELETE/INSERT cycles of session saving
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = NORMAL;
+             PRAGMA auto_vacuum = FULL;
+             PRAGMA foreign_keys = ON;",
+        )?;
+
         let version = Self::get_schema_version(&conn)?;
 
         // Use transaction for all schema changes to enable rollback on error
         let tx = conn.transaction()?;
-        
+
         match version {
             0 => {
                 // Initial schema creation
@@ -75,33 +86,51 @@ impl Database {
             v if v < 4 => {
                 // Progressive migrations
                 let mut current_version = v;
-                
+
                 if current_version < 2 {
                     // Migration from v1 to v2: Add is_pinned and custom_title columns
-                    info!("Migrating database schema from version {} to 2", current_version);
-                    tx.execute("ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0", [])?;
+                    info!(
+                        "Migrating database schema from version {} to 2",
+                        current_version
+                    );
+                    tx.execute(
+                        "ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0",
+                        [],
+                    )?;
                     tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
                     current_version = 2;
                     info!("Migration to version 2 completed successfully");
                 }
-                
+
                 if current_version < 3 {
                     // Migration from v2 to v3: Add file_check_failed and file_check_performed columns
-                    info!("Migrating database schema from version {} to 3", current_version);
-                    tx.execute("ALTER TABLE tabs ADD COLUMN file_check_failed INTEGER DEFAULT 0", [])?;
-                    tx.execute("ALTER TABLE tabs ADD COLUMN file_check_performed INTEGER DEFAULT 0", [])?;
+                    info!(
+                        "Migrating database schema from version {} to 3",
+                        current_version
+                    );
+                    tx.execute(
+                        "ALTER TABLE tabs ADD COLUMN file_check_failed INTEGER DEFAULT 0",
+                        [],
+                    )?;
+                    tx.execute(
+                        "ALTER TABLE tabs ADD COLUMN file_check_performed INTEGER DEFAULT 0",
+                        [],
+                    )?;
                     current_version = 3;
                     info!("Migration to version 3 completed successfully");
                 }
-                
+
                 if current_version < 4 {
                     // Migration from v3 to v4: Add mru_position column
-                    info!("Migrating database schema from version {} to 4", current_version);
+                    info!(
+                        "Migrating database schema from version {} to 4",
+                        current_version
+                    );
                     tx.execute("ALTER TABLE tabs ADD COLUMN mru_position INTEGER", [])?;
                     current_version = 4;
                     info!("Migration to version 4 completed successfully");
                 }
-                
+
                 tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
             }
             4 => {
