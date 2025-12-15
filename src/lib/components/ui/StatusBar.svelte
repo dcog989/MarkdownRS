@@ -7,13 +7,8 @@
 
     let m = $derived(editorStore.activeMetrics);
 
-    // Derive active tab data and index
+    // Derive active tab data
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
-    let tabIndex = $derived(editorStore.tabs.findIndex((t) => t.id === appState.activeTabId) + 1);
-    let displayPath = $derived(activeTab?.customTitle || activeTab?.path || activeTab?.title || "Untitled");
-
-    // Timestamp
-    let timestamp = $derived(activeTab?.modified || activeTab?.created || "");
 
     // Settings
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
@@ -46,18 +41,7 @@
         border-color: var(--border-main);
     "
 >
-    <!-- Left: File Path (Accent Color) -->
-    <div class="flex gap-4 overflow-hidden mr-4 status-bar-section pointer-events-auto" style="opacity: {textOpacity};">
-        <span class="truncate max-w-[40vw] font-bold" style="color: var(--accent-primary)" use:tooltip={displayPath}>
-            <span style="color: var(--fg-muted); font-weight: normal;">{tabIndex}:&nbsp;</span>{displayPath}
-        </span>
-        <!-- Timestamp (No Label) -->
-        {#if timestamp}
-            <span class="hidden md:inline opacity-70" use:tooltip={"Last Modified/Created"} style="color: var(--fg-muted)">{timestamp}</span>
-        {/if}
-    </div>
-
-    <!-- Right: Metrics -->
+    <!-- Left: Metrics -->
     <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
         <!-- Chars: x / y -->
         <span use:tooltip={"Cursor Position / Total Characters"}>{m.cursorOffset} / {m.charCount} chars</span>
@@ -67,12 +51,10 @@
 
         <span class="hidden sm:inline">{m.sizeKB.toFixed(2)} KB</span>
         <span class="hidden sm:inline">Ln {m.cursorLine}, Col {m.cursorCol}</span>
+    </div>
 
-        <!-- Word Wrap Toggle -->
-        <button class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};">
-            <WrapText size={14} />
-        </button>
-
+    <!-- Right: Technicals + Wrap -->
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
         <!-- Line Ending -->
         <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
             {lineEnding}
@@ -87,6 +69,11 @@
         <span class="font-bold w-8 text-center" style="color: {m.insertMode === 'OVR' ? 'var(--danger)' : 'var(--accent-secondary)'}">
             {m.insertMode}
         </span>
+
+        <!-- Word Wrap Toggle -->
+        <button class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};">
+            <WrapText size={14} />
+        </button>
     </div>
 </footer>
 

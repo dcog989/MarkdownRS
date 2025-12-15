@@ -14,11 +14,15 @@
             let newX = tooltipStore.x;
             let newY = tooltipStore.y + 20;
 
+            // Shift left if overflowing right edge
             if (newX + rect.width > winW) {
                 newX = winW - rect.width - 10;
             }
+
+            // Safety check for left edge
             if (newX < 10) newX = 10;
 
+            // Shift up if overflowing bottom edge
             if (newY + rect.height > winH) {
                 newY = tooltipStore.y - rect.height - 5;
             }
@@ -32,7 +36,7 @@
 {#if tooltipStore.visible && tooltipStore.content}
     <div bind:this={tooltipEl} class="fixed z-[9999] pointer-events-none" style="left: {adjustedX}px; top: {adjustedY}px;">
         <div
-            class="p-3 rounded shadow-2xl border text-xs whitespace-pre-line max-w-lg break-all leading-relaxed"
+            class="p-3 rounded shadow-2xl border text-xs whitespace-pre-line max-w-lg w-max break-words leading-relaxed"
             style="
                 background-color: var(--bg-header);
                 border-color: var(--border-light);
