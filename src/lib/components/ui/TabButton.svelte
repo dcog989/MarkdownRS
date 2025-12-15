@@ -35,11 +35,9 @@
     let mouseY = $state(0);
 
     function handleMouseEnter(e: MouseEvent) {
-        if (!tab.path) return; // Only show tooltip for saved files
-        
         mouseX = e.clientX;
         mouseY = e.clientY;
-        
+
         if (tooltipTimer) clearTimeout(tooltipTimer);
         tooltipTimer = window.setTimeout(() => {
             showTooltip = true;
@@ -56,7 +54,7 @@
 
     onMount(() => {
         // DIAGNOSTIC: Verify component is mounted and draggable state
-        console.log(`[TabButton:${tab.id}] Mounted. Pinned: ${tab.isPinned}, Draggable: ${!tab.isPinned}`);
+        // console.log(`[TabButton:${tab.id}] Mounted. Pinned: ${tab.isPinned}, Draggable: ${!tab.isPinned}`);
     });
 
     let isFileMissing = $derived(tab.fileCheckFailed === true);
@@ -64,24 +62,19 @@
     let iconColor = $derived.by(() => {
         const _ = currentTime;
         if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
-        return isActive ? "#ffffff" : "var(--fg-muted)"; // Changed from green to muted
+        return isActive ? "#ffffff" : "var(--fg-muted)";
     });
 
     let opacity = $derived(draggedTabId === tab.id ? "0.4" : "1");
     let borderLeft = $derived(draggedOverTabId === tab.id ? "2px solid var(--accent-primary)" : "");
-    let bg = $derived(isActive ? "var(--bg-main)" : "var(--bg-panel)");
-    let hoverBg = $derived(isActive ? "var(--bg-main)" : "var(--bg-hover)");
-    let color = $derived(isActive ? "var(--fg-default)" : "var(--fg-muted)");
     let borderTop = $derived(isActive ? "2px solid var(--accent-secondary)" : "transparent");
+    let color = $derived(isActive ? "var(--fg-default)" : "var(--fg-muted)");
 
     function onInternalDragStart(e: DragEvent) {
-        console.error(`[TabButton:${tab.id}] NATIVE DRAG START FIRED`);
         if (ondragstart) ondragstart(e, tab.id);
     }
 
     function onInternalMouseDown(e: MouseEvent) {
-        // DIAGNOSTIC: Ensure mouse down is received
-        // console.log(`[TabButton:${tab.id}] MouseDown`);
         // Hide tooltip on click
         handleMouseLeave();
     }
@@ -98,7 +91,7 @@
     draggable={!tab.isPinned}
     class="tab-button group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
     style="
-        background-color: {bg};
+        --tab-bg: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
         color: {color};
         border-color: var(--border-main);
         border-top: {borderTop};
@@ -107,7 +100,6 @@
         max-width: 200px;
         opacity: {opacity};
         border-left: {borderLeft};
-        --hover-bg: {hoverBg};
     "
     role="button"
     tabindex="0"
@@ -130,7 +122,6 @@
     ondrop={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.error(`[TabButton:${tab.id}] NATIVE DROP FIRED`);
         ondrop?.(e, tab.id);
     }}
     {ondragend}
@@ -159,7 +150,7 @@
 
     <!-- Close Button (Overlay on Right) -->
     {#if !tab.isPinned}
-        <div class="close-btn-wrapper absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" style="background: linear-gradient(to right, transparent 0%, {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'} 30%);">
+        <div class="close-btn-wrapper absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <span
                 role="button"
                 tabindex="0"
@@ -183,24 +174,26 @@
         -webkit-app-region: no-drag;
         -webkit-user-drag: element;
         user-select: none;
+        background-color: var(--tab-bg);
+    }
+
+    .tab-button:not([data-active="true"]):hover {
+        --tab-bg: var(--bg-hover) !important;
+    }
+
+    .close-btn-wrapper {
+        background: linear-gradient(to right, transparent 0%, var(--tab-bg) 30%);
     }
 
     .tab-button[draggable="true"] {
-        cursor: default; /* Reset cursor to default to avoid "grab" on hover unless actively grabbing */
+        cursor: default;
     }
 
-    /* Disable pointer events on all children to ensure the drop target is correct */
     .tab-button > * {
         pointer-events: none;
     }
 
-    /* Re-enable pointer events for the close button wrapper so it can be clicked */
     .tab-button > .close-btn-wrapper {
         pointer-events: auto;
-    }
-
-    /* Hover effect for inactive tabs */
-    .tab-button:not([data-active="true"]):hover {
-        background-color: var(--hover-bg) !important;
     }
 </style>

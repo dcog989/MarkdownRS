@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
 
-    let { 
+    let {
         tab,
         isVisible = false,
         x = 0,
-        y = 0
+        y = 0,
     } = $props<{
         tab: EditorTab;
         isVisible: boolean;
@@ -15,46 +14,85 @@
         y: number;
     }>();
 
-    let tooltipContent = $derived.by(() => {
-        if (!tab.path) return null;
+    let tooltipEl = $state<HTMLDivElement>();
+    let adjustedX = $state(0);
+    let adjustedY = $state(0);
 
+    // Calculate position with constraints
+    $effect(() => {
+        if (isVisible && tooltipEl) {
+            const rect = tooltipEl.getBoundingClientRect();
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+
+            let newX = x;
+            let newY = y + 20;
+
+            // Constrain X (Keep within screen width)
+            if (newX + rect.width > winW) {
+                newX = winW - rect.width - 10;
+            }
+            if (newX < 10) {
+                newX = 10;
+            }
+
+            // Constrain Y (Keep within screen height)
+            if (newY + rect.height > winH) {
+                newY = y - rect.height - 5;
+            }
+
+            adjustedX = newX;
+            adjustedY = newY;
+        }
+    });
+
+    let tooltipContent = $derived.by(() => {
         const parts: string[] = [];
-        
-        // Full path
-        parts.push(`Path: ${tab.path}`);
-        
-        // Created date
-        if (tab.created) {
-            parts.push(`Created: ${tab.created}`);
+
+        // Line 1: Full path or Unsaved indicator
+        if (tab.path) {
+            parts.push(tab.path);
+        } else {
+            parts.push("Unsaved content");
         }
-        
-        // Modified date
-        if (tab.modified) {
-            parts.push(`Modified: ${tab.modified}`);
+
+        // Line 2: Timestamp and Size
+        // Input format from store: "20251215 / 133000"
+        const timestamp = tab.modified || tab.created || "";
+        let formattedTime = "";
+
+        if (timestamp.includes(" / ")) {
+            const [datePart, timePart] = timestamp.split(" / ");
+            // Format HHMMSS -> HH:MM:SS
+            const formattedTimePart = timePart.replace(/(\d{2})(\d{2})(\d{2})/, "$1:$2:$3");
+            // Format YYYYMMDD -> YYYY-MM-DD (Optional, but strictly sticking to user request: "yyyymmdd, HH:mm:ss")
+            // User requested: "yyyymmdd, HH:mm:ss"
+            formattedTime = `${datePart}, ${formattedTimePart}`;
+        } else {
+            formattedTime = timestamp;
         }
-        
+
         // File size
         const text = tab.content || "";
         const sizeBytes = new TextEncoder().encode(text).length;
-        parts.push(`Size: ${formatFileSize(sizeBytes)}`);
-        
-        // Line ending
-        parts.push(`Line Ending: ${tab.lineEnding}`);
-        
-        // Encoding
-        parts.push(`Encoding: ${tab.encoding}`);
-        
-        return parts.join('\n');
+        const sizeStr = formatFileSize(sizeBytes);
+
+        if (formattedTime) {
+            parts.push(`${formattedTime}, ${sizeStr}`);
+        } else {
+            parts.push(sizeStr);
+        }
+
+        return parts.join("\n");
     });
 </script>
 
-{#if isVisible && tooltipContent}
-    <div
-        class="fixed z-[9999] pointer-events-none"
-        style="left: {x}px; top: {y + 20}px;"
-    >
+{#if isVisible}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div bind:this={tooltipEl} class="fixed z-[9999] pointer-events-none" style="left: {adjustedX}px; top: {adjustedY}px;">
         <div
-            class="px-3 py-2 rounded shadow-2xl border text-xs whitespace-pre-line max-w-md"
+            class="p-3 rounded shadow-2xl border text-xs whitespace-pre-line max-w-lg break-all leading-relaxed"
             style="
                 background-color: var(--bg-header);
                 border-color: var(--border-light);
