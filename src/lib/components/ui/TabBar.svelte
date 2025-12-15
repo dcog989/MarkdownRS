@@ -3,24 +3,20 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { AlertCircle, ChevronDown, File, FileText, Pencil, Plus } from "lucide-svelte";
+    import { ChevronDown, Plus } from "lucide-svelte";
     import { onMount, tick } from "svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabButton from "./TabButton.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
+    import TabDropdown from "./TabDropdown.svelte";
 
     let scrollContainer: HTMLDivElement;
     let showDropdown = $state(false);
     let currentTime = $state(Date.now());
-    let tabSearchQuery = $state("");
-    let searchInputRef = $state<HTMLInputElement>();
-    let selectedDropdownIndex = $state(0);
-    let dropdownListRef = $state<HTMLDivElement>();
 
     let draggedTabId: string | null = $state(null);
     let draggedOverTabId: string | null = $state(null);
-
     let contextMenuTabId: string | null = $state(null);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
@@ -30,9 +26,7 @@
     let mruCleanupTimeout: number | null = null;
     let tabKeyHeld = $state(false);
 
-    // Track mouse position to prevent scroll-induced hover events
-    let lastClientX = 0;
-    let lastClientY = 0;
+
 
     onMount(() => {
         const appWindow = getCurrentWindow();
@@ -216,65 +210,11 @@
 
     function toggleDropdown() {
         showDropdown = !showDropdown;
-        if (showDropdown) {
-            selectedDropdownIndex = 0;
-            // Reset tracking so we don't immediately select what's under mouse
-            lastClientX = 0;
-            lastClientY = 0;
-            setTimeout(() => searchInputRef?.focus(), 50);
-        } else {
-            tabSearchQuery = "";
-        }
     }
 
     function handleDropdownSelect(id: string) {
         handleTabClick(id);
         showDropdown = false;
-    }
-
-    function handleDropdownHover(index: number, e: MouseEvent) {
-        // Prevent scroll from triggering selection changes
-        // Only update if the mouse actually moved
-        if (e.clientX === lastClientX && e.clientY === lastClientY) return;
-
-        lastClientX = e.clientX;
-        lastClientY = e.clientY;
-        selectedDropdownIndex = index;
-    }
-
-    function handleDropdownKeydown(e: KeyboardEvent) {
-        if (filteredTabs.length === 0) return;
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            selectedDropdownIndex = (selectedDropdownIndex + 1) % filteredTabs.length;
-            scrollToSelectedDropdownItem();
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            selectedDropdownIndex = (selectedDropdownIndex - 1 + filteredTabs.length) % filteredTabs.length;
-            scrollToSelectedDropdownItem();
-        } else if (e.key === "Enter") {
-            e.preventDefault();
-            if (filteredTabs[selectedDropdownIndex]) handleDropdownSelect(filteredTabs[selectedDropdownIndex].id);
-        } else if (e.key === "Escape") {
-            e.preventDefault();
-            toggleDropdown();
-        }
-    }
-
-    async function scrollToSelectedDropdownItem() {
-        await tick();
-        if (!dropdownListRef) return;
-        const buttons = dropdownListRef.querySelectorAll('button[role="menuitem"]');
-        const selectedButton = buttons[selectedDropdownIndex] as HTMLElement;
-        if (selectedButton) {
-            const container = dropdownListRef;
-            const itemTop = selectedButton.offsetTop;
-            const itemBottom = itemTop + selectedButton.offsetHeight;
-            const containerTop = container.scrollTop;
-            const containerBottom = containerTop + container.clientHeight;
-            if (itemTop < containerTop) container.scrollTop = itemTop;
-            else if (itemBottom > containerBottom) container.scrollTop = itemBottom - container.clientHeight;
-        }
     }
 
     function handleMruSelect(tabId: string) {
@@ -283,14 +223,6 @@
     }
 
     let tabCount = $derived(editorStore.tabs.length);
-    let filteredTabs = $derived(
-        tabSearchQuery.trim() === ""
-            ? editorStore.tabs
-            : editorStore.tabs.filter((tab) => {
-                  const query = tabSearchQuery.toLowerCase();
-                  return (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || "").toLowerCase().includes(query);
-              })
-    );
 
     function getTabNumber(tabId: string): number {
         return editorStore.tabs.findIndex((t) => t.id === tabId) + 1;
@@ -303,50 +235,11 @@
             <span>{tabCount}</span>
             <ChevronDown size={12} />
         </button>
-        {#if showDropdown}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="fixed inset-0 z-40" onclick={toggleDropdown}></div>
-            <div class="absolute left-0 top-full mt-1 w-80 max-h-[calc(100vh-100px)] rounded-lg shadow-2xl border overflow-hidden flex flex-col z-50" style="background-color: var(--bg-panel); border-color: var(--border-light);" role="menu">
-                <div class="p-2 border-b" style="border-color: var(--border-light);">
-                    <input bind:this={searchInputRef} bind:value={tabSearchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--fg-default);" onkeydown={handleDropdownKeydown} />
-                </div>
-
-                <!-- Wrapper for Custom Scrollbar -->
-                <div class="relative min-h-0 flex-1">
-                    <div bind:this={dropdownListRef} class="overflow-y-auto py-1 no-scrollbar relative h-full">
-                        {#each filteredTabs as tab, index (tab.id)}
-                            {@const isSelected = index === selectedDropdownIndex}
-                            {@const isActive = appState.activeTabId === tab.id}
-                            <button
-                                type="button"
-                                class="w-full text-left px-3 py-2 text-sm flex items-center gap-2"
-                                style="
-                                    background-color: {isSelected ? 'var(--accent-primary)' : 'transparent'};
-                                    color: {isSelected ? 'var(--fg-inverse)' : isActive ? 'var(--accent-secondary)' : 'var(--fg-default)'};
-                                "
-                                onclick={() => handleDropdownSelect(tab.id)}
-                                onmousemove={(e) => handleDropdownHover(index, e)}
-                                role="menuitem"
-                            >
-                                {#if tab.fileCheckFailed}
-                                    <AlertCircle size={14} class="shrink-0" style="color: var(--danger-text);" />
-                                {:else if tab.path && tab.isDirty}
-                                    <Pencil size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : '#5deb47'};" />
-                                {:else if tab.path}
-                                    <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : 'var(--fg-muted)'};" />
-                                {:else}
-                                    <File size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : 'var(--fg-muted)'};" />
-                                {/if}
-                                <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
-                            </button>
-                        {/each}
-                    </div>
-                    <!-- Pass content={dropdownListRef} to trigger update on resize -->
-                    <CustomScrollbar viewport={dropdownListRef} content={dropdownListRef} />
-                </div>
-            </div>
-        {/if}
+        <TabDropdown 
+            isOpen={showDropdown}
+            onSelect={handleDropdownSelect}
+            onClose={toggleDropdown}
+        />
     </div>
 
     <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container">

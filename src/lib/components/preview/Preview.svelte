@@ -4,18 +4,24 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { AppError } from "$lib/utils/errorHandling";
     import { renderMarkdown } from "$lib/utils/markdown";
+    import { 
+        createScrollSyncState, 
+        setScrollPercentage, 
+        getScrollPercentage,
+        cleanupScrollSync 
+    } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
+    import { onDestroy } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
     let renderError = $state<string | null>(null);
     let isRendering = $state(false);
-    let scrollSyncTimeout: number | null = null;
     let renderErrorCount = $state(0);
 
-    // Flag to differentiate manual user scrolling from programmatic sync scrolling
-    let isSyncingScroll = false;
-    let syncLockTimeout: number | null = null;
+    // Scroll sync state
+    const scrollSyncState = createScrollSyncState();
+    let scrollSyncFrame: number | null = null;
 
     // Configuration constants
     const MAX_RENDER_ERRORS = 3;
@@ -28,6 +34,7 @@
     let htmlContent = $state("");
     let renderDebounceTimer: number | null = null;
 
+    // Debounced markdown rendering
     $effect(() => {
         if (renderDebounceTimer !== null) {
             clearTimeout(renderDebounceTimer);
@@ -53,22 +60,20 @@
                 AppError.log("Markdown:Render", e, { tabId, contentLength: content.length });
                 renderError = e instanceof Error ? e.message : "Unknown rendering error";
 
-                if (renderErrorCount >= MAX_RENDER_ERRORS) {
-                    const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
-                        <strong>Rendering failed multiple times (${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
-                        <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
-                        <p style='margin-top: 0.5rem; font-size: 0.9em;'>Please check your markdown syntax. Further render attempts have been paused to prevent performance issues.</p>
-                    </div>`;
-                    isRendering = false;
-                    return;
-                }
-
                 const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
-                    <strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
-                    <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
-                </div>`;
+                
+                if (renderErrorCount >= MAX_RENDER_ERRORS) {
+                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
+                        <strong>Rendering failed ${renderErrorCount} times:</strong><br/>
+                        <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
+                        <p style='margin-top: 0.5rem; font-size: 0.9em;'>Check markdown syntax. Render attempts paused to prevent performance issues.</p>
+                    </div>`;
+                } else {
+                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
+                        <strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
+                        <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
+                    </div>`;
+                }
             } finally {
                 isRendering = false;
             }
@@ -85,69 +90,55 @@
     $effect(() => {
         if (!container) return;
 
-        const currentScrollPercentage = scrollPercentage;
+        const targetPercentage = scrollPercentage;
 
-        if (scrollSyncTimeout !== null) {
-            cancelAnimationFrame(scrollSyncTimeout);
+        if (scrollSyncFrame !== null) {
+            cancelAnimationFrame(scrollSyncFrame);
         }
 
-        scrollSyncTimeout = requestAnimationFrame(() => {
+        scrollSyncFrame = requestAnimationFrame(() => {
             if (!container) return;
-
-            const maxScroll = container.scrollHeight - container.clientHeight;
-            if (maxScroll <= 0) return;
-
-            const currentScroll = container.scrollTop;
-            const targetScroll = Math.round(maxScroll * currentScrollPercentage);
-
-            // Sync if difference is significant
-            if (Math.abs(currentScroll - targetScroll) > 10) {
-                isSyncingScroll = true;
-                container.scrollTop = targetScroll;
-
-                // Release lock after scroll event has fired
-                if (syncLockTimeout) clearTimeout(syncLockTimeout);
-                syncLockTimeout = window.setTimeout(() => {
-                    isSyncingScroll = false;
-                }, 50);
-            }
-            scrollSyncTimeout = null;
+            setScrollPercentage(container, targetPercentage, scrollSyncState);
+            scrollSyncFrame = null;
         }) as number;
 
         return () => {
-            if (scrollSyncTimeout !== null) {
-                cancelAnimationFrame(scrollSyncTimeout);
-                scrollSyncTimeout = null;
-            }
-            if (syncLockTimeout !== null) {
-                clearTimeout(syncLockTimeout);
-                syncLockTimeout = null;
+            if (scrollSyncFrame !== null) {
+                cancelAnimationFrame(scrollSyncFrame);
+                scrollSyncFrame = null;
             }
         };
     });
 
     // Outgoing Scroll Sync: Preview -> Editor
     function handleScroll() {
-        if (!container || isSyncingScroll) return;
+        if (!container || scrollSyncState.isRemoteScrolling) return;
 
-        const maxScroll = container.scrollHeight - container.clientHeight;
-        if (maxScroll <= 0) return;
-
-        let percentage = container.scrollTop / maxScroll;
-
-        // Clamp
-        if (container.scrollTop <= 2) percentage = 0;
-        else if (Math.abs(container.scrollTop - maxScroll) <= 2) percentage = 1;
-        percentage = Math.max(0, Math.min(1, percentage));
-
+        const percentage = getScrollPercentage(container);
         editorStore.updateScroll(tabId, percentage);
     }
+
+    onDestroy(() => {
+        cleanupScrollSync(scrollSyncState);
+        if (scrollSyncFrame !== null) {
+            cancelAnimationFrame(scrollSyncFrame);
+        }
+        if (renderDebounceTimer !== null) {
+            clearTimeout(renderDebounceTimer);
+        }
+    });
 </script>
 
-<!-- Parent must be relative -->
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
     <!-- Orientation Toggle Button -->
-    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" onclick={() => appState.toggleOrientation()} title="Toggle split orientation (vertical/horizontal)" aria-label="Toggle split orientation">
+    <button 
+        type="button" 
+        class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" 
+        style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" 
+        onclick={() => appState.toggleOrientation()} 
+        title="Toggle split orientation (vertical/horizontal)" 
+        aria-label="Toggle split orientation"
+    >
         {#if appState.splitOrientation === "vertical"}
             <FlipVertical size={16} style="color: var(--fg-default);" />
         {:else}
@@ -156,7 +147,12 @@
     </button>
 
     <!-- Content -->
-    <div bind:this={container} onscroll={handleScroll} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
+    <div 
+        bind:this={container} 
+        onscroll={handleScroll} 
+        class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" 
+        style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
+    >
         {#if isRendering && !htmlContent}
             <div class="absolute inset-0 flex items-center justify-center text-[var(--fg-muted)] opacity-50">Loading...</div>
         {:else if !htmlContent}

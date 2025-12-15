@@ -37,6 +37,8 @@ export async function initSettings() {
             formatterCodeFence: '```' | '~~~';
             formatterTableAlignment: boolean;
             startupBehavior: 'first' | 'last-focused' | 'new';
+            lineEndingPreference: 'system' | 'LF' | 'CRLF';
+            tooltipDelay: number;
         }>('app-settings');
 
         if (saved) {
@@ -65,6 +67,8 @@ export async function initSettings() {
             if (saved.formatterCodeFence) appState.formatterCodeFence = saved.formatterCodeFence;
             if (saved.formatterTableAlignment !== undefined) appState.formatterTableAlignment = saved.formatterTableAlignment;
             if (saved.startupBehavior) appState.startupBehavior = saved.startupBehavior;
+            if (saved.lineEndingPreference) appState.lineEndingPreference = saved.lineEndingPreference;
+            if (saved.tooltipDelay !== undefined) appState.tooltipDelay = saved.tooltipDelay;
         }
     } catch (err) {
         log(`Failed to load settings: ${err}`, 'error');
@@ -100,7 +104,9 @@ async function saveSettingsImmediate() {
             formatterBulletChar: appState.formatterBulletChar,
             formatterCodeFence: appState.formatterCodeFence,
             formatterTableAlignment: appState.formatterTableAlignment,
-            startupBehavior: appState.startupBehavior
+            startupBehavior: appState.startupBehavior,
+            lineEndingPreference: appState.lineEndingPreference,
+            tooltipDelay: appState.tooltipDelay
         };
 
         await store.set('app-settings', newSettings);

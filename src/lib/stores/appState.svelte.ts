@@ -34,6 +34,12 @@ export class AppState {
     formatterCodeFence = $state<'```' | '~~~'>('```');
     formatterTableAlignment = $state(true);
 
+    // Line Ending Preference
+    lineEndingPreference = $state<'system' | 'LF' | 'CRLF'>('system');
+
+    // Tooltip Settings
+    tooltipDelay = $state(1000); // milliseconds
+
     constructor() {
         // Initialization logic
     }

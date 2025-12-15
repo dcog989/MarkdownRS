@@ -12,15 +12,15 @@
     --bg-panel: #252526; /* Tab bar, Sidebars */
     --bg-header: #2d2d2d; /* Modal Headers */
     --bg-titlebar: #181818; /* System Drag Area */
-    --bg-hover: #2a2d2e; /* List items hover */
-    --bg-active: #37373d; /* Active items */
+    --bg-hover: #343434; /* List items hover */
+    --bg-active: #434343; /* Active items */
     --bg-input: #3c3c3c; /* Inputs */
     --bg-backdrop: rgba(0, 0, 0, 0.6);
 
     /* Borders */
     --border-main: #333333; /* Standard borders */
     --border-light: #454545; /* Lighter borders (modals) */
-    --border-focus: #007fd4; /* Focus rings */
+    --border-focus: #6c6c6c; /* Focus rings */
 
     /* Text */
     --fg-default: #d4d4d4; /* Primary text */
@@ -29,15 +29,15 @@
 
     /* Accents */
     --accent-primary: #7c5a73;
-    --accent-secondary: #7c5a73;
+    --accent-secondary: #ae8da6;
     --accent-file: #eac55f;
     --accent-link: #3794ff;
 
     /* Functional */
     --status-bar-bg: #7c5a73;
     --status-bar-fg: #ffffff;
-    --danger: #fc707b;
-    --danger-hover: #ef3746;
+    --danger: #ff8892;
+    --danger-hover: #eb626e;
     --danger-text: #ff6b6b; /* Lighter red for text on dark backgrounds */
     --success: #0e639c;
     --success-hover: #1177bb;

@@ -71,14 +71,13 @@ export async function openFile(): Promise<void> {
             const result = await invoke<FileContent>('read_text_file', { path: sanitizedPath });
             const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
-            // Fixed: Improved line ending detection
-            // Count CRLF vs LF occurrences separately
+            // Improved line ending detection
             const crlfCount = (result.content.match(/\r\n/g) || []).length;
-            const lfCount = (result.content.match(/\n/g) || []).length;
-            const lfOnlyCount = lfCount - crlfCount; // Subtract CRLF from total LF count
-
-            // If CRLF is majority, use CRLF
-            const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > lfOnlyCount ? 'CRLF' : 'LF';
+            const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
+            
+            // Use CRLF if majority or if file has any CRLF and no LF-only
+            const detectedLineEnding: 'LF' | 'CRLF' = 
+                crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
             const id = editorStore.addTab(fileName, result.content);
             const tab = editorStore.tabs.find(t => t.id === id);
@@ -143,14 +142,27 @@ export async function saveCurrentFile(): Promise<boolean> {
                 }
             }
 
-            // Handle Line Endings
-            if (tab.lineEnding === 'CRLF') {
-                // Ensure LF -> CRLF (CodeMirror normalizes to LF internally)
+            // Handle Line Endings based on preference
+            let targetLineEnding: 'LF' | 'CRLF';
+            
+            if (appState.lineEndingPreference === 'system') {
+                // Use detected line ending or default to LF
+                targetLineEnding = tab.lineEnding || 'LF';
+            } else {
+                // Use user preference
+                targetLineEnding = appState.lineEndingPreference;
+            }
+            
+            if (targetLineEnding === 'CRLF') {
+                // Normalize to LF first, then convert to CRLF
                 contentToSave = contentToSave.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
             } else {
-                // Ensure LF
+                // Ensure LF only
                 contentToSave = contentToSave.replace(/\r\n/g, '\n');
             }
+            
+            // Update tab's line ending to match what we're saving
+            tab.lineEnding = targetLineEnding;
 
             await invoke('write_text_file', { path: sanitizedPath, content: contentToSave });
             tab.path = sanitizedPath;

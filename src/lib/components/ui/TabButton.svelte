@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { AlertCircle, File, FileText, Pencil, Pin, X } from "lucide-svelte";
     import { onMount } from "svelte";
+    import TabTooltip from "./TabTooltip.svelte";
 
     interface Props {
         tab: EditorTab;
@@ -26,6 +28,32 @@
 
     let { tab, isActive, index, draggedTabId, draggedOverTabId, currentTime, onclick, onclose, oncontextmenu, ondragstart, ondragover, ondragenter, ondragleave, ondrop, ondragend }: Props = $props();
 
+    // Tooltip state
+    let showTooltip = $state(false);
+    let tooltipTimer: number | null = null;
+    let mouseX = $state(0);
+    let mouseY = $state(0);
+
+    function handleMouseEnter(e: MouseEvent) {
+        if (!tab.path) return; // Only show tooltip for saved files
+        
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        if (tooltipTimer) clearTimeout(tooltipTimer);
+        tooltipTimer = window.setTimeout(() => {
+            showTooltip = true;
+        }, appState.tooltipDelay);
+    }
+
+    function handleMouseLeave() {
+        if (tooltipTimer) {
+            clearTimeout(tooltipTimer);
+            tooltipTimer = null;
+        }
+        showTooltip = false;
+    }
+
     onMount(() => {
         // DIAGNOSTIC: Verify component is mounted and draggable state
         console.log(`[TabButton:${tab.id}] Mounted. Pinned: ${tab.isPinned}, Draggable: ${!tab.isPinned}`);
@@ -36,12 +64,13 @@
     let iconColor = $derived.by(() => {
         const _ = currentTime;
         if (!tab.modified) return isActive ? "#ffffff" : "var(--fg-muted)";
-        return isActive ? "#ffffff" : "#5deb47";
+        return isActive ? "#ffffff" : "var(--fg-muted)"; // Changed from green to muted
     });
 
     let opacity = $derived(draggedTabId === tab.id ? "0.4" : "1");
     let borderLeft = $derived(draggedOverTabId === tab.id ? "2px solid var(--accent-primary)" : "");
     let bg = $derived(isActive ? "var(--bg-main)" : "var(--bg-panel)");
+    let hoverBg = $derived(isActive ? "var(--bg-main)" : "var(--bg-hover)");
     let color = $derived(isActive ? "var(--fg-default)" : "var(--fg-muted)");
     let borderTop = $derived(isActive ? "2px solid var(--accent-secondary)" : "transparent");
 
@@ -53,8 +82,12 @@
     function onInternalMouseDown(e: MouseEvent) {
         // DIAGNOSTIC: Ensure mouse down is received
         // console.log(`[TabButton:${tab.id}] MouseDown`);
+        // Hide tooltip on click
+        handleMouseLeave();
     }
 </script>
+
+<TabTooltip {tab} isVisible={showTooltip} x={mouseX} y={mouseY} />
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -63,19 +96,23 @@
     data-tab-index={index}
     data-tab-id={tab.id}
     draggable={!tab.isPinned}
-    class="tab-button group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden"
+    class="tab-button group relative h-8 pl-2 pr-0 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
     style="
         background-color: {bg};
         color: {color};
         border-color: var(--border-main);
         border-top: {borderTop};
+        border-radius: 4px 4px 0 0;
         min-width: 100px;
         max-width: 200px;
         opacity: {opacity};
         border-left: {borderLeft};
+        --hover-bg: {hoverBg};
     "
     role="button"
     tabindex="0"
+    onmouseenter={handleMouseEnter}
+    onmouseleave={handleMouseLeave}
     onmousedown={onInternalMouseDown}
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => oncontextmenu?.(e, tab.id)}
@@ -160,5 +197,10 @@
     /* Re-enable pointer events for the close button wrapper so it can be clicked */
     .tab-button > .close-btn-wrapper {
         pointer-events: auto;
+    }
+
+    /* Hover effect for inactive tabs */
+    .tab-button:not([data-active="true"]):hover {
+        background-color: var(--hover-bg) !important;
     }
 </style>
