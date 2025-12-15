@@ -67,6 +67,8 @@
                 borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
             },
             ".cm-scroller": { fontFamily: fontFamily, overflow: "auto" },
+            // Added opacity to selection to ensure underlines show through
+            ".cm-selectionBackground": { backgroundColor: "rgba(100, 150, 255, 0.3) !important" },
             ".cm-search": {
                 backgroundColor: "var(--bg-panel)",
                 borderBottom: "1px solid var(--border-main)",
@@ -84,6 +86,8 @@
             ".cm-lintRange-warning": {
                 backgroundImage: "none",
                 borderBottom: "2px dotted var(--danger)",
+                position: "relative",
+                zIndex: "1",
             },
         });
     }
