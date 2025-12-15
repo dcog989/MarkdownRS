@@ -1,6 +1,6 @@
 {
     "name": "markdown-rs",
-    "version": "0.1.83",
+    "version": "0.1.84",
     "private": true,
     "type": "module",
     "scripts": {
@@ -12,7 +12,8 @@
         "tauri": "tauri",
         "clean": "npm run clean:node && npm run clean:rust",
         "clean:node": "node -e \"const fs = require('fs'); ['build', '.svelte-kit', 'node_modules'].forEach(dir => fs.rmSync(dir, {recursive: true, force: true, maxRetries: 3, retryDelay: 500}));\"",
-        "clean:rust": "node -e \"require('fs').rmSync('src-tauri/target', {recursive: true, force: true, maxRetries: 3, retryDelay: 500});\""
+        "clean:rust": "node -e \"require('fs').rmSync('src-tauri/target', {recursive: true, force: true, maxRetries: 3, retryDelay: 500});\"",
+        "bump": "node scripts/bump.js"
     },
     "dependencies": {
         "@codemirror/commands": "^6.10",
@@ -54,6 +55,6 @@
         "tailwindcss": "^4.1",
         "tslib": "^2.8",
         "typescript": "^5.9",
-        "vite": "^7.2"
+        "vite": "^7.3"
     }
 }
