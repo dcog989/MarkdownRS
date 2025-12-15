@@ -48,14 +48,11 @@
     let tooltipContent = $derived.by(() => {
         const parts: string[] = [];
 
-        // Line 1: Path or Unsaved
-        if (tab.path) {
-            parts.push(tab.path);
-        } else {
-            parts.push("Unsaved content");
-        }
+        // Calculate common metadata
+        const text = tab.content || "";
+        const sizeBytes = new TextEncoder().encode(text).length;
+        const sizeStr = formatFileSize(sizeBytes);
 
-        // Line 2: Timestamp and Size
         const timestamp = tab.modified || tab.created || "";
         let formattedTime = "";
 
@@ -68,14 +65,21 @@
             formattedTime = timestamp;
         }
 
-        const text = tab.content || "";
-        const sizeBytes = new TextEncoder().encode(text).length;
-        const sizeStr = formatFileSize(sizeBytes);
+        const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 
-        if (formattedTime) {
-            parts.push(`${formattedTime}, ${sizeStr}`);
+        if (tab.fileCheckFailed) {
+            // Missing File Format
+            parts.push("File missing from original location");
+            if (tab.path) parts.push(tab.path);
+            parts.push(bottomLine);
         } else {
-            parts.push(sizeStr);
+            // Normal File Format
+            if (tab.path) {
+                parts.push(tab.path);
+            } else {
+                parts.push("Unsaved content");
+            }
+            parts.push(bottomLine);
         }
 
         return parts.join("\n");
