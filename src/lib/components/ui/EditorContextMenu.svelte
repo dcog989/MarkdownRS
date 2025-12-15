@@ -27,46 +27,60 @@
 
     // Position state
     let menuEl = $state<HTMLDivElement>();
+    let menuWidth = $state(0);
+    let menuHeight = $state(0);
+
+    // Initialize adjusted coordinates
     let adjustedX = $state(untrack(() => x));
     let adjustedY = $state(untrack(() => y));
     let submenuSide = $state<"left" | "right">("right");
 
     $effect(() => {
-        if (menuEl && (x || y)) {
-            const rect = menuEl.getBoundingClientRect();
-            const winWidth = window.innerWidth;
-            const winHeight = window.innerHeight;
+        // Track dependencies
+        const _deps = [x, y, menuWidth, menuHeight];
 
-            let newX = x;
-            let newY = y;
+        if (!menuEl || menuHeight === 0) return;
 
-            // Prevent overflowing right edge
-            if (newX + rect.width > winWidth) {
-                newX = winWidth - rect.width - 5;
-            }
-            // Prevent overflowing bottom edge
-            if (newY + rect.height > winHeight) {
-                newY = winHeight - rect.height - 5;
-            }
+        const winWidth = window.innerWidth;
+        const winHeight = window.innerHeight;
 
-            adjustedX = newX;
-            adjustedY = newY;
+        let newX = x;
+        let newY = y;
 
-            // Determine if submenu should open to the left
-            // Check if there is space on the right for submenus (approx 200px)
-            if (newX + rect.width + 200 > winWidth) {
-                submenuSide = "left";
-            } else {
-                submenuSide = "right";
-            }
+        // Prevent overflowing right edge
+        if (newX + menuWidth > winWidth) {
+            newX = winWidth - menuWidth - 5;
+        }
+
+        // Prevent overflowing bottom edge
+        if (newY + menuHeight > winHeight) {
+            newY = winHeight - menuHeight - 5;
+        }
+
+        // Ensure it doesn't go off top/left
+        if (newX < 5) newX = 5;
+        if (newY < 5) newY = 5;
+
+        adjustedX = newX;
+        adjustedY = newY;
+
+        // Determine if submenu should open to the left
+        if (newX + menuWidth + 200 > winWidth) {
+            submenuSide = "left";
+        } else {
+            submenuSide = "right";
         }
     });
+
+    function handleBackdropContextMenu(e: MouseEvent) {
+        e.preventDefault();
+        onClose();
+    }
 
     async function handleAddToDictionary() {
         const word = selectedText?.trim() || wordUnderCursor?.trim();
         if (word && word.length > 0) {
             await addToDictionary(word);
-            // Trigger spellcheck refresh
             if (onDictionaryUpdate) {
                 onDictionaryUpdate();
             }
@@ -76,24 +90,19 @@
 
     async function handleAddAllToDictionary() {
         if (!selectedText) return;
-
-        // Extract unique words from selected text
         const words = selectedText
             .split(/\s+/)
-            .map((w: string) => w.replace(/[^a-zA-Z0-9'-]/g, "")) // Remove punctuation except apostrophes and hyphens
+            .map((w: string) => w.replace(/[^a-zA-Z0-9'-]/g, ""))
             .filter((w: string) => w.length > 0)
-            .filter((word: string, index: number, self: string[]) => self.indexOf(word) === index); // Unique words
+            .filter((word: string, index: number, self: string[]) => self.indexOf(word) === index);
 
-        // Add all words to dictionary
         for (const word of words) {
             await addToDictionary(word);
         }
 
-        // Trigger spellcheck refresh
         if (onDictionaryUpdate) {
             onDictionaryUpdate();
         }
-
         onClose();
     }
 
@@ -112,42 +121,10 @@
         onClose();
     }
 
-    // Helper to check if text contains misspelled words
-    function hasMisspelledWords(text: string): boolean {
-        if (!text || text.trim().length === 0) return false;
-
-        // Create temporary element to check spelling
-        const temp = document.createElement("div");
-        temp.setAttribute("contenteditable", "true");
-        temp.setAttribute("spellcheck", "true");
-        temp.style.position = "absolute";
-        temp.style.left = "-9999px";
-        temp.textContent = text;
-        document.body.appendChild(temp);
-
-        // Force spell check by focusing
-        temp.focus();
-
-        // Check for misspellings
-        const range = document.createRange();
-        range.selectNodeContents(temp);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-
-        // Simple heuristic: check if browser would mark it as misspelled
-        // We rely on the word being in the editor with spell check enabled
-        const hasMisspelling = text.length > 0 && /^[a-zA-Z'-]+$/.test(text.trim());
-
-        document.body.removeChild(temp);
-        return hasMisspelling;
-    }
-
     const hasWord = $derived((selectedText?.trim() || wordUnderCursor?.trim())?.length > 0);
     const hasMultipleWords = $derived(selectedText && selectedText.trim().split(/\s+/).length > 1);
     const hasSelection = $derived(selectedText && selectedText.length > 0);
 
-    // Only show dictionary options if there's a valid word/selection with potential misspellings
     const canAddToDictionary = $derived(hasWord && /^[a-zA-Z'-]+$/.test(selectedText?.trim() || wordUnderCursor?.trim() || ""));
     const canAddMultipleToDictionary = $derived(hasMultipleWords && selectedText.split(/\s+/).some((w: string) => /^[a-zA-Z'-]+$/.test(w.replace(/[^a-zA-Z0-9'-]/g, ""))));
 
@@ -159,17 +136,24 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="fixed inset-0 z-50" onclick={onClose}>
+<div class="fixed inset-0 z-50" onclick={onClose} oncontextmenu={handleBackdropContextMenu} role="presentation">
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1"
+        bind:offsetWidth={menuWidth}
+        bind:offsetHeight={menuHeight}
+        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 custom-scrollbar"
         style="
+            opacity: {menuHeight > 0 ? 1 : 0};
             left: {adjustedX}px;
             top: {adjustedY}px;
             background-color: var(--bg-panel);
             border-color: var(--border-light);
+            max-height: calc(100vh - 10px);
+            overflow-y: auto;
         "
         onclick={(e) => e.stopPropagation()}
+        role="menu"
+        tabindex="-1"
     >
         {#if selectedText}
             <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCut}>
@@ -307,3 +291,16 @@
         {/if}
     </div>
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: var(--border-light);
+        border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+</style>
