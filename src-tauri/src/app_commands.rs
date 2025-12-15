@@ -85,7 +85,6 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     }
 
     // 2. Try UTF-8 (Standard)
-    // We attempt to decode as UTF-8. If it fails (had_errors=true), it's likely a legacy encoding.
     let (cow, _, had_errors) = UTF_8.decode(&bytes);
     if !had_errors {
         return Ok(FileContent {
@@ -95,7 +94,6 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     }
 
     // 3. Fallback to Windows-1252 (ANSI / Latin1)
-    // This is the standard fallback for web browsers when encoding is undefined and not UTF-8.
     let (cow, _, _) = WINDOWS_1252.decode(&bytes);
     Ok(FileContent {
         content: cow.into_owned(),
@@ -172,12 +170,12 @@ pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
     let data_dir = app_handle.path().data_dir().map_err(|e| e.to_string())?;
-    let dict_path = data_dir.join("MarkdownRS").join("custom-spelling.dic");
+    // Explicitly use MarkdownRS folder
+    let app_dir = data_dir.join("MarkdownRS");
+    let dict_path = app_dir.join("custom-spelling.dic");
 
-    // Check if directory exists
-    let parent = dict_path.parent().ok_or("Invalid path")?;
-    if !parent.exists() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
     }
 
     // Read existing words to check for duplicates
@@ -191,7 +189,6 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
         std::collections::HashSet::new()
     };
 
-    // Only add if word doesn't already exist (case-insensitive)
     if !existing_words.contains(&word.to_lowercase()) {
         let mut file = OpenOptions::new()
             .create(true)

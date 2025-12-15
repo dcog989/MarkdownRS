@@ -58,10 +58,13 @@ fn main() {
             let window = app.get_webview_window("main").unwrap();
 
             // 1. Resolve Paths
+            // Use data_dir() (AppData/Roaming) and explicitly append "MarkdownRS"
+            // instead of app_data_dir() which uses the bundle identifier.
             let base_dir = app_handle
                 .path()
                 .data_dir()
                 .expect("failed to get data dir");
+
             let app_dir = base_dir.join("MarkdownRS");
             let db_dir = app_dir.join("Database");
             let log_dir = app_dir.join("Logs");
@@ -69,6 +72,7 @@ fn main() {
             let dict_path = app_dir.join("custom-spelling.dic");
 
             // 2. Create Directories
+            fs::create_dir_all(&app_dir).expect("failed to create app dir");
             fs::create_dir_all(&db_dir).expect("failed to create db dir");
             fs::create_dir_all(&log_dir).expect("failed to create log dir");
 

@@ -33,7 +33,7 @@
     }>();
 
     let editorContainer: HTMLDivElement;
-    let view: EditorView;
+    let view = $state<EditorView>();
     let themeCompartment = new Compartment();
     let lineWrappingCompartment = new Compartment();
 
@@ -56,18 +56,30 @@
     }
 
     function getTheme() {
-        const fontSize = appState.editorFontSize;
-        const fontFamily = appState.editorFontFamily;
+        const fontSize = appState.editorFontSize || 14;
+        const fontFamily = appState.editorFontFamily || "monospace";
         const insertMode = editorStore.activeMetrics.insertMode;
 
         return EditorView.theme({
-            "&": { height: "100%", fontSize: `${fontSize}px` },
+            "&": {
+                height: "100%",
+                fontSize: `${fontSize}px`,
+            },
             ".cm-cursor": {
                 borderLeftColor: insertMode === "OVR" ? "transparent" : "white",
                 borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
             },
-            ".cm-scroller": { fontFamily: fontFamily, overflow: "auto" },
-            ".cm-selectionBackground": { backgroundColor: "rgba(100, 150, 255, 0.3) !important" },
+            ".cm-scroller": {
+                fontFamily: fontFamily,
+                overflow: "auto",
+            },
+            // Adjusted selection style to be more robust
+            ".cm-selectionBackground": {
+                backgroundColor: "rgba(100, 150, 255, 0.3) !important",
+            },
+            "&.cm-focused .cm-selectionBackground": {
+                backgroundColor: "rgba(100, 150, 255, 0.3) !important",
+            },
             ".cm-search": {
                 backgroundColor: "var(--bg-panel)",
                 borderBottom: "1px solid var(--border-main)",
@@ -153,8 +165,7 @@
 
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-                // Check if the change was caused by a user event or specific input
-                // Programmatic dispatches (like tab switching) usually lack these annotations
+                // Check if user event to trigger debounce
                 const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
 
                 if (isUserUpdate) {
@@ -164,8 +175,6 @@
                         contentUpdateTimer = null;
                     }, CONTENT_UPDATE_DEBOUNCE_MS);
                 } else {
-                    // Programmatic update (e.g., load file) - cancel any pending user debounce
-                    // to prevent overwriting the new content with old pending state
                     if (contentUpdateTimer !== null) {
                         clearTimeout(contentUpdateTimer);
                         contentUpdateTimer = null;
@@ -238,15 +247,9 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] relative {editorStore.activeMetrics.insertMode === 'OVR' ? 'overwrite-mode' : ''}" bind:this={editorContainer} onclick={() => view?.focus()}></div>
+<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] relative" bind:this={editorContainer} onclick={() => view?.focus()}></div>
 
 <style>
-    :global(.overwrite-mode .cm-cursor) {
-        border-left: none !important;
-        border-bottom: 3px solid #eac55f !important;
-        width: 8px;
-    }
-
     :global(.cm-scroller) {
         scrollbar-width: none;
     }
