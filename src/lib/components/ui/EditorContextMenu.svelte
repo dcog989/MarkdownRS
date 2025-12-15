@@ -39,7 +39,6 @@
         let newX = x;
         let newY = y;
 
-        // Account for status bar (h-6 = 24px) + padding
         const BOTTOM_MARGIN = 32;
 
         // 1. Horizontal constraint
@@ -73,7 +72,6 @@
 
     $effect(() => {
         if (menuEl) {
-            // Setup ResizeObserver to handle content loading/size changes
             if (resizeObserver) resizeObserver.disconnect();
 
             resizeObserver = new ResizeObserver(() => {
@@ -81,16 +79,13 @@
             });
 
             resizeObserver.observe(menuEl);
-
-            // Initial position update
             updatePosition();
         }
     });
 
     // React to prop changes (x/y updates)
     $effect(() => {
-        const _ = { x, y, selectedText }; // Dependency tracking
-        // Force update if menu exists
+        const _ = { x, y, selectedText };
         if (menuEl) updatePosition();
     });
 
@@ -147,12 +142,17 @@
         onClose();
     }
 
-    const hasWord = $derived((selectedText?.trim() || wordUnderCursor?.trim())?.length > 0);
-    const hasMultipleWords = $derived(selectedText && selectedText.trim().split(/\s+/).length > 1);
-    const hasSelection = $derived(selectedText && selectedText.length > 0);
+    // Reactive derivations
+    let targetWord = $derived(selectedText ? selectedText.trim() : wordUnderCursor?.trim());
 
-    const canAddToDictionary = $derived(hasWord && /^[a-zA-Z'-]+$/.test(selectedText?.trim() || wordUnderCursor?.trim() || ""));
-    const canAddMultipleToDictionary = $derived(hasMultipleWords && selectedText.split(/\s+/).some((w: string) => /^[a-zA-Z'-]+$/.test(w.replace(/[^a-zA-Z0-9'-]/g, ""))));
+    // 1. Single Word Add: Valid if strict single word
+    let canAddSingle = $derived(targetWord && targetWord.length > 0 && /^[a-zA-Z'-]+$/.test(targetWord));
+
+    // 2. Multi Word Add: Valid if selection exists, has spaces, and contains valid words
+    let canAddMulti = $derived(selectedText && selectedText.trim().split(/\s+/).length > 1 && selectedText.split(/\s+/).some((w: string) => /^[a-zA-Z'-]+$/.test(w.replace(/[^a-zA-Z0-9'-]/g, ""))));
+
+    let showDictionarySection = $derived(canAddSingle || canAddMulti);
+    let hasSelection = $derived(selectedText && selectedText.length > 0);
 
     function handleTransform(transformType: OperationTypeString) {
         editorStore.performTextTransform(transformType);
@@ -172,7 +172,7 @@
             left: 0;
             background-color: var(--bg-panel);
             border-color: var(--border-light);
-            max-height: calc(100vh - 40px); /* Ensure it fits with margins */
+            max-height: calc(100vh - 40px);
             overflow-y: auto;
         "
         onclick={(e) => e.stopPropagation()}
@@ -297,16 +297,18 @@
             </div>
         {/if}
 
-        {#if canAddToDictionary}
+        {#if showDictionarySection}
             <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-            <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddToDictionary}>
-                <BookPlus size={14} />
-                <span>Add to Dictionary</span>
-                <span class="ml-auto text-xs opacity-60">F8</span>
-            </button>
+            {#if canAddSingle}
+                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddToDictionary}>
+                    <BookPlus size={14} />
+                    <span>Add to Dictionary</span>
+                    <span class="ml-auto text-xs opacity-60">F8</span>
+                </button>
+            {/if}
 
-            {#if canAddMultipleToDictionary}
+            {#if canAddMulti}
                 <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddAllToDictionary}>
                     <BookText size={14} />
                     <span>Add All to Dictionary</span>

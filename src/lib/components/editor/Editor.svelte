@@ -1,16 +1,16 @@
 <script lang="ts">
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
-    import EditorView from "./EditorView.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
-    import { checkFileExists, addToDictionary } from "$lib/utils/fileSystem";
+    import { checkFileExists } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatter";
-    import { initSpellcheck, isWordValid, refreshCustomDictionary } from "$lib/utils/spellcheck";
+    import { initSpellcheck } from "$lib/utils/spellcheck";
+    import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
     import { transformText } from "$lib/utils/textTransforms";
-    import { linter, type Diagnostic } from "@codemirror/lint";
     import { EditorView as CM6EditorView } from "@codemirror/view";
-    import { onMount, onDestroy, untrack } from "svelte";
+    import { onDestroy, onMount, untrack } from "svelte";
+    import EditorView from "./EditorView.svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let editorViewComponent: any;
@@ -26,41 +26,11 @@
     let contextSelectedText = $state("");
     let contextWordUnderCursor = $state("");
 
-    // Spellcheck Linter
-    const spellCheckLinter = linter((view) => {
-        const diagnostics: Diagnostic[] = [];
-        const doc = view.state.doc;
-        const wordRegex = /\b[a-zA-Z']+\b/g;
-        const text = doc.toString();
+    // Initialize extensions
+    const spellCheckLinter = createSpellCheckLinter();
 
-        let match;
-        while ((match = wordRegex.exec(text)) !== null) {
-            const word = match[0];
-            if (word.length > 1 && !isWordValid(word)) {
-                diagnostics.push({
-                    from: match.index,
-                    to: match.index + word.length,
-                    severity: "warning",
-                    message: `Misspelled: ${word}`,
-                    source: "Spellchecker",
-                });
-            }
-        }
-
-        return diagnostics;
-    });
-
-    async function refreshSpellcheck() {
-        const view = editorViewComponent?.getView();
-        if (!view) return;
-        await refreshCustomDictionary();
-        // Force linter to re-run
-        view.dispatch({
-            changes: { from: 0, to: 0, insert: " " },
-        });
-        view.dispatch({
-            changes: { from: 0, to: 1, insert: "" },
-        });
+    function handleDictionaryUpdate() {
+        refreshSpellcheck(editorViewComponent?.getView());
     }
 
     function handleTextOperation(operation: TextOperation) {
@@ -89,31 +59,6 @@
             userEvent: "input.complete",
         });
     }
-
-    // Custom keymaps for F8 (add to dictionary)
-    const customKeymap = [
-        {
-            key: "F8",
-            run: (view: any) => {
-                const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
-                if (selection && selection.trim().length > 0) {
-                    const words = selection.split(/\s+/);
-                    Promise.all(words.map((w: string) => addToDictionary(w))).then(() => {
-                        refreshSpellcheck();
-                    });
-                } else {
-                    const range = view.state.wordAt(view.state.selection.main.head);
-                    if (range) {
-                        const word = view.state.sliceDoc(range.from, range.to);
-                        addToDictionary(word).then(() => {
-                            refreshSpellcheck();
-                        });
-                    }
-                }
-                return true;
-            },
-        },
-    ];
 
     const inputHandler = CM6EditorView.inputHandler.of((view, from, to, text) => {
         if (editorStore.activeMetrics.insertMode === "OVR" && from === to && text.length === 1) {
@@ -180,8 +125,7 @@
                             changes: { from: 0, to: currentDoc.length, insert: currentTab.content },
                         });
                     }
-                    
-                    // Immediately update metrics for the new tab
+
                     const doc = view.state.doc;
                     const selection = view.state.selection.main;
                     const cursorLine = doc.lineAt(selection.head);
@@ -199,7 +143,7 @@
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
                     });
-                    
+
                     setTimeout(() => {
                         if (view.scrollDOM && currentTab.scrollPercentage >= 0) {
                             const dom = view.scrollDOM;
@@ -218,7 +162,6 @@
         }
     });
 
-    // Scroll sync logic
     let currentTabState = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let targetScrollPercentage = $derived(currentTabState?.scrollPercentage ?? 0);
 
@@ -269,18 +212,7 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
-    <EditorView
-        bind:this={editorViewComponent}
-        {tabId}
-        {initialContent}
-        {filename}
-        {customKeymap}
-        {spellCheckLinter}
-        {inputHandler}
-        {eventHandlers}
-        onContentChange={(content) => editorStore.updateContent(tabId, content)}
-        onMetricsChange={(metrics) => editorStore.updateMetrics(metrics)}
-    />
+    <EditorView bind:this={editorViewComponent} {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} {spellCheckLinter} {inputHandler} {eventHandlers} onContentChange={(content) => editorStore.updateContent(tabId, content)} onMetricsChange={(metrics) => editorStore.updateMetrics(metrics)} />
 
     {#if scrollDOM}
         <CustomScrollbar viewport={scrollDOM} />
@@ -288,12 +220,5 @@
 </div>
 
 {#if showContextMenu}
-    <EditorContextMenu
-        x={contextMenuX}
-        y={contextMenuY}
-        selectedText={contextSelectedText}
-        wordUnderCursor={contextWordUnderCursor}
-        onClose={() => (showContextMenu = false)}
-        onDictionaryUpdate={refreshSpellcheck}
-    />
+    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} />
 {/if}
