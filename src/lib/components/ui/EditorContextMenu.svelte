@@ -1,6 +1,7 @@
 <script lang="ts">
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
+    import { isWordValid } from "$lib/utils/spellcheck";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, WrapText } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
@@ -11,6 +12,7 @@
         wordUnderCursor = "",
         onClose,
         onDictionaryUpdate,
+        onPaste,
     } = $props<{
         x: number;
         y: number;
@@ -18,6 +20,7 @@
         wordUnderCursor?: string;
         onClose: () => void;
         onDictionaryUpdate?: () => void;
+        onPaste?: () => void;
     }>();
 
     // Submenu state
@@ -25,9 +28,45 @@
     let showCaseMenu = $state(false);
     let showTransformMenu = $state(false);
 
+    // Timers for hover grace periods
+    let sortTimer: number | null = null;
+    let caseTimer: number | null = null;
+    let transformTimer: number | null = null;
+
     let menuEl = $state<HTMLDivElement>();
     let submenuSide = $state<"left" | "right">("right");
     let resizeObserver: ResizeObserver | null = null;
+
+    function openSubmenu(menu: "sort" | "case" | "transform") {
+        if (menu === "sort" && sortTimer) clearTimeout(sortTimer);
+        if (menu === "case" && caseTimer) clearTimeout(caseTimer);
+        if (menu === "transform" && transformTimer) clearTimeout(transformTimer);
+
+        if (menu === "sort") {
+            showSortMenu = true;
+            showCaseMenu = false;
+            showTransformMenu = false;
+        } else if (menu === "case") {
+            showCaseMenu = true;
+            showSortMenu = false;
+            showTransformMenu = false;
+        } else if (menu === "transform") {
+            showTransformMenu = true;
+            showSortMenu = false;
+            showCaseMenu = false;
+        }
+    }
+
+    function closeSubmenu(menu: "sort" | "case" | "transform") {
+        const delay = 200;
+        if (menu === "sort") {
+            sortTimer = window.setTimeout(() => (showSortMenu = false), delay);
+        } else if (menu === "case") {
+            caseTimer = window.setTimeout(() => (showCaseMenu = false), delay);
+        } else if (menu === "transform") {
+            transformTimer = window.setTimeout(() => (showTransformMenu = false), delay);
+        }
+    }
 
     function updatePosition() {
         if (!menuEl) return;
@@ -46,7 +85,7 @@
             newX = winWidth - rect.width - 5;
         }
 
-        // 2. Vertical constraint
+        // 2. Vertical constraint (Shift up if hitting bottom)
         if (newY + rect.height > winHeight - BOTTOM_MARGIN) {
             newY = winHeight - rect.height - BOTTOM_MARGIN;
         }
@@ -59,7 +98,7 @@
         menuEl.style.left = `${newX}px`;
         menuEl.style.top = `${newY}px`;
 
-        // Determine submenu direction based on available space
+        // Determine submenu direction
         if (newX + rect.width + 200 > winWidth) {
             submenuSide = "left";
         } else {
@@ -83,7 +122,6 @@
         }
     });
 
-    // React to prop changes (x/y updates)
     $effect(() => {
         const _ = { x, y, selectedText };
         if (menuEl) updatePosition();
@@ -91,6 +129,9 @@
 
     onDestroy(() => {
         if (resizeObserver) resizeObserver.disconnect();
+        if (sortTimer) clearTimeout(sortTimer);
+        if (caseTimer) clearTimeout(caseTimer);
+        if (transformTimer) clearTimeout(transformTimer);
     });
 
     function handleBackdropContextMenu(e: MouseEvent) {
@@ -111,13 +152,13 @@
 
     async function handleAddAllToDictionary() {
         if (!selectedText) return;
-        const words = selectedText
-            .split(/\s+/)
-            .map((w: string) => w.replace(/[^a-zA-Z0-9'-]/g, ""))
-            .filter((w: string) => w.length > 0)
-            .filter((word: string, index: number, self: string[]) => self.indexOf(word) === index);
 
-        for (const word of words) {
+        // Extract words using standard linter regex to ensure clean words
+        const words = selectedText.match(/\b[a-zA-Z']+\b/g) || [];
+
+        const uniqueInvalidWords = words.filter((w: string) => !isWordValid(w)).filter((w: string, i: number, arr: string[]) => arr.indexOf(w) === i);
+
+        for (const word of uniqueInvalidWords) {
             await addToDictionary(word);
         }
 
@@ -138,21 +179,32 @@
     }
 
     function handlePaste() {
-        document.execCommand("paste");
+        if (onPaste) {
+            onPaste();
+        }
         onClose();
     }
 
-    // Reactive derivations
-    let targetWord = $derived(selectedText ? selectedText.trim() : wordUnderCursor?.trim());
+    const targetWord = $derived(selectedText ? selectedText.trim() : wordUnderCursor?.trim());
 
-    // 1. Single Word Add: Valid if strict single word
-    let canAddSingle = $derived(targetWord && targetWord.length > 0 && /^[a-zA-Z'-]+$/.test(targetWord));
+    // Clean target word for single-word validity check
+    // Remove leading/trailing non-alpha chars (punctuation)
+    const cleanTarget = $derived(targetWord ? targetWord.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, "") : "");
 
-    // 2. Multi Word Add: Valid if selection exists, has spaces, and contains valid words
-    let canAddMulti = $derived(selectedText && selectedText.trim().split(/\s+/).length > 1 && selectedText.split(/\s+/).some((w: string) => /^[a-zA-Z'-]+$/.test(w.replace(/[^a-zA-Z0-9'-]/g, ""))));
+    // 1. Single Word Add: Valid format AND not in dictionary
+    const canAddSingle = $derived(cleanTarget && cleanTarget.length > 0 && /^[a-zA-Z'-]+$/.test(cleanTarget) && !isWordValid(cleanTarget));
 
-    let showDictionarySection = $derived(canAddSingle || canAddMulti);
-    let hasSelection = $derived(selectedText && selectedText.length > 0);
+    // 2. Multi Word Add: Selection contains extracted words, >1 word, and at least one is invalid
+    const canAddMulti = $derived.by(() => {
+        if (!selectedText) return false;
+        const words = selectedText.match(/\b[a-zA-Z']+\b/g);
+        if (!words || words.length < 2) return false;
+
+        return words.some((w: string) => !isWordValid(w));
+    });
+
+    const showDictionarySection = $derived(canAddSingle || canAddMulti);
+    const hasSelection = $derived(selectedText && selectedText.length > 0);
 
     function handleTransform(transformType: OperationTypeString) {
         editorStore.performTextTransform(transformType);
@@ -172,8 +224,6 @@
             left: 0;
             background-color: var(--bg-panel);
             border-color: var(--border-light);
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
         "
         onclick={(e) => e.stopPropagation()}
         role="menu"
@@ -206,7 +256,7 @@
 
             <!-- Sort Menu -->
             <div class="relative">
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => (showSortMenu = true)} onmouseleave={() => (showSortMenu = false)}>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => openSubmenu("sort")} onmouseleave={() => closeSubmenu("sort")}>
                     <ArrowUpDown size={14} />
                     <span>Sort Lines</span>
                     <span class="ml-auto text-xs">▶</span>
@@ -220,8 +270,8 @@
                             border-color: var(--border-light);
                             {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
                         "
-                        onmouseenter={() => (showSortMenu = true)}
-                        onmouseleave={() => (showSortMenu = false)}
+                        onmouseenter={() => openSubmenu("sort")}
+                        onmouseleave={() => closeSubmenu("sort")}
                     >
                         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
                         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
@@ -237,7 +287,7 @@
 
             <!-- Case Change Menu -->
             <div class="relative">
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => (showCaseMenu = true)} onmouseleave={() => (showCaseMenu = false)}>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => openSubmenu("case")} onmouseleave={() => closeSubmenu("case")}>
                     <CaseSensitive size={14} />
                     <span>Change Case</span>
                     <span class="ml-auto text-xs">▶</span>
@@ -251,8 +301,8 @@
                             border-color: var(--border-light);
                             {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
                         "
-                        onmouseenter={() => (showCaseMenu = true)}
-                        onmouseleave={() => (showCaseMenu = false)}
+                        onmouseenter={() => openSubmenu("case")}
+                        onmouseleave={() => closeSubmenu("case")}
                     >
                         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
                         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
@@ -270,7 +320,7 @@
 
             <!-- Transform Menu -->
             <div class="relative">
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => (showTransformMenu = true)} onmouseleave={() => (showTransformMenu = false)}>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => openSubmenu("transform")} onmouseleave={() => closeSubmenu("transform")}>
                     <WrapText size={14} />
                     <span>Transform</span>
                     <span class="ml-auto text-xs">▶</span>
@@ -284,8 +334,8 @@
                             border-color: var(--border-light);
                             {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
                         "
-                        onmouseenter={() => (showTransformMenu = true)}
-                        onmouseleave={() => (showTransformMenu = false)}
+                        onmouseenter={() => openSubmenu("transform")}
+                        onmouseleave={() => closeSubmenu("transform")}
                     >
                         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
                         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>

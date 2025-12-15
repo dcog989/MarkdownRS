@@ -33,6 +33,25 @@
         refreshSpellcheck(editorViewComponent?.getView());
     }
 
+    async function handlePaste() {
+        try {
+            const text = await navigator.clipboard.readText();
+            const view = editorViewComponent?.getView();
+            if (view && text) {
+                const selection = view.state.selection.main;
+                view.dispatch({
+                    changes: { from: selection.from, to: selection.to, insert: text },
+                    selection: { anchor: selection.from + text.length },
+                    userEvent: "input.paste",
+                    scrollIntoView: true,
+                });
+                view.focus();
+            }
+        } catch (err) {
+            console.error("Paste failed:", err);
+        }
+    }
+
     function handleTextOperation(operation: TextOperation) {
         const view = editorViewComponent?.getView();
         if (!view) return;
@@ -220,5 +239,5 @@
 </div>
 
 {#if showContextMenu}
-    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} />
+    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} onPaste={handlePaste} />
 {/if}
