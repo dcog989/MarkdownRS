@@ -6,6 +6,7 @@
     import { ChevronDown, Plus } from "lucide-svelte";
     import { onMount, tick } from "svelte";
     import { dndzone, type DndEvent } from "svelte-dnd-action";
+    import { flip } from "svelte/animate";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabButton from "./TabButton.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -219,7 +220,7 @@
         onfinalize={handleDndFinalize}
     >
         {#each editorStore.tabs as tab (tab.id)}
-            <div class="h-full flex items-end">
+            <div class="h-full flex items-end" animate:flip={{ duration: 200 }}>
                 <TabButton {tab} isActive={appState.activeTabId === tab.id} {currentTime} onclick={(id) => handleTabClick(id)} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} />
             </div>
         {/each}
