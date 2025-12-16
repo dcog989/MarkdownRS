@@ -53,7 +53,7 @@
             style="
                 background-color: var(--bg-panel);
                 border-color: var(--border-light);
-                {side === 'left' ? 'right: 100%; margin-right: 0px;' : 'left: 100%; margin-left: 0px;'}
+                {side === 'left' ? 'right: 100%;' : 'left: 100%;'}
             "
             onmouseenter={handleMouseEnter}
             onmouseleave={handleMouseLeave}

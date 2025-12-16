@@ -1,8 +1,9 @@
 <script lang="ts">
+    import Submenu from "$lib/components/ui/Submenu.svelte";
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { isWordValid } from "$lib/utils/spellcheck";
-    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, WrapText, Wand2 } from "lucide-svelte";
+    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Wand2, WrapText } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
     let {
@@ -28,45 +29,9 @@
     let showCaseMenu = $state(false);
     let showTransformMenu = $state(false);
 
-    // Timers for hover grace periods
-    let sortTimer: number | null = null;
-    let caseTimer: number | null = null;
-    let transformTimer: number | null = null;
-
     let menuEl = $state<HTMLDivElement>();
     let submenuSide = $state<"left" | "right">("right");
     let resizeObserver: ResizeObserver | null = null;
-
-    function openSubmenu(menu: "sort" | "case" | "transform") {
-        if (menu === "sort" && sortTimer) clearTimeout(sortTimer);
-        if (menu === "case" && caseTimer) clearTimeout(caseTimer);
-        if (menu === "transform" && transformTimer) clearTimeout(transformTimer);
-
-        if (menu === "sort") {
-            showSortMenu = true;
-            showCaseMenu = false;
-            showTransformMenu = false;
-        } else if (menu === "case") {
-            showCaseMenu = true;
-            showSortMenu = false;
-            showTransformMenu = false;
-        } else if (menu === "transform") {
-            showTransformMenu = true;
-            showSortMenu = false;
-            showCaseMenu = false;
-        }
-    }
-
-    function closeSubmenu(menu: "sort" | "case" | "transform") {
-        const delay = 200;
-        if (menu === "sort") {
-            sortTimer = window.setTimeout(() => (showSortMenu = false), delay);
-        } else if (menu === "case") {
-            caseTimer = window.setTimeout(() => (showCaseMenu = false), delay);
-        } else if (menu === "transform") {
-            transformTimer = window.setTimeout(() => (showTransformMenu = false), delay);
-        }
-    }
 
     function updatePosition() {
         if (!menuEl) return;
@@ -129,9 +94,6 @@
 
     onDestroy(() => {
         if (resizeObserver) resizeObserver.disconnect();
-        if (sortTimer) clearTimeout(sortTimer);
-        if (caseTimer) clearTimeout(caseTimer);
-        if (transformTimer) clearTimeout(transformTimer);
     });
 
     function handleBackdropContextMenu(e: MouseEvent) {
@@ -218,7 +180,7 @@
     }
 
     function handleFormatDocument() {
-        // Format entire document - we'll need to signal this differently
+        // Format entire document
         editorStore.performTextTransform("format-document");
         onClose();
     }
@@ -283,96 +245,84 @@
             <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
             <!-- Sort Menu -->
-            <div class="relative">
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => openSubmenu("sort")} onmouseleave={() => closeSubmenu("sort")}>
-                    <ArrowUpDown size={14} />
-                    <span>Sort Lines</span>
-                    <span class="ml-auto text-xs">▶</span>
-                </button>
+            <Submenu
+                bind:show={showSortMenu}
+                side={submenuSide}
+                onOpen={() => {
+                    showCaseMenu = false;
+                    showTransformMenu = false;
+                }}
+            >
+                {#snippet trigger()}
+                    <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
+                        <ArrowUpDown size={14} />
+                        <span>Sort Lines</span>
+                        <span class="ml-auto text-xs">▶</span>
+                    </button>
+                {/snippet}
 
-                {#if showSortMenu}
-                    <div
-                        class="absolute top-0 min-w-[180px] rounded-md shadow-xl border py-1 z-50"
-                        style="
-                            background-color: var(--bg-panel);
-                            border-color: var(--border-light);
-                            {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
-                        "
-                        onmouseenter={() => openSubmenu("sort")}
-                        onmouseleave={() => closeSubmenu("sort")}
-                    >
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-asc")}>Sort Numeric ↑</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-desc")}>Sort Numeric ↓</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-asc")}>Sort by Length ↑</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-desc")}>Sort by Length ↓</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("reverse")}>Reverse Order</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
-                    </div>
-                {/if}
-            </div>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-asc")}>Sort Numeric ↑</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-desc")}>Sort Numeric ↓</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-asc")}>Sort by Length ↑</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-desc")}>Sort by Length ↓</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("reverse")}>Reverse Order</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
+            </Submenu>
 
             <!-- Case Change Menu -->
-            <div class="relative">
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => openSubmenu("case")} onmouseleave={() => closeSubmenu("case")}>
-                    <CaseSensitive size={14} />
-                    <span>Change Case</span>
-                    <span class="ml-auto text-xs">▶</span>
-                </button>
+            <Submenu
+                bind:show={showCaseMenu}
+                side={submenuSide}
+                onOpen={() => {
+                    showSortMenu = false;
+                    showTransformMenu = false;
+                }}
+            >
+                {#snippet trigger()}
+                    <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
+                        <CaseSensitive size={14} />
+                        <span>Change Case</span>
+                        <span class="ml-auto text-xs">▶</span>
+                    </button>
+                {/snippet}
 
-                {#if showCaseMenu}
-                    <div
-                        class="absolute top-0 min-w-[180px] rounded-md shadow-xl border py-1 z-50"
-                        style="
-                            background-color: var(--bg-panel);
-                            border-color: var(--border-light);
-                            {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
-                        "
-                        onmouseenter={() => openSubmenu("case")}
-                        onmouseleave={() => closeSubmenu("case")}
-                    >
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("title-case")}>Title Case</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sentence-case")}>Sentence case</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("camel-case")}>camelCase</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("pascal-case")}>PascalCase</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("snake-case")}>snake_case</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("kebab-case")}>kebab-case</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("constant-case")}>CONSTANT_CASE</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
-                    </div>
-                {/if}
-            </div>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("title-case")}>Title Case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sentence-case")}>Sentence case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("camel-case")}>camelCase</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("pascal-case")}>PascalCase</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("snake-case")}>snake_case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("kebab-case")}>kebab-case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("constant-case")}>CONSTANT_CASE</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
+            </Submenu>
 
             <!-- Transform Menu -->
-            <div class="relative">
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onmouseenter={() => openSubmenu("transform")} onmouseleave={() => closeSubmenu("transform")}>
-                    <WrapText size={14} />
-                    <span>Transform</span>
-                    <span class="ml-auto text-xs">▶</span>
-                </button>
+            <Submenu
+                bind:show={showTransformMenu}
+                side={submenuSide}
+                onOpen={() => {
+                    showSortMenu = false;
+                    showCaseMenu = false;
+                }}
+            >
+                {#snippet trigger()}
+                    <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
+                        <WrapText size={14} />
+                        <span>Transform</span>
+                        <span class="ml-auto text-xs">▶</span>
+                    </button>
+                {/snippet}
 
-                {#if showTransformMenu}
-                    <div
-                        class="absolute top-0 min-w-[200px] rounded-md shadow-xl border py-1 z-50"
-                        style="
-                            background-color: var(--bg-panel);
-                            border-color: var(--border-light);
-                            {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
-                        "
-                        onmouseenter={() => openSubmenu("transform")}
-                        onmouseleave={() => closeSubmenu("transform")}
-                    >
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("trim-whitespace")}>Trim Whitespace</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("join-lines")}>Join Lines</button>
-                        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("add-line-numbers")}>Add Line Numbers</button>
-                    </div>
-                {/if}
-            </div>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("trim-whitespace")}>Trim Whitespace</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("join-lines")}>Join Lines</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("add-line-numbers")}>Add Line Numbers</button>
+            </Submenu>
         {/if}
 
         {#if showDictionarySection}
