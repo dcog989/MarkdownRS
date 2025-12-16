@@ -41,11 +41,19 @@
         "copyright": "",
         "category": "Productivity",
         "shortDescription": "The only markdown editor you need.",
-        "longDescription": ""
+        "longDescription": "",
+        "createUpdaterArtifacts": "v1Compatible"
     },
     "plugins": {
         "shell": {
             "open": true
+        },
+        "updater": {
+            "endpoints": [
+                "https://github.com/USERNAME/REPO/releases/latest/download/latest.json"
+            ],
+            "dialog": true,
+            "pubkey": "YOUR_PUBLIC_KEY_HERE"
         }
     }
 }

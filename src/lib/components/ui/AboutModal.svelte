@@ -1,6 +1,8 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-    import { X } from "lucide-svelte";
+    import { relaunch } from "@tauri-apps/plugin-process";
+    import { check } from "@tauri-apps/plugin-updater";
+    import { Loader2, RefreshCw, X } from "lucide-svelte";
     import { onMount } from "svelte";
 
     interface Props {
@@ -23,6 +25,9 @@
         install_path: "",
         data_path: "",
     });
+
+    let isChecking = $state(false);
+    let updateStatus = $state<string | null>(null);
 
     onMount(async () => {
         try {
@@ -48,6 +53,41 @@
 
     function copyToClipboard(text: string) {
         navigator.clipboard.writeText(text);
+    }
+
+    async function checkForUpdates() {
+        if (isChecking) return;
+        isChecking = true;
+        updateStatus = "Checking for updates...";
+
+        try {
+            const update = await check();
+            if (update?.available) {
+                const confirmed = confirm(`Update available: ${update.version}\n\n${update.body || "No release notes available."}\n\nDo you want to install it now?`);
+
+                if (confirmed) {
+                    updateStatus = "Downloading and installing...";
+                    await update.downloadAndInstall();
+                    updateStatus = "Restarting...";
+                    await relaunch();
+                } else {
+                    updateStatus = "Update cancelled.";
+                }
+            } else {
+                updateStatus = "You are up to date.";
+            }
+        } catch (err) {
+            console.error("Update check failed:", err);
+            updateStatus = "Failed to check for updates.";
+        } finally {
+            isChecking = false;
+            // Clear status after 3 seconds if not updating
+            if (updateStatus !== "Restarting...") {
+                setTimeout(() => {
+                    updateStatus = null;
+                }, 3000);
+            }
+        }
     }
 </script>
 
@@ -75,8 +115,25 @@
                 <div class="w-full mt-4 space-y-3">
                     <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-main);">
                         <span class="text-sm font-medium" style="color: var(--fg-muted);">Version</span>
-                        <span class="text-sm font-mono" style="color: var(--fg-default);">{appInfo.version}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-mono" style="color: var(--fg-default);">{appInfo.version}</span>
+                            <button class="text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-light);" onclick={checkForUpdates} disabled={isChecking}>
+                                {#if isChecking}
+                                    <Loader2 size={12} class="animate-spin" />
+                                    <span>Checking...</span>
+                                {:else}
+                                    <RefreshCw size={12} />
+                                    <span>Check for Updates</span>
+                                {/if}
+                            </button>
+                        </div>
                     </div>
+
+                    {#if updateStatus}
+                        <div class="text-center text-xs py-1" style="color: var(--accent-primary);">
+                            {updateStatus}
+                        </div>
+                    {/if}
 
                     <div class="flex items-start justify-between py-2 border-b" style="border-color: var(--border-main);">
                         <span class="text-sm font-medium" style="color: var(--fg-muted);">Install Path</span>
@@ -96,11 +153,10 @@
                 </div>
 
                 <div class="mt-4 text-center">
-                    <p class="text-xs" style="color: var(--fg-muted);">Built with Tauri v2, Svelte 5, and Rust</p>
+                    <p class="text-xs" style="color: var(--fg-muted);">Giants' Shoulders = Rust / Tauri / Svelte</p>
                     <p class="text-xs mt-1" style="color: var(--fg-muted);">© 2025 MarkdownRS. All rights reserved.</p>
                 </div>
             </div>
-            <!-- Footer removed -->
         </div>
     </div>
 {/if}
