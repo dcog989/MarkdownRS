@@ -13,28 +13,29 @@
     let searchQuery = $state("");
 
     // Settings definitions with categories
+    // Labels updated to remove redundancy as we now display "Category: Label"
     const settingsDefinitions = [
-        { key: "editorFontFamily", label: "Editor: Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
-        { key: "editorFontSize", label: "Editor: Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
-        { key: "editorWordWrap", label: "Editor: Word Wrap", type: "boolean", category: "Editor", defaultValue: false },
-        { key: "lineEndingPreference", label: "Editor: Line Ending Preference", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
+        { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
+        { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
+        { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: false },
+        { key: "lineEndingPreference", label: "Line Ending Preference", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
 
-        { key: "previewFontFamily", label: "Preview: Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
-        { key: "previewFontSize", label: "Preview: Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
+        { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
+        { key: "previewFontSize", label: "Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
 
-        { key: "formatOnSave", label: "Format: Auto-format on Save", type: "boolean", category: "Formatter", defaultValue: false },
-        { key: "formatOnPaste", label: "Format: Auto-format on Paste", type: "boolean", category: "Formatter", defaultValue: false },
-        { key: "formatterListIndent", label: "Format: List Indentation (spaces)", type: "number", category: "Formatter", defaultValue: 2, min: 2, max: 8 },
-        { key: "formatterBulletChar", label: "Format: Bullet Character", type: "select", category: "Formatter", defaultValue: "-", options: ["-", "*", "+"] },
-        { key: "formatterCodeFence", label: "Format: Code Fence Style", type: "select", category: "Formatter", defaultValue: "```", options: ["```", "~~~"] },
-        { key: "formatterTableAlignment", label: "Format: Align Table Columns", type: "boolean", category: "Formatter", defaultValue: true },
+        { key: "formatOnSave", label: "Auto-format on Save", type: "boolean", category: "Formatter", defaultValue: false },
+        { key: "formatOnPaste", label: "Auto-format on Paste", type: "boolean", category: "Formatter", defaultValue: false },
+        { key: "formatterListIndent", label: "List Indentation (spaces)", type: "number", category: "Formatter", defaultValue: 2, min: 2, max: 8 },
+        { key: "formatterBulletChar", label: "Bullet Character", type: "select", category: "Formatter", defaultValue: "-", options: ["-", "*", "+"] },
+        { key: "formatterCodeFence", label: "Code Fence Style", type: "select", category: "Formatter", defaultValue: "```", options: ["```", "~~~"] },
+        { key: "formatterTableAlignment", label: "Align Table Columns", type: "boolean", category: "Formatter", defaultValue: true },
 
         { key: "logLevel", label: "Log Level", type: "select", category: "Advanced", defaultValue: "info", options: ["trace", "debug", "info", "warn", "error"] },
 
         { key: "tabWidthMin", label: "Tab Width: Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
         { key: "tabWidthMax", label: "Tab Width: Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
         { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "sequential", options: ["Sequential", "MRU"] },
-        { key: "tabNavigationMode", label: "Tab Navigation (Ctrl+Left/Right)", type: "select", category: "Interface", defaultValue: "arrow-keys", options: ["arrow-keys", "disabled"], optionLabels: ["Enabled", "Disabled"] },
+        { key: "tabNavigationMode", label: "Tab Navigation (Ctrl+PgUp/PgDn)", type: "select", category: "Interface", defaultValue: "arrow-keys", options: ["arrow-keys", "disabled"], optionLabels: ["Enabled", "Disabled"] },
         { key: "newTabPosition", label: "Open New Tabs", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
         { key: "startupBehavior", label: "On Startup", type: "select", category: "Interface", defaultValue: "last-focused", options: ["first", "last-focused", "new"], optionLabels: ["Show First Tab", "Show Last Focused Tab", "Create New Tab"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
@@ -53,9 +54,15 @@
         settingsDefinitions
             .filter((s) => {
                 if (searchQuery.length < 2) return true;
-                return s.label.toLowerCase().includes(searchQuery.toLowerCase());
+                const fullString = `${s.category}: ${s.label}`;
+                return fullString.toLowerCase().includes(searchQuery.toLowerCase());
             })
-            .sort((a, b) => a.label.localeCompare(b.label))
+            .sort((a, b) => {
+                // Sort by Category then Label
+                const aFull = `${a.category}: ${a.label}`;
+                const bFull = `${b.category}: ${b.label}`;
+                return aFull.localeCompare(bFull);
+            })
     );
 
     function handleBackdropClick(e: MouseEvent) {
@@ -125,10 +132,10 @@
                             <div class="px-4 py-3 hover:bg-white/5 transition-colors">
                                 <div class="flex items-center justify-between gap-4">
                                     <div class="flex-1">
-                                        <label for={setting.key} class="text-sm font-medium block mb-1 whitespace-nowrap" style="color: var(--fg-default);">
-                                            {setting.label}
+                                        <label for={setting.key} class="text-sm block mb-1 whitespace-nowrap">
+                                            <span style="color: var(--fg-muted);">{setting.category}: </span>
+                                            <span class="font-medium" style="color: var(--fg-default);">{setting.label}</span>
                                         </label>
-                                        <span class="text-xs" style="color: var(--fg-muted);">{setting.category}</span>
                                     </div>
                                     <div class="w-48 shrink-0">
                                         {#if setting.type === "text"}
