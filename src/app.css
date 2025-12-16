@@ -39,17 +39,6 @@
     --color-success-hover: #1177bb;
 }
 
-@keyframes cm-tooltip-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(2px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 :root {
     /* Typography */
     font-family: ui-sans-serif, system-ui, sans-serif;
@@ -132,4 +121,25 @@ body {
 
 ::-webkit-scrollbar-corner {
     background-color: var(--bg-main);
+}
+
+@keyframes cm-tooltip-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@utility text-ui {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@utility text-ui-sm {
+    font-size: 11px;
+    line-height: 1.4;
 }

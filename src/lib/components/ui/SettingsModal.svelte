@@ -12,8 +12,6 @@
 
     let searchQuery = $state("");
 
-    // Settings definitions with categories
-    // Labels updated to remove redundancy as we now display "Category: Label"
     const settingsDefinitions = [
         { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
@@ -42,14 +40,12 @@
         { key: "tooltipDelay", label: "Tooltip Delay (ms)", type: "number", category: "Interface", defaultValue: 1000, min: 0, max: 5000 },
     ];
 
-    // Reset search on close
     $effect(() => {
         if (!isOpen) {
             searchQuery = "";
         }
     });
 
-    // Filter settings
     let sortedSettings = $derived(
         settingsDefinitions
             .filter((s) => {
@@ -58,7 +54,6 @@
                 return fullString.toLowerCase().includes(searchQuery.toLowerCase());
             })
             .sort((a, b) => {
-                // Sort by Category then Label
                 const aFull = `${a.category}: ${a.label}`;
                 const bFull = `${b.category}: ${b.label}`;
                 return aFull.localeCompare(bFull);
@@ -103,24 +98,24 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--bg-backdrop);" onclick={handleBackdropClick}>
         <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[80vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--bg-panel); border-color: var(--border-light);">
-            <!-- Header with integrated Search -->
-            <div class="flex items-center gap-4 px-4 py-3 border-b" style="background-color: var(--bg-header); border-color: var(--border-light);">
+            <!-- Header -->
+            <div class="flex items-center gap-4 px-4 py-2 border-b" style="background-color: var(--bg-header); border-color: var(--border-light);">
                 <div class="flex items-center gap-2">
-                    <Settings size={18} style="color: var(--accent-secondary);" />
-                    <h2 class="text-base font-semibold shrink-0" style="color: var(--fg-default);">Settings</h2>
+                    <Settings size={16} style="color: var(--accent-secondary);" />
+                    <h2 class="text-ui font-semibold shrink-0" style="color: var(--fg-default);">Settings</h2>
                 </div>
 
                 <div class="flex-1 relative">
-                    <Search size={14} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-                    <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1.5 rounded outline-none text-sm" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
+                    <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+                    <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
                 </div>
 
                 <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
-                    <Keyboard size={18} />
+                    <Keyboard size={16} />
                 </button>
 
                 <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--fg-muted);" onclick={onClose} aria-label="Close Settings">
-                    <X size={18} />
+                    <X size={16} />
                 </button>
             </div>
 
@@ -129,28 +124,28 @@
                 {#if sortedSettings.length > 0}
                     <div class="divide-y" style="border-color: var(--border-main);">
                         {#each sortedSettings as setting}
-                            <div class="px-4 py-3 hover:bg-white/5 transition-colors">
+                            <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
                                 <div class="flex items-center justify-between gap-4">
                                     <div class="flex-1">
-                                        <label for={setting.key} class="text-sm block mb-1 whitespace-nowrap">
+                                        <label for={setting.key} class="text-ui block mb-0.5 whitespace-nowrap">
                                             <span style="color: var(--fg-muted);">{setting.category}: </span>
                                             <span class="font-medium" style="color: var(--fg-default);">{setting.label}</span>
                                         </label>
                                     </div>
                                     <div class="w-48 shrink-0">
                                         {#if setting.type === "text"}
-                                            <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-sm outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
+                                            <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
                                         {:else if setting.type === "number"}
-                                            <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-sm outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
+                                            <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
                                         {:else if setting.type === "range"}
                                             <div class="flex items-center gap-2">
                                                 <input id={setting.key} type="range" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} step={setting.step} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none" style="background-color: var(--border-main); accent-color: var(--accent-primary);" />
-                                                <span class="text-xs w-8 text-right font-mono" style="color: var(--fg-muted);">{getSettingValue(setting.key, setting.defaultValue)}%</span>
+                                                <span class="text-ui-sm w-8 text-right font-mono" style="color: var(--fg-muted);">{getSettingValue(setting.key, setting.defaultValue)}%</span>
                                             </div>
                                         {:else if setting.type === "boolean"}
                                             <input id={setting.key} type="checkbox" checked={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.checked, setting.type)} class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--accent-primary);" />
                                         {:else if setting.type === "select"}
-                                            <select id={setting.key} value={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-sm outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);">
+                                            <select id={setting.key} value={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);">
                                                 {#each setting.options as option, idx}
                                                     <option value={option}>{setting.optionLabels?.[idx] || option}</option>
                                                 {/each}
@@ -162,7 +157,7 @@
                         {/each}
                     </div>
                 {:else}
-                    <div class="px-4 py-8 text-center text-sm" style="color: var(--fg-muted);">No settings match your search</div>
+                    <div class="px-4 py-8 text-center text-ui" style="color: var(--fg-muted);">No settings match your search</div>
                 {/if}
             </div>
         </div>

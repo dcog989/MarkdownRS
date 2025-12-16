@@ -42,8 +42,6 @@
                 showCommandPalette = false;
             },
         },
-        // ... (Commands list truncated for brevity, identical to previous) ...
-        // Re-adding essential commands for context if needed, but assuming logic remains same
         {
             id: "open",
             label: "File: Open File",
@@ -123,7 +121,7 @@
             },
         },
     ];
-    // Adding back missing ops commands to ensure functionality
+
     const opsCommands: Command[] = [
         {
             id: "ops-sort",
@@ -296,14 +294,14 @@
     <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" style="background-color: var(--bg-backdrop);" onclick={handleCommandBackdropClick}>
         <div class="w-[600px] rounded-lg shadow-2xl border overflow-hidden flex flex-col max-h-[60vh]" style="background-color: var(--bg-panel); border-color: var(--border-light);">
             <div class="p-2 border-b" style="border-color: var(--border-light);">
-                <input bind:this={commandInputRef} bind:value={commandSearchQuery} class="w-full bg-transparent outline-none px-2 py-1 text-sm placeholder-opacity-50" style="color: var(--fg-default);" placeholder="Type a command..." onkeydown={handleCommandKeydown} />
+                <input bind:this={commandInputRef} bind:value={commandSearchQuery} class="w-full bg-transparent outline-none px-2 py-1 text-ui placeholder-opacity-50" style="color: var(--fg-default);" placeholder="Type a command..." onkeydown={handleCommandKeydown} />
             </div>
             <div class="overflow-y-auto py-1">
                 {#if filteredCommands.length > 0}
                     {#each filteredCommands as command, index}
                         <button
                             type="button"
-                            class="w-full text-left px-3 py-2 text-sm flex justify-between items-center"
+                            class="w-full text-left px-3 py-2 text-ui flex justify-between items-center"
                             style="
                                 background-color: {index === selectedCommandIndex ? 'var(--accent-primary)' : 'transparent'};
                                 color: {index === selectedCommandIndex ? 'var(--fg-inverse)' : 'var(--fg-default)'};
@@ -313,12 +311,12 @@
                         >
                             <span>{command.label}</span>
                             {#if command.shortcut}
-                                <span class="text-xs opacity-60">{command.shortcut}</span>
+                                <span class="text-ui-sm opacity-60">{command.shortcut}</span>
                             {/if}
                         </button>
                     {/each}
                 {:else}
-                    <div class="px-3 py-2 text-sm text-gray-500">No commands found</div>
+                    <div class="px-3 py-2 text-ui text-gray-500">No commands found</div>
                 {/if}
             </div>
         </div>

@@ -48,7 +48,6 @@
 
     function close() {
         isOpen = false;
-        // Don't clear text immediately to allow reopening with same query
         if (editorView) editorView.getView()?.focus();
     }
 
@@ -58,7 +57,6 @@
         try {
             let pattern = text;
             if (!useRegex) {
-                // Escape special regex characters
                 pattern = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             }
 
@@ -93,7 +91,6 @@
         currentMatches = matches.length;
         currentIndex = 0;
 
-        // Highlight first match
         if (matches.length > 0) {
             const match = matches[0];
             const from = match.index!;
@@ -121,7 +118,6 @@
 
         if (matches.length === 0) return;
 
-        // Move to next match
         currentIndex = (currentIndex + 1) % matches.length;
         const match = matches[currentIndex];
         const from = match.index!;
@@ -148,7 +144,6 @@
 
         if (matches.length === 0) return;
 
-        // Move to previous match
         currentIndex = currentIndex - 1;
         if (currentIndex < 0) currentIndex = matches.length - 1;
 
@@ -171,7 +166,6 @@
         const selection = view.state.selection.main;
         const selectedText = view.state.sliceDoc(selection.from, selection.to);
 
-        // Check if current selection matches find text
         const regex = buildSearchRegex(findText);
         if (!regex) return;
 
@@ -181,10 +175,8 @@
                 selection: { anchor: selection.from + replaceText.length },
             });
 
-            // Find next match after replacing
             setTimeout(() => findNext(), 10);
         } else {
-            // No match selected, find next
             findNext();
         }
     }
@@ -279,7 +271,6 @@
                 }
             }
         } else if ((e.key === "f" || e.key === "h") && (e.ctrlKey || e.metaKey)) {
-            // Trap these to prevent browser find from activating while focused here
             e.preventDefault();
             e.stopPropagation();
             if (e.key === "h") {
@@ -300,15 +291,15 @@
             <div class="flex items-center gap-2 flex-1">
                 <button type="button" class="icon-btn" onclick={() => (isReplaceMode = !isReplaceMode)} title="Toggle Replace Mode">
                     {#if isReplaceMode}
-                        <ChevronDown size={16} />
+                        <ChevronDown size={14} />
                     {:else}
-                        <ChevronRight size={16} />
+                        <ChevronRight size={14} />
                     {/if}
                 </button>
-                <span class="font-semibold text-sm">Find {isReplaceMode ? "& Replace" : ""}</span>
+                <span class="font-semibold text-ui">Find {isReplaceMode ? "& Replace" : ""}</span>
             </div>
             <button type="button" class="icon-btn" onclick={close} title="Close (Esc)">
-                <X size={16} />
+                <X size={14} />
             </button>
         </div>
 
@@ -371,20 +362,20 @@
             <!-- Actions -->
             <div class="actions-row">
                 <button type="button" class="action-btn" onclick={findPrevious} disabled={searchScope === "all"}>
-                    <Search size={14} />
+                    <Search size={12} />
                     Previous
                 </button>
                 <button type="button" class="action-btn" onclick={findNext} disabled={searchScope === "all"}>
-                    <Search size={14} />
+                    <Search size={12} />
                     Next
                 </button>
                 {#if isReplaceMode}
                     <button type="button" class="action-btn" onclick={replaceCurrentMatch} disabled={searchScope === "all"}>
-                        <Replace size={14} />
+                        <Replace size={12} />
                         Replace
                     </button>
                     <button type="button" class="action-btn" onclick={replaceAll}>
-                        <Replace size={14} />
+                        <Replace size={12} />
                         Replace All
                     </button>
                 {/if}
@@ -451,12 +442,13 @@
 
     .search-input {
         flex: 1;
-        padding: 0.5rem;
+        padding: 0.3rem 0.5rem;
         background-color: var(--bg-input);
         border: 1px solid var(--border-light);
         border-radius: 4px;
         color: var(--fg-default);
-        font-size: 0.875rem;
+        font-size: 13px;
+        line-height: 1.5;
     }
 
     .search-input:focus {
@@ -465,7 +457,7 @@
     }
 
     .result-indicator {
-        font-size: 0.75rem;
+        font-size: 11px;
         color: var(--fg-muted);
         min-width: 80px;
         text-align: right;
@@ -483,7 +475,7 @@
         display: flex;
         align-items: center;
         gap: 0.375rem;
-        font-size: 0.875rem;
+        font-size: 13px;
         color: var(--fg-default);
         cursor: pointer;
     }
@@ -496,12 +488,12 @@
 
     .icon-btn,
     .action-btn {
-        padding: 0.375rem 0.75rem;
+        padding: 0.25rem 0.6rem;
         background-color: var(--bg-hover);
         border: 1px solid var(--border-light);
         border-radius: 4px;
         color: var(--fg-default);
-        font-size: 0.875rem;
+        font-size: 13px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -529,7 +521,7 @@
     }
 
     .results-header {
-        font-size: 0.75rem;
+        font-size: 11px;
         font-weight: 600;
         color: var(--fg-muted);
         margin-bottom: 0.25rem;
@@ -539,7 +531,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.5rem;
+        padding: 0.4rem 0.5rem;
         background-color: var(--bg-hover);
         border-radius: 4px;
         cursor: pointer;
@@ -554,7 +546,7 @@
     }
 
     .result-filename {
-        font-size: 0.875rem;
+        font-size: 13px;
         color: var(--fg-default);
         overflow: hidden;
         text-overflow: ellipsis;
@@ -562,7 +554,7 @@
     }
 
     .result-count {
-        font-size: 0.75rem;
+        font-size: 11px;
         color: var(--fg-muted);
         background-color: var(--bg-panel);
         padding: 0.125rem 0.5rem;

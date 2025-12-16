@@ -59,7 +59,7 @@
     data-active={isActive}
     data-tab-id={tab.id}
     use:tooltip={tooltipContent}
-    class="tab-button group relative h-8 pl-2 pr-6 flex items-center gap-2 text-xs cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
+    class="tab-button group relative h-8 pl-2 pr-6 flex items-center gap-2 text-ui cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
     style="
         --tab-bg: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
         color: {color};

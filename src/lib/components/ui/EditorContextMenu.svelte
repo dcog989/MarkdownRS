@@ -26,7 +26,6 @@
         onReplaceWord?: (newWord: string) => void;
     }>();
 
-    // Submenu state
     let showSortMenu = $state(false);
     let showCaseMenu = $state(false);
     let showTransformMenu = $state(false);
@@ -37,9 +36,7 @@
     let resizeObserver: ResizeObserver | null = null;
 
     $effect(() => {
-        // Calculate suggestions when menu opens
         if (wordUnderCursor && !selectedText && !isWordValid(wordUnderCursor)) {
-            // Defer slightly to allow UI to mount, though synchronous is fine here
             suggestions = getSuggestions(wordUnderCursor);
         } else {
             suggestions = [];
@@ -58,32 +55,26 @@
 
         const BOTTOM_MARGIN = 32;
 
-        // 1. Horizontal constraint
         if (newX + rect.width > winWidth) {
             newX = winWidth - rect.width - 5;
         }
 
-        // 2. Vertical constraint (Shift up if hitting bottom)
         if (newY + rect.height > winHeight - BOTTOM_MARGIN) {
             newY = winHeight - rect.height - BOTTOM_MARGIN;
         }
 
-        // 3. Top/Left safety guard
         newX = Math.max(5, newX);
         newY = Math.max(5, newY);
 
-        // Apply
         menuEl.style.left = `${newX}px`;
         menuEl.style.top = `${newY}px`;
 
-        // Determine submenu direction
         if (newX + rect.width + 200 > winWidth) {
             submenuSide = "left";
         } else {
             submenuSide = "right";
         }
 
-        // Reveal
         menuEl.style.visibility = "visible";
     }
 
@@ -101,7 +92,7 @@
     });
 
     $effect(() => {
-        const _ = { x, y, selectedText, suggestions }; // React to suggestions changing size
+        const _ = { x, y, selectedText, suggestions };
         if (menuEl) updatePosition();
     });
 
@@ -127,10 +118,7 @@
 
     async function handleAddAllToDictionary() {
         if (!selectedText) return;
-
-        // Extract words using standard linter regex to ensure clean words
         const words = selectedText.match(/\b[a-zA-Z']+\b/g) || [];
-
         const uniqueInvalidWords = words.filter((w: string) => !isWordValid(w)).filter((w: string, i: number, arr: string[]) => arr.indexOf(w) === i);
 
         for (const word of uniqueInvalidWords) {
@@ -168,19 +156,13 @@
     }
 
     const targetWord = $derived(selectedText ? selectedText.trim() : wordUnderCursor?.trim());
-
-    // Clean target word for single-word validity check
     const cleanTarget = $derived(targetWord ? targetWord.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, "") : "");
-
-    // 1. Single Word Add: Valid format AND not in dictionary
     const canAddSingle = $derived(cleanTarget && cleanTarget.length > 0 && /^[a-zA-Z'-]+$/.test(cleanTarget) && !isWordValid(cleanTarget));
 
-    // 2. Multi Word Add: Selection contains extracted words, >1 word, and at least one is invalid
     const canAddMulti = $derived.by(() => {
         if (!selectedText) return false;
         const words = selectedText.match(/\b[a-zA-Z']+\b/g);
         if (!words || words.length < 2) return false;
-
         return words.some((w: string) => !isWordValid(w));
     });
 
@@ -210,7 +192,7 @@
         bind:this={menuEl}
         class="absolute min-w-[200px] rounded-md shadow-xl border py-1 custom-scrollbar"
         style="
-            visibility: hidden; /* Start hidden for measurement */
+            visibility: hidden;
             top: 0;
             left: 0;
             background-color: var(--bg-panel);
@@ -221,9 +203,9 @@
         tabindex="-1"
     >
         {#if suggestions.length > 0}
-            <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide opacity-50" style="color: var(--fg-muted);">Suggestions</div>
+            <div class="px-2 py-1 text-ui-sm font-semibold uppercase tracking-wide opacity-50" style="color: var(--fg-muted);">Suggestions</div>
             {#each suggestions as suggestion}
-                <button type="button" class="w-full text-left px-4 py-2 text-sm font-medium hover:bg-white/10 flex items-center gap-2" style="color: var(--fg-default);" onclick={() => handleSuggestionClick(suggestion)}>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui font-medium hover:bg-white/10 flex items-center gap-2" style="color: var(--fg-default);" onclick={() => handleSuggestionClick(suggestion)}>
                     <Sparkles size={14} class="text-[var(--accent-secondary)]" />
                     <span>{suggestion}</span>
                 </button>
@@ -232,41 +214,40 @@
         {/if}
 
         {#if selectedText}
-            <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCut}>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCut}>
                 <Scissors size={14} />
                 <span>Cut</span>
-                <span class="ml-auto text-xs opacity-60">Ctrl+X</span>
+                <span class="ml-auto text-ui-sm opacity-60">Ctrl+X</span>
             </button>
         {/if}
 
         {#if selectedText}
-            <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCopy}>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCopy}>
                 <ClipboardCopy size={14} />
                 <span>Copy</span>
-                <span class="ml-auto text-xs opacity-60">Ctrl+C</span>
+                <span class="ml-auto text-ui-sm opacity-60">Ctrl+C</span>
             </button>
         {/if}
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handlePaste}>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handlePaste}>
             <ClipboardPaste size={14} />
             <span>Paste</span>
-            <span class="ml-auto text-xs opacity-60">Ctrl+V</span>
+            <span class="ml-auto text-ui-sm opacity-60">Ctrl+V</span>
         </button>
 
-        <!-- Format Section -->
         <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
         {#if hasSelection}
-            <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleFormatSelection}>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleFormatSelection}>
                 <Wand2 size={14} />
                 <span>Format Selection</span>
             </button>
         {/if}
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleFormatDocument}>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleFormatDocument}>
             <Wand2 size={14} />
             <span>Format Document</span>
-            <span class="ml-auto text-xs opacity-60">Shift+Alt+F</span>
+            <span class="ml-auto text-ui-sm opacity-60">Shift+Alt+F</span>
         </button>
 
         {#if hasSelection}
@@ -282,21 +263,21 @@
                 }}
             >
                 {#snippet trigger()}
-                    <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
+                    <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
                         <ArrowUpDown size={14} />
                         <span>Sort Lines</span>
-                        <span class="ml-auto text-xs">▶</span>
+                        <span class="ml-auto text-ui-sm">▶</span>
                     </button>
                 {/snippet}
 
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-asc")}>Sort Numeric ↑</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-desc")}>Sort Numeric ↓</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-asc")}>Sort by Length ↑</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-desc")}>Sort by Length ↓</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("reverse")}>Reverse Order</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-asc")}>Sort Numeric ↑</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-numeric-desc")}>Sort Numeric ↓</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-asc")}>Sort by Length ↑</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sort-length-desc")}>Sort by Length ↓</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("reverse")}>Reverse Order</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
             </Submenu>
 
             <!-- Case Change Menu -->
@@ -309,23 +290,23 @@
                 }}
             >
                 {#snippet trigger()}
-                    <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
+                    <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
                         <CaseSensitive size={14} />
                         <span>Change Case</span>
-                        <span class="ml-auto text-xs">▶</span>
+                        <span class="ml-auto text-ui-sm">▶</span>
                     </button>
                 {/snippet}
 
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("title-case")}>Title Case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sentence-case")}>Sentence case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("camel-case")}>camelCase</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("pascal-case")}>PascalCase</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("snake-case")}>snake_case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("kebab-case")}>kebab-case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("constant-case")}>CONSTANT_CASE</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("title-case")}>Title Case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("sentence-case")}>Sentence case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("camel-case")}>camelCase</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("pascal-case")}>PascalCase</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("snake-case")}>snake_case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("kebab-case")}>kebab-case</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("constant-case")}>CONSTANT_CASE</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
             </Submenu>
 
             <!-- Transform Menu -->
@@ -338,18 +319,18 @@
                 }}
             >
                 {#snippet trigger()}
-                    <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
+                    <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);">
                         <WrapText size={14} />
                         <span>Transform</span>
-                        <span class="ml-auto text-xs">▶</span>
+                        <span class="ml-auto text-ui-sm">▶</span>
                     </button>
                 {/snippet}
 
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("trim-whitespace")}>Trim Whitespace</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("join-lines")}>Join Lines</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("add-line-numbers")}>Add Line Numbers</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("trim-whitespace")}>Trim Whitespace</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("join-lines")}>Join Lines</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("add-line-numbers")}>Add Line Numbers</button>
             </Submenu>
         {/if}
 
@@ -357,15 +338,15 @@
             <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
             {#if canAddSingle}
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddToDictionary}>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddToDictionary}>
                     <BookPlus size={14} />
                     <span>Add to Dictionary</span>
-                    <span class="ml-auto text-xs opacity-60">F8</span>
+                    <span class="ml-auto text-ui-sm opacity-60">F8</span>
                 </button>
             {/if}
 
             {#if canAddMulti}
-                <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddAllToDictionary}>
+                <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddAllToDictionary}>
                     <BookText size={14} />
                     <span>Add All to Dictionary</span>
                 </button>
