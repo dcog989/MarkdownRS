@@ -31,7 +31,7 @@
         }
 
         // Tab Navigation
-        if (e.ctrlKey && appState.tabNavigationMode === "arrow-keys") {
+        if (e.ctrlKey) {
             if (e.key === "PageUp" || e.key === "PageDown") {
                 e.preventDefault();
                 e.stopPropagation();
@@ -106,18 +106,11 @@
                 case "t":
                     e.preventDefault();
                     e.stopPropagation();
-                    // Handled by Titlebar event listener usually, but we can't easily reach it.
-                    // Titlebar adds its own listener. We just prevent default here if needed
-                    // or let Titlebar handle it.
-                    // Given previous code in Titlebar.svelte handles 't', we just leave it or ensuring it propagates?
-                    // Titlebar uses 'window.addEventListener' (bubbling), this is capture.
-                    // If we want Titlebar to handle 'T', we shouldn't stopPropagation here unless we handle it.
-                    // Titlebar handles it.
+                    // Handled by Titlebar event listener
                     break;
             }
         }
     }
-
     onMount(() => {
         (async () => {
             try {

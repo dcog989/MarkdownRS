@@ -1,6 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
-import { debounce } from './async';
 import { Store } from '@tauri-apps/plugin-store';
+import { debounce } from './async';
 
 let store: Store | null = null;
 
@@ -19,12 +19,12 @@ export async function initSettings() {
             splitOrientation: 'vertical' | 'horizontal';
             splitView: boolean;
             tabCycling: 'mru' | 'sequential';
-            tabNavigationMode: 'arrow-keys' | 'disabled';
             tabWidthMin: number;
             tabWidthMax: number;
             editorFontFamily: string;
             editorFontSize: number;
             editorWordWrap: boolean;
+            enableAutocomplete: boolean;
             previewFontFamily: string;
             previewFontSize: number;
             logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error';
@@ -47,7 +47,6 @@ export async function initSettings() {
             if (saved.splitOrientation) appState.splitOrientation = saved.splitOrientation;
             if (typeof saved.splitView === 'boolean') appState.splitView = saved.splitView;
             if (saved.tabCycling) appState.tabCycling = saved.tabCycling;
-            if (saved.tabNavigationMode) appState.tabNavigationMode = saved.tabNavigationMode;
 
             if (saved.tabWidthMin) appState.tabWidthMin = saved.tabWidthMin;
             if (saved.tabWidthMax) appState.tabWidthMax = saved.tabWidthMax;
@@ -55,6 +54,7 @@ export async function initSettings() {
             if (saved.editorFontFamily) appState.editorFontFamily = saved.editorFontFamily;
             if (saved.editorFontSize) appState.editorFontSize = saved.editorFontSize;
             if (saved.editorWordWrap !== undefined) appState.editorWordWrap = saved.editorWordWrap;
+            if (saved.enableAutocomplete !== undefined) appState.enableAutocomplete = saved.enableAutocomplete;
             if (saved.previewFontFamily) appState.previewFontFamily = saved.previewFontFamily;
             if (saved.previewFontSize) appState.previewFontSize = saved.previewFontSize;
             if (saved.logLevel) appState.logLevel = saved.logLevel;
@@ -87,12 +87,12 @@ async function saveSettingsImmediate() {
             splitOrientation: appState.splitOrientation,
             splitView: appState.splitView,
             tabCycling: appState.tabCycling,
-            tabNavigationMode: appState.tabNavigationMode,
             tabWidthMin: appState.tabWidthMin,
             tabWidthMax: appState.tabWidthMax,
             editorFontFamily: appState.editorFontFamily,
             editorFontSize: appState.editorFontSize,
             editorWordWrap: appState.editorWordWrap,
+            enableAutocomplete: appState.enableAutocomplete,
             previewFontFamily: appState.previewFontFamily,
             previewFontSize: appState.previewFontSize,
             logLevel: appState.logLevel,

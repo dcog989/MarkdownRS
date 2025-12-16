@@ -16,6 +16,7 @@
         "bump": "node scripts/bump.js"
     },
     "dependencies": {
+        "@codemirror/autocomplete": "^6.20",
         "@codemirror/commands": "^6.10",
         "@codemirror/lang-markdown": "^6.5",
         "@codemirror/language": "^6.11",

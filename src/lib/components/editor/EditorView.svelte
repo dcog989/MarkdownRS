@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
@@ -34,8 +35,11 @@
 
     let editorContainer: HTMLDivElement;
     let view = $state<EditorView>();
+
+    // Compartments for dynamic reconfiguration
     let themeCompartment = new Compartment();
     let lineWrappingCompartment = new Compartment();
+    let autocompleteCompartment = new Compartment();
 
     // Timer refs
     let contentUpdateTimer: number | null = null;
@@ -55,30 +59,47 @@
         }
     }
 
-    // FIX: Memoize theme generation to avoid recreation on every reactivity trigger
+    // Autocomplete Source: Simple Buffer Completion
+    function completeFromBuffer(context: CompletionContext) {
+        const word = context.matchBefore(/\w+/);
+        if (!word || (word.from === word.to && !context.explicit)) return null;
+        if (word.text.length < 3) return null; // Minimum length to trigger
+
+        const text = context.state.doc.toString();
+        const options = new Set<string>();
+        // Match words with 3+ chars
+        const re = /\w{3,}/g;
+        let m;
+        while ((m = re.exec(text))) {
+            if (m[0] !== word.text) options.add(m[0]);
+        }
+
+        return {
+            from: word.from,
+            options: Array.from(options).map((label) => ({ label, type: "text" })),
+            validFor: /^\w*$/,
+        };
+    }
+
+    // Memoize theme generation
     let lastFontSize = 0;
-    let lastFontFamily = '';
-    let lastInsertMode: 'INS' | 'OVR' = 'INS';
+    let lastFontFamily = "";
+    let lastInsertMode: "INS" | "OVR" = "INS";
     let cachedTheme: any = null;
-    
+
     function getTheme() {
         const fontSize = appState.editorFontSize || 14;
         const fontFamily = appState.editorFontFamily || "monospace";
         const insertMode = editorStore.activeMetrics.insertMode;
-        
-        // Return cached theme if nothing changed
-        if (cachedTheme && 
-            fontSize === lastFontSize && 
-            fontFamily === lastFontFamily && 
-            insertMode === lastInsertMode) {
+
+        if (cachedTheme && fontSize === lastFontSize && fontFamily === lastFontFamily && insertMode === lastInsertMode) {
             return cachedTheme;
         }
-        
-        // Update cache
+
         lastFontSize = fontSize;
         lastFontFamily = fontFamily;
         lastInsertMode = insertMode;
-        
+
         cachedTheme = EditorView.theme({
             "&": {
                 height: "100%",
@@ -118,12 +139,34 @@
                 position: "relative",
                 zIndex: "1",
             },
+            // Autocomplete Tooltip Styling
+            ".cm-tooltip": {
+                backgroundColor: "var(--bg-panel) !important",
+                border: "1px solid var(--border-light) !important",
+                color: "var(--fg-default) !important",
+                borderRadius: "6px !important",
+                zIndex: "100",
+                animation: "cm-tooltip-fade-in 0.2s cubic-bezier(0.2, 0, 0.2, 1)",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            },
+            ".cm-tooltip-autocomplete > ul > li": {
+                padding: "4px 8px !important",
+                fontFamily: "var(--font-sans)",
+                fontSize: "0.9em",
+            },
+            ".cm-tooltip-autocomplete > ul > li[aria-selected]": {
+                backgroundColor: "var(--accent-primary) !important",
+                color: "var(--fg-inverse) !important",
+            },
+            ".cm-completionIcon": {
+                display: "none", // Hide icons for cleaner look
+            },
         });
-        
+
         return cachedTheme;
     }
 
-    // Effect to handle Theme and Font changes
+    // Effect: Theme and Font changes
     $effect(() => {
         const newTheme = getTheme();
         if (view) {
@@ -133,12 +176,22 @@
         }
     });
 
-    // Effect to handle word wrap changes
+    // Effect: Word wrap changes
     $effect(() => {
         const wordWrap = appState.editorWordWrap;
         if (view) {
             view.dispatch({
                 effects: lineWrappingCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : []),
+            });
+        }
+    });
+
+    // Effect: Autocomplete enable/disable
+    $effect(() => {
+        const enable = appState.enableAutocomplete;
+        if (view) {
+            view.dispatch({
+                effects: autocompleteCompartment.reconfigure(enable ? autocompletion({ override: [completeFromBuffer] }) : []),
             });
         }
     });
@@ -178,19 +231,22 @@
         ];
 
         const extensions = [
-            lineNumbers(), 
-            highlightActiveLineGutter(), 
-            history(), 
-            search({ top: true }), 
-            highlightSelectionMatches(), 
-            keymap.of([...builtInKeymap, ...customKeymap, ...defaultKeymap, ...historyKeymap]), 
-            oneDark, 
-            spellCheckLinter, 
-            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), 
-            EditorView.contentAttributes.of({ spellcheck: "false" }), 
-            inputHandler, 
-            eventHandlers, 
-            themeCompartment.of(getTheme())
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            history(),
+            search({ top: true }),
+            highlightSelectionMatches(),
+            // Autocomplete compartment
+            autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []),
+            closeBrackets(),
+            keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
+            oneDark,
+            spellCheckLinter,
+            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
+            EditorView.contentAttributes.of({ spellcheck: "false" }),
+            inputHandler,
+            eventHandlers,
+            themeCompartment.of(getTheme()),
         ];
 
         if (!filename.endsWith(".txt")) {
@@ -199,14 +255,7 @@
 
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-                // Check if user event to trigger debounce
-                const isUserUpdate = update.transactions.some((tr) => 
-                    tr.isUserEvent("input") || 
-                    tr.isUserEvent("delete") || 
-                    tr.isUserEvent("undo") || 
-                    tr.isUserEvent("redo") || 
-                    tr.isUserEvent("move")
-                );
+                const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
 
                 if (isUserUpdate) {
                     if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
@@ -215,14 +264,13 @@
                         contentUpdateTimer = null;
                     }, CONTENT_UPDATE_DEBOUNCE_MS);
                 } else {
-                    // Immediate update for non-user events (like paste operations)
                     if (contentUpdateTimer !== null) {
                         clearTimeout(contentUpdateTimer);
                         contentUpdateTimer = null;
                     }
                 }
             }
-            
+
             if (update.docChanged || update.selectionSet) {
                 if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
                 metricsUpdateTimer = window.setTimeout(() => {
