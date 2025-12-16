@@ -10,11 +10,12 @@
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
     import { transformText } from "$lib/utils/textTransforms";
     import { EditorView as CM6EditorView } from "@codemirror/view";
-    import { onDestroy, onMount, untrack } from "svelte";
+    import { onDestroy, onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let editorViewComponent = $state<any>(null);
+    let findReplacePanel = $state<any>(null);
     let scrollDOM = $state<HTMLElement | null>(null);
     let previousTabId: string = "";
     let isRemoteScrolling = false;
@@ -203,23 +204,21 @@
         },
     });
 
-    // Custom keymap for Ctrl+F
-    const findReplaceKeymap = [
-        {
-            key: "Mod-f",
-            run: () => {
-                showFindReplace = !showFindReplace;
-                return true;
-            },
-        },
-        {
-            key: "Mod-h",
-            run: () => {
-                showFindReplace = true;
-                return true;
-            },
-        },
-    ];
+    async function handleGlobalFind() {
+        if (appState.activeTabId !== tabId) return;
+        showFindReplace = true;
+        await tick();
+        findReplacePanel?.setReplaceMode(false);
+        findReplacePanel?.focusInput();
+    }
+
+    async function handleGlobalReplace() {
+        if (appState.activeTabId !== tabId) return;
+        showFindReplace = true;
+        await tick();
+        findReplacePanel?.setReplaceMode(true);
+        findReplacePanel?.focusInput();
+    }
 
     $effect(() => {
         if (tabId !== previousTabId) {
@@ -300,14 +299,22 @@
         initSpellcheck();
         editorStore.registerTextOperationCallback(handleTextOperation);
 
+        // Listen for global Find/Replace events
+        window.addEventListener("open-find", handleGlobalFind);
+        window.addEventListener("open-replace", handleGlobalReplace);
+
         return () => {
             editorStore.unregisterTextOperationCallback();
+            window.removeEventListener("open-find", handleGlobalFind);
+            window.removeEventListener("open-replace", handleGlobalReplace);
             if (scrollDebounce) clearTimeout(scrollDebounce);
         };
     });
 
     onDestroy(() => {
         editorStore.unregisterTextOperationCallback();
+        window.removeEventListener("open-find", handleGlobalFind);
+        window.removeEventListener("open-replace", handleGlobalReplace);
         if (scrollDebounce) clearTimeout(scrollDebounce);
     });
 
@@ -319,8 +326,8 @@
     let initialContent = $derived(currentTab?.content || "");
     let filename = $derived(currentTab?.title || "");
 
-    // Combine all keymaps
-    let combinedKeymap = $derived([...findReplaceKeymap, ...spellCheckKeymap]);
+    // Combined keymap - removed Mod-f/Mod-h as they are handled globally
+    let combinedKeymap = $derived([...spellCheckKeymap]);
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
@@ -330,7 +337,7 @@
         <CustomScrollbar viewport={scrollDOM} />
     {/if}
 
-    <FindReplacePanel bind:isOpen={showFindReplace} editorView={editorViewComponent} />
+    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={showFindReplace} editorView={editorViewComponent} />
 </div>
 
 {#if showContextMenu}

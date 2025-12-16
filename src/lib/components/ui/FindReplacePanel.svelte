@@ -6,6 +6,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
+    import { tick } from "svelte";
 
     let { isOpen = $bindable(false), editorView } = $props<{
         isOpen?: boolean;
@@ -19,19 +20,36 @@
     let useRegex = $state(false);
     let searchScope = $state<"current" | "all">("current");
     let isReplaceMode = $state(false);
+    let searchInputRef = $state<HTMLInputElement>();
 
     // Results
     let currentMatches = $state<number>(0);
     let currentIndex = $state<number>(0);
     let allTabsResults = $state<Map<string, number>>(new Map());
 
+    export function focusInput() {
+        if (searchInputRef) {
+            searchInputRef.focus();
+            searchInputRef.select();
+        }
+    }
+
+    export function setReplaceMode(enable: boolean) {
+        isReplaceMode = enable;
+    }
+
+    $effect(() => {
+        if (isOpen) {
+            tick().then(() => {
+                focusInput();
+            });
+        }
+    });
+
     function close() {
         isOpen = false;
-        findText = "";
-        replaceText = "";
-        currentMatches = 0;
-        currentIndex = 0;
-        allTabsResults.clear();
+        // Don't clear text immediately to allow reopening with same query
+        if (editorView) editorView.getView()?.focus();
     }
 
     function buildSearchRegex(text: string): RegExp | null {
@@ -248,6 +266,7 @@
 
     function handleKeydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
+            e.stopPropagation();
             close();
         } else if (e.key === "Enter") {
             if (e.shiftKey) {
@@ -259,8 +278,14 @@
                     findNext();
                 }
             }
-        } else if (e.key === "f" && e.ctrlKey) {
+        } else if ((e.key === "f" || e.key === "h") && (e.ctrlKey || e.metaKey)) {
+            // Trap these to prevent browser find from activating while focused here
             e.preventDefault();
+            e.stopPropagation();
+            if (e.key === "h") {
+                isReplaceMode = true;
+            }
+            focusInput();
         }
     }
 
@@ -290,7 +315,7 @@
         <div class="panel-content">
             <!-- Find Input -->
             <div class="input-row">
-                <input type="text" bind:value={findText} placeholder="Find" class="search-input" oninput={handleSearch} />
+                <input bind:this={searchInputRef} type="text" bind:value={findText} placeholder="Find" class="search-input" oninput={handleSearch} />
                 <div class="result-indicator">
                     {#if searchScope === "current" && currentMatches > 0}
                         {currentIndex + 1} of {currentMatches}
