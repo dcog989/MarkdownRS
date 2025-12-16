@@ -317,10 +317,18 @@
             <div class="input-row">
                 <input bind:this={searchInputRef} type="text" bind:value={findText} placeholder="Find" class="search-input" oninput={handleSearch} />
                 <div class="result-indicator">
-                    {#if searchScope === "current" && currentMatches > 0}
-                        {currentIndex + 1} of {currentMatches}
-                    {:else if searchScope === "all" && allTabsResults.size > 0}
-                        {allTabsResults.size} tabs
+                    {#if searchScope === "current"}
+                        {#if currentMatches > 0}
+                            {currentIndex + 1} of {currentMatches}
+                        {:else if findText}
+                            0 of 0
+                        {/if}
+                    {:else if searchScope === "all"}
+                        {#if allTabsResults.size > 0}
+                            {allTabsResults.size} tabs
+                        {:else if findText}
+                            0 tabs
+                        {/if}
                     {/if}
                 </div>
             </div>
