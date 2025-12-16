@@ -1,21 +1,20 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { ChevronDown, Plus } from "lucide-svelte";
     import { onMount, tick } from "svelte";
+    import { dndzone, type DndEvent } from "svelte-dnd-action";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabButton from "./TabButton.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
     import TabDropdown from "./TabDropdown.svelte";
 
-    let scrollContainer: HTMLDivElement;
+    let scrollContainer = $state<HTMLElement>();
     let showDropdown = $state(false);
     let currentTime = $state(Date.now());
 
-    let draggedTabId: string | null = $state(null);
-    let draggedOverTabId: string | null = $state(null);
     let contextMenuTabId: string | null = $state(null);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
@@ -160,51 +159,6 @@
         contextMenuY = e.clientY;
     }
 
-    function handleDragStart(e: DragEvent, tabId: string) {
-        if (!e.dataTransfer) return;
-        draggedTabId = tabId;
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", tabId);
-    }
-
-    function handleDragOver(e: DragEvent, tabId: string) {
-        if (!draggedTabId || draggedTabId === tabId) return;
-        draggedOverTabId = tabId;
-    }
-
-    function handleDragEnter(e: DragEvent, tabId: string) {
-        if (!draggedTabId || draggedTabId === tabId) return;
-        draggedOverTabId = tabId;
-    }
-
-    function handleDragLeave(e: DragEvent, tabId: string) {
-        if (draggedOverTabId === tabId) draggedOverTabId = null;
-    }
-
-    function handleDrop(e: DragEvent, targetTabId: string) {
-        if (!draggedTabId || draggedTabId === targetTabId) {
-            draggedTabId = null;
-            draggedOverTabId = null;
-            return;
-        }
-        const fromIndex = editorStore.tabs.findIndex((t) => t.id === draggedTabId);
-        const toIndex = editorStore.tabs.findIndex((t) => t.id === targetTabId);
-        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
-            const tabs = [...editorStore.tabs];
-            const [movedTab] = tabs.splice(fromIndex, 1);
-            tabs.splice(toIndex, 0, movedTab);
-            editorStore.tabs = tabs;
-            editorStore.sessionDirty = true;
-        }
-        draggedTabId = null;
-        draggedOverTabId = null;
-    }
-
-    function handleDragEnd() {
-        draggedTabId = null;
-        draggedOverTabId = null;
-    }
-
     function toggleDropdown() {
         showDropdown = !showDropdown;
     }
@@ -221,8 +175,14 @@
 
     let tabCount = $derived(editorStore.tabs.length);
 
-    function getTabNumber(tabId: string): number {
-        return editorStore.tabs.findIndex((t) => t.id === tabId) + 1;
+    // Svelte DND Action Handlers
+    function handleDndConsider(e: CustomEvent<DndEvent<EditorTab>>) {
+        editorStore.tabs = e.detail.items;
+    }
+
+    function handleDndFinalize(e: CustomEvent<DndEvent<EditorTab>>) {
+        editorStore.tabs = e.detail.items;
+        editorStore.sessionDirty = true;
     }
 </script>
 
@@ -235,14 +195,36 @@
         <TabDropdown isOpen={showDropdown} onSelect={handleDropdownSelect} onClose={toggleDropdown} />
     </div>
 
-    <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container">
+    <!--
+        dndzone container.
+        Note: svelte-dnd-action manages the items array order via events.
+        We apply dndzone to the whole list.
+    -->
+    <section
+        bind:this={scrollContainer}
+        class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container"
+        use:dndzone={{
+            items: editorStore.tabs,
+            type: "tabs",
+            flipDurationMs: 200,
+            dropTargetStyle: {}, // Remove default outline
+        }}
+        onconsider={handleDndConsider}
+        onfinalize={handleDndFinalize}
+    >
         {#each editorStore.tabs as tab (tab.id)}
-            <TabButton {tab} isActive={appState.activeTabId === tab.id} index={getTabNumber(tab.id)} {draggedTabId} {draggedOverTabId} {currentTime} onclick={(id) => handleTabClick(id)} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} ondragstart={handleDragStart} ondragover={handleDragOver} ondragenter={handleDragEnter} ondragleave={handleDragLeave} ondrop={handleDrop} ondragend={handleDragEnd} />
+            <!-- svelte-dnd-action requires immediate children to be the items -->
+            <!-- animate:flip is handled by the action internally for position swapping -->
+            <div class="h-full flex items-end">
+                <TabButton {tab} isActive={appState.activeTabId === tab.id} {currentTime} onclick={(id) => handleTabClick(id)} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} />
+            </div>
         {/each}
+
+        <!-- New Tab Button is separate from drag zone flow, appended at end -->
         <button class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-[var(--fg-muted)] shrink-0" onclick={handleNewTab}>
             <Plus size={16} />
         </button>
-    </div>
+    </section>
 </div>
 
 {#if contextMenuTabId}
@@ -261,6 +243,7 @@
     }
     .tab-bar-container,
     .tab-scroll-container {
-        -webkit-app-region: no-drag;
+        /* dndzone needs to be able to capture events */
+        pointer-events: auto;
     }
 </style>

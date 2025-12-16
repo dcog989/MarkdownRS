@@ -27,7 +27,7 @@
         "@codemirror/theme-one-dark": "^6.1",
         "@codemirror/view": "^6.38",
         "@tailwindcss/postcss": "^4.1",
-        "@tailwindcss/typography": "^0.5.19",
+        "@tailwindcss/typography": "^0.5",
         "@tauri-apps/api": "^2.9",
         "@tauri-apps/plugin-dialog": "^2.4",
         "@tauri-apps/plugin-fs": "^2.4",
@@ -42,6 +42,7 @@
         "dompurify": "^3.3",
         "lucide-svelte": "^0.555",
         "marked": "^17.0",
+        "svelte-dnd-action": "^0.9",
         "tailwind-merge": "^3.4",
         "tailwindcss": "^4.1"
     },
