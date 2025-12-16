@@ -2,8 +2,8 @@
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
-    import { isWordValid } from "$lib/utils/spellcheck";
-    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Wand2, WrapText } from "lucide-svelte";
+    import { getSuggestions, isWordValid } from "$lib/utils/spellcheck";
+    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Sparkles, Wand2, WrapText } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
     let {
@@ -14,6 +14,7 @@
         onClose,
         onDictionaryUpdate,
         onPaste,
+        onReplaceWord,
     } = $props<{
         x: number;
         y: number;
@@ -22,16 +23,28 @@
         onClose: () => void;
         onDictionaryUpdate?: () => void;
         onPaste?: () => void;
+        onReplaceWord?: (newWord: string) => void;
     }>();
 
     // Submenu state
     let showSortMenu = $state(false);
     let showCaseMenu = $state(false);
     let showTransformMenu = $state(false);
+    let suggestions = $state<string[]>([]);
 
     let menuEl = $state<HTMLDivElement>();
     let submenuSide = $state<"left" | "right">("right");
     let resizeObserver: ResizeObserver | null = null;
+
+    $effect(() => {
+        // Calculate suggestions when menu opens
+        if (wordUnderCursor && !selectedText && !isWordValid(wordUnderCursor)) {
+            // Defer slightly to allow UI to mount, though synchronous is fine here
+            suggestions = getSuggestions(wordUnderCursor);
+        } else {
+            suggestions = [];
+        }
+    });
 
     function updatePosition() {
         if (!menuEl) return;
@@ -88,7 +101,7 @@
     });
 
     $effect(() => {
-        const _ = { x, y, selectedText };
+        const _ = { x, y, selectedText, suggestions }; // React to suggestions changing size
         if (menuEl) updatePosition();
     });
 
@@ -147,10 +160,16 @@
         onClose();
     }
 
+    function handleSuggestionClick(suggestion: string) {
+        if (onReplaceWord) {
+            onReplaceWord(suggestion);
+        }
+        onClose();
+    }
+
     const targetWord = $derived(selectedText ? selectedText.trim() : wordUnderCursor?.trim());
 
     // Clean target word for single-word validity check
-    // Remove leading/trailing non-alpha chars (punctuation)
     const cleanTarget = $derived(targetWord ? targetWord.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, "") : "");
 
     // 1. Single Word Add: Valid format AND not in dictionary
@@ -174,13 +193,11 @@
     }
 
     function handleFormatSelection() {
-        // This will format only the selected text
         editorStore.performTextTransform("format-document");
         onClose();
     }
 
     function handleFormatDocument() {
-        // Format entire document
         editorStore.performTextTransform("format-document");
         onClose();
     }
@@ -203,6 +220,17 @@
         role="menu"
         tabindex="-1"
     >
+        {#if suggestions.length > 0}
+            <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide opacity-50" style="color: var(--fg-muted);">Suggestions</div>
+            {#each suggestions as suggestion}
+                <button type="button" class="w-full text-left px-4 py-2 text-sm font-medium hover:bg-white/10 flex items-center gap-2" style="color: var(--fg-default);" onclick={() => handleSuggestionClick(suggestion)}>
+                    <Sparkles size={14} class="text-[var(--accent-secondary)]" />
+                    <span>{suggestion}</span>
+                </button>
+            {/each}
+            <div class="h-px my-1" style="background-color: var(--border-main);"></div>
+        {/if}
+
         {#if selectedText}
             <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCut}>
                 <Scissors size={14} />

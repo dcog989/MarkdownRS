@@ -54,7 +54,7 @@ async function loadBaseDictionary(): Promise<void> {
         console.error('Failed to load base dictionary:', err);
         // Fallback to a minimal list if offline/failed
         baseDictionary = new Set([
-            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 
+            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
             'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
             'markdown', 'rust', 'tauri', 'svelte', 'typescript', 'javascript'
         ]);
@@ -64,7 +64,7 @@ async function loadBaseDictionary(): Promise<void> {
 function parseDictionary(text: string) {
     const words = text.split(/\r?\n/);
     baseDictionary = new Set();
-    
+
     // Filter and normalize words
     for (const word of words) {
         const trimmed = word.trim();
@@ -79,13 +79,9 @@ function parseDictionary(text: string) {
  * Initialize dictionaries (singleton pattern)
  */
 export async function initSpellcheck(): Promise<void> {
-    // Return existing initialization if in progress
     if (initPromise) return initPromise;
-    
-    // Already initialized
     if (dictionaryLoaded) return;
 
-    // Start new initialization
     initPromise = (async () => {
         try {
             await Promise.all([loadCustomDictionary(), loadBaseDictionary()]);
@@ -98,35 +94,107 @@ export async function initSpellcheck(): Promise<void> {
     return initPromise;
 }
 
-/**
- * Refresh the custom dictionary from disk
- */
 export async function refreshCustomDictionary(): Promise<void> {
     await loadCustomDictionary();
 }
 
-/**
- * Check if a word is valid (exists in base or custom dictionary)
- */
 export function isWordValid(word: string): boolean {
-    if (!dictionaryLoaded) return true; // Don't mark as error if still loading
+    if (!dictionaryLoaded) return true;
     const w = word.toLowerCase();
     return baseDictionary.has(w) || customDictionary.has(w);
 }
 
-/**
- * Get all words in the custom dictionary
- */
 export function getCustomDictionary(): Set<string> {
-    return new Set(customDictionary); // Return copy to prevent mutations
+    return new Set(customDictionary);
 }
 
-/**
- * Clear cached dictionaries (useful for testing)
- */
 export function clearDictionaries(): void {
     customDictionary.clear();
     baseDictionary.clear();
     dictionaryLoaded = false;
     initPromise = null;
+}
+
+/**
+ * Calculate Levenshtein distance between two strings
+ * Optimized for speed (early exit not included here to keep it simple, but strictly limited loop)
+ */
+function levenshtein(a: string, b: string): number {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix = [];
+
+    // increment along the first column of each row
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+
+    // increment each column in the first row
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    // Fill in the rest of the matrix
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    Math.min(
+                        matrix[i][j - 1] + 1, // insertion
+                        matrix[i - 1][j] + 1 // deletion
+                    )
+                );
+            }
+        }
+    }
+
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Get spelling suggestions for a word
+ * Limits search to avoid freezing the UI
+ */
+export function getSuggestions(word: string, maxSuggestions = 3): string[] {
+    if (!dictionaryLoaded || !word) return [];
+
+    const target = word.toLowerCase();
+    const candidates: { word: string; score: number }[] = [];
+    const maxDistance = 2; // Strict distance limit
+
+    // Performance optimization:
+    // Only check words that start with same letter (unless word is very short)
+    // and are within +/- 2 length difference
+    const checkFirstChar = target.length > 3;
+    const firstChar = target[0];
+
+    // Combine dictionaries for search
+    const allWords = [baseDictionary, customDictionary];
+
+    for (const dict of allWords) {
+        for (const candidate of dict) {
+            // Filter 1: Length check (very fast)
+            if (Math.abs(candidate.length - target.length) > maxDistance) continue;
+
+            // Filter 2: First char check (fast)
+            if (checkFirstChar && candidate[0] !== firstChar) continue;
+
+            // Calc distance (expensive)
+            const dist = levenshtein(target, candidate);
+
+            if (dist <= maxDistance) {
+                candidates.push({ word: candidate, score: dist });
+            }
+        }
+    }
+
+    // Sort by score (lower is better)
+    return candidates
+        .sort((a, b) => a.score - b.score)
+        .slice(0, maxSuggestions)
+        .map(c => c.word);
 }

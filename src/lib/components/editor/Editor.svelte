@@ -26,6 +26,9 @@
     let contextMenuY = $state(0);
     let contextSelectedText = $state("");
     let contextWordUnderCursor = $state("");
+    // Track location for spelling replacements
+    let contextWordFrom = $state(0);
+    let contextWordTo = $state(0);
 
     // Find/Replace panel state
     let showFindReplace = $state(false);
@@ -68,6 +71,18 @@
             }
         } catch (err) {
             console.error("Paste failed:", err);
+        }
+    }
+
+    function handleReplaceWord(newWord: string) {
+        const view = editorViewComponent?.getView();
+        if (view && contextWordFrom !== contextWordTo) {
+            view.dispatch({
+                changes: { from: contextWordFrom, to: contextWordTo, insert: newWord },
+                userEvent: "input.spellcheck",
+            });
+            // Force refresh to remove the red underline
+            refreshSpellcheck(view);
         }
     }
 
@@ -151,15 +166,22 @@
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
 
             let wordUnderCursor = "";
+            let from = 0;
+            let to = 0;
+
             if (!selectedText) {
                 const range = view.state.wordAt(selection.head);
                 if (range) {
                     wordUnderCursor = view.state.sliceDoc(range.from, range.to);
+                    from = range.from;
+                    to = range.to;
                 }
             }
 
             contextSelectedText = selectedText;
             contextWordUnderCursor = wordUnderCursor;
+            contextWordFrom = from;
+            contextWordTo = to;
             contextMenuX = event.clientX;
             contextMenuY = event.clientY;
             showContextMenu = true;
@@ -312,5 +334,5 @@
 </div>
 
 {#if showContextMenu}
-    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} onPaste={handlePaste} />
+    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} onPaste={handlePaste} onReplaceWord={handleReplaceWord} />
 {/if}
