@@ -153,7 +153,7 @@
                 </div>
 
                 <div class="mt-4 text-center">
-                    <p class="text-xs" style="color: var(--fg-muted);">Giants' Shoulders = Rust / Tauri / Svelte</p>
+                    <p class="text-xs" style="color: var(--fg-muted);">Giants' Shoulders = Rust / Tauri + Vite / Svelte</p>
                     <p class="text-xs mt-1" style="color: var(--fg-muted);">© 2025 MarkdownRS. All rights reserved.</p>
                 </div>
             </div>
