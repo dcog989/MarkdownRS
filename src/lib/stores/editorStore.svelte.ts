@@ -133,7 +133,19 @@ export class EditorStore {
             encoding: 'UTF-8'
         };
 
-        this.tabs = [...this.tabs, newTab];
+        if (appState.newTabPosition === 'right' && appState.activeTabId) {
+            const activeIndex = this.tabs.findIndex(t => t.id === appState.activeTabId);
+            if (activeIndex !== -1) {
+                const newTabs = [...this.tabs];
+                newTabs.splice(activeIndex + 1, 0, newTab);
+                this.tabs = newTabs;
+            } else {
+                this.tabs = [...this.tabs, newTab];
+            }
+        } else {
+            this.tabs = [...this.tabs, newTab];
+        }
+
         this.pushToMru(id);
         this.sessionDirty = true;
         return id;
