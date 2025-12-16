@@ -18,13 +18,13 @@
         { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: false },
-        { key: "lineEndingPreference", label: "Line Ending Preference", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
+        { key: "lineEndingPreference", label: "Line Ending", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
 
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
         { key: "previewFontSize", label: "Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
 
-        { key: "formatOnSave", label: "Auto-format on Save", type: "boolean", category: "Formatter", defaultValue: false },
-        { key: "formatOnPaste", label: "Auto-format on Paste", type: "boolean", category: "Formatter", defaultValue: false },
+        { key: "formatOnSave", label: "Format on Save", type: "boolean", category: "Formatter", defaultValue: false },
+        { key: "formatOnPaste", label: "Format on Paste", type: "boolean", category: "Formatter", defaultValue: false },
         { key: "formatterListIndent", label: "List Indentation (spaces)", type: "number", category: "Formatter", defaultValue: 2, min: 2, max: 8 },
         { key: "formatterBulletChar", label: "Bullet Character", type: "select", category: "Formatter", defaultValue: "-", options: ["-", "*", "+"] },
         { key: "formatterCodeFence", label: "Code Fence Style", type: "select", category: "Formatter", defaultValue: "```", options: ["```", "~~~"] },
@@ -32,14 +32,14 @@
 
         { key: "logLevel", label: "Log Level", type: "select", category: "Advanced", defaultValue: "info", options: ["trace", "debug", "info", "warn", "error"] },
 
-        { key: "tabWidthMin", label: "Tab Width: Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
-        { key: "tabWidthMax", label: "Tab Width: Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
-        { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "sequential", options: ["Sequential", "MRU"] },
+        { key: "tabWidthMin", label: "Tab Width Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
+        { key: "tabWidthMax", label: "Tab Width Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
+        { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "MRU", options: ["Sequential", "MRU"] },
         { key: "tabNavigationMode", label: "Tab Navigation (Ctrl+PgUp/PgDn)", type: "select", category: "Interface", defaultValue: "arrow-keys", options: ["arrow-keys", "disabled"], optionLabels: ["Enabled", "Disabled"] },
-        { key: "newTabPosition", label: "Open New Tabs", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
+        { key: "newTabPosition", label: "New Tab Position", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
         { key: "startupBehavior", label: "On Startup", type: "select", category: "Interface", defaultValue: "last-focused", options: ["first", "last-focused", "new"], optionLabels: ["Show First Tab", "Show Last Focused Tab", "Create New Tab"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
-        { key: "tooltipDelay", label: "UI: Tooltip Delay (ms)", type: "number", category: "Interface", defaultValue: 1000, min: 0, max: 5000 },
+        { key: "tooltipDelay", label: "Tooltip Delay (ms)", type: "number", category: "Interface", defaultValue: 1000, min: 0, max: 5000 },
     ];
 
     // Reset search on close
