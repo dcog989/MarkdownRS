@@ -45,9 +45,11 @@ export function setScrollPercentage(
     const targetScroll = Math.round(maxScroll * percentage);
     const currentScroll = element.scrollTop;
 
-    // Only sync if difference is significant (>1% of total scroll)
-    if (Math.abs(currentScroll - targetScroll) > maxScroll * 0.01) {
+    // Sync if difference is greater than 1 pixel (removes "steppiness" of 1% threshold)
+    if (Math.abs(currentScroll - targetScroll) > 1) {
         state.isRemoteScrolling = true;
+
+        // Use direct assignment for instant 1:1 tracking
         element.scrollTop = targetScroll;
 
         // Release lock after scroll event has fired
