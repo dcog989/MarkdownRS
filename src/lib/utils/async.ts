@@ -1,48 +1,8 @@
 /**
- * Debounce utility for delaying function execution
- * Prevents excessive function calls during rapid events
+ * Async utilities for managing timers and rate limiting
+ * Note: Deprecated - Use timing.ts instead for debounce/throttle
+ * This file is kept only for backward compatibility with TimerManager
  */
-
-type DebounceFunction = (...args: any[]) => void;
-
-export function debounce<T extends DebounceFunction>(
-    func: T,
-    wait: number
-): (...args: Parameters<T>) => void {
-    let timeout: number | null = null;
-
-    return function executedFunction(...args: Parameters<T>) {
-        const later = () => {
-            timeout = null;
-            func(...args);
-        };
-
-        if (timeout !== null) {
-            clearTimeout(timeout);
-        }
-
-        timeout = window.setTimeout(later, wait);
-    };
-}
-
-/**
- * Throttle utility for rate-limiting function execution
- * Ensures function is called at most once per specified interval
- */
-export function throttle<T extends DebounceFunction>(
-    func: T,
-    limit: number
-): (...args: Parameters<T>) => void {
-    let inThrottle: boolean = false;
-
-    return function executedFunction(...args: Parameters<T>) {
-        if (!inThrottle) {
-            func(...args);
-            inThrottle = true;
-            setTimeout(() => (inThrottle = false), limit);
-        }
-    };
-}
 
 /**
  * Creates a timer manager for handling multiple timeouts/intervals
@@ -89,3 +49,6 @@ export class TimerManager {
         this.intervals.clear();
     }
 }
+
+// Re-export from timing.ts to maintain compatibility
+export { debounce, throttle } from './timing';

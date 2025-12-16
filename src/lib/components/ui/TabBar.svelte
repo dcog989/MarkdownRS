@@ -5,7 +5,6 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { ChevronDown, Plus } from "lucide-svelte";
     import { onMount, tick } from "svelte";
-    import CustomScrollbar from "./CustomScrollbar.svelte";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabButton from "./TabButton.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -25,8 +24,6 @@
     let mruPopupTimeout: number | null = null;
     let mruCleanupTimeout: number | null = null;
     let tabKeyHeld = $state(false);
-
-
 
     onMount(() => {
         const appWindow = getCurrentWindow();
@@ -235,11 +232,7 @@
             <span>{tabCount}</span>
             <ChevronDown size={12} />
         </button>
-        <TabDropdown 
-            isOpen={showDropdown}
-            onSelect={handleDropdownSelect}
-            onClose={toggleDropdown}
-        />
+        <TabDropdown isOpen={showDropdown} onSelect={handleDropdownSelect} onClose={toggleDropdown} />
     </div>
 
     <div bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container">
@@ -269,9 +262,5 @@
     .tab-bar-container,
     .tab-scroll-container {
         -webkit-app-region: no-drag;
-    }
-    input::placeholder {
-        color: var(--fg-muted);
-        opacity: 0.5;
     }
 </style>

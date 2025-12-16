@@ -306,6 +306,7 @@ export async function checkFileExists(tabId: string): Promise<void> {
 
 /**
  * Load the saved session from the database
+ * FIX: Improved dirty state restoration to avoid race conditions
  */
 export async function loadSession(): Promise<void> {
     try {
@@ -314,15 +315,9 @@ export async function loadSession(): Promise<void> {
             const convertedTabs: EditorTab[] = rustTabs.map(t => {
                 const normalizedContent = normalizeLineEndings(t.content);
 
-                // Determine lastSavedContent state
-                // If DB says clean, then content is the baseline.
-                // If DB says dirty, we initially assume content=baseline to start clean
-                // (until/unless we verify differently from disk later).
-                let lastSaved = normalizedContent;
-                if (t.is_dirty) {
-                    // Force a diff to represent the dirty state visually immediately
-                    lastSaved = normalizedContent + " ";
-                }
+                // If tab has a path and is dirty, we'll fetch the saved version from disk
+                // For now, initialize with current content as baseline
+                const lastSaved = normalizedContent;
 
                 return {
                     id: t.id,
@@ -371,8 +366,11 @@ export async function loadSession(): Promise<void> {
                     appState.activeTabId = convertedTabs[0].id;
             }
 
+            // FIX: Batch process file operations to avoid race conditions
             // Restore true saved state from disk for dirty files with paths
-            convertedTabs.filter(t => t.path && t.isDirty).forEach(async (tab) => {
+            const dirtyTabsWithPath = convertedTabs.filter(t => t.path && t.isDirty);
+            
+            await Promise.all(dirtyTabsWithPath.map(async (tab) => {
                 try {
                     const result = await invoke<FileContent>('read_text_file', { path: tab.path! });
                     // Update the reference "clean" content from disk (normalized)
@@ -383,23 +381,22 @@ export async function loadSession(): Promise<void> {
                         storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
                     }
                 } catch (e) {
-                    console.warn(`Could not read original content for dirty tab ${tab.id}`);
+                    console.warn(`Could not read original content for dirty tab ${tab.id}:`, e);
                 }
-            });
+            }));
 
-            const checkPromises = convertedTabs
-                .filter(t => t.path)
-                .map(async (t) => {
-                    try {
-                        await refreshMetadata(t.id, t.path!);
-                        await checkFileExists(t.id);
-                    } catch (err) {
-                        console.error(`Failed to check tab ${t.id}:`, err);
-                    }
-                });
-
-            Promise.all(checkPromises).catch(err =>
-                console.error('Failed to check some tabs:', err)
+            // Check file existence for all tabs with paths
+            await Promise.all(
+                convertedTabs
+                    .filter(t => t.path)
+                    .map(async (t) => {
+                        try {
+                            await refreshMetadata(t.id, t.path!);
+                            await checkFileExists(t.id);
+                        } catch (err) {
+                            console.error(`Failed to check tab ${t.id}:`, err);
+                        }
+                    })
             );
         } else {
             const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');

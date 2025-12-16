@@ -1,6 +1,7 @@
 <script lang="ts">
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
+    import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { checkFileExists } from "$lib/utils/fileSystem";
@@ -13,7 +14,7 @@
     import EditorView from "./EditorView.svelte";
 
     let { tabId } = $props<{ tabId: string }>();
-    let editorViewComponent: any;
+    let editorViewComponent = $state<any>(null);
     let scrollDOM = $state<HTMLElement | null>(null);
     let previousTabId: string = "";
     let isRemoteScrolling = false;
@@ -25,6 +26,9 @@
     let contextMenuY = $state(0);
     let contextSelectedText = $state("");
     let contextWordUnderCursor = $state("");
+
+    // Find/Replace panel state
+    let showFindReplace = $state(false);
 
     // Initialize extensions
     const spellCheckLinter = createSpellCheckLinter();
@@ -38,10 +42,25 @@
             const text = await navigator.clipboard.readText();
             const view = editorViewComponent?.getView();
             if (view && text) {
+                let textToInsert = text;
+
+                if (appState.formatOnPaste) {
+                    try {
+                        textToInsert = formatMarkdown(text, {
+                            listIndent: appState.formatterListIndent || 2,
+                            bulletChar: appState.formatterBulletChar || "-",
+                            codeBlockFence: appState.formatterCodeFence || "```",
+                            tableAlignment: appState.formatterTableAlignment !== false,
+                        });
+                    } catch (err) {
+                        console.warn("Format on paste failed, using original text:", err);
+                    }
+                }
+
                 const selection = view.state.selection.main;
                 view.dispatch({
-                    changes: { from: selection.from, to: selection.to, insert: text },
-                    selection: { anchor: selection.from + text.length },
+                    changes: { from: selection.from, to: selection.to, insert: textToInsert },
+                    selection: { anchor: selection.from + textToInsert.length },
                     userEvent: "input.paste",
                     scrollIntoView: true,
                 });
@@ -58,23 +77,53 @@
 
         const state = view.state;
         const doc = state.doc;
-        const text = doc.toString();
+        const selection = state.selection.main;
+
+        const hasSelection = selection.from !== selection.to;
 
         let newText: string;
+        let from: number;
+        let to: number;
 
         if (operation.type === "format-document") {
-            newText = formatMarkdown(text, {
-                listIndent: appState.formatterListIndent || 2,
-                bulletChar: appState.formatterBulletChar || "-",
-                codeBlockFence: appState.formatterCodeFence || "```",
-                tableAlignment: appState.formatterTableAlignment !== false,
-            });
+            if (hasSelection) {
+                const selectedText = state.sliceDoc(selection.from, selection.to);
+                newText = formatMarkdown(selectedText, {
+                    listIndent: appState.formatterListIndent || 2,
+                    bulletChar: appState.formatterBulletChar || "-",
+                    codeBlockFence: appState.formatterCodeFence || "```",
+                    tableAlignment: appState.formatterTableAlignment !== false,
+                });
+                from = selection.from;
+                to = selection.to;
+            } else {
+                const text = doc.toString();
+                newText = formatMarkdown(text, {
+                    listIndent: appState.formatterListIndent || 2,
+                    bulletChar: appState.formatterBulletChar || "-",
+                    codeBlockFence: appState.formatterCodeFence || "```",
+                    tableAlignment: appState.formatterTableAlignment !== false,
+                });
+                from = 0;
+                to = doc.length;
+            }
         } else {
-            newText = transformText(text, operation.type);
+            if (hasSelection) {
+                const selectedText = state.sliceDoc(selection.from, selection.to);
+                newText = transformText(selectedText, operation.type);
+                from = selection.from;
+                to = selection.to;
+            } else {
+                const text = doc.toString();
+                newText = transformText(text, operation.type);
+                from = 0;
+                to = doc.length;
+            }
         }
 
         view.dispatch({
-            changes: { from: 0, to: doc.length, insert: newText },
+            changes: { from, to, insert: newText },
+            selection: { anchor: from + newText.length },
             userEvent: "input.complete",
         });
     }
@@ -132,6 +181,24 @@
         },
     });
 
+    // Custom keymap for Ctrl+F
+    const findReplaceKeymap = [
+        {
+            key: "Mod-f",
+            run: () => {
+                showFindReplace = !showFindReplace;
+                return true;
+            },
+        },
+        {
+            key: "Mod-h",
+            run: () => {
+                showFindReplace = true;
+                return true;
+            },
+        },
+    ];
+
     $effect(() => {
         if (tabId !== previousTabId) {
             const view = editorViewComponent?.getView();
@@ -174,8 +241,9 @@
                             }
                         }
                     }, 0);
+
+                    checkFileExists(tabId);
                 });
-                checkFileExists(tabId);
             }
             previousTabId = tabId;
         }
@@ -187,7 +255,7 @@
     $effect(() => {
         const target = targetScrollPercentage;
         const view = editorViewComponent?.getView();
-        if (!view || !view.scrollDOM) return;
+        if (!view || !view.scrollDOM || previousTabId === tabId) return;
 
         const dom = view.scrollDOM;
         const maxScroll = dom.scrollHeight - dom.clientHeight;
@@ -228,14 +296,19 @@
     let currentTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let initialContent = $derived(currentTab?.content || "");
     let filename = $derived(currentTab?.title || "");
+
+    // Combine all keymaps
+    let combinedKeymap = $derived([...findReplaceKeymap, ...spellCheckKeymap]);
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
-    <EditorView bind:this={editorViewComponent} {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} {spellCheckLinter} {inputHandler} {eventHandlers} onContentChange={(content) => editorStore.updateContent(tabId, content)} onMetricsChange={(metrics) => editorStore.updateMetrics(metrics)} />
+    <EditorView bind:this={editorViewComponent} {tabId} {initialContent} {filename} customKeymap={combinedKeymap} {spellCheckLinter} {inputHandler} {eventHandlers} onContentChange={(content) => editorStore.updateContent(tabId, content)} onMetricsChange={(metrics) => editorStore.updateMetrics(metrics)} />
 
     {#if scrollDOM}
         <CustomScrollbar viewport={scrollDOM} />
     {/if}
+
+    <FindReplacePanel bind:isOpen={showFindReplace} editorView={editorViewComponent} />
 </div>
 
 {#if showContextMenu}

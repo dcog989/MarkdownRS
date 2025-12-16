@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Submenu from "$lib/components/ui/Submenu.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
@@ -17,14 +18,12 @@
     let { tabId, x, y, onClose }: Props = $props();
 
     let menuEl = $state<HTMLDivElement>();
-    // Use untrack to explicitly initialize with the current prop value,
-    // acknowledging that subsequent prop changes are handled by the effect below.
     let adjustedX = $state(untrack(() => x));
     let adjustedY = $state(untrack(() => y));
     let submenuSide = $state<"left" | "right">("right");
+    let showCloseSubmenu = $state(false);
 
     $effect(() => {
-        // We depend on x and y here to update position if props change
         if (menuEl && (x || y)) {
             const rect = menuEl.getBoundingClientRect();
             const winWidth = window.innerWidth;
@@ -33,11 +32,9 @@
             let newX = x;
             let newY = y;
 
-            // Prevent overflowing right edge
             if (newX + rect.width > winWidth) {
                 newX = winWidth - rect.width - 5;
             }
-            // Prevent overflowing bottom edge
             if (newY + rect.height > winHeight) {
                 newY = winHeight - rect.height - 5;
             }
@@ -45,7 +42,6 @@
             adjustedX = newX;
             adjustedY = newY;
 
-            // Determine if submenu should open to the left
             if (newX + rect.width + 180 > winWidth) {
                 submenuSide = "left";
             } else {
@@ -200,6 +196,8 @@
         e.preventDefault();
         onClose();
     }}
+    role="dialog"
+    tabindex="-1"
 >
     <div
         bind:this={menuEl}
@@ -210,6 +208,7 @@
             background-color: var(--bg-panel);
             border-color: var(--border-light);
         "
+        role="menu"
     >
         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleSave}>Save</button>
         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleSaveAs}>Save As...</button>
@@ -230,28 +229,20 @@
 
         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleClose}>Close</button>
 
-        <div class="relative group">
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 flex items-center justify-between" style="color: var(--fg-default);">
-                <span>Close Many</span>
-                <span class="text-[10px]">›</span>
-            </button>
+        <Submenu bind:show={showCloseSubmenu} side={submenuSide}>
+            {#snippet trigger()}
+                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 flex items-center justify-between" style="color: var(--fg-default);">
+                    <span>Close Many</span>
+                    <span class="text-[10px]">›</span>
+                </button>
+            {/snippet}
 
-            <!-- Submenu -->
-            <div
-                class="absolute top-0 min-w-[180px] rounded-md shadow-xl border py-1 hidden group-hover:block"
-                style="
-                    background-color: var(--bg-panel);
-                    border-color: var(--border-light);
-                    {submenuSide === 'left' ? 'right: 100%; margin-right: 0.25rem;' : 'left: 100%; margin-left: 0.25rem;'}
-                "
-            >
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCloseAll}>Close All</button>
-            </div>
-        </div>
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCloseAll}>Close All</button>
+        </Submenu>
 
         <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {editorStore.closedTabsHistory.length > 0 ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={editorStore.closedTabsHistory.length === 0} onclick={handleReopenLast}>Reopen Last Closed</button>
 

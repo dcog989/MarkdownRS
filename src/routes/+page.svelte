@@ -31,9 +31,9 @@
             return;
         }
 
-        // Tab Navigation (Ctrl+Left/Right)
+        // FIX: Changed from Ctrl+Left/Right to Ctrl+PageUp/PageDown for tab navigation
         if (e.ctrlKey && appState.tabNavigationMode === "arrow-keys") {
-            if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            if (e.key === "PageUp" || e.key === "PageDown") {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -41,7 +41,7 @@
                 if (currentIndex === -1) return;
 
                 let newIndex;
-                if (e.key === "ArrowLeft") {
+                if (e.key === "PageUp") {
                     // Navigate to previous tab
                     newIndex = currentIndex - 1;
                     if (newIndex < 0) newIndex = editorStore.tabs.length - 1; // Wrap to end

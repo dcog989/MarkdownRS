@@ -10,7 +10,7 @@
 
 ## Standards
 
-Ensure that coding is correct to current standards for December 2025 for Svelte 5 / Runes, Tauri v2, Rust 2024 edition (v1.91), TS 5.9, etc.
+Ensure that coding is correct to current standards for December 2025 for Svelte 5 / Runes, Tauri v2, Rust 2024 edition (v1.9), TS 5.9, etc.
 
 ## Core Architecture Decisions
 

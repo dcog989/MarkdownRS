@@ -29,9 +29,17 @@
 
     let htmlContent = $state("");
     let renderDebounceTimer: number | null = null;
+    
+    // FIX: Memoize rendered content to avoid re-parsing identical markdown
+    let lastRenderedContent = '';
 
     // Debounced markdown rendering
     $effect(() => {
+        // Skip if content hasn't changed
+        if (content === lastRenderedContent && htmlContent) {
+            return;
+        }
+        
         if (renderDebounceTimer !== null) {
             clearTimeout(renderDebounceTimer);
         }
@@ -42,6 +50,7 @@
 
             if (!content || content.trim().length === 0) {
                 htmlContent = "";
+                lastRenderedContent = content;
                 isRendering = false;
                 renderErrorCount = 0;
                 return;
@@ -50,6 +59,7 @@
             try {
                 const rendered = await renderMarkdown(content);
                 htmlContent = rendered;
+                lastRenderedContent = content;
                 renderErrorCount = 0;
             } catch (e) {
                 renderErrorCount++;
@@ -70,6 +80,7 @@
                         <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
                     </div>`;
                 }
+                lastRenderedContent = content;
             } finally {
                 isRendering = false;
             }
@@ -171,7 +182,6 @@
     :global(.prose) {
         color: var(--fg-default);
     }
-    /* Updated: Removed margin-top: 0 to restore vertical spacing */
     :global(.prose h1),
     :global(.prose h2),
     :global(.prose h3),

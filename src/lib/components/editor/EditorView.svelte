@@ -55,12 +55,31 @@
         }
     }
 
+    // FIX: Memoize theme generation to avoid recreation on every reactivity trigger
+    let lastFontSize = 0;
+    let lastFontFamily = '';
+    let lastInsertMode: 'INS' | 'OVR' = 'INS';
+    let cachedTheme: any = null;
+    
     function getTheme() {
         const fontSize = appState.editorFontSize || 14;
         const fontFamily = appState.editorFontFamily || "monospace";
         const insertMode = editorStore.activeMetrics.insertMode;
-
-        return EditorView.theme({
+        
+        // Return cached theme if nothing changed
+        if (cachedTheme && 
+            fontSize === lastFontSize && 
+            fontFamily === lastFontFamily && 
+            insertMode === lastInsertMode) {
+            return cachedTheme;
+        }
+        
+        // Update cache
+        lastFontSize = fontSize;
+        lastFontFamily = fontFamily;
+        lastInsertMode = insertMode;
+        
+        cachedTheme = EditorView.theme({
             "&": {
                 height: "100%",
                 fontSize: `${fontSize}px`,
@@ -73,7 +92,6 @@
                 fontFamily: fontFamily,
                 overflow: "auto",
             },
-            // Adjusted selection style to be more robust
             ".cm-selectionBackground": {
                 backgroundColor: "rgba(100, 150, 255, 0.3) !important",
             },
@@ -101,6 +119,8 @@
                 zIndex: "1",
             },
         });
+        
+        return cachedTheme;
     }
 
     // Effect to handle Theme and Font changes
@@ -157,7 +177,21 @@
             },
         ];
 
-        const extensions = [lineNumbers(), highlightActiveLineGutter(), history(), search({ top: true }), highlightSelectionMatches(), keymap.of([...builtInKeymap, ...customKeymap, ...defaultKeymap, ...historyKeymap]), oneDark, spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), inputHandler, eventHandlers, themeCompartment.of(getTheme())];
+        const extensions = [
+            lineNumbers(), 
+            highlightActiveLineGutter(), 
+            history(), 
+            search({ top: true }), 
+            highlightSelectionMatches(), 
+            keymap.of([...builtInKeymap, ...customKeymap, ...defaultKeymap, ...historyKeymap]), 
+            oneDark, 
+            spellCheckLinter, 
+            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), 
+            EditorView.contentAttributes.of({ spellcheck: "false" }), 
+            inputHandler, 
+            eventHandlers, 
+            themeCompartment.of(getTheme())
+        ];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
@@ -166,7 +200,13 @@
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
                 // Check if user event to trigger debounce
-                const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
+                const isUserUpdate = update.transactions.some((tr) => 
+                    tr.isUserEvent("input") || 
+                    tr.isUserEvent("delete") || 
+                    tr.isUserEvent("undo") || 
+                    tr.isUserEvent("redo") || 
+                    tr.isUserEvent("move")
+                );
 
                 if (isUserUpdate) {
                     if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
@@ -175,12 +215,14 @@
                         contentUpdateTimer = null;
                     }, CONTENT_UPDATE_DEBOUNCE_MS);
                 } else {
+                    // Immediate update for non-user events (like paste operations)
                     if (contentUpdateTimer !== null) {
                         clearTimeout(contentUpdateTimer);
                         contentUpdateTimer = null;
                     }
                 }
             }
+            
             if (update.docChanged || update.selectionSet) {
                 if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
                 metricsUpdateTimer = window.setTimeout(() => {

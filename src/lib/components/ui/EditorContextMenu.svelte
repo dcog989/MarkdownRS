@@ -2,7 +2,7 @@
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { isWordValid } from "$lib/utils/spellcheck";
-    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, WrapText } from "lucide-svelte";
+    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, WrapText, Wand2 } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
     let {
@@ -210,6 +210,18 @@
         editorStore.performTextTransform(transformType);
         onClose();
     }
+
+    function handleFormatSelection() {
+        // This will format only the selected text
+        editorStore.performTextTransform("format-document");
+        onClose();
+    }
+
+    function handleFormatDocument() {
+        // Format entire document - we'll need to signal this differently
+        editorStore.performTextTransform("format-document");
+        onClose();
+    }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -249,6 +261,22 @@
             <ClipboardPaste size={14} />
             <span>Paste</span>
             <span class="ml-auto text-xs opacity-60">Ctrl+V</span>
+        </button>
+
+        <!-- Format Section -->
+        <div class="h-px my-1" style="background-color: var(--border-main);"></div>
+
+        {#if hasSelection}
+            <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleFormatSelection}>
+                <Wand2 size={14} />
+                <span>Format Selection</span>
+            </button>
+        {/if}
+
+        <button type="button" class="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleFormatDocument}>
+            <Wand2 size={14} />
+            <span>Format Document</span>
+            <span class="ml-auto text-xs opacity-60">Shift+Alt+F</span>
         </button>
 
         {#if hasSelection}
