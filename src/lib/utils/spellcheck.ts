@@ -98,10 +98,36 @@ export async function refreshCustomDictionary(): Promise<void> {
     await loadCustomDictionary();
 }
 
+/**
+ * Check if a word is valid, handling possessives
+ */
 export function isWordValid(word: string): boolean {
     if (!dictionaryLoaded) return true;
+    
     const w = word.toLowerCase();
-    return baseDictionary.has(w) || customDictionary.has(w);
+    
+    // Direct dictionary check
+    if (baseDictionary.has(w) || customDictionary.has(w)) {
+        return true;
+    }
+    
+    // Handle possessives: "repository's" -> check "repository"
+    if (w.endsWith("'s")) {
+        const base = w.slice(0, -2);
+        if (baseDictionary.has(base) || customDictionary.has(base)) {
+            return true;
+        }
+    }
+    
+    // Handle plural possessives: "repositories'" -> check "repositories" and "repository"
+    if (w.endsWith("'")) {
+        const base = w.slice(0, -1);
+        if (baseDictionary.has(base) || customDictionary.has(base)) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 export function getCustomDictionary(): Set<string> {
@@ -156,13 +182,23 @@ function levenshtein(a: string, b: string): number {
 }
 
 /**
- * Get spelling suggestions for a word
- * Limits search to avoid freezing the UI
+ * Get spelling suggestions for a word, handling possessives
  */
 export function getSuggestions(word: string, maxSuggestions = 3): string[] {
     if (!dictionaryLoaded || !word) return [];
 
-    const target = word.toLowerCase();
+    let target = word.toLowerCase();
+    let suffix = '';
+    
+    // Handle possessives - get suggestions for base word then add suffix back
+    if (target.endsWith("'s")) {
+        suffix = "'s";
+        target = target.slice(0, -2);
+    } else if (target.endsWith("'")) {
+        suffix = "'";
+        target = target.slice(0, -1);
+    }
+    
     const candidates: { word: string; score: number }[] = [];
     const maxDistance = 2; // Strict distance limit
 
@@ -187,7 +223,7 @@ export function getSuggestions(word: string, maxSuggestions = 3): string[] {
             const dist = levenshtein(target, candidate);
 
             if (dist <= maxDistance) {
-                candidates.push({ word: candidate, score: dist });
+                candidates.push({ word: candidate + suffix, score: dist });
             }
         }
     }

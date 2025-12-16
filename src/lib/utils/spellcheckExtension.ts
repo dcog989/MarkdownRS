@@ -10,8 +10,8 @@ import type { EditorView } from "@codemirror/view";
 export const createSpellCheckLinter = () => linter((view) => {
     const diagnostics: Diagnostic[] = [];
     const doc = view.state.doc;
-    // Matches pure alpha words. Words with numbers are naturally excluded.
-    const wordRegex = /\b[a-zA-Z']+\b/g;
+    // Matches pure alpha words with optional apostrophes for possessives/contractions
+    const wordRegex = /\b[a-zA-Z][a-zA-Z']*[a-zA-Z]\b|\b[a-zA-Z]\b/g;
     const text = doc.toString();
     const tree = syntaxTree(view.state);
 
@@ -30,18 +30,37 @@ export const createSpellCheckLinter = () => linter((view) => {
         if (
             nodeType.includes("Code") ||
             nodeType.includes("Url") ||
+            nodeType.includes("URL") ||
             nodeType.includes("Link") ||
-            nodeType.includes("Image")
+            nodeType.includes("Image") ||
+            nodeType.includes("Autolink")
         ) {
             continue;
         }
 
-        // 2. Mixed Case Check (CamelCase, PascalCase, iPhone)
+        // 2. URL Pattern Check (catches URLs that might not be in link syntax)
+        // Check if word is part of a URL pattern
+        const contextStart = Math.max(0, from - 20);
+        const contextEnd = Math.min(text.length, to + 20);
+        const context = text.slice(contextStart, contextEnd);
+        
+        // Common URL patterns
+        if (
+            context.includes('http://') ||
+            context.includes('https://') ||
+            context.includes('www.') ||
+            context.includes('://') ||
+            /[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(context) // domain pattern
+        ) {
+            continue;
+        }
+
+        // 3. Mixed Case Check (CamelCase, PascalCase, iPhone)
         if (/[a-z][A-Z]/.test(word)) {
             continue;
         }
 
-        // 3. Dictionary Check
+        // 4. Dictionary Check
         if (!isWordValid(word)) {
             diagnostics.push({
                 from,

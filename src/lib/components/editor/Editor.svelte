@@ -171,11 +171,24 @@
             let to = 0;
 
             if (!selectedText) {
-                const range = view.state.wordAt(selection.head);
+                // Get word at cursor position
+                let range = view.state.wordAt(selection.head);
                 if (range) {
-                    wordUnderCursor = view.state.sliceDoc(range.from, range.to);
                     from = range.from;
                     to = range.to;
+                    wordUnderCursor = view.state.sliceDoc(from, to);
+                    
+                    // Check if we clicked on just the possessive part ('s or ')
+                    // If so, expand to include the base word
+                    if (wordUnderCursor === "'s" || wordUnderCursor === "'") {
+                        // Look backwards for the actual word
+                        const prevRange = view.state.wordAt(from - 1);
+                        if (prevRange && prevRange.to === from) {
+                            // Found the base word right before the apostrophe
+                            from = prevRange.from;
+                            wordUnderCursor = view.state.sliceDoc(from, to);
+                        }
+                    }
                 }
             }
 

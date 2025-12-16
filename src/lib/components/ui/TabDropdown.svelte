@@ -108,7 +108,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-40" onclick={onClose}></div>
     <div 
-        class="absolute left-0 top-full mt-1 w-80 max-h-[calc(100vh-100px)] rounded-lg shadow-2xl border overflow-hidden flex flex-col z-50" 
+        class="absolute left-0 top-full mt-1 w-80 max-h-[400px] rounded-lg shadow-2xl border overflow-hidden flex flex-col z-50" 
         style="background-color: var(--bg-panel); border-color: var(--border-light);" 
         role="menu"
     >
@@ -125,7 +125,7 @@
         </div>
 
         <div class="relative min-h-0 flex-1">
-            <div bind:this={dropdownListRef} class="overflow-y-auto py-1 no-scrollbar relative h-full">
+            <div bind:this={dropdownListRef} class="overflow-y-auto py-1 relative h-full" style="scrollbar-width: thin;">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appState.activeTabId === tab.id}
@@ -159,13 +159,6 @@
 {/if}
 
 <style>
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
     input::placeholder {
         color: var(--fg-muted);
         opacity: 0.5;

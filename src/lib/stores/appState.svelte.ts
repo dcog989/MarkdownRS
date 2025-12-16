@@ -8,7 +8,7 @@ export class AppState {
     splitOrientation = $state<'vertical' | 'horizontal'>('vertical');
 
     // Preferences
-    tabCycling = $state<'mru' | 'sequential'>('sequential');
+    tabCycling = $state<'mru' | 'sequential'>('mru'); // Fixed: Default to MRU
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
     statusBarTransparency = $state(0); // 0 to 100
@@ -18,7 +18,7 @@ export class AppState {
     // Editor & Preview Settings
     editorFontFamily = $state("Consolas, 'Courier New', monospace");
     editorFontSize = $state(14);
-    editorWordWrap = $state(false); // Word wrap setting
+    editorWordWrap = $state(true); // Fixed: Default to true
     enableAutocomplete = $state(true);
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);

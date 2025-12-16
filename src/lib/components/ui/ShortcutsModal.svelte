@@ -28,7 +28,6 @@
         ],
         View: [
             { description: "Toggle split preview", shortcut: "Ctrl+\\" },
-            { description: "Search commands", shortcut: "Ctrl+Shift+P" },
             { description: "Command palette", shortcut: "Ctrl+P" },
         ],
         Help: [
@@ -57,7 +56,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--bg-backdrop);" onclick={handleBackdropClick}>
-        <div class="w-[800px] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--bg-panel); border-color: var(--border-light);">
+        <div class="w-fit max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--bg-panel); border-color: var(--border-light);">
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-4 border-b" style="background-color: var(--bg-header); border-color: var(--border-light);">
                 <div class="flex items-center gap-3">
@@ -80,11 +79,11 @@
                             </h3>
                             <div class="space-y-2">
                                 {#each shortcuts as shortcut}
-                                    <div class="flex items-center justify-between py-2 px-3 rounded hover:bg-white/5 transition-colors">
+                                    <div class="flex items-center justify-between py-2 px-3 rounded hover:bg-white/5 transition-colors min-w-[500px]">
                                         <span class="text-sm" style="color: var(--fg-default);">
                                             {shortcut.description}
                                         </span>
-                                        <kbd class="px-3 py-1.5 rounded text-xs font-mono font-semibold" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);">
+                                        <kbd class="px-3 py-1.5 rounded text-xs font-mono font-semibold whitespace-nowrap ml-8" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);">
                                             {shortcut.shortcut}
                                         </kbd>
                                     </div>

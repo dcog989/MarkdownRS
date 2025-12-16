@@ -59,8 +59,7 @@ fn main() {
             let window = app.get_webview_window("main").unwrap();
 
             // 1. Resolve Paths
-            // Use data_dir() (AppData/Roaming) and explicitly append "MarkdownRS"
-            // instead of app_data_dir() which uses the bundle identifier.
+            // Use data_dir() (AppData/Roaming on Windows) and explicitly append "MarkdownRS"
             let base_dir = app_handle
                 .path()
                 .data_dir()

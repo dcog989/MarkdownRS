@@ -30,7 +30,7 @@
     let htmlContent = $state("");
     let renderDebounceTimer: number | null = null;
     
-    // FIX: Memoize rendered content to avoid re-parsing identical markdown
+    // Memoize rendered content to avoid re-parsing identical markdown
     let lastRenderedContent = '';
 
     // Debounced markdown rendering
@@ -118,8 +118,14 @@
     });
 
     // Outgoing Scroll Sync: Preview -> Editor
+    // Fixed: properly check the lock state before updating
     function handleScroll() {
-        if (!container || scrollSyncState.isRemoteScrolling) return;
+        if (!container) return;
+        
+        // Don't update scroll if we're currently being remotely scrolled
+        if (scrollSyncState.isRemoteScrolling) {
+            return;
+        }
 
         const percentage = getScrollPercentage(container);
         editorStore.updateScroll(tabId, percentage);

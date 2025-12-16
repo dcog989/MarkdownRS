@@ -175,6 +175,10 @@
                 e.preventDefault();
                 showTransformModal = true;
             }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+                e.preventDefault();
+                openCommandPalette();
+            }
             if (e.key === "F1") {
                 e.preventDefault();
                 showShortcutsModal = true;
@@ -261,7 +265,7 @@
         <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--bg-input); color: var(--fg-muted); border: 1px solid var(--border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
             <Search size={12} />
             <span class="flex-1 text-left">Search commands...</span>
-            <span class="text-[10px] opacity-60">Ctrl+Shift+P</span>
+            <span class="text-[10px] opacity-60">Ctrl+P</span>
         </button>
     </div>
 
