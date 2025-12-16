@@ -24,6 +24,8 @@
     let mruCleanupTimeout: number | null = null;
     let tabKeyHeld = $state(false);
 
+    let isDragging = $state(false);
+
     onMount(() => {
         const appWindow = getCurrentWindow();
         let unlisten: (() => void) | undefined;
@@ -175,16 +177,25 @@
 
     let tabCount = $derived(editorStore.tabs.length);
 
-    // Svelte DND Action Handlers
     function handleDndConsider(e: CustomEvent<DndEvent<EditorTab>>) {
         editorStore.tabs = e.detail.items;
+        isDragging = true;
     }
 
     function handleDndFinalize(e: CustomEvent<DndEvent<EditorTab>>) {
         editorStore.tabs = e.detail.items;
         editorStore.sessionDirty = true;
+        isDragging = false;
     }
 </script>
+
+{#if isDragging}
+    <style>
+        body * {
+            cursor: grabbing !important;
+        }
+    </style>
+{/if}
 
 <div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--bg-panel); border-color: var(--border-main);">
     <div class="relative h-8 border-r border-[var(--border-main)]">
@@ -195,11 +206,6 @@
         <TabDropdown isOpen={showDropdown} onSelect={handleDropdownSelect} onClose={toggleDropdown} />
     </div>
 
-    <!--
-        dndzone container.
-        Note: svelte-dnd-action manages the items array order via events.
-        We apply dndzone to the whole list.
-    -->
     <section
         bind:this={scrollContainer}
         class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container"
@@ -207,24 +213,23 @@
             items: editorStore.tabs,
             type: "tabs",
             flipDurationMs: 200,
-            dropTargetStyle: {}, // Remove default outline
+            dropTargetStyle: {},
         }}
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
     >
         {#each editorStore.tabs as tab (tab.id)}
-            <!-- svelte-dnd-action requires immediate children to be the items -->
-            <!-- animate:flip is handled by the action internally for position swapping -->
             <div class="h-full flex items-end">
                 <TabButton {tab} isActive={appState.activeTabId === tab.id} {currentTime} onclick={(id) => handleTabClick(id)} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} />
             </div>
         {/each}
+    </section>
 
-        <!-- New Tab Button is separate from drag zone flow, appended at end -->
+    <div class="h-full flex items-end border-l border-[var(--border-main)]">
         <button class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-[var(--fg-muted)] shrink-0" onclick={handleNewTab}>
             <Plus size={16} />
         </button>
-    </section>
+    </div>
 </div>
 
 {#if contextMenuTabId}
@@ -243,7 +248,6 @@
     }
     .tab-bar-container,
     .tab-scroll-container {
-        /* dndzone needs to be able to capture events */
         pointer-events: auto;
     }
 </style>

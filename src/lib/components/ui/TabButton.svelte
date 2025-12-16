@@ -68,7 +68,7 @@
         border-radius: 4px 4px 0 0;
         min-width: 100px;
         max-width: 200px;
-        cursor: {tab.isPinned ? 'default' : 'default'};
+        cursor: default;
         user-select: none;
     "
     onclick={() => onclick?.(tab.id)}
