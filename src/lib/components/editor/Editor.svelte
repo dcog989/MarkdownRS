@@ -5,8 +5,8 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { checkFileExists } from "$lib/utils/fileSystem";
-    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage, setScrollPercentage } from "$lib/utils/scrollSync";
     import { formatMarkdown } from "$lib/utils/formatter";
+    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { initSpellcheck } from "$lib/utils/spellcheck";
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
     import { transformText } from "$lib/utils/textTransforms";
@@ -19,26 +19,27 @@
     let findReplacePanel = $state<any>(null);
     let scrollDOM = $state<HTMLElement | null>(null);
     let previousTabId: string = "";
-    
-    // Scroll sync state using shared utilities
+
     const scrollSyncState = createScrollSyncState();
     let scrollSyncFrame: number | null = null;
 
-    // Context menu state
+    // Interaction State guards
+    let isHovered = false;
+    let isFocused = false;
+
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
     let contextSelectedText = $state("");
     let contextWordUnderCursor = $state("");
-    // Track location for spelling replacements
     let contextWordFrom = $state(0);
     let contextWordTo = $state(0);
 
-    // Find/Replace panel state
     let showFindReplace = $state(false);
 
-    // Initialize extensions
     const spellCheckLinter = createSpellCheckLinter();
+
+    let currentTabState = $derived(editorStore.tabs.find((t) => t.id === tabId));
 
     function handleDictionaryUpdate() {
         refreshSpellcheck(editorViewComponent?.getView());
@@ -50,7 +51,6 @@
             const view = editorViewComponent?.getView();
             if (view && text) {
                 let textToInsert = text;
-
                 if (appState.formatOnPaste) {
                     try {
                         textToInsert = formatMarkdown(text, {
@@ -60,10 +60,9 @@
                             tableAlignment: appState.formatterTableAlignment !== false,
                         });
                     } catch (err) {
-                        console.warn("Format on paste failed, using original text:", err);
+                        console.warn("Format on paste failed:", err);
                     }
                 }
-
                 const selection = view.state.selection.main;
                 view.dispatch({
                     changes: { from: selection.from, to: selection.to, insert: textToInsert },
@@ -85,7 +84,6 @@
                 changes: { from: contextWordFrom, to: contextWordTo, insert: newWord },
                 userEvent: "input.spellcheck",
             });
-            // Force refresh to remove the red underline
             refreshSpellcheck(view);
         }
     }
@@ -93,13 +91,10 @@
     function handleTextOperation(operation: TextOperation) {
         const view = editorViewComponent?.getView();
         if (!view) return;
-
         const state = view.state;
         const doc = state.doc;
         const selection = state.selection.main;
-
         const hasSelection = selection.from !== selection.to;
-
         let newText: string;
         let from: number;
         let to: number;
@@ -139,7 +134,6 @@
                 to = doc.length;
             }
         }
-
         view.dispatch({
             changes: { from, to, insert: newText },
             selection: { anchor: from + newText.length },
@@ -168,33 +162,24 @@
             event.preventDefault();
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
-
             let wordUnderCursor = "";
             let from = 0;
             let to = 0;
-
             if (!selectedText) {
-                // Get word at cursor position
                 let range = view.state.wordAt(selection.head);
                 if (range) {
                     from = range.from;
                     to = range.to;
                     wordUnderCursor = view.state.sliceDoc(from, to);
-                    
-                    // Check if we clicked on just the possessive part ('s or ')
-                    // If so, expand to include the base word
                     if (wordUnderCursor === "'s" || wordUnderCursor === "'") {
-                        // Look backwards for the actual word
                         const prevRange = view.state.wordAt(from - 1);
                         if (prevRange && prevRange.to === from) {
-                            // Found the base word right before the apostrophe
                             from = prevRange.from;
                             wordUnderCursor = view.state.sliceDoc(from, to);
                         }
                     }
                 }
             }
-
             contextSelectedText = selectedText;
             contextWordUnderCursor = wordUnderCursor;
             contextWordFrom = from;
@@ -205,12 +190,26 @@
             return true;
         },
         scroll: (event, view) => {
-            // Don't update scroll if we're currently being remotely scrolled
+            // Guard: Only sync if this pane is being actively used
+            if (!isHovered && !isFocused && !scrollSyncState.isRemoteScrolling) return;
             if (scrollSyncState.isRemoteScrolling) return;
-            
+
             const dom = view.scrollDOM;
             const percentage = getScrollPercentage(dom);
-            editorStore.updateScroll(tabId, percentage);
+
+            const lineBlock = view.lineBlockAtHeight(dom.scrollTop);
+            const lineNum = view.state.doc.lineAt(lineBlock.from).number;
+
+            const progress = (dom.scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+            const preciseLine = lineNum + Math.max(0, Math.min(1, progress));
+
+            editorStore.updateScroll(tabId, percentage, preciseLine);
+        },
+        focus: () => {
+            isFocused = true;
+        },
+        blur: () => {
+            isFocused = false;
         },
     });
 
@@ -266,12 +265,24 @@
                             const dom = view.scrollDOM;
                             const maxScroll = dom.scrollHeight - dom.clientHeight;
                             if (maxScroll > 0) {
-                                scrollSyncState.isRemoteScrolling = true;
-                                dom.scrollTop = maxScroll * currentTab.scrollPercentage;
+                                if (currentTab.topLine && currentTab.topLine > 1) {
+                                    try {
+                                        const lineBlock = view.lineBlockAt(view.state.doc.line(Math.floor(currentTab.topLine)).from);
+                                        scrollSyncState.isRemoteScrolling = true;
+                                        dom.scrollTop = lineBlock.top;
+                                    } catch (e) {
+                                        scrollSyncState.isRemoteScrolling = true;
+                                        dom.scrollTop = maxScroll * currentTab.scrollPercentage;
+                                    }
+                                } else {
+                                    scrollSyncState.isRemoteScrolling = true;
+                                    dom.scrollTop = maxScroll * currentTab.scrollPercentage;
+                                }
+
                                 if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
                                 scrollSyncState.lockTimeout = window.setTimeout(() => {
                                     scrollSyncState.isRemoteScrolling = false;
-                                }, 50);
+                                }, 100);
                             }
                         }
                     }, 0);
@@ -283,53 +294,53 @@
         }
     });
 
-    let currentTabState = $derived(editorStore.tabs.find((t) => t.id === tabId));
-    let targetScrollPercentage = $derived(currentTabState?.scrollPercentage ?? 0);
-
-    // Incoming scroll sync from Preview -> Editor
     $effect(() => {
-        const target = targetScrollPercentage;
-        const view = editorViewComponent?.getView();
-        
-        // Don't sync on tab switch (that's handled above)
+        if (!editorViewComponent) return;
+        const view = editorViewComponent.getView();
         if (!view || !view.scrollDOM || previousTabId !== tabId) return;
 
-        const dom = view.scrollDOM;
+        const targetLine = currentTabState?.topLine;
 
-        if (scrollSyncFrame !== null) {
-            cancelAnimationFrame(scrollSyncFrame);
-        }
+        // Guard: Only apply remote scroll if we are NOT interacting with this pane
+        if (isHovered || isFocused) return;
 
-        scrollSyncFrame = requestAnimationFrame(() => {
-            if (!view || !view.scrollDOM) return;
-            setScrollPercentage(dom, target, scrollSyncState);
-            scrollSyncFrame = null;
-        }) as number;
+        if (targetLine !== undefined && targetLine > 0) {
+            if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
 
-        return () => {
-            if (scrollSyncFrame !== null) {
-                cancelAnimationFrame(scrollSyncFrame);
+            scrollSyncFrame = requestAnimationFrame(() => {
+                if (!view) return;
+
+                try {
+                    const lineInt = Math.floor(targetLine);
+                    const lineBlock = view.lineBlockAt(view.state.doc.line(lineInt).from);
+                    const dom = view.scrollDOM;
+
+                    if (Math.abs(dom.scrollTop - lineBlock.top) > 5) {
+                        scrollSyncState.isRemoteScrolling = true;
+                        dom.scrollTop = lineBlock.top;
+
+                        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+                        scrollSyncState.lockTimeout = window.setTimeout(() => {
+                            scrollSyncState.isRemoteScrolling = false;
+                        }, 100);
+                    }
+                } catch (e) {}
                 scrollSyncFrame = null;
-            }
-        };
+            }) as number;
+        }
     });
 
     onMount(() => {
         initSpellcheck();
         editorStore.registerTextOperationCallback(handleTextOperation);
-
-        // Listen for global Find/Replace events
         window.addEventListener("open-find", handleGlobalFind);
         window.addEventListener("open-replace", handleGlobalReplace);
-
         return () => {
             editorStore.unregisterTextOperationCallback();
             window.removeEventListener("open-find", handleGlobalFind);
             window.removeEventListener("open-replace", handleGlobalReplace);
             cleanupScrollSync(scrollSyncState);
-            if (scrollSyncFrame !== null) {
-                cancelAnimationFrame(scrollSyncFrame);
-            }
+            if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
         };
     });
 
@@ -338,9 +349,7 @@
         window.removeEventListener("open-find", handleGlobalFind);
         window.removeEventListener("open-replace", handleGlobalReplace);
         cleanupScrollSync(scrollSyncState);
-        if (scrollSyncFrame !== null) {
-            cancelAnimationFrame(scrollSyncFrame);
-        }
+        if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
     });
 
     $effect(() => {
@@ -350,18 +359,15 @@
     let currentTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let initialContent = $derived(currentTab?.content || "");
     let filename = $derived(currentTab?.title || "");
-
-    // Combined keymap - removed Mod-f/Mod-h as they are handled globally
     let combinedKeymap = $derived([...spellCheckKeymap]);
 </script>
 
-<div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative" onmouseenter={() => (isHovered = true)} onmouseleave={() => (isHovered = false)}>
     <EditorView bind:this={editorViewComponent} {tabId} {initialContent} {filename} customKeymap={combinedKeymap} {spellCheckLinter} {inputHandler} {eventHandlers} onContentChange={(content) => editorStore.updateContent(tabId, content)} onMetricsChange={(metrics) => editorStore.updateMetrics(metrics)} />
-
     {#if scrollDOM}
         <CustomScrollbar viewport={scrollDOM} />
     {/if}
-
     <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={showFindReplace} editorView={editorViewComponent} />
 </div>
 

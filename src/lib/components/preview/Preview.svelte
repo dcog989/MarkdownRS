@@ -5,7 +5,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { AppError } from "$lib/utils/errorHandling";
     import { renderMarkdown } from "$lib/utils/markdown";
-    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage, setScrollPercentage } from "$lib/utils/scrollSync";
+    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
@@ -15,39 +15,31 @@
     let isRendering = $state(false);
     let renderErrorCount = $state(0);
 
-    // Scroll sync state
+    // Interaction Guard
+    let isHovered = false;
+
     const scrollSyncState = createScrollSyncState();
     let scrollSyncFrame: number | null = null;
 
-    // Configuration constants
     const MAX_RENDER_ERRORS = 3;
     const RENDER_DEBOUNCE_MS = 300;
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
-    let scrollPercentage = $derived(tab?.scrollPercentage || 0);
+    let targetLine = $derived(tab?.topLine || 1);
 
     let htmlContent = $state("");
     let renderDebounceTimer: number | null = null;
-    
-    // Memoize rendered content to avoid re-parsing identical markdown
-    let lastRenderedContent = '';
+    let lastRenderedContent = "";
 
-    // Debounced markdown rendering
     $effect(() => {
-        // Skip if content hasn't changed
-        if (content === lastRenderedContent && htmlContent) {
-            return;
-        }
-        
-        if (renderDebounceTimer !== null) {
-            clearTimeout(renderDebounceTimer);
-        }
+        if (content === lastRenderedContent && htmlContent) return;
+
+        if (renderDebounceTimer !== null) clearTimeout(renderDebounceTimer);
 
         isRendering = true;
         renderDebounceTimer = window.setTimeout(async () => {
             renderError = null;
-
             if (!content || content.trim().length === 0) {
                 htmlContent = "";
                 lastRenderedContent = content;
@@ -55,7 +47,6 @@
                 renderErrorCount = 0;
                 return;
             }
-
             try {
                 const rendered = await renderMarkdown(content);
                 htmlContent = rendered;
@@ -65,20 +56,11 @@
                 renderErrorCount++;
                 AppError.log("Markdown:Render", e, { tabId, contentLength: content.length });
                 renderError = e instanceof Error ? e.message : "Unknown rendering error";
-
                 const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
                 if (renderErrorCount >= MAX_RENDER_ERRORS) {
-                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
-                        <strong>Rendering failed ${renderErrorCount} times:</strong><br/>
-                        <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
-                        <p style='margin-top: 0.5rem; font-size: 0.9em;'>Check markdown syntax. Render attempts paused to prevent performance issues.</p>
-                    </div>`;
+                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'><strong>Rendering failed ${renderErrorCount} times:</strong><br/><code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code><p style='margin-top: 0.5rem; font-size: 0.9em;'>Check markdown syntax.</p></div>`;
                 } else {
-                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'>
-                        <strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/>
-                        <code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code>
-                    </div>`;
+                    htmlContent = `<div style='color: var(--danger); padding: 1rem; border: 1px solid var(--danger); border-radius: 4px; margin: 1rem 0;'><strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/><code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code></div>`;
                 }
                 lastRenderedContent = content;
             } finally {
@@ -87,63 +69,115 @@
         }, RENDER_DEBOUNCE_MS);
 
         return () => {
-            if (renderDebounceTimer !== null) {
-                clearTimeout(renderDebounceTimer);
-            }
+            if (renderDebounceTimer !== null) clearTimeout(renderDebounceTimer);
         };
     });
 
-    // Incoming Scroll Sync: Editor -> Preview
+    // Incoming Sync: Editor -> Preview
     $effect(() => {
-        if (!container) return;
+        if (!container || !targetLine) return;
 
-        const targetPercentage = scrollPercentage;
+        // Guard: If mouse is hovering preview, ignore incoming scroll (prevent fighting)
+        if (isHovered) return;
 
-        if (scrollSyncFrame !== null) {
-            cancelAnimationFrame(scrollSyncFrame);
-        }
+        if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
 
         scrollSyncFrame = requestAnimationFrame(() => {
             if (!container) return;
-            setScrollPercentage(container, targetPercentage, scrollSyncState);
+
+            const anchors = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
+            if (anchors.length === 0) return;
+
+            let beforeEl: HTMLElement | null = null;
+            let afterEl: HTMLElement | null = null;
+            let beforeLine = 0;
+            let afterLine = Infinity;
+
+            for (const el of anchors) {
+                const line = parseInt(el.getAttribute("data-source-line") || "0", 10);
+                if (isNaN(line)) continue;
+
+                if (line <= targetLine) {
+                    if (line > beforeLine) {
+                        beforeLine = line;
+                        beforeEl = el;
+                    }
+                } else {
+                    if (line < afterLine) {
+                        afterLine = line;
+                        afterEl = el;
+                    }
+                }
+            }
+
+            let scrollTop = 0;
+            const PADDING_OFFSET = 32;
+
+            if (beforeEl && afterEl) {
+                const lineDiff = afterLine - beforeLine;
+                const pixelDiff = afterEl.offsetTop - beforeEl.offsetTop;
+                const progress = (targetLine - beforeLine) / lineDiff;
+                scrollTop = beforeEl.offsetTop + pixelDiff * progress - PADDING_OFFSET;
+            } else if (beforeEl) {
+                scrollTop = beforeEl.offsetTop - PADDING_OFFSET;
+            } else if (afterEl) {
+                scrollTop = 0;
+            }
+
+            scrollTop = Math.max(0, scrollTop);
+
+            if (Math.abs(container.scrollTop - scrollTop) > 10) {
+                scrollSyncState.isRemoteScrolling = true;
+                container.scrollTop = scrollTop;
+                if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+                scrollSyncState.lockTimeout = window.setTimeout(() => {
+                    scrollSyncState.isRemoteScrolling = false;
+                }, 100);
+            }
             scrollSyncFrame = null;
         }) as number;
 
         return () => {
-            if (scrollSyncFrame !== null) {
-                cancelAnimationFrame(scrollSyncFrame);
-                scrollSyncFrame = null;
-            }
+            if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
         };
     });
 
-    // Outgoing Scroll Sync: Preview -> Editor
-    // Fixed: properly check the lock state before updating
+    // Outgoing Sync: Preview -> Editor
     function handleScroll() {
         if (!container) return;
-        
-        // Don't update scroll if we're currently being remotely scrolled
-        if (scrollSyncState.isRemoteScrolling) {
-            return;
+
+        // Guard: Only sync if this pane is actively hovered
+        if (!isHovered && !scrollSyncState.isRemoteScrolling) return;
+        if (scrollSyncState.isRemoteScrolling) return;
+
+        const anchors = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
+        if (anchors.length === 0) return;
+
+        const currentScroll = container.scrollTop;
+        const PADDING_OFFSET = 32;
+
+        let bestLine = 1;
+
+        for (const el of anchors) {
+            if (el.offsetTop - PADDING_OFFSET <= currentScroll + 5) {
+                bestLine = parseInt(el.getAttribute("data-source-line") || "1", 10);
+            } else {
+                break;
+            }
         }
 
         const percentage = getScrollPercentage(container);
-        editorStore.updateScroll(tabId, percentage);
+        editorStore.updateScroll(tabId, percentage, bestLine);
     }
 
     onDestroy(() => {
         cleanupScrollSync(scrollSyncState);
-        if (scrollSyncFrame !== null) {
-            cancelAnimationFrame(scrollSyncFrame);
-        }
-        if (renderDebounceTimer !== null) {
-            clearTimeout(renderDebounceTimer);
-        }
+        if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
+        if (renderDebounceTimer !== null) clearTimeout(renderDebounceTimer);
     });
 </script>
 
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
-    <!-- Orientation Toggle Button -->
     <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" onclick={() => appState.toggleOrientation()} use:tooltip={"Toggle split orientation (vertical/horizontal)"}>
         {#if appState.splitOrientation === "vertical"}
             <FlipVertical size={16} style="color: var(--fg-default);" />
@@ -152,8 +186,8 @@
         {/if}
     </button>
 
-    <!-- Content -->
-    <div bind:this={container} onscroll={handleScroll} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div bind:this={container} onscroll={handleScroll} onmouseenter={() => (isHovered = true)} onmouseleave={() => (isHovered = false)} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}
             <div class="absolute inset-0 flex items-center justify-center text-[var(--fg-muted)] opacity-50">Loading...</div>
         {:else if !htmlContent}
@@ -165,7 +199,6 @@
             {#if renderError}
                 <div role="alert" aria-live="polite"></div>
             {/if}
-
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html htmlContent}
         {/if}

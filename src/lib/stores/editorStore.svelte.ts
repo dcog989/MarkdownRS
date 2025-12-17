@@ -8,6 +8,7 @@ export type EditorTab = {
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
+    topLine?: number;
     created?: string;
     modified?: string;
     originalTitle?: string;
@@ -89,7 +90,6 @@ export class EditorStore {
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
 
-    // Callback for text operations that need to run on the active editor
     private textOperationCallback: TextOperationCallback | null = null;
 
     activeMetrics = $state<EditorMetrics>({
@@ -114,8 +114,6 @@ export class EditorStore {
     addTab(title: string = 'Untitled', content: string = '# New') {
         const id = crypto.randomUUID();
         const now = getCurrentTimestamp();
-
-        // Normalize content to LF immediately to match CodeMirror's internal state
         const normalizedContent = normalizeLineEndings(content);
 
         const newTab: EditorTab = {
@@ -123,10 +121,11 @@ export class EditorStore {
             title,
             originalTitle: title,
             content: normalizedContent,
-            lastSavedContent: normalizedContent, // Initialize as clean
+            lastSavedContent: normalizedContent,
             isDirty: false,
             path: null,
             scrollPercentage: 0,
+            topLine: 1,
             created: now,
             modified: now,
             lineEnding: 'LF',
@@ -177,7 +176,6 @@ export class EditorStore {
 
     pushToMru(id: string) {
         if (this.mruStack.length > 0 && this.mruStack[0] === id) return;
-
         const filtered = this.mruStack.filter(tId => tId !== id);
         this.mruStack = [id, ...filtered];
         this.sessionDirty = true;
@@ -211,13 +209,8 @@ export class EditorStore {
         const tab = this.tabs.find(t => t.id === id);
         if (!tab) return;
 
-        // CodeMirror returns LF content.
         tab.content = content;
-
-        // Auto-detect dirty state by comparing with saved version
-        // Ensure comparison is robust against line endings
         tab.isDirty = content !== tab.lastSavedContent;
-
         tab.modified = getCurrentTimestamp();
 
         if (!tab.path) {
@@ -238,17 +231,17 @@ export class EditorStore {
     markAsSaved(id: string) {
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
-            // Update the baseline "clean" content to current state
             tab.lastSavedContent = tab.content;
             tab.isDirty = false;
             this.sessionDirty = true;
         }
     }
 
-    updateScroll(id: string, percentage: number) {
+    updateScroll(id: string, percentage: number, topLine?: number) {
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
             tab.scrollPercentage = percentage;
+            if (topLine !== undefined) tab.topLine = topLine;
             this.sessionDirty = true;
         }
     }
@@ -270,39 +263,24 @@ export class EditorStore {
         this.activeMetrics.insertMode = this.activeMetrics.insertMode === 'INS' ? 'OVR' : 'INS';
     }
 
-    // Text operations now delegate to the active editor
     sortLines() {
-        if (this.textOperationCallback) {
-            this.textOperationCallback({ type: 'sort-asc' });
-        }
+        if (this.textOperationCallback) this.textOperationCallback({ type: 'sort-asc' });
     }
 
     trimWhitespace() {
-        if (this.textOperationCallback) {
-            this.textOperationCallback({ type: 'trim-whitespace' });
-        }
+        if (this.textOperationCallback) this.textOperationCallback({ type: 'trim-whitespace' });
     }
 
     toUpperCase() {
-        if (this.textOperationCallback) {
-            this.textOperationCallback({ type: 'uppercase' });
-        }
+        if (this.textOperationCallback) this.textOperationCallback({ type: 'uppercase' });
     }
 
     toLowerCase() {
-        if (this.textOperationCallback) {
-            this.textOperationCallback({ type: 'lowercase' });
-        }
+        if (this.textOperationCallback) this.textOperationCallback({ type: 'lowercase' });
     }
 
-    /**
-     * Perform a text transformation on the active editor
-     * @param operationId - The operation type to perform
-     */
     performTextTransform(operationId: OperationTypeString) {
-        if (this.textOperationCallback) {
-            this.textOperationCallback({ type: operationId });
-        }
+        if (this.textOperationCallback) this.textOperationCallback({ type: operationId });
     }
 }
 
