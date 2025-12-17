@@ -31,7 +31,7 @@ export function getScrollPercentage(element: HTMLElement): number {
 }
 
 /**
- * Apply scroll percentage to DOM element
+ * Apply scroll percentage to DOM element with smooth animation
  */
 export function setScrollPercentage(
     element: HTMLElement,
@@ -49,8 +49,11 @@ export function setScrollPercentage(
     if (Math.abs(currentScroll - targetScroll) > 1) {
         state.isRemoteScrolling = true;
 
-        // Use direct assignment for instant 1:1 tracking
-        element.scrollTop = targetScroll;
+        // Use smooth scrollTo for animated transitions
+        element.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+        });
 
         // Release lock after scroll event has fired
         if (state.lockTimeout) clearTimeout(state.lockTimeout);
@@ -58,6 +61,42 @@ export function setScrollPercentage(
             state.isRemoteScrolling = false;
         }, lockDuration);
     }
+}
+
+/**
+ * Scroll to a specific position with smooth animation
+ */
+export function smoothScrollTo(
+    element: HTMLElement,
+    targetScroll: number,
+    duration: number = 200
+): Promise<void> {
+    return new Promise((resolve) => {
+        const startScroll = element.scrollTop;
+        const distance = targetScroll - startScroll;
+        let startTime: number | null = null;
+
+        function animation(currentTime: number) {
+            if (startTime === null) startTime = currentTime;
+            const timeElapsed = currentTime - startTime;
+            const progress = Math.min(timeElapsed / duration, 1);
+            
+            // Ease-in-out cubic for smooth motion
+            const easing = progress < 0.5
+                ? 4 * progress * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+            element.scrollTop = startScroll + distance * easing;
+
+            if (progress < 1) {
+                requestAnimationFrame(animation);
+            } else {
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(animation);
+    });
 }
 
 /**

@@ -12,12 +12,43 @@
 
     let { isOpen, onClose, onSelect, currentActiveId }: Props = $props();
 
+    let listContainerRef = $state<HTMLDivElement>();
+
     let mruTabs = $derived(
         editorStore.mruStack
             .map((id) => editorStore.tabs.find((t) => t.id === id))
             .filter((t) => t !== undefined)
             .slice(0, 10) // Show max 10 most recent
     );
+
+    // Scroll to selected tab when modal opens or selection changes
+    $effect(() => {
+        if (isOpen && currentActiveId && listContainerRef) {
+            const selectedIndex = mruTabs.findIndex(t => t.id === currentActiveId);
+            if (selectedIndex >= 0) {
+                // Use setTimeout to ensure DOM is ready
+                setTimeout(() => {
+                    const buttons = listContainerRef?.querySelectorAll('button');
+                    const selectedButton = buttons?.[selectedIndex] as HTMLElement;
+                    
+                    if (selectedButton && listContainerRef) {
+                        const container = listContainerRef;
+                        const itemTop = selectedButton.offsetTop;
+                        const itemBottom = itemTop + selectedButton.offsetHeight;
+                        const containerTop = container.scrollTop;
+                        const containerBottom = containerTop + container.clientHeight;
+
+                        // Scroll if item is not fully visible
+                        if (itemTop < containerTop) {
+                            container.scrollTop = itemTop;
+                        } else if (itemBottom > containerBottom) {
+                            container.scrollTop = itemBottom - container.clientHeight;
+                        }
+                    }
+                }, 50);
+            }
+        }
+    });
 
     function handleSelect(tabId: string) {
         onSelect(tabId);
@@ -43,7 +74,7 @@
             </div>
 
             <!-- Tab List -->
-            <div class="flex-1 overflow-y-auto py-1">
+            <div bind:this={listContainerRef} class="flex-1 overflow-y-auto py-1">
                 {#each mruTabs as tab, index}
                     <button
                         type="button"

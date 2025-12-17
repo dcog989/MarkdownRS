@@ -125,9 +125,9 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="absolute right-0 top-0 bottom-0 w-3 z-30 hover:bg-white/5 transition-colors duration-200" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<div bind:this={trackRef} class="scrollbar-track absolute right-0 top-0 bottom-0 w-3 z-30 hover:bg-white/5 transition-all duration-200" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
     <div
-        class="scrollbar-thumb absolute bg-[var(--border-light)] hover:bg-[var(--fg-muted)] active:bg-[var(--fg-muted)]"
+        class="scrollbar-thumb absolute bg-[var(--border-light)] hover:bg-[var(--fg-muted)] active:bg-[var(--fg-muted)] transition-all duration-200"
         style="
             height: {thumbHeight}px;
             top: {thumbTop}px;
@@ -143,7 +143,17 @@
     .hidden {
         display: none;
     }
+
+    .scrollbar-track:hover {
+        width: 14px;
+    }
+
+    .scrollbar-track:hover .scrollbar-thumb {
+        width: 10px;
+        right: 2px;
+    }
+
     .scrollbar-thumb {
-        transition: background-color 0.1s;
+        transition: all 0.2s ease;
     }
 </style>

@@ -122,7 +122,7 @@
         </div>
 
         <div class="relative min-h-0 flex-1">
-            <div bind:this={dropdownListRef} class="overflow-y-auto py-1" style="scrollbar-width: thin; max-height: 60vh;">
+            <div bind:this={dropdownListRef} class="overflow-y-auto py-1" style="scrollbar-width: none; max-height: 60vh;">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appState.activeTabId === tab.id}
@@ -150,7 +150,9 @@
                     </button>
                 {/each}
             </div>
-            <CustomScrollbar viewport={dropdownListRef} content={dropdownListRef} />
+            {#if dropdownListRef}
+                <CustomScrollbar viewport={dropdownListRef} content={dropdownListRef} />
+            {/if}
         </div>
     </div>
 {/if}
@@ -159,5 +161,14 @@
     input::placeholder {
         color: var(--fg-muted);
         opacity: 0.5;
+    }
+
+    /* Hide native scrollbar */
+    div[bind\:this="{dropdownListRef}"] {
+        scrollbar-width: none;
+    }
+
+    div[bind\:this="{dropdownListRef}"]::-webkit-scrollbar {
+        display: none;
     }
 </style>

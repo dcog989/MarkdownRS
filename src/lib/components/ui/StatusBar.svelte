@@ -17,6 +17,55 @@
     let bgWithAlpha = $derived(`rgba(37, 37, 38, ${1 - opacity})`);
     let textOpacity = $derived(1 - opacity);
 
+    // Debounced metrics for display
+    let displayMetrics = $state({
+        lineCount: 1,
+        cursorLine: 1,
+        cursorCol: 1,
+        charCount: 0,
+        wordCount: 0,
+        sizeKB: 0.0
+    });
+
+    let updateTimer: number | null = null;
+
+    $effect(() => {
+        // Trigger on metrics change
+        const current = m;
+        
+        if (updateTimer !== null) clearTimeout(updateTimer);
+        
+        updateTimer = window.setTimeout(() => {
+            displayMetrics = {
+                lineCount: current.lineCount,
+                cursorLine: current.cursorLine,
+                cursorCol: current.cursorCol,
+                charCount: current.charCount,
+                wordCount: current.wordCount,
+                sizeKB: current.sizeKB
+            };
+            updateTimer = null;
+        }, 150);
+    });
+
+    // Format file size
+    let fileSizeDisplay = $derived.by(() => {
+        const kb = displayMetrics.sizeKB;
+        if (kb < 100) {
+            return kb.toFixed(1);
+        }
+        return Math.round(kb).toString();
+    });
+
+    // Get file type from tab
+    let fileType = $derived.by(() => {
+        if (!activeTab) return "markdown";
+        const path = activeTab.path || activeTab.title || "";
+        if (path.endsWith(".txt")) return "text";
+        if (path.endsWith(".md")) return "markdown";
+        return "markdown";
+    });
+
     function toggleLineEnding() {
         if (activeTab) {
             activeTab.lineEnding = activeTab.lineEnding === "LF" ? "CRLF" : "LF";
@@ -39,10 +88,13 @@
 >
     <!-- Left: Metrics -->
     <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
-        <span use:tooltip={"Cursor Position / Total Characters"}>{m.cursorOffset} / {m.charCount} chars</span>
-        <span>{m.wordCount} words</span>
-        <span class="hidden sm:inline">{m.sizeKB.toFixed(2)} KB</span>
-        <span class="hidden sm:inline">Ln {m.cursorLine}, Col {m.cursorCol}</span>
+        <span class="metric-item" use:tooltip={"File Type"}>{fileType}</span>
+        <span class="metric-divider">|</span>
+        <span class="metric-item" use:tooltip={"Line Position"}>Ln {displayMetrics.cursorLine} / {displayMetrics.lineCount}</span>
+        <span class="metric-item" use:tooltip={"Column Position"}>Col {displayMetrics.cursorCol} / {displayMetrics.cursorCol}</span>
+        <span class="metric-item" use:tooltip={"Character Count"}>Char {m.cursorOffset} / {displayMetrics.charCount}</span>
+        <span class="metric-item" use:tooltip={"Word Count"}>Word {displayMetrics.wordCount} / {displayMetrics.wordCount}</span>
+        <span class="metric-item" use:tooltip={"File Size"}>{fileSizeDisplay} KB</span>
     </div>
 
     <!-- Right: Technicals + Wrap -->
@@ -84,5 +136,24 @@
 
     button {
         pointer-events: auto;
+    }
+
+    .metric-item {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .metric-divider {
+        opacity: 0.4;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(2px);
+        }
+        to {
+            opacity: inherit;
+            transform: translateY(0);
+        }
     }
 </style>

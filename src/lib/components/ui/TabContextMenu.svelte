@@ -57,6 +57,7 @@
     let hasTabsToLeft = $derived(tabIndex > 0);
     let hasOtherTabs = $derived(editorStore.tabs.length > 1);
     let hasSavedTabs = $derived(editorStore.tabs.some((t) => !t.isDirty && t.id !== tabId));
+    let hasUnsavedTabs = $derived(editorStore.tabs.some((t) => t.isDirty && t.id !== tabId));
 
     async function handleSave() {
         const prevActive = appState.activeTabId;
@@ -102,35 +103,65 @@
         onClose();
     }
 
-    function handleCloseToRight() {
+    async function handleCloseToRight() {
         const index = tabIndex;
         const tabsToClose = editorStore.tabs.slice(index + 1).filter((t) => !t.isPinned);
-        tabsToClose.forEach((t) => requestCloseTab(t.id));
+        
+        // Close all in sequence to avoid race conditions
+        for (const t of tabsToClose) {
+            await requestCloseTab(t.id);
+        }
         onClose();
     }
 
-    function handleCloseToLeft() {
+    async function handleCloseToLeft() {
         const index = tabIndex;
         const tabsToClose = editorStore.tabs.slice(0, index).filter((t) => !t.isPinned);
-        tabsToClose.forEach((t) => requestCloseTab(t.id));
+        
+        // Close all in sequence to avoid race conditions
+        for (const t of tabsToClose) {
+            await requestCloseTab(t.id);
+        }
         onClose();
     }
 
-    function handleCloseOthers() {
+    async function handleCloseOthers() {
         const tabsToClose = editorStore.tabs.filter((t) => t.id !== tabId && !t.isPinned);
-        tabsToClose.forEach((t) => requestCloseTab(t.id));
+        
+        // Close all in sequence to avoid race conditions
+        for (const t of tabsToClose) {
+            await requestCloseTab(t.id);
+        }
         onClose();
     }
 
-    function handleCloseSaved() {
+    async function handleCloseSaved() {
         const tabsToClose = editorStore.tabs.filter((t) => !t.isDirty && t.id !== tabId && !t.isPinned);
-        tabsToClose.forEach((t) => requestCloseTab(t.id));
+        
+        // Close all in sequence to avoid race conditions
+        for (const t of tabsToClose) {
+            await requestCloseTab(t.id);
+        }
         onClose();
     }
 
-    function handleCloseAll() {
+    async function handleCloseUnsaved() {
+        const tabsToClose = editorStore.tabs.filter((t) => t.isDirty && t.id !== tabId && !t.isPinned);
+        
+        // Close all in sequence to avoid race conditions
+        for (const t of tabsToClose) {
+            await requestCloseTab(t.id);
+        }
+        onClose();
+    }
+
+    async function handleCloseAll() {
         const tabsToClose = editorStore.tabs.filter((t) => !t.isPinned);
-        tabsToClose.forEach((t) => requestCloseTab(t.id));
+        
+        // Close all in sequence to avoid race conditions
+        for (const t of tabsToClose) {
+            await requestCloseTab(t.id);
+        }
         onClose();
     }
 
@@ -241,6 +272,7 @@
             <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
             <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
             <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasUnsavedTabs ? 'var(--fg-default)' : 'var(--fg-muted)'};" disabled={!hasUnsavedTabs} onclick={handleCloseUnsaved}>Close Not Saved</button>
             <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--fg-default);" onclick={handleCloseAll}>Close All</button>
         </Submenu>
 

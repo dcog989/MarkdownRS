@@ -106,12 +106,18 @@ body {
     width: 10px;
     height: 10px;
     background-color: var(--bg-main);
+    transition: width 0.2s ease;
+}
+
+::-webkit-scrollbar:hover {
+    width: 14px;
 }
 
 ::-webkit-scrollbar-thumb {
     background-color: var(--border-light);
     border-radius: 5px;
     border: 2px solid var(--bg-main);
+    transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {

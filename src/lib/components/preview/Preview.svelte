@@ -128,11 +128,14 @@
 
             if (Math.abs(container.scrollTop - scrollTop) > 10) {
                 scrollSyncState.isRemoteScrolling = true;
-                container.scrollTop = scrollTop;
+                container.scrollTo({
+                    top: scrollTop,
+                    behavior: 'smooth'
+                });
                 if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
                 scrollSyncState.lockTimeout = window.setTimeout(() => {
                     scrollSyncState.isRemoteScrolling = false;
-                }, 100);
+                }, 300);
             }
             scrollSyncFrame = null;
         }) as number;
@@ -211,7 +214,7 @@
 
 <style>
     .preview-container {
-        scroll-behavior: auto !important;
+        scroll-behavior: smooth !important;
         scrollbar-width: none;
     }
     .preview-container::-webkit-scrollbar {

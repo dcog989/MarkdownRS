@@ -347,6 +347,7 @@
 <style>
     :global(.cm-scroller) {
         scrollbar-width: none;
+        scroll-behavior: smooth;
     }
     :global(.cm-scroller::-webkit-scrollbar) {
         display: none;
