@@ -108,7 +108,7 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
     // Write to temp file first, then rename
     let temp_path = format!("{}.tmp", path);
 
-    // Always write UTF-8 for now (Text editors typically normalize to UTF-8 on save)
+    // Always write UTF-8 for now
     fs::write(&temp_path, &content).map_err(|e| e.to_string())?;
 
     fs::rename(&temp_path, &path).map_err(|e| {
@@ -147,10 +147,11 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         })
         .unwrap_or_default();
 
+    // With identifier "MarkdownRS", app_data_dir() is already .../Roaming/MarkdownRS
     let data_path = app_handle
         .path()
-        .data_dir()
-        .map(|p| p.join("MarkdownRS").to_string_lossy().to_string())
+        .app_data_dir()
+        .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
 
     Ok(AppInfo {
@@ -169,9 +170,10 @@ pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
-    let data_dir = app_handle.path().data_dir().map_err(|e| e.to_string())?;
-    // Explicitly use MarkdownRS folder
-    let app_dir = data_dir.join("MarkdownRS");
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
     let dict_path = app_dir.join("custom-spelling.dic");
 
     if !app_dir.exists() {
@@ -206,8 +208,11 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
 
 #[tauri::command]
 pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
-    let data_dir = app_handle.path().data_dir().map_err(|e| e.to_string())?;
-    let dict_path = data_dir.join("MarkdownRS").join("custom-spelling.dic");
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let dict_path = app_dir.join("custom-spelling.dic");
 
     if !dict_path.exists() {
         return Ok(Vec::new());

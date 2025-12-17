@@ -16,6 +16,7 @@ async function loadCustomDictionary(): Promise<void> {
     try {
         const words = await invoke<string[]>('get_custom_dictionary');
         customDictionary = new Set(words.map(w => w.toLowerCase()));
+        console.log(`Custom dictionary loaded: ${customDictionary.size} words`);
     } catch (err) {
         console.warn('Failed to load custom dictionary:', err);
         customDictionary = new Set();
@@ -29,18 +30,20 @@ async function loadCustomDictionary(): Promise<void> {
 async function loadBaseDictionary(): Promise<void> {
     try {
         if (!store) {
-            store = await Store.load('dictionary_cache.json');
+            const storePath = 'dictionary_cache.json';
+            store = await Store.load(storePath, { autoSave: false, defaults: {} });
         }
 
         // Try to get from cache first
         const cached = await store.get<string>('base_dictionary');
         if (cached) {
             parseDictionary(cached);
+            console.log(`Base dictionary loaded from cache: ${baseDictionary.size} words`);
             return;
         }
 
         // Fetch from CDN if not cached
-        console.log('Fetching base dictionary...');
+        console.log('Fetching base dictionary from network...');
         const response = await fetch(DICT_URL);
         if (!response.ok) throw new Error('Network response was not ok');
         const text = await response.text();
@@ -50,14 +53,11 @@ async function loadBaseDictionary(): Promise<void> {
         await store.save();
 
         parseDictionary(text);
+        console.log(`Base dictionary loaded from network: ${baseDictionary.size} words`);
     } catch (err) {
         console.error('Failed to load base dictionary:', err);
-        // Fallback to a minimal list if offline/failed
-        baseDictionary = new Set([
-            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
-            'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
-            'markdown', 'rust', 'tauri', 'svelte', 'typescript', 'javascript'
-        ]);
+        baseDictionary = new Set();
+        console.log('Spellcheck disabled due to dictionary load failure');
     }
 }
 
@@ -72,7 +72,6 @@ function parseDictionary(text: string) {
             baseDictionary.add(trimmed.toLowerCase());
         }
     }
-    console.log(`Dictionary loaded: ${baseDictionary.size} words`);
 }
 
 /**
@@ -85,7 +84,15 @@ export async function initSpellcheck(): Promise<void> {
     initPromise = (async () => {
         try {
             await Promise.all([loadCustomDictionary(), loadBaseDictionary()]);
+            // Always set loaded to true after attempting to load
             dictionaryLoaded = true;
+            if (baseDictionary.size > 0) {
+                console.log(`Spellcheck initialized successfully with ${baseDictionary.size} words`);
+            } else {
+                console.error('Failed to load any dictionary words - spellcheck will be disabled');
+            }
+        } catch (err) {
+            console.error('Error initializing spellcheck:', err);
         } finally {
             initPromise = null;
         }
@@ -102,15 +109,18 @@ export async function refreshCustomDictionary(): Promise<void> {
  * Check if a word is valid, handling possessives
  */
 export function isWordValid(word: string): boolean {
-    if (!dictionaryLoaded) return true;
-    
+    // If dictionary isn't loaded OR is empty, return true to avoid marking everything as misspelled
+    if (!dictionaryLoaded || baseDictionary.size === 0) {
+        return true;
+    }
+
     const w = word.toLowerCase();
-    
+
     // Direct dictionary check
     if (baseDictionary.has(w) || customDictionary.has(w)) {
         return true;
     }
-    
+
     // Handle possessives: "repository's" -> check "repository"
     if (w.endsWith("'s")) {
         const base = w.slice(0, -2);
@@ -118,7 +128,7 @@ export function isWordValid(word: string): boolean {
             return true;
         }
     }
-    
+
     // Handle plural possessives: "repositories'" -> check "repositories" and "repository"
     if (w.endsWith("'")) {
         const base = w.slice(0, -1);
@@ -126,7 +136,7 @@ export function isWordValid(word: string): boolean {
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -189,7 +199,7 @@ export function getSuggestions(word: string, maxSuggestions = 3): string[] {
 
     let target = word.toLowerCase();
     let suffix = '';
-    
+
     // Handle possessives - get suggestions for base word then add suffix back
     if (target.endsWith("'s")) {
         suffix = "'s";
@@ -198,7 +208,7 @@ export function getSuggestions(word: string, maxSuggestions = 3): string[] {
         suffix = "'";
         target = target.slice(0, -1);
     }
-    
+
     const candidates: { word: string; score: number }[] = [];
     const maxDistance = 2; // Strict distance limit
 

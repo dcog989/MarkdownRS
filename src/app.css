@@ -68,8 +68,7 @@
     --color-danger-text: #e81123;
 }
 
-/* Map Tailwind theme variables to standard CSS variables for non-Tailwind usage if needed,
-   though v4 allows using --color-* directly in utilities like bg-bg-main */
+/* Map Tailwind theme variables to standard CSS variables */
 :root {
     --bg-main: var(--color-bg-main);
     --bg-panel: var(--color-bg-panel);
@@ -123,10 +122,11 @@ body {
     background-color: var(--bg-main);
 }
 
+/* Global Keyframes for Tooltips (used by EditorView) */
 @keyframes cm-tooltip-fade-in {
     from {
         opacity: 0;
-        transform: translateY(2px);
+        transform: translateY(-4px);
     }
     to {
         opacity: 1;

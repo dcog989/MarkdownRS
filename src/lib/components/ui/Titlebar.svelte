@@ -1,7 +1,10 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
     import { appState } from "$lib/stores/appState.svelte.ts";
+    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { saveSettings } from "$lib/utils/settings";
+    import { invoke } from "@tauri-apps/api/core";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -20,9 +23,6 @@
     let commandSearchQuery = $state("");
     let commandInputRef: HTMLInputElement | undefined = $state();
     let selectedCommandIndex = $state(0);
-
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
 
     type Command = {
         id: string;
@@ -83,6 +83,7 @@
             label: "Theme: Dark",
             action: () => {
                 appState.setTheme("dark");
+                saveSettings();
                 showCommandPalette = false;
             },
         },
@@ -91,6 +92,7 @@
             label: "Theme: Light",
             action: () => {
                 appState.setTheme("light");
+                saveSettings();
                 showCommandPalette = false;
             },
         },
@@ -209,9 +211,18 @@
     }
 
     async function closeApp() {
-        await persistSession();
-        await saveSettings();
-        await appWindow.close();
+        try {
+            await persistSession();
+            await saveSettings();
+
+            // Explicitly trigger window state save
+            await invoke("plugin:window-state|save_window_state");
+
+            await appWindow.close();
+        } catch (e) {
+            console.error(`Error during shutdown: ${e}`);
+            await appWindow.close();
+        }
     }
 
     function openCommandPalette() {

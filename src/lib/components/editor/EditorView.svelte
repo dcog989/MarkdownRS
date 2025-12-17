@@ -85,93 +85,91 @@
     let lastFontSize = 0;
     let lastFontFamily = "";
     let lastInsertMode: "INS" | "OVR" = "INS";
-    let cachedTheme: any = null;
+    let cachedDynamicStyles: any = null;
 
-    function getTheme() {
+    function getDynamicStyles() {
         const fontSize = appState.editorFontSize || 14;
-        const fontFamily = appState.editorFontFamily || "monospace";
+        let fontFamily = appState.editorFontFamily || "monospace";
         const insertMode = editorStore.activeMetrics.insertMode;
 
-        if (cachedTheme && fontSize === lastFontSize && fontFamily === lastFontFamily && insertMode === lastInsertMode) {
-            return cachedTheme;
+        // 1. Sanitize: Trim whitespace
+        fontFamily = fontFamily.trim();
+
+        // 2. Sanitize: Remove trailing comma if present (common when typing lists)
+        if (fontFamily.endsWith(",")) {
+            fontFamily = fontFamily.slice(0, -1).trim();
         }
 
+        // 3. Safety Check: Detect unbalanced quotes
+        // Unclosed quotes in a CSS value can break the entire stylesheet by consuming closing braces.
+        const singleQuotes = (fontFamily.match(/'/g) || []).length;
+        const doubleQuotes = (fontFamily.match(/"/g) || []).length;
+
+        if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0) {
+            // Unsafe CSS detected (e.g. user is typing "'Source...").
+            // If we have a valid cache, return it to maintain previous styling while typing.
+            if (cachedDynamicStyles) return cachedDynamicStyles;
+            // If no cache (e.g. startup with bad config), force a safe fallback to prevent broken UI
+            fontFamily = "monospace";
+        }
+
+        // 4. Cache Check
+        if (cachedDynamicStyles && fontSize === lastFontSize && fontFamily === lastFontFamily && insertMode === lastInsertMode) {
+            return cachedDynamicStyles;
+        }
+
+        // 5. Update Cache State
         lastFontSize = fontSize;
         lastFontFamily = fontFamily;
         lastInsertMode = insertMode;
 
-        cachedTheme = EditorView.theme({
+        cachedDynamicStyles = EditorView.theme({
             "&": {
                 height: "100%",
                 fontSize: `${fontSize}px`,
             },
             ".cm-cursor": {
-                borderLeftColor: insertMode === "OVR" ? "transparent" : "white",
-                borderBottom: insertMode === "OVR" ? "2px solid white" : "none",
+                borderLeftColor: insertMode === "OVR" ? "transparent" : "auto",
+                borderBottom: insertMode === "OVR" ? "2px solid currentColor" : "none",
             },
             ".cm-scroller": {
                 fontFamily: fontFamily,
                 overflow: "auto",
             },
-            ".cm-selectionBackground": {
-                backgroundColor: "rgba(100, 150, 255, 0.3) !important",
-            },
-            "&.cm-focused .cm-selectionBackground": {
-                backgroundColor: "rgba(100, 150, 255, 0.3) !important",
-            },
-            ".cm-search": {
-                backgroundColor: "var(--bg-panel)",
-                borderBottom: "1px solid var(--border-main)",
-            },
-            ".cm-search input": {
-                backgroundColor: "var(--bg-main)",
-                color: "var(--fg-default)",
-                border: "1px solid var(--border-light)",
-            },
-            ".cm-search button": {
-                backgroundColor: "var(--bg-main)",
-                color: "var(--fg-default)",
-                border: "1px solid var(--border-light)",
-            },
-            ".cm-lintRange-warning": {
-                backgroundImage: "none",
-                borderBottom: "2px dotted var(--danger)",
-                position: "relative",
-                zIndex: "1",
-            },
             // Autocomplete Tooltip Styling
             ".cm-tooltip": {
-                backgroundColor: "var(--bg-panel) !important",
-                border: "1px solid var(--border-light) !important",
-                color: "var(--fg-default) !important",
                 borderRadius: "6px !important",
                 zIndex: "100",
-                animation: "cm-tooltip-fade-in 0.2s cubic-bezier(0.2, 0, 0.2, 1)",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                opacity: "0",
+                animation: "cm-tooltip-fade-in 0.15s cubic-bezier(0.2, 0, 0.2, 1) forwards",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
+            },
+            ".cm-tooltip.cm-tooltip-autocomplete": {
+                "& > ul": {
+                    borderRadius: "4px",
+                },
             },
             ".cm-tooltip-autocomplete > ul > li": {
                 padding: "4px 8px !important",
                 fontFamily: "var(--font-sans)",
                 fontSize: "0.9em",
             },
-            ".cm-tooltip-autocomplete > ul > li[aria-selected]": {
-                backgroundColor: "var(--accent-primary) !important",
-                color: "var(--fg-inverse) !important",
-            },
             ".cm-completionIcon": {
                 display: "none", // Hide icons for cleaner look
             },
         });
 
-        return cachedTheme;
+        return cachedDynamicStyles;
     }
 
     // Effect: Theme and Font changes
     $effect(() => {
-        const newTheme = getTheme();
+        const dynamicStyles = getDynamicStyles();
+        const baseTheme = appState.theme === "dark" ? oneDark : [];
+
         if (view) {
             view.dispatch({
-                effects: themeCompartment.reconfigure(newTheme),
+                effects: themeCompartment.reconfigure([baseTheme, dynamicStyles]),
             });
         }
     });
@@ -240,13 +238,13 @@
             autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []),
             closeBrackets(),
             keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
-            oneDark,
+            // Theme compartment - Start with default placeholder, effect will configure immediately
+            themeCompartment.of([]),
             spellCheckLinter,
             lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             inputHandler,
             eventHandlers,
-            themeCompartment.of(getTheme()),
         ];
 
         if (!filename.endsWith(".txt")) {

@@ -5,6 +5,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { checkFileExists } from "$lib/utils/fileSystem";
+    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage, setScrollPercentage } from "$lib/utils/scrollSync";
     import { formatMarkdown } from "$lib/utils/formatter";
     import { initSpellcheck } from "$lib/utils/spellcheck";
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
@@ -18,8 +19,10 @@
     let findReplacePanel = $state<any>(null);
     let scrollDOM = $state<HTMLElement | null>(null);
     let previousTabId: string = "";
-    let isRemoteScrolling = false;
-    let scrollDebounce: number | null = null;
+    
+    // Scroll sync state using shared utilities
+    const scrollSyncState = createScrollSyncState();
+    let scrollSyncFrame: number | null = null;
 
     // Context menu state
     let showContextMenu = $state(false);
@@ -202,18 +205,12 @@
             return true;
         },
         scroll: (event, view) => {
-            if (isRemoteScrolling) return;
+            // Don't update scroll if we're currently being remotely scrolled
+            if (scrollSyncState.isRemoteScrolling) return;
+            
             const dom = view.scrollDOM;
-            const maxScroll = dom.scrollHeight - dom.clientHeight;
-            if (maxScroll > 0) {
-                let percentage = dom.scrollTop / maxScroll;
-                if (dom.scrollTop <= 2) percentage = 0;
-                else if (Math.abs(dom.scrollTop - maxScroll) <= 2) percentage = 1;
-                percentage = Math.max(0, Math.min(1, percentage));
-                editorStore.updateScroll(tabId, percentage);
-            } else {
-                editorStore.updateScroll(tabId, 0);
-            }
+            const percentage = getScrollPercentage(dom);
+            editorStore.updateScroll(tabId, percentage);
         },
     });
 
@@ -267,11 +264,14 @@
                     setTimeout(() => {
                         if (view.scrollDOM && currentTab.scrollPercentage >= 0) {
                             const dom = view.scrollDOM;
-                            const scrollHeight = dom.scrollHeight - dom.clientHeight;
-                            if (scrollHeight > 0) {
-                                isRemoteScrolling = true;
-                                dom.scrollTop = scrollHeight * currentTab.scrollPercentage;
-                                setTimeout(() => (isRemoteScrolling = false), 50);
+                            const maxScroll = dom.scrollHeight - dom.clientHeight;
+                            if (maxScroll > 0) {
+                                scrollSyncState.isRemoteScrolling = true;
+                                dom.scrollTop = maxScroll * currentTab.scrollPercentage;
+                                if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+                                scrollSyncState.lockTimeout = window.setTimeout(() => {
+                                    scrollSyncState.isRemoteScrolling = false;
+                                }, 50);
                             }
                         }
                     }, 0);
@@ -286,26 +286,32 @@
     let currentTabState = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let targetScrollPercentage = $derived(currentTabState?.scrollPercentage ?? 0);
 
+    // Incoming scroll sync from Preview -> Editor
     $effect(() => {
         const target = targetScrollPercentage;
         const view = editorViewComponent?.getView();
-        if (!view || !view.scrollDOM || previousTabId === tabId) return;
+        
+        // Don't sync on tab switch (that's handled above)
+        if (!view || !view.scrollDOM || previousTabId !== tabId) return;
 
         const dom = view.scrollDOM;
-        const maxScroll = dom.scrollHeight - dom.clientHeight;
-        if (maxScroll <= 0) return;
 
-        const currentScroll = dom.scrollTop;
-        const targetScroll = maxScroll * target;
-
-        if (Math.abs(currentScroll - targetScroll) > maxScroll * 0.01) {
-            isRemoteScrolling = true;
-            dom.scrollTop = targetScroll;
-            if (scrollDebounce) clearTimeout(scrollDebounce);
-            scrollDebounce = window.setTimeout(() => {
-                isRemoteScrolling = false;
-            }, 50);
+        if (scrollSyncFrame !== null) {
+            cancelAnimationFrame(scrollSyncFrame);
         }
+
+        scrollSyncFrame = requestAnimationFrame(() => {
+            if (!view || !view.scrollDOM) return;
+            setScrollPercentage(dom, target, scrollSyncState);
+            scrollSyncFrame = null;
+        }) as number;
+
+        return () => {
+            if (scrollSyncFrame !== null) {
+                cancelAnimationFrame(scrollSyncFrame);
+                scrollSyncFrame = null;
+            }
+        };
     });
 
     onMount(() => {
@@ -320,7 +326,10 @@
             editorStore.unregisterTextOperationCallback();
             window.removeEventListener("open-find", handleGlobalFind);
             window.removeEventListener("open-replace", handleGlobalReplace);
-            if (scrollDebounce) clearTimeout(scrollDebounce);
+            cleanupScrollSync(scrollSyncState);
+            if (scrollSyncFrame !== null) {
+                cancelAnimationFrame(scrollSyncFrame);
+            }
         };
     });
 
@@ -328,7 +337,10 @@
         editorStore.unregisterTextOperationCallback();
         window.removeEventListener("open-find", handleGlobalFind);
         window.removeEventListener("open-replace", handleGlobalReplace);
-        if (scrollDebounce) clearTimeout(scrollDebounce);
+        cleanupScrollSync(scrollSyncState);
+        if (scrollSyncFrame !== null) {
+            cancelAnimationFrame(scrollSyncFrame);
+        }
     });
 
     $effect(() => {

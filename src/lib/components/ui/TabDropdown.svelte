@@ -5,8 +5,8 @@
     import { tick } from "svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
 
-    let { 
-        isOpen = false, 
+    let {
+        isOpen = false,
         onSelect,
         onClose,
     } = $props<{
@@ -19,20 +19,20 @@
     let selectedIndex = $state(0);
     let searchInputRef = $state<HTMLInputElement>();
     let dropdownListRef = $state<HTMLDivElement>();
+    let dropdownContainerRef = $state<HTMLDivElement>();
     let lastClientX = 0;
     let lastClientY = 0;
 
-    let filteredTabs = $derived(
-        searchQuery.trim() === ""
-            ? editorStore.tabs
-            : editorStore.tabs.filter((tab) => {
-                  const query = searchQuery.toLowerCase();
-                  return (
-                      (tab.customTitle || tab.title).toLowerCase().includes(query) ||
-                      (tab.path || "").toLowerCase().includes(query)
-                  );
-              })
-    );
+    let filteredTabs = $derived.by(() => {
+        const tabs = editorStore.tabs; // Access reactive state
+        if (searchQuery.trim() === "") {
+            return tabs;
+        }
+        const query = searchQuery.toLowerCase();
+        return tabs.filter((tab) => {
+            return (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || "").toLowerCase().includes(query);
+        });
+    });
 
     $effect(() => {
         if (isOpen) {
@@ -107,25 +107,22 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-40" onclick={onClose}></div>
-    <div 
-        class="absolute left-0 top-full mt-1 w-80 max-h-[400px] rounded-lg shadow-2xl border overflow-hidden flex flex-col z-50" 
-        style="background-color: var(--bg-panel); border-color: var(--border-light);" 
+    <div
+        bind:this={dropdownContainerRef}
+        class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50"
+        style="
+            background-color: var(--bg-panel);
+            border-color: var(--border-light);
+            max-height: calc(100vh - 120px);
+        "
         role="menu"
     >
-        <div class="p-2 border-b" style="border-color: var(--border-light);">
-            <input
-                bind:this={searchInputRef}
-                bind:value={searchQuery}
-                type="text"
-                placeholder="Filter tabs..."
-                class="w-full bg-transparent outline-none px-2 py-1 text-sm"
-                style="color: var(--fg-default);"
-                onkeydown={handleKeydown}
-            />
+        <div class="p-2 border-b shrink-0" style="border-color: var(--border-light);">
+            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--fg-default);" onkeydown={handleKeydown} />
         </div>
 
         <div class="relative min-h-0 flex-1">
-            <div bind:this={dropdownListRef} class="overflow-y-auto py-1 relative h-full" style="scrollbar-width: thin;">
+            <div bind:this={dropdownListRef} class="overflow-y-auto py-1" style="scrollbar-width: thin; max-height: 60vh;">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appState.activeTabId === tab.id}

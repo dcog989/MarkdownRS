@@ -12,7 +12,11 @@ function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
 
 export async function initSettings() {
     try {
-        store = await Store.load('settings.json');
+        // App ID is set to "MarkdownRS", so base dir is .../AppData/Roaming/MarkdownRS
+        const storePath = 'settings.json';
+
+        // Ensure store loads with defaults to prevent type errors
+        store = await Store.load(storePath, { autoSave: false, defaults: {} });
 
         const saved = await store.get<{
             splitPercentage: number;

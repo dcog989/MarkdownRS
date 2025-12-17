@@ -1,8 +1,8 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
     "productName": "MarkdownRS",
-    "version": "0.1.88",
-    "identifier": "com.markdownrs.app",
+    "version": "0.1.89",
+    "identifier": "MarkdownRS",
     "build": {
         "beforeDevCommand": "npm run dev",
         "beforeBuildCommand": "npm run build",
@@ -41,7 +41,7 @@
         "copyright": "",
         "category": "Productivity",
         "shortDescription": "The only markdown editor you need.",
-        "longDescription": "",
+        "longDescription": "MarkdownRS is a fast, slim, cross-platform notepad, focused on editing Markdown documents.",
         "createUpdaterArtifacts": "v1Compatible"
     },
     "plugins": {

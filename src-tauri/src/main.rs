@@ -4,7 +4,7 @@
 mod app_commands;
 mod db;
 
-use log::{LevelFilter, info};
+use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
@@ -51,32 +51,38 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_store::Builder::new().build())
-        .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
+        // Initialize Window State Plugin in builder chain
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(tauri_plugin_window_state::StateFlags::all())
+                .with_filename(".window-state.json")
+                .build(),
+        )
         .setup(|app| {
             let app_handle = app.handle();
             let window = app.get_webview_window("main").unwrap();
 
             // 1. Resolve Paths
-            // Use data_dir() (AppData/Roaming on Windows) and explicitly append "MarkdownRS"
-            let base_dir = app_handle
+            let app_dir = app_handle
                 .path()
-                .data_dir()
-                .expect("failed to get data dir");
+                .app_data_dir()
+                .expect("failed to get app data dir");
 
-            let app_dir = base_dir.join("MarkdownRS");
             let db_dir = app_dir.join("Database");
             let log_dir = app_dir.join("Logs");
             let config_path = app_dir.join("settings.toml");
             let dict_path = app_dir.join("custom-spelling.dic");
 
             // 2. Create Directories
-            fs::create_dir_all(&app_dir).expect("failed to create app dir");
-            fs::create_dir_all(&db_dir).expect("failed to create db dir");
-            fs::create_dir_all(&log_dir).expect("failed to create log dir");
+            // Ignore errors here as logging isn't set up yet,
+            // but these are non-fatal or will be caught later
+            let _ = fs::create_dir_all(&app_dir);
+            let _ = fs::create_dir_all(&db_dir);
+            let _ = fs::create_dir_all(&log_dir);
 
-            // 3. Load/Create Settings.toml
+            // 3. Load/Create Settings (for Log Level)
             let settings: AppSettings = if config_path.exists() {
                 let content = fs::read_to_string(&config_path).unwrap_or_default();
                 toml::from_str(&content).unwrap_or_default()
@@ -86,11 +92,6 @@ fn main() {
                 let _ = fs::write(&config_path, toml_string);
                 defaults
             };
-
-            // Create empty dictionary file if not exists
-            if !dict_path.exists() {
-                let _ = fs::write(&dict_path, "");
-            }
 
             let log_level = match settings.log_level.to_lowercase().as_str() {
                 "error" => LevelFilter::Error,
@@ -120,7 +121,10 @@ fn main() {
                     .build(),
             )?;
 
-            info!("Application started. Logs writing to: {:?}", log_dir);
+            // Create empty dictionary file if not exists
+            if !dict_path.exists() {
+                let _ = fs::write(&dict_path, "");
+            }
 
             // 5. Initialize DB
             let db_path = db_dir.join("session.db");
@@ -130,21 +134,12 @@ fn main() {
                 db: std::sync::Mutex::new(db),
             });
 
-            // 6. Async Show & Focus (Prevents Flash + Ghost Focus)
+            // 6. Async Show & Focus
             tauri::async_runtime::spawn(async move {
-                // Wait for window-state to restore position
                 std::thread::sleep(std::time::Duration::from_millis(150));
-
-                if let Err(e) = window.show() {
-                    log::error!("Failed to show window: {}", e);
-                }
-
-                // Buffer for OS visibility
+                let _ = window.show();
                 std::thread::sleep(std::time::Duration::from_millis(50));
-
-                if let Err(e) = window.set_focus() {
-                    log::error!("Failed to set focus: {}", e);
-                }
+                let _ = window.set_focus();
             });
 
             Ok(())
