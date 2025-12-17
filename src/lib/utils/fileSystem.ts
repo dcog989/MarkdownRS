@@ -209,7 +209,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     }
 
     if (editorStore.tabs.length === 0) {
-        const newId = editorStore.addTab();
+        const newId = editorStore.addTab(); // Will create New-1
         appState.activeTabId = newId;
     }
 }

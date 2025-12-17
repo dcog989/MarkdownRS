@@ -111,15 +111,42 @@ export class EditorStore {
         this.textOperationCallback = null;
     }
 
-    addTab(title: string = 'Untitled', content: string = '# New') {
+    addTab(title: string = '', content: string = '') {
         const id = crypto.randomUUID();
         const now = getCurrentTimestamp();
-        const normalizedContent = normalizeLineEndings(content);
+
+        // Generate sequential New-N titles when no explicit title provided
+        let finalTitle = title;
+        let finalContent = content;
+
+        if (!title || title === 'Untitled' || title.startsWith('Untitled-')) {
+            // Find existing New-N tabs and get the highest N
+            const newTabPattern = /^New-(\d+)$/;
+            let maxNewNumber = 0;
+            
+            for (const tab of this.tabs) {
+                const match = tab.originalTitle?.match(newTabPattern);
+                if (match) {
+                    maxNewNumber = Math.max(maxNewNumber, parseInt(match[1]));
+                }
+            }
+
+            // Next number is maxNewNumber + 1 (resets to 1 when no New-N tabs exist)
+            const nextNumber = maxNewNumber + 1;
+            finalTitle = `New-${nextNumber}`;
+            
+            // Set content to match title if no explicit content provided
+            if (!content) {
+                finalContent = `# ${finalTitle}`;
+            }
+        }
+
+        const normalizedContent = normalizeLineEndings(finalContent);
 
         const newTab: EditorTab = {
             id,
-            title,
-            originalTitle: title,
+            title: finalTitle,
+            originalTitle: finalTitle,
             content: normalizedContent,
             lastSavedContent: normalizedContent,
             isDirty: false,

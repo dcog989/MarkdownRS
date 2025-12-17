@@ -27,6 +27,23 @@
 
     let isDragging = $state(false);
 
+    let showLeftFade = $state(false);
+    let showRightFade = $state(false);
+
+    function updateFadeIndicators() {
+        if (!scrollContainer) return;
+
+        const scrollLeft = scrollContainer.scrollLeft;
+        const scrollWidth = scrollContainer.scrollWidth;
+        const clientWidth = scrollContainer.clientWidth;
+
+        // Show left fade if scrolled right (there are tabs to the left)
+        showLeftFade = scrollLeft > 5;
+
+        // Show right fade if not scrolled all the way right (there are tabs to the right)
+        showRightFade = scrollLeft < scrollWidth - clientWidth - 5;
+    }
+
     onMount(() => {
         const appWindow = getCurrentWindow();
         let unlisten: (() => void) | undefined;
@@ -71,11 +88,18 @@
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
 
+        // Update fade indicators on scroll
+        scrollContainer?.addEventListener("scroll", updateFadeIndicators);
+
+        // Initial update
+        updateFadeIndicators();
+
         return () => {
             if (unlisten) unlisten();
             clearInterval(interval);
             if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
             if (mruCleanupTimeout) clearTimeout(mruCleanupTimeout);
+            scrollContainer?.removeEventListener("scroll", updateFadeIndicators);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
@@ -101,37 +125,61 @@
 
             const containerRect = scrollContainer.getBoundingClientRect();
             const tabRect = activeEl.getBoundingClientRect();
-            const relativeLeft = tabRect.left - containerRect.left;
-            const relativeRight = tabRect.right - containerRect.left;
             const containerWidth = containerRect.width;
             const currentScroll = scrollContainer.scrollLeft;
-            const absTabLeft = currentScroll + relativeLeft;
-            const absTabRight = currentScroll + relativeRight;
 
+            // Calculate absolute positions within scrollable area
+            const tabLeft = tabRect.left - containerRect.left + currentScroll;
+            const tabRight = tabRect.right - containerRect.left + currentScroll;
+
+            // Check if there are tabs beyond the active one
             const nextEl = activeEl.nextElementSibling as HTMLElement;
             const prevEl = activeEl.previousElementSibling as HTMLElement;
-            const hasNext = nextEl && (nextEl.hasAttribute("data-tab-id") || nextEl.tagName === "BUTTON");
+            const hasNext = nextEl && nextEl.hasAttribute("data-tab-id");
             const hasPrev = prevEl && prevEl.hasAttribute("data-tab-id");
-            const PEEK = 40;
+
+            const PEEK_WIDTH = 60; // ! NOTE - this seems broken, has no effect.    Width of partial tab to show
+            const MARGIN = 40; // ! NOTE - this works and does what 'PEEK_WIDTH' should???      Safety margin
 
             let targetScroll = currentScroll;
-            const minScrollForRight = absTabRight + (hasNext ? PEEK : 0) - containerWidth;
-            const maxScrollForLeft = absTabLeft - (hasPrev ? PEEK : 0);
+            let needsScroll = false;
 
-            if (targetScroll < minScrollForRight) targetScroll = minScrollForRight;
-            if (targetScroll > maxScrollForLeft) targetScroll = maxScrollForLeft;
+            // Calculate the visible window with peek reservations
+            const effectiveWindowLeft = currentScroll + (hasPrev ? PEEK_WIDTH : MARGIN);
+            const effectiveWindowRight = currentScroll + containerWidth - (hasNext ? PEEK_WIDTH : MARGIN);
 
+            // Check if active tab is outside the effective window
+            if (tabLeft < effectiveWindowLeft) {
+                // Tab is cut off on left - scroll left to show it with peek
+                targetScroll = tabLeft - (hasPrev ? PEEK_WIDTH : MARGIN);
+                needsScroll = true;
+            } else if (tabRight > effectiveWindowRight) {
+                // Tab is cut off on right - scroll right to show it with peek
+                targetScroll = tabRight - containerWidth + (hasNext ? PEEK_WIDTH : MARGIN);
+                needsScroll = true;
+            }
+
+            // Clamp to valid scroll range
             const maxPossibleScroll = scrollContainer.scrollWidth - containerWidth;
             targetScroll = Math.max(0, Math.min(targetScroll, maxPossibleScroll));
 
-            if (Math.abs(currentScroll - targetScroll) > 1) {
+            if (needsScroll && Math.abs(currentScroll - targetScroll) > 2) {
                 scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
             }
+
+            // Update fade indicators after scroll
+            setTimeout(updateFadeIndicators, 150);
         }, 50);
     }
 
     $effect(() => {
         if (appState.activeTabId) scrollToActive();
+    });
+
+    // Update fade indicators when tabs change
+    $effect(() => {
+        editorStore.tabs.length; // Track changes
+        setTimeout(updateFadeIndicators, 100);
     });
 
     function handleTabClick(id: string) {
@@ -140,8 +188,10 @@
     }
 
     function handleNewTab() {
-        const newId = editorStore.addTab(`Untitled-${editorStore.tabs.length + 1}`);
+        const newId = editorStore.addTab();
         appState.activeTabId = newId;
+        // Force scroll update after new tab is added and rendered
+        setTimeout(() => scrollToActive(), 100);
     }
 
     function handleCloseTab(e: MouseEvent, tabId: string) {
@@ -209,7 +259,7 @@
 
     <section
         bind:this={scrollContainer}
-        class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container"
+        class="flex-1 flex items-end overflow-x-auto no-scrollbar scroll-smooth h-full tab-scroll-container relative"
         use:dndzone={{
             items: editorStore.tabs,
             type: "tabs",
@@ -219,6 +269,16 @@
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
     >
+        <!-- Left fade indicator -->
+        {#if showLeftFade}
+            <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to right, var(--bg-panel), transparent);"></div>
+        {/if}
+
+        <!-- Right fade indicator -->
+        {#if showRightFade}
+            <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to left, var(--bg-panel), transparent);"></div>
+        {/if}
+
         {#each editorStore.tabs as tab (tab.id)}
             <div class="h-full flex items-end" animate:flip={{ duration: 200 }}>
                 <TabButton {tab} isActive={appState.activeTabId === tab.id} {currentTime} onclick={(id) => handleTabClick(id)} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} />

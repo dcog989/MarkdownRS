@@ -75,7 +75,7 @@
                 case "n":
                     e.preventDefault();
                     e.stopPropagation();
-                    const id = editorStore.addTab();
+                    const id = editorStore.addTab(); // Creates New-N tab
                     appState.activeTabId = id;
                     break;
                 case "w":
