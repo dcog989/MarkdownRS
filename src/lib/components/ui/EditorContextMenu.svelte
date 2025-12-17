@@ -340,7 +340,7 @@
             {#if canAddSingle}
                 <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--fg-default);" onclick={handleAddToDictionary}>
                     <BookPlus size={14} />
-                    <span>Add to Dictionary</span>
+                    <span>Add "{cleanTarget}" to Dictionary</span>
                     <span class="ml-auto text-ui-sm opacity-60">F8</span>
                 </button>
             {/if}
