@@ -214,9 +214,9 @@
 
 <style>
     .preview-container {
-        padding-bottom: 30px !important;
-        scroll-behavior: smooth !important;
+        scroll-behavior: smooth;
         scrollbar-width: none;
+        padding-bottom: 30px !important;
     }
     .preview-container::-webkit-scrollbar {
         display: none;

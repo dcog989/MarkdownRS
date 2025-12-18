@@ -45,17 +45,15 @@ export function setScrollPercentage(
     const targetScroll = Math.round(maxScroll * percentage);
     const currentScroll = element.scrollTop;
 
-    // Sync if difference is greater than 1 pixel (removes "steppiness" of 1% threshold)
     if (Math.abs(currentScroll - targetScroll) > 1) {
         state.isRemoteScrolling = true;
 
-        // Use smooth scrollTo for animated transitions
+        // Use 'auto' instead of 'smooth' to prevent lag during high-frequency updates
         element.scrollTo({
             top: targetScroll,
-            behavior: 'smooth'
+            behavior: 'auto'
         });
 
-        // Release lock after scroll event has fired
         if (state.lockTimeout) clearTimeout(state.lockTimeout);
         state.lockTimeout = window.setTimeout(() => {
             state.isRemoteScrolling = false;
@@ -80,7 +78,7 @@ export function smoothScrollTo(
             if (startTime === null) startTime = currentTime;
             const timeElapsed = currentTime - startTime;
             const progress = Math.min(timeElapsed / duration, 1);
-            
+
             // Ease-in-out cubic for smooth motion
             const easing = progress < 0.5
                 ? 4 * progress * progress * progress
