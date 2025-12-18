@@ -46,7 +46,7 @@
     let metricsUpdateTimer: number | null = null;
 
     const CONTENT_UPDATE_DEBOUNCE_MS = 100;
-    const METRICS_UPDATE_DEBOUNCE_MS = 200;
+    const METRICS_UPDATE_DEBOUNCE_MS = 50;
 
     function clearTimers() {
         if (contentUpdateTimer !== null) {
@@ -287,6 +287,21 @@
                     const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
                     const sizeKB = new TextEncoder().encode(text).length / 1024;
 
+                    // Calculate current line length
+                    const currentLineText = cursorLine.text;
+                    const currentLineLength = currentLineText.length;
+
+                    // Calculate current word index
+                    let currentWordIndex = 0;
+                    if (trimmedText.length > 0) {
+                        // Get text up to cursor
+                        const textUpToCursor = text.substring(0, selection.head).trim();
+                        if (textUpToCursor.length > 0) {
+                            const wordsBeforeCursor = textUpToCursor.split(/\s+/);
+                            currentWordIndex = wordsBeforeCursor.length;
+                        }
+                    }
+
                     onMetricsChange({
                         lineCount: doc.lines,
                         wordCount: wordCount,
@@ -295,6 +310,8 @@
                         sizeKB: sizeKB,
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
+                        currentLineLength: currentLineLength,
+                        currentWordIndex: currentWordIndex,
                     });
                     metricsUpdateTimer = null;
                 }, METRICS_UPDATE_DEBOUNCE_MS);

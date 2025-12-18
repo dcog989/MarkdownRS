@@ -33,6 +33,8 @@ export type EditorMetrics = {
     sizeKB: number;
     cursorLine: number;
     cursorCol: number;
+    currentLineLength: number;
+    currentWordIndex: number;
     insertMode: 'INS' | 'OVR';
 };
 
@@ -100,6 +102,8 @@ export class EditorStore {
         sizeKB: 0,
         cursorLine: 1,
         cursorCol: 1,
+        currentLineLength: 0,
+        currentWordIndex: 0,
         insertMode: 'INS'
     });
 

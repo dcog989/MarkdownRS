@@ -250,6 +250,20 @@
                     const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
                     const sizeKB = new TextEncoder().encode(text).length / 1024;
 
+                    // Calculate current line length
+                    const currentLineText = cursorLine.text;
+                    const currentLineLength = currentLineText.length;
+
+                    // Calculate current word index
+                    let currentWordIndex = 0;
+                    if (trimmedText.length > 0) {
+                        const textUpToCursor = text.substring(0, selection.head).trim();
+                        if (textUpToCursor.length > 0) {
+                            const wordsBeforeCursor = textUpToCursor.split(/\s+/);
+                            currentWordIndex = wordsBeforeCursor.length;
+                        }
+                    }
+
                     editorStore.updateMetrics({
                         lineCount: doc.lines,
                         wordCount: wordCount,
@@ -258,6 +272,8 @@
                         sizeKB: sizeKB,
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
+                        currentLineLength: currentLineLength,
+                        currentWordIndex: currentWordIndex,
                     });
 
                     setTimeout(() => {
