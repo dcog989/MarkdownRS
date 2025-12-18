@@ -314,14 +314,12 @@ export async function loadSession(): Promise<void> {
         if (rustTabs && rustTabs.length > 0) {
             const convertedTabs: EditorTab[] = rustTabs.map(t => {
                 const normalizedContent = normalizeLineEndings(t.content);
-
-                // If tab has a path and is dirty, we'll fetch the saved version from disk
-                // For now, initialize with current content as baseline
                 const lastSaved = normalizedContent;
 
                 return {
                     id: t.id,
                     title: t.title,
+                    originalTitle: t.title, // Restore original title to maintain New-N numbering
                     content: normalizedContent,
                     lastSavedContent: lastSaved,
                     isDirty: t.is_dirty,
@@ -359,25 +357,20 @@ export async function loadSession(): Promise<void> {
                     appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id;
                     break;
                 case 'new':
-                    const newId = editorStore.addTab('Untitled');
-                    appState.activeTabId = newId;
+                    appState.activeTabId = editorStore.addTab();
                     break;
                 default:
                     appState.activeTabId = convertedTabs[0].id;
             }
 
-            // FIX: Batch process file operations to avoid race conditions
-            // Restore true saved state from disk for dirty files with paths
             const dirtyTabsWithPath = convertedTabs.filter(t => t.path && t.isDirty);
-            
+
             await Promise.all(dirtyTabsWithPath.map(async (tab) => {
                 try {
                     const result = await invoke<FileContent>('read_text_file', { path: tab.path! });
-                    // Update the reference "clean" content from disk (normalized)
                     const storeTab = editorStore.tabs.find(x => x.id === tab.id);
                     if (storeTab) {
                         storeTab.lastSavedContent = normalizeLineEndings(result.content);
-                        // Recalculate dirty state properly against disk content
                         storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
                     }
                 } catch (e) {
@@ -385,7 +378,6 @@ export async function loadSession(): Promise<void> {
                 }
             }));
 
-            // Check file existence for all tabs with paths
             await Promise.all(
                 convertedTabs
                     .filter(t => t.path)
@@ -399,12 +391,10 @@ export async function loadSession(): Promise<void> {
                     })
             );
         } else {
-            const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
-            appState.activeTabId = id;
+            appState.activeTabId = editorStore.addTab();
         }
     } catch (err) {
         AppError.log('Session:Load', err);
-        const id = editorStore.addTab('Untitled-1', '# Welcome to MarkdownRS\n');
-        appState.activeTabId = id;
+        appState.activeTabId = editorStore.addTab();
     }
 }
