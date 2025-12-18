@@ -270,18 +270,6 @@
                     const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
                     const sizeKB = new TextEncoder().encode(text).length / 1024;
 
-                    const currentLineText = cursorLine.text;
-                    const currentLineLength = currentLineText.length;
-
-                    let currentWordIndex = 0;
-                    if (trimmedText.length > 0) {
-                        const textUpToCursor = text.substring(0, selection.head).trim();
-                        if (textUpToCursor.length > 0) {
-                            const wordsBeforeCursor = textUpToCursor.split(/\s+/);
-                            currentWordIndex = wordsBeforeCursor.length;
-                        }
-                    }
-
                     editorStore.updateMetrics({
                         lineCount: doc.lines,
                         wordCount: wordCount,
@@ -290,34 +278,40 @@
                         sizeKB: sizeKB,
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
-                        currentLineLength: currentLineLength,
-                        currentWordIndex: currentWordIndex,
+                        currentLineLength: cursorLine.text.length,
+                        currentWordIndex: text.substring(0, selection.head).trim().split(/\s+/).length,
                     });
 
                     setTimeout(() => {
                         if (view.scrollDOM && currentTab.scrollPercentage >= 0) {
                             const dom = view.scrollDOM;
-                            const maxScroll = dom.scrollHeight - dom.clientHeight;
-                            if (maxScroll > 0) {
-                                if (currentTab.topLine && currentTab.topLine > 1) {
-                                    try {
-                                        const lineBlock = view.lineBlockAt(view.state.doc.line(Math.floor(currentTab.topLine)).from);
-                                        scrollSyncState.isRemoteScrolling = true;
-                                        dom.scrollTop = lineBlock.top;
-                                    } catch (e) {
-                                        scrollSyncState.isRemoteScrolling = true;
-                                        dom.scrollTop = maxScroll * currentTab.scrollPercentage;
-                                    }
-                                } else {
-                                    scrollSyncState.isRemoteScrolling = true;
-                                    dom.scrollTop = maxScroll * currentTab.scrollPercentage;
-                                }
+                            const originalBehavior = dom.style.scrollBehavior;
 
+                            // Disable smooth scroll for the initial tab-switch jump
+                            dom.style.scrollBehavior = "auto";
+
+                            if (currentTab.topLine && currentTab.topLine > 1) {
+                                try {
+                                    const lineBlock = view.lineBlockAt(view.state.doc.line(Math.floor(currentTab.topLine)).from);
+                                    scrollSyncState.isRemoteScrolling = true;
+                                    dom.scrollTop = lineBlock.top;
+                                } catch (e) {
+                                    scrollSyncState.isRemoteScrolling = true;
+                                    dom.scrollTop = (dom.scrollHeight - dom.clientHeight) * currentTab.scrollPercentage;
+                                }
+                            } else {
+                                scrollSyncState.isRemoteScrolling = true;
+                                dom.scrollTop = (dom.scrollHeight - dom.clientHeight) * currentTab.scrollPercentage;
+                            }
+
+                            // Restore original behavior after the jump
+                            requestAnimationFrame(() => {
+                                dom.style.scrollBehavior = originalBehavior;
                                 if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
                                 scrollSyncState.lockTimeout = window.setTimeout(() => {
                                     scrollSyncState.isRemoteScrolling = false;
                                 }, 100);
-                            }
+                            });
                         }
                     }, 0);
 
