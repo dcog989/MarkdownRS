@@ -38,7 +38,6 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            // When a second instance is launched, focus the existing window
             let windows = app.webview_windows();
             if let Some((_, window)) = windows.iter().next() {
                 let _ = window.set_focus();
@@ -51,7 +50,6 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        // Initialize Window State Plugin in builder chain
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(tauri_plugin_window_state::StateFlags::all())
@@ -62,7 +60,6 @@ fn main() {
             let app_handle = app.handle();
             let window = app.get_webview_window("main").unwrap();
 
-            // 1. Resolve Paths
             let app_dir = app_handle
                 .path()
                 .app_data_dir()
@@ -73,14 +70,10 @@ fn main() {
             let config_path = app_dir.join("settings.toml");
             let dict_path = app_dir.join("custom-spelling.dic");
 
-            // 2. Create Directories
-            // Ignore errors here as logging isn't set up yet,
-            // but these are non-fatal or will be caught later
             let _ = fs::create_dir_all(&app_dir);
             let _ = fs::create_dir_all(&db_dir);
             let _ = fs::create_dir_all(&log_dir);
 
-            // 3. Load/Create Settings (for Log Level)
             let settings: AppSettings = if config_path.exists() {
                 let content = fs::read_to_string(&config_path).unwrap_or_default();
                 toml::from_str(&content).unwrap_or_default()
@@ -100,14 +93,12 @@ fn main() {
                 _ => LevelFilter::Debug,
             };
 
-            // 4. Initialize Logging Plugin
             app_handle.plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log_level)
                     .level_for("tao", LevelFilter::Error)
                     .level_for("wry", LevelFilter::Error)
-                    .level_for("move_resize", LevelFilter::Error)
-                    .max_file_size(10 * 1024 * 1024) // 10MB
+                    .max_file_size(10 * 1024 * 1024)
                     .targets([
                         Target::new(TargetKind::Stdout),
                         Target::new(TargetKind::Folder {
@@ -119,20 +110,18 @@ fn main() {
                     .build(),
             )?;
 
-            // Create empty dictionary file if not exists
             if !dict_path.exists() {
                 let _ = fs::write(&dict_path, "");
             }
 
-            // 5. Initialize DB
             let db_path = db_dir.join("session.db");
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
             app.manage(app_commands::AppState {
                 db: std::sync::Mutex::new(db),
+                symspell: std::sync::Mutex::new(symspell_rs::SymSpell::new(2, None, 7, 1)),
             });
 
-            // 6. Async Show & Focus
             tauri::async_runtime::spawn(async move {
                 std::thread::sleep(std::time::Duration::from_millis(150));
                 let _ = window.show();
@@ -153,6 +142,7 @@ fn main() {
             app_commands::add_to_dictionary,
             app_commands::get_custom_dictionary,
             app_commands::resolve_path_relative,
+            app_commands::init_spellchecker,
             app_commands::get_spelling_suggestions,
         ])
         .run(tauri::generate_context!())

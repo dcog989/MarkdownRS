@@ -65,6 +65,11 @@ export async function initSpellcheck(): Promise<void> {
 
     initPromise = (async () => {
         await Promise.all([loadCustomDictionary(), loadBaseDictionary()]);
+
+        await invoke('init_spellchecker', {
+            dictionaryData: baseDictionaryRaw
+        });
+
         dictionaryLoaded = true;
     })();
 
@@ -99,13 +104,11 @@ export async function getSuggestions(word: string): Promise<string[]> {
 
     try {
         const results = await invoke<string[]>('get_spelling_suggestions', {
-            word,
-            customDict: Array.from(customDictionary),
-            baseDictRaw: baseDictionaryRaw
+            word
         });
         return results;
     } catch (err) {
-        console.error('Failed to get suggestions from backend:', err);
+        console.error('Failed to get suggestions from symspell_rs:', err);
         return [];
     }
 }

@@ -10,6 +10,7 @@ use tauri::{Manager, State};
 
 pub struct AppState {
     pub db: Mutex<Database>,
+    pub symspell: Mutex<symspell_rs::SymSpell>,
 }
 
 #[derive(serde::Serialize)]
@@ -264,72 +265,43 @@ pub async fn resolve_path_relative(
 }
 
 #[tauri::command]
-pub async fn get_spelling_suggestions(
-    word: String,
-    custom_dict: Vec<String>,
-    base_dict_raw: String,
-) -> Result<Vec<String>, String> {
-    let target = word.to_lowercase();
-    let mut candidates: Vec<(String, usize)> = Vec::new();
-    let max_distance = 2;
+pub async fn init_spellchecker(
+    state: State<'_, AppState>,
+    dictionary_data: String,
+) -> Result<(), String> {
+    let mut sym = state
+        .symspell
+        .lock()
+        .map_err(|_| "Failed to lock symspell")?;
 
-    let target_len = target.chars().count();
+    // Initialize with standard defaults: max_distance=2, threshold=None, prefix_len=7, count_threshold=1
+    *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
 
-    // Iterate through custom dictionary
-    for cand in custom_dict {
-        if cand.chars().count().abs_diff(target_len) <= max_distance {
-            let dist = levenshtein_distance(&target, &cand);
-            if dist <= max_distance {
-                candidates.push((cand, dist));
-            }
-        }
+    for line in dictionary_data.lines() {
+        sym.load_dictionary_line(line, 0, 1, " ");
     }
-
-    // Iterate through base dictionary lines
-    for line in base_dict_raw.lines() {
-        let cand = line.trim();
-        if cand.len() > 1 && cand.chars().count().abs_diff(target_len) <= max_distance {
-            let dist = levenshtein_distance(&target, cand);
-            if dist <= max_distance {
-                candidates.push((cand.to_string(), dist));
-            }
-        }
-    }
-
-    candidates.sort_by_key(|&(_, dist)| dist);
-    Ok(candidates.into_iter().take(3).map(|(w, _)| w).collect())
+    Ok(())
 }
 
-fn levenshtein_distance(a: &str, b: &str) -> usize {
-    let a_chars: Vec<char> = a.chars().collect();
-    let b_chars: Vec<char> = b.chars().collect();
-    let a_len = a_chars.len();
-    let b_len = b_chars.len();
+#[tauri::command]
+pub async fn get_spelling_suggestions(
+    state: State<'_, AppState>,
+    word: String,
+) -> Result<Vec<String>, String> {
+    let sym = state
+        .symspell
+        .lock()
+        .map_err(|_| "Failed to lock symspell")?;
 
-    if a_len == 0 {
-        return b_len;
-    }
-    if b_len == 0 {
-        return a_len;
-    }
+    // Signature: (input, verbosity, max_edit_distance, custom_dict, transfer_casing, include_unknown)
+    let suggestions = sym.lookup(
+        &word.to_lowercase(),
+        symspell_rs::Verbosity::Top,
+        2,
+        &None,
+        None,
+        false,
+    );
 
-    let mut prev_row: Vec<usize> = (0..=b_len).collect();
-    let mut curr_row: Vec<usize> = vec![0; b_len + 1];
-
-    for i in 1..=a_len {
-        curr_row[0] = i;
-        for j in 1..=b_len {
-            let cost = if a_chars[i - 1] == b_chars[j - 1] {
-                0
-            } else {
-                1
-            };
-            curr_row[j] = (curr_row[j - 1] + 1)
-                .min(prev_row[j] + 1)
-                .min(prev_row[j - 1] + cost);
-        }
-        prev_row.copy_from_slice(&curr_row);
-    }
-
-    prev_row[b_len]
+    Ok(suggestions.into_iter().map(|s| s.term).take(3).collect())
 }
