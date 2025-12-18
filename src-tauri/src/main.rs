@@ -8,7 +8,7 @@ use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
-use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AppSettings {
@@ -99,6 +99,7 @@ fn main() {
                     .level_for("tao", LevelFilter::Error)
                     .level_for("wry", LevelFilter::Error)
                     .max_file_size(10 * 1024 * 1024)
+                    .rotation_strategy(RotationStrategy::KeepOne)
                     .targets([
                         Target::new(TargetKind::Stdout),
                         Target::new(TargetKind::Folder {
