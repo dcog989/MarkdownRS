@@ -2,7 +2,7 @@
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
-    import { getSuggestions, isWordValid } from "$lib/utils/spellcheck";
+    import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Sparkles, Wand2, WrapText } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
@@ -40,10 +40,20 @@
     let resizeObserver: ResizeObserver | null = null;
 
     $effect(() => {
-        if (wordUnderCursor && !selectedText && !isWordValid(wordUnderCursor)) {
-            getSuggestions(wordUnderCursor).then((results) => {
-                suggestions = results;
-            });
+        const cleanWord = wordUnderCursor?.trim();
+        if (spellcheckState.dictionaryLoaded && cleanWord && !selectedText) {
+            if (!isWordValid(cleanWord)) {
+                getSuggestions(cleanWord)
+                    .then((results: string[]) => {
+                        suggestions = results.filter((s: string) => s.toLowerCase() !== cleanWord.toLowerCase());
+                    })
+                    .catch((err) => {
+                        console.error("Suggestion lookup error:", err);
+                        suggestions = [];
+                    });
+            } else {
+                suggestions = [];
+            }
         } else {
             suggestions = [];
         }
@@ -259,7 +269,6 @@
         {#if hasSelection}
             <div class="h-px my-1" style="background-color: var(--border-main);"></div>
 
-            <!-- Sort Menu -->
             <Submenu
                 bind:show={showSortMenu}
                 side={submenuSide}
@@ -286,7 +295,6 @@
                 <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
             </Submenu>
 
-            <!-- Case Change Menu -->
             <Submenu
                 bind:show={showCaseMenu}
                 side={submenuSide}
@@ -315,7 +323,6 @@
                 <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
             </Submenu>
 
-            <!-- Transform Menu -->
             <Submenu
                 bind:show={showTransformMenu}
                 side={submenuSide}

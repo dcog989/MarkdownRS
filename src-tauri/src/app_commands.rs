@@ -274,11 +274,15 @@ pub async fn init_spellchecker(
         .lock()
         .map_err(|_| "Failed to lock symspell")?;
 
-    // Initialize with standard defaults: max_distance=2, threshold=None, prefix_len=7, count_threshold=1
+    // Initialize with standard defaults
     *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
 
     for line in dictionary_data.lines() {
-        sym.load_dictionary_line(line, 0, 1, " ");
+        let word = line.trim();
+        if !word.is_empty() {
+            // Since words_alpha.txt has no frequency, manually create entries with count 1
+            sym.create_dictionary_entry(word, 1);
+        }
     }
     Ok(())
 }
@@ -293,15 +297,23 @@ pub async fn get_spelling_suggestions(
         .lock()
         .map_err(|_| "Failed to lock symspell")?;
 
-    // Signature: (input, verbosity, max_edit_distance, custom_dict, transfer_casing, include_unknown)
+    // Verbosity::All ensures we get candidates even if the distance is maxed
+    // include_unknown is false because we want actual suggestions
     let suggestions = sym.lookup(
         &word.to_lowercase(),
-        symspell_rs::Verbosity::Top,
+        symspell_rs::Verbosity::All,
         2,
         &None,
         None,
         false,
     );
 
-    Ok(suggestions.into_iter().map(|s| s.term).take(3).collect())
+    let mut results: Vec<String> = suggestions
+        .into_iter()
+        .map(|s| s.term)
+        .filter(|t| t != &word.to_lowercase())
+        .collect();
+
+    results.truncate(5);
+    Ok(results)
 }

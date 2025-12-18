@@ -7,7 +7,7 @@
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatter";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
-    import { initSpellcheck } from "$lib/utils/spellcheck";
+    import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
     import { transformText } from "$lib/utils/textTransforms";
     import { EditorView as CM6EditorView } from "@codemirror/view";
@@ -181,7 +181,6 @@
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (pos !== null) {
                     const line = view.state.doc.lineAt(pos);
-                    // Regex improved to handle Windows drive letters (C:\), forward/backslashes, and dots
                     const pathRegex = /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g;
 
                     let match;
@@ -202,24 +201,26 @@
             event.preventDefault();
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
+
             let wordUnderCursor = "";
             let from = 0;
             let to = 0;
+
             if (!selectedText) {
-                let range = view.state.wordAt(selection.head);
+                // Determine position from mouse coordinates for precision
+                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                const searchPos = pos !== null ? pos : selection.head;
+                const range = view.state.wordAt(searchPos);
+
                 if (range) {
                     from = range.from;
                     to = range.to;
-                    wordUnderCursor = view.state.sliceDoc(from, to);
-                    if (wordUnderCursor === "'s" || wordUnderCursor === "'") {
-                        const prevRange = view.state.wordAt(from - 1);
-                        if (prevRange && prevRange.to === from) {
-                            from = prevRange.from;
-                            wordUnderCursor = view.state.sliceDoc(from, to);
-                        }
-                    }
+                    const rawWord = view.state.sliceDoc(from, to);
+                    // Strip punctuation and numbers to focus on the alphabetic term
+                    wordUnderCursor = rawWord.replace(/[^a-zA-Z']/g, "");
                 }
             }
+
             contextSelectedText = selectedText;
             contextWordUnderCursor = wordUnderCursor;
             contextWordFrom = from;
@@ -287,14 +288,12 @@
                     const text = doc.toString();
                     const trimmedText = text.trim();
                     const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
-                    const sizeKB = new TextEncoder().encode(text).length / 1024;
 
                     editorStore.updateMetrics({
                         lineCount: doc.lines,
                         wordCount: wordCount,
                         charCount: text.length,
                         cursorOffset: selection.head,
-                        sizeKB: sizeKB,
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
                         currentLineLength: cursorLine.text.length,
@@ -306,7 +305,6 @@
                             const dom = view.scrollDOM;
                             const originalBehavior = dom.style.scrollBehavior;
 
-                            // Disable smooth scroll for the initial tab-switch jump
                             dom.style.scrollBehavior = "auto";
 
                             if (currentTab.topLine && currentTab.topLine > 1) {
@@ -323,7 +321,6 @@
                                 dom.scrollTop = (dom.scrollHeight - dom.clientHeight) * currentTab.scrollPercentage;
                             }
 
-                            // Restore original behavior after the jump
                             requestAnimationFrame(() => {
                                 dom.style.scrollBehavior = originalBehavior;
                                 if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
