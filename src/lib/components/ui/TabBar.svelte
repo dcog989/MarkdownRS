@@ -21,33 +21,25 @@
     let contextMenuY = $state(0);
 
     let showMruPopup = $state(false);
+    let mruSelectedIndex = $state(0);
+    let isMruCycling = $state(false);
     let mruPopupTimeout: number | null = null;
     let mruCleanupTimeout: number | null = null;
-    let tabKeyHeld = $state(false);
 
     let isDragging = $state(false);
-
     let showLeftFade = $state(false);
     let showRightFade = $state(false);
 
     function updateFadeIndicators() {
         if (!scrollContainer) return;
-
-        const scrollLeft = scrollContainer.scrollLeft;
-        const scrollWidth = scrollContainer.scrollWidth;
-        const clientWidth = scrollContainer.clientWidth;
-
-        // Show left fade if scrolled right (there are tabs to the left)
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
         showLeftFade = scrollLeft > 5;
-
-        // Show right fade if not scrolled all the way right (there are tabs to the right)
         showRightFade = scrollLeft < scrollWidth - clientWidth - 5;
     }
 
     onMount(() => {
         const appWindow = getCurrentWindow();
         let unlisten: (() => void) | undefined;
-
         appWindow.onResized(() => {}).then((u) => (unlisten = u));
 
         const interval = setInterval(() => {
@@ -57,41 +49,43 @@
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
-                if (!tabKeyHeld) {
-                    tabKeyHeld = true;
-                    if (editorStore.mruStack.length >= 2) {
-                        const lastUsedTab = editorStore.mruStack[1];
-                        if (lastUsedTab && lastUsedTab !== appState.activeTabId) {
-                            appState.activeTabId = lastUsedTab;
-                        }
-                    }
+                if (!isMruCycling) {
+                    isMruCycling = true;
+                    // Start cycling from the next item in the stack (previously active)
+                    mruSelectedIndex = editorStore.mruStack.length > 1 ? 1 : 0;
+
                     if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
                     mruPopupTimeout = window.setTimeout(() => {
-                        if (tabKeyHeld) showMruPopup = true;
+                        if (isMruCycling) showMruPopup = true;
                     }, 200);
                 } else {
-                    cycleNextMru();
+                    // Cycle through the entire stack
+                    mruSelectedIndex = (mruSelectedIndex + 1) % editorStore.mruStack.length;
                 }
             }
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (!e.ctrlKey && tabKeyHeld) {
-                tabKeyHeld = false;
+            if (!e.ctrlKey && isMruCycling) {
+                const targetId = editorStore.mruStack[mruSelectedIndex];
+                if (targetId && targetId !== appState.activeTabId) {
+                    appState.activeTabId = targetId;
+                    editorStore.pushToMru(targetId);
+                }
+
+                isMruCycling = false;
                 if (mruPopupTimeout) clearTimeout(mruPopupTimeout);
-                if (appState.activeTabId) editorStore.pushToMru(appState.activeTabId);
                 if (mruCleanupTimeout) clearTimeout(mruCleanupTimeout);
-                mruCleanupTimeout = window.setTimeout(() => (showMruPopup = false), 100);
+                mruCleanupTimeout = window.setTimeout(() => {
+                    showMruPopup = false;
+                    mruSelectedIndex = 0;
+                }, 50);
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
-
-        // Update fade indicators on scroll
         scrollContainer?.addEventListener("scroll", updateFadeIndicators);
-
-        // Initial update
         updateFadeIndicators();
 
         return () => {
@@ -105,17 +99,6 @@
         };
     });
 
-    function cycleNextMru() {
-        if (editorStore.mruStack.length < 2) return;
-        const currentActive = appState.activeTabId;
-        const currentIndex = editorStore.mruStack.findIndex((id) => id === currentActive);
-        const nextIndex = (currentIndex + 1) % editorStore.mruStack.length;
-        const nextTabId = editorStore.mruStack[nextIndex];
-        if (nextTabId && nextTabId !== currentActive) {
-            appState.activeTabId = nextTabId;
-        }
-    }
-
     async function scrollToActive() {
         await tick();
         setTimeout(() => {
@@ -128,38 +111,30 @@
             const containerWidth = containerRect.width;
             const currentScroll = scrollContainer.scrollLeft;
 
-            // Calculate absolute positions within scrollable area
             const tabLeft = tabRect.left - containerRect.left + currentScroll;
             const tabRight = tabRect.right - containerRect.left + currentScroll;
 
-            // Check if there are tabs beyond the active one
             const nextEl = activeEl.nextElementSibling as HTMLElement;
             const prevEl = activeEl.previousElementSibling as HTMLElement;
             const hasNext = nextEl && nextEl.hasAttribute("data-tab-id");
             const hasPrev = prevEl && prevEl.hasAttribute("data-tab-id");
 
-            const PEEK_WIDTH = 60; // ! NOTE - this seems broken, has no effect.    Width of partial tab to show
-            const MARGIN = 40; // ! NOTE - this works and does what 'PEEK_WIDTH' should???      Safety margin
+            const MARGIN = 40;
 
             let targetScroll = currentScroll;
             let needsScroll = false;
 
-            // Calculate the visible window with peek reservations
-            const effectiveWindowLeft = currentScroll + (hasPrev ? PEEK_WIDTH : MARGIN);
-            const effectiveWindowRight = currentScroll + containerWidth - (hasNext ? PEEK_WIDTH : MARGIN);
+            const effectiveWindowLeft = currentScroll + (hasPrev ? MARGIN : MARGIN);
+            const effectiveWindowRight = currentScroll + containerWidth - (hasNext ? MARGIN : MARGIN);
 
-            // Check if active tab is outside the effective window
             if (tabLeft < effectiveWindowLeft) {
-                // Tab is cut off on left - scroll left to show it with peek
-                targetScroll = tabLeft - (hasPrev ? PEEK_WIDTH : MARGIN);
+                targetScroll = tabLeft - MARGIN;
                 needsScroll = true;
             } else if (tabRight > effectiveWindowRight) {
-                // Tab is cut off on right - scroll right to show it with peek
-                targetScroll = tabRight - containerWidth + (hasNext ? PEEK_WIDTH : MARGIN);
+                targetScroll = tabRight - containerWidth + MARGIN;
                 needsScroll = true;
             }
 
-            // Clamp to valid scroll range
             const maxPossibleScroll = scrollContainer.scrollWidth - containerWidth;
             targetScroll = Math.max(0, Math.min(targetScroll, maxPossibleScroll));
 
@@ -167,7 +142,6 @@
                 scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
             }
 
-            // Update fade indicators after scroll
             setTimeout(updateFadeIndicators, 150);
         }, 50);
     }
@@ -176,9 +150,8 @@
         if (appState.activeTabId) scrollToActive();
     });
 
-    // Update fade indicators when tabs change
     $effect(() => {
-        editorStore.tabs.length; // Track changes
+        editorStore.tabs.length;
         setTimeout(updateFadeIndicators, 100);
     });
 
@@ -190,7 +163,6 @@
     function handleNewTab() {
         const newId = editorStore.addTab();
         appState.activeTabId = newId;
-        // Force scroll update after new tab is added and rendered
         setTimeout(() => scrollToActive(), 100);
     }
 
@@ -200,20 +172,12 @@
         requestCloseTab(tabId);
     }
 
-    function closeContextMenu() {
-        contextMenuTabId = null;
-    }
-
     function handleTabContextMenu(e: MouseEvent, tabId: string) {
         e.preventDefault();
         e.stopPropagation();
         contextMenuTabId = tabId;
         contextMenuX = e.clientX;
         contextMenuY = e.clientY;
-    }
-
-    function toggleDropdown() {
-        showDropdown = !showDropdown;
     }
 
     function handleDropdownSelect(id: string) {
@@ -225,8 +189,6 @@
         appState.activeTabId = tabId;
         editorStore.pushToMru(tabId);
     }
-
-    let tabCount = $derived(editorStore.tabs.length);
 
     function handleDndConsider(e: CustomEvent<DndEvent<EditorTab>>) {
         editorStore.tabs = e.detail.items;
@@ -250,11 +212,11 @@
 
 <div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--bg-panel); border-color: var(--border-main);">
     <div class="relative h-8 border-r border-[var(--border-main)]">
-        <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={toggleDropdown}>
-            <span>{tabCount}</span>
+        <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)}>
+            <span>{editorStore.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
-        <TabDropdown isOpen={showDropdown} onSelect={handleDropdownSelect} onClose={toggleDropdown} />
+        <TabDropdown isOpen={showDropdown} onSelect={handleDropdownSelect} onClose={() => (showDropdown = false)} />
     </div>
 
     <section
@@ -269,19 +231,17 @@
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
     >
-        <!-- Left fade indicator -->
         {#if showLeftFade}
             <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to right, var(--bg-panel), transparent);"></div>
         {/if}
 
-        <!-- Right fade indicator -->
         {#if showRightFade}
             <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to left, var(--bg-panel), transparent);"></div>
         {/if}
 
         {#each editorStore.tabs as tab (tab.id)}
             <div class="h-full flex items-end" animate:flip={{ duration: 200 }}>
-                <TabButton {tab} isActive={appState.activeTabId === tab.id} {currentTime} onclick={(id) => handleTabClick(id)} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} />
+                <TabButton {tab} isActive={appState.activeTabId === tab.id} {currentTime} onclick={handleTabClick} onclose={handleCloseTab} oncontextmenu={handleTabContextMenu} />
             </div>
         {/each}
     </section>
@@ -294,10 +254,10 @@
 </div>
 
 {#if contextMenuTabId}
-    <TabContextMenu tabId={contextMenuTabId} x={contextMenuX} y={contextMenuY} onClose={closeContextMenu} />
+    <TabContextMenu tabId={contextMenuTabId} x={contextMenuX} y={contextMenuY} onClose={() => (contextMenuTabId = null)} />
 {/if}
 
-<MruTabsPopup isOpen={showMruPopup} onClose={() => (showMruPopup = false)} onSelect={handleMruSelect} currentActiveId={appState.activeTabId} />
+<MruTabsPopup isOpen={showMruPopup} onClose={() => (showMruPopup = false)} onSelect={handleMruSelect} selectedId={isMruCycling ? editorStore.mruStack[mruSelectedIndex] : appState.activeTabId} />
 
 <style>
     .no-scrollbar::-webkit-scrollbar {

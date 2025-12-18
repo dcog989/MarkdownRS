@@ -19,9 +19,12 @@
 
     function update() {
         if (!viewport) return;
-        const { clientHeight, scrollHeight, scrollTop } = viewport;
+        const clientHeight = viewport.clientHeight;
+        const scrollHeight = viewport.scrollHeight;
+        const scrollTop = viewport.scrollTop;
 
-        if (scrollHeight <= clientHeight) {
+        // Use a 2px buffer to avoid flickering on exact matches
+        if (scrollHeight <= clientHeight + 2) {
             isVisible = false;
             return;
         }
@@ -29,7 +32,7 @@
         isVisible = true;
 
         const ratio = clientHeight / scrollHeight;
-        thumbHeight = Math.max(20, clientHeight * ratio);
+        thumbHeight = Math.max(30, clientHeight * ratio);
 
         const maxScroll = scrollHeight - clientHeight;
         const maxThumb = clientHeight - thumbHeight;
@@ -45,14 +48,12 @@
 
         const rect = trackRef.getBoundingClientRect();
         const clickOffset = e.clientY - rect.top;
-
         const maxThumb = viewport.clientHeight - thumbHeight;
         let newThumbTop = clickOffset - thumbHeight / 2;
         newThumbTop = Math.max(0, Math.min(maxThumb, newThumbTop));
 
         const maxScroll = viewport.scrollHeight - viewport.clientHeight;
         const scrollRatio = newThumbTop / maxThumb;
-
         viewport.scrollTop = scrollRatio * maxScroll;
     }
 
@@ -117,19 +118,18 @@
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
         }
-        if (resizeObserver) resizeObserver.disconnect();
+        resizeObserver?.disconnect();
     });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="scrollbar-track absolute right-0 top-0 bottom-0 z-30 transition-all duration-200" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-0 bottom-0 z-50 flex w-[12px] justify-center bg-transparent transition-all duration-200 hover:w-[14px] hover:bg-white/4" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
     <div
-        class="scrollbar-thumb absolute bg-[var(--border-light)] hover:bg-[var(--fg-muted)] active:bg-[var(--fg-muted)] transition-all duration-200"
+        class="scrollbar-thumb absolute w-[6px] rounded-full bg-[var(--border-light)] transition-all duration-200 group-hover:w-[10px] group-hover:bg-white/24 active:bg-[var(--accent-primary)]"
         style="
             height: {thumbHeight}px;
             top: {thumbTop}px;
-            border-radius: 9999px;
         "
         onmousedown={onThumbMouseDown}
     ></div>
@@ -138,25 +138,5 @@
 <style>
     .hidden {
         display: none;
-    }
-
-    .scrollbar-track {
-        width: 10px;
-        background-color: transparent;
-    }
-
-    .scrollbar-track:hover {
-        width: 14px;
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-
-    .scrollbar-thumb {
-        width: 6px;
-        right: 2px;
-    }
-
-    .scrollbar-track:hover .scrollbar-thumb {
-        width: 10px;
-        right: 2px;
     }
 </style>
