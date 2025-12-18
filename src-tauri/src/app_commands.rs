@@ -112,10 +112,19 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
     validate_path(&path)?;
     let temp_path = format!("{}.tmp", path);
     fs::write(&temp_path, &content).map_err(|e| e.to_string())?;
-    fs::rename(&temp_path, &path).map_err(|e| {
-        let _ = fs::remove_file(&temp_path);
-        e.to_string()
-    })
+
+    match fs::rename(&temp_path, &path) {
+        Ok(_) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
+            fs::copy(&temp_path, &path).map_err(|ce| ce.to_string())?;
+            let _ = fs::remove_file(&temp_path);
+            Ok(())
+        }
+        Err(e) => {
+            let _ = fs::remove_file(&temp_path);
+            Err(e.to_string())
+        }
+    }
 }
 
 #[tauri::command]
