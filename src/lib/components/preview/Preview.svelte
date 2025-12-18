@@ -8,7 +8,7 @@
     import { renderMarkdown } from "$lib/utils/markdown";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
-    import { onDestroy } from "svelte";
+    import { onDestroy, tick } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
@@ -32,6 +32,22 @@
     let renderDebounceTimer: number | null = null;
     let lastRenderedContent = "";
 
+    // Cache for scroll synchronization
+    let lineOffsets = $state<{ line: number; top: number }[]>([]);
+
+    async function updateLineOffsets() {
+        if (!container) return;
+        await tick();
+        const anchors = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
+        lineOffsets = anchors
+            .map((el) => ({
+                line: parseInt(el.getAttribute("data-source-line") || "0", 10),
+                top: el.offsetTop,
+            }))
+            .filter((item) => !isNaN(item.line))
+            .sort((a, b) => a.line - b.line);
+    }
+
     $effect(() => {
         if (content === lastRenderedContent && htmlContent) return;
 
@@ -45,6 +61,7 @@
                 lastRenderedContent = content;
                 isRendering = false;
                 renderErrorCount = 0;
+                lineOffsets = [];
                 return;
             }
             try {
@@ -52,6 +69,7 @@
                 htmlContent = rendered;
                 lastRenderedContent = content;
                 renderErrorCount = 0;
+                await updateLineOffsets();
             } catch (e) {
                 renderErrorCount++;
                 AppError.log("Markdown:Render", e, { tabId, contentLength: content.length });
@@ -74,7 +92,7 @@
     });
 
     $effect(() => {
-        if (!container || !targetLine) return;
+        if (!container || !targetLine || lineOffsets.length === 0) return;
         if (isHovered) return;
 
         if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
@@ -82,43 +100,28 @@
         scrollSyncFrame = requestAnimationFrame(() => {
             if (!container) return;
 
-            const anchors = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
-            if (anchors.length === 0) return;
+            let before = { line: 0, top: 0 };
+            let after = { line: Infinity, top: 0 };
 
-            let beforeEl: HTMLElement | null = null;
-            let afterEl: HTMLElement | null = null;
-            let beforeLine = 0;
-            let afterLine = Infinity;
-
-            for (const el of anchors) {
-                const line = parseInt(el.getAttribute("data-source-line") || "0", 10);
-                if (isNaN(line)) continue;
-
-                if (line <= targetLine) {
-                    if (line > beforeLine) {
-                        beforeLine = line;
-                        beforeEl = el;
-                    }
+            for (const item of lineOffsets) {
+                if (item.line <= targetLine) {
+                    if (item.line > before.line) before = item;
                 } else {
-                    if (line < afterLine) {
-                        afterLine = line;
-                        afterEl = el;
-                    }
+                    if (item.line < after.line) after = item;
+                    break;
                 }
             }
 
             let scrollTop = 0;
             const PADDING_OFFSET = 32;
 
-            if (beforeEl && afterEl) {
-                const lineDiff = afterLine - beforeLine;
-                const pixelDiff = afterEl.offsetTop - beforeEl.offsetTop;
-                const progress = (targetLine - beforeLine) / lineDiff;
-                scrollTop = beforeEl.offsetTop + pixelDiff * progress - PADDING_OFFSET;
-            } else if (beforeEl) {
-                scrollTop = beforeEl.offsetTop - PADDING_OFFSET;
-            } else if (afterEl) {
-                scrollTop = 0;
+            if (before.line > 0 && after.line !== Infinity) {
+                const lineDiff = after.line - before.line;
+                const pixelDiff = after.top - before.top;
+                const progress = (targetLine - before.line) / lineDiff;
+                scrollTop = before.top + pixelDiff * progress - PADDING_OFFSET;
+            } else if (before.line > 0) {
+                scrollTop = before.top - PADDING_OFFSET;
             }
 
             scrollTop = Math.max(0, scrollTop);
@@ -143,21 +146,17 @@
     });
 
     function handleScroll() {
-        if (!container) return;
+        if (!container || lineOffsets.length === 0) return;
         if (!isHovered && !scrollSyncState.isRemoteScrolling) return;
         if (scrollSyncState.isRemoteScrolling) return;
 
-        const anchors = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
-        if (anchors.length === 0) return;
-
         const currentScroll = container.scrollTop;
         const PADDING_OFFSET = 32;
-
         let bestLine = 1;
 
-        for (const el of anchors) {
-            if (el.offsetTop - PADDING_OFFSET <= currentScroll + 5) {
-                bestLine = parseInt(el.getAttribute("data-source-line") || "1", 10);
+        for (const item of lineOffsets) {
+            if (item.top - PADDING_OFFSET <= currentScroll + 5) {
+                bestLine = item.line;
             } else {
                 break;
             }
@@ -219,9 +218,6 @@
                 <h1 class="text-3xl font-bold tracking-tight" style="color: var(--fg-muted); margin: 0;">MarkdownRS</h1>
             </div>
         {:else}
-            {#if renderError}
-                <div role="alert" aria-live="polite"></div>
-            {/if}
             {@html htmlContent}
         {/if}
     </div>
