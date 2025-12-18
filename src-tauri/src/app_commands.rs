@@ -1,6 +1,6 @@
 use crate::db::{Database, TabState};
 use chrono::{DateTime, Local};
-use encoding_rs::{Encoding, UTF_8, WINDOWS_1252};
+use encoding_rs::{Encoding, UTF_8};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -115,10 +115,14 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
         });
     }
 
-    let (cow, _, _) = WINDOWS_1252.decode(&bytes);
+    let mut detector = chardetng::EncodingDetector::new();
+    detector.feed(&bytes, true);
+    let detected_encoding = detector.guess(None, false);
+
+    let (cow, _, _) = detected_encoding.decode(&bytes);
     Ok(FileContent {
         content: cow.into_owned(),
-        encoding: "WINDOWS-1252".to_string(),
+        encoding: detected_encoding.name().to_string(),
     })
 }
 
