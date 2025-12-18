@@ -96,6 +96,7 @@ export async function openFile(path?: string): Promise<void> {
             tab.lineEnding = detectedLineEnding;
             tab.encoding = result.encoding.toUpperCase();
             tab.fileCheckPerformed = false;
+            tab.sizeBytes = new TextEncoder().encode(result.content).length;
             await refreshMetadata(id, sanitizedPath);
             await checkFileExists(id);
         }
@@ -316,6 +317,7 @@ export async function loadSession(): Promise<void> {
         if (rustTabs && rustTabs.length > 0) {
             const convertedTabs: EditorTab[] = rustTabs.map(t => {
                 const normalizedContent = normalizeLineEndings(t.content);
+                const sizeBytes = new TextEncoder().encode(normalizedContent).length;
                 return {
                     id: t.id,
                     title: t.title,
@@ -325,6 +327,7 @@ export async function loadSession(): Promise<void> {
                     isDirty: t.is_dirty,
                     path: t.path,
                     scrollPercentage: t.scroll_percentage,
+                    sizeBytes,
                     created: t.created || undefined,
                     modified: t.modified || undefined,
                     isPinned: t.is_pinned,
@@ -371,6 +374,7 @@ export async function loadSession(): Promise<void> {
                     if (storeTab) {
                         storeTab.lastSavedContent = normalizeLineEndings(result.content);
                         storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
+                        storeTab.sizeBytes = new TextEncoder().encode(storeTab.content).length;
                     }
                 } catch (e) {
                     console.warn(`Could not read original content for dirty tab ${tab.id}:`, e);

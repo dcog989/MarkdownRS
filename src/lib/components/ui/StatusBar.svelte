@@ -19,7 +19,8 @@
 
     // Format file size
     let fileSizeDisplay = $derived.by(() => {
-        const kb = m.sizeKB;
+        const bytes = activeTab?.sizeBytes || 0;
+        const kb = bytes / 1024;
         if (kb < 100) {
             return kb.toFixed(1);
         }

@@ -8,6 +8,7 @@ export type EditorTab = {
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
+    sizeBytes: number;
     topLine?: number;
     created?: string;
     modified?: string;
@@ -30,7 +31,6 @@ export type EditorMetrics = {
     wordCount: number;
     charCount: number;
     cursorOffset: number;
-    sizeKB: number;
     cursorLine: number;
     cursorCol: number;
     currentLineLength: number;
@@ -53,35 +53,25 @@ function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
 
-// Event system for text operations
 type TextOperationCallback = (operation: TextOperation) => void;
 
-// Type-safe operation type strings
 export type OperationTypeString =
-    // Sort operations
     | 'sort-asc' | 'sort-desc' | 'sort-numeric-asc' | 'sort-numeric-desc'
     | 'sort-length-asc' | 'sort-length-desc' | 'reverse' | 'shuffle'
-    // Remove operations
     | 'remove-duplicates' | 'remove-unique' | 'remove-blank'
     | 'remove-trailing-spaces' | 'remove-leading-spaces' | 'remove-all-spaces'
-    // Case operations
     | 'uppercase' | 'lowercase' | 'title-case' | 'sentence-case'
     | 'camel-case' | 'pascal-case' | 'snake-case' | 'kebab-case'
     | 'constant-case' | 'invert-case'
-    // Markdown operations
     | 'add-bullets' | 'add-numbers' | 'add-checkboxes' | 'remove-bullets'
     | 'blockquote' | 'remove-blockquote' | 'add-code-fence'
     | 'increase-heading' | 'decrease-heading'
-    // Text manipulation
     | 'trim-whitespace' | 'normalize-whitespace' | 'join-lines'
     | 'split-sentences' | 'wrap-quotes' | 'add-line-numbers'
     | 'indent-lines' | 'unindent-lines'
-    // Formatter
     | 'format-document'
-    // Legacy (kept for compatibility)
     | 'sort-lines' | 'to-uppercase' | 'to-lowercase';
 
-// Simplified TextOperation to match the usage in performTextTransform
 export type TextOperation = {
     type: OperationTypeString;
 };
@@ -99,7 +89,6 @@ export class EditorStore {
         wordCount: 0,
         charCount: 0,
         cursorOffset: 0,
-        sizeKB: 0,
         cursorLine: 1,
         cursorCol: 1,
         currentLineLength: 0,
@@ -122,13 +111,11 @@ export class EditorStore {
         let finalTitle = title;
         let finalContent = content;
 
-        // If no title, or generic 'Untitled', calculate the next 'New-N'
         if (!title || title === 'Untitled' || title === '') {
             const newTabPattern = /New-(\d+)/;
             let maxNewNumber = 0;
 
             for (const tab of this.tabs) {
-                // Check current display title and original title
                 const currentTitle = tab.customTitle || tab.title || "";
                 const match = currentTitle.match(newTabPattern) || (tab.originalTitle && tab.originalTitle.match(newTabPattern));
 
@@ -146,6 +133,7 @@ export class EditorStore {
         }
 
         const normalizedContent = normalizeLineEndings(finalContent);
+        const sizeBytes = new TextEncoder().encode(normalizedContent).length;
 
         const newTab: EditorTab = {
             id,
@@ -156,6 +144,7 @@ export class EditorStore {
             isDirty: false,
             path: null,
             scrollPercentage: 0,
+            sizeBytes,
             topLine: 1,
             created: now,
             modified: now,
@@ -243,6 +232,7 @@ export class EditorStore {
         tab.content = content;
         tab.isDirty = content !== tab.lastSavedContent;
         tab.modified = getCurrentTimestamp();
+        tab.sizeBytes = new TextEncoder().encode(content).length;
 
         if (!tab.path) {
             const trimmed = content.trim();

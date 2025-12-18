@@ -27,9 +27,7 @@
 
     let tooltipContent = $derived.by(() => {
         const parts: string[] = [];
-        const text = tab.content || "";
-        const sizeBytes = new TextEncoder().encode(text).length;
-        const sizeStr = formatFileSize(sizeBytes);
+        const sizeStr = formatFileSize(tab.sizeBytes || 0);
         const timestamp = tab.modified || tab.created || "";
         let formattedTime = timestamp;
 

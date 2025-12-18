@@ -49,33 +49,24 @@
     let tooltipContent = $derived.by(() => {
         const parts: string[] = [];
 
-        // Line 1: Full path or Unsaved indicator
         if (tab.path) {
             parts.push(tab.path);
         } else {
             parts.push("Unsaved content");
         }
 
-        // Line 2: Timestamp and Size
-        // Input format from store: "20251215 / 133000"
         const timestamp = tab.modified || tab.created || "";
         let formattedTime = "";
 
         if (timestamp.includes(" / ")) {
             const [datePart, timePart] = timestamp.split(" / ");
-            // Format HHMMSS -> HH:MM:SS
             const formattedTimePart = timePart.replace(/(\d{2})(\d{2})(\d{2})/, "$1:$2:$3");
-            // Format YYYYMMDD -> YYYY-MM-DD (Optional, but strictly sticking to user request: "yyyymmdd, HH:mm:ss")
-            // User requested: "yyyymmdd, HH:mm:ss"
             formattedTime = `${datePart}, ${formattedTimePart}`;
         } else {
             formattedTime = timestamp;
         }
 
-        // File size
-        const text = tab.content || "";
-        const sizeBytes = new TextEncoder().encode(text).length;
-        const sizeStr = formatFileSize(sizeBytes);
+        const sizeStr = formatFileSize(tab.sizeBytes || 0);
 
         if (formattedTime) {
             parts.push(`${formattedTime}, ${sizeStr}`);

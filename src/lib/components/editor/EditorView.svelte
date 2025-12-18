@@ -266,7 +266,6 @@
                         wordCount: wordCount,
                         charCount: text.length,
                         cursorOffset: selection.head,
-                        sizeKB: sizeKB,
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
                         currentLineLength: cursorLine.text.length,
