@@ -262,3 +262,74 @@ pub async fn resolve_path_relative(
         .map(|p| p.to_string_lossy().to_string())
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn get_spelling_suggestions(
+    word: String,
+    custom_dict: Vec<String>,
+    base_dict_raw: String,
+) -> Result<Vec<String>, String> {
+    let target = word.to_lowercase();
+    let mut candidates: Vec<(String, usize)> = Vec::new();
+    let max_distance = 2;
+
+    let target_len = target.chars().count();
+
+    // Iterate through custom dictionary
+    for cand in custom_dict {
+        if cand.chars().count().abs_diff(target_len) <= max_distance {
+            let dist = levenshtein_distance(&target, &cand);
+            if dist <= max_distance {
+                candidates.push((cand, dist));
+            }
+        }
+    }
+
+    // Iterate through base dictionary lines
+    for line in base_dict_raw.lines() {
+        let cand = line.trim();
+        if cand.len() > 1 && cand.chars().count().abs_diff(target_len) <= max_distance {
+            let dist = levenshtein_distance(&target, cand);
+            if dist <= max_distance {
+                candidates.push((cand.to_string(), dist));
+            }
+        }
+    }
+
+    candidates.sort_by_key(|&(_, dist)| dist);
+    Ok(candidates.into_iter().take(3).map(|(w, _)| w).collect())
+}
+
+fn levenshtein_distance(a: &str, b: &str) -> usize {
+    let a_chars: Vec<char> = a.chars().collect();
+    let b_chars: Vec<char> = b.chars().collect();
+    let a_len = a_chars.len();
+    let b_len = b_chars.len();
+
+    if a_len == 0 {
+        return b_len;
+    }
+    if b_len == 0 {
+        return a_len;
+    }
+
+    let mut prev_row: Vec<usize> = (0..=b_len).collect();
+    let mut curr_row: Vec<usize> = vec![0; b_len + 1];
+
+    for i in 1..=a_len {
+        curr_row[0] = i;
+        for j in 1..=b_len {
+            let cost = if a_chars[i - 1] == b_chars[j - 1] {
+                0
+            } else {
+                1
+            };
+            curr_row[j] = (curr_row[j - 1] + 1)
+                .min(prev_row[j] + 1)
+                .min(prev_row[j - 1] + cost);
+        }
+        prev_row.copy_from_slice(&curr_row);
+    }
+
+    prev_row[b_len]
+}

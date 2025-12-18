@@ -41,7 +41,9 @@
 
     $effect(() => {
         if (wordUnderCursor && !selectedText && !isWordValid(wordUnderCursor)) {
-            suggestions = getSuggestions(wordUnderCursor);
+            getSuggestions(wordUnderCursor).then((results) => {
+                suggestions = results;
+            });
         } else {
             suggestions = [];
         }
