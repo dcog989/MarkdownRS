@@ -43,8 +43,8 @@
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
 
-    const CONTENT_UPDATE_DEBOUNCE_MS = 100;
-    const METRICS_UPDATE_DEBOUNCE_MS = 50;
+    const CONTENT_UPDATE_DEBOUNCE_MS = 80;
+    const METRICS_UPDATE_DEBOUNCE_MS = 80;
 
     function clearTimers() {
         if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
