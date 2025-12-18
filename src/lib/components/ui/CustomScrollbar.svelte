@@ -46,7 +46,6 @@
         const rect = trackRef.getBoundingClientRect();
         const clickOffset = e.clientY - rect.top;
 
-        // Center thumb on click
         const maxThumb = viewport.clientHeight - thumbHeight;
         let newThumbTop = clickOffset - thumbHeight / 2;
         newThumbTop = Math.max(0, Math.min(maxThumb, newThumbTop));
@@ -100,7 +99,6 @@
 
         resizeObserver.observe(el);
         if (content) resizeObserver.observe(content);
-        // Also observe the first child as it often dictates size in CodeMirror/Preview
         else if (el.firstElementChild) resizeObserver.observe(el.firstElementChild);
     }
 
@@ -125,14 +123,12 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="scrollbar-track absolute right-0 top-0 bottom-0 w-3 z-30 hover:bg-white/5 transition-all duration-200" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<div bind:this={trackRef} class="scrollbar-track absolute right-0 top-0 bottom-0 z-30 transition-all duration-200" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
     <div
         class="scrollbar-thumb absolute bg-[var(--border-light)] hover:bg-[var(--fg-muted)] active:bg-[var(--fg-muted)] transition-all duration-200"
         style="
             height: {thumbHeight}px;
             top: {thumbTop}px;
-            width: 6px;
-            right: 3px;
             border-radius: 9999px;
         "
         onmousedown={onThumbMouseDown}
@@ -144,16 +140,23 @@
         display: none;
     }
 
+    .scrollbar-track {
+        width: 10px;
+        background-color: transparent;
+    }
+
     .scrollbar-track:hover {
         width: 14px;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .scrollbar-thumb {
+        width: 6px;
+        right: 2px;
     }
 
     .scrollbar-track:hover .scrollbar-thumb {
         width: 10px;
         right: 2px;
-    }
-
-    .scrollbar-thumb {
-        transition: all 0.2s ease;
     }
 </style>
