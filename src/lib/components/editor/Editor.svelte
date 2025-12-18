@@ -7,7 +7,7 @@
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatter";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
-    import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
+    import { initSpellcheck, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
     import { transformText } from "$lib/utils/textTransforms";
     import { EditorView as CM6EditorView } from "@codemirror/view";
@@ -207,7 +207,6 @@
             let to = 0;
 
             if (!selectedText) {
-                // Determine position from mouse coordinates for precision
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 const searchPos = pos !== null ? pos : selection.head;
                 const range = view.state.wordAt(searchPos);
@@ -216,7 +215,6 @@
                     from = range.from;
                     to = range.to;
                     const rawWord = view.state.sliceDoc(from, to);
-                    // Strip punctuation and numbers to focus on the alphabetic term
                     wordUnderCursor = rawWord.replace(/[^a-zA-Z']/g, "");
                 }
             }
@@ -385,6 +383,15 @@
             cleanupScrollSync(scrollSyncState);
             if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
         };
+    });
+
+    $effect(() => {
+        if (spellcheckState.dictionaryLoaded) {
+            const view = editorViewComponent?.getView();
+            if (view) {
+                refreshSpellcheck(view);
+            }
+        }
     });
 
     onDestroy(() => {
