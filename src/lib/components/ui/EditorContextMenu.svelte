@@ -13,6 +13,8 @@
         wordUnderCursor = "",
         onClose,
         onDictionaryUpdate,
+        onCut,
+        onCopy,
         onPaste,
         onReplaceWord,
     } = $props<{
@@ -22,6 +24,8 @@
         wordUnderCursor?: string;
         onClose: () => void;
         onDictionaryUpdate?: () => void;
+        onCut?: () => void;
+        onCopy?: () => void;
         onPaste?: () => void;
         onReplaceWord?: (newWord: string) => void;
     }>();
@@ -132,12 +136,12 @@
     }
 
     function handleCut() {
-        document.execCommand("cut");
+        if (onCut) onCut();
         onClose();
     }
 
     function handleCopy() {
-        document.execCommand("copy");
+        if (onCopy) onCopy();
         onClose();
     }
 

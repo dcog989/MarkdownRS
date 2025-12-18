@@ -44,6 +44,25 @@
         refreshSpellcheck(editorViewComponent?.getView());
     }
 
+    async function handleCopy() {
+        if (contextSelectedText) {
+            await navigator.clipboard.writeText(contextSelectedText);
+        }
+    }
+
+    async function handleCut() {
+        const view = editorViewComponent?.getView();
+        if (view && contextSelectedText) {
+            await navigator.clipboard.writeText(contextSelectedText);
+            const selection = view.state.selection.main;
+            view.dispatch({
+                changes: { from: selection.from, to: selection.to, insert: "" },
+                userEvent: "delete.cut",
+            });
+            view.focus();
+        }
+    }
+
     async function handlePaste() {
         try {
             const text = await navigator.clipboard.readText();
@@ -399,5 +418,5 @@
 </div>
 
 {#if showContextMenu}
-    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} onPaste={handlePaste} onReplaceWord={handleReplaceWord} />
+    <EditorContextMenu x={contextMenuX} y={contextMenuY} selectedText={contextSelectedText} wordUnderCursor={contextWordUnderCursor} onClose={() => (showContextMenu = false)} onDictionaryUpdate={handleDictionaryUpdate} onCut={handleCut} onCopy={handleCopy} onPaste={handlePaste} onReplaceWord={handleReplaceWord} />
 {/if}
