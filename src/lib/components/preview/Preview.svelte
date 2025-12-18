@@ -130,7 +130,7 @@
                 scrollSyncState.isRemoteScrolling = true;
                 container.scrollTo({
                     top: scrollTop,
-                    behavior: 'smooth'
+                    behavior: "smooth",
                 });
                 if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
                 scrollSyncState.lockTimeout = window.setTimeout(() => {
@@ -214,6 +214,7 @@
 
 <style>
     .preview-container {
+        padding-bottom: 30px !important;
         scroll-behavior: smooth !important;
         scrollbar-width: none;
     }

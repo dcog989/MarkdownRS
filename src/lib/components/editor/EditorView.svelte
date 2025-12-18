@@ -136,7 +136,9 @@
                 fontFamily: fontFamily,
                 overflow: "auto",
             },
-            // Autocomplete Tooltip Styling
+            ".cm-content": {
+                paddingBottom: "30px !important",
+            },
             ".cm-tooltip": {
                 borderRadius: "6px !important",
                 zIndex: "100",
@@ -213,10 +215,10 @@
             {
                 key: "Mod-End",
                 run: (view: EditorView) => {
-                    const doc = view.state.doc;
+                    const pos = view.state.doc.length;
                     view.dispatch({
-                        selection: EditorSelection.cursor(doc.length),
-                        scrollIntoView: true,
+                        selection: EditorSelection.cursor(pos),
+                        effects: EditorView.scrollIntoView(pos, { y: "end", yMargin: 40 }),
                         userEvent: "select",
                     });
                     return true;
