@@ -98,23 +98,27 @@ marked.use({
  */
 export async function renderMarkdown(content: string): Promise<string> {
     try {
-        // 1. Tokenize
-        const tokens = marked.lexer(content);
+        // Path regex logic: Match absolute paths or relative paths starting with ./ or ../
+        const pathRegex = /(?<![\[\(])(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+(?![\]\)])/g;
+        const linkedContent = content.replace(pathRegex, (match) => {
+            // Avoid linking if it looks like part of an existing Markdown structure (e.g. inside backticks)
+            // This is a simple check; marked will handle complex cases
+            return `[${match}](${match})`;
+        });
 
-        // 2. Map tokens to line numbers
+        const tokens = marked.lexer(linkedContent);
+
         let currentOffset = 0;
-
         function addLineNumbers(tokens: any[]) {
             tokens.forEach(token => {
                 if (token.raw) {
-                    const index = content.indexOf(token.raw, currentOffset);
+                    const index = linkedContent.indexOf(token.raw, currentOffset);
                     if (index !== -1) {
                         currentOffset = index;
-                        const linesBefore = content.substring(0, index).split('\n').length;
+                        const linesBefore = linkedContent.substring(0, index).split('\n').length;
                         token._line = linesBefore;
                     }
                 }
-
                 if (token.tokens) addLineNumbers(token.tokens);
                 if (token.items) addLineNumbers(token.items);
             });
@@ -122,7 +126,6 @@ export async function renderMarkdown(content: string): Promise<string> {
 
         addLineNumbers(tokens);
 
-        // Ensure line numbers propagate to children if missing
         function passLineToChildren(tokens: any[], parentLine: number) {
             tokens.forEach(t => {
                 t._line = t._line || parentLine;
@@ -132,10 +135,8 @@ export async function renderMarkdown(content: string): Promise<string> {
         }
         passLineToChildren(tokens, 1);
 
-        // 3. Parse using the globally registered extensions
         const rawHtml = marked.parser(tokens);
 
-        // 4. Sanitize
         const cleanHtml = DOMPurify.sanitize(rawHtml, {
             USE_PROFILES: { html: true },
             ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start']
@@ -144,7 +145,6 @@ export async function renderMarkdown(content: string): Promise<string> {
         return cleanHtml;
     } catch (e) {
         await error(`[Markdown] Render error: ${e}`);
-        // Return a safe error message to the preview
         return `<div style="color: #ff6b6b; padding: 1rem; border: 1px solid #ff6b6b;">
             <strong>Preview Error:</strong><br/>${String(e)}
         </div>`;

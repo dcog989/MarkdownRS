@@ -3,6 +3,7 @@ use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8, WINDOWS_1252};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::SystemTime;
 use tauri::{Manager, State};
@@ -21,6 +22,14 @@ pub struct FileMetadata {
 pub struct FileContent {
     pub content: String,
     pub encoding: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct AppInfo {
+    pub name: String,
+    pub version: String,
+    pub install_path: String,
+    pub data_path: String,
 }
 
 fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
@@ -75,7 +84,6 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
 
     let bytes = fs::read(&path).map_err(|e| e.to_string())?;
 
-    // 1. Check for BOM (Byte Order Mark)
     if let Some((encoding, _)) = Encoding::for_bom(&bytes) {
         let (cow, _) = encoding.decode_with_bom_removal(&bytes);
         return Ok(FileContent {
@@ -84,7 +92,6 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
         });
     }
 
-    // 2. Try UTF-8 (Standard)
     let (cow, _, had_errors) = UTF_8.decode(&bytes);
     if !had_errors {
         return Ok(FileContent {
@@ -93,7 +100,6 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
         });
     }
 
-    // 3. Fallback to Windows-1252 (ANSI / Latin1)
     let (cow, _, _) = WINDOWS_1252.decode(&bytes);
     Ok(FileContent {
         content: cow.into_owned(),
@@ -104,13 +110,8 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
     validate_path(&path)?;
-
-    // Write to temp file first, then rename
     let temp_path = format!("{}.tmp", path);
-
-    // Always write UTF-8 for now
     fs::write(&temp_path, &content).map_err(|e| e.to_string())?;
-
     fs::rename(&temp_path, &path).map_err(|e| {
         let _ = fs::remove_file(&temp_path);
         e.to_string()
@@ -120,21 +121,11 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
 #[tauri::command]
 pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
     validate_path(&path)?;
-
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
-
     Ok(FileMetadata {
         created: format_system_time(metadata.created()),
         modified: format_system_time(metadata.modified()),
     })
-}
-
-#[derive(serde::Serialize)]
-pub struct AppInfo {
-    pub name: String,
-    pub version: String,
-    pub install_path: String,
-    pub data_path: String,
 }
 
 #[tauri::command]
@@ -147,7 +138,6 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         })
         .unwrap_or_default();
 
-    // With identifier "MarkdownRS", app_data_dir() is already .../Roaming/MarkdownRS
     let data_path = app_handle
         .path()
         .app_data_dir()
@@ -180,7 +170,6 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
         fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
     }
 
-    // Read existing words to check for duplicates
     let existing_words = if dict_path.exists() {
         fs::read_to_string(&dict_path)
             .map_err(|e| e.to_string())?
@@ -202,7 +191,6 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
             return Err(format!("Failed to write to dictionary: {}", e));
         }
     }
-
     Ok(())
 }
 
@@ -226,4 +214,28 @@ pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<S
         .collect();
 
     Ok(words)
+}
+
+#[tauri::command]
+pub async fn resolve_path_relative(
+    base_path: Option<String>,
+    click_path: String,
+) -> Result<String, String> {
+    let resolved = if Path::new(&click_path).is_absolute() {
+        PathBuf::from(&click_path)
+    } else if let Some(base) = base_path {
+        let base_dir = Path::new(&base).parent().unwrap_or_else(|| Path::new(""));
+        base_dir.join(click_path)
+    } else {
+        PathBuf::from(&click_path)
+    };
+
+    if !resolved.exists() {
+        return Err("File does not exist".to_string());
+    }
+
+    resolved
+        .canonicalize()
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| e.to_string())
 }

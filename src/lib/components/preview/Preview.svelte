@@ -4,6 +4,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { AppError } from "$lib/utils/errorHandling";
+    import { navigateToPath } from "$lib/utils/fileSystem";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
@@ -15,7 +16,6 @@
     let isRendering = $state(false);
     let renderErrorCount = $state(0);
 
-    // Interaction Guard
     let isHovered = false;
 
     const scrollSyncState = createScrollSyncState();
@@ -73,11 +73,8 @@
         };
     });
 
-    // Incoming Sync: Editor -> Preview
     $effect(() => {
         if (!container || !targetLine) return;
-
-        // Guard: If mouse is hovering preview, ignore incoming scroll (prevent fighting)
         if (isHovered) return;
 
         if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
@@ -145,11 +142,8 @@
         };
     });
 
-    // Outgoing Sync: Preview -> Editor
     function handleScroll() {
         if (!container) return;
-
-        // Guard: Only sync if this pane is actively hovered
         if (!isHovered && !scrollSyncState.isRemoteScrolling) return;
         if (scrollSyncState.isRemoteScrolling) return;
 
@@ -173,6 +167,32 @@
         editorStore.updateScroll(tabId, percentage, bestLine);
     }
 
+    function handlePathNavigation(target: HTMLElement) {
+        const link = target.closest("a");
+        if (link) {
+            const href = link.getAttribute("href");
+            if (href && !href.startsWith("http") && !href.startsWith("#")) {
+                navigateToPath(href);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function handlePreviewClick(e: MouseEvent) {
+        if (handlePathNavigation(e.target as HTMLElement)) {
+            e.preventDefault();
+        }
+    }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === "Enter") {
+            if (handlePathNavigation(e.target as HTMLElement)) {
+                e.preventDefault();
+            }
+        }
+    }
+
     onDestroy(() => {
         cleanupScrollSync(scrollSyncState);
         if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
@@ -181,7 +201,7 @@
 </script>
 
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--border-main);">
-    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" onclick={() => appState.toggleOrientation()} use:tooltip={"Toggle split orientation (vertical/horizontal)"}>
+    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--bg-panel); border: 1px solid var(--border-main);" onclick={() => appState.toggleOrientation()} use:tooltip={"Toggle split orientation"}>
         {#if appState.splitOrientation === "vertical"}
             <FlipVertical size={16} style="color: var(--fg-default);" />
         {:else}
@@ -190,7 +210,7 @@
     </button>
 
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div bind:this={container} onscroll={handleScroll} onmouseenter={() => (isHovered = true)} onmouseleave={() => (isHovered = false)} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
+    <div bind:this={container} onscroll={handleScroll} onclick={handlePreviewClick} onkeydown={handleKeydown} onmouseenter={() => (isHovered = true)} onmouseleave={() => (isHovered = false)} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--bg-main); color: var(--fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}
             <div class="absolute inset-0 flex items-center justify-center text-[var(--fg-muted)] opacity-50">Loading...</div>
         {:else if !htmlContent}
@@ -202,7 +222,6 @@
             {#if renderError}
                 <div role="alert" aria-live="polite"></div>
             {/if}
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html htmlContent}
         {/if}
     </div>

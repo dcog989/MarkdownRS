@@ -3,7 +3,9 @@ import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
+import { openPath } from '@tauri-apps/plugin-opener';
 import { AppError } from './errorHandling';
+import { isTextFile } from './fileValidation';
 import { formatMarkdown } from './formatter';
 
 type RustTabState = {
@@ -35,14 +37,10 @@ type FileContent = {
 let isSaving = false;
 let saveQueue: (() => Promise<void>)[] = [];
 
-// Helper to match EditorStore normalization
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
 
-/**
- * Refresh file metadata (created/modified dates) for a tab
- */
 async function refreshMetadata(tabId: string, path: string) {
     try {
         const meta = await invoke<FileMetadata>('get_file_metadata', { path });
@@ -53,56 +51,80 @@ async function refreshMetadata(tabId: string, path: string) {
 }
 
 function sanitizePath(path: string): string {
+    // Remove null bytes but preserve colons for Windows drive letters
     return path.replace(/\0/g, '').replace(/\\/g, '/');
 }
 
-/**
- * Open a file dialog and load the selected file into a new tab
- */
-export async function openFile(): Promise<void> {
+export async function openFile(path?: string): Promise<void> {
     try {
-        const selected = await open({
-            multiple: false,
-            filters: [{
-                name: 'Markdown',
-                extensions: ['md', 'markdown', 'txt', 'rs', 'js', 'ts', 'svelte', 'json']
-            }]
-        });
+        let targetPath = path;
 
-        if (selected && typeof selected === 'string') {
-            const sanitizedPath = sanitizePath(selected);
-            const result = await invoke<FileContent>('read_text_file', { path: sanitizedPath });
-            const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-
-            const crlfCount = (result.content.match(/\r\n/g) || []).length;
-            const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-
-            const detectedLineEnding: 'LF' | 'CRLF' =
-                crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
-
-            const id = editorStore.addTab(fileName, result.content);
-            const tab = editorStore.tabs.find(t => t.id === id);
-            if (tab) {
-                tab.path = sanitizedPath;
-                // addTab initializes lastSavedContent = content (normalized), so it starts clean
-                tab.isDirty = false;
-                tab.lineEnding = detectedLineEnding;
-                tab.encoding = result.encoding.toUpperCase();
-                tab.fileCheckPerformed = false;
-                await refreshMetadata(id, sanitizedPath);
-                await checkFileExists(id);
-            }
-            appState.activeTabId = id;
-            editorStore.pushToMru(id);
+        if (!targetPath) {
+            const selected = await open({
+                multiple: false,
+                filters: [{
+                    name: 'Markdown',
+                    extensions: ['md', 'markdown', 'txt', 'rs', 'js', 'ts', 'svelte', 'json']
+                }]
+            });
+            if (!selected || typeof selected !== 'string') return;
+            targetPath = selected;
         }
+
+        const sanitizedPath = sanitizePath(targetPath);
+
+        const existingTab = editorStore.tabs.find(t => t.path === sanitizedPath);
+        if (existingTab) {
+            appState.activeTabId = existingTab.id;
+            editorStore.pushToMru(existingTab.id);
+            return;
+        }
+
+        const result = await invoke<FileContent>('read_text_file', { path: sanitizedPath });
+        const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
+
+        const crlfCount = (result.content.match(/\r\n/g) || []).length;
+        const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
+        const detectedLineEnding: 'LF' | 'CRLF' =
+            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+
+        const id = editorStore.addTab(fileName, result.content);
+        const tab = editorStore.tabs.find(t => t.id === id);
+        if (tab) {
+            tab.path = sanitizedPath;
+            tab.isDirty = false;
+            tab.lineEnding = detectedLineEnding;
+            tab.encoding = result.encoding.toUpperCase();
+            tab.fileCheckPerformed = false;
+            await refreshMetadata(id, sanitizedPath);
+            await checkFileExists(id);
+        }
+        appState.activeTabId = id;
+        editorStore.pushToMru(id);
     } catch (err) {
         AppError.log('File:Read', err);
     }
 }
 
-/**
- * Save the currently active file
- */
+export async function navigateToPath(clickedPath: string) {
+    const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
+
+    try {
+        const resolvedPath = await invoke<string>('resolve_path_relative', {
+            basePath: activeTab?.path,
+            clickPath: clickedPath.replace(/\\/g, '/')
+        });
+
+        if (isTextFile(resolvedPath)) {
+            await openFile(resolvedPath);
+        } else {
+            await openPath(resolvedPath);
+        }
+    } catch (err) {
+        console.warn('Navigation failed:', err);
+    }
+}
+
 export async function saveCurrentFile(): Promise<boolean> {
     const tabId = appState.activeTabId;
     if (!tabId) return false;
@@ -138,7 +160,6 @@ export async function saveCurrentFile(): Promise<boolean> {
             }
 
             let targetLineEnding: 'LF' | 'CRLF';
-
             if (appState.lineEndingPreference === 'system') {
                 targetLineEnding = tab.lineEnding || 'LF';
             } else {
@@ -158,7 +179,6 @@ export async function saveCurrentFile(): Promise<boolean> {
             tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
             editorStore.markAsSaved(tabId);
-
             tab.fileCheckPerformed = false;
             tab.fileCheckFailed = false;
             await refreshMetadata(tabId, sanitizedPath);
@@ -171,13 +191,9 @@ export async function saveCurrentFile(): Promise<boolean> {
     }
 }
 
-/**
- * Request to close a tab
- */
 export async function requestCloseTab(id: string, force = false): Promise<void> {
     const tab = editorStore.tabs.find(t => t.id === id);
     if (!tab) return;
-
     if (tab.isPinned && !force) return;
 
     if (tab.isDirty && tab.content.trim().length > 0) {
@@ -186,9 +202,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
             message: `Do you want to save changes to ${tab.title}?`,
         });
 
-        if (result === 'cancel') {
-            return;
-        }
+        if (result === 'cancel') return;
 
         if (result === 'save') {
             const prevActive = appState.activeTabId;
@@ -204,13 +218,11 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     editorStore.closeTab(id);
 
     if (appState.activeTabId === id) {
-        const nextId = editorStore.mruStack[0];
-        appState.activeTabId = nextId || null;
+        appState.activeTabId = editorStore.mruStack[0] || null;
     }
 
     if (editorStore.tabs.length === 0) {
-        const newId = editorStore.addTab(); // Will create New-1
-        appState.activeTabId = newId;
+        appState.activeTabId = editorStore.addTab();
     }
 }
 
@@ -288,12 +300,9 @@ export async function persistSession(): Promise<void> {
 
 export async function checkFileExists(tabId: string): Promise<void> {
     const tab = editorStore.tabs.find(t => t.id === tabId);
-    if (!tab || !tab.path) {
-        return;
-    }
+    if (!tab || !tab.path) return;
 
     tab.fileCheckPerformed = true;
-
     try {
         await invoke('get_file_metadata', { path: tab.path });
         tab.fileCheckFailed = false;
@@ -304,24 +313,18 @@ export async function checkFileExists(tabId: string): Promise<void> {
     }
 }
 
-/**
- * Load the saved session from the database
- * FIX: Improved dirty state restoration to avoid race conditions
- */
 export async function loadSession(): Promise<void> {
     try {
         const rustTabs = await invoke<RustTabState[]>('restore_session');
         if (rustTabs && rustTabs.length > 0) {
             const convertedTabs: EditorTab[] = rustTabs.map(t => {
                 const normalizedContent = normalizeLineEndings(t.content);
-                const lastSaved = normalizedContent;
-
                 return {
                     id: t.id,
                     title: t.title,
-                    originalTitle: t.title, // Restore original title to maintain New-N numbering
+                    originalTitle: t.title,
                     content: normalizedContent,
-                    lastSavedContent: lastSaved,
+                    lastSavedContent: normalizedContent,
                     isDirty: t.is_dirty,
                     path: t.path,
                     scrollPercentage: t.scroll_percentage,
@@ -364,7 +367,6 @@ export async function loadSession(): Promise<void> {
             }
 
             const dirtyTabsWithPath = convertedTabs.filter(t => t.path && t.isDirty);
-
             await Promise.all(dirtyTabsWithPath.map(async (tab) => {
                 try {
                     const result = await invoke<FileContent>('read_text_file', { path: tab.path! });

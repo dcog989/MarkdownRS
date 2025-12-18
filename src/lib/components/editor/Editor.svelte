@@ -4,7 +4,7 @@
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
-    import { checkFileExists } from "$lib/utils/fileSystem";
+    import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatter";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { initSpellcheck } from "$lib/utils/spellcheck";
@@ -23,7 +23,6 @@
     const scrollSyncState = createScrollSyncState();
     let scrollSyncFrame: number | null = null;
 
-    // Interaction State guards
     let isHovered = false;
     let isFocused = false;
 
@@ -158,6 +157,28 @@
     });
 
     const eventHandlers = CM6EditorView.domEventHandlers({
+        mousedown: (event, view) => {
+            if ((event.ctrlKey || event.metaKey) && event.button === 0) {
+                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                if (pos !== null) {
+                    const line = view.state.doc.lineAt(pos);
+                    // Regex improved to handle Windows drive letters (C:\), forward/backslashes, and dots
+                    const pathRegex = /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g;
+
+                    let match;
+                    while ((match = pathRegex.exec(line.text)) !== null) {
+                        const start = line.from + match.index;
+                        const end = start + match[0].length;
+
+                        if (pos >= start && pos <= end) {
+                            navigateToPath(match[0]);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        },
         contextmenu: (event, view) => {
             event.preventDefault();
             const selection = view.state.selection.main;
@@ -190,7 +211,6 @@
             return true;
         },
         scroll: (event, view) => {
-            // Guard: Only sync if this pane is being actively used
             if (!isHovered && !isFocused && !scrollSyncState.isRemoteScrolling) return;
             if (scrollSyncState.isRemoteScrolling) return;
 
@@ -250,11 +270,9 @@
                     const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
                     const sizeKB = new TextEncoder().encode(text).length / 1024;
 
-                    // Calculate current line length
                     const currentLineText = cursorLine.text;
                     const currentLineLength = currentLineText.length;
 
-                    // Calculate current word index
                     let currentWordIndex = 0;
                     if (trimmedText.length > 0) {
                         const textUpToCursor = text.substring(0, selection.head).trim();
@@ -317,7 +335,6 @@
 
         const targetLine = currentTabState?.topLine;
 
-        // Guard: Only apply remote scroll if we are NOT interacting with this pane
         if (isHovered || isFocused) return;
 
         if (targetLine !== undefined && targetLine > 0) {

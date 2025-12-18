@@ -8,7 +8,7 @@
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
-    import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
+    import { Decoration, EditorView, highlightActiveLineGutter, keymap, lineNumbers, MatchDecorator, ViewPlugin } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -36,12 +36,10 @@
     let editorContainer: HTMLDivElement;
     let view = $state<EditorView>();
 
-    // Compartments for dynamic reconfiguration
     let themeCompartment = new Compartment();
     let lineWrappingCompartment = new Compartment();
     let autocompleteCompartment = new Compartment();
 
-    // Timer refs
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
 
@@ -49,25 +47,17 @@
     const METRICS_UPDATE_DEBOUNCE_MS = 50;
 
     function clearTimers() {
-        if (contentUpdateTimer !== null) {
-            clearTimeout(contentUpdateTimer);
-            contentUpdateTimer = null;
-        }
-        if (metricsUpdateTimer !== null) {
-            clearTimeout(metricsUpdateTimer);
-            metricsUpdateTimer = null;
-        }
+        if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
+        if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
     }
 
-    // Autocomplete Source: Simple Buffer Completion
     function completeFromBuffer(context: CompletionContext) {
         const word = context.matchBefore(/\w+/);
         if (!word || (word.from === word.to && !context.explicit)) return null;
-        if (word.text.length < 3) return null; // Minimum length to trigger
+        if (word.text.length < 3) return null;
 
         const text = context.state.doc.toString();
         const options = new Set<string>();
-        // Match words with 3+ chars
         const re = /\w{3,}/g;
         let m;
         while ((m = re.exec(text))) {
@@ -81,7 +71,6 @@
         };
     }
 
-    // Memoize theme generation
     let lastFontSize = 0;
     let lastFontFamily = "";
     let lastInsertMode: "INS" | "OVR" = "INS";
@@ -92,33 +81,23 @@
         let fontFamily = appState.editorFontFamily || "monospace";
         const insertMode = editorStore.activeMetrics.insertMode;
 
-        // 1. Sanitize: Trim whitespace
         fontFamily = fontFamily.trim();
-
-        // 2. Sanitize: Remove trailing comma if present (common when typing lists)
         if (fontFamily.endsWith(",")) {
             fontFamily = fontFamily.slice(0, -1).trim();
         }
 
-        // 3. Safety Check: Detect unbalanced quotes
-        // Unclosed quotes in a CSS value can break the entire stylesheet by consuming closing braces.
         const singleQuotes = (fontFamily.match(/'/g) || []).length;
         const doubleQuotes = (fontFamily.match(/"/g) || []).length;
 
         if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0) {
-            // Unsafe CSS detected (e.g. user is typing "'Source...").
-            // If we have a valid cache, return it to maintain previous styling while typing.
             if (cachedDynamicStyles) return cachedDynamicStyles;
-            // If no cache (e.g. startup with bad config), force a safe fallback to prevent broken UI
             fontFamily = "monospace";
         }
 
-        // 4. Cache Check
         if (cachedDynamicStyles && fontSize === lastFontSize && fontFamily === lastFontFamily && insertMode === lastInsertMode) {
             return cachedDynamicStyles;
         }
 
-        // 5. Update Cache State
         lastFontSize = fontSize;
         lastFontFamily = fontFamily;
         lastInsertMode = insertMode;
@@ -139,6 +118,11 @@
             ".cm-content": {
                 paddingBottom: "30px !important",
             },
+            ".cm-local-path": {
+                color: "var(--accent-link)",
+                textDecoration: "underline",
+                cursor: "pointer",
+            },
             ".cm-tooltip": {
                 borderRadius: "6px !important",
                 zIndex: "100",
@@ -149,33 +133,18 @@
                 border: "1px solid var(--border-light) !important",
                 color: "var(--fg-default) !important",
             },
-            ".cm-tooltip.cm-tooltip-autocomplete": {
-                "& > ul": {
-                    borderRadius: "4px",
-                },
-            },
-            ".cm-tooltip-autocomplete > ul > li": {
-                padding: "4px 8px !important",
-                fontFamily: "ui-sans-serif, system-ui, sans-serif",
-                fontSize: "0.9em",
-            },
             ".cm-tooltip-autocomplete > ul > li[aria-selected]": {
                 backgroundColor: "var(--accent-primary) !important",
                 color: "var(--fg-inverse) !important",
-            },
-            ".cm-completionIcon": {
-                display: "none", // Hide icons for cleaner look
             },
         });
 
         return cachedDynamicStyles;
     }
 
-    // Effect: Theme and Font changes
     $effect(() => {
         const dynamicStyles = getDynamicStyles();
         const baseTheme = appState.theme === "dark" ? oneDark : [];
-
         if (view) {
             view.dispatch({
                 effects: themeCompartment.reconfigure([baseTheme, dynamicStyles]),
@@ -183,7 +152,6 @@
         }
     });
 
-    // Effect: Word wrap changes
     $effect(() => {
         const wordWrap = appState.editorWordWrap;
         if (view) {
@@ -193,7 +161,6 @@
         }
     });
 
-    // Effect: Autocomplete enable/disable
     $effect(() => {
         const enable = appState.enableAutocomplete;
         if (view) {
@@ -204,6 +171,26 @@
     });
 
     onMount(() => {
+        const pathDecorator = new MatchDecorator({
+            regexp: /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g,
+            decoration: Decoration.mark({ class: "cm-local-path" }),
+        });
+
+        const pathHighlighter = ViewPlugin.fromClass(
+            class {
+                decorations: any;
+                constructor(view: EditorView) {
+                    this.decorations = pathDecorator.createDeco(view);
+                }
+                update(update: any) {
+                    this.decorations = pathDecorator.updateDeco(update, this.decorations);
+                }
+            },
+            {
+                decorations: (v) => v.decorations,
+            }
+        );
+
         const builtInKeymap = [
             {
                 key: "Insert",
@@ -237,24 +224,7 @@
             },
         ];
 
-        const extensions = [
-            lineNumbers(),
-            highlightActiveLineGutter(),
-            history(),
-            search({ top: true }),
-            highlightSelectionMatches(),
-            // Autocomplete compartment
-            autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []),
-            closeBrackets(),
-            keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
-            // Theme compartment - Start with default placeholder, effect will configure immediately
-            themeCompartment.of([]),
-            spellCheckLinter,
-            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
-            EditorView.contentAttributes.of({ spellcheck: "false" }),
-            inputHandler,
-            eventHandlers,
-        ];
+        const extensions = [lineNumbers(), highlightActiveLineGutter(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), inputHandler, eventHandlers];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
@@ -263,18 +233,12 @@
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
                 const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
-
                 if (isUserUpdate) {
                     if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => {
                         onContentChange(update.state.doc.toString());
                         contentUpdateTimer = null;
                     }, CONTENT_UPDATE_DEBOUNCE_MS);
-                } else {
-                    if (contentUpdateTimer !== null) {
-                        clearTimeout(contentUpdateTimer);
-                        contentUpdateTimer = null;
-                    }
                 }
             }
 
@@ -285,23 +249,13 @@
                     const selection = update.state.selection.main;
                     const cursorLine = doc.lineAt(selection.head);
                     const text = doc.toString();
-                    const trimmedText = text.trim();
-                    const wordCount = trimmedText === "" ? 0 : trimmedText.split(/\s+/).length;
+                    const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
                     const sizeKB = new TextEncoder().encode(text).length / 1024;
 
-                    // Calculate current line length
-                    const currentLineText = cursorLine.text;
-                    const currentLineLength = currentLineText.length;
-
-                    // Calculate current word index
                     let currentWordIndex = 0;
-                    if (trimmedText.length > 0) {
-                        // Get text up to cursor
-                        const textUpToCursor = text.substring(0, selection.head).trim();
-                        if (textUpToCursor.length > 0) {
-                            const wordsBeforeCursor = textUpToCursor.split(/\s+/);
-                            currentWordIndex = wordsBeforeCursor.length;
-                        }
+                    const textUpToCursor = text.substring(0, selection.head).trim();
+                    if (textUpToCursor.length > 0) {
+                        currentWordIndex = textUpToCursor.split(/\s+/).length;
                     }
 
                     onMetricsChange({
@@ -312,7 +266,7 @@
                         sizeKB: sizeKB,
                         cursorLine: cursorLine.number,
                         cursorCol: selection.head - cursorLine.from + 1,
-                        currentLineLength: currentLineLength,
+                        currentLineLength: cursorLine.text.length,
                         currentWordIndex: currentWordIndex,
                     });
                     metricsUpdateTimer = null;
@@ -353,7 +307,6 @@
     export function getView() {
         return view;
     }
-
     export function getScrollDOM() {
         return view?.scrollDOM;
     }
