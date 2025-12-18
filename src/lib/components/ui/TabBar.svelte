@@ -67,10 +67,15 @@
 
         const handleKeyUp = (e: KeyboardEvent) => {
             if (!e.ctrlKey && isMruCycling) {
-                const targetId = editorStore.mruStack[mruSelectedIndex];
-                if (targetId && targetId !== appState.activeTabId) {
-                    appState.activeTabId = targetId;
-                    editorStore.pushToMru(targetId);
+                const stack = editorStore.mruStack;
+                if (stack.length > 0) {
+                    const safeIndex = Math.min(Math.max(0, mruSelectedIndex), stack.length - 1);
+                    const targetId = stack[safeIndex];
+
+                    if (targetId && targetId !== appState.activeTabId) {
+                        appState.activeTabId = targetId;
+                        editorStore.pushToMru(targetId);
+                    }
                 }
 
                 isMruCycling = false;
