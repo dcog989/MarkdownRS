@@ -71,38 +71,24 @@
         };
     }
 
-    let lastFontSize = 0;
-    let lastFontFamily = "";
-    let lastInsertMode: "INS" | "OVR" = "INS";
-    let cachedDynamicStyles: any = null;
+    let validatedFontFamily = $derived.by(() => {
+        let family = appState.editorFontFamily || "monospace";
+        family = family.trim();
+        if (family.endsWith(",")) family = family.slice(0, -1).trim();
 
-    function getDynamicStyles() {
+        const singleQuotes = (family.match(/'/g) || []).length;
+        const doubleQuotes = (family.match(/"/g) || []).length;
+
+        if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0) return "monospace";
+        return family;
+    });
+
+    let dynamicTheme = $derived.by(() => {
         const fontSize = appState.editorFontSize || 14;
-        let fontFamily = appState.editorFontFamily || "monospace";
         const insertMode = editorStore.insertMode;
+        const fontFamily = validatedFontFamily;
 
-        fontFamily = fontFamily.trim();
-        if (fontFamily.endsWith(",")) {
-            fontFamily = fontFamily.slice(0, -1).trim();
-        }
-
-        const singleQuotes = (fontFamily.match(/'/g) || []).length;
-        const doubleQuotes = (fontFamily.match(/"/g) || []).length;
-
-        if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0) {
-            if (cachedDynamicStyles) return cachedDynamicStyles;
-            fontFamily = "monospace";
-        }
-
-        if (cachedDynamicStyles && fontSize === lastFontSize && fontFamily === lastFontFamily && insertMode === lastInsertMode) {
-            return cachedDynamicStyles;
-        }
-
-        lastFontSize = fontSize;
-        lastFontFamily = fontFamily;
-        lastInsertMode = insertMode;
-
-        cachedDynamicStyles = EditorView.theme({
+        return EditorView.theme({
             "&": {
                 height: "100%",
                 fontSize: `${fontSize}px`,
@@ -138,16 +124,13 @@
                 color: "var(--fg-inverse) !important",
             },
         });
-
-        return cachedDynamicStyles;
-    }
+    });
 
     $effect(() => {
-        const dynamicStyles = getDynamicStyles();
         const baseTheme = appState.theme === "dark" ? oneDark : [];
         if (view) {
             view.dispatch({
-                effects: themeCompartment.reconfigure([baseTheme, dynamicStyles]),
+                effects: themeCompartment.reconfigure([baseTheme, dynamicTheme]),
             });
         }
     });
@@ -171,6 +154,17 @@
     });
 
     onMount(() => {
+        const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
+
+        const countWords = (str: string) => {
+            if (!str.trim()) return 0;
+            let count = 0;
+            for (const segment of segmenter.segment(str)) {
+                if (segment.isWordLike) count++;
+            }
+            return count;
+        };
+
         const pathDecorator = new MatchDecorator({
             regexp: /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g,
             decoration: Decoration.mark({ class: "cm-local-path" }),
@@ -203,9 +197,6 @@
                 key: "Mod-End",
                 run: (view: EditorView) => {
                     const pos = view.state.doc.length;
-                    // Move selection and trigger CodeMirror's internal scroll management.
-                    // Managing scroll via effects is more reliable in virtualized documents
-                    // than direct DOM scrollTop assignments.
                     view.dispatch({
                         selection: EditorSelection.cursor(pos),
                         effects: EditorView.scrollIntoView(pos, { y: "end", yMargin: 40 }),
@@ -232,17 +223,6 @@
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
         }
-
-        const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
-
-        const countWords = (str: string) => {
-            if (!str.trim()) return 0;
-            let count = 0;
-            for (const segment of segmenter.segment(str)) {
-                if (segment.isWordLike) count++;
-            }
-            return count;
-        };
 
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
