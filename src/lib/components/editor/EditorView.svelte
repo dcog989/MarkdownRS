@@ -233,6 +233,17 @@
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
         }
 
+        const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
+
+        const countWords = (str: string) => {
+            if (!str.trim()) return 0;
+            let count = 0;
+            for (const segment of segmenter.segment(str)) {
+                if (segment.isWordLike) count++;
+            }
+            return count;
+        };
+
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
                 const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
@@ -252,14 +263,10 @@
                     const selection = update.state.selection.main;
                     const cursorLine = doc.lineAt(selection.head);
                     const text = doc.toString();
-                    const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-                    const sizeKB = new TextEncoder().encode(text).length / 1024;
 
-                    let currentWordIndex = 0;
-                    const textUpToCursor = text.substring(0, selection.head).trim();
-                    if (textUpToCursor.length > 0) {
-                        currentWordIndex = textUpToCursor.split(/\s+/).length;
-                    }
+                    const wordCount = countWords(text);
+                    const textUpToCursor = text.substring(0, selection.head);
+                    const currentWordIndex = countWords(textUpToCursor);
 
                     onMetricsChange({
                         lineCount: doc.lines,
