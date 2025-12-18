@@ -64,7 +64,6 @@ fn main() {
                 .path()
                 .app_data_dir()
                 .expect("failed to get app data dir");
-
             let db_dir = app_dir.join("Database");
             let log_dir = app_dir.join("Logs");
             let config_path = app_dir.join("settings.toml");
@@ -120,7 +119,12 @@ fn main() {
 
             app.manage(app_commands::AppState {
                 db: std::sync::Mutex::new(db),
-                symspell: std::sync::Mutex::new(symspell_rs::SymSpell::new(2, None, 7, 1)),
+                symspell: std::sync::Arc::new(std::sync::Mutex::new(symspell_rs::SymSpell::new(
+                    2, None, 7, 1,
+                ))),
+                dict_set: std::sync::Arc::new(std::sync::Mutex::new(
+                    std::collections::HashSet::new(),
+                )),
             });
 
             tauri::async_runtime::spawn(async move {
@@ -144,6 +148,7 @@ fn main() {
             app_commands::get_custom_dictionary,
             app_commands::resolve_path_relative,
             app_commands::init_spellchecker,
+            app_commands::check_words,
             app_commands::get_spelling_suggestions,
         ])
         .run(tauri::generate_context!())

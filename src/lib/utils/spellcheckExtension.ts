@@ -1,26 +1,29 @@
 import { addToDictionary } from "$lib/utils/fileSystem";
-import { isWordValid, refreshCustomDictionary } from "$lib/utils/spellcheck.svelte.ts";
+import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
 import { syntaxTree } from "@codemirror/language";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
+import { invoke } from "@tauri-apps/api/core";
 
-export const createSpellCheckLinter = () => linter((view) => {
-    const diagnostics: Diagnostic[] = [];
+export const createSpellCheckLinter = () => linter(async (view) => {
+    if (!spellcheckState.dictionaryLoaded) return [];
+
     const doc = view.state.doc;
-    const wordRegex = /\b[a-zA-Z][a-zA-Z']*[a-zA-Z]\b|\b[a-zA-Z]\b/g;
     const text = doc.toString();
     const tree = syntaxTree(view.state);
+    const wordRegex = /\b[a-zA-Z][a-zA-Z']*[a-zA-Z]\b|\b[a-zA-Z]\b/g;
 
+    const wordsToVerify = new Map<string, { from: number; to: number }[]>();
     let match;
+
     while ((match = wordRegex.exec(text)) !== null) {
         const word = match[0];
-        const from = match.index;
-        const to = match.index + word.length;
-
         if (word.length <= 1) continue;
 
+        const from = match.index;
         const node = tree.resolveInner(from, 1);
         const nodeType = node.type.name;
+
         if (
             nodeType.includes("Code") ||
             nodeType.includes("Url") ||
@@ -28,40 +31,48 @@ export const createSpellCheckLinter = () => linter((view) => {
             nodeType.includes("Link") ||
             nodeType.includes("Image") ||
             nodeType.includes("Autolink")
-        ) {
-            continue;
-        }
+        ) continue;
 
-        const contextStart = Math.max(0, from - 20);
-        const contextEnd = Math.min(text.length, to + 20);
-        const context = text.slice(contextStart, contextEnd);
+        const wLower = word.toLowerCase();
+        if (spellcheckState.customDictionary.has(wLower)) continue;
+        if (/[a-z][A-Z]/.test(word)) continue;
 
-        if (
-            context.includes('http://') ||
-            context.includes('https://') ||
-            context.includes('www.') ||
-            context.includes('://') ||
-            /[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(context)
-        ) {
-            continue;
-        }
-
-        if (/[a-z][A-Z]/.test(word)) {
-            continue;
-        }
-
-        if (!isWordValid(word)) {
-            diagnostics.push({
-                from,
-                to,
-                severity: "warning",
-                message: `Misspelled: ${word}`,
-                source: "Spellchecker",
-            });
-        }
+        const entry = wordsToVerify.get(word) || [];
+        entry.push({ from, to: from + word.length });
+        wordsToVerify.set(word, entry);
     }
 
-    return diagnostics;
+    if (wordsToVerify.size === 0) return [];
+
+    try {
+        const misspelled = await invoke<string[]>('check_words', {
+            words: Array.from(wordsToVerify.keys())
+        });
+
+        const newCache = new Set<string>();
+        const diagnostics: Diagnostic[] = [];
+
+        for (const word of misspelled) {
+            newCache.add(word.toLowerCase());
+            const ranges = wordsToVerify.get(word);
+            if (ranges) {
+                for (const range of ranges) {
+                    diagnostics.push({
+                        from: range.from,
+                        to: range.to,
+                        severity: "warning",
+                        message: `Misspelled: ${word}`,
+                        source: "Spellchecker",
+                    });
+                }
+            }
+        }
+
+        spellcheckState.misspelledCache = newCache;
+        return diagnostics;
+    } catch (err) {
+        return [];
+    }
 });
 
 export async function refreshSpellcheck(view: EditorView | undefined) {
