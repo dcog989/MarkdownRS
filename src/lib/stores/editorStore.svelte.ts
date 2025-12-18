@@ -82,19 +82,17 @@ export class EditorStore {
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
 
-    private textOperationCallback: TextOperationCallback | null = null;
+    lineCount = $state(1);
+    wordCount = $state(0);
+    charCount = $state(0);
+    cursorOffset = $state(0);
+    cursorLine = $state(1);
+    cursorCol = $state(1);
+    currentLineLength = $state(0);
+    currentWordIndex = $state(0);
+    insertMode = $state<'INS' | 'OVR'>('INS');
 
-    activeMetrics = $state<EditorMetrics>({
-        lineCount: 1,
-        wordCount: 0,
-        charCount: 0,
-        cursorOffset: 0,
-        cursorLine: 1,
-        cursorCol: 1,
-        currentLineLength: 0,
-        currentWordIndex: 0,
-        insertMode: 'INS'
-    });
+    private textOperationCallback: TextOperationCallback | null = null;
 
     registerTextOperationCallback(callback: TextOperationCallback) {
         this.textOperationCallback = callback;
@@ -283,11 +281,19 @@ export class EditorStore {
     }
 
     updateMetrics(metrics: Partial<EditorMetrics>) {
-        Object.assign(this.activeMetrics, metrics);
+        if (metrics.lineCount !== undefined) this.lineCount = metrics.lineCount;
+        if (metrics.wordCount !== undefined) this.wordCount = metrics.wordCount;
+        if (metrics.charCount !== undefined) this.charCount = metrics.charCount;
+        if (metrics.cursorOffset !== undefined) this.cursorOffset = metrics.cursorOffset;
+        if (metrics.cursorLine !== undefined) this.cursorLine = metrics.cursorLine;
+        if (metrics.cursorCol !== undefined) this.cursorCol = metrics.cursorCol;
+        if (metrics.currentLineLength !== undefined) this.currentLineLength = metrics.currentLineLength;
+        if (metrics.currentWordIndex !== undefined) this.currentWordIndex = metrics.currentWordIndex;
+        if (metrics.insertMode !== undefined) this.insertMode = metrics.insertMode;
     }
 
     toggleInsertMode() {
-        this.activeMetrics.insertMode = this.activeMetrics.insertMode === 'INS' ? 'OVR' : 'INS';
+        this.insertMode = this.insertMode === 'INS' ? 'OVR' : 'INS';
     }
 
     sortLines() {

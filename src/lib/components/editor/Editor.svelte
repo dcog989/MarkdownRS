@@ -160,7 +160,7 @@
     }
 
     const inputHandler = CM6EditorView.inputHandler.of((view, from, to, text) => {
-        if (editorStore.activeMetrics.insertMode === "OVR" && from === to && text.length === 1) {
+        if (editorStore.insertMode === "OVR" && from === to && text.length === 1) {
             const doc = view.state.doc;
             const line = doc.lineAt(from);
             if (from < line.to) {

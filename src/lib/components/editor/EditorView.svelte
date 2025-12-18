@@ -79,7 +79,7 @@
     function getDynamicStyles() {
         const fontSize = appState.editorFontSize || 14;
         let fontFamily = appState.editorFontFamily || "monospace";
-        const insertMode = editorStore.activeMetrics.insertMode;
+        const insertMode = editorStore.insertMode;
 
         fontFamily = fontFamily.trim();
         if (fontFamily.endsWith(",")) {

@@ -5,8 +5,6 @@
     import { saveSettings } from "$lib/utils/settings";
     import { WrapText } from "lucide-svelte";
 
-    let m = $derived(editorStore.activeMetrics);
-
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
 
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
@@ -17,7 +15,6 @@
     let bgWithAlpha = $derived(`rgba(37, 37, 38, ${1 - opacity})`);
     let textOpacity = $derived(1 - opacity);
 
-    // Format file size
     let fileSizeDisplay = $derived.by(() => {
         const bytes = activeTab?.sizeBytes || 0;
         const kb = bytes / 1024;
@@ -27,7 +24,6 @@
         return Math.round(kb).toString();
     });
 
-    // Get file type from tab
     let fileType = $derived.by(() => {
         if (!activeTab) return "markdown";
         const path = activeTab.path || activeTab.title || "";
@@ -56,18 +52,16 @@
         border-color: var(--border-main);
     "
 >
-    <!-- Left: Metrics -->
     <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
         <span class="metric-item" use:tooltip={"File Type"}>{fileType}</span>
         <span class="metric-divider">|</span>
-        <span class="metric-item" use:tooltip={"Line Position"}>Ln {m.cursorLine} / {m.lineCount}</span>
-        <span class="metric-item" use:tooltip={"Column Position"}>Col {m.cursorCol} / {m.currentLineLength}</span>
-        <span class="metric-item" use:tooltip={"Character Count"}>Char {m.cursorOffset} / {m.charCount}</span>
-        <span class="metric-item" use:tooltip={"Word Position"}>Word {m.currentWordIndex} / {m.wordCount}</span>
+        <span class="metric-item" use:tooltip={"Line Position"}>Ln {editorStore.cursorLine} / {editorStore.lineCount}</span>
+        <span class="metric-item" use:tooltip={"Column Position"}>Col {editorStore.cursorCol} / {editorStore.currentLineLength}</span>
+        <span class="metric-item" use:tooltip={"Character Count"}>Char {editorStore.cursorOffset} / {editorStore.charCount}</span>
+        <span class="metric-item" use:tooltip={"Word Position"}>Word {editorStore.currentWordIndex} / {editorStore.wordCount}</span>
         <span class="metric-item" use:tooltip={"File Size"}>{fileSizeDisplay} KB</span>
     </div>
 
-    <!-- Right: Technicals + Wrap -->
     <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
         <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
             {lineEnding}
@@ -77,8 +71,8 @@
             {encoding}
         </span>
 
-        <span class="font-bold w-8 text-center" style="color: {m.insertMode === 'OVR' ? 'var(--danger)' : 'var(--accent-secondary)'}">
-            {m.insertMode}
+        <span class="font-bold w-8 text-center" style="color: {editorStore.insertMode === 'OVR' ? 'var(--danger)' : 'var(--accent-secondary)'}">
+            {editorStore.insertMode}
         </span>
 
         <button class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};">
