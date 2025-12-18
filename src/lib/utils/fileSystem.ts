@@ -251,7 +251,7 @@ async function processSaveQueue() {
 }
 
 export async function persistSession(): Promise<void> {
-    if (!editorStore.sessionDirty) return;
+    if (!editorStore.sessionDirty || isSaving) return;
 
     const saveTask = async () => {
         try {
@@ -276,18 +276,15 @@ export async function persistSession(): Promise<void> {
                 mru_position: mruPositionMap.get(t.id) ?? null
             }));
 
-            await invoke('save_session', { tabs: plainTabs });
             editorStore.sessionDirty = false;
+
+            await invoke('save_session', { tabs: plainTabs });
         } catch (err) {
+            editorStore.sessionDirty = true;
             AppError.log('Session:Save', err);
             throw err;
         }
     };
-
-    if (isSaving) {
-        saveQueue.push(saveTask);
-        return;
-    }
 
     isSaving = true;
     try {

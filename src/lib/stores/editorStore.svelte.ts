@@ -270,7 +270,13 @@ export class EditorStore {
 
     updateScroll(id: string, percentage: number, topLine?: number) {
         const tab = this.tabs.find(t => t.id === id);
-        if (tab) {
+        if (!tab) return;
+
+        const isSignificantMove =
+            Math.abs(tab.scrollPercentage - percentage) > 0.005 ||
+            (topLine !== undefined && Math.floor(tab.topLine || 0) !== Math.floor(topLine));
+
+        if (isSignificantMove) {
             tab.scrollPercentage = percentage;
             if (topLine !== undefined) tab.topLine = topLine;
             this.sessionDirty = true;
