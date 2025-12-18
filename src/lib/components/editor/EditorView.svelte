@@ -203,6 +203,9 @@
                 key: "Mod-End",
                 run: (view: EditorView) => {
                     const pos = view.state.doc.length;
+                    // Move selection and trigger CodeMirror's internal scroll management.
+                    // Managing scroll via effects is more reliable in virtualized documents
+                    // than direct DOM scrollTop assignments.
                     view.dispatch({
                         selection: EditorSelection.cursor(pos),
                         effects: EditorView.scrollIntoView(pos, { y: "end", yMargin: 40 }),
@@ -216,7 +219,7 @@
                 run: (view: EditorView) => {
                     view.dispatch({
                         selection: EditorSelection.cursor(0),
-                        scrollIntoView: true,
+                        effects: EditorView.scrollIntoView(0, { y: "start" }),
                         userEvent: "select",
                     });
                     return true;
