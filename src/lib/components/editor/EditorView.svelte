@@ -9,7 +9,7 @@
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
-    import { Decoration, EditorView, highlightActiveLineGutter, keymap, lineNumbers, MatchDecorator, ViewPlugin } from "@codemirror/view";
+    import { Decoration, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, MatchDecorator, ViewPlugin } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -109,6 +109,14 @@
                 color: "var(--color-accent-link)",
                 textDecoration: "underline",
                 cursor: "pointer",
+            },
+            /* Current Line Highlight */
+            ".cm-activeLine": {
+                backgroundColor: "var(--color-bg-input) !important",
+                mixBlendMode: "normal",
+            },
+            ".cm-activeLineGutter": {
+                backgroundColor: "var(--color-bg-panel) !important",
             },
             /* Explicit Spellcheck Squiggles */
             ".cm-lintRange-error": {
@@ -216,7 +224,24 @@
             },
         ];
 
-        const extensions = [lineNumbers(), highlightActiveLineGutter(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), inputHandler, eventHandlers];
+        const extensions = [
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            highlightActiveLine(), // Added
+            history(),
+            search({ top: true }),
+            highlightSelectionMatches(),
+            pathHighlighter,
+            autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []),
+            closeBrackets(),
+            keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
+            themeCompartment.of([]),
+            spellCheckLinter,
+            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
+            EditorView.contentAttributes.of({ spellcheck: "false" }),
+            inputHandler,
+            eventHandlers,
+        ];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
