@@ -2,8 +2,7 @@
 
 The only markdown editor you need.
 
-This is a fast, slim, cross-platform desktop markdown editor with clean, minimal UI. It's built with the latest Rust / Tauri / Svelte (Runes) / Tailwind stack.
-
+MarkdownRS is a fast, low-resource, cross-platform desktop markdown editor with clean, minimal UI. It's built with the latest Rust / Tauri / Svelte (Runes) / Tailwind stack.
 
 ## Features
 
