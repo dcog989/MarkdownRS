@@ -143,7 +143,6 @@ export class EditorStore {
             encoding: 'UTF-8'
         };
 
-        // Immutable update: Replace the array reference
         if (appState.newTabPosition === 'right' && appState.activeTabId) {
             const activeIndex = this.tabs.findIndex(t => t.id === appState.activeTabId);
             const newTabs = [...this.tabs];
@@ -196,23 +195,16 @@ export class EditorStore {
 
         let newTitle = oldTab.title;
 
-        // Smart Title Logic for unsaved files
         if (!oldTab.path) {
             const trimmed = content.trim();
             if (trimmed.length > 0) {
-                // Find first non-empty line
                 const lines = content.split('\n');
                 const firstLine = lines.find(l => l.trim().length > 0) || "";
-
-                // Strip Markdown headers (#) and whitespace
                 let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
-
-                // Truncate to reasonable length
                 const MAX_LEN = 25;
                 if (smartTitle.length > MAX_LEN) {
                     smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
                 }
-
                 if (smartTitle.length > 0) {
                     newTitle = smartTitle;
                 } else if (oldTab.originalTitle) {
@@ -223,7 +215,6 @@ export class EditorStore {
             }
         }
 
-        // Immutable update: Replace both the object and the array reference
         const updatedTab = {
             ...oldTab,
             title: newTitle,
@@ -250,6 +241,19 @@ export class EditorStore {
         if (isSignificant) {
             const newTabs = [...this.tabs];
             newTabs[index] = { ...tab, scrollPercentage: percentage, topLine: topLine ?? tab.topLine };
+            this.tabs = newTabs;
+            this.sessionDirty = true;
+        }
+    }
+
+    updateMetadata(id: string, created?: string, modified?: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const tab = this.tabs[index];
+        if (tab.created !== created || tab.modified !== modified) {
+            const newTabs = [...this.tabs];
+            newTabs[index] = { ...tab, created: created || tab.created, modified: modified || tab.modified };
             this.tabs = newTabs;
             this.sessionDirty = true;
         }
