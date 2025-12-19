@@ -5,7 +5,6 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
     preprocess: vitePreprocess(),
     onwarn: (warning, handler) => {
-        // Suppress "state_referenced_locally" warnings from SvelteKit's auto-generated files
         if (warning.code === 'state_referenced_locally' && warning.filename?.includes('.svelte-kit')) {
             return;
         }

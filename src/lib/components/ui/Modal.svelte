@@ -43,19 +43,19 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 flex items-center justify-center p-4" style="background-color: var(--bg-backdrop); z-index: {zIndex};" onclick={handleBackdropClick}>
-        <div class="shadow-2xl rounded-lg border overflow-hidden flex flex-col max-h-[90vh]" style="background-color: var(--bg-panel); border-color: var(--border-light); width: {width};" onclick={(e) => e.stopPropagation()}>
+    <div class="fixed inset-0 flex items-center justify-center p-4" style="background-color: var(--color-bg-backdrop); z-index: {zIndex};" onclick={handleBackdropClick}>
+        <div class="shadow-2xl rounded-lg border overflow-hidden flex flex-col max-h-[90vh]" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light); width: {width};" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
             {#if header || title}
-                <div class="px-4 py-3 border-b flex justify-between items-center shrink-0" style="background-color: var(--bg-header); border-color: var(--border-main);">
+                <div class="px-4 py-3 border-b flex justify-between items-center shrink-0" style="background-color: var(--color-bg-header); border-color: var(--color-border-main);">
                     {#if header}
                         {@render header()}
                     {:else}
-                        <span class="text-sm font-semibold" style="color: var(--fg-default)">{title}</span>
+                        <span class="text-sm font-semibold" style="color: var(--color-fg-default)">{title}</span>
                     {/if}
 
                     {#if showCloseButton}
-                        <button class="p-1 rounded hover:bg-white/10 transition-colors" style="color: var(--fg-muted);" onclick={onClose} aria-label="Close">
+                        <button class="p-1 rounded hover:bg-white/10 transition-colors" style="color: var(--color-fg-muted);" onclick={onClose} aria-label="Close">
                             <X size={18} />
                         </button>
                     {/if}
@@ -69,7 +69,7 @@
 
             <!-- Footer -->
             {#if footer}
-                <div class="px-4 py-3 border-t flex justify-end gap-2 shrink-0" style="background-color: var(--bg-panel); border-color: var(--border-main);">
+                <div class="px-4 py-3 border-t flex justify-end gap-2 shrink-0" style="background-color: var(--color-bg-panel); border-color: var(--color-border-main);">
                     {@render footer()}
                 </div>
             {/if}

@@ -3,7 +3,7 @@
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type EditorTab, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
@@ -38,7 +38,7 @@
 
     const spellCheckLinter = createSpellCheckLinter();
 
-    let currentTabState = $derived(editorStore.tabs.find((t) => t.id === tabId));
+    let currentTabState = $derived(editorStore.tabs.find((t: EditorTab) => t.id === tabId));
 
     function handleDictionaryUpdate() {
         refreshSpellcheck(editorViewComponent?.getView());
@@ -117,7 +117,32 @@
         let from: number;
         let to: number;
 
-        if (operation.type === "format-document") {
+        const isSimpleTransform = ["uppercase", "to-uppercase", "lowercase", "to-lowercase", "trim-whitespace", "remove-all-spaces"].includes(operation.type);
+
+        if (isSimpleTransform) {
+            const targetText = hasSelection ? state.sliceDoc(selection.from, selection.to) : doc.toString();
+            from = hasSelection ? selection.from : 0;
+            to = hasSelection ? selection.to : doc.length;
+
+            switch (operation.type) {
+                case "uppercase":
+                case "to-uppercase":
+                    newText = targetText.toUpperCase();
+                    break;
+                case "lowercase":
+                case "to-lowercase":
+                    newText = targetText.toLowerCase();
+                    break;
+                case "trim-whitespace":
+                    newText = targetText.trim();
+                    break;
+                case "remove-all-spaces":
+                    newText = targetText.replace(/\s+/g, "");
+                    break;
+                default:
+                    newText = targetText;
+            }
+        } else if (operation.type === "format-document") {
             if (hasSelection) {
                 const selectedText = state.sliceDoc(selection.from, selection.to);
                 newText = await formatMarkdown(selectedText, {
@@ -152,6 +177,7 @@
                 to = doc.length;
             }
         }
+
         view.dispatch({
             changes: { from, to, insert: newText },
             selection: { anchor: from + newText.length },
@@ -270,7 +296,7 @@
     $effect(() => {
         if (tabId !== previousTabId) {
             const view = editorViewComponent?.getView();
-            const currentTab = editorStore.tabs.find((t) => t.id === tabId);
+            const currentTab = editorStore.tabs.find((t: EditorTab) => t.id === tabId);
             if (currentTab && view) {
                 untrack(() => {
                     const currentDoc = view.state.doc.toString();
@@ -406,7 +432,7 @@
         scrollDOM = editorViewComponent?.getScrollDOM() || null;
     });
 
-    let currentTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
+    let currentTab = $derived(editorStore.tabs.find((t: EditorTab) => t.id === tabId));
     let initialContent = $derived(currentTab?.content || "");
     let filename = $derived(currentTab?.title || "");
     let combinedKeymap = $derived([...spellCheckKeymap]);

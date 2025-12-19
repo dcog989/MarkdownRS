@@ -85,9 +85,9 @@
         <div
             class="p-3 rounded shadow-2xl border text-xs whitespace-pre-line max-w-lg break-all leading-relaxed"
             style="
-                background-color: var(--bg-header);
-                border-color: var(--border-light);
-                color: var(--fg-default);
+                background-color: var(--color-bg-header);
+                border-color: var(--color-border-light);
+                color: var(--color-fg-default);
             "
         >
             {tooltipContent}

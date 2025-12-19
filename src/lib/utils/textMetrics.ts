@@ -1,5 +1,3 @@
-import { invoke } from '@tauri-apps/api/core';
-
 export interface TextMetrics {
     lineCount: number;
     wordCount: number;
@@ -14,82 +12,47 @@ export interface CursorMetrics extends TextMetrics {
 }
 
 /**
- * Calculate text metrics using Rust backend.
- * Best used for initial file loads or large files.
+ * Calculate basic text metrics locally in TypeScript to avoid IPC overhead
  */
-export async function calculateTextMetrics(content: string): Promise<TextMetrics> {
-    try {
-        const result = await invoke<{
-            line_count: number;
-            word_count: number;
-            char_count: number;
-        }>('calculate_text_metrics_command', { content });
-        
-        return {
-            lineCount: result.line_count,
-            wordCount: result.word_count,
-            charCount: result.char_count,
-        };
-    } catch (e) {
-        console.error('[TextMetrics] Error calculating metrics:', e);
-        // Fallback to basic calculation
-        return {
-            lineCount: content.split('\n').length,
-            wordCount: content.trim() ? content.trim().split(/\s+/).length : 0,
-            charCount: content.length,
-        };
-    }
+export function calculateTextMetrics(content: string): TextMetrics {
+    const lines = content.split('\n');
+
+    // Fast word count implementation
+    const trimmed = content.trim();
+    const wordCount = trimmed === '' ? 0 : trimmed.split(/\s+/).length;
+
+    return {
+        lineCount: lines.length,
+        wordCount: wordCount,
+        charCount: content.length,
+    };
 }
 
 /**
- * Calculate metrics including cursor position using Rust backend.
- * Best used for initial loads or large documents.
+ * Calculate metrics including cursor position locally
  */
-export async function calculateCursorMetrics(
+export function calculateCursorMetrics(
     content: string,
     cursorOffset: number
-): Promise<CursorMetrics> {
-    try {
-        const result = await invoke<{
-            line_count: number;
-            word_count: number;
-            char_count: number;
-            cursor_line: number;
-            cursor_col: number;
-            current_line_length: number;
-            current_word_index: number;
-        }>('calculate_cursor_metrics_command', { content, cursorOffset });
-        
-        return {
-            lineCount: result.line_count,
-            wordCount: result.word_count,
-            charCount: result.char_count,
-            cursorLine: result.cursor_line,
-            cursorCol: result.cursor_col,
-            currentLineLength: result.current_line_length,
-            currentWordIndex: result.current_word_index,
-        };
-    } catch (e) {
-        console.error('[TextMetrics] Error calculating cursor metrics:', e);
-        // Fallback
-        const basicMetrics = await calculateTextMetrics(content);
-        return {
-            ...basicMetrics,
-            cursorLine: 1,
-            cursorCol: 1,
-            currentLineLength: 0,
-            currentWordIndex: 0,
-        };
-    }
-}
+): CursorMetrics {
+    const metrics = calculateTextMetrics(content);
+    const textUpToCursor = content.slice(0, cursorOffset);
+    const linesUpToCursor = textUpToCursor.split('\n');
 
-/**
- * Determine if we should use Rust for metrics calculation.
- * Use Rust for large files (> 50KB or > 1000 lines)
- */
-export function shouldUseRustMetrics(content: string): boolean {
-    const size = content.length;
-    const lineCount = content.split('\n').length;
-    
-    return size > 50000 || lineCount > 1000;
+    const cursorLine = linesUpToCursor.length;
+    const cursorCol = linesUpToCursor[cursorLine - 1].length + 1;
+
+    const allLines = content.split('\n');
+    const currentLineLength = allLines[cursorLine - 1]?.length || 0;
+
+    const trimmedBefore = textUpToCursor.trim();
+    const currentWordIndex = trimmedBefore === '' ? 0 : trimmedBefore.split(/\s+/).length;
+
+    return {
+        ...metrics,
+        cursorLine,
+        cursorCol,
+        currentLineLength,
+        currentWordIndex,
+    };
 }

@@ -51,8 +51,8 @@
         <div
             class="absolute top-0 min-w-[180px] rounded-md shadow-xl border py-1 z-50"
             style="
-                background-color: var(--bg-panel);
-                border-color: var(--border-light);
+                background-color: var(--color-bg-panel);
+                border-color: var(--color-border-light);
                 {side === 'left' ? 'right: 100%;' : 'left: 100%;'}
             "
             onmouseenter={handleMouseEnter}

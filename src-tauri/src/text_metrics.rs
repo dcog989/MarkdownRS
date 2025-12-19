@@ -25,7 +25,7 @@ pub fn calculate_text_metrics(content: &str) -> TextMetrics {
     } else {
         content.lines().count().max(1)
     };
-    
+
     let word_count = count_words(content);
     let char_count = content.len();
 
@@ -42,26 +42,26 @@ pub fn calculate_cursor_metrics(
     cursor_offset: usize,
 ) -> Result<CursorMetrics, String> {
     let metrics = calculate_text_metrics(content);
-    
+
     // Find cursor line and column
     let mut current_offset = 0;
     let mut cursor_line = 1;
     let mut cursor_col = 1;
     let mut current_line_length = 0;
-    
+
     for (line_num, line) in content.lines().enumerate() {
         let line_end = current_offset + line.len();
-        
+
         if cursor_offset <= line_end {
             cursor_line = line_num + 1;
             cursor_col = cursor_offset - current_offset + 1;
             current_line_length = line.len();
             break;
         }
-        
+
         current_offset = line_end + 1; // +1 for newline
     }
-    
+
     // Handle case where cursor is at the very end
     if cursor_offset >= content.len() {
         cursor_line = metrics.line_count;
@@ -70,7 +70,7 @@ pub fn calculate_cursor_metrics(
             cursor_col = last_line.len() + 1;
         }
     }
-    
+
     // Count words up to cursor
     let text_up_to_cursor = if cursor_offset > content.len() {
         content
@@ -78,7 +78,7 @@ pub fn calculate_cursor_metrics(
         &content[..cursor_offset]
     };
     let current_word_index = count_words(text_up_to_cursor);
-    
+
     Ok(CursorMetrics {
         line_count: metrics.line_count,
         word_count: metrics.word_count,
@@ -95,15 +95,15 @@ fn count_words(text: &str) -> usize {
     if text.trim().is_empty() {
         return 0;
     }
-    
+
     let mut count = 0;
     let mut in_word = false;
     let mut prev_was_whitespace = true;
-    
+
     for ch in text.chars() {
         let is_whitespace = ch.is_whitespace();
         let is_word_char = ch.is_alphanumeric() || ch == '\'' || ch == '-';
-        
+
         if is_word_char {
             if !in_word && prev_was_whitespace {
                 count += 1;
@@ -112,16 +112,11 @@ fn count_words(text: &str) -> usize {
         } else {
             in_word = false;
         }
-        
+
         prev_was_whitespace = is_whitespace;
     }
-    
-    count
-}
 
-/// Calculate metrics for initial file load
-pub fn calculate_file_metrics(content: &str) -> TextMetrics {
-    calculate_text_metrics(content)
+    count
 }
 
 #[cfg(test)]
@@ -132,7 +127,7 @@ mod tests {
     fn test_basic_metrics() {
         let content = "Hello world\nThis is a test\n";
         let metrics = calculate_text_metrics(content);
-        
+
         assert_eq!(metrics.line_count, 2);
         assert_eq!(metrics.word_count, 6);
         assert_eq!(metrics.char_count, content.len());
@@ -142,7 +137,7 @@ mod tests {
     fn test_empty_content() {
         let content = "";
         let metrics = calculate_text_metrics(content);
-        
+
         assert_eq!(metrics.line_count, 1);
         assert_eq!(metrics.word_count, 0);
         assert_eq!(metrics.char_count, 0);
@@ -161,12 +156,12 @@ mod tests {
     #[test]
     fn test_cursor_metrics() {
         let content = "Line one\nLine two\nLine three";
-        
+
         // Cursor at start of line 2
         let metrics = calculate_cursor_metrics(content, 9).unwrap();
         assert_eq!(metrics.cursor_line, 2);
         assert_eq!(metrics.cursor_col, 1);
-        
+
         // Cursor at end
         let metrics = calculate_cursor_metrics(content, content.len()).unwrap();
         assert_eq!(metrics.cursor_line, 3);
@@ -176,7 +171,7 @@ mod tests {
     fn test_single_line() {
         let content = "Just one line";
         let metrics = calculate_text_metrics(content);
-        
+
         assert_eq!(metrics.line_count, 1);
         assert_eq!(metrics.word_count, 3);
     }
@@ -185,7 +180,7 @@ mod tests {
     fn test_large_file() {
         let content = "word ".repeat(10000);
         let metrics = calculate_text_metrics(&content);
-        
+
         assert_eq!(metrics.word_count, 10000);
     }
 }

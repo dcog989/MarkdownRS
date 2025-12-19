@@ -148,7 +148,7 @@ export async function saveCurrentFile(): Promise<boolean> {
             let contentToSave = tab.content;
             if (appState.formatOnSave && !sanitizedPath.endsWith('.txt')) {
                 try {
-                    contentToSave = formatMarkdown(contentToSave, {
+                    contentToSave = await formatMarkdown(contentToSave, {
                         listIndent: appState.formatterListIndent,
                         bulletChar: appState.formatterBulletChar,
                         codeBlockFence: appState.formatterCodeFence,

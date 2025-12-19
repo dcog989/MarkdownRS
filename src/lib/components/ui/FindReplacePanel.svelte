@@ -407,8 +407,8 @@
         right: 0;
         width: 400px;
         max-height: 600px;
-        background-color: var(--bg-panel);
-        border: 1px solid var(--border-main);
+        background-color: var(--color-bg-panel);
+        border: 1px solid var(--color-border-main);
         border-top: none;
         border-right: none;
         box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.3);
@@ -421,8 +421,8 @@
         display: flex;
         align-items: center;
         padding: 0.5rem;
-        border-bottom: 1px solid var(--border-main);
-        color: var(--fg-default);
+        border-bottom: 1px solid var(--color-border-main);
+        color: var(--color-fg-default);
     }
 
     .panel-content {
@@ -443,22 +443,22 @@
     .search-input {
         flex: 1;
         padding: 0.3rem 0.5rem;
-        background-color: var(--bg-input);
-        border: 1px solid var(--border-light);
+        background-color: var(--color-bg-input);
+        border: 1px solid var(--color-border-light);
         border-radius: 4px;
-        color: var(--fg-default);
+        color: var(--color-fg-default);
         font-size: 13px;
         line-height: 1.5;
     }
 
     .search-input:focus {
         outline: none;
-        border-color: var(--accent-primary);
+        border-color: var(--color-accent-primary);
     }
 
     .result-indicator {
         font-size: 11px;
-        color: var(--fg-muted);
+        color: var(--color-fg-muted);
         min-width: 80px;
         text-align: right;
     }
@@ -476,7 +476,7 @@
         align-items: center;
         gap: 0.375rem;
         font-size: 13px;
-        color: var(--fg-default);
+        color: var(--color-fg-default);
         cursor: pointer;
     }
 
@@ -489,10 +489,10 @@
     .icon-btn,
     .action-btn {
         padding: 0.25rem 0.6rem;
-        background-color: var(--bg-hover);
-        border: 1px solid var(--border-light);
+        background-color: var(--color-bg-hover);
+        border: 1px solid var(--color-border-light);
         border-radius: 4px;
-        color: var(--fg-default);
+        color: var(--color-fg-default);
         font-size: 13px;
         cursor: pointer;
         display: flex;
@@ -503,7 +503,7 @@
 
     .icon-btn:hover,
     .action-btn:hover {
-        background-color: var(--bg-active);
+        background-color: var(--color-bg-active);
     }
 
     .icon-btn:disabled,
@@ -523,7 +523,7 @@
     .results-header {
         font-size: 11px;
         font-weight: 600;
-        color: var(--fg-muted);
+        color: var(--color-fg-muted);
         margin-bottom: 0.25rem;
     }
 
@@ -532,7 +532,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 0.4rem 0.5rem;
-        background-color: var(--bg-hover);
+        background-color: var(--color-bg-hover);
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 150ms;
@@ -542,12 +542,12 @@
     }
 
     .result-item:hover {
-        background-color: var(--bg-active);
+        background-color: var(--color-bg-active);
     }
 
     .result-filename {
         font-size: 13px;
-        color: var(--fg-default);
+        color: var(--color-fg-default);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -555,8 +555,8 @@
 
     .result-count {
         font-size: 11px;
-        color: var(--fg-muted);
-        background-color: var(--bg-panel);
+        color: var(--color-fg-muted);
+        background-color: var(--color-bg-panel);
         padding: 0.125rem 0.5rem;
         border-radius: 12px;
     }

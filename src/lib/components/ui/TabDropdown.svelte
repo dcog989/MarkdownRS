@@ -111,18 +111,18 @@
         bind:this={dropdownContainerRef}
         class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50"
         style="
-            background-color: var(--bg-panel);
-            border-color: var(--border-light);
+            background-color: var(--color-bg-panel);
+            border-color: var(--color-border-light);
             max-height: calc(100vh - 120px);
         "
         role="menu"
     >
-        <div class="p-2 border-b shrink-0" style="border-color: var(--border-light);">
-            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--fg-default);" onkeydown={handleKeydown} />
+        <div class="p-2 border-b shrink-0" style="border-color: var(--color-border-light);">
+            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--color-fg-default);" onkeydown={handleKeydown} />
         </div>
 
         <div class="relative min-h-0 flex-1">
-            <div bind:this={dropdownListRef} class="overflow-y-auto py-1" style="scrollbar-width: none; max-height: 60vh;">
+            <div bind:this={dropdownListRef} class="dropdown-list overflow-y-auto py-1" style="max-height: 60vh;">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appState.activeTabId === tab.id}
@@ -163,12 +163,12 @@
         opacity: 0.5;
     }
 
-    /* Hide native scrollbar */
-    div[bind\:this="{dropdownListRef}"] {
+    .dropdown-list {
         scrollbar-width: none;
+        -ms-overflow-style: none;
     }
 
-    div[bind\:this="{dropdownListRef}"]::-webkit-scrollbar {
+    .dropdown-list::-webkit-scrollbar {
         display: none;
     }
 </style>

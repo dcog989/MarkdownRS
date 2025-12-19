@@ -215,9 +215,9 @@
     </style>
 {/if}
 
-<div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--bg-panel); border-color: var(--border-main);">
-    <div class="relative h-8 border-r border-[var(--border-main)]">
-        <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)}>
+<div class="h-9 flex items-end w-full border-b relative shrink-0 tab-bar-container" style="background-color: var(--color-bg-panel); border-color: var(--color-border-main);">
+    <div class="relative h-8 border-r border-[var(--color-border-main)]">
+        <button class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--color-fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)}>
             <span>{editorStore.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
@@ -237,11 +237,11 @@
         onfinalize={handleDndFinalize}
     >
         {#if showLeftFade}
-            <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to right, var(--bg-panel), transparent);"></div>
+            <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
         {/if}
 
         {#if showRightFade}
-            <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to left, var(--bg-panel), transparent);"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"></div>
         {/if}
 
         {#each editorStore.tabs as tab (tab.id)}
@@ -251,8 +251,8 @@
         {/each}
     </section>
 
-    <div class="h-full flex items-end border-l border-[var(--border-main)]">
-        <button class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-[var(--fg-muted)] shrink-0" onclick={handleNewTab}>
+    <div class="h-full flex items-end border-l border-[var(--color-border-main)]">
+        <button class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-[var(--color-fg-muted)] shrink-0" onclick={handleNewTab}>
             <Plus size={16} />
         </button>
     </div>

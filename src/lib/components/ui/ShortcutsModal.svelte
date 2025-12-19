@@ -55,16 +55,16 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--bg-backdrop);" onclick={handleBackdropClick}>
-        <div class="w-fit max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--bg-panel); border-color: var(--border-light);">
+    <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
+        <div class="w-fit max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
             <!-- Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b" style="background-color: var(--bg-header); border-color: var(--border-light);">
+            <div class="flex items-center justify-between px-6 py-4 border-b" style="background-color: var(--color-bg-header); border-color: var(--color-border-light);">
                 <div class="flex items-center gap-3">
-                    <Keyboard size={20} style="color: var(--accent-secondary);" />
-                    <h2 class="text-lg font-semibold" style="color: var(--fg-default);">Keyboard Shortcuts</h2>
+                    <Keyboard size={20} style="color: var(--color-accent-secondary);" />
+                    <h2 class="text-lg font-semibold" style="color: var(--color-fg-default);">Keyboard Shortcuts</h2>
                 </div>
 
-                <button class="p-1.5 rounded hover:bg-white/10 transition-colors" style="color: var(--fg-muted);" onclick={onClose} aria-label="Close Shortcuts">
+                <button class="p-1.5 rounded hover:bg-white/10 transition-colors" style="color: var(--color-fg-muted);" onclick={onClose} aria-label="Close Shortcuts">
                     <X size={20} />
                 </button>
             </div>
@@ -74,16 +74,16 @@
                 {#if Object.keys(shortcutsByCategory).length > 0}
                     {#each Object.entries(shortcutsByCategory) as [category, shortcuts]}
                         <div class="mb-6 last:mb-0">
-                            <h3 class="text-sm font-semibold mb-3 uppercase tracking-wide" style="color: var(--accent-secondary);">
+                            <h3 class="text-sm font-semibold mb-3 uppercase tracking-wide" style="color: var(--color-accent-secondary);">
                                 {category}
                             </h3>
                             <div class="space-y-2">
                                 {#each shortcuts as shortcut}
                                     <div class="flex items-center justify-between py-2 px-3 rounded hover:bg-white/5 transition-colors min-w-[500px]">
-                                        <span class="text-sm" style="color: var(--fg-default);">
+                                        <span class="text-sm" style="color: var(--color-fg-default);">
                                             {shortcut.description}
                                         </span>
-                                        <kbd class="px-3 py-1.5 rounded text-xs font-mono font-semibold whitespace-nowrap ml-8" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);">
+                                        <kbd class="px-3 py-1.5 rounded text-xs font-mono font-semibold whitespace-nowrap ml-8" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);">
                                             {shortcut.shortcut}
                                         </kbd>
                                     </div>
@@ -92,7 +92,7 @@
                         </div>
                     {/each}
                 {:else}
-                    <div class="text-center py-12" style="color: var(--fg-muted);">
+                    <div class="text-center py-12" style="color: var(--color-fg-muted);">
                         <p class="text-sm">No shortcuts registered</p>
                     </div>
                 {/if}

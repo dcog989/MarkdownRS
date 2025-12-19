@@ -19,11 +19,11 @@
 
     let iconColor = $derived.by(() => {
         const _ = currentTime;
-        return isActive ? "#ffffff" : "var(--fg-muted)";
+        return isActive ? "#ffffff" : "var(--color-fg-muted)";
     });
 
-    let borderTop = $derived(isActive ? "2px solid var(--accent-secondary)" : "transparent");
-    let color = $derived(isActive ? "var(--fg-default)" : "var(--fg-muted)");
+    let borderTop = $derived(isActive ? "2px solid var(--color-accent-secondary)" : "transparent");
+    let color = $derived(isActive ? "var(--color-fg-default)" : "var(--color-fg-muted)");
 
     let tooltipContent = $derived.by(() => {
         const parts: string[] = [];
@@ -59,9 +59,9 @@
     use:tooltip={tooltipContent}
     class="tab-button group relative h-8 pl-2 pr-6 flex items-center gap-2 text-ui cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
     style="
-        --tab-bg: {isActive ? 'var(--bg-main)' : 'var(--bg-panel)'};
+        --tab-bg: {isActive ? 'var(--color-bg-main)' : 'var(--color-bg-panel)'};
         color: {color};
-        border-color: var(--border-main);
+        border-color: var(--color-border-main);
         border-top: {borderTop};
         border-radius: 4px 4px 0 0;
         min-width: 100px;
@@ -74,7 +74,7 @@
     onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
 >
     {#if isFileMissing}
-        <AlertCircle size={14} class="flex-shrink-0" style="color: var(--danger-text);" />
+        <AlertCircle size={14} class="flex-shrink-0" style="color: var(--color-danger-text);" />
     {:else if tab.path && tab.isDirty}
         <Pencil size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {:else if tab.path}
@@ -87,7 +87,7 @@
 
     {#if tab.isPinned}
         <div class="w-6 flex items-center justify-center pointer-events-none">
-            <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--accent-secondary)' : 'var(--fg-muted)'}" />
+            <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-muted)'}" />
         </div>
     {/if}
 
@@ -97,7 +97,7 @@
                 role="button"
                 tabindex="0"
                 class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center"
-                style="color: var(--fg-muted);"
+                style="color: var(--color-fg-muted);"
                 onclick={(e) => {
                     e.stopPropagation();
                     if (onclose) onclose(e as unknown as MouseEvent, tab.id);
@@ -105,7 +105,7 @@
                 onkeydown={(e) => e.key === "Enter" && onclose?.(e as unknown as MouseEvent, tab.id)}
                 use:tooltip={`Close ${tab.title}`}
             >
-                <X size={12} class="hover:text-[var(--danger-text)]" />
+                <X size={12} class="hover:text-[var(--color-danger-text)]" />
             </span>
         </div>
     {/if}
@@ -113,15 +113,15 @@
 
 <style>
     .tab-button {
-        background-color: var(--tab-bg);
+        background-color: var(--color-tab-bg);
     }
 
     .tab-button:not([data-active="true"]):hover {
-        --tab-bg: var(--bg-hover) !important;
+        --tab-bg: var(--color-bg-hover) !important;
     }
 
     .close-btn-wrapper {
-        background: linear-gradient(to right, transparent 0%, var(--tab-bg) 30%);
+        background: linear-gradient(to right, transparent 0%, var(--color-tab-bg) 30%);
         pointer-events: auto;
     }
 </style>

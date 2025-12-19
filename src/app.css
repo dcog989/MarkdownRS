@@ -39,12 +39,6 @@
     --color-success-hover: #1177bb;
 }
 
-:root {
-    /* Typography */
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    color-scheme: dark;
-}
-
 /* --- Light Mode Override --- */
 [data-theme="light"] {
     --color-bg-main: #ffffff;
@@ -68,35 +62,12 @@
     --color-danger-text: #e81123;
 }
 
-/* Map Tailwind theme variables to standard CSS variables */
-:root {
-    --bg-main: var(--color-bg-main);
-    --bg-panel: var(--color-bg-panel);
-    --bg-header: var(--color-bg-header);
-    --bg-titlebar: var(--color-bg-titlebar);
-    --bg-hover: var(--color-bg-hover);
-    --bg-active: var(--color-bg-active);
-    --bg-input: var(--color-bg-input);
-    --bg-backdrop: var(--color-bg-backdrop);
-    --border-main: var(--color-border-main);
-    --border-light: var(--color-border-light);
-    --fg-default: var(--color-fg-default);
-    --fg-muted: var(--color-fg-muted);
-    --fg-inverse: var(--color-fg-inverse);
-    --accent-primary: var(--color-accent-primary);
-    --accent-secondary: var(--color-accent-secondary);
-    --accent-file: var(--color-accent-file);
-    --accent-link: var(--color-accent-link);
-    --danger: var(--color-danger);
-    --danger-text: var(--color-danger-text);
-}
-
 html,
 body {
     margin: 0;
     overflow: hidden;
-    background-color: var(--bg-main);
-    color: var(--fg-default);
+    background-color: var(--color-bg-main);
+    color: var(--color-fg-default);
     height: 100%;
     width: 100%;
 }
@@ -105,7 +76,7 @@ body {
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
-    background-color: var(--bg-main);
+    background-color: var(--color-bg-main);
     transition: width 0.2s ease;
 }
 
@@ -114,18 +85,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: var(--border-light);
+    background-color: var(--color-border-light);
     border-radius: 5px;
-    border: 2px solid var(--bg-main);
+    border: 2px solid var(--color-bg-main);
     transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--fg-muted);
+    background-color: var(--color-fg-muted);
 }
 
 ::-webkit-scrollbar-corner {
-    background-color: var(--bg-main);
+    background-color: var(--color-bg-main);
 }
 
 /* Global Keyframes for Tooltips (used by EditorView) */

@@ -105,7 +105,7 @@
                 paddingBottom: "30px !important",
             },
             ".cm-local-path": {
-                color: "var(--accent-link)",
+                color: "var(--color-accent-link)",
                 textDecoration: "underline",
                 cursor: "pointer",
             },
@@ -115,13 +115,13 @@
                 opacity: "0",
                 animation: "cm-tooltip-fade-in 0.15s cubic-bezier(0.2, 0, 0.2, 1) forwards",
                 boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
-                backgroundColor: "var(--bg-panel) !important",
-                border: "1px solid var(--border-light) !important",
-                color: "var(--fg-default) !important",
+                backgroundColor: "var(--color-bg-panel) !important",
+                border: "1px solid var(--color-border-light) !important",
+                color: "var(--color-fg-default) !important",
             },
             ".cm-tooltip-autocomplete > ul > li[aria-selected]": {
-                backgroundColor: "var(--accent-primary) !important",
-                color: "var(--fg-inverse) !important",
+                backgroundColor: "var(--color-accent-primary) !important",
+                color: "var(--color-fg-inverse) !important",
             },
         });
     });

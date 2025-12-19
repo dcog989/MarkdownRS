@@ -260,20 +260,20 @@
     }
 </script>
 
-<div class="h-9 flex items-center select-none w-full border-b shrink-0" style="background-color: var(--bg-titlebar); border-color: var(--border-main); transform: translateZ(0);" data-tauri-drag-region>
+<div class="h-9 flex items-center select-none w-full border-b shrink-0" style="background-color: var(--color-bg-titlebar); border-color: var(--color-border-main); transform: translateZ(0);" data-tauri-drag-region>
     <!-- Logo / Settings -->
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--fg-muted)]" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)]" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
             <Settings size={14} />
         </button>
     </div>
 
     <!-- Command Palette Search (Center) -->
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto" data-tauri-drag-region>
-        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--bg-input); color: var(--fg-muted); border: 1px solid var(--border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
+        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--color-bg-input); color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
             <Search size={12} />
             <span class="flex-1 text-left">Search commands...</span>
             <span class="text-[10px] opacity-60">Ctrl+P</span>
@@ -284,21 +284,21 @@
     <div class="flex h-full pointer-events-auto items-center">
         <button
             class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors border-r"
-            style="color: var(--fg-muted); border-color: var(--border-main);"
+            style="color: var(--color-fg-muted); border-color: var(--color-border-main);"
             onclick={() => {
                 appState.toggleSplitView();
                 saveSettings();
             }}
             use:tooltip={"Toggle Split Preview (Ctrl+\\)"}
         >
-            <Eye size={14} class={appState.splitView ? "text-[var(--fg-default)]" : "opacity-50"} />
+            <Eye size={14} class={appState.splitView ? "text-[var(--color-fg-default)]" : "opacity-50"} />
         </button>
 
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={minimize} use:tooltip={"Minimize"}><Minus size={16} /></button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--fg-muted)]" onclick={toggleMaximize} use:tooltip={"Maximize / Restore"}>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)]" onclick={minimize} use:tooltip={"Minimize"}><Minus size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)]" onclick={toggleMaximize} use:tooltip={"Maximize / Restore"}>
             {#if isMaximized}<Copy size={14} class="rotate-180" />{:else}<Square size={14} />{/if}
         </button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--danger)] hover:text-white text-[var(--fg-muted)]" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white text-[var(--color-fg-muted)]" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
     </div>
 </div>
 
@@ -306,10 +306,10 @@
 {#if showCommandPalette}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" style="background-color: var(--bg-backdrop);" onclick={handleCommandBackdropClick}>
-        <div class="w-[600px] rounded-lg shadow-2xl border overflow-hidden flex flex-col max-h-[60vh]" style="background-color: var(--bg-panel); border-color: var(--border-light);">
-            <div class="p-2 border-b" style="border-color: var(--border-light);">
-                <input bind:this={commandInputRef} bind:value={commandSearchQuery} class="w-full bg-transparent outline-none px-2 py-1 text-ui placeholder-opacity-50" style="color: var(--fg-default);" placeholder="Type a command..." onkeydown={handleCommandKeydown} />
+    <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" style="background-color: var(--color-bg-backdrop);" onclick={handleCommandBackdropClick}>
+        <div class="w-[600px] rounded-lg shadow-2xl border overflow-hidden flex flex-col max-h-[60vh]" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
+            <div class="p-2 border-b" style="border-color: var(--color-border-light);">
+                <input bind:this={commandInputRef} bind:value={commandSearchQuery} class="w-full bg-transparent outline-none px-2 py-1 text-ui placeholder-opacity-50" style="color: var(--color-fg-default);" placeholder="Type a command..." onkeydown={handleCommandKeydown} />
             </div>
             <div class="overflow-y-auto py-1">
                 {#if filteredCommands.length > 0}
@@ -318,8 +318,8 @@
                             type="button"
                             class="w-full text-left px-3 py-2 text-ui flex justify-between items-center"
                             style="
-                                background-color: {index === selectedCommandIndex ? 'var(--accent-primary)' : 'transparent'};
-                                color: {index === selectedCommandIndex ? 'var(--fg-inverse)' : 'var(--fg-default)'};
+                                background-color: {index === selectedCommandIndex ? 'var(--color-accent-primary)' : 'transparent'};
+                                color: {index === selectedCommandIndex ? 'var(--color-fg-inverse)' : 'var(--color-fg-default)'};
                             "
                             onmouseenter={() => (selectedCommandIndex = index)}
                             onclick={() => executeCommand(command)}

@@ -49,10 +49,10 @@
     class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden status-bar pointer-events-auto"
     style="
         background-color: {bgWithAlpha};
-        border-color: var(--border-main);
+        border-color: var(--color-border-main);
     "
 >
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--color-fg-muted);">
         <span class="metric-item" use:tooltip={"File Type"}>{fileType}</span>
         <span class="metric-divider">|</span>
         <span class="metric-item" use:tooltip={"Line Position"}>Ln {editorStore.cursorLine} / {editorStore.lineCount}</span>
@@ -62,8 +62,8 @@
         <span class="metric-item" use:tooltip={"File Size"}>{fileSizeDisplay} KB</span>
     </div>
 
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--fg-muted);">
-        <button class="hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--color-fg-muted);">
+        <button class="hover:text-[var(--color-fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
             {lineEnding}
         </button>
 
@@ -71,11 +71,11 @@
             {encoding}
         </span>
 
-        <span class="font-bold w-8 text-center" style="color: {editorStore.insertMode === 'OVR' ? 'var(--danger)' : 'var(--accent-secondary)'}">
+        <span class="font-bold w-8 text-center" style="color: {editorStore.insertMode === 'OVR' ? 'var(--color-danger)' : 'var(--color-accent-secondary)'}">
             {editorStore.insertMode}
         </span>
 
-        <button class="flex items-center gap-1 hover:text-[var(--fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--accent-secondary)' : 'inherit'};">
+        <button class="flex items-center gap-1 hover:text-[var(--color-fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--color-accent-secondary)' : 'inherit'};">
             <WrapText size={14} />
         </button>
     </div>
@@ -91,7 +91,7 @@
     }
 
     .status-bar:hover {
-        background-color: var(--bg-panel) !important;
+        background-color: var(--color-bg-panel) !important;
     }
 
     .status-bar:hover .status-bar-section {

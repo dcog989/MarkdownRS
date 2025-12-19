@@ -151,7 +151,7 @@ export class EditorStore {
         };
 
         if (appState.newTabPosition === 'right' && appState.activeTabId) {
-            const activeIndex = this.tabs.findIndex(t => t.id === appState.activeTabId);
+            const activeIndex = this.tabs.findIndex((t: EditorTab) => t.id === appState.activeTabId);
             if (activeIndex !== -1) {
                 const newTabs = [...this.tabs];
                 newTabs.splice(activeIndex + 1, 0, newTab);
@@ -169,7 +169,7 @@ export class EditorStore {
     }
 
     closeTab(id: string) {
-        const index = this.tabs.findIndex(t => t.id === id);
+        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
         if (index !== -1) {
             const tab = this.tabs[index];
             this.closedTabsHistory.unshift({ tab: { ...tab }, index });
@@ -177,7 +177,7 @@ export class EditorStore {
                 this.closedTabsHistory.pop();
             }
         }
-        this.tabs = this.tabs.filter(t => t.id !== id);
+        this.tabs = this.tabs.filter((t: EditorTab) => t.id !== id);
         this.mruStack = this.mruStack.filter(tId => tId !== id);
         this.sessionDirty = true;
     }
@@ -186,7 +186,9 @@ export class EditorStore {
         const lastClosed = this.closedTabsHistory.shift();
         if (lastClosed) {
             const insertIndex = Math.min(lastClosed.index, this.tabs.length);
-            this.tabs.splice(insertIndex, 0, lastClosed.tab);
+            const newTabs = [...this.tabs];
+            newTabs.splice(insertIndex, 0, lastClosed.tab);
+            this.tabs = newTabs;
             this.pushToMru(lastClosed.tab.id);
             this.sessionDirty = true;
         }
@@ -208,7 +210,7 @@ export class EditorStore {
             }
             return this.mruStack[0] || null;
         } else {
-            const currentIndex = this.tabs.findIndex(t => t.id === currentId);
+            const currentIndex = this.tabs.findIndex((t: EditorTab) => t.id === currentId);
             if (currentIndex === -1) return this.tabs[0]?.id || null;
 
             let nextIndex;
@@ -224,9 +226,10 @@ export class EditorStore {
     }
 
     updateContent(id: string, content: string) {
-        const tab = this.tabs.find(t => t.id === id);
-        if (!tab) return;
+        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        if (index === -1) return;
 
+        const tab = { ...this.tabs[index] };
         tab.content = content;
         tab.isDirty = content !== tab.lastSavedContent;
         tab.modified = getCurrentTimestamp();
@@ -244,38 +247,53 @@ export class EditorStore {
             }
         }
 
+        const newTabs = [...this.tabs];
+        newTabs[index] = tab;
+        this.tabs = newTabs;
         this.sessionDirty = true;
     }
 
     markAsSaved(id: string) {
-        const tab = this.tabs.find(t => t.id === id);
-        if (tab) {
-            tab.lastSavedContent = tab.content;
-            tab.isDirty = false;
+        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        if (index !== -1) {
+            const tab = { ...this.tabs[index], lastSavedContent: this.tabs[index].content, isDirty: false };
+            const newTabs = [...this.tabs];
+            newTabs[index] = tab;
+            this.tabs = newTabs;
             this.sessionDirty = true;
         }
     }
 
     updateScroll(id: string, percentage: number, topLine?: number) {
-        const tab = this.tabs.find(t => t.id === id);
-        if (!tab) return;
+        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        if (index === -1) return;
 
+        const tab = this.tabs[index];
         const isSignificantMove =
             Math.abs(tab.scrollPercentage - percentage) > 0.005 ||
             (topLine !== undefined && Math.floor(tab.topLine || 0) !== Math.floor(topLine));
 
         if (isSignificantMove) {
-            tab.scrollPercentage = percentage;
-            if (topLine !== undefined) tab.topLine = topLine;
+            const updatedTab = { ...tab, scrollPercentage: percentage };
+            if (topLine !== undefined) updatedTab.topLine = topLine;
+
+            const newTabs = [...this.tabs];
+            newTabs[index] = updatedTab;
+            this.tabs = newTabs;
             this.sessionDirty = true;
         }
     }
 
     updateMetadata(id: string, created?: string, modified?: string) {
-        const tab = this.tabs.find(t => t.id === id);
-        if (tab) {
-            if (created) tab.created = created;
-            if (modified) tab.modified = modified;
+        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        if (index !== -1) {
+            const updatedTab = { ...this.tabs[index] };
+            if (created) updatedTab.created = created;
+            if (modified) updatedTab.modified = modified;
+
+            const newTabs = [...this.tabs];
+            newTabs[index] = updatedTab;
+            this.tabs = newTabs;
             this.sessionDirty = true;
         }
     }

@@ -5,7 +5,7 @@
     import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
@@ -23,94 +23,97 @@
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    // Global Shortcut Handler (Capturing Phase)
-    async function handleGlobalKeydown(e: KeyboardEvent) {
-        // Tab Cycling (Ctrl+Tab) - Let TabBar component handle this
-        if (e.key === "Tab" && e.ctrlKey) {
+    // Global Shortcut Handler (Document Level, before CodeMirror can intercept)
+    function handleDocumentKeydown(e: KeyboardEvent) {
+        const isModifier = e.ctrlKey || e.metaKey;
+
+        if (!isModifier) return;
+
+        const key = e.key.toLowerCase();
+
+        // Critical shortcuts - ALWAYS prevent default
+        switch (key) {
+            case "s":
+                e.preventDefault();
+                e.stopImmediatePropagation(); // Stop ALL other handlers
+                saveCurrentFile().then(() => persistSession());
+                return;
+
+            case "w":
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                if (appState.activeTabId) {
+                    requestCloseTab(appState.activeTabId);
+                }
+                return;
+
+            case "o":
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                openFile().then(() => persistSession());
+                return;
+
+            case "n":
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const id = editorStore.addTab();
+                appState.activeTabId = id;
+                return;
+
+            case "\\":
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                appState.toggleSplitView();
+                saveSettings();
+                return;
+
+            case "f":
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                window.dispatchEvent(new CustomEvent("open-find"));
+                return;
+
+            case "h":
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                window.dispatchEvent(new CustomEvent("open-replace"));
+                return;
+        }
+    }
+
+    // Tab Navigation Handler (Separate for clarity)
+    function handleTabNavigation(e: KeyboardEvent) {
+        if (!e.ctrlKey) return;
+
+        if (e.key === "Tab") {
+            // Let TabBar component handle this
             return;
         }
 
-        // Tab Navigation
-        if (e.ctrlKey) {
-            if (e.key === "PageUp" || e.key === "PageDown") {
-                e.preventDefault();
-                e.stopPropagation();
+        if (e.key === "PageUp" || e.key === "PageDown") {
+            e.preventDefault();
+            e.stopImmediatePropagation();
 
-                const currentIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
-                if (currentIndex === -1) return;
+            const currentIndex = editorStore.tabs.findIndex((t: EditorTab) => t.id === appState.activeTabId);
+            if (currentIndex === -1) return;
 
-                let newIndex;
-                if (e.key === "PageUp") {
-                    newIndex = currentIndex - 1;
-                    if (newIndex < 0) newIndex = editorStore.tabs.length - 1;
-                } else {
-                    newIndex = currentIndex + 1;
-                    if (newIndex >= editorStore.tabs.length) newIndex = 0;
-                }
-
-                const newTab = editorStore.tabs[newIndex];
-                if (newTab) {
-                    appState.activeTabId = newTab.id;
-                    editorStore.pushToMru(newTab.id);
-                }
-                return;
+            let newIndex;
+            if (e.key === "PageUp") {
+                newIndex = currentIndex - 1;
+                if (newIndex < 0) newIndex = editorStore.tabs.length - 1;
+            } else {
+                newIndex = currentIndex + 1;
+                if (newIndex >= editorStore.tabs.length) newIndex = 0;
             }
-        }
 
-        // App Shortcuts
-        if (e.ctrlKey || e.metaKey) {
-            switch (e.key.toLowerCase()) {
-                case "s":
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await saveCurrentFile();
-                    await persistSession();
-                    break;
-                case "o":
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await openFile();
-                    await persistSession();
-                    break;
-                case "n":
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const id = editorStore.addTab(); // Creates New-N tab
-                    appState.activeTabId = id;
-                    break;
-                case "w":
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (appState.activeTabId) {
-                        await requestCloseTab(appState.activeTabId);
-                    }
-                    break;
-                case "\\":
-                    e.preventDefault();
-                    e.stopPropagation();
-                    appState.toggleSplitView();
-                    saveSettings();
-                    break;
-                case "f":
-                    // Force App Find, preventing Browser Find
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.dispatchEvent(new CustomEvent("open-find"));
-                    break;
-                case "h":
-                    // Force App Replace
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.dispatchEvent(new CustomEvent("open-replace"));
-                    break;
-                case "t":
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Handled by Titlebar event listener
-                    break;
+            const newTab = editorStore.tabs[newIndex];
+            if (newTab) {
+                appState.activeTabId = newTab.id;
+                editorStore.pushToMru(newTab.id);
             }
         }
     }
+
     onMount(() => {
         (async () => {
             try {
@@ -123,7 +126,6 @@
                 }
 
                 isInitialized = true;
-                // Window visibility is handled by Rust backend to prevent flash
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 console.error("Initialization Failed:", msg);
@@ -132,7 +134,9 @@
             }
         })();
 
-        window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
+        // Add document-level shortcuts with HIGHEST priority
+        document.addEventListener("keydown", handleDocumentKeydown, { capture: true });
+        document.addEventListener("keydown", handleTabNavigation, { capture: true });
 
         autoSaveInterval = window.setInterval(() => {
             persistSession();
@@ -147,7 +151,8 @@
         window.addEventListener("blur", handleBlur);
 
         return () => {
-            window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
+            document.removeEventListener("keydown", handleDocumentKeydown, { capture: true });
+            document.removeEventListener("keydown", handleTabNavigation, { capture: true });
             window.removeEventListener("blur", handleBlur);
         };
     });
@@ -200,15 +205,15 @@
 </script>
 
 {#if !isInitialized}
-    <div class="h-screen w-screen flex items-center justify-center flex-col" style="background-color: var(--bg-main); color: var(--fg-default);">
+    <div class="h-screen w-screen flex items-center justify-center flex-col" style="background-color: var(--color-bg-main); color: var(--color-fg-default);">
         <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 animate-pulse" />
-        <p class="text-sm" style="color: var(--fg-muted)">Loading MarkdownRS...</p>
+        <p class="text-sm" style="color: var(--color-fg-muted)">Loading MarkdownRS...</p>
         {#if initError}
-            <p class="text-xs mt-2" style="color: var(--danger-text)">{initError}</p>
+            <p class="text-xs mt-2" style="color: var(--color-danger-text)">{initError}</p>
         {/if}
     </div>
 {:else}
-    <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--bg-main); color: var(--fg-default); border-color: var(--border-main);">
+    <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--color-bg-main); color: var(--color-fg-default); border-color: var(--color-border-main);">
         <!-- Header Section -->
         <Titlebar />
         <TabBar />
@@ -229,10 +234,10 @@
                                 style="
                                     cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
                                     flex: 0 0 4px;
-                                    background-color: var(--bg-panel);
+                                    background-color: var(--color-bg-panel);
                                 "
-                                onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-primary)")}
-                                onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--bg-panel)")}
+                                onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-accent-primary)")}
+                                onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--color-bg-panel)")}
                                 onmousedown={startResize}
                                 ondblclick={resetSplit}
                             ></div>
@@ -246,7 +251,7 @@
                     </div>
                 {/key}
             {:else}
-                <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--fg-muted)">
+                <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--color-fg-muted)">
                     <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>

@@ -96,25 +96,25 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--bg-backdrop);" onclick={handleBackdropClick}>
-        <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[80vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--bg-panel); border-color: var(--border-light);">
+    <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
+        <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[80vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
             <!-- Header -->
-            <div class="flex items-center gap-4 px-4 py-2 border-b" style="background-color: var(--bg-header); border-color: var(--border-light);">
+            <div class="flex items-center gap-4 px-4 py-2 border-b" style="background-color: var(--color-bg-header); border-color: var(--color-border-light);">
                 <div class="flex items-center gap-2">
-                    <Settings size={16} style="color: var(--accent-secondary);" />
-                    <h2 class="text-ui font-semibold shrink-0" style="color: var(--fg-default);">Settings</h2>
+                    <Settings size={16} style="color: var(--color-accent-secondary);" />
+                    <h2 class="text-ui font-semibold shrink-0" style="color: var(--color-fg-default);">Settings</h2>
                 </div>
 
                 <div class="flex-1 relative">
                     <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-                    <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
+                    <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
                 </div>
 
-                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
+                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
                     <Keyboard size={16} />
                 </button>
 
-                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--fg-muted);" onclick={onClose} aria-label="Close Settings">
+                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-fg-muted);" onclick={onClose} aria-label="Close Settings">
                     <X size={16} />
                 </button>
             </div>
@@ -122,30 +122,30 @@
             <!-- Settings List -->
             <div class="flex-1 overflow-y-auto">
                 {#if sortedSettings.length > 0}
-                    <div class="divide-y" style="border-color: var(--border-main);">
+                    <div class="divide-y" style="border-color: var(--color-border-main);">
                         {#each sortedSettings as setting}
                             <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
                                 <div class="flex items-center justify-between gap-4">
                                     <div class="flex-1">
                                         <label for={setting.key} class="text-ui block mb-0.5 whitespace-nowrap">
-                                            <span style="color: var(--fg-muted);">{setting.category}: </span>
-                                            <span class="font-medium" style="color: var(--fg-default);">{setting.label}</span>
+                                            <span style="color: var(--color-fg-muted);">{setting.category}: </span>
+                                            <span class="font-medium" style="color: var(--color-fg-default);">{setting.label}</span>
                                         </label>
                                     </div>
                                     <div class="w-48 shrink-0">
                                         {#if setting.type === "text"}
-                                            <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
+                                            <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
                                         {:else if setting.type === "number"}
-                                            <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);" />
+                                            <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
                                         {:else if setting.type === "range"}
                                             <div class="flex items-center gap-2">
-                                                <input id={setting.key} type="range" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} step={setting.step} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none" style="background-color: var(--border-main); accent-color: var(--accent-primary);" />
-                                                <span class="text-ui-sm w-8 text-right font-mono" style="color: var(--fg-muted);">{getSettingValue(setting.key, setting.defaultValue)}%</span>
+                                                <input id={setting.key} type="range" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} step={setting.step} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none" style="background-color: var(--color-border-main); accent-color: var(--color-accent-primary);" />
+                                                <span class="text-ui-sm w-8 text-right font-mono" style="color: var(--color-fg-muted);">{getSettingValue(setting.key, setting.defaultValue)}%</span>
                                             </div>
                                         {:else if setting.type === "boolean"}
-                                            <input id={setting.key} type="checkbox" checked={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.checked, setting.type)} class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--accent-primary);" />
+                                            <input id={setting.key} type="checkbox" checked={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.checked, setting.type)} class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--color-accent-primary);" />
                                         {:else if setting.type === "select"}
-                                            <select id={setting.key} value={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--bg-input); color: var(--fg-default); border: 1px solid var(--border-main);">
+                                            <select id={setting.key} value={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);">
                                                 {#each setting.options as option, idx}
                                                     <option value={option}>{setting.optionLabels?.[idx] || option}</option>
                                                 {/each}
@@ -157,7 +157,7 @@
                         {/each}
                     </div>
                 {:else}
-                    <div class="px-4 py-8 text-center text-ui" style="color: var(--fg-muted);">No settings match your search</div>
+                    <div class="px-4 py-8 text-center text-ui" style="color: var(--color-fg-muted);">No settings match your search</div>
                 {/if}
             </div>
         </div>
