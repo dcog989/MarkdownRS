@@ -39,14 +39,13 @@
     let showMruPopup = $state(false);
     let mruSelectedIndex = $state(0);
     let isMruCycling = $state(false);
+    let mruTimer: number | null = null;
 
     // --- Store Sync ---
     $effect(() => {
         const storeTabs = editorStore.tabs;
         untrack(() => {
             if (!draggingId) {
-                // Check reference equality to detect immutable updates (isDirty, content change)
-                // specific tab objects change reference when updated in the store
                 const needsUpdate = localTabs.length !== storeTabs.length || !localTabs.every((t, i) => t === storeTabs[i]);
 
                 if (needsUpdate) {
@@ -66,25 +65,43 @@
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
+
                 if (!isMruCycling) {
+                    // Start Cycling
                     isMruCycling = true;
+                    // Start at previous tab (index 1) if available
                     mruSelectedIndex = editorStore.mruStack.length > 1 ? 1 : 0;
-                    showMruPopup = true;
+
+                    // Delay showing popup for quick switch
+                    if (mruTimer) clearTimeout(mruTimer);
+                    mruTimer = window.setTimeout(() => {
+                        showMruPopup = true;
+                    }, 200);
                 } else {
+                    // Cycle to next
                     mruSelectedIndex = (mruSelectedIndex + 1) % editorStore.mruStack.length;
+                    // If user presses tab again, show popup immediately
+                    showMruPopup = true;
+                    if (mruTimer) clearTimeout(mruTimer);
                 }
             }
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (!e.ctrlKey && isMruCycling) {
-                const targetId = editorStore.mruStack[mruSelectedIndex];
-                if (targetId) {
-                    appState.activeTabId = targetId;
-                    editorStore.pushToMru(targetId);
+            if (e.key === "Control" || !e.ctrlKey) {
+                if (isMruCycling) {
+                    // Commit switch
+                    if (mruTimer) clearTimeout(mruTimer);
+
+                    const targetId = editorStore.mruStack[mruSelectedIndex];
+                    if (targetId) {
+                        appState.activeTabId = targetId;
+                        editorStore.pushToMru(targetId);
+                    }
+
+                    isMruCycling = false;
+                    showMruPopup = false;
                 }
-                isMruCycling = false;
-                showMruPopup = false;
             }
         };
 
