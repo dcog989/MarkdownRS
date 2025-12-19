@@ -77,11 +77,13 @@ export type TextOperation = {
 };
 
 export class EditorStore {
-    tabs = $state<EditorTab[]>([]);
+    // Use $state.raw for immutable collections to prevent deep proxy overhead
+    tabs = $state.raw<EditorTab[]>([]);
     sessionDirty = $state(false);
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
 
+    // Metrics remain standard $state as they change frequently and are primitives
     lineCount = $state(1);
     wordCount = $state(0);
     charCount = $state(0);
@@ -112,22 +114,13 @@ export class EditorStore {
         if (!title || title === 'Untitled' || title === '') {
             const newTabPattern = /New-(\d+)/;
             let maxNewNumber = 0;
-
             for (const tab of this.tabs) {
                 const currentTitle = tab.customTitle || tab.title || "";
-                const match = currentTitle.match(newTabPattern) || (tab.originalTitle && tab.originalTitle.match(newTabPattern));
-
-                if (match) {
-                    maxNewNumber = Math.max(maxNewNumber, parseInt(match[1]));
-                }
+                const match = currentTitle.match(newTabPattern);
+                if (match) maxNewNumber = Math.max(maxNewNumber, parseInt(match[1]));
             }
-
-            const nextNumber = maxNewNumber + 1;
-            finalTitle = `New-${nextNumber}`;
-
-            if (!content) {
-                finalContent = `# ${finalTitle}`;
-            }
+            finalTitle = `New-${maxNewNumber + 1}`;
+            if (!content) finalContent = `# ${finalTitle}`;
         }
 
         const normalizedContent = normalizeLineEndings(finalContent);
@@ -150,15 +143,12 @@ export class EditorStore {
             encoding: 'UTF-8'
         };
 
+        // Immutable update: Replace the array reference
         if (appState.newTabPosition === 'right' && appState.activeTabId) {
-            const activeIndex = this.tabs.findIndex((t: EditorTab) => t.id === appState.activeTabId);
-            if (activeIndex !== -1) {
-                const newTabs = [...this.tabs];
-                newTabs.splice(activeIndex + 1, 0, newTab);
-                this.tabs = newTabs;
-            } else {
-                this.tabs = [...this.tabs, newTab];
-            }
+            const activeIndex = this.tabs.findIndex(t => t.id === appState.activeTabId);
+            const newTabs = [...this.tabs];
+            newTabs.splice(activeIndex + 1, 0, newTab);
+            this.tabs = newTabs;
         } else {
             this.tabs = [...this.tabs, newTab];
         }
@@ -169,22 +159,20 @@ export class EditorStore {
     }
 
     closeTab(id: string) {
-        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        const index = this.tabs.findIndex(t => t.id === id);
         if (index !== -1) {
             const tab = this.tabs[index];
-            this.closedTabsHistory.unshift({ tab: { ...tab }, index });
-            if (this.closedTabsHistory.length > 10) {
-                this.closedTabsHistory.pop();
-            }
+            this.closedTabsHistory = [{ tab: { ...tab }, index }, ...this.closedTabsHistory.slice(0, 9)];
+            this.tabs = this.tabs.filter(t => t.id !== id);
+            this.mruStack = this.mruStack.filter(tId => tId !== id);
+            this.sessionDirty = true;
         }
-        this.tabs = this.tabs.filter((t: EditorTab) => t.id !== id);
-        this.mruStack = this.mruStack.filter(tId => tId !== id);
-        this.sessionDirty = true;
     }
 
     reopenLastClosed() {
-        const lastClosed = this.closedTabsHistory.shift();
+        const lastClosed = this.closedTabsHistory[0];
         if (lastClosed) {
+            this.closedTabsHistory = this.closedTabsHistory.slice(1);
             const insertIndex = Math.min(lastClosed.index, this.tabs.length);
             const newTabs = [...this.tabs];
             newTabs.splice(insertIndex, 0, lastClosed.tab);
@@ -195,107 +183,56 @@ export class EditorStore {
     }
 
     pushToMru(id: string) {
-        if (this.mruStack.length > 0 && this.mruStack[0] === id) return;
-        const filtered = this.mruStack.filter(tId => tId !== id);
-        this.mruStack = [id, ...filtered];
-        this.sessionDirty = true;
-    }
-
-    getNextTabId(currentId: string | null, shiftKey: boolean): string | null {
-        if (this.tabs.length <= 1) return currentId;
-
-        if (appState.tabCycling === 'mru') {
-            if (this.mruStack.length > 1) {
-                return this.mruStack[1];
-            }
-            return this.mruStack[0] || null;
-        } else {
-            const currentIndex = this.tabs.findIndex((t: EditorTab) => t.id === currentId);
-            if (currentIndex === -1) return this.tabs[0]?.id || null;
-
-            let nextIndex;
-            if (shiftKey) {
-                nextIndex = currentIndex - 1;
-                if (nextIndex < 0) nextIndex = this.tabs.length - 1;
-            } else {
-                nextIndex = currentIndex + 1;
-                if (nextIndex >= this.tabs.length) nextIndex = 0;
-            }
-            return this.tabs[nextIndex].id;
-        }
+        if (this.mruStack[0] === id) return;
+        this.mruStack = [id, ...this.mruStack.filter(tId => tId !== id)];
     }
 
     updateContent(id: string, content: string) {
-        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        const index = this.tabs.findIndex(t => t.id === id);
         if (index === -1) return;
 
-        const tab = { ...this.tabs[index] };
-        tab.content = content;
-        tab.isDirty = content !== tab.lastSavedContent;
-        tab.modified = getCurrentTimestamp();
-        tab.sizeBytes = new TextEncoder().encode(content).length;
+        const oldTab = this.tabs[index];
+        if (oldTab.content === content) return;
 
-        if (!tab.path) {
-            const trimmed = content.trim();
-            if (trimmed.length > 0) {
-                const firstLine = trimmed.split('\n')[0].trim();
-                let smartTitle = firstLine.substring(0, 20);
-                if (firstLine.length > 20) smartTitle += "...";
-                tab.title = smartTitle;
-            } else {
-                if (tab.originalTitle) tab.title = tab.originalTitle;
-            }
-        }
+        // Immutable update: Replace both the object and the array reference
+        const updatedTab = {
+            ...oldTab,
+            content,
+            isDirty: content !== oldTab.lastSavedContent,
+            modified: getCurrentTimestamp(),
+            sizeBytes: new TextEncoder().encode(content).length
+        };
 
         const newTabs = [...this.tabs];
-        newTabs[index] = tab;
+        newTabs[index] = updatedTab;
         this.tabs = newTabs;
         this.sessionDirty = true;
     }
 
-    markAsSaved(id: string) {
-        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
-        if (index !== -1) {
-            const tab = { ...this.tabs[index], lastSavedContent: this.tabs[index].content, isDirty: false };
-            const newTabs = [...this.tabs];
-            newTabs[index] = tab;
-            this.tabs = newTabs;
-            this.sessionDirty = true;
-        }
-    }
-
     updateScroll(id: string, percentage: number, topLine?: number) {
-        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
+        const index = this.tabs.findIndex(t => t.id === id);
         if (index === -1) return;
 
         const tab = this.tabs[index];
-        const isSignificantMove =
-            Math.abs(tab.scrollPercentage - percentage) > 0.005 ||
-            (topLine !== undefined && Math.floor(tab.topLine || 0) !== Math.floor(topLine));
+        const isSignificant = Math.abs(tab.scrollPercentage - percentage) > 0.001 ||
+            (topLine !== undefined && tab.topLine !== topLine);
 
-        if (isSignificantMove) {
-            const updatedTab = { ...tab, scrollPercentage: percentage };
-            if (topLine !== undefined) updatedTab.topLine = topLine;
-
+        if (isSignificant) {
             const newTabs = [...this.tabs];
-            newTabs[index] = updatedTab;
+            newTabs[index] = { ...tab, scrollPercentage: percentage, topLine: topLine ?? tab.topLine };
             this.tabs = newTabs;
             this.sessionDirty = true;
         }
     }
 
-    updateMetadata(id: string, created?: string, modified?: string) {
-        const index = this.tabs.findIndex((t: EditorTab) => t.id === id);
-        if (index !== -1) {
-            const updatedTab = { ...this.tabs[index] };
-            if (created) updatedTab.created = created;
-            if (modified) updatedTab.modified = modified;
+    markAsSaved(id: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
 
-            const newTabs = [...this.tabs];
-            newTabs[index] = updatedTab;
-            this.tabs = newTabs;
-            this.sessionDirty = true;
-        }
+        const newTabs = [...this.tabs];
+        newTabs[index] = { ...this.tabs[index], lastSavedContent: this.tabs[index].content, isDirty: false };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
     }
 
     updateMetrics(metrics: Partial<EditorMetrics>) {
@@ -312,22 +249,6 @@ export class EditorStore {
 
     toggleInsertMode() {
         this.insertMode = this.insertMode === 'INS' ? 'OVR' : 'INS';
-    }
-
-    sortLines() {
-        if (this.textOperationCallback) this.textOperationCallback({ type: 'sort-asc' });
-    }
-
-    trimWhitespace() {
-        if (this.textOperationCallback) this.textOperationCallback({ type: 'trim-whitespace' });
-    }
-
-    toUpperCase() {
-        if (this.textOperationCallback) this.textOperationCallback({ type: 'uppercase' });
-    }
-
-    toLowerCase() {
-        if (this.textOperationCallback) this.textOperationCallback({ type: 'lowercase' });
     }
 
     performTextTransform(operationId: OperationTypeString) {
