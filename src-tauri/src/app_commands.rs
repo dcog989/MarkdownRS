@@ -1,7 +1,9 @@
 use crate::db::{Database, TabState};
-use crate::markdown_formatter::{format_markdown, FormatterOptions};
-use crate::markdown_renderer::{render_markdown, MarkdownOptions, RenderResult};
-use crate::text_metrics::{calculate_cursor_metrics, calculate_text_metrics, CursorMetrics, TextMetrics};
+use crate::markdown_formatter::{FormatterOptions, format_markdown};
+use crate::markdown_renderer::{MarkdownOptions, RenderResult, render_markdown};
+use crate::text_metrics::{
+    CursorMetrics, TextMetrics, calculate_cursor_metrics, calculate_text_metrics,
+};
 use crate::text_transforms::transform_text;
 use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8};
@@ -260,20 +262,23 @@ pub async fn init_spellchecker(
         .map_err(|e| e.to_string())?;
     let cache_dir = app_dir.join("spellcheck_cache");
     let bin_path = cache_dir.join("dict.bin");
-    let json_path = app_dir.join("dictionary_cache.json");
+    let txt_path = cache_dir.join("words_alpha.txt");
 
     let sym_arc = state.symspell.clone();
     let set_arc = state.dict_set.clone();
 
+    // 1. Try loading from binary cache (fastest)
     if bin_path.exists() {
         let bin_data = fs::read(&bin_path).map_err(|e| e.to_string())?;
         let words: Vec<String> = wincode::deserialize(&bin_data).map_err(|e| e.to_string())?;
+
         let mut set = set_arc.lock().map_err(|_| "Lock failed")?;
         set.clear();
         for word in &words {
             set.insert(word.clone());
         }
         drop(set);
+
         std::thread::spawn(move || {
             if let Ok(mut sym) = sym_arc.lock() {
                 *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
@@ -285,26 +290,26 @@ pub async fn init_spellchecker(
         return Ok(());
     }
 
-    if !json_path.exists() {
+    // 2. Fetch or Load text dictionary internally in Rust
+    if !txt_path.exists() {
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
+        }
+
         let url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
         let resp = reqwest::blocking::get(url).map_err(|e| e.to_string())?;
         let text = resp.text().map_err(|e| e.to_string())?;
-        let json = serde_json::json!({ "base_dictionary": text });
-        fs::write(&json_path, json.to_string()).map_err(|e| e.to_string())?;
+        fs::write(&txt_path, text).map_err(|e| e.to_string())?;
     }
 
-    let content = fs::read_to_string(&json_path).map_err(|e| e.to_string())?;
-    let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-    let raw_data = json
-        .get("base_dictionary")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let raw_data = fs::read_to_string(&txt_path).map_err(|e| e.to_string())?;
     let words: Vec<String> = raw_data
         .lines()
         .map(|l| l.trim().to_lowercase())
         .filter(|l| !l.is_empty())
         .collect();
 
+    // 3. Populate HashSet for O(1) validation
     let mut set = set_arc.lock().map_err(|_| "Lock failed")?;
     set.clear();
     for word in &words {
@@ -312,17 +317,15 @@ pub async fn init_spellchecker(
     }
     drop(set);
 
-    let words_clone = words.clone();
-    if !cache_dir.exists() {
-        fs::create_dir_all(&cache_dir).ok();
-    }
+    // 4. Save binary cache for next boot
     let bin_data = wincode::serialize(&words).map_err(|e| e.to_string())?;
-    fs::write(&bin_path, bin_data).ok();
+    let _ = fs::write(&bin_path, bin_data);
 
+    // 5. Build SymSpell dictionary in background
     std::thread::spawn(move || {
         if let Ok(mut sym) = sym_arc.lock() {
             *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
-            for word in words_clone {
+            for word in words {
                 sym.create_dictionary_entry(&word, 1);
             }
         }
@@ -374,19 +377,13 @@ pub async fn get_spelling_suggestions(
 }
 
 #[tauri::command]
-pub async fn render_markdown_content(
-    content: String,
-    gfm: bool,
-) -> Result<RenderResult, String> {
+pub async fn render_markdown_content(content: String, gfm: bool) -> Result<RenderResult, String> {
     let options = MarkdownOptions { gfm };
     render_markdown(&content, options)
 }
 
 #[tauri::command]
-pub async fn transform_text_content(
-    content: String,
-    operation: String,
-) -> Result<String, String> {
+pub async fn transform_text_content(content: String, operation: String) -> Result<String, String> {
     transform_text(&content, &operation)
 }
 
