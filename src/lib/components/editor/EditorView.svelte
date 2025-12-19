@@ -111,7 +111,7 @@
                 cursor: "pointer",
             },
             ".cm-activeLine": {
-                backgroundColor: "var(--color-bg-panel) !important",
+                backgroundColor: "var(--color-bg-active) !important",
                 mixBlendMode: "normal",
             },
             ".cm-activeLineGutter": {
