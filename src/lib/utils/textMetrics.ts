@@ -5,6 +5,7 @@ export interface TextMetrics {
 }
 
 export interface CursorMetrics extends TextMetrics {
+    cursorOffset: number;
     cursorLine: number;
     cursorCol: number;
     currentLineLength: number;
@@ -12,47 +13,51 @@ export interface CursorMetrics extends TextMetrics {
 }
 
 /**
- * Calculate basic text metrics locally in TypeScript to avoid IPC overhead
+ * Robust word counter using Intl.Segmenter for Unicode awareness
+ */
+const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
+
+export function countWords(text: string): number {
+    if (!text.trim()) return 0;
+    let count = 0;
+    for (const segment of segmenter.segment(text)) {
+        if (segment.isWordLike) count++;
+    }
+    return count;
+}
+
+/**
+ * Calculate basic text metrics locally
  */
 export function calculateTextMetrics(content: string): TextMetrics {
-    const lines = content.split('\n');
-
-    // Fast word count implementation
-    const trimmed = content.trim();
-    const wordCount = trimmed === '' ? 0 : trimmed.split(/\s+/).length;
-
     return {
-        lineCount: lines.length,
-        wordCount: wordCount,
+        lineCount: content.split('\n').length,
+        wordCount: countWords(content),
         charCount: content.length,
     };
 }
 
 /**
- * Calculate metrics including cursor position locally
+ * Calculate full cursor and document metrics locally
+ * @param content Full document text
+ * @param cursorOffset Byte/char offset from CodeMirror
+ * @param line Information for the current line provided by CodeMirror
  */
 export function calculateCursorMetrics(
     content: string,
-    cursorOffset: number
+    cursorOffset: number,
+    line: { number: number; from: number; text: string }
 ): CursorMetrics {
-    const metrics = calculateTextMetrics(content);
-    const textUpToCursor = content.slice(0, cursorOffset);
-    const linesUpToCursor = textUpToCursor.split('\n');
-
-    const cursorLine = linesUpToCursor.length;
-    const cursorCol = linesUpToCursor[cursorLine - 1].length + 1;
-
-    const allLines = content.split('\n');
-    const currentLineLength = allLines[cursorLine - 1]?.length || 0;
-
-    const trimmedBefore = textUpToCursor.trim();
-    const currentWordIndex = trimmedBefore === '' ? 0 : trimmedBefore.split(/\s+/).length;
+    const textUpToCursor = content.substring(0, cursorOffset);
 
     return {
-        ...metrics,
-        cursorLine,
-        cursorCol,
-        currentLineLength,
-        currentWordIndex,
+        lineCount: content.split('\n').length,
+        wordCount: countWords(content),
+        charCount: content.length,
+        cursorOffset: cursorOffset,
+        cursorLine: line.number,
+        cursorCol: cursorOffset - line.from + 1,
+        currentLineLength: line.text.length,
+        currentWordIndex: countWords(textUpToCursor),
     };
 }

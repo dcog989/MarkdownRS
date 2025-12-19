@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -154,17 +155,6 @@
     });
 
     onMount(() => {
-        const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
-
-        const countWords = (str: string) => {
-            if (!str.trim()) return 0;
-            let count = 0;
-            for (const segment of segmenter.segment(str)) {
-                if (segment.isWordLike) count++;
-            }
-            return count;
-        };
-
         const pathDecorator = new MatchDecorator({
             regexp: /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g,
             decoration: Decoration.mark({ class: "cm-local-path" }),
@@ -227,6 +217,7 @@
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
                 const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
+
                 if (isUserUpdate) {
                     if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => {
@@ -238,26 +229,20 @@
 
             if (update.docChanged || update.selectionSet) {
                 if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
-                metricsUpdateTimer = window.setTimeout(() => {
+                metricsUpdateTimer = window.setTimeout(async () => {
                     const doc = update.state.doc;
                     const selection = update.state.selection.main;
-                    const cursorLine = doc.lineAt(selection.head);
+                    const line = doc.lineAt(selection.head);
                     const text = doc.toString();
 
-                    const wordCount = countWords(text);
-                    const textUpToCursor = text.substring(0, selection.head);
-                    const currentWordIndex = countWords(textUpToCursor);
-
-                    onMetricsChange({
-                        lineCount: doc.lines,
-                        wordCount: wordCount,
-                        charCount: text.length,
-                        cursorOffset: selection.head,
-                        cursorLine: cursorLine.number,
-                        cursorCol: selection.head - cursorLine.from + 1,
-                        currentLineLength: cursorLine.text.length,
-                        currentWordIndex: currentWordIndex,
+                    // Direct TypeScript calculation - No IPC call
+                    const metrics = calculateCursorMetrics(text, selection.head, {
+                        number: line.number,
+                        from: line.from,
+                        text: line.text,
                     });
+
+                    onMetricsChange(metrics);
                     metricsUpdateTimer = null;
                 }, METRICS_UPDATE_DEBOUNCE_MS);
             }
