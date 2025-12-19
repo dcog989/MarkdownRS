@@ -45,11 +45,12 @@
         const storeTabs = editorStore.tabs;
         untrack(() => {
             if (!draggingId) {
-                const currentIds = localTabs.map((t) => t.id).join(",");
-                const newIds = storeTabs.map((t) => t.id).join(",");
+                // Check reference equality to detect immutable updates (isDirty, content change)
+                // specific tab objects change reference when updated in the store
+                const needsUpdate = localTabs.length !== storeTabs.length || !localTabs.every((t, i) => t === storeTabs[i]);
 
-                if (currentIds !== newIds) {
-                    log("Syncing Store -> Local", newIds);
+                if (needsUpdate) {
+                    log("Syncing Store -> Local");
                     localTabs = [...storeTabs];
                     tick().then(updateFadeIndicators);
                 }
@@ -222,7 +223,6 @@
         showRightFade = scrollLeft < scrollWidth - clientWidth - 2;
     }
 
-    // SCROLL LOGIC WITH PEEK
     async function scrollToActive() {
         await tick();
         if (!scrollContainer || isDragging) return;
@@ -232,26 +232,13 @@
 
         const containerRect = scrollContainer.getBoundingClientRect();
         const tabRect = activeEl.getBoundingClientRect();
-
-        // Width of the "Peek" (how much of the next tab to reveal)
         const PEEK_AMOUNT = 80;
 
-        // 1. Check Right Edge
-        // If the right edge of the tab is near the right edge of the container (or past it)
         if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
-            // Scroll to the right so the tab end is `PEEK_AMOUNT` from the edge
-            // Logic: TargetScroll = (TabRight - TabWidth) - (ContainerWidth - PEEK) + (ExistingScroll)
-            // Simplified: CurrentScroll + (TabRight - ContainerRight) + PEEK
-
             const offsetRight = activeEl.offsetLeft + activeEl.offsetWidth;
             const targetScroll = offsetRight - scrollContainer.clientWidth + PEEK_AMOUNT;
-
             scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
-        }
-        // 2. Check Left Edge
-        // If the left edge of the tab is near the left edge of the container (or past it)
-        else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
-            // Scroll to the left so the tab start is `PEEK_AMOUNT` from the edge
+        } else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
             const targetScroll = activeEl.offsetLeft - PEEK_AMOUNT;
             scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
         }

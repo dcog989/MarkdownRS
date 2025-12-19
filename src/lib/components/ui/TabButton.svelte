@@ -3,7 +3,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
-    import { AlertCircle, File, FileText, Pencil, Pin, X } from "lucide-svelte";
+    import { AlertCircle, FileText, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
 
     interface Props {
         tab: EditorTab;
@@ -77,11 +77,11 @@
     {#if isFileMissing}
         <AlertCircle size={14} class="flex-shrink-0" style="color: var(--color-danger-text);" />
     {:else if tab.path && tab.isDirty}
-        <Pencil size={14} class="flex-shrink-0" style="color: {iconColor}" />
-    {:else if tab.path}
-        <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />
+        <SquarePen size={14} class="flex-shrink-0" style="color: {iconColor}" />
+    {:else if !tab.path}
+        <PencilLine size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {:else}
-        <File size={14} class="flex-shrink-0" style="color: {iconColor}" />
+        <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {/if}
 
     <span class="truncate flex-1 pointer-events-none">{tab.customTitle || tab.title}</span>

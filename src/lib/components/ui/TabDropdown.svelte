@@ -1,7 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { AlertCircle, File, FileText, Pencil } from "lucide-svelte";
+    import { AlertCircle, FileText, PencilLine, SquarePen } from "lucide-svelte";
     import { tick } from "svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
 
@@ -24,7 +24,7 @@
     let lastClientY = 0;
 
     let filteredTabs = $derived.by(() => {
-        const tabs = editorStore.tabs; // Access reactive state
+        const tabs = editorStore.tabs;
         if (searchQuery.trim() === "") {
             return tabs;
         }
@@ -36,7 +36,6 @@
 
     $effect(() => {
         if (isOpen) {
-            // Reset tracking and search on open
             lastClientX = 0;
             lastClientY = 0;
             searchQuery = "";
@@ -50,7 +49,6 @@
     }
 
     function handleHover(index: number, e: MouseEvent) {
-        // Prevent scroll from triggering selection changes
         if (e.clientX === lastClientX && e.clientY === lastClientY) return;
 
         lastClientX = e.clientX;
@@ -130,21 +128,21 @@
                         type="button"
                         class="w-full text-left px-3 py-2 text-sm flex items-center gap-2"
                         style="
-                            background-color: {isSelected ? 'var(--accent-primary)' : 'transparent'};
-                            color: {isSelected ? 'var(--fg-inverse)' : isActive ? 'var(--accent-secondary)' : 'var(--fg-default)'};
+                            background-color: {isSelected ? 'var(--color-accent-primary)' : 'transparent'};
+                            color: {isSelected ? 'var(--color-fg-inverse)' : isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-default)'};
                         "
                         onclick={() => handleSelect(tab.id)}
                         onmousemove={(e) => handleHover(index, e)}
                         role="menuitem"
                     >
                         {#if tab.fileCheckFailed}
-                            <AlertCircle size={14} class="shrink-0" style="color: var(--danger-text);" />
+                            <AlertCircle size={14} class="shrink-0" style="color: var(--color-danger-text);" />
                         {:else if tab.path && tab.isDirty}
-                            <Pencil size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : '#5deb47'};" />
-                        {:else if tab.path}
-                            <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : 'var(--fg-muted)'};" />
+                            <SquarePen size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
+                        {:else if !tab.path}
+                            <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
                         {:else}
-                            <File size={14} class="shrink-0" style="color: {isSelected ? 'var(--fg-inverse)' : 'var(--fg-muted)'};" />
+                            <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
                         {/if}
                         <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
                     </button>
@@ -159,7 +157,7 @@
 
 <style>
     input::placeholder {
-        color: var(--fg-muted);
+        color: var(--color-fg-muted);
         opacity: 0.5;
     }
 
