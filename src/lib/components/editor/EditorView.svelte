@@ -103,7 +103,8 @@
                 overflow: "auto",
             },
             ".cm-content": {
-                paddingBottom: "30px !important",
+                // Ensure sufficient padding so text isn't hidden behind status bar (24px) + scrollbar
+                paddingBottom: "40px !important",
             },
             ".cm-local-path": {
                 color: "var(--color-accent-link)",
@@ -112,7 +113,7 @@
             },
             /* Current Line Highlight */
             ".cm-activeLine": {
-                backgroundColor: "var(--color-bg-input) !important",
+                backgroundColor: "var(--color-bg-panel) !important",
                 mixBlendMode: "normal",
             },
             ".cm-activeLineGutter": {
@@ -202,10 +203,11 @@
             {
                 key: "Mod-End",
                 run: (view: EditorView) => {
+                    // Standard scrollIntoView handles virtualization correctly IF scroll-behavior: smooth is OFF in CSS
                     const pos = view.state.doc.length;
                     view.dispatch({
                         selection: EditorSelection.cursor(pos),
-                        effects: EditorView.scrollIntoView(pos, { y: "end", yMargin: 40 }),
+                        effects: EditorView.scrollIntoView(pos, { y: "end" }),
                         userEvent: "select",
                     });
                     return true;
@@ -227,7 +229,7 @@
         const extensions = [
             lineNumbers(),
             highlightActiveLineGutter(),
-            highlightActiveLine(), // Added
+            highlightActiveLine(),
             history(),
             search({ top: true }),
             highlightSelectionMatches(),
@@ -239,6 +241,8 @@
             spellCheckLinter,
             lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
+            // Scroll Margins handle the status bar overlap naturally
+            EditorView.scrollMargins.of(() => ({ bottom: 30 })),
             inputHandler,
             eventHandlers,
         ];
@@ -268,7 +272,6 @@
                     const line = doc.lineAt(selection.head);
                     const text = doc.toString();
 
-                    // Direct TypeScript calculation - No IPC call
                     const metrics = calculateCursorMetrics(text, selection.head, {
                         number: line.number,
                         from: line.from,
@@ -326,7 +329,7 @@
 <style>
     :global(.cm-scroller) {
         scrollbar-width: none;
-        scroll-behavior: smooth;
+        /* REMOVED scroll-behavior: smooth to fix large jumps with virtualization */
     }
     :global(.cm-scroller::-webkit-scrollbar) {
         display: none;
