@@ -4,7 +4,7 @@
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Sparkles, Wand2, WrapText } from "lucide-svelte";
-    import { onDestroy } from "svelte";
+    import { onDestroy, untrack } from "svelte";
 
     let {
         x = 0,
@@ -40,20 +40,19 @@
     let resizeObserver: ResizeObserver | null = null;
 
     $effect(() => {
-        const cleanWord = wordUnderCursor?.trim();
-        if (spellcheckState.dictionaryLoaded && cleanWord && !selectedText) {
-            if (!isWordValid(cleanWord)) {
-                getSuggestions(cleanWord)
-                    .then((results: string[]) => {
-                        suggestions = results.filter((s: string) => s.toLowerCase() !== cleanWord.toLowerCase());
-                    })
-                    .catch((err) => {
-                        console.error("Suggestion lookup error:", err);
-                        suggestions = [];
-                    });
-            } else {
-                suggestions = [];
-            }
+        // Untrack to prevent circular re-runs, focusing only on word changes
+        const cleanWord = untrack(() => wordUnderCursor?.trim());
+        const hasSelection = untrack(() => !!selectedText);
+
+        if (spellcheckState.dictionaryLoaded && cleanWord && !hasSelection) {
+            getSuggestions(cleanWord)
+                .then((results: string[]) => {
+                    suggestions = results.filter((s: string) => s.toLowerCase() !== cleanWord.toLowerCase()).slice(0, 5);
+                })
+                .catch((err) => {
+                    console.error("Suggestion lookup error:", err);
+                    suggestions = [];
+                });
         } else {
             suggestions = [];
         }
@@ -173,7 +172,12 @@
 
     const targetWord = $derived(selectedText ? selectedText.trim() : wordUnderCursor?.trim());
     const cleanTarget = $derived(targetWord ? targetWord.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, "") : "");
-    const canAddSingle = $derived(cleanTarget && cleanTarget.length > 0 && /^[a-zA-Z'-]+$/.test(cleanTarget) && !isWordValid(cleanTarget));
+
+    const canAddSingle = $derived.by(() => {
+        if (!cleanTarget || cleanTarget.length <= 1) return false;
+        if (/[a-z][A-Z]/.test(cleanTarget)) return false; // Skip camelCase
+        return !isWordValid(cleanTarget);
+    });
 
     const canAddMulti = $derived.by(() => {
         if (!selectedText) return false;

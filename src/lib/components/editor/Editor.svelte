@@ -235,7 +235,8 @@
             let from = 0;
             let to = 0;
 
-            if (!selectedText) {
+            // Only look for word suggestions if there's no multi-character selection
+            if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 const searchPos = pos !== null ? pos : selection.head;
                 const range = view.state.wordAt(searchPos);
@@ -244,6 +245,7 @@
                     from = range.from;
                     to = range.to;
                     const rawWord = view.state.sliceDoc(from, to);
+                    // Clean punctuation but keep apostrophes for possessives
                     wordUnderCursor = rawWord.replace(/[^a-zA-Z']/g, "");
                 }
             }
