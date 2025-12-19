@@ -1,26 +1,30 @@
 # MarkdownRS
 
-A fast, slim, minimal UI, cross-platform desktop markdown editor. It's built with the latest Rust / Tauri / Svelte stack.
-
 The only markdown editor you need.
+
+This is a fast, slim, cross-platform desktop markdown editor with clean, minimal UI. It's built with the latest Rust / Tauri / Svelte (Runes) / Tailwind stack.
+
 
 ## Features
 
 - **Fast & Performant**: Built with Rust backend for instant startup and smooth editing
-- **Live Preview**: Split view with synchronized scrolling
+- **Live Preview**: Split view with smooth, bi-directional synchronized scrolling
 - **Auto-Save**: Session persistence with hot-exit support - never lose your work
 - **Clean UI**: Dark-mode native interface with minimal distractions
 - **Keyboard Shortcuts**: Efficient navigation with command palette (Ctrl+P)
 - **Multi-Tab**: Work on multiple documents simultaneously
-- **Text Operations**: Sort lines, trim whitespace, change case, and more
+- **Text Operations**: Sort lines, trim whitespace, change case, etc.
+- **Bookmark System**: Bookmark and tag local documents with instant filter search
 
 ## Development
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Rust](https://www.rust-lang.org/) (latest stable)
-- [Tauri Prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites)
+- [Node.js](https://nodejs.org/) (v25)
+- [Rust](https://www.rust-lang.org/) (v1.92)
+- [Tauri](https://v2.tauri.app/) (v2.9)
+- [Svelte](https://svelte.dev/) (v5.46)
+- [Tailwind](https://tailwindcss.com/) (v4.1)
 
 ### Setup
 
