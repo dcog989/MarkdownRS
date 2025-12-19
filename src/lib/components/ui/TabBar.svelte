@@ -5,6 +5,7 @@
     import { ChevronDown, Plus } from "lucide-svelte";
     import { onMount, tick, untrack } from "svelte";
     import { flip } from "svelte/animate";
+    import { fade } from "svelte/transition";
     import MruTabsPopup from "./MruTabsPopup.svelte";
     import TabButton from "./TabButton.svelte";
     import TabContextMenu from "./TabContextMenu.svelte";
@@ -12,7 +13,7 @@
 
     // --- DIAGNOSTICS ---
     function log(action: string, details?: any) {
-        console.log(`[TabBar] ${action}`, details || "");
+        // console.log(`[TabBar] ${action}`, details || "");
     }
 
     let scrollContainer = $state<HTMLElement>();
@@ -28,8 +29,7 @@
     let dragStartX = 0;
     let rafId: number | null = null;
 
-    // Layout Snapshot for stable sorting
-    // This prevents the flickering feedback loop by comparing mouse X to static slots
+    // Layout Snapshot
     let layoutCache: { center: number }[] = [];
 
     let contextMenuTabId: string | null = $state(null);
@@ -89,7 +89,16 @@
 
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("keyup", handleKeyUp);
-        scrollContainer?.addEventListener("scroll", updateFadeIndicators);
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateFadeIndicators();
+        });
+
+        if (scrollContainer) {
+            scrollContainer.addEventListener("scroll", updateFadeIndicators);
+            resizeObserver.observe(scrollContainer);
+        }
+
         updateFadeIndicators();
 
         return () => {
@@ -97,11 +106,14 @@
             if (rafId) cancelAnimationFrame(rafId);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
-            scrollContainer?.removeEventListener("scroll", updateFadeIndicators);
+            if (scrollContainer) {
+                scrollContainer.removeEventListener("scroll", updateFadeIndicators);
+            }
+            resizeObserver.disconnect();
         };
     });
 
-    // --- Pointer Event Logic (Stable Snapshot DND) ---
+    // --- Pointer Event Logic ---
 
     function handlePointerDown(e: PointerEvent, id: string) {
         if (e.button !== 0) return;
@@ -120,8 +132,6 @@
         isDragging = false;
         dragStartX = e.clientX;
 
-        // Snapshot the visual slots
-        // We calculate sorting based on these STATIC positions, not the animating DOM elements
         if (scrollContainer) {
             layoutCache = Array.from(scrollContainer.children)
                 .filter((el) => el.getAttribute("role") === "listitem")
@@ -150,8 +160,6 @@
             rafId = null;
 
             const mouseX = e.clientX;
-
-            // Find which "Slot" the mouse is closest to based on the initial snapshot
             let targetIndex = 0;
             let minDistance = Infinity;
 
@@ -164,11 +172,9 @@
                 }
             }
 
-            // Compare with current actual index in the array
             const currentIndex = localTabs.findIndex((t) => t.id === draggingId);
             if (currentIndex === -1) return;
 
-            // Only move if the intended slot is different
             if (targetIndex !== currentIndex) {
                 const newTabs = [...localTabs];
                 const [item] = newTabs.splice(currentIndex, 1);
@@ -213,14 +219,42 @@
         if (!scrollContainer) return;
         const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
         showLeftFade = scrollLeft > 5;
-        showRightFade = scrollLeft < scrollWidth - clientWidth - 5;
+        showRightFade = scrollLeft < scrollWidth - clientWidth - 2;
     }
 
+    // SCROLL LOGIC WITH PEEK
     async function scrollToActive() {
         await tick();
         if (!scrollContainer || isDragging) return;
+
         const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
-        if (activeEl) activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        if (!activeEl) return;
+
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const tabRect = activeEl.getBoundingClientRect();
+
+        // Width of the "Peek" (how much of the next tab to reveal)
+        const PEEK_AMOUNT = 80;
+
+        // 1. Check Right Edge
+        // If the right edge of the tab is near the right edge of the container (or past it)
+        if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
+            // Scroll to the right so the tab end is `PEEK_AMOUNT` from the edge
+            // Logic: TargetScroll = (TabRight - TabWidth) - (ContainerWidth - PEEK) + (ExistingScroll)
+            // Simplified: CurrentScroll + (TabRight - ContainerRight) + PEEK
+
+            const offsetRight = activeEl.offsetLeft + activeEl.offsetWidth;
+            const targetScroll = offsetRight - scrollContainer.clientWidth + PEEK_AMOUNT;
+
+            scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
+        }
+        // 2. Check Left Edge
+        // If the left edge of the tab is near the left edge of the container (or past it)
+        else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
+            // Scroll to the left so the tab start is `PEEK_AMOUNT` from the edge
+            const targetScroll = activeEl.offsetLeft - PEEK_AMOUNT;
+            scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
+        }
     }
 
     $effect(() => {
@@ -246,35 +280,38 @@
         />
     </div>
 
-    <!-- Scrollable Tab Container -->
-    <section bind:this={scrollContainer} class="flex-1 flex items-end overflow-x-auto no-scrollbar h-full tab-scroll-container relative" onscroll={updateFadeIndicators}>
+    <!-- Scrollable Tab Area Wrapper -->
+    <div class="flex-1 h-full relative min-w-0">
         {#if showLeftFade}
-            <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
+            <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20" transition:fade={{ duration: 150 }} style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
         {/if}
+
+        <section bind:this={scrollContainer} class="w-full h-full flex items-end overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
+            {#each localTabs as tab (tab.id)}
+                <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.8' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0}; cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};" onpointerdown={(e) => handlePointerDown(e, tab.id)} onpointermove={handlePointerMove} onpointerup={(e) => handlePointerUp(e, tab.id)} onpointercancel={(e) => handlePointerUp(e, tab.id)}>
+                    <TabButton
+                        {tab}
+                        isActive={appState.activeTabId === tab.id}
+                        {currentTime}
+                        onclick={() => {}}
+                        onclose={(e, id) => requestCloseTab(id)}
+                        oncontextmenu={(e, id) => {
+                            contextMenuTabId = id;
+                            contextMenuX = e.clientX;
+                            contextMenuY = e.clientY;
+                        }}
+                    />
+                </div>
+            {/each}
+
+            <!-- Padding at end -->
+            <div class="w-4 h-full shrink-0"></div>
+        </section>
+
         {#if showRightFade}
-            <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10" style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-20" transition:fade={{ duration: 150 }} style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"></div>
         {/if}
-
-        {#each localTabs as tab (tab.id)}
-            <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.8' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0}; cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};" onpointerdown={(e) => handlePointerDown(e, tab.id)} onpointermove={handlePointerMove} onpointerup={(e) => handlePointerUp(e, tab.id)} onpointercancel={(e) => handlePointerUp(e, tab.id)}>
-                <TabButton
-                    {tab}
-                    isActive={appState.activeTabId === tab.id}
-                    {currentTime}
-                    onclick={() => {}}
-                    onclose={(e, id) => requestCloseTab(id)}
-                    oncontextmenu={(e, id) => {
-                        contextMenuTabId = id;
-                        contextMenuX = e.clientX;
-                        contextMenuY = e.clientY;
-                    }}
-                />
-            </div>
-        {/each}
-
-        <!-- Padding at end -->
-        <div class="w-4 h-full shrink-0"></div>
-    </section>
+    </div>
 
     <!-- New Tab -->
     <div class="h-full flex items-end border-l border-[var(--color-border-main)]">
