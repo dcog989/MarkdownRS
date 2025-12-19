@@ -7,6 +7,7 @@ use crate::text_metrics::{
 use crate::text_transforms::transform_text;
 use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8};
+use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
@@ -17,8 +18,8 @@ use tauri::{Manager, State};
 
 pub struct AppState {
     pub db: Mutex<Database>,
-    pub symspell: Arc<Mutex<symspell_rs::SymSpell>>,
-    pub dict_set: Arc<Mutex<HashSet<String>>>,
+    pub speller: Arc<Mutex<Option<Dictionary>>>,
+    pub custom_dict: Arc<Mutex<HashSet<String>>>,
 }
 
 #[derive(serde::Serialize)]
@@ -207,6 +208,11 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
             return Err(format!("Failed to write to dictionary: {}", e));
         }
     }
+
+    if let Ok(mut custom_dict) = app_handle.state::<AppState>().custom_dict.lock() {
+        custom_dict.insert(word.to_lowercase());
+    }
+
     Ok(())
 }
 
@@ -261,76 +267,155 @@ pub async fn init_spellchecker(
         .app_data_dir()
         .map_err(|e| e.to_string())?;
     let cache_dir = app_dir.join("spellcheck_cache");
-    let txt_path = cache_dir.join("words_alpha.txt");
+    let aff_path = cache_dir.join("en_US.aff");
+    let dic_path = cache_dir.join("en_US.dic");
+    let custom_path = app_dir.join("custom-spelling.dic");
 
-    let sym_arc = state.symspell.clone();
-    let set_arc = state.dict_set.clone();
+    let speller_arc = state.speller.clone();
+    let custom_arc = state.custom_dict.clone();
 
     if !cache_dir.exists() {
         fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
     }
 
-    println!("[Spellcheck] Initializing...");
+    // Delete any existing corrupted dictionary files before spawning thread
+    if aff_path.exists() {
+        if let Ok(content) = fs::read_to_string(&aff_path) {
+            if content.contains("404") || content.contains("Not Found") || content.len() < 100 {
+                println!("[Spellcheck] Deleting corrupted .aff file");
+                let _ = fs::remove_file(&aff_path);
+            }
+        }
+    }
+    if dic_path.exists() {
+        if let Ok(content) = fs::read_to_string(&dic_path) {
+            if content.contains("404") || content.contains("Not Found") || content.len() < 100 {
+                println!("[Spellcheck] Deleting corrupted .dic file");
+                let _ = fs::remove_file(&dic_path);
+            }
+        }
+    }
 
-    // 1. Load Dictionary Text
-    // We switched back to raw text loading because serialization of the large HashSet
-    // was causing "Encoded sequence length exceeded" errors in wincode.
-    let text = if txt_path.exists() {
-        println!("[Spellcheck] Loading dictionary from disk...");
-        fs::read_to_string(&txt_path).map_err(|e| e.to_string())?
-    } else {
-        println!("[Spellcheck] Downloading dictionary...");
-        let client = reqwest::Client::builder()
-            .user_agent("MarkdownRS/0.1.0")
-            .timeout(std::time::Duration::from_secs(30))
-            .build()
-            .map_err(|e| e.to_string())?;
+    std::thread::spawn(move || {
+        println!("[Spellcheck] Initializing...");
 
-        let url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
-        let resp = client
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| format!("Network error: {}", e))?;
+        // 1. Download Dictionary if needed
+        if !aff_path.exists() || !dic_path.exists() {
+            println!("[Spellcheck] Downloading Hunspell dictionary...");
+            let client = reqwest::blocking::Client::new();
 
-        if !resp.status().is_success() {
-            return Err(format!("Download failed: HTTP {}", resp.status()));
+            let aff_url = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
+            let dic_url = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic";
+
+            match client.get(aff_url).send() {
+                Ok(resp) => {
+                    if resp.status().is_success() {
+                        if let Ok(text) = resp.text() {
+                            if let Err(e) = fs::write(&aff_path, text) {
+                                println!("[Spellcheck] Failed to write .aff file: {}", e);
+                            } else {
+                                println!("[Spellcheck] Downloaded .aff file successfully");
+                            }
+                        }
+                    } else {
+                        println!("[Spellcheck] Failed to download .aff: HTTP {}", resp.status());
+                    }
+                }
+                Err(e) => println!("[Spellcheck] Network error downloading .aff: {}", e),
+            }
+
+            match client.get(dic_url).send() {
+                Ok(resp) => {
+                    if resp.status().is_success() {
+                        if let Ok(text) = resp.text() {
+                            if let Err(e) = fs::write(&dic_path, text) {
+                                println!("[Spellcheck] Failed to write .dic file: {}", e);
+                            } else {
+                                println!("[Spellcheck] Downloaded .dic file successfully");
+                            }
+                        }
+                    } else {
+                        println!("[Spellcheck] Failed to download .dic: HTTP {}", resp.status());
+                    }
+                }
+                Err(e) => println!("[Spellcheck] Network error downloading .dic: {}", e),
+            }
         }
 
-        let t = resp.text().await.map_err(|e| e.to_string())?;
-        let _ = fs::write(&txt_path, &t);
-        t
-    };
+        // 2. Load Dictionary
+        if aff_path.exists() && dic_path.exists() {
+            if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
+                if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
+                    // Check if files contain error messages instead of dictionary data
+                    if raw_aff.contains("404") || raw_aff.contains("Not Found") || 
+                       raw_dic.contains("404") || raw_dic.contains("Not Found") {
+                        println!("[Spellcheck] Dictionary files are corrupted (contain error pages). Deleting...");
+                        let _ = fs::remove_file(&aff_path);
+                        let _ = fs::remove_file(&dic_path);
+                        println!("[Spellcheck] Please restart the app to re-download dictionaries.");
+                        return;
+                    }
 
-    // 2. Process Words
-    let words: Vec<String> = text
-        .lines()
-        .map(|l| l.trim().to_lowercase())
-        .filter(|l| l.len() > 1)
-        .collect();
+                    // Sanitize inputs:
+                    // 1. Remove BOM
+                    // 2. Ensure first line (word count) is purely numeric (trim \r, spaces)
+                    let aff_content = raw_aff.trim_start_matches('\u{feff}');
+                    let dic_content = sanitize_dic_content(&raw_dic);
 
-    println!("[Spellcheck] Loaded {} words.", words.len());
-
-    // 3. Update State (HashSet)
-    let mut set = set_arc.lock().map_err(|_| "Lock failed")?;
-    set.clear();
-    for word in &words {
-        set.insert(word.clone());
-    }
-    drop(set);
-
-    // 4. Update SymSpell (Threaded)
-    std::thread::spawn(move || {
-        if let Ok(mut sym) = sym_arc.lock() {
-            *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
-            for word in words {
-                sym.create_dictionary_entry(&word, 1);
+                    match Dictionary::new(aff_content, &dic_content) {
+                        Ok(dict) => {
+                            if let Ok(mut speller) = speller_arc.lock() {
+                                *speller = Some(dict);
+                                println!("[Spellcheck] Dictionary loaded successfully.");
+                            }
+                        }
+                        Err(e) => {
+                            println!("[Spellcheck] Failed to build dictionary: {}", e);
+                            // Diagnostic: Print first 50 chars to see what's wrong
+                            let preview: String = dic_content.chars().take(50).collect();
+                            println!("[Spellcheck] DIC File Header Preview: {:?}", preview);
+                            println!("[Spellcheck] Deleting corrupted files. Please restart to re-download.");
+                            let _ = fs::remove_file(&aff_path);
+                            let _ = fs::remove_file(&dic_path);
+                        }
+                    }
+                }
             }
-            println!("[Spellcheck] SymSpell index built.");
+        }
+
+        // 3. Load Custom Dictionary
+        if custom_path.exists() {
+            if let Ok(text) = fs::read_to_string(&custom_path) {
+                if let Ok(mut custom) = custom_arc.lock() {
+                    for line in text.lines() {
+                        let w = line.trim();
+                        if !w.is_empty() {
+                            custom.insert(w.to_lowercase());
+                        }
+                    }
+                    println!("[Spellcheck] Custom words loaded.");
+                }
+            }
         }
     });
 
     Ok(())
+}
+
+// Helper to strictly sanitize the .dic file format
+fn sanitize_dic_content(content: &str) -> String {
+    let content = content.trim_start_matches('\u{feff}');
+
+    // Split once to separate count from words
+    // We treat \n as the delimiter, but handle \r in the first part
+    if let Some((first_line, rest)) = content.split_once('\n') {
+        let clean_count = first_line.trim();
+        // Reconstruct with a clean newline
+        format!("{}\n{}", clean_count, rest)
+    } else {
+        // Single line file (unlikely valid, but just trim it)
+        content.trim().to_string()
+    }
 }
 
 #[tauri::command]
@@ -338,21 +423,29 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    let set = state.dict_set.lock().map_err(|_| "Lock failed")?;
+    let speller_guard = state.speller.lock().map_err(|_| "Lock failed")?;
+    let custom_guard = state.custom_dict.lock().map_err(|_| "Lock failed")?;
 
-    // If dictionary isn't loaded yet, don't mark anything as misspelled
-    if set.is_empty() {
-        return Ok(Vec::new());
-    }
+    let speller = match speller_guard.as_ref() {
+        Some(s) => s,
+        None => return Ok(Vec::new()), // Not loaded yet
+    };
 
     let misspelled: Vec<String> = words
         .into_iter()
         .filter(|word| {
-            let w = word.to_lowercase();
-            // Basic validation + common possessive handling
-            !set.contains(&w)
-                && !(w.ends_with("'s") && w.len() > 2 && set.contains(&w[..w.len() - 2]))
-                && !(w.ends_with("'") && w.len() > 1 && set.contains(&w[..w.len() - 1]))
+            let clean = word.trim();
+            if clean.is_empty() {
+                return false;
+            }
+
+            // Check custom first
+            if custom_guard.contains(&clean.to_lowercase()) {
+                return false;
+            }
+
+            // Check spellbook
+            !speller.check(clean)
         })
         .collect();
 
@@ -364,22 +457,18 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let sym = state.symspell.lock().map_err(|_| "Lock failed")?;
-    let suggestions = sym.lookup(
-        &word.to_lowercase(),
-        symspell_rs::Verbosity::All,
-        2,
-        &None,
-        None,
-        false,
-    );
-    let mut results: Vec<String> = suggestions
-        .into_iter()
-        .map(|s| s.term)
-        .filter(|t| t != &word.to_lowercase())
-        .collect();
-    results.truncate(5);
-    Ok(results)
+    let speller_guard = state.speller.lock().map_err(|_| "Lock failed")?;
+
+    let speller = match speller_guard.as_ref() {
+        Some(s) => s,
+        None => return Ok(Vec::new()),
+    };
+
+    let mut suggestions = Vec::new();
+
+    speller.suggest(&word, &mut suggestions);
+
+    Ok(suggestions.into_iter().take(5).collect())
 }
 
 #[tauri::command]

@@ -21,6 +21,8 @@
     let startY = 0;
     let startScrollTop = 0;
     let resizeObserver: ResizeObserver;
+    let rafId: number | null = null;
+    let pendingThumbTop: number | null = null;
 
     function update() {
         // Guard: Don't run update logic during drag to prevent CPU spikes and fighting
@@ -94,20 +96,50 @@
 
         if (maxThumb > 0) {
             const scrollPos = startScrollTop + deltaY * (maxScroll / maxThumb);
-            viewport.scrollTop = scrollPos;
-
-            // Manually update thumbTop during drag for perfect sync without waiting for scroll event
             const clampedScroll = Math.max(0, Math.min(maxScroll, scrollPos));
-            thumbTop = (clampedScroll / maxScroll) * maxThumb;
+            
+            // Direct DOM manipulation - no reactive updates during drag
+            viewport.scrollTop = clampedScroll;
+            
+            // Calculate new thumb position
+            const newThumbTop = (clampedScroll / maxScroll) * maxThumb;
+            
+            // Batch state updates to happen only once per frame using rAF
+            if (rafId === null) {
+                rafId = requestAnimationFrame(() => {
+                    // Apply the most recent pending value if available
+                    thumbTop = pendingThumbTop !== null ? pendingThumbTop : newThumbTop;
+                    pendingThumbTop = null;
+                    rafId = null;
+                });
+            }
+            // Store the latest value to apply on next frame
+            pendingThumbTop = newThumbTop;
         }
     }
 
     function onMouseUp() {
         isDragging = false;
+        
+        // Apply any pending thumb position update
+        if (pendingThumbTop !== null) {
+            thumbTop = pendingThumbTop;
+            pendingThumbTop = null;
+        }
+        
+        // Cancel any pending animation frame
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+        
         if (viewport) viewport.style.scrollBehavior = ""; // Restore CSS default (smooth)
         document.body.style.userSelect = "";
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
+        
+        // Final update after drag ends
+        update();
     }
 
     function attachListeners(el: HTMLElement) {
@@ -137,6 +169,10 @@
             return () => {
                 viewport?.removeEventListener("scroll", update);
                 resizeObserver?.disconnect();
+                if (rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
             };
         }
     });
@@ -145,6 +181,9 @@
         if (typeof window !== "undefined") {
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
+        }
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
         }
         resizeObserver?.disconnect();
     });

@@ -123,10 +123,8 @@ fn main() {
 
             app.manage(app_commands::AppState {
                 db: std::sync::Mutex::new(db),
-                symspell: std::sync::Arc::new(std::sync::Mutex::new(symspell_rs::SymSpell::new(
-                    2, None, 7, 1,
-                ))),
-                dict_set: std::sync::Arc::new(std::sync::Mutex::new(
+                speller: std::sync::Arc::new(std::sync::Mutex::new(None)),
+                custom_dict: std::sync::Arc::new(std::sync::Mutex::new(
                     std::collections::HashSet::new(),
                 )),
             });

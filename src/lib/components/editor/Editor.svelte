@@ -21,7 +21,6 @@
     let previousTabId: string = "";
 
     const scrollSyncState = createScrollSyncState();
-    let scrollSyncFrame: number | null = null;
 
     let isHovered = false;
     let isFocused = false;
@@ -260,8 +259,8 @@
             return true;
         },
         scroll: (event, view) => {
-            if (!isHovered && !isFocused && !scrollSyncState.isRemoteScrolling) return;
             if (scrollSyncState.isRemoteScrolling) return;
+            if (!isHovered && !isFocused) return;
 
             const dom = view.scrollDOM;
             const percentage = getScrollPercentage(dom);
@@ -272,6 +271,7 @@
             const progress = (dom.scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
             const preciseLine = lineNum + Math.max(0, Math.min(1, progress));
 
+            // Immediately update scroll position without debouncing
             editorStore.updateScroll(tabId, percentage, preciseLine);
         },
         focus: () => {
@@ -375,30 +375,23 @@
         const targetLine = currentTabState?.topLine;
 
         if (isHovered || isFocused) return;
+        if (scrollSyncState.isRemoteScrolling) return;
 
         if (targetLine !== undefined && targetLine > 0) {
-            if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
+            try {
+                const lineInt = Math.floor(targetLine);
+                const lineBlock = view.lineBlockAt(view.state.doc.line(lineInt).from);
+                const dom = view.scrollDOM;
 
-            scrollSyncFrame = requestAnimationFrame(() => {
-                if (!view) return;
+                // Instant update without threshold check - always sync
+                scrollSyncState.isRemoteScrolling = true;
+                dom.scrollTop = lineBlock.top;
 
-                try {
-                    const lineInt = Math.floor(targetLine);
-                    const lineBlock = view.lineBlockAt(view.state.doc.line(lineInt).from);
-                    const dom = view.scrollDOM;
-
-                    if (Math.abs(dom.scrollTop - lineBlock.top) > 5) {
-                        scrollSyncState.isRemoteScrolling = true;
-                        dom.scrollTop = lineBlock.top;
-
-                        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
-                        scrollSyncState.lockTimeout = window.setTimeout(() => {
-                            scrollSyncState.isRemoteScrolling = false;
-                        }, 100);
-                    }
-                } catch (e) {}
-                scrollSyncFrame = null;
-            }) as number;
+                if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+                scrollSyncState.lockTimeout = window.setTimeout(() => {
+                    scrollSyncState.isRemoteScrolling = false;
+                }, 100);
+            } catch (e) {}
         }
     });
 
@@ -417,7 +410,6 @@
             window.removeEventListener("open-find", handleGlobalFind);
             window.removeEventListener("open-replace", handleGlobalReplace);
             cleanupScrollSync(scrollSyncState);
-            if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
         };
     });
 
@@ -435,7 +427,6 @@
         window.removeEventListener("open-find", handleGlobalFind);
         window.removeEventListener("open-replace", handleGlobalReplace);
         cleanupScrollSync(scrollSyncState);
-        if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
     });
 
     $effect(() => {

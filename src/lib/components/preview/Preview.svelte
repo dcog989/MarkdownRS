@@ -19,7 +19,6 @@
     let isHovered = false;
 
     const scrollSyncState = createScrollSyncState();
-    let scrollSyncFrame: number | null = null;
 
     const MAX_RENDER_ERRORS = 3;
     const RENDER_DEBOUNCE_MS = 300;
@@ -94,61 +93,48 @@
     $effect(() => {
         if (!container || !targetLine || lineOffsets.length === 0) return;
         if (isHovered) return;
+        if (scrollSyncState.isRemoteScrolling) return;
 
-        if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
+        let before = { line: 0, top: 0 };
+        let after = { line: Infinity, top: 0 };
 
-        scrollSyncFrame = requestAnimationFrame(() => {
-            if (!container) return;
-
-            let before = { line: 0, top: 0 };
-            let after = { line: Infinity, top: 0 };
-
-            for (const item of lineOffsets) {
-                if (item.line <= targetLine) {
-                    if (item.line > before.line) before = item;
-                } else {
-                    if (item.line < after.line) after = item;
-                    break;
-                }
+        for (const item of lineOffsets) {
+            if (item.line <= targetLine) {
+                if (item.line > before.line) before = item;
+            } else {
+                if (item.line < after.line) after = item;
+                break;
             }
+        }
 
-            let scrollTop = 0;
-            const PADDING_OFFSET = 32;
+        let scrollTop = 0;
+        const PADDING_OFFSET = 32;
 
-            if (before.line > 0 && after.line !== Infinity) {
-                const lineDiff = after.line - before.line;
-                const pixelDiff = after.top - before.top;
-                const progress = (targetLine - before.line) / lineDiff;
-                scrollTop = before.top + pixelDiff * progress - PADDING_OFFSET;
-            } else if (before.line > 0) {
-                scrollTop = before.top - PADDING_OFFSET;
-            }
+        if (before.line > 0 && after.line !== Infinity) {
+            const lineDiff = after.line - before.line;
+            const pixelDiff = after.top - before.top;
+            const progress = (targetLine - before.line) / lineDiff;
+            scrollTop = before.top + pixelDiff * progress - PADDING_OFFSET;
+        } else if (before.line > 0) {
+            scrollTop = before.top - PADDING_OFFSET;
+        }
 
-            scrollTop = Math.max(0, scrollTop);
+        scrollTop = Math.max(0, scrollTop);
 
-            if (Math.abs(container.scrollTop - scrollTop) > 10) {
-                scrollSyncState.isRemoteScrolling = true;
-                container.scrollTo({
-                    top: scrollTop,
-                    behavior: "smooth",
-                });
-                if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
-                scrollSyncState.lockTimeout = window.setTimeout(() => {
-                    scrollSyncState.isRemoteScrolling = false;
-                }, 300);
-            }
-            scrollSyncFrame = null;
-        }) as number;
-
-        return () => {
-            if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
-        };
+        // Instant update without threshold check - always sync
+        scrollSyncState.isRemoteScrolling = true;
+        container.scrollTop = scrollTop;
+        
+        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+        scrollSyncState.lockTimeout = window.setTimeout(() => {
+            scrollSyncState.isRemoteScrolling = false;
+        }, 100);
     });
 
     function handleScroll() {
         if (!container || lineOffsets.length === 0) return;
-        if (!isHovered && !scrollSyncState.isRemoteScrolling) return;
         if (scrollSyncState.isRemoteScrolling) return;
+        if (!isHovered) return;
 
         const currentScroll = container.scrollTop;
         const PADDING_OFFSET = 32;
@@ -163,6 +149,7 @@
         }
 
         const percentage = getScrollPercentage(container);
+        // Immediately update scroll position without debouncing
         editorStore.updateScroll(tabId, percentage, bestLine);
     }
 
@@ -194,7 +181,6 @@
 
     onDestroy(() => {
         cleanupScrollSync(scrollSyncState);
-        if (scrollSyncFrame !== null) cancelAnimationFrame(scrollSyncFrame);
         if (renderDebounceTimer !== null) clearTimeout(renderDebounceTimer);
     });
 </script>
@@ -229,7 +215,6 @@
 
 <style>
     .preview-container {
-        scroll-behavior: smooth;
         scrollbar-width: none;
         padding-bottom: 30px !important;
     }
