@@ -53,13 +53,41 @@
     "
 >
     <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--color-fg-muted);">
-        <span class="metric-item" use:tooltip={"File Type"}>{fileType}</span>
+        <span class="metric-item min-w-[70px]" use:tooltip={"File Type"}>{fileType}</span>
         <span class="metric-divider">|</span>
-        <span class="metric-item" use:tooltip={"Line Position"}>Ln {editorStore.cursorLine} / {editorStore.lineCount}</span>
-        <span class="metric-item" use:tooltip={"Column Position"}>Col {editorStore.cursorCol} / {editorStore.currentLineLength}</span>
-        <span class="metric-item" use:tooltip={"Character Count"}>Char {editorStore.cursorOffset} / {editorStore.charCount}</span>
-        <span class="metric-item" use:tooltip={"Word Position"}>Word {editorStore.currentWordIndex} / {editorStore.wordCount}</span>
-        <span class="metric-item" use:tooltip={"File Size"}>{fileSizeDisplay} KB</span>
+
+        <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>
+            <span class="opacity-70">Ln</span>
+            <span class="font-mono text-right inline-block w-[4ch]">{editorStore.cursorLine}</span>
+            <span class="opacity-30">/</span>
+            <span class="font-mono text-left inline-block w-[4ch]">{editorStore.lineCount}</span>
+        </div>
+
+        <div class="flex gap-1 items-center" use:tooltip={"Column Position"}>
+            <span class="opacity-70">Col</span>
+            <span class="font-mono text-right inline-block w-[3ch]">{editorStore.cursorCol}</span>
+            <span class="opacity-30">/</span>
+            <span class="font-mono text-left inline-block w-[3ch]">{editorStore.currentLineLength}</span>
+        </div>
+
+        <div class="flex gap-1 items-center" use:tooltip={"Character Count"}>
+            <span class="opacity-70">Char</span>
+            <span class="font-mono text-right inline-block w-[6ch]">{editorStore.cursorOffset}</span>
+            <span class="opacity-30">/</span>
+            <span class="font-mono text-left inline-block w-[6ch]">{editorStore.charCount}</span>
+        </div>
+
+        <div class="flex gap-1 items-center" use:tooltip={"Word Position"}>
+            <span class="opacity-70">Word</span>
+            <span class="font-mono text-right inline-block w-[5ch]">{editorStore.currentWordIndex}</span>
+            <span class="opacity-30">/</span>
+            <span class="font-mono text-left inline-block w-[5ch]">{editorStore.wordCount}</span>
+        </div>
+
+        <div class="flex gap-1 items-center" use:tooltip={"File Size"}>
+            <span class="font-mono text-right inline-block w-[5ch]">{fileSizeDisplay}</span>
+            <span class="opacity-70 uppercase">kb</span>
+        </div>
     </div>
 
     <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--color-fg-muted);">
