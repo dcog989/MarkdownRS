@@ -11,8 +11,9 @@ export const createSpellCheckLinter = () => linter(async (view) => {
     const doc = view.state.doc;
     const text = doc.toString();
     const tree = syntaxTree(view.state);
-    const wordRegex = /\b[a-zA-Z][a-zA-Z']*[a-zA-Z]\b|\b[a-zA-Z]\b/g;
 
+    // Improved regex to capture words with apostrophes but ignore numbers/symbols
+    const wordRegex = /[a-zA-Z]+(?:'[a-zA-Z]+)?/g;
     const wordsToVerify = new Map<string, { from: number; to: number }[]>();
     let match;
 
@@ -21,25 +22,30 @@ export const createSpellCheckLinter = () => linter(async (view) => {
         if (word.length <= 1) continue;
 
         const from = match.index;
-        const node = tree.resolveInner(from, 1);
-        const nodeType = node.type.name;
+        const to = from + word.length;
 
+        // Use resolveInner to find the specific syntax node at this position
+        const node = tree.resolveInner(from, 1);
+        const type = node.type.name;
+
+        // Skip non-textual Markdown elements
         if (
-            nodeType.includes("Code") ||
-            nodeType.includes("Url") ||
-            nodeType.includes("URL") ||
-            nodeType.includes("Link") ||
-            nodeType.includes("Image") ||
-            nodeType.includes("Autolink")
+            type.includes("Code") ||
+            type.includes("Link") ||
+            type.includes("Url") ||
+            type.includes("Header") ||
+            type.includes("Comment")
         ) continue;
 
         const wLower = word.toLowerCase();
         if (spellcheckState.customDictionary.has(wLower)) continue;
+
+        // Skip CamelCase (likely code or intentional identifiers)
         if (/[a-z][A-Z]/.test(word)) continue;
 
-        const entry = wordsToVerify.get(word) || [];
-        entry.push({ from, to: from + word.length });
-        wordsToVerify.set(word, entry);
+        const ranges = wordsToVerify.get(word) || [];
+        ranges.push({ from, to });
+        wordsToVerify.set(word, ranges);
     }
 
     if (wordsToVerify.size === 0) return [];
@@ -60,9 +66,9 @@ export const createSpellCheckLinter = () => linter(async (view) => {
                     diagnostics.push({
                         from: range.from,
                         to: range.to,
-                        severity: "warning",
+                        severity: "error",
                         message: `Misspelled: ${word}`,
-                        source: "Spellchecker",
+                        source: "Spellchecker"
                     });
                 }
             }
@@ -71,6 +77,7 @@ export const createSpellCheckLinter = () => linter(async (view) => {
         spellcheckState.misspelledCache = newCache;
         return diagnostics;
     } catch (err) {
+        console.error("Spellcheck linter error:", err);
         return [];
     }
 });

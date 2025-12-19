@@ -110,6 +110,14 @@
                 textDecoration: "underline",
                 cursor: "pointer",
             },
+            /* Explicit Spellcheck Squiggles */
+            ".cm-lintRange-error": {
+                backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3">%3Cpath d="M0 2.5 L1.5 1 L3 2.5 L4.5 1 L6 2.5" stroke="%23ff6b6b" stroke-width="1" fill="none"/%3E</svg>')`,
+                backgroundRepeat: "repeat-x",
+                backgroundPosition: "bottom",
+                paddingBottom: "1px",
+                borderBottom: "none",
+            },
             ".cm-tooltip": {
                 borderRadius: "6px !important",
                 zIndex: "100",

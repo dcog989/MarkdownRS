@@ -267,49 +267,59 @@ pub async fn init_spellchecker(
     let sym_arc = state.symspell.clone();
     let set_arc = state.dict_set.clone();
 
-    // 1. Try loading from binary cache (fastest)
-    if bin_path.exists() {
+    if !cache_dir.exists() {
+        fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
+    }
+
+    println!("[Spellcheck] Initializing...");
+
+    let words: Vec<String> = if bin_path.exists() {
+        println!("[Spellcheck] Loading from binary cache: {:?}", bin_path);
         let bin_data = fs::read(&bin_path).map_err(|e| e.to_string())?;
-        let words: Vec<String> = wincode::deserialize(&bin_data).map_err(|e| e.to_string())?;
+        wincode::deserialize(&bin_data).map_err(|e| e.to_string())?
+    } else {
+        let text = if txt_path.exists() {
+            println!("[Spellcheck] Loading from text file: {:?}", txt_path);
+            fs::read_to_string(&txt_path).map_err(|e| e.to_string())?
+        } else {
+            println!("[Spellcheck] Fetching dictionary from GitHub (async)...");
+            let client = reqwest::Client::builder()
+                .user_agent("MarkdownRS/0.1.0")
+                .timeout(std::time::Duration::from_secs(30))
+                .build()
+                .map_err(|e| e.to_string())?;
 
-        let mut set = set_arc.lock().map_err(|_| "Lock failed")?;
-        set.clear();
-        for word in &words {
-            set.insert(word.clone());
-        }
-        drop(set);
+            let url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
+            let resp = client
+                .get(url)
+                .send()
+                .await
+                .map_err(|e| format!("Network error: {}", e))?;
 
-        std::thread::spawn(move || {
-            if let Ok(mut sym) = sym_arc.lock() {
-                *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
-                for word in words {
-                    sym.create_dictionary_entry(&word, 1);
-                }
+            if !resp.status().is_success() {
+                return Err(format!("Download failed: HTTP {}", resp.status()));
             }
-        });
-        return Ok(());
-    }
 
-    // 2. Fetch or Load text dictionary internally in Rust
-    if !txt_path.exists() {
-        if !cache_dir.exists() {
-            fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
-        }
+            let t = resp.text().await.map_err(|e| e.to_string())?;
+            let _ = fs::write(&txt_path, &t);
+            t
+        };
 
-        let url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
-        let resp = reqwest::blocking::get(url).map_err(|e| e.to_string())?;
-        let text = resp.text().map_err(|e| e.to_string())?;
-        fs::write(&txt_path, text).map_err(|e| e.to_string())?;
-    }
+        let processed: Vec<String> = text
+            .lines()
+            .map(|l| l.trim().to_lowercase())
+            .filter(|l| l.len() > 1)
+            .collect();
 
-    let raw_data = fs::read_to_string(&txt_path).map_err(|e| e.to_string())?;
-    let words: Vec<String> = raw_data
-        .lines()
-        .map(|l| l.trim().to_lowercase())
-        .filter(|l| !l.is_empty())
-        .collect();
+        println!(
+            "[Spellcheck] Creating binary cache ({} words)...",
+            processed.len()
+        );
+        let bin_data = wincode::serialize(&processed).map_err(|e| e.to_string())?;
+        let _ = fs::write(&bin_path, bin_data);
+        processed
+    };
 
-    // 3. Populate HashSet for O(1) validation
     let mut set = set_arc.lock().map_err(|_| "Lock failed")?;
     set.clear();
     for word in &words {
@@ -317,17 +327,14 @@ pub async fn init_spellchecker(
     }
     drop(set);
 
-    // 4. Save binary cache for next boot
-    let bin_data = wincode::serialize(&words).map_err(|e| e.to_string())?;
-    let _ = fs::write(&bin_path, bin_data);
-
-    // 5. Build SymSpell dictionary in background
+    // Offload heavy indexing to a dedicated thread to keep the async executor free
     std::thread::spawn(move || {
         if let Ok(mut sym) = sym_arc.lock() {
             *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
             for word in words {
                 sym.create_dictionary_entry(&word, 1);
             }
+            println!("[Spellcheck] SymSpell dictionary built successfully.");
         }
     });
 
@@ -340,16 +347,23 @@ pub async fn check_words(
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
     let set = state.dict_set.lock().map_err(|_| "Lock failed")?;
-    let mut misspelled = Vec::new();
-    for word in words {
-        let w = word.to_lowercase();
-        let is_valid = set.contains(&w)
-            || (w.ends_with("'s") && w.len() > 2 && set.contains(&w[..w.len() - 2]))
-            || (w.ends_with("'") && w.len() > 1 && set.contains(&w[..w.len() - 1]));
-        if !is_valid {
-            misspelled.push(word);
-        }
+
+    // If dictionary isn't loaded yet, don't mark anything as misspelled
+    if set.is_empty() {
+        return Ok(Vec::new());
     }
+
+    let misspelled: Vec<String> = words
+        .into_iter()
+        .filter(|word| {
+            let w = word.to_lowercase();
+            // Basic validation + common possessive handling
+            !set.contains(&w)
+                && !(w.ends_with("'s") && w.len() > 2 && set.contains(&w[..w.len() - 2]))
+                && !(w.ends_with("'") && w.len() > 1 && set.contains(&w[..w.len() - 1]))
+        })
+        .collect();
+
     Ok(misspelled)
 }
 

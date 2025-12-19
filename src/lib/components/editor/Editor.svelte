@@ -401,10 +401,15 @@
     });
 
     onMount(() => {
-        initSpellcheck();
+        initSpellcheck().then(() => {
+            const view = editorViewComponent?.getView();
+            if (view) refreshSpellcheck(view);
+        });
+
         editorStore.registerTextOperationCallback(handleTextOperation);
         window.addEventListener("open-find", handleGlobalFind);
         window.addEventListener("open-replace", handleGlobalReplace);
+
         return () => {
             editorStore.unregisterTextOperationCallback();
             window.removeEventListener("open-find", handleGlobalFind);
