@@ -261,7 +261,6 @@ pub async fn init_spellchecker(
         .app_data_dir()
         .map_err(|e| e.to_string())?;
     let cache_dir = app_dir.join("spellcheck_cache");
-    let bin_path = cache_dir.join("dict.bin");
     let txt_path = cache_dir.join("words_alpha.txt");
 
     let sym_arc = state.symspell.clone();
@@ -273,53 +272,46 @@ pub async fn init_spellchecker(
 
     println!("[Spellcheck] Initializing...");
 
-    let words: Vec<String> = if bin_path.exists() {
-        println!("[Spellcheck] Loading from binary cache: {:?}", bin_path);
-        let bin_data = fs::read(&bin_path).map_err(|e| e.to_string())?;
-        wincode::deserialize(&bin_data).map_err(|e| e.to_string())?
+    // 1. Load Dictionary Text
+    // We switched back to raw text loading because serialization of the large HashSet
+    // was causing "Encoded sequence length exceeded" errors in wincode.
+    let text = if txt_path.exists() {
+        println!("[Spellcheck] Loading dictionary from disk...");
+        fs::read_to_string(&txt_path).map_err(|e| e.to_string())?
     } else {
-        let text = if txt_path.exists() {
-            println!("[Spellcheck] Loading from text file: {:?}", txt_path);
-            fs::read_to_string(&txt_path).map_err(|e| e.to_string())?
-        } else {
-            println!("[Spellcheck] Fetching dictionary from GitHub (async)...");
-            let client = reqwest::Client::builder()
-                .user_agent("MarkdownRS/0.1.0")
-                .timeout(std::time::Duration::from_secs(30))
-                .build()
-                .map_err(|e| e.to_string())?;
+        println!("[Spellcheck] Downloading dictionary...");
+        let client = reqwest::Client::builder()
+            .user_agent("MarkdownRS/0.1.0")
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .map_err(|e| e.to_string())?;
 
-            let url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
-            let resp = client
-                .get(url)
-                .send()
-                .await
-                .map_err(|e| format!("Network error: {}", e))?;
+        let url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
+        let resp = client
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| format!("Network error: {}", e))?;
 
-            if !resp.status().is_success() {
-                return Err(format!("Download failed: HTTP {}", resp.status()));
-            }
+        if !resp.status().is_success() {
+            return Err(format!("Download failed: HTTP {}", resp.status()));
+        }
 
-            let t = resp.text().await.map_err(|e| e.to_string())?;
-            let _ = fs::write(&txt_path, &t);
-            t
-        };
-
-        let processed: Vec<String> = text
-            .lines()
-            .map(|l| l.trim().to_lowercase())
-            .filter(|l| l.len() > 1)
-            .collect();
-
-        println!(
-            "[Spellcheck] Creating binary cache ({} words)...",
-            processed.len()
-        );
-        let bin_data = wincode::serialize(&processed).map_err(|e| e.to_string())?;
-        let _ = fs::write(&bin_path, bin_data);
-        processed
+        let t = resp.text().await.map_err(|e| e.to_string())?;
+        let _ = fs::write(&txt_path, &t);
+        t
     };
 
+    // 2. Process Words
+    let words: Vec<String> = text
+        .lines()
+        .map(|l| l.trim().to_lowercase())
+        .filter(|l| l.len() > 1)
+        .collect();
+
+    println!("[Spellcheck] Loaded {} words.", words.len());
+
+    // 3. Update State (HashSet)
     let mut set = set_arc.lock().map_err(|_| "Lock failed")?;
     set.clear();
     for word in &words {
@@ -327,14 +319,14 @@ pub async fn init_spellchecker(
     }
     drop(set);
 
-    // Offload heavy indexing to a dedicated thread to keep the async executor free
+    // 4. Update SymSpell (Threaded)
     std::thread::spawn(move || {
         if let Ok(mut sym) = sym_arc.lock() {
             *sym = symspell_rs::SymSpell::new(2, None, 7, 1);
             for word in words {
                 sym.create_dictionary_entry(&word, 1);
             }
-            println!("[Spellcheck] SymSpell dictionary built successfully.");
+            println!("[Spellcheck] SymSpell index built.");
         }
     });
 
