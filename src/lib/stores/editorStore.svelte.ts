@@ -194,9 +194,39 @@ export class EditorStore {
         const oldTab = this.tabs[index];
         if (oldTab.content === content) return;
 
+        let newTitle = oldTab.title;
+
+        // Smart Title Logic for unsaved files
+        if (!oldTab.path) {
+            const trimmed = content.trim();
+            if (trimmed.length > 0) {
+                // Find first non-empty line
+                const lines = content.split('\n');
+                const firstLine = lines.find(l => l.trim().length > 0) || "";
+
+                // Strip Markdown headers (#) and whitespace
+                let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
+
+                // Truncate to reasonable length
+                const MAX_LEN = 25;
+                if (smartTitle.length > MAX_LEN) {
+                    smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
+                }
+
+                if (smartTitle.length > 0) {
+                    newTitle = smartTitle;
+                } else if (oldTab.originalTitle) {
+                    newTitle = oldTab.originalTitle;
+                }
+            } else if (oldTab.originalTitle) {
+                newTitle = oldTab.originalTitle;
+            }
+        }
+
         // Immutable update: Replace both the object and the array reference
         const updatedTab = {
             ...oldTab,
+            title: newTitle,
             content,
             isDirty: content !== oldTab.lastSavedContent,
             modified: getCurrentTimestamp(),
