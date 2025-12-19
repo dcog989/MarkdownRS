@@ -103,7 +103,6 @@
                 overflow: "auto",
             },
             ".cm-content": {
-                // Ensure sufficient padding so text isn't hidden behind status bar (24px) + scrollbar
                 paddingBottom: "40px !important",
             },
             ".cm-local-path": {
@@ -111,7 +110,6 @@
                 textDecoration: "underline",
                 cursor: "pointer",
             },
-            /* Current Line Highlight */
             ".cm-activeLine": {
                 backgroundColor: "var(--color-bg-panel) !important",
                 mixBlendMode: "normal",
@@ -119,7 +117,6 @@
             ".cm-activeLineGutter": {
                 backgroundColor: "var(--color-bg-panel) !important",
             },
-            /* Explicit Spellcheck Squiggles */
             ".cm-lintRange-error": {
                 backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3">%3Cpath d="M0 2.5 L1.5 1 L3 2.5 L4.5 1 L6 2.5" stroke="%23ff6b6b" stroke-width="1" fill="none"/%3E</svg>')`,
                 backgroundRepeat: "repeat-x",
@@ -203,12 +200,24 @@
             {
                 key: "Mod-End",
                 run: (view: EditorView) => {
-                    // Standard scrollIntoView handles virtualization correctly IF scroll-behavior: smooth is OFF in CSS
+                    // Disable CSS smooth scroll to allow virtualization to jump instantly
+                    if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "auto";
+
                     const pos = view.state.doc.length;
                     view.dispatch({
                         selection: EditorSelection.cursor(pos),
                         effects: EditorView.scrollIntoView(pos, { y: "end" }),
                         userEvent: "select",
+                    });
+
+                    // Restore smooth scroll after a delay to allow render
+                    requestAnimationFrame(() => {
+                        if (view.scrollDOM) {
+                            view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
+                            requestAnimationFrame(() => {
+                                if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "smooth";
+                            });
+                        }
                     });
                     return true;
                 },
@@ -216,36 +225,28 @@
             {
                 key: "Mod-Home",
                 run: (view: EditorView) => {
+                    if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "auto";
+
                     view.dispatch({
                         selection: EditorSelection.cursor(0),
                         effects: EditorView.scrollIntoView(0, { y: "start" }),
                         userEvent: "select",
+                    });
+
+                    requestAnimationFrame(() => {
+                        if (view.scrollDOM) {
+                            view.scrollDOM.scrollTop = 0;
+                            requestAnimationFrame(() => {
+                                if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "smooth";
+                            });
+                        }
                     });
                     return true;
                 },
             },
         ];
 
-        const extensions = [
-            lineNumbers(),
-            highlightActiveLineGutter(),
-            highlightActiveLine(),
-            history(),
-            search({ top: true }),
-            highlightSelectionMatches(),
-            pathHighlighter,
-            autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []),
-            closeBrackets(),
-            keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
-            themeCompartment.of([]),
-            spellCheckLinter,
-            lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []),
-            EditorView.contentAttributes.of({ spellcheck: "false" }),
-            // Scroll Margins handle the status bar overlap naturally
-            EditorView.scrollMargins.of(() => ({ bottom: 30 })),
-            inputHandler,
-            eventHandlers,
-        ];
+        const extensions = [lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
@@ -329,7 +330,7 @@
 <style>
     :global(.cm-scroller) {
         scrollbar-width: none;
-        /* REMOVED scroll-behavior: smooth to fix large jumps with virtualization */
+        scroll-behavior: smooth; /* Re-enabled for general use */
     }
     :global(.cm-scroller::-webkit-scrollbar) {
         display: none;
