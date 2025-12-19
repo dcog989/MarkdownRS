@@ -39,10 +39,15 @@ We will use **CodeMirror 6** (headless, modular).
 ### 4. Backend vs. Frontend Split
 - **Frontend (Svelte/TS):**
   - Editor interaction, syntax highlighting.
-  - Preview rendering & scroll sync logic.
+  - Scroll sync logic and UI coordination.
   - UI State (Tabs, Command Palette, Settings).
+  - Real-time metrics (due to IPC overhead, calculated per-keystroke in JS).
 - **Backend (Rust):**
   - **File I/O:** Atomic reads/writes, Encoding detection (UTF-8/ANSI).
+  - **Markdown Rendering:** Using `markdown` crate for non-blocking, high-performance HTML generation.
+  - **Markdown Formatting:** Using `regex` for consistent formatting (headings, lists, tables, code blocks).
+  - **Text Transformations:** All sorting, case transformations, and text manipulation operations in Rust.
+  - **Text Metrics:** Initial calculation for large files (lines, words, chars).
   - **Heavy Lifting:** Global search (Ripgrep), text manipulation (sorting/deduping).
   - **Session Management:** Auto-saving unsaved buffers to IndexedDB / SQLite for crash recovery ("Hot Exit").
 

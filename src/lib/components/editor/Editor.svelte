@@ -5,11 +5,11 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
-    import { formatMarkdown } from "$lib/utils/formatter";
+    import { formatMarkdown } from "$lib/utils/formatterRust";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { initSpellcheck, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension";
-    import { transformText } from "$lib/utils/textTransforms";
+    import { transformText } from "$lib/utils/textTransformsRust";
     import { EditorView as CM6EditorView } from "@codemirror/view";
     import { onDestroy, onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
@@ -71,7 +71,7 @@
                 let textToInsert = text;
                 if (appState.formatOnPaste) {
                     try {
-                        textToInsert = formatMarkdown(text, {
+                        textToInsert = await formatMarkdown(text, {
                             listIndent: appState.formatterListIndent || 2,
                             bulletChar: appState.formatterBulletChar || "-",
                             codeBlockFence: appState.formatterCodeFence || "```",
@@ -106,7 +106,7 @@
         }
     }
 
-    function handleTextOperation(operation: TextOperation) {
+    async function handleTextOperation(operation: TextOperation) {
         const view = editorViewComponent?.getView();
         if (!view) return;
         const state = view.state;
@@ -120,7 +120,7 @@
         if (operation.type === "format-document") {
             if (hasSelection) {
                 const selectedText = state.sliceDoc(selection.from, selection.to);
-                newText = formatMarkdown(selectedText, {
+                newText = await formatMarkdown(selectedText, {
                     listIndent: appState.formatterListIndent || 2,
                     bulletChar: appState.formatterBulletChar || "-",
                     codeBlockFence: appState.formatterCodeFence || "```",
@@ -130,7 +130,7 @@
                 to = selection.to;
             } else {
                 const text = doc.toString();
-                newText = formatMarkdown(text, {
+                newText = await formatMarkdown(text, {
                     listIndent: appState.formatterListIndent || 2,
                     bulletChar: appState.formatterBulletChar || "-",
                     codeBlockFence: appState.formatterCodeFence || "```",
@@ -142,12 +142,12 @@
         } else {
             if (hasSelection) {
                 const selectedText = state.sliceDoc(selection.from, selection.to);
-                newText = transformText(selectedText, operation.type);
+                newText = await transformText(selectedText, operation.type);
                 from = selection.from;
                 to = selection.to;
             } else {
                 const text = doc.toString();
-                newText = transformText(text, operation.type);
+                newText = await transformText(text, operation.type);
                 from = 0;
                 to = doc.length;
             }

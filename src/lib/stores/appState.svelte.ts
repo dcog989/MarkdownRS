@@ -22,6 +22,7 @@ export class AppState {
     enableAutocomplete = $state(true);
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
+    gfmEnabled = $state(true); // GitHub Flavored Markdown
 
     // Advanced Settings
     logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');

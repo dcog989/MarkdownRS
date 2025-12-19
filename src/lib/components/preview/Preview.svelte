@@ -5,7 +5,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { AppError } from "$lib/utils/errorHandling";
     import { navigateToPath } from "$lib/utils/fileSystem";
-    import { renderMarkdown } from "$lib/utils/markdown";
+    import { renderMarkdown } from "$lib/utils/markdownRust";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy, tick } from "svelte";
@@ -65,7 +65,7 @@
                 return;
             }
             try {
-                const rendered = await renderMarkdown(content);
+                const rendered = await renderMarkdown(content, appState.gfmEnabled);
                 htmlContent = rendered;
                 lastRenderedContent = content;
                 renderErrorCount = 0;

@@ -6,7 +6,7 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { AppError } from './errorHandling';
 import { isTextFile } from './fileValidation';
-import { formatMarkdown } from './formatter';
+import { formatMarkdown } from './formatterRust';
 
 type RustTabState = {
     id: string;

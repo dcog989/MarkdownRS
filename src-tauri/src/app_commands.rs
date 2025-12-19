@@ -1,4 +1,8 @@
 use crate::db::{Database, TabState};
+use crate::markdown_formatter::{format_markdown, FormatterOptions};
+use crate::markdown_renderer::{render_markdown, MarkdownOptions, RenderResult};
+use crate::text_metrics::{calculate_cursor_metrics, calculate_text_metrics, CursorMetrics, TextMetrics};
+use crate::text_transforms::transform_text;
 use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8};
 use std::collections::HashSet;
@@ -367,4 +371,51 @@ pub async fn get_spelling_suggestions(
         .collect();
     results.truncate(5);
     Ok(results)
+}
+
+#[tauri::command]
+pub async fn render_markdown_content(
+    content: String,
+    gfm: bool,
+) -> Result<RenderResult, String> {
+    let options = MarkdownOptions { gfm };
+    render_markdown(&content, options)
+}
+
+#[tauri::command]
+pub async fn transform_text_content(
+    content: String,
+    operation: String,
+) -> Result<String, String> {
+    transform_text(&content, &operation)
+}
+
+#[tauri::command]
+pub async fn format_markdown_content(
+    content: String,
+    list_indent: usize,
+    bullet_char: String,
+    code_block_fence: String,
+    table_alignment: bool,
+) -> Result<String, String> {
+    let options = FormatterOptions {
+        list_indent,
+        bullet_char,
+        code_block_fence,
+        table_alignment,
+    };
+    format_markdown(&content, &options)
+}
+
+#[tauri::command]
+pub async fn calculate_text_metrics_command(content: String) -> Result<TextMetrics, String> {
+    Ok(calculate_text_metrics(&content))
+}
+
+#[tauri::command]
+pub async fn calculate_cursor_metrics_command(
+    content: String,
+    cursor_offset: usize,
+) -> Result<CursorMetrics, String> {
+    calculate_cursor_metrics(&content, cursor_offset)
 }

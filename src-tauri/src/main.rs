@@ -3,6 +3,10 @@
 
 mod app_commands;
 mod db;
+mod markdown_formatter;
+mod markdown_renderer;
+mod text_metrics;
+mod text_transforms;
 
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
@@ -150,6 +154,11 @@ fn main() {
             app_commands::init_spellchecker,
             app_commands::check_words,
             app_commands::get_spelling_suggestions,
+            app_commands::render_markdown_content,
+            app_commands::transform_text_content,
+            app_commands::format_markdown_content,
+            app_commands::calculate_text_metrics_command,
+            app_commands::calculate_cursor_metrics_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
