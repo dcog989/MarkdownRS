@@ -1,5 +1,6 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
+    import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
     import { AlertCircle, File, FileText, Pencil, Pin, X } from "lucide-svelte";
@@ -57,15 +58,15 @@
     data-active={isActive}
     data-tab-id={tab.id}
     use:tooltip={tooltipContent}
-    class="tab-button group relative h-8 pl-2 pr-6 flex items-center gap-2 text-ui cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
+    class="tab-button group relative h-8 px-2 flex items-center gap-2 text-ui cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
     style="
         --tab-bg: {isActive ? 'var(--color-bg-main)' : 'var(--color-bg-panel)'};
         color: {color};
         border-color: var(--color-border-main);
         border-top: {borderTop};
         border-radius: 4px 4px 0 0;
-        min-width: 100px;
-        max-width: 200px;
+        min-width: {appState.tabWidthMin}px;
+        max-width: {appState.tabWidthMax}px;
         cursor: default;
         user-select: none;
     "
@@ -83,7 +84,7 @@
         <File size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {/if}
 
-    <span class="truncate flex-1 w-full text-left pointer-events-none">{tab.customTitle || tab.title}</span>
+    <span class="truncate flex-1 pointer-events-none">{tab.customTitle || tab.title}</span>
 
     {#if tab.isPinned}
         <div class="w-6 flex items-center justify-center pointer-events-none">
@@ -92,7 +93,7 @@
     {/if}
 
     {#if !tab.isPinned}
-        <div class="close-btn-wrapper absolute right-0 top-0 bottom-0 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div class="close-btn-wrapper absolute right-0 top-0 bottom-0 w-8 flex items-center justify-end pr-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <span
                 role="button"
                 tabindex="0"
@@ -105,7 +106,7 @@
                 onkeydown={(e) => e.key === "Enter" && onclose?.(e as unknown as MouseEvent, tab.id)}
                 use:tooltip={`Close ${tab.title}`}
             >
-                <X size={12} class="hover:text-[var(--color-danger-text)]" />
+                <X size={14} class="hover:text-[var(--color-danger-text)]" />
             </span>
         </div>
     {/if}
@@ -113,7 +114,7 @@
 
 <style>
     .tab-button {
-        background-color: var(--color-tab-bg);
+        background-color: var(--tab-bg);
     }
 
     .tab-button:not([data-active="true"]):hover {
@@ -121,7 +122,7 @@
     }
 
     .close-btn-wrapper {
-        background: linear-gradient(to right, transparent 0%, var(--color-tab-bg) 30%);
+        background: linear-gradient(to right, transparent 0%, var(--tab-bg) 50%);
         pointer-events: auto;
     }
 </style>
