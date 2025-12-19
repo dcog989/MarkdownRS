@@ -23,9 +23,14 @@
     let localTabs = $state<any[]>([]);
 
     // Pointer Drag State
-    let isDragging = $state(false); // True only after moving threshold
+    let isDragging = $state(false);
     let draggingId = $state<string | null>(null);
     let dragStartX = 0;
+    let rafId: number | null = null;
+
+    // Layout Snapshot for stable sorting
+    // This prevents the flickering feedback loop by comparing mouse X to static slots
+    let layoutCache: { center: number }[] = [];
 
     let contextMenuTabId: string | null = $state(null);
     let contextMenuX = $state(0);
@@ -36,7 +41,6 @@
     let isMruCycling = $state(false);
 
     // --- Store Sync ---
-    // Only sync when we are NOT interacting to prevent UI jumps during drag
     $effect(() => {
         const storeTabs = editorStore.tabs;
         untrack(() => {
@@ -54,7 +58,6 @@
     });
 
     onMount(() => {
-        // Init local tabs
         localTabs = [...editorStore.tabs];
 
         const interval = setInterval(() => (currentTime = Date.now()), 60000);
@@ -91,83 +94,88 @@
 
         return () => {
             clearInterval(interval);
+            if (rafId) cancelAnimationFrame(rafId);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
             scrollContainer?.removeEventListener("scroll", updateFadeIndicators);
         };
     });
 
-    // --- Pointer Event Logic (Custom DND) ---
+    // --- Pointer Event Logic (Stable Snapshot DND) ---
 
     function handlePointerDown(e: PointerEvent, id: string) {
-        // Only Left Click
         if (e.button !== 0) return;
 
         const target = e.target as HTMLElement;
-        // Ignore if clicking close button or existing interactive elements
-        // (The close button wrapper usually has a specific class or we check for button tags)
         if (target.closest(".close-btn-wrapper") || target.closest("button")) {
             return;
         }
 
-        e.preventDefault(); // Prevent text selection/native drag
+        e.preventDefault();
 
         const wrapper = e.currentTarget as HTMLElement;
         wrapper.setPointerCapture(e.pointerId);
 
         draggingId = id;
-        isDragging = false; // Wait for move to confirm drag
+        isDragging = false;
         dragStartX = e.clientX;
 
-        log("Pointer Down", { id });
+        // Snapshot the visual slots
+        // We calculate sorting based on these STATIC positions, not the animating DOM elements
+        if (scrollContainer) {
+            layoutCache = Array.from(scrollContainer.children)
+                .filter((el) => el.getAttribute("role") === "listitem")
+                .map((el) => {
+                    const rect = el.getBoundingClientRect();
+                    return { center: rect.left + rect.width / 2 };
+                });
+        }
     }
 
     function handlePointerMove(e: PointerEvent) {
         if (!draggingId) return;
         e.preventDefault();
 
-        // Threshold check: Treat as click if movement is small
         if (!isDragging) {
             if (Math.abs(e.clientX - dragStartX) > 5) {
                 isDragging = true;
-                log("Drag Started (Threshold Passed)");
             } else {
                 return;
             }
         }
 
-        if (!scrollContainer) return;
+        if (rafId) return;
 
-        // 1. Identify current index
-        const currentIndex = localTabs.findIndex((t) => t.id === draggingId);
-        if (currentIndex === -1) return;
+        rafId = requestAnimationFrame(() => {
+            rafId = null;
 
-        // 2. Find target based on mouse X
-        const mouseX = e.clientX;
-        const children = Array.from(scrollContainer.children).filter((el) => el.getAttribute("role") === "listitem");
+            const mouseX = e.clientX;
 
-        let targetIndex = currentIndex;
-        let minDistance = Infinity;
+            // Find which "Slot" the mouse is closest to based on the initial snapshot
+            let targetIndex = 0;
+            let minDistance = Infinity;
 
-        for (let i = 0; i < children.length; i++) {
-            const rect = children[i].getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const dist = Math.abs(mouseX - centerX);
-
-            if (dist < minDistance) {
-                minDistance = dist;
-                targetIndex = i;
+            for (let i = 0; i < layoutCache.length; i++) {
+                const center = layoutCache[i].center;
+                const dist = Math.abs(mouseX - center);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    targetIndex = i;
+                }
             }
-        }
 
-        // 3. Swap
-        if (targetIndex !== currentIndex) {
-            log(`Swapping ${currentIndex} -> ${targetIndex}`);
-            const newTabs = [...localTabs];
-            const [item] = newTabs.splice(currentIndex, 1);
-            newTabs.splice(targetIndex, 0, item);
-            localTabs = newTabs;
-        }
+            // Compare with current actual index in the array
+            const currentIndex = localTabs.findIndex((t) => t.id === draggingId);
+            if (currentIndex === -1) return;
+
+            // Only move if the intended slot is different
+            if (targetIndex !== currentIndex) {
+                const newTabs = [...localTabs];
+                const [item] = newTabs.splice(currentIndex, 1);
+                newTabs.splice(targetIndex, 0, item);
+                localTabs = newTabs;
+            }
+        });
     }
 
     function handlePointerUp(e: PointerEvent, id: string) {
@@ -177,18 +185,21 @@
         wrapper.releasePointerCapture(e.pointerId);
 
         if (!isDragging) {
-            log("Click Detected - Selecting Tab");
             appState.activeTabId = id;
             editorStore.pushToMru(id);
         } else {
-            log("Drag Ended - Committing");
             editorStore.tabs = [...localTabs];
             editorStore.sessionDirty = true;
         }
 
-        // Reset
         isDragging = false;
         draggingId = null;
+        layoutCache = [];
+
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
 
         tick().then(updateFadeIndicators);
     }
@@ -245,18 +256,13 @@
         {/if}
 
         {#each localTabs as tab (tab.id)}
-            <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: 150 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.6' : '1'}; cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};" onpointerdown={(e) => handlePointerDown(e, tab.id)} onpointermove={handlePointerMove} onpointerup={(e) => handlePointerUp(e, tab.id)} onpointercancel={(e) => handlePointerUp(e, tab.id)}>
+            <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.8' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0}; cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};" onpointerdown={(e) => handlePointerDown(e, tab.id)} onpointermove={handlePointerMove} onpointerup={(e) => handlePointerUp(e, tab.id)} onpointercancel={(e) => handlePointerUp(e, tab.id)}>
                 <TabButton
                     {tab}
                     isActive={appState.activeTabId === tab.id}
                     {currentTime}
-                    onclick={() => {
-                        /* Handled by pointer events now */
-                    }}
-                    onclose={(e, id) => {
-                        // Close still works via TabButton's internal click handler
-                        requestCloseTab(id);
-                    }}
+                    onclick={() => {}}
+                    onclose={(e, id) => requestCloseTab(id)}
                     oncontextmenu={(e, id) => {
                         contextMenuTabId = id;
                         contextMenuX = e.clientX;
