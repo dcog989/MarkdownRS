@@ -117,9 +117,10 @@
         let from: number;
         let to: number;
 
-        const isSimpleTransform = ["uppercase", "to-uppercase", "lowercase", "to-lowercase", "trim-whitespace", "remove-all-spaces"].includes(operation.type);
+        // Frontend handled simple transformations
+        const simpleTransforms = ["uppercase", "to-uppercase", "lowercase", "to-lowercase", "trim-whitespace", "remove-all-spaces"];
 
-        if (isSimpleTransform) {
+        if (simpleTransforms.includes(operation.type)) {
             const targetText = hasSelection ? state.sliceDoc(selection.from, selection.to) : doc.toString();
             from = hasSelection ? selection.from : 0;
             to = hasSelection ? selection.to : doc.length;
@@ -143,6 +144,7 @@
                     newText = targetText;
             }
         } else if (operation.type === "format-document") {
+            // Specialized Markdown Formatter (Rust)
             if (hasSelection) {
                 const selectedText = state.sliceDoc(selection.from, selection.to);
                 newText = await formatMarkdown(selectedText, {
@@ -165,6 +167,7 @@
                 to = doc.length;
             }
         } else {
+            // Complex Transformations (Rust)
             if (hasSelection) {
                 const selectedText = state.sliceDoc(selection.from, selection.to);
                 newText = await transformText(selectedText, operation.type);
