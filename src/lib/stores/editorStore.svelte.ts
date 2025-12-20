@@ -186,8 +186,11 @@ export class EditorStore {
     }
 
     pushToMru(id: string) {
-        if (this.mruStack[0] === id) return;
-        this.mruStack = [id, ...this.mruStack.filter(tId => tId !== id)];
+        if (this.mruStack.length > 0 && this.mruStack[0] === id) return;
+
+        const filtered = this.mruStack.filter(tId => tId !== id);
+        this.mruStack = [id, ...filtered];
+        this.sessionDirty = true;
     }
 
     updateContent(id: string, content: string) {
