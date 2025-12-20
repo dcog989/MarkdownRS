@@ -262,14 +262,20 @@ pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
+    let local_dir = app_handle
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| e.to_string())?;
+    let cache_dir = local_dir.join("spellcheck_cache");
+    let aff_path = cache_dir.join("en_US.aff");
+    let dic_path = cache_dir.join("en_US.dic");
+    let jargon_path = cache_dir.join("jargon.dic");
+
+    // Custom dictionary stays in Roaming as it is user-created content
     let app_dir = app_handle
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let cache_dir = app_dir.join("spellcheck_cache");
-    let aff_path = cache_dir.join("en_US.aff");
-    let dic_path = cache_dir.join("en_US.dic");
-    let jargon_path = cache_dir.join("jargon.dic");
     let custom_path = app_dir.join("custom-spelling.dic");
 
     let speller_arc = state.speller.clone();
@@ -279,11 +285,9 @@ pub async fn init_spellchecker(
         fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
     }
 
-    // Delete any existing corrupted dictionary files before spawning thread
     if aff_path.exists() {
         if let Ok(content) = fs::read_to_string(&aff_path) {
             if content.contains("404") || content.contains("Not Found") || content.len() < 100 {
-                println!("[Spellcheck] Deleting corrupted .aff file");
                 let _ = fs::remove_file(&aff_path);
             }
         }
@@ -291,147 +295,67 @@ pub async fn init_spellchecker(
     if dic_path.exists() {
         if let Ok(content) = fs::read_to_string(&dic_path) {
             if content.contains("404") || content.contains("Not Found") || content.len() < 100 {
-                println!("[Spellcheck] Deleting corrupted .dic file");
                 let _ = fs::remove_file(&dic_path);
             }
         }
     }
 
     std::thread::spawn(move || {
-        println!("[Spellcheck] Initializing...");
-
-        // 1. Download Dictionaries if needed
         if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
-            println!("[Spellcheck] Downloading Hunspell dictionary...");
             let client = reqwest::blocking::Client::new();
-
             let aff_url = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
             let dic_url = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic";
 
-            match client.get(aff_url).send() {
-                Ok(resp) => {
-                    if resp.status().is_success() {
-                        if let Ok(text) = resp.text() {
-                            if let Err(e) = fs::write(&aff_path, text) {
-                                println!("[Spellcheck] Failed to write .aff file: {}", e);
-                            } else {
-                                println!("[Spellcheck] Downloaded .aff file successfully");
-                            }
-                        }
-                    } else {
-                        println!(
-                            "[Spellcheck] Failed to download .aff: HTTP {}",
-                            resp.status()
-                        );
+            if let Ok(resp) = client.get(aff_url).send() {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text() {
+                        let _ = fs::write(&aff_path, text);
                     }
                 }
-                Err(e) => println!("[Spellcheck] Network error downloading .aff: {}", e),
             }
 
-            match client.get(dic_url).send() {
-                Ok(resp) => {
-                    if resp.status().is_success() {
-                        if let Ok(text) = resp.text() {
-                            if let Err(e) = fs::write(&dic_path, text) {
-                                println!("[Spellcheck] Failed to write .dic file: {}", e);
-                            } else {
-                                println!("[Spellcheck] Downloaded .dic file successfully");
-                            }
-                        }
-                    } else {
-                        println!(
-                            "[Spellcheck] Failed to download .dic: HTTP {}",
-                            resp.status()
-                        );
+            if let Ok(resp) = client.get(dic_url).send() {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text() {
+                        let _ = fs::write(&dic_path, text);
                     }
                 }
-                Err(e) => println!("[Spellcheck] Network error downloading .dic: {}", e),
             }
 
-            // Download technical jargon dictionary
             let jargon_url =
                 "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
-            match client.get(jargon_url).send() {
-                Ok(resp) => {
-                    if resp.status().is_success() {
-                        if let Ok(text) = resp.text() {
-                            if let Err(e) = fs::write(&jargon_path, text) {
-                                println!("[Spellcheck] Failed to write jargon.dic file: {}", e);
-                            } else {
-                                println!("[Spellcheck] Downloaded jargon.dic file successfully");
-                            }
-                        }
-                    } else {
-                        println!(
-                            "[Spellcheck] Failed to download jargon.dic: HTTP {}",
-                            resp.status()
-                        );
+            if let Ok(resp) = client.get(jargon_url).send() {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text() {
+                        let _ = fs::write(&jargon_path, text);
                     }
                 }
-                Err(e) => println!("[Spellcheck] Network error downloading jargon.dic: {}", e),
             }
         }
 
-        // 2. Load Dictionary with technical jargon
         if aff_path.exists() && dic_path.exists() {
             if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
                 if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
-                    // Merge jargon dictionary if it exists
                     let mut combined_dic = raw_dic.clone();
                     if jargon_path.exists() {
                         if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
-                            // Append jargon words to main dictionary
-                            // Skip the first line (word count) from jargon
-                            if let Some((_first_line, jargon_words)) =
-                                jargon_content.split_once('\n')
-                            {
+                            if let Some((_, jargon_words)) = jargon_content.split_once('\n') {
                                 combined_dic.push_str("\n");
                                 combined_dic.push_str(jargon_words);
-                                println!("[Spellcheck] Merged technical jargon dictionary");
                             }
                         }
                     }
-                    let raw_dic = combined_dic;
-                    // Check if files contain error messages instead of dictionary data
-                    if raw_aff.contains("404")
-                        || raw_aff.contains("Not Found")
-                        || raw_dic.contains("404")
-                        || raw_dic.contains("Not Found")
-                    {
-                        println!(
-                            "[Spellcheck] Dictionary files are corrupted (contain error pages). Deleting..."
-                        );
-                        let _ = fs::remove_file(&aff_path);
-                        let _ = fs::remove_file(&dic_path);
-                        println!(
-                            "[Spellcheck] Please restart the app to re-download dictionaries."
-                        );
-                        return;
-                    }
 
-                    // Sanitize inputs:
-                    // 1. Remove BOM
-                    // 2. Ensure first line (word count) is purely numeric (trim \r, spaces)
                     let aff_content = raw_aff.trim_start_matches('\u{feff}');
-                    let dic_content = sanitize_dic_content(&raw_dic);
+                    let dic_content = sanitize_dic_content(&combined_dic);
 
                     match Dictionary::new(aff_content, &dic_content) {
                         Ok(dict) => {
                             if let Ok(mut speller) = speller_arc.lock() {
                                 *speller = Some(dict);
-                                println!(
-                                    "[Spellcheck] Dictionary loaded successfully with technical jargon."
-                                );
                             }
                         }
-                        Err(e) => {
-                            println!("[Spellcheck] Failed to build dictionary: {}", e);
-                            // Diagnostic: Print first 50 chars to see what's wrong
-                            let preview: String = dic_content.chars().take(50).collect();
-                            println!("[Spellcheck] DIC File Header Preview: {:?}", preview);
-                            println!(
-                                "[Spellcheck] Deleting corrupted files. Please restart to re-download."
-                            );
+                        Err(_) => {
                             let _ = fs::remove_file(&aff_path);
                             let _ = fs::remove_file(&dic_path);
                             let _ = fs::remove_file(&jargon_path);
@@ -441,7 +365,6 @@ pub async fn init_spellchecker(
             }
         }
 
-        // 3. Load Custom Dictionary
         if custom_path.exists() {
             if let Ok(text) = fs::read_to_string(&custom_path) {
                 if let Ok(mut custom) = custom_arc.lock() {
@@ -451,7 +374,6 @@ pub async fn init_spellchecker(
                             custom.insert(w.to_lowercase());
                         }
                     }
-                    println!("[Spellcheck] Custom words loaded.");
                 }
             }
         }

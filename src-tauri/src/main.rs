@@ -64,16 +64,25 @@ fn main() {
             let app_handle = app.handle();
             let window = app.get_webview_window("main").unwrap();
 
+            // Roaming Data (Settings, Session DB, Custom Dictionary)
             let app_dir = app_handle
                 .path()
                 .app_data_dir()
                 .expect("failed to get app data dir");
+
+            // Local Data (Logs, Spellcheck Cache)
+            let local_dir = app_handle
+                .path()
+                .app_local_data_dir()
+                .expect("failed to get app local data dir");
+
             let db_dir = app_dir.join("Database");
-            let log_dir = app_dir.join("Logs");
+            let log_dir = local_dir.join("Logs");
             let config_path = app_dir.join("settings.toml");
             let dict_path = app_dir.join("custom-spelling.dic");
 
             let _ = fs::create_dir_all(&app_dir);
+            let _ = fs::create_dir_all(&local_dir);
             let _ = fs::create_dir_all(&db_dir);
             let _ = fs::create_dir_all(&log_dir);
 
