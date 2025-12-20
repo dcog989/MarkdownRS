@@ -319,7 +319,10 @@ pub async fn init_spellchecker(
                             }
                         }
                     } else {
-                        println!("[Spellcheck] Failed to download .aff: HTTP {}", resp.status());
+                        println!(
+                            "[Spellcheck] Failed to download .aff: HTTP {}",
+                            resp.status()
+                        );
                     }
                 }
                 Err(e) => println!("[Spellcheck] Network error downloading .aff: {}", e),
@@ -336,14 +339,18 @@ pub async fn init_spellchecker(
                             }
                         }
                     } else {
-                        println!("[Spellcheck] Failed to download .dic: HTTP {}", resp.status());
+                        println!(
+                            "[Spellcheck] Failed to download .dic: HTTP {}",
+                            resp.status()
+                        );
                     }
                 }
                 Err(e) => println!("[Spellcheck] Network error downloading .dic: {}", e),
             }
 
             // Download technical jargon dictionary
-            let jargon_url = "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
+            let jargon_url =
+                "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
             match client.get(jargon_url).send() {
                 Ok(resp) => {
                     if resp.status().is_success() {
@@ -355,7 +362,10 @@ pub async fn init_spellchecker(
                             }
                         }
                     } else {
-                        println!("[Spellcheck] Failed to download jargon.dic: HTTP {}", resp.status());
+                        println!(
+                            "[Spellcheck] Failed to download jargon.dic: HTTP {}",
+                            resp.status()
+                        );
                     }
                 }
                 Err(e) => println!("[Spellcheck] Network error downloading jargon.dic: {}", e),
@@ -372,7 +382,9 @@ pub async fn init_spellchecker(
                         if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
                             // Append jargon words to main dictionary
                             // Skip the first line (word count) from jargon
-                            if let Some((_first_line, jargon_words)) = jargon_content.split_once('\n') {
+                            if let Some((_first_line, jargon_words)) =
+                                jargon_content.split_once('\n')
+                            {
                                 combined_dic.push_str("\n");
                                 combined_dic.push_str(jargon_words);
                                 println!("[Spellcheck] Merged technical jargon dictionary");
@@ -381,12 +393,19 @@ pub async fn init_spellchecker(
                     }
                     let raw_dic = combined_dic;
                     // Check if files contain error messages instead of dictionary data
-                    if raw_aff.contains("404") || raw_aff.contains("Not Found") || 
-                       raw_dic.contains("404") || raw_dic.contains("Not Found") {
-                        println!("[Spellcheck] Dictionary files are corrupted (contain error pages). Deleting...");
+                    if raw_aff.contains("404")
+                        || raw_aff.contains("Not Found")
+                        || raw_dic.contains("404")
+                        || raw_dic.contains("Not Found")
+                    {
+                        println!(
+                            "[Spellcheck] Dictionary files are corrupted (contain error pages). Deleting..."
+                        );
                         let _ = fs::remove_file(&aff_path);
                         let _ = fs::remove_file(&dic_path);
-                        println!("[Spellcheck] Please restart the app to re-download dictionaries.");
+                        println!(
+                            "[Spellcheck] Please restart the app to re-download dictionaries."
+                        );
                         return;
                     }
 
@@ -400,7 +419,9 @@ pub async fn init_spellchecker(
                         Ok(dict) => {
                             if let Ok(mut speller) = speller_arc.lock() {
                                 *speller = Some(dict);
-                                println!("[Spellcheck] Dictionary loaded successfully with technical jargon.");
+                                println!(
+                                    "[Spellcheck] Dictionary loaded successfully with technical jargon."
+                                );
                             }
                         }
                         Err(e) => {
@@ -408,7 +429,9 @@ pub async fn init_spellchecker(
                             // Diagnostic: Print first 50 chars to see what's wrong
                             let preview: String = dic_content.chars().take(50).collect();
                             println!("[Spellcheck] DIC File Header Preview: {:?}", preview);
-                            println!("[Spellcheck] Deleting corrupted files. Please restart to re-download.");
+                            println!(
+                                "[Spellcheck] Deleting corrupted files. Please restart to re-download."
+                            );
                             let _ = fs::remove_file(&aff_path);
                             let _ = fs::remove_file(&dic_path);
                             let _ = fs::remove_file(&jargon_path);
@@ -440,15 +463,19 @@ pub async fn init_spellchecker(
 // Helper to strictly sanitize the .dic file format
 fn sanitize_dic_content(content: &str) -> String {
     let content = content.trim_start_matches('\u{feff}');
+    let normalized = content.replace("\r\n", "\n").replace('\r', "\n");
 
-    // Split once to separate count from words
-    // We treat \n as the delimiter, but handle \r in the first part
-    if let Some((first_line, rest)) = content.split_once('\n') {
+    if let Some((first_line, rest)) = normalized.split_once('\n') {
         let clean_count = first_line.trim();
-        // Reconstruct with a clean newline
-        format!("{}\n{}", clean_count, rest)
+        if clean_count.chars().all(|c| c.is_ascii_digit()) {
+            format!("{}\n{}", clean_count, rest)
+        } else {
+            // If the first line isn't a simple digit count,
+            // the spellbook builder might fail; we inject a placeholder count.
+            let line_count = normalized.lines().count();
+            format!("{}\n{}", line_count, normalized)
+        }
     } else {
-        // Single line file (unlikely valid, but just trim it)
         content.trim().to_string()
     }
 }
