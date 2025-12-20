@@ -24,6 +24,7 @@
         spellCheckLinter,
         inputHandler,
         eventHandlers,
+        cmView = $bindable(),
     } = $props<{
         tabId: string;
         initialContent?: string;
@@ -34,10 +35,16 @@
         spellCheckLinter: any;
         inputHandler: any;
         eventHandlers: any;
+        cmView?: EditorView;
     }>();
 
     let editorContainer: HTMLDivElement;
     let view = $state<EditorView>();
+
+    // Sync internal state to bindable prop
+    $effect(() => {
+        cmView = view;
+    });
 
     let themeCompartment = new Compartment();
     let lineWrappingCompartment = new Compartment();

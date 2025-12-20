@@ -1,11 +1,14 @@
 import { addToDictionary } from "$lib/utils/fileSystem";
 import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
 import { syntaxTree } from "@codemirror/language";
-import { linter, type Diagnostic } from "@codemirror/lint";
-import type { EditorView } from "@codemirror/view";
+import { forceLinting, linter, type Diagnostic } from "@codemirror/lint";
+import { EditorView } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
 import { invoke } from "@tauri-apps/api/core";
 
+/**
+ * Optimized linter with a reduced 350ms debounce delay.
+ */
 export const createSpellCheckLinter = () => linter(async (view) => {
     if (!spellcheckState.dictionaryLoaded) return [];
 
@@ -45,7 +48,6 @@ export const createSpellCheckLinter = () => linter(async (view) => {
                     const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : "";
 
                     if (/[\\/:@\.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
-
                     if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
 
                     const wLower = word.toLowerCase();
@@ -88,21 +90,22 @@ export const createSpellCheckLinter = () => linter(async (view) => {
         spellcheckState.misspelledCache = newCache;
         return diagnostics;
     } catch (err) {
-        console.error("Spellcheck linter error:", err);
         return [];
     }
-});
+}, { delay: 350 });
 
+export function triggerImmediateLint(view: EditorView) {
+    view.dispatch({});
+    forceLinting(view);
+}
+
+/**
+ * Refreshes custom dictionary and triggers a linting pass.
+ */
 export async function refreshSpellcheck(view: EditorView | undefined) {
     if (!view) return;
     await refreshCustomDictionary();
-
-    view.dispatch({
-        changes: { from: 0, to: 0, insert: " " },
-    });
-    view.dispatch({
-        changes: { from: 0, to: 1, insert: "" },
-    });
+    triggerImmediateLint(view);
 }
 
 export const spellCheckKeymap = [

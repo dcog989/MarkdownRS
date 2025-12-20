@@ -23,9 +23,13 @@ export async function initSpellcheck(): Promise<void> {
     if (spellcheckState.dictionaryLoaded) return;
 
     initPromise = (async () => {
-        await loadCustomDictionary();
-        await invoke('init_spellchecker');
-        spellcheckState.dictionaryLoaded = true;
+        try {
+            await loadCustomDictionary();
+            await invoke('init_spellchecker');
+            spellcheckState.dictionaryLoaded = true;
+        } catch (err) {
+            // Initialization error handled silently to prevent log pollution
+        }
     })();
 
     return initPromise;
