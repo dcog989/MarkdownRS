@@ -7,7 +7,7 @@
     import { CONFIG } from "$lib/utils/config";
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
-    import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
+    import { cleanupScrollSync, createScrollSyncState } from "$lib/utils/scrollSync";
     import { initSpellcheck, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap, triggerImmediateLint } from "$lib/utils/spellcheckExtension";
     import { transformText } from "$lib/utils/textTransformsRust";
@@ -24,8 +24,9 @@
 
     const scrollSyncState = createScrollSyncState();
 
-    let isHovered = false;
-    let isFocused = false;
+    let isHovered = $state(false);
+    let isFocused = $state(false);
+    let isDragging = $state(false);
 
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
@@ -198,6 +199,9 @@
 
     const eventHandlers = CM6EditorView.domEventHandlers({
         mousedown: (event, view) => {
+            isDragging = true;
+            window.addEventListener("mouseup", () => (isDragging = false), { once: true });
+
             if ((event.ctrlKey || event.metaKey) && event.button === 0) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (pos !== null) {
@@ -252,17 +256,23 @@
         },
         scroll: (event, view) => {
             if (scrollSyncState.isRemoteScrolling) return;
-            if (!isHovered && !isFocused) return;
+            if (!isHovered && !isFocused && !isDragging) return;
 
             const dom = view.scrollDOM;
-            const percentage = getScrollPercentage(dom);
+            const scrollHeight = dom.scrollHeight - dom.clientHeight;
+            if (scrollHeight <= 0) return;
+
+            if (dom.scrollTop + dom.clientHeight >= dom.scrollHeight - 5) {
+                editorStore.updateScroll(tabId, 1, view.state.doc.lines);
+                return;
+            }
 
             const lineBlock = view.lineBlockAtHeight(dom.scrollTop);
             const lineNum = view.state.doc.lineAt(lineBlock.from).number;
-
             const progress = (dom.scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-            const preciseLine = lineNum + Math.max(0, Math.min(1, progress));
+            const preciseLine = lineNum + Math.max(0, Math.min(0.99, progress));
 
+            const percentage = dom.scrollTop / scrollHeight;
             editorStore.updateScroll(tabId, percentage, preciseLine);
         },
         focus: () => {
@@ -271,6 +281,37 @@
         blur: () => {
             isFocused = false;
         },
+    });
+
+    $effect(() => {
+        if (!cmView || !cmView.scrollDOM || previousTabId !== tabId) return;
+        if (isHovered || isFocused || isDragging) return;
+
+        const targetLine = currentTabState?.topLine;
+        const targetPercent = currentTabState?.scrollPercentage;
+        if (targetLine === undefined) return;
+
+        const dom = cmView.scrollDOM;
+        scrollSyncState.isRemoteScrolling = true;
+
+        if (targetPercent !== undefined && targetPercent >= 0.99) {
+            dom.scrollTop = dom.scrollHeight - dom.clientHeight;
+        } else {
+            try {
+                const lineInt = Math.floor(targetLine);
+                const progress = targetLine - lineInt;
+                const lineBlock = cmView.lineBlockAt(cmView.state.doc.line(lineInt).from);
+                dom.scrollTop = lineBlock.top + lineBlock.height * progress;
+            } catch (e) {
+                const scrollHeight = dom.scrollHeight - dom.clientHeight;
+                dom.scrollTop = scrollHeight * (targetPercent || 0);
+            }
+        }
+
+        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+        scrollSyncState.lockTimeout = window.setTimeout(() => {
+            scrollSyncState.isRemoteScrolling = false;
+        }, 30);
     });
 
     async function handleGlobalFind() {
@@ -374,27 +415,33 @@
 
     $effect(() => {
         if (!cmView || !cmView.scrollDOM || previousTabId !== tabId) return;
+        if (isHovered || isFocused) return; // Locked: we are the master
 
         const targetLine = currentTabState?.topLine;
+        const targetPercent = currentTabState?.scrollPercentage;
+        if (targetLine === undefined) return;
 
-        if (isHovered || isFocused) return;
-        if (scrollSyncState.isRemoteScrolling) return;
+        const dom = cmView.scrollDOM;
+        scrollSyncState.isRemoteScrolling = true;
 
-        if (targetLine !== undefined && targetLine > 0) {
+        if (targetPercent !== undefined && targetPercent >= 0.99) {
+            dom.scrollTop = dom.scrollHeight - dom.clientHeight;
+        } else {
             try {
                 const lineInt = Math.floor(targetLine);
+                const progress = targetLine - lineInt;
                 const lineBlock = cmView.lineBlockAt(cmView.state.doc.line(lineInt).from);
-                const dom = cmView.scrollDOM;
-
-                scrollSyncState.isRemoteScrolling = true;
-                dom.scrollTop = lineBlock.top;
-
-                if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
-                scrollSyncState.lockTimeout = window.setTimeout(() => {
-                    scrollSyncState.isRemoteScrolling = false;
-                }, 100);
-            } catch (e) {}
+                dom.scrollTop = lineBlock.top + lineBlock.height * progress;
+            } catch (e) {
+                const scrollHeight = dom.scrollHeight - dom.clientHeight;
+                dom.scrollTop = scrollHeight * (targetPercent || 0);
+            }
         }
+
+        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
+        scrollSyncState.lockTimeout = window.setTimeout(() => {
+            scrollSyncState.isRemoteScrolling = false;
+        }, 50);
     });
 
     onMount(() => {
