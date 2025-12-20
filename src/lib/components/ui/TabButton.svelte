@@ -71,7 +71,10 @@
         user-select: none;
     "
     onclick={() => onclick?.(tab.id)}
-    oncontextmenu={(e) => { e.preventDefault(); oncontextmenu?.(e, tab.id); }}
+    oncontextmenu={(e) => {
+        e.preventDefault();
+        oncontextmenu?.(e, tab.id);
+    }}
     onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
 >
     {#if isFileMissing}
@@ -88,30 +91,28 @@
 
     <span class="truncate flex-1 pointer-events-none">{tab.customTitle || tab.title}</span>
 
-    {#if tab.isPinned}
-        <div class="w-6 flex items-center justify-center pointer-events-none">
+    <div class="flex-shrink-0 w-8 h-full flex items-center justify-center relative">
+        {#if tab.isPinned}
             <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-muted)'}" />
-        </div>
-    {/if}
-
-    {#if !tab.isPinned}
-        <div class="close-btn-wrapper absolute right-0 top-0 bottom-0 w-8 flex items-center justify-end pr-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <span
-                role="button"
-                tabindex="0"
-                class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center"
-                style="color: var(--color-fg-muted);"
-                onclick={(e) => {
-                    e.stopPropagation();
-                    if (onclose) onclose(e as unknown as MouseEvent, tab.id);
-                }}
-                onkeydown={(e) => e.key === "Enter" && onclose?.(e as unknown as MouseEvent, tab.id)}
-                use:tooltip={`Close ${tab.title}`}
-            >
-                <X size={14} class="hover:text-[var(--color-danger-text)]" />
-            </span>
-        </div>
-    {/if}
+        {:else}
+            <div class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <span
+                    role="button"
+                    tabindex="0"
+                    class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center cursor-pointer"
+                    style="color: var(--color-fg-muted);"
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        if (onclose) onclose(e as unknown as MouseEvent, tab.id);
+                    }}
+                    onkeydown={(e) => e.key === "Enter" && onclose?.(e as unknown as MouseEvent, tab.id)}
+                    use:tooltip={`Close ${tab.title}`}
+                >
+                    <X size={14} class="hover:text-[var(--color-danger-text)]" />
+                </span>
+            </div>
+        {/if}
+    </div>
 </div>
 
 <style>
