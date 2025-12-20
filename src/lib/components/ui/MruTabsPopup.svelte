@@ -2,7 +2,7 @@
     import { tooltip } from "$lib/actions/tooltip";
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { AlertCircle, FileText, PencilLine, SquarePen } from "lucide-svelte";
+    import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
     import { tick } from "svelte";
 
     interface Props {
@@ -77,7 +77,7 @@
                             </div>
 
                             {#if tab.fileCheckFailed}
-                                <AlertCircle size={14} class="shrink-0" style="color: var(--color-danger-text);" />
+                                <CircleAlert size={14} class="shrink-0" style="color: var(--color-danger-text);" />
                             {:else if tab.path && tab.isDirty}
                                 <SquarePen size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                             {:else if !tab.path}

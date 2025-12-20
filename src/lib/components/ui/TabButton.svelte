@@ -3,7 +3,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
-    import { AlertCircle, FileText, Pencil, PencilLine, Pin, X } from "lucide-svelte";
+    import { CircleAlert, FileText, Pencil, PencilLine, Pin, X } from "lucide-svelte";
 
     interface Props {
         tab: EditorTab;
@@ -58,7 +58,7 @@
     data-active={isActive}
     data-tab-id={tab.id}
     use:tooltip={tooltipContent}
-    class="tab-button group relative h-8 px-2 flex items-center gap-2 text-ui cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
+    class="tab-button group relative h-8 px-2 flex items-center gap-2 text-ui-sm cursor-pointer border-r outline-none text-left shrink-0 overflow-hidden transition-colors duration-150"
     style="
         --tab-bg: {isActive ? 'var(--color-bg-main)' : 'var(--color-bg-panel)'};
         color: {color};
@@ -78,7 +78,7 @@
     onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
 >
     {#if isFileMissing}
-        <AlertCircle size={14} class="flex-shrink-0" style="color: var(--color-danger-text);" />
+        <CircleAlert size={14} class="flex-shrink-0" style="color: var(--color-danger-text);" />
     {:else if !tab.path && tab.isDirty}
         <PencilLine size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {:else if !tab.path}
