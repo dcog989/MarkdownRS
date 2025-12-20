@@ -22,7 +22,7 @@
 
     let appInfo = $state<AppInfo>({
         name: "MarkdownRS",
-        version: "0.1.92",
+        version: "...",
         install_path: "",
         data_path: "",
     });
