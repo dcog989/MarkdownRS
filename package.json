@@ -15,6 +15,9 @@
         "preview": "vite preview",
         "tauri": "tauri"
     },
+    "overrides": {
+        "cookie": "^0.7.0"
+    },
     "dependencies": {
         "@codemirror/autocomplete": "^6.20",
         "@codemirror/commands": "^6.10",
@@ -38,7 +41,6 @@
         "@tauri-apps/plugin-store": "^2.4",
         "@tauri-apps/plugin-updater": "^2.9",
         "clsx": "^2.1",
-        "color": "^5.0",
         "dompurify": "^3.3",
         "lucide-svelte": "^0.562",
         "tailwind-merge": "^3.4",
