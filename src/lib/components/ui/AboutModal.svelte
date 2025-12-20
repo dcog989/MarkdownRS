@@ -18,6 +18,8 @@
         version: string;
         install_path: string;
         data_path: string;
+        cache_path: string;
+        logs_path: string;
     }
 
     let appInfo = $state<AppInfo>({
@@ -25,6 +27,8 @@
         version: "...",
         install_path: "",
         data_path: "",
+        cache_path: "",
+        logs_path: "",
     });
 
     let isChecking = $state(false);
@@ -86,42 +90,53 @@
         <p class="italic text-center" style="color: var(--color-accent-secondary);">"I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."</p>
 
         <div class="w-full mt-4 space-y-1">
-            <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--color-border-main);">
-                <span class="font-medium" style="color: var(--color-fg-muted);">Version</span>
-                <div class="flex items-center gap-3">
-                    <span class="font-mono font-bold" style="color: var(--color-fg-default);">{appInfo.version}</span>
-                    <button class="px-2 py-0.5 rounded flex items-center gap-1 transition-colors border" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-light); font-size: 12px;" onclick={checkForUpdates} disabled={isChecking}>
-                        {#if isChecking}
-                            <Loader2 size={12} class="animate-spin" />
-                            <span>Checking...</span>
-                        {:else}
-                            <RefreshCw size={12} />
-                            <span>Check for Updates</span>
-                        {/if}
-                    </button>
-                </div>
+            <div class="flex items-center py-2 border-b gap-3" style="border-color: var(--color-border-main);">
+                <span class="font-medium shrink-0 w-16" style="color: var(--color-fg-muted);">Version</span>
+                <span class="font-mono font-bold flex-1 text-left" style="color: var(--color-fg-default);">{appInfo.version}</span>
+                <button class="text-ui-sm px-2 py-0.5 rounded flex items-center gap-1 transition-colors border shrink-0" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-light);" onclick={checkForUpdates} disabled={isChecking}>
+                    {#if isChecking}
+                        <Loader2 size={12} class="animate-spin" />
+                    {:else}
+                        <RefreshCw size={12} />
+                    {/if}
+                    <span>Update</span>
+                </button>
             </div>
 
-            <div class="flex items-start justify-between py-2 border-b" style="border-color: var(--color-border-main);">
-                <span class="font-medium" style="color: var(--color-fg-muted);">Install Path</span>
-                <div class="flex items-center gap-2">
-                    <span class="text-ui-sm font-mono text-right max-w-[250px] truncate" style="color: var(--color-fg-default);" title={appInfo.install_path}>{appInfo.install_path}</span>
-                    <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
-                </div>
+            <div class="flex items-center py-2 border-b gap-3" style="border-color: var(--color-border-main);">
+                <span class="font-medium shrink-0 w-16" style="color: var(--color-fg-muted);">Install</span>
+                <span class="text-ui-sm font-mono truncate flex-1 text-left" style="color: var(--color-fg-default);" title={appInfo.install_path}>{appInfo.install_path}</span>
+                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
             </div>
 
-            <div class="flex items-start justify-between py-2 border-b" style="border-color: var(--color-border-main);">
-                <span class="font-medium" style="color: var(--color-fg-muted);">Data Path</span>
-                <div class="flex items-center gap-2">
-                    <span class="text-ui-sm font-mono text-right max-w-[250px] truncate" style="color: var(--color-fg-default);" title={appInfo.data_path}>{appInfo.data_path}</span>
-                    <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
-                </div>
+            <div class="flex items-center py-2 border-b gap-3" style="border-color: var(--color-border-main);">
+                <span class="font-medium shrink-0 w-16" style="color: var(--color-fg-muted);">Data</span>
+                <span class="text-ui-sm font-mono truncate flex-1 text-left" style="color: var(--color-fg-default);" title={appInfo.data_path}>{appInfo.data_path}</span>
+                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
+            </div>
+
+            <div class="flex items-center py-2 border-b gap-3" style="border-color: var(--color-border-main);">
+                <span class="font-medium shrink-0 w-16" style="color: var(--color-fg-muted);">Cache</span>
+                <span class="text-ui-sm font-mono truncate flex-1 text-left" style="color: var(--color-fg-default);" title={appInfo.cache_path}>{appInfo.cache_path}</span>
+                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button>
+            </div>
+
+            <div class="flex items-center py-2 border-b gap-3" style="border-color: var(--color-border-main);">
+                <span class="font-medium shrink-0 w-16" style="color: var(--color-fg-muted);">Logs</span>
+                <span class="text-ui-sm font-mono truncate flex-1 text-left" style="color: var(--color-fg-default);" title={appInfo.logs_path}>{appInfo.logs_path}</span>
+                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button>
             </div>
         </div>
 
+        {#if updateStatus}
+            <div class="text-center text-ui-sm py-1" style="color: var(--color-accent-primary);">
+                {updateStatus}
+            </div>
+        {/if}
+
         <div class="mt-4 text-center text-ui-sm">
-            <p style="color: var(--color-fg-muted);">Giants' Shoulders = Rust / Tauri + Vite / Svelte</p>
-            <p class="mt-1" style="color: var(--color-fg-muted);">© 2025 MarkdownRS. All rights reserved.</p>
+            <p style="color: var(--color-fg-muted);">Giants' Shoulders = Rust / Tauri + Vite / Svelte / Tailwind</p>
+            <p class="mt-1" style="color: var(--color-fg-muted);">© MarkdownRS. All rights reserved.</p>
         </div>
     </div>
 </Modal>

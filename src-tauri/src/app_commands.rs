@@ -40,6 +40,8 @@ pub struct AppInfo {
     pub version: String,
     pub install_path: String,
     pub data_path: String,
+    pub cache_path: String,
+    pub logs_path: String,
 }
 
 fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
@@ -165,11 +167,24 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         .app_data_dir()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
+    let cache_path = app_handle
+        .path()
+        .app_local_data_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+    let logs_path = app_handle
+        .path()
+        .app_local_data_dir()
+        .map(|p| p.join("Logs").to_string_lossy().to_string())
+        .unwrap_or_default();
+
     Ok(AppInfo {
         name: "MarkdownRS".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         install_path,
         data_path,
+        cache_path,
+        logs_path,
     })
 }
 
