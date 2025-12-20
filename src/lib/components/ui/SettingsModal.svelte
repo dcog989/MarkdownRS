@@ -124,32 +124,32 @@
             </div>
 
             <!-- Settings List -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto custom-scrollbar text-ui">
                 {#if sortedSettings.length > 0}
                     <div class="divide-y" style="border-color: var(--color-border-main);">
                         {#each sortedSettings as setting}
                             <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
-                                <div class="flex items-center justify-between gap-4">
-                                    <div class="flex-1">
-                                        <label for={setting.key} class="text-ui block mb-0.5 whitespace-nowrap">
-                                            <span style="color: var(--color-fg-muted);">{setting.category}: </span>
-                                            <span class="font-medium" style="color: var(--color-fg-default);">{setting.label}</span>
+                                <div class="flex items-center justify-between gap-6">
+                                    <div class="flex-1 min-w-0">
+                                        <label for={setting.key} class="flex items-center whitespace-nowrap overflow-hidden">
+                                            <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0" style="color: var(--color-fg-muted);">{setting.category}:</span>
+                                            <span class="font-medium truncate" style="color: var(--color-fg-default);">{setting.label}</span>
                                         </label>
                                     </div>
-                                    <div class="w-48 shrink-0">
+                                    <div class="w-56 shrink-0">
                                         {#if setting.type === "text"}
-                                            <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
+                                            <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-main);" />
                                         {:else if setting.type === "number"}
-                                            <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
+                                            <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-main);" />
                                         {:else if setting.type === "range"}
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex items-center gap-3">
                                                 <input id={setting.key} type="range" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} step={setting.step} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none" style="background-color: var(--color-border-main); accent-color: var(--color-accent-primary);" />
-                                                <span class="text-ui-sm w-8 text-right font-mono" style="color: var(--color-fg-muted);">{getSettingValue(setting.key, setting.defaultValue)}%</span>
+                                                <span class="text-ui-sm w-10 text-right font-mono opacity-80" style="color: var(--color-fg-muted);">{getSettingValue(setting.key, setting.defaultValue)}%</span>
                                             </div>
                                         {:else if setting.type === "boolean"}
                                             <input id={setting.key} type="checkbox" checked={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.checked, setting.type)} class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--color-accent-primary);" />
                                         {:else if setting.type === "select"}
-                                            <select id={setting.key} value={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);">
+                                            <select id={setting.key} value={getSettingValue(setting.key, setting.defaultValue)} onchange={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border cursor-pointer" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-main);">
                                                 {#each setting.options as option, idx}
                                                     <option value={option}>{setting.optionLabels?.[idx] || option}</option>
                                                 {/each}
@@ -161,7 +161,7 @@
                         {/each}
                     </div>
                 {:else}
-                    <div class="px-4 py-8 text-center text-ui" style="color: var(--color-fg-muted);">No settings match your search</div>
+                    <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">No settings match your search</div>
                 {/if}
             </div>
         </div>

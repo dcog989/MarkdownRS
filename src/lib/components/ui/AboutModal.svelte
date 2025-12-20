@@ -79,18 +79,18 @@
 </script>
 
 <Modal bind:isOpen {onClose} title="About" width="500px">
-    <div class="p-6 flex flex-col items-center gap-4">
+    <div class="p-6 flex flex-col items-center gap-4 text-ui">
         <img src="/logo.svg" alt="MarkdownRS Logo" class="w-20 h-20" />
         <h1 class="text-2xl font-bold" style="color: var(--color-fg-default);">{appInfo.name}</h1>
-        <p class="text-sm" style="color: var(--color-fg-muted);">The only markdown editor you need.</p>
-        <p class="text-sm italic text-center" style="color: var(--color-accent-secondary);">"I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."</p>
+        <p style="color: var(--color-fg-muted);">The only markdown editor you need.</p>
+        <p class="italic text-center" style="color: var(--color-accent-secondary);">"I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."</p>
 
-        <div class="w-full mt-4 space-y-3 text-ui">
+        <div class="w-full mt-4 space-y-1">
             <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--color-border-main);">
                 <span class="font-medium" style="color: var(--color-fg-muted);">Version</span>
                 <div class="flex items-center gap-3">
-                    <span class="font-mono" style="color: var(--color-fg-default);">{appInfo.version}</span>
-                    <button class="text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-light);" onclick={checkForUpdates} disabled={isChecking}>
+                    <span class="font-mono font-bold" style="color: var(--color-fg-default);">{appInfo.version}</span>
+                    <button class="px-2 py-0.5 rounded flex items-center gap-1 transition-colors border" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-light); font-size: 12px;" onclick={checkForUpdates} disabled={isChecking}>
                         {#if isChecking}
                             <Loader2 size={12} class="animate-spin" />
                             <span>Checking...</span>
@@ -102,32 +102,26 @@
                 </div>
             </div>
 
-            {#if updateStatus}
-                <div class="text-center text-xs py-1" style="color: var(--color-accent-primary);">
-                    {updateStatus}
-                </div>
-            {/if}
-
             <div class="flex items-start justify-between py-2 border-b" style="border-color: var(--color-border-main);">
                 <span class="font-medium" style="color: var(--color-fg-muted);">Install Path</span>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-mono text-right max-w-[250px] truncate" style="color: var(--color-fg-default);" title={appInfo.install_path}>{appInfo.install_path}</span>
-                    <button class="text-xs px-2 py-1 rounded hover:bg-white/10" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
+                    <span class="text-ui-sm font-mono text-right max-w-[250px] truncate" style="color: var(--color-fg-default);" title={appInfo.install_path}>{appInfo.install_path}</span>
+                    <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
                 </div>
             </div>
 
             <div class="flex items-start justify-between py-2 border-b" style="border-color: var(--color-border-main);">
                 <span class="font-medium" style="color: var(--color-fg-muted);">Data Path</span>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-mono text-right max-w-[250px] truncate" style="color: var(--color-fg-default);" title={appInfo.data_path}>{appInfo.data_path}</span>
-                    <button class="text-xs px-2 py-1 rounded hover:bg-white/10" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
+                    <span class="text-ui-sm font-mono text-right max-w-[250px] truncate" style="color: var(--color-fg-default);" title={appInfo.data_path}>{appInfo.data_path}</span>
+                    <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10" style="color: var(--color-accent-primary);" onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
                 </div>
             </div>
         </div>
 
-        <div class="mt-4 text-center">
-            <p class="text-xs" style="color: var(--color-fg-muted);">Giants' Shoulders = Rust / Tauri + Vite / Svelte</p>
-            <p class="text-xs mt-1" style="color: var(--color-fg-muted);">© 2025 MarkdownRS. All rights reserved.</p>
+        <div class="mt-4 text-center text-ui-sm">
+            <p style="color: var(--color-fg-muted);">Giants' Shoulders = Rust / Tauri + Vite / Svelte</p>
+            <p class="mt-1" style="color: var(--color-fg-muted);">© 2025 MarkdownRS. All rights reserved.</p>
         </div>
     </div>
 </Modal>

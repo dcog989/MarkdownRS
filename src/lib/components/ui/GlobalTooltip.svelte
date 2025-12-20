@@ -36,7 +36,7 @@
 {#if tooltipStore.visible && tooltipStore.content}
     <div bind:this={tooltipEl} class="fixed z-[9999] pointer-events-none" style="left: {adjustedX}px; top: {adjustedY}px;">
         <div
-            class="p-3 rounded shadow-2xl border text-xs whitespace-pre-line max-w-lg w-max break-words leading-relaxed"
+            class="p-2 rounded shadow-2xl border text-ui-sm whitespace-pre-line max-w-lg w-max break-words leading-relaxed"
             style="
                 background-color: var(--color-bg-header);
                 border-color: var(--color-border-light);

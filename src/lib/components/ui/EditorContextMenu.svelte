@@ -210,7 +210,7 @@
 <div class="fixed inset-0 z-50" onclick={onClose} oncontextmenu={handleBackdropContextMenu} role="presentation">
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 custom-scrollbar"
+        class="absolute min-w-[220px] rounded-md shadow-xl border py-1 custom-scrollbar"
         style="
             visibility: hidden;
             top: 0;
@@ -223,9 +223,9 @@
         tabindex="-1"
     >
         {#if suggestions.length > 0}
-            <div class="px-2 py-1 text-ui-sm font-semibold uppercase tracking-wide opacity-50" style="color: var(--color-fg-muted);">Suggestions</div>
+            <div class="px-3 py-1 text-ui-sm font-bold uppercase tracking-widest opacity-50" style="color: var(--color-fg-muted);">Suggestions</div>
             {#each suggestions as suggestion}
-                <button type="button" class="w-full text-left px-4 py-2 text-ui font-medium hover:bg-white/10 flex items-center gap-2" style="color: var(--color-fg-default);" onclick={() => handleSuggestionClick(suggestion)}>
+                <button type="button" class="w-full text-left px-3 py-1.5 text-ui font-medium hover:bg-white/10 flex items-center gap-2" style="color: var(--color-fg-default);" onclick={() => handleSuggestionClick(suggestion)}>
                     <Sparkles size={14} class="text-[var(--color-accent-secondary)]" />
                     <span>{suggestion}</span>
                 </button>
@@ -234,40 +234,37 @@
         {/if}
 
         {#if selectedText}
-            <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCut}>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCut}>
                 <Scissors size={14} />
                 <span>Cut</span>
-                <span class="ml-auto text-ui-sm opacity-60">Ctrl+X</span>
+                <span class="ml-auto text-ui-sm opacity-50">Ctrl+X</span>
             </button>
-        {/if}
-
-        {#if selectedText}
-            <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCopy}>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCopy}>
                 <ClipboardCopy size={14} />
                 <span>Copy</span>
-                <span class="ml-auto text-ui-sm opacity-60">Ctrl+C</span>
+                <span class="ml-auto text-ui-sm opacity-50">Ctrl+C</span>
             </button>
         {/if}
 
-        <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handlePaste}>
+        <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handlePaste}>
             <ClipboardPaste size={14} />
             <span>Paste</span>
-            <span class="ml-auto text-ui-sm opacity-60">Ctrl+V</span>
+            <span class="ml-auto text-ui-sm opacity-50">Ctrl+V</span>
         </button>
 
         <div class="h-px my-1" style="background-color: var(--color-border-main);"></div>
 
         {#if hasSelection}
-            <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleFormatSelection}>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleFormatSelection}>
                 <Wand2 size={14} />
                 <span>Format Selection</span>
             </button>
         {/if}
 
-        <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleFormatDocument}>
+        <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleFormatDocument}>
             <Wand2 size={14} />
             <span>Format Document</span>
-            <span class="ml-auto text-ui-sm opacity-60">Shift+Alt+F</span>
+            <span class="ml-auto text-ui-sm opacity-50">Shift+Alt+F</span>
         </button>
 
         {#if hasSelection}
@@ -282,21 +279,23 @@
                 }}
             >
                 {#snippet trigger()}
-                    <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
                         <ArrowUpDown size={14} />
                         <span>Sort Lines</span>
-                        <span class="ml-auto opacity-60">›</span>
+                        <span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
 
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-numeric-asc")}>Sort Numeric ↑</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-numeric-desc")}>Sort Numeric ↓</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-length-asc")}>Sort by Length ↑</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-length-desc")}>Sort by Length ↓</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("reverse")}>Reverse Order</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
+                <div class="py-1">
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-asc")}>Sort A → Z</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-desc")}>Sort Z → A</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-numeric-asc")}>Sort Numeric ↑</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-numeric-desc")}>Sort Numeric ↓</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-length-asc")}>Sort by Length ↑</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sort-length-desc")}>Sort by Length ↓</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("reverse")}>Reverse Order</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("shuffle")}>Shuffle</button>
+                </div>
             </Submenu>
 
             <Submenu
@@ -308,23 +307,25 @@
                 }}
             >
                 {#snippet trigger()}
-                    <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
                         <CaseSensitive size={14} />
                         <span>Change Case</span>
-                        <span class="ml-auto opacity-60">›</span>
+                        <span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
 
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("title-case")}>Title Case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sentence-case")}>Sentence case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("camel-case")}>camelCase</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("pascal-case")}>PascalCase</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("snake-case")}>snake_case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("kebab-case")}>kebab-case</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("constant-case")}>CONSTANT_CASE</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
+                <div class="py-1">
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("uppercase")}>UPPERCASE</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("lowercase")}>lowercase</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("title-case")}>Title Case</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("sentence-case")}>Sentence case</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("camel-case")}>camelCase</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("pascal-case")}>PascalCase</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("snake-case")}>snake_case</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("kebab-case")}>kebab-case</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("constant-case")}>CONSTANT_CASE</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("invert-case")}>iNVERT cASE</button>
+                </div>
             </Submenu>
 
             <Submenu
@@ -336,18 +337,20 @@
                 }}
             >
                 {#snippet trigger()}
-                    <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
                         <WrapText size={14} />
                         <span>Transform</span>
-                        <span class="ml-auto opacity-60">›</span>
+                        <span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
 
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("trim-whitespace")}>Trim Whitespace</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("join-lines")}>Join Lines</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("add-line-numbers")}>Add Line Numbers</button>
+                <div class="py-1">
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("remove-duplicates")}>Remove Duplicate Lines</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("remove-blank")}>Remove Blank Lines</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("trim-whitespace")}>Trim Whitespace</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("join-lines")}>Join Lines</button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={() => handleTransform("add-line-numbers")}>Add Line Numbers</button>
+                </div>
             </Submenu>
         {/if}
 
@@ -355,15 +358,15 @@
             <div class="h-px my-1" style="background-color: var(--color-border-main);"></div>
 
             {#if canAddSingle}
-                <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleAddToDictionary}>
+                <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleAddToDictionary}>
                     <BookPlus size={14} />
-                    <span>Add "{cleanTarget}" to Dictionary</span>
-                    <span class="ml-auto text-ui-sm opacity-60">F8</span>
+                    <span class="flex-1 truncate">Add "{cleanTarget}" to Dictionary</span>
+                    <span class="text-ui-sm opacity-50">F8</span>
                 </button>
             {/if}
 
             {#if canAddMulti}
-                <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleAddAllToDictionary}>
+                <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleAddAllToDictionary}>
                     <BookText size={14} />
                     <span>Add All to Dictionary</span>
                 </button>

@@ -83,7 +83,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div bind:this={tooltipEl} class="fixed z-[9999] pointer-events-none" style="left: {adjustedX}px; top: {adjustedY}px;">
         <div
-            class="p-3 rounded shadow-2xl border text-xs whitespace-pre-line max-w-lg break-all leading-relaxed"
+            class="p-2 rounded shadow-2xl border text-ui-sm whitespace-pre-line max-w-lg break-all leading-relaxed"
             style="
                 background-color: var(--color-bg-header);
                 border-color: var(--color-border-light);
