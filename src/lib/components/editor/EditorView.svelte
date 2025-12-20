@@ -2,6 +2,8 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
+    import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
+    import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -40,9 +42,13 @@
     let themeCompartment = new Compartment();
     let lineWrappingCompartment = new Compartment();
     let autocompleteCompartment = new Compartment();
+    let recentChangesCompartment = new Compartment();
 
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
+
+    // Line change tracker (persists across updates)
+    const lineChangeTracker = new LineChangeTracker();
 
     const CONTENT_UPDATE_DEBOUNCE_MS = 80;
     const METRICS_UPDATE_DEBOUNCE_MS = 80;
@@ -168,6 +174,28 @@
         }
     });
 
+    $effect(() => {
+        const enabled = appState.highlightRecentChanges;
+        if (view) {
+            view.dispatch({
+                effects: recentChangesCompartment.reconfigure(enabled ? createRecentChangesHighlighter(lineChangeTracker) : []),
+            });
+        }
+    });
+
+    // Reactive effect to trigger redraws when settings change
+    $effect(() => {
+        const _ = {
+            mode: appState.recentChangesMode,
+            timespan: appState.recentChangesTimespan,
+            count: appState.recentChangesCount,
+        };
+        if (view && appState.highlightRecentChanges) {
+            // Force a redraw by dispatching an empty transaction
+            view.dispatch();
+        }
+    });
+
     onMount(() => {
         const pathDecorator = new MatchDecorator({
             regexp: /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g,
@@ -246,13 +274,16 @@
             },
         ];
 
-        const extensions = [lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
+        const extensions = [lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : []), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
         }
 
         const updateListener = EditorView.updateListener.of((update) => {
+            // Track line changes for highlighting
+            trackEditorChanges(lineChangeTracker, update);
+
             if (update.docChanged) {
                 const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
 

@@ -17,6 +17,10 @@
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
+        { key: "highlightRecentChanges", label: "Highlight Recent Changes", type: "boolean", category: "Editor", defaultValue: false },
+        { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "time", options: ["time", "count"], optionLabels: ["Time-Based", "Last N Changes"] },
+        { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300 },
+        { key: "recentChangesCount", label: "Number of Recent Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50 },
         { key: "lineEndingPreference", label: "Line Ending", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
 
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },

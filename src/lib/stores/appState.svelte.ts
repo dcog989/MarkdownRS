@@ -20,6 +20,10 @@ export class AppState {
     editorFontSize = $state(14);
     editorWordWrap = $state(true); // Fixed: Default to true
     enableAutocomplete = $state(true);
+    highlightRecentChanges = $state(false);
+    recentChangesMode = $state<'time' | 'count'>('time');
+    recentChangesTimespan = $state(60); // seconds
+    recentChangesCount = $state(10); // number of changes
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
     gfmEnabled = $state(true); // GitHub Flavored Markdown

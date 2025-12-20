@@ -285,7 +285,7 @@
                     <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
                         <ArrowUpDown size={14} />
                         <span>Sort Lines</span>
-                        <span class="ml-auto" style="color: var(--color-fg-muted); font-size: 18px;">›</span>
+                        <span class="ml-auto opacity-60">›</span>
                     </button>
                 {/snippet}
 
@@ -311,7 +311,7 @@
                     <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
                         <CaseSensitive size={14} />
                         <span>Change Case</span>
-                        <span class="ml-auto" style="color: var(--color-fg-muted); font-size: 18px;">›</span>
+                        <span class="ml-auto opacity-60">›</span>
                     </button>
                 {/snippet}
 
@@ -339,7 +339,7 @@
                     <button type="button" class="w-full text-left px-4 py-2 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
                         <WrapText size={14} />
                         <span>Transform</span>
-                        <span class="ml-auto" style="color: var(--color-fg-muted); font-size: 18px;">›</span>
+                        <span class="ml-auto opacity-60">›</span>
                     </button>
                 {/snippet}
 

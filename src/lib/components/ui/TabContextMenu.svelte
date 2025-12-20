@@ -94,7 +94,13 @@
 
     function handlePin() {
         if (!tab) return;
-        tab.isPinned = !tab.isPinned;
+        const index = editorStore.tabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+        
+        const newTabs = [...editorStore.tabs];
+        newTabs[index] = { ...newTabs[index], isPinned: !newTabs[index].isPinned };
+        editorStore.tabs = newTabs;
+        editorStore.sessionDirty = true;
         onClose();
     }
 
@@ -264,7 +270,7 @@
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10 flex items-center" style="color: var(--color-fg-default);">
                     <span>Close Many</span>
-                    <span class="ml-auto" style="color: var(--color-fg-muted); font-size: 18px;">›</span>
+                    <span class="ml-auto opacity-60">›</span>
                 </button>
             {/snippet}
 
