@@ -166,6 +166,10 @@ fn main() {
             app_commands::format_markdown_content,
             app_commands::calculate_text_metrics_command,
             app_commands::calculate_cursor_metrics_command,
+            app_commands::add_bookmark,
+            app_commands::get_all_bookmarks,
+            app_commands::delete_bookmark,
+            app_commands::update_bookmark_access_time,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

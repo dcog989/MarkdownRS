@@ -2,13 +2,15 @@
     import { tooltip } from "$lib/actions/tooltip";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
+    import { openFile, persistSession, requestCloseTab, saveCurrentFile, openFileByPath } from "$lib/utils/fileSystem.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { invoke } from "@tauri-apps/api/core";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
+    import { Copy, Eye, Minus, Search, Settings, Square, X, Bookmark } from "lucide-svelte";
     import { onMount } from "svelte";
     import AboutModal from "./AboutModal.svelte";
+    import BookmarksModal from "./BookmarksModal.svelte";
     import SettingsModal from "./SettingsModal.svelte";
     import ShortcutsModal from "./ShortcutsModal.svelte";
     import TextTransformModal from "./TextTransformModal.svelte";
@@ -19,6 +21,7 @@
     let showAboutModal = $state(false);
     let showTransformModal = $state(false);
     let showShortcutsModal = $state(false);
+    let showBookmarksModal = $state(false);
     let showCommandPalette = $state(false);
     let commandSearchQuery = $state("");
     let commandInputRef: HTMLInputElement | undefined = $state();
@@ -122,6 +125,15 @@
                 showCommandPalette = false;
             },
         },
+        {
+            id: "bookmarks",
+            label: "Bookmarks",
+            shortcut: "Ctrl+B",
+            action: () => {
+                showBookmarksModal = true;
+                showCommandPalette = false;
+            },
+        },
     ];
 
     const opsCommands: Command[] = [
@@ -180,6 +192,10 @@
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
                 e.preventDefault();
                 openCommandPalette();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+                e.preventDefault();
+                showBookmarksModal = true;
             }
             if (e.key === "F1") {
                 e.preventDefault();
@@ -266,6 +282,9 @@
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)]" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
+            <Bookmark size={14} />
+        </button>
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)]" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
             <Settings size={14} />
         </button>
@@ -343,6 +362,9 @@
 
 <!-- About Modal -->
 <AboutModal bind:isOpen={showAboutModal} onClose={() => (showAboutModal = false)} />
+
+<!-- Bookmarks Modal -->
+<BookmarksModal bind:isOpen={showBookmarksModal} onClose={() => (showBookmarksModal = false)} onOpenFile={openFileByPath} />
 
 <!-- Text Transform Modal -->
 <TextTransformModal isOpen={showTransformModal} onClose={() => (showTransformModal = false)} />

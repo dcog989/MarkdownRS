@@ -26,6 +26,16 @@ pub struct TabState {
     pub mru_position: Option<i32>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Bookmark {
+    pub id: String,
+    pub path: String,
+    pub title: String,
+    pub tags: Vec<String>,
+    pub created: String,
+    pub last_accessed: Option<String>,
+}
+
 pub struct Database {
     conn: Connection,
 }
@@ -74,16 +84,33 @@ impl Database {
                 )?;
 
                 tx.execute(
+                    "CREATE TABLE IF NOT EXISTS bookmarks (
+                        id TEXT PRIMARY KEY,
+                        path TEXT NOT NULL UNIQUE,
+                        title TEXT NOT NULL,
+                        tags TEXT NOT NULL,
+                        created TEXT NOT NULL,
+                        last_accessed TEXT
+                    )",
+                    [],
+                )?;
+
+                tx.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path)",
+                    [],
+                )?;
+
+                tx.execute(
                     "CREATE TABLE IF NOT EXISTS schema_version (
                         version INTEGER PRIMARY KEY
                     )",
                     [],
                 )?;
 
-                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [4])?;
-                info!("Initial schema created successfully (version 4)");
+                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [5])?;
+                info!("Initial schema created successfully (version 5)");
             }
-            v if v < 4 => {
+            v if v < 5 => {
                 // Progressive migrations
                 let mut current_version = v;
 
@@ -131,9 +158,34 @@ impl Database {
                     info!("Migration to version 4 completed successfully");
                 }
 
+                if current_version < 5 {
+                    // Migration from v4 to v5: Add bookmarks table
+                    info!(
+                        "Migrating database schema from version {} to 5",
+                        current_version
+                    );
+                    tx.execute(
+                        "CREATE TABLE IF NOT EXISTS bookmarks (
+                            id TEXT PRIMARY KEY,
+                            path TEXT NOT NULL UNIQUE,
+                            title TEXT NOT NULL,
+                            tags TEXT NOT NULL,
+                            created TEXT NOT NULL,
+                            last_accessed TEXT
+                        )",
+                        [],
+                    )?;
+                    tx.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path)",
+                        [],
+                    )?;
+                    current_version = 5;
+                    info!("Migration to version 5 completed successfully");
+                }
+
                 tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
             }
-            4 => {
+            5 => {
                 // Current version, no migration needed
                 info!("Database schema is up to date (version {})", version);
             }
@@ -258,6 +310,64 @@ impl Database {
     pub fn clear_session(&self) -> Result<()> {
         info!("Clearing session data");
         self.conn.execute("DELETE FROM tabs", [])?;
+        Ok(())
+    }
+
+    // Bookmark operations
+    pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
+        info!("Adding bookmark: {} ({})", bookmark.title, bookmark.path);
+        let tags_json = serde_json::to_string(&bookmark.tags)?;
+        self.conn.execute(
+            "INSERT OR REPLACE INTO bookmarks (id, path, title, tags, created, last_accessed)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                &bookmark.id,
+                &bookmark.path,
+                &bookmark.title,
+                &tags_json,
+                &bookmark.created,
+                &bookmark.last_accessed
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_all_bookmarks(&self) -> Result<Vec<Bookmark>> {
+        info!("Loading all bookmarks from database");
+        let mut stmt = self.conn.prepare(
+            "SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC"
+        )?;
+
+        let bookmarks = stmt
+            .query_map([], |row| {
+                let tags_json: String = row.get(3)?;
+                let tags: Vec<String> = serde_json::from_str(&tags_json).unwrap_or_default();
+                Ok(Bookmark {
+                    id: row.get(0)?,
+                    path: row.get(1)?,
+                    title: row.get(2)?,
+                    tags,
+                    created: row.get(4)?,
+                    last_accessed: row.get(5)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        info!("Loaded {} bookmarks from database", bookmarks.len());
+        Ok(bookmarks)
+    }
+
+    pub fn delete_bookmark(&self, id: &str) -> Result<()> {
+        info!("Deleting bookmark: {}", id);
+        self.conn.execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    pub fn update_bookmark_access_time(&self, id: &str, last_accessed: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE bookmarks SET last_accessed = ?1 WHERE id = ?2",
+            params![last_accessed, id],
+        )?;
         Ok(())
     }
 }

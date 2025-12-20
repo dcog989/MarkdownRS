@@ -2,10 +2,11 @@
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { invoke } from "@tauri-apps/api/core";
     import { save } from "@tauri-apps/plugin-dialog";
-    import { Pin, PinOff } from "lucide-svelte";
+    import { Pin, PinOff, Bookmark, BookmarkX } from "lucide-svelte";
     import { untrack } from "svelte";
 
     interface Props {
@@ -52,6 +53,7 @@
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
+    let isBookmarked = $derived(tab?.path ? bookmarkStore.isBookmarked(tab.path) : false);
     let tabIndex = $derived(editorStore.tabs.findIndex((t) => t.id === tabId));
     let hasTabsToRight = $derived(tabIndex < editorStore.tabs.length - 1);
     let hasTabsToLeft = $derived(tabIndex > 0);
@@ -217,6 +219,24 @@
         onClose();
     }
 
+    async function handleToggleBookmark() {
+        if (!tab || !tab.path) return;
+        
+        try {
+            if (isBookmarked) {
+                const bookmark = bookmarkStore.getBookmark(tab.path);
+                if (bookmark) {
+                    await bookmarkStore.deleteBookmark(bookmark.id);
+                }
+            } else {
+                await bookmarkStore.addBookmark(tab.path, tab.title, []);
+            }
+        } catch (err) {
+            console.error("Failed to toggle bookmark:", err);
+        }
+        onClose();
+    }
+
     function handleBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) {
             onClose();
@@ -259,6 +279,17 @@
             {:else}
                 <Pin size={12} />
                 <span>Pin</span>
+            {/if}
+        </button>
+
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10 flex items-center gap-2" style="color: {tab?.path ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};
+" disabled={!tab?.path} onclick={handleToggleBookmark}>
+            {#if isBookmarked}
+                <BookmarkX size={12} />
+                <span>Remove Bookmark</span>
+            {:else}
+                <Bookmark size={12} />
+                <span>Add Bookmark</span>
             {/if}
         </button>
 

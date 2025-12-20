@@ -1,4 +1,4 @@
-use crate::db::{Database, TabState};
+use crate::db::{Bookmark, Database, TabState};
 use crate::markdown_formatter::{FormatterOptions, format_markdown};
 use crate::markdown_renderer::{MarkdownOptions, RenderResult, render_markdown};
 use crate::text_metrics::{
@@ -509,4 +509,37 @@ pub async fn calculate_cursor_metrics_command(
     cursor_offset: usize,
 ) -> Result<CursorMetrics, String> {
     calculate_cursor_metrics(&content, cursor_offset)
+}
+
+// Bookmark commands
+#[tauri::command]
+pub async fn add_bookmark(
+    state: State<'_, AppState>,
+    bookmark: Bookmark,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    db.add_bookmark(&bookmark).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
+    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    db.get_all_bookmarks().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    db.delete_bookmark(&id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn update_bookmark_access_time(
+    state: State<'_, AppState>,
+    id: String,
+    last_accessed: String,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    db.update_bookmark_access_time(&id, &last_accessed)
+        .map_err(|e| e.to_string())
 }

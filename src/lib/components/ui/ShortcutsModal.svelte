@@ -29,6 +29,7 @@
         View: [
             { description: "Toggle split preview", shortcut: "Ctrl+\\" },
             { description: "Command palette", shortcut: "Ctrl+P" },
+            { description: "Bookmarks", shortcut: "Ctrl+B" },
         ],
         Help: [
             { description: "Keyboard shortcuts", shortcut: "F1" },

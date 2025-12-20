@@ -107,6 +107,10 @@ export async function openFile(path?: string): Promise<void> {
     }
 }
 
+export async function openFileByPath(path: string): Promise<void> {
+    await openFile(path);
+}
+
 export async function navigateToPath(clickedPath: string) {
     const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
 
