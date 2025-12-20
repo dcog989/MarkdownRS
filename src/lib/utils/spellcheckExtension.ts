@@ -3,50 +3,61 @@ import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.
 import { syntaxTree } from "@codemirror/language";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
+import type { SyntaxNodeRef } from "@lezer/common";
 import { invoke } from "@tauri-apps/api/core";
 
 export const createSpellCheckLinter = () => linter(async (view) => {
     if (!spellcheckState.dictionaryLoaded) return [];
 
-    const doc = view.state.doc;
-    const text = doc.toString();
-    const tree = syntaxTree(view.state);
-
-    // Improved regex to capture words with apostrophes but ignore numbers/symbols
-    const wordRegex = /[a-zA-Z]+(?:'[a-zA-Z]+)?/g;
+    const { state } = view;
+    const doc = state.doc;
     const wordsToVerify = new Map<string, { from: number; to: number }[]>();
-    let match;
 
-    while ((match = wordRegex.exec(text)) !== null) {
-        const word = match[0];
-        if (word.length <= 1) continue;
+    const safeNodeTypes = new Set([
+        "Paragraph", "Text", "Emphasis", "StrongEmphasis",
+        "ListItem", "HeaderMark", "SetextHeading1", "SetextHeading2"
+    ]);
 
-        const from = match.index;
-        const to = from + word.length;
+    syntaxTree(state).iterate({
+        enter: (node: SyntaxNodeRef): boolean | void => {
+            if (
+                node.name.includes("Code") ||
+                node.name.includes("Link") ||
+                node.name.includes("Url") ||
+                node.name.includes("Comment") ||
+                node.name.includes("Attribute") ||
+                node.name === "HtmlTag"
+            ) return false;
 
-        // Use resolveInner to find the specific syntax node at this position
-        const node = tree.resolveInner(from, 1);
-        const type = node.type.name;
+            if (safeNodeTypes.has(node.name)) {
+                const nodeText = doc.sliceString(node.from, node.to);
+                const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
+                let match;
 
-        // Skip non-textual Markdown elements
-        if (
-            type.includes("Code") ||
-            type.includes("Link") ||
-            type.includes("Url") ||
-            type.includes("Header") ||
-            type.includes("Comment")
-        ) continue;
+                while ((match = wordRegex.exec(nodeText)) !== null) {
+                    const word = match[0];
+                    if (word.length <= 1) continue;
 
-        const wLower = word.toLowerCase();
-        if (spellcheckState.customDictionary.has(wLower)) continue;
+                    const globalFrom = node.from + match.index;
+                    const globalTo = globalFrom + word.length;
 
-        // Skip CamelCase (likely code or intentional identifiers)
-        if (/[a-z][A-Z]/.test(word)) continue;
+                    const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
+                    const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : "";
 
-        const ranges = wordsToVerify.get(word) || [];
-        ranges.push({ from, to });
-        wordsToVerify.set(word, ranges);
-    }
+                    if (/[\\/:@\.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
+
+                    if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
+
+                    const wLower = word.toLowerCase();
+                    if (spellcheckState.customDictionary.has(wLower)) continue;
+
+                    const ranges = wordsToVerify.get(word) || [];
+                    ranges.push({ from: globalFrom, to: globalTo });
+                    wordsToVerify.set(word, ranges);
+                }
+            }
+        }
+    });
 
     if (wordsToVerify.size === 0) return [];
 
