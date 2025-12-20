@@ -73,7 +73,7 @@ npm run tauri build
 
 ### Frontend (Svelte 5 + TypeScript)
 - **Editor**: CodeMirror 6 for markdown editing with syntax highlighting
-- **Preview**: Marked.js for markdown parsing with DOMPurify for security
+- **Preview**: Rust `markdown` for markdown parsing with DOMPurify for security
 - **State Management**: Svelte 5 runes for reactive state
 - **Styling**: TailwindCSS v4 for modern, utility-first styling
 
