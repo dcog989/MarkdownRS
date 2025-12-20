@@ -1,9 +1,9 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
+    import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -101,8 +101,8 @@
                 fontSize: `${fontSize}px`,
             },
             ".cm-cursor": {
-                borderLeftColor: insertMode === "OVR" ? "transparent" : "auto",
-                borderBottom: insertMode === "OVR" ? "2px solid currentColor" : "none",
+                borderLeftColor: insertMode === "OVR" ? "transparent" : "var(--color-fg-default)",
+                borderBottom: insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none",
             },
             ".cm-scroller": {
                 fontFamily: fontFamily,
@@ -111,13 +111,16 @@
             ".cm-content": {
                 paddingBottom: "40px !important",
             },
+            ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
+                backgroundColor: "color-mix(in srgb, var(--color-accent-secondary), transparent 25%) !important",
+            },
             ".cm-local-path": {
                 color: "var(--color-accent-link)",
                 textDecoration: "underline",
                 cursor: "pointer",
             },
             ".cm-activeLine": {
-                backgroundColor: "var(--color-bg-active) !important",
+                backgroundColor: "color-mix(in srgb, var(--color-bg-main), var(--color-fg-default) 4%) !important",
                 mixBlendMode: "normal",
             },
             ".cm-activeLineGutter": {
