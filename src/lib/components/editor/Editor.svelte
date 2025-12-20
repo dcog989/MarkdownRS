@@ -24,7 +24,6 @@
 
     const scrollSyncState = createScrollSyncState();
 
-    let isHovered = $state(false);
     let isFocused = $state(false);
     let isDragging = $state(false);
 
@@ -255,63 +254,85 @@
             return true;
         },
         scroll: (event, view) => {
+            // Source: Editor
+            // If the last scroll came from preview, we might still be settling.
             if (scrollSyncState.isRemoteScrolling) return;
-            if (!isHovered && !isFocused && !isDragging) return;
 
             const dom = view.scrollDOM;
-            const scrollHeight = dom.scrollHeight - dom.clientHeight;
-            if (scrollHeight <= 0) return;
+            const maxScroll = dom.scrollHeight - dom.clientHeight;
+            if (maxScroll <= 0) return;
 
-            if (dom.scrollTop + dom.clientHeight >= dom.scrollHeight - 5) {
-                editorStore.updateScroll(tabId, 1, view.state.doc.lines);
+            const scrollTop = dom.scrollTop;
+
+            if (Math.abs(scrollTop - maxScroll) < 5) {
+                editorStore.updateScroll(tabId, 1, view.state.doc.lines, "editor");
                 return;
             }
 
-            const lineBlock = view.lineBlockAtHeight(dom.scrollTop);
-            const lineNum = view.state.doc.lineAt(lineBlock.from).number;
-            const progress = (dom.scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-            const preciseLine = lineNum + Math.max(0, Math.min(0.99, progress));
+            if (scrollTop === 0) {
+                editorStore.updateScroll(tabId, 0, 1, "editor");
+                return;
+            }
 
-            const percentage = dom.scrollTop / scrollHeight;
-            editorStore.updateScroll(tabId, percentage, preciseLine);
+            const lineBlock = view.lineBlockAtHeight(scrollTop);
+            const lineNum = view.state.doc.lineAt(lineBlock.from).number;
+            const progress = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+            const preciseLine = lineNum + progress;
+            const percentage = scrollTop / maxScroll;
+
+            editorStore.updateScroll(tabId, percentage, preciseLine, "editor");
         },
         focus: () => {
-            isFocused = true;
+            setTimeout(() => {
+                isFocused = true;
+            }, 0);
         },
         blur: () => {
-            isFocused = false;
+            setTimeout(() => {
+                isFocused = false;
+            }, 0);
         },
     });
 
+    // Receiver: Editor
     $effect(() => {
         if (!cmView || !cmView.scrollDOM || previousTabId !== tabId) return;
-        if (isHovered || isFocused || isDragging) return;
+
+        // If the source was the Editor, do NOT apply the scroll back.
+        if (editorStore.lastScrollSource === "editor") return;
 
         const targetLine = currentTabState?.topLine;
         const targetPercent = currentTabState?.scrollPercentage;
-        if (targetLine === undefined) return;
+
+        if (targetLine === undefined || targetPercent === undefined) return;
 
         const dom = cmView.scrollDOM;
-        scrollSyncState.isRemoteScrolling = true;
 
-        if (targetPercent !== undefined && targetPercent >= 0.99) {
+        scrollSyncState.isRemoteScrolling = true;
+        dom.style.scrollBehavior = "auto";
+
+        if (targetPercent >= 0.99 || targetLine >= editorStore.lineCount - 1) {
             dom.scrollTop = dom.scrollHeight - dom.clientHeight;
+        } else if (targetLine <= 1.05) {
+            dom.scrollTop = 0;
         } else {
             try {
                 const lineInt = Math.floor(targetLine);
                 const progress = targetLine - lineInt;
                 const lineBlock = cmView.lineBlockAt(cmView.state.doc.line(lineInt).from);
-                dom.scrollTop = lineBlock.top + lineBlock.height * progress;
+                const targetScroll = lineBlock.top + lineBlock.height * progress;
+                dom.scrollTop = targetScroll;
             } catch (e) {
                 const scrollHeight = dom.scrollHeight - dom.clientHeight;
-                dom.scrollTop = scrollHeight * (targetPercent || 0);
+                dom.scrollTop = scrollHeight * targetPercent;
             }
         }
 
         if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
         scrollSyncState.lockTimeout = window.setTimeout(() => {
             scrollSyncState.isRemoteScrolling = false;
-        }, 30);
+            if (dom) dom.style.scrollBehavior = "";
+        }, 60);
     });
 
     async function handleGlobalFind() {
@@ -330,7 +351,6 @@
         findReplacePanel?.focusInput();
     }
 
-    // Unified effect for startup and dictionary load
     $effect(() => {
         if (spellcheckState.dictionaryLoaded && cmView) {
             untrack(() => {
@@ -371,7 +391,6 @@
                         currentWordIndex: text.substring(0, selection.head).trim().split(/\s+/).length,
                     });
 
-                    // Immediate lint trigger for tab switch
                     triggerImmediateLint(cmView!);
 
                     setTimeout(() => {
@@ -380,28 +399,23 @@
                             const originalBehavior = dom.style.scrollBehavior;
 
                             dom.style.scrollBehavior = "auto";
+                            scrollSyncState.isRemoteScrolling = true;
 
                             if (currentTab.topLine && currentTab.topLine > 1) {
                                 try {
                                     const lineInt = Math.floor(currentTab.topLine);
                                     const lineBlock = cmView!.lineBlockAt(cmView!.state.doc.line(lineInt).from);
-                                    scrollSyncState.isRemoteScrolling = true;
                                     dom.scrollTop = lineBlock.top;
                                 } catch (e) {
-                                    scrollSyncState.isRemoteScrolling = true;
                                     dom.scrollTop = (dom.scrollHeight - dom.clientHeight) * currentTab.scrollPercentage;
                                 }
                             } else {
-                                scrollSyncState.isRemoteScrolling = true;
                                 dom.scrollTop = (dom.scrollHeight - dom.clientHeight) * currentTab.scrollPercentage;
                             }
 
                             requestAnimationFrame(() => {
                                 dom.style.scrollBehavior = originalBehavior;
-                                if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
-                                scrollSyncState.lockTimeout = window.setTimeout(() => {
-                                    scrollSyncState.isRemoteScrolling = false;
-                                }, 100);
+                                scrollSyncState.isRemoteScrolling = false;
                             });
                         }
                     }, 0);
@@ -411,37 +425,6 @@
             }
             previousTabId = tabId;
         }
-    });
-
-    $effect(() => {
-        if (!cmView || !cmView.scrollDOM || previousTabId !== tabId) return;
-        if (isHovered || isFocused) return; // Locked: we are the master
-
-        const targetLine = currentTabState?.topLine;
-        const targetPercent = currentTabState?.scrollPercentage;
-        if (targetLine === undefined) return;
-
-        const dom = cmView.scrollDOM;
-        scrollSyncState.isRemoteScrolling = true;
-
-        if (targetPercent !== undefined && targetPercent >= 0.99) {
-            dom.scrollTop = dom.scrollHeight - dom.clientHeight;
-        } else {
-            try {
-                const lineInt = Math.floor(targetLine);
-                const progress = targetLine - lineInt;
-                const lineBlock = cmView.lineBlockAt(cmView.state.doc.line(lineInt).from);
-                dom.scrollTop = lineBlock.top + lineBlock.height * progress;
-            } catch (e) {
-                const scrollHeight = dom.scrollHeight - dom.clientHeight;
-                dom.scrollTop = scrollHeight * (targetPercent || 0);
-            }
-        }
-
-        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
-        scrollSyncState.lockTimeout = window.setTimeout(() => {
-            scrollSyncState.isRemoteScrolling = false;
-        }, 50);
     });
 
     onMount(() => {
@@ -477,7 +460,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative" onmouseenter={() => (isHovered = true)} onmouseleave={() => (isHovered = false)}>
+<div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
     <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={combinedKeymap} {spellCheckLinter} {inputHandler} {eventHandlers} onContentChange={(content) => editorStore.updateContent(tabId, content)} onMetricsChange={(metrics) => editorStore.updateMetrics(metrics)} />
     {#if scrollDOM}
         <CustomScrollbar viewport={scrollDOM} />

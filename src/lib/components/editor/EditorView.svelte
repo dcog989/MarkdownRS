@@ -1,6 +1,8 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { logScroll } from "$lib/utils/diagnostics";
+    import { navigateToPath } from "$lib/utils/fileSystem";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
@@ -41,7 +43,11 @@
     let editorContainer: HTMLDivElement;
     let view = $state<EditorView>();
 
-    // Sync internal state to bindable prop
+    // Sync Lock State
+    let isRemoteScrolling = false;
+    let remoteScrollTimeout: number | null = null;
+    let scrollRaf: number | null = null;
+
     $effect(() => {
         cmView = view;
     });
@@ -54,7 +60,6 @@
     let contentUpdateTimer: number | null = null;
     let metricsUpdateTimer: number | null = null;
 
-    // Line change tracker (persists across updates)
     const lineChangeTracker = new LineChangeTracker();
 
     const CONTENT_UPDATE_DEBOUNCE_MS = 80;
@@ -63,6 +68,8 @@
     function clearTimers() {
         if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
         if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
+        if (remoteScrollTimeout !== null) clearTimeout(remoteScrollTimeout);
+        if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
     }
 
     function completeFromBuffer(context: CompletionContext) {
@@ -86,66 +93,30 @@
     }
 
     let validatedFontFamily = $derived.by(() => {
-        let family = appState.editorFontFamily || "monospace";
-        family = family.trim();
-        if (family.endsWith(",")) family = family.slice(0, -1).trim();
-
-        const singleQuotes = (family.match(/'/g) || []).length;
-        const doubleQuotes = (family.match(/"/g) || []).length;
-
-        if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0) return "monospace";
-        return family;
+        return appState.editorFontFamily || "monospace";
     });
 
     let dynamicTheme = $derived.by(() => {
         const fontSize = appState.editorFontSize || 14;
         const insertMode = editorStore.insertMode;
-        const fontFamily = validatedFontFamily;
 
         return EditorView.theme({
-            "&": {
-                height: "100%",
-                fontSize: `${fontSize}px`,
-            },
+            "&": { height: "100%", fontSize: `${fontSize}px` },
             ".cm-cursor": {
                 borderLeftColor: insertMode === "OVR" ? "transparent" : "var(--color-fg-default)",
                 borderBottom: insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none",
             },
-            ".cm-scroller": {
-                fontFamily: fontFamily,
-                overflow: "auto",
-            },
-            ".cm-content": {
-                paddingBottom: "40px !important",
-            },
+            ".cm-scroller": { fontFamily: validatedFontFamily, overflow: "auto" },
+            ".cm-content": { paddingBottom: "40px !important" },
             ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
                 backgroundColor: "color-mix(in srgb, var(--color-accent-secondary), transparent 25%) !important",
             },
-            ".cm-local-path": {
-                color: "var(--color-accent-link)",
-                textDecoration: "underline",
-                cursor: "pointer",
-            },
-            ".cm-activeLine": {
-                backgroundColor: "color-mix(in srgb, var(--color-bg-main), var(--color-fg-default) 4%) !important",
-                mixBlendMode: "normal",
-            },
-            ".cm-activeLineGutter": {
-                backgroundColor: "var(--color-bg-panel) !important",
-            },
-            ".cm-lintRange-error": {
-                backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3">%3Cpath d="M0 2.5 L1.5 1 L3 2.5 L4.5 1 L6 2.5" stroke="%23ff6b6b" stroke-width="1" fill="none"/%3E</svg>')`,
-                backgroundRepeat: "repeat-x",
-                backgroundPosition: "bottom",
-                paddingBottom: "1px",
-                borderBottom: "none",
-            },
+            ".cm-local-path": { color: "var(--color-accent-link)", textDecoration: "underline", cursor: "pointer" },
+            ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--color-bg-main), var(--color-fg-default) 4%) !important" },
+            ".cm-activeLineGutter": { backgroundColor: "var(--color-bg-panel) !important" },
             ".cm-tooltip": {
                 borderRadius: "6px !important",
                 zIndex: "100",
-                opacity: "0",
-                animation: "cm-tooltip-fade-in 0.15s cubic-bezier(0.2, 0, 0.2, 1) forwards",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
                 backgroundColor: "var(--color-bg-panel) !important",
                 border: "1px solid var(--color-border-light) !important",
                 color: "var(--color-fg-default) !important",
@@ -158,58 +129,20 @@
     });
 
     $effect(() => {
-        const baseTheme = appState.theme === "dark" ? oneDark : [];
-        if (view) {
-            view.dispatch({
-                effects: themeCompartment.reconfigure([baseTheme, dynamicTheme]),
-            });
-        }
+        if (view) view.dispatch({ effects: themeCompartment.reconfigure([appState.theme === "dark" ? oneDark : [], dynamicTheme]) });
     });
 
     $effect(() => {
-        const wordWrap = appState.editorWordWrap;
-        if (view) {
-            view.dispatch({
-                effects: lineWrappingCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : []),
-            });
-        }
+        if (view) view.dispatch({ effects: lineWrappingCompartment.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []) });
     });
 
     $effect(() => {
-        const enable = appState.enableAutocomplete;
-        if (view) {
-            view.dispatch({
-                effects: autocompleteCompartment.reconfigure(enable ? autocompletion({ override: [completeFromBuffer] }) : []),
-            });
-        }
+        if (view) view.dispatch({ effects: autocompleteCompartment.reconfigure(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []) });
     });
 
     $effect(() => {
-        // Track dependencies to trigger re-render of the gutter
-        const _ = {
-            enabled: appState.highlightRecentChanges,
-            mode: appState.recentChangesMode,
-            span: appState.recentChangesTimespan,
-            count: appState.recentChangesCount,
-        };
-
-        if (view) {
-            view.dispatch({
-                effects: recentChangesCompartment.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
-            });
-        }
-    });
-
-    // Reactive effect to trigger redraws when settings change
-    $effect(() => {
-        const _ = {
-            mode: appState.recentChangesMode,
-            timespan: appState.recentChangesTimespan,
-            count: appState.recentChangesCount,
-        };
         if (view && appState.highlightRecentChanges) {
-            // Force a redraw by dispatching an empty transaction
-            view.dispatch();
+            view.dispatch({ effects: recentChangesCompartment.reconfigure(createRecentChangesHighlighter(lineChangeTracker)) });
         }
     });
 
@@ -229,9 +162,7 @@
                     this.decorations = pathDecorator.updateDeco(update, this.decorations);
                 }
             },
-            {
-                decorations: (v) => v.decorations,
-            }
+            { decorations: (v) => v.decorations }
         );
 
         const builtInKeymap = [
@@ -245,22 +176,14 @@
             {
                 key: "Mod-End",
                 run: (view: EditorView) => {
-                    // Disable CSS smooth scroll to allow virtualization to jump instantly
                     if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "auto";
-
                     const pos = view.state.doc.length;
-                    view.dispatch({
-                        selection: EditorSelection.cursor(pos),
-                        effects: EditorView.scrollIntoView(pos, { y: "end" }),
-                        userEvent: "select",
-                    });
-
-                    // Restore smooth scroll after a delay to allow render
+                    view.dispatch({ selection: EditorSelection.cursor(pos), effects: EditorView.scrollIntoView(pos, { y: "end" }), userEvent: "select" });
                     requestAnimationFrame(() => {
                         if (view.scrollDOM) {
                             view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight;
                             requestAnimationFrame(() => {
-                                if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "smooth";
+                                if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "";
                             });
                         }
                     });
@@ -271,79 +194,116 @@
                 key: "Mod-Home",
                 run: (view: EditorView) => {
                     if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "auto";
-
-                    view.dispatch({
-                        selection: EditorSelection.cursor(0),
-                        effects: EditorView.scrollIntoView(0, { y: "start" }),
-                        userEvent: "select",
-                    });
-
+                    view.dispatch({ selection: EditorSelection.cursor(0), effects: EditorView.scrollIntoView(0, { y: "start" }), userEvent: "select" });
                     requestAnimationFrame(() => {
                         if (view.scrollDOM) {
                             view.scrollDOM.scrollTop = 0;
                             requestAnimationFrame(() => {
-                                if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "smooth";
+                                if (view.scrollDOM) view.scrollDOM.style.scrollBehavior = "";
                             });
                         }
                     });
                     return true;
                 },
             },
-        ];
+            defaultKeymap,
+        ].flat();
 
-        const extensions = [highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(createRecentChangesHighlighter(lineChangeTracker)), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
+        // --- DOM HANDLERS ---
+        const wrappedEventHandlers = {
+            ...eventHandlers,
+            mousedown: (event: MouseEvent, view: EditorView) => {
+                if (eventHandlers?.mousedown) eventHandlers.mousedown(event, view);
+
+                // Path Navigation Logic
+                if ((event.ctrlKey || event.metaKey) && event.button === 0) {
+                    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                    if (pos !== null) {
+                        const line = view.state.doc.lineAt(pos);
+                        const pathRegex = /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g;
+                        let match;
+                        while ((match = pathRegex.exec(line.text)) !== null) {
+                            const trimmedMatch = match[0].trim();
+                            const start = line.from + match.index + (match[0].length - trimmedMatch.length);
+                            const end = start + trimmedMatch.length;
+                            if (pos >= start && pos <= end) {
+                                navigateToPath(trimmedMatch);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            scroll: (event: Event, view: EditorView) => {
+                if (eventHandlers?.scroll) eventHandlers.scroll(event, view);
+
+                // Lock Check: Only sync if not currently being driven remotely
+                if (isRemoteScrolling) return;
+
+                if (scrollRaf) cancelAnimationFrame(scrollRaf);
+                scrollRaf = requestAnimationFrame(() => {
+                    const dom = view.scrollDOM;
+                    const maxScroll = dom.scrollHeight - dom.clientHeight;
+                    const scrollTop = dom.scrollTop;
+
+                    let preciseLine = 1;
+                    let percentage = 0;
+
+                    if (maxScroll > 0) {
+                        percentage = scrollTop / maxScroll;
+
+                        // Aggressive top snap check
+                        if (scrollTop < 5) {
+                            preciseLine = 1;
+                        } else if (Math.abs(scrollTop - maxScroll) < 10) {
+                            preciseLine = view.state.doc.lines;
+                        } else {
+                            const lineBlock = view.lineBlockAtHeight(scrollTop);
+                            const lineNum = view.state.doc.lineAt(lineBlock.from).number;
+                            const progress = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+                            preciseLine = lineNum + progress;
+                        }
+                    }
+
+                    logScroll("Editor", "Scroll Source (Calc)", { scrollTop, preciseLine });
+                    editorStore.updateScroll(tabId, percentage, preciseLine, "editor");
+                    scrollRaf = null;
+                });
+            },
+        };
+
+        const domHandlers = EditorView.domEventHandlers(wrappedEventHandlers);
+
+        const extensions = [highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(createRecentChangesHighlighter(lineChangeTracker)), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, domHandlers];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
         }
 
         const updateListener = EditorView.updateListener.of((update) => {
-            // Track line changes for highlighting
             trackEditorChanges(lineChangeTracker, update);
-
             if (update.docChanged) {
-                const isUserUpdate = update.transactions.some((tr) => tr.isUserEvent("input") || tr.isUserEvent("delete") || tr.isUserEvent("undo") || tr.isUserEvent("redo") || tr.isUserEvent("move"));
-
-                if (isUserUpdate) {
-                    if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
-                    contentUpdateTimer = window.setTimeout(() => {
-                        onContentChange(update.state.doc.toString());
-                        contentUpdateTimer = null;
-                    }, CONTENT_UPDATE_DEBOUNCE_MS);
-                }
+                if (contentUpdateTimer !== null) clearTimeout(contentUpdateTimer);
+                contentUpdateTimer = window.setTimeout(() => {
+                    onContentChange(update.state.doc.toString());
+                }, CONTENT_UPDATE_DEBOUNCE_MS);
             }
-
             if (update.docChanged || update.selectionSet) {
                 if (metricsUpdateTimer !== null) clearTimeout(metricsUpdateTimer);
-                metricsUpdateTimer = window.setTimeout(async () => {
+                metricsUpdateTimer = window.setTimeout(() => {
                     const doc = update.state.doc;
                     const selection = update.state.selection.main;
                     const line = doc.lineAt(selection.head);
-                    const text = doc.toString();
-
-                    const metrics = calculateCursorMetrics(text, selection.head, {
-                        number: line.number,
-                        from: line.from,
-                        text: line.text,
-                    });
-
-                    onMetricsChange(metrics);
-                    metricsUpdateTimer = null;
+                    onMetricsChange(calculateCursorMetrics(doc.toString(), selection.head, { number: line.number, from: line.from, text: line.text }));
                 }, METRICS_UPDATE_DEBOUNCE_MS);
             }
         });
 
         extensions.push(updateListener);
 
-        const state = EditorState.create({
-            doc: initialContent,
-            extensions: extensions,
-        });
-
-        view = new EditorView({
-            state,
-            parent: editorContainer,
-        });
+        const state = EditorState.create({ doc: initialContent, extensions });
+        view = new EditorView({ state, parent: editorContainer });
 
         const handleWindowFocus = () => {
             if (view && !view.hasFocus) view.focus();
@@ -356,6 +316,52 @@
             clearTimers();
             if (view) view.destroy();
         };
+    });
+
+    // --- SCROLL RECEIVER ---
+    $effect(() => {
+        if (!cmView || !cmView.scrollDOM) return;
+
+        const currentTabState = editorStore.tabs.find((t) => t.id === tabId);
+
+        if (editorStore.lastScrollSource === "editor") return;
+
+        const targetLine = currentTabState?.topLine;
+        if (targetLine === undefined) return;
+
+        const dom = cmView.scrollDOM;
+
+        // Engage Lock
+        isRemoteScrolling = true;
+
+        // Force instant scroll for sync (overrides CSS smooth)
+        dom.style.scrollBehavior = "auto";
+
+        try {
+            if (targetLine <= 1.05) {
+                dom.scrollTop = 0;
+            } else if (targetLine >= editorStore.lineCount - 0.5) {
+                dom.scrollTop = dom.scrollHeight;
+            } else {
+                const lineInt = Math.floor(targetLine);
+                const progress = targetLine - lineInt;
+                const lineBlock = cmView.lineBlockAt(cmView.state.doc.line(lineInt).from);
+
+                // Exact alignment logic:
+                // CodeMirror's top padding is usually small (4px), but checking `documentPadding` ensures correctness.
+                const topPadding = cmView.documentPadding.top || 0;
+                dom.scrollTop = lineBlock.top + lineBlock.height * progress - topPadding;
+            }
+        } catch (e) {
+            // Fallback
+        }
+
+        // Release lock
+        if (remoteScrollTimeout) clearTimeout(remoteScrollTimeout);
+        remoteScrollTimeout = window.setTimeout(() => {
+            isRemoteScrolling = false;
+            dom.style.scrollBehavior = "";
+        }, 100);
     });
 
     onDestroy(() => {
@@ -378,7 +384,7 @@
 <style>
     :global(.cm-scroller) {
         scrollbar-width: none;
-        scroll-behavior: smooth; /* Re-enabled for general use */
+        scroll-behavior: smooth;
     }
     :global(.cm-scroller::-webkit-scrollbar) {
         display: none;

@@ -83,7 +83,10 @@ export class EditorStore {
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
 
-    // Metrics remain standard $state as they change frequently and are primitives
+    // Scroll Source Tracking
+    lastScrollSource = $state<'editor' | 'preview' | null>(null);
+
+    // Metrics
     lineCount = $state(1);
     wordCount = $state(0);
     charCount = $state(0);
@@ -237,15 +240,16 @@ export class EditorStore {
         this.sessionDirty = true;
     }
 
-    updateScroll(id: string, percentage: number, topLine?: number) {
+    updateScroll(id: string, percentage: number, topLine: number | undefined, source: 'editor' | 'preview') {
         const index = this.tabs.findIndex(t => t.id === id);
         if (index === -1) return;
 
         const tab = this.tabs[index];
         const isSignificant = Math.abs(tab.scrollPercentage - percentage) > 0.001 ||
-            (topLine !== undefined && tab.topLine !== topLine);
+            (topLine !== undefined && Math.abs((tab.topLine || 0) - topLine) > 0.01);
 
         if (isSignificant) {
+            this.lastScrollSource = source; // Set Source
             const newTabs = [...this.tabs];
             newTabs[index] = { ...tab, scrollPercentage: percentage, topLine: topLine ?? tab.topLine };
             this.tabs = newTabs;

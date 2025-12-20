@@ -1,65 +1,69 @@
 <script lang="ts">
-    import { tooltip } from "$lib/actions/tooltip";
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { logScroll } from "$lib/utils/diagnostics";
     import { AppError } from "$lib/utils/errorHandling";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { renderMarkdown } from "$lib/utils/markdownRust";
-    import { cleanupScrollSync, createScrollSyncState } from "$lib/utils/scrollSync";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy, tick } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
-    let renderError = $state<string | null>(null);
     let isRendering = $state(false);
-    let renderErrorCount = $state(0);
 
-    let isHovered = $state(false);
-    let isDragging = $state(false);
+    // Sync Lock
+    let isRemoteScrolling = false;
+    let remoteScrollTimeout: number | null = null;
+    let scrollRaf: number | null = null;
 
-    const scrollSyncState = createScrollSyncState();
-
-    const MAX_RENDER_ERRORS = 3;
     const RENDER_DEBOUNCE_MS = 300;
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let content = $derived(tab?.content || "");
-    let targetLine = $derived(tab?.topLine);
 
     let htmlContent = $state("");
     let renderDebounceTimer: number | null = null;
     let lastRenderedContent = "";
 
+    // Map: Line Number -> Pixel Offset (Top)
     let lineOffsets = $state<{ line: number; top: number }[]>([]);
 
     async function updateLineOffsets() {
-        if (!container) return;
+        // Capture state to local const for TS safety
+        const el = container;
+        if (!el) return;
+
         await tick();
-        const anchors = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
+
+        // Re-query in case DOM changed after tick
+        const currentEl = container;
+        if (!currentEl) return;
+
+        const anchors = Array.from(currentEl.querySelectorAll("[data-source-line]")) as HTMLElement[];
+
         lineOffsets = anchors
-            .map((el) => ({
-                line: parseInt(el.getAttribute("data-source-line") || "0", 10),
-                top: el.offsetTop,
+            .map((anchor) => ({
+                line: parseInt(anchor.getAttribute("data-source-line") || "0", 10),
+                top: anchor.offsetTop, // Relative to container
             }))
-            .filter((item) => !isNaN(item.line))
+            .filter((x) => !isNaN(x.line))
             .sort((a, b) => a.line - b.line);
+
+        logScroll("Preview", "Line Offsets Updated", { count: lineOffsets.length });
     }
 
     $effect(() => {
         if (content === lastRenderedContent && htmlContent) return;
-
         if (renderDebounceTimer !== null) clearTimeout(renderDebounceTimer);
 
         isRendering = true;
         renderDebounceTimer = window.setTimeout(async () => {
-            renderError = null;
             if (!content || content.trim().length === 0) {
                 htmlContent = "";
                 lastRenderedContent = content;
                 isRendering = false;
-                renderErrorCount = 0;
                 lineOffsets = [];
                 return;
             }
@@ -67,18 +71,10 @@
                 const rendered = await renderMarkdown(content, appState.gfmEnabled);
                 htmlContent = rendered;
                 lastRenderedContent = content;
-                renderErrorCount = 0;
                 await updateLineOffsets();
             } catch (e) {
-                renderErrorCount++;
-                AppError.log("Markdown:Render", e, { tabId, contentLength: content.length });
-                renderError = e instanceof Error ? e.message : "Unknown rendering error";
-                const errorMessage = String(renderError).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                if (renderErrorCount >= MAX_RENDER_ERRORS) {
-                    htmlContent = `<div style='color: var(--color-danger); padding: 1rem; border: 1px solid var(--color-danger); border-radius: 4px; margin: 1rem 0;'><strong>Rendering failed ${renderErrorCount} times:</strong><br/><code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code></div>`;
-                } else {
-                    htmlContent = `<div style='color: var(--color-danger); padding: 1rem; border: 1px solid var(--color-danger); border-radius: 4px; margin: 1rem 0;'><strong>Error rendering markdown (attempt ${renderErrorCount}/${MAX_RENDER_ERRORS}):</strong><br/><code style='display: block; margin-top: 0.5rem; font-size: 0.9em;'>${errorMessage}</code></div>`;
-                }
+                AppError.log("Markdown:Render", e);
+                htmlContent = `<div style='color:red;padding:1rem;'>Render Error</div>`;
                 lastRenderedContent = content;
             } finally {
                 isRendering = false;
@@ -90,16 +86,27 @@
         };
     });
 
+    // RECEIVER (Driven by Editor)
     $effect(() => {
-        if (!container || targetLine === undefined || lineOffsets.length === 0) return;
-        if (isHovered || isDragging) return;
+        const el = container;
+        if (!el || lineOffsets.length === 0) return;
 
-        const targetPercent = tab?.scrollPercentage || 0;
-        scrollSyncState.isRemoteScrolling = true;
+        // Reactively access store
+        const currentTabState = editorStore.tabs.find((t) => t.id === tabId);
 
-        if (targetPercent >= 0.99) {
-            container.scrollTop = container.scrollHeight - container.clientHeight;
+        // Ignore if we drove this
+        if (editorStore.lastScrollSource === "preview") return;
+
+        const targetLine = currentTabState?.topLine;
+        if (targetLine === undefined) return;
+
+        isRemoteScrolling = true;
+        el.style.scrollBehavior = "auto";
+
+        if (targetLine <= 1.05) {
+            el.scrollTop = 0;
         } else {
+            // Find bounding anchors
             let before = lineOffsets[0];
             let after = lineOffsets[lineOffsets.length - 1];
 
@@ -112,75 +119,89 @@
                 }
             }
 
-            const style = window.getComputedStyle(container);
-            const padding = parseFloat(style.paddingTop) || 32;
             let targetScroll = 0;
+            const style = window.getComputedStyle(el);
+            const padding = parseFloat(style.paddingTop) || 32;
 
-            if (before.line !== after.line) {
+            if (before && after && before !== after) {
                 const lineDiff = after.line - before.line;
                 const pixelDiff = after.top - before.top;
                 const progress = (targetLine - before.line) / lineDiff;
-                targetScroll = before.top - padding + pixelDiff * progress;
-            } else {
+
+                // Align exact offsetTop to viewport top minus padding
+                targetScroll = before.top + pixelDiff * progress - padding;
+            } else if (before) {
                 targetScroll = before.top - padding;
             }
 
-            container.scrollTop = Math.max(0, targetScroll);
+            logScroll("Preview", "Scroll Target (Apply)", { targetLine, targetScroll });
+            el.scrollTop = Math.max(0, targetScroll);
         }
 
-        if (scrollSyncState.lockTimeout) clearTimeout(scrollSyncState.lockTimeout);
-        scrollSyncState.lockTimeout = window.setTimeout(() => {
-            scrollSyncState.isRemoteScrolling = false;
-        }, 30);
+        if (remoteScrollTimeout) clearTimeout(remoteScrollTimeout);
+        remoteScrollTimeout = window.setTimeout(() => {
+            isRemoteScrolling = false;
+            if (el) el.style.scrollBehavior = "";
+        }, 100);
     });
 
+    // SOURCE (Drives Editor)
     function handleScroll() {
-        if (!container || lineOffsets.length === 0) return;
-        if (scrollSyncState.isRemoteScrolling) return;
-        if (!isHovered && !isDragging) return;
+        const el = container;
+        if (!el || lineOffsets.length === 0) return;
+        if (isRemoteScrolling) return;
 
-        const currentScroll = container.scrollTop;
-        const scrollHeight = container.scrollHeight - container.clientHeight;
+        if (scrollRaf) cancelAnimationFrame(scrollRaf);
+        scrollRaf = requestAnimationFrame(() => {
+            // Check again inside frame
+            if (!container) return;
+            const currentEl = container;
 
-        if (currentScroll + container.clientHeight >= container.scrollHeight - 5) {
-            editorStore.updateScroll(tabId, 1, editorStore.lineCount);
-            return;
-        }
+            const scrollTop = currentEl.scrollTop;
+            const scrollHeight = currentEl.scrollHeight - currentEl.clientHeight;
 
-        let bestLine = 1;
-        const style = window.getComputedStyle(container);
-        const padding = parseFloat(style.paddingTop) || 32;
+            let bestLine = 1;
+            let percentage = 0;
 
-        for (let i = 0; i < lineOffsets.length; i++) {
-            const current = lineOffsets[i];
-            const next = lineOffsets[i + 1];
+            if (scrollHeight > 0) {
+                percentage = scrollTop / scrollHeight;
 
-            const currentTop = current.top - padding;
-            if (currentTop <= currentScroll) {
-                if (next) {
-                    const nextTop = next.top - padding;
-                    if (nextTop > currentScroll) {
-                        const dist = nextTop - currentTop;
-                        const pos = currentScroll - currentTop;
-                        const progress = pos / dist;
-                        bestLine = current.line + (next.line - current.line) * progress;
-                        break;
-                    }
+                if (scrollTop <= 5) {
+                    bestLine = 1;
                 } else {
-                    bestLine = current.line;
+                    const style = window.getComputedStyle(currentEl);
+                    const padding = parseFloat(style.paddingTop) || 32;
+                    const effectiveScroll = scrollTop + padding;
+
+                    // Find the anchor nearest to the current scroll top
+                    for (let i = 0; i < lineOffsets.length; i++) {
+                        const current = lineOffsets[i];
+                        const next = lineOffsets[i + 1];
+
+                        if (current.top <= effectiveScroll) {
+                            if (next && next.top > effectiveScroll) {
+                                // Interpolate
+                                const pixelDist = next.top - current.top;
+                                const pixelProg = effectiveScroll - current.top;
+                                const ratio = pixelProg / Math.max(1, pixelDist);
+                                const lineDist = next.line - current.line;
+                                bestLine = current.line + lineDist * ratio;
+                                break;
+                            } else if (!next) {
+                                bestLine = current.line;
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        const percentage = scrollHeight > 0 ? currentScroll / scrollHeight : 0;
-        editorStore.updateScroll(tabId, percentage, bestLine);
+            logScroll("Preview", "Scroll Source", { scrollTop, bestLine });
+            editorStore.updateScroll(tabId, percentage, bestLine, "preview");
+            scrollRaf = null;
+        });
     }
 
-    function handleMouseDown() {
-        isDragging = true;
-        window.addEventListener("mouseup", () => (isDragging = false), { once: true });
-    }
-
+    // [Click Handlers]
     function handlePathNavigation(target: HTMLElement) {
         const link = target.closest("a");
         if (link) {
@@ -192,29 +213,22 @@
         }
         return false;
     }
-
     function handlePreviewClick(e: MouseEvent) {
-        if (handlePathNavigation(e.target as HTMLElement)) {
-            e.preventDefault();
-        }
+        if (handlePathNavigation(e.target as HTMLElement)) e.preventDefault();
     }
-
     function handleKeydown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            if (handlePathNavigation(e.target as HTMLElement)) {
-                e.preventDefault();
-            }
-        }
+        if (e.key === "Enter" && handlePathNavigation(e.target as HTMLElement)) e.preventDefault();
     }
 
     onDestroy(() => {
-        cleanupScrollSync(scrollSyncState);
         if (renderDebounceTimer !== null) clearTimeout(renderDebounceTimer);
+        if (remoteScrollTimeout !== null) clearTimeout(remoteScrollTimeout);
+        if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
     });
 </script>
 
 <div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--color-border-main);">
-    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appState.toggleOrientation()} use:tooltip={"Toggle split orientation"}>
+    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appState.toggleOrientation()}>
         {#if appState.splitOrientation === "vertical"}
             <FlipVertical size={16} style="color: var(--color-fg-default);" />
         {:else}
@@ -223,7 +237,7 @@
     </button>
 
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div bind:this={container} onscroll={handleScroll} onclick={handlePreviewClick} onmousedown={handleMouseDown} onkeydown={handleKeydown} onmouseenter={() => (isHovered = true)} onmouseleave={() => (isHovered = false)} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
+    <div bind:this={container} onscroll={handleScroll} onclick={handlePreviewClick} onkeydown={handleKeydown} class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0" style="background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;">
         {#if isRendering && !htmlContent}
             <div class="absolute inset-0 flex items-center justify-center text-[var(--color-fg-muted)] opacity-50">Loading...</div>
         {:else if !htmlContent}
@@ -245,11 +259,12 @@
     .preview-container {
         scrollbar-width: none;
         padding-bottom: 30px !important;
+        scroll-behavior: smooth;
     }
     .preview-container::-webkit-scrollbar {
         display: none;
     }
-
+    /* Typography styles kept as is */
     :global(.prose) {
         color: var(--color-fg-default);
     }
