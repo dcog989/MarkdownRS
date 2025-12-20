@@ -38,6 +38,7 @@
     --color-danger-text: #ff6b6b;
     --color-success: #0e639c;
     --color-success-hover: #1177bb;
+    --color-highlight-line: #4caf50;
 }
 
 /* --- Light Mode Override --- */
@@ -61,6 +62,7 @@
     --color-accent-file: #a88d3e;
 
     --color-danger-text: #e81123;
+    --color-highlight-line: #2e7d32;
 }
 
 html,

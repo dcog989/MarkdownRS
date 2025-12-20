@@ -11,7 +11,7 @@
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorSelection, EditorState } from "@codemirror/state";
     import { oneDark } from "@codemirror/theme-one-dark";
-    import { Decoration, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, MatchDecorator, ViewPlugin } from "@codemirror/view";
+    import { Decoration, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, MatchDecorator, ViewPlugin } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -178,10 +178,17 @@
     });
 
     $effect(() => {
-        const enabled = appState.highlightRecentChanges;
+        // Track dependencies to trigger re-render of the gutter
+        const _ = {
+            enabled: appState.highlightRecentChanges,
+            mode: appState.recentChangesMode,
+            span: appState.recentChangesTimespan,
+            count: appState.recentChangesCount,
+        };
+
         if (view) {
             view.dispatch({
-                effects: recentChangesCompartment.reconfigure(enabled ? createRecentChangesHighlighter(lineChangeTracker) : []),
+                effects: recentChangesCompartment.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
             });
         }
     });
@@ -277,7 +284,7 @@
             },
         ];
 
-        const extensions = [lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : []), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
+        const extensions = [highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(createRecentChangesHighlighter(lineChangeTracker)), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
