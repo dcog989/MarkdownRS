@@ -2,6 +2,7 @@
     import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
     import { Bookmark as BookmarkIcon, Search, X, Tag, Plus, Trash2, Edit2, ExternalLink } from "lucide-svelte";
     import { invoke } from "@tauri-apps/api/core";
+    import { open } from "@tauri-apps/plugin-dialog";
 
     interface Props {
         isOpen: boolean;
@@ -104,7 +105,6 @@
 
     async function handleBrowse() {
         try {
-            const { open } = await import("@tauri-apps/plugin-dialog");
             const selected = await open({
                 multiple: false,
                 filters: [
