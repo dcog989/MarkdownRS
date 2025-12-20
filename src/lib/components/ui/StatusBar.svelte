@@ -3,7 +3,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
-    import { WrapText } from "lucide-svelte";
+    import { TextWrap } from "lucide-svelte";
 
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
 
@@ -109,7 +109,7 @@
         </span>
 
         <button class="flex items-center gap-1 hover:text-[var(--color-fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--color-accent-secondary)' : 'inherit'};">
-            <WrapText size={14} />
+            <TextWrap size={14} />
         </button>
     </div>
 </footer>

@@ -3,7 +3,7 @@
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
-    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Sparkles, Wand2, WrapText } from "lucide-svelte";
+    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Sparkles, TextWrap, WandSparkles } from "lucide-svelte";
     import { onDestroy, untrack } from "svelte";
 
     let {
@@ -256,13 +256,13 @@
 
         {#if hasSelection}
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleFormatSelection}>
-                <Wand2 size={14} />
+                <WandSparkles size={14} />
                 <span>Format Selection</span>
             </button>
         {/if}
 
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleFormatDocument}>
-            <Wand2 size={14} />
+            <WandSparkles size={14} />
             <span>Format Document</span>
             <span class="ml-auto text-ui-sm opacity-50">Shift+Alt+F</span>
         </button>
@@ -338,7 +338,7 @@
             >
                 {#snippet trigger()}
                     <button type="button" class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" style="color: var(--color-fg-default);">
-                        <WrapText size={14} />
+                        <TextWrap size={14} />
                         <span>Transform</span>
                         <span class="ml-auto opacity-50">›</span>
                     </button>

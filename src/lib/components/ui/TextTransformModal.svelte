@@ -1,6 +1,6 @@
 <script lang="ts">
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
-    import { AlignLeft, ArrowDown01, ArrowDown10, ArrowDownAZ, ArrowDownZA, CaseSensitive, Eraser, FilterX, Hash, List, MinusCircle, Trash2, Type, X } from "lucide-svelte";
+    import { ArrowDown01, ArrowDown10, ArrowDownAZ, ArrowDownZA, CaseSensitive, CircleMinus, Eraser, FunnelX, Hash, List, TextAlignStart, Trash2, Type, X } from "lucide-svelte";
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
@@ -27,7 +27,7 @@
                 { id: "sort-length-asc", label: "Sort by Length (Short to Long)", description: "Sort by line length ascending", icon: ArrowDownAZ },
                 { id: "sort-length-desc", label: "Sort by Length (Long to Short)", description: "Sort by line length descending", icon: ArrowDownZA },
                 { id: "reverse", label: "Reverse Lines", description: "Reverse the order of all lines", icon: ArrowDownZA },
-                { id: "shuffle", label: "Shuffle Lines", description: "Randomly shuffle line order", icon: FilterX },
+                { id: "shuffle", label: "Shuffle Lines", description: "Randomly shuffle line order", icon: FunnelX },
             ],
         },
         {
@@ -35,8 +35,8 @@
             icon: Trash2,
             operations: [
                 { id: "remove-duplicates", label: "Remove Duplicate Lines", description: "Keep only unique lines", icon: Eraser },
-                { id: "remove-unique", label: "Remove Unique Lines", description: "Keep only duplicate lines", icon: FilterX },
-                { id: "remove-blank", label: "Remove Blank Lines", description: "Remove all empty lines", icon: MinusCircle },
+                { id: "remove-unique", label: "Remove Unique Lines", description: "Keep only duplicate lines", icon: FunnelX },
+                { id: "remove-blank", label: "Remove Blank Lines", description: "Remove all empty lines", icon: CircleMinus },
                 { id: "remove-trailing-spaces", label: "Remove Trailing Spaces", description: "Trim whitespace from line ends", icon: Eraser },
                 { id: "remove-leading-spaces", label: "Remove Leading Spaces", description: "Trim whitespace from line starts", icon: Eraser },
                 { id: "remove-all-spaces", label: "Remove All Spaces", description: "Remove all whitespace characters", icon: Eraser },
@@ -65,9 +65,9 @@
                 { id: "add-bullets", label: "Add Bullet Points", description: "Prefix lines with '- '", icon: List },
                 { id: "add-numbers", label: "Add Numbering", description: "Prefix lines with '1. 2. 3.'", icon: List },
                 { id: "add-checkboxes", label: "Add Checkboxes", description: "Prefix lines with '- [ ]'", icon: List },
-                { id: "remove-bullets", label: "Remove List Markers", description: "Remove bullets, numbers, checkboxes", icon: MinusCircle },
-                { id: "blockquote", label: "Add Blockquote", description: "Prefix lines with '> '", icon: AlignLeft },
-                { id: "remove-blockquote", label: "Remove Blockquote", description: "Remove '> ' prefix", icon: MinusCircle },
+                { id: "remove-bullets", label: "Remove List Markers", description: "Remove bullets, numbers, checkboxes", icon: CircleMinus },
+                { id: "blockquote", label: "Add Blockquote", description: "Prefix lines with '> '", icon: TextAlignStart },
+                { id: "remove-blockquote", label: "Remove Blockquote", description: "Remove '> ' prefix", icon: CircleMinus },
                 { id: "add-code-fence", label: "Wrap in Code Block", description: "Wrap with ``` fences", icon: Hash },
                 { id: "increase-heading", label: "Increase Heading Level", description: "Add # to headings", icon: Hash },
                 { id: "decrease-heading", label: "Decrease Heading Level", description: "Remove # from headings", icon: Hash },
@@ -79,12 +79,12 @@
             operations: [
                 { id: "trim-whitespace", label: "Trim All Whitespace", description: "Trim leading and trailing spaces", icon: Eraser },
                 { id: "normalize-whitespace", label: "Normalize Whitespace", description: "Replace multiple spaces with single", icon: Eraser },
-                { id: "join-lines", label: "Join Lines", description: "Combine all lines into one", icon: AlignLeft },
-                { id: "split-sentences", label: "Split into Sentences", description: "Each sentence on new line", icon: AlignLeft },
+                { id: "join-lines", label: "Join Lines", description: "Combine all lines into one", icon: TextAlignStart },
+                { id: "split-sentences", label: "Split into Sentences", description: "Each sentence on new line", icon: TextAlignStart },
                 { id: "wrap-quotes", label: "Wrap in Quotes", description: "Wrap each line in quotes", icon: Type },
                 { id: "add-line-numbers", label: "Add Line Numbers", description: "Prefix with line numbers", icon: List },
-                { id: "indent-lines", label: "Indent Lines", description: "Add 4 spaces to each line", icon: AlignLeft },
-                { id: "unindent-lines", label: "Unindent Lines", description: "Remove 4 spaces from each line", icon: AlignLeft },
+                { id: "indent-lines", label: "Indent Lines", description: "Add 4 spaces to each line", icon: TextAlignStart },
+                { id: "unindent-lines", label: "Unindent Lines", description: "Remove 4 spaces from each line", icon: TextAlignStart },
             ],
         },
     ];
