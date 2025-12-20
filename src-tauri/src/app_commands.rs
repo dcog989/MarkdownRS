@@ -269,6 +269,7 @@ pub async fn init_spellchecker(
     let cache_dir = app_dir.join("spellcheck_cache");
     let aff_path = cache_dir.join("en_US.aff");
     let dic_path = cache_dir.join("en_US.dic");
+    let jargon_path = cache_dir.join("jargon.dic");
     let custom_path = app_dir.join("custom-spelling.dic");
 
     let speller_arc = state.speller.clone();
@@ -299,8 +300,8 @@ pub async fn init_spellchecker(
     std::thread::spawn(move || {
         println!("[Spellcheck] Initializing...");
 
-        // 1. Download Dictionary if needed
-        if !aff_path.exists() || !dic_path.exists() {
+        // 1. Download Dictionaries if needed
+        if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
             println!("[Spellcheck] Downloading Hunspell dictionary...");
             let client = reqwest::blocking::Client::new();
 
@@ -340,12 +341,45 @@ pub async fn init_spellchecker(
                 }
                 Err(e) => println!("[Spellcheck] Network error downloading .dic: {}", e),
             }
+
+            // Download technical jargon dictionary
+            let jargon_url = "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
+            match client.get(jargon_url).send() {
+                Ok(resp) => {
+                    if resp.status().is_success() {
+                        if let Ok(text) = resp.text() {
+                            if let Err(e) = fs::write(&jargon_path, text) {
+                                println!("[Spellcheck] Failed to write jargon.dic file: {}", e);
+                            } else {
+                                println!("[Spellcheck] Downloaded jargon.dic file successfully");
+                            }
+                        }
+                    } else {
+                        println!("[Spellcheck] Failed to download jargon.dic: HTTP {}", resp.status());
+                    }
+                }
+                Err(e) => println!("[Spellcheck] Network error downloading jargon.dic: {}", e),
+            }
         }
 
-        // 2. Load Dictionary
+        // 2. Load Dictionary with technical jargon
         if aff_path.exists() && dic_path.exists() {
             if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
                 if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
+                    // Merge jargon dictionary if it exists
+                    let mut combined_dic = raw_dic.clone();
+                    if jargon_path.exists() {
+                        if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
+                            // Append jargon words to main dictionary
+                            // Skip the first line (word count) from jargon
+                            if let Some((_first_line, jargon_words)) = jargon_content.split_once('\n') {
+                                combined_dic.push_str("\n");
+                                combined_dic.push_str(jargon_words);
+                                println!("[Spellcheck] Merged technical jargon dictionary");
+                            }
+                        }
+                    }
+                    let raw_dic = combined_dic;
                     // Check if files contain error messages instead of dictionary data
                     if raw_aff.contains("404") || raw_aff.contains("Not Found") || 
                        raw_dic.contains("404") || raw_dic.contains("Not Found") {
@@ -366,7 +400,7 @@ pub async fn init_spellchecker(
                         Ok(dict) => {
                             if let Ok(mut speller) = speller_arc.lock() {
                                 *speller = Some(dict);
-                                println!("[Spellcheck] Dictionary loaded successfully.");
+                                println!("[Spellcheck] Dictionary loaded successfully with technical jargon.");
                             }
                         }
                         Err(e) => {
@@ -377,6 +411,7 @@ pub async fn init_spellchecker(
                             println!("[Spellcheck] Deleting corrupted files. Please restart to re-download.");
                             let _ = fs::remove_file(&aff_path);
                             let _ = fs::remove_file(&dic_path);
+                            let _ = fs::remove_file(&jargon_path);
                         }
                     }
                 }

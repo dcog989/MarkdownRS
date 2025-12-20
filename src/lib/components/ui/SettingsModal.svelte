@@ -34,7 +34,7 @@
         { key: "tabWidthMin", label: "Tab Width Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
         { key: "tabWidthMax", label: "Tab Width Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
         { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "mru", options: ["sequential", "mru"], optionLabels: ["Sequential", "MRU"] },
-        { key: "newTabPosition", label: "New Tab Position", type: "select", category: "Interface", defaultValue: "end", options: ["right", "end"], optionLabels: ["To the Right", "At the End"] },
+        { key: "newTabPosition", label: "New Tab Position", type: "select", category: "Interface", defaultValue: "end", options: ["beginning", "right", "end"], optionLabels: ["At the Beginning", "To the Right", "At the End"] },
         { key: "startupBehavior", label: "On Startup", type: "select", category: "Interface", defaultValue: "last-focused", options: ["first", "last-focused", "new"], optionLabels: ["Show First Tab", "Show Last Focused Tab", "Create New Tab"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
         { key: "tooltipDelay", label: "Tooltip Delay (ms)", type: "number", category: "Interface", defaultValue: 1000, min: 0, max: 5000 },

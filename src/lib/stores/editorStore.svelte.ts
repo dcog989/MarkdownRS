@@ -143,7 +143,11 @@ export class EditorStore {
             encoding: 'UTF-8'
         };
 
-        if (appState.newTabPosition === 'right' && appState.activeTabId) {
+        if (appState.newTabPosition === 'beginning') {
+            const newTabs = [...this.tabs];
+            newTabs.unshift(newTab);
+            this.tabs = newTabs;
+        } else if (appState.newTabPosition === 'right' && appState.activeTabId) {
             const activeIndex = this.tabs.findIndex(t => t.id === appState.activeTabId);
             const newTabs = [...this.tabs];
             newTabs.splice(activeIndex + 1, 0, newTab);

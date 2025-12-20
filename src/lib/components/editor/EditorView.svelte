@@ -170,7 +170,7 @@
 
     onMount(() => {
         const pathDecorator = new MatchDecorator({
-            regexp: /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g,
+            regexp: /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g,
             decoration: Decoration.mark({ class: "cm-local-path" }),
         });
 

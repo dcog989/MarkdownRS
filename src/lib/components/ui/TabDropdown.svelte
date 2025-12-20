@@ -1,7 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { AlertCircle, FileText, PencilLine, SquarePen } from "lucide-svelte";
+    import { AlertCircle, FileText, Pencil, PencilLine } from "lucide-svelte";
     import { tick } from "svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
 
@@ -33,6 +33,32 @@
             return (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || "").toLowerCase().includes(query);
         });
     });
+
+    // Get a longer display title for the dropdown
+    function getDropdownTitle(tab: any): string {
+        // If it has a custom title, use it
+        if (tab.customTitle) return tab.customTitle;
+        
+        // If it has a path, show the filename
+        if (tab.path) {
+            const parts = tab.path.split(/[\\\/]/);
+            return parts[parts.length - 1] || tab.title;
+        }
+        
+        // For unsaved tabs, extract first line from content (up to 60 chars)
+        if (tab.content) {
+            const lines = tab.content.split('\n');
+            const firstLine = lines.find((l: string) => l.trim().length > 0) || "";
+            let displayTitle = firstLine.replace(/^#+\s*/, "").trim();
+            const MAX_LEN = 60;
+            if (displayTitle.length > MAX_LEN) {
+                displayTitle = displayTitle.substring(0, MAX_LEN).trim() + "...";
+            }
+            return displayTitle.length > 0 ? displayTitle : tab.title;
+        }
+        
+        return tab.title;
+    }
 
     $effect(() => {
         if (isOpen) {
@@ -137,14 +163,16 @@
                     >
                         {#if tab.fileCheckFailed}
                             <AlertCircle size={14} class="shrink-0" style="color: var(--color-danger-text);" />
-                        {:else if tab.path && tab.isDirty}
-                            <SquarePen size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
+                        {:else if !tab.path && tab.isDirty}
+                            <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else if !tab.path}
-                            <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
+                            <Pencil size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
+                        {:else if tab.isDirty}
+                            <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else}
                             <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
                         {/if}
-                        <span class="truncate flex-1">{tab.customTitle || tab.title}</span>
+                        <span class="truncate flex-1" title="{tab.path || 'Unsaved content'}">{getDropdownTitle(tab)}</span>
                     </button>
                 {/each}
             </div>

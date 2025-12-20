@@ -232,7 +232,7 @@
 >
     <div
         bind:this={menuEl}
-        class="absolute w-48 rounded-md shadow-xl border py-1"
+        class="absolute w-48 rounded-md shadow-xl border py-1 custom-scrollbar"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;
@@ -241,12 +241,12 @@
         "
         role="menu"
     >
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleSave}>Save</button>
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleSaveAs}>Save As...</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleSave}>Save</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleSaveAs}>Save As...</button>
 
         <div class="h-px my-1" style="background-color: var(--color-border-main);"></div>
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2" style="color: var(--color-fg-default);" onclick={handlePin}>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-fg-default);" onclick={handlePin}>
             {#if isPinned}
                 <PinOff size={12} />
                 <span>Unpin</span>
@@ -258,34 +258,47 @@
 
         <div class="h-px my-1" style="background-color: var(--color-border-main);"></div>
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleClose}>Close</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleClose}>Close</button>
 
         <Submenu bind:show={showCloseSubmenu} side={submenuSide}>
             {#snippet trigger()}
-                <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 flex items-center justify-between" style="color: var(--color-fg-default);">
+                <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10 flex items-center" style="color: var(--color-fg-default);">
                     <span>Close Many</span>
-                    <span class="text-[10px]">›</span>
+                    <span class="ml-auto" style="color: var(--color-fg-muted); font-size: 18px;">›</span>
                 </button>
             {/snippet}
 
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {hasUnsavedTabs ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasUnsavedTabs} onclick={handleCloseUnsaved}>Close Not Saved</button>
-            <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCloseAll}>Close All</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {hasTabsToRight ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasTabsToRight} onclick={handleCloseToRight}>Close to the Right</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {hasTabsToLeft ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasTabsToLeft} onclick={handleCloseToLeft}>Close to the Left</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {hasOtherTabs ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasOtherTabs} onclick={handleCloseOthers}>Close Others</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {hasSavedTabs ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasSavedTabs} onclick={handleCloseSaved}>Close Saved</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {hasUnsavedTabs ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!hasUnsavedTabs} onclick={handleCloseUnsaved}>Close Not Saved</button>
+            <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCloseAll}>Close All</button>
         </Submenu>
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {editorStore.closedTabsHistory.length > 0 ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={editorStore.closedTabsHistory.length === 0} onclick={handleReopenLast}>Reopen Last Closed</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {editorStore.closedTabsHistory.length > 0 ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={editorStore.closedTabsHistory.length === 0} onclick={handleReopenLast}>Reopen Last Closed</button>
 
         <div class="h-px my-1" style="background-color: var(--color-border-main);"></div>
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleRename}>Rename</button>
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCopyFileName}>Copy File Name</button>
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {tab?.path ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!tab?.path} onclick={handleCopyFullPath}>Copy Full Path</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleRename}>Rename</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: var(--color-fg-default);" onclick={handleCopyFileName}>Copy File Name</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {tab?.path ? 'var(--color-fg-default)' : 'var(--color-fg-muted)'};" disabled={!tab?.path} onclick={handleCopyFullPath}>Copy Full Path</button>
 
         <div class="h-px my-1" style="background-color: var(--color-border-main);"></div>
 
-        <button type="button" class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" style="color: {tab?.path ? 'var(--color-danger)' : 'var(--color-fg-muted)'};" disabled={!tab?.path} onclick={handleSendToRecycleBin}>Delete to Recycle Bin</button>
+        <button type="button" class="w-full text-left px-4 py-2 text-ui hover:bg-white/10" style="color: {tab?.path ? 'var(--color-danger)' : 'var(--color-fg-muted)'};" disabled={!tab?.path} onclick={handleSendToRecycleBin}>Delete to Recycle Bin</button>
     </div>
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: var(--color-border-light);
+        border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+</style>

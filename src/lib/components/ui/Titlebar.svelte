@@ -129,7 +129,7 @@
             id: "ops-sort",
             label: "Edit: Sort Lines (A-Z)",
             action: () => {
-                editorStore.sortLines();
+                editorStore.performTextTransform('sort-asc');
                 showCommandPalette = false;
             },
         },
@@ -137,7 +137,7 @@
             id: "ops-trim",
             label: "Edit: Trim Whitespace",
             action: () => {
-                editorStore.trimWhitespace();
+                editorStore.performTextTransform('trim-whitespace');
                 showCommandPalette = false;
             },
         },
@@ -145,7 +145,7 @@
             id: "ops-upper",
             label: "Edit: To Upper Case",
             action: () => {
-                editorStore.toUpperCase();
+                editorStore.performTextTransform('uppercase');
                 showCommandPalette = false;
             },
         },
@@ -153,7 +153,7 @@
             id: "ops-lower",
             label: "Edit: To Lower Case",
             action: () => {
-                editorStore.toLowerCase();
+                editorStore.performTextTransform('lowercase');
                 showCommandPalette = false;
             },
         },

@@ -3,7 +3,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
-    import { AlertCircle, FileText, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+    import { AlertCircle, FileText, Pencil, PencilLine, Pin, X } from "lucide-svelte";
 
     interface Props {
         tab: EditorTab;
@@ -71,14 +71,16 @@
         user-select: none;
     "
     onclick={() => onclick?.(tab.id)}
-    oncontextmenu={(e) => oncontextmenu?.(e, tab.id)}
+    oncontextmenu={(e) => { e.preventDefault(); oncontextmenu?.(e, tab.id); }}
     onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
 >
     {#if isFileMissing}
         <AlertCircle size={14} class="flex-shrink-0" style="color: var(--color-danger-text);" />
-    {:else if tab.path && tab.isDirty}
-        <SquarePen size={14} class="flex-shrink-0" style="color: {iconColor}" />
+    {:else if !tab.path && tab.isDirty}
+        <PencilLine size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {:else if !tab.path}
+        <Pencil size={14} class="flex-shrink-0" style="color: {iconColor}" />
+    {:else if tab.isDirty}
         <PencilLine size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {:else}
         <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />

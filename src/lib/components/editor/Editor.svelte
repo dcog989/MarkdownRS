@@ -209,15 +209,16 @@
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (pos !== null) {
                     const line = view.state.doc.lineAt(pos);
-                    const pathRegex = /(?:[a-zA-Z]:[\\\/]|[\\\/]|\.?\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}'~`+]+/g;
+                    const pathRegex = /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g;
 
                     let match;
                     while ((match = pathRegex.exec(line.text)) !== null) {
-                        const start = line.from + match.index;
-                        const end = start + match[0].length;
+                        const trimmedMatch = match[0].trim();
+                        const start = line.from + match.index + (match[0].length - trimmedMatch.length);
+                        const end = start + trimmedMatch.length;
 
                         if (pos >= start && pos <= end) {
-                            navigateToPath(match[0]);
+                            navigateToPath(trimmedMatch);
                             return true;
                         }
                     }

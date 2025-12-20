@@ -16,6 +16,13 @@
         }
     </style>
 
+    <script>
+        // Prevent browser context menu globally
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+
     %sveltekit.head%
 </head>
 

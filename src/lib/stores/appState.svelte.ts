@@ -12,7 +12,7 @@ export class AppState {
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
     statusBarTransparency = $state(0); // 0 to 100
-    newTabPosition = $state<'right' | 'end'>('end');
+    newTabPosition = $state<'beginning' | 'right' | 'end'>('end');
     startupBehavior = $state<'first' | 'last-focused' | 'new'>('last-focused');
 
     // Editor & Preview Settings
