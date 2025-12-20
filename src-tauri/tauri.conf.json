@@ -42,7 +42,7 @@
         "category": "Productivity",
         "shortDescription": "The only markdown editor you need.",
         "longDescription": "MarkdownRS is a fast, slim, cross-platform notepad, focused on editing Markdown documents.",
-        "createUpdaterArtifacts": "v1Compatible"
+        "createUpdaterArtifacts": true
     },
     "plugins": {
         "shell": {
