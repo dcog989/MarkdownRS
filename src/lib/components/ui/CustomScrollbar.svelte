@@ -88,7 +88,7 @@
     }
 
     function onMouseMove(e: MouseEvent) {
-        if (!isDragging || !viewport) return;
+        if (!isDragging || !viewport || !trackRef) return;
 
         const deltaY = e.clientY - startY;
         const maxThumb = ch - thumbHeight;
@@ -97,48 +97,47 @@
         if (maxThumb > 0) {
             const scrollPos = startScrollTop + deltaY * (maxScroll / maxThumb);
             const clampedScroll = Math.max(0, Math.min(maxScroll, scrollPos));
-            
-            // Direct DOM manipulation - no reactive updates during drag
+
             viewport.scrollTop = clampedScroll;
-            
-            // Calculate new thumb position
             const newThumbTop = (clampedScroll / maxScroll) * maxThumb;
-            
-            // Batch state updates to happen only once per frame using rAF
+
             if (rafId === null) {
                 rafId = requestAnimationFrame(() => {
-                    // Apply the most recent pending value if available
                     thumbTop = pendingThumbTop !== null ? pendingThumbTop : newThumbTop;
+
+                    const thumbEl = trackRef.querySelector(".scrollbar-thumb") as HTMLElement;
+                    if (thumbEl) {
+                        thumbEl.style.top = `${thumbTop}px`;
+                    }
+
                     pendingThumbTop = null;
                     rafId = null;
                 });
             }
-            // Store the latest value to apply on next frame
             pendingThumbTop = newThumbTop;
         }
     }
 
     function onMouseUp() {
         isDragging = false;
-        
-        // Apply any pending thumb position update
+
         if (pendingThumbTop !== null) {
             thumbTop = pendingThumbTop;
             pendingThumbTop = null;
         }
-        
-        // Cancel any pending animation frame
+
         if (rafId !== null) {
             cancelAnimationFrame(rafId);
             rafId = null;
         }
-        
-        if (viewport) viewport.style.scrollBehavior = ""; // Restore CSS default (smooth)
+
+        if (viewport) {
+            viewport.style.scrollBehavior = "";
+        }
         document.body.style.userSelect = "";
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
-        
-        // Final update after drag ends
+
         update();
     }
 
