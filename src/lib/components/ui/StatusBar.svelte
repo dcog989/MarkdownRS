@@ -10,10 +10,7 @@
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
 
-    let opacity = $derived(appState.statusBarTransparency / 100);
-
-    let bgWithAlpha = $derived(`rgba(37, 37, 38, ${1 - opacity})`);
-    let textOpacity = $derived(1 - opacity);
+    let textOpacity = $derived(1 - appState.statusBarTransparency / 100);
 
     let fileSizeDisplay = $derived.by(() => {
         const bytes = activeTab?.sizeBytes || 0;
@@ -34,8 +31,16 @@
 
     function toggleLineEnding() {
         if (activeTab) {
-            activeTab.lineEnding = activeTab.lineEnding === "LF" ? "CRLF" : "LF";
-            editorStore.sessionDirty = true;
+            const index = editorStore.tabs.findIndex((t) => t.id === activeTab!.id);
+            if (index !== -1) {
+                const newTabs = [...editorStore.tabs];
+                newTabs[index] = {
+                    ...newTabs[index],
+                    lineEnding: newTabs[index].lineEnding === "LF" ? "CRLF" : "LF",
+                };
+                editorStore.tabs = newTabs;
+                editorStore.sessionDirty = true;
+            }
         }
     }
 
@@ -48,7 +53,7 @@
 <footer
     class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden status-bar pointer-events-auto"
     style="
-        background-color: {bgWithAlpha};
+        background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appState.statusBarTransparency}%);
         border-color: var(--color-border-main);
     "
 >

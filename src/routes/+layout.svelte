@@ -2,21 +2,15 @@
     import ConfirmationModal from "$lib/components/ui/ConfirmationModal.svelte";
     import GlobalTooltip from "$lib/components/ui/GlobalTooltip.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { applyTheme } from "$lib/utils/colors";
-    import { onMount } from "svelte";
     import "../app.css";
 
     let { children } = $props();
 
     $effect(() => {
         const theme = appState.theme;
-        document.documentElement.setAttribute("data-theme", theme);
-        document.documentElement.style.colorScheme = theme;
-        applyTheme();
-    });
-
-    onMount(() => {
-        applyTheme();
+        const root = document.documentElement;
+        root.setAttribute("data-theme", theme);
+        root.style.colorScheme = theme;
     });
 </script>
 

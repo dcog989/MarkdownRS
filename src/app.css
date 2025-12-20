@@ -3,66 +3,73 @@
 
 /* Tailwind Configuration */
 @theme {
+    /* Brand Bases */
+    --color-brand-accent: #7c5a73;
+    --color-brand-file: #eac55f;
+    --color-brand-link: #3794ff;
+
     /* Backgrounds */
-    --color-bg-main: #1e1e1e;
-    --color-bg-panel: #252526;
-    --color-bg-header: #2d2d2d;
-    --color-bg-titlebar: #181818;
-    --color-bg-hover: #343434;
-    --color-bg-active: #434343;
-    --color-bg-input: #3c3c3c;
+    --color-bg-main: oklch(0.25 0 0);
+    --color-bg-panel: oklch(0.28 0.01 280);
+    --color-bg-header: oklch(0.32 0.01 280);
+    --color-bg-titlebar: oklch(0.2 0 0);
+    --color-bg-hover: oklch(0.35 0.01 280);
+    --color-bg-active: oklch(0.4 0.01 280);
+    --color-bg-input: oklch(0.3 0.01 280);
     --color-bg-backdrop: rgba(0, 0, 0, 0.6);
 
     /* Borders */
-    --color-border-main: #333333;
-    --color-border-light: #454545;
-    --color-border-focus: #6c6c6c;
+    --color-border-main: oklch(0.35 0 0);
+    --color-border-light: oklch(0.45 0 0);
+    --color-border-focus: oklch(0.6 0 0);
 
     /* Text */
-    --color-fg-default: #d4d4d4;
-    --color-fg-muted: #9ca3af;
-    --color-fg-inverse: #ffffff;
+    --color-fg-default: oklch(0.9 0 0);
+    --color-fg-muted: oklch(0.7 0 0);
+    --color-fg-inverse: oklch(1 0 0);
 
-    /* Accents */
-    --color-accent-primary: #7c5a73;
-    --color-accent-secondary: #ae8da6;
-    --color-accent-dark: #32242f;
-    --color-accent-file: #eac55f;
-    --color-accent-link: #3794ff;
+    /* Accents (Derived with WCAG-Safe Lightness for Dark BG) */
+    --color-accent-primary: oklch(from var(--color-brand-accent) 0.75 c h);
+    --color-accent-secondary: oklch(from var(--color-brand-accent) 0.85 c h);
+    --color-accent-file: oklch(from var(--color-brand-file) 0.8 c h);
+    --color-accent-link: oklch(from var(--color-brand-link) 0.75 c h);
 
     /* Functional */
-    --color-status-bar-bg: #7c5a73;
-    --color-status-bar-fg: #ffffff;
-    --color-danger: #d1313f;
-    --color-danger-hover: #ff3041;
-    --color-danger-text: #ff6b6b;
-    --color-success: #0e639c;
-    --color-success-hover: #1177bb;
-    --color-highlight-line: #4caf50;
+    --color-status-bar-bg: var(--color-accent-primary);
+    --color-status-bar-fg: var(--color-fg-inverse);
+    --color-danger: oklch(0.55 0.22 25);
+    --color-danger-hover: oklch(0.6 0.25 25);
+    --color-danger-text: oklch(0.8 0.15 25);
+    --color-success: oklch(0.5 0.15 150);
+    --color-success-hover: oklch(0.6 0.18 150);
+    --color-highlight-line: oklch(0.7 0.15 140);
 }
 
-/* --- Light Mode Override --- */
 [data-theme="light"] {
-    --color-bg-main: #ffffff;
-    --color-bg-panel: #f3f3f3;
-    --color-bg-header: #e5e5e5;
-    --color-bg-titlebar: #dddddd;
-    --color-bg-hover: #e8e8e8;
-    --color-bg-active: #d4d4d4;
-    --color-bg-input: #ffffff;
-    --color-bg-backdrop: rgba(0, 0, 0, 0.3);
+    --color-bg-main: oklch(0.98 0 0);
+    --color-bg-panel: oklch(0.95 0 0);
+    --color-bg-header: oklch(0.9 0 0);
+    --color-bg-titlebar: oklch(0.85 0 0);
+    --color-bg-hover: oklch(0.92 0 0);
+    --color-bg-active: oklch(0.88 0 0);
+    --color-bg-input: oklch(1 0 0);
+    --color-bg-backdrop: rgba(0, 0, 0, 0.2);
 
-    --color-border-main: #e5e5e5;
-    --color-border-light: #cccccc;
+    --color-border-main: oklch(0.9 0 0);
+    --color-border-light: oklch(0.8 0 0);
 
-    --color-fg-default: #333333;
-    --color-fg-muted: #666666;
-    --color-fg-inverse: #ffffff;
+    --color-fg-default: oklch(0.2 0 0);
+    --color-fg-muted: oklch(0.4 0 0);
+    --color-fg-inverse: oklch(1 0 0);
 
-    --color-accent-file: #a88d3e;
+    /* Accents (Derived with WCAG-Safe Lightness for Light BG) */
+    --color-accent-primary: oklch(from var(--color-brand-accent) 0.4 c h);
+    --color-accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
+    --color-accent-file: oklch(from var(--color-brand-file) 0.45 c h);
+    --color-accent-link: oklch(from var(--color-brand-link) 0.5 c h);
 
-    --color-danger-text: #e81123;
-    --color-highlight-line: #2e7d32;
+    --color-danger-text: oklch(0.5 0.2 25);
+    --color-highlight-line: oklch(0.4 0.15 140);
 }
 
 html,
