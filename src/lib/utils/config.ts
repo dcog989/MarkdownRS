@@ -4,11 +4,17 @@
 export const CONFIG = {
     // Editor Settings
     EDITOR: {
-        CONTENT_DEBOUNCE_MS: 100,
+        CONTENT_DEBOUNCE_MS: 80,
+        METRICS_DEBOUNCE_MS: 80,
         SCROLL_DEBOUNCE_MS: 150,
-        METRICS_DEBOUNCE_MS: 200,
         MAX_FILE_SIZE_MB: 50,
-        SMART_TITLE_MAX_LENGTH: 20,
+        SMART_TITLE_MAX_LENGTH: 25,
+    },
+
+    // Spellcheck Settings
+    SPELLCHECK: {
+        LINT_DELAY_MS: 350,
+        STARTUP_DELAY_MS: 200,
     },
 
     // Tab Settings
@@ -30,7 +36,7 @@ export const CONFIG = {
 
     // Session & Auto-save
     SESSION: {
-        AUTO_SAVE_INTERVAL_MS: 30000, // 30 seconds
+        AUTO_SAVE_INTERVAL_MS: 30000,
         SAVE_ON_BLUR: true,
     },
 
@@ -38,7 +44,7 @@ export const CONFIG = {
     PERFORMANCE: {
         LARGE_FILE_THRESHOLD_LINES: 10000,
         SCROLL_SYNC_THRESHOLD_PX: 10,
-        SCROLL_SYNC_THROTTLE_MS: 16, // ~60fps
+        SCROLL_SYNC_THROTTLE_MS: 16,
     },
 
     // UI

@@ -1,3 +1,4 @@
+import { CONFIG } from "$lib/utils/config";
 import { addToDictionary } from "$lib/utils/fileSystem";
 import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
 import { syntaxTree } from "@codemirror/language";
@@ -6,9 +7,6 @@ import { EditorView } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
 import { invoke } from "@tauri-apps/api/core";
 
-/**
- * Optimized linter with a reduced 350ms debounce delay.
- */
 export const createSpellCheckLinter = () => linter(async (view) => {
     if (!spellcheckState.dictionaryLoaded) return [];
 
@@ -92,16 +90,13 @@ export const createSpellCheckLinter = () => linter(async (view) => {
     } catch (err) {
         return [];
     }
-}, { delay: 350 });
+}, { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS });
 
 export function triggerImmediateLint(view: EditorView) {
     view.dispatch({});
     forceLinting(view);
 }
 
-/**
- * Refreshes custom dictionary and triggers a linting pass.
- */
 export async function refreshSpellcheck(view: EditorView | undefined) {
     if (!view) return;
     await refreshCustomDictionary();
