@@ -2,7 +2,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { relaunch } from "@tauri-apps/plugin-process";
     import { check } from "@tauri-apps/plugin-updater";
-    import { Loader2, RefreshCw } from "lucide-svelte";
+    import { LoaderCircle, RefreshCw } from "lucide-svelte";
     import { onMount } from "svelte";
     import Modal from "./Modal.svelte";
 
@@ -95,7 +95,7 @@
                 <span class="font-mono font-bold flex-1 text-left" style="color: var(--color-fg-default);">{appInfo.version}</span>
                 <button class="text-ui-sm px-2 py-0.5 rounded flex items-center gap-1 transition-colors border shrink-0" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-light);" onclick={checkForUpdates} disabled={isChecking}>
                     {#if isChecking}
-                        <Loader2 size={12} class="animate-spin" />
+                        <LoaderCircle size={12} class="animate-spin" />
                     {:else}
                         <RefreshCw size={12} />
                     {/if}
