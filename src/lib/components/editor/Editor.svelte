@@ -4,6 +4,7 @@
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type EditorTab, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
+    import { CONFIG } from "$lib/utils/config";
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { cleanupScrollSync, createScrollSyncState, getScrollPercentage } from "$lib/utils/scrollSync";
@@ -294,7 +295,7 @@
             untrack(() => {
                 setTimeout(() => {
                     if (cmView) triggerImmediateLint(cmView);
-                }, 200);
+                }, CONFIG.SPELLCHECK.STARTUP_DELAY_MS);
             });
         }
     });
