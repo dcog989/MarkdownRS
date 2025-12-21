@@ -133,11 +133,11 @@
                     <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
                 </div>
 
-                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
+                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none" style="color: var(--color-fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
                     <Keyboard size={16} />
                 </button>
 
-                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-fg-muted);" onclick={onClose} aria-label="Close Settings">
+                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none" style="color: var(--color-fg-muted);" onclick={onClose} aria-label="Close Settings">
                     <X size={16} />
                 </button>
             </div>

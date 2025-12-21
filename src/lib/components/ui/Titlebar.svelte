@@ -278,22 +278,22 @@
 <div class="h-9 flex items-center select-none w-full border-b shrink-0" style="background-color: var(--color-bg-titlebar); border-color: var(--color-border-main); transform: translateZ(0);" data-tauri-drag-region>
     <!-- Logo / Settings -->
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)]" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)] outline-none" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
             <Settings size={14} />
         </button>
     </div>
 
     <!-- Command Palette Search (Center) -->
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--color-bg-input); color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
+        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
             <Search size={12} />
             <span class="flex-1 text-left">Search commands...</span>
             <span class="text-[10px] opacity-60">Ctrl+P</span>
         </button>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
             <Bookmark size={14} />
         </button>
     </div>
@@ -301,7 +301,7 @@
     <!-- Controls -->
     <div class="flex h-full pointer-events-auto items-center">
         <button
-            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors"
+            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors outline-none"
             style="color: var(--color-fg-muted);"
             onclick={() => {
                 appState.toggleSplitView();
@@ -312,11 +312,11 @@
             <Eye size={14} class={appState.splitView ? "text-[var(--color-fg-default)]" : "opacity-50"} />
         </button>
 
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)]" onclick={minimize} use:tooltip={"Minimize"}><Minus size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)] outline-none" onclick={minimize} use:tooltip={"Minimize"}><Minus size={16} /></button>
         <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)]" onclick={toggleMaximize} use:tooltip={"Maximize / Restore"}>
             {#if isMaximized}<Copy size={14} class="rotate-180" />{:else}<Square size={14} />{/if}
         </button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white text-[var(--color-fg-muted)]" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white text-[var(--color-fg-muted)] outline-none" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
     </div>
 </div>
 
@@ -334,7 +334,7 @@
                     {#each filteredCommands as command, index}
                         <button
                             type="button"
-                            class="w-full text-left px-3 py-2 text-ui flex justify-between items-center"
+                            class="w-full text-left px-3 py-2 text-ui flex justify-between items-center outline-none"
                             style="
                                 background-color: {index === selectedCommandIndex ? 'var(--color-accent-primary)' : 'transparent'};
                                 color: {index === selectedCommandIndex ? 'var(--color-fg-inverse)' : 'var(--color-fg-default)'};
