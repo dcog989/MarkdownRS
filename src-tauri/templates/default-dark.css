@@ -1,22 +1,31 @@
 /* MarkdownRS Default Dark Theme */
 
 /* --- EDITOR CONTENT --- */
-.cm-content {
+.cm-editor .cm-content {
     caret-color: #aeafad;
 }
-.cm-gutters {
+.cm-editor .cm-gutters {
     background-color: var(--color-bg-main) !important;
     border-right: 1px solid var(--color-border-main) !important;
 }
-.cm-lineNumbers .cm-gutterElement {
-    color: #636d83 !important;
+.cm-editor .cm-gutterElement {
+    color: #515151 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 8px !important;
 }
-.cm-activeLine {
-    background-color: rgba(255, 255, 255, 0.03) !important;
-}
-.cm-activeLineGutter {
+.cm-editor .cm-activeLineGutter {
     background-color: var(--color-bg-panel) !important;
     color: var(--color-fg-default) !important;
+    font-weight: bold;
+}
+.cm-editor {
+    background-color: var(--color-bg-main);
+    color: var(--color-fg-default);
+}
+.cm-editor .cm-activeLine {
+    background-color: rgba(255, 255, 255, 0.03) !important;
 }
 .cm-h1 {
     color: #e06c75;

@@ -587,6 +587,7 @@ pub async fn get_theme_css(
 
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
+    // Only write if the file does not exist to allow user persistence
     if !theme_path.exists() {
         let template = match theme_name.as_str() {
             "default-dark" => Some(include_str!("../templates/default-dark.css")),

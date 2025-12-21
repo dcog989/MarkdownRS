@@ -20,13 +20,14 @@
         async function loadTheme() {
             try {
                 const css = await invoke<string>("get_theme_css", { themeName });
-                let styleTag = document.getElementById("user-theme-styles");
+                let styleTag = document.getElementById("user-theme-styles") as HTMLStyleElement;
                 if (!styleTag) {
                     styleTag = document.createElement("style");
                     styleTag.id = "user-theme-styles";
                     document.head.appendChild(styleTag);
                 }
                 styleTag.textContent = css;
+                document.head.appendChild(styleTag);
             } catch (err) {
                 console.error("Theme Load Error:", err);
             }

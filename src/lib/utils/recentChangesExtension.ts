@@ -12,8 +12,6 @@ class LineNumberMarker extends GutterMarker {
         const span = document.createElement("span");
         span.textContent = String(this.lineNo);
 
-        span.style.color = "var(--color-fg-muted)";
-
         if (this.alpha > 0) {
             span.style.color = `color-mix(in srgb, var(--color-highlight-line), var(--color-fg-muted) ${Math.round((1 - this.alpha) * 100)}%)`;
             span.style.fontWeight = "bold";

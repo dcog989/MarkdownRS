@@ -79,7 +79,12 @@
             },
             ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
             ".cm-content": { paddingBottom: "40px !important" },
-            ".cm-gutters": { border: "none" },
+            // Neutralize gutters in JS to give CSS file total priority
+            ".cm-gutters": {
+                backgroundColor: "transparent",
+                color: "currentColor",
+                border: "none",
+            },
             ".cm-tooltip": { borderRadius: "6px !important", zIndex: "100", backgroundColor: "var(--color-bg-panel) !important", border: "1px solid var(--color-border-light) !important", color: "var(--color-fg-default) !important" },
             ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--color-accent-primary) !important", color: "var(--color-fg-inverse) !important" },
         });
