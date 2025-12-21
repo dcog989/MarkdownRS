@@ -7,6 +7,7 @@
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
+    import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -42,7 +43,8 @@
     let view = $state<EditorView>();
     let wrapComp = new Compartment(),
         autoComp = new Compartment(),
-        recentComp = new Compartment();
+        recentComp = new Compartment(),
+        historyComp = new Compartment();
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
     const lineChangeTracker = new LineChangeTracker();
@@ -59,23 +61,48 @@
             ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto", overflowAnchor: "none" },
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
+            "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+                backgroundColor: "var(--color-selection-bg) !important"
+            },
+            ".cm-selectionMatch": {
+                backgroundColor: "var(--color-selection-match-bg)"
+            },
+            ".cm-tooltip": { 
+                backgroundColor: "var(--color-bg-panel)",
+                border: "1px solid var(--color-border-light)",
+                color: "var(--color-fg-default)"
+            },
+            ".cm-tooltip.cm-tooltip-lint": {
+                backgroundColor: "var(--color-bg-panel)",
+                border: "1px solid var(--color-border-light)",
+                color: "var(--color-fg-default)"
+            }
         });
     });
 
     $effect(() => {
-        if (view) view.dispatch({ effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])] });
+        if (view) view.dispatch({ 
+            effects: [
+                wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), 
+                autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), 
+                recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : []),
+                historyComp.reconfigure(history({ minDepth: appState.undoDepth }))
+            ] 
+        });
     });
 
     onMount(() => {
         const extensions = [
             highlightActiveLineGutter(),
             highlightActiveLine(),
-            history(),
+            historyComp.of(history({ minDepth: appState.undoDepth })),
             search({ top: true }),
             highlightSelectionMatches(),
             autoComp.of([]),
             recentComp.of([]),
             closeBrackets(),
+            filePathPlugin,
+            filePathTheme,
             keymap.of([
                 {
                     key: "Insert",

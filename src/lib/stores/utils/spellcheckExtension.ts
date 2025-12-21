@@ -105,6 +105,14 @@ export function triggerImmediateLint(view: EditorView) {
 export async function refreshSpellcheck(view: EditorView | undefined) {
     if (!view) return;
     await refreshCustomDictionary();
+    // Clear misspelled cache for words that are now in the custom dictionary
+    const updatedCache = new Set<string>();
+    for (const word of spellcheckState.misspelledCache) {
+        if (!spellcheckState.customDictionary.has(word)) {
+            updatedCache.add(word);
+        }
+    }
+    spellcheckState.misspelledCache = updatedCache;
     triggerImmediateLint(view);
 }
 

@@ -13,6 +13,7 @@
     let { isOpen = $bindable(false), onClose, onOpenFile }: Props = $props();
 
     let searchQuery = $state("");
+    let searchInputEl = $state<HTMLInputElement>();
     let editingId = $state<string | null>(null);
     let editTitle = $state("");
     let editTags = $state("");
@@ -31,6 +32,10 @@
             editingId = null;
             showAddForm = false;
             browseError = "";
+        }
+        if (isOpen) {
+            // Focus search input when modal opens
+            setTimeout(() => searchInputEl?.focus(), 0);
         }
     });
 
@@ -184,7 +189,7 @@
 
                 <div class="flex-1 relative">
                     <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-                    <input bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
+                    <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
                 </div>
 
                 <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-accent-primary);" onclick={startAdd} title="Add Bookmark" aria-label="Add Bookmark">

@@ -318,7 +318,7 @@
 
         const containerRect = scrollContainer.getBoundingClientRect();
         const tabRect = activeEl.getBoundingClientRect();
-        const PEEK_AMOUNT = 80;
+        const PEEK_AMOUNT = 75;
 
         if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
             const offsetRight = activeEl.offsetLeft + activeEl.offsetWidth;

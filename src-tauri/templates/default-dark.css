@@ -27,6 +27,17 @@
 .cm-editor .cm-activeLine {
     background-color: rgba(255, 255, 255, 0.08) !important;
 }
+
+/* Text selection */
+.cm-editor.cm-focused .cm-selectionBackground,
+.cm-editor .cm-selectionBackground,
+.cm-editor .cm-content ::selection {
+    background-color: rgba(97, 175, 239, 0.3) !important;
+}
+.cm-editor .cm-selectionMatch {
+    background-color: rgba(209, 154, 102, 0.3);
+}
+
 .cm-h1,
 .cm-h2,
 .cm-h3,

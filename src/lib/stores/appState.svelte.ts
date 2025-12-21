@@ -26,6 +26,7 @@ export class AppState {
     recentChangesMode = $state<'time' | 'count'>('time');
     recentChangesTimespan = $state(60);
     recentChangesCount = $state(10);
+    undoDepth = $state(200);
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
     gfmEnabled = $state(true);

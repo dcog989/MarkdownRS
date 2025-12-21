@@ -33,6 +33,7 @@
     --color-accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
     --color-accent-file: oklch(from var(--color-brand-file) 0.8 c h);
     --color-accent-link: oklch(from var(--color-brand-link) 0.75 c h);
+    --color-accent-link-hover: oklch(from var(--color-brand-link) 0.85 c h);
 
     /* Functional */
     --color-status-bar-bg: var(--color-accent-primary);
@@ -43,6 +44,8 @@
     --color-success: oklch(0.5 0.15 150);
     --color-success-hover: oklch(0.6 0.18 150);
     --color-highlight-line: oklch(0.7 0.15 140);
+    --color-selection-bg: oklch(0.4 0.05 240);
+    --color-selection-match-bg: oklch(0.35 0.05 60);
 }
 
 [data-theme="light"] {
@@ -70,9 +73,12 @@
     --color-accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
     --color-accent-file: oklch(from var(--color-brand-file) 0.45 c h);
     --color-accent-link: oklch(from var(--color-brand-link) 0.5 c h);
+    --color-accent-link-hover: oklch(from var(--color-brand-link) 0.4 c h);
 
     --color-danger-text: oklch(0.5 0.2 25);
     --color-highlight-line: oklch(0.4 0.15 140);
+    --color-selection-bg: oklch(0.75 0.05 240);
+    --color-selection-match-bg: oklch(0.85 0.05 60);
 }
 
 html,

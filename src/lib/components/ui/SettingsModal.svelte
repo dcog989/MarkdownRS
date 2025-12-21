@@ -12,6 +12,7 @@
     let { isOpen = $bindable(false), onClose }: Props = $props();
 
     let searchQuery = $state("");
+    let searchInputEl = $state<HTMLInputElement>();
 
     $effect(() => {
         if (isOpen) {
@@ -20,6 +21,9 @@
                     appState.availableThemes = themes;
                 })
                 .catch((err) => console.error("Failed to load themes:", err));
+            
+            // Focus search input when modal opens
+            setTimeout(() => searchInputEl?.focus(), 0);
         }
     });
 
@@ -36,6 +40,7 @@
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
+        { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },
         { key: "highlightRecentChanges", label: "Highlight Recent Changes", type: "boolean", category: "Editor", defaultValue: false },
         { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "time", options: ["time", "count"], optionLabels: ["Time-Based", "Last N Changes"] },
         { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300 },
@@ -130,7 +135,7 @@
 
                 <div class="flex-1 relative">
                     <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-                    <input bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
+                    <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
                 </div>
 
                 <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none" style="color: var(--color-fg-muted);" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
