@@ -17,7 +17,7 @@
 }
 .cm-editor .cm-activeLineGutter {
     background-color: var(--color-bg-panel) !important;
-    color: var(--color-fg-default) !important;
+    color: var(--color-fg-muted) !important;
     font-weight: bold;
 }
 .cm-editor {
@@ -25,7 +25,7 @@
     color: var(--color-fg-default);
 }
 .cm-editor .cm-activeLine {
-    background-color: rgba(255, 255, 255, 0.03) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
 }
 .cm-h1,
 .cm-h2,
@@ -37,10 +37,10 @@
     font-weight: bold;
 }
 .cm-h1 {
-    font-size: 1.5em;
+    font-size: 1.3em;
 }
 .cm-h2 {
-    font-size: 1.3em;
+    font-size: 1.2em;
 }
 .cm-h3 {
     font-size: 1.1em;
