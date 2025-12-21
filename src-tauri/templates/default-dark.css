@@ -1,0 +1,69 @@
+/* MarkdownRS Default Dark Theme */
+
+/* --- EDITOR CONTENT --- */
+.cm-content {
+    caret-color: #aeafad;
+}
+.cm-h1 {
+    color: #e06c75;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+.cm-h2 {
+    color: #d19a66;
+    font-weight: bold;
+    font-size: 1.3em;
+}
+.cm-h3 {
+    color: #98c379;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.cm-keyword {
+    color: #c678dd;
+}
+.cm-atom {
+    color: #d19a66;
+}
+.cm-number {
+    color: #d19a66;
+}
+.cm-string {
+    color: #98c379;
+}
+.cm-comment {
+    color: #7f848e;
+    font-style: italic;
+}
+.cm-link {
+    color: #61afef;
+    text-decoration: underline;
+}
+.cm-emphasis {
+    font-style: italic;
+}
+.cm-strong {
+    font-weight: bold;
+}
+.cm-code {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e5c07b;
+    border-radius: 3px;
+}
+
+/* --- PREVIEW CONTENT --- */
+.prose {
+    --tw-prose-body: #abb2bf;
+    --tw-prose-headings: #e06c75;
+    --tw-prose-links: #61afef;
+    --tw-prose-code: #e5c07b;
+    --tw-prose-quotes: #7f848e;
+}
+.prose h1 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.3em;
+}
+.prose blockquote {
+    border-left: 4px solid #c678dd;
+    background: rgba(198, 120, 221, 0.05);
+}

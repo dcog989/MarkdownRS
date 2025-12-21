@@ -6,13 +6,13 @@
     import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
+    import { userThemeExtension } from "$lib/utils/themeMapper";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorState } from "@codemirror/state";
-    import { oneDark } from "@codemirror/theme-one-dark";
     import { Decoration, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, MatchDecorator, ViewPlugin } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
@@ -47,7 +47,6 @@
         cmView = view;
     });
 
-    let themeComp = new Compartment();
     let wrapComp = new Compartment();
     let autoComp = new Compartment();
     let recentComp = new Compartment();
@@ -91,7 +90,7 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: [themeComp.reconfigure([appState.theme === "dark" ? oneDark : [], dynamicTheme]), wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])],
+                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])],
             });
         }
     });
@@ -135,7 +134,8 @@
                 ...historyKeymap,
                 ...defaultKeymap,
             ]),
-            themeComp.of([]),
+            dynamicTheme,
+            userThemeExtension,
             spellCheckLinter,
             wrapComp.of([]),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
@@ -156,10 +156,8 @@
                 if (update.docChanged || update.selectionSet) {
                     if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
                     metricsUpdateTimer = window.setTimeout(() => {
-                        const doc = update.state.doc;
-                        const selection = update.state.selection.main;
-                        const line = doc.lineAt(selection.head);
-                        onMetricsChange(calculateCursorMetrics(doc.toString(), selection.head, { number: line.number, from: line.from, text: line.text }));
+                        const line = update.state.doc.lineAt(update.state.selection.main.head);
+                        onMetricsChange(calculateCursorMetrics(update.state.doc.toString(), update.state.selection.main.head, { number: line.number, from: line.from, text: line.text }));
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
             })
@@ -187,10 +185,5 @@
     }
     :global(.cm-scroller::-webkit-scrollbar) {
         display: none;
-    }
-    :global(.cm-local-path) {
-        color: var(--color-accent-link);
-        text-decoration: underline;
-        cursor: pointer;
     }
 </style>

@@ -513,10 +513,7 @@ pub async fn calculate_cursor_metrics_command(
 
 // Bookmark commands
 #[tauri::command]
-pub async fn add_bookmark(
-    state: State<'_, AppState>,
-    bookmark: Bookmark,
-) -> Result<(), String> {
+pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
     let db = state.db.lock().map_err(|_| "Failed to lock db")?;
     db.add_bookmark(&bookmark).map_err(|e| e.to_string())
 }
@@ -542,4 +539,49 @@ pub async fn update_bookmark_access_time(
     let db = state.db.lock().map_err(|_| "Failed to lock db")?;
     db.update_bookmark_access_time(&id, &last_accessed)
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let themes_dir = app_dir.join("Themes");
+
+    if !themes_dir.exists() {
+        fs::create_dir_all(&themes_dir).map_err(|e| e.to_string())?;
+        let dark = include_str!("../templates/default-dark.css");
+        let light = include_str!("../templates/default-light.css");
+        let _ = fs::write(themes_dir.join("default-dark.css"), dark);
+        let _ = fs::write(themes_dir.join("default-light.css"), light);
+    }
+
+    let mut themes = Vec::new();
+    if let Ok(entries) = fs::read_dir(themes_dir) {
+        for entry in entries.flatten() {
+            if entry.path().extension().and_then(|s| s.to_str()) == Some("css") {
+                if let Some(name) = entry.path().file_stem().and_then(|s| s.to_str()) {
+                    themes.push(name.to_string());
+                }
+            }
+        }
+    }
+    Ok(themes)
+}
+
+#[tauri::command]
+pub async fn get_theme_css(
+    app_handle: tauri::AppHandle,
+    theme_name: String,
+) -> Result<String, String> {
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let theme_path = app_dir.join("Themes").join(format!("{}.css", theme_name));
+    if !theme_path.exists() {
+        return Err("Theme file not found".to_string());
+    }
+    fs::read_to_string(theme_path).map_err(|e| e.to_string())
 }

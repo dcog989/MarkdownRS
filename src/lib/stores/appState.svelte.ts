@@ -2,31 +2,32 @@ export class AppState {
     activeTabId = $state<string | null>(null);
     splitView = $state(true);
     theme = $state<'dark' | 'light'>('dark');
+    activeTheme = $state('default-dark');
 
     // Layout State
     splitPercentage = $state(0.5);
     splitOrientation = $state<'vertical' | 'horizontal'>('vertical');
 
     // Preferences
-    tabCycling = $state<'mru' | 'sequential'>('mru'); // Fixed: Default to MRU
+    tabCycling = $state<'mru' | 'sequential'>('mru');
     tabWidthMin = $state(100);
     tabWidthMax = $state(200);
-    statusBarTransparency = $state(0); // 0 to 100
+    statusBarTransparency = $state(0);
     newTabPosition = $state<'beginning' | 'right' | 'end'>('end');
     startupBehavior = $state<'first' | 'last-focused' | 'new'>('last-focused');
 
     // Editor & Preview Settings
     editorFontFamily = $state("Consolas, 'Courier New', monospace");
     editorFontSize = $state(14);
-    editorWordWrap = $state(true); // Fixed: Default to true
+    editorWordWrap = $state(true);
     enableAutocomplete = $state(true);
     highlightRecentChanges = $state(false);
     recentChangesMode = $state<'time' | 'count'>('time');
-    recentChangesTimespan = $state(60); // seconds
-    recentChangesCount = $state(10); // number of changes
+    recentChangesTimespan = $state(60);
+    recentChangesCount = $state(10);
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
-    gfmEnabled = $state(true); // GitHub Flavored Markdown
+    gfmEnabled = $state(true);
 
     // Advanced Settings
     logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');
@@ -43,11 +44,9 @@ export class AppState {
     lineEndingPreference = $state<'system' | 'LF' | 'CRLF'>('system');
 
     // Tooltip Settings
-    tooltipDelay = $state(1000); // milliseconds
+    tooltipDelay = $state(1000);
 
-    constructor() {
-        // Initialization logic
-    }
+    constructor() { }
 
     toggleSplitView() {
         this.splitView = !this.splitView;
@@ -55,6 +54,7 @@ export class AppState {
 
     setTheme(newTheme: 'dark' | 'light') {
         this.theme = newTheme;
+        this.activeTheme = newTheme === 'dark' ? 'default-dark' : 'default-light';
     }
 
     toggleOrientation() {

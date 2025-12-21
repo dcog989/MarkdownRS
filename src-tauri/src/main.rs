@@ -170,6 +170,8 @@ fn main() {
             app_commands::get_all_bookmarks,
             app_commands::delete_bookmark,
             app_commands::update_bookmark_access_time,
+            app_commands::get_available_themes,
+            app_commands::get_theme_css,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
