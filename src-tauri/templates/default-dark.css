@@ -27,19 +27,22 @@
 .cm-editor .cm-activeLine {
     background-color: rgba(255, 255, 255, 0.03) !important;
 }
-.cm-h1 {
+.cm-h1,
+.cm-h2,
+.cm-h3,
+.cm-h4,
+.cm-h5,
+.cm-h6 {
     color: #e06c75;
     font-weight: bold;
+}
+.cm-h1 {
     font-size: 1.5em;
 }
 .cm-h2 {
-    color: #d19a66;
-    font-weight: bold;
     font-size: 1.3em;
 }
 .cm-h3 {
-    color: #98c379;
-    font-weight: bold;
     font-size: 1.1em;
 }
 .cm-keyword {
@@ -70,7 +73,7 @@
 }
 .cm-code {
     background: rgba(255, 255, 255, 0.05);
-    color: #e5c07b;
+    color: #89e57b;
     border-radius: 3px;
 }
 

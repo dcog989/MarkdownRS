@@ -10,8 +10,6 @@
     background-color: var(--color-bg-main) !important;
     border-right: 1px solid var(--color-border-main) !important;
 }
-
-/* Base style for all line numbers */
 .cm-editor .cm-gutterElement {
     color: #9ca3af !important;
     display: flex !important;
@@ -19,15 +17,11 @@
     justify-content: flex-end;
     padding: 0 8px !important;
 }
-
-/* Active line number highlight */
 .cm-editor .cm-activeLineGutter {
     background-color: var(--color-bg-panel) !important;
     color: var(--color-fg-default) !important;
     font-weight: bold;
 }
-
-/* Editor background and text */
 .cm-editor {
     background-color: var(--color-bg-main);
     color: var(--color-fg-default);
@@ -35,20 +29,22 @@
 .cm-editor .cm-activeLine {
     background-color: rgba(0, 0, 0, 0.03) !important;
 }
-
-.cm-h1 {
+.cm-h1,
+.cm-h2,
+.cm-h3,
+.cm-h4,
+.cm-h5,
+.cm-h6 {
     color: #d32f2f;
     font-weight: bold;
+}
+.cm-h1 {
     font-size: 1.5em;
 }
 .cm-h2 {
-    color: #f57c00;
-    font-weight: bold;
     font-size: 1.3em;
 }
 .cm-h3 {
-    color: #388e3c;
-    font-weight: bold;
     font-size: 1.1em;
 }
 .cm-keyword {

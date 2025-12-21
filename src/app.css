@@ -29,8 +29,8 @@
     --color-fg-inverse: oklch(1 0 0);
 
     /* Accents (Derived with WCAG-Safe Lightness for Dark BG) */
-    --color-accent-primary: oklch(from var(--color-brand-accent) 0.75 c h);
-    --color-accent-secondary: oklch(from var(--color-brand-accent) 0.85 c h);
+    --color-accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
+    --color-accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
     --color-accent-file: oklch(from var(--color-brand-file) 0.8 c h);
     --color-accent-link: oklch(from var(--color-brand-link) 0.75 c h);
 
