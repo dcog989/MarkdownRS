@@ -2,7 +2,7 @@ import { CONFIG } from "$lib/utils/config";
 import { addToDictionary } from "$lib/utils/fileSystem";
 import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
 import { syntaxTree } from "@codemirror/language";
-import { forceLinting, linter, type Diagnostic } from "@codemirror/lint";
+import { forceLinting, linter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
 import { invoke } from "@tauri-apps/api/core";
@@ -98,7 +98,11 @@ export const createSpellCheckLinter = () => linter(async (view) => {
 }, { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS });
 
 export function triggerImmediateLint(view: EditorView) {
-    view.dispatch({});
+    // First clear all diagnostics to force a clean re-lint
+    view.dispatch({
+        effects: setDiagnostics(view.state, [])
+    });
+    // Then force a new lint run
     forceLinting(view);
 }
 
