@@ -7,13 +7,13 @@
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
-    import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, type CompletionContext } from "@codemirror/autocomplete";
+    import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorState } from "@codemirror/state";
-    import { Decoration, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, MatchDecorator, ViewPlugin } from "@codemirror/view";
+    import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -24,7 +24,6 @@
         onMetricsChange,
         customKeymap = [],
         spellCheckLinter,
-        inputHandler,
         eventHandlers,
         cmView = $bindable(),
     } = $props<{
@@ -35,91 +34,45 @@
         onMetricsChange: (metrics: any) => void;
         customKeymap?: any[];
         spellCheckLinter: any;
-        inputHandler: any;
         eventHandlers: any;
         cmView?: EditorView;
     }>();
 
     let editorContainer: HTMLDivElement;
     let view = $state<EditorView>();
+    let wrapComp = new Compartment(),
+        autoComp = new Compartment(),
+        recentComp = new Compartment();
+    let contentUpdateTimer: number | null = null,
+        metricsUpdateTimer: number | null = null;
+    const lineChangeTracker = new LineChangeTracker();
 
     $effect(() => {
         cmView = view;
     });
 
-    let themeComp = new Compartment();
-    let wrapComp = new Compartment();
-    let autoComp = new Compartment();
-    let recentComp = new Compartment();
-
-    let contentUpdateTimer: number | null = null;
-    let metricsUpdateTimer: number | null = null;
-    const lineChangeTracker = new LineChangeTracker();
-
-    function completeFromBuffer(context: CompletionContext) {
-        const word = context.matchBefore(/\w+/);
-        if (!word || (word.from === word.to && !context.explicit)) return null;
-        if (word.text.length < 3) return null;
-        const text = context.state.doc.toString();
-        const options = new Set<string>();
-        const re = /\w{3,}/g;
-        let m;
-        while ((m = re.exec(text))) if (m[0] !== word.text) options.add(m[0]);
-        return { from: word.from, options: Array.from(options).map((label) => ({ label, type: "text" })), validFor: /^\w*$/ };
-    }
-
     let dynamicTheme = $derived.by(() => {
         const fontSize = appState.editorFontSize || 14;
-        const insertMode = editorStore.insertMode;
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
-            ".cm-cursor": {
-                borderLeftColor: insertMode === "OVR" ? "transparent" : "var(--color-fg-default)",
-                borderBottom: insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none",
-            },
-            ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
+            ".cm-cursor": { borderLeftColor: editorStore.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: editorStore.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
+            ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto", overflowAnchor: "none" },
             ".cm-content": { paddingBottom: "40px !important" },
-            // Neutralize gutters in JS to give CSS file total priority
-            ".cm-gutters": {
-                backgroundColor: "transparent",
-                color: "currentColor",
-                border: "none",
-            },
-            ".cm-tooltip": { borderRadius: "6px !important", zIndex: "100", backgroundColor: "var(--color-bg-panel) !important", border: "1px solid var(--color-border-light) !important", color: "var(--color-fg-default) !important" },
-            ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--color-accent-primary) !important", color: "var(--color-fg-inverse) !important" },
+            ".cm-gutters": { border: "none", backgroundColor: "transparent" },
         });
     });
 
     $effect(() => {
-        if (view) {
-            view.dispatch({
-                effects: [themeComp.reconfigure(dynamicTheme), wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])],
-            });
-        }
+        if (view) view.dispatch({ effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])] });
     });
 
     onMount(() => {
-        const pathDecorator = new MatchDecorator({ regexp: /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g, decoration: Decoration.mark({ class: "cm-local-path" }) });
-        const pathHighlighter = ViewPlugin.fromClass(
-            class {
-                decorations: any;
-                constructor(v: EditorView) {
-                    this.decorations = pathDecorator.createDeco(v);
-                }
-                update(u: any) {
-                    this.decorations = pathDecorator.updateDeco(u, this.decorations);
-                }
-            },
-            { decorations: (v) => v.decorations }
-        );
-
         const extensions = [
             highlightActiveLineGutter(),
             highlightActiveLine(),
             history(),
             search({ top: true }),
             highlightSelectionMatches(),
-            pathHighlighter,
             autoComp.of([]),
             recentComp.of([]),
             closeBrackets(),
@@ -131,19 +84,48 @@
                         return true;
                     },
                 },
+                {
+                    key: "Mod-Home",
+                    run: (v) => {
+                        v.dispatch({ selection: { anchor: 0 } });
+                        scrollSync.handleFastScroll(v, 0);
+                        return true;
+                    },
+                },
+                {
+                    key: "Mod-End",
+                    run: (v) => {
+                        v.dispatch({ selection: { anchor: v.state.doc.length } });
+                        scrollSync.handleFastScroll(v, v.scrollDOM.scrollHeight);
+                        return true;
+                    },
+                },
+                {
+                    key: "PageDown",
+                    run: (v) => {
+                        scrollSync.handleFastScroll(v, v.scrollDOM.scrollTop + v.scrollDOM.clientHeight);
+                        return true;
+                    },
+                },
+                {
+                    key: "PageUp",
+                    run: (v) => {
+                        scrollSync.handleFastScroll(v, v.scrollDOM.scrollTop - v.scrollDOM.clientHeight);
+                        return true;
+                    },
+                },
                 ...customKeymap,
                 ...completionKeymap,
                 ...closeBracketsKeymap,
                 ...historyKeymap,
                 ...defaultKeymap,
             ]),
-            themeComp.of([dynamicTheme]),
+            dynamicTheme,
             userThemeExtension,
             spellCheckLinter,
             wrapComp.of([]),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
-            inputHandler,
             eventHandlers,
         ];
 
@@ -159,10 +141,8 @@
                 if (update.docChanged || update.selectionSet) {
                     if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
                     metricsUpdateTimer = window.setTimeout(() => {
-                        const doc = update.state.doc;
-                        const selection = update.state.selection.main;
-                        const line = doc.lineAt(selection.head);
-                        onMetricsChange(calculateCursorMetrics(doc.toString(), selection.head, { number: line.number, from: line.from, text: line.text }));
+                        const line = update.state.doc.lineAt(update.state.selection.main.head);
+                        onMetricsChange(calculateCursorMetrics(update.state.doc.toString(), update.state.selection.main.head, { number: line.number, from: line.from, text: line.text }));
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
             })
@@ -171,7 +151,6 @@
         view = new EditorView({ state: EditorState.create({ doc: initialContent, extensions }), parent: editorContainer });
         scrollSync.registerEditor(view);
         view.focus();
-
         return () => {
             if (view) view.destroy();
         };
@@ -183,12 +162,3 @@
 </script>
 
 <div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] relative" bind:this={editorContainer} onclick={() => view?.focus()}></div>
-
-<style>
-    :global(.cm-scroller) {
-        scrollbar-width: none;
-    }
-    :global(.cm-scroller::-webkit-scrollbar) {
-        display: none;
-    }
-</style>
