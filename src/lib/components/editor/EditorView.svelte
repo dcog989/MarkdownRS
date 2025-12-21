@@ -72,16 +72,17 @@
         const fontSize = appState.editorFontSize || 14;
         const insertMode = editorStore.insertMode;
         return EditorView.theme({
-            "&": { height: "100%", fontSize: `${fontSize}px` },
+            "&": { height: "100%", fontSize: `${fontSize}px`, backgroundColor: "var(--color-bg-main)", color: "var(--color-fg-default)" },
             ".cm-cursor": {
                 borderLeftColor: insertMode === "OVR" ? "transparent" : "var(--color-fg-default)",
                 borderBottom: insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none",
             },
             ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
             ".cm-content": { paddingBottom: "40px !important" },
-            ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": { backgroundColor: "color-mix(in srgb, var(--color-accent-secondary), transparent 25%) !important" },
+            ".cm-gutters": { backgroundColor: "var(--color-bg-main)", color: "var(--color-fg-muted)", border: "none", borderRight: "1px solid var(--color-border-main)" },
             ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--color-bg-main), var(--color-fg-default) 4%) !important" },
-            ".cm-activeLineGutter": { backgroundColor: "var(--color-bg-panel) !important" },
+            ".cm-activeLineGutter": { backgroundColor: "var(--color-bg-panel) !important", color: "var(--color-fg-default)" },
+            ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": { backgroundColor: "color-mix(in srgb, var(--color-accent-secondary), transparent 25%) !important" },
             ".cm-tooltip": { borderRadius: "6px !important", zIndex: "100", backgroundColor: "var(--color-bg-panel) !important", border: "1px solid var(--color-border-light) !important", color: "var(--color-fg-default) !important" },
             ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--color-accent-primary) !important", color: "var(--color-fg-inverse) !important" },
         });
