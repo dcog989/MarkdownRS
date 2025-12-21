@@ -68,19 +68,24 @@ export const createSpellCheckLinter = () => linter(async (view) => {
 
         const newCache = new Set<string>();
         const diagnostics: Diagnostic[] = [];
+        const diagnosticKeys = new Set<string>(); // Deduplicate diagnostics
 
         for (const word of misspelled) {
             newCache.add(word.toLowerCase());
             const ranges = wordsToVerify.get(word);
             if (ranges) {
                 for (const range of ranges) {
-                    diagnostics.push({
-                        from: range.from,
-                        to: range.to,
-                        severity: "error",
-                        message: `Misspelled: ${word}`,
-                        source: "Spellchecker"
-                    });
+                    const key = `${range.from}-${range.to}`;
+                    if (!diagnosticKeys.has(key)) {
+                        diagnosticKeys.add(key);
+                        diagnostics.push({
+                            from: range.from,
+                            to: range.to,
+                            severity: "error",
+                            message: `Misspelled: ${word}`,
+                            source: "Spellchecker"
+                        });
+                    }
                 }
             }
         }

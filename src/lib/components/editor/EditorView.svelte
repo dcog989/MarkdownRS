@@ -2,7 +2,6 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { logScroll } from "$lib/utils/diagnostics";
-    import { navigateToPath } from "$lib/utils/fileSystem";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
@@ -209,73 +208,8 @@
             defaultKeymap,
         ].flat();
 
-        // --- DOM HANDLERS ---
-        const wrappedEventHandlers = {
-            ...eventHandlers,
-            mousedown: (event: MouseEvent, view: EditorView) => {
-                if (eventHandlers?.mousedown) eventHandlers.mousedown(event, view);
-
-                // Path Navigation Logic
-                if ((event.ctrlKey || event.metaKey) && event.button === 0) {
-                    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                    if (pos !== null) {
-                        const line = view.state.doc.lineAt(pos);
-                        const pathRegex = /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g;
-                        let match;
-                        while ((match = pathRegex.exec(line.text)) !== null) {
-                            const trimmedMatch = match[0].trim();
-                            const start = line.from + match.index + (match[0].length - trimmedMatch.length);
-                            const end = start + trimmedMatch.length;
-                            if (pos >= start && pos <= end) {
-                                navigateToPath(trimmedMatch);
-                                return true;
-                            }
-                        }
-                    }
-                }
-                return false;
-            },
-            scroll: (event: Event, view: EditorView) => {
-                if (eventHandlers?.scroll) eventHandlers.scroll(event, view);
-
-                // Lock Check: Only sync if not currently being driven remotely
-                if (isRemoteScrolling) return;
-
-                if (scrollRaf) cancelAnimationFrame(scrollRaf);
-                scrollRaf = requestAnimationFrame(() => {
-                    const dom = view.scrollDOM;
-                    const maxScroll = dom.scrollHeight - dom.clientHeight;
-                    const scrollTop = dom.scrollTop;
-
-                    let preciseLine = 1;
-                    let percentage = 0;
-
-                    if (maxScroll > 0) {
-                        percentage = scrollTop / maxScroll;
-
-                        // Aggressive top snap check
-                        if (scrollTop < 5) {
-                            preciseLine = 1;
-                        } else if (Math.abs(scrollTop - maxScroll) < 10) {
-                            preciseLine = view.state.doc.lines;
-                        } else {
-                            const lineBlock = view.lineBlockAtHeight(scrollTop);
-                            const lineNum = view.state.doc.lineAt(lineBlock.from).number;
-                            const progress = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-                            preciseLine = lineNum + progress;
-                        }
-                    }
-
-                    logScroll("Editor", "Scroll Source (Calc)", { scrollTop, preciseLine });
-                    editorStore.updateScroll(tabId, percentage, preciseLine, "editor");
-                    scrollRaf = null;
-                });
-            },
-        };
-
-        const domHandlers = EditorView.domEventHandlers(wrappedEventHandlers);
-
-        const extensions = [highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(createRecentChangesHighlighter(lineChangeTracker)), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, domHandlers];
+        // eventHandlers is already a CodeMirror extension, use it directly
+        const extensions = [highlightActiveLineGutter(), highlightActiveLine(), history(), search({ top: true }), highlightSelectionMatches(), pathHighlighter, autocompleteCompartment.of(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentChangesCompartment.of(createRecentChangesHighlighter(lineChangeTracker)), closeBrackets(), keymap.of([...builtInKeymap, ...customKeymap, ...completionKeymap, ...closeBracketsKeymap, ...historyKeymap]), themeCompartment.of([]), spellCheckLinter, lineWrappingCompartment.of(appState.editorWordWrap ? EditorView.lineWrapping : []), EditorView.contentAttributes.of({ spellcheck: "false" }), EditorView.scrollMargins.of(() => ({ bottom: 30 })), inputHandler, eventHandlers];
 
         if (!filename.endsWith(".txt")) {
             extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));

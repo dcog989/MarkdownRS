@@ -223,6 +223,7 @@
             return false;
         },
         contextmenu: (event, view) => {
+            console.log('Context menu event fired!', { x: event.clientX, y: event.clientY });
             event.preventDefault();
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
@@ -251,6 +252,7 @@
             contextMenuX = event.clientX;
             contextMenuY = event.clientY;
             showContextMenu = true;
+            console.log('showContextMenu set to:', showContextMenu);
             return true;
         },
         scroll: (event, view) => {

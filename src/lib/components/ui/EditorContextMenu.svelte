@@ -39,6 +39,14 @@
     let submenuSide = $state<"left" | "right">("right");
     let resizeObserver: ResizeObserver | null = null;
 
+    // Add immediate visibility on mount
+    $effect(() => {
+        if (menuEl) {
+            console.log('Menu element mounted, updating position');
+            updatePosition();
+        }
+    });
+
     $effect(() => {
         // Untrack to prevent circular re-runs, focusing only on word changes
         const cleanWord = untrack(() => wordUnderCursor?.trim());
@@ -59,9 +67,11 @@
     });
 
     function updatePosition() {
+        console.log('updatePosition called', { menuEl: !!menuEl, x, y });
         if (!menuEl) return;
 
         const rect = menuEl.getBoundingClientRect();
+        console.log('Menu rect:', rect);
         const winWidth = window.innerWidth;
         const winHeight = window.innerHeight;
 
@@ -81,6 +91,7 @@
         newX = Math.max(5, newX);
         newY = Math.max(5, newY);
 
+        console.log('Setting position:', { newX, newY });
         menuEl.style.left = `${newX}px`;
         menuEl.style.top = `${newY}px`;
 
@@ -90,7 +101,14 @@
             submenuSide = "right";
         }
 
-        menuEl.style.visibility = "visible";
+        // Force visibility after positioning
+        console.log('Setting visibility to visible');
+        requestAnimationFrame(() => {
+            if (menuEl) {
+                menuEl.style.visibility = "visible";
+                console.log('Visibility set to visible');
+            }
+        });
     }
 
     $effect(() => {
