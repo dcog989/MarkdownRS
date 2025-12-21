@@ -89,17 +89,19 @@
         <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {/if}
 
-    <span class="truncate flex-1 pointer-events-none pr-8">{tab.customTitle || tab.title}</span>
+    <span class="truncate flex-1 pointer-events-none">{tab.customTitle || tab.title}</span>
 
-    <div class="absolute right-2 top-0 bottom-0 w-8 flex items-center justify-center">
+    <div class="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center">
         {#if tab.isPinned}
-            <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-muted)'}" />
+            <div class="absolute inset-0 flex items-center justify-center bg-[var(--tab-bg)]">
+                <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-muted)'}" />
+            </div>
         {:else}
             <div class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <span
                     role="button"
                     tabindex="0"
-                    class="p-0.5 rounded hover:bg-white/20 flex items-center justify-center cursor-pointer"
+                    class="p-1 rounded hover:bg-white/20 flex items-center justify-center cursor-pointer"
                     style="color: var(--color-fg-muted);"
                     onclick={(e) => {
                         e.stopPropagation();
@@ -125,7 +127,7 @@
     }
 
     .close-btn-wrapper {
-        background: linear-gradient(to right, transparent 0%, var(--tab-bg) 50%);
+        background: linear-gradient(to right, transparent 0%, var(--tab-bg) 40%, var(--tab-bg) 100%);
         pointer-events: auto;
     }
 </style>

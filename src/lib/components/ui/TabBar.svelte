@@ -27,8 +27,8 @@
     let isDragging = $state(false);
     let draggingId = $state<string | null>(null);
     let dragStartX = 0;
-    let dragOffsetX = 0; // Offset from tab's left edge to cursor
-    let currentDragX = 0; // Current cursor X position during drag
+    let dragOffsetX = $state(0); // Offset from tab's left edge to cursor
+    let currentDragX = $state(0); // Current cursor X position during drag
     let rafId: number | null = null;
 
     // Layout Snapshot
@@ -171,11 +171,10 @@
         draggingId = id;
         isDragging = false;
         dragStartX = e.clientX;
-        
+
         // Calculate offset from tab's left edge to cursor position
         const tabRect = wrapper.getBoundingClientRect();
         dragOffsetX = e.clientX - tabRect.left;
-        const tabWidth = tabRect.width;
         currentDragX = e.clientX;
 
         if (scrollContainer) {
@@ -183,9 +182,9 @@
                 .filter((el) => el.getAttribute("role") === "listitem")
                 .map((el) => {
                     const rect = el.getBoundingClientRect();
-                    return { 
+                    return {
                         center: rect.left + rect.width / 2,
-                        width: rect.width
+                        width: rect.width,
                     };
                 });
         }
@@ -193,7 +192,7 @@
 
     function handlePointerMove(e: PointerEvent) {
         if (!draggingId) return;
-        
+
         // Update cursor position
         currentDragX = e.clientX;
 
@@ -215,10 +214,10 @@
 
             // Get current tab's original center
             const currentCenter = layoutCache[currentIndex]?.center || 0;
-            
+
             // Calculate how far we've moved from the original position
             const deltaX = currentDragX - dragStartX;
-            
+
             let targetIndex = currentIndex;
 
             // Check if we should swap with the tab to the right
@@ -247,17 +246,17 @@
                 const [item] = newTabs.splice(currentIndex, 1);
                 newTabs.splice(targetIndex, 0, item);
                 localTabs = newTabs;
-                
+
                 // Update layout cache AND reset drag start for next comparison
                 if (scrollContainer) {
                     setTimeout(() => {
-                        layoutCache = Array.from(scrollContainer.children)
+                        layoutCache = Array.from(scrollContainer!.children)
                             .filter((el) => el.getAttribute("role") === "listitem")
                             .map((el) => {
                                 const rect = el.getBoundingClientRect();
-                                return { 
+                                return {
                                     center: rect.left + rect.width / 2,
-                                    width: rect.width
+                                    width: rect.width,
                                 };
                             });
                         // Update dragStartX to the new position so next swap is relative to new position
@@ -362,18 +361,18 @@
 
         <section bind:this={scrollContainer} class="w-full h-full flex items-end overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
             {#each localTabs as tab (tab.id)}
-                <div 
-                    class="h-full flex items-end shrink-0 outline-none select-none touch-none" 
-                    animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} 
-                    role="listitem" 
+                <div
+                    class="h-full flex items-end shrink-0 outline-none select-none touch-none"
+                    animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
+                    role="listitem"
                     style="
-                        opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; 
-                        z-index: {isDragging && draggingId === tab.id ? 100 : 0}; 
+                        opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'};
+                        z-index: {isDragging && draggingId === tab.id ? 100 : 0};
                         cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};
-                    " 
-                    onpointerdown={(e) => handlePointerDown(e, tab.id)} 
-                    onpointermove={handlePointerMove} 
-                    onpointerup={(e) => handlePointerUp(e, tab.id, e.currentTarget as HTMLElement)} 
+                    "
+                    onpointerdown={(e) => handlePointerDown(e, tab.id)}
+                    onpointermove={handlePointerMove}
+                    onpointerup={(e) => handlePointerUp(e, tab.id, e.currentTarget as HTMLElement)}
                     onpointercancel={(e) => handlePointerUp(e, tab.id, e.currentTarget as HTMLElement)}
                 >
                     <TabButton
@@ -393,24 +392,17 @@
 
             <!-- Dragging ghost that follows cursor -->
             {#if isDragging && draggingId}
-                {@const dragTab = localTabs.find(t => t.id === draggingId)}
+                {@const dragTab = localTabs.find((t) => t.id === draggingId)}
                 {#if dragTab}
-                    <div 
-                        class="fixed pointer-events-none z-[999]" 
+                    <div
+                        class="fixed pointer-events-none z-[999]"
                         style="
-                            left: {currentDragX - dragOffsetX}px; 
+                            left: {currentDragX - dragOffsetX}px;
                             top: {scrollContainer?.getBoundingClientRect().top ?? 0}px;
                             opacity: 0.95;
                         "
                     >
-                        <TabButton
-                            tab={dragTab}
-                            isActive={appState.activeTabId === dragTab.id}
-                            {currentTime}
-                            onclick={() => {}}
-                            onclose={() => {}}
-                            oncontextmenu={() => {}}
-                        />
+                        <TabButton tab={dragTab} isActive={appState.activeTabId === dragTab.id} {currentTime} onclick={() => {}} onclose={() => {}} oncontextmenu={() => {}} />
                     </div>
                 {/if}
             {/if}

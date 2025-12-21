@@ -2,12 +2,11 @@
     import { tooltip } from "$lib/actions/tooltip";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
-    import { openFile, persistSession, requestCloseTab, saveCurrentFile, openFileByPath } from "$lib/utils/fileSystem.ts";
+    import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { invoke } from "@tauri-apps/api/core";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Copy, Eye, Minus, Search, Settings, Square, X, Bookmark } from "lucide-svelte";
+    import { Bookmark, Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
     import AboutModal from "./AboutModal.svelte";
     import BookmarksModal from "./BookmarksModal.svelte";
@@ -141,7 +140,7 @@
             id: "ops-sort",
             label: "Edit: Sort Lines (A-Z)",
             action: () => {
-                editorStore.performTextTransform('sort-asc');
+                editorStore.performTextTransform("sort-asc");
                 showCommandPalette = false;
             },
         },
@@ -149,7 +148,7 @@
             id: "ops-trim",
             label: "Edit: Trim Whitespace",
             action: () => {
-                editorStore.performTextTransform('trim-whitespace');
+                editorStore.performTextTransform("trim-whitespace");
                 showCommandPalette = false;
             },
         },
@@ -157,7 +156,7 @@
             id: "ops-upper",
             label: "Edit: To Upper Case",
             action: () => {
-                editorStore.performTextTransform('uppercase');
+                editorStore.performTextTransform("uppercase");
                 showCommandPalette = false;
             },
         },
@@ -165,7 +164,7 @@
             id: "ops-lower",
             label: "Edit: To Lower Case",
             action: () => {
-                editorStore.performTextTransform('lowercase');
+                editorStore.performTextTransform("lowercase");
                 showCommandPalette = false;
             },
         },
@@ -282,28 +281,28 @@
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)]" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
-            <Bookmark size={14} />
-        </button>
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)]" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
             <Settings size={14} />
         </button>
     </div>
 
     <!-- Command Palette Search (Center) -->
-    <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto" data-tauri-drag-region>
+    <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
         <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors" style="background-color: var(--color-bg-input); color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={openCommandPalette} use:tooltip={"Open Command Palette (Ctrl+P)"}>
             <Search size={12} />
             <span class="flex-1 text-left">Search commands...</span>
             <span class="text-[10px] opacity-60">Ctrl+P</span>
+        </button>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
+            <Bookmark size={14} />
         </button>
     </div>
 
     <!-- Controls -->
     <div class="flex h-full pointer-events-auto items-center">
         <button
-            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors border-r"
-            style="color: var(--color-fg-muted); border-color: var(--color-border-main);"
+            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors"
+            style="color: var(--color-fg-muted);"
             onclick={() => {
                 appState.toggleSplitView();
                 saveSettings();
