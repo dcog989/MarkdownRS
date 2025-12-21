@@ -1,7 +1,6 @@
 import { appState } from "$lib/stores/appState.svelte";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-import type { ViewUpdate } from "@codemirror/view";
-import { GutterMarker, gutter } from "@codemirror/view";
+import { EditorView, GutterMarker, gutter, type ViewUpdate } from "@codemirror/view";
 
 class LineNumberMarker extends GutterMarker {
     constructor(private lineNo: number, private alpha: number) {
@@ -25,7 +24,9 @@ class LineNumberMarker extends GutterMarker {
 }
 
 /**
- * Custom line number gutter that integrates recent change highlighting
+ * Custom line number gutter that integrates recent change highlighting.
+ * Uses initialSpacer and updateSpacer to ensure the gutter is always wide enough
+ * for the largest line number in the document.
  */
 export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
     return gutter({
@@ -45,7 +46,13 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
 
             return new LineNumberMarker(lineNo, alpha);
         },
-        initialSpacer: () => new LineNumberMarker(1, 0),
+        initialSpacer: (view: EditorView) => new LineNumberMarker(view.state.doc.lines, 0),
+        updateSpacer: (spacer: GutterMarker, update: ViewUpdate) => {
+            if (update.docChanged) {
+                return new LineNumberMarker(update.state.doc.lines, 0);
+            }
+            return spacer;
+        }
     });
 }
 
