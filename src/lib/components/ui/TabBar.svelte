@@ -27,10 +27,12 @@
     let isDragging = $state(false);
     let draggingId = $state<string | null>(null);
     let dragStartX = 0;
+    let dragOffsetX = 0; // Offset from tab's left edge to cursor
+    let currentDragX = 0; // Current cursor X position during drag
     let rafId: number | null = null;
 
     // Layout Snapshot
-    let layoutCache: { center: number }[] = [];
+    let layoutCache: { center: number; width: number }[] = [];
 
     let contextMenuTabId: string | null = $state(null);
     let contextMenuX = $state(0);
@@ -117,6 +119,23 @@
             resizeObserver.observe(scrollContainer);
         }
 
+        // Global pointer handlers for drag release
+        const handleGlobalPointerMove = (e: PointerEvent) => {
+            if (draggingId) {
+                handlePointerMove(e);
+            }
+        };
+
+        const handleGlobalPointerUp = (e: PointerEvent) => {
+            if (draggingId) {
+                handlePointerUp(e, draggingId);
+            }
+        };
+
+        window.addEventListener("pointermove", handleGlobalPointerMove);
+        window.addEventListener("pointerup", handleGlobalPointerUp);
+        window.addEventListener("pointercancel", handleGlobalPointerUp);
+
         updateFadeIndicators();
 
         return () => {
@@ -124,6 +143,9 @@
             if (rafId) cancelAnimationFrame(rafId);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
+            window.removeEventListener("pointermove", handleGlobalPointerMove);
+            window.removeEventListener("pointerup", handleGlobalPointerUp);
+            window.removeEventListener("pointercancel", handleGlobalPointerUp);
             if (scrollContainer) {
                 scrollContainer.removeEventListener("scroll", updateFadeIndicators);
             }
@@ -149,20 +171,31 @@
         draggingId = id;
         isDragging = false;
         dragStartX = e.clientX;
+        
+        // Calculate offset from tab's left edge to cursor position
+        const tabRect = wrapper.getBoundingClientRect();
+        dragOffsetX = e.clientX - tabRect.left;
+        const tabWidth = tabRect.width;
+        currentDragX = e.clientX;
 
         if (scrollContainer) {
             layoutCache = Array.from(scrollContainer.children)
                 .filter((el) => el.getAttribute("role") === "listitem")
                 .map((el) => {
                     const rect = el.getBoundingClientRect();
-                    return { center: rect.left + rect.width / 2 };
+                    return { 
+                        center: rect.left + rect.width / 2,
+                        width: rect.width
+                    };
                 });
         }
     }
 
     function handlePointerMove(e: PointerEvent) {
         if (!draggingId) return;
-        e.preventDefault();
+        
+        // Update cursor position
+        currentDragX = e.clientX;
 
         if (!isDragging) {
             if (Math.abs(e.clientX - dragStartX) > 5) {
@@ -177,36 +210,71 @@
         rafId = requestAnimationFrame(() => {
             rafId = null;
 
-            const mouseX = e.clientX;
-            let targetIndex = 0;
-            let minDistance = Infinity;
-
-            for (let i = 0; i < layoutCache.length; i++) {
-                const center = layoutCache[i].center;
-                const dist = Math.abs(mouseX - center);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    targetIndex = i;
-                }
-            }
-
             const currentIndex = localTabs.findIndex((t) => t.id === draggingId);
             if (currentIndex === -1) return;
+
+            // Get current tab's original center
+            const currentCenter = layoutCache[currentIndex]?.center || 0;
+            
+            // Calculate how far we've moved from the original position
+            const deltaX = currentDragX - dragStartX;
+            
+            let targetIndex = currentIndex;
+
+            // Check if we should swap with the tab to the right
+            if (deltaX > 0 && currentIndex < layoutCache.length - 1) {
+                const rightTab = layoutCache[currentIndex + 1];
+                const rightTabCenter = rightTab.center;
+                // Swap when cursor passes the midpoint between our center and right tab's center
+                const swapThreshold = currentCenter + (rightTabCenter - currentCenter) / 2;
+                if (currentDragX > swapThreshold) {
+                    targetIndex = currentIndex + 1;
+                }
+            }
+            // Check if we should swap with the tab to the left
+            else if (deltaX < 0 && currentIndex > 0) {
+                const leftTab = layoutCache[currentIndex - 1];
+                const leftTabCenter = leftTab.center;
+                // Swap when cursor passes the midpoint between left tab's center and our center
+                const swapThreshold = leftTabCenter + (currentCenter - leftTabCenter) / 2;
+                if (currentDragX < swapThreshold) {
+                    targetIndex = currentIndex - 1;
+                }
+            }
 
             if (targetIndex !== currentIndex) {
                 const newTabs = [...localTabs];
                 const [item] = newTabs.splice(currentIndex, 1);
                 newTabs.splice(targetIndex, 0, item);
                 localTabs = newTabs;
+                
+                // Update layout cache AND reset drag start for next comparison
+                if (scrollContainer) {
+                    setTimeout(() => {
+                        layoutCache = Array.from(scrollContainer.children)
+                            .filter((el) => el.getAttribute("role") === "listitem")
+                            .map((el) => {
+                                const rect = el.getBoundingClientRect();
+                                return { 
+                                    center: rect.left + rect.width / 2,
+                                    width: rect.width
+                                };
+                            });
+                        // Update dragStartX to the new position so next swap is relative to new position
+                        dragStartX = currentDragX;
+                    }, 0);
+                }
             }
         });
     }
 
-    function handlePointerUp(e: PointerEvent, id: string) {
+    function handlePointerUp(e: PointerEvent, id: string, wrapper?: HTMLElement) {
         if (!draggingId) return;
 
-        const wrapper = e.currentTarget as HTMLElement;
-        wrapper.releasePointerCapture(e.pointerId);
+        // Only release pointer capture if we have a wrapper element
+        if (wrapper) {
+            wrapper.releasePointerCapture(e.pointerId);
+        }
 
         if (!isDragging) {
             appState.activeTabId = id;
@@ -218,6 +286,8 @@
 
         isDragging = false;
         draggingId = null;
+        dragOffsetX = 0;
+        currentDragX = 0;
         layoutCache = [];
 
         if (rafId) {
@@ -292,7 +362,20 @@
 
         <section bind:this={scrollContainer} class="w-full h-full flex items-end overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
             {#each localTabs as tab (tab.id)}
-                <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.8' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0}; cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};" onpointerdown={(e) => handlePointerDown(e, tab.id)} onpointermove={handlePointerMove} onpointerup={(e) => handlePointerUp(e, tab.id)} onpointercancel={(e) => handlePointerUp(e, tab.id)}>
+                <div 
+                    class="h-full flex items-end shrink-0 outline-none select-none touch-none" 
+                    animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} 
+                    role="listitem" 
+                    style="
+                        opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; 
+                        z-index: {isDragging && draggingId === tab.id ? 100 : 0}; 
+                        cursor: {isDragging && draggingId === tab.id ? 'grabbing' : 'default'};
+                    " 
+                    onpointerdown={(e) => handlePointerDown(e, tab.id)} 
+                    onpointermove={handlePointerMove} 
+                    onpointerup={(e) => handlePointerUp(e, tab.id, e.currentTarget as HTMLElement)} 
+                    onpointercancel={(e) => handlePointerUp(e, tab.id, e.currentTarget as HTMLElement)}
+                >
                     <TabButton
                         {tab}
                         isActive={appState.activeTabId === tab.id}
@@ -307,6 +390,30 @@
                     />
                 </div>
             {/each}
+
+            <!-- Dragging ghost that follows cursor -->
+            {#if isDragging && draggingId}
+                {@const dragTab = localTabs.find(t => t.id === draggingId)}
+                {#if dragTab}
+                    <div 
+                        class="fixed pointer-events-none z-[999]" 
+                        style="
+                            left: {currentDragX - dragOffsetX}px; 
+                            top: {scrollContainer?.getBoundingClientRect().top ?? 0}px;
+                            opacity: 0.95;
+                        "
+                    >
+                        <TabButton
+                            tab={dragTab}
+                            isActive={appState.activeTabId === dragTab.id}
+                            {currentTime}
+                            onclick={() => {}}
+                            onclose={() => {}}
+                            oncontextmenu={() => {}}
+                        />
+                    </div>
+                {/if}
+            {/if}
 
             <!-- Padding at end -->
             <div class="w-4 h-full shrink-0"></div>

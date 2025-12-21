@@ -89,9 +89,9 @@
         <FileText size={14} class="flex-shrink-0" style="color: {iconColor}" />
     {/if}
 
-    <span class="truncate flex-1 pointer-events-none">{tab.customTitle || tab.title}</span>
+    <span class="truncate flex-1 pointer-events-none pr-8">{tab.customTitle || tab.title}</span>
 
-    <div class="flex-shrink-0 w-8 h-full flex items-center justify-center relative">
+    <div class="absolute right-2 top-0 bottom-0 w-8 flex items-center justify-center">
         {#if tab.isPinned}
             <Pin size={12} class="flex-shrink-0" style="color: {isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-muted)'}" />
         {:else}
