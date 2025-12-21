@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
+    import { invoke } from "@tauri-apps/api/core";
     import { Keyboard, Search, Settings, X } from "lucide-svelte";
 
     interface Props {
@@ -12,7 +13,25 @@
 
     let searchQuery = $state("");
 
-    const settingsDefinitions = [
+    $effect(() => {
+        if (isOpen) {
+            invoke<string[]>("get_available_themes")
+                .then((themes) => {
+                    appState.availableThemes = themes;
+                })
+                .catch((err) => console.error("Failed to load themes:", err));
+        }
+    });
+
+    const settingsDefinitions = $derived([
+        {
+            key: "activeTheme",
+            label: "Content Theme",
+            type: "select",
+            category: "Appearance",
+            defaultValue: "default-dark",
+            options: appState.availableThemes,
+        },
         { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
@@ -42,7 +61,7 @@
         { key: "startupBehavior", label: "On Startup", type: "select", category: "Interface", defaultValue: "last-focused", options: ["first", "last-focused", "new"], optionLabels: ["Show First Tab", "Show Last Focused Tab", "Create New Tab"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
         { key: "tooltipDelay", label: "Tooltip Delay (ms)", type: "number", category: "Interface", defaultValue: 1000, min: 0, max: 5000 },
-    ];
+    ]);
 
     $effect(() => {
         if (!isOpen) {

@@ -47,6 +47,7 @@
         cmView = view;
     });
 
+    let themeComp = new Compartment();
     let wrapComp = new Compartment();
     let autoComp = new Compartment();
     let recentComp = new Compartment();
@@ -78,10 +79,7 @@
             },
             ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto" },
             ".cm-content": { paddingBottom: "40px !important" },
-            ".cm-gutters": { backgroundColor: "var(--color-bg-main)", color: "var(--color-fg-muted)", border: "none", borderRight: "1px solid var(--color-border-main)" },
-            ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--color-bg-main), var(--color-fg-default) 4%) !important" },
-            ".cm-activeLineGutter": { backgroundColor: "var(--color-bg-panel) !important", color: "var(--color-fg-default)" },
-            ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": { backgroundColor: "color-mix(in srgb, var(--color-accent-secondary), transparent 25%) !important" },
+            ".cm-gutters": { border: "none" },
             ".cm-tooltip": { borderRadius: "6px !important", zIndex: "100", backgroundColor: "var(--color-bg-panel) !important", border: "1px solid var(--color-border-light) !important", color: "var(--color-fg-default) !important" },
             ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--color-accent-primary) !important", color: "var(--color-fg-inverse) !important" },
         });
@@ -90,7 +88,7 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])],
+                effects: [themeComp.reconfigure(dynamicTheme), wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion({ override: [completeFromBuffer] }) : []), recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : [])],
             });
         }
     });
@@ -134,7 +132,7 @@
                 ...historyKeymap,
                 ...defaultKeymap,
             ]),
-            dynamicTheme,
+            themeComp.of([dynamicTheme]),
             userThemeExtension,
             spellCheckLinter,
             wrapComp.of([]),
@@ -156,8 +154,10 @@
                 if (update.docChanged || update.selectionSet) {
                     if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
                     metricsUpdateTimer = window.setTimeout(() => {
-                        const line = update.state.doc.lineAt(update.state.selection.main.head);
-                        onMetricsChange(calculateCursorMetrics(update.state.doc.toString(), update.state.selection.main.head, { number: line.number, from: line.from, text: line.text }));
+                        const doc = update.state.doc;
+                        const selection = update.state.selection.main;
+                        const line = doc.lineAt(selection.head);
+                        onMetricsChange(calculateCursorMetrics(doc.toString(), selection.head, { number: line.number, from: line.from, text: line.text }));
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
             })

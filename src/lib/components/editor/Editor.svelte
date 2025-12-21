@@ -18,7 +18,6 @@
     let editorViewComponent = $state<any>(null);
     let cmView = $state<CM6EditorView>();
     let findReplacePanel = $state<any>(null);
-    let scrollDOM = $state<HTMLElement | null>(null);
     let previousTabId: string = "";
 
     let isFocused = $state(false);
@@ -41,17 +40,14 @@
     }
 
     async function handleCopy() {
-        if (contextSelectedText) {
-            await navigator.clipboard.writeText(contextSelectedText);
-        }
+        if (contextSelectedText) await navigator.clipboard.writeText(contextSelectedText);
     }
 
     async function handleCut() {
         if (cmView && contextSelectedText) {
             await navigator.clipboard.writeText(contextSelectedText);
-            const selection = cmView.state.selection.main;
             cmView.dispatch({
-                changes: { from: selection.from, to: selection.to, insert: "" },
+                changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: "" },
                 userEvent: "delete.cut",
             });
             cmView.focus();
@@ -64,21 +60,16 @@
             if (cmView && text) {
                 let textToInsert = text;
                 if (appState.formatOnPaste) {
-                    try {
-                        textToInsert = await formatMarkdown(text, {
-                            listIndent: appState.formatterListIndent || 2,
-                            bulletChar: appState.formatterBulletChar || "-",
-                            codeBlockFence: appState.formatterCodeFence || "```",
-                            tableAlignment: appState.formatterTableAlignment !== false,
-                        });
-                    } catch (err) {
-                        console.warn("Format on paste failed:", err);
-                    }
+                    textToInsert = await formatMarkdown(text, {
+                        listIndent: appState.formatterListIndent || 2,
+                        bulletChar: appState.formatterBulletChar || "-",
+                        codeBlockFence: appState.formatterCodeFence || "```",
+                        tableAlignment: appState.formatterTableAlignment !== false,
+                    });
                 }
-                const selection = cmView.state.selection.main;
                 cmView.dispatch({
-                    changes: { from: selection.from, to: selection.to, insert: textToInsert },
-                    selection: { anchor: selection.from + textToInsert.length },
+                    changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: textToInsert },
+                    selection: { anchor: cmView.state.selection.main.from + textToInsert.length },
                     userEvent: "input.paste",
                     scrollIntoView: true,
                 });
@@ -135,8 +126,7 @@
 
     const inputHandler = CM6EditorView.inputHandler.of((view, from, to, text) => {
         if (editorStore.insertMode === "OVR" && from === to && text.length === 1) {
-            const doc = view.state.doc;
-            const line = doc.lineAt(from);
+            const line = view.state.doc.lineAt(from);
             if (from < line.to) {
                 view.dispatch({
                     changes: { from, to: from + 1, insert: text },
@@ -153,21 +143,17 @@
         mousedown: (event, view) => {
             isDragging = true;
             window.addEventListener("mouseup", () => (isDragging = false), { once: true });
-
             if ((event.ctrlKey || event.metaKey) && event.button === 0) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (pos !== null) {
                     const line = view.state.doc.lineAt(pos);
                     const pathRegex = /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/g;
-
                     let match;
                     while ((match = pathRegex.exec(line.text)) !== null) {
-                        const trimmedMatch = match[0].trim();
-                        const start = line.from + match.index + (match[0].length - trimmedMatch.length);
-                        const end = start + trimmedMatch.length;
-
+                        const start = line.from + match.index;
+                        const end = start + match[0].length;
                         if (pos >= start && pos <= end) {
-                            navigateToPath(trimmedMatch);
+                            navigateToPath(match[0].trim());
                             return true;
                         }
                     }
@@ -179,16 +165,13 @@
             event.preventDefault();
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
-
             let wordUnderCursor = "";
-            let from = 0;
-            let to = 0;
+            let from = 0,
+                to = 0;
 
             if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                const searchPos = pos !== null ? pos : selection.head;
-                const range = view.state.wordAt(searchPos);
-
+                const range = view.state.wordAt(pos ?? selection.head);
                 if (range) {
                     from = range.from;
                     to = range.to;

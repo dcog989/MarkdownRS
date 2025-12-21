@@ -579,9 +579,28 @@ pub async fn get_theme_css(
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let theme_path = app_dir.join("Themes").join(format!("{}.css", theme_name));
+    let themes_dir = app_dir.join("Themes");
+
+    if !themes_dir.exists() {
+        fs::create_dir_all(&themes_dir).map_err(|e| e.to_string())?;
+    }
+
+    let theme_path = themes_dir.join(format!("{}.css", theme_name));
+
+    // Force refresh default themes to ensure the !important fixes are applied
+    if theme_name == "default-dark" || theme_name == "default-light" {
+        let content = if theme_name == "default-dark" {
+            include_str!("../templates/default-dark.css")
+        } else {
+            include_str!("../templates/default-light.css")
+        };
+        fs::write(&theme_path, content).map_err(|e| e.to_string())?;
+        return Ok(content.to_string());
+    }
+
     if !theme_path.exists() {
         return Err("Theme file not found".to_string());
     }
+
     fs::read_to_string(theme_path).map_err(|e| e.to_string())
 }

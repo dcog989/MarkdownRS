@@ -16,8 +16,10 @@
 
     $effect(() => {
         const themeName = appState.activeTheme;
-        invoke<string>("get_theme_css", { themeName })
-            .then((css) => {
+
+        async function loadTheme() {
+            try {
+                const css = await invoke<string>("get_theme_css", { themeName });
                 let styleTag = document.getElementById("user-theme-styles");
                 if (!styleTag) {
                     styleTag = document.createElement("style");
@@ -25,8 +27,12 @@
                     document.head.appendChild(styleTag);
                 }
                 styleTag.textContent = css;
-            })
-            .catch((err) => console.error("Theme Load Error:", err));
+            } catch (err) {
+                console.error("Theme Load Error:", err);
+            }
+        }
+
+        loadTheme();
     });
 </script>
 

@@ -4,6 +4,18 @@
 .cm-content {
     caret-color: #aeafad;
 }
+.cm-gutters {
+    background-color: var(--color-bg-main) !important;
+    color: #2654b1 !important;
+    border-right: 1px solid var(--color-border-main) !important;
+}
+.cm-activeLine {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+.cm-activeLineGutter {
+    background-color: var(--color-bg-panel) !important;
+    color: var(--color-fg-default) !important;
+}
 .cm-h1 {
     color: #e06c75;
     font-weight: bold;

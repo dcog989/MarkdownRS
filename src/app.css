@@ -10,12 +10,12 @@
 
     /* Backgrounds */
     --color-bg-main: oklch(0.25 0 0);
-    --color-bg-panel: oklch(0.28 0.01 280);
-    --color-bg-header: oklch(0.32 0.01 280);
+    --color-bg-panel: oklch(0.28 0 0);
+    --color-bg-header: oklch(0.32 0 0);
     --color-bg-titlebar: oklch(0.2 0 0);
-    --color-bg-hover: oklch(0.35 0.01 280);
-    --color-bg-active: oklch(0.4 0.01 280);
-    --color-bg-input: oklch(0.3 0.01 280);
+    --color-bg-hover: oklch(0.35 0 0);
+    --color-bg-active: oklch(0.4 0 0);
+    --color-bg-input: oklch(0.3 0 0);
     --color-bg-backdrop: rgba(0, 0, 0, 0.6);
 
     /* Borders */
@@ -46,6 +46,7 @@
 }
 
 [data-theme="light"] {
+    /* Backgrounds */
     --color-bg-main: oklch(0.98 0 0);
     --color-bg-panel: oklch(0.95 0 0);
     --color-bg-header: oklch(0.9 0 0);
@@ -55,9 +56,11 @@
     --color-bg-input: oklch(1 0 0);
     --color-bg-backdrop: rgba(0, 0, 0, 0.2);
 
+    /* Borders */
     --color-border-main: oklch(0.9 0 0);
     --color-border-light: oklch(0.8 0 0);
 
+    /* Text */
     --color-fg-default: oklch(0.2 0 0);
     --color-fg-muted: oklch(0.4 0 0);
     --color-fg-inverse: oklch(1 0 0);
@@ -84,21 +87,15 @@ body {
 
 /* Custom thin scrollbar styling */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     background-color: var(--color-bg-main);
-    transition: width 0.2s ease;
-}
-
-::-webkit-scrollbar:hover {
-    width: 14px;
 }
 
 ::-webkit-scrollbar-thumb {
     background-color: var(--color-border-light);
-    border-radius: 5px;
+    border-radius: 2px;
     border: 2px solid var(--color-bg-main);
-    transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -109,7 +106,7 @@ body {
     background-color: var(--color-bg-main);
 }
 
-/* Global Keyframes for Tooltips (used by EditorView) */
+/* Global Keyframes for Tooltips */
 @keyframes cm-tooltip-fade-in {
     from {
         opacity: 0;

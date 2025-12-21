@@ -3,6 +3,7 @@ export class AppState {
     splitView = $state(true);
     theme = $state<'dark' | 'light'>('dark');
     activeTheme = $state('default-dark');
+    availableThemes = $state<string[]>(['default-dark', 'default-light']);
 
     // Layout State
     splitPercentage = $state(0.5);
