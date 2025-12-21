@@ -68,7 +68,7 @@ export const createSpellCheckLinter = () => linter(async (view) => {
 
         const newCache = new Set<string>();
         const diagnostics: Diagnostic[] = [];
-        const diagnosticKeys = new Set<string>(); // Deduplicate diagnostics
+        const diagnosticKeys = new Set<string>();
 
         for (const word of misspelled) {
             newCache.add(word.toLowerCase());

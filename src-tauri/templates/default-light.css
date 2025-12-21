@@ -6,8 +6,10 @@
 }
 .cm-gutters {
     background-color: var(--color-bg-main) !important;
-    color: #9ca3af !important;
     border-right: 1px solid var(--color-border-main) !important;
+}
+.cm-lineNumbers .cm-gutterElement {
+    color: #9ca3af !important;
 }
 .cm-activeLine {
     background-color: rgba(0, 0, 0, 0.03) !important;

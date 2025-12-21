@@ -72,7 +72,7 @@
         const fontSize = appState.editorFontSize || 14;
         const insertMode = editorStore.insertMode;
         return EditorView.theme({
-            "&": { height: "100%", fontSize: `${fontSize}px`, backgroundColor: "var(--color-bg-main)", color: "var(--color-fg-default)" },
+            "&": { height: "100%", fontSize: `${fontSize}px` },
             ".cm-cursor": {
                 borderLeftColor: insertMode === "OVR" ? "transparent" : "var(--color-fg-default)",
                 borderBottom: insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none",

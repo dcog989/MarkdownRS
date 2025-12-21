@@ -8,7 +8,7 @@
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
-    import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap, triggerImmediateLint } from "$lib/utils/spellcheckExtension";
+    import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap, triggerImmediateLint } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { transformText } from "$lib/utils/textTransformsRust";
     import { EditorView as CM6EditorView } from "@codemirror/view";
     import { onMount, tick, untrack } from "svelte";
