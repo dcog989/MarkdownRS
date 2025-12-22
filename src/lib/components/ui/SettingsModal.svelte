@@ -3,6 +3,7 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
+    import { DEFAULT_THEMES } from "$lib/utils/themes";
     import { Keyboard, Search, Settings, X } from "lucide-svelte";
 
     interface Props {
@@ -19,14 +20,21 @@
     $effect(() => {
         if (isOpen) {
             callBackend<string[]>("get_available_themes", {}, "Settings:Load")
-                .then((themes: string[]) => {
-                    appState.availableThemes = themes;
-                    if (!themes.includes(appState.activeTheme)) {
+                .then((customThemes: string[]) => {
+                    // Merge defaults with custom themes, removing duplicates if any
+                    const defaults = Object.keys(DEFAULT_THEMES);
+                    const customs = customThemes.filter((t) => !defaults.includes(t));
+                    appState.availableThemes = [...defaults, ...customs];
+
+                    if (!appState.availableThemes.includes(appState.activeTheme)) {
                         appState.activeTheme = "default-dark";
                         saveSettings();
                     }
                 })
-                .catch(() => {});
+                .catch(() => {
+                    // Fallback if backend fails
+                    appState.availableThemes = Object.keys(DEFAULT_THEMES);
+                });
 
             setTimeout(() => searchInputEl?.focus(), 0);
         }

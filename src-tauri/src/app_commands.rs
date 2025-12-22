@@ -534,11 +534,8 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
     let themes_dir = app_dir.join("Themes");
 
     if !themes_dir.exists() {
+        // Just create directory if missing, don't write defaults
         fs::create_dir_all(&themes_dir).map_err(|e| e.to_string())?;
-        let dark = include_str!("../templates/default-dark.css");
-        let light = include_str!("../templates/default-light.css");
-        let _ = fs::write(themes_dir.join("default-dark.css"), dark);
-        let _ = fs::write(themes_dir.join("default-light.css"), light);
     }
 
     let mut themes = Vec::new();
@@ -564,27 +561,10 @@ pub async fn get_theme_css(
         .app_data_dir()
         .map_err(|e| e.to_string())?;
     let themes_dir = app_dir.join("Themes");
-
-    if !themes_dir.exists() {
-        fs::create_dir_all(&themes_dir).map_err(|e| e.to_string())?;
-    }
-
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
-    // Only write if the file does not exist to allow user persistence
     if !theme_path.exists() {
-        let template = match theme_name.as_str() {
-            "default-dark" => Some(include_str!("../templates/default-dark.css")),
-            "default-light" => Some(include_str!("../templates/default-light.css")),
-            _ => None,
-        };
-
-        if let Some(content) = template {
-            fs::write(&theme_path, content).map_err(|e| e.to_string())?;
-            return Ok(content.to_string());
-        } else {
-            return Err("Theme file not found".to_string());
-        }
+        return Err(format!("Custom theme '{}' not found", theme_name));
     }
 
     fs::read_to_string(theme_path).map_err(|e| e.to_string())
