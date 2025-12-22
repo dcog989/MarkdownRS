@@ -67,13 +67,34 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
  * Track changes from editor updates
  */
 export function trackEditorChanges(tracker: LineChangeTracker, update: ViewUpdate) {
-    if (!update.docChanged || appState.recentChangesMode === 'disabled') return;
+    if (!update.docChanged) return;
+    if (appState.recentChangesMode === 'disabled') return;
 
-    // Detect if this transaction is an undo or redo operation
+    // Detect if this is an undo/redo operation (Logic parity with original isInverted check)
     const isHistoryAction = update.transactions.some(tr =>
         tr.isUserEvent('undo') || tr.isUserEvent('redo')
     );
 
+    if (isHistoryAction) {
+        // For undo/redo, remove highlights from affected lines
+        const affectedLines = new Set<number>();
+
+        update.changes.iterChanges((fromA, toA, fromB, toB) => {
+            const doc = update.state.doc;
+            const startLine = doc.lineAt(fromB).number;
+            const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
+
+            for (let line = startLine; line <= endLine; line++) {
+                affectedLines.add(line);
+            }
+        });
+
+        // Remove the affected lines from tracking
+        tracker.removeLines(Array.from(affectedLines));
+        return;
+    }
+
+    // Normal edit: track the changes
     const changedLines = new Set<number>();
 
     update.changes.iterChanges((fromA, toA, fromB, toB) => {
@@ -85,16 +106,14 @@ export function trackEditorChanges(tracker: LineChangeTracker, update: ViewUpdat
             changedLines.add(line);
         }
 
-        const linesA = update.startState.doc.lineAt(toA).number - update.startState.doc.lineAt(fromA).number;
-        const linesB = endLine - startLine;
-        const lineDelta = linesB - linesA;
-
+        // Adjust tracker for line count changes
+        const lineDelta = (endLine - startLine) - (update.startState.doc.lineAt(toA).number - update.startState.doc.lineAt(fromA).number);
         if (lineDelta !== 0) {
             tracker.adjustLineNumbers(endLine + 1, lineDelta);
         }
     });
 
-    if (!isHistoryAction && changedLines.size > 0) {
+    if (changedLines.size > 0) {
         tracker.recordChanges(Array.from(changedLines));
     }
 }
