@@ -1,9 +1,6 @@
 use crate::db::{Bookmark, Database, TabState};
 use crate::markdown_formatter::{FormatterOptions, format_markdown};
 use crate::markdown_renderer::{MarkdownOptions, RenderResult, render_markdown};
-use crate::text_metrics::{
-    CursorMetrics, TextMetrics, calculate_cursor_metrics, calculate_text_metrics,
-};
 use crate::text_transforms::transform_text;
 use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8};
@@ -496,19 +493,6 @@ pub async fn format_markdown_content(
         table_alignment,
     };
     format_markdown(&content, &options)
-}
-
-#[tauri::command]
-pub async fn calculate_text_metrics_command(content: String) -> Result<TextMetrics, String> {
-    Ok(calculate_text_metrics(&content))
-}
-
-#[tauri::command]
-pub async fn calculate_cursor_metrics_command(
-    content: String,
-    cursor_offset: usize,
-) -> Result<CursorMetrics, String> {
-    calculate_cursor_metrics(&content, cursor_offset)
 }
 
 // Bookmark commands

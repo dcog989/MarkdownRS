@@ -5,7 +5,6 @@ mod app_commands;
 mod db;
 mod markdown_formatter;
 mod markdown_renderer;
-mod text_metrics;
 mod text_transforms;
 
 use log::LevelFilter;
@@ -164,8 +163,6 @@ fn main() {
             app_commands::render_markdown_content,
             app_commands::transform_text_content,
             app_commands::format_markdown_content,
-            app_commands::calculate_text_metrics_command,
-            app_commands::calculate_cursor_metrics_command,
             app_commands::add_bookmark,
             app_commands::get_all_bookmarks,
             app_commands::delete_bookmark,
