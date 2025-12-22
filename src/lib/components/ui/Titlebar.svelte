@@ -45,7 +45,15 @@
                 saveSettings();
             },
         },
-        { id: "transform", label: "Edit: Text Transformations...", shortcut: "Ctrl+T", action: () => (showTransformModal = true) },
+        { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform("format-document") },
+        { id: "ops-sort", label: "Edit: Sort Lines (A→Z)", action: () => editorStore.performTextTransform("sort-asc") },
+        { id: "ops-sort-desc", label: "Edit: Sort Lines (Z→A)", action: () => editorStore.performTextTransform("sort-desc") },
+        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => editorStore.performTextTransform("trim-whitespace") },
+        { id: "ops-upper", label: "Edit: To UPPERCASE", action: () => editorStore.performTextTransform("uppercase") },
+        { id: "ops-lower", label: "Edit: To lowercase", action: () => editorStore.performTextTransform("lowercase") },
+        { id: "ops-title", label: "Edit: To Title Case", action: () => editorStore.performTextTransform("title-case") },
+        { id: "ops-remove-dupes", label: "Edit: Remove Duplicate Lines", action: () => editorStore.performTextTransform("remove-duplicates") },
+        { id: "ops-remove-blank", label: "Edit: Remove Blank Lines", action: () => editorStore.performTextTransform("remove-blank") },
         {
             id: "theme-dark",
             label: "Theme: Dark",
@@ -70,18 +78,43 @@
                 if (appState.activeTabId) requestCloseTab(appState.activeTabId);
             },
         },
-        { id: "settings", label: "Open Settings", action: () => (showSettingsModal = true) },
-        { id: "shortcuts", label: "Keyboard Shortcuts", shortcut: "F1", action: () => (showShortcutsModal = true) },
-        { id: "bookmarks", label: "Bookmarks", shortcut: "Ctrl+B", action: () => (showBookmarksModal = true) },
-        { id: "ops-sort", label: "Edit: Sort Lines (A-Z)", action: () => editorStore.performTextTransform("sort-asc") },
-        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => editorStore.performTextTransform("trim-whitespace") },
-        { id: "ops-upper", label: "Edit: To Upper Case", action: () => editorStore.performTextTransform("uppercase") },
-        { id: "ops-lower", label: "Edit: To Lower Case", action: () => editorStore.performTextTransform("lowercase") },
+        {
+            id: "settings",
+            label: "Open Settings",
+            action: () => {
+                showSettingsModal = true;
+            },
+        },
+        {
+            id: "shortcuts",
+            label: "Keyboard Shortcuts",
+            shortcut: "F1",
+            action: () => {
+                showShortcutsModal = true;
+            },
+        },
+        {
+            id: "bookmarks",
+            label: "Bookmarks",
+            shortcut: "Ctrl+B",
+            action: () => {
+                showBookmarksModal = true;
+            },
+        },
+        {
+            id: "transform",
+            label: "Edit: Text Transformations...",
+            shortcut: "Ctrl+T",
+            action: () => {
+                showTransformModal = true;
+            },
+        },
     ];
 
     onMount(() => {
         let unlisten: (() => void) | undefined;
         appWindow.isMaximized().then((m) => (isMaximized = m));
+
         appWindow
             .onResized(async () => {
                 isMaximized = await appWindow.isMaximized();
@@ -89,16 +122,16 @@
             .then((u) => (unlisten = u));
 
         const handleKeydown = (e: KeyboardEvent) => {
-            const mod = e.ctrlKey || e.metaKey;
-            if (mod && e.key.toLowerCase() === "t") {
+            const isModifier = e.ctrlKey || e.metaKey;
+            if (isModifier && e.key.toLowerCase() === "t") {
                 e.preventDefault();
                 showTransformModal = true;
             }
-            if (mod && e.key.toLowerCase() === "p") {
+            if (isModifier && e.key.toLowerCase() === "p") {
                 e.preventDefault();
                 showCommandPalette = true;
             }
-            if (mod && e.key.toLowerCase() === "b") {
+            if (isModifier && e.key.toLowerCase() === "b") {
                 e.preventDefault();
                 showBookmarksModal = true;
             }
@@ -109,7 +142,9 @@
         };
 
         window.addEventListener("keydown", handleKeydown);
-        window.addEventListener("open-shortcuts", () => (showShortcutsModal = true));
+        window.addEventListener("open-shortcuts", () => {
+            showShortcutsModal = true;
+        });
 
         return () => {
             if (unlisten) unlisten();
@@ -124,6 +159,7 @@
             await invoke("plugin:window-state|save_window_state");
             await appWindow.close();
         } catch (e) {
+            console.error(`Error during shutdown: ${e}`);
             await appWindow.close();
         }
     }
