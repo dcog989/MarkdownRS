@@ -131,10 +131,8 @@
     }
 
     function setupObservers(el: HTMLElement) {
-        // Scroll Listener
         el.addEventListener("scroll", syncThumbToScroll, { passive: true });
 
-        // Resize Observer
         if (resizeObserver) resizeObserver.disconnect();
         resizeObserver = new ResizeObserver(() => {
             updateMetrics();
@@ -145,7 +143,6 @@
         if (content) resizeObserver.observe(content);
         else if (el.firstElementChild) resizeObserver.observe(el.firstElementChild);
 
-        // Initial check
         updateMetrics();
         syncThumbToScroll();
     }
@@ -171,19 +168,15 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<!--
-    Structure:
-    - Container (group): Fixed 14px width, transparent, handles track clicks.
-    - Thumb: Centered horizontally, slim by default (2px), expands on group-hover (6px).
-    - Top/Bottom Offset: 2px via 'top-[2px]' class to prevent hitting edges.
--->
-<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-[2px] bottom-[2px] z-50 flex w-[14px] justify-center bg-transparent" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-[2px] bottom-[2px] z-50 flex w-[16px] justify-center bg-transparent" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
     <div
-        class="scrollbar-thumb absolute w-[2px] rounded-full bg-[var(--color-border-light)] transition-[width,background-color] duration-100 group-hover:w-[6px] group-hover:bg-white/40 active:bg-[var(--color-accent-primary)]"
+        class="scrollbar-thumb absolute left-1/2 -translate-x-1/2 rounded-full bg-[var(--color-border-light)] transition-[width,background-color] duration-150 group-hover:bg-white/40 active:bg-[var(--color-accent-primary)]"
+        class:w-[2px]={!isDragging}
+        class:group-hover:w-[8px]={!isDragging}
+        class:w-[8px]={isDragging}
         style="
             height: {thumbHeight}px;
-            transform: translateY({thumbTop}px);
-            top: 0;
+            top: {thumbTop}px;
         "
         onmousedown={onThumbMouseDown}
     ></div>
