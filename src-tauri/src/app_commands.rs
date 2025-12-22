@@ -534,8 +534,20 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
     let themes_dir = app_dir.join("Themes");
 
     if !themes_dir.exists() {
-        // Just create directory if missing, don't write defaults
         fs::create_dir_all(&themes_dir).map_err(|e| e.to_string())?;
+    }
+
+    // Write default themes if they don't exist
+    let dark_path = themes_dir.join("default-dark.css");
+    if !dark_path.exists() {
+        let content = include_str!("../templates/default-dark.css");
+        let _ = fs::write(dark_path, content);
+    }
+
+    let light_path = themes_dir.join("default-light.css");
+    if !light_path.exists() {
+        let content = include_str!("../templates/default-light.css");
+        let _ = fs::write(light_path, content);
     }
 
     let mut themes = Vec::new();

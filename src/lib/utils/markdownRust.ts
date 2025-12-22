@@ -59,7 +59,8 @@ function linkifyFilePaths(html: string): string {
                 link.href = path;
                 link.textContent = path;
                 link.className = 'file-path-link';
-                link.style.cssText = 'color: var(--color-accent-link); text-decoration: underline; cursor: pointer;';
+                // Use CSS variables for consistent theming
+                link.style.cssText = 'color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;';
                 fragment.appendChild(link);
 
                 lastIndex = index + fullMatch.length;

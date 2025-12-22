@@ -4,6 +4,7 @@
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
+    import { highlightPlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
@@ -71,7 +72,7 @@
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
 
-            // Selection Background (standard) - Ensure visible on blur
+            // Selection Background
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
                 backgroundColor: "var(--color-selection-bg) !important",
             },
@@ -79,14 +80,12 @@
                 backgroundColor: "var(--color-selection-match-bg)",
             },
 
-            // SEARCH MATCH STYLING
-            // Standard Match (inactive)
+            // Search Matches
             ".cm-searchMatch": {
                 backgroundColor: isDark ? "rgba(255, 255, 0, 0.2)" : "rgba(255, 215, 0, 0.4)",
                 outline: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
                 borderRadius: "2px",
             },
-            // Selected Match (active / current) - High Contrast
             ".cm-searchMatch.cm-searchMatch-selected": {
                 backgroundColor: isDark ? "#d19a66 !important" : "#ff9900 !important",
                 color: isDark ? "#000 !important" : "#fff !important",
@@ -107,7 +106,6 @@
     });
 
     $effect(() => {
-        // Track dependency explicitly to trigger reconfiguration on change
         const _mode = appState.recentChangesMode;
 
         if (view)
@@ -120,7 +118,7 @@
         const extensions = [
             highlightActiveLineGutter(),
             highlightActiveLine(),
-            drawSelection(), // Crucial for persistent selection visibility on blur
+            drawSelection(),
             historyComp.of(history({ minDepth: appState.undoDepth })),
             search({ top: true }),
             highlightSelectionMatches(),
@@ -129,6 +127,7 @@
             closeBrackets(),
             filePathPlugin,
             filePathTheme,
+            highlightPlugin, // Added custom highlighter
             keymap.of([
                 {
                     key: "Insert",
@@ -202,7 +201,6 @@
 
         view = new EditorView({ state: EditorState.create({ doc: initialContent, extensions }), parent: editorContainer });
 
-        // --- Modifier Key Tracking for Clickable Links ---
         const handleModifierKey = (e: KeyboardEvent) => {
             if (e.key === "Control" || e.key === "Meta") {
                 if (e.type === "keydown") {
@@ -217,7 +215,6 @@
         window.addEventListener("keydown", handleModifierKey);
         window.addEventListener("keyup", handleModifierKey);
         window.addEventListener("blur", clearModifier);
-        // -------------------------------------------------
 
         scrollSync.registerEditor(view);
         view.focus();

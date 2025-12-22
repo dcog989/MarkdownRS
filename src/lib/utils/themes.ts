@@ -49,45 +49,45 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     color: #e06c75;
     font-weight: bold;
 }
-.cm-h1 {
-    font-size: 1.3em;
+.cm-h1 { font-size: 1.3em; }
+.cm-h2 { font-size: 1.2em; }
+.cm-h3 { font-size: 1.1em; }
+.cm-keyword { color: #c678dd; }
+.cm-atom { color: #d19a66; }
+.cm-number { color: #d19a66; }
+.cm-string { color: #98c379; }
+.cm-comment { color: #7f848e; font-style: italic; }
+
+.cm-link { color: var(--color-accent-link); text-decoration: underline; }
+.cm-url { color: var(--color-accent-url); text-decoration: underline; }
+.cm-file-path { color: var(--color-accent-filepath); text-decoration: underline; }
+
+.cm-emphasis { font-style: italic; }
+.cm-strong { font-weight: bold; }
+
+/* Markdown Elements */
+.cm-highlight {
+    background-color: var(--color-bg-highlight);
+    color: #000;
 }
-.cm-h2 {
-    font-size: 1.2em;
-}
-.cm-h3 {
-    font-size: 1.1em;
-}
-.cm-keyword {
-    color: #c678dd;
-}
-.cm-atom {
-    color: #d19a66;
-}
-.cm-number {
-    color: #d19a66;
-}
-.cm-string {
-    color: #98c379;
-}
-.cm-comment {
-    color: #7f848e;
-    font-style: italic;
-}
-.cm-link {
-    color: #61afef;
-    text-decoration: underline;
-}
-.cm-emphasis {
-    font-style: italic;
-}
-.cm-strong {
-    font-weight: bold;
+.cm-strikethrough {
+    text-decoration: line-through;
+    opacity: 0.8;
 }
 .cm-code {
-    background: rgba(255, 255, 255, 0.05);
-    color: #89e57b;
-    border-radius: 3px;
+    background-color: var(--color-bg-code);
+    color: var(--color-fg-code);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+}
+.cm-blockquote {
+    color: var(--color-fg-muted);
+    background-color: var(--color-bg-quote);
+    border-left: 4px solid var(--color-border-quote);
+    padding-left: 10px;
+    margin-left: 0;
+    font-style: italic;
 }
 
 /* --- PREVIEW CONTENT --- */
@@ -107,12 +107,7 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     font-family: "Source Code Pro", Consolas, "Courier New", monospace;
     font-weight: normal;
 }
-.prose h1,
-.prose h2,
-.prose h3,
-.prose h4,
-.prose h5,
-.prose h6 {
+.prose h1, .prose h2, .prose h3, .prose h4 {
     font-family: Georgia, "Times New Roman", Times, serif;
 }
 .prose h1 {
@@ -131,8 +126,6 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
 .cm-editor .cm-content {
     caret-color: #212121;
 }
-
-/* Main gutter strip */
 .cm-editor .cm-gutters {
     background-color: var(--color-bg-main) !important;
     border-right: 1px solid var(--color-border-main) !important;
@@ -167,54 +160,49 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
     background-color: rgba(249, 168, 37, 0.3);
 }
 
-.cm-h1,
-.cm-h2,
-.cm-h3,
-.cm-h4,
-.cm-h5,
-.cm-h6 {
+.cm-h1, .cm-h2, .cm-h3, .cm-h4, .cm-h5, .cm-h6 {
     color: #d32f2f;
     font-weight: bold;
 }
-.cm-h1 {
-    font-size: 1.5em;
+.cm-h1 { font-size: 1.5em; }
+.cm-h2 { font-size: 1.3em; }
+.cm-h3 { font-size: 1.1em; }
+.cm-keyword { color: #7b1fa2; }
+.cm-atom { color: #f57c00; }
+.cm-number { color: #f57c00; }
+.cm-string { color: #388e3c; }
+.cm-comment { color: #757575; font-style: italic; }
+
+.cm-link { color: var(--color-accent-link); text-decoration: underline; }
+.cm-url { color: var(--color-accent-url); text-decoration: underline; }
+.cm-file-path { color: var(--color-accent-filepath); text-decoration: underline; }
+
+.cm-emphasis { font-style: italic; }
+.cm-strong { font-weight: bold; }
+
+/* Markdown Elements */
+.cm-highlight {
+    background-color: var(--color-bg-highlight);
+    color: inherit;
 }
-.cm-h2 {
-    font-size: 1.3em;
-}
-.cm-h3 {
-    font-size: 1.1em;
-}
-.cm-keyword {
-    color: #7b1fa2;
-}
-.cm-atom {
-    color: #f57c00;
-}
-.cm-number {
-    color: #f57c00;
-}
-.cm-string {
-    color: #388e3c;
-}
-.cm-comment {
-    color: #757575;
-    font-style: italic;
-}
-.cm-link {
-    color: #1976d2;
-    text-decoration: underline;
-}
-.cm-emphasis {
-    font-style: italic;
-}
-.cm-strong {
-    font-weight: bold;
+.cm-strikethrough {
+    text-decoration: line-through;
+    opacity: 0.8;
 }
 .cm-code {
-    background: rgba(0, 0, 0, 0.05);
-    color: #f9a825;
-    border-radius: 3px;
+    background-color: var(--color-bg-code);
+    color: var(--color-fg-code);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+}
+.cm-blockquote {
+    color: var(--color-fg-muted);
+    background-color: var(--color-bg-quote);
+    border-left: 4px solid var(--color-border-quote);
+    padding-left: 10px;
+    margin-left: 0;
+    font-style: italic;
 }
 
 /* --- PREVIEW CONTENT --- */
