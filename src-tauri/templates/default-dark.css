@@ -2,7 +2,7 @@
 
 /* --- EDITOR CONTENT --- */
 .cm-editor .cm-content {
-    caret-color: #aeafad;
+    caret-color: #d58dff;
 }
 .cm-editor .cm-gutters {
     background-color: var(--color-bg-main) !important;
@@ -32,10 +32,10 @@
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: rgba(97, 175, 239, 0.3) !important;
+    background-color: rgba(187, 112, 228, 0.35) !important;
 }
 .cm-editor .cm-selectionMatch {
-    background-color: rgba(209, 154, 102, 0.3);
+    background-color: rgba(209, 154, 102, 0.35);
 }
 
 .cm-h1,
@@ -93,14 +93,31 @@
     --tw-prose-body: #abb2bf;
     --tw-prose-headings: #e06c75;
     --tw-prose-links: #61afef;
-    --tw-prose-code: #e5c07b;
+    --tw-prose-code: #82e57b;
     --tw-prose-quotes: #7f848e;
+}
+.prose blockquote {
+    border-left: 4px solid rgb(221, 206, 120);
+    background: rgb(221, 206, 120, 0.18);
+    border-radius: 4px;
+}
+.prose code {
+    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+    font-weight: normal;
+}
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+    font-family: Georgia, "Times New Roman", Times, serif;
 }
 .prose h1 {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 0.3em;
 }
-.prose blockquote {
-    border-left: 4px solid #c678dd;
-    background: rgba(198, 120, 221, 0.05);
+.prose pre {
+    background: #333;
+    color: #89e57b;
 }
