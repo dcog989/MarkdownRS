@@ -1,4 +1,6 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FormatterOptions {
@@ -60,14 +62,14 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
 
 /// Format ATX-style headings (# Heading)
 fn format_headings(content: &str) -> String {
+    static HEADING_REGEX: OnceLock<Regex> = OnceLock::new();
+    let re = HEADING_REGEX.get_or_init(|| Regex::new(r"^(#{1,6})\s*(.+?)(\s*#+)?\s*$").unwrap());
+
     content
         .lines()
         .map(|line| {
             // Match heading lines with optional trailing #
-            if let Some(captures) = regex::Regex::new(r"^(#{1,6})\s*(.+?)(\s*#+)?\s*$")
-                .unwrap()
-                .captures(line)
-            {
+            if let Some(captures) = re.captures(line) {
                 let level = captures.get(1).unwrap().as_str();
                 let text = captures.get(2).unwrap().as_str().trim();
                 // Consistent format: level + space + text (no trailing #)
@@ -82,37 +84,44 @@ fn format_headings(content: &str) -> String {
 
 /// Format list indentation
 fn format_lists(content: &str, options: &FormatterOptions) -> String {
+    static BULLET_REGEX: OnceLock<Regex> = OnceLock::new();
+    static ORDERED_REGEX: OnceLock<Regex> = OnceLock::new();
+
+    let bullet_re = BULLET_REGEX.get_or_init(|| Regex::new(r"^[-*+]\s+").unwrap());
+    let ordered_re = ORDERED_REGEX.get_or_init(|| Regex::new(r"^\d+\.\s+").unwrap());
+
     let lines: Vec<&str> = content.lines().collect();
-    let mut result = Vec::new();
+    let mut result = Vec::with_capacity(lines.len());
     let mut in_list = false;
     let mut list_level = 0;
 
     for line in lines {
         let trimmed = line.trim();
 
-        // Detect bullet list items
-        let bullet_regex = regex::Regex::new(r"^[-*+]\s+").unwrap();
-        let ordered_regex = regex::Regex::new(r"^\d+\.\s+").unwrap();
-
-        if bullet_regex.is_match(trimmed) {
+        if bullet_re.is_match(trimmed) {
             // Calculate indentation level
             let leading_spaces = line.len() - line.trim_start().len();
             list_level = leading_spaces / options.list_indent;
             in_list = true;
 
             let indent = " ".repeat(list_level * options.list_indent);
-            let content = bullet_regex.replace(trimmed, "").to_string();
+            let content = bullet_re.replace(trimmed, "").to_string();
             result.push(format!("{}{} {}", indent, options.bullet_char, content));
-        } else if ordered_regex.is_match(trimmed) {
+        } else if ordered_re.is_match(trimmed) {
             // Ordered list
             let leading_spaces = line.len() - line.trim_start().len();
             list_level = leading_spaces / options.list_indent;
             in_list = true;
 
             let indent = " ".repeat(list_level * options.list_indent);
-            if let Some(captures) = ordered_regex.captures(trimmed) {
-                let number = captures.get(0).unwrap().as_str().trim().trim_end_matches('.');
-                let content = ordered_regex.replace(trimmed, "").to_string();
+            if let Some(captures) = ordered_re.captures(trimmed) {
+                let number = captures
+                    .get(0)
+                    .unwrap()
+                    .as_str()
+                    .trim()
+                    .trim_end_matches('.');
+                let content = ordered_re.replace(trimmed, "").to_string();
                 result.push(format!("{}{}. {}", indent, number, content));
             }
         } else if trimmed.is_empty() {
@@ -135,9 +144,11 @@ fn format_lists(content: &str, options: &FormatterOptions) -> String {
 
 /// Normalize code block fences
 fn format_code_blocks(content: &str, preferred_fence: &str) -> String {
-    let fence_regex = regex::Regex::new(r"(?m)^(```|~~~)(\w*)\n([\s\S]*?)^(```|~~~)").unwrap();
+    static FENCE_REGEX: OnceLock<Regex> = OnceLock::new();
+    let fence_re = FENCE_REGEX
+        .get_or_init(|| Regex::new(r"(?m)^(```|~~~)(\w*)\n([\s\S]*?)^(```|~~~)").unwrap());
 
-    fence_regex
+    fence_re
         .replace_all(content, |caps: &regex::Captures| {
             let lang = caps.get(2).map_or("", |m| m.as_str());
             let code = caps.get(3).map_or("", |m| m.as_str());
@@ -149,7 +160,7 @@ fn format_code_blocks(content: &str, preferred_fence: &str) -> String {
 /// Align table columns
 fn format_tables(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
-    let mut result = Vec::new();
+    let mut result = Vec::with_capacity(lines.len());
     let mut in_table = false;
     let mut table_lines = Vec::new();
 
