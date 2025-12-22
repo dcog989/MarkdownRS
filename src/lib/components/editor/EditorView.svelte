@@ -4,7 +4,7 @@
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-    import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
+    import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
@@ -97,6 +97,7 @@
     });
 
     $effect(() => {
+        // Track dependency explicitly to trigger reconfiguration on change
         const _mode = appState.recentChangesMode;
 
         if (view)
@@ -174,7 +175,8 @@
 
         extensions.push(
             EditorView.updateListener.of((update) => {
-                trackEditorChanges(lineChangeTracker, update);
+                // Tracking is now handled by the extension itself
+
                 if (update.docChanged) {
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => onContentChange(update.state.doc.toString()), CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);

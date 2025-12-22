@@ -1,6 +1,6 @@
 import { appState } from "$lib/stores/appState.svelte";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-import { EditorView, GutterMarker, gutter, type ViewUpdate } from "@codemirror/view";
+import { EditorView, gutter, GutterMarker, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 class LineNumberMarker extends GutterMarker {
     constructor(private lineNo: number, private alpha: number) {
@@ -21,99 +21,90 @@ class LineNumberMarker extends GutterMarker {
 
         return span;
     }
+
+    eq(other: LineNumberMarker) {
+        return this.lineNo === other.lineNo && Math.abs(this.alpha - other.alpha) < 0.01;
+    }
 }
 
 /**
- * Custom line number gutter that integrates recent change highlighting.
- * Uses initialSpacer and updateSpacer to ensure the gutter is always wide enough
- * for the largest line number in the document.
+ * Creates the complete extension for recent changes:
+ * 1. A ViewPlugin that updates the tracker state synchronously during view updates.
+ * 2. The gutter that renders the line numbers based on that tracker state.
  */
 export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
-    return gutter({
-        class: "cm-lineNumbers",
-        lineMarker(view, line) {
-            const lineNo = view.state.doc.lineAt(line.from).number;
-            let alpha = 0;
+    return [
+        ViewPlugin.fromClass(class {
+            update(update: ViewUpdate) {
+                if (!update.docChanged) return;
+                if (appState.recentChangesMode === 'disabled') return;
 
-            if (appState.recentChangesMode !== 'disabled') {
-                alpha = tracker.getLineAlpha(
-                    lineNo,
-                    appState.recentChangesMode,
-                    appState.recentChangesTimespan,
-                    appState.recentChangesCount
+                // Detect Undo/Redo
+                const isHistoryAction = update.transactions.some(tr =>
+                    tr.isUserEvent('undo') || tr.isUserEvent('redo')
                 );
+
+                if (isHistoryAction) {
+                    const affectedLines = new Set<number>();
+                    update.changes.iterChanges((fromA, toA, fromB, toB) => {
+                        const doc = update.state.doc;
+                        const startLine = doc.lineAt(fromB).number;
+                        const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
+                        for (let line = startLine; line <= endLine; line++) {
+                            affectedLines.add(line);
+                        }
+                    });
+                    tracker.removeLines(Array.from(affectedLines));
+                    return;
+                }
+
+                // Normal Changes
+                const changedLines = new Set<number>();
+                update.changes.iterChanges((fromA, toA, fromB, toB) => {
+                    const doc = update.state.doc;
+                    const startLine = doc.lineAt(fromB).number;
+                    const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
+
+                    for (let line = startLine; line <= endLine; line++) {
+                        changedLines.add(line);
+                    }
+
+                    // Adjust subsequent line numbers if lines were added/removed
+                    const lineDelta = (endLine - startLine) - (update.startState.doc.lineAt(toA).number - update.startState.doc.lineAt(fromA).number);
+                    if (lineDelta !== 0) {
+                        tracker.adjustLineNumbers(endLine + 1, lineDelta);
+                    }
+                });
+
+                if (changedLines.size > 0) {
+                    tracker.recordChanges(Array.from(changedLines));
+                }
             }
+        }),
+        gutter({
+            class: "cm-lineNumbers",
+            lineMarker(view, line) {
+                const lineNo = view.state.doc.lineAt(line.from).number;
+                let alpha = 0;
 
-            return new LineNumberMarker(lineNo, alpha);
-        },
-        initialSpacer: (view: EditorView) => new LineNumberMarker(view.state.doc.lines, 0),
-        updateSpacer: (spacer: GutterMarker, update: ViewUpdate) => {
-            if (update.docChanged) {
-                return new LineNumberMarker(update.state.doc.lines, 0);
+                if (appState.recentChangesMode !== 'disabled') {
+                    alpha = tracker.getLineAlpha(
+                        lineNo,
+                        appState.recentChangesMode,
+                        appState.recentChangesTimespan,
+                        appState.recentChangesCount
+                    );
+                }
+
+                return new LineNumberMarker(lineNo, alpha);
+            },
+            initialSpacer: (view: EditorView) => new LineNumberMarker(view.state.doc.lines, 0),
+            updateSpacer: (spacer: GutterMarker, update: ViewUpdate) => {
+                if (update.docChanged) {
+                    return new LineNumberMarker(update.state.doc.lines, 0);
+                }
+                return spacer;
             }
-            return spacer;
-        },
-        // Force re-render of all line markers when document changes
-        lineMarkerChange: (update: ViewUpdate) => {
-            if (update.docChanged && appState.recentChangesMode !== 'disabled') {
-                return true; // Force update of all line markers
-            }
-            return false;
-        }
-    });
-}
-
-/**
- * Track changes from editor updates
- */
-export function trackEditorChanges(tracker: LineChangeTracker, update: ViewUpdate) {
-    if (!update.docChanged) return;
-    if (appState.recentChangesMode === 'disabled') return;
-
-    // Detect if this is an undo/redo operation (Logic parity with original isInverted check)
-    const isHistoryAction = update.transactions.some(tr =>
-        tr.isUserEvent('undo') || tr.isUserEvent('redo')
-    );
-
-    if (isHistoryAction) {
-        // For undo/redo, remove highlights from affected lines
-        const affectedLines = new Set<number>();
-
-        update.changes.iterChanges((fromA, toA, fromB, toB) => {
-            const doc = update.state.doc;
-            const startLine = doc.lineAt(fromB).number;
-            const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
-
-            for (let line = startLine; line <= endLine; line++) {
-                affectedLines.add(line);
-            }
-        });
-
-        // Remove the affected lines from tracking
-        tracker.removeLines(Array.from(affectedLines));
-        return;
-    }
-
-    // Normal edit: track the changes
-    const changedLines = new Set<number>();
-
-    update.changes.iterChanges((fromA, toA, fromB, toB) => {
-        const doc = update.state.doc;
-        const startLine = doc.lineAt(fromB).number;
-        const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
-
-        for (let line = startLine; line <= endLine; line++) {
-            changedLines.add(line);
-        }
-
-        // Adjust tracker for line count changes
-        const lineDelta = (endLine - startLine) - (update.startState.doc.lineAt(toA).number - update.startState.doc.lineAt(fromA).number);
-        if (lineDelta !== 0) {
-            tracker.adjustLineNumbers(endLine + 1, lineDelta);
-        }
-    });
-
-    if (changedLines.size > 0) {
-        tracker.recordChanges(Array.from(changedLines));
-    }
+        })
+    ];
 }
