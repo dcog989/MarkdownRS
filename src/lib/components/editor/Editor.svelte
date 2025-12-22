@@ -31,6 +31,36 @@
 
     const spellCheckLinter = createSpellCheckLinter();
 
+    // Derived active tab to track content changes reactively
+    let activeTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
+
+    $effect(() => {
+        const tab = activeTab;
+        if (!tab || !cmView) return;
+
+        const content = tab.content;
+
+        untrack(() => {
+            const currentDoc = cmView!.state.doc.toString();
+
+            // 1. Sync Content: Update editor if store content differs from editor content
+            // This handles external updates (Format Document, Replace All) while ignoring
+            // updates caused by user typing (where store matches editor).
+            if (currentDoc !== content) {
+                cmView!.dispatch({
+                    changes: { from: 0, to: currentDoc.length, insert: content },
+                });
+            }
+
+            // 2. Tab Switch Logic: Handle side effects when the active tab ID changes
+            if (tabId !== previousTabId) {
+                triggerImmediateLint(cmView!);
+                checkFileExists(tabId);
+                previousTabId = tabId;
+            }
+        });
+    });
+
     async function handleTextOperation(operation: TextOperation) {
         if (!cmView) return;
         const selection = cmView.state.selection.main;
@@ -87,22 +117,6 @@
         scroll: () => scrollSync.syncPreviewToEditor(),
     });
 
-    $effect(() => {
-        if (tabId !== previousTabId) {
-            const tab = editorStore.tabs.find((t) => t.id === tabId);
-            if (tab && cmView) {
-                untrack(() => {
-                    if (cmView!.state.doc.toString() !== tab.content) {
-                        cmView!.dispatch({ changes: { from: 0, to: cmView!.state.doc.length, insert: tab.content } });
-                    }
-                    triggerImmediateLint(cmView!);
-                    checkFileExists(tabId);
-                });
-            }
-            previousTabId = tabId;
-        }
-    });
-
     onMount(() => {
         initSpellcheck();
         editorStore.registerTextOperationCallback(handleTextOperation);
@@ -113,8 +127,8 @@
         return () => editorStore.unregisterTextOperationCallback();
     });
 
-    let initialContent = $derived(editorStore.tabs.find((t) => t.id === tabId)?.content || "");
-    let filename = $derived(editorStore.tabs.find((t) => t.id === tabId)?.title || "");
+    let initialContent = $derived(activeTab?.content || "");
+    let filename = $derived(activeTab?.title || "");
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
