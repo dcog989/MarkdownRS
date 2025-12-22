@@ -1,32 +1,23 @@
 <script lang="ts">
-    /**
-     * Find/Replace Panel Component
-     * Supports find/replace in current document and all open tabs
-     */
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { searchManager } from "$lib/utils/searchManager.svelte.ts";
+    import { findNext, findPrevious, replaceAll, replaceNext, setSearchQuery } from "@codemirror/search";
+    import type { EditorView } from "@codemirror/view";
     import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
     import { tick } from "svelte";
-    import { SearchQuery, setSearchQuery, findNext as cmFindNext, findPrevious as cmFindPrevious, replaceNext, replaceAll as cmReplaceAll } from "@codemirror/search";
 
     let { isOpen = $bindable(false), editorView } = $props<{
         isOpen?: boolean;
         editorView: any;
     }>();
 
-    let findText = $state("");
-    let replaceText = $state("");
-    let matchCase = $state(false);
-    let matchWholeWord = $state(false);
-    let useRegex = $state(false);
     let searchScope = $state<"current" | "all">("current");
     let isReplaceMode = $state(false);
     let searchInputRef = $state<HTMLInputElement>();
 
-    // Results
-    let currentMatches = $state<number>(0);
-    let currentIndex = $state<number>(0);
-    let allTabsResults = $state<Map<string, number>>(new Map());
+    // Helper to get actual CM instance
+    const getView = (): EditorView | undefined => editorView?.getView?.();
 
     export function focusInput() {
         if (searchInputRef) {
@@ -41,290 +32,75 @@
 
     $effect(() => {
         if (isOpen) {
-            tick().then(() => {
-                focusInput();
-            });
+            tick().then(focusInput);
+            handleSearch();
+        } else {
+            searchManager.clear(getView());
         }
     });
 
     function close() {
-        // Clear search highlighting when closing
-        const view = editorView?.getView?.();
-        if (view) {
-            view.dispatch({
-                effects: setSearchQuery.of(new SearchQuery({
-                    search: "",
-                    caseSensitive: false,
-                    regexp: false,
-                    wholeWord: false
-                }))
-            });
-        }
         isOpen = false;
-        if (editorView) editorView.getView()?.focus();
-    }
-
-    function buildSearchRegex(text: string): RegExp | null {
-        if (!text) return null;
-
-        try {
-            let pattern = text;
-            if (!useRegex) {
-                pattern = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            }
-
-            if (matchWholeWord) {
-                pattern = `\\b${pattern}\\b`;
-            }
-
-            const flags = matchCase ? "g" : "gi";
-            return new RegExp(pattern, flags);
-        } catch (e) {
-            console.error("Invalid regex:", e);
-            return null;
-        }
-    }
-
-    function updateSearchInEditor() {
-        const view = editorView?.getView?.();
-        if (!view || !findText) {
-            // Clear search if no text
-            if (view) {
-                view.dispatch({
-                    effects: setSearchQuery.of(new SearchQuery({
-                        search: "",
-                        caseSensitive: false,
-                        regexp: false,
-                        wholeWord: false
-                    }))
-                });
-            }
-            return;
-        }
-
-        // Update CodeMirror's search state to highlight all matches
-        view.dispatch({
-            effects: setSearchQuery.of(new SearchQuery({
-                search: findText,
-                caseSensitive: matchCase,
-                regexp: useRegex,
-                wholeWord: matchWholeWord
-            }))
-        });
-
-        // Update match count
-        const doc = view.state.doc;
-        const text = doc.toString();
-        const regex = buildSearchRegex(findText);
-        if (regex) {
-            const matches = [...text.matchAll(regex)];
-            currentMatches = matches.length;
-        }
-    }
-
-    function findInCurrentDocument() {
-        if (!findText || !editorView) return;
-
-        const view = editorView.getView?.();
-        if (!view) return;
-
-        // Update search highlighting
-        updateSearchInEditor();
-
-        const doc = view.state.doc;
-        const text = doc.toString();
-        const regex = buildSearchRegex(findText);
-
-        if (!regex) {
-            currentMatches = 0;
-            return;
-        }
-
-        const matches = [...text.matchAll(regex)];
-        currentMatches = matches.length;
-        currentIndex = 0;
-
-        if (matches.length > 0) {
-            const match = matches[0];
-            const from = match.index!;
-            const to = from + match[0].length;
-
-            view.dispatch({
-                selection: { anchor: from, head: to },
-                scrollIntoView: true,
-            });
-        }
-    }
-
-    function findNext() {
-        if (!findText || !editorView) return;
-
-        const view = editorView.getView?.();
-        if (!view) return;
-
-        // Use CodeMirror's built-in findNext
-        cmFindNext(view);
-
-        // Update current index
-        const doc = view.state.doc;
-        const text = doc.toString();
-        const regex = buildSearchRegex(findText);
-        if (regex) {
-            const matches = [...text.matchAll(regex)];
-            const selection = view.state.selection.main;
-            const currentPos = selection.from;
-            
-            // Find which match we're at
-            for (let i = 0; i < matches.length; i++) {
-                if (matches[i].index === currentPos) {
-                    currentIndex = i;
-                    break;
-                }
-            }
-        }
-    }
-
-    function findPrevious() {
-        if (!findText || !editorView) return;
-
-        const view = editorView.getView?.();
-        if (!view) return;
-
-        // Use CodeMirror's built-in findPrevious
-        cmFindPrevious(view);
-
-        // Update current index
-        const doc = view.state.doc;
-        const text = doc.toString();
-        const regex = buildSearchRegex(findText);
-        if (regex) {
-            const matches = [...text.matchAll(regex)];
-            const selection = view.state.selection.main;
-            const currentPos = selection.from;
-            
-            // Find which match we're at
-            for (let i = 0; i < matches.length; i++) {
-                if (matches[i].index === currentPos) {
-                    currentIndex = i;
-                    break;
-                }
-            }
-        }
-    }
-
-    function replaceCurrentMatch() {
-        if (!findText || !editorView) return;
-
-        const view = editorView.getView?.();
-        if (!view) return;
-
-        // Update the search query with replace text
-        view.dispatch({
-            effects: setSearchQuery.of(new SearchQuery({
-                search: findText,
-                replace: replaceText,
-                caseSensitive: matchCase,
-                regexp: useRegex,
-                wholeWord: matchWholeWord
-            }))
-        });
-
-        // Use CodeMirror's built-in replaceNext
-        replaceNext(view);
-        
-        // Update match count after replace
-        setTimeout(() => updateSearchInEditor(), 10);
-    }
-
-    function replaceAll() {
-        if (!findText) return;
-
-        if (searchScope === "current") {
-            replaceAllInCurrentDocument();
-        } else {
-            replaceAllInAllDocuments();
-        }
-    }
-
-    function replaceAllInCurrentDocument() {
-        if (!editorView) return;
-
-        const view = editorView.getView?.();
-        if (!view) return;
-
-        // Update the search query with replace text
-        view.dispatch({
-            effects: setSearchQuery.of(new SearchQuery({
-                search: findText,
-                replace: replaceText,
-                caseSensitive: matchCase,
-                regexp: useRegex,
-                wholeWord: matchWholeWord
-            }))
-        });
-
-        // Use CodeMirror's built-in replaceAll
-        cmReplaceAll(view);
-
-        // Update match count after replace
-        setTimeout(() => updateSearchInEditor(), 10);
-    }
-
-    function replaceAllInAllDocuments() {
-        const regex = buildSearchRegex(findText);
-        if (!regex) return;
-
-        let totalReplacements = 0;
-
-        editorStore.tabs.forEach((tab) => {
-            const matches = [...tab.content.matchAll(regex)];
-            if (matches.length > 0) {
-                const newContent = tab.content.replace(regex, replaceText);
-                tab.content = newContent;
-                totalReplacements += matches.length;
-            }
-        });
-
-        alert(`Replaced ${totalReplacements} occurrences across ${editorStore.tabs.length} documents`);
-        findInAllDocuments();
-    }
-
-    function findInAllDocuments() {
-        if (!findText) return;
-
-        const regex = buildSearchRegex(findText);
-        if (!regex) return;
-
-        allTabsResults.clear();
-
-        editorStore.tabs.forEach((tab) => {
-            const matches = [...tab.content.matchAll(regex)];
-            if (matches.length > 0) {
-                allTabsResults.set(tab.id, matches.length);
-            }
-        });
-
-        allTabsResults = new Map(allTabsResults);
+        searchManager.clear(getView());
+        getView()?.focus();
     }
 
     function handleSearch() {
         if (searchScope === "current") {
-            updateSearchInEditor();
-            findInCurrentDocument();
-        } else {
-            // Clear editor search when searching all tabs
-            const view = editorView?.getView?.();
+            // Update CodeMirror directly
+            const view = getView();
             if (view) {
-                view.dispatch({
-                    effects: setSearchQuery.of(new SearchQuery({
-                        search: "",
-                        caseSensitive: false,
-                        regexp: false,
-                        wholeWord: false
-                    }))
-                });
+                // Sync manager state to CM state
+                view.dispatch({ effects: setSearchQuery.of(searchManager.getQuery()) });
+                // Calculate stats
+                searchManager.updateEditor(view);
+
+                // If this is a fresh search (matches > 0 but we aren't selecting one), jump to first
+                if (searchManager.currentMatches > 0 && searchManager.currentIndex === 0) {
+                    findNext(view);
+                    searchManager.updateEditor(view);
+                }
             }
-            findInAllDocuments();
+        } else {
+            searchManager.clear(getView()); // Clear highlighting in current editor
+            searchManager.searchAllTabs();
+        }
+    }
+
+    function onFindNext() {
+        const view = getView();
+        if (view) {
+            findNext(view);
+            searchManager.updateEditor(view);
+        }
+    }
+
+    function onFindPrevious() {
+        const view = getView();
+        if (view) {
+            findPrevious(view);
+            searchManager.updateEditor(view);
+        }
+    }
+
+    function onReplace() {
+        const view = getView();
+        if (view) {
+            replaceNext(view);
+            searchManager.updateEditor(view);
+        }
+    }
+
+    function onReplaceAll() {
+        if (searchScope === "current") {
+            const view = getView();
+            if (view) {
+                replaceAll(view);
+                searchManager.updateEditor(view);
+            }
+        } else {
+            const count = searchManager.replaceAllInTabs();
+            alert(`Replaced ${count} occurrences across open tabs.`);
         }
     }
 
@@ -334,26 +110,26 @@
             close();
         } else if (e.key === "Enter") {
             if (e.shiftKey) {
-                findPrevious();
+                onFindPrevious();
             } else {
                 if (isReplaceMode && e.ctrlKey) {
-                    replaceAll();
+                    onReplaceAll();
                 } else {
-                    findNext();
+                    onFindNext();
                 }
             }
         } else if ((e.key === "f" || e.key === "h") && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             e.stopPropagation();
-            if (e.key === "h") {
-                isReplaceMode = true;
-            }
+            if (e.key === "h") isReplaceMode = true;
             focusInput();
         }
     }
 
     function navigateToTab(tabId: string) {
         appState.activeTabId = tabId;
+        // The editor will mount and eventually sync with the search manager via its own effect or we re-trigger here
+        // But for now, simple navigation is enough.
     }
 </script>
 
@@ -362,11 +138,7 @@
         <div class="panel-header">
             <div class="flex items-center gap-2 flex-1">
                 <button type="button" class="icon-btn" onclick={() => (isReplaceMode = !isReplaceMode)} title="Toggle Replace Mode">
-                    {#if isReplaceMode}
-                        <ChevronDown size={14} />
-                    {:else}
-                        <ChevronRight size={14} />
-                    {/if}
+                    {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
                 </button>
                 <span class="font-semibold text-ui">Find {isReplaceMode ? "& Replace" : ""}</span>
             </div>
@@ -378,18 +150,18 @@
         <div class="panel-content">
             <!-- Find Input -->
             <div class="input-row">
-                <input bind:this={searchInputRef} type="text" bind:value={findText} placeholder="Find" class="search-input" oninput={handleSearch} />
+                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={handleSearch} />
                 <div class="result-indicator">
                     {#if searchScope === "current"}
-                        {#if currentMatches > 0}
-                            {currentIndex + 1} of {currentMatches}
-                        {:else if findText}
+                        {#if searchManager.currentMatches > 0}
+                            {searchManager.currentIndex + 1} of {searchManager.currentMatches}
+                        {:else if searchManager.findText}
                             0 of 0
                         {/if}
                     {:else if searchScope === "all"}
-                        {#if allTabsResults.size > 0}
-                            {allTabsResults.size} tabs
-                        {:else if findText}
+                        {#if searchManager.allTabsResults.size > 0}
+                            {searchManager.allTabsResults.size} tabs
+                        {:else if searchManager.findText}
                             0 tabs
                         {/if}
                     {/if}
@@ -399,22 +171,22 @@
             <!-- Replace Input -->
             {#if isReplaceMode}
                 <div class="input-row">
-                    <input type="text" bind:value={replaceText} placeholder="Replace" class="search-input" />
+                    <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="search-input" />
                 </div>
             {/if}
 
             <!-- Options -->
             <div class="options-row">
                 <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={matchCase} onchange={handleSearch} />
+                    <input type="checkbox" bind:checked={searchManager.matchCase} onchange={handleSearch} />
                     <span>Match Case</span>
                 </label>
                 <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={matchWholeWord} onchange={handleSearch} />
+                    <input type="checkbox" bind:checked={searchManager.matchWholeWord} onchange={handleSearch} />
                     <span>Whole Word</span>
                 </label>
                 <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={useRegex} onchange={handleSearch} />
+                    <input type="checkbox" bind:checked={searchManager.useRegex} onchange={handleSearch} />
                     <span>Regex</span>
                 </label>
             </div>
@@ -433,31 +205,27 @@
 
             <!-- Actions -->
             <div class="actions-row">
-                <button type="button" class="action-btn" onclick={findPrevious} disabled={searchScope === "all"}>
-                    <Search size={12} />
-                    Previous
+                <button type="button" class="action-btn" onclick={onFindPrevious} disabled={searchScope === "all"}>
+                    <Search size={12} /> Previous
                 </button>
-                <button type="button" class="action-btn" onclick={findNext} disabled={searchScope === "all"}>
-                    <Search size={12} />
-                    Next
+                <button type="button" class="action-btn" onclick={onFindNext} disabled={searchScope === "all"}>
+                    <Search size={12} /> Next
                 </button>
                 {#if isReplaceMode}
-                    <button type="button" class="action-btn" onclick={replaceCurrentMatch} disabled={searchScope === "all"}>
-                        <Replace size={12} />
-                        Replace
+                    <button type="button" class="action-btn" onclick={onReplace} disabled={searchScope === "all"}>
+                        <Replace size={12} /> Replace
                     </button>
-                    <button type="button" class="action-btn" onclick={replaceAll}>
-                        <Replace size={12} />
-                        Replace All
+                    <button type="button" class="action-btn" onclick={onReplaceAll}>
+                        <Replace size={12} /> Replace All
                     </button>
                 {/if}
             </div>
 
             <!-- All Tabs Results -->
-            {#if searchScope === "all" && allTabsResults.size > 0}
+            {#if searchScope === "all" && searchManager.allTabsResults.size > 0}
                 <div class="results-list">
                     <div class="results-header">Results:</div>
-                    {#each [...allTabsResults.entries()] as [tabId, count]}
+                    {#each [...searchManager.allTabsResults.entries()] as [tabId, count]}
                         {@const tab = editorStore.tabs.find((t) => t.id === tabId)}
                         {#if tab}
                             <button type="button" class="result-item" onclick={() => navigateToTab(tabId)}>
