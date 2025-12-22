@@ -2,9 +2,9 @@
     import { tooltip } from "$lib/actions/tooltip";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { callBackend } from "$lib/utils/backend";
     import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { saveSettings } from "$lib/utils/settings";
-    import { invoke } from "@tauri-apps/api/core";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { Bookmark, Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -156,10 +156,9 @@
         try {
             await persistSession();
             await saveSettings();
-            await invoke("plugin:window-state|save_window_state");
+            await callBackend("plugin:window-state|save_window_state", {}, "Session:Save");
             await appWindow.close();
         } catch (e) {
-            console.error(`Error during shutdown: ${e}`);
             await appWindow.close();
         }
     }

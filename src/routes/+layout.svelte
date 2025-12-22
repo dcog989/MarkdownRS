@@ -2,7 +2,7 @@
     import ConfirmationModal from "$lib/components/ui/ConfirmationModal.svelte";
     import GlobalTooltip from "$lib/components/ui/GlobalTooltip.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { invoke } from "@tauri-apps/api/core";
+    import { callBackend } from "$lib/utils/backend";
     import "../app.css";
 
     let { children } = $props();
@@ -20,7 +20,7 @@
 
         async function loadTheme() {
             try {
-                const css = await invoke<string>("get_theme_css", { themeName });
+                const css = await callBackend<string>("get_theme_css", { themeName }, "Settings:Load");
                 let styleTag = document.getElementById("user-theme-styles") as HTMLStyleElement;
                 if (!styleTag) {
                     styleTag = document.createElement("style");
@@ -29,7 +29,7 @@
                 }
                 styleTag.textContent = css;
             } catch (err) {
-                console.error("Theme Load Error:", err);
+                // Error handled by bridge
             }
         }
 

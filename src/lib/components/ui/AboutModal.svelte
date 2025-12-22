@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
+    import { callBackend } from "$lib/utils/backend";
     import { relaunch } from "@tauri-apps/plugin-process";
     import { check } from "@tauri-apps/plugin-updater";
     import { LoaderCircle, RefreshCw } from "lucide-svelte";
@@ -36,10 +36,10 @@
 
     onMount(async () => {
         try {
-            const info = await invoke<AppInfo>("get_app_info");
+            const info = await callBackend<AppInfo>("get_app_info", {}, "File:Metadata");
             appInfo = info;
         } catch (err) {
-            console.error("Failed to get app info:", err);
+            // Error handled by bridge
         }
     });
 

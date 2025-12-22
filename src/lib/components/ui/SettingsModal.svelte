@@ -1,8 +1,8 @@
 <script lang="ts">
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
+    import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
-    import { invoke } from "@tauri-apps/api/core";
     import { Keyboard, Search, Settings, X } from "lucide-svelte";
 
     interface Props {
@@ -18,20 +18,16 @@
 
     $effect(() => {
         if (isOpen) {
-            // Load available themes when modal opens
-            invoke<string[]>("get_available_themes")
-                .then((themes) => {
+            callBackend<string[]>("get_available_themes", {}, "Settings:Load")
+                .then((themes: string[]) => {
                     appState.availableThemes = themes;
-                    // If current theme is not in the list, reset to default
                     if (!themes.includes(appState.activeTheme)) {
-                        console.warn(`Current theme '${appState.activeTheme}' not found, resetting to default`);
-                        appState.activeTheme = 'default-dark';
+                        appState.activeTheme = "default-dark";
                         saveSettings();
                     }
                 })
-                .catch((err) => console.error("Failed to load themes:", err));
-            
-            // Focus search input when modal opens
+                .catch(() => {});
+
             setTimeout(() => searchInputEl?.focus(), 0);
         }
     });
@@ -93,7 +89,7 @@
                         return false;
                     }
                 }
-                
+
                 // Check search query
                 if (searchQuery.length < 2) return true;
                 const fullString = `${s.category}: ${s.label}`;
@@ -205,7 +201,7 @@
                 {:else}
                     <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">No settings match your search</div>
                 {/if}
-                
+
                 {#if settingsListEl}
                     <CustomScrollbar viewport={settingsListEl} />
                 {/if}

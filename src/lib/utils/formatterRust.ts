@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { callBackend } from './backend';
 
 export interface FormatterOptions {
     listIndent: number;
@@ -8,33 +8,30 @@ export interface FormatterOptions {
 }
 
 /**
- * Format markdown content using the Rust backend
+ * Format markdown content using the Rust backend via unified bridge
  */
 export async function formatMarkdown(
     content: string,
     options: Partial<FormatterOptions> = {}
 ): Promise<string> {
-    const defaultOptions: FormatterOptions = {
+    const defaults: FormatterOptions = {
         listIndent: 2,
         codeBlockFence: '```',
         bulletChar: '-',
         tableAlignment: true,
     };
 
-    const finalOptions = { ...defaultOptions, ...options };
+    const final = { ...defaults, ...options };
 
     try {
-        const result = await invoke<string>('format_markdown_content', {
+        return await callBackend<string>('format_markdown_content', {
             content,
-            listIndent: finalOptions.listIndent,
-            bulletChar: finalOptions.bulletChar,
-            codeBlockFence: finalOptions.codeBlockFence,
-            tableAlignment: finalOptions.tableAlignment,
-        });
-        return result;
+            listIndent: final.listIndent,
+            bulletChar: final.bulletChar,
+            codeBlockFence: final.codeBlockFence,
+            tableAlignment: final.tableAlignment,
+        }, 'Markdown:Render');
     } catch (e) {
-        console.error('[Formatter] Error formatting markdown:', e);
-        // Fallback to returning original content on error
         return content;
     }
 }

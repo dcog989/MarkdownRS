@@ -2,10 +2,9 @@ import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { toastStore } from '$lib/stores/toastStore.svelte.ts';
-import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
-import { AppError } from './errorHandling';
+import { callBackend } from './backend';
 import { isTextFile } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 import { debounce } from './timing';
@@ -45,16 +44,28 @@ function normalizeLineEndings(text: string): string {
 
 async function refreshMetadata(tabId: string, path: string) {
     try {
-        const meta = await invoke<FileMetadata>('get_file_metadata', { path });
+        const meta = await callBackend<FileMetadata>('get_file_metadata', { path }, 'File:Metadata');
         editorStore.updateMetadata(tabId, meta.created, meta.modified);
     } catch (e) {
-        AppError.log('File:Metadata', e, { tabId, path });
+        // Logging handled by bridge
     }
 }
 
 function sanitizePath(path: string): string {
-    // Remove null bytes but preserve colons for Windows drive letters
     return path.replace(/\0/g, '').replace(/\\/g, '/');
+}
+
+function handleFileSystemError(err: unknown, path?: string) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const fileName = path ? path.split(/[\\/]/).pop() || path : 'file';
+
+    if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
+        toastStore.error(`File not found: ${fileName}`, 4000);
+    } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
+        toastStore.error(`Cannot access file: ${fileName}`, 4000);
+    } else {
+        toastStore.error(`Failed operation on: ${fileName}`, 4000);
+    }
 }
 
 export async function openFile(path?: string): Promise<void> {
@@ -74,21 +85,20 @@ export async function openFile(path?: string): Promise<void> {
         }
 
         const sanitizedPath = sanitizePath(targetPath);
-
         const existingTab = editorStore.tabs.find(t => t.path === sanitizedPath);
+
         if (existingTab) {
             appState.activeTabId = existingTab.id;
             editorStore.pushToMru(existingTab.id);
             return;
         }
 
-        const result = await invoke<FileContent>('read_text_file', { path: sanitizedPath });
+        const result = await callBackend<FileContent>('read_text_file', { path: sanitizedPath }, 'File:Read');
         const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
         const crlfCount = (result.content.match(/\r\n/g) || []).length;
         const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-        const detectedLineEnding: 'LF' | 'CRLF' =
-            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+        const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
         const id = editorStore.addTab(fileName, result.content);
         const tab = editorStore.tabs.find(t => t.id === id);
@@ -104,24 +114,10 @@ export async function openFile(path?: string): Promise<void> {
         }
         appState.activeTabId = id;
         editorStore.pushToMru(id);
-        
-        // Show success notification only when explicitly opening from navigation
-        if (path) {
-            toastStore.success(`Opened: ${fileName}`, 2000);
-        }
+
+        if (path) toastStore.success(`Opened: ${fileName}`, 2000);
     } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        const displayPath = path ? path.split(/[\\/]/).pop() || path : 'file';
-        
-        if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
-            toastStore.error(`File not found: ${displayPath}`, 4000);
-        } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
-            toastStore.error(`Cannot access file: ${displayPath}`, 4000);
-        } else {
-            toastStore.error(`Failed to open file: ${displayPath}`, 4000);
-        }
-        
-        AppError.log('File:Read', err);
+        handleFileSystemError(err, path);
     }
 }
 
@@ -131,12 +127,11 @@ export async function openFileByPath(path: string): Promise<void> {
 
 export async function navigateToPath(clickedPath: string) {
     const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
-
     try {
-        const resolvedPath = await invoke<string>('resolve_path_relative', {
+        const resolvedPath = await callBackend<string>('resolve_path_relative', {
             basePath: activeTab?.path,
             clickPath: clickedPath.replace(/\\/g, '/')
-        });
+        }, 'File:Read');
 
         if (isTextFile(resolvedPath)) {
             await openFile(resolvedPath);
@@ -144,20 +139,7 @@ export async function navigateToPath(clickedPath: string) {
             await openPath(resolvedPath);
         }
     } catch (err) {
-        // Extract the file name from the clicked path for better UX
-        const fileName = clickedPath.split(/[\\/]/).pop() || clickedPath;
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        
-        // Show user-friendly error message
-        if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
-            toastStore.error(`File not found: ${fileName}`, 4000);
-        } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
-            toastStore.error(`Cannot access file: ${fileName}`, 4000);
-        } else {
-            toastStore.error(`Could not open: ${fileName}`, 4000);
-        }
-        
-        console.warn('Navigation failed:', err);
+        handleFileSystemError(err, clickedPath);
     }
 }
 
@@ -170,37 +152,27 @@ export async function saveCurrentFile(): Promise<boolean> {
 
     try {
         let savePath = tab.path;
-
         if (!savePath) {
-            savePath = await save({
-                filters: [{ name: 'Markdown', extensions: ['md'] }]
-            });
+            savePath = await save({ filters: [{ name: 'Markdown', extensions: ['md'] }] });
         }
 
         if (savePath) {
             const sanitizedPath = sanitizePath(savePath);
-
             let contentToSave = tab.content;
+
             if (appState.formatOnSave && !sanitizedPath.endsWith('.txt')) {
-                try {
-                    contentToSave = await formatMarkdown(contentToSave, {
-                        listIndent: appState.formatterListIndent,
-                        bulletChar: appState.formatterBulletChar,
-                        codeBlockFence: appState.formatterCodeFence,
-                        tableAlignment: appState.formatterTableAlignment
-                    });
-                    tab.content = contentToSave;
-                } catch (err) {
-                    console.error('Format on save failed:', err);
-                }
+                contentToSave = await formatMarkdown(contentToSave, {
+                    listIndent: appState.formatterListIndent,
+                    bulletChar: appState.formatterBulletChar,
+                    codeBlockFence: appState.formatterCodeFence,
+                    tableAlignment: appState.formatterTableAlignment
+                });
+                tab.content = contentToSave;
             }
 
-            let targetLineEnding: 'LF' | 'CRLF';
-            if (appState.lineEndingPreference === 'system') {
-                targetLineEnding = tab.lineEnding || 'LF';
-            } else {
-                targetLineEnding = appState.lineEndingPreference;
-            }
+            const targetLineEnding = appState.lineEndingPreference === 'system'
+                ? (tab.lineEnding || 'LF')
+                : appState.lineEndingPreference;
 
             if (targetLineEnding === 'CRLF') {
                 contentToSave = contentToSave.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
@@ -209,11 +181,10 @@ export async function saveCurrentFile(): Promise<boolean> {
             }
 
             tab.lineEnding = targetLineEnding;
+            await callBackend('write_text_file', { path: sanitizedPath, content: contentToSave }, 'File:Write');
 
-            await invoke('write_text_file', { path: sanitizedPath, content: contentToSave });
             tab.path = sanitizedPath;
             tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-
             editorStore.markAsSaved(tabId);
             tab.fileCheckPerformed = false;
             tab.fileCheckFailed = false;
@@ -222,15 +193,14 @@ export async function saveCurrentFile(): Promise<boolean> {
         }
         return false;
     } catch (err) {
-        AppError.log('File:Write', err, { tabId, path: tab?.path });
+        handleFileSystemError(err, tab.path || 'document');
         return false;
     }
 }
 
 export async function requestCloseTab(id: string, force = false): Promise<void> {
     const tab = editorStore.tabs.find(t => t.id === id);
-    if (!tab) return;
-    if (tab.isPinned && !force) return;
+    if (!tab || (tab.isPinned && !force)) return;
 
     if (tab.isDirty && tab.content.trim().length > 0) {
         const result = await dialogStore.confirm({
@@ -239,24 +209,20 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
         });
 
         if (result === 'cancel') return;
-
         if (result === 'save') {
-            const prevActive = appState.activeTabId;
+            const prev = appState.activeTabId;
             appState.activeTabId = id;
-            const saved = await saveCurrentFile();
-            if (!saved) {
-                appState.activeTabId = prevActive;
+            if (!(await saveCurrentFile())) {
+                appState.activeTabId = prev;
                 return;
             }
         }
     }
 
     editorStore.closeTab(id);
-
     if (appState.activeTabId === id) {
         appState.activeTabId = editorStore.mruStack[0] || null;
     }
-
     if (editorStore.tabs.length === 0) {
         appState.activeTabId = editorStore.addTab();
     }
@@ -264,10 +230,9 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
 export async function addToDictionary(word: string): Promise<boolean> {
     try {
-        await invoke('add_to_dictionary', { word });
+        await callBackend('add_to_dictionary', { word }, 'Dictionary:Add');
         return true;
     } catch (err) {
-        AppError.log('Dictionary:Add', err, { word });
         return false;
     }
 }
@@ -276,11 +241,7 @@ async function processSaveQueue() {
     while (saveQueue.length > 0) {
         const saveTask = saveQueue.shift();
         if (saveTask) {
-            try {
-                await saveTask();
-            } catch (err) {
-                AppError.log('Session:Save', err);
-            }
+            try { await saveTask(); } catch (err) { }
         }
     }
     isSaving = false;
@@ -292,9 +253,7 @@ export async function persistSession(): Promise<void> {
     const saveTask = async () => {
         try {
             const mruPositionMap = new Map<string, number>();
-            editorStore.mruStack.forEach((tabId, index) => {
-                mruPositionMap.set(tabId, index);
-            });
+            editorStore.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
             const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
                 id: t.id,
@@ -313,11 +272,9 @@ export async function persistSession(): Promise<void> {
             }));
 
             editorStore.sessionDirty = false;
-
-            await invoke('save_session', { tabs: plainTabs });
+            await callBackend('save_session', { tabs: plainTabs }, 'Session:Save');
         } catch (err) {
             editorStore.sessionDirty = true;
-            AppError.log('Session:Save', err);
             throw err;
         }
     };
@@ -331,38 +288,22 @@ export async function persistSession(): Promise<void> {
     }
 }
 
-export async function checkFileExists(tabId: string): Promise<void> {
-    const tab = editorStore.tabs.find(t => t.id === tabId);
-    if (!tab || !tab.path) return;
-
-    tab.fileCheckPerformed = true;
-    try {
-        await invoke('get_file_metadata', { path: tab.path });
-        tab.fileCheckFailed = false;
-        editorStore.sessionDirty = true;
-    } catch (err) {
-        tab.fileCheckFailed = true;
-        editorStore.sessionDirty = true;
-    }
-}
-
 export async function loadSession(): Promise<void> {
     try {
-        const rustTabs = await invoke<RustTabState[]>('restore_session');
+        const rustTabs = await callBackend<RustTabState[]>('restore_session', {}, 'Session:Load');
         if (rustTabs && rustTabs.length > 0) {
             const convertedTabs: EditorTab[] = rustTabs.map(t => {
-                const normalizedContent = normalizeLineEndings(t.content);
-                const sizeBytes = new TextEncoder().encode(normalizedContent).length;
+                const content = normalizeLineEndings(t.content);
                 return {
                     id: t.id,
                     title: t.title,
                     originalTitle: t.title,
-                    content: normalizedContent,
-                    lastSavedContent: normalizedContent,
+                    content,
+                    lastSavedContent: content,
                     isDirty: t.is_dirty,
                     path: t.path,
                     scrollPercentage: t.scroll_percentage,
-                    sizeBytes,
+                    sizeBytes: new TextEncoder().encode(content).length,
                     created: t.created || undefined,
                     modified: t.modified || undefined,
                     isPinned: t.is_pinned,
@@ -376,66 +317,54 @@ export async function loadSession(): Promise<void> {
 
             editorStore.tabs = convertedTabs;
 
-            const tabsWithMruPosition = rustTabs
-                .map((t, index) => ({ tab: t, originalIndex: index }))
-                .filter(item => item.tab.mru_position !== null && item.tab.mru_position !== undefined)
-                .sort((a, b) => (a.tab.mru_position || 0) - (b.tab.mru_position || 0));
+            const sortedMru = rustTabs
+                .filter(t => t.mru_position !== null && t.mru_position !== undefined)
+                .sort((a, b) => (a.mru_position || 0) - (b.mru_position || 0))
+                .map(t => t.id);
 
-            if (tabsWithMruPosition.length > 0) {
-                editorStore.mruStack = tabsWithMruPosition.map(item => item.tab.id);
-            } else {
-                editorStore.mruStack = convertedTabs.map(t => t.id);
-            }
+            editorStore.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map(t => t.id);
 
             switch (appState.startupBehavior) {
-                case 'first':
-                    appState.activeTabId = convertedTabs[0].id;
-                    break;
-                case 'last-focused':
-                    appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id;
-                    break;
-                case 'new':
-                    appState.activeTabId = editorStore.addTab();
-                    break;
-                default:
-                    appState.activeTabId = convertedTabs[0].id;
+                case 'first': appState.activeTabId = convertedTabs[0].id; break;
+                case 'last-focused': appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id; break;
+                case 'new': appState.activeTabId = editorStore.addTab(); break;
+                default: appState.activeTabId = convertedTabs[0].id;
             }
 
-            const dirtyTabsWithPath = convertedTabs.filter(t => t.path && t.isDirty);
-            await Promise.all(dirtyTabsWithPath.map(async (tab) => {
-                try {
-                    const result = await invoke<FileContent>('read_text_file', { path: tab.path! });
-                    const storeTab = editorStore.tabs.find(x => x.id === tab.id);
-                    if (storeTab) {
-                        storeTab.lastSavedContent = normalizeLineEndings(result.content);
-                        storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
-                        storeTab.sizeBytes = new TextEncoder().encode(storeTab.content).length;
-                    }
-                } catch (e) {
-                    console.warn(`Could not read original content for dirty tab ${tab.id}:`, e);
-                }
-            }));
-
-            await Promise.all(
-                convertedTabs
-                    .filter(t => t.path)
-                    .map(async (t) => {
-                        try {
-                            await refreshMetadata(t.id, t.path!);
-                            await checkFileExists(t.id);
-                        } catch (err) {
-                            console.error(`Failed to check tab ${t.id}:`, err);
+            await Promise.all(convertedTabs.filter(t => t.path).map(async (tab) => {
+                if (tab.isDirty) {
+                    try {
+                        const res = await callBackend<FileContent>('read_text_file', { path: tab.path! }, 'File:Read');
+                        const storeTab = editorStore.tabs.find(x => x.id === tab.id);
+                        if (storeTab) {
+                            storeTab.lastSavedContent = normalizeLineEndings(res.content);
+                            storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
                         }
-                    })
-            );
+                    } catch (e) { }
+                }
+                await refreshMetadata(tab.id, tab.path!);
+                await checkFileExists(tab.id);
+            }));
         } else {
             appState.activeTabId = editorStore.addTab();
         }
     } catch (err) {
-        AppError.log('Session:Load', err);
         appState.activeTabId = editorStore.addTab();
     }
 }
 
-// Debounced version for rapid operations (e.g., keyboard shortcuts)
+export async function checkFileExists(tabId: string): Promise<void> {
+    const tab = editorStore.tabs.find(t => t.id === tabId);
+    if (!tab || !tab.path) return;
+
+    tab.fileCheckPerformed = true;
+    try {
+        await callBackend('get_file_metadata', { path: tab.path }, 'File:Metadata');
+        tab.fileCheckFailed = false;
+    } catch (err) {
+        tab.fileCheckFailed = true;
+    }
+    editorStore.sessionDirty = true;
+}
+
 export const persistSessionDebounced = debounce(persistSession, 500);

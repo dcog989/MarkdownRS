@@ -1,4 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
+import { callBackend } from "$lib/utils/backend";
+import { getCurrentTimestamp } from "$lib/utils/date";
 
 export type Bookmark = {
     id: string;
@@ -9,28 +10,16 @@ export type Bookmark = {
     last_accessed: string | null;
 };
 
-function getCurrentTimestamp(): string {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const HH = String(d.getHours()).padStart(2, '0');
-    const MM = String(d.getMinutes()).padStart(2, '0');
-    const SS = String(d.getSeconds()).padStart(2, '0');
-    return `${yyyy}${mm}${dd} / ${HH}${MM}${SS}`;
-}
-
 export class BookmarkStore {
     bookmarks = $state<Bookmark[]>([]);
     isLoaded = $state(false);
 
     async loadBookmarks() {
         try {
-            const bookmarks = await invoke<Bookmark[]>("get_all_bookmarks");
+            const bookmarks = await callBackend<Bookmark[]>("get_all_bookmarks", {}, "Database:Init");
             this.bookmarks = bookmarks;
             this.isLoaded = true;
         } catch (error) {
-            console.error("Failed to load bookmarks:", error);
             this.bookmarks = [];
             this.isLoaded = true;
         }
@@ -47,21 +36,19 @@ export class BookmarkStore {
         };
 
         try {
-            await invoke("add_bookmark", { bookmark });
+            await callBackend("add_bookmark", { bookmark }, "File:Read");
             this.bookmarks = [bookmark, ...this.bookmarks];
             return bookmark;
         } catch (error) {
-            console.error("Failed to add bookmark:", error);
             throw error;
         }
     }
 
     async deleteBookmark(id: string) {
         try {
-            await invoke("delete_bookmark", { id });
+            await callBackend("delete_bookmark", { id }, "File:Write");
             this.bookmarks = this.bookmarks.filter(b => b.id !== id);
         } catch (error) {
-            console.error("Failed to delete bookmark:", error);
             throw error;
         }
     }
@@ -77,7 +64,7 @@ export class BookmarkStore {
         };
 
         try {
-            await invoke("add_bookmark", { bookmark: updated });
+            await callBackend("add_bookmark", { bookmark: updated }, "File:Write");
             const index = this.bookmarks.findIndex(b => b.id === id);
             if (index !== -1) {
                 const newBookmarks = [...this.bookmarks];
@@ -85,7 +72,6 @@ export class BookmarkStore {
                 this.bookmarks = newBookmarks;
             }
         } catch (error) {
-            console.error("Failed to update bookmark:", error);
             throw error;
         }
     }
@@ -93,7 +79,7 @@ export class BookmarkStore {
     async updateAccessTime(id: string) {
         const lastAccessed = getCurrentTimestamp();
         try {
-            await invoke("update_bookmark_access_time", { id, lastAccessed });
+            await callBackend("update_bookmark_access_time", { id, lastAccessed }, "File:Read");
             const bookmark = this.bookmarks.find(b => b.id === id);
             if (bookmark) {
                 const index = this.bookmarks.findIndex(b => b.id === id);
@@ -104,7 +90,7 @@ export class BookmarkStore {
                 }
             }
         } catch (error) {
-            console.error("Failed to update access time:", error);
+            // Error logged by bridge
         }
     }
 

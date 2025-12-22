@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { callBackend } from './backend';
 
 export class SpellcheckState {
     dictionaryLoaded = $state(false);
@@ -11,7 +11,7 @@ let initPromise: Promise<void> | null = null;
 
 async function loadCustomDictionary(): Promise<void> {
     try {
-        const words = await invoke<string[]>('get_custom_dictionary');
+        const words = await callBackend<string[]>('get_custom_dictionary', {}, 'Dictionary:Add');
         spellcheckState.customDictionary = new Set(words.map(w => w.toLowerCase()));
     } catch (err) {
         spellcheckState.customDictionary = new Set();
@@ -25,10 +25,10 @@ export async function initSpellcheck(): Promise<void> {
     initPromise = (async () => {
         try {
             await loadCustomDictionary();
-            await invoke('init_spellchecker');
+            await callBackend('init_spellchecker', {}, 'Editor:Init');
             spellcheckState.dictionaryLoaded = true;
         } catch (err) {
-            // Initialization error handled silently to prevent log pollution
+            // Error handled by bridge
         }
     })();
 
@@ -49,7 +49,7 @@ export function isWordValid(word: string): boolean {
 export async function getSuggestions(word: string): Promise<string[]> {
     if (!spellcheckState.dictionaryLoaded || !word) return [];
     try {
-        return await invoke<string[]>('get_spelling_suggestions', { word });
+        return await callBackend<string[]>('get_spelling_suggestions', { word }, 'Dictionary:Add');
     } catch (err) {
         return [];
     }

@@ -1,3 +1,4 @@
+import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { addToDictionary } from "$lib/utils/fileSystem";
 import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
@@ -5,16 +6,13 @@ import { syntaxTree } from "@codemirror/language";
 import { forceLinting, linter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
-import { invoke } from "@tauri-apps/api/core";
 
 let lintGeneration = 0;
 
 export const createSpellCheckLinter = () => linter(async (view) => {
     if (!spellcheckState.dictionaryLoaded) return [];
 
-    // Capture the current generation at the start of this lint
     const currentGeneration = lintGeneration;
-
     const { state } = view;
     const doc = state.doc;
     const wordsToVerify = new Map<string, { from: number; to: number }[]>();
@@ -24,7 +22,6 @@ export const createSpellCheckLinter = () => linter(async (view) => {
         "ListItem", "HeaderMark", "SetextHeading1", "SetextHeading2"
     ]);
 
-    // Get a snapshot of the custom dictionary to ensure consistency
     const customDict = new Set(spellcheckState.customDictionary);
 
     syntaxTree(state).iterate({
@@ -57,7 +54,6 @@ export const createSpellCheckLinter = () => linter(async (view) => {
                     if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
 
                     const wLower = word.toLowerCase();
-                    // Check against the snapshot of the custom dictionary
                     if (customDict.has(wLower)) continue;
 
                     const ranges = wordsToVerify.get(word) || [];
@@ -71,11 +67,10 @@ export const createSpellCheckLinter = () => linter(async (view) => {
     if (wordsToVerify.size === 0) return [];
 
     try {
-        const misspelled = await invoke<string[]>('check_words', {
+        const misspelled = await callBackend<string[]>('check_words', {
             words: Array.from(wordsToVerify.keys())
-        });
+        }, 'Editor:Init');
 
-        // If the generation has changed, this lint is stale - return empty to discard results
         if (currentGeneration !== lintGeneration) {
             return [];
         }
@@ -86,10 +81,8 @@ export const createSpellCheckLinter = () => linter(async (view) => {
 
         for (const word of misspelled) {
             const wLower = word.toLowerCase();
-            // Double-check against custom dictionary before adding diagnostic
-            // This handles race conditions where dictionary was updated during async check
             if (customDict.has(wLower)) continue;
-            
+
             newCache.add(wLower);
             const ranges = wordsToVerify.get(word);
             if (ranges) {
@@ -119,7 +112,7 @@ export const createSpellCheckLinter = () => linter(async (view) => {
 export function triggerImmediateLint(view: EditorView) {
     // Increment generation to invalidate any in-flight lint operations
     lintGeneration++;
-    
+
     // First clear all diagnostics to force a clean re-lint
     const transaction = setDiagnostics(view.state, []);
     view.dispatch(view.state.update(transaction));
@@ -129,10 +122,10 @@ export function triggerImmediateLint(view: EditorView) {
 
 export async function refreshSpellcheck(view: EditorView | undefined) {
     if (!view) return;
-    
+
     // First, reload the custom dictionary from backend
     await refreshCustomDictionary();
-    
+
     // Clear misspelled cache for words that are now in the custom dictionary
     const updatedCache = new Set<string>();
     for (const word of spellcheckState.misspelledCache) {
@@ -141,7 +134,7 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
         }
     }
     spellcheckState.misspelledCache = updatedCache;
-    
+
     // Force immediate re-lint to update diagnostics
     triggerImmediateLint(view);
 }

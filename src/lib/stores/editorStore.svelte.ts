@@ -1,3 +1,4 @@
+import { getCurrentTimestamp } from "$lib/utils/date";
 import { appState } from "./appState.svelte";
 
 export type EditorTab = {
@@ -38,17 +39,6 @@ export type EditorMetrics = {
     insertMode: 'INS' | 'OVR';
 };
 
-function getCurrentTimestamp(): string {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const HH = String(d.getHours()).padStart(2, '0');
-    const MM = String(d.getMinutes()).padStart(2, '0');
-    const SS = String(d.getSeconds()).padStart(2, '0');
-    return `${yyyy}${mm}${dd} / ${HH}${MM}${SS}`;
-}
-
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
@@ -77,16 +67,13 @@ export type TextOperation = {
 };
 
 export class EditorStore {
-    // Use $state.raw for immutable collections to prevent deep proxy overhead
     tabs = $state.raw<EditorTab[]>([]);
     sessionDirty = $state(false);
     mruStack = $state<string[]>([]);
     closedTabsHistory = $state<ClosedTab[]>([]);
 
-    // Scroll Source Tracking
     lastScrollSource = $state<'editor' | 'preview' | null>(null);
 
-    // Metrics
     lineCount = $state(1);
     wordCount = $state(0);
     charCount = $state(0);
@@ -249,7 +236,7 @@ export class EditorStore {
             (topLine !== undefined && Math.abs((tab.topLine || 0) - topLine) > 0.01);
 
         if (isSignificant) {
-            this.lastScrollSource = source; // Set Source
+            this.lastScrollSource = source;
             const newTabs = [...this.tabs];
             newTabs[index] = { ...tab, scrollPercentage: percentage, topLine: topLine ?? tab.topLine };
             this.tabs = newTabs;
