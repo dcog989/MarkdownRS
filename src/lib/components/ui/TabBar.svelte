@@ -4,7 +4,7 @@
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { ChevronDown, Plus } from "lucide-svelte";
-    import { onMount, tick, untrack } from "svelte";
+    import { onMount, tick } from "svelte";
     import { flip } from "svelte/animate";
     import { fade } from "svelte/transition";
     import MruTabsPopup from "./MruTabsPopup.svelte";
@@ -15,9 +15,6 @@
     let scrollContainer = $state<HTMLElement>();
     let showDropdown = $state(false);
     let currentTime = $state(Date.now());
-
-    // Local State for immediate drag feedback
-    let localTabs = $state<EditorTab[]>([]);
 
     // Drag State
     let isDragging = $state(false);
@@ -35,10 +32,12 @@
     let mruTimer: number | null = null;
 
     const sortController = new SortableController<EditorTab>({
-        items: [],
+        items: [], // Will be updated by effect
         idKey: "id",
         container: undefined,
-        onSort: (newItems) => (localTabs = newItems),
+        onSort: (newItems) => {
+            editorStore.reorderTabs(newItems);
+        },
         onDragStart: (id, x, offset) => {
             draggingId = id;
             isDragging = false; // Will set to true on move
@@ -50,7 +49,6 @@
         },
         onDragEnd: () => {
             if (isDragging) {
-                editorStore.tabs = [...localTabs];
                 editorStore.sessionDirty = true;
             } else if (draggingId) {
                 appState.activeTabId = draggingId;
@@ -62,26 +60,18 @@
         },
     });
 
-    // Store Sync
+    // Reactive update for controller options
     $effect(() => {
-        const storeTabs = editorStore.tabs;
-        untrack(() => {
-            if (!draggingId) {
-                const needsUpdate = localTabs.length !== storeTabs.length || !localTabs.every((t, i) => t.id === storeTabs[i].id);
-                if (needsUpdate) {
-                    localTabs = [...storeTabs];
-                    tick().then(updateFadeIndicators);
-                }
-            }
+        sortController.updateOptions({
+            items: editorStore.tabs,
+            container: scrollContainer,
         });
     });
 
-    // Reactive update for controller
+    // Reactively update fade indicators when tab count changes
     $effect(() => {
-        sortController.updateOptions({
-            items: localTabs,
-            container: scrollContainer,
-        });
+        const _ = editorStore.tabs.length;
+        tick().then(updateFadeIndicators);
     });
 
     onMount(() => {
@@ -195,7 +185,7 @@
         {/if}
 
         <section bind:this={scrollContainer} class="w-full h-full flex items-end overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
-            {#each localTabs as tab (tab.id)}
+            {#each editorStore.tabs as tab (tab.id)}
                 <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
                     <TabButton
                         {tab}
@@ -212,7 +202,7 @@
             {/each}
 
             {#if isDragging && draggingId}
-                {@const dragTab = localTabs.find((t) => t.id === draggingId)}
+                {@const dragTab = editorStore.tabs.find((t) => t.id === draggingId)}
                 {#if dragTab}
                     <div class="fixed pointer-events-none z-[999]" style="left: {currentDragX - dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect().top ?? 0}px; opacity: 0.95;">
                         <TabButton tab={dragTab} isActive={appState.activeTabId === dragTab.id} {currentTime} />

@@ -161,6 +161,13 @@ export class EditorStore {
         this.sessionDirty = true;
     }
 
+    reorderTabs(newTabs: EditorTab[]) {
+        this.tabs = newTabs;
+        // We don't necessarily need to mark session dirty on every frame of drag,
+        // but explicit reordering should eventually persist.
+        // The calling component (TabBar) can handle the 'commit' dirty flag on drag end.
+    }
+
     updateContent(id: string, content: string) {
         const index = this.tabs.findIndex(t => t.id === id);
         if (index === -1) return;
