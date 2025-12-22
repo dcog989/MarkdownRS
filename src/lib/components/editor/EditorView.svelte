@@ -14,7 +14,7 @@
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorState } from "@codemirror/state";
-    import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap } from "@codemirror/view";
+    import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -55,6 +55,8 @@
 
     let dynamicTheme = $derived.by(() => {
         const fontSize = appState.editorFontSize || 14;
+        const isDark = appState.theme === "dark";
+
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
             ".cm-cursor": { borderLeftColor: editorMetrics.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: editorMetrics.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
@@ -68,21 +70,29 @@
             },
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
+
+            // Selection Background (standard) - Ensure visible on blur
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
                 backgroundColor: "var(--color-selection-bg) !important",
             },
             ".cm-selectionMatch": {
                 backgroundColor: "var(--color-selection-match-bg)",
             },
+
+            // SEARCH MATCH STYLING
+            // Standard Match (inactive)
             ".cm-searchMatch": {
-                backgroundColor: "rgba(255, 213, 0, 0.25)",
-                outline: "1px solid rgba(255, 213, 0, 0.5)",
+                backgroundColor: isDark ? "rgba(255, 255, 0, 0.2)" : "rgba(255, 215, 0, 0.4)",
+                outline: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
                 borderRadius: "2px",
             },
+            // Selected Match (active / current) - High Contrast
             ".cm-searchMatch.cm-searchMatch-selected": {
-                backgroundColor: "rgba(255, 153, 0, 0.4)",
-                outline: "1px solid rgba(255, 153, 0, 0.8)",
+                backgroundColor: isDark ? "#d19a66 !important" : "#ff9900 !important",
+                color: isDark ? "#000 !important" : "#fff !important",
+                borderRadius: "2px",
             },
+
             ".cm-tooltip": {
                 backgroundColor: "var(--color-bg-panel)",
                 border: "1px solid var(--color-border-light)",
@@ -110,6 +120,7 @@
         const extensions = [
             highlightActiveLineGutter(),
             highlightActiveLine(),
+            drawSelection(), // Crucial for persistent selection visibility on blur
             historyComp.of(history({ minDepth: appState.undoDepth })),
             search({ top: true }),
             highlightSelectionMatches(),
@@ -175,8 +186,6 @@
 
         extensions.push(
             EditorView.updateListener.of((update) => {
-                // Tracking is now handled by the extension itself
-
                 if (update.docChanged) {
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => onContentChange(update.state.doc.toString()), CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);

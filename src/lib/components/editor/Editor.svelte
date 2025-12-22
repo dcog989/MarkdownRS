@@ -136,7 +136,7 @@
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
-    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={showFindReplace} editorView={editorViewComponent} />
+    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={showFindReplace} {cmView} />
 </div>
 
 {#if showContextMenu}

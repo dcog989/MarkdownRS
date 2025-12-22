@@ -2,101 +2,127 @@
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { searchManager } from "$lib/utils/searchManager.svelte.ts";
-    import { findNext, findPrevious, replaceAll, replaceNext, setSearchQuery } from "@codemirror/search";
+    import { findNext, findPrevious, replaceAll, replaceNext } from "@codemirror/search";
     import type { EditorView } from "@codemirror/view";
     import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
-    import { tick } from "svelte";
+    import { onMount, tick, untrack } from "svelte";
 
-    let { isOpen = $bindable(false), editorView } = $props<{
+    let { isOpen = $bindable(false), cmView } = $props<{
         isOpen?: boolean;
-        editorView: any;
+        cmView: EditorView | undefined;
     }>();
 
     let searchScope = $state<"current" | "all">("current");
     let isReplaceMode = $state(false);
     let searchInputRef = $state<HTMLInputElement>();
+    let wasOpen = false;
 
-    // Helper to get actual CM instance
-    const getView = (): EditorView | undefined => editorView?.getView?.();
-
-    export function focusInput() {
+    // Actions
+    function focusAndSelectInput() {
         if (searchInputRef) {
             searchInputRef.focus();
             searchInputRef.select();
         }
     }
 
+    function returnFocusToInput() {
+        // Only focus, do not select text
+        searchInputRef?.focus();
+    }
+
     export function setReplaceMode(enable: boolean) {
         isReplaceMode = enable;
     }
 
+    // Effect 1: Handle Opening/Closing Lifecycle
     $effect(() => {
-        if (isOpen) {
-            tick().then(focusInput);
-            handleSearch();
-        } else {
-            searchManager.clear(getView());
+        const currentlyOpen = isOpen;
+
+        if (currentlyOpen && !wasOpen) {
+            wasOpen = true;
+            tick().then(focusAndSelectInput);
+
+            untrack(() => {
+                if (searchManager.findText && cmView) {
+                    searchManager.updateEditor(cmView);
+                }
+            });
+        } else if (!currentlyOpen && wasOpen) {
+            wasOpen = false;
+            searchManager.clear(cmView);
+        }
+    });
+
+    // Effect 2: Handle reactive updates
+    $effect(() => {
+        const _scope = searchScope;
+        const _replace = isReplaceMode;
+        const view = cmView;
+
+        if (isOpen && view) {
+            untrack(() => executeSearch(view, false));
         }
     });
 
     function close() {
         isOpen = false;
-        searchManager.clear(getView());
-        getView()?.focus();
+        searchManager.clear(cmView);
+        cmView?.focus();
     }
 
-    function handleSearch() {
+    /**
+     * Core Search Logic
+     * @param view Active EditorView
+     * @param incremental If true (typing), select nearest. If false (button/scope), select nearest or next.
+     */
+    function executeSearch(view: EditorView, incremental: boolean) {
         if (searchScope === "current") {
-            // Update CodeMirror directly
-            const view = getView();
-            if (view) {
-                // Sync manager state to CM state
-                view.dispatch({ effects: setSearchQuery.of(searchManager.getQuery()) });
-                // Calculate stats
-                searchManager.updateEditor(view);
-
-                // If this is a fresh search (matches > 0 but we aren't selecting one), jump to first
-                if (searchManager.currentMatches > 0 && searchManager.currentIndex === 0) {
-                    findNext(view);
-                    searchManager.updateEditor(view);
-                }
+            if (searchManager.findText) {
+                // selectNearestMatch applies the query AND moves selection to the match
+                searchManager.selectNearestMatch(view);
+            } else {
+                searchManager.updateEditor(view); // Clear highlights
             }
         } else {
-            searchManager.clear(getView()); // Clear highlighting in current editor
+            searchManager.clear(view);
             searchManager.searchAllTabs();
         }
     }
 
+    // Input Handler (Typing)
+    function onInput() {
+        if (!cmView) return;
+        executeSearch(cmView, true);
+    }
+
     function onFindNext() {
-        const view = getView();
-        if (view) {
-            findNext(view);
-            searchManager.updateEditor(view);
+        if (cmView) {
+            findNext(cmView);
+            searchManager.updateEditor(cmView);
+            returnFocusToInput();
         }
     }
 
     function onFindPrevious() {
-        const view = getView();
-        if (view) {
-            findPrevious(view);
-            searchManager.updateEditor(view);
+        if (cmView) {
+            findPrevious(cmView);
+            searchManager.updateEditor(cmView);
+            returnFocusToInput();
         }
     }
 
     function onReplace() {
-        const view = getView();
-        if (view) {
-            replaceNext(view);
-            searchManager.updateEditor(view);
+        if (cmView) {
+            replaceNext(cmView);
+            searchManager.updateEditor(cmView);
         }
     }
 
     function onReplaceAll() {
         if (searchScope === "current") {
-            const view = getView();
-            if (view) {
-                replaceAll(view);
-                searchManager.updateEditor(view);
+            if (cmView) {
+                replaceAll(cmView);
+                searchManager.updateEditor(cmView);
             }
         } else {
             const count = searchManager.replaceAllInTabs();
@@ -109,6 +135,7 @@
             e.stopPropagation();
             close();
         } else if (e.key === "Enter") {
+            e.preventDefault();
             if (e.shiftKey) {
                 onFindPrevious();
             } else {
@@ -122,15 +149,40 @@
             e.preventDefault();
             e.stopPropagation();
             if (e.key === "h") isReplaceMode = true;
-            focusInput();
+            focusAndSelectInput();
+        }
+    }
+
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        if (e.key === "F3") {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!searchManager.findText && !isOpen) {
+                isOpen = true;
+                return;
+            }
+
+            if (!isOpen) isOpen = true;
+
+            if (e.shiftKey) {
+                onFindPrevious();
+            } else {
+                onFindNext();
+            }
         }
     }
 
     function navigateToTab(tabId: string) {
         appState.activeTabId = tabId;
-        // The editor will mount and eventually sync with the search manager via its own effect or we re-trigger here
-        // But for now, simple navigation is enough.
     }
+
+    onMount(() => {
+        window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
+        return () => {
+            window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
+        };
+    });
 </script>
 
 {#if isOpen}
@@ -150,7 +202,7 @@
         <div class="panel-content">
             <!-- Find Input -->
             <div class="input-row">
-                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={handleSearch} />
+                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={onInput} />
                 <div class="result-indicator">
                     {#if searchScope === "current"}
                         {#if searchManager.currentMatches > 0}
@@ -178,15 +230,15 @@
             <!-- Options -->
             <div class="options-row">
                 <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={searchManager.matchCase} onchange={handleSearch} />
+                    <input type="checkbox" bind:checked={searchManager.matchCase} onchange={() => executeSearch(cmView!, false)} />
                     <span>Match Case</span>
                 </label>
                 <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={searchManager.matchWholeWord} onchange={handleSearch} />
+                    <input type="checkbox" bind:checked={searchManager.matchWholeWord} onchange={() => executeSearch(cmView!, false)} />
                     <span>Whole Word</span>
                 </label>
                 <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={searchManager.useRegex} onchange={handleSearch} />
+                    <input type="checkbox" bind:checked={searchManager.useRegex} onchange={() => executeSearch(cmView!, false)} />
                     <span>Regex</span>
                 </label>
             </div>
@@ -194,11 +246,11 @@
             <!-- Scope Selector -->
             <div class="scope-row">
                 <label class="radio-label">
-                    <input type="radio" bind:group={searchScope} value="current" onchange={handleSearch} />
+                    <input type="radio" bind:group={searchScope} value="current" />
                     <span>Current Document</span>
                 </label>
                 <label class="radio-label">
-                    <input type="radio" bind:group={searchScope} value="all" onchange={handleSearch} />
+                    <input type="radio" bind:group={searchScope} value="all" />
                     <span>All Open Documents</span>
                 </label>
             </div>

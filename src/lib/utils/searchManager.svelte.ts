@@ -16,9 +16,6 @@ export class SearchManager {
 
     constructor() { }
 
-    /**
-     * Build a CodeMirror SearchQuery object based on current state
-     */
     getQuery(): SearchQuery {
         return new SearchQuery({
             search: this.findText,
@@ -30,20 +27,22 @@ export class SearchManager {
     }
 
     /**
-     * Update the active editor view with the current search query
-     * and calculate match statistics using CodeMirror's cursor
+     * Updates highlighting and calculates stats.
+     * Does NOT move the cursor or scroll.
      */
     updateEditor(view: EditorView | undefined) {
         if (!view) return;
 
         const query = this.getQuery();
 
-        // Dispatch query to CodeMirror to handle highlighting
         view.dispatch({
             effects: setSearchQuery.of(query)
         });
 
-        // Calculate counts using CodeMirror's own logic
+        this.calculateStats(view, query);
+    }
+
+    private calculateStats(view: EditorView, query: SearchQuery) {
         if (!this.findText) {
             this.currentMatches = 0;
             this.currentIndex = 0;
@@ -53,25 +52,81 @@ export class SearchManager {
         let count = 0;
         let idx = 0;
         const cursor = query.getCursor(view.state);
+        // Use the selection HEAD to determine where we are
         const selectionHead = view.state.selection.main.head;
+        const selectionFrom = view.state.selection.main.from;
 
         let item = cursor.next();
         while (!item.done) {
-            // Check if this match is "current" (closest to or overlapping selection)
-            if (item.value.from <= selectionHead) {
+            // A match is "current" if it's the specific match selected in the editor.
+            // If the selection range matches the item range, it's definitely the one.
+            if (item.value.from === selectionFrom && item.value.to === selectionHead) {
                 idx = count;
             }
+            // Fallback: If we are just "at" the end of it (typical for some cursor movements)
+            else if (item.value.from <= selectionHead && item.value.to >= selectionHead) {
+                idx = count;
+            }
+            // Fallback 2: Count items before our cursor
+            else if (item.value.to <= selectionFrom) {
+                // We passed this match, so our index is at least this + 1
+                // We hold this until we find an exact match or pass everything
+                idx = count + 1;
+            }
+
             count++;
             item = cursor.next();
         }
+
+        if (idx >= count && count > 0) idx = 0; // Wrap around check
 
         this.currentMatches = count;
         this.currentIndex = count > 0 ? idx : 0;
     }
 
     /**
-     * Clear search state in the editor
+     * Finds the nearest match to the current cursor position and SELECTS it.
+     * This ensures the "active" highlight styling is applied.
      */
+    selectNearestMatch(view: EditorView | undefined) {
+        if (!view || !this.findText) return;
+
+        const query = this.getQuery();
+        const cursor = query.getCursor(view.state);
+        const currentPos = view.state.selection.main.from;
+
+        let firstMatch = null;
+        let bestMatch = null;
+
+        let item = cursor.next();
+        while (!item.done) {
+            if (!firstMatch) firstMatch = item.value;
+
+            // Check if this match is at or after our current cursor position
+            // This includes matches we might be currently inside
+            if (item.value.to >= currentPos) {
+                bestMatch = item.value;
+                break;
+            }
+
+            item = cursor.next();
+        }
+
+        const matchToSelect = bestMatch || firstMatch;
+
+        if (matchToSelect) {
+            view.dispatch({
+                effects: setSearchQuery.of(query), // Ensure highlighters are active
+                selection: { anchor: matchToSelect.from, head: matchToSelect.to },
+                scrollIntoView: true
+            });
+
+            this.calculateStats(view, query);
+        } else {
+            this.updateEditor(view);
+        }
+    }
+
     clear(view: EditorView | undefined) {
         if (!view) return;
         view.dispatch({
@@ -81,9 +136,6 @@ export class SearchManager {
         this.currentIndex = 0;
     }
 
-    /**
-     * Search across all tabs using a consistent Regex strategy
-     */
     searchAllTabs() {
         if (!this.findText) {
             this.allTabsResults.clear();
@@ -105,9 +157,6 @@ export class SearchManager {
         this.allTabsResults = results;
     }
 
-    /**
-     * replaceAll across all tabs
-     */
     replaceAllInTabs(): number {
         const regex = this.buildRegex();
         if (!regex) return 0;
@@ -123,19 +172,14 @@ export class SearchManager {
             }
         });
 
-        // Refresh search results
         this.searchAllTabs();
         return total;
     }
 
-    /**
-     * Internal regex builder that mimics CodeMirror's non-regex behavior
-     */
     private buildRegex(): RegExp | null {
         try {
             let pattern = this.findText;
             if (!this.useRegex) {
-                // Escape special regex characters
                 pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             }
 
