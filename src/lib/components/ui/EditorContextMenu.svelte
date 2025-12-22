@@ -1,6 +1,7 @@
 <script lang="ts">
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
+    import { getOperationsByCategory } from "$lib/config/textOperations";
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
@@ -35,6 +36,10 @@
     let showCaseMenu = $state(false);
     let showTransformMenu = $state(false);
     let suggestions = $state<string[]>([]);
+
+    const sortOps = getOperationsByCategory("Sort & Order");
+    const caseOps = getOperationsByCategory("Case Transformations");
+    const transformOps = getOperationsByCategory("Text Manipulation").concat(getOperationsByCategory("Remove & Filter"));
 
     $effect(() => {
         const word = untrack(() => wordUnderCursor?.trim());
@@ -121,14 +126,9 @@
                     </button>
                 {/snippet}
                 <div class="py-1">
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sort-asc")}>Sort A → Z</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sort-desc")}>Sort Z → A</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sort-numeric-asc")}>Sort Numeric ↑</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sort-numeric-desc")}>Sort Numeric ↓</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sort-length-asc")}>Sort by Length ↑</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sort-length-desc")}>Sort by Length ↓</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("reverse")}>Reverse Order</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("shuffle")}>Shuffle</button>
+                    {#each sortOps as op}
+                        <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {/each}
                 </div>
             </Submenu>
 
@@ -139,16 +139,9 @@
                     </button>
                 {/snippet}
                 <div class="py-1">
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("uppercase")}>UPPERCASE</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("lowercase")}>lowercase</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("title-case")}>Title Case</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("sentence-case")}>Sentence Case</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("camel-case")}>camelCase</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("pascal-case")}>PascalCase</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("snake-case")}>snake_case</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("kebab-case")}>kebab-case</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("constant-case")}>CONSTANT_CASE</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("invert-case")}>iNVERT cASE</button>
+                    {#each caseOps as op}
+                        <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {/each}
                 </div>
             </Submenu>
 
@@ -158,21 +151,10 @@
                         <TextWrap size={14} /><span>Transform</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                <div class="py-1">
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("remove-duplicates")}>Remove Duplicate Lines</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("remove-unique")}>Remove Unique Lines</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("remove-blank")}>Remove Blank Lines</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("remove-trailing-spaces")}>Remove Trailing Spaces</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("remove-leading-spaces")}>Remove Leading Spaces</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("remove-all-spaces")}>Remove All Spaces</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("trim-whitespace")}>Trim Whitespace</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("normalize-whitespace")}>Normalize Whitespace</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("join-lines")}>Join Lines</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("split-sentences")}>Split into Sentences</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("wrap-quotes")}>Wrap in Quotes</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("add-line-numbers")}>Add Line Numbers</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("indent-lines")}>Indent Lines (4 spaces)</button>
-                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp("unindent-lines")}>Unindent Lines (4 spaces)</button>
+                <div class="py-1 max-h-[300px] overflow-y-auto custom-scrollbar">
+                    {#each transformOps as op}
+                        <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {/each}
                 </div>
             </Submenu>
         {/if}

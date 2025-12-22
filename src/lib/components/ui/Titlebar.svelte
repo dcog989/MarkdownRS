@@ -1,9 +1,10 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
+    import { TEXT_OPERATIONS } from "$lib/config/textOperations";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
-    import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { Bookmark, Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
@@ -24,7 +25,8 @@
     let showBookmarksModal = $state(false);
     let showCommandPalette = $state(false);
 
-    const commands: Command[] = [
+    // Static Commands
+    const staticCommands: Command[] = [
         {
             id: "new",
             label: "File: New File",
@@ -46,14 +48,6 @@
             },
         },
         { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform("format-document") },
-        { id: "ops-sort", label: "Edit: Sort Lines (A→Z)", action: () => editorStore.performTextTransform("sort-asc") },
-        { id: "ops-sort-desc", label: "Edit: Sort Lines (Z→A)", action: () => editorStore.performTextTransform("sort-desc") },
-        { id: "ops-trim", label: "Edit: Trim Whitespace", action: () => editorStore.performTextTransform("trim-whitespace") },
-        { id: "ops-upper", label: "Edit: To UPPERCASE", action: () => editorStore.performTextTransform("uppercase") },
-        { id: "ops-lower", label: "Edit: To lowercase", action: () => editorStore.performTextTransform("lowercase") },
-        { id: "ops-title", label: "Edit: To Title Case", action: () => editorStore.performTextTransform("title-case") },
-        { id: "ops-remove-dupes", label: "Edit: Remove Duplicate Lines", action: () => editorStore.performTextTransform("remove-duplicates") },
-        { id: "ops-remove-blank", label: "Edit: Remove Blank Lines", action: () => editorStore.performTextTransform("remove-blank") },
         {
             id: "theme-dark",
             label: "Theme: Dark",
@@ -110,6 +104,17 @@
             },
         },
     ];
+
+    // Generate dynamic commands from TEXT_OPERATIONS config
+    const dynamicCommands: Command[] = TEXT_OPERATIONS.flatMap((category) =>
+        category.operations.map((op) => ({
+            id: `ops-${op.id}`,
+            label: `Edit: ${op.label}`,
+            action: () => editorStore.performTextTransform(op.id),
+        }))
+    );
+
+    const commands = [...staticCommands, ...dynamicCommands];
 
     onMount(() => {
         let unlisten: (() => void) | undefined;
