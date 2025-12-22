@@ -10,41 +10,51 @@
 
     let trackRef: HTMLDivElement;
 
-    let thumbHeight = $state(30);
+    // State
+    let thumbHeight = $state(20);
     let thumbTop = $state(0);
     let isVisible = $state(false);
     let isDragging = $state(false);
 
-    // Non-reactive dimension cache
-    let ch = 0;
-    let sh = 0;
+    // Cache
+    let viewHeight = 0;
+    let scrollHeight = 0;
+
+    // Drag data
     let startY = 0;
-    let startScrollTop = 0;
+    let startThumbTop = 0;
+
     let resizeObserver: ResizeObserver;
-    let rafId: number | null = null;
-    let pendingThumbTop: number | null = null;
 
-    function update() {
-        // Guard: Don't run update logic during drag to prevent CPU spikes and fighting
-        if (!viewport || isDragging) return;
+    function updateMetrics() {
+        if (!viewport) return;
+        viewHeight = viewport.clientHeight;
+        scrollHeight = viewport.scrollHeight;
 
-        const clientHeight = ch || viewport.clientHeight;
-        const scrollHeight = sh || viewport.scrollHeight;
-        const scrollTop = viewport.scrollTop;
-
-        if (scrollHeight <= clientHeight + 2) {
-            if (isVisible) isVisible = false;
+        // Hide if content fits
+        if (scrollHeight <= viewHeight) {
+            isVisible = false;
             return;
         }
 
-        if (!isVisible) isVisible = true;
-        const ratio = clientHeight / scrollHeight;
-        thumbHeight = Math.max(30, clientHeight * ratio);
+        isVisible = true;
 
-        const maxScroll = scrollHeight - clientHeight;
-        const maxThumb = clientHeight - thumbHeight;
+        // Calculate thumb height (min 20px)
+        // Subtract 4px for top/bottom padding
+        const trackHeight = viewHeight - 4;
+        const ratio = trackHeight / scrollHeight;
+        thumbHeight = Math.max(20, trackHeight * ratio);
+    }
+
+    function syncThumbToScroll() {
+        if (!viewport || isDragging) return;
+
+        const trackHeight = viewHeight - 4;
+        const maxScroll = scrollHeight - viewHeight;
+        const maxThumb = trackHeight - thumbHeight;
 
         if (maxScroll > 0) {
+            const scrollTop = viewport.scrollTop;
             thumbTop = (scrollTop / maxScroll) * maxThumb;
         }
     }
@@ -54,15 +64,18 @@
         e.preventDefault();
 
         const rect = trackRef.getBoundingClientRect();
+        // Adjust for top margin
         const clickOffset = e.clientY - rect.top;
-        const maxThumb = (ch || viewport.clientHeight) - thumbHeight;
-        const newThumbTop = Math.max(0, Math.min(maxThumb, clickOffset - thumbHeight / 2));
 
-        const maxScroll = (sh || viewport.scrollHeight) - (ch || viewport.clientHeight);
+        const trackHeight = viewHeight - 4;
+        const maxThumb = trackHeight - thumbHeight;
+        const maxScroll = scrollHeight - viewHeight;
 
-        // Use auto behavior for instant jump on track click
+        // Center thumb on click
+        const targetThumbTop = Math.max(0, Math.min(maxThumb, clickOffset - thumbHeight / 2));
+
         viewport.scrollTo({
-            top: (newThumbTop / maxThumb) * maxScroll,
+            top: (targetThumbTop / maxThumb) * maxScroll,
             behavior: "auto",
         });
     }
@@ -74,104 +87,75 @@
 
         isDragging = true;
         startY = e.clientY;
-        startScrollTop = viewport.scrollTop;
+        startThumbTop = thumbTop;
 
-        ch = viewport.clientHeight;
-        sh = viewport.scrollHeight;
-
-        // Force 'auto' behavior during drag to lock thumb to cursor and eliminate CPU spikes
         viewport.style.scrollBehavior = "auto";
         document.body.style.userSelect = "none";
+        document.body.style.cursor = "default";
 
         window.addEventListener("mousemove", onMouseMove, { passive: true });
         window.addEventListener("mouseup", onMouseUp);
     }
 
     function onMouseMove(e: MouseEvent) {
-        if (!isDragging || !viewport || !trackRef) return;
+        if (!isDragging || !viewport) return;
 
         const deltaY = e.clientY - startY;
-        const maxThumb = ch - thumbHeight;
-        const maxScroll = sh - ch;
+        const trackHeight = viewHeight - 4;
+        const maxThumb = trackHeight - thumbHeight;
+        const maxScroll = scrollHeight - viewHeight;
 
         if (maxThumb > 0) {
-            const scrollPos = startScrollTop + deltaY * (maxScroll / maxThumb);
-            const clampedScroll = Math.max(0, Math.min(maxScroll, scrollPos));
+            // 1. Update visual state immediately
+            let newTop = startThumbTop + deltaY;
+            newTop = Math.max(0, Math.min(maxThumb, newTop));
+            thumbTop = newTop;
 
-            viewport.scrollTop = clampedScroll;
-            const newThumbTop = (clampedScroll / maxScroll) * maxThumb;
-
-            if (rafId === null) {
-                rafId = requestAnimationFrame(() => {
-                    thumbTop = pendingThumbTop !== null ? pendingThumbTop : newThumbTop;
-
-                    const thumbEl = trackRef.querySelector(".scrollbar-thumb") as HTMLElement;
-                    if (thumbEl) {
-                        thumbEl.style.top = `${thumbTop}px`;
-                    }
-
-                    pendingThumbTop = null;
-                    rafId = null;
-                });
-            }
-            pendingThumbTop = newThumbTop;
+            // 2. Update scroll position based on thumb
+            const scrollRatio = newTop / maxThumb;
+            viewport.scrollTop = scrollRatio * maxScroll;
         }
     }
 
     function onMouseUp() {
         isDragging = false;
 
-        if (pendingThumbTop !== null) {
-            thumbTop = pendingThumbTop;
-            pendingThumbTop = null;
-        }
-
-        if (rafId !== null) {
-            cancelAnimationFrame(rafId);
-            rafId = null;
-        }
-
         if (viewport) {
             viewport.style.scrollBehavior = "";
         }
         document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
-
-        update();
     }
 
-    function attachListeners(el: HTMLElement) {
-        el.addEventListener("scroll", update, { passive: true });
+    function setupObservers(el: HTMLElement) {
+        // Scroll Listener
+        el.addEventListener("scroll", syncThumbToScroll, { passive: true });
 
+        // Resize Observer
         if (resizeObserver) resizeObserver.disconnect();
-        resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                if (entry.target === el) ch = entry.contentRect.height;
-            }
-            sh = el.scrollHeight;
-            update();
+        resizeObserver = new ResizeObserver(() => {
+            updateMetrics();
+            syncThumbToScroll();
         });
 
         resizeObserver.observe(el);
         if (content) resizeObserver.observe(content);
         else if (el.firstElementChild) resizeObserver.observe(el.firstElementChild);
 
-        ch = el.clientHeight;
-        sh = el.scrollHeight;
-        update();
+        // Initial check
+        updateMetrics();
+        syncThumbToScroll();
     }
 
     $effect(() => {
         if (viewport) {
-            attachListeners(viewport);
+            setupObservers(viewport);
             return () => {
-                viewport?.removeEventListener("scroll", update);
+                viewport?.removeEventListener("scroll", syncThumbToScroll);
                 resizeObserver?.disconnect();
-                if (rafId !== null) {
-                    cancelAnimationFrame(rafId);
-                    rafId = null;
-                }
             };
         }
     });
@@ -181,21 +165,25 @@
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
         }
-        if (rafId !== null) {
-            cancelAnimationFrame(rafId);
-        }
         resizeObserver?.disconnect();
     });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-0 bottom-0 z-50 flex w-[14px] justify-center bg-transparent transition-[background-color] duration-200 hover:bg-white/4" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<!--
+    Structure:
+    - Container (group): Fixed 14px width, transparent, handles track clicks.
+    - Thumb: Centered horizontally, slim by default (2px), expands on group-hover (6px).
+    - Top/Bottom Offset: 2px via 'top-[2px]' class to prevent hitting edges.
+-->
+<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-[2px] bottom-[2px] z-50 flex w-[14px] justify-center bg-transparent" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
     <div
-        class="scrollbar-thumb absolute w-[6px] rounded-full bg-[var(--color-border-light)] transition-[width,background-color] duration-200 group-hover:w-[10px] group-hover:bg-white/24 active:bg-[var(--color-accent-primary)]"
+        class="scrollbar-thumb absolute w-[2px] rounded-full bg-[var(--color-border-light)] transition-[width,background-color] duration-100 group-hover:w-[6px] group-hover:bg-white/40 active:bg-[var(--color-accent-primary)]"
         style="
             height: {thumbHeight}px;
-            top: {thumbTop}px;
+            transform: translateY({thumbTop}px);
+            top: 0;
         "
         onmousedown={onThumbMouseDown}
     ></div>
