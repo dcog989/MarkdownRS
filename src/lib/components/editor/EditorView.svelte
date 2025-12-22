@@ -97,19 +97,11 @@
     });
 
     $effect(() => {
-        // Track dependency explicitly to trigger reconfiguration on change
         const _mode = appState.recentChangesMode;
 
         if (view)
             view.dispatch({
-                effects: [
-                    wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []),
-                    autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []),
-                    // Always render the highlighter gutter as it provides line numbers.
-                    // The internal logic handles the 'disabled' state by rendering plain numbers.
-                    recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
-                    historyComp.reconfigure(history({ minDepth: appState.undoDepth })),
-                ],
+                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth }))],
             });
     });
 
@@ -198,9 +190,31 @@
         );
 
         view = new EditorView({ state: EditorState.create({ doc: initialContent, extensions }), parent: editorContainer });
+
+        // --- Modifier Key Tracking for Clickable Links ---
+        const handleModifierKey = (e: KeyboardEvent) => {
+            if (e.key === "Control" || e.key === "Meta") {
+                if (e.type === "keydown") {
+                    view?.dom.classList.add("cm-modifier-down");
+                } else {
+                    view?.dom.classList.remove("cm-modifier-down");
+                }
+            }
+        };
+        const clearModifier = () => view?.dom.classList.remove("cm-modifier-down");
+
+        window.addEventListener("keydown", handleModifierKey);
+        window.addEventListener("keyup", handleModifierKey);
+        window.addEventListener("blur", clearModifier);
+        // -------------------------------------------------
+
         scrollSync.registerEditor(view);
         view.focus();
+
         return () => {
+            window.removeEventListener("keydown", handleModifierKey);
+            window.removeEventListener("keyup", handleModifierKey);
+            window.removeEventListener("blur", clearModifier);
             if (view) view.destroy();
         };
     });
