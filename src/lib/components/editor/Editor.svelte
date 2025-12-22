@@ -2,6 +2,7 @@
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
+    import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
     import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
@@ -117,7 +118,7 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} {spellCheckLinter} {eventHandlers} onContentChange={(c) => editorStore.updateContent(tabId, c)} onMetricsChange={(m) => editorStore.updateMetrics(m)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} {spellCheckLinter} {eventHandlers} onContentChange={(c) => editorStore.updateContent(tabId, c)} onMetricsChange={(m) => editorMetrics.updateMetrics(m)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}

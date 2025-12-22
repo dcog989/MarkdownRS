@@ -1,6 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
     import { appState } from "$lib/stores/appState.svelte.ts";
+    import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { TextWrap } from "lucide-svelte";
@@ -63,30 +64,30 @@
 
         <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>
             <span class="opacity-70">Ln</span>
-            <span class="font-mono text-right inline-block w-[4ch]">{editorStore.cursorLine}</span>
+            <span class="font-mono text-right inline-block w-[4ch]">{editorMetrics.cursorLine}</span>
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[4ch]">{editorStore.lineCount}</span>
+            <span class="font-mono text-left inline-block w-[4ch]">{editorMetrics.lineCount}</span>
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Column Position"}>
             <span class="opacity-70">Col</span>
-            <span class="font-mono text-right inline-block w-[3ch]">{editorStore.cursorCol}</span>
+            <span class="font-mono text-right inline-block w-[3ch]">{editorMetrics.cursorCol}</span>
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[3ch]">{editorStore.currentLineLength}</span>
+            <span class="font-mono text-left inline-block w-[3ch]">{editorMetrics.currentLineLength}</span>
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Character Count"}>
             <span class="opacity-70">Char</span>
-            <span class="font-mono text-right inline-block w-[6ch]">{editorStore.cursorOffset}</span>
+            <span class="font-mono text-right inline-block w-[6ch]">{editorMetrics.cursorOffset}</span>
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[6ch]">{editorStore.charCount}</span>
+            <span class="font-mono text-left inline-block w-[6ch]">{editorMetrics.charCount}</span>
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Word Position"}>
             <span class="opacity-70">Word</span>
-            <span class="font-mono text-right inline-block w-[5ch]">{editorStore.currentWordIndex}</span>
+            <span class="font-mono text-right inline-block w-[5ch]">{editorMetrics.currentWordIndex}</span>
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[5ch]">{editorStore.wordCount}</span>
+            <span class="font-mono text-left inline-block w-[5ch]">{editorMetrics.wordCount}</span>
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"File Size"}>
@@ -104,8 +105,8 @@
             {encoding}
         </span>
 
-        <span class="font-bold w-8 text-center" style="color: {editorStore.insertMode === 'OVR' ? 'var(--color-danger)' : 'var(--color-accent-secondary)'}">
-            {editorStore.insertMode}
+        <span class="font-bold w-8 text-center" style="color: {editorMetrics.insertMode === 'OVR' ? 'var(--color-danger)' : 'var(--color-accent-secondary)'}">
+            {editorMetrics.insertMode}
         </span>
 
         <button class="flex items-center gap-1 hover:text-[var(--color-fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--color-accent-secondary)' : 'inherit'};">

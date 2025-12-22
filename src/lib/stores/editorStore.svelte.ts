@@ -27,18 +27,6 @@ export type ClosedTab = {
     index: number;
 };
 
-export type EditorMetrics = {
-    lineCount: number;
-    wordCount: number;
-    charCount: number;
-    cursorOffset: number;
-    cursorLine: number;
-    cursorCol: number;
-    currentLineLength: number;
-    currentWordIndex: number;
-    insertMode: 'INS' | 'OVR';
-};
-
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
@@ -73,16 +61,6 @@ export class EditorStore {
     closedTabsHistory = $state<ClosedTab[]>([]);
 
     lastScrollSource = $state<'editor' | 'preview' | null>(null);
-
-    lineCount = $state(1);
-    wordCount = $state(0);
-    charCount = $state(0);
-    cursorOffset = $state(0);
-    cursorLine = $state(1);
-    cursorCol = $state(1);
-    currentLineLength = $state(0);
-    currentWordIndex = $state(0);
-    insertMode = $state<'INS' | 'OVR'>('INS');
 
     private textOperationCallback: TextOperationCallback | null = null;
 
@@ -265,22 +243,6 @@ export class EditorStore {
         newTabs[index] = { ...this.tabs[index], lastSavedContent: this.tabs[index].content, isDirty: false };
         this.tabs = newTabs;
         this.sessionDirty = true;
-    }
-
-    updateMetrics(metrics: Partial<EditorMetrics>) {
-        if (metrics.lineCount !== undefined) this.lineCount = metrics.lineCount;
-        if (metrics.wordCount !== undefined) this.wordCount = metrics.wordCount;
-        if (metrics.charCount !== undefined) this.charCount = metrics.charCount;
-        if (metrics.cursorOffset !== undefined) this.cursorOffset = metrics.cursorOffset;
-        if (metrics.cursorLine !== undefined) this.cursorLine = metrics.cursorLine;
-        if (metrics.cursorCol !== undefined) this.cursorCol = metrics.cursorCol;
-        if (metrics.currentLineLength !== undefined) this.currentLineLength = metrics.currentLineLength;
-        if (metrics.currentWordIndex !== undefined) this.currentWordIndex = metrics.currentWordIndex;
-        if (metrics.insertMode !== undefined) this.insertMode = metrics.insertMode;
-    }
-
-    toggleInsertMode() {
-        this.insertMode = this.insertMode === 'INS' ? 'OVR' : 'INS';
     }
 
     performTextTransform(operationId: OperationTypeString) {

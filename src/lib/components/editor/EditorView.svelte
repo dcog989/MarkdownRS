@@ -1,13 +1,13 @@
 <script lang="ts">
     import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
+    import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { createRecentChangesHighlighter, trackEditorChanges } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
-    import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -57,54 +57,50 @@
         const fontSize = appState.editorFontSize || 14;
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
-            ".cm-cursor": { borderLeftColor: editorStore.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: editorStore.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
-            ".cm-scroller": { 
-                fontFamily: appState.editorFontFamily, 
-                overflow: "auto", 
-                overflowAnchor: "none"
+            ".cm-cursor": { borderLeftColor: editorMetrics.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: editorMetrics.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
+            ".cm-scroller": {
+                fontFamily: appState.editorFontFamily,
+                overflow: "auto",
+                overflowAnchor: "none",
             },
             ".cm-scroller::-webkit-scrollbar": {
-                display: "none"
+                display: "none",
             },
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-                backgroundColor: "var(--color-selection-bg) !important"
+                backgroundColor: "var(--color-selection-bg) !important",
             },
             ".cm-selectionMatch": {
-                backgroundColor: "var(--color-selection-match-bg)"
+                backgroundColor: "var(--color-selection-match-bg)",
             },
             ".cm-searchMatch": {
                 backgroundColor: "rgba(255, 213, 0, 0.25)",
                 outline: "1px solid rgba(255, 213, 0, 0.5)",
-                borderRadius: "2px"
+                borderRadius: "2px",
             },
             ".cm-searchMatch.cm-searchMatch-selected": {
                 backgroundColor: "rgba(255, 153, 0, 0.4)",
-                outline: "1px solid rgba(255, 153, 0, 0.8)"
+                outline: "1px solid rgba(255, 153, 0, 0.8)",
             },
-            ".cm-tooltip": { 
+            ".cm-tooltip": {
                 backgroundColor: "var(--color-bg-panel)",
                 border: "1px solid var(--color-border-light)",
-                color: "var(--color-fg-default)"
+                color: "var(--color-fg-default)",
             },
             ".cm-tooltip.cm-tooltip-lint": {
                 backgroundColor: "var(--color-bg-panel)",
                 border: "1px solid var(--color-border-light)",
-                color: "var(--color-fg-default)"
-            }
+                color: "var(--color-fg-default)",
+            },
         });
     });
 
     $effect(() => {
-        if (view) view.dispatch({ 
-            effects: [
-                wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), 
-                autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), 
-                recentComp.reconfigure(appState.recentChangesMode !== 'disabled' ? createRecentChangesHighlighter(lineChangeTracker) : []),
-                historyComp.reconfigure(history({ minDepth: appState.undoDepth }))
-            ] 
-        });
+        if (view)
+            view.dispatch({
+                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(appState.recentChangesMode !== "disabled" ? createRecentChangesHighlighter(lineChangeTracker) : []), historyComp.reconfigure(history({ minDepth: appState.undoDepth }))],
+            });
     });
 
     onMount(() => {
@@ -123,7 +119,7 @@
                 {
                     key: "Insert",
                     run: () => {
-                        editorStore.toggleInsertMode();
+                        editorMetrics.toggleInsertMode();
                         return true;
                     },
                 },
