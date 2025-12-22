@@ -21,7 +21,6 @@
         if (isOpen) {
             callBackend<string[]>("get_available_themes", {}, "Settings:Load")
                 .then((customThemes: string[]) => {
-                    // Merge defaults with custom themes, removing duplicates if any
                     const defaults = Object.keys(DEFAULT_THEMES);
                     const customs = customThemes.filter((t) => !defaults.includes(t));
                     appState.availableThemes = [...defaults, ...customs];
@@ -32,7 +31,6 @@
                     }
                 })
                 .catch(() => {
-                    // Fallback if backend fails
                     appState.availableThemes = Object.keys(DEFAULT_THEMES);
                 });
 
@@ -54,9 +52,12 @@
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
         { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },
+
+        // Recent Changes Group
         { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "disabled", options: ["disabled", "count", "time"], optionLabels: ["Disabled", "Last N Changes", "Time-Based"] },
         { key: "recentChangesCount", label: "Number of Recent Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50, visibleWhen: { key: "recentChangesMode", value: "count" } },
         { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300, visibleWhen: { key: "recentChangesMode", value: "time" } },
+
         { key: "lineEndingPreference", label: "Line Ending", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
 
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
@@ -104,9 +105,12 @@
                 return fullString.toLowerCase().includes(searchQuery.toLowerCase());
             })
             .sort((a, b) => {
-                const aFull = `${a.category}: ${a.label}`;
-                const bFull = `${b.category}: ${b.label}`;
-                return aFull.localeCompare(bFull);
+                // Primary sort: Category
+                if (a.category !== b.category) {
+                    return a.category.localeCompare(b.category);
+                }
+                // Secondary sort: Definition Order (to keep groups together)
+                return settingsDefinitions.indexOf(a) - settingsDefinitions.indexOf(b);
             })
     );
 
@@ -178,8 +182,16 @@
                                 <div class="flex items-center justify-between gap-6">
                                     <div class="flex-1 min-w-0">
                                         <label for={setting.key} class="flex items-center whitespace-nowrap overflow-hidden">
-                                            <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0" style="color: var(--color-fg-muted);">{setting.category}:</span>
-                                            <span class="font-medium truncate" style="color: var(--color-fg-default);">{setting.label}</span>
+                                            <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0" style="color: var(--color-fg-muted);">
+                                                {#if (setting as any).visibleWhen}
+                                                    <!-- Indented child -->
+                                                {:else}
+                                                    {setting.category}:
+                                                {/if}
+                                            </span>
+                                            <span class="font-medium truncate" style="color: var(--color-fg-default);">
+                                                {setting.label}
+                                            </span>
                                         </label>
                                     </div>
                                     <div class="w-56 shrink-0">
