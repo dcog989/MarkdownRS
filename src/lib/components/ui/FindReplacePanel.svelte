@@ -53,7 +53,7 @@
         }
     });
 
-    // Effect 2: Handle reactive updates
+    // Effect 2: Handle reactive updates (Scope change, Replace mode change)
     $effect(() => {
         const _scope = searchScope;
         const _replace = isReplaceMode;
@@ -73,13 +73,23 @@
     /**
      * Core Search Logic
      * @param view Active EditorView
-     * @param incremental If true (typing), select nearest. If false (button/scope), select nearest or next.
+     * @param incremental If true (typing), we select the nearest match without jumping around.
      */
     function executeSearch(view: EditorView, incremental: boolean) {
         if (searchScope === "current") {
             if (searchManager.findText) {
-                // selectNearestMatch applies the query AND moves selection to the match
-                searchManager.selectNearestMatch(view);
+                if (incremental) {
+                    // While typing: select nearest match (preserve context)
+                    searchManager.selectNearestMatch(view);
+                } else {
+                    // On scope change or fresh open: find next
+                    searchManager.updateEditor(view);
+                    if (searchManager.currentMatches > 0) {
+                        // If we aren't already on a match, go to next
+                        findNext(view);
+                        searchManager.updateEditor(view);
+                    }
+                }
             } else {
                 searchManager.updateEditor(view); // Clear highlights
             }
@@ -93,6 +103,13 @@
     function onInput() {
         if (!cmView) return;
         executeSearch(cmView, true);
+    }
+
+    // Replace Input Handler
+    function onReplaceInput() {
+        if (!cmView) return;
+        // Just update the state so CM knows about the replacement text
+        searchManager.updateEditor(cmView);
     }
 
     function onFindNext() {
@@ -113,6 +130,8 @@
 
     function onReplace() {
         if (cmView) {
+            // Ensure CM has the latest query (including replace text) before executing
+            searchManager.updateEditor(cmView);
             replaceNext(cmView);
             searchManager.updateEditor(cmView);
         }
@@ -121,6 +140,8 @@
     function onReplaceAll() {
         if (searchScope === "current") {
             if (cmView) {
+                // Ensure CM has the latest query (including replace text) before executing
+                searchManager.updateEditor(cmView);
                 replaceAll(cmView);
                 searchManager.updateEditor(cmView);
             }
@@ -135,7 +156,7 @@
             e.stopPropagation();
             close();
         } else if (e.key === "Enter") {
-            e.preventDefault();
+            e.preventDefault(); // Prevent form submission or newline
             if (e.shiftKey) {
                 onFindPrevious();
             } else {
@@ -160,7 +181,7 @@
 
             if (!searchManager.findText && !isOpen) {
                 isOpen = true;
-                return;
+                return; // Effect 1 will handle focus
             }
 
             if (!isOpen) isOpen = true;
@@ -202,7 +223,7 @@
         <div class="panel-content">
             <!-- Find Input -->
             <div class="input-row">
-                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={onInput} />
+                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={onInput} spellcheck="false" />
                 <div class="result-indicator">
                     {#if searchScope === "current"}
                         {#if searchManager.currentMatches > 0}
@@ -223,7 +244,7 @@
             <!-- Replace Input -->
             {#if isReplaceMode}
                 <div class="input-row">
-                    <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="search-input" />
+                    <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="search-input" oninput={onReplaceInput} spellcheck="false" />
                 </div>
             {/if}
 
