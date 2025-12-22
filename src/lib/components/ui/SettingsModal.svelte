@@ -176,9 +176,9 @@
             <!-- Settings List -->
             <div bind:this={settingsListEl} class="flex-1 overflow-y-auto text-ui relative settings-scrollable" style="scrollbar-width: none;">
                 {#if sortedSettings.length > 0}
-                    <div class="divide-y" style="border-color: var(--color-border-main);">
-                        {#each sortedSettings as setting}
-                            <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
+                    <div>
+                        {#each sortedSettings as setting, index}
+                            <div class="px-4 py-2.5 hover:bg-white/5 transition-colors" style:border-top={index > 0 && !(setting as any).visibleWhen ? "1px solid var(--color-border-main)" : "none"}>
                                 <div class="flex items-center justify-between gap-6">
                                     <div class="flex-1 min-w-0">
                                         <label for={setting.key} class="flex items-center whitespace-nowrap overflow-hidden">
