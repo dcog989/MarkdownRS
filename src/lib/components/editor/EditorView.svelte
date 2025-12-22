@@ -97,9 +97,19 @@
     });
 
     $effect(() => {
+        // Track dependency explicitly to trigger reconfiguration on change
+        const _mode = appState.recentChangesMode;
+
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(appState.recentChangesMode !== "disabled" ? createRecentChangesHighlighter(lineChangeTracker) : []), historyComp.reconfigure(history({ minDepth: appState.undoDepth }))],
+                effects: [
+                    wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []),
+                    autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []),
+                    // Always render the highlighter gutter as it provides line numbers.
+                    // The internal logic handles the 'disabled' state by rendering plain numbers.
+                    recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
+                    historyComp.reconfigure(history({ minDepth: appState.undoDepth })),
+                ],
             });
     });
 
