@@ -4,9 +4,10 @@
     import StatusBar from "$lib/components/ui/StatusBar.svelte";
     import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
+    import Toast from "$lib/components/ui/Toast.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
-    import { loadSession, openFile, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { loadSession, openFile, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
@@ -36,7 +37,9 @@
             case "s":
                 e.preventDefault();
                 e.stopImmediatePropagation(); // Stop ALL other handlers
-                saveCurrentFile().then(() => persistSession());
+                saveCurrentFile();
+                // Use debounced version to avoid blocking on session save
+                persistSessionDebounced();
                 return;
 
             case "w":
@@ -50,7 +53,9 @@
             case "o":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                openFile().then(() => persistSession());
+                openFile();
+                // Use debounced version to avoid blocking on session save
+                persistSessionDebounced();
                 return;
 
             case "n":
@@ -263,4 +268,7 @@
             </div>
         </div>
     </div>
+    
+    <!-- Toast Notifications -->
+    <Toast />
 {/if}

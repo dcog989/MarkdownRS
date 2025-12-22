@@ -57,10 +57,11 @@ export class LineChangeTracker {
      */
     getLineAlpha(
         lineNumber: number, 
-        mode: 'time' | 'count',
+        mode: 'disabled' | 'count' | 'time',
         timespan: number, // seconds
         maxCount: number
     ): number {
+        if (mode === 'disabled') return 0;
         const change = this.changes.find(c => c.lineNumber === lineNumber);
         if (!change) return 0;
 
@@ -91,10 +92,11 @@ export class LineChangeTracker {
      * Get all lines that should be highlighted
      */
     getHighlightedLines(
-        mode: 'time' | 'count',
+        mode: 'disabled' | 'count' | 'time',
         timespan: number,
         maxCount: number
     ): Map<number, number> {
+        if (mode === 'disabled') return new Map();
         const result = new Map<number, number>();
         
         if (mode === 'time') {
@@ -131,6 +133,14 @@ export class LineChangeTracker {
      */
     clear(): void {
         this.changes = [];
+    }
+
+    /**
+     * Remove specific lines from tracking (used for undo/redo)
+     */
+    removeLines(lineNumbers: number[]): void {
+        const lineSet = new Set(lineNumbers);
+        this.changes = this.changes.filter(c => !lineSet.has(c.lineNumber));
     }
 
     /**

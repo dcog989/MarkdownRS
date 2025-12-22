@@ -7,6 +7,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
     import { tick } from "svelte";
+    import { SearchQuery, setSearchQuery, findNext as cmFindNext, findPrevious as cmFindPrevious, replaceNext, replaceAll as cmReplaceAll } from "@codemirror/search";
 
     let { isOpen = $bindable(false), editorView } = $props<{
         isOpen?: boolean;
@@ -47,6 +48,18 @@
     });
 
     function close() {
+        // Clear search highlighting when closing
+        const view = editorView?.getView?.();
+        if (view) {
+            view.dispatch({
+                effects: setSearchQuery.of(new SearchQuery({
+                    search: "",
+                    caseSensitive: false,
+                    regexp: false,
+                    wholeWord: false
+                }))
+            });
+        }
         isOpen = false;
         if (editorView) editorView.getView()?.focus();
     }
@@ -72,11 +85,51 @@
         }
     }
 
+    function updateSearchInEditor() {
+        const view = editorView?.getView?.();
+        if (!view || !findText) {
+            // Clear search if no text
+            if (view) {
+                view.dispatch({
+                    effects: setSearchQuery.of(new SearchQuery({
+                        search: "",
+                        caseSensitive: false,
+                        regexp: false,
+                        wholeWord: false
+                    }))
+                });
+            }
+            return;
+        }
+
+        // Update CodeMirror's search state to highlight all matches
+        view.dispatch({
+            effects: setSearchQuery.of(new SearchQuery({
+                search: findText,
+                caseSensitive: matchCase,
+                regexp: useRegex,
+                wholeWord: matchWholeWord
+            }))
+        });
+
+        // Update match count
+        const doc = view.state.doc;
+        const text = doc.toString();
+        const regex = buildSearchRegex(findText);
+        if (regex) {
+            const matches = [...text.matchAll(regex)];
+            currentMatches = matches.length;
+        }
+    }
+
     function findInCurrentDocument() {
         if (!findText || !editorView) return;
 
         const view = editorView.getView?.();
         if (!view) return;
+
+        // Update search highlighting
+        updateSearchInEditor();
 
         const doc = view.state.doc;
         const text = doc.toString();
@@ -104,57 +157,59 @@
     }
 
     function findNext() {
-        if (!findText || !editorView || currentMatches === 0) return;
+        if (!findText || !editorView) return;
 
         const view = editorView.getView?.();
         if (!view) return;
 
+        // Use CodeMirror's built-in findNext
+        cmFindNext(view);
+
+        // Update current index
         const doc = view.state.doc;
         const text = doc.toString();
         const regex = buildSearchRegex(findText);
-        if (!regex) return;
-
-        const matches = [...text.matchAll(regex)];
-
-        if (matches.length === 0) return;
-
-        currentIndex = (currentIndex + 1) % matches.length;
-        const match = matches[currentIndex];
-        const from = match.index!;
-        const to = from + match[0].length;
-
-        view.dispatch({
-            selection: { anchor: from, head: to },
-            scrollIntoView: true,
-        });
+        if (regex) {
+            const matches = [...text.matchAll(regex)];
+            const selection = view.state.selection.main;
+            const currentPos = selection.from;
+            
+            // Find which match we're at
+            for (let i = 0; i < matches.length; i++) {
+                if (matches[i].index === currentPos) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+        }
     }
 
     function findPrevious() {
-        if (!findText || !editorView || currentMatches === 0) return;
+        if (!findText || !editorView) return;
 
         const view = editorView.getView?.();
         if (!view) return;
 
+        // Use CodeMirror's built-in findPrevious
+        cmFindPrevious(view);
+
+        // Update current index
         const doc = view.state.doc;
         const text = doc.toString();
         const regex = buildSearchRegex(findText);
-        if (!regex) return;
-
-        const matches = [...text.matchAll(regex)];
-
-        if (matches.length === 0) return;
-
-        currentIndex = currentIndex - 1;
-        if (currentIndex < 0) currentIndex = matches.length - 1;
-
-        const match = matches[currentIndex];
-        const from = match.index!;
-        const to = from + match[0].length;
-
-        view.dispatch({
-            selection: { anchor: from, head: to },
-            scrollIntoView: true,
-        });
+        if (regex) {
+            const matches = [...text.matchAll(regex)];
+            const selection = view.state.selection.main;
+            const currentPos = selection.from;
+            
+            // Find which match we're at
+            for (let i = 0; i < matches.length; i++) {
+                if (matches[i].index === currentPos) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+        }
     }
 
     function replaceCurrentMatch() {
@@ -163,22 +218,22 @@
         const view = editorView.getView?.();
         if (!view) return;
 
-        const selection = view.state.selection.main;
-        const selectedText = view.state.sliceDoc(selection.from, selection.to);
+        // Update the search query with replace text
+        view.dispatch({
+            effects: setSearchQuery.of(new SearchQuery({
+                search: findText,
+                replace: replaceText,
+                caseSensitive: matchCase,
+                regexp: useRegex,
+                wholeWord: matchWholeWord
+            }))
+        });
 
-        const regex = buildSearchRegex(findText);
-        if (!regex) return;
-
-        if (regex.test(selectedText)) {
-            view.dispatch({
-                changes: { from: selection.from, to: selection.to, insert: replaceText },
-                selection: { anchor: selection.from + replaceText.length },
-            });
-
-            setTimeout(() => findNext(), 10);
-        } else {
-            findNext();
-        }
+        // Use CodeMirror's built-in replaceNext
+        replaceNext(view);
+        
+        // Update match count after replace
+        setTimeout(() => updateSearchInEditor(), 10);
     }
 
     function replaceAll() {
@@ -197,18 +252,22 @@
         const view = editorView.getView?.();
         if (!view) return;
 
-        const doc = view.state.doc;
-        const text = doc.toString();
-        const regex = buildSearchRegex(findText);
-        if (!regex) return;
-
-        const newText = text.replace(regex, replaceText);
-
+        // Update the search query with replace text
         view.dispatch({
-            changes: { from: 0, to: doc.length, insert: newText },
+            effects: setSearchQuery.of(new SearchQuery({
+                search: findText,
+                replace: replaceText,
+                caseSensitive: matchCase,
+                regexp: useRegex,
+                wholeWord: matchWholeWord
+            }))
         });
 
-        currentMatches = 0;
+        // Use CodeMirror's built-in replaceAll
+        cmReplaceAll(view);
+
+        // Update match count after replace
+        setTimeout(() => updateSearchInEditor(), 10);
     }
 
     function replaceAllInAllDocuments() {
@@ -250,8 +309,21 @@
 
     function handleSearch() {
         if (searchScope === "current") {
+            updateSearchInEditor();
             findInCurrentDocument();
         } else {
+            // Clear editor search when searching all tabs
+            const view = editorView?.getView?.();
+            if (view) {
+                view.dispatch({
+                    effects: setSearchQuery.of(new SearchQuery({
+                        search: "",
+                        caseSensitive: false,
+                        regexp: false,
+                        wholeWord: false
+                    }))
+                });
+            }
             findInAllDocuments();
         }
     }
@@ -478,6 +550,14 @@
         font-size: 13px;
         color: var(--color-fg-default);
         cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"],
+    .radio-label input[type="radio"] {
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        accent-color: var(--color-accent-primary);
     }
 
     .actions-row {

@@ -190,7 +190,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-0 bottom-0 z-50 flex w-[12px] justify-center bg-transparent transition-[width,background-color] duration-200 hover:w-[14px] hover:bg-white/4" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-0 bottom-0 z-50 flex w-[14px] justify-center bg-transparent transition-[background-color] duration-200 hover:bg-white/4" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
     <div
         class="scrollbar-thumb absolute w-[6px] rounded-full bg-[var(--color-border-light)] transition-[width,background-color] duration-200 group-hover:w-[10px] group-hover:bg-white/24 active:bg-[var(--color-accent-primary)]"
         style="

@@ -58,7 +58,14 @@
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
             ".cm-cursor": { borderLeftColor: editorStore.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: editorStore.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
-            ".cm-scroller": { fontFamily: appState.editorFontFamily, overflow: "auto", overflowAnchor: "none" },
+            ".cm-scroller": { 
+                fontFamily: appState.editorFontFamily, 
+                overflow: "auto", 
+                overflowAnchor: "none"
+            },
+            ".cm-scroller::-webkit-scrollbar": {
+                display: "none"
+            },
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
@@ -66,6 +73,15 @@
             },
             ".cm-selectionMatch": {
                 backgroundColor: "var(--color-selection-match-bg)"
+            },
+            ".cm-searchMatch": {
+                backgroundColor: "rgba(255, 213, 0, 0.25)",
+                outline: "1px solid rgba(255, 213, 0, 0.5)",
+                borderRadius: "2px"
+            },
+            ".cm-searchMatch.cm-searchMatch-selected": {
+                backgroundColor: "rgba(255, 153, 0, 0.4)",
+                outline: "1px solid rgba(255, 153, 0, 0.8)"
             },
             ".cm-tooltip": { 
                 backgroundColor: "var(--color-bg-panel)",
@@ -85,7 +101,7 @@
             effects: [
                 wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), 
                 autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), 
-                recentComp.reconfigure(appState.highlightRecentChanges ? createRecentChangesHighlighter(lineChangeTracker) : []),
+                recentComp.reconfigure(appState.recentChangesMode !== 'disabled' ? createRecentChangesHighlighter(lineChangeTracker) : []),
                 historyComp.reconfigure(history({ minDepth: appState.undoDepth }))
             ] 
         });

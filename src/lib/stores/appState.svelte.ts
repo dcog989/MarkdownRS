@@ -22,8 +22,7 @@ export class AppState {
     editorFontSize = $state(14);
     editorWordWrap = $state(true);
     enableAutocomplete = $state(true);
-    highlightRecentChanges = $state(false);
-    recentChangesMode = $state<'time' | 'count'>('time');
+    recentChangesMode = $state<'disabled' | 'count' | 'time'>('disabled');
     recentChangesTimespan = $state(60);
     recentChangesCount = $state(10);
     undoDepth = $state(200);

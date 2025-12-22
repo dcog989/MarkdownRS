@@ -16,6 +16,7 @@
 
     $effect(() => {
         const themeName = appState.activeTheme;
+        if (!themeName) return;
 
         async function loadTheme() {
             try {
@@ -27,7 +28,6 @@
                     document.head.appendChild(styleTag);
                 }
                 styleTag.textContent = css;
-                document.head.appendChild(styleTag);
             } catch (err) {
                 console.error("Theme Load Error:", err);
             }

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { invoke } from "@tauri-apps/api/core";
@@ -13,12 +14,20 @@
 
     let searchQuery = $state("");
     let searchInputEl = $state<HTMLInputElement>();
+    let settingsListEl = $state<HTMLDivElement>();
 
     $effect(() => {
         if (isOpen) {
+            // Load available themes when modal opens
             invoke<string[]>("get_available_themes")
                 .then((themes) => {
                     appState.availableThemes = themes;
+                    // If current theme is not in the list, reset to default
+                    if (!themes.includes(appState.activeTheme)) {
+                        console.warn(`Current theme '${appState.activeTheme}' not found, resetting to default`);
+                        appState.activeTheme = 'default-dark';
+                        saveSettings();
+                    }
                 })
                 .catch((err) => console.error("Failed to load themes:", err));
             
@@ -41,10 +50,9 @@
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
         { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },
-        { key: "highlightRecentChanges", label: "Highlight Recent Changes", type: "boolean", category: "Editor", defaultValue: false },
-        { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "time", options: ["time", "count"], optionLabels: ["Time-Based", "Last N Changes"] },
-        { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300 },
-        { key: "recentChangesCount", label: "Number of Recent Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50 },
+        { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "disabled", options: ["disabled", "count", "time"], optionLabels: ["Disabled", "Last N Changes", "Time-Based"] },
+        { key: "recentChangesCount", label: "Number of Recent Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50, visibleWhen: { key: "recentChangesMode", value: "count" } },
+        { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300, visibleWhen: { key: "recentChangesMode", value: "time" } },
         { key: "lineEndingPreference", label: "Line Ending", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
 
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
@@ -77,6 +85,16 @@
     let sortedSettings = $derived(
         settingsDefinitions
             .filter((s) => {
+                // Check visibility condition
+                if ((s as any).visibleWhen) {
+                    const condition = (s as any).visibleWhen;
+                    const dependentValue = getSettingValue(condition.key, null);
+                    if (dependentValue !== condition.value) {
+                        return false;
+                    }
+                }
+                
+                // Check search query
                 if (searchQuery.length < 2) return true;
                 const fullString = `${s.category}: ${s.label}`;
                 return fullString.toLowerCase().includes(searchQuery.toLowerCase());
@@ -148,7 +166,7 @@
             </div>
 
             <!-- Settings List -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar text-ui">
+            <div bind:this={settingsListEl} class="flex-1 overflow-y-auto text-ui relative settings-scrollable" style="scrollbar-width: none;">
                 {#if sortedSettings.length > 0}
                     <div class="divide-y" style="border-color: var(--color-border-main);">
                         {#each sortedSettings as setting}
@@ -187,7 +205,17 @@
                 {:else}
                     <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">No settings match your search</div>
                 {/if}
+                
+                {#if settingsListEl}
+                    <CustomScrollbar viewport={settingsListEl} />
+                {/if}
             </div>
         </div>
     </div>
 {/if}
+
+<style>
+    .settings-scrollable::-webkit-scrollbar {
+        display: none;
+    }
+</style>

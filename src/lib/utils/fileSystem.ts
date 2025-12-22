@@ -1,12 +1,14 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { toastStore } from '$lib/stores/toastStore.svelte.ts';
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { AppError } from './errorHandling';
 import { isTextFile } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
+import { debounce } from './timing';
 
 type RustTabState = {
     id: string;
@@ -102,7 +104,23 @@ export async function openFile(path?: string): Promise<void> {
         }
         appState.activeTabId = id;
         editorStore.pushToMru(id);
+        
+        // Show success notification only when explicitly opening from navigation
+        if (path) {
+            toastStore.success(`Opened: ${fileName}`, 2000);
+        }
     } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        const displayPath = path ? path.split(/[\\/]/).pop() || path : 'file';
+        
+        if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
+            toastStore.error(`File not found: ${displayPath}`, 4000);
+        } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
+            toastStore.error(`Cannot access file: ${displayPath}`, 4000);
+        } else {
+            toastStore.error(`Failed to open file: ${displayPath}`, 4000);
+        }
+        
         AppError.log('File:Read', err);
     }
 }
@@ -126,6 +144,19 @@ export async function navigateToPath(clickedPath: string) {
             await openPath(resolvedPath);
         }
     } catch (err) {
+        // Extract the file name from the clicked path for better UX
+        const fileName = clickedPath.split(/[\\/]/).pop() || clickedPath;
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        
+        // Show user-friendly error message
+        if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
+            toastStore.error(`File not found: ${fileName}`, 4000);
+        } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
+            toastStore.error(`Cannot access file: ${fileName}`, 4000);
+        } else {
+            toastStore.error(`Could not open: ${fileName}`, 4000);
+        }
+        
         console.warn('Navigation failed:', err);
     }
 }
@@ -405,3 +436,6 @@ export async function loadSession(): Promise<void> {
         appState.activeTabId = editorStore.addTab();
     }
 }
+
+// Debounced version for rapid operations (e.g., keyboard shortcuts)
+export const persistSessionDebounced = debounce(persistSession, 500);
