@@ -17,8 +17,8 @@
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { Compartment, EditorState } from "@codemirror/state";
-    import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap } from "@codemirror/view";
+    import { Compartment, EditorState, RangeSetBuilder } from "@codemirror/state";
+    import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightWhitespace, keymap, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -28,7 +28,7 @@
         onContentChange,
         onMetricsChange,
         customKeymap = [],
-        spellCheckLinter, // NOTE: This prop is now ignored for the compartment init to ensure control here
+        spellCheckLinter,
         eventHandlers,
         cmView = $bindable(),
     } = $props<{
@@ -54,10 +54,61 @@
     let themeComp = new Compartment();
     let indentComp = new Compartment();
     let spellComp = new Compartment();
+    let whitespaceComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
     const lineChangeTracker = new LineChangeTracker();
+
+    // -- Visual Extensions --
+    class NewlineWidget extends WidgetType {
+        toDOM() {
+            const span = document.createElement("span");
+            span.className = "cm-newline";
+            span.textContent = "¬";
+            return span;
+        }
+    }
+
+    function getNewlineDecorations(view: EditorView): DecorationSet {
+        const builder = new RangeSetBuilder<Decoration>();
+        for (const { from, to } of view.visibleRanges) {
+            for (let pos = from; pos <= to; ) {
+                const line = view.state.doc.lineAt(pos);
+                // Only show newline widget if it's not the very last line of doc (which has no newline)
+                if (line.to < view.state.doc.length) {
+                    builder.add(
+                        line.to,
+                        line.to,
+                        Decoration.widget({
+                            widget: new NewlineWidget(),
+                            side: 1,
+                        })
+                    );
+                }
+                pos = line.to + 1;
+            }
+        }
+        return builder.finish();
+    }
+
+    const newlinePlugin = ViewPlugin.fromClass(
+        class {
+            decorations: DecorationSet;
+            constructor(view: EditorView) {
+                this.decorations = getNewlineDecorations(view);
+            }
+            update(update: ViewUpdate) {
+                if (update.docChanged || update.viewportChanged) {
+                    this.decorations = getNewlineDecorations(update.view);
+                }
+            }
+        },
+        {
+            decorations: (v) => v.decorations,
+        }
+    );
+    // -----------------------
 
     $effect(() => {
         cmView = view;
@@ -66,6 +117,7 @@
     let dynamicTheme = $derived.by(() => {
         const fontSize = appState.editorFontSize || 14;
         const isDark = appState.theme === "dark";
+        const whitespaceColor = isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)";
 
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
@@ -106,15 +158,44 @@
                 border: "1px solid var(--color-border-light)",
                 color: "var(--color-fg-default)",
             },
+            // Explicit Whitespace Styling
+            ".cm-highlightSpace": {
+                backgroundImage: "none !important",
+                position: "relative",
+                "&:before": {
+                    content: "'·'",
+                    color: whitespaceColor,
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                    pointerEvents: "none",
+                },
+            },
+            ".cm-highlightTab": {
+                backgroundImage: "none !important",
+                position: "relative",
+                "&:before": {
+                    content: "'→'",
+                    color: whitespaceColor,
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                    pointerEvents: "none",
+                },
+            },
+            ".cm-newline": {
+                color: whitespaceColor,
+                userSelect: "none",
+                pointerEvents: "none",
+                display: "inline-block",
+                verticalAlign: "middle",
+                marginLeft: "2px",
+            },
         });
     });
 
-    // Effect: RECONFIGURE spellcheck when dictionary loads
-    // This effectively destroys the old linter instance and creates a new one, forcing a run.
     $effect(() => {
         if (view && spellcheckState.dictionaryLoaded) {
-            console.warn("[EditorView] Dictionary loaded. Reconfiguring spellcheck compartment.");
-            // We create a fresh linter instance here
             view.dispatch({
                 effects: spellComp.reconfigure(createSpellCheckLinter()),
             });
@@ -124,7 +205,7 @@
     $effect(() => {
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent))))],
+                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent)))), whitespaceComp.reconfigure(appState.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [])],
             });
     });
 
@@ -189,9 +270,9 @@
             ]),
             themeComp.of(dynamicTheme),
             indentComp.of(indentUnit.of("  ")),
+            whitespaceComp.of([]),
             userThemeExtension,
 
-            // Initialize compartment with initial linter
             spellComp.of(createSpellCheckLinter()),
 
             wrapComp.of([]),

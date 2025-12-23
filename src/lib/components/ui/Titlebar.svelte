@@ -47,6 +47,14 @@
                 saveSettings();
             },
         },
+        {
+            id: "toggle-whitespace",
+            label: "View: Toggle Whitespace",
+            action: () => {
+                appState.showWhitespace = !appState.showWhitespace;
+                saveSettings();
+            },
+        },
         { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform("format-document") },
         {
             id: "theme-dark",
@@ -105,7 +113,6 @@
         },
     ];
 
-    // Generate dynamic commands from TEXT_OPERATIONS config
     const dynamicCommands: Command[] = TEXT_OPERATIONS.flatMap((category) =>
         category.operations.map((op) => ({
             id: `ops-${op.id}`,

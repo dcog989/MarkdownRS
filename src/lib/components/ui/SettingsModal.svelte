@@ -51,6 +51,7 @@
         { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
+        { key: "showWhitespace", label: "Show Whitespace", type: "boolean", category: "Editor", defaultValue: false },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
         { key: "defaultIndent", label: "Default Indentation (spaces)", type: "number", category: "Editor", defaultValue: 2, min: 2, max: 8 },
         { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },

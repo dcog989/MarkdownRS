@@ -21,6 +21,7 @@ export class AppState {
     editorFontFamily = $state("ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace");
     editorFontSize = $state(14);
     editorWordWrap = $state(true);
+    showWhitespace = $state(false);
     enableAutocomplete = $state(true);
     recentChangesMode = $state<'disabled' | 'count' | 'time'>('disabled');
     recentChangesTimespan = $state(60);
@@ -37,7 +38,7 @@ export class AppState {
     // Formatter & Indentation Settings
     formatOnSave = $state(false);
     formatOnPaste = $state(false);
-    defaultIndent = $state(2); // Renamed from formatterListIndent
+    defaultIndent = $state(2);
     formatterBulletChar = $state<'-' | '*' | '+'>('-');
     formatterCodeFence = $state<'```' | '~~~'>('```');
     formatterTableAlignment = $state(true);
