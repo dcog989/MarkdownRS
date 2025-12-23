@@ -55,7 +55,7 @@
 
         // Recent Changes Group
         { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "disabled", options: ["disabled", "count", "time"], optionLabels: ["Disabled", "Last N Changes", "Time-Based"] },
-        { key: "recentChangesCount", label: "Number of Recent Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50, visibleWhen: { key: "recentChangesMode", value: "count" } },
+        { key: "recentChangesCount", label: "Number of Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50, visibleWhen: { key: "recentChangesMode", value: "count" } },
         { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300, visibleWhen: { key: "recentChangesMode", value: "time" } },
 
         { key: "lineEndingPreference", label: "Line Ending", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
