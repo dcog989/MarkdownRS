@@ -79,7 +79,7 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     color: var(--color-fg-code);
     padding: 2px 4px;
     border-radius: 4px;
-    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
 }
 .cm-blockquote {
     color: var(--color-fg-muted);
@@ -104,7 +104,7 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     border-radius: 4px;
 }
 .prose code {
-    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     font-weight: normal;
 }
 .prose h1, .prose h2, .prose h3, .prose h4 {
@@ -194,7 +194,7 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
     color: var(--color-fg-code);
     padding: 2px 4px;
     border-radius: 4px;
-    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
 }
 .cm-blockquote {
     color: var(--color-fg-muted);

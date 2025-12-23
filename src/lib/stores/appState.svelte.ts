@@ -18,7 +18,7 @@ export class AppState {
     startupBehavior = $state<'first' | 'last-focused' | 'new'>('last-focused');
 
     // Editor & Preview Settings
-    editorFontFamily = $state("Consolas, 'Courier New', monospace");
+    editorFontFamily = $state("ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace");
     editorFontSize = $state(14);
     editorWordWrap = $state(true);
     enableAutocomplete = $state(true);
