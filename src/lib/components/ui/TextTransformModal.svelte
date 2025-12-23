@@ -9,15 +9,25 @@
         editorStore.performTextTransform(operationId);
         onClose();
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (isOpen && e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+        }
+    }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--color-bg-backdrop);" onclick={onClose}>
-        <div class="w-[900px] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);" onclick={(e) => e.stopPropagation()}>
+        <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b" style="border-color: var(--color-border-light);">
+            <div class="flex items-center justify-between p-4 border-b shrink-0" style="border-color: var(--color-border-light);">
                 <div class="flex items-center gap-2">
                     <Type size={20} style="color: var(--color-accent-secondary);" />
                     <h2 class="text-lg font-semibold" style="color: var(--color-fg-default);">Text Transformations</h2>
@@ -28,7 +38,7 @@
             </div>
 
             <!-- Content -->
-            <div class="overflow-y-auto p-4 space-y-6">
+            <div class="overflow-y-auto p-4 space-y-6 flex-1 custom-scrollbar">
                 {#each TEXT_OPERATIONS as category}
                     {@const CategoryIcon = category.icon}
                     <div>
@@ -50,11 +60,11 @@
                                         {/if}
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium" style="color: var(--color-fg-default);">
+                                        <div class="text-sm font-medium whitespace-nowrap" style="color: var(--color-fg-default);">
                                             {operation.label}
                                         </div>
                                         {#if operation.description}
-                                            <div class="text-xs mt-0.5" style="color: var(--color-fg-muted);">
+                                            <div class="text-xs mt-0.5 truncate" style="color: var(--color-fg-muted);">
                                                 {operation.description}
                                             </div>
                                         {/if}
@@ -67,7 +77,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="p-4 border-t flex justify-between items-center" style="border-color: var(--color-border-light); background-color: var(--color-bg-main);">
+            <div class="p-4 border-t flex justify-between items-center shrink-0" style="border-color: var(--color-border-light); background-color: var(--color-bg-main);">
                 <p class="text-xs" style="color: var(--color-fg-muted);">All operations support undo (Ctrl+Z)</p>
                 <button type="button" class="px-4 py-2 rounded text-sm font-medium hover:opacity-80" style="background-color: var(--color-accent-primary); color: var(--color-fg-inverse);" onclick={onClose}> Close </button>
             </div>
