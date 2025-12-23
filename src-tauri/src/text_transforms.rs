@@ -397,13 +397,44 @@ fn transform_lines(text: &str, operation: &str) -> Result<String, String> {
         }
 
         "split-sentences" => {
-            let full_text = text.to_string();
-            let sentences: Vec<&str> = full_text
-                .split(|c| c == '.' || c == '!' || c == '?')
-                .map(|s| s.trim())
-                .filter(|s| !s.is_empty())
-                .collect();
-            Ok(sentences.join("\n"))
+            let mut result = String::new();
+            let mut current_sentence = String::new();
+            let mut chars = text.chars().peekable();
+
+            while let Some(c) = chars.next() {
+                current_sentence.push(c);
+                if c == '.' || c == '!' || c == '?' {
+                    // Peek next char to see if it's also punctuation (handle "..." or "?!")
+                    let mut is_end = true;
+                    if let Some(&next_c) = chars.peek() {
+                        if next_c == '.' || next_c == '!' || next_c == '?' {
+                            is_end = false;
+                        }
+                    }
+
+                    if is_end {
+                        let trimmed = current_sentence.trim();
+                        if !trimmed.is_empty() {
+                            if !result.is_empty() {
+                                result.push('\n');
+                            }
+                            result.push_str(trimmed);
+                        }
+                        current_sentence.clear();
+                    }
+                }
+            }
+
+            // Handle leftovers
+            let trimmed = current_sentence.trim();
+            if !trimmed.is_empty() {
+                if !result.is_empty() {
+                    result.push('\n');
+                }
+                result.push_str(trimmed);
+            }
+
+            Ok(result)
         }
 
         "wrap-quotes" => {
