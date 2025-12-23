@@ -46,8 +46,10 @@
         "windows": {
             "nsis": {
                 "installerIcon": "icons/icon.ico",
-                "installMode": "perUser",
-                "languages": ["English"],
+                "installMode": "currentUser",
+                "languages": [
+                    "English"
+                ],
                 "displayLanguageSelector": false
             }
         }
