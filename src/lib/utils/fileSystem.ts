@@ -1,5 +1,6 @@
 import { addToDictionary } from '$lib/services/dictionaryService';
-import { checkFileExists, checkAndReloadIfChanged, refreshMetadata, sanitizePath } from '$lib/services/fileMetadata';
+import { checkAndReloadIfChanged, checkFileExists, normalizeLineEndings, refreshMetadata, sanitizePath } from '$lib/services/fileMetadata';
+import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
@@ -12,7 +13,7 @@ import { isTextFile } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 // Re-export service functions for backward compatibility with existing imports
-export { addToDictionary, checkFileExists, checkAndReloadIfChanged, loadSession, persistSession, persistSessionDebounced };
+export { addToDictionary, checkAndReloadIfChanged, checkFileExists, loadSession, persistSession, persistSessionDebounced };
 
 type FileContent = {
     content: string;
@@ -75,6 +76,7 @@ export async function openFile(path?: string): Promise<void> {
             tab.sizeBytes = new TextEncoder().encode(result.content).length;
             await refreshMetadata(id, sanitizedPath);
             await checkFileExists(id);
+            await fileWatcher.watch(sanitizedPath);
         }
         appState.activeTabId = id;
         editorStore.pushToMru(id);
@@ -114,6 +116,8 @@ export async function saveCurrentFile(): Promise<boolean> {
     const tab = editorStore.tabs.find(t => t.id === tabId);
     if (!tab) return false;
 
+    const oldPath = tab.path;
+
     try {
         let savePath = tab.path;
         if (!savePath) {
@@ -147,6 +151,13 @@ export async function saveCurrentFile(): Promise<boolean> {
             tab.lineEnding = targetLineEnding;
             await callBackend('write_text_file', { path: sanitizedPath, content: contentToSave }, 'File:Write');
 
+            if (oldPath && oldPath !== sanitizedPath) {
+                fileWatcher.unwatch(oldPath);
+            }
+            if (oldPath !== sanitizedPath) {
+                await fileWatcher.watch(sanitizedPath);
+            }
+
             tab.path = sanitizedPath;
             tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
             editorStore.markAsSaved(tabId);
@@ -169,21 +180,24 @@ export async function reloadFileContent(tabId: string): Promise<void> {
     try {
         const sanitizedPath = sanitizePath(tab.path);
         const result = await callBackend<FileContent>('read_text_file', { path: sanitizedPath }, 'File:Read');
-        
+
         // Detect line endings
         const crlfCount = (result.content.match(/\r\n/g) || []).length;
         const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
         const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
-        
+
+        // Normalize content to ensure dirty check works correctly with CodeMirror (which uses LF)
+        const content = normalizeLineEndings(result.content);
+
         // Update the tab with new content
-        tab.content = result.content;
-        tab.lastSavedContent = result.content;
+        tab.content = content;
+        tab.lastSavedContent = content;
         tab.isDirty = false;
         tab.lineEnding = detectedLineEnding;
         tab.encoding = result.encoding.toUpperCase();
         tab.sizeBytes = new TextEncoder().encode(result.content).length;
         tab.fileCheckPerformed = false;
-        
+
         await refreshMetadata(tabId, sanitizedPath);
         editorStore.sessionDirty = true;
     } catch (err) {
@@ -210,6 +224,10 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
                 return;
             }
         }
+    }
+
+    if (tab.path) {
+        fileWatcher.unwatch(tab.path);
     }
 
     editorStore.closeTab(id);

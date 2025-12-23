@@ -3,6 +3,7 @@ import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { debounce } from '$lib/utils/timing';
 import { checkFileExists, normalizeLineEndings, refreshMetadata } from './fileMetadata';
+import { fileWatcher } from './fileWatcher';
 
 type RustTabState = {
     id: string;
@@ -135,6 +136,9 @@ export async function loadSession(): Promise<void> {
                 }
                 await refreshMetadata(tab.id, tab.path!);
                 await checkFileExists(tab.id);
+                if (tab.path) {
+                    await fileWatcher.watch(tab.path);
+                }
             }));
         } else {
             appState.activeTabId = editorStore.addTab();
