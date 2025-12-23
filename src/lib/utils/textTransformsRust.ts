@@ -1,3 +1,4 @@
+import { appState } from '$lib/stores/appState.svelte';
 import { callBackend } from './backend';
 
 /**
@@ -7,7 +8,8 @@ export async function transformText(text: string, operation: string): Promise<st
     try {
         return await callBackend<string>('transform_text_content', {
             content: text,
-            operation
+            operation,
+            indentWidth: appState.defaultIndent
         }, 'Transform:Text');
     } catch (e) {
         return text;

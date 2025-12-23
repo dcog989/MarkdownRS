@@ -51,6 +51,7 @@
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
+        { key: "defaultIndent", label: "Default Indentation (spaces)", type: "number", category: "Editor", defaultValue: 2, min: 2, max: 8 },
         { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },
 
         // Recent Changes Group
@@ -66,7 +67,6 @@
 
         { key: "formatOnSave", label: "Format on Save", type: "boolean", category: "Formatter", defaultValue: false },
         { key: "formatOnPaste", label: "Format on Paste", type: "boolean", category: "Formatter", defaultValue: false },
-        { key: "formatterListIndent", label: "List Indentation (spaces)", type: "number", category: "Formatter", defaultValue: 2, min: 2, max: 8 },
         { key: "formatterBulletChar", label: "Bullet Character", type: "select", category: "Formatter", defaultValue: "-", options: ["-", "*", "+"] },
         { key: "formatterCodeFence", label: "Code Fence Style", type: "select", category: "Formatter", defaultValue: "```", options: ["```", "~~~"] },
         { key: "formatterTableAlignment", label: "Align Table Columns", type: "boolean", category: "Formatter", defaultValue: true },
@@ -91,7 +91,6 @@
     let sortedSettings = $derived(
         settingsDefinitions
             .filter((s) => {
-                // Check visibility condition
                 if ((s as any).visibleWhen) {
                     const condition = (s as any).visibleWhen;
                     const dependentValue = getSettingValue(condition.key, null);
@@ -100,17 +99,14 @@
                     }
                 }
 
-                // Check search query
                 if (searchQuery.length < 2) return true;
                 const fullString = `${s.category}: ${s.label}`;
                 return fullString.toLowerCase().includes(searchQuery.toLowerCase());
             })
             .sort((a, b) => {
-                // Primary sort: Category
                 if (a.category !== b.category) {
                     return a.category.localeCompare(b.category);
                 }
-                // Secondary sort: Definition Order (to keep groups together)
                 return settingsDefinitions.indexOf(a) - settingsDefinitions.indexOf(b);
             })
     );
@@ -154,7 +150,7 @@
     <div class="fixed inset-0 z-50 flex items-start justify-center pt-16" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
         <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[calc(100vh-8rem)] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
             <!-- Header -->
-            <div class="flex items-center gap-4 px-4 py-2 border-b" style="background-color: var(--color-bg-header); border-color: var(--color-border-light);">
+            <div class="flex items-center gap-4 px-4 py-2 border-b shrink-0" style="background-color: var(--color-bg-header); border-color: var(--color-border-light);">
                 <div class="flex items-center gap-2">
                     <Settings size={16} style="color: var(--color-accent-secondary);" />
                     <h2 class="text-ui font-semibold shrink-0" style="color: var(--color-fg-default);">Settings</h2>

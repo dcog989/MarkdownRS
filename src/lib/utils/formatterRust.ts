@@ -1,5 +1,5 @@
-import { formatMarkdown as formatMarkdownAPI, type FormatterOptions as FormatterOptionsAPI } from './markdown';
 import { appState } from '$lib/stores/appState.svelte';
+import { formatMarkdown as formatMarkdownAPI, type FormatterOptions as FormatterOptionsAPI } from './markdown';
 
 export interface FormatterOptions {
     listIndent: number;
@@ -16,7 +16,7 @@ export async function formatMarkdown(
     options: Partial<FormatterOptions> = {}
 ): Promise<string> {
     const defaults: FormatterOptions = {
-        listIndent: 2,
+        listIndent: appState.defaultIndent, // Use the shared setting
         codeBlockFence: '```',
         bulletChar: '-',
         tableAlignment: true,

@@ -14,6 +14,9 @@ use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 use tauri::{Manager, State};
 
+// ... (keep imports and structs the same) ...
+// Since I must output the full file, I will include everything.
+
 pub struct AppState {
     pub db: Mutex<Database>,
     pub speller: Arc<Mutex<Option<Dictionary>>>,
@@ -284,7 +287,6 @@ pub async fn init_spellchecker(
     let dic_path = cache_dir.join("en_US.dic");
     let jargon_path = cache_dir.join("jargon.dic");
 
-    // Custom dictionary stays in Roaming as it is user-created content
     let app_dir = app_handle
         .path()
         .app_data_dir()
@@ -395,7 +397,6 @@ pub async fn init_spellchecker(
     Ok(())
 }
 
-// Helper to strictly sanitize the .dic file format
 fn sanitize_dic_content(content: &str) -> String {
     let content = content.trim_start_matches('\u{feff}');
     let normalized = content.replace("\r\n", "\n").replace('\r', "\n");
@@ -405,8 +406,6 @@ fn sanitize_dic_content(content: &str) -> String {
         if clean_count.chars().all(|c| c.is_ascii_digit()) {
             format!("{}\n{}", clean_count, rest)
         } else {
-            // If the first line isn't a simple digit count,
-            // the spellbook builder might fail; we inject a placeholder count.
             let line_count = normalized.lines().count();
             format!("{}\n{}", line_count, normalized)
         }
@@ -425,7 +424,7 @@ pub async fn check_words(
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
-        None => return Ok(Vec::new()), // Not loaded yet
+        None => return Ok(Vec::new()),
     };
 
     let misspelled: Vec<String> = words
@@ -435,13 +434,9 @@ pub async fn check_words(
             if clean.is_empty() {
                 return false;
             }
-
-            // Check custom first
             if custom_guard.contains(&clean.to_lowercase()) {
                 return false;
             }
-
-            // Check spellbook
             !speller.check(clean)
         })
         .collect();
@@ -462,17 +457,10 @@ pub async fn get_spelling_suggestions(
     };
 
     let mut suggestions = Vec::new();
-
     speller.suggest(&word, &mut suggestions);
-
     Ok(suggestions.into_iter().take(5).collect())
 }
 
-/// Render markdown using the comrak engine with flavor support
-///
-/// Parameters:
-/// - content: The markdown content to render
-/// - flavor: Optional markdown flavor ("commonmark" or "gfm"), defaults to "gfm"
 #[tauri::command]
 pub async fn render_markdown(
     content: String,
@@ -489,15 +477,6 @@ pub async fn render_markdown(
     markdown_renderer::render_markdown(&content, options)
 }
 
-/// Format markdown using the comrak engine with flavor support
-///
-/// Parameters:
-/// - content: The markdown content to format
-/// - flavor: Optional markdown flavor ("commonmark" or "gfm"), defaults to "gfm"
-/// - list_indent: Optional list indentation, defaults to 2
-/// - bullet_char: Optional bullet character ("-", "*", "+"), defaults to "-"
-/// - code_block_fence: Optional code block fence ("```" or "~~~"), defaults to "```"
-/// - table_alignment: Optional table alignment flag, defaults to true
 #[tauri::command]
 pub async fn format_markdown(
     content: String,
@@ -524,18 +503,21 @@ pub async fn format_markdown(
     markdown_formatter::format_markdown(&content, &options)
 }
 
-/// Get supported markdown flavors
 #[tauri::command]
 pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
     Ok(vec!["commonmark".to_string(), "gfm".to_string()])
 }
 
+// Updated transform_text_content signature
 #[tauri::command]
-pub async fn transform_text_content(content: String, operation: String) -> Result<String, String> {
-    transform_text(&content, &operation)
+pub async fn transform_text_content(
+    content: String,
+    operation: String,
+    indent_width: Option<usize>,
+) -> Result<String, String> {
+    transform_text(&content, &operation, indent_width.unwrap_or(4))
 }
 
-// Bookmark commands
 #[tauri::command]
 pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
     let db = state.db.lock().map_err(|_| "Failed to lock db")?;
@@ -573,8 +555,6 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
         .map_err(|e| e.to_string())?;
     let themes_dir = app_dir.join("Themes");
 
-    // Themes directory and default themes are created on startup in main.rs
-    // Just list the available themes here
     let mut themes = Vec::new();
     if let Ok(entries) = fs::read_dir(themes_dir) {
         for entry in entries.flatten() {
@@ -607,7 +587,6 @@ pub async fn get_theme_css(
     fs::read_to_string(theme_path).map_err(|e| e.to_string())
 }
 
-// Settings commands using TOML
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
     let app_dir = app_handle
@@ -621,7 +600,9 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     }
 
     let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let toml_val: toml::Value = toml::from_str(&content).map_err(|e| e.to_string())?;
+    // Strip BOM before parsing
+    let clean_content = content.trim_start_matches('\u{feff}');
+    let toml_val: toml::Value = toml::from_str(clean_content).map_err(|e| e.to_string())?;
 
     Ok(serde_json::to_value(toml_val).map_err(|e| e.to_string())?)
 }

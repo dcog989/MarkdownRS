@@ -34,10 +34,10 @@ export class AppState {
     // Advanced Settings
     logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');
 
-    // Formatter Settings
+    // Formatter & Indentation Settings
     formatOnSave = $state(false);
     formatOnPaste = $state(false);
-    formatterListIndent = $state(2);
+    defaultIndent = $state(2); // Renamed from formatterListIndent
     formatterBulletChar = $state<'-' | '*' | '+'>('-');
     formatterCodeFence = $state<'```' | '~~~'>('```');
     formatterTableAlignment = $state(true);

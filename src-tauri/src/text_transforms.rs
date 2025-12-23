@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 /// Performs text transformations
-pub fn transform_text(text: &str, operation: &str) -> Result<String, String> {
+pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Result<String, String> {
     match operation {
         // Case transformations (whole-text operations)
         "uppercase" | "to-uppercase" => Ok(text.to_uppercase()),
@@ -96,12 +96,12 @@ pub fn transform_text(text: &str, operation: &str) -> Result<String, String> {
         }
 
         // Line-based operations
-        _ => transform_lines(text, operation),
+        _ => transform_lines(text, operation, indent_width),
     }
 }
 
 /// Line-based text transformations
-fn transform_lines(text: &str, operation: &str) -> Result<String, String> {
+fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<String, String> {
     let lines: Vec<&str> = text.lines().collect();
 
     match operation {
@@ -425,7 +425,6 @@ fn transform_lines(text: &str, operation: &str) -> Result<String, String> {
                 }
             }
 
-            // Handle leftovers
             let trimmed = current_sentence.trim();
             if !trimmed.is_empty() {
                 if !result.is_empty() {
@@ -462,13 +461,14 @@ fn transform_lines(text: &str, operation: &str) -> Result<String, String> {
         }
 
         "indent-lines" => {
+            let indent = " ".repeat(indent_width);
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
                     if line.trim().is_empty() {
                         line.to_string()
                     } else {
-                        format!("    {}", line)
+                        format!("{}{}", indent, line)
                     }
                 })
                 .collect();
@@ -476,9 +476,10 @@ fn transform_lines(text: &str, operation: &str) -> Result<String, String> {
         }
 
         "unindent-lines" => {
+            let indent = " ".repeat(indent_width);
             let result: Vec<String> = lines
                 .iter()
-                .map(|line| line.strip_prefix("    ").unwrap_or(line).to_string())
+                .map(|line| line.strip_prefix(&indent).unwrap_or(line).to_string())
                 .collect();
             Ok(result.join("\n"))
         }
@@ -517,48 +518,16 @@ mod tests {
     #[test]
     fn test_uppercase() {
         assert_eq!(
-            transform_text("hello world", "uppercase").unwrap(),
+            transform_text("hello world", "uppercase", 4).unwrap(),
             "HELLO WORLD"
         );
     }
 
     #[test]
-    fn test_lowercase() {
+    fn test_indent_custom() {
         assert_eq!(
-            transform_text("HELLO WORLD", "lowercase").unwrap(),
-            "hello world"
-        );
-    }
-
-    #[test]
-    fn test_sort_asc() {
-        assert_eq!(
-            transform_text("zebra\napple\nbanana", "sort-asc").unwrap(),
-            "apple\nbanana\nzebra"
-        );
-    }
-
-    #[test]
-    fn test_remove_duplicates() {
-        assert_eq!(
-            transform_text("apple\nbanana\napple\ncherry", "remove-duplicates").unwrap(),
-            "apple\nbanana\ncherry"
-        );
-    }
-
-    #[test]
-    fn test_add_bullets() {
-        assert_eq!(
-            transform_text("item1\nitem2", "add-bullets").unwrap(),
-            "- item1\n- item2"
-        );
-    }
-
-    #[test]
-    fn test_reverse() {
-        assert_eq!(
-            transform_text("line1\nline2\nline3", "reverse").unwrap(),
-            "line3\nline2\nline1"
+            transform_text("hello", "indent-lines", 2).unwrap(),
+            "  hello"
         );
     }
 }

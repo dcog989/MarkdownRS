@@ -15,7 +15,10 @@ export async function initSettings() {
         if (saved && Object.keys(saved).length > 0) {
             log(`Restoring app preferences from TOML...`);
             Object.keys(saved).forEach(key => {
-                if (key in appState) {
+                // Migration: handle old keys if they exist in file
+                if (key === 'formatterListIndent') {
+                    appState.defaultIndent = saved[key];
+                } else if (key in appState) {
                     (appState as any)[key] = saved[key];
                 }
             });
@@ -51,7 +54,7 @@ async function saveSettingsImmediate() {
             newTabPosition: appState.newTabPosition,
             formatOnSave: appState.formatOnSave,
             formatOnPaste: appState.formatOnPaste,
-            formatterListIndent: appState.formatterListIndent,
+            defaultIndent: appState.defaultIndent, // Saved as new key
             formatterBulletChar: appState.formatterBulletChar,
             formatterCodeFence: appState.formatterCodeFence,
             formatterTableAlignment: appState.formatterTableAlignment,

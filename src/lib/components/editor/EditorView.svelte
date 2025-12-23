@@ -12,6 +12,7 @@
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+    import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorState } from "@codemirror/state";
@@ -46,7 +47,8 @@
         autoComp = new Compartment(),
         recentComp = new Compartment(),
         historyComp = new Compartment(),
-        themeComp = new Compartment();
+        themeComp = new Compartment(),
+        indentComp = new Compartment();
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
     const lineChangeTracker = new LineChangeTracker();
@@ -110,16 +112,11 @@
         const _mode = appState.recentChangesMode;
         const _fontSize = appState.editorFontSize;
         const _fontFamily = appState.editorFontFamily;
+        const _indent = appState.defaultIndent;
 
         if (view)
             view.dispatch({
-                effects: [
-                    wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []),
-                    autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []),
-                    recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
-                    historyComp.reconfigure(history({ minDepth: appState.undoDepth })),
-                    themeComp.reconfigure(dynamicTheme)
-                ],
+                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent))))],
             });
     });
 
@@ -136,7 +133,7 @@
             closeBrackets(),
             filePathPlugin,
             filePathTheme,
-            highlightPlugin, // Added custom highlighter
+            highlightPlugin,
             keymap.of([
                 {
                     key: "Insert",
@@ -182,6 +179,7 @@
                 ...defaultKeymap,
             ]),
             themeComp.of(dynamicTheme),
+            indentComp.of(indentUnit.of("  ")), // Default initial
             userThemeExtension,
             spellCheckLinter,
             wrapComp.of([]),
