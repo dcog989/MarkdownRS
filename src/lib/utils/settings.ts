@@ -1,8 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
-import { Store } from '@tauri-apps/plugin-store';
+import { callBackend } from './backend';
 import { debounce } from './timing';
-
-let store: Store | null = null;
 
 function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
     const output = `[Settings] ${msg}`;
@@ -12,16 +10,10 @@ function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
 
 export async function initSettings() {
     try {
-        const storePath = 'settings.json';
-        store = await Store.load(storePath, {
-            autoSave: false,
-            defaults: {}
-        });
+        const saved = await callBackend<Record<string, any>>('load_settings', {}, 'Settings:Load');
 
-        const saved = await store.get<Record<string, any>>('app-settings');
-
-        if (saved) {
-            log(`Restoring app preferences...`);
+        if (saved && Object.keys(saved).length > 0) {
+            log(`Restoring app preferences from TOML...`);
             Object.keys(saved).forEach(key => {
                 if (key in appState) {
                     (appState as any)[key] = saved[key];
@@ -34,8 +26,6 @@ export async function initSettings() {
 }
 
 async function saveSettingsImmediate() {
-    if (!store) return;
-
     try {
         const settingsToSave = {
             splitPercentage: appState.splitPercentage,
@@ -70,8 +60,7 @@ async function saveSettingsImmediate() {
             tooltipDelay: appState.tooltipDelay
         };
 
-        await store.set('app-settings', settingsToSave);
-        await store.save();
+        await callBackend('save_settings', { settings: settingsToSave }, 'Settings:Save');
     } catch (err) {
         log(`Failed to save settings: ${err}`, 'error');
     }

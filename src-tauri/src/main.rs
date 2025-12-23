@@ -9,26 +9,13 @@ mod markdown_renderer;
 mod text_transforms;
 
 use log::LevelFilter;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fs;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
-#[derive(Debug, Serialize, Deserialize)]
-struct AppSettings {
-    log_level: String,
-    tab_width_min: u32,
-    tab_width_max: u32,
-}
-
-impl Default for AppSettings {
-    fn default() -> Self {
-        Self {
-            log_level: "debug".to_string(),
-            tab_width_min: 140,
-            tab_width_max: 220,
-        }
-    }
+fn default_log_level() -> String {
+    "info".to_string()
 }
 
 fn main() {
@@ -101,17 +88,24 @@ fn main() {
                 let _ = fs::write(&light_theme_path, light_theme_content);
             }
 
-            let settings: AppSettings = if config_path.exists() {
-                let content = fs::read_to_string(&config_path).unwrap_or_default();
-                toml::from_str(&content).unwrap_or_default()
+            // Read settings from the TOML file
+            #[derive(Deserialize)]
+            struct PartialSettings {
+                #[serde(rename = "logLevel")]
+                log_level: Option<String>,
+            }
+
+            let settings_level = if config_path.exists() {
+                fs::read_to_string(&config_path)
+                    .ok()
+                    .and_then(|content| toml::from_str::<PartialSettings>(&content).ok())
+                    .and_then(|s| s.log_level)
+                    .unwrap_or_else(default_log_level)
             } else {
-                let defaults = AppSettings::default();
-                let toml_string = toml::to_string(&defaults).unwrap_or_default();
-                let _ = fs::write(&config_path, toml_string);
-                defaults
+                default_log_level()
             };
 
-            let log_level = match settings.log_level.to_lowercase().as_str() {
+            let log_level = match settings_level.to_lowercase().as_str() {
                 "error" => LevelFilter::Error,
                 "warn" => LevelFilter::Warn,
                 "info" => LevelFilter::Info,
@@ -183,10 +177,11 @@ fn main() {
             app_commands::update_bookmark_access_time,
             app_commands::get_available_themes,
             app_commands::get_theme_css,
-            // Comrak-based markdown commands with flavor support
             app_commands::render_markdown,
             app_commands::format_markdown,
             app_commands::get_markdown_flavors,
+            app_commands::load_settings,
+            app_commands::save_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

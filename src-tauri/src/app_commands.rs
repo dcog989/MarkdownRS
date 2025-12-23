@@ -469,7 +469,7 @@ pub async fn get_spelling_suggestions(
 }
 
 /// Render markdown using the comrak engine with flavor support
-/// 
+///
 /// Parameters:
 /// - content: The markdown content to render
 /// - flavor: Optional markdown flavor ("commonmark" or "gfm"), defaults to "gfm"
@@ -481,16 +481,16 @@ pub async fn render_markdown(
     let markdown_flavor = flavor
         .and_then(|f| MarkdownFlavor::from_str(&f))
         .unwrap_or_default();
-    
+
     let options = MarkdownOptions {
         flavor: markdown_flavor,
     };
-    
+
     markdown_renderer::render_markdown(&content, options)
 }
 
 /// Format markdown using the comrak engine with flavor support
-/// 
+///
 /// Parameters:
 /// - content: The markdown content to format
 /// - flavor: Optional markdown flavor ("commonmark" or "gfm"), defaults to "gfm"
@@ -510,7 +510,7 @@ pub async fn format_markdown(
     let markdown_flavor = flavor
         .and_then(|f| MarkdownFlavor::from_str(&f))
         .unwrap_or_default();
-    
+
     let options = FormatterOptions {
         flavor: markdown_flavor,
         list_indent: list_indent.unwrap_or(2),
@@ -520,17 +520,14 @@ pub async fn format_markdown(
         normalize_whitespace: true,
         max_blank_lines: 2,
     };
-    
+
     markdown_formatter::format_markdown(&content, &options)
 }
 
 /// Get supported markdown flavors
 #[tauri::command]
 pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
-    Ok(vec![
-        "commonmark".to_string(),
-        "gfm".to_string(),
-    ])
+    Ok(vec!["commonmark".to_string(), "gfm".to_string()])
 }
 
 #[tauri::command]
@@ -608,4 +605,39 @@ pub async fn get_theme_css(
     }
 
     fs::read_to_string(theme_path).map_err(|e| e.to_string())
+}
+
+// Settings commands using TOML
+#[tauri::command]
+pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let path = app_dir.join("settings.toml");
+
+    if !path.exists() {
+        return Ok(serde_json::json!({}));
+    }
+
+    let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let toml_val: toml::Value = toml::from_str(&content).map_err(|e| e.to_string())?;
+
+    Ok(serde_json::to_value(toml_val).map_err(|e| e.to_string())?)
+}
+
+#[tauri::command]
+pub async fn save_settings(
+    app_handle: tauri::AppHandle,
+    settings: serde_json::Value,
+) -> Result<(), String> {
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let path = app_dir.join("settings.toml");
+
+    let toml_str = toml::to_string_pretty(&settings).map_err(|e| e.to_string())?;
+    fs::write(path, toml_str).map_err(|e| e.to_string())?;
+    Ok(())
 }
