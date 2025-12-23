@@ -5,7 +5,7 @@
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
-    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Scissors, Sparkles, TextWrap, WandSparkles } from "lucide-svelte";
+    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, WandSparkles } from "lucide-svelte";
     import { untrack } from "svelte";
 
     let {
@@ -148,7 +148,7 @@
             <Submenu bind:show={showTransformMenu} side={submenuSide}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
-                        <TextWrap size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>
+                        <Rotate3d size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 <div class="py-1 max-h-[300px] overflow-y-auto custom-scrollbar">
