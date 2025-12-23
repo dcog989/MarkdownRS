@@ -123,9 +123,8 @@ npm run tauri build
 
 ### v2 (Planned)
 
-- Snippets & templates
-- Export to PDF/PNG/HTML
-- Git integration
+- Export to PDF/PNG/WEBP/HTML
+- Git integration - what does this mean??
 - Context menu with "Send to..." options
 
 ## License
