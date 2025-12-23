@@ -78,6 +78,7 @@ fn main() {
 
             let db_dir = app_dir.join("Database");
             let log_dir = local_dir.join("Logs");
+            let themes_dir = app_dir.join("Themes");
             let config_path = app_dir.join("settings.toml");
             let dict_path = app_dir.join("custom-spelling.dic");
 
@@ -85,6 +86,20 @@ fn main() {
             let _ = fs::create_dir_all(&local_dir);
             let _ = fs::create_dir_all(&db_dir);
             let _ = fs::create_dir_all(&log_dir);
+            let _ = fs::create_dir_all(&themes_dir);
+
+            // Create default theme files if they don't exist
+            let dark_theme_path = themes_dir.join("default-dark.css");
+            if !dark_theme_path.exists() {
+                let dark_theme_content = include_str!("../templates/default-dark.css");
+                let _ = fs::write(&dark_theme_path, dark_theme_content);
+            }
+
+            let light_theme_path = themes_dir.join("default-light.css");
+            if !light_theme_path.exists() {
+                let light_theme_content = include_str!("../templates/default-light.css");
+                let _ = fs::write(&light_theme_path, light_theme_content);
+            }
 
             let settings: AppSettings = if config_path.exists() {
                 let content = fs::read_to_string(&config_path).unwrap_or_default();

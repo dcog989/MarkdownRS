@@ -1,5 +1,5 @@
 import { addToDictionary } from '$lib/services/dictionaryService';
-import { checkFileExists, refreshMetadata, sanitizePath } from '$lib/services/fileMetadata';
+import { checkFileExists, checkAndReloadIfChanged, refreshMetadata, sanitizePath } from '$lib/services/fileMetadata';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
@@ -12,7 +12,7 @@ import { isTextFile } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 // Re-export service functions for backward compatibility with existing imports
-export { addToDictionary, checkFileExists, loadSession, persistSession, persistSessionDebounced };
+export { addToDictionary, checkFileExists, checkAndReloadIfChanged, loadSession, persistSession, persistSessionDebounced };
 
 type FileContent = {
     content: string;
@@ -159,6 +159,35 @@ export async function saveCurrentFile(): Promise<boolean> {
     } catch (err) {
         handleFileSystemError(err, tab.path || 'document');
         return false;
+    }
+}
+
+export async function reloadFileContent(tabId: string): Promise<void> {
+    const tab = editorStore.tabs.find(t => t.id === tabId);
+    if (!tab || !tab.path) return;
+
+    try {
+        const sanitizedPath = sanitizePath(tab.path);
+        const result = await callBackend<FileContent>('read_text_file', { path: sanitizedPath }, 'File:Read');
+        
+        // Detect line endings
+        const crlfCount = (result.content.match(/\r\n/g) || []).length;
+        const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
+        const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+        
+        // Update the tab with new content
+        tab.content = result.content;
+        tab.lastSavedContent = result.content;
+        tab.isDirty = false;
+        tab.lineEnding = detectedLineEnding;
+        tab.encoding = result.encoding.toUpperCase();
+        tab.sizeBytes = new TextEncoder().encode(result.content).length;
+        tab.fileCheckPerformed = false;
+        
+        await refreshMetadata(tabId, sanitizedPath);
+        editorStore.sessionDirty = true;
+    } catch (err) {
+        handleFileSystemError(err, tab.path);
     }
 }
 

@@ -4,7 +4,7 @@
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
-    import { checkFileExists, navigateToPath } from "$lib/utils/fileSystem";
+    import { checkFileExists, checkAndReloadIfChanged, navigateToPath, reloadFileContent } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
@@ -55,7 +55,13 @@
             // 2. Tab Switch Logic: Handle side effects when the active tab ID changes
             if (tabId !== previousTabId) {
                 triggerImmediateLint(cmView!);
-                checkFileExists(tabId);
+                // Check if file has been modified externally and reload if needed
+                (async () => {
+                    if (await checkAndReloadIfChanged(tabId)) {
+                        await reloadFileContent(tabId);
+                    }
+                    await checkFileExists(tabId);
+                })();
                 previousTabId = tabId;
             }
         });

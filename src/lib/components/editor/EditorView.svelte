@@ -45,7 +45,8 @@
     let wrapComp = new Compartment(),
         autoComp = new Compartment(),
         recentComp = new Compartment(),
-        historyComp = new Compartment();
+        historyComp = new Compartment(),
+        themeComp = new Compartment();
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
     const lineChangeTracker = new LineChangeTracker();
@@ -107,10 +108,18 @@
 
     $effect(() => {
         const _mode = appState.recentChangesMode;
+        const _fontSize = appState.editorFontSize;
+        const _fontFamily = appState.editorFontFamily;
 
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth }))],
+                effects: [
+                    wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []),
+                    autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []),
+                    recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
+                    historyComp.reconfigure(history({ minDepth: appState.undoDepth })),
+                    themeComp.reconfigure(dynamicTheme)
+                ],
             });
     });
 
@@ -172,7 +181,7 @@
                 ...historyKeymap,
                 ...defaultKeymap,
             ]),
-            dynamicTheme,
+            themeComp.of(dynamicTheme),
             userThemeExtension,
             spellCheckLinter,
             wrapComp.of([]),

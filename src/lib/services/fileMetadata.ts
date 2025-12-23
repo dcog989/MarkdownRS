@@ -36,3 +36,27 @@ export async function checkFileExists(tabId: string): Promise<void> {
     }
     editorStore.sessionDirty = true;
 }
+
+export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
+    const tab = editorStore.tabs.find(t => t.id === tabId);
+    if (!tab || !tab.path) return false;
+
+    // If the tab has unsaved changes, don't auto-reload to avoid losing user's work
+    if (tab.isDirty) return false;
+
+    try {
+        const meta = await callBackend<FileMetadata>('get_file_metadata', { path: tab.path }, 'File:Metadata');
+        
+        // Check if the file's modification time has changed since we last loaded it
+        if (meta.modified && tab.modified && meta.modified !== tab.modified) {
+            // File has been modified externally - we need to reload it
+            return true;
+        }
+        return false;
+    } catch (err) {
+        // File doesn't exist or can't be read
+        tab.fileCheckFailed = true;
+        editorStore.sessionDirty = true;
+        return false;
+    }
+}
