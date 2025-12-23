@@ -19,7 +19,14 @@
         "fs:default",
         "fs:allow-read-text-file",
         "fs:allow-write-text-file",
-        "fs:allow-watch",
+        {
+            "identifier": "fs:allow-watch",
+            "allow": [
+                {
+                    "path": "**"
+                }
+            ]
+        },
         "fs:allow-unwatch",
         "shell:allow-open",
         "opener:default",

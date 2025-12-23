@@ -4,11 +4,11 @@
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
-    import { checkFileExists, checkAndReloadIfChanged, navigateToPath, reloadFileContent } from "$lib/utils/fileSystem";
+    import { checkAndReloadIfChanged, checkFileExists, navigateToPath, reloadFileContent } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
-    import { createSpellCheckLinter, refreshSpellcheck, spellCheckKeymap, triggerImmediateLint } from "$lib/utils/spellcheckExtension.svelte.ts";
+    import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { transformText } from "$lib/utils/textTransformsRust";
     import { EditorView as CM6EditorView } from "@codemirror/view";
     import { onMount, tick, untrack } from "svelte";
@@ -29,8 +29,6 @@
     let contextWordTo = $state(0);
     let showFindReplace = $state(false);
 
-    const spellCheckLinter = createSpellCheckLinter();
-
     // Derived active tab to track content changes reactively
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
 
@@ -43,19 +41,15 @@
         untrack(() => {
             const currentDoc = cmView!.state.doc.toString();
 
-            // 1. Sync Content: Update editor if store content differs from editor content
-            // This handles external updates (Format Document, Replace All) while ignoring
-            // updates caused by user typing (where store matches editor).
+            // 1. Sync Content
             if (currentDoc !== content) {
                 cmView!.dispatch({
                     changes: { from: 0, to: currentDoc.length, insert: content },
                 });
             }
 
-            // 2. Tab Switch Logic: Handle side effects when the active tab ID changes
+            // 2. Tab Switch Logic
             if (tabId !== previousTabId) {
-                triggerImmediateLint(cmView!);
-                // Check if file has been modified externally and reload if needed
                 (async () => {
                     if (await checkAndReloadIfChanged(tabId)) {
                         await reloadFileContent(tabId);
@@ -138,7 +132,7 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} {spellCheckLinter} {eventHandlers} onContentChange={(c) => editorStore.updateContent(tabId, c)} onMetricsChange={(m) => editorMetrics.updateMetrics(m)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => editorStore.updateContent(tabId, c)} onMetricsChange={(m) => editorMetrics.updateMetrics(m)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}

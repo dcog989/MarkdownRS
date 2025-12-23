@@ -14,9 +14,6 @@ use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 use tauri::{Manager, State};
 
-// ... (keep imports and structs the same) ...
-// Since I must output the full file, I will include everything.
-
 pub struct AppState {
     pub db: Mutex<Database>,
     pub speller: Arc<Mutex<Option<Dictionary>>>,
@@ -278,6 +275,7 @@ pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
+    println!("[Spellcheck] Initializing...");
     let local_dir = app_handle
         .path()
         .app_local_data_dir()
@@ -300,99 +298,93 @@ pub async fn init_spellchecker(
         fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
     }
 
-    if aff_path.exists() {
-        if let Ok(content) = fs::read_to_string(&aff_path) {
-            if content.contains("404") || content.contains("Not Found") || content.len() < 100 {
-                let _ = fs::remove_file(&aff_path);
+    if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
+        println!("[Spellcheck] Downloading dictionaries...");
+        let client = reqwest::blocking::Client::new();
+        let aff_url =
+            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
+        let dic_url =
+            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic";
+
+        if let Ok(resp) = client.get(aff_url).send() {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text() {
+                    let _ = fs::write(&aff_path, text);
+                }
+            }
+        }
+
+        if let Ok(resp) = client.get(dic_url).send() {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text() {
+                    let _ = fs::write(&dic_path, text);
+                }
+            }
+        }
+
+        let jargon_url =
+            "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
+        if let Ok(resp) = client.get(jargon_url).send() {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text() {
+                    let _ = fs::write(&jargon_path, text);
+                }
             }
         }
     }
-    if dic_path.exists() {
-        if let Ok(content) = fs::read_to_string(&dic_path) {
-            if content.contains("404") || content.contains("Not Found") || content.len() < 100 {
-                let _ = fs::remove_file(&dic_path);
+
+    if aff_path.exists() && dic_path.exists() {
+        if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
+            if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
+                let mut combined_dic = raw_dic.clone();
+                if jargon_path.exists() {
+                    if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
+                        if let Some((_, jargon_words)) = jargon_content.split_once('\n') {
+                            combined_dic.push_str("\n");
+                            combined_dic.push_str(jargon_words);
+                        }
+                    }
+                }
+
+                let aff_content = raw_aff.trim_start_matches('\u{feff}');
+                let dic_content = sanitize_dic_content(&combined_dic);
+
+                match Dictionary::new(aff_content, &dic_content) {
+                    Ok(dict) => {
+                        if let Ok(mut speller) = speller_arc.lock() {
+                            *speller = Some(dict);
+                            println!("[Spellcheck] Dictionary loaded successfully");
+                        }
+                    }
+                    Err(e) => {
+                        println!("[Spellcheck] Failed to create dictionary: {:?}", e);
+                        let _ = fs::remove_file(&aff_path);
+                        let _ = fs::remove_file(&dic_path);
+                        let _ = fs::remove_file(&jargon_path);
+                    }
+                }
+            }
+        }
+    } else {
+        println!("[Spellcheck] Dictionary files missing");
+    }
+
+    if custom_path.exists() {
+        if let Ok(text) = fs::read_to_string(&custom_path) {
+            if let Ok(mut custom) = custom_arc.lock() {
+                for line in text.lines() {
+                    let w = line.trim();
+                    if !w.is_empty() {
+                        custom.insert(w.to_lowercase());
+                    }
+                }
+                println!(
+                    "[Spellcheck] Custom dictionary loaded with {} words",
+                    custom.len()
+                );
             }
         }
     }
-
-    std::thread::spawn(move || {
-        if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
-            let client = reqwest::blocking::Client::new();
-            let aff_url = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
-            let dic_url = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic";
-
-            if let Ok(resp) = client.get(aff_url).send() {
-                if resp.status().is_success() {
-                    if let Ok(text) = resp.text() {
-                        let _ = fs::write(&aff_path, text);
-                    }
-                }
-            }
-
-            if let Ok(resp) = client.get(dic_url).send() {
-                if resp.status().is_success() {
-                    if let Ok(text) = resp.text() {
-                        let _ = fs::write(&dic_path, text);
-                    }
-                }
-            }
-
-            let jargon_url =
-                "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
-            if let Ok(resp) = client.get(jargon_url).send() {
-                if resp.status().is_success() {
-                    if let Ok(text) = resp.text() {
-                        let _ = fs::write(&jargon_path, text);
-                    }
-                }
-            }
-        }
-
-        if aff_path.exists() && dic_path.exists() {
-            if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
-                if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
-                    let mut combined_dic = raw_dic.clone();
-                    if jargon_path.exists() {
-                        if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
-                            if let Some((_, jargon_words)) = jargon_content.split_once('\n') {
-                                combined_dic.push_str("\n");
-                                combined_dic.push_str(jargon_words);
-                            }
-                        }
-                    }
-
-                    let aff_content = raw_aff.trim_start_matches('\u{feff}');
-                    let dic_content = sanitize_dic_content(&combined_dic);
-
-                    match Dictionary::new(aff_content, &dic_content) {
-                        Ok(dict) => {
-                            if let Ok(mut speller) = speller_arc.lock() {
-                                *speller = Some(dict);
-                            }
-                        }
-                        Err(_) => {
-                            let _ = fs::remove_file(&aff_path);
-                            let _ = fs::remove_file(&dic_path);
-                            let _ = fs::remove_file(&jargon_path);
-                        }
-                    }
-                }
-            }
-        }
-
-        if custom_path.exists() {
-            if let Ok(text) = fs::read_to_string(&custom_path) {
-                if let Ok(mut custom) = custom_arc.lock() {
-                    for line in text.lines() {
-                        let w = line.trim();
-                        if !w.is_empty() {
-                            custom.insert(w.to_lowercase());
-                        }
-                    }
-                }
-            }
-        }
-    });
 
     Ok(())
 }
@@ -419,12 +411,16 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
+    println!("[Spellcheck] Checking {} candidate words", words.len());
     let speller_guard = state.speller.lock().map_err(|_| "Lock failed")?;
     let custom_guard = state.custom_dict.lock().map_err(|_| "Lock failed")?;
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
-        None => return Ok(Vec::new()),
+        None => {
+            println!("[Spellcheck] Warning: Check requested but dictionary not loaded");
+            return Ok(Vec::new());
+        }
     };
 
     let misspelled: Vec<String> = words
@@ -441,6 +437,7 @@ pub async fn check_words(
         })
         .collect();
 
+    println!("[Spellcheck] Found {} misspelled words", misspelled.len());
     Ok(misspelled)
 }
 
@@ -508,7 +505,6 @@ pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
     Ok(vec!["commonmark".to_string(), "gfm".to_string()])
 }
 
-// Updated transform_text_content signature
 #[tauri::command]
 pub async fn transform_text_content(
     content: String,
@@ -600,7 +596,6 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     }
 
     let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    // Strip BOM before parsing
     let clean_content = content.trim_start_matches('\u{feff}');
     let toml_val: toml::Value = toml::from_str(clean_content).map_err(|e| e.to_string())?;
 

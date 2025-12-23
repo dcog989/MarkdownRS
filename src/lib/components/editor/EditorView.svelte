@@ -7,6 +7,8 @@
     import { highlightPlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
+    import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
+    import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
@@ -26,7 +28,7 @@
         onContentChange,
         onMetricsChange,
         customKeymap = [],
-        spellCheckLinter,
+        spellCheckLinter, // NOTE: This prop is now ignored for the compartment init to ensure control here
         eventHandlers,
         cmView = $bindable(),
     } = $props<{
@@ -43,12 +45,16 @@
 
     let editorContainer: HTMLDivElement;
     let view = $state<EditorView>();
-    let wrapComp = new Compartment(),
-        autoComp = new Compartment(),
-        recentComp = new Compartment(),
-        historyComp = new Compartment(),
-        themeComp = new Compartment(),
-        indentComp = new Compartment();
+
+    // Compartments
+    let wrapComp = new Compartment();
+    let autoComp = new Compartment();
+    let recentComp = new Compartment();
+    let historyComp = new Compartment();
+    let themeComp = new Compartment();
+    let indentComp = new Compartment();
+    let spellComp = new Compartment();
+
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
     const lineChangeTracker = new LineChangeTracker();
@@ -74,16 +80,12 @@
             },
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
-
-            // Selection Background
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
                 backgroundColor: "var(--color-selection-bg) !important",
             },
             ".cm-selectionMatch": {
                 backgroundColor: "var(--color-selection-match-bg)",
             },
-
-            // Search Matches
             ".cm-searchMatch": {
                 backgroundColor: isDark ? "rgba(255, 255, 0, 0.2)" : "rgba(255, 215, 0, 0.4)",
                 outline: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
@@ -94,7 +96,6 @@
                 color: isDark ? "#000 !important" : "#fff !important",
                 borderRadius: "2px",
             },
-
             ".cm-tooltip": {
                 backgroundColor: "var(--color-bg-panel)",
                 border: "1px solid var(--color-border-light)",
@@ -108,12 +109,19 @@
         });
     });
 
+    // Effect: RECONFIGURE spellcheck when dictionary loads
+    // This effectively destroys the old linter instance and creates a new one, forcing a run.
     $effect(() => {
-        const _mode = appState.recentChangesMode;
-        const _fontSize = appState.editorFontSize;
-        const _fontFamily = appState.editorFontFamily;
-        const _indent = appState.defaultIndent;
+        if (view && spellcheckState.dictionaryLoaded) {
+            console.warn("[EditorView] Dictionary loaded. Reconfiguring spellcheck compartment.");
+            // We create a fresh linter instance here
+            view.dispatch({
+                effects: spellComp.reconfigure(createSpellCheckLinter()),
+            });
+        }
+    });
 
+    $effect(() => {
         if (view)
             view.dispatch({
                 effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent))))],
@@ -182,7 +190,10 @@
             themeComp.of(dynamicTheme),
             indentComp.of(indentUnit.of("  ")),
             userThemeExtension,
-            spellCheckLinter,
+
+            // Initialize compartment with initial linter
+            spellComp.of(createSpellCheckLinter()),
+
             wrapComp.of([]),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),

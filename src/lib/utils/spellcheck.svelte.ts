@@ -22,13 +22,16 @@ export async function initSpellcheck(): Promise<void> {
     if (initPromise) return initPromise;
     if (spellcheckState.dictionaryLoaded) return;
 
+    console.log("[Spellcheck] Starting initialization...");
+
     initPromise = (async () => {
         try {
             await loadCustomDictionary();
             await callBackend('init_spellchecker', {}, 'Editor:Init');
+            console.log("[Spellcheck] Backend initialization finished");
             spellcheckState.dictionaryLoaded = true;
         } catch (err) {
-            // Error handled by bridge
+            console.error("[Spellcheck] Initialization failed:", err);
         }
     })();
 
