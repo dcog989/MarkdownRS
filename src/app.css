@@ -202,7 +202,7 @@ body {
     color: var(--color-fg-code);
     padding: 2px 4px;
     border-radius: 4px;
-    font-family: "Source Code Pro", Consolas, "Courier New", monospace;
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 
 .cm-blockquote {

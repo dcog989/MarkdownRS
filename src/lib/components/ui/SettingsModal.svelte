@@ -47,7 +47,7 @@
             defaultValue: "default-dark",
             options: appState.availableThemes,
         },
-        { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "Consolas, 'Courier New', monospace" },
+        { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
