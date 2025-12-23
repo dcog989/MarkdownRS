@@ -55,6 +55,7 @@ async function saveSettingsImmediate() {
             undoDepth: appState.undoDepth,
             previewFontFamily: appState.previewFontFamily,
             previewFontSize: appState.previewFontSize,
+            markdownFlavor: appState.markdownFlavor,
             logLevel: appState.logLevel,
             statusBarTransparency: appState.statusBarTransparency,
             newTabPosition: appState.newTabPosition,

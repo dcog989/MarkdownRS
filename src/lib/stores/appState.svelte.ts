@@ -29,6 +29,7 @@ export class AppState {
     previewFontFamily = $state("system-ui, -apple-system, sans-serif");
     previewFontSize = $state(16);
     gfmEnabled = $state(true);
+    markdownFlavor = $state<'commonmark' | 'gfm'>('gfm');
 
     // Advanced Settings
     logLevel = $state<'trace' | 'debug' | 'info' | 'warn' | 'error'>('info');

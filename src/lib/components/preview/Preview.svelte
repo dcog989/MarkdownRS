@@ -4,7 +4,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
-    import { renderMarkdown } from "$lib/utils/markdownRust";
+    import { renderMarkdown } from "$lib/utils/markdown";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
@@ -24,7 +24,8 @@
 
         isRendering = true;
         debounceTimer = window.setTimeout(async () => {
-            htmlContent = await renderMarkdown(content, appState.gfmEnabled);
+            const result = await renderMarkdown(content, appState.markdownFlavor);
+            htmlContent = result.html;
             lastRendered = content;
             if (container) {
                 scrollSync.registerPreview(container);

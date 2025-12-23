@@ -1,4 +1,5 @@
-import { callBackend } from './backend';
+import { formatMarkdown as formatMarkdownAPI, type FormatterOptions as FormatterOptionsAPI } from './markdown';
+import { appState } from '$lib/stores/appState.svelte';
 
 export interface FormatterOptions {
     listIndent: number;
@@ -8,7 +9,7 @@ export interface FormatterOptions {
 }
 
 /**
- * Format markdown content using the Rust backend via unified bridge
+ * Format markdown content using the new comrak-based formatter
  */
 export async function formatMarkdown(
     content: string,
@@ -23,15 +24,18 @@ export async function formatMarkdown(
 
     const final = { ...defaults, ...options };
 
+    const apiOptions: FormatterOptionsAPI = {
+        flavor: appState.markdownFlavor,
+        list_indent: final.listIndent,
+        bullet_char: final.bulletChar,
+        code_block_fence: final.codeBlockFence,
+        table_alignment: final.tableAlignment,
+    };
+
     try {
-        return await callBackend<string>('format_markdown_content', {
-            content,
-            listIndent: final.listIndent,
-            bulletChar: final.bulletChar,
-            codeBlockFence: final.codeBlockFence,
-            tableAlignment: final.tableAlignment,
-        }, 'Markdown:Render');
+        return await formatMarkdownAPI(content, apiOptions);
     } catch (e) {
+        console.error('Failed to format markdown:', e);
         return content;
     }
 }

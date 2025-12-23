@@ -62,6 +62,7 @@
 
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
         { key: "previewFontSize", label: "Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
+        { key: "markdownFlavor", label: "Markdown Flavor", type: "select", category: "Preview", defaultValue: "gfm", options: ["gfm", "commonmark"], optionLabels: ["GitHub Flavored Markdown", "CommonMark"] },
 
         { key: "formatOnSave", label: "Format on Save", type: "boolean", category: "Formatter", defaultValue: false },
         { key: "formatOnPaste", label: "Format on Paste", type: "boolean", category: "Formatter", defaultValue: false },

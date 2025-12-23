@@ -1,6 +1,7 @@
 use crate::db::{Bookmark, Database, TabState};
-use crate::markdown_formatter::{FormatterOptions, format_markdown};
-use crate::markdown_renderer::{MarkdownOptions, RenderResult, render_markdown};
+use crate::markdown_config::MarkdownFlavor;
+use crate::markdown_formatter::{self, FormatterOptions};
+use crate::markdown_renderer::{self, MarkdownOptions, RenderResult};
 use crate::text_transforms::transform_text;
 use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8};
@@ -467,32 +468,74 @@ pub async fn get_spelling_suggestions(
     Ok(suggestions.into_iter().take(5).collect())
 }
 
+/// Render markdown using the comrak engine with flavor support
+/// 
+/// Parameters:
+/// - content: The markdown content to render
+/// - flavor: Optional markdown flavor ("commonmark" or "gfm"), defaults to "gfm"
 #[tauri::command]
-pub async fn render_markdown_content(content: String, gfm: bool) -> Result<RenderResult, String> {
-    let options = MarkdownOptions { gfm };
-    render_markdown(&content, options)
+pub async fn render_markdown(
+    content: String,
+    flavor: Option<String>,
+) -> Result<RenderResult, String> {
+    let markdown_flavor = flavor
+        .and_then(|f| MarkdownFlavor::from_str(&f))
+        .unwrap_or_default();
+    
+    let options = MarkdownOptions {
+        flavor: markdown_flavor,
+    };
+    
+    markdown_renderer::render_markdown(&content, options)
+}
+
+/// Format markdown using the comrak engine with flavor support
+/// 
+/// Parameters:
+/// - content: The markdown content to format
+/// - flavor: Optional markdown flavor ("commonmark" or "gfm"), defaults to "gfm"
+/// - list_indent: Optional list indentation, defaults to 2
+/// - bullet_char: Optional bullet character ("-", "*", "+"), defaults to "-"
+/// - code_block_fence: Optional code block fence ("```" or "~~~"), defaults to "```"
+/// - table_alignment: Optional table alignment flag, defaults to true
+#[tauri::command]
+pub async fn format_markdown(
+    content: String,
+    flavor: Option<String>,
+    list_indent: Option<usize>,
+    bullet_char: Option<String>,
+    code_block_fence: Option<String>,
+    table_alignment: Option<bool>,
+) -> Result<String, String> {
+    let markdown_flavor = flavor
+        .and_then(|f| MarkdownFlavor::from_str(&f))
+        .unwrap_or_default();
+    
+    let options = FormatterOptions {
+        flavor: markdown_flavor,
+        list_indent: list_indent.unwrap_or(2),
+        bullet_char: bullet_char.unwrap_or_else(|| "-".to_string()),
+        code_block_fence: code_block_fence.unwrap_or_else(|| "```".to_string()),
+        table_alignment: table_alignment.unwrap_or(true),
+        normalize_whitespace: true,
+        max_blank_lines: 2,
+    };
+    
+    markdown_formatter::format_markdown(&content, &options)
+}
+
+/// Get supported markdown flavors
+#[tauri::command]
+pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
+    Ok(vec![
+        "commonmark".to_string(),
+        "gfm".to_string(),
+    ])
 }
 
 #[tauri::command]
 pub async fn transform_text_content(content: String, operation: String) -> Result<String, String> {
     transform_text(&content, &operation)
-}
-
-#[tauri::command]
-pub async fn format_markdown_content(
-    content: String,
-    list_indent: usize,
-    bullet_char: String,
-    code_block_fence: String,
-    table_alignment: bool,
-) -> Result<String, String> {
-    let options = FormatterOptions {
-        list_indent,
-        bullet_char,
-        code_block_fence,
-        table_alignment,
-    };
-    format_markdown(&content, &options)
 }
 
 // Bookmark commands

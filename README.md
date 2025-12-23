@@ -14,6 +14,8 @@ MarkdownRS is a fast, low-resource, cross-platform desktop markdown editor with 
 - **Multi-Tab**: Work on multiple documents simultaneously
 - **Text Operations**: Sort lines, trim whitespace, change case, etc.
 - **Bookmark System**: Bookmark and tag local documents with instant filter search
+- **Full GFM Support**: GitHub Flavored Markdown with tables, strikethrough, task lists (powered by comrak)
+- **Smart Formatting**: AST-based markdown formatting for consistent, semantic-preserving results
 
 ## Development
 
@@ -73,7 +75,7 @@ npm run tauri build
 
 ### Frontend (Svelte 5 + TypeScript)
 - **Editor**: CodeMirror 6 for markdown editing with syntax highlighting
-- **Preview**: Rust `markdown` for markdown parsing with DOMPurify for security
+- **Preview**: Rust `comrak` for full CommonMark / GFM markdown parsing with security hardening
 - **State Management**: Svelte 5 runes for reactive state
 - **Styling**: TailwindCSS v4 for modern, utility-first styling
 
@@ -110,13 +112,15 @@ MarkdownRS/
 - ✅ Auto-save & hot-exit
 - ✅ Command palette
 - ✅ Text operations
+- ✅ Full GFM support (comrak)
+- ✅ Smart formatting
+- ✅ Custom themes
+- ✅ Find & replace across all documents
 
 ### v2 (Planned)
-- Custom themes
 - Snippets & templates
 - Export to PDF/PNG/HTML
 - Git integration
-- Find & replace across all documents
 - Context menu with "Send to..." options
 
 ## License
