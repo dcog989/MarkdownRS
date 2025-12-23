@@ -5,7 +5,7 @@
     import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
-    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, WandSparkles } from "lucide-svelte";
+    import { AlignLeft, ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, WandSparkles } from "lucide-svelte";
     import { untrack } from "svelte";
 
     let {
@@ -34,12 +34,49 @@
 
     let showSortMenu = $state(false);
     let showCaseMenu = $state(false);
+    let showFormatMenu = $state(false);
     let showTransformMenu = $state(false);
     let suggestions = $state<string[]>([]);
 
+    // Operations
     const sortOps = getOperationsByCategory("Sort & Order");
     const caseOps = getOperationsByCategory("Case Transformations");
-    const transformOps = getOperationsByCategory("Text Manipulation").concat(getOperationsByCategory("Remove & Filter"));
+
+    type MenuOption = {
+        id?: OperationTypeString;
+        label?: string;
+        divider?: boolean;
+    };
+
+    // Organized Format Menu (Non-destructive/Styling)
+    const formatOps: MenuOption[] = [
+        // Indentation & Spacing
+        { id: "indent-lines", label: "Indent Lines" },
+        { id: "unindent-lines", label: "Unindent Lines" },
+        { id: "trim-whitespace", label: "Trim Whitespace" },
+        { id: "normalize-whitespace", label: "Normalize Whitespace" },
+        { divider: true },
+        // Lists
+        { id: "add-bullets", label: "Add Bullet Points" },
+        { id: "add-numbers", label: "Add Numbering" },
+        { id: "add-checkboxes", label: "Add Checkboxes" },
+        { id: "remove-bullets", label: "Remove List Markers" },
+        { divider: true },
+        // Block Elements
+        { id: "blockquote", label: "Add Blockquote" },
+        { id: "remove-blockquote", label: "Remove Blockquote" },
+        { id: "add-code-fence", label: "Wrap in Code Block" },
+        { divider: true },
+        // Headings
+        { id: "increase-heading", label: "Increase Heading Level" },
+        { id: "decrease-heading", label: "Decrease Heading Level" },
+        { divider: true },
+        // Misc
+        { id: "wrap-quotes", label: "Wrap in Quotes" },
+    ];
+
+    // Transform Menu (Destructive/Structural)
+    const transformOps: MenuOption[] = [{ id: "join-lines", label: "Join Lines" }, { id: "split-sentences", label: "Sentences to New Lines" }, { divider: true }, { id: "remove-duplicates", label: "Remove Duplicates" }, { id: "remove-unique", label: "Remove Unique" }, { divider: true }, { id: "remove-blank", label: "Remove Blank Lines" }, { id: "remove-all-spaces", label: "Remove All Spaces" }, { divider: true }, { id: "reverse", label: "Reverse Lines" }, { id: "shuffle", label: "Shuffle Lines" }];
 
     $effect(() => {
         const word = untrack(() => wordUnderCursor?.trim());
@@ -62,9 +99,11 @@
         onClose();
     }
 
-    function handleOp(type: OperationTypeString) {
-        editorStore.performTextTransform(type);
-        onClose();
+    function handleOp(type: OperationTypeString | undefined) {
+        if (type) {
+            editorStore.performTextTransform(type);
+            onClose();
+        }
     }
 </script>
 
@@ -119,43 +158,60 @@
         {#if selectedText}
             <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
+            <!-- Sort Menu -->
             <Submenu bind:show={showSortMenu} side={submenuSide}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <ArrowUpDown size={14} /><span>Sort Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                <div class="py-1">
-                    {#each sortOps as op}
-                        <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
-                    {/each}
-                </div>
+                {#each sortOps as op}
+                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
+                {/each}
             </Submenu>
 
+            <!-- Case Menu -->
             <Submenu bind:show={showCaseMenu} side={submenuSide}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <CaseSensitive size={14} /><span>Change Case</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                <div class="py-1">
-                    {#each caseOps as op}
-                        <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
-                    {/each}
-                </div>
+                {#each caseOps as op}
+                    <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
+                {/each}
             </Submenu>
 
+            <!-- Format Menu -->
+            <Submenu bind:show={showFormatMenu} side={submenuSide}>
+                {#snippet trigger()}
+                    <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
+                        <AlignLeft size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
+                    </button>
+                {/snippet}
+                {#each formatOps as op}
+                    {#if op.divider}
+                        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+                    {:else}
+                        <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {/if}
+                {/each}
+            </Submenu>
+
+            <!-- Transform Menu -->
             <Submenu bind:show={showTransformMenu} side={submenuSide}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <Rotate3d size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                <div class="py-1 max-h-[300px] overflow-y-auto custom-scrollbar">
-                    {#each transformOps as op}
+                {#each transformOps as op}
+                    {#if op.divider}
+                        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+                    {:else}
                         <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
-                    {/each}
-                </div>
+                    {/if}
+                {/each}
             </Submenu>
         {/if}
 

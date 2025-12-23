@@ -35,6 +35,8 @@ export const TEXT_OPERATIONS: OperationCategory[] = [
         operations: [
             { id: "sort-asc", label: "Ascending", description: "Sort lines alphabetically A to Z", icon: ArrowDownAZ },
             { id: "sort-desc", label: "Descending", description: "Sort lines alphabetically Z to A", icon: ArrowDownZA },
+            { id: "sort-case-insensitive-asc", label: "Ascending (Ignore Case)", description: "Sort A to Z ignoring case", icon: ArrowDownAZ },
+            { id: "sort-case-insensitive-desc", label: "Descending (Ignore Case)", description: "Sort Z to A ignoring case", icon: ArrowDownZA },
             { id: "sort-numeric-asc", label: "Numeric Ascending", description: "Sort lines numerically (0-9)", icon: ArrowDown01 },
             { id: "sort-numeric-desc", label: "Numeric Descending", description: "Sort lines numerically (9-0)", icon: ArrowDown10 },
             { id: "sort-length-asc", label: "By Shortest", description: "Sort by line length ascending", icon: ArrowDownAZ },

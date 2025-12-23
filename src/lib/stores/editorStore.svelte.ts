@@ -35,7 +35,8 @@ type TextOperationCallback = (operation: TextOperation) => void;
 
 export type OperationTypeString =
     | 'sort-asc' | 'sort-desc' | 'sort-numeric-asc' | 'sort-numeric-desc'
-    | 'sort-length-asc' | 'sort-length-desc' | 'reverse' | 'shuffle'
+    | 'sort-length-asc' | 'sort-length-desc' | 'sort-case-insensitive-asc' | 'sort-case-insensitive-desc'
+    | 'reverse' | 'shuffle'
     | 'remove-duplicates' | 'remove-unique' | 'remove-blank'
     | 'remove-trailing-spaces' | 'remove-leading-spaces' | 'remove-all-spaces'
     | 'uppercase' | 'lowercase' | 'title-case' | 'sentence-case'

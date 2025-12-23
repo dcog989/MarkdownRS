@@ -119,6 +119,18 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(sorted.join("\n"))
         }
 
+        "sort-case-insensitive-asc" => {
+            let mut sorted = lines.clone();
+            sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+            Ok(sorted.join("\n"))
+        }
+
+        "sort-case-insensitive-desc" => {
+            let mut sorted = lines.clone();
+            sorted.sort_by(|a, b| b.to_lowercase().cmp(&a.to_lowercase()));
+            Ok(sorted.join("\n"))
+        }
+
         "sort-numeric-asc" => {
             let mut sorted = lines.clone();
             sorted.sort_by(|a, b| {

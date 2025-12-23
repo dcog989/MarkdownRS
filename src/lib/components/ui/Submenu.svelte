@@ -49,7 +49,7 @@
 
     {#if show}
         <div
-            class="absolute top-0 min-w-[180px] rounded-md shadow-xl border py-1 z-50"
+            class="absolute top-0 flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[70vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-50 whitespace-nowrap"
             style="
                 background-color: var(--color-bg-panel);
                 border-color: var(--color-border-light);
