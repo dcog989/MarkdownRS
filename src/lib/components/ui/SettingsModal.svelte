@@ -1,6 +1,7 @@
 <script lang="ts">
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
+    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
     import { DEFAULT_THEMES } from "$lib/utils/themes";
@@ -71,7 +72,7 @@
         { key: "formatterCodeFence", label: "Code Fence Style", type: "select", category: "Formatter", defaultValue: "```", options: ["```", "~~~"] },
         { key: "formatterTableAlignment", label: "Align Table Columns", type: "boolean", category: "Formatter", defaultValue: true },
 
-        { key: "logLevel", label: "Log Level", type: "select", category: "Advanced", defaultValue: "info", options: ["trace", "debug", "info", "warn", "error"] },
+        { key: "logLevel", label: "Log Level (Restart Required)", type: "select", category: "Advanced", defaultValue: "info", options: ["trace", "debug", "info", "warn", "error"] },
 
         { key: "tabWidthMin", label: "Tab Width Minimum (px)", type: "number", category: "Interface", defaultValue: 100, min: 80, max: 300 },
         { key: "tabWidthMax", label: "Tab Width Maximum (px)", type: "number", category: "Interface", defaultValue: 200, min: 100, max: 400 },
@@ -125,8 +126,16 @@
         if (type === "number" || type === "range") {
             value = Number(value);
         }
-        (appState as any)[key] = value;
-        saveSettings();
+
+        const oldValue = (appState as any)[key];
+        if (oldValue !== value) {
+            (appState as any)[key] = value;
+            saveSettings();
+
+            if (key === "logLevel") {
+                toastStore.info("Restart required to apply log level changes");
+            }
+        }
     }
 
     function handleKeydown(e: KeyboardEvent) {
