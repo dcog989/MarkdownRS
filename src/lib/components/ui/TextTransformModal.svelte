@@ -24,8 +24,8 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--color-bg-backdrop);" onclick={onClose}>
-        <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);" onclick={(e) => e.stopPropagation()}>
+    <div class="fixed inset-0 z-50 flex items-start justify-center pt-16" style="background-color: var(--color-bg-backdrop);" onclick={onClose}>
+        <div class="w-fit min-w-[600px] max-w-[90vw] max-h-[calc(100vh-8rem)] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b shrink-0" style="border-color: var(--color-border-light);">
                 <div class="flex items-center gap-2">
