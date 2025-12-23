@@ -63,12 +63,12 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
-        <div class="w-[600px] rounded-lg shadow-2xl border overflow-hidden flex flex-col max-h-[60vh]" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
-            <div class="p-2 border-b" style="border-color: var(--color-border-light);">
+    <div class="fixed inset-0 z-50 flex items-start justify-center pt-16" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
+        <div class="w-[600px] max-w-[90vw] rounded-lg shadow-2xl border overflow-hidden flex flex-col max-h-[calc(100vh-8rem)]" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
+            <div class="p-2 border-b shrink-0" style="border-color: var(--color-border-light);">
                 <input bind:this={inputRef} bind:value={query} class="w-full bg-transparent outline-none px-2 py-1 text-ui placeholder-opacity-50" style="color: var(--color-fg-default);" placeholder="Type a command..." onkeydown={handleKeydown} />
             </div>
-            <div class="overflow-y-auto py-1">
+            <div class="overflow-y-auto py-1 custom-scrollbar">
                 {#if filteredCommands.length > 0}
                     {#each filteredCommands as command, index}
                         <button
