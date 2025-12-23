@@ -10,7 +10,7 @@
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
-    import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+    import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
@@ -135,6 +135,7 @@
             filePathTheme,
             highlightPlugin,
             keymap.of([
+                indentWithTab,
                 {
                     key: "Insert",
                     run: () => {
@@ -179,7 +180,7 @@
                 ...defaultKeymap,
             ]),
             themeComp.of(dynamicTheme),
-            indentComp.of(indentUnit.of("  ")), // Default initial
+            indentComp.of(indentUnit.of("  ")),
             userThemeExtension,
             spellCheckLinter,
             wrapComp.of([]),
