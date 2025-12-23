@@ -58,55 +58,59 @@ npm run tauri build
 ## Keyboard Shortcuts
 
 ### File Operations
+
 - `Ctrl+N` - New file
 - `Ctrl+O` - Open file
 - `Ctrl+S` - Save file
 - `Ctrl+W` - Close tab
 
 ### View
+
 - `Ctrl+\` - Toggle split preview
 - `Ctrl+P` - Open command palette
 
 ### Editing
+
 - Standard text editing shortcuts
 - Access text operations via command palette (Ctrl+P)
 
 ## Architecture
 
 ### Frontend (Svelte 5 + TypeScript)
+
 - **Editor**: CodeMirror 6 for markdown editing with syntax highlighting
 - **Preview**: Rust `comrak` for full CommonMark / GFM markdown parsing with security hardening
 - **State Management**: Svelte 5 runes for reactive state
 - **Styling**: TailwindCSS v4 for modern, utility-first styling
 
 ### Backend (Rust + Tauri)
+
 - **File I/O**: Atomic file operations
 - **Session Management**: IndexedDB / SQLite for crash recovery and hot-exit
 - **Logging**: Comprehensive logging for debugging
 
 ## Project Structure
 
-```
-MarkdownRS/
-├── src/                      # Frontend source
-│   ├── lib/
-│   │   ├── components/      # Svelte components
-│   │   ├── stores/          # State management
-│   │   └── utils/           # Utility functions
-│   └── routes/              # SvelteKit routes
-├── src-tauri/               # Rust backend
-│   ├── src/
-│   │   ├── commands/        # Tauri commands
-│   │   ├── db/              # Database logic
-│   │   └── main.rs          # Entry point
-│   └── tauri.conf.json      # Tauri configuration
-├── static/                  # Static assets
-└── package.json             # Node dependencies & scripts
-```
+    MarkdownRS/
+    ├── src/                      # Frontend source
+    │   ├── lib/
+    │   │   ├── components/      # Svelte components
+    │   │   ├── stores/          # State management
+    │   │   └── utils/           # Utility functions
+    │   └── routes/              # SvelteKit routes
+    ├── src-tauri/               # Rust backend
+    │   ├── src/
+    │   │   ├── commands/        # Tauri commands
+    │   │   ├── db/              # Database logic
+    │   │   └── main.rs          # Entry point
+    │   └── tauri.conf.json      # Tauri configuration
+    ├── static/                  # Static assets
+    └── package.json             # Node dependencies & scripts
 
 ## Roadmap
 
 ### v1 (Current)
+
 - ✅ Split view with live preview
 - ✅ Multi-tab interface
 - ✅ Auto-save & hot-exit
@@ -118,6 +122,7 @@ MarkdownRS/
 - ✅ Find & replace across all documents
 
 ### v2 (Planned)
+
 - Snippets & templates
 - Export to PDF/PNG/HTML
 - Git integration
@@ -129,4 +134,4 @@ MIT.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request or submit an issue for bugs and feature requests.
+Contributions are welcome. Please feel free to submit a Pull Request or submit an issue for bugs and feature requests.
