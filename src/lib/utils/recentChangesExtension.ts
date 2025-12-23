@@ -58,6 +58,17 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                     return;
                 }
 
+                // Only track user-initiated changes (typing, deleting, pasting, dragging)
+                // This prevents programmatic changes (like file loading) from triggering highlights
+                // "input" covers input.type, input.paste, input.drop, input.complete
+                const isUserAction = update.transactions.some(tr =>
+                    tr.isUserEvent('input') ||
+                    tr.isUserEvent('delete') ||
+                    tr.isUserEvent('move')
+                );
+
+                if (!isUserAction) return;
+
                 // Normal Changes
                 const changedLines = new Set<number>();
                 update.changes.iterChanges((fromA, toA, fromB, toB) => {
