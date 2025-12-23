@@ -9,7 +9,6 @@ mod markdown_renderer;
 mod text_transforms;
 
 use log::LevelFilter;
-use serde::Deserialize;
 use std::fs;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
@@ -88,37 +87,53 @@ fn main() {
                 let _ = fs::write(&light_theme_path, light_theme_content);
             }
 
-            // Read settings from the TOML file
-            #[derive(Deserialize)]
-            struct PartialSettings {
-                #[serde(rename = "logLevel")]
-                log_level: Option<String>,
-            }
-
+            // Robustly read settings from the TOML file
             let settings_level = if config_path.exists() {
-                fs::read_to_string(&config_path)
-                    .ok()
-                    .and_then(|content| toml::from_str::<PartialSettings>(&content).ok())
-                    .and_then(|s| s.log_level)
-                    .unwrap_or_else(default_log_level)
+                match fs::read_to_string(&config_path) {
+                    Ok(raw_content) => {
+                        // Strip BOM if present to prevent parse errors
+                        let content = raw_content.trim_start_matches('\u{feff}');
+                        match toml::from_str::<toml::Value>(content) {
+                            Ok(toml_val) => toml_val
+                                .get("logLevel")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(default_log_level),
+                            Err(e) => {
+                                println!("Failed to parse settings.toml: {}", e);
+                                default_log_level()
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        println!("Failed to read settings.toml: {}", e);
+                        default_log_level()
+                    }
+                }
             } else {
                 default_log_level()
             };
 
             let log_level = match settings_level.to_lowercase().as_str() {
                 "error" => LevelFilter::Error,
-                "warn" => LevelFilter::Warn,
+                "warn" | "warning" => LevelFilter::Warn,
                 "info" => LevelFilter::Info,
                 "trace" => LevelFilter::Trace,
                 "off" => LevelFilter::Off,
                 _ => LevelFilter::Debug,
             };
 
+            println!(
+                "Initializing logger with level: {:?} (source: '{}')",
+                log_level, settings_level
+            );
+
             app_handle.plugin(
                 tauri_plugin_log::Builder::default()
                     .level(log_level)
                     .level_for("tao", LevelFilter::Error)
                     .level_for("wry", LevelFilter::Error)
+                    .level_for("markdown_rs", log_level) // Explicitly set crate level
                     .max_file_size(10 * 1024 * 1024)
                     .rotation_strategy(RotationStrategy::KeepOne)
                     .targets([
