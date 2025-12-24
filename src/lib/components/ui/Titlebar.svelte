@@ -25,8 +25,9 @@
     let showBookmarksModal = $state(false);
     let showCommandPalette = $state(false);
 
-    // Static Commands
-    const staticCommands: Command[] = [
+    // All Commands with proper categories
+    const allCommands: Command[] = [
+        // File Commands
         {
             id: "new",
             label: "File: New File",
@@ -36,8 +37,54 @@
                 appState.activeTabId = id;
             },
         },
-        { id: "open", label: "File: Open File", shortcut: "Ctrl+O", action: () => openFile() },
-        { id: "save", label: "File: Save", shortcut: "Ctrl+S", action: () => saveCurrentFile() },
+        { 
+            id: "open", 
+            label: "File: Open File", 
+            shortcut: "Ctrl+O", 
+            action: () => openFile() 
+        },
+        { 
+            id: "save", 
+            label: "File: Save", 
+            shortcut: "Ctrl+S", 
+            action: () => saveCurrentFile() 
+        },
+        {
+            id: "close",
+            label: "File: Close Tab",
+            shortcut: "Ctrl+W",
+            action: () => {
+                if (appState.activeTabId) requestCloseTab(appState.activeTabId);
+            },
+        },
+
+        // Format Commands
+        { 
+            id: "format", 
+            label: "Format: Format Document", 
+            shortcut: "Shift+Alt+F", 
+            action: () => editorStore.performTextTransform("format-document") 
+        },
+
+        // Theme Commands
+        {
+            id: "theme-dark",
+            label: "Theme: Dark",
+            action: () => {
+                appState.setTheme("dark");
+                saveSettings();
+            },
+        },
+        {
+            id: "theme-light",
+            label: "Theme: Light",
+            action: () => {
+                appState.setTheme("light");
+                saveSettings();
+            },
+        },
+
+        // View Commands
         {
             id: "toggle-split",
             label: "View: Toggle Split Preview",
@@ -55,73 +102,73 @@
                 saveSettings();
             },
         },
-        { id: "format", label: "Format: Format Document", shortcut: "Shift+Alt+F", action: () => editorStore.performTextTransform("format-document") },
-        {
-            id: "theme-dark",
-            label: "Theme: Dark",
-            action: () => {
-                appState.setTheme("dark");
-                saveSettings();
-            },
-        },
-        {
-            id: "theme-light",
-            label: "Theme: Light",
-            action: () => {
-                appState.setTheme("light");
-                saveSettings();
-            },
-        },
-        {
-            id: "close",
-            label: "File: Close Tab",
-            shortcut: "Ctrl+W",
-            action: () => {
-                if (appState.activeTabId) requestCloseTab(appState.activeTabId);
-            },
-        },
-        {
-            id: "settings",
-            label: "Open Settings",
-            action: () => {
-                showSettingsModal = true;
-            },
-        },
-        {
-            id: "shortcuts",
-            label: "Keyboard Shortcuts",
-            shortcut: "F1",
-            action: () => {
-                showShortcutsModal = true;
-            },
-        },
+
+        // Window Commands
         {
             id: "bookmarks",
-            label: "Bookmarks",
+            label: "Window: Bookmarks",
             shortcut: "Ctrl+B",
             action: () => {
                 showBookmarksModal = true;
             },
         },
         {
+            id: "settings",
+            label: "Window: Settings",
+            action: () => {
+                showSettingsModal = true;
+            },
+        },
+        {
+            id: "shortcuts",
+            label: "Window: Keyboard Shortcuts",
+            shortcut: "F1",
+            action: () => {
+                showShortcutsModal = true;
+            },
+        },
+        {
             id: "transform",
-            label: "Edit: Text Transformations...",
+            label: "Window: Text Transformations",
             shortcut: "Ctrl+T",
             action: () => {
                 showTransformModal = true;
             },
         },
+        {
+            id: "about",
+            label: "Window: About",
+            action: () => {
+                showAboutModal = true;
+            },
+        },
     ];
 
-    const dynamicCommands: Command[] = TEXT_OPERATIONS.flatMap((category) =>
+    // Text operation commands from config
+    const textOperationCommands: Command[] = TEXT_OPERATIONS.flatMap((category) =>
         category.operations.map((op) => ({
             id: `ops-${op.id}`,
-            label: `Edit: ${op.label}`,
+            label: `${category.title}: ${op.label}`,
             action: () => editorStore.performTextTransform(op.id),
         }))
     );
 
-    const commands = [...staticCommands, ...dynamicCommands];
+    // Combine and sort all commands alphabetically by category, then by label
+    const commands = $derived(
+        [...allCommands, ...textOperationCommands].sort((a, b) => {
+            // Extract category (before colon)
+            const catA = a.label.split(':')[0].trim();
+            const catB = b.label.split(':')[0].trim();
+            
+            // First sort by category
+            if (catA !== catB) {
+                return catA.localeCompare(catB);
+            }
+            
+            // Then sort by full label within category
+            return a.label.localeCompare(b.label);
+        })
+    );
 
     onMount(() => {
         let unlisten: (() => void) | undefined;
