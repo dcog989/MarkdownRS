@@ -11,7 +11,7 @@
     import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
-    import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
+    import { autocompletion, closeBrackets, closeBracketsKeymap, completeAnyWord, completionKeymap } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { indentUnit } from "@codemirror/language";
@@ -148,16 +148,49 @@
                 color: isDark ? "#000 !important" : "#fff !important",
                 borderRadius: "2px",
             },
+
+            // Tooltip & Autocomplete Styles
             ".cm-tooltip": {
                 backgroundColor: "var(--color-bg-panel)",
                 border: "1px solid var(--color-border-light)",
                 color: "var(--color-fg-default)",
+                borderRadius: "6px",
+            },
+            ".cm-tooltip.cm-tooltip-autocomplete": {
+                borderRadius: "6px",
+                overflow: "hidden",
+                border: "1px solid var(--color-border-light)",
+                backgroundColor: "var(--color-bg-panel)",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)",
+            },
+            ".cm-tooltip.cm-tooltip-autocomplete > ul > li": {
+                padding: "4px 8px",
+            },
+            ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": {
+                backgroundColor: "var(--color-accent-primary) !important",
+                color: "var(--color-fg-inverse) !important",
+            },
+            ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionLabel": {
+                color: "var(--color-fg-inverse) !important",
+            },
+            ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail": {
+                color: "rgba(255, 255, 255, 0.7) !important",
+            },
+            ".cm-completionIcon": {
+                marginRight: "0.5em",
+                opacity: "0.7",
+            },
+            ".cm-completionDetail": {
+                marginLeft: "0.5em",
+                fontStyle: "italic",
+                opacity: "0.5",
             },
             ".cm-tooltip.cm-tooltip-lint": {
                 backgroundColor: "var(--color-bg-panel)",
                 border: "1px solid var(--color-border-light)",
                 color: "var(--color-fg-default)",
             },
+
             // Explicit Whitespace Styling
             ".cm-highlightSpace": {
                 backgroundImage: "none !important",
@@ -220,6 +253,7 @@
             autoComp.of([]),
             recentComp.of([]),
             closeBrackets(),
+            EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
             filePathPlugin,
             filePathTheme,
             highlightPlugin,
