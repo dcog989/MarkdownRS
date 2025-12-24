@@ -4,6 +4,7 @@
      * Handles keyboard navigation, filtering, and execution of app-wide commands.
      */
     import { tick } from "svelte";
+    import { Search, Zap, X } from "lucide-svelte";
 
     export type Command = {
         id: string;
@@ -12,9 +13,10 @@
         action: () => void;
     };
 
-    let { isOpen = $bindable(false), commands = [] } = $props<{
+    let { isOpen = $bindable(false), commands = [], onClose } = $props<{
         isOpen: boolean;
         commands: Command[];
+        onClose?: () => void;
     }>();
 
     let query = $state("");
@@ -43,19 +45,24 @@
             execute(filteredCommands[selectedIndex]);
         } else if (e.key === "Escape") {
             e.preventDefault();
-            isOpen = false;
+            close();
         }
     }
 
     function execute(command: Command) {
         if (!command) return;
         command.action();
+        close();
+    }
+
+    function close() {
         isOpen = false;
+        if (onClose) onClose();
     }
 
     function handleBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) {
-            isOpen = false;
+            close();
         }
     }
 </script>
@@ -65,9 +72,32 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-50 flex items-start justify-center pt-16" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
         <div class="w-[600px] max-w-[90vw] rounded-lg shadow-2xl border overflow-hidden flex flex-col max-h-[calc(100vh-8rem)]" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
-            <div class="p-2 border-b shrink-0" style="border-color: var(--color-border-light);">
-                <input bind:this={inputRef} bind:value={query} class="w-full bg-transparent outline-none px-2 py-1 text-ui placeholder-opacity-50" style="color: var(--color-fg-default);" placeholder="Type a command..." onkeydown={handleKeydown} />
+            <!-- Modal Header -->
+            <div class="flex items-center gap-4 px-4 py-2 border-b" style="background-color: var(--color-bg-header); border-color: var(--color-border-light);">
+                <div class="flex items-center gap-2">
+                    <Zap size={16} style="color: var(--color-accent-secondary);" />
+                    <h2 class="text-ui font-semibold shrink-0" style="color: var(--color-fg-default);">Commands</h2>
+                </div>
+
+                <div class="flex-1 relative">
+                    <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+                    <input 
+                        bind:this={inputRef} 
+                        bind:value={query} 
+                        type="text" 
+                        placeholder="Search..." 
+                        class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" 
+                        style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" 
+                        onkeydown={handleKeydown}
+                    />
+                </div>
+
+                <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-fg-muted);" onclick={close}>
+                    <X size={16} />
+                </button>
             </div>
+
+            <!-- Command List -->
             <div class="overflow-y-auto py-1 custom-scrollbar">
                 {#if filteredCommands.length > 0}
                     {#each filteredCommands as command, index}
@@ -88,7 +118,7 @@
                         </button>
                     {/each}
                 {:else}
-                    <div class="px-3 py-2 text-ui text-gray-500">No commands found</div>
+                    <div class="px-3 py-2 text-ui" style="color: var(--color-fg-muted);">No commands found</div>
                 {/if}
             </div>
         </div>

@@ -7,7 +7,7 @@
     import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Bookmark, Copy, Eye, Minus, Search, Settings, Square, X } from "lucide-svelte";
+    import { Bookmark, Copy, Eye, Minus, Settings, Square, X, Zap } from "lucide-svelte";
     import { onMount } from "svelte";
     import AboutModal from "./AboutModal.svelte";
     import BookmarksModal from "./BookmarksModal.svelte";
@@ -187,9 +187,12 @@
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button class="flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors outline-none hover:bg-white/5" style="color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={() => (showCommandPalette = true)} use:tooltip={"Command Palette (Ctrl+P)"}>
-            <Search size={12} />
-            <span>Commands...</span>
+        <button 
+            class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" 
+            onclick={() => (showCommandPalette = true)} 
+            use:tooltip={"Commands (Ctrl+P)"}
+        >
+            <Zap size={14} />
         </button>
         <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
             <Bookmark size={14} />
@@ -216,7 +219,7 @@
     </div>
 </div>
 
-<CommandPalette bind:isOpen={showCommandPalette} {commands} />
+<CommandPalette bind:isOpen={showCommandPalette} {commands} onClose={() => (showCommandPalette = false)} />
 <SettingsModal bind:isOpen={showSettingsModal} onClose={() => (showSettingsModal = false)} />
 <AboutModal bind:isOpen={showAboutModal} onClose={() => (showAboutModal = false)} />
 <BookmarksModal bind:isOpen={showBookmarksModal} onClose={() => (showBookmarksModal = false)} onOpenFile={openFileByPath} />
