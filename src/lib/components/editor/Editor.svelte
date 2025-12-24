@@ -43,8 +43,15 @@
 
             // 1. Sync Content
             if (currentDoc !== content) {
+                const currentSelection = cmView!.state.selection.main;
+                const newLength = content.length;
+
                 cmView!.dispatch({
                     changes: { from: 0, to: currentDoc.length, insert: content },
+                    selection: {
+                        anchor: Math.min(currentSelection.anchor, newLength),
+                        head: Math.min(currentSelection.head, newLength),
+                    },
                 });
             }
 
