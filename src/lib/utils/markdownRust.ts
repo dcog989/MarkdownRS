@@ -86,6 +86,7 @@ function linkifyFilePaths(html: string): string {
  */
 export async function renderMarkdown(content: string, gfm: boolean = true): Promise<string> {
     try {
+        // Map boolean GFM to flavor string expected by backend
         const flavor = gfm ? 'gfm' : 'commonmark';
         const result = await callBackend<RenderResult>('render_markdown', {
             content,

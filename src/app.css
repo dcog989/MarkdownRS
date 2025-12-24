@@ -337,8 +337,29 @@ option:checked {
 /* --- PRINT STYLES (PDF) --- */
 @media print {
     @page {
-        margin: 0; /* We handle margin in the container padding */
+        margin: 0;
         size: auto;
+    }
+
+    /* Force Light Theme Variables for Print */
+    :root {
+        --color-bg-main: #ffffff !important;
+        --color-fg-default: #000000 !important;
+        --color-fg-muted: #444444 !important;
+        --color-fg-inverse: #ffffff !important;
+
+        --color-border-main: #cccccc !important;
+        --color-border-light: #dddddd !important;
+        --color-border-quote: #7c5a73 !important;
+
+        --color-bg-code: #f5f5f5 !important;
+        --color-fg-code: #000000 !important;
+
+        --color-bg-quote: #f9f9f9 !important;
+        --color-accent-link: #2563eb !important;
+        --color-accent-secondary: #7c5a73 !important;
+
+        color-scheme: light !important;
     }
 
     /* Reset global constraints */
@@ -365,11 +386,41 @@ option:checked {
         top: auto !important;
         width: 100% !important;
         margin: 0 !important;
-        padding: 15mm 20mm !important; /* Proper print margins */
+        padding: 15mm 20mm !important;
         display: block !important;
         opacity: 1 !important;
         visibility: visible !important;
         z-index: 9999;
+
+        /* Ensure text color is forced black */
+        color: black !important;
+        background-color: white !important;
+    }
+
+    /* Force text colors on specific elements to override any specific styles */
+    #export-container * {
+        color: black !important;
+    }
+
+    #export-container pre,
+    #export-container code {
+        background-color: #f5f5f5 !important;
+        border: 1px solid #ddd !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #export-container blockquote {
+        background-color: #f9f9f9 !important;
+        border-left-color: #7c5a73 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #export-container a {
+        text-decoration: underline;
+        color: #2563eb !important;
     }
 
     /* Page break handling */
@@ -383,4 +434,27 @@ option:checked {
     #export-container blockquote {
         page-break-inside: avoid;
     }
+}
+
+/* --- JS-DRIVEN PRINT CLASS --- */
+/* Used to force layout calculation before the print dialog opens */
+body.is-printing {
+    overflow: visible !important;
+    height: auto !important;
+    background-color: white !important;
+}
+
+body.is-printing > *:not(#export-container) {
+    display: none !important;
+}
+
+body.is-printing #export-container {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    z-index: 99999;
 }

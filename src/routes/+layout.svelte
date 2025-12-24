@@ -37,6 +37,4 @@
 
 <ConfirmationModal />
 <GlobalTooltip />
-<!-- Dedicated hidden container for exports to prevent UI flickering and layout issues -->
-<div id="export-container" class="prose" aria-hidden="true"></div>
 {@render children()}

@@ -15,10 +15,19 @@ export class ExportService {
         return editorStore.tabs.find(t => t.id === tabId) || null;
     }
 
-    /**
-     * Prepares the off-screen export container with the rendered content.
-     * This avoids messing with the live preview pane.
-     */
+    private getExportContainer(): HTMLElement {
+        let container = document.getElementById('export-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'export-container';
+            container.className = 'prose';
+            // Accessibility: hidden from screen readers during normal use
+            container.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
     private async prepareExportContent(): Promise<HTMLElement | null> {
         const tab = this.getActiveTab();
         if (!tab) {
@@ -26,11 +35,7 @@ export class ExportService {
             return null;
         }
 
-        const container = document.getElementById('export-container');
-        if (!container) {
-            toastStore.error("Export container not initialized.");
-            return null;
-        }
+        const container = this.getExportContainer();
 
         // Render Markdown to HTML
         const html = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
@@ -113,13 +118,20 @@ export class ExportService {
         const container = await this.prepareExportContent();
         if (!container) return;
 
-        // Print
-        // Because of the @media print CSS in app.css, only #export-container will show
-        window.print();
+        // Trigger CSS mode for print
+        document.body.classList.add('is-printing');
 
-        // Cleanup
-        // We delay cleanup slightly to ensure print dialog has captured the content
-        setTimeout(() => this.clearExportContent(), 1000);
+        // Allow layout to settle
+        await new Promise(resolve => setTimeout(resolve, 250));
+
+        try {
+            window.print();
+        } catch (e) {
+            console.error('[Export] window.print() failed:', e);
+        } finally {
+            document.body.classList.remove('is-printing');
+            setTimeout(() => this.clearExportContent(), 500);
+        }
     }
 
     async exportToImage(format: 'png' | 'webp' | 'svg') {
@@ -139,16 +151,11 @@ export class ExportService {
 
             toastStore.info("Generating image...", 2000);
 
-            // We need to temporarily force the container to be visible on screen for html-to-image to work reliably
-            // changing z-index or opacity just for the capture moment
-            // However, since it is fixed positioned off-screen, html-to-image might clip it.
-            // We clone styling logic specifically for the capture.
             const options = {
                 backgroundColor: '#ffffff',
                 width: container.scrollWidth,
                 height: container.scrollHeight,
                 style: {
-                    // Reset position for the capture canvas
                     position: 'static',
                     left: 'auto',
                     top: 'auto',
