@@ -288,3 +288,41 @@ option:checked {
     box-shadow: 0 0 0 100px var(--color-accent-primary) inset;
     -webkit-text-fill-color: var(--color-fg-inverse);
 }
+
+/* Print Styles for PDF Export */
+@media print {
+    @page {
+        margin: 20mm;
+    }
+
+    /* Hide everything by default */
+    body > * {
+        display: none !important;
+    }
+
+    /* Only show the preview container */
+    /* We need to target the preview container specifically */
+    /* Note: We will attach an ID to the preview container in Preview.svelte */
+    #active-preview-container {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background-color: white !important; /* Force white paper usually preferred */
+        color: black !important;
+    }
+
+    /* Override dark theme vars for print if desired, or keep WYSIWYG */
+    /* For now, we keep WYSIWYG but ensure background doesn't bleed weirdly */
+
+    /* Ensure content flows */
+    html,
+    body {
+        height: auto !important;
+        overflow: visible !important;
+        background-color: white !important;
+    }
+}

@@ -617,3 +617,9 @@ pub async fn save_settings(
     fs::write(path, toml_str).map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), String> {
+    validate_path(&path)?;
+    fs::write(&path, &content).map_err(|e| e.to_string())
+}

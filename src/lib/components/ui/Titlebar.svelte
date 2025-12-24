@@ -1,6 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
     import { TEXT_OPERATIONS } from "$lib/config/textOperations";
+    import { exportService } from "$lib/services/exportService";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
@@ -37,17 +38,17 @@
                 appState.activeTabId = id;
             },
         },
-        { 
-            id: "open", 
-            label: "File: Open File", 
-            shortcut: "Ctrl+O", 
-            action: () => openFile() 
+        {
+            id: "open",
+            label: "File: Open File",
+            shortcut: "Ctrl+O",
+            action: () => openFile(),
         },
-        { 
-            id: "save", 
-            label: "File: Save", 
-            shortcut: "Ctrl+S", 
-            action: () => saveCurrentFile() 
+        {
+            id: "save",
+            label: "File: Save",
+            shortcut: "Ctrl+S",
+            action: () => saveCurrentFile(),
         },
         {
             id: "close",
@@ -57,13 +58,28 @@
                 if (appState.activeTabId) requestCloseTab(appState.activeTabId);
             },
         },
+        {
+            id: "export-html",
+            label: "File: Export to HTML",
+            action: () => exportService.exportToHtml(),
+        },
+        {
+            id: "export-pdf",
+            label: "File: Export to PDF",
+            action: () => exportService.exportToPdf(),
+        },
+        {
+            id: "export-png",
+            label: "File: Export to PNG",
+            action: () => exportService.exportToImage("png"),
+        },
 
         // Format Commands
-        { 
-            id: "format", 
-            label: "Format: Format Document", 
-            shortcut: "Shift+Alt+F", 
-            action: () => editorStore.performTextTransform("format-document") 
+        {
+            id: "format",
+            label: "Format: Format Document",
+            shortcut: "Shift+Alt+F",
+            action: () => editorStore.performTextTransform("format-document"),
         },
 
         // Theme Commands
@@ -157,14 +173,14 @@
     const commands = $derived(
         [...allCommands, ...textOperationCommands].sort((a, b) => {
             // Extract category (before colon)
-            const catA = a.label.split(':')[0].trim();
-            const catB = b.label.split(':')[0].trim();
-            
+            const catA = a.label.split(":")[0].trim();
+            const catB = b.label.split(":")[0].trim();
+
             // First sort by category
             if (catA !== catB) {
                 return catA.localeCompare(catB);
             }
-            
+
             // Then sort by full label within category
             return a.label.localeCompare(b.label);
         })
@@ -234,11 +250,7 @@
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button 
-            class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" 
-            onclick={() => (showCommandPalette = true)} 
-            use:tooltip={"Commands (Ctrl+P)"}
-        >
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showCommandPalette = true)} use:tooltip={"Commands (Ctrl+P)"}>
             <Zap size={14} />
         </button>
         <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>

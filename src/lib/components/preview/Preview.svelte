@@ -51,6 +51,7 @@
 
     <div
         bind:this={container}
+        id="active-preview-container"
         onscroll={() => scrollSync.syncEditorToPreview()}
         onclick={(e) => {
             const a = (e.target as HTMLElement).closest("a");

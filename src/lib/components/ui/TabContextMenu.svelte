@@ -1,13 +1,14 @@
 <script lang="ts">
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
+    import { exportService } from "$lib/services/exportService";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { save } from "@tauri-apps/plugin-dialog";
-    import { Bookmark, BookmarkX, Copy, FileDown, FilePen, Files, Pin, PinOff, Save, Trash2, Undo2 } from "lucide-svelte";
+    import { Bookmark, BookmarkX, Copy, Download, FileDown, FilePen, Files, Pin, PinOff, Save, Trash2, Undo2 } from "lucide-svelte";
 
     let { tabId, x, y, onClose } = $props<{
         tabId: string;
@@ -17,6 +18,7 @@
     }>();
 
     let showCloseSubmenu = $state(false);
+    let showExportSubmenu = $state(false);
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
@@ -159,6 +161,55 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
+        <Submenu bind:show={showExportSubmenu} side={submenuSide}>
+            {#snippet trigger()}
+                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
+                    <Download size={14} class="mr-2 opacity-70" />
+                    <span>Export</span>
+                    <span class="ml-auto opacity-60">›</span>
+                </button>
+            {/snippet}
+
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                onclick={async () => {
+                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    await exportService.exportToHtml();
+                    onClose();
+                }}>Export to HTML</button
+            >
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                onclick={async () => {
+                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    await exportService.exportToPdf();
+                    onClose();
+                }}>Export to PDF</button
+            >
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                onclick={async () => {
+                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    await exportService.exportToImage("png");
+                    onClose();
+                }}>Export to PNG</button
+            >
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                onclick={async () => {
+                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    await exportService.exportToImage("webp");
+                    onClose();
+                }}>Export to WEBP</button
+            >
+        </Submenu>
+
+        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+
         <!-- Closure Operations -->
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => requestCloseTab(tabId)}>Close</button>
 
@@ -171,14 +222,12 @@
                 </button>
             {/snippet}
 
-            <div class="py-1">
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasTabsToRight} onclick={() => handleCloseMany("right")}>Close to the Right</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasTabsToLeft} onclick={() => handleCloseMany("left")}>Close to the Left</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasOtherTabs} onclick={() => handleCloseMany("others")}>Close Others</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasSavedTabs} onclick={() => handleCloseMany("saved")}>Close Saved</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasUnsavedTabs} onclick={() => handleCloseMany("unsaved")}>Close Not Saved</button>
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleCloseMany("all")}>Close All</button>
-            </div>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasTabsToRight} onclick={() => handleCloseMany("right")}>Close to the Right</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasTabsToLeft} onclick={() => handleCloseMany("left")}>Close to the Left</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasOtherTabs} onclick={() => handleCloseMany("others")}>Close Others</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasSavedTabs} onclick={() => handleCloseMany("saved")}>Close Saved</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasUnsavedTabs} onclick={() => handleCloseMany("unsaved")}>Close Not Saved</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleCloseMany("all")}>Close All</button>
         </Submenu>
 
         <button

@@ -176,6 +176,7 @@ fn main() {
             app_commands::restore_session,
             app_commands::read_text_file,
             app_commands::write_text_file,
+            app_commands::write_binary_file,
             app_commands::get_file_metadata,
             app_commands::get_app_info,
             app_commands::send_to_recycle_bin,
