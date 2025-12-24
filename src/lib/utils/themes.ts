@@ -83,11 +83,11 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
 }
 .cm-blockquote {
     color: var(--color-fg-muted);
+    font-style: italic;
+}
+.cm-blockquote-line {
     background-color: var(--color-bg-quote);
     border-left: 4px solid var(--color-border-quote);
-    padding-left: 10px;
-    margin-left: 0;
-    font-style: italic;
 }
 
 /* --- PREVIEW CONTENT --- */
@@ -198,11 +198,11 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
 }
 .cm-blockquote {
     color: var(--color-fg-muted);
+    font-style: italic;
+}
+.cm-blockquote-line {
     background-color: var(--color-bg-quote);
     border-left: 4px solid var(--color-border-quote);
-    padding-left: 10px;
-    margin-left: 0;
-    font-style: italic;
 }
 
 /* --- PREVIEW CONTENT --- */

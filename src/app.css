@@ -235,12 +235,13 @@ body {
 }
 
 .cm-blockquote {
-    /* > blockquote */
+    /* > blockquote tokens */
     color: var(--color-fg-muted);
+    font-style: italic;
+}
+
+.cm-blockquote-line {
+    /* The whole line container */
     background-color: var(--color-bg-quote);
     border-left: 4px solid var(--color-border-quote);
-    padding-left: 10px;
-    margin-left: 0;
-    font-style: italic;
-    white-space: pre-wrap;
 }
