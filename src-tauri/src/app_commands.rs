@@ -275,7 +275,6 @@ pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    println!("[Spellcheck] Initializing...");
     let local_dir = app_handle
         .path()
         .app_local_data_dir()
@@ -299,7 +298,6 @@ pub async fn init_spellchecker(
     }
 
     if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
-        println!("[Spellcheck] Downloading dictionaries...");
         let client = reqwest::blocking::Client::new();
         let aff_url =
             "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
@@ -353,11 +351,10 @@ pub async fn init_spellchecker(
                     Ok(dict) => {
                         if let Ok(mut speller) = speller_arc.lock() {
                             *speller = Some(dict);
-                            println!("[Spellcheck] Dictionary loaded successfully");
                         }
                     }
                     Err(e) => {
-                        println!("[Spellcheck] Failed to create dictionary: {:?}", e);
+                        println!("[Spellcheck] Error: Failed to create dictionary: {:?}", e);
                         let _ = fs::remove_file(&aff_path);
                         let _ = fs::remove_file(&dic_path);
                         let _ = fs::remove_file(&jargon_path);
@@ -366,7 +363,7 @@ pub async fn init_spellchecker(
             }
         }
     } else {
-        println!("[Spellcheck] Dictionary files missing");
+        println!("[Spellcheck] Error: Dictionary files missing");
     }
 
     if custom_path.exists() {
@@ -378,10 +375,6 @@ pub async fn init_spellchecker(
                         custom.insert(w.to_lowercase());
                     }
                 }
-                println!(
-                    "[Spellcheck] Custom dictionary loaded with {} words",
-                    custom.len()
-                );
             }
         }
     }
@@ -411,14 +404,13 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    println!("[Spellcheck] Checking {} candidate words", words.len());
     let speller_guard = state.speller.lock().map_err(|_| "Lock failed")?;
     let custom_guard = state.custom_dict.lock().map_err(|_| "Lock failed")?;
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
         None => {
-            println!("[Spellcheck] Warning: Check requested but dictionary not loaded");
+            println!("[Spellcheck] Error: Check requested but dictionary not loaded");
             return Ok(Vec::new());
         }
     };
@@ -437,7 +429,6 @@ pub async fn check_words(
         })
         .collect();
 
-    println!("[Spellcheck] Found {} misspelled words", misspelled.len());
     Ok(misspelled)
 }
 
