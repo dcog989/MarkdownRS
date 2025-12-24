@@ -81,13 +81,10 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     border-radius: 4px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
 }
+/* Removed border/bg from base class to prevent duplication. Handled by app.css via plugins */
 .cm-blockquote {
     color: var(--color-fg-muted);
     font-style: italic;
-}
-.cm-blockquote-line {
-    background-color: var(--color-bg-quote);
-    border-left: 4px solid var(--color-border-quote);
 }
 
 /* --- PREVIEW CONTENT --- */
@@ -196,13 +193,10 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
     border-radius: 4px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
 }
+/* Removed border/bg from base class to prevent duplication. Handled by app.css via plugins */
 .cm-blockquote {
     color: var(--color-fg-muted);
     font-style: italic;
-}
-.cm-blockquote-line {
-    background-color: var(--color-bg-quote);
-    border-left: 4px solid var(--color-border-quote);
 }
 
 /* --- PREVIEW CONTENT --- */
