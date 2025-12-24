@@ -33,7 +33,7 @@
         ],
         Help: [
             { description: "Keyboard shortcuts", shortcut: "F1" },
-            { description: "Settings", shortcut: "Click gear icon" },
+            { description: "Settings", shortcut: "Ctrl+," },
         ],
     };
 

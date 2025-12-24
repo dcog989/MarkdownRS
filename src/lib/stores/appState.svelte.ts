@@ -49,6 +49,10 @@ export class AppState {
     // Tooltip Settings
     tooltipDelay = $state(1000);
 
+    // Find/Replace Settings
+    findPanelTransparent = $state(false);
+    findPanelCloseOnBlur = $state(false);
+
     constructor() { }
 
     toggleSplitView() {

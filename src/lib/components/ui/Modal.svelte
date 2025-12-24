@@ -9,6 +9,7 @@
         width = "500px",
         zIndex = 50,
         showCloseButton = true,
+        position = "top",
         header,
         footer,
         children,
@@ -19,6 +20,7 @@
         width?: string;
         zIndex?: number;
         showCloseButton?: boolean;
+        position?: "center" | "top";
         header?: Snippet;
         footer?: Snippet;
         children: Snippet;
@@ -43,7 +45,7 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 flex items-center justify-center p-4" style="background-color: var(--color-bg-backdrop); z-index: {zIndex};" onclick={handleBackdropClick}>
+    <div class="fixed inset-0 flex {position === 'top' ? 'items-start pt-16' : 'items-center p-4'} justify-center" style="background-color: var(--color-bg-backdrop); z-index: {zIndex};" onclick={handleBackdropClick}>
         <div class="shadow-2xl rounded-lg border overflow-hidden flex flex-col max-h-[90vh]" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light); width: {width};" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
             {#if header || title}

@@ -69,6 +69,8 @@
         { key: "startupBehavior", label: "Tab Startup", type: "select", category: "Interface", defaultValue: "last-focused", options: ["first", "last-focused", "new"], optionLabels: ["Show First Tab", "Show Last Focused Tab", "Create New Tab"] },
         { key: "statusBarTransparency", label: "Status Bar Transparency", type: "range", category: "Interface", defaultValue: 0, min: 0, max: 100, step: 5 },
         { key: "tooltipDelay", label: "Tooltip Delay (ms)", type: "number", category: "Interface", defaultValue: 1000, min: 0, max: 5000 },
+        { key: "findPanelTransparent", label: "Find Panel Transparent on Hover", type: "boolean", category: "Interface", defaultValue: false },
+        { key: "findPanelCloseOnBlur", label: "Find Panel Close on Blur", type: "boolean", category: "Interface", defaultValue: false },
 
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
         { key: "previewFontSize", label: "Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },

@@ -76,11 +76,14 @@
 
         const newText = operation.type === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, operation.type);
 
-        cmView.dispatch({
-            changes: { from: hasSelection ? selection.from : 0, to: hasSelection ? selection.to : cmView.state.doc.length, insert: newText },
-            selection: { anchor: (hasSelection ? selection.from : 0) + newText.length },
-            userEvent: "input.complete",
-        });
+        // Only dispatch if text actually changed
+        if (newText !== targetText) {
+            cmView.dispatch({
+                changes: { from: hasSelection ? selection.from : 0, to: hasSelection ? selection.to : cmView.state.doc.length, insert: newText },
+                selection: { anchor: (hasSelection ? selection.from : 0) + newText.length },
+                userEvent: "input.complete",
+            });
+        }
     }
 
     const eventHandlers = CM6EditorView.domEventHandlers({

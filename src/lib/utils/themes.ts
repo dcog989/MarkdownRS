@@ -81,6 +81,13 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     border-radius: 4px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
 }
+.cm-codeMark {
+    background-color: transparent !important;
+    color: #abb2bf !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-family: inherit !important;
+}
 /* Removed border/bg from base class to prevent duplication. Handled by app.css via plugins */
 .cm-blockquote {
     color: var(--color-fg-muted);
@@ -192,6 +199,13 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
     padding: 2px 4px;
     border-radius: 4px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+.cm-codeMark {
+    background-color: transparent !important;
+    color: #374151 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-family: inherit !important;
 }
 /* Removed border/bg from base class to prevent duplication. Handled by app.css via plugins */
 .cm-blockquote {

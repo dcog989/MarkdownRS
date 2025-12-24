@@ -131,6 +131,7 @@
         {
             id: "settings",
             label: "Window: Settings",
+            shortcut: "Ctrl+,",
             action: () => {
                 showSettingsModal = true;
             },
@@ -210,6 +211,10 @@
                 e.preventDefault();
                 showBookmarksModal = true;
             }
+            if (isModifier && e.key === ",") {
+                e.preventDefault();
+                showSettingsModal = true;
+            }
             if (e.key === "F1") {
                 e.preventDefault();
                 showShortcutsModal = true;
@@ -244,7 +249,7 @@
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)] outline-none" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)] outline-none" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings (Ctrl+,)"}>
             <Settings size={14} />
         </button>
     </div>

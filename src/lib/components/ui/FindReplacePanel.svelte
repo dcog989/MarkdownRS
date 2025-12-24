@@ -15,7 +15,9 @@
     let searchScope = $state<"current" | "all">("current");
     let isReplaceMode = $state(false);
     let searchInputRef = $state<HTMLInputElement>();
+    let panelRef = $state<HTMLDivElement>();
     let wasOpen = false;
+    let isMouseOver = $state(false);
 
     // Actions
     function focusAndSelectInput() {
@@ -194,6 +196,19 @@
         }
     }
 
+    function handleBlur(e: FocusEvent) {
+        if (!appState.findPanelCloseOnBlur) return;
+        
+        // Use setTimeout to allow the focus change to complete
+        setTimeout(() => {
+            // Check if the new focused element is within the panel
+            const activeElement = document.activeElement;
+            if (panelRef && !panelRef.contains(activeElement) && !isMouseOver) {
+                close();
+            }
+        }, 0);
+    }
+
     function navigateToTab(tabId: string) {
         appState.activeTabId = tabId;
     }
@@ -207,7 +222,17 @@
 </script>
 
 {#if isOpen}
-    <div class="find-replace-panel" onkeydown={handleKeydown} role="dialog" aria-label="Find and Replace" tabindex="-1">
+    <div 
+        bind:this={panelRef}
+        class="find-replace-panel" 
+        class:transparent={appState.findPanelTransparent && !isMouseOver}
+        onkeydown={handleKeydown} 
+        onfocusout={handleBlur}
+        onmouseenter={() => isMouseOver = true}
+        onmouseleave={() => isMouseOver = false}
+        role="dialog" 
+        aria-label="Find and Replace"
+    >
         <div class="panel-header">
             <div class="flex items-center gap-2 flex-1">
                 <button type="button" class="icon-btn" onclick={() => (isReplaceMode = !isReplaceMode)} title="Toggle Replace Mode">
@@ -328,6 +353,11 @@
         z-index: 50;
         display: flex;
         flex-direction: column;
+        transition: opacity 200ms ease-in-out;
+    }
+
+    .find-replace-panel.transparent {
+        opacity: 0.15;
     }
 
     .panel-header {

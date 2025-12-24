@@ -236,6 +236,15 @@ body {
     -webkit-box-decoration-break: clone;
 }
 
+.cm-codeMark {
+    /* Triple backticks for code fences - render as standard text */
+    background-color: transparent !important;
+    color: var(--color-fg-default) !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-family: inherit !important;
+}
+
 /* Blockquote Construction */
 .cm-blockquote {
     /* Base text style (italic/color) */

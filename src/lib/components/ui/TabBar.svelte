@@ -84,6 +84,10 @@
         window.addEventListener("pointerup", handleGlobalPointerUp);
         window.addEventListener("pointercancel", handleGlobalPointerUp);
 
+        // Listen for forced scroll events
+        const handleScrollToActive = () => scrollToActive();
+        window.addEventListener('scroll-to-active-tab', handleScrollToActive);
+
         // MRU & Keyboard logic
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
@@ -126,6 +130,7 @@
             window.removeEventListener("pointercancel", handleGlobalPointerUp);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
+            window.removeEventListener('scroll-to-active-tab', handleScrollToActive);
         };
     });
 
@@ -143,6 +148,10 @@
     async function scrollToActive() {
         await tick();
         if (!scrollContainer || isDragging) return;
+        
+        // Wait a bit more for the flip animation to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
         if (!activeEl) return;
 

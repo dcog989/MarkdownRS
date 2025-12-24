@@ -8,7 +8,8 @@
     import { callBackend } from "$lib/utils/backend";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { save } from "@tauri-apps/plugin-dialog";
-    import { Bookmark, BookmarkX, Copy, Download, FileDown, FilePen, Files, Pin, PinOff, Save, Trash2, Undo2 } from "lucide-svelte";
+    import { ArrowLeft, ArrowRight, Bookmark, BookmarkX, Copy, Download, FileDown, FilePen, Files, Pin, PinOff, Save, Trash2, Undo2, X } from "lucide-svelte";
+    import { tick } from "svelte";
 
     let { tabId, x, y, onClose } = $props<{
         tabId: string;
@@ -210,8 +211,56 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
+        <!-- Tab Position Operations -->
+        <button
+            type="button"
+            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+            disabled={tabIndex === 0}
+            onclick={async () => {
+                const newTabs = [...editorStore.tabs];
+                const [tab] = newTabs.splice(tabIndex, 1);
+                newTabs.unshift(tab);
+                editorStore.reorderTabs(newTabs);
+                editorStore.sessionDirty = true;
+                appState.activeTabId = tabId;
+                editorStore.pushToMru(tabId);
+                await tick();
+                // Force scroll after DOM update
+                const event = new CustomEvent('scroll-to-active-tab');
+                window.dispatchEvent(event);
+                onClose();
+            }}
+        >
+            <ArrowLeft size={14} class="opacity-70" /><span>Move to Start</span>
+        </button>
+        <button
+            type="button"
+            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+            disabled={tabIndex === editorStore.tabs.length - 1}
+            onclick={async () => {
+                const newTabs = [...editorStore.tabs];
+                const [tab] = newTabs.splice(tabIndex, 1);
+                newTabs.push(tab);
+                editorStore.reorderTabs(newTabs);
+                editorStore.sessionDirty = true;
+                appState.activeTabId = tabId;
+                editorStore.pushToMru(tabId);
+                await tick();
+                // Force scroll after DOM update
+                const event = new CustomEvent('scroll-to-active-tab');
+                window.dispatchEvent(event);
+                onClose();
+            }}
+        >
+            <ArrowRight size={14} class="opacity-70" /><span>Move to End</span>
+        </button>
+
+        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+
         <!-- Closure Operations -->
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => requestCloseTab(tabId)}>Close</button>
+        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={() => requestCloseTab(tabId)}>
+            <X size={14} class="opacity-70" /><span>Close</span>
+        </button>
 
         <Submenu bind:show={showCloseSubmenu} side={submenuSide}>
             {#snippet trigger()}
