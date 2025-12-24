@@ -1,6 +1,7 @@
 use crate::markdown_config::MarkdownFlavor;
 use comrak::nodes::{AstNode, NodeValue};
-use comrak::{format_commonmark, parse_document, Arena, Options};
+use comrak::{Arena, Options, format_commonmark, parse_document};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -33,24 +34,28 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
     // Configure comrak options based on flavor
     let mut comrak_options = Options::default();
     comrak_options.extension = options.flavor.to_extension_options();
-    
+
+    // Set width to 0 to prevent line wrapping
+    comrak_options.render.width = 0;
+
     // Parse markdown to AST
     let arena = Arena::new();
     let root = parse_document(&arena, content, &comrak_options);
-    
+
     // Transform AST based on formatter options
     transform_ast(root, options);
-    
+
     // Serialize AST back to markdown
     let mut formatted = String::new();
     format_commonmark(root, &comrak_options, &mut formatted)
         .map_err(|e| format!("Failed to format markdown: {}", e))?;
-    
+
     let mut result = formatted;
-    
-    // Post-processing for style preferences
+
+    // Post-processing for style preferences and remove unnecessary escaping
     result = post_process_formatting(&result, options);
-    
+    result = remove_unnecessary_escapes(&result);
+
     Ok(result)
 }
 
@@ -76,7 +81,8 @@ fn transform_ast<'a>(node: &'a AstNode<'a>, options: &FormatterOptions) {
             NodeValue::CodeBlock(code_block) => {
                 // Normalize fence character
                 code_block.fenced = true;
-                code_block.fence_char = options.code_block_fence.chars().next().unwrap_or('`') as u8;
+                code_block.fence_char =
+                    options.code_block_fence.chars().next().unwrap_or('`') as u8;
                 code_block.fence_length = options.code_block_fence.len();
             }
             NodeValue::Heading(_) => {
@@ -84,19 +90,51 @@ fn transform_ast<'a>(node: &'a AstNode<'a>, options: &FormatterOptions) {
             }
             _ => {}
         }
-        
+
         // Recursively transform children
         transform_ast(child, options);
     }
 }
 
+/// Removes unnecessary escape sequences that comrak adds for safety
+/// but are not needed in most contexts
+fn remove_unnecessary_escapes(content: &str) -> String {
+    let mut result = content.to_string();
+
+    // Remove escaped exclamation marks that are not part of image syntax
+    // Keep \! only if it's immediately followed by [ (for images)
+    // Note: regex crate doesn't support look-around, so we match the following char
+    let re_exclamation = Regex::new(r"\\!([^\[])").unwrap();
+    result = re_exclamation.replace_all(&result, "!$1").to_string();
+
+    // Handle case where \! is at the end of the string
+    let re_exclamation_end = Regex::new(r"\\!$").unwrap();
+    result = re_exclamation_end.replace_all(&result, "!").to_string();
+
+    // Remove escaped underscores in the middle of words or in contexts
+    // where they wouldn't be interpreted as emphasis
+    // This pattern targets \_ that appears:
+    // - In the middle of words (letter before and after)
+    // - Not at the start of a line (which could be list syntax)
+    let re_underscore = Regex::new(r"(\w)\\(_)(\w)").unwrap();
+    result = re_underscore.replace_all(&result, "$1$2$3").to_string();
+
+    // Also handle escaped underscores after alphanumeric + whitespace or start
+    // but be conservative to avoid breaking emphasis syntax
+    // Note: Replaced look-ahead (?=\w) with capturing group
+    let re_underscore_safe = Regex::new(r"\\_(\w)").unwrap();
+    result = re_underscore_safe.replace_all(&result, "_$1").to_string();
+
+    result
+}
+
 /// Post-processes the formatted markdown for additional style preferences
 fn post_process_formatting(content: &str, options: &FormatterOptions) -> String {
     let mut result = content.to_string();
-    
+
     // Normalize line endings
     result = result.replace("\r\n", "\n");
-    
+
     if options.normalize_whitespace {
         // Remove trailing whitespace from lines
         result = result
@@ -105,7 +143,7 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
             .collect::<Vec<_>>()
             .join("\n");
     }
-    
+
     // Limit consecutive blank lines
     if options.max_blank_lines > 0 {
         let pattern = "\n".repeat(options.max_blank_lines + 2);
@@ -114,10 +152,10 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
             result = result.replace(&pattern, &replacement);
         }
     }
-    
+
     // Ensure file ends with single newline
     result = result.trim_end().to_string() + "\n";
-    
+
     result
 }
 
@@ -262,14 +300,44 @@ mod tests {
     fn test_roundtrip_preservation() {
         let input = "# Title\n\nParagraph with **bold** and *italic*.\n\n- Item 1\n- Item 2";
         let options = FormatterOptions::default();
-        
+
         // Format once
         let formatted1 = format_markdown(input, &options).unwrap();
-        
+
         // Format again (should be idempotent)
         let formatted2 = format_markdown(&formatted1, &options).unwrap();
-        
+
         // Results should be identical
         assert_eq!(formatted1, formatted2);
+    }
+
+    #[test]
+    fn test_no_escape_exclamation() {
+        let input = "This is a test! Another sentence!";
+        let options = FormatterOptions::default();
+        let result = format_markdown(input, &options).unwrap();
+        // Exclamation marks should not be escaped
+        assert!(!result.contains("\\!"));
+        assert!(result.contains("!"));
+    }
+
+    #[test]
+    fn test_no_escape_underscore_in_words() {
+        let input = "variable_name and another_variable here";
+        let options = FormatterOptions::default();
+        let result = format_markdown(input, &options).unwrap();
+        // Underscores in variable names should not be escaped
+        assert!(!result.contains("\\_"));
+        assert!(result.contains("variable_name"));
+    }
+
+    #[test]
+    fn test_preserve_image_syntax() {
+        let input = "![alt text](image.png)";
+        let options = FormatterOptions::default();
+        let result = format_markdown(input, &options).unwrap();
+        // Image syntax should be preserved correctly
+        assert!(result.contains("!["));
+        assert!(result.contains("]("));
     }
 }

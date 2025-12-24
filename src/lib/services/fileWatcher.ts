@@ -1,6 +1,6 @@
+import { checkAndReloadIfChanged, reloadFileContent } from '$lib/services/fileMetadata';
 import { editorStore } from '$lib/stores/editorStore.svelte';
 import { toastStore } from '$lib/stores/toastStore.svelte';
-import { checkAndReloadIfChanged, reloadFileContent } from '$lib/utils/fileSystem';
 import { debounce } from '$lib/utils/timing';
 import { watch } from '@tauri-apps/plugin-fs';
 

@@ -1,11 +1,12 @@
 import { addToDictionary } from '$lib/services/dictionaryService';
-import { checkAndReloadIfChanged, checkFileExists, normalizeLineEndings, refreshMetadata, sanitizePath } from '$lib/services/fileMetadata';
+import { checkAndReloadIfChanged, checkFileExists, refreshMetadata, reloadFileContent, sanitizePath, type FileContent } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore } from '$lib/stores/editorStore.svelte.ts';
 import { toastStore } from '$lib/stores/toastStore.svelte.ts';
+import { handleFileSystemError } from '$lib/utils/errorHandling';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { callBackend } from './backend';
@@ -13,25 +14,7 @@ import { isTextFile } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 // Re-export service functions for backward compatibility with existing imports
-export { addToDictionary, checkAndReloadIfChanged, checkFileExists, loadSession, persistSession, persistSessionDebounced };
-
-type FileContent = {
-    content: string;
-    encoding: string;
-};
-
-function handleFileSystemError(err: unknown, path?: string) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const fileName = path ? path.split(/[\\/]/).pop() || path : 'file';
-
-    if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
-        toastStore.error(`File not found: ${fileName}`, 4000);
-    } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
-        toastStore.error(`Cannot access file: ${fileName}`, 4000);
-    } else {
-        toastStore.error(`Failed operation on: ${fileName}`, 4000);
-    }
-}
+export { addToDictionary, checkAndReloadIfChanged, checkFileExists, loadSession, persistSession, persistSessionDebounced, reloadFileContent };
 
 export async function openFile(path?: string): Promise<void> {
     try {
@@ -130,7 +113,7 @@ export async function saveCurrentFile(): Promise<boolean> {
 
             if (appState.formatOnSave && !sanitizedPath.endsWith('.txt')) {
                 contentToSave = await formatMarkdown(contentToSave, {
-                    listIndent: appState.formatterListIndent,
+                    listIndent: appState.defaultIndent,
                     bulletChar: appState.formatterBulletChar,
                     codeBlockFence: appState.formatterCodeFence,
                     tableAlignment: appState.formatterTableAlignment
@@ -170,38 +153,6 @@ export async function saveCurrentFile(): Promise<boolean> {
     } catch (err) {
         handleFileSystemError(err, tab.path || 'document');
         return false;
-    }
-}
-
-export async function reloadFileContent(tabId: string): Promise<void> {
-    const tab = editorStore.tabs.find(t => t.id === tabId);
-    if (!tab || !tab.path) return;
-
-    try {
-        const sanitizedPath = sanitizePath(tab.path);
-        const result = await callBackend<FileContent>('read_text_file', { path: sanitizedPath }, 'File:Read');
-
-        // Detect line endings
-        const crlfCount = (result.content.match(/\r\n/g) || []).length;
-        const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-        const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
-
-        // Normalize content to ensure dirty check works correctly with CodeMirror (which uses LF)
-        const content = normalizeLineEndings(result.content);
-
-        // Update the tab with new content
-        tab.content = content;
-        tab.lastSavedContent = content;
-        tab.isDirty = false;
-        tab.lineEnding = detectedLineEnding;
-        tab.encoding = result.encoding.toUpperCase();
-        tab.sizeBytes = new TextEncoder().encode(result.content).length;
-        tab.fileCheckPerformed = false;
-
-        await refreshMetadata(tabId, sanitizedPath);
-        editorStore.sessionDirty = true;
-    } catch (err) {
-        handleFileSystemError(err, tab.path);
     }
 }
 

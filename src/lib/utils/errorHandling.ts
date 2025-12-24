@@ -1,3 +1,5 @@
+import { toastStore } from "$lib/stores/toastStore.svelte.ts";
+
 /**
  * Centralized error handling and logging utilities
  */
@@ -73,5 +75,18 @@ export class AppError {
             return error.message;
         }
         return String(error);
+    }
+}
+
+export function handleFileSystemError(err: unknown, path?: string) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const fileName = path ? path.split(/[\\/]/).pop() || path : 'file';
+
+    if (errorMsg.includes('No such file') || errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
+        toastStore.error(`File not found: ${fileName}`, 4000);
+    } else if (errorMsg.includes('Permission denied') || errorMsg.includes('Access denied')) {
+        toastStore.error(`Cannot access file: ${fileName}`, 4000);
+    } else {
+        toastStore.error(`Failed operation on: ${fileName}`, 4000);
     }
 }
