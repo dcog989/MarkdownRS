@@ -117,7 +117,7 @@
     let dynamicTheme = $derived.by(() => {
         const fontSize = appState.editorFontSize || 14;
         const isDark = appState.theme === "dark";
-        const whitespaceColor = isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)";
+        const whitespaceColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
 
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
@@ -202,6 +202,8 @@
                     top: "0",
                     left: "0",
                     pointerEvents: "none",
+                    fontWeight: "bold",
+                    transform: "scale(1.2)",
                 },
             },
             ".cm-highlightTab": {
@@ -214,6 +216,8 @@
                     top: "0",
                     left: "0",
                     pointerEvents: "none",
+                    fontWeight: "bold",
+                    transform: "scale(1.2)",
                 },
             },
             ".cm-newline": {
@@ -223,6 +227,8 @@
                 display: "inline-block",
                 verticalAlign: "middle",
                 marginLeft: "2px",
+                fontWeight: "bold",
+                transform: "scale(1.2)",
             },
         });
     });
