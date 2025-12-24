@@ -187,12 +187,7 @@
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button 
-            class="flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors outline-none hover:bg-white/5" 
-            style="color: var(--color-fg-muted); border: 1px solid var(--color-border-main);"
-            onclick={() => (showCommandPalette = true)} 
-            use:tooltip={"Open Command Palette (Ctrl+P)"}
-        >
+        <button class="flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors outline-none hover:bg-white/5" style="color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={() => (showCommandPalette = true)} use:tooltip={"Command Palette (Ctrl+P)"}>
             <Search size={12} />
             <span>Commands...</span>
         </button>
