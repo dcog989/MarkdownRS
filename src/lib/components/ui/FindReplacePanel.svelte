@@ -232,6 +232,7 @@
         onmouseleave={() => isMouseOver = false}
         role="dialog" 
         aria-label="Find and Replace"
+        tabindex="-1"
     >
         <div class="panel-header">
             <div class="flex items-center gap-2 flex-1">
