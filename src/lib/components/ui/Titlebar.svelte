@@ -187,10 +187,14 @@
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button class="w-full max-w-md flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors outline-none" style="background-color: var(--color-bg-input); color: var(--color-fg-muted); border: 1px solid var(--color-border-main);" onclick={() => (showCommandPalette = true)} use:tooltip={"Open Command Palette (Ctrl+P)"}>
+        <button 
+            class="flex items-center gap-2 px-3 py-1 rounded text-xs transition-colors outline-none hover:bg-white/5" 
+            style="color: var(--color-fg-muted); border: 1px solid var(--color-border-main);"
+            onclick={() => (showCommandPalette = true)} 
+            use:tooltip={"Open Command Palette (Ctrl+P)"}
+        >
             <Search size={12} />
-            <span class="flex-1 text-left">Search commands...</span>
-            <span class="text-[10px] opacity-60">Ctrl+P</span>
+            <span>Commands...</span>
         </button>
         <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
             <Bookmark size={14} />
