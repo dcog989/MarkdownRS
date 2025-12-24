@@ -29,14 +29,11 @@ impl Default for FormatterOptions {
 }
 
 /// Format markdown content using dprint-plugin-markdown
-/// This provides "Prettier-like" opinionated formatting that is safe and aesthetic.
 pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<String, String> {
     let mut builder = ConfigurationBuilder::new();
 
     // Map options to dprint configuration
-    // Text Wrap: Maintain existing (soft wrap handled by editor) or standard width?
-    // Usually "Format Document" implies standardizing wrap, but for a notepad app,
-    // "Maintain" often feels less intrusive than hard-wrapping at 80 cols.
+    // Text Wrap: Maintain existing (soft wrap handled by editor)
     builder.text_wrap(TextWrap::Maintain);
 
     // List Character - Map char to UnorderedListKind
