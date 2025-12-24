@@ -444,26 +444,3 @@ option:checked {
         page-break-inside: avoid;
     }
 }
-
-/* --- JS-DRIVEN PRINT CLASS --- */
-/* Used to force layout calculation before the print dialog opens */
-body.is-printing {
-    overflow: visible !important;
-    height: auto !important;
-    background-color: white !important;
-}
-
-body.is-printing > *:not(#export-container) {
-    display: none !important;
-}
-
-body.is-printing #export-container {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    display: block !important;
-    visibility: visible !important;
-    width: 100% !important;
-    height: auto !important;
-    z-index: 99999;
-}

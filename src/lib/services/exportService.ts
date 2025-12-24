@@ -118,18 +118,13 @@ export class ExportService {
         const container = await this.prepareExportContent();
         if (!container) return;
 
-        // Trigger CSS mode for print
-        document.body.classList.add('is-printing');
-
-        // Allow layout to settle
-        await new Promise(resolve => setTimeout(resolve, 250));
-
         try {
+            // Directly trigger print without showing the container on screen
             window.print();
         } catch (e) {
             console.error('[Export] window.print() failed:', e);
         } finally {
-            document.body.classList.remove('is-printing');
+            // Clear after a delay to allow print dialog to read the content
             setTimeout(() => this.clearExportContent(), 500);
         }
     }
