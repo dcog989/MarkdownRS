@@ -236,6 +236,7 @@ body {
     -webkit-box-decoration-break: clone;
 }
 
+/* Blockquote Construction */
 .cm-blockquote {
     /* Base text style (italic/color) */
     color: var(--color-fg-muted);
@@ -258,23 +259,6 @@ body {
     padding-bottom: 1px;
 }
 
-.cm-blockquote-line {
-    /* The whole line container */
-    background-color: var(--color-bg-quote);
-    border-left: 4px solid var(--color-border-quote);
-}
-
-.cm-codeblock-line {
-    background-color: var(--color-bg-code);
-}
-
-/* Reset inline code styles when inside a code block line to prevent double-styling */
-.cm-codeblock-line .cm-code {
-    background-color: transparent !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-}
-
 /* Settings Modal Specifics */
 select:focus {
     border-color: var(--color-accent-primary) !important;
@@ -289,40 +273,114 @@ option:checked {
     -webkit-text-fill-color: var(--color-fg-inverse);
 }
 
-/* Print Styles for PDF Export */
+/* --- EXPORT CONTAINER STYLES --- */
+
+/*
+   The export container is always present in the DOM but hidden off-screen.
+   We do NOT use display:none because html-to-image needs layout to be calculated.
+*/
+#export-container {
+    position: fixed;
+    top: 0;
+    left: -9999px; /* Move off-screen */
+    width: 210mm; /* A4 width approx, ensures text wrapping matches print */
+    min-height: 100vh;
+    background-color: white;
+    color: black;
+    padding: 20mm;
+    z-index: -1;
+    pointer-events: none;
+
+    /* Typography defaults for export */
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+}
+
+#export-container h1 {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.3em;
+}
+#export-container pre {
+    background-color: #f5f5f5;
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+#export-container code {
+    background-color: #f5f5f5;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: monospace;
+}
+#export-container blockquote {
+    border-left: 4px solid #7c5a73;
+    padding-left: 1em;
+    margin-left: 0;
+    color: #555;
+}
+#export-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+#export-container th,
+#export-container td {
+    border: 1px solid #ccc;
+    padding: 0.5em;
+    text-align: left;
+}
+#export-container img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --- PRINT STYLES (PDF) --- */
 @media print {
     @page {
-        margin: 20mm;
+        margin: 0; /* We handle margin in the container padding */
+        size: auto;
     }
 
-    /* Hide everything by default */
-    body > * {
+    /* Reset global constraints */
+    html,
+    body {
+        width: 100%;
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    /* Hide the entire App UI */
+    body > *:not(#export-container) {
         display: none !important;
     }
 
-    /* Only show the preview container */
-    /* We need to target the preview container specifically */
-    /* Note: We will attach an ID to the preview container in Preview.svelte */
-    #active-preview-container {
-        display: block !important;
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+    /* Position the Export Container for Print */
+    #export-container {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
         width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-        background-color: white !important; /* Force white paper usually preferred */
-        color: black !important;
+        margin: 0 !important;
+        padding: 15mm 20mm !important; /* Proper print margins */
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 9999;
     }
 
-    /* Override dark theme vars for print if desired, or keep WYSIWYG */
-    /* For now, we keep WYSIWYG but ensure background doesn't bleed weirdly */
+    /* Page break handling */
+    #export-container h1,
+    #export-container h2,
+    #export-container h3 {
+        page-break-after: avoid;
+    }
 
-    /* Ensure content flows */
-    html,
-    body {
-        height: auto !important;
-        overflow: visible !important;
-        background-color: white !important;
+    #export-container pre,
+    #export-container blockquote {
+        page-break-inside: avoid;
     }
 }

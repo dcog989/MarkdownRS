@@ -86,9 +86,10 @@ function linkifyFilePaths(html: string): string {
  */
 export async function renderMarkdown(content: string, gfm: boolean = true): Promise<string> {
     try {
-        const result = await callBackend<RenderResult>('render_markdown_content', {
+        const flavor = gfm ? 'gfm' : 'commonmark';
+        const result = await callBackend<RenderResult>('render_markdown', {
             content,
-            gfm
+            flavor
         }, 'Markdown:Render');
 
         const cleanHtml = DOMPurify.sanitize(result.html, {
