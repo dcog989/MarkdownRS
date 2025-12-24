@@ -81,6 +81,15 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
     border-radius: 4px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
 }
+/* Single backticks for inline code */
+.cm-formatting.cm-formatting-code,
+.cm-formatting-code-marker,
+.cm-meta.cm-code {
+    background-color: var(--color-bg-code) !important;
+    color: var(--color-fg-code) !important;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
 .cm-codeMark {
     background-color: transparent !important;
     color: #abb2bf !important;
@@ -199,6 +208,15 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
     padding: 2px 4px;
     border-radius: 4px;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+/* Single backticks for inline code */
+.cm-formatting.cm-formatting-code,
+.cm-formatting-code-marker,
+.cm-meta.cm-code {
+    background-color: var(--color-bg-code) !important;
+    color: var(--color-fg-code) !important;
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 .cm-codeMark {
     background-color: transparent !important;

@@ -236,6 +236,16 @@ body {
     -webkit-box-decoration-break: clone;
 }
 
+/* Single backticks for inline code */
+.cm-formatting.cm-formatting-code,
+.cm-formatting-code-marker,
+.cm-meta.cm-code {
+    background-color: var(--color-bg-code) !important;
+    color: var(--color-fg-code) !important;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
 .cm-codeMark {
     /* Triple backticks for code fences - render as standard text */
     background-color: transparent !important;
