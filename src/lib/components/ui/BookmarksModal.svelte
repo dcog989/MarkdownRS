@@ -2,7 +2,7 @@
     import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { open } from "@tauri-apps/plugin-dialog";
-    import { Bookmark as BookmarkIcon, Pen, Plus, Search, Tag, Trash2, X } from "lucide-svelte";
+    import { ArrowDown, ArrowUp, Bookmark as BookmarkIcon, Pen, Plus, Search, Tag, Trash2, X } from "lucide-svelte";
 
     interface Props {
         isOpen: boolean;
@@ -11,6 +11,9 @@
     }
 
     let { isOpen = $bindable(false), onClose, onOpenFile }: Props = $props();
+
+    type SortOption = "most-recent" | "alphabetical" | "last-updated";
+    type SortDirection = "asc" | "desc";
 
     let searchQuery = $state("");
     let searchInputEl = $state<HTMLInputElement>();
@@ -22,6 +25,8 @@
     let addTitle = $state("");
     let addTags = $state("");
     let browseError = $state("");
+    let sortBy = $state<SortOption>("most-recent");
+    let sortDirection = $state<SortDirection>("desc");
 
     $effect(() => {
         if (isOpen && !bookmarkStore.isLoaded) {
@@ -47,6 +52,46 @@
             const tagsMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query));
             return titleMatch || pathMatch || tagsMatch;
         })
+    );
+
+    let sortedBookmarks = $derived(
+        (() => {
+            const sorted = [...filteredBookmarks];
+            
+            switch (sortBy) {
+                case "most-recent":
+                    sorted.sort((a, b) => {
+                        const dateA = a.created || "";
+                        const dateB = b.created || "";
+                        return sortDirection === "desc" 
+                            ? dateB.localeCompare(dateA)
+                            : dateA.localeCompare(dateB);
+                    });
+                    break;
+                    
+                case "alphabetical":
+                    sorted.sort((a, b) => {
+                        const titleA = a.title.toLowerCase();
+                        const titleB = b.title.toLowerCase();
+                        return sortDirection === "desc"
+                            ? titleB.localeCompare(titleA)
+                            : titleA.localeCompare(titleB);
+                    });
+                    break;
+                    
+                case "last-updated":
+                    sorted.sort((a, b) => {
+                        const dateA = a.last_accessed || a.created || "";
+                        const dateB = b.last_accessed || b.created || "";
+                        return sortDirection === "desc"
+                            ? dateB.localeCompare(dateA)
+                            : dateA.localeCompare(dateB);
+                    });
+                    break;
+            }
+            
+            return sorted;
+        })()
     );
 
     function handleBackdropClick(e: MouseEvent) {
@@ -171,6 +216,21 @@
         const day = date.substring(6, 8);
         return `${year}-${month}-${day}`;
     }
+
+    function toggleSortDirection() {
+        sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    }
+
+    function getSortLabel(option: SortOption): string {
+        switch (option) {
+            case "most-recent":
+                return "Most Recent";
+            case "alphabetical":
+                return "Alphabetical";
+            case "last-updated":
+                return "Last Updated";
+        }
+    }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -189,6 +249,31 @@
                 <div class="flex-1 relative">
                     <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
                     <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
+                </div>
+
+                <div class="flex items-center gap-1 shrink-0">
+                    <select 
+                        bind:value={sortBy}
+                        class="px-2 py-1 rounded text-ui outline-none cursor-pointer"
+                        style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);"
+                    >
+                        <option value="most-recent">Most Recent</option>
+                        <option value="alphabetical">Alphabetical</option>
+                        <option value="last-updated">Last Updated</option>
+                    </select>
+                    
+                    <button 
+                        onclick={toggleSortDirection}
+                        class="p-1 rounded hover:bg-white/10 transition-colors"
+                        style="color: var(--color-fg-muted);"
+                        title={sortDirection === "asc" ? "Sort Ascending" : "Sort Descending"}
+                    >
+                        {#if sortDirection === "asc"}
+                            <ArrowUp size={16} />
+                        {:else}
+                            <ArrowDown size={16} />
+                        {/if}
+                    </button>
                 </div>
 
                 <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-accent-primary);" onclick={startAdd} title="Add Bookmark">
@@ -221,9 +306,9 @@
             {/if}
 
             <div class="flex-1 overflow-y-auto custom-scrollbar text-ui">
-                {#if filteredBookmarks.length > 0}
+                {#if sortedBookmarks.length > 0}
                     <div class="divide-y" style="border-color: var(--color-border-main);">
-                        {#each filteredBookmarks as bookmark (bookmark.id)}
+                        {#each sortedBookmarks as bookmark (bookmark.id)}
                             <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
                                 {#if editingId === bookmark.id}
                                     <div class="space-y-2">
