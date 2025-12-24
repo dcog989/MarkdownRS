@@ -274,3 +274,17 @@ body {
     padding: 0 !important;
     border-radius: 0 !important;
 }
+
+/* Settings Modal Specifics */
+select:focus {
+    border-color: var(--color-accent-primary) !important;
+}
+
+/* Force accent color on the selected item in the dropdown list */
+option:checked {
+    background-color: var(--color-accent-primary) !important;
+    color: var(--color-fg-inverse) !important;
+    /* WebKit hack to force background color on native select options */
+    box-shadow: 0 0 0 100px var(--color-accent-primary) inset;
+    -webkit-text-fill-color: var(--color-fg-inverse);
+}
