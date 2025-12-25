@@ -167,7 +167,7 @@
             <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
             <!-- Sort Menu -->
-            <Submenu bind:show={showSortMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("sort")} onClose={() => closeOtherSubmenus(null)}>
+            <Submenu bind:show={showSortMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("sort")}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <ArrowUpDown size={14} /><span>Sort Lines</span><span class="ml-auto opacity-50">›</span>
@@ -179,7 +179,7 @@
             </Submenu>
 
             <!-- Case Menu -->
-            <Submenu bind:show={showCaseMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("case")} onClose={() => closeOtherSubmenus(null)}>
+            <Submenu bind:show={showCaseMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("case")}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <CaseSensitive size={14} /><span>Change Case</span><span class="ml-auto opacity-50">›</span>
@@ -191,7 +191,7 @@
             </Submenu>
 
             <!-- Format Menu -->
-            <Submenu bind:show={showFormatMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("format")} onClose={() => closeOtherSubmenus(null)}>
+            <Submenu bind:show={showFormatMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("format")}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <AlignLeft size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
@@ -207,7 +207,7 @@
             </Submenu>
 
             <!-- Transform Menu -->
-            <Submenu bind:show={showTransformMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("transform")} onClose={() => closeOtherSubmenus(null)}>
+            <Submenu bind:show={showTransformMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("transform")}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <Rotate3d size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>
