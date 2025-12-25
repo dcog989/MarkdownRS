@@ -18,13 +18,13 @@
     --color-bg-hover: oklch(0.35 0 0);
     --color-bg-active: oklch(0.4 0 0);
     --color-bg-input: oklch(0.3 0 0);
-    --color-bg-backdrop: rgba(0, 0, 0, 0.6);
+    --color-bg-backdrop: oklch(0 0 0 / 0.6);
 
     /* Markdown Specifics (Dark Default) */
-    --color-bg-code: rgba(137, 229, 123, 0.15);
+    --color-bg-code: oklch(0.53 0.12 140 / 0.15);
     --color-fg-code: #89e57b;
-    --color-bg-quote: rgba(221, 206, 120, 0.1);
-    --color-border-quote: rgb(221, 206, 120);
+    --color-bg-quote: oklch(0.77 0.09 90 / 0.1);
+    --color-border-quote: #ddce78;
     --color-bg-highlight: #d19a66;
 
     /* Borders */
@@ -70,12 +70,12 @@
     --color-bg-hover: oklch(0.92 0 0);
     --color-bg-active: oklch(0.88 0 0);
     --color-bg-input: oklch(1 0 0);
-    --color-bg-backdrop: rgba(0, 0, 0, 0.2);
+    --color-bg-backdrop: oklch(0 0 0 / 0.2);
 
     /* Markdown Specifics (Light) */
-    --color-bg-code: rgba(249, 168, 37, 0.15);
+    --color-bg-code: oklch(0.76 0.14 70 / 0.15);
     --color-fg-code: #f9a825;
-    --color-bg-quote: rgba(123, 31, 162, 0.05);
+    --color-bg-quote: oklch(0.47 0.14 310 / 0.05);
     --color-border-quote: #7b1fa2;
     --color-bg-highlight: #ffe47c;
 

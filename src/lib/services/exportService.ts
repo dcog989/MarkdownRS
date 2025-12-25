@@ -162,7 +162,7 @@ export class ExportService {
             toastStore.info("Generating image...", 2000);
 
             const options = {
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 width: container.scrollWidth,
                 height: container.scrollHeight,
                 style: {

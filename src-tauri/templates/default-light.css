@@ -25,17 +25,17 @@
     color: var(--color-fg-default);
 }
 .cm-editor .cm-activeLine {
-    background-color: rgba(0, 0, 0, 0.03) !important;
+    background-color: oklch(0 0 0 / 0.03) !important;
 }
 
 /* Text selection */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: rgba(25, 118, 210, 0.25) !important;
+    background-color: oklch(0.57 0.14 250 / 0.25) !important;
 }
 .cm-editor .cm-selectionMatch {
-    background-color: rgba(249, 168, 37, 0.3);
+    background-color: oklch(0.76 0.14 70 / 0.3);
 }
 
 .cm-h1,
@@ -127,10 +127,10 @@
     --tw-prose-quotes: #757575;
 }
 .prose h1 {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid oklch(0 0 0 / 0.1);
     padding-bottom: 0.3em;
 }
 .prose blockquote {
     border-left: 4px solid #7b1fa2;
-    background: rgba(123, 31, 162, 0.05);
+    background: oklch(0.47 0.14 310 / 0.05);
 }
