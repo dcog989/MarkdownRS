@@ -60,7 +60,9 @@ async function saveSettingsImmediate() {
             formatterTableAlignment: appState.formatterTableAlignment,
             startupBehavior: appState.startupBehavior,
             lineEndingPreference: appState.lineEndingPreference,
-            tooltipDelay: appState.tooltipDelay
+            tooltipDelay: appState.tooltipDelay,
+            findPanelTransparent: appState.findPanelTransparent,
+            findPanelCloseOnBlur: appState.findPanelCloseOnBlur
         };
 
         await callBackend('save_settings', { settings: settingsToSave }, 'Settings:Save');
