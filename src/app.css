@@ -158,6 +158,112 @@ body {
     line-height: 1.4;
 }
 
+/* Centralized UI Utilities */
+
+@utility btn-base {
+    @apply px-3 py-1.5 rounded text-xs border transition-colors cursor-pointer;
+}
+
+@utility btn-secondary {
+    @apply btn-base;
+    background-color: transparent;
+    border-color: var(--color-border-light);
+    color: var(--color-fg-default);
+
+    &:hover {
+        background-color: var(--color-bg-hover);
+    }
+}
+
+@utility btn-danger-outline {
+    @apply btn-base;
+    background-color: transparent;
+    border-color: var(--color-danger);
+    color: var(--color-danger-text);
+
+    &:hover {
+        background-color: var(--color-danger);
+        color: var(--color-fg-inverse);
+    }
+}
+
+@utility btn-success {
+    @apply btn-base border-transparent;
+    background-color: var(--color-success);
+    color: var(--color-fg-inverse);
+
+    &:hover {
+        background-color: var(--color-success-hover);
+    }
+}
+
+/* Modal & Popup Utilities */
+@utility ui-backdrop {
+    @apply fixed inset-0 z-[100] flex items-center justify-center;
+    background-color: var(--color-bg-backdrop);
+}
+
+@utility ui-panel {
+    @apply w-[500px] max-h-[400px] rounded-lg shadow-2xl border overflow-hidden flex flex-col;
+    background-color: var(--color-bg-panel);
+    border-color: var(--color-border-light);
+}
+
+@utility ui-header {
+    @apply px-4 py-3 border-b shrink-0;
+    background-color: var(--color-bg-header);
+    border-color: var(--color-border-light);
+}
+
+/* MRU List Items */
+@utility mru-item {
+    @apply w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors shrink-0;
+    background-color: transparent;
+    color: var(--color-fg-default);
+
+    &[data-selected="true"] {
+        background-color: var(--color-accent-primary);
+        color: var(--color-fg-inverse);
+
+        & .mru-badge {
+            background-color: var(--color-fg-inverse);
+            color: var(--color-accent-primary);
+        }
+
+        & .mru-path {
+            color: var(--color-fg-inverse);
+        }
+
+        & .mru-dot {
+            background-color: var(--color-fg-inverse);
+        }
+
+        & .mru-icon {
+            color: var(--color-fg-inverse) !important;
+        }
+    }
+}
+
+@utility mru-badge {
+    @apply w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0;
+    background-color: var(--color-accent-secondary);
+    color: var(--color-accent-primary);
+}
+
+@utility mru-path {
+    @apply text-[11px] truncate opacity-70;
+    color: var(--color-fg-muted);
+}
+
+@utility mru-dot {
+    @apply w-2 h-2 rounded-full shrink-0;
+    background-color: var(--color-accent-secondary);
+}
+
+@utility mru-icon {
+    color: var(--icon-color, var(--color-fg-muted));
+}
+
 /* CodeMirror Specific Styling for Markdown Elements */
 .cm-editor {
     /* Base styles already apply from dynamicTheme */
@@ -212,20 +318,28 @@ body {
 }
 
 .cm-highlight {
+    /* ==text== */
     background-color: var(--color-bg-highlight);
-    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+    color: var(--color-fg-inverse);
 }
+
 .cm-strikethrough {
     /* ~~text~~ */
     text-decoration: line-through;
     text-decoration-color: var(--color-fg-muted);
 }
+
 .cm-code {
+    /* `code` and ```code``` */
     background-color: var(--color-bg-code);
     color: var(--color-fg-code);
     padding: 2px 4px;
     border-radius: 4px;
     font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
 
 /* Single backticks for inline code */

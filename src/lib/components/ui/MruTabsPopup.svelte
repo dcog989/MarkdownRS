@@ -43,11 +43,11 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-[100] flex items-center justify-center" style="background-color: var(--color-bg-backdrop);" onclick={handleBackdropClick}>
-        <div class="w-[500px] max-h-[400px] rounded-lg shadow-2xl border overflow-hidden flex flex-col" style="background-color: var(--color-bg-panel); border-color: var(--color-border-light);">
-            <div class="px-4 py-3 border-b shrink-0" style="background-color: var(--color-bg-header); border-color: var(--color-border-light);">
-                <h3 class="text-sm font-semibold" style="color: var(--color-fg-default);">Recent Tabs</h3>
-                <p class="text-ui-sm mt-1" style="color: var(--color-fg-muted);">Release Ctrl to switch</p>
+    <div class="ui-backdrop" onclick={handleBackdropClick}>
+        <div class="ui-panel">
+            <div class="ui-header">
+                <h3 class="text-sm font-semibold text-[var(--color-fg-default)]">Recent Tabs</h3>
+                <p class="text-ui-sm mt-1 text-[var(--color-fg-muted)]">Release Ctrl to switch</p>
             </div>
 
             <div class="flex-1 relative overflow-hidden flex flex-col min-h-0">
@@ -56,45 +56,44 @@
                         {@const isSelected = tab.id === selectedId}
                         <button
                             type="button"
-                            class="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors shrink-0"
-                            style="
-                                background-color: {isSelected ? 'var(--color-accent-primary)' : 'transparent'};
-                                color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-default)'};
-                            "
+                            class="mru-item"
+                            data-selected={isSelected}
                             onclick={() => {
                                 onSelect(tab.id);
                                 onClose();
                             }}
                         >
-                            <div
-                                class="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0"
-                                style="
-                                    background-color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-accent-secondary)'};
-                                    color: {isSelected ? 'var(--color-accent-primary)' : 'var(--color-fg-inverse)'};
-                                "
-                            >
+                            <div class="mru-badge">
                                 {index + 1}
                             </div>
 
                             {#if tab.fileCheckFailed}
-                                <CircleAlert size={14} class="shrink-0" style="color: var(--color-danger-text);" />
+                                <div class="mru-icon" style="--icon-color: var(--color-danger-text)">
+                                    <CircleAlert size={14} class="shrink-0" />
+                                </div>
                             {:else if tab.path && tab.isDirty}
-                                <SquarePen size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
+                                <div class="mru-icon" style="--icon-color: #5deb47">
+                                    <SquarePen size={14} class="shrink-0" />
+                                </div>
                             {:else if !tab.path}
-                                <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-accent-file)'};" />
+                                <div class="mru-icon" style="--icon-color: var(--color-accent-file)">
+                                    <PencilLine size={14} class="shrink-0" />
+                                </div>
                             {:else}
-                                <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-accent-file)'};" />
+                                <div class="mru-icon" style="--icon-color: var(--color-accent-file)">
+                                    <FileText size={14} class="shrink-0" />
+                                </div>
                             {/if}
 
                             <div class="flex-1 min-w-0">
                                 <div class="truncate font-medium">{tab.title}</div>
                                 {#if tab.path}
-                                    <div class="text-[11px] truncate opacity-70" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};">{tab.path}</div>
+                                    <div class="mru-path">{tab.path}</div>
                                 {/if}
                             </div>
 
                             {#if tab.isDirty}
-                                <div class="w-2 h-2 rounded-full shrink-0" style="background-color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-accent-secondary)'};" use:tooltip={"Modified"}></div>
+                                <div class="mru-dot" use:tooltip={"Modified"}></div>
                             {/if}
                         </button>
                     {/each}
