@@ -100,13 +100,13 @@ fn main() {
                                 .map(|s| s.to_string())
                                 .unwrap_or_else(default_log_level),
                             Err(e) => {
-                                println!("Failed to parse settings.toml: {}", e);
+                                eprintln!("[WARN] Failed to parse settings.toml: {} - Using default log level", e);
                                 default_log_level()
                             }
                         }
                     }
                     Err(e) => {
-                        println!("Failed to read settings.toml: {}", e);
+                        eprintln!("[WARN] Failed to read settings.toml: {} - Using default log level", e);
                         default_log_level()
                     }
                 }
@@ -123,8 +123,8 @@ fn main() {
                 _ => LevelFilter::Debug,
             };
 
-            println!(
-                "Initializing logger with level: {:?} (source: '{}')",
+            eprintln!(
+                "[INFO] Initializing logger with level: {:?} (source: '{}')",
                 log_level, settings_level
             );
 

@@ -5,6 +5,7 @@ use crate::markdown_renderer::{self, MarkdownOptions, RenderResult};
 use crate::text_transforms::transform_text;
 use chrono::{DateTime, Local};
 use encoding_rs::{Encoding, UTF_8};
+use log;
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::fs::{self, OpenOptions};
@@ -72,26 +73,50 @@ fn validate_path(path: &str) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Result<(), String> {
-    let mut db = state.db.lock().map_err(|_| "Failed to lock db")?;
-    db.save_session(&tabs).map_err(|e| e.to_string())
+    let mut db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for save_session: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
+    db.save_session(&tabs).map_err(|e| {
+        log::error!("Failed to save session: {}", e);
+        format!("Failed to save session: {}", e)
+    })
 }
 
 #[tauri::command]
 pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>, String> {
-    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
-    db.load_session().map_err(|e| e.to_string())
+    let db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for restore_session: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
+    db.load_session().map_err(|e| {
+        log::error!("Failed to restore session: {}", e);
+        format!("Failed to restore session: {}", e)
+    })
 }
 
 #[tauri::command]
 pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    let db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for vacuum_database: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
     
     // Check if there are any free pages to reclaim
-    let freelist_count = db.get_freelist_count().map_err(|e| e.to_string())?;
+    let freelist_count = db.get_freelist_count().map_err(|e| {
+        log::error!("Failed to get freelist count: {}", e);
+        format!("Failed to check database: {}", e)
+    })?;
     
     if freelist_count > 0 {
+        log::info!("Vacuuming database: {} free pages to reclaim", freelist_count);
         // Reclaim up to 100 pages at a time to avoid blocking
-        db.incremental_vacuum(100).map_err(|e| e.to_string())?;
+        db.incremental_vacuum(100).map_err(|e| {
+            log::error!("Failed to vacuum database: {}", e);
+            format!("Failed to vacuum database: {}", e)
+        })?;
+    } else {
+        log::debug!("No free pages to reclaim in database");
     }
     
     Ok(())
@@ -100,19 +125,27 @@ pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
 #[tauri::command]
 pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     validate_path(&path)?;
-    let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
+    let metadata = fs::metadata(&path).map_err(|e| {
+        log::error!("Failed to read metadata for '{}': {}", path, e);
+        format!("Failed to access file: {}", e)
+    })?;
     if metadata.is_dir() {
+        log::warn!("Attempted to read directory as file: {}", path);
         return Err("Cannot read a directory as a text file".to_string());
     }
     const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024;
     if metadata.len() > MAX_FILE_SIZE {
+        log::warn!("File too large to read: {} ({} MB)", path, metadata.len() / 1024 / 1024);
         return Err(format!(
             "File too large: {} MB (max {} MB)",
             metadata.len() / 1024 / 1024,
             MAX_FILE_SIZE / 1024 / 1024
         ));
     }
-    let bytes = fs::read(&path).map_err(|e| e.to_string())?;
+    let bytes = fs::read(&path).map_err(|e| {
+        log::error!("Failed to read file '{}': {}", path, e);
+        format!("Failed to read file: {}", e)
+    })?;
     if let Some((encoding, _)) = Encoding::for_bom(&bytes) {
         let (cow, _) = encoding.decode_with_bom_removal(&bytes);
         return Ok(FileContent {
@@ -141,17 +174,28 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
     validate_path(&path)?;
     let temp_path = format!("{}.tmp", path);
-    fs::write(&temp_path, &content).map_err(|e| e.to_string())?;
+    fs::write(&temp_path, &content).map_err(|e| {
+        log::error!("Failed to write temporary file '{}': {}", temp_path, e);
+        format!("Failed to write file: {}", e)
+    })?;
     match fs::rename(&temp_path, &path) {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            log::debug!("Successfully wrote file: {}", path);
+            Ok(())
+        }
         Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
-            fs::copy(&temp_path, &path).map_err(|ce| ce.to_string())?;
+            log::debug!("Cross-device rename failed, falling back to copy for: {}", path);
+            fs::copy(&temp_path, &path).map_err(|ce| {
+                log::error!("Failed to copy file from '{}' to '{}': {}", temp_path, path, ce);
+                format!("Failed to save file: {}", ce)
+            })?;
             let _ = fs::remove_file(&temp_path);
             Ok(())
         }
         Err(e) => {
+            log::error!("Failed to rename '{}' to '{}': {}", temp_path, path, e);
             let _ = fs::remove_file(&temp_path);
-            Err(e.to_string())
+            Err(format!("Failed to save file: {}", e))
         }
     }
 }
@@ -159,7 +203,10 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
 #[tauri::command]
 pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
     validate_path(&path)?;
-    let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
+    let metadata = fs::metadata(&path).map_err(|e| {
+        log::debug!("Failed to get metadata for '{}': {}", path, e);
+        format!("Failed to get file metadata: {}", e)
+    })?;
     Ok(FileMetadata {
         created: format_system_time(metadata.created()),
         modified: format_system_time(metadata.modified()),
@@ -204,7 +251,10 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
 #[tauri::command]
 pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
     validate_path(&path)?;
-    trash::delete(&path).map_err(|e| format!("Failed to send file to recycle bin: {}", e))
+    trash::delete(&path).map_err(|e| {
+        log::error!("Failed to send file to recycle bin '{}': {}", path, e);
+        format!("Failed to send file to recycle bin: {}", e)
+    })
 }
 
 #[tauri::command]
@@ -212,14 +262,23 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get app data directory: {}", e);
+            format!("Failed to access app data: {}", e)
+        })?;
     let dict_path = app_dir.join("custom-spelling.dic");
     if !app_dir.exists() {
-        fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
+        fs::create_dir_all(&app_dir).map_err(|e| {
+            log::error!("Failed to create app data directory: {}", e);
+            format!("Failed to create directory: {}", e)
+        })?;
     }
     let existing_words = if dict_path.exists() {
         fs::read_to_string(&dict_path)
-            .map_err(|e| e.to_string())?
+            .map_err(|e| {
+                log::error!("Failed to read custom dictionary: {}", e);
+                format!("Failed to read dictionary: {}", e)
+            })?
             .lines()
             .map(|line| line.trim().to_lowercase())
             .collect::<HashSet<_>>()
@@ -231,9 +290,15 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
             .create(true)
             .append(true)
             .open(dict_path)
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| {
+                log::error!("Failed to open custom dictionary for writing: {}", e);
+                format!("Failed to open dictionary: {}", e)
+            })?;
         if let Err(e) = writeln!(file, "{}", word) {
+            log::error!("Failed to write word '{}' to dictionary: {}", word, e);
             return Err(format!("Failed to write to dictionary: {}", e));
+        } else {
+            log::info!("Added word '{}' to custom dictionary", word);
         }
     }
 
@@ -249,12 +314,19 @@ pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<S
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get app data directory for custom dictionary: {}", e);
+            format!("Failed to access dictionary: {}", e)
+        })?;
     let dict_path = app_dir.join("custom-spelling.dic");
     if !dict_path.exists() {
+        log::debug!("Custom dictionary does not exist yet");
         return Ok(Vec::new());
     }
-    let content = fs::read_to_string(&dict_path).map_err(|e| e.to_string())?;
+    let content = fs::read_to_string(&dict_path).map_err(|e| {
+        log::error!("Failed to read custom dictionary: {}", e);
+        format!("Failed to read dictionary: {}", e)
+    })?;
     let words: Vec<String> = content
         .lines()
         .map(|line| line.trim().to_string())
@@ -277,12 +349,19 @@ pub async fn resolve_path_relative(
         PathBuf::from(&click_path)
     };
     if !resolved.exists() {
+        log::debug!("Resolved path does not exist: {:?}", resolved);
         return Err("File does not exist".to_string());
     }
     resolved
         .canonicalize()
-        .map(|p| p.to_string_lossy().to_string())
-        .map_err(|e| e.to_string())
+        .map(|p| {
+            log::debug!("Resolved path: {:?}", p);
+            p.to_string_lossy().to_string()
+        })
+        .map_err(|e| {
+            log::error!("Failed to canonicalize path {:?}: {}", resolved, e);
+            format!("Failed to resolve path: {}", e)
+        })
 }
 
 #[tauri::command]
@@ -290,10 +369,14 @@ pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
+    log::info!("Initializing spellchecker");
     let local_dir = app_handle
         .path()
         .app_local_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get local data directory: {}", e);
+            format!("Failed to initialize spellchecker: {}", e)
+        })?;
     let cache_dir = local_dir.join("spellcheck_cache");
     let aff_path = cache_dir.join("en_US.aff");
     let dic_path = cache_dir.join("en_US.dic");
@@ -309,10 +392,15 @@ pub async fn init_spellchecker(
     let custom_arc = state.custom_dict.clone();
 
     if !cache_dir.exists() {
-        fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
+        log::info!("Creating spellcheck cache directory: {:?}", cache_dir);
+        fs::create_dir_all(&cache_dir).map_err(|e| {
+            log::error!("Failed to create spellcheck cache directory: {}", e);
+            format!("Failed to create cache directory: {}", e)
+        })?;
     }
 
     if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
+        log::info!("Downloading spellcheck dictionary files");
         let client = reqwest::blocking::Client::new();
         let aff_url =
             "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
@@ -322,17 +410,31 @@ pub async fn init_spellchecker(
         if let Ok(resp) = client.get(aff_url).send() {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text() {
+                    log::info!("Downloaded .aff dictionary file");
                     let _ = fs::write(&aff_path, text);
+                } else {
+                    log::warn!("Failed to read .aff dictionary response body");
                 }
+            } else {
+                log::warn!("Failed to download .aff dictionary: status {}", resp.status());
             }
+        } else {
+            log::warn!("Failed to send request for .aff dictionary");
         }
 
         if let Ok(resp) = client.get(dic_url).send() {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text() {
+                    log::info!("Downloaded .dic dictionary file");
                     let _ = fs::write(&dic_path, text);
+                } else {
+                    log::warn!("Failed to read .dic dictionary response body");
                 }
+            } else {
+                log::warn!("Failed to download .dic dictionary: status {}", resp.status());
             }
+        } else {
+            log::warn!("Failed to send request for .dic dictionary");
         }
 
         let jargon_url =
@@ -340,15 +442,23 @@ pub async fn init_spellchecker(
         if let Ok(resp) = client.get(jargon_url).send() {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text() {
+                    log::info!("Downloaded jargon dictionary file");
                     let _ = fs::write(&jargon_path, text);
+                } else {
+                    log::warn!("Failed to read jargon dictionary response body");
                 }
+            } else {
+                log::warn!("Failed to download jargon dictionary: status {}", resp.status());
             }
+        } else {
+            log::warn!("Failed to send request for jargon dictionary");
         }
     }
 
     if aff_path.exists() && dic_path.exists() {
         if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
             if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
+                log::debug!("Successfully read dictionary files");
                 let mut combined_dic = raw_dic.clone();
                 if jargon_path.exists() {
                     if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
@@ -366,19 +476,26 @@ pub async fn init_spellchecker(
                     Ok(dict) => {
                         if let Ok(mut speller) = speller_arc.lock() {
                             *speller = Some(dict);
+                            log::info!("Spellchecker initialized successfully");
+                        } else {
+                            log::error!("[Spellcheck] Failed to acquire speller lock");
                         }
                     }
                     Err(e) => {
-                        println!("[Spellcheck] Error: Failed to create dictionary: {:?}", e);
+                        log::error!("[Spellcheck] Failed to create dictionary: {:?} - Cleaning up cache files", e);
                         let _ = fs::remove_file(&aff_path);
                         let _ = fs::remove_file(&dic_path);
                         let _ = fs::remove_file(&jargon_path);
                     }
                 }
+            } else {
+                log::error!("Failed to read .dic file: {:?}", dic_path);
             }
+        } else {
+            log::error!("Failed to read .aff file: {:?}", aff_path);
         }
     } else {
-        println!("[Spellcheck] Error: Dictionary files missing");
+        log::warn!("[Spellcheck] Dictionary files missing after download attempt");
     }
 
     if custom_path.exists() {
@@ -419,13 +536,19 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock().map_err(|_| "Lock failed")?;
-    let custom_guard = state.custom_dict.lock().map_err(|_| "Lock failed")?;
+    let speller_guard = state.speller.lock().map_err(|e| {
+        log::error!("Failed to acquire speller lock: {:?}", e);
+        "Failed to access spell checker".to_string()
+    })?;
+    let custom_guard = state.custom_dict.lock().map_err(|e| {
+        log::error!("Failed to acquire custom dictionary lock: {:?}", e);
+        "Failed to access custom dictionary".to_string()
+    })?;
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
         None => {
-            println!("[Spellcheck] Error: Check requested but dictionary not loaded");
+            log::warn!("[Spellcheck] Check requested but dictionary not loaded");
             return Ok(Vec::new());
         }
     };
@@ -452,7 +575,10 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock().map_err(|_| "Lock failed")?;
+    let speller_guard = state.speller.lock().map_err(|e| {
+        log::error!("Failed to acquire speller lock for suggestions: {:?}", e);
+        "Failed to access spell checker".to_string()
+    })?;
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
@@ -477,7 +603,10 @@ pub async fn render_markdown(
         flavor: markdown_flavor,
     };
 
-    markdown_renderer::render_markdown(&content, options)
+    markdown_renderer::render_markdown(&content, options).map_err(|e| {
+        log::error!("Failed to render markdown: {}", e);
+        e
+    })
 }
 
 #[tauri::command]
@@ -503,7 +632,10 @@ pub async fn format_markdown(
         max_blank_lines: 2,
     };
 
-    markdown_formatter::format_markdown(&content, &options)
+    markdown_formatter::format_markdown(&content, &options).map_err(|e| {
+        log::error!("Failed to format markdown: {}", e);
+        e
+    })
 }
 
 #[tauri::command]
@@ -517,25 +649,46 @@ pub async fn transform_text_content(
     operation: String,
     indent_width: Option<usize>,
 ) -> Result<String, String> {
-    transform_text(&content, &operation, indent_width.unwrap_or(4))
+    transform_text(&content, &operation, indent_width.unwrap_or(4)).map_err(|e| {
+        log::error!("Failed to transform text with operation '{}': {}", operation, e);
+        e
+    })
 }
 
 #[tauri::command]
 pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
-    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
-    db.add_bookmark(&bookmark).map_err(|e| e.to_string())
+    let db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for add_bookmark: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
+    db.add_bookmark(&bookmark).map_err(|e| {
+        log::error!("Failed to add bookmark '{}': {}", bookmark.path, e);
+        format!("Failed to add bookmark: {}", e)
+    })
 }
 
 #[tauri::command]
 pub async fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
-    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
-    db.get_all_bookmarks().map_err(|e| e.to_string())
+    let db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for get_all_bookmarks: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
+    db.get_all_bookmarks().map_err(|e| {
+        log::error!("Failed to retrieve bookmarks: {}", e);
+        format!("Failed to retrieve bookmarks: {}", e)
+    })
 }
 
 #[tauri::command]
 pub async fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(), String> {
-    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
-    db.delete_bookmark(&id).map_err(|e| e.to_string())
+    let db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for delete_bookmark: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
+    db.delete_bookmark(&id).map_err(|e| {
+        log::error!("Failed to delete bookmark '{}': {}", id, e);
+        format!("Failed to delete bookmark: {}", e)
+    })
 }
 
 #[tauri::command]
@@ -544,9 +697,15 @@ pub async fn update_bookmark_access_time(
     id: String,
     last_accessed: String,
 ) -> Result<(), String> {
-    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    let db = state.db.lock().map_err(|e| {
+        log::error!("Failed to acquire database lock for update_bookmark_access_time: {:?}", e);
+        "Failed to lock database".to_string()
+    })?;
     db.update_bookmark_access_time(&id, &last_accessed)
-        .map_err(|e| e.to_string())
+        .map_err(|e| {
+            log::error!("Failed to update bookmark access time for '{}': {}", id, e);
+            format!("Failed to update bookmark: {}", e)
+        })
 }
 
 #[tauri::command]
@@ -554,11 +713,15 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get app data directory for themes: {}", e);
+            format!("Failed to access themes: {}", e)
+        })?;
     let themes_dir = app_dir.join("Themes");
 
     let mut themes = Vec::new();
     if let Ok(entries) = fs::read_dir(themes_dir) {
+        log::debug!("Scanning themes directory");
         for entry in entries.flatten() {
             if entry.path().extension().and_then(|s| s.to_str()) == Some("css") {
                 if let Some(name) = entry.path().file_stem().and_then(|s| s.to_str()) {
@@ -578,15 +741,22 @@ pub async fn get_theme_css(
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get app data directory for theme CSS: {}", e);
+            format!("Failed to access theme: {}", e)
+        })?;
     let themes_dir = app_dir.join("Themes");
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
     if !theme_path.exists() {
+        log::warn!("Theme '{}' not found at path: {:?}", theme_name, theme_path);
         return Err(format!("Custom theme '{}' not found", theme_name));
     }
 
-    fs::read_to_string(theme_path).map_err(|e| e.to_string())
+    fs::read_to_string(theme_path).map_err(|e| {
+        log::error!("Failed to read theme '{}': {}", theme_name, e);
+        format!("Failed to load theme: {}", e)
+    })
 }
 
 #[tauri::command]
@@ -594,18 +764,30 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get app data directory for load_settings: {}", e);
+            format!("Failed to access app data: {}", e)
+        })?;
     let path = app_dir.join("settings.toml");
 
     if !path.exists() {
         return Ok(serde_json::json!({}));
     }
 
-    let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let content = fs::read_to_string(path).map_err(|e| {
+        log::error!("Failed to read settings file: {}", e);
+        format!("Failed to read settings: {}", e)
+    })?;
     let clean_content = content.trim_start_matches('\u{feff}');
-    let toml_val: toml::Value = toml::from_str(clean_content).map_err(|e| e.to_string())?;
+    let toml_val: toml::Value = toml::from_str(clean_content).map_err(|e| {
+        log::error!("Failed to parse settings TOML: {}", e);
+        format!("Failed to parse settings: {}", e)
+    })?;
 
-    Ok(serde_json::to_value(toml_val).map_err(|e| e.to_string())?)
+    Ok(serde_json::to_value(toml_val).map_err(|e| {
+        log::error!("Failed to convert settings to JSON: {}", e);
+        format!("Failed to process settings: {}", e)
+    })?)
 }
 
 #[tauri::command]
@@ -616,16 +798,31 @@ pub async fn save_settings(
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            log::error!("Failed to get app data directory for save_settings: {}", e);
+            format!("Failed to access app data: {}", e)
+        })?;
     let path = app_dir.join("settings.toml");
 
-    let toml_str = toml::to_string_pretty(&settings).map_err(|e| e.to_string())?;
-    fs::write(path, toml_str).map_err(|e| e.to_string())?;
+    let toml_str = toml::to_string_pretty(&settings).map_err(|e| {
+        log::error!("Failed to serialize settings to TOML: {}", e);
+        format!("Failed to save settings: {}", e)
+    })?;
+    fs::write(path, toml_str).map_err(|e| {
+        log::error!("Failed to write settings file: {}", e);
+        format!("Failed to save settings: {}", e)
+    })?;
+    log::info!("Settings saved successfully");
     Ok(())
 }
 
 #[tauri::command]
 pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), String> {
     validate_path(&path)?;
-    fs::write(&path, &content).map_err(|e| e.to_string())
+    fs::write(&path, &content).map_err(|e| {
+        log::error!("Failed to write binary file '{}': {}", path, e);
+        format!("Failed to write file: {}", e)
+    })?;
+    log::debug!("Successfully wrote binary file: {}", path);
+    Ok(())
 }

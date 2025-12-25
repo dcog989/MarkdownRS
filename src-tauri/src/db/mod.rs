@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::info;
+use log;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -42,7 +42,7 @@ pub struct Database {
 
 impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
-        info!("Initializing database at {:?}", db_path);
+        log::info!("Initializing database at {:?}", db_path);
         let mut conn = Connection::open(db_path)?;
 
         // Performance & Maintenance Optimization
@@ -65,7 +65,7 @@ impl Database {
         match version {
             0 => {
                 // Initial schema creation
-                info!("Creating initial database schema");
+                log::info!("Creating initial database schema");
                 tx.execute(
                     "CREATE TABLE IF NOT EXISTS tabs (
                         id TEXT PRIMARY KEY,
@@ -110,7 +110,7 @@ impl Database {
                 )?;
 
                 tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [5])?;
-                info!("Initial schema created successfully (version 5)");
+                log::info!("Initial schema created successfully (version 5)");
             }
             v if v < 5 => {
                 // Progressive migrations
@@ -118,7 +118,7 @@ impl Database {
 
                 if current_version < 2 {
                     // Migration from v1 to v2: Add is_pinned and custom_title columns
-                    info!(
+                    log::info!(
                         "Migrating database schema from version {} to 2",
                         current_version
                     );
@@ -128,12 +128,12 @@ impl Database {
                     )?;
                     tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
                     current_version = 2;
-                    info!("Migration to version 2 completed successfully");
+                    log::info!("Migration to version 2 completed successfully");
                 }
 
                 if current_version < 3 {
                     // Migration from v2 to v3: Add file_check_failed and file_check_performed columns
-                    info!(
+                    log::info!(
                         "Migrating database schema from version {} to 3",
                         current_version
                     );
@@ -146,23 +146,23 @@ impl Database {
                         [],
                     )?;
                     current_version = 3;
-                    info!("Migration to version 3 completed successfully");
+                    log::info!("Migration to version 3 completed successfully");
                 }
 
                 if current_version < 4 {
                     // Migration from v3 to v4: Add mru_position column
-                    info!(
+                    log::info!(
                         "Migrating database schema from version {} to 4",
                         current_version
                     );
                     tx.execute("ALTER TABLE tabs ADD COLUMN mru_position INTEGER", [])?;
                     current_version = 4;
-                    info!("Migration to version 4 completed successfully");
+                    log::info!("Migration to version 4 completed successfully");
                 }
 
                 if current_version < 5 {
                     // Migration from v4 to v5: Add bookmarks table
-                    info!(
+                    log::info!(
                         "Migrating database schema from version {} to 5",
                         current_version
                     );
@@ -182,25 +182,28 @@ impl Database {
                         [],
                     )?;
                     current_version = 5;
-                    info!("Migration to version 5 completed successfully");
+                    log::info!("Migration to version 5 completed successfully");
                 }
 
                 tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
             }
             5 => {
                 // Current version, no migration needed
-                info!("Database schema is up to date (version {})", version);
+                log::info!("Database schema is up to date (version {})", version);
             }
             _ => {
                 // Future migrations would go here
-                info!("Unknown schema version {}, attempting to continue", version);
+                log::warn!("Unknown schema version {}, attempting to continue", version);
             }
         }
 
         // Commit transaction - if any error occurred above, this won't execute
         // and the transaction will rollback automatically when dropped
-        tx.commit()?;
-        info!("Database initialization completed successfully");
+        tx.commit().map_err(|e| {
+            log::error!("Failed to commit database initialization transaction: {}", e);
+            e
+        })?;
+        log::info!("Database initialization completed successfully");
 
         Ok(Self { conn })
     }
@@ -236,9 +239,12 @@ impl Database {
     }
 
     pub fn save_session(&mut self, tabs: &[TabState]) -> Result<()> {
-        info!("Saving {} tabs to database", tabs.len());
+        log::info!("Saving {} tabs to database", tabs.len());
 
-        let tx = self.conn.transaction()?;
+        let tx = self.conn.transaction().map_err(|e| {
+            log::error!("Failed to begin transaction for save_session: {}", e);
+            e
+        })?;
 
         // Create temporary table with same structure
         tx.execute(
@@ -301,13 +307,16 @@ impl Database {
         )?;
         tx.execute("DELETE FROM tabs_temp", [])?;
 
-        tx.commit()?;
-        info!("Session saved successfully");
+        tx.commit().map_err(|e| {
+            log::error!("Failed to commit save_session transaction: {}", e);
+            e
+        })?;
+        log::info!("Session saved successfully");
         Ok(())
     }
 
     pub fn load_session(&self) -> Result<Vec<TabState>> {
-        info!("Loading session from database");
+        log::info!("Loading session from database");
 
         let mut stmt = self.conn.prepare(
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position FROM tabs ORDER BY ROWID"
@@ -333,20 +342,20 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        info!("Loaded {} tabs from database", tabs.len());
+        log::info!("Loaded {} tabs from database", tabs.len());
         Ok(tabs)
     }
 
     #[allow(dead_code)]
     pub fn clear_session(&self) -> Result<()> {
-        info!("Clearing session data");
+        log::info!("Clearing session data");
         self.conn.execute("DELETE FROM tabs", [])?;
         Ok(())
     }
 
     // Bookmark operations
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
-        info!("Adding bookmark: {} ({})", bookmark.title, bookmark.path);
+        log::info!("Adding bookmark: {} ({})", bookmark.title, bookmark.path);
         let tags_json = serde_json::to_string(&bookmark.tags)?;
         self.conn.execute(
             "INSERT OR REPLACE INTO bookmarks (id, path, title, tags, created, last_accessed)
@@ -364,7 +373,7 @@ impl Database {
     }
 
     pub fn get_all_bookmarks(&self) -> Result<Vec<Bookmark>> {
-        info!("Loading all bookmarks from database");
+        log::info!("Loading all bookmarks from database");
         let mut stmt = self.conn.prepare(
             "SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC"
         )?;
@@ -384,12 +393,12 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        info!("Loaded {} bookmarks from database", bookmarks.len());
+        log::info!("Loaded {} bookmarks from database", bookmarks.len());
         Ok(bookmarks)
     }
 
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
-        info!("Deleting bookmark: {}", id);
+        log::info!("Deleting bookmark: {}", id);
         self.conn.execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
         Ok(())
     }
@@ -406,7 +415,7 @@ impl Database {
     /// Should be called periodically (e.g., on app shutdown or after many session saves)
     /// The parameter specifies maximum pages to reclaim (0 = reclaim all free pages)
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
-        info!("Running incremental vacuum (max {} pages)", max_pages);
+        log::info!("Running incremental vacuum (max {} pages)", max_pages);
         if max_pages > 0 {
             self.conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
         } else {

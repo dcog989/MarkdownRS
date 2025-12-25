@@ -2,6 +2,7 @@ import { appState } from '$lib/stores/appState.svelte';
 import { editorStore } from '$lib/stores/editorStore.svelte';
 import { toastStore } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
+import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { getThemeCss } from '$lib/utils/themes';
 import { save } from '@tauri-apps/plugin-dialog';
@@ -29,17 +30,25 @@ export class ExportService {
     }
 
     private async prepareExportContent(): Promise<HTMLElement | null> {
-        const tab = this.getActiveTab();
-        if (!tab) {
-            toastStore.error("No active tab to export.");
-            return null;
-        }
+    const tab = this.getActiveTab();
+    if (!tab) {
+    toastStore.error("No active tab to export.");
+    return null;
+    }
 
-        const container = this.getExportContainer();
+    const container = this.getExportContainer();
 
-        // Render Markdown to HTML
-        const html = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
-        container.innerHTML = html;
+    try {
+     // Render Markdown to HTML
+     const html = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
+			container.innerHTML = html;
+		} catch (err) {
+			AppError.handle('Export:HTML', err, {
+				showToast: true,
+				userMessage: 'Failed to render markdown for export'
+			});
+			return null;
+		}
 
         // Wait for DOM update/images to load
         // A small delay ensures the browser layout engine has calculated sizes
@@ -71,16 +80,16 @@ export class ExportService {
         if (!tab) return;
 
         try {
-            const path = await save({
-                defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.html`,
-                filters: [{ name: 'HTML', extensions: ['html'] }]
-            });
+        const path = await save({
+        defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.html`,
+        filters: [{ name: 'HTML', extensions: ['html'] }]
+        });
 
-            if (!path) return;
+        if (!path) return;
 
-            const bodyContent = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
-            const themeCss = await getThemeCss(appState.activeTheme);
-            const baseVars = this.getComputedCssVariables();
+        const bodyContent = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
+        const themeCss = await getThemeCss(appState.activeTheme);
+        const baseVars = this.getComputedCssVariables();
 
             const html = `<!DOCTYPE html>
 <html lang="en" data-theme="${appState.theme}">
@@ -108,10 +117,13 @@ export class ExportService {
 
             await callBackend('write_text_file', { path, content: html }, 'File:Write');
             toastStore.success(`Exported to ${path}`);
-        } catch (err) {
-            console.error(err);
-            toastStore.error("Failed to export HTML");
-        }
+            } catch (err) {
+            AppError.handle('Export:HTML', err, {
+             showToast: true,
+              userMessage: 'Failed to export to HTML',
+				additionalInfo: { path: tab?.path }
+			});
+		}
     }
 
     async exportToPdf() {
@@ -119,11 +131,14 @@ export class ExportService {
         if (!container) return;
 
         try {
-            // Directly trigger print without showing the container on screen
-            window.print();
-        } catch (e) {
-            console.error('[Export] window.print() failed:', e);
-        } finally {
+        // Directly trigger print without showing the container on screen
+        window.print();
+        } catch (err) {
+        AppError.handle('Export:PDF', err, {
+          showToast: true,
+				userMessage: 'Failed to open print dialog'
+			});
+		} finally {
             // Clear after a delay to allow print dialog to read the content
             setTimeout(() => this.clearExportContent(), 500);
         }
@@ -178,10 +193,13 @@ export class ExportService {
 
             await callBackend('write_binary_file', { path, content: Array.from(bytes) }, 'File:Write');
             toastStore.success(`Exported to ${path}`);
-        } catch (err) {
-            console.error(err);
-            toastStore.error(`Failed to export to ${format.toUpperCase()}`);
-        } finally {
+            } catch (err) {
+            AppError.handle('Export:HTML', err, {
+             showToast: true,
+              userMessage: `Failed to export to ${format.toUpperCase()}`,
+				additionalInfo: { format, path: tab?.path }
+			});
+		} finally {
             this.clearExportContent();
         }
     }
