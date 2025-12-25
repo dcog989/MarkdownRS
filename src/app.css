@@ -264,6 +264,22 @@ body {
     color: var(--icon-color, var(--color-fg-muted));
 }
 
+/* Scrollbar Utility - Using Standard CSS Layer to support pseudo-elements correctly in v4 */
+@layer utilities {
+    .no-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* CodeMirror Specific Styling for Markdown Elements */
+.cm-editor {
+    /* Base styles already apply from dynamicTheme */
+}
+
 /* Prevent line numbers and gutters from being selectable */
 .cm-gutters {
     user-select: none !important;
@@ -313,15 +329,11 @@ body {
 }
 
 .cm-highlight {
-    /* ==text== */
     background-color: var(--color-bg-highlight);
-    padding: 0 2px;
-    border-radius: 2px;
-    color: var(--color-fg-inverse);
+    color: inherit;
 }
 
 .cm-strikethrough {
-    /* ~~text~~ */
     text-decoration: line-through;
     text-decoration-color: var(--color-fg-muted);
 }

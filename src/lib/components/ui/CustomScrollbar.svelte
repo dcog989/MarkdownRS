@@ -8,54 +8,59 @@
 
     let { viewport, content }: Props = $props();
 
-    let trackRef: HTMLDivElement;
-
-    // State
+    let trackRef = $state<HTMLDivElement>();
     let thumbHeight = $state(20);
     let thumbTop = $state(0);
     let isVisible = $state(false);
     let isDragging = $state(false);
-
-    // Cache
-    let viewHeight = 0;
-    let scrollHeight = 0;
-
-    // Drag data
     let startY = 0;
     let startThumbTop = 0;
 
     let resizeObserver: ResizeObserver;
+    let mutationObserver: MutationObserver;
 
-    function updateMetrics() {
+    async function updateMetrics() {
         if (!viewport) return;
-        viewHeight = viewport.clientHeight;
-        scrollHeight = viewport.scrollHeight;
 
-        // Hide if content fits
-        if (scrollHeight <= viewHeight) {
+        const rect = viewport.getBoundingClientRect();
+        const viewHeight = rect.height;
+        const scrollHeight = viewport.scrollHeight;
+        const scrollTop = viewport.scrollTop;
+
+        // Safety check for invalid/hidden containers
+        if (viewHeight === 0 || isNaN(viewHeight)) {
             isVisible = false;
             return;
         }
 
+        // Determine visibility: content must be taller than viewport
+        // Using 1px threshold to handle sub-pixel rounding
+        const shouldBeVisible = scrollHeight > viewHeight + 1;
+
+        if (!shouldBeVisible) {
+            if (isVisible) isVisible = false;
+            return;
+        }
+
         isVisible = true;
+        const trackHeight = viewHeight - 4; // 2px padding top/bottom
 
-        // Calculate thumb height (min 20px)
-        // Subtract 4px for top/bottom padding
-        const trackHeight = viewHeight - 4;
-        const ratio = trackHeight / scrollHeight;
-        thumbHeight = Math.max(20, trackHeight * ratio);
-    }
+        // Calculate thumb height proportion
+        const heightRatio = viewHeight / scrollHeight;
+        // Ensure minimum thumb height (20px)
+        thumbHeight = Math.max(20, trackHeight * heightRatio);
 
-    function syncThumbToScroll() {
-        if (!viewport || isDragging) return;
+        if (!isDragging) {
+            // Calculate thumb position
+            const maxScroll = scrollHeight - viewHeight;
+            const maxThumb = trackHeight - thumbHeight;
 
-        const trackHeight = viewHeight - 4;
-        const maxScroll = scrollHeight - viewHeight;
-        const maxThumb = trackHeight - thumbHeight;
-
-        if (maxScroll > 0) {
-            const scrollTop = viewport.scrollTop;
-            thumbTop = (scrollTop / maxScroll) * maxThumb;
+            if (maxScroll > 0) {
+                const scrollRatio = scrollTop / maxScroll;
+                thumbTop = scrollRatio * maxThumb;
+            } else {
+                thumbTop = 0;
+            }
         }
     }
 
@@ -64,19 +69,20 @@
         e.preventDefault();
 
         const rect = trackRef.getBoundingClientRect();
-        // Adjust for top margin
         const clickOffset = e.clientY - rect.top;
 
+        const viewHeight = viewport.clientHeight;
         const trackHeight = viewHeight - 4;
         const maxThumb = trackHeight - thumbHeight;
-        const maxScroll = scrollHeight - viewHeight;
+        const maxScroll = viewport.scrollHeight - viewHeight;
 
-        // Center thumb on click
-        const targetThumbTop = Math.max(0, Math.min(maxThumb, clickOffset - thumbHeight / 2));
+        let targetThumbTop = clickOffset - thumbHeight / 2;
+        targetThumbTop = Math.max(0, Math.min(maxThumb, targetThumbTop));
 
+        const scrollRatio = targetThumbTop / maxThumb;
         viewport.scrollTo({
-            top: (targetThumbTop / maxThumb) * maxScroll,
-            behavior: "auto",
+            top: scrollRatio * maxScroll,
+            behavior: "smooth",
         });
     }
 
@@ -89,10 +95,8 @@
         startY = e.clientY;
         startThumbTop = thumbTop;
 
-        viewport.style.scrollBehavior = "auto";
         document.body.style.userSelect = "none";
         document.body.style.cursor = "default";
-
         window.addEventListener("mousemove", onMouseMove, { passive: true });
         window.addEventListener("mouseup", onMouseUp);
     }
@@ -101,17 +105,17 @@
         if (!isDragging || !viewport) return;
 
         const deltaY = e.clientY - startY;
+        const viewHeight = viewport.clientHeight;
         const trackHeight = viewHeight - 4;
         const maxThumb = trackHeight - thumbHeight;
-        const maxScroll = scrollHeight - viewHeight;
+        const maxScroll = viewport.scrollHeight - viewHeight;
 
         if (maxThumb > 0) {
-            // 1. Update visual state immediately
             let newTop = startThumbTop + deltaY;
             newTop = Math.max(0, Math.min(maxThumb, newTop));
+
             thumbTop = newTop;
 
-            // 2. Update scroll position based on thumb
             const scrollRatio = newTop / maxThumb;
             viewport.scrollTop = scrollRatio * maxScroll;
         }
@@ -119,40 +123,51 @@
 
     function onMouseUp() {
         isDragging = false;
-
-        if (viewport) {
-            viewport.style.scrollBehavior = "";
-        }
         document.body.style.userSelect = "";
         document.body.style.cursor = "";
-
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
     }
 
-    function setupObservers(el: HTMLElement) {
-        el.addEventListener("scroll", syncThumbToScroll, { passive: true });
+    function setup() {
+        if (!viewport) return;
 
-        if (resizeObserver) resizeObserver.disconnect();
-        resizeObserver = new ResizeObserver(() => {
-            updateMetrics();
-            syncThumbToScroll();
-        });
+        resizeObserver?.disconnect();
+        mutationObserver?.disconnect();
 
-        resizeObserver.observe(el);
-        if (content) resizeObserver.observe(content);
-        else if (el.firstElementChild) resizeObserver.observe(el.firstElementChild);
+        // 1. Observe Resize (Window/Container)
+        resizeObserver = new ResizeObserver(() => requestAnimationFrame(updateMetrics));
+        resizeObserver.observe(viewport);
 
+        // 2. Observe Content Size
+        if (content) {
+            resizeObserver.observe(content);
+        } else if (viewport.firstElementChild) {
+            resizeObserver.observe(viewport.firstElementChild);
+        }
+
+        // 3. Observe Mutations (Nodes added/removed)
+        mutationObserver = new MutationObserver(() => requestAnimationFrame(updateMetrics));
+        mutationObserver.observe(viewport, { childList: true, subtree: true, attributes: true });
+
+        // 4. Bind Scroll Event
+        viewport.addEventListener("scroll", updateMetrics, { passive: true });
+        window.addEventListener("resize", updateMetrics);
+
+        // Initial check with retries for layout shifts
         updateMetrics();
-        syncThumbToScroll();
+        setTimeout(updateMetrics, 100);
+        setTimeout(updateMetrics, 300);
     }
 
     $effect(() => {
         if (viewport) {
-            setupObservers(viewport);
+            setup();
             return () => {
-                viewport?.removeEventListener("scroll", syncThumbToScroll);
+                viewport?.removeEventListener("scroll", updateMetrics);
+                window.removeEventListener("resize", updateMetrics);
                 resizeObserver?.disconnect();
+                mutationObserver?.disconnect();
             };
         }
     });
@@ -162,28 +177,20 @@
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
         }
-        resizeObserver?.disconnect();
     });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="group scrollbar-track absolute right-0 top-[2px] bottom-[2px] z-50 flex w-[16px] justify-center bg-transparent" class:hidden={!isVisible} onmousedown={onTrackMouseDown}>
+<div bind:this={trackRef} class="scrollbar-track absolute right-0 top-[2px] bottom-[2px] z-[60] flex w-[12px] justify-center bg-transparent transition-opacity duration-200" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
     <div
-        class="scrollbar-thumb absolute left-1/2 -translate-x-1/2 rounded-full bg-[var(--color-border-light)] transition-[width,background-color] duration-150 group-hover:bg-white/40 active:bg-[var(--color-accent-primary)]"
-        class:w-[2px]={!isDragging}
-        class:group-hover:w-[8px]={!isDragging}
-        class:w-[8px]={isDragging}
+        class="scrollbar-thumb absolute top-0 w-[4px] rounded-full bg-[var(--color-border-light)] hover:bg-[var(--color-fg-muted)] hover:w-[6px] active:bg-[var(--color-accent-primary)] active:w-[6px] transition-all duration-150 cursor-pointer"
+        class:w-[6px]={isDragging}
+        class:bg-[var(--color-accent-primary)]={isDragging}
         style="
             height: {thumbHeight}px;
-            top: {thumbTop}px;
+            transform: translateY({thumbTop}px);
         "
         onmousedown={onThumbMouseDown}
     ></div>
 </div>
-
-<style>
-    .hidden {
-        display: none;
-    }
-</style>
