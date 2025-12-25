@@ -52,33 +52,43 @@ export class SearchManager {
         let count = 0;
         let idx = 0;
         const cursor = query.getCursor(view.state);
-        // Use the selection HEAD to determine where we are
-        const selectionHead = view.state.selection.main.head;
-        const selectionFrom = view.state.selection.main.from;
+        const selection = view.state.selection.main;
 
+        // First pass: count total matches
         let item = cursor.next();
         while (!item.done) {
-            // A match is "current" if it's the specific match selected in the editor.
-            // If the selection range matches the item range, it's definitely the one.
-            if (item.value.from === selectionFrom && item.value.to === selectionHead) {
-                idx = count;
-            }
-            // Fallback: If we are just "at" the end of it (typical for some cursor movements)
-            else if (item.value.from <= selectionHead && item.value.to >= selectionHead) {
-                idx = count;
-            }
-            // Fallback 2: Count items before our cursor
-            else if (item.value.to <= selectionFrom) {
-                // We passed this match, so our index is at least this + 1
-                // We hold this until we find an exact match or pass everything
-                idx = count + 1;
-            }
-
             count++;
             item = cursor.next();
         }
 
-        if (idx >= count && count > 0) idx = 0; // Wrap around check
+        // Second pass: find which match is currently selected
+        // Use exact range matching - the selected match should have exactly the same from/to
+        const cursorReset = query.getCursor(view.state);
+        let matchIndex = 0;
+        item = cursorReset.next();
+        
+        while (!item.done) {
+            // Check if this match is exactly selected
+            if (item.value.from === selection.from && item.value.to === selection.to) {
+                idx = matchIndex;
+                break;
+            }
+            // If no exact match found, check if cursor is within or before this match
+            if (selection.head < item.value.from) {
+                // Cursor is before this match, so current index is this match
+                idx = matchIndex;
+                break;
+            }
+            
+            matchIndex++;
+            item = cursorReset.next();
+        }
+
+        // If we went through all matches without finding where cursor is,
+        // cursor is after the last match, so wrap to first
+        if (matchIndex >= count && count > 0) {
+            idx = 0;
+        }
 
         this.currentMatches = count;
         this.currentIndex = count > 0 ? idx : 0;

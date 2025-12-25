@@ -1,4 +1,5 @@
 import { getCurrentTimestamp } from "$lib/utils/date";
+import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { appState } from "./appState.svelte";
 
 export type EditorTab = {
@@ -31,29 +32,7 @@ function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
 
-type TextOperationCallback = (operation: TextOperation) => void;
-
-export type OperationTypeString =
-    | 'sort-asc' | 'sort-desc' | 'sort-numeric-asc' | 'sort-numeric-desc'
-    | 'sort-length-asc' | 'sort-length-desc' | 'sort-case-insensitive-asc' | 'sort-case-insensitive-desc'
-    | 'reverse' | 'shuffle'
-    | 'remove-duplicates' | 'remove-unique' | 'remove-blank'
-    | 'remove-trailing-spaces' | 'remove-leading-spaces' | 'remove-all-spaces'
-    | 'uppercase' | 'lowercase' | 'title-case' | 'sentence-case'
-    | 'camel-case' | 'pascal-case' | 'snake-case' | 'kebab-case'
-    | 'constant-case' | 'invert-case'
-    | 'add-bullets' | 'add-numbers' | 'add-checkboxes' | 'remove-bullets'
-    | 'blockquote' | 'remove-blockquote' | 'add-code-fence'
-    | 'increase-heading' | 'decrease-heading'
-    | 'trim-whitespace' | 'normalize-whitespace' | 'join-lines'
-    | 'split-sentences' | 'wrap-quotes' | 'add-line-numbers'
-    | 'indent-lines' | 'unindent-lines'
-    | 'format-document'
-    | 'sort-lines' | 'to-uppercase' | 'to-lowercase';
-
-export type TextOperation = {
-    type: OperationTypeString;
-};
+type TextOperationCallback = (operationId: OperationId) => void;
 
 export class EditorStore {
     tabs = $state.raw<EditorTab[]>([]);
@@ -253,8 +232,8 @@ export class EditorStore {
         this.sessionDirty = true;
     }
 
-    performTextTransform(operationId: OperationTypeString) {
-        if (this.textOperationCallback) this.textOperationCallback({ type: operationId });
+    performTextTransform(operationId: OperationId) {
+        if (this.textOperationCallback) this.textOperationCallback(operationId);
     }
 }
 

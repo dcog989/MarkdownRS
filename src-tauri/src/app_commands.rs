@@ -83,6 +83,21 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>
 }
 
 #[tauri::command]
+pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
+    let db = state.db.lock().map_err(|_| "Failed to lock db")?;
+    
+    // Check if there are any free pages to reclaim
+    let freelist_count = db.get_freelist_count().map_err(|e| e.to_string())?;
+    
+    if freelist_count > 0 {
+        // Reclaim up to 100 pages at a time to avoid blocking
+        db.incremental_vacuum(100).map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     validate_path(&path)?;
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;

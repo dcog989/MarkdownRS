@@ -131,18 +131,13 @@ export class SortableController<T> {
 
             this.options.onSort(newItems);
 
-            // Re-cache layout after DOM update
-            setTimeout(() => {
-                if (this.options.container) {
-                    this.layoutCache = Array.from(this.options.container.children)
-                        .filter((el) => el.getAttribute("role") === "listitem")
-                        .map((el) => {
-                            const r = el.getBoundingClientRect();
-                            return { center: r.left + r.width / 2, width: r.width };
-                        });
-                    this.dragStartX = this.currentDragX;
-                }
-            }, 0);
+            // Update layout cache by swapping the cached positions
+            // This avoids expensive getBoundingClientRect calls
+            const [movedCache] = this.layoutCache.splice(currentIndex, 1);
+            this.layoutCache.splice(targetIndex, 0, movedCache);
+            
+            // Update the drag start position to the new position
+            this.dragStartX = this.currentDragX;
         }
     }
 }

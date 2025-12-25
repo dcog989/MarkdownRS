@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { TEXT_OPERATIONS } from "$lib/config/textOperations";
-    import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
+    import { OPERATION_CATEGORIES, getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
+    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { Type, X } from "lucide-svelte";
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
-    function handleOperation(operationId: OperationTypeString) {
+    function handleOperation(operationId: OperationId) {
         editorStore.performTextTransform(operationId);
         onClose();
     }
@@ -39,8 +39,9 @@
 
             <!-- Content -->
             <div class="overflow-y-auto p-4 space-y-6 flex-1 custom-scrollbar">
-                {#each TEXT_OPERATIONS as category}
+                {#each OPERATION_CATEGORIES as category}
                     {@const CategoryIcon = category.icon}
+                    {@const operations = getOperationsByCategory(category.id)}
                     <div>
                         <div class="flex items-center gap-2 mb-3">
                             <CategoryIcon size={16} style="color: var(--color-accent-primary);" />
@@ -49,25 +50,19 @@
                             </h3>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            {#each category.operations as operation}
+                            {#each operations as operation}
                                 {@const OperationIcon = operation.icon}
                                 <button type="button" class="flex items-start gap-3 p-3 rounded text-left hover:bg-white/10 transition-colors" style="border: 1px solid var(--color-border-main);" onclick={() => handleOperation(operation.id)}>
                                     <div class="flex-shrink-0 mt-0.5">
-                                        {#if OperationIcon}
-                                            <OperationIcon size={16} style="color: var(--color-accent-secondary);" />
-                                        {:else}
-                                            <div class="w-4"></div>
-                                        {/if}
+                                        <OperationIcon size={16} style="color: var(--color-accent-secondary);" />
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-sm font-medium whitespace-nowrap" style="color: var(--color-fg-default);">
                                             {operation.label}
                                         </div>
-                                        {#if operation.description}
-                                            <div class="text-xs mt-0.5 truncate" style="color: var(--color-fg-muted);">
-                                                {operation.description}
-                                            </div>
-                                        {/if}
+                                        <div class="text-xs mt-0.5 truncate" style="color: var(--color-fg-muted);">
+                                            {operation.description}
+                                        </div>
                                     </div>
                                 </button>
                             {/each}

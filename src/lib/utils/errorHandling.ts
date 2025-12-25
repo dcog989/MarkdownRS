@@ -7,6 +7,7 @@ import { toastStore } from "$lib/stores/toastStore.svelte.ts";
 export type ErrorContext =
     | 'Session:Save'
     | 'Session:Load'
+    | 'Session:Vacuum'
     | 'File:Read'
     | 'File:Write'
     | 'File:Metadata'

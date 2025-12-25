@@ -174,6 +174,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             app_commands::save_session,
             app_commands::restore_session,
+            app_commands::vacuum_database,
             app_commands::read_text_file,
             app_commands::write_text_file,
             app_commands::write_binary_file,

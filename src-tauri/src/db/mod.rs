@@ -47,11 +47,13 @@ impl Database {
 
         // Performance & Maintenance Optimization
         // WAL: Better concurrency for auto-saves
-        // FULL: Reclaims disk space automatically after the frequent DELETE/INSERT cycles of session saving
+        // INCREMENTAL: Reclaims disk space more efficiently than FULL without blocking I/O
+        // FULL auto_vacuum causes excessive page movement on every DELETE, impacting performance
+        // With INCREMENTAL, we can control when vacuuming happens via manual PRAGMA incremental_vacuum calls
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
              PRAGMA synchronous = NORMAL;
-             PRAGMA auto_vacuum = FULL;
+             PRAGMA auto_vacuum = INCREMENTAL;
              PRAGMA foreign_keys = ON;",
         )?;
 
@@ -238,13 +240,33 @@ impl Database {
 
         let tx = self.conn.transaction()?;
 
-        // Wipe existing state to ensure clean slate (simple synchronization)
-        tx.execute("DELETE FROM tabs", [])?;
+        // Create temporary table with same structure
+        tx.execute(
+            "CREATE TEMP TABLE IF NOT EXISTS tabs_temp (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                is_dirty INTEGER NOT NULL,
+                path TEXT,
+                scroll_percentage REAL NOT NULL,
+                created TEXT,
+                modified TEXT,
+                is_pinned INTEGER DEFAULT 0,
+                custom_title TEXT,
+                file_check_failed INTEGER DEFAULT 0,
+                file_check_performed INTEGER DEFAULT 0,
+                mru_position INTEGER
+            )",
+            [],
+        )?;
 
-        // Prepare the statement ONCE to avoid recompiling SQL for every tab
+        // Clear temp table in case it had data from a previous failed operation
+        tx.execute("DELETE FROM tabs_temp", [])?;
+
+        // Insert all new data into temp table
         {
             let mut stmt = tx.prepare_cached(
-                "INSERT INTO tabs (
+                "INSERT INTO tabs_temp (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
                     file_check_failed, file_check_performed, mru_position
@@ -269,6 +291,15 @@ impl Database {
                 ])?;
             }
         }
+
+        // Atomic swap: delete old data and rename temp table
+        // This happens within the transaction, so it's all-or-nothing
+        tx.execute("DELETE FROM tabs", [])?;
+        tx.execute(
+            "INSERT INTO tabs SELECT * FROM tabs_temp",
+            [],
+        )?;
+        tx.execute("DELETE FROM tabs_temp", [])?;
 
         tx.commit()?;
         info!("Session saved successfully");
@@ -369,5 +400,28 @@ impl Database {
             params![last_accessed, id],
         )?;
         Ok(())
+    }
+
+    /// Performs incremental vacuum to reclaim freed pages
+    /// Should be called periodically (e.g., on app shutdown or after many session saves)
+    /// The parameter specifies maximum pages to reclaim (0 = reclaim all free pages)
+    pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
+        info!("Running incremental vacuum (max {} pages)", max_pages);
+        if max_pages > 0 {
+            self.conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
+        } else {
+            self.conn.execute("PRAGMA incremental_vacuum", [])?;
+        }
+        Ok(())
+    }
+
+    /// Returns the number of freelist pages that could be reclaimed
+    pub fn get_freelist_count(&self) -> Result<i32> {
+        let count: i32 = self.conn.query_row(
+            "PRAGMA freelist_count",
+            [],
+            |row| row.get(0),
+        )?;
+        Ok(count)
     }
 }

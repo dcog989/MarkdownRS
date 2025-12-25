@@ -2,8 +2,9 @@
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
+    import { getBackendCommand, type OperationId } from "$lib/config/textOperationsRegistry";
     import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
-    import { editorStore, type TextOperation } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { checkAndReloadIfChanged, checkFileExists, navigateToPath, reloadFileContent } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
@@ -68,13 +69,16 @@
         });
     });
 
-    async function handleTextOperation(operation: TextOperation) {
+    async function handleTextOperation(operationId: OperationId) {
         if (!cmView) return;
         const selection = cmView.state.selection.main;
         const hasSelection = selection.from !== selection.to;
         const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
 
-        const newText = operation.type === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, operation.type);
+        // Get the backend command from the registry
+        const backendCommand = getBackendCommand(operationId);
+
+        const newText = operationId === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, backendCommand);
 
         // Only dispatch if text actually changed
         if (newText !== targetText) {

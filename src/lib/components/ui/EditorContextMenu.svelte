@@ -1,8 +1,8 @@
 <script lang="ts">
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
-    import { getOperationsByCategory } from "$lib/config/textOperations";
-    import { editorStore, type OperationTypeString } from "$lib/stores/editorStore.svelte.ts";
+    import { getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
+    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { AlignLeft, ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, WandSparkles } from "lucide-svelte";
@@ -38,12 +38,20 @@
     let showTransformMenu = $state(false);
     let suggestions = $state<string[]>([]);
 
+    // Close all submenus except the one specified
+    function closeOtherSubmenus(keepOpen: "sort" | "case" | "format" | "transform" | null = null) {
+        if (keepOpen !== "sort") showSortMenu = false;
+        if (keepOpen !== "case") showCaseMenu = false;
+        if (keepOpen !== "format") showFormatMenu = false;
+        if (keepOpen !== "transform") showTransformMenu = false;
+    }
+
     // Operations
-    const sortOps = getOperationsByCategory("Sort & Order");
-    const caseOps = getOperationsByCategory("Case Transformations");
+    const sortOps = getOperationsByCategory("sort");
+    const caseOps = getOperationsByCategory("case");
 
     type MenuOption = {
-        id?: OperationTypeString;
+        id?: OperationId;
         label?: string;
         divider?: boolean;
     };
@@ -99,7 +107,7 @@
         onClose();
     }
 
-    function handleOp(type: OperationTypeString | undefined) {
+    function handleOp(type: OperationId | undefined) {
         if (type) {
             editorStore.performTextTransform(type);
             onClose();
@@ -159,7 +167,7 @@
             <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
             <!-- Sort Menu -->
-            <Submenu bind:show={showSortMenu} side={submenuSide}>
+            <Submenu bind:show={showSortMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("sort")} onClose={() => closeOtherSubmenus(null)}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <ArrowUpDown size={14} /><span>Sort Lines</span><span class="ml-auto opacity-50">›</span>
@@ -171,7 +179,7 @@
             </Submenu>
 
             <!-- Case Menu -->
-            <Submenu bind:show={showCaseMenu} side={submenuSide}>
+            <Submenu bind:show={showCaseMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("case")} onClose={() => closeOtherSubmenus(null)}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <CaseSensitive size={14} /><span>Change Case</span><span class="ml-auto opacity-50">›</span>
@@ -183,7 +191,7 @@
             </Submenu>
 
             <!-- Format Menu -->
-            <Submenu bind:show={showFormatMenu} side={submenuSide}>
+            <Submenu bind:show={showFormatMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("format")} onClose={() => closeOtherSubmenus(null)}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <AlignLeft size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
@@ -199,7 +207,7 @@
             </Submenu>
 
             <!-- Transform Menu -->
-            <Submenu bind:show={showTransformMenu} side={submenuSide}>
+            <Submenu bind:show={showTransformMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("transform")} onClose={() => closeOtherSubmenus(null)}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <Rotate3d size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>

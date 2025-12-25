@@ -1,6 +1,6 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
-    import { TEXT_OPERATIONS } from "$lib/config/textOperations";
+    import { OPERATION_CATEGORIES, getOperationsByCategory } from "$lib/config/textOperationsRegistry";
     import { exportService } from "$lib/services/exportService";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
@@ -162,8 +162,8 @@
     ];
 
     // Text operation commands from config
-    const textOperationCommands: Command[] = TEXT_OPERATIONS.flatMap((category) =>
-        category.operations.map((op) => ({
+    const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category) =>
+        getOperationsByCategory(category.id).map((op) => ({
             id: `ops-${op.id}`,
             label: `${category.title}: ${op.label}`,
             action: () => editorStore.performTextTransform(op.id),
@@ -237,6 +237,8 @@
             await persistSession();
             await saveSettings();
             await callBackend("plugin:window-state|save_window_state", {}, "Session:Save");
+            // Perform incremental vacuum on shutdown to reclaim freed space
+            await callBackend("vacuum_database", {}, "Session:Vacuum");
             await appWindow.close();
         } catch (e) {
             await appWindow.close();

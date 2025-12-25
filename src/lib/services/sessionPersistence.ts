@@ -40,7 +40,7 @@ async function processSaveQueue() {
 }
 
 export async function persistSession(): Promise<void> {
-    if (!editorStore.sessionDirty || isSaving) return;
+    if (!editorStore.sessionDirty) return;
 
     const saveTask = async () => {
         try {
@@ -70,6 +70,12 @@ export async function persistSession(): Promise<void> {
             throw err;
         }
     };
+
+    if (isSaving) {
+        // Add to queue if a save is already in progress
+        saveQueue.push(saveTask);
+        return;
+    }
 
     isSaving = true;
     try {

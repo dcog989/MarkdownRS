@@ -1,0 +1,443 @@
+/**
+ * Consolidated Text Operations Registry
+ * 
+ * This file serves as the single source of truth for all text operations.
+ * It maps operation IDs to their metadata (label, description, icon) and 
+ * backend command, preventing "stringly-typed" errors.
+ */
+
+import {
+    ArrowDown01,
+    ArrowDown10,
+    ArrowDownAZ,
+    ArrowDownZA,
+    CaseSensitive,
+    CircleMinus,
+    Eraser,
+    FunnelX,
+    Hash,
+    List,
+    TextAlignStart,
+    Trash2,
+    Type
+} from "lucide-svelte";
+import type { ComponentType } from "svelte";
+
+/**
+ * Operation ID type - all valid operation identifiers
+ */
+export type OperationId = 
+    // Sort & Order
+    | 'sort-asc' | 'sort-desc' | 'sort-case-insensitive-asc' | 'sort-case-insensitive-desc'
+    | 'sort-numeric-asc' | 'sort-numeric-desc' | 'sort-length-asc' | 'sort-length-desc'
+    | 'reverse' | 'shuffle'
+    // Remove & Filter
+    | 'remove-duplicates' | 'remove-unique' | 'remove-blank'
+    | 'remove-trailing-spaces' | 'remove-leading-spaces' | 'remove-all-spaces'
+    // Case Transformations
+    | 'uppercase' | 'lowercase' | 'title-case' | 'sentence-case'
+    | 'camel-case' | 'pascal-case' | 'snake-case' | 'kebab-case'
+    | 'constant-case' | 'invert-case'
+    // Markdown Formatting
+    | 'add-bullets' | 'add-numbers' | 'add-checkboxes' | 'remove-bullets'
+    | 'blockquote' | 'remove-blockquote' | 'add-code-fence'
+    | 'increase-heading' | 'decrease-heading'
+    // Text Manipulation
+    | 'trim-whitespace' | 'normalize-whitespace' | 'join-lines'
+    | 'split-sentences' | 'wrap-quotes' | 'add-line-numbers'
+    | 'indent-lines' | 'unindent-lines'
+    // Special
+    | 'format-document';
+
+/**
+ * Operation definition with metadata and backend mapping
+ */
+export interface TextOperation {
+    id: OperationId;
+    label: string;
+    description: string;
+    icon: ComponentType;
+    /**
+     * Backend command name - this is what gets sent to the Rust backend.
+     * If not specified, defaults to the operation id.
+     */
+    backendCommand?: string;
+    category: string;
+}
+
+/**
+ * Category definition
+ */
+export interface OperationCategory {
+    id: string;
+    title: string;
+    icon: ComponentType;
+}
+
+/**
+ * All operation categories
+ */
+export const OPERATION_CATEGORIES: OperationCategory[] = [
+    { id: 'sort', title: 'Sort & Order', icon: ArrowDownAZ },
+    { id: 'filter', title: 'Remove & Filter', icon: Trash2 },
+    { id: 'case', title: 'Case Transformations', icon: CaseSensitive },
+    { id: 'markdown', title: 'Markdown Formatting', icon: Hash },
+    { id: 'text', title: 'Text Manipulation', icon: Type },
+];
+
+/**
+ * Complete registry of all text operations
+ * This is the single source of truth for operation metadata
+ */
+export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
+    // Sort & Order
+    'sort-asc': {
+        id: 'sort-asc',
+        label: 'Ascending',
+        description: 'Sort lines alphabetically A to Z',
+        icon: ArrowDownAZ,
+        category: 'sort',
+    },
+    'sort-desc': {
+        id: 'sort-desc',
+        label: 'Descending',
+        description: 'Sort lines alphabetically Z to A',
+        icon: ArrowDownZA,
+        category: 'sort',
+    },
+    'sort-case-insensitive-asc': {
+        id: 'sort-case-insensitive-asc',
+        label: 'Ascending (Ignore Case)',
+        description: 'Sort A to Z ignoring case',
+        icon: ArrowDownAZ,
+        category: 'sort',
+    },
+    'sort-case-insensitive-desc': {
+        id: 'sort-case-insensitive-desc',
+        label: 'Descending (Ignore Case)',
+        description: 'Sort Z to A ignoring case',
+        icon: ArrowDownZA,
+        category: 'sort',
+    },
+    'sort-numeric-asc': {
+        id: 'sort-numeric-asc',
+        label: 'Numeric Ascending',
+        description: 'Sort lines numerically (0-9)',
+        icon: ArrowDown01,
+        category: 'sort',
+    },
+    'sort-numeric-desc': {
+        id: 'sort-numeric-desc',
+        label: 'Numeric Descending',
+        description: 'Sort lines numerically (9-0)',
+        icon: ArrowDown10,
+        category: 'sort',
+    },
+    'sort-length-asc': {
+        id: 'sort-length-asc',
+        label: 'By Shortest',
+        description: 'Sort by line length ascending',
+        icon: ArrowDownAZ,
+        category: 'sort',
+    },
+    'sort-length-desc': {
+        id: 'sort-length-desc',
+        label: 'By Longest',
+        description: 'Sort by line length descending',
+        icon: ArrowDownZA,
+        category: 'sort',
+    },
+    'reverse': {
+        id: 'reverse',
+        label: 'Reverse',
+        description: 'Reverse the order of all lines',
+        icon: ArrowDownZA,
+        category: 'sort',
+    },
+    'shuffle': {
+        id: 'shuffle',
+        label: 'Shuffle',
+        description: 'Randomly shuffle line order',
+        icon: FunnelX,
+        category: 'sort',
+    },
+
+    // Remove & Filter
+    'remove-duplicates': {
+        id: 'remove-duplicates',
+        label: 'Remove Duplicates',
+        description: 'Keep only unique lines',
+        icon: Eraser,
+        category: 'filter',
+    },
+    'remove-unique': {
+        id: 'remove-unique',
+        label: 'Remove Unique',
+        description: 'Keep only duplicate lines',
+        icon: FunnelX,
+        category: 'filter',
+    },
+    'remove-blank': {
+        id: 'remove-blank',
+        label: 'Remove Blank Lines',
+        description: 'Remove all empty lines',
+        icon: CircleMinus,
+        category: 'filter',
+    },
+    'remove-trailing-spaces': {
+        id: 'remove-trailing-spaces',
+        label: 'Remove Trailing Spaces',
+        description: 'Trim whitespace from line ends',
+        icon: Eraser,
+        category: 'filter',
+    },
+    'remove-leading-spaces': {
+        id: 'remove-leading-spaces',
+        label: 'Remove Leading Spaces',
+        description: 'Trim whitespace from line starts',
+        icon: Eraser,
+        category: 'filter',
+    },
+    'remove-all-spaces': {
+        id: 'remove-all-spaces',
+        label: 'Remove All Spaces',
+        description: 'Remove all whitespace characters',
+        icon: Eraser,
+        category: 'filter',
+    },
+
+    // Case Transformations
+    'uppercase': {
+        id: 'uppercase',
+        label: 'UPPER CASE',
+        description: 'Convert all text to uppercase',
+        icon: Type,
+        category: 'case',
+    },
+    'lowercase': {
+        id: 'lowercase',
+        label: 'lower case',
+        description: 'Convert all text to lowercase',
+        icon: Type,
+        category: 'case',
+    },
+    'title-case': {
+        id: 'title-case',
+        label: 'Title Case',
+        description: 'Capitalize first letter of each word',
+        icon: Type,
+        category: 'case',
+    },
+    'sentence-case': {
+        id: 'sentence-case',
+        label: 'Sentence case',
+        description: 'Capitalize first letter of sentences',
+        icon: Type,
+        category: 'case',
+    },
+    'camel-case': {
+        id: 'camel-case',
+        label: 'camelCase',
+        description: 'Convert to camelCase format',
+        icon: Type,
+        category: 'case',
+    },
+    'pascal-case': {
+        id: 'pascal-case',
+        label: 'PascalCase',
+        description: 'Convert to PascalCase format',
+        icon: Type,
+        category: 'case',
+    },
+    'snake-case': {
+        id: 'snake-case',
+        label: 'snake_case',
+        description: 'Convert to snake_case format',
+        icon: Type,
+        category: 'case',
+    },
+    'kebab-case': {
+        id: 'kebab-case',
+        label: 'kebab-case',
+        description: 'Convert to kebab-case format',
+        icon: Type,
+        category: 'case',
+    },
+    'constant-case': {
+        id: 'constant-case',
+        label: 'CONSTANT_CASE',
+        description: 'Convert to CONSTANT_CASE format',
+        icon: Type,
+        category: 'case',
+    },
+    'invert-case': {
+        id: 'invert-case',
+        label: 'iNVERT cASE',
+        description: 'Swap uppercase and lowercase',
+        icon: Type,
+        category: 'case',
+    },
+
+    // Markdown Formatting
+    'add-bullets': {
+        id: 'add-bullets',
+        label: 'Add Bullet Points',
+        description: "Prefix lines with '- '",
+        icon: List,
+        category: 'markdown',
+    },
+    'add-numbers': {
+        id: 'add-numbers',
+        label: 'Add Numbering',
+        description: "Prefix lines with '1. 2. 3.'",
+        icon: List,
+        category: 'markdown',
+    },
+    'add-checkboxes': {
+        id: 'add-checkboxes',
+        label: 'Add Checkboxes',
+        description: "Prefix lines with '- [ ]'",
+        icon: List,
+        category: 'markdown',
+    },
+    'remove-bullets': {
+        id: 'remove-bullets',
+        label: 'Remove List Markers',
+        description: 'Remove bullets, numbers, checkboxes',
+        icon: CircleMinus,
+        category: 'markdown',
+    },
+    'blockquote': {
+        id: 'blockquote',
+        label: 'Add Blockquote',
+        description: "Prefix lines with '> '",
+        icon: TextAlignStart,
+        category: 'markdown',
+    },
+    'remove-blockquote': {
+        id: 'remove-blockquote',
+        label: 'Remove Blockquote',
+        description: "Remove '> ' prefix",
+        icon: CircleMinus,
+        category: 'markdown',
+    },
+    'add-code-fence': {
+        id: 'add-code-fence',
+        label: 'Wrap in Code Block',
+        description: 'Wrap with ``` fences',
+        icon: Hash,
+        category: 'markdown',
+    },
+    'increase-heading': {
+        id: 'increase-heading',
+        label: 'Increase Heading Level',
+        description: 'Add # to headings',
+        icon: Hash,
+        category: 'markdown',
+    },
+    'decrease-heading': {
+        id: 'decrease-heading',
+        label: 'Decrease Heading Level',
+        description: 'Remove # from headings',
+        icon: Hash,
+        category: 'markdown',
+    },
+
+    // Text Manipulation
+    'trim-whitespace': {
+        id: 'trim-whitespace',
+        label: 'Trim Whitespace',
+        description: 'Trim leading and trailing spaces',
+        icon: Eraser,
+        category: 'text',
+    },
+    'normalize-whitespace': {
+        id: 'normalize-whitespace',
+        label: 'Normalize Whitespace',
+        description: 'Replace multiple spaces with single',
+        icon: Eraser,
+        category: 'text',
+    },
+    'join-lines': {
+        id: 'join-lines',
+        label: 'Join Lines',
+        description: 'Combine all lines into one',
+        icon: TextAlignStart,
+        category: 'text',
+    },
+    'split-sentences': {
+        id: 'split-sentences',
+        label: 'Sentences to new lines',
+        description: 'Each sentence on new line',
+        icon: TextAlignStart,
+        category: 'text',
+    },
+    'wrap-quotes': {
+        id: 'wrap-quotes',
+        label: 'Wrap in Quotes',
+        description: 'Wrap each line in quotes',
+        icon: Type,
+        category: 'text',
+    },
+    'add-line-numbers': {
+        id: 'add-line-numbers',
+        label: 'Number Each Line',
+        description: 'Prefix with line numbers',
+        icon: List,
+        category: 'text',
+    },
+    'indent-lines': {
+        id: 'indent-lines',
+        label: 'Indent Lines',
+        description: 'Indent each line by default spacing',
+        icon: TextAlignStart,
+        category: 'text',
+    },
+    'unindent-lines': {
+        id: 'unindent-lines',
+        label: 'Unindent Lines',
+        description: 'Unindent each line by default spacing',
+        icon: TextAlignStart,
+        category: 'text',
+    },
+
+    // Special operations
+    'format-document': {
+        id: 'format-document',
+        label: 'Format Document',
+        description: 'Format markdown document',
+        icon: Type,
+        category: 'text',
+        backendCommand: 'format_markdown',
+    },
+};
+
+/**
+ * Get operation metadata by ID
+ * Returns undefined if operation doesn't exist (type-safe)
+ */
+export function getOperation(id: OperationId): TextOperation | undefined {
+    return TEXT_OPERATIONS_REGISTRY[id];
+}
+
+/**
+ * Get all operations for a category
+ */
+export function getOperationsByCategory(categoryId: string): TextOperation[] {
+    return Object.values(TEXT_OPERATIONS_REGISTRY).filter(op => op.category === categoryId);
+}
+
+/**
+ * Get the backend command name for an operation
+ */
+export function getBackendCommand(id: OperationId): string {
+    const operation = TEXT_OPERATIONS_REGISTRY[id];
+    return operation?.backendCommand || id;
+}
+
+/**
+ * Validate that an operation ID exists
+ */
+export function isValidOperationId(id: string): id is OperationId {
+    return id in TEXT_OPERATIONS_REGISTRY;
+}
