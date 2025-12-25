@@ -275,11 +275,6 @@ body {
     }
 }
 
-/* CodeMirror Specific Styling for Markdown Elements */
-.cm-editor {
-    /* Base styles already apply from dynamicTheme */
-}
-
 /* Prevent line numbers and gutters from being selectable */
 .cm-gutters {
     user-select: none !important;
