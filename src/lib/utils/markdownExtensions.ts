@@ -23,7 +23,6 @@ export const highlightPlugin = ViewPlugin.fromClass(class {
 });
 
 // Blockquote Styling
-// We use two marks: one for the border (applied to the '> ') and one for the background (applied to the whole line content)
 const blockquoteBorderDeco = Decoration.mark({ class: "cm-blockquote-border" });
 const blockquoteBgDeco = Decoration.mark({ class: "cm-blockquote-bg" });
 
@@ -34,9 +33,7 @@ function getBlockquoteDecorations(view: EditorView) {
             const line = view.state.doc.lineAt(pos);
             const match = /^\s*> ?/.exec(line.text);
             if (match) {
-                // Apply border style to the "> " part
                 builder.add(line.from + match.index, line.from + match.index + match[0].length, blockquoteBorderDeco);
-                // Apply background style to the entire content of the line
                 builder.add(line.from, line.to, blockquoteBgDeco);
             }
             pos = line.to + 1;
@@ -79,7 +76,6 @@ function getCodeBlockDecorations(view: EditorView) {
 
                     for (let i = startLine.number; i <= endLine.number; i++) {
                         const line = view.state.doc.line(i);
-                        // Ensure we don't add duplicate marks if ranges overlap
                         if (line.from > lastPos) {
                             builder.add(line.from, line.to, codeBlockMarkDeco);
                             lastPos = line.from;
@@ -100,6 +96,39 @@ export const codeBlockPlugin = ViewPlugin.fromClass(class {
     update(update: ViewUpdate) {
         if (update.docChanged || update.viewportChanged) {
             this.decorations = getCodeBlockDecorations(update.view);
+        }
+    }
+}, {
+    decorations: v => v.decorations
+});
+
+// Plugin for Inline Code `...` to ensure backticks are colored
+function getInlineCodeDecorations(view: EditorView) {
+    const builder = new RangeSetBuilder<Decoration>();
+    const tree = syntaxTree(view.state);
+
+    for (const { from, to } of view.visibleRanges) {
+        tree.iterate({
+            from, to,
+            enter: (node) => {
+                // InlineCode encompasses the backticks and content
+                if (node.name === "InlineCode") {
+                    builder.add(node.from, node.to, codeBlockMarkDeco);
+                }
+            }
+        });
+    }
+    return builder.finish();
+}
+
+export const inlineCodePlugin = ViewPlugin.fromClass(class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+        this.decorations = getInlineCodeDecorations(view);
+    }
+    update(update: ViewUpdate) {
+        if (update.docChanged || update.viewportChanged) {
+            this.decorations = getInlineCodeDecorations(update.view);
         }
     }
 }, {

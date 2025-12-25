@@ -4,7 +4,7 @@
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-    import { blockquotePlugin, codeBlockPlugin, highlightPlugin } from "$lib/utils/markdownExtensions";
+    import { blockquotePlugin, codeBlockPlugin, highlightPlugin, inlineCodePlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
@@ -265,6 +265,7 @@
             highlightPlugin,
             blockquotePlugin,
             codeBlockPlugin,
+            inlineCodePlugin,
             keymap.of([
                 indentWithTab,
                 {
