@@ -100,7 +100,7 @@
 }
 .cm-strikethrough {
     text-decoration: line-through;
-    opacity: 0.8;
+    text-decoration-color: var(--color-fg-muted);
 }
 .cm-code {
     background-color: var(--color-bg-code);

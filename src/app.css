@@ -212,29 +212,20 @@ body {
 }
 
 .cm-highlight {
-    /* ==text== */
     background-color: var(--color-bg-highlight);
-    padding: 0 2px;
-    border-radius: 2px;
-    color: var(--color-fg-inverse);
+    color: inherit;
 }
-
 .cm-strikethrough {
     /* ~~text~~ */
     text-decoration: line-through;
-    color: var(--color-fg-muted);
-    opacity: 0.7;
+    text-decoration-color: var(--color-fg-muted);
 }
-
 .cm-code {
-    /* `code` and ```code``` */
     background-color: var(--color-bg-code);
     color: var(--color-fg-code);
     padding: 2px 4px;
     border-radius: 4px;
     font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
 }
 
 /* Single backticks for inline code */

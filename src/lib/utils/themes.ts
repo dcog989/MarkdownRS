@@ -72,8 +72,7 @@ const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
 }
 .cm-strikethrough {
     text-decoration: line-through;
-    color: var(--color-fg-muted);
-    opacity: 0.7;
+    text-decoration-color: var(--color-fg-muted);
 }
 .cm-code {
     background-color: var(--color-bg-code);
@@ -201,8 +200,7 @@ const DEFAULT_LIGHT_CSS = `/* MarkdownRS Default Light Theme */
 }
 .cm-strikethrough {
     text-decoration: line-through;
-    color: var(--color-fg-muted);
-    opacity: 0.7;
+    text-decoration-color: var(--color-fg-muted);
 }
 .cm-code {
     background-color: var(--color-bg-code);
