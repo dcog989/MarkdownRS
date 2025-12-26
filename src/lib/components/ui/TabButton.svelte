@@ -29,13 +29,7 @@
     let tooltipContent = $derived.by(() => {
         const parts: string[] = [];
         const sizeStr = formatFileSize(tab.sizeBytes || 0);
-        const timestamp = tab.modified || tab.created || "";
-        let formattedTime = timestamp;
-
-        if (timestamp.includes(" / ")) {
-            const [datePart, timePart] = timestamp.split(" / ");
-            formattedTime = `${datePart}, ${timePart.replace(/(\d{2})(\d{2})(\d{2})/, "$1:$2:$3")}`;
-        }
+        const formattedTime = tab.formattedTimestamp || "";
 
         const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 

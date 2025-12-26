@@ -1,5 +1,5 @@
 import type { OperationId } from "$lib/config/textOperationsRegistry";
-import { getCurrentTimestamp } from "$lib/utils/date";
+import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
 import { clearRendererCache } from "$lib/utils/markdown";
 import { appState } from "./appState.svelte";
 
@@ -15,6 +15,7 @@ export type EditorTab = {
     topLine?: number;
     created?: string;
     modified?: string;
+    formattedTimestamp?: string;
     originalTitle?: string;
     isPinned?: boolean;
     customTitle?: string;
@@ -88,6 +89,7 @@ export class EditorStore {
             topLine: 1,
             created: now,
             modified: now,
+            formattedTimestamp: formatTimestampForDisplay(now),
             lineEnding: 'LF',
             encoding: 'UTF-8'
         };
@@ -195,12 +197,14 @@ export class EditorStore {
             }
         }
 
+        const now = getCurrentTimestamp();
         const updatedTab = {
             ...oldTab,
             title: newTitle,
             content,
             isDirty: content !== oldTab.lastSavedContent,
-            modified: getCurrentTimestamp(),
+            modified: now,
+            formattedTimestamp: formatTimestampForDisplay(now),
             sizeBytes: new TextEncoder().encode(content).length
         };
 
@@ -234,7 +238,13 @@ export class EditorStore {
         const tab = this.tabs[index];
         if (tab.created !== created || tab.modified !== modified) {
             const newTabs = [...this.tabs];
-            newTabs[index] = { ...tab, created: created || tab.created, modified: modified || tab.modified };
+            const tsToFormat = modified || tab.modified || created || tab.created || "";
+            newTabs[index] = {
+                ...tab,
+                created: created || tab.created,
+                modified: modified || tab.modified,
+                formattedTimestamp: formatTimestampForDisplay(tsToFormat)
+            };
             this.tabs = newTabs;
             this.sessionDirty = true;
         }

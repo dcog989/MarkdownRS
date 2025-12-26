@@ -1,7 +1,8 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import { AppError } from '$lib/utils/errorHandling';
 import { callBackend } from '$lib/utils/backend';
+import { formatTimestampForDisplay } from '$lib/utils/date';
+import { AppError } from '$lib/utils/errorHandling';
 import { debounce } from '$lib/utils/timing';
 import { checkFileExists, normalizeLineEndings, refreshMetadata } from './fileMetadata';
 import { fileWatcher } from './fileWatcher';
@@ -102,6 +103,7 @@ export async function loadSession(): Promise<void> {
 		if (rustTabs && rustTabs.length > 0) {
 			const convertedTabs: EditorTab[] = rustTabs.map(t => {
 				const content = normalizeLineEndings(t.content);
+				const timestamp = t.modified || t.created || "";
 				return {
 					id: t.id,
 					title: t.title,
@@ -114,6 +116,7 @@ export async function loadSession(): Promise<void> {
 					sizeBytes: new TextEncoder().encode(content).length,
 					created: t.created || undefined,
 					modified: t.modified || undefined,
+					formattedTimestamp: formatTimestampForDisplay(timestamp),
 					isPinned: t.is_pinned,
 					customTitle: t.custom_title || undefined,
 					lineEnding: t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
