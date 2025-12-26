@@ -49,7 +49,7 @@ export const CONFIG = {
 
     // UI
     UI: {
-        ANIMATION_DURATION_MS: 300,
+        ANIMATION_DURATION_MS: 250,
         TOAST_DURATION_MS: 3000,
         TOOLTIP_OFFSET_Y: 20,
         TOOLTIP_SCREEN_PADDING: 10,
