@@ -215,6 +215,49 @@ body {
     border-color: var(--color-border-light);
 }
 
+/* Theme Utilities for cleaner markup */
+@utility theme-bg-panel {
+    background-color: var(--color-bg-panel);
+}
+@utility theme-bg-header {
+    background-color: var(--color-bg-header);
+}
+@utility theme-bg-input {
+    background-color: var(--color-bg-input);
+}
+@utility theme-bg-hover {
+    background-color: var(--color-bg-hover);
+}
+@utility theme-bg-active {
+    background-color: var(--color-bg-active);
+}
+@utility theme-bg-accent {
+    background-color: var(--color-accent-primary);
+}
+
+@utility theme-border-main {
+    border-color: var(--color-border-main);
+}
+@utility theme-border-light {
+    border-color: var(--color-border-light);
+}
+
+@utility theme-text-default {
+    color: var(--color-fg-default);
+}
+@utility theme-text-muted {
+    color: var(--color-fg-muted);
+}
+@utility theme-text-inverse {
+    color: var(--color-fg-inverse);
+}
+@utility theme-text-accent {
+    color: var(--color-accent-secondary);
+}
+@utility theme-text-danger {
+    color: var(--color-danger-text);
+}
+
 /* MRU List Items */
 @utility mru-item {
     @apply w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors shrink-0;

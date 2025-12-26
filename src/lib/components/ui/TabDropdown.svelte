@@ -69,18 +69,18 @@
             searchQuery = "";
             selectedIndex = 0;
             ignoreMouseMovement = true;
-            
+
             // Clear any existing timer
             if (mouseMovementTimer !== null) {
                 clearTimeout(mouseMovementTimer);
             }
-            
+
             // Allow mouse movement after 100ms to prevent race conditions
             mouseMovementTimer = window.setTimeout(() => {
                 ignoreMouseMovement = false;
                 mouseMovementTimer = null;
             }, 100);
-            
+
             setTimeout(() => searchInputRef?.focus(), 50);
         } else {
             // Clean up timer when closing
@@ -98,7 +98,7 @@
     function handleHover(index: number, e: MouseEvent) {
         // Ignore mouse movement during the opening transition
         if (ignoreMouseMovement) return;
-        
+
         if (e.clientX === lastClientX && e.clientY === lastClientY) return;
 
         lastClientX = e.clientX;
@@ -155,18 +155,9 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-40" onclick={onClose}></div>
-    <div
-        bind:this={dropdownContainerRef}
-        class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50"
-        style="
-            background-color: var(--color-bg-panel);
-            border-color: var(--color-border-light);
-            max-height: calc(100vh - 120px);
-        "
-        role="menu"
-    >
-        <div class="p-2 border-b shrink-0" style="border-color: var(--color-border-light);">
-            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm" style="color: var(--color-fg-default);" onkeydown={handleKeydown} />
+    <div bind:this={dropdownContainerRef} class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50 theme-bg-panel theme-border-light max-h-[calc(100vh-120px)]" role="menu">
+        <div class="p-2 border-b shrink-0 theme-border-light">
+            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm theme-text-default" onkeydown={handleKeydown} />
         </div>
 
         <div class="relative min-h-0 flex-1">
@@ -174,27 +165,17 @@
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appState.activeTabId === tab.id}
-                    <button
-                        type="button"
-                        class="w-full text-left px-3 py-2 text-sm flex items-center gap-2"
-                        style="
-                            background-color: {isSelected ? 'var(--color-accent-primary)' : 'transparent'};
-                            color: {isSelected ? 'var(--color-fg-inverse)' : isActive ? 'var(--color-accent-secondary)' : 'var(--color-fg-default)'};
-                        "
-                        onclick={() => handleSelect(tab.id)}
-                        onmousemove={(e) => handleHover(index, e)}
-                        role="menuitem"
-                    >
+                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'theme-bg-accent theme-text-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'theme-text-accent' : 'theme-text-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem">
                         {#if tab.fileCheckFailed}
-                            <CircleAlert size={14} class="shrink-0" style="color: var(--color-danger-text);" />
+                            <CircleAlert size={14} class="shrink-0 theme-text-danger" />
                         {:else if !tab.path && tab.isDirty}
                             <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else if !tab.path}
-                            <Pencil size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
+                            <Pencil size={14} class="shrink-0 {isSelected ? 'theme-text-inverse' : 'theme-text-muted'}" />
                         {:else if tab.isDirty}
                             <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else}
-                            <FileText size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'};" />
+                            <FileText size={14} class="shrink-0 {isSelected ? 'theme-text-inverse' : 'theme-text-muted'}" />
                         {/if}
                         <span class="truncate flex-1" title={tab.path || "Unsaved content"}>{getDropdownTitle(tab)}</span>
                     </button>

@@ -59,12 +59,10 @@
 >
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50"
+        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 theme-bg-panel theme-border-light"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;
-            background-color: var(--color-bg-panel);
-            border-color: var(--color-border-light);
             opacity: {isVisible ? 1 : 0};
         "
         onclick={(e) => e.stopPropagation()}

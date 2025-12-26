@@ -48,18 +48,7 @@
     </div>
 
     {#if show}
-        <div
-            class="absolute top-0 flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[70vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-50 whitespace-nowrap"
-            style="
-                background-color: var(--color-bg-panel);
-                border-color: var(--color-border-light);
-                {side === 'left' ? 'right: 100%;' : 'left: 100%;'}
-            "
-            onmouseenter={handleMouseEnter}
-            onmouseleave={handleMouseLeave}
-            role="menu"
-            tabindex="-1"
-        >
+        <div class="absolute top-0 flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[70vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-50 whitespace-nowrap theme-bg-panel theme-border-light" style={side === "left" ? "right: 100%;" : "left: 100%;"} onmouseenter={handleMouseEnter} onmouseleave={handleMouseLeave} role="menu" tabindex="-1">
             {@render children()}
         </div>
     {/if}
