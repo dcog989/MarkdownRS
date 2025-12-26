@@ -5,6 +5,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
+// Lazy-compiled regex for file paths to avoid re-compilation on every render
+// Matches Windows paths (C:\...), Unix absolute paths (/...), and relative paths (./... or ../...)
+// Use r#""# to allow double quotes inside the regex pattern for the character class negation
+static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>\"'|?*]*|(?:\.\.?/|~/)[^\s<>\"'|?*]+)"#).unwrap()
+});
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MarkdownOptions {
     pub flavor: MarkdownFlavor,
@@ -63,14 +70,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 }
 
 /// Linkifies file paths in HTML content
-/// Matches Windows paths (C:\...), Unix absolute paths (/...), and relative paths (./... or ../...)
 fn linkify_file_paths(html: &str) -> String {
-    // Lazy-compiled regex for file paths
-    // Use r#""# to allow double quotes inside the regex pattern for the character class negation
-    static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>\"'|?*]*|(?:\.\.?/|~/)[^\s<>\"'|?*]+)"#).unwrap()
-    });
-
     // Tags where we should NOT linkify paths
     const SKIP_TAGS: &[&str] = &["<a", "<code", "<pre", "</"];
 
@@ -89,7 +89,7 @@ fn linkify_file_paths(html: &str) -> String {
             continue;
         }
 
-        // Find all path matches in this line
+        // Find all path matches in this line using the global regex
         let mut last_end = 0;
         for cap in PATH_REGEX.captures_iter(line) {
             let full_match = cap.get(0).unwrap();
