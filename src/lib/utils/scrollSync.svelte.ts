@@ -40,7 +40,8 @@ class ScrollSyncManager {
     }
 
     syncPreviewToEditor() {
-        if (this.isLocked || this.master !== 'editor' || !this.editor || !this.preview || this.lineMap.length === 0) return;
+        if (this.isLocked || this.master !== 'editor' || !this.editor || !this.preview) return;
+        if (!this.lineMap || this.lineMap.length === 0) return;
 
         const scroller = this.editor.scrollDOM;
         const scrollTop = scroller.scrollTop;
@@ -58,17 +59,26 @@ class ScrollSyncManager {
         if (scrollTop / maxScroll > 0.99) {
             targetY = previewMax;
         } else {
-            let i = 1;
+            // Find the segment containing targetLine
+            let i = 0;
             for (; i < this.lineMap.length; i++) {
                 if (this.lineMap[i].line > targetLine) break;
             }
-            const before = this.lineMap[i - 1];
-            const after = this.lineMap[i] || before;
-            const ratio = (targetLine - before.line) / (after.line - before.line || 1);
-            targetY = before.y + (after.y - before.y) * ratio;
 
-            const padding = parseFloat(getComputedStyle(this.preview).paddingTop) || 0;
-            targetY -= padding;
+            // Safe index access
+            const prevIdx = Math.max(0, i - 1);
+            const nextIdx = Math.min(i, this.lineMap.length - 1);
+
+            const before = this.lineMap[prevIdx];
+            const after = this.lineMap[nextIdx];
+
+            if (before && after) {
+                const ratio = (targetLine - before.line) / (after.line - before.line || 1);
+                targetY = before.y + (after.y - before.y) * ratio;
+
+                const padding = parseFloat(getComputedStyle(this.preview).paddingTop) || 0;
+                targetY -= padding;
+            }
         }
 
         if (Math.abs(this.preview.scrollTop - targetY) > 1) {
@@ -79,7 +89,8 @@ class ScrollSyncManager {
     }
 
     syncEditorToPreview() {
-        if (this.isLocked || this.master !== 'preview' || !this.editor || !this.preview || this.lineMap.length === 0) return;
+        if (this.isLocked || this.master !== 'preview' || !this.editor || !this.preview) return;
+        if (!this.lineMap || this.lineMap.length === 0) return;
 
         const scrollTop = this.preview.scrollTop;
         const maxScroll = this.preview.scrollHeight - this.preview.clientHeight;
@@ -88,14 +99,25 @@ class ScrollSyncManager {
         const padding = parseFloat(getComputedStyle(this.preview).paddingTop) || 0;
         const effectiveY = scrollTop + padding;
 
-        let i = 1;
+        let i = 0;
         for (; i < this.lineMap.length; i++) {
             if (this.lineMap[i].y > effectiveY) break;
         }
-        const before = this.lineMap[i - 1];
-        const after = this.lineMap[i] || before;
-        const ratio = (effectiveY - before.y) / (after.y - before.y || 1);
-        const targetLine = before.line + (after.line - before.line) * ratio;
+
+        // Safe index access
+        const prevIdx = Math.max(0, i - 1);
+        const nextIdx = Math.min(i, this.lineMap.length - 1);
+
+        const before = this.lineMap[prevIdx];
+        const after = this.lineMap[nextIdx];
+
+        // Default to not moving if something is wrong, though indices are clamped
+        let targetLine = 1;
+
+        if (before && after) {
+            const ratio = (effectiveY - before.y) / (after.y - before.y || 1);
+            targetLine = before.line + (after.line - before.line) * ratio;
+        }
 
         const scroller = this.editor.scrollDOM;
         let targetEditorY = 0;
@@ -105,7 +127,11 @@ class ScrollSyncManager {
         } else {
             const lineInt = Math.floor(targetLine);
             const lineFrac = targetLine - lineInt;
-            const lineBlock = this.editor.lineBlockAt(this.editor.state.doc.line(Math.max(1, Math.min(lineInt, this.editor.state.doc.lines))).from);
+            // Ensure line access is within document bounds
+            const docLines = this.editor.state.doc.lines;
+            const safeLine = Math.max(1, Math.min(lineInt, docLines));
+
+            const lineBlock = this.editor.lineBlockAt(this.editor.state.doc.line(safeLine).from);
             targetEditorY = lineBlock.top + (lineBlock.height * lineFrac);
         }
 
