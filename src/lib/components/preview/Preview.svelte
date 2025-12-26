@@ -4,23 +4,27 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
-    import { renderMarkdown, clearRendererCache } from "$lib/utils/markdown";
+    import { clearRendererCache, renderMarkdown } from "$lib/utils/markdown";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
-    let isRendering = $state(false),
-        htmlContent = $state(""),
-        lastRendered = "";
+    let isRendering = $state(false);
+    let htmlContent = $state("");
+    let lastRendered = $state("");
+    // Initialize with empty string to avoid "state_referenced_locally" warning.
+    // The effect will synchronize it immediately on mount.
+    let lastTabId = $state("");
     let debounceTimer: number | null = null;
-    let lastTabId = tabId;
 
     $effect(() => {
         // Clear cache when switching tabs
         if (lastTabId !== tabId) {
-            clearRendererCache(lastTabId);
+            if (lastTabId) {
+                clearRendererCache(lastTabId);
+            }
             lastTabId = tabId;
             lastRendered = "";
             htmlContent = "";
@@ -28,7 +32,10 @@
 
         const tab = editorStore.tabs.find((t) => t.id === tabId);
         const content = appState.activeTabId === tabId ? tab?.content || "" : "";
+
+        // Only render if content changed or if we don't have htmlContent yet
         if (content === lastRendered && htmlContent) return;
+
         if (debounceTimer) clearTimeout(debounceTimer);
 
         isRendering = true;
