@@ -54,12 +54,11 @@ export async function checkFileExists(tabId: string): Promise<void> {
 	const tab = editorStore.tabs.find(t => t.id === tabId);
 	if (!tab || !tab.path) return;
 
-	tab.fileCheckPerformed = true;
 	try {
 		await getCachedFileMetadata(tab.path);
-		tab.fileCheckFailed = false;
+		editorStore.setFileCheckStatus(tabId, true, false);
 	} catch (err) {
-		tab.fileCheckFailed = true;
+		editorStore.setFileCheckStatus(tabId, true, true);
 		// Don't show toast - this is a background check
 		AppError.handle('File:Metadata', err, {
 			showToast: false,
@@ -67,7 +66,6 @@ export async function checkFileExists(tabId: string): Promise<void> {
 			additionalInfo: { path: tab.path, tabId }
 		});
 	}
-	editorStore.sessionDirty = true;
 }
 
 export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
@@ -88,8 +86,7 @@ export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
 		return false;
 	} catch (err) {
 		// File doesn't exist or can't be read
-		tab.fileCheckFailed = true;
-		editorStore.sessionDirty = true;
+		editorStore.setFileCheckStatus(tabId, true, true);
 
 		AppError.handle('File:Metadata', err, {
 			showToast: false,
@@ -116,18 +113,18 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 
 		// Normalize content to ensure dirty check works correctly with CodeMirror (which uses LF)
 		const content = normalizeLineEndings(result.content);
+		const sizeBytes = new TextEncoder().encode(result.content).length;
 
-		// Update the tab with new content
-		tab.content = content;
-		tab.lastSavedContent = content;
-		tab.isDirty = false;
-		tab.lineEnding = detectedLineEnding;
-		tab.encoding = result.encoding.toUpperCase();
-		tab.sizeBytes = new TextEncoder().encode(result.content).length;
-		tab.fileCheckPerformed = false;
+		// Update the tab with new content using store method
+		editorStore.reloadTabContent(
+			tabId,
+			content,
+			detectedLineEnding,
+			result.encoding.toUpperCase(),
+			sizeBytes
+		);
 
 		await refreshMetadata(tabId, sanitizedPath);
-		editorStore.sessionDirty = true;
 	} catch (err) {
 		AppError.handle('File:Read', err, {
 			showToast: true,

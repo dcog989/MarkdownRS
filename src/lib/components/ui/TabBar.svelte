@@ -221,7 +221,10 @@
     </div>
 
     <div class="h-full flex items-end border-l border-border-main">
-        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-fg-muted shrink-0" onclick={() => editorStore.addTab()}>
+        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-fg-muted shrink-0" onclick={() => {
+            const newTabId = editorStore.addTab();
+            appState.activeTabId = newTabId;
+        }}>
             <Plus size={16} />
         </button>
     </div>

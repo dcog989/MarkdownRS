@@ -133,8 +133,8 @@ export class EditorStore {
         }
     }
 
-    reopenClosedTab(historyIndex: number) {
-        if (historyIndex < 0 || historyIndex >= this.closedTabsHistory.length) return;
+    reopenClosedTab(historyIndex: number): string | null {
+        if (historyIndex < 0 || historyIndex >= this.closedTabsHistory.length) return null;
 
         const entry = this.closedTabsHistory[historyIndex];
 
@@ -151,6 +151,8 @@ export class EditorStore {
 
         this.pushToMru(entry.tab.id);
         this.sessionDirty = true;
+        
+        return entry.tab.id;
     }
 
     pushToMru(id: string) {
@@ -262,6 +264,123 @@ export class EditorStore {
 
     performTextTransform(operationId: OperationId) {
         if (this.textOperationCallback) this.textOperationCallback(operationId);
+    }
+
+    togglePin(id: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { ...this.tabs[index], isPinned: !this.tabs[index].isPinned };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    updateTabTitle(id: string, title: string, customTitle?: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { 
+            ...this.tabs[index], 
+            title, 
+            customTitle: customTitle !== undefined ? customTitle : this.tabs[index].customTitle 
+        };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    updateTabPath(id: string, path: string, title?: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        const updates: Partial<EditorTab> = { path };
+        if (title !== undefined) updates.title = title;
+        
+        newTabs[index] = { ...this.tabs[index], ...updates };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    updateTabMetadataAndPath(id: string, updates: Partial<EditorTab>) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { ...this.tabs[index], ...updates };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    setFileCheckStatus(id: string, performed: boolean, failed: boolean) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { 
+            ...this.tabs[index], 
+            fileCheckPerformed: performed,
+            fileCheckFailed: failed
+        };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    reloadTabContent(id: string, content: string, lineEnding: 'LF' | 'CRLF', encoding: string, sizeBytes: number) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { 
+            ...this.tabs[index], 
+            content,
+            lastSavedContent: content,
+            isDirty: false,
+            lineEnding,
+            encoding,
+            sizeBytes,
+            fileCheckPerformed: false
+        };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    updateContentOnly(id: string, content: string) {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { ...this.tabs[index], content };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    updateLineEnding(id: string, lineEnding: 'LF' | 'CRLF') {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { ...this.tabs[index], lineEnding };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
+    }
+
+    saveTabComplete(id: string, path: string, title: string, lineEnding: 'LF' | 'CRLF') {
+        const index = this.tabs.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const newTabs = [...this.tabs];
+        newTabs[index] = { 
+            ...this.tabs[index], 
+            path,
+            title,
+            lineEnding,
+            fileCheckPerformed: false,
+            fileCheckFailed: false
+        };
+        this.tabs = newTabs;
+        this.sessionDirty = true;
     }
 }
 

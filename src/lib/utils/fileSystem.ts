@@ -49,18 +49,17 @@ export async function openFile(path?: string): Promise<void> {
 		const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
 		const id = editorStore.addTab(fileName, result.content);
-		const tab = editorStore.tabs.find(t => t.id === id);
-		if (tab) {
-			tab.path = sanitizedPath;
-			tab.isDirty = false;
-			tab.lineEnding = detectedLineEnding;
-			tab.encoding = result.encoding.toUpperCase();
-			tab.fileCheckPerformed = false;
-			tab.sizeBytes = new TextEncoder().encode(result.content).length;
-			await refreshMetadata(id, sanitizedPath);
-			await checkFileExists(id);
-			await fileWatcher.watch(sanitizedPath);
-		}
+		editorStore.updateTabMetadataAndPath(id, {
+			path: sanitizedPath,
+			isDirty: false,
+			lineEnding: detectedLineEnding,
+			encoding: result.encoding.toUpperCase(),
+			fileCheckPerformed: false,
+			sizeBytes: new TextEncoder().encode(result.content).length
+		});
+		await refreshMetadata(id, sanitizedPath);
+		await checkFileExists(id);
+		await fileWatcher.watch(sanitizedPath);
 		appState.activeTabId = id;
 		editorStore.pushToMru(id);
 
@@ -125,7 +124,7 @@ export async function saveCurrentFile(): Promise<boolean> {
 					codeBlockFence: appState.formatterCodeFence,
 					tableAlignment: appState.formatterTableAlignment
 				});
-				tab.content = contentToSave;
+				editorStore.updateContentOnly(tabId, contentToSave);
 			}
 
 			const targetLineEnding = appState.lineEndingPreference === 'system'
@@ -138,7 +137,6 @@ export async function saveCurrentFile(): Promise<boolean> {
 				contentToSave = contentToSave.replace(/\r\n/g, '\n');
 			}
 
-			tab.lineEnding = targetLineEnding;
 			await callBackend('write_text_file', { path: sanitizedPath, content: contentToSave }, 'File:Write');
 
 			if (oldPath && oldPath !== sanitizedPath) {
@@ -148,11 +146,9 @@ export async function saveCurrentFile(): Promise<boolean> {
 				await fileWatcher.watch(sanitizedPath);
 			}
 
-			tab.path = sanitizedPath;
-			tab.title = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
+			const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
+			editorStore.saveTabComplete(tabId, sanitizedPath, fileName, targetLineEnding);
 			editorStore.markAsSaved(tabId);
-			tab.fileCheckPerformed = false;
-			tab.fileCheckFailed = false;
 			await refreshMetadata(tabId, sanitizedPath);
 			return true;
 		}

@@ -7,7 +7,7 @@
     import Toast from "$lib/components/ui/Toast.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
-    import { loadSession, openFile, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
@@ -139,6 +139,18 @@
             }
         })();
 
+        // Listen for file open events from command-line arguments
+        let unlistenFileOpen: (() => void) | null = null;
+        import('@tauri-apps/api/event').then(({ listen }) => {
+            listen<string>('open-file-from-args', async (event) => {
+                const filePath = event.payload;
+                console.log('Opening file from command line:', filePath);
+                await openFileByPath(filePath);
+            }).then((unlisten) => {
+                unlistenFileOpen = unlisten;
+            });
+        });
+
         // Add document-level shortcuts with HIGHEST priority
         document.addEventListener("keydown", handleDocumentKeydown, { capture: true });
         document.addEventListener("keydown", handleTabNavigation, { capture: true });
@@ -159,6 +171,7 @@
             document.removeEventListener("keydown", handleDocumentKeydown, { capture: true });
             document.removeEventListener("keydown", handleTabNavigation, { capture: true });
             window.removeEventListener("blur", handleBlur);
+            if (unlistenFileOpen) unlistenFileOpen();
         };
     });
 

@@ -56,9 +56,9 @@
             if (savePath) {
                 const sanitizedPath = savePath.replace(/\0/g, "").replace(/\\/g, "/");
                 await callBackend("write_text_file", { path: sanitizedPath, content: tab.content }, "File:Write");
-                tab.path = sanitizedPath;
-                tab.title = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
-                tab.isDirty = false;
+                const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
+                editorStore.updateTabPath(tabId, sanitizedPath, fileName);
+                editorStore.markAsSaved(tabId);
             }
         } finally {
             appState.activeTabId = prevActive;
@@ -68,8 +68,7 @@
 
     function handlePin() {
         if (!tab) return;
-        tab.isPinned = !tab.isPinned;
-        editorStore.sessionDirty = true;
+        editorStore.togglePin(tabId);
         onClose();
     }
 
@@ -94,8 +93,7 @@
         if (!tab) return;
         const newTitle = prompt("Enter new title:", tab.customTitle || tab.title);
         if (newTitle && newTitle.trim()) {
-            tab.title = newTitle.trim();
-            tab.customTitle = newTitle.trim();
+            editorStore.updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
         }
         onClose();
     }
@@ -317,7 +315,10 @@
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
                         use:tooltip={getHistoryTooltip(item.tab)}
                         onclick={() => {
-                            editorStore.reopenClosedTab(i);
+                            const reopenedTabId = editorStore.reopenClosedTab(i);
+                            if (reopenedTabId) {
+                                appState.activeTabId = reopenedTabId;
+                            }
                             onClose();
                         }}
                     >

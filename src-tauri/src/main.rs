@@ -10,6 +10,7 @@ mod text_transforms;
 
 use log::LevelFilter;
 use std::fs;
+use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 use unicode_bom::Bom;
@@ -28,11 +29,21 @@ fn main() {
     }
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             let windows = app.webview_windows();
             if let Some((_, window)) = windows.iter().next() {
                 let _ = window.set_focus();
                 let _ = window.unminimize();
+                
+                // Handle file path argument from Windows Explorer
+                if args.len() > 1 {
+                    // args[0] is the executable path, args[1] is the file path
+                    let file_path = &args[1];
+                    log::info!("Opening file from command line: {}", file_path);
+                    
+                    // Emit event to frontend with the file path
+                    let _ = window.emit("open-file-from-args", file_path);
+                }
             }
         }))
         .plugin(tauri_plugin_shell::init())
@@ -174,12 +185,32 @@ fn main() {
                 )),
             });
 
-            tauri::async_runtime::spawn(async move {
-                std::thread::sleep(std::time::Duration::from_millis(150));
-                let _ = window.show();
-                std::thread::sleep(std::time::Duration::from_millis(50));
-                let _ = window.set_focus();
-            });
+            // Check for command-line arguments on first launch
+            let args: Vec<String> = std::env::args().collect();
+            if args.len() > 1 {
+                // args[0] is the executable path, args[1] is the file path
+                let file_path = args[1].clone();
+                let window_clone = window.clone();
+                
+                tauri::async_runtime::spawn(async move {
+                    std::thread::sleep(std::time::Duration::from_millis(150));
+                    let _ = window_clone.show();
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    let _ = window_clone.set_focus();
+                    
+                    // Give the frontend time to initialize before sending the file path
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                    log::info!("Opening file from initial launch: {}", file_path);
+                    let _ = window_clone.emit("open-file-from-args", &file_path);
+                });
+            } else {
+                tauri::async_runtime::spawn(async move {
+                    std::thread::sleep(std::time::Duration::from_millis(150));
+                    let _ = window.show();
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    let _ = window.set_focus();
+                });
+            }
 
             Ok(())
         })

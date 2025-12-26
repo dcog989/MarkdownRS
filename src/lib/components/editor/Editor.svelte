@@ -171,8 +171,13 @@
             cmView?.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: t }, selection: { anchor: cmView.state.selection.main.from + t.length }, scrollIntoView: true });
         }}
         onReplaceWord={(w) => {
-            cmView?.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
-            refreshSpellcheck(cmView!);
+            if (!cmView) return;
+            cmView.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
+            // Close context menu first, then refresh spell check
+            showContextMenu = false;
+            setTimeout(() => {
+                if (cmView) refreshSpellcheck(cmView);
+            }, 50);
         }}
     />
 {/if}
