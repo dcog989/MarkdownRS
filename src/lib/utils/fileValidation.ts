@@ -81,6 +81,7 @@ export function formatFileSize(bytes: number): string {
  * Check if path is likely a text file based on extension
  */
 export function isTextFile(path: string): boolean {
-    const extension = path.split('.').pop()?.toLowerCase();
-    return extension ? DEFAULT_ALLOWED_EXTENSIONS.includes(extension) : false;
+    const extension = path.split('.').pop();
+    if (!extension) return false;
+    return DEFAULT_ALLOWED_EXTENSIONS.includes(extension.toLowerCase());
 }

@@ -22,6 +22,8 @@
     let dropdownContainerRef = $state<HTMLDivElement>();
     let lastClientX = 0;
     let lastClientY = 0;
+    let ignoreMouseMovement = $state(false);
+    let mouseMovementTimer: number | null = null;
 
     let filteredTabs = $derived.by(() => {
         const tabs = editorStore.tabs;
@@ -66,7 +68,26 @@
             lastClientY = 0;
             searchQuery = "";
             selectedIndex = 0;
+            ignoreMouseMovement = true;
+            
+            // Clear any existing timer
+            if (mouseMovementTimer !== null) {
+                clearTimeout(mouseMovementTimer);
+            }
+            
+            // Allow mouse movement after 100ms to prevent race conditions
+            mouseMovementTimer = window.setTimeout(() => {
+                ignoreMouseMovement = false;
+                mouseMovementTimer = null;
+            }, 100);
+            
             setTimeout(() => searchInputRef?.focus(), 50);
+        } else {
+            // Clean up timer when closing
+            if (mouseMovementTimer !== null) {
+                clearTimeout(mouseMovementTimer);
+                mouseMovementTimer = null;
+            }
         }
     });
 
@@ -75,6 +96,9 @@
     }
 
     function handleHover(index: number, e: MouseEvent) {
+        // Ignore mouse movement during the opening transition
+        if (ignoreMouseMovement) return;
+        
         if (e.clientX === lastClientX && e.clientY === lastClientY) return;
 
         lastClientX = e.clientX;

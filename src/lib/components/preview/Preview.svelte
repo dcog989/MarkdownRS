@@ -4,7 +4,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
-    import { renderMarkdown } from "$lib/utils/markdown";
+    import { renderMarkdown, clearRendererCache } from "$lib/utils/markdown";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
@@ -15,8 +15,17 @@
         htmlContent = $state(""),
         lastRendered = "";
     let debounceTimer: number | null = null;
+    let lastTabId = tabId;
 
     $effect(() => {
+        // Clear cache when switching tabs
+        if (lastTabId !== tabId) {
+            clearRendererCache(lastTabId);
+            lastTabId = tabId;
+            lastRendered = "";
+            htmlContent = "";
+        }
+
         const tab = editorStore.tabs.find((t) => t.id === tabId);
         const content = appState.activeTabId === tabId ? tab?.content || "" : "";
         if (content === lastRendered && htmlContent) return;
@@ -24,7 +33,7 @@
 
         isRendering = true;
         debounceTimer = window.setTimeout(async () => {
-            const result = await renderMarkdown(content, appState.markdownFlavor);
+            const result = await renderMarkdown(content, appState.markdownFlavor, tabId);
             htmlContent = result.html;
             lastRendered = content;
             if (container) {
@@ -41,6 +50,8 @@
 
     onDestroy(() => {
         if (debounceTimer) clearTimeout(debounceTimer);
+        // Clear renderer cache when component is destroyed
+        clearRendererCache(tabId);
     });
 </script>
 

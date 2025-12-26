@@ -1,6 +1,7 @@
 import { getCurrentTimestamp } from "$lib/utils/date";
 import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { appState } from "./appState.svelte";
+import { clearRendererCache } from "$lib/utils/markdown";
 
 export type EditorTab = {
     id: string;
@@ -117,6 +118,9 @@ export class EditorStore {
             this.tabs = this.tabs.filter(t => t.id !== id);
             this.mruStack = this.mruStack.filter(tId => tId !== id);
             this.sessionDirty = true;
+            
+            // Clear renderer cache for this tab to free memory
+            clearRendererCache(id);
         }
     }
 

@@ -34,19 +34,19 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
 
     return {
         update(newContent: string | undefined | null) {
+            // Always reset state before updating to prevent leaks
+            handleMouseLeave();
             content = newContent;
-            if (!content && timer) {
-                handleMouseLeave();
-            }
             if (tooltipStore.visible && content) {
                 tooltipStore.content = content;
             }
         },
         destroy() {
+            // Ensure cleanup before destroying
+            handleMouseLeave();
             node.removeEventListener("mouseenter", handleMouseEnter);
             node.removeEventListener("mouseleave", handleMouseLeave);
             node.removeEventListener("mousedown", handleMouseDown);
-            if (timer) clearTimeout(timer);
         }
     };
 }

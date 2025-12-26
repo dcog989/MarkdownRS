@@ -12,6 +12,7 @@ use log::LevelFilter;
 use std::fs;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
+use unicode_bom::Bom;
 
 fn default_log_level() -> String {
     "info".to_string()
@@ -89,11 +90,22 @@ fn main() {
 
             // Robustly read settings from the TOML file
             let settings_level = if config_path.exists() {
-                match fs::read_to_string(&config_path) {
-                    Ok(raw_content) => {
-                        // Strip BOM if present to prevent parse errors
-                        let content = raw_content.trim_start_matches('\u{feff}');
-                        match toml::from_str::<toml::Value>(content) {
+                match fs::read(&config_path) {
+                    Ok(raw_bytes) => {
+                        // Strip BOM using unicode-bom crate for robust handling
+                        let content = match Bom::from(raw_bytes.as_slice()) {
+                            Bom::Null => {
+                                // No BOM detected, decode as UTF-8
+                                String::from_utf8_lossy(&raw_bytes).to_string()
+                            }
+                            bom => {
+                                // BOM detected, strip it and decode the rest
+                                let without_bom = &raw_bytes[bom.len()..];
+                                String::from_utf8_lossy(without_bom).to_string()
+                            }
+                        };
+
+                        match toml::from_str::<toml::Value>(&content) {
                             Ok(toml_val) => toml_val
                                 .get("logLevel")
                                 .and_then(|v| v.as_str())
