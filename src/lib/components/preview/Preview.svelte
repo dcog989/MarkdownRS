@@ -4,7 +4,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
-    import { clearRendererCache, renderMarkdown } from "$lib/utils/markdown";
+    import { renderMarkdown } from "$lib/utils/markdown";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
@@ -20,11 +20,10 @@
     let debounceTimer: number | null = null;
 
     $effect(() => {
-        // Clear cache when switching tabs
+        // Reset local state when switching tabs, but DO NOT clear the renderer cache here.
+        // We want the cache to persist across tab switches for performance.
+        // The cache is explicitly cleared in editorStore.closeTab().
         if (lastTabId !== tabId) {
-            if (lastTabId) {
-                clearRendererCache(lastTabId);
-            }
             lastTabId = tabId;
             lastRendered = "";
             htmlContent = "";
@@ -57,8 +56,8 @@
 
     onDestroy(() => {
         if (debounceTimer) clearTimeout(debounceTimer);
-        // Clear renderer cache when component is destroyed
-        clearRendererCache(tabId);
+        // Do NOT clear renderer cache here. This component is destroyed on tab switch,
+        // and we want to keep the cache. Cleanup is handled by editorStore.closeTab.
     });
 </script>
 
