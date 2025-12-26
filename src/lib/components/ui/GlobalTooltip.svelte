@@ -1,5 +1,6 @@
 <script lang="ts">
     import { tooltipStore } from "$lib/stores/tooltipStore.svelte.ts";
+    import { CONFIG } from "$lib/utils/config";
 
     let tooltipEl = $state<HTMLDivElement>();
     let adjustedX = $state(0);
@@ -12,19 +13,19 @@
             const winH = window.innerHeight;
 
             let newX = tooltipStore.x;
-            let newY = tooltipStore.y + 20;
+            let newY = tooltipStore.y + CONFIG.UI.TOOLTIP_OFFSET_Y;
 
             // Shift left if overflowing right edge
             if (newX + rect.width > winW) {
-                newX = winW - rect.width - 10;
+                newX = winW - rect.width - CONFIG.UI.TOOLTIP_SCREEN_PADDING;
             }
 
             // Safety check for left edge
-            if (newX < 10) newX = 10;
+            if (newX < CONFIG.UI.TOOLTIP_SCREEN_PADDING) newX = CONFIG.UI.TOOLTIP_SCREEN_PADDING;
 
             // Shift up if overflowing bottom edge
             if (newY + rect.height > winH) {
-                newY = tooltipStore.y - rect.height - 5;
+                newY = tooltipStore.y - rect.height - CONFIG.UI.TOOLTIP_FLIP_OFFSET;
             }
 
             adjustedX = newX;

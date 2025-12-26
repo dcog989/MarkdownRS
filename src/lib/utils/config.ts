@@ -51,6 +51,9 @@ export const CONFIG = {
     UI: {
         ANIMATION_DURATION_MS: 150,
         TOAST_DURATION_MS: 3000,
+        TOOLTIP_OFFSET_Y: 20,
+        TOOLTIP_SCREEN_PADDING: 10,
+        TOOLTIP_FLIP_OFFSET: 5,
     },
 } as const;
 
