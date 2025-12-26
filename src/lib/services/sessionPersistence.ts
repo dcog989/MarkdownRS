@@ -45,6 +45,55 @@ async function processSaveQueue() {
 	isSaving = false;
 }
 
+/**
+ * Initializes a single tab's file state:
+ * - Reloads content if dirty and changed on disk (safety check)
+ * - Refreshes metadata
+ * - Checks existence
+ * - Sets up watcher
+ */
+async function initializeTabFileState(tab: EditorTab): Promise<void> {
+	if (!tab.path) return;
+
+	// If tab is dirty, reload the saved content to detect changes
+	if (tab.isDirty) {
+		try {
+			const res = await callBackend<FileContent>(
+				'read_text_file',
+				{ path: tab.path },
+				'File:Read'
+			);
+			const storeTab = editorStore.tabs.find(x => x.id === tab.id);
+			if (storeTab) {
+				storeTab.lastSavedContent = normalizeLineEndings(res.content);
+				storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
+			}
+		} catch (err) {
+			// Silently handle - file might not exist anymore
+			AppError.handle('File:Read', err, {
+				showToast: false,
+				severity: 'warning',
+				additionalInfo: { path: tab.path }
+			});
+		}
+	}
+
+	// Refresh metadata and check file existence
+	await refreshMetadata(tab.id, tab.path);
+	await checkFileExists(tab.id);
+
+	// Watch file for changes
+	try {
+		await fileWatcher.watch(tab.path);
+	} catch (err) {
+		AppError.handle('FileWatcher:Watch', err, {
+			showToast: false,
+			severity: 'warning',
+			additionalInfo: { path: tab.path }
+		});
+	}
+}
+
 export async function persistSession(): Promise<void> {
 	if (!editorStore.sessionDirty) return;
 
@@ -149,50 +198,23 @@ export async function loadSession(): Promise<void> {
 					appState.activeTabId = convertedTabs[0].id;
 			}
 
-			// Load file metadata and check file existence
-			await Promise.all(
-				convertedTabs.filter(t => t.path).map(async (tab) => {
-					// If tab is dirty, reload the saved content to detect changes
-					if (tab.isDirty) {
-						try {
-							const res = await callBackend<FileContent>(
-								'read_text_file',
-								{ path: tab.path! },
-								'File:Read'
-							);
-							const storeTab = editorStore.tabs.find(x => x.id === tab.id);
-							if (storeTab) {
-								storeTab.lastSavedContent = normalizeLineEndings(res.content);
-								storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
-							}
-						} catch (err) {
-							// Silently handle - file might not exist anymore
-							AppError.handle('File:Read', err, {
-								showToast: false,
-								severity: 'warning',
-								additionalInfo: { path: tab.path }
-							});
-						}
-					}
+			// 1. Process the active tab immediately so user sees data ASAP
+			const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
+			if (activeTab) {
+				await initializeTabFileState(activeTab);
+			}
 
-					// Refresh metadata and check file existence
-					await refreshMetadata(tab.id, tab.path!);
-					await checkFileExists(tab.id);
+			// 2. Process remaining tabs in the background, staggered to prevent I/O spike
+			const remainingTabs = editorStore.tabs.filter(t => t.id !== appState.activeTabId);
 
-					// Watch file for changes
-					if (tab.path) {
-						try {
-							await fileWatcher.watch(tab.path);
-						} catch (err) {
-							AppError.handle('FileWatcher:Watch', err, {
-								showToast: false,
-								severity: 'warning',
-								additionalInfo: { path: tab.path }
-							});
-						}
-					}
-				})
-			);
+			(async () => {
+				for (const tab of remainingTabs) {
+					await initializeTabFileState(tab);
+					// Small delay to allow UI event loop to breathe
+					await new Promise(resolve => setTimeout(resolve, 20));
+				}
+			})();
+
 		} else {
 			// No session to restore, create new tab
 			appState.activeTabId = editorStore.addTab();
