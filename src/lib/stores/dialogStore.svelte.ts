@@ -8,31 +8,52 @@ export type DialogOptions = {
     cancelLabel?: string;
 };
 
+type DialogRequest = {
+    options: DialogOptions;
+    resolve: (value: DialogResult) => void;
+};
+
 class DialogStore {
     isOpen = $state(false);
     options = $state<DialogOptions>({ title: '', message: '' });
-    resolvePromise: ((value: DialogResult) => void) | null = null;
+
+    private queue: DialogRequest[] = [];
 
     confirm(options: DialogOptions): Promise<DialogResult> {
-        this.options = {
-            saveLabel: 'Save',
-            discardLabel: "Don't Save",
-            cancelLabel: 'Cancel',
-            ...options
-        };
-        this.isOpen = true;
-
         return new Promise((resolve) => {
-            this.resolvePromise = resolve;
+            this.queue.push({
+                options: {
+                    saveLabel: 'Save',
+                    discardLabel: "Don't Save",
+                    cancelLabel: 'Cancel',
+                    ...options
+                },
+                resolve
+            });
+
+            if (!this.isOpen) {
+                this.showNext();
+            }
         });
     }
 
-    resolve(result: DialogResult) {
-        this.isOpen = false;
-        if (this.resolvePromise) {
-            this.resolvePromise(result);
-            this.resolvePromise = null;
+    private showNext() {
+        if (this.queue.length === 0) {
+            this.isOpen = false;
+            return;
         }
+
+        const next = this.queue[0];
+        this.options = next.options;
+        this.isOpen = true;
+    }
+
+    resolve(result: DialogResult) {
+        const current = this.queue.shift();
+        if (current) {
+            current.resolve(result);
+        }
+        this.showNext();
     }
 }
 
