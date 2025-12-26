@@ -46,8 +46,8 @@
     <div class="ui-backdrop" onclick={handleBackdropClick}>
         <div class="ui-panel">
             <div class="ui-header">
-                <h3 class="text-sm font-semibold text-[var(--color-fg-default)]">Recent Tabs</h3>
-                <p class="text-ui-sm mt-1 text-[var(--color-fg-muted)]">Release Ctrl to switch</p>
+                <h3 class="text-sm font-semibold text-fg-default">Recent Tabs</h3>
+                <p class="text-ui-sm mt-1 text-fg-muted">Release Ctrl to switch</p>
             </div>
 
             <div class="flex-1 relative overflow-hidden flex flex-col min-h-0">
@@ -68,7 +68,7 @@
                             </div>
 
                             {#if tab.fileCheckFailed}
-                                <div class="mru-icon" style="--icon-color: var(--color-danger-text)">
+                                <div class="mru-icon text-danger-text">
                                     <CircleAlert size={14} class="shrink-0" />
                                 </div>
                             {:else if tab.path && tab.isDirty}
@@ -76,11 +76,11 @@
                                     <SquarePen size={14} class="shrink-0" />
                                 </div>
                             {:else if !tab.path}
-                                <div class="mru-icon" style="--icon-color: var(--color-accent-file)">
+                                <div class="mru-icon text-accent-file">
                                     <PencilLine size={14} class="shrink-0" />
                                 </div>
                             {:else}
-                                <div class="mru-icon" style="--icon-color: var(--color-accent-file)">
+                                <div class="mru-icon text-accent-file">
                                     <FileText size={14} class="shrink-0" />
                                 </div>
                             {/if}

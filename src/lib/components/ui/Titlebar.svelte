@@ -273,42 +273,41 @@
     }
 </script>
 
-<div class="h-9 flex items-center select-none w-full border-b shrink-0" style="background-color: var(--color-bg-titlebar); border-color: var(--color-border-main); transform: translateZ(0);" data-tauri-drag-region>
+<div class="h-9 flex items-center select-none w-full border-b shrink-0 bg-bg-titlebar border-border-main" style="transform: translateZ(0);" data-tauri-drag-region>
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
         <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-[var(--color-fg-muted)] outline-none" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings (Ctrl+,)"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-fg-muted outline-none" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings (Ctrl+,)"}>
             <Settings size={14} />
         </button>
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showCommandPalette = true)} use:tooltip={"Commands (Ctrl+P)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => (showCommandPalette = true)} use:tooltip={"Commands (Ctrl+P)"}>
             <Zap size={14} />
         </button>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-[var(--color-fg-muted)] transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
             <Bookmark size={14} />
         </button>
     </div>
 
     <div class="flex h-full pointer-events-auto items-center">
         <button
-            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors outline-none"
-            style="color: var(--color-fg-muted);"
+            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors outline-none text-fg-muted"
             onclick={() => {
                 appState.toggleSplitView();
                 saveSettings();
             }}
             use:tooltip={"Toggle Split Preview (Ctrl+\\)"}
         >
-            <Eye size={14} class={appState.splitView ? "text-[var(--color-fg-default)]" : "opacity-50"} />
+            <Eye size={14} class={appState.splitView ? "text-fg-default" : "opacity-50"} />
         </button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)] outline-none" onclick={() => appWindow.minimize()} use:tooltip={"Minimize"}><Minus size={16} /></button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-[var(--color-fg-muted)]" onclick={() => appWindow.toggleMaximize()} use:tooltip={"Maximize / Restore"}>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-fg-muted outline-none" onclick={() => appWindow.minimize()} use:tooltip={"Minimize"}><Minus size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-fg-muted" onclick={() => appWindow.toggleMaximize()} use:tooltip={"Maximize / Restore"}>
             {#if isMaximized}<Copy size={14} class="rotate-180" />{:else}<Square size={14} />{/if}
         </button>
-        <button class="h-full w-12 flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white text-[var(--color-fg-muted)] outline-none" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
+        <button class="h-full w-12 flex items-center justify-center hover:bg-danger hover:text-white text-fg-muted outline-none" onclick={closeApp} use:tooltip={"Close"}><X size={16} /></button>
     </div>
 </div>
 

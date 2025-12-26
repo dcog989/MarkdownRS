@@ -52,15 +52,14 @@
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden status-bar pointer-events-auto"
+    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden status-bar pointer-events-auto border-border-main"
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appState.statusBarTransparency}%);
-        border-color: var(--color-border-main);
     "
 >
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--color-fg-muted);">
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto text-fg-muted" style="opacity: {textOpacity};">
         <span class="metric-item min-w-[70px]" use:tooltip={"File Type"}>{fileType}</span>
-        <span class="metric-divider">|</span>
+        <span class="metric-divider opacity-40">|</span>
 
         <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>
             <span class="opacity-70">Ln</span>
@@ -96,8 +95,8 @@
         </div>
     </div>
 
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto" style="opacity: {textOpacity}; color: var(--color-fg-muted);">
-        <button class="hover:text-[var(--color-fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
+    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto text-fg-muted" style="opacity: {textOpacity};">
+        <button class="hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
             {lineEnding}
         </button>
 
@@ -105,11 +104,11 @@
             {encoding}
         </span>
 
-        <span class="font-bold w-8 text-center" style="color: {editorMetrics.insertMode === 'OVR' ? 'var(--color-danger)' : 'var(--color-accent-secondary)'}">
+        <span class="font-bold w-8 text-center {editorMetrics.insertMode === 'OVR' ? 'text-danger' : 'text-accent-secondary'}">
             {editorMetrics.insertMode}
         </span>
 
-        <button class="flex items-center gap-1 hover:text-[var(--color-fg-default)] hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"} style="color: {appState.editorWordWrap ? 'var(--color-accent-secondary)' : 'inherit'};">
+        <button class="flex items-center gap-1 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors {appState.editorWordWrap ? 'text-accent-secondary' : 'text-inherit'}" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"}>
             <TextWrap size={14} />
         </button>
     </div>
@@ -134,9 +133,5 @@
 
     button {
         pointer-events: auto;
-    }
-
-    .metric-divider {
-        opacity: 0.4;
     }
 </style>
