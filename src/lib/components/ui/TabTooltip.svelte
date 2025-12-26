@@ -24,18 +24,8 @@
             parts.push("Unsaved content");
         }
 
-        const timestamp = tab.modified || tab.created || "";
-        let formattedTime = "";
-
-        if (timestamp.includes(" / ")) {
-            const [datePart, timePart] = timestamp.split(" / ");
-            const formattedTimePart = timePart.replace(/(\d{2})(\d{2})(\d{2})/, "$1:$2:$3");
-            formattedTime = `${datePart}, ${formattedTimePart}`;
-        } else {
-            formattedTime = timestamp;
-        }
-
         const sizeStr = formatFileSize(tab.sizeBytes || 0);
+        const formattedTime = tab.formattedTimestamp || "";
 
         if (formattedTime) {
             parts.push(`${formattedTime}, ${sizeStr}`);
