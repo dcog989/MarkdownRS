@@ -4,7 +4,7 @@
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { ChevronDown, Plus } from "lucide-svelte";
-    import { onMount, tick } from "svelte";
+    import { onDestroy, onMount, tick } from "svelte";
     import { flip } from "svelte/animate";
     import { fade } from "svelte/transition";
     import MruTabsPopup from "./MruTabsPopup.svelte";
@@ -77,16 +77,9 @@
     onMount(() => {
         const interval = setInterval(() => (currentTime = Date.now()), 60000);
 
-        const handleGlobalPointerMove = (e: PointerEvent) => sortController.handleMove(e);
-        const handleGlobalPointerUp = (e: PointerEvent) => sortController.handleUp(e);
-
-        window.addEventListener("pointermove", handleGlobalPointerMove);
-        window.addEventListener("pointerup", handleGlobalPointerUp);
-        window.addEventListener("pointercancel", handleGlobalPointerUp);
-
         // Listen for forced scroll events
         const handleScrollToActive = () => scrollToActive();
-        window.addEventListener('scroll-to-active-tab', handleScrollToActive);
+        window.addEventListener("scroll-to-active-tab", handleScrollToActive);
 
         // MRU & Keyboard logic
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -125,13 +118,14 @@
 
         return () => {
             clearInterval(interval);
-            window.removeEventListener("pointermove", handleGlobalPointerMove);
-            window.removeEventListener("pointerup", handleGlobalPointerUp);
-            window.removeEventListener("pointercancel", handleGlobalPointerUp);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
-            window.removeEventListener('scroll-to-active-tab', handleScrollToActive);
+            window.removeEventListener("scroll-to-active-tab", handleScrollToActive);
         };
+    });
+
+    onDestroy(() => {
+        sortController.destroy();
     });
 
     // Fade Indicators
@@ -148,10 +142,10 @@
     async function scrollToActive() {
         await tick();
         if (!scrollContainer || isDragging) return;
-        
+
         // Wait a bit more for the flip animation to complete
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
         if (!activeEl) return;
 
@@ -171,9 +165,9 @@
     });
 </script>
 
-<div class="h-9 flex items-end w-full border-b relative shrink-0" style="background-color: var(--color-bg-panel); border-color: var(--color-border-main);">
-    <div class="relative h-8 border-r border-[var(--color-border-main)]">
-        <button type="button" class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-[var(--color-fg-muted)] text-xs" onclick={() => (showDropdown = !showDropdown)}>
+<div class="h-9 flex items-end w-full border-b relative shrink-0 bg-bg-panel border-border-main">
+    <div class="relative h-8 border-r border-border-main">
+        <button type="button" class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-fg-muted text-xs" onclick={() => (showDropdown = !showDropdown)}>
             <span>{editorStore.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
@@ -226,8 +220,8 @@
         {/if}
     </div>
 
-    <div class="h-full flex items-end border-l border-[var(--color-border-main)]">
-        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-[var(--color-fg-muted)] shrink-0" onclick={() => editorStore.addTab()}>
+    <div class="h-full flex items-end border-l border-border-main">
+        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-fg-muted shrink-0" onclick={() => editorStore.addTab()}>
             <Plus size={16} />
         </button>
     </div>

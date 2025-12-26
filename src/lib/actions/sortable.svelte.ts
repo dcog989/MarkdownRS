@@ -16,6 +16,10 @@ export class SortableController<T> {
     private currentDragX = 0;
     private layoutCache: { center: number; width: number }[] = [];
     private rafId: number | null = null;
+    private activeWrapper: HTMLElement | null = null;
+
+    private _handleMove = this.handleMove.bind(this);
+    private _handleUp = this.handleUp.bind(this);
 
     constructor(options: SortableOptions<T>) {
         this.options = options;
@@ -33,6 +37,8 @@ export class SortableController<T> {
         if (target.closest(".close-btn-wrapper") || target.closest("button")) return;
 
         e.preventDefault();
+
+        this.activeWrapper = wrapper;
         wrapper.setPointerCapture(e.pointerId);
 
         this.draggingId = id;
@@ -54,6 +60,10 @@ export class SortableController<T> {
         }
 
         this.options.onDragStart(id, e.clientX, offset);
+
+        window.addEventListener('pointermove', this._handleMove);
+        window.addEventListener('pointerup', this._handleUp);
+        window.addEventListener('pointercancel', this._handleUp);
     }
 
     handleMove(e: PointerEvent) {
@@ -79,15 +89,31 @@ export class SortableController<T> {
         });
     }
 
-    handleUp(e: PointerEvent, wrapper?: HTMLElement) {
+    handleUp(e: PointerEvent) {
         if (!this.draggingId) return;
 
-        if (wrapper) {
-            wrapper.releasePointerCapture(e.pointerId);
+        if (this.activeWrapper) {
+            this.activeWrapper.releasePointerCapture(e.pointerId);
+            this.activeWrapper = null;
         }
 
+        this.cleanupListeners();
         this.options.onDragEnd();
         this.reset();
+    }
+
+    private cleanupListeners() {
+        window.removeEventListener('pointermove', this._handleMove);
+        window.removeEventListener('pointerup', this._handleUp);
+        window.removeEventListener('pointercancel', this._handleUp);
+    }
+
+    destroy() {
+        this.cleanupListeners();
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
     }
 
     private reset() {
@@ -132,10 +158,9 @@ export class SortableController<T> {
             this.options.onSort(newItems);
 
             // Update layout cache by swapping the cached positions
-            // This avoids expensive getBoundingClientRect calls
             const [movedCache] = this.layoutCache.splice(currentIndex, 1);
             this.layoutCache.splice(targetIndex, 0, movedCache);
-            
+
             // Update the drag start position to the new position
             this.dragStartX = this.currentDragX;
         }
