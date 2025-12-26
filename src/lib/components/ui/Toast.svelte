@@ -1,7 +1,11 @@
 <script lang="ts">
     import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { AlertCircle, CheckCircle, Info, X, XCircle } from "lucide-svelte";
-    import { fade, fly } from "svelte/transition";
+    import { onMount } from "svelte";
+    import { fly } from "svelte/transition";
+
+    // Track which toasts have started their dismissal timer
+    const activeTimers = new Set<string>();
 
     function getIcon(type: string) {
         switch (type) {
@@ -28,27 +32,54 @@
                 return "#3b82f6"; // blue
         }
     }
+
+    function startDismissal(id: string, duration: number) {
+        if (activeTimers.has(id)) return;
+        activeTimers.add(id);
+
+        setTimeout(() => {
+            toastStore.dismiss(id);
+            activeTimers.delete(id);
+        }, duration);
+    }
+
+    function handleInteraction() {
+        if (toastStore.toasts.length === 0) return;
+
+        for (const toast of toastStore.toasts) {
+            // Only start timer if it hasn't started and has a valid duration
+            // Infinite toasts (duration 0) are excluded
+            if (!activeTimers.has(toast.id) && toast.duration > 0) {
+                startDismissal(toast.id, toast.duration);
+            }
+        }
+    }
+
+    onMount(() => {
+        // Monitor user interaction to start dismissal timers
+        const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
+
+        events.forEach((event) => {
+            window.addEventListener(event, handleInteraction, { capture: true, passive: true });
+        });
+
+        return () => {
+            events.forEach((event) => {
+                window.removeEventListener(event, handleInteraction, { capture: true });
+            });
+        };
+    });
 </script>
 
 <div class="toast-container">
     {#each toastStore.toasts as toast (toast.id)}
         {@const Icon = getIcon(toast.type)}
         {@const color = getColor(toast.type)}
-        <div
-            class="toast"
-            transition:fly={{ y: -20, duration: 200 }}
-            role="alert"
-            aria-live="polite"
-        >
+        <div class="toast" transition:fly={{ y: -20, duration: 200 }} role="alert" aria-live="polite">
             <div class="toast-content" style="border-left-color: {color}">
                 <Icon size={16} style="color: {color}; flex-shrink: 0;" />
                 <span class="toast-message">{toast.message}</span>
-                <button
-                    type="button"
-                    class="toast-close"
-                    onclick={() => toastStore.dismiss(toast.id)}
-                    aria-label="Dismiss"
-                >
+                <button type="button" class="toast-close" onclick={() => toastStore.dismiss(toast.id)} aria-label="Dismiss">
                     <X size={14} />
                 </button>
             </div>
@@ -83,7 +114,9 @@
         border: 1px solid var(--color-border-main);
         border-left: 3px solid;
         border-radius: 6px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+        box-shadow:
+            0 4px 6px -1px rgb(0 0 0 / 0.3),
+            0 2px 4px -2px rgb(0 0 0 / 0.3);
         color: var(--color-fg-default);
     }
 

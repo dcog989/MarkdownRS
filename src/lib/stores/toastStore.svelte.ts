@@ -1,3 +1,5 @@
+import { CONFIG } from "$lib/utils/config";
+
 export type ToastType = 'info' | 'success' | 'warning' | 'error';
 
 export type Toast = {
@@ -11,17 +13,14 @@ class ToastStore {
     toasts = $state<Toast[]>([]);
     private nextId = 0;
 
-    show(message: string, type: ToastType = 'info', duration: number = 3000) {
+    show(message: string, type: ToastType = 'info', duration: number = CONFIG.UI.TOAST_DURATION_MS) {
         const id = `toast-${this.nextId++}`;
         const toast: Toast = { id, message, type, duration };
-        
+
         this.toasts.push(toast);
-        
-        if (duration > 0) {
-            setTimeout(() => {
-                this.dismiss(id);
-            }, duration);
-        }
+
+        // Timeout handling is delegated to the Toast component
+        // to support "wait for user interaction" behavior
     }
 
     dismiss(id: string) {
