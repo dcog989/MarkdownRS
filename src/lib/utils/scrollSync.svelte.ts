@@ -8,18 +8,42 @@ class ScrollSyncManager {
     private isLocked = false;
     private master: 'editor' | 'preview' | null = null;
 
+    handleEvent(event: Event) {
+        if (this.editor && event.currentTarget === this.editor.scrollDOM) {
+            this.master = 'editor';
+        } else if (this.preview && event.currentTarget === this.preview) {
+            this.master = 'preview';
+        }
+    }
+
     registerEditor(view: EditorView) {
+        if (this.editor === view) return;
+
+        if (this.editor) {
+            const dom = this.editor.scrollDOM;
+            dom.removeEventListener('mousedown', this);
+            dom.removeEventListener('wheel', this);
+            dom.removeEventListener('keydown', this);
+        }
+
         this.editor = view;
         const dom = view.scrollDOM;
-        dom.addEventListener('mousedown', () => this.master = 'editor', { passive: true });
-        dom.addEventListener('wheel', () => this.master = 'editor', { passive: true });
-        dom.addEventListener('keydown', () => this.master = 'editor', { passive: true });
+        dom.addEventListener('mousedown', this, { passive: true });
+        dom.addEventListener('wheel', this, { passive: true });
+        dom.addEventListener('keydown', this, { passive: true });
     }
 
     registerPreview(el: HTMLElement) {
+        if (this.preview === el) return;
+
+        if (this.preview) {
+            this.preview.removeEventListener('mousedown', this);
+            this.preview.removeEventListener('wheel', this);
+        }
+
         this.preview = el;
-        el.addEventListener('mousedown', () => this.master = 'preview', { passive: true });
-        el.addEventListener('wheel', () => this.master = 'preview', { passive: true });
+        el.addEventListener('mousedown', this, { passive: true });
+        el.addEventListener('wheel', this, { passive: true });
     }
 
     async updateMap() {
