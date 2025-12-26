@@ -71,15 +71,21 @@ try {
 const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
 try {
     let content = fs.readFileSync(cargoTomlPath, 'utf8');
-    // Regex to match: version = "0.0.0" at the start of a line (handling the [package] section)
-    const regex = /^version = ".*?"/m;
+
+    // Regex explanation:
+    // 1. Start with [package] header
+    // 2. Match any character (including newlines via [\s\S]) non-greedily (*?)
+    // 3. Until we find 'version = "' at the start of a line (m flag)
+    // 4. Capture the version number
+    // 5. Capture the closing quote
+    const regex = /(\[package\][\s\S]*?^version = ")([^"]+)(")/m;
 
     if (regex.test(content)) {
-        content = content.replace(regex, `version = "${newVersion}"`);
+        content = content.replace(regex, `$1${newVersion}$3`);
         fs.writeFileSync(cargoTomlPath, content);
         console.log('✅ Updated src-tauri/Cargo.toml');
     } else {
-        console.error('❌ Could not find version string in Cargo.toml');
+        console.error('❌ Could not find [package] version string in Cargo.toml');
         process.exit(1);
     }
 } catch (error) {
