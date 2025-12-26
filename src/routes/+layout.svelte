@@ -2,7 +2,9 @@
     import ConfirmationModal from "$lib/components/ui/ConfirmationModal.svelte";
     import GlobalTooltip from "$lib/components/ui/GlobalTooltip.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
+    import { shortcutManager } from "$lib/utils/shortcuts";
     import { getThemeCss } from "$lib/utils/themes";
+    import { onMount } from "svelte";
     import "../app.css";
 
     let { children } = $props();
@@ -32,6 +34,18 @@
         }
 
         loadTheme();
+    });
+
+    onMount(() => {
+        const handleKeydown = (e: KeyboardEvent) => {
+            shortcutManager.handleKeyEvent(e);
+        };
+        // Use capture phase to ensure shortcuts are handled before other listeners if needed,
+        // matching the behavior of the previous manual implementations.
+        window.addEventListener("keydown", handleKeydown, { capture: true });
+        return () => {
+            window.removeEventListener("keydown", handleKeydown, { capture: true });
+        };
     });
 </script>
 

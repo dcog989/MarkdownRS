@@ -7,6 +7,7 @@
     import { callBackend } from "$lib/utils/backend";
     import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { saveSettings } from "$lib/utils/settings";
+    import { shortcutManager } from "$lib/utils/shortcuts";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { Bookmark, Copy, Eye, Minus, Settings, Square, X, Zap } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -187,6 +188,52 @@
         })
     );
 
+    function registerShortcuts() {
+        // Transformations (Ctrl+T)
+        const openTransform = () => {
+            showTransformModal = true;
+        };
+        shortcutManager.register({ id: "win-transform-ctrl", key: "t", ctrl: true, category: "Window", description: "Text Transformations", handler: openTransform });
+        shortcutManager.register({ id: "win-transform-meta", key: "t", meta: true, category: "Window", description: "Text Transformations", handler: openTransform });
+
+        // Command Palette (Ctrl+P)
+        const openPalette = () => {
+            showCommandPalette = true;
+        };
+        shortcutManager.register({ id: "win-palette-ctrl", key: "p", ctrl: true, category: "Window", description: "Command Palette", handler: openPalette });
+        shortcutManager.register({ id: "win-palette-meta", key: "p", meta: true, category: "Window", description: "Command Palette", handler: openPalette });
+
+        // Bookmarks (Ctrl+B)
+        const openBookmarks = () => {
+            showBookmarksModal = true;
+        };
+        shortcutManager.register({ id: "win-bookmarks-ctrl", key: "b", ctrl: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
+        shortcutManager.register({ id: "win-bookmarks-meta", key: "b", meta: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
+
+        // Settings (Ctrl+,)
+        const openSettings = () => {
+            showSettingsModal = true;
+        };
+        shortcutManager.register({ id: "win-settings-ctrl", key: ",", ctrl: true, category: "Window", description: "Settings", handler: openSettings });
+        shortcutManager.register({ id: "win-settings-meta", key: ",", meta: true, category: "Window", description: "Settings", handler: openSettings });
+
+        // Shortcuts Help (F1)
+        shortcutManager.register({
+            id: "win-help",
+            key: "F1",
+            category: "Window",
+            description: "Keyboard Shortcuts",
+            handler: () => {
+                showShortcutsModal = true;
+            },
+        });
+    }
+
+    function unregisterShortcuts() {
+        const ids = ["win-transform-ctrl", "win-transform-meta", "win-palette-ctrl", "win-palette-meta", "win-bookmarks-ctrl", "win-bookmarks-meta", "win-settings-ctrl", "win-settings-meta", "win-help"];
+        ids.forEach((id) => shortcutManager.unregister(id));
+    }
+
     onMount(() => {
         let unlisten: (() => void) | undefined;
         appWindow.isMaximized().then((m) => (isMaximized = m));
@@ -197,38 +244,18 @@
             })
             .then((u) => (unlisten = u));
 
-        const handleKeydown = (e: KeyboardEvent) => {
-            const isModifier = e.ctrlKey || e.metaKey;
-            if (isModifier && e.key.toLowerCase() === "t") {
-                e.preventDefault();
-                showTransformModal = true;
-            }
-            if (isModifier && e.key.toLowerCase() === "p") {
-                e.preventDefault();
-                showCommandPalette = true;
-            }
-            if (isModifier && e.key.toLowerCase() === "b") {
-                e.preventDefault();
-                showBookmarksModal = true;
-            }
-            if (isModifier && e.key === ",") {
-                e.preventDefault();
-                showSettingsModal = true;
-            }
-            if (e.key === "F1") {
-                e.preventDefault();
-                showShortcutsModal = true;
-            }
-        };
+        registerShortcuts();
 
-        window.addEventListener("keydown", handleKeydown);
-        window.addEventListener("open-shortcuts", () => {
+        // Listen for internal events (e.g. from Settings Modal button)
+        const handleOpenShortcuts = () => {
             showShortcutsModal = true;
-        });
+        };
+        window.addEventListener("open-shortcuts", handleOpenShortcuts);
 
         return () => {
             if (unlisten) unlisten();
-            window.removeEventListener("keydown", handleKeydown);
+            window.removeEventListener("open-shortcuts", handleOpenShortcuts);
+            unregisterShortcuts();
         };
     });
 
