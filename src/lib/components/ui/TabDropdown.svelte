@@ -155,9 +155,9 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-40" onclick={onClose}></div>
-    <div bind:this={dropdownContainerRef} class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50 theme-bg-panel theme-border-light max-h-[calc(100vh-120px)]" role="menu">
-        <div class="p-2 border-b shrink-0 theme-border-light">
-            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm theme-text-default" onkeydown={handleKeydown} />
+    <div bind:this={dropdownContainerRef} class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50 bg-bg-panel border-border-light max-h-[calc(100vh-120px)]" role="menu">
+        <div class="p-2 border-b shrink-0 border-border-light">
+            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm text-fg-default" onkeydown={handleKeydown} />
         </div>
 
         <div class="relative min-h-0 flex-1">
@@ -165,17 +165,17 @@
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appState.activeTabId === tab.id}
-                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'theme-bg-accent theme-text-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'theme-text-accent' : 'theme-text-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem">
+                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem">
                         {#if tab.fileCheckFailed}
-                            <CircleAlert size={14} class="shrink-0 theme-text-danger" />
+                            <CircleAlert size={14} class="shrink-0 text-danger-text" />
                         {:else if !tab.path && tab.isDirty}
                             <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else if !tab.path}
-                            <Pencil size={14} class="shrink-0 {isSelected ? 'theme-text-inverse' : 'theme-text-muted'}" />
+                            <Pencil size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
                         {:else if tab.isDirty}
                             <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else}
-                            <FileText size={14} class="shrink-0 {isSelected ? 'theme-text-inverse' : 'theme-text-muted'}" />
+                            <FileText size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
                         {/if}
                         <span class="truncate flex-1" title={tab.path || "Unsaved content"}>{getDropdownTitle(tab)}</span>
                     </button>

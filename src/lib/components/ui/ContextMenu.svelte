@@ -59,7 +59,7 @@
 >
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 theme-bg-panel theme-border-light"
+        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 bg-bg-panel border-border-light"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;
