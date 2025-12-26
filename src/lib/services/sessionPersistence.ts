@@ -209,9 +209,13 @@ export async function loadSession(): Promise<void> {
 
 			(async () => {
 				for (const tab of remainingTabs) {
+					// Check if tab is still open before processing (user might have closed it during the delay)
+					if (!editorStore.tabs.some(t => t.id === tab.id)) continue;
+
 					await initializeTabFileState(tab);
-					// Small delay to allow UI event loop to breathe
-					await new Promise(resolve => setTimeout(resolve, 20));
+
+					// Small delay to allow UI event loop to breathe between file operations
+					await new Promise(resolve => setTimeout(resolve, 50));
 				}
 			})();
 
