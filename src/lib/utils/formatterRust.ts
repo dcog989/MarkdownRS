@@ -1,5 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
-import { formatMarkdown as formatMarkdownAPI, type FormatterOptions as FormatterOptionsAPI } from './markdown';
+import type { FormatterOptions as FormatterOptionsAPI } from '$lib/types/markdown';
+import { formatMarkdown as formatMarkdownAPI } from './markdown';
 
 export interface FormatterOptions {
     listIndent: number;

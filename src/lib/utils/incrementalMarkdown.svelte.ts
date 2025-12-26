@@ -1,3 +1,4 @@
+import type { RenderResult } from '$lib/types/markdown';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
 import { callBackend } from './backend';
@@ -8,11 +9,6 @@ interface MarkdownBlock {
     content: string;
     html: string;
     hash: string;
-}
-
-interface RenderResult {
-    html: string;
-    line_map: Record<number, number>;
 }
 
 /**
@@ -36,7 +32,7 @@ export class IncrementalMarkdownRenderer {
 
         // Detect changes and render incrementally
         const changedBlocks = this.detectChanges(content);
-        
+
         if (changedBlocks.length === 0 && this.blocks.length > 0) {
             // No changes, return cached HTML
             return this.assembleHtml();
@@ -51,7 +47,7 @@ export class IncrementalMarkdownRenderer {
         // Render only changed blocks
         await this.renderBlocks(changedBlocks, gfm);
         this.lastContent = content;
-        
+
         return this.assembleHtml();
     }
 
@@ -160,7 +156,7 @@ export class IncrementalMarkdownRenderer {
             const startLine = i * this.BLOCK_SIZE;
             const endLine = Math.min((i + 1) * this.BLOCK_SIZE, lines.length);
             const blockContent = lines.slice(startLine, endLine).join('\n');
-            
+
             // Approximate HTML mapping (simplified)
             const htmlStartLine = Math.floor((startLine / lines.length) * htmlLines.length);
             const htmlEndLine = Math.floor((endLine / lines.length) * htmlLines.length);

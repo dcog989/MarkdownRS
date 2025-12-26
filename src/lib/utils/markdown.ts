@@ -1,22 +1,8 @@
 // TypeScript interfaces and functions for comrak-based markdown commands
 
+import type { FormatterOptions, MarkdownFlavor, RenderResult } from '$lib/types/markdown';
 import { invoke } from '@tauri-apps/api/core';
 import { IncrementalMarkdownRenderer } from './incrementalMarkdown.svelte';
-
-export type MarkdownFlavor = 'commonmark' | 'gfm';
-
-export interface FormatterOptions {
-  flavor?: MarkdownFlavor;
-  list_indent?: number;
-  bullet_char?: '-' | '*' | '+';
-  code_block_fence?: '```' | '~~~';
-  table_alignment?: boolean;
-}
-
-export interface RenderResult {
-  html: string;
-  line_map: Record<number, number>;
-}
 
 // Global incremental renderer instance (one per document)
 const rendererCache = new Map<string, IncrementalMarkdownRenderer>();
@@ -52,12 +38,12 @@ export function clearAllRendererCaches(): void {
 
 /**
  * Render markdown using the comrak engine with incremental rendering
- * 
+ *
  * @param content - The markdown content to render
  * @param flavor - Markdown flavor ('commonmark' or 'gfm'), defaults to 'gfm'
  * @param documentId - Optional document identifier for caching (defaults to 'default')
  * @returns Rendered HTML with line mapping for scroll sync
- * 
+ *
  * @example
  * ```typescript
  * const result = await renderMarkdown('# Hello\n\nWorld', 'gfm', 'doc-123');
@@ -72,7 +58,7 @@ export async function renderMarkdown(
   const gfm = !flavor || flavor === 'gfm';
   const renderer = getRenderer(documentId);
   const html = await renderer.render(content, gfm);
-  
+
   // Return with empty line_map for now (incremental rendering makes this complex)
   // The line mapping is less critical than performance for large files
   return { html, line_map: {} };
@@ -80,11 +66,11 @@ export async function renderMarkdown(
 
 /**
  * Format markdown using the comrak engine
- * 
+ *
  * @param content - The markdown content to format
  * @param options - Formatting options
  * @returns Formatted markdown string
- * 
+ *
  * @example
  * ```typescript
  * const formatted = await formatMarkdown('*  item1\n+  item2', {
@@ -110,7 +96,7 @@ export async function formatMarkdown(
 
 /**
  * Get list of supported markdown flavors
- * 
+ *
  * @returns Array of flavor names
  */
 export async function getMarkdownFlavors(): Promise<string[]> {

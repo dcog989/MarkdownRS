@@ -1,11 +1,7 @@
+import type { RenderResult } from '$lib/types/markdown';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
 import { callBackend } from './backend';
-
-export interface RenderResult {
-    html: string;
-    line_map: Record<number, number>;
-}
 
 /**
  * Renders markdown using the Rust backend
