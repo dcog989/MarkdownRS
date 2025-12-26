@@ -1,7 +1,7 @@
-import { getCurrentTimestamp } from "$lib/utils/date";
 import type { OperationId } from "$lib/config/textOperationsRegistry";
-import { appState } from "./appState.svelte";
+import { getCurrentTimestamp } from "$lib/utils/date";
 import { clearRendererCache } from "$lib/utils/markdown";
+import { appState } from "./appState.svelte";
 
 export type EditorTab = {
     id: string;
@@ -114,27 +114,41 @@ export class EditorStore {
         const index = this.tabs.findIndex(t => t.id === id);
         if (index !== -1) {
             const tab = this.tabs[index];
-            this.closedTabsHistory = [{ tab: { ...tab }, index }, ...this.closedTabsHistory.slice(0, 9)];
+            // Store up to 12 recently closed tabs
+            this.closedTabsHistory = [{ tab: { ...tab }, index }, ...this.closedTabsHistory.slice(0, 11)];
             this.tabs = this.tabs.filter(t => t.id !== id);
             this.mruStack = this.mruStack.filter(tId => tId !== id);
             this.sessionDirty = true;
-            
+
             // Clear renderer cache for this tab to free memory
             clearRendererCache(id);
         }
     }
 
     reopenLastClosed() {
-        const lastClosed = this.closedTabsHistory[0];
-        if (lastClosed) {
-            this.closedTabsHistory = this.closedTabsHistory.slice(1);
-            const insertIndex = Math.min(lastClosed.index, this.tabs.length);
-            const newTabs = [...this.tabs];
-            newTabs.splice(insertIndex, 0, lastClosed.tab);
-            this.tabs = newTabs;
-            this.pushToMru(lastClosed.tab.id);
-            this.sessionDirty = true;
+        if (this.closedTabsHistory.length > 0) {
+            this.reopenClosedTab(0);
         }
+    }
+
+    reopenClosedTab(historyIndex: number) {
+        if (historyIndex < 0 || historyIndex >= this.closedTabsHistory.length) return;
+
+        const entry = this.closedTabsHistory[historyIndex];
+
+        // Remove from history
+        const newHistory = [...this.closedTabsHistory];
+        newHistory.splice(historyIndex, 1);
+        this.closedTabsHistory = newHistory;
+
+        // Restore tab
+        const insertIndex = Math.min(entry.index, this.tabs.length);
+        const newTabs = [...this.tabs];
+        newTabs.splice(insertIndex, 0, entry.tab);
+        this.tabs = newTabs;
+
+        this.pushToMru(entry.tab.id);
+        this.sessionDirty = true;
     }
 
     pushToMru(id: string) {

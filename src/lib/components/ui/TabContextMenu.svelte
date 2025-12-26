@@ -1,10 +1,11 @@
 <script lang="ts">
+    import { tooltip } from "$lib/actions/tooltip";
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { exportService } from "$lib/services/exportService";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { save } from "@tauri-apps/plugin-dialog";
@@ -20,6 +21,7 @@
 
     let showCloseSubmenu = $state(false);
     let showExportSubmenu = $state(false);
+    let showRestoreSubmenu = $state(false);
 
     let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
@@ -129,6 +131,25 @@
             onClose();
         }
     }
+
+    function getHistoryTooltip(tab: EditorTab): string {
+        const lines = tab.content.slice(0, 300).split("\n").slice(0, 5);
+        const preview = lines.join("\n") + (tab.content.length > 300 ? "..." : "");
+
+        let title = tab.title;
+        if (tab.path) {
+            title += `\n${tab.path}`;
+        }
+
+        return `${title}\n\n-- Preview --\n${preview}`;
+    }
+
+    function formatTitle(title: string): string {
+        if (title.length > 20) {
+            return title.substring(0, 20) + "...";
+        }
+        return title;
+    }
 </script>
 
 <ContextMenu {x} {y} {onClose}>
@@ -226,7 +247,7 @@
                 editorStore.pushToMru(tabId);
                 await tick();
                 // Force scroll after DOM update
-                const event = new CustomEvent('scroll-to-active-tab');
+                const event = new CustomEvent("scroll-to-active-tab");
                 window.dispatchEvent(event);
                 onClose();
             }}
@@ -247,7 +268,7 @@
                 editorStore.pushToMru(tabId);
                 await tick();
                 // Force scroll after DOM update
-                const event = new CustomEvent('scroll-to-active-tab');
+                const event = new CustomEvent("scroll-to-active-tab");
                 window.dispatchEvent(event);
                 onClose();
             }}
@@ -279,17 +300,34 @@
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleCloseMany("all")}>Close All</button>
         </Submenu>
 
-        <button
-            type="button"
-            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-            disabled={editorStore.closedTabsHistory.length === 0}
-            onclick={() => {
-                editorStore.reopenLastClosed();
-                onClose();
-            }}
-        >
-            <Undo2 size={14} class="opacity-70" /><span>Reopen Last Closed</span>
-        </button>
+        <Submenu bind:show={showRestoreSubmenu} side={submenuSide}>
+            {#snippet trigger()}
+                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {editorStore.closedTabsHistory.length === 0 ? 'opacity-50' : ''}">
+                    <Undo2 size={14} class="mr-2 opacity-70" />
+                    <span>Reopen Tabs</span>
+                    <span class="ml-auto opacity-60">›</span>
+                </button>
+            {/snippet}
+
+            {#if editorStore.closedTabsHistory.length > 0}
+                <div class="px-3 py-1.5 text-xs opacity-50 font-semibold border-b border-[var(--color-border-main)]">RECENTLY CLOSED</div>
+                {#each editorStore.closedTabsHistory as item, i}
+                    <button
+                        type="button"
+                        class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
+                        use:tooltip={getHistoryTooltip(item.tab)}
+                        onclick={() => {
+                            editorStore.reopenClosedTab(i);
+                            onClose();
+                        }}
+                    >
+                        <span>{formatTitle(item.tab.customTitle || item.tab.title)}</span>
+                    </button>
+                {/each}
+            {:else}
+                <div class="px-3 py-2 text-sm text-[var(--color-fg-muted)]">History empty</div>
+            {/if}
+        </Submenu>
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
