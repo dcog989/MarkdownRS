@@ -50,6 +50,7 @@
 
         if (!isVisible) return;
 
+        // Track height is clientHeight - padding (top 2px + bottom 2px = 4px)
         const trackHeight = clientHeight - 4;
         const heightRatio = clientHeight / scrollHeight;
         thumbHeight = Math.max(20, trackHeight * heightRatio);
@@ -205,6 +206,6 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="scrollbar-track absolute right-0 top-[2px] bottom-[2px] z-[60] flex w-[12px] justify-center bg-transparent transition-opacity duration-200" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
-    <div bind:this={thumbRef} class="scrollbar-thumb absolute top-0 w-[4px] rounded-full bg-[var(--color-border-light)] hover:bg-[var(--color-fg-muted)] hover:w-[6px] active:bg-[var(--color-accent-primary)] active:w-[6px] transition-[width,background-color] duration-150 cursor-pointer" class:w-[6px]={isDragging} class:bg-[var(--color-accent-primary)]={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
+<div bind:this={trackRef} class="scrollbar-track group absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
+    <div bind:this={thumbRef} class="scrollbar-thumb absolute top-0 w-1 rounded-full bg-border-light hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:w-3 transition-[width,background-color] duration-150 cursor-pointer" class:w-3={isDragging} class:bg-accent-primary={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
 </div>
