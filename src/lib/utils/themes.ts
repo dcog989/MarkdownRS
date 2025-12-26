@@ -1,4 +1,5 @@
 import { callBackend } from "./backend";
+import { AppError } from "./errorHandling";
 
 const DEFAULT_DARK_CSS = `/* MarkdownRS Default Dark Theme */
 
@@ -262,7 +263,11 @@ export async function getThemeCss(themeName: string): Promise<string> {
     try {
         return await callBackend<string>("get_theme_css", { themeName }, "Settings:Load");
     } catch (e) {
-        console.error(`Failed to load theme '${themeName}':`, e);
+        AppError.handle('Settings:Load', e, {
+            showToast: false,
+            severity: 'warning',
+            userMessage: `Failed to load theme '${themeName}'`
+        });
         return "";
     }
 }

@@ -1,4 +1,5 @@
 import { callBackend } from './backend';
+import { AppError } from './errorHandling';
 
 export class SpellcheckState {
     dictionaryLoaded = $state(false);
@@ -14,6 +15,7 @@ async function loadCustomDictionary(): Promise<void> {
         const words = await callBackend<string[]>('get_custom_dictionary', {}, 'Dictionary:Add');
         spellcheckState.customDictionary = new Set(words.map(w => w.toLowerCase()));
     } catch (err) {
+        AppError.handle('Dictionary:Add', err, { showToast: false, severity: 'warning' });
         spellcheckState.customDictionary = new Set();
     }
 }
@@ -28,7 +30,7 @@ export async function initSpellcheck(): Promise<void> {
             await callBackend('init_spellchecker', {}, 'Editor:Init');
             spellcheckState.dictionaryLoaded = true;
         } catch (err) {
-            console.error("[Spellcheck] Error: Initialization failed:", err);
+            AppError.handle('Spellcheck:Init', err, { showToast: false, severity: 'warning' });
         }
     })();
 
@@ -51,6 +53,7 @@ export async function getSuggestions(word: string): Promise<string[]> {
     try {
         return await callBackend<string[]>('get_spelling_suggestions', { word }, 'Dictionary:Add');
     } catch (err) {
+        AppError.handle('Dictionary:Add', err, { showToast: false, severity: 'warning' });
         return [];
     }
 }
