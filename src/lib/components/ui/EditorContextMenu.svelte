@@ -5,7 +5,7 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
-    import { AlignLeft, ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, WandSparkles } from "lucide-svelte";
+    import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, TextAlignStart, WandSparkles } from "lucide-svelte";
     import { untrack } from "svelte";
 
     let {
@@ -37,6 +37,7 @@
     let showFormatMenu = $state(false);
     let showTransformMenu = $state(false);
     let suggestions = $state<string[]>([]);
+    let isLoadingSuggestions = $state(false);
 
     // Close all submenus except the one specified
     function closeOtherSubmenus(keepOpen: "sort" | "case" | "format" | "transform" | null = null) {
@@ -86,12 +87,33 @@
     // Transform Menu (Destructive/Structural)
     const transformOps: MenuOption[] = [{ id: "join-lines", label: "Join Lines" }, { id: "split-sentences", label: "Sentences to New Lines" }, { divider: true }, { id: "remove-duplicates", label: "Remove Duplicates" }, { id: "remove-unique", label: "Remove Unique" }, { divider: true }, { id: "remove-blank", label: "Remove Blank Lines" }, { id: "remove-all-spaces", label: "Remove All Spaces" }, { divider: true }, { id: "reverse", label: "Reverse Lines" }, { id: "shuffle", label: "Shuffle Lines" }];
 
+    // Effect to fetch suggestions when the menu becomes visible or word changes
     $effect(() => {
         const word = untrack(() => wordUnderCursor?.trim());
-        if (spellcheckState.dictionaryLoaded && word && !selectedText) {
-            getSuggestions(word).then((res) => (suggestions = res.slice(0, 5)));
+
+        // Only fetch suggestions if:
+        // 1. Dictionary is loaded
+        // 2. We have a word
+        // 3. No text is selected (context menu on a single word)
+        // 4. The word is actually invalid (misspelled) according to our current state
+        if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
+            isLoadingSuggestions = true;
+            console.log("[ContextMenu] Fetching suggestions for:", word);
+            getSuggestions(word)
+                .then((res) => {
+                    suggestions = res.slice(0, 5);
+                    console.log("[ContextMenu] Suggestions loaded:", suggestions);
+                })
+                .catch((err) => {
+                    console.error("[ContextMenu] Failed to load suggestions:", err);
+                    suggestions = [];
+                })
+                .finally(() => {
+                    isLoadingSuggestions = false;
+                });
         } else {
             suggestions = [];
+            isLoadingSuggestions = false;
         }
     });
 
@@ -113,17 +135,30 @@
             onClose();
         }
     }
+
+    // Enhanced onClose to reset loading state
+    function closeMenuAndReset() {
+        onClose();
+        isLoadingSuggestions = false;
+        suggestions = [];
+    }
 </script>
 
-<ContextMenu {x} {y} {onClose}>
+<ContextMenu {x} {y} onClose={closeMenuAndReset}>
     {#snippet children({ submenuSide })}
-        {#if suggestions.length > 0}
+        {#if suggestions.length > 0 || isLoadingSuggestions}
             <div class="px-3 py-1 text-ui-sm font-bold uppercase opacity-50 text-[var(--color-fg-muted)]">Suggestions</div>
-            {#each suggestions as s}
-                <button class="w-full text-left px-3 py-1.5 text-ui font-medium hover:bg-white/10 flex items-center gap-2" onclick={() => onReplaceWord?.(s)}>
-                    <Sparkles size={14} class="text-[var(--color-accent-secondary)]" /><span>{s}</span>
-                </button>
-            {/each}
+            {#if isLoadingSuggestions}
+                <div class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 opacity-70">
+                    <Sparkles size={14} class="text-[var(--color-accent-secondary)] animate-spin" /><span>Loading suggestions...</span>
+                </div>
+            {:else}
+                {#each suggestions as s}
+                    <button class="w-full text-left px-3 py-1.5 text-ui font-medium hover:bg-white/10 flex items-center gap-2" onclick={() => onReplaceWord?.(s)}>
+                        <Sparkles size={14} class="text-[var(--color-accent-secondary)]" /><span>{s}</span>
+                    </button>
+                {/each}
+            {/if}
             <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
         {/if}
 
@@ -132,7 +167,7 @@
                 class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                 onclick={() => {
                     onCut?.();
-                    onClose();
+                    closeMenuAndReset();
                 }}
             >
                 <Scissors size={14} /><span>Cut</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+X</span>
@@ -141,7 +176,7 @@
                 class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                 onclick={() => {
                     onCopy?.();
-                    onClose();
+                    closeMenuAndReset();
                 }}
             >
                 <ClipboardCopy size={14} /><span>Copy</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+C</span>
@@ -151,7 +186,7 @@
             class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
             onclick={() => {
                 onPaste?.();
-                onClose();
+                closeMenuAndReset();
             }}
         >
             <ClipboardPaste size={14} /><span>Paste</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+V</span>
@@ -194,7 +229,7 @@
             <Submenu bind:show={showFormatMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("format")}>
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
-                        <AlignLeft size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
+                        <TextAlignStart size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each formatOps as op}
@@ -231,7 +266,7 @@
                     onclick={async () => {
                         await addToDictionary(targetWord);
                         onDictionaryUpdate?.();
-                        onClose();
+                        closeMenuAndReset();
                     }}
                 >
                     <BookPlus size={14} /><span class="truncate">Add "{targetWord}" to Dictionary</span><span class="ml-auto text-ui-sm opacity-50">F8</span>
@@ -245,3 +280,11 @@
         {/if}
     {/snippet}
 </ContextMenu>
+
+<style>
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+</style>
