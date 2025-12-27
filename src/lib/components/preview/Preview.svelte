@@ -4,9 +4,10 @@
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
+    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
-    import { FlipHorizontal, FlipVertical } from "lucide-svelte";
+    import { FileText, FlipHorizontal, FlipVertical } from "lucide-svelte";
     import { onDestroy } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
@@ -16,6 +17,9 @@
     let lastRendered = $state("");
     let lastTabId = $state("");
     let debounceTimer: number | null = null;
+
+    let activeTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
+    let isMarkdown = $derived(activeTab ? isMarkdownFile(activeTab.path || activeTab.title) : true);
 
     $effect(() => {
         // Reset local state when switching tabs
@@ -28,6 +32,9 @@
         const tab = editorStore.tabs.find((t) => t.id === tabId);
         const content = appState.activeTabId === tabId ? tab?.content || "" : "";
 
+        // If not markdown, skip rendering
+        if (!isMarkdown) return;
+
         // Only render if content changed or if we don't have htmlContent yet
         if (content === lastRendered && htmlContent) return;
 
@@ -39,6 +46,7 @@
             htmlContent = result.html;
             lastRendered = content;
             if (container) {
+                // ScrollSyncManager handles event listeners internally
                 scrollSync.registerPreview(container);
                 await scrollSync.updateMap();
             }
@@ -55,7 +63,7 @@
     });
 </script>
 
-<div class="relative w-full h-full bg-[#1e1e1e] border-l" style="border-color: var(--color-border-main);">
+<div class="relative w-full h-full border-l" style="background-color: var(--color-bg-preview); border-color: var(--color-border-main);">
     <div class="group absolute top-2 right-2 z-10">
         <button type="button" class="p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appState.toggleOrientation()}>
             {#if appState.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
@@ -65,7 +73,6 @@
     <div
         bind:this={container}
         id="active-preview-container"
-        onscroll={() => scrollSync.syncEditorToPreview()}
         onclick={(e) => {
             const a = (e.target as HTMLElement).closest("a");
             if (a) {
@@ -75,23 +82,34 @@
         }}
         role="none"
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0"
-        style="background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
+        style="background-color: var(--color-bg-preview); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
     >
-        {#if isRendering && !htmlContent}<div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
-        {:else if !htmlContent}<div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
+        {#if !isMarkdown}
+            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">
+                <FileText size={64} class="mb-4" />
+                <p>Preview not available for this file type</p>
+            </div>
+        {:else if isRendering && !htmlContent}
+            <div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
+        {:else if !htmlContent}
+            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
                 <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
                 <h1 class="text-3xl font-bold">MarkdownRS</h1>
             </div>
-        {:else}{@html htmlContent}{/if}
+        {:else}
+            {@html htmlContent}
+        {/if}
     </div>
 
-    {#if container}<CustomScrollbar viewport={container} />{/if}
+    {#if container && isMarkdown}
+        <CustomScrollbar viewport={container} />
+    {/if}
 </div>
 
 <style>
     .preview-container {
         scrollbar-width: none;
-        padding-bottom: 2rem !important;
+        padding-bottom: 50vh !important;
     }
     .preview-container::-webkit-scrollbar {
         display: none;
