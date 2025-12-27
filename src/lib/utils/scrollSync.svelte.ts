@@ -77,8 +77,12 @@ class ScrollSyncManager {
 
         let targetY = 0;
 
+        // Force top alignment
+        if (scrollTop === 0) {
+            targetY = 0;
+        }
         // If editor is at the very bottom, keep preview at the very bottom
-        if (scrollRatio >= 0.99) {
+        else if (scrollRatio >= 0.99) {
             targetY = previewMax;
         } else {
             const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
@@ -125,6 +129,16 @@ class ScrollSyncManager {
         const scrollTop = this.preview.scrollTop;
         const maxScroll = this.preview.scrollHeight - this.preview.clientHeight;
         if (maxScroll <= 0) return;
+
+        // Force top alignment
+        if (scrollTop === 0) {
+            if (this.editor.scrollDOM.scrollTop !== 0) {
+                this.isLocked = true;
+                this.editor.scrollDOM.scrollTop = 0;
+                requestAnimationFrame(() => this.isLocked = false);
+            }
+            return;
+        }
 
         const padding = parseFloat(getComputedStyle(this.preview).paddingTop) || 0;
         const effectiveY = scrollTop + padding;

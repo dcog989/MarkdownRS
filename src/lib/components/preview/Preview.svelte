@@ -77,27 +77,21 @@
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0"
         style="background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
     >
-        {#if isRendering && !htmlContent}
-            <div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
-        {:else if !htmlContent}
-            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
+        {#if isRendering && !htmlContent}<div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
+        {:else if !htmlContent}<div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
                 <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
                 <h1 class="text-3xl font-bold">MarkdownRS</h1>
             </div>
-        {:else}
-            {@html htmlContent}
-        {/if}
+        {:else}{@html htmlContent}{/if}
     </div>
 
-    {#if container}
-        <CustomScrollbar viewport={container} />
-    {/if}
+    {#if container}<CustomScrollbar viewport={container} />{/if}
 </div>
 
 <style>
     .preview-container {
         scrollbar-width: none;
-        padding-bottom: 50vh !important;
+        padding-bottom: 2rem !important;
     }
     .preview-container::-webkit-scrollbar {
         display: none;
