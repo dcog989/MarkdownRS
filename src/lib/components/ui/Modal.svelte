@@ -31,6 +31,7 @@
     let content = $state<HTMLDivElement>();
 
     function handleBackdropClick(e: MouseEvent) {
+        // Only close on backdrop click, not content click
         if (e.target === e.currentTarget) {
             onClose();
         }
@@ -38,8 +39,19 @@
 
     function handleKeydown(e: KeyboardEvent) {
         if (isOpen && e.key === "Escape") {
+            e.preventDefault();
             e.stopPropagation();
             onClose();
+        }
+    }
+
+    // Prevent tab focus from escaping the modal
+    function handleFocusTrap(e: FocusEvent) {
+        if (!isOpen) return;
+        const modal = (e.target as HTMLElement)?.closest('.ui-panel');
+        if (!modal && isOpen) {
+            e.preventDefault();
+            e.stopPropagation();
         }
     }
 </script>
@@ -49,7 +61,14 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="ui-backdrop" class:pt-16={position === "top"} class:items-start={position === "top"} style="z-index: {zIndex};" onclick={handleBackdropClick}>
+    <div 
+        class="ui-backdrop" 
+        class:pt-16={position === "top"} 
+        class:items-start={position === "top"} 
+        style="z-index: {zIndex}; pointer-events: auto;" 
+        onclick={handleBackdropClick}
+        onfocusin={handleFocusTrap}
+    >
         <div class="ui-panel shadow-2xl" style="width: {width}; max-height: 85vh; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
             {#if header || title}

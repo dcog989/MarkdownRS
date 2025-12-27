@@ -23,6 +23,7 @@ export class AppState {
     editorWordWrap = $state(true);
     showWhitespace = $state(false);
     enableAutocomplete = $state(true);
+    autocompleteDelay = $state(250);
     recentChangesMode = $state<'disabled' | 'count' | 'time'>('disabled');
     recentChangesTimespan = $state(60);
     recentChangesCount = $state(10);

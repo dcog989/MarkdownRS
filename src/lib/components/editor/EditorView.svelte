@@ -4,7 +4,7 @@
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-    import { blockquotePlugin, codeBlockPlugin, highlightPlugin, inlineCodePlugin } from "$lib/utils/markdownExtensions";
+    import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { searchManager } from "$lib/utils/searchManager.svelte.ts";
@@ -111,6 +111,36 @@
     );
     // -----------------------
 
+    // Create debounced autocompletion configuration
+    let autocompletionConfig = $derived.by(() => {
+        if (!appState.enableAutocomplete) return [];
+        
+        const delay = appState.autocompleteDelay;
+        let timeoutId: number | null = null;
+        
+        return autocompletion({
+            activateOnTyping: true,
+            closeOnBlur: true,
+            defaultKeymap: true,
+            aboveCursor: false,
+            maxRenderedOptions: 100,
+            override: delay > 0 ? [async (context) => {
+                // Clear any pending timeout
+                if (timeoutId !== null) {
+                    clearTimeout(timeoutId);
+                }
+                
+                // Wait for the delay
+                await new Promise(resolve => {
+                    timeoutId = window.setTimeout(resolve, delay);
+                });
+                
+                // Call the default word completion
+                return completeAnyWord(context);
+            }] : undefined
+        });
+    });
+
     $effect(() => {
         cmView = view;
     });
@@ -133,6 +163,7 @@
             },
             ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
+            ".cm-gutterElement": { alignItems: "flex-start !important" },
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
                 backgroundColor: "var(--color-selection-bg) !important",
             },
@@ -245,7 +276,7 @@
     $effect(() => {
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(appState.enableAutocomplete ? autocompletion() : []), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent)))), whitespaceComp.reconfigure(appState.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [])],
+                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent)))), whitespaceComp.reconfigure(appState.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [])],
             });
     });
 
@@ -267,6 +298,8 @@
             blockquotePlugin,
             codeBlockPlugin,
             inlineCodePlugin,
+            horizontalRulePlugin,
+            bulletPointPlugin,
             keymap.of([
                 indentWithTab,
                 {

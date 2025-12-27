@@ -123,13 +123,9 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
 
     await refreshCustomDictionary();
 
-    const updatedCache = new Set<string>();
-    for (const word of spellcheckState.misspelledCache) {
-        if (!spellcheckState.customDictionary.has(word)) {
-            updatedCache.add(word);
-        }
-    }
-    spellcheckState.misspelledCache = updatedCache;
+    // Clear the misspelled cache to force a full re-check
+    // The linter will rebuild it with all misspelled words
+    spellcheckState.misspelledCache = new Set<string>();
 
     triggerImmediateLint(view);
 }

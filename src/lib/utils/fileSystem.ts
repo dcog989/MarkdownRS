@@ -62,8 +62,6 @@ export async function openFile(path?: string): Promise<void> {
 		await fileWatcher.watch(sanitizedPath);
 		appState.activeTabId = id;
 		editorStore.pushToMru(id);
-
-		if (path) toastStore.success(`Opened: ${fileName}`, 2000);
 	} catch (err) {
 		AppError.handle('File:Read', err, {
 			showToast: true,

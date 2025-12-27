@@ -165,7 +165,7 @@
     });
 </script>
 
-<div class="h-9 flex items-end w-full border-b relative shrink-0 bg-bg-panel border-border-main">
+<div class="h-8 flex items-stretch w-full border-b relative shrink-0 bg-bg-panel border-border-main">
     <div class="relative h-8 border-r border-border-main">
         <button type="button" class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-fg-muted text-xs" onclick={() => (showDropdown = !showDropdown)}>
             <span>{editorStore.tabs.length}</span>
@@ -187,9 +187,9 @@
             <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20" transition:fade={{ duration: 150 }} style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
         {/if}
 
-        <section bind:this={scrollContainer} class="w-full h-full flex items-end overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
+        <section bind:this={scrollContainer} class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
             {#each editorStore.tabs as tab (tab.id)}
-                <div class="h-full flex items-end shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
+                <div class="h-full flex items-stretch shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
                     <TabButton
                         {tab}
                         isActive={appState.activeTabId === tab.id}
@@ -212,7 +212,6 @@
                     </div>
                 {/if}
             {/if}
-            <div class="w-4 h-full shrink-0"></div>
         </section>
 
         {#if showRightFade}
@@ -220,8 +219,8 @@
         {/if}
     </div>
 
-    <div class="h-full flex items-end border-l border-border-main">
-        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 ml-1 text-fg-muted shrink-0" onclick={() => {
+    <div class="h-full flex items-stretch border-l border-border-main">
+        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 text-fg-muted shrink-0" onclick={() => {
             const newTabId = editorStore.addTab();
             appState.activeTabId = newTabId;
         }}>

@@ -72,17 +72,20 @@ class ScrollSyncManager {
         const maxScroll = scroller.scrollHeight - scroller.clientHeight;
         if (maxScroll <= 0) return;
 
-        const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
-        const lineNum = this.editor.state.doc.lineAt(lineBlock.from).number;
-        const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-        const targetLine = lineNum + fraction;
-
+        const scrollRatio = scrollTop / maxScroll;
         const previewMax = this.preview.scrollHeight - this.preview.clientHeight;
+
         let targetY = 0;
 
-        if (scrollTop / maxScroll > 0.99) {
+        // If editor is at the very bottom, keep preview at the very bottom
+        if (scrollRatio >= 0.99) {
             targetY = previewMax;
         } else {
+            const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
+            const lineNum = this.editor.state.doc.lineAt(lineBlock.from).number;
+            const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+            const targetLine = lineNum + fraction;
+
             // Find the segment containing targetLine
             let i = 0;
             for (; i < this.lineMap.length; i++) {
@@ -103,6 +106,9 @@ class ScrollSyncManager {
                 const padding = parseFloat(getComputedStyle(this.preview).paddingTop) || 0;
                 targetY -= padding;
             }
+
+            // Always clamp to valid scroll range to prevent jumps
+            targetY = Math.max(0, Math.min(targetY, previewMax));
         }
 
         if (Math.abs(this.preview.scrollTop - targetY) > 1) {

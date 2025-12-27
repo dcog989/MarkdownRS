@@ -134,3 +134,72 @@ export const inlineCodePlugin = ViewPlugin.fromClass(class {
 }, {
     decorations: v => v.decorations
 });
+
+// Horizontal Rule Styling (---, -----, etc.)
+const horizontalRuleDeco = Decoration.mark({ class: "cm-hr" });
+
+function getHorizontalRuleDecorations(view: EditorView) {
+    const builder = new RangeSetBuilder<Decoration>();
+    for (const { from, to } of view.visibleRanges) {
+        for (let pos = from; pos <= to;) {
+            const line = view.state.doc.lineAt(pos);
+            // Match lines with 3 or more dashes, optionally with leading/trailing whitespace
+            const match = /^\s*-{3,}\s*$/.exec(line.text);
+            if (match) {
+                builder.add(line.from, line.to, horizontalRuleDeco);
+            }
+            pos = line.to + 1;
+        }
+    }
+    return builder.finish();
+}
+
+export const horizontalRulePlugin = ViewPlugin.fromClass(class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+        this.decorations = getHorizontalRuleDecorations(view);
+    }
+    update(update: ViewUpdate) {
+        if (update.docChanged || update.viewportChanged) {
+            this.decorations = getHorizontalRuleDecorations(update.view);
+        }
+    }
+}, {
+    decorations: v => v.decorations
+});
+
+// Bullet Point Styling (- at start of line)
+const bulletPointDeco = Decoration.mark({ class: "cm-bullet" });
+
+function getBulletPointDecorations(view: EditorView) {
+    const builder = new RangeSetBuilder<Decoration>();
+    for (const { from, to } of view.visibleRanges) {
+        for (let pos = from; pos <= to;) {
+            const line = view.state.doc.lineAt(pos);
+            // Match lines starting with optional whitespace, then a dash, then a space
+            const match = /^(\s*)-\s/.exec(line.text);
+            if (match) {
+                // Style only the dash character itself
+                const dashStart = line.from + match[1].length;
+                const dashEnd = dashStart + 1;
+                builder.add(dashStart, dashEnd, bulletPointDeco);
+            }
+            pos = line.to + 1;
+        }
+    }
+    return builder.finish();
+}
+
+export const bulletPointPlugin = ViewPlugin.fromClass(class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+        this.decorations = getBulletPointDecorations(view);
+    }
+    update(update: ViewUpdate) {
+        if (update.docChanged || update.viewportChanged) {
+            this.decorations = getBulletPointDecorations(update.view);
+        }
+    }
+}, {
+    decorations: v => v.decorations
+});

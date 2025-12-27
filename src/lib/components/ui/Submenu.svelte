@@ -22,6 +22,9 @@
     }>();
 
     let hoverTimer: number | null = null;
+    let submenuEl = $state<HTMLDivElement>();
+    let actualSide = $state<"left" | "right">(side);
+    let adjustedTop = $state(0);
     const HOVER_DELAY = 200;
 
     function handleMouseEnter() {
@@ -37,6 +40,39 @@
         }, HOVER_DELAY);
     }
 
+    function adjustPosition() {
+        if (!submenuEl) return;
+
+        const rect = submenuEl.getBoundingClientRect();
+        const winWidth = window.innerWidth;
+        const winHeight = window.innerHeight;
+
+        // Check horizontal overflow and adjust side if needed
+        if (side === "right" && rect.right > winWidth - 5) {
+            actualSide = "left";
+        } else if (side === "left" && rect.left < 5) {
+            actualSide = "right";
+        } else {
+            actualSide = side;
+        }
+
+        // Check vertical overflow and adjust top position if needed
+        let newTop = 0;
+        if (rect.bottom > winHeight - 32) {
+            newTop = winHeight - 32 - rect.bottom;
+        } else if (rect.top < 5) {
+            newTop = 5 - rect.top;
+        }
+        adjustedTop = newTop;
+    }
+
+    $effect(() => {
+        if (show) {
+            // Wait for next tick to ensure element is rendered
+            requestAnimationFrame(() => adjustPosition());
+        }
+    });
+
     onDestroy(() => {
         if (hoverTimer) clearTimeout(hoverTimer);
     });
@@ -48,7 +84,15 @@
     </div>
 
     {#if show}
-        <div class="absolute top-0 flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[70vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-50 whitespace-nowrap bg-bg-panel border-border-light" style={side === "left" ? "right: 100%;" : "left: 100%;"} onmouseenter={handleMouseEnter} onmouseleave={handleMouseLeave} role="menu" tabindex="-1">
+        <div
+            bind:this={submenuEl}
+            class="absolute flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[70vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-50 whitespace-nowrap bg-bg-panel border-border-light"
+            style="{actualSide === 'left' ? 'right: 100%;' : 'left: 100%;'} top: {adjustedTop}px;"
+            onmouseenter={handleMouseEnter}
+            onmouseleave={handleMouseLeave}
+            role="menu"
+            tabindex="-1"
+        >
             {@render children()}
         </div>
     {/if}

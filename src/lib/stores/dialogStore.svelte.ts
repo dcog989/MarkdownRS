@@ -9,6 +9,7 @@ export type DialogOptions = {
 };
 
 type DialogRequest = {
+    id: string;
     options: DialogOptions;
     resolve: (value: DialogResult) => void;
 };
@@ -18,10 +19,13 @@ class DialogStore {
     options = $state<DialogOptions>({ title: '', message: '' });
 
     private queue: DialogRequest[] = [];
+    private idCounter = 0;
 
     confirm(options: DialogOptions): Promise<DialogResult> {
         return new Promise((resolve) => {
+            const id = `dialog-${++this.idCounter}`;
             this.queue.push({
+                id,
                 options: {
                     saveLabel: 'Save',
                     discardLabel: "Don't Save",
@@ -49,10 +53,18 @@ class DialogStore {
     }
 
     resolve(result: DialogResult) {
+        // Safety check: only resolve if we have dialogs in queue
+        if (this.queue.length === 0) {
+            console.warn('dialogStore.resolve() called with empty queue');
+            return;
+        }
+
         const current = this.queue.shift();
         if (current) {
             current.resolve(result);
         }
+        
+        // Show next dialog or close
         this.showNext();
     }
 }

@@ -34,6 +34,9 @@
     let hasOtherTabs = $derived(editorStore.tabs.length > 1);
     let hasSavedTabs = $derived(editorStore.tabs.some((t) => !t.isDirty && t.id !== tabId));
     let hasUnsavedTabs = $derived(editorStore.tabs.some((t) => t.isDirty && t.id !== tabId));
+    let hasCloseableTabsToRight = $derived(tabIndex < editorStore.tabs.length - 1 && editorStore.tabs.slice(tabIndex + 1).some((t) => !t.isPinned));
+    let hasCloseableTabsToLeft = $derived(tabIndex > 0 && editorStore.tabs.slice(0, tabIndex).some((t) => !t.isPinned));
+    let hasCloseableOtherTabs = $derived(editorStore.tabs.some((t) => t.id !== tabId && !t.isPinned));
 
     async function handleSave() {
         const prevActive = appState.activeTabId;
@@ -277,7 +280,7 @@
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
         <!-- Closure Operations -->
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={() => requestCloseTab(tabId)}>
+        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={isPinned} onclick={() => requestCloseTab(tabId)}>
             <X size={14} class="opacity-70" /><span>Close</span>
         </button>
 
@@ -290,9 +293,9 @@
                 </button>
             {/snippet}
 
-            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasTabsToRight} onclick={() => handleCloseMany("right")}>Close to the Right</button>
-            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasTabsToLeft} onclick={() => handleCloseMany("left")}>Close to the Left</button>
-            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasOtherTabs} onclick={() => handleCloseMany("others")}>Close Others</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasCloseableTabsToRight} onclick={() => handleCloseMany("right")}>Close to the Right</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasCloseableTabsToLeft} onclick={() => handleCloseMany("left")}>Close to the Left</button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasCloseableOtherTabs} onclick={() => handleCloseMany("others")}>Close Others</button>
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasSavedTabs} onclick={() => handleCloseMany("saved")}>Close Saved</button>
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" disabled={!hasUnsavedTabs} onclick={() => handleCloseMany("unsaved")}>Close Not Saved</button>
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleCloseMany("all")}>Close All</button>
@@ -361,8 +364,16 @@
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
         <!-- Destruction -->
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-danger-text)" disabled={!tab?.path} onclick={handleSendToRecycleBin}>
+        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-danger-text)" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
             <Trash2 size={14} /><span>Delete to Recycle Bin</span>
         </button>
     {/snippet}
 </ContextMenu>
+
+<style>
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+</style>

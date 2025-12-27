@@ -61,10 +61,12 @@
     });
 </script>
 
-<div class="relative w-full h-full bg-[#1e1e1e] border-l group" style="border-color: var(--color-border-main);">
-    <button type="button" class="absolute top-2 right-2 z-10 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appState.toggleOrientation()}>
-        {#if appState.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
-    </button>
+<div class="relative w-full h-full bg-[#1e1e1e] border-l" style="border-color: var(--color-border-main);">
+    <div class="group absolute top-2 right-2 z-10">
+        <button type="button" class="p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appState.toggleOrientation()}>
+            {#if appState.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
+        </button>
+    </div>
 
     <div
         bind:this={container}

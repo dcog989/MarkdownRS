@@ -368,6 +368,36 @@ body {
     padding-bottom: 0.0625rem;
 }
 
+/* Horizontal Rule Styling */
+.cm-hr {
+    color: var(--color-border-light);
+    font-weight: bold;
+    display: block;
+    text-align: center;
+    opacity: 0.8;
+    position: relative;
+    padding: 0.5em 0;
+}
+
+.cm-hr::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background-color: var(--color-border-light);
+    opacity: 0.6;
+    z-index: -1;
+}
+
+/* Bullet Point Styling */
+.cm-bullet {
+    color: var(--color-accent-secondary);
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
 /* Settings Modal Specifics */
 select:focus {
     border-color: var(--color-accent-primary) !important;

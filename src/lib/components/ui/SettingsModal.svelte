@@ -50,6 +50,7 @@
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
         { key: "showWhitespace", label: "Show Whitespace", type: "boolean", category: "Editor", defaultValue: false },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
+        { key: "autocompleteDelay", label: "Autocomplete Delay (ms)", type: "number", category: "Editor", defaultValue: 250, min: 0, max: 2000 },
         { key: "defaultIndent", label: "Default Indentation (spaces)", type: "number", category: "Editor", defaultValue: 2, min: 2, max: 8 },
         { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },
         { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "disabled", options: ["disabled", "count", "time"], optionLabels: ["Disabled", "Last N Changes", "Time-Based"] },
