@@ -7,7 +7,9 @@
     import Toast from "$lib/components/ui/Toast.svelte";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
 
@@ -23,6 +25,10 @@
 
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
+
+    let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
+    let isMarkdown = $derived(activeTab ? isMarkdownFile(activeTab.path || activeTab.title) : true);
+    let showPreview = $derived(appState.splitView && isMarkdown);
 
     // Global Shortcut Handler (Document Level, before CodeMirror can intercept)
     function handleDocumentKeydown(e: KeyboardEvent) {
@@ -68,6 +74,10 @@
             case "\\":
                 e.preventDefault();
                 e.stopImmediatePropagation();
+                if (!isMarkdown) {
+                    toastStore.warning("Preview not available for this file type");
+                    return;
+                }
                 appState.toggleSplitView();
                 saveSettings();
                 return;
@@ -141,10 +151,10 @@
 
         // Listen for file open events from command-line arguments
         let unlistenFileOpen: (() => void) | null = null;
-        import('@tauri-apps/api/event').then(({ listen }) => {
-            listen<string>('open-file-from-args', async (event) => {
+        import("@tauri-apps/api/event").then(({ listen }) => {
+            listen<string>("open-file-from-args", async (event) => {
                 const filePath = event.payload;
-                console.log('Opening file from command line:', filePath);
+                console.log("Opening file from command line:", filePath);
                 await openFileByPath(filePath);
             }).then((unlisten) => {
                 unlistenFileOpen = unlisten;
@@ -241,11 +251,11 @@
             {#if appState.activeTabId}
                 {#key appState.activeTabId}
                     <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
-                        <div style="flex: {appState.splitView ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
+                        <div style="flex: {showPreview ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
                             <Editor tabId={appState.activeTabId} />
                         </div>
 
-                        {#if appState.splitView}
+                        {#if showPreview}
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div
                                 class="z-20 transition-colors duration-150"
@@ -261,7 +271,7 @@
                             ></div>
                         {/if}
 
-                        {#if appState.splitView}
+                        {#if showPreview}
                             <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
                                 <Preview tabId={appState.activeTabId} />
                             </div>
@@ -281,7 +291,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Toast Notifications -->
     <Toast />
 {/if}

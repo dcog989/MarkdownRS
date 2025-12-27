@@ -5,12 +5,11 @@ import { loadSession, persistSession, persistSessionDebounced } from '$lib/servi
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { dialogStore } from '$lib/stores/dialogStore.svelte.ts';
 import { editorStore } from '$lib/stores/editorStore.svelte.ts';
-import { toastStore } from '$lib/stores/toastStore.svelte.ts';
 import { AppError } from '$lib/utils/errorHandling';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { callBackend } from './backend';
-import { isTextFile } from './fileValidation';
+import { isTextFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 // Re-export service functions for backward compatibility with existing imports
@@ -23,10 +22,16 @@ export async function openFile(path?: string): Promise<void> {
 		if (!targetPath) {
 			const selected = await open({
 				multiple: false,
-				filters: [{
-					name: 'Markdown',
-					extensions: ['md', 'markdown', 'txt', 'rs', 'js', 'ts', 'svelte', 'json']
-				}]
+				filters: [
+					{
+						name: 'Text Files',
+						extensions: SUPPORTED_TEXT_EXTENSIONS
+					},
+					{
+						name: 'All Files',
+						extensions: ['*']
+					}
+				]
 			});
 			if (!selected || typeof selected !== 'string') return;
 			targetPath = selected;
@@ -108,7 +113,12 @@ export async function saveCurrentFile(): Promise<boolean> {
 	try {
 		let savePath = tab.path;
 		if (!savePath) {
-			savePath = await save({ filters: [{ name: 'Markdown', extensions: ['md'] }] });
+			savePath = await save({
+				filters: [
+					{ name: 'Markdown', extensions: ['md'] },
+					{ name: 'All Files', extensions: ['*'] }
+				]
+			});
 		}
 
 		if (savePath) {

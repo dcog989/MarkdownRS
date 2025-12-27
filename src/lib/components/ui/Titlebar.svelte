@@ -4,12 +4,14 @@
     import { exportService } from "$lib/services/exportService";
     import { appState } from "$lib/stores/appState.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
+    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { shortcutManager } from "$lib/utils/shortcuts";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Bookmark, Copy, Eye, Minus, Settings, Square, X, Zap } from "lucide-svelte";
+    import { Bookmark, Copy, Eye, EyeOff, Minus, Settings, Square, X, Zap } from "lucide-svelte";
     import { onMount } from "svelte";
     import AboutModal from "./AboutModal.svelte";
     import BookmarksModal from "./BookmarksModal.svelte";
@@ -26,6 +28,18 @@
     let showShortcutsModal = $state(false);
     let showBookmarksModal = $state(false);
     let showCommandPalette = $state(false);
+
+    let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
+    let isMarkdown = $derived(activeTab ? isMarkdownFile(activeTab.path || activeTab.title) : true);
+
+    function toggleSplit() {
+        if (!isMarkdown) {
+            toastStore.warning("Preview not available for this file type");
+            return;
+        }
+        appState.toggleSplitView();
+        saveSettings();
+    }
 
     // All Commands with proper categories
     const allCommands: Command[] = [
@@ -107,8 +121,7 @@
             label: "View: Toggle Split Preview",
             shortcut: "Ctrl+\\",
             action: () => {
-                appState.toggleSplitView();
-                saveSettings();
+                toggleSplit();
             },
         },
         {
@@ -293,15 +306,12 @@
     </div>
 
     <div class="flex h-full pointer-events-auto items-center">
-        <button
-            class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors outline-none text-fg-muted"
-            onclick={() => {
-                appState.toggleSplitView();
-                saveSettings();
-            }}
-            use:tooltip={"Toggle Split Preview (Ctrl+\\)"}
-        >
-            <Eye size={14} class={appState.splitView ? "text-fg-default" : "opacity-50"} />
+        <button class="h-full px-3 flex items-center justify-center hover:bg-white/10 focus:outline-none transition-colors outline-none text-fg-muted" class:opacity-50={!isMarkdown} class:cursor-not-allowed={!isMarkdown} onclick={toggleSplit} use:tooltip={isMarkdown ? "Toggle Split Preview (Ctrl+\\)" : "Preview not available"}>
+            {#if !isMarkdown}
+                <EyeOff size={14} class="opacity-50" />
+            {:else}
+                <Eye size={14} class={appState.splitView ? "text-fg-default" : "opacity-50"} />
+            {/if}
         </button>
         <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-fg-muted outline-none" onclick={() => appWindow.minimize()} use:tooltip={"Minimize"}><Minus size={16} /></button>
         <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-fg-muted" onclick={() => appWindow.toggleMaximize()} use:tooltip={"Maximize / Restore"}>

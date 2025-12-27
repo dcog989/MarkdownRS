@@ -3,6 +3,7 @@
     import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
+    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
@@ -114,30 +115,35 @@
     // Create debounced autocompletion configuration
     let autocompletionConfig = $derived.by(() => {
         if (!appState.enableAutocomplete) return [];
-        
+
         const delay = appState.autocompleteDelay;
         let timeoutId: number | null = null;
-        
+
         return autocompletion({
             activateOnTyping: true,
             closeOnBlur: true,
             defaultKeymap: true,
             aboveCursor: false,
             maxRenderedOptions: 100,
-            override: delay > 0 ? [async (context) => {
-                // Clear any pending timeout
-                if (timeoutId !== null) {
-                    clearTimeout(timeoutId);
-                }
-                
-                // Wait for the delay
-                await new Promise(resolve => {
-                    timeoutId = window.setTimeout(resolve, delay);
-                });
-                
-                // Call the default word completion
-                return completeAnyWord(context);
-            }] : undefined
+            override:
+                delay > 0
+                    ? [
+                          async (context) => {
+                              // Clear any pending timeout
+                              if (timeoutId !== null) {
+                                  clearTimeout(timeoutId);
+                              }
+
+                              // Wait for the delay
+                              await new Promise((resolve) => {
+                                  timeoutId = window.setTimeout(resolve, delay);
+                              });
+
+                              // Call the default word completion
+                              return completeAnyWord(context);
+                          },
+                      ]
+                    : undefined,
         });
     });
 
@@ -294,12 +300,6 @@
             EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
             filePathPlugin,
             filePathTheme,
-            highlightPlugin,
-            blockquotePlugin,
-            codeBlockPlugin,
-            inlineCodePlugin,
-            horizontalRulePlugin,
-            bulletPointPlugin,
             keymap.of([
                 indentWithTab,
                 {
@@ -358,7 +358,10 @@
             eventHandlers,
         ];
 
-        if (!filename.endsWith(".txt")) extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }));
+        // Conditionally apply Markdown syntax highlighting and extensions
+        if (isMarkdownFile(filename)) {
+            extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin);
+        }
 
         extensions.push(
             EditorView.updateListener.of((update) => {

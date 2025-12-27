@@ -14,15 +14,11 @@
     let isRendering = $state(false);
     let htmlContent = $state("");
     let lastRendered = $state("");
-    // Initialize with empty string to avoid "state_referenced_locally" warning.
-    // The effect will synchronize it immediately on mount.
     let lastTabId = $state("");
     let debounceTimer: number | null = null;
 
     $effect(() => {
-        // Reset local state when switching tabs, but DO NOT clear the renderer cache here.
-        // We want the cache to persist across tab switches for performance.
-        // The cache is explicitly cleared in editorStore.closeTab().
+        // Reset local state when switching tabs
         if (lastTabId !== tabId) {
             lastTabId = tabId;
             lastRendered = "";
@@ -56,8 +52,6 @@
 
     onDestroy(() => {
         if (debounceTimer) clearTimeout(debounceTimer);
-        // Do NOT clear renderer cache here. This component is destroyed on tab switch,
-        // and we want to keep the cache. Cleanup is handled by editorStore.closeTab.
     });
 </script>
 
@@ -83,15 +77,21 @@
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0"
         style="background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
     >
-        {#if isRendering && !htmlContent}<div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
-        {:else if !htmlContent}<div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
+        {#if isRendering && !htmlContent}
+            <div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
+        {:else if !htmlContent}
+            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
                 <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
                 <h1 class="text-3xl font-bold">MarkdownRS</h1>
             </div>
-        {:else}{@html htmlContent}{/if}
+        {:else}
+            {@html htmlContent}
+        {/if}
     </div>
 
-    {#if container}<CustomScrollbar viewport={container} />{/if}
+    {#if container}
+        <CustomScrollbar viewport={container} />
+    {/if}
 </div>
 
 <style>
