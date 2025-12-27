@@ -4,266 +4,286 @@ import { tick } from "svelte";
 class ScrollSyncManager {
     private editor: EditorView | null = null;
     private preview: HTMLElement | null = null;
-
-    // Cache for line mapping: [{ line: 1, y: 0 }, { line: 10, y: 500 }, ...]
     private lineMap: { line: number; y: number }[] = [];
 
-    // State for locking mechanism to prevent circular scrolling
-    private isSyncing = false;
-    private pendingSource: 'editor' | 'preview' | null = null;
-    private lockTimeout: number | null = null;
+    // State to prevent circular scroll loops
+    // 'editor' = Editor is being scrolled by user, sync Preview
+    // 'preview' = Preview is being scrolled by user, sync Editor
+    // null = Idle
+    private activeSource: 'editor' | 'preview' | null = null;
+    private clearSourceTimer: number | null = null;
+    private resizeObserver: ResizeObserver | null = null;
 
     registerEditor(view: EditorView) {
+        if (this.editor === view) return;
+
+        if (this.editor) {
+            this.editor.scrollDOM.removeEventListener('scroll', this.onEditorScroll);
+        }
+
         this.editor = view;
+        // Bind to class instance
+        this.onEditorScroll = this.onEditorScroll.bind(this);
+        view.scrollDOM.addEventListener('scroll', this.onEditorScroll, { passive: true });
     }
 
     registerPreview(el: HTMLElement) {
+        if (this.preview === el) return;
+
+        if (this.preview) {
+            this.preview.removeEventListener('scroll', this.onPreviewScroll);
+            this.resizeObserver?.disconnect();
+        }
+
         this.preview = el;
+        this.onPreviewScroll = this.onPreviewScroll.bind(this);
+        el.addEventListener('scroll', this.onPreviewScroll, { passive: true });
+
+        // Observe content changes to rebuild map
+        this.resizeObserver = new ResizeObserver(() => {
+            // Debounce map updates slightly
+            requestAnimationFrame(() => this.updateMap());
+        });
+
+        // Observe direct children (prose wrapper)
+        Array.from(el.children).forEach(child => {
+            this.resizeObserver?.observe(child);
+        });
     }
 
-    /**
-     * Rebuilds the mapping between markdown source lines and preview pixel offsets.
-     * Call this when preview content changes.
-     */
     async updateMap() {
         if (!this.preview) return;
 
-        // Wait for DOM update to ensure accurate measurements
         await tick();
 
         const container = this.preview;
         const containerRect = container.getBoundingClientRect();
+        const scrollTop = container.scrollTop;
 
-        // Get all elements with a source line mapping
         const elements = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
 
-        this.lineMap = elements.map(el => {
+        // 1. Build Raw Map: Line -> Pixel Y (absolute in scrollable area)
+        let rawMap = elements.map(el => {
             const rect = el.getBoundingClientRect();
-            // Calculate Y position relative to the top of the SCROLLABLE content
-            // scrollTop adds the scrolled amount, rect.top - containerRect.top gives relative screen pos
-            const y = rect.top - containerRect.top + container.scrollTop;
+            // Calculate Y relative to the top of the scrollable content
+            // (Visual Top - Container Top) + Scrolled Amount
+            const y = (rect.top - containerRect.top) + scrollTop;
             const line = parseInt(el.getAttribute("data-source-line") || "0", 10);
             return { line, y };
         })
-            .filter(item => !isNaN(item.line))
-            .sort((a, b) => a.line - b.line);
+            .filter(item => !isNaN(item.line));
 
-        // Ensure we have a start point
-        if (this.lineMap.length === 0) {
-            this.lineMap = [{ line: 0, y: 0 }];
-        }
+        // 2. Sanitize Map
+        // Ensure strictly increasing Lines and mostly increasing Ys
+        // We filter out Ys that go backwards (rare, but possible with some CSS layouts)
+        if (rawMap.length > 0) {
+            rawMap.sort((a, b) => a.line - b.line);
 
-        // Force the first mapped element to start at 0 if it's the first line or close to it
-        // This ensures the top of the document syncs to the top of the preview
-        if (this.lineMap[0].line <= 1) {
-            this.lineMap[0].y = 0;
+            this.lineMap = [rawMap[0]];
+            for (let i = 1; i < rawMap.length; i++) {
+                const prev = this.lineMap[this.lineMap.length - 1];
+                const curr = rawMap[i];
+
+                // Only keep points that advance in both Line and Y
+                // Or if Y is same but Line advances (horizontal elements)
+                if (curr.line > prev.line && curr.y >= prev.y) {
+                    this.lineMap.push(curr);
+                }
+            }
         } else {
+            this.lineMap = [];
+        }
+
+        // 3. Anchor Boundaries
+        // Force Line 1 -> 0px
+        if (this.lineMap.length === 0 || this.lineMap[0].line > 1) {
             this.lineMap.unshift({ line: 1, y: 0 });
+        } else {
+            this.lineMap[0].y = 0; // Force line 1 to top
+        }
+
+        // If we have an editor, map the last line to the full height
+        // This ensures the bottom of the editor maps to the bottom of the preview
+        if (this.editor) {
+            const totalLines = this.editor.state.doc.lines;
+            const scrollHeight = container.scrollHeight;
+
+            // Only add bottom anchor if the last mapped point isn't already at the bottom/end
+            const last = this.lineMap[this.lineMap.length - 1];
+            if (last.line < totalLines) {
+                this.lineMap.push({ line: totalLines, y: scrollHeight });
+            }
         }
     }
 
-    /**
-     * Triggered when Editor scrolls. Syncs Preview to match.
-     */
-    syncPreviewToEditor() {
-        // If we are currently syncing driven by the preview, ignore this event
-        if (this.isSyncing && this.pendingSource === 'preview') return;
+    private onEditorScroll() {
+        // If the preview is currently driving the scroll (user dragging preview scrollbar),
+        // ignore the echo event from the editor.
+        if (this.activeSource === 'preview') return;
 
-        this.pendingSource = 'editor';
-        this.setLock();
-
-        // Use RAF to decouple calculation from the scroll event
-        requestAnimationFrame(() => this.performSyncToPreview());
+        this.setActiveSource('editor');
+        requestAnimationFrame(() => this.syncPreview());
     }
 
-    /**
-     * Triggered when Preview scrolls. Syncs Editor to match.
-     */
-    syncEditorToPreview() {
-        // If we are currently syncing driven by the editor, ignore this event
-        if (this.isSyncing && this.pendingSource === 'editor') return;
+    private onPreviewScroll() {
+        // If the editor is currently driving, ignore echo.
+        if (this.activeSource === 'editor') return;
 
-        this.pendingSource = 'preview';
-        this.setLock();
-
-        requestAnimationFrame(() => this.performSyncToEditor());
+        this.setActiveSource('preview');
+        requestAnimationFrame(() => this.syncEditor());
     }
 
-    private setLock() {
-        this.isSyncing = true;
-        if (this.lockTimeout) clearTimeout(this.lockTimeout);
-        // Short timeout to release lock after scroll events settle
-        this.lockTimeout = window.setTimeout(() => {
-            this.isSyncing = false;
-            this.pendingSource = null;
-        }, 50);
+    private setActiveSource(source: 'editor' | 'preview') {
+        this.activeSource = source;
+        if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
+        // Release lock after scroll events stop firing (debounce)
+        this.clearSourceTimer = window.setTimeout(() => {
+            this.activeSource = null;
+        }, 150);
     }
 
-    /**
-     * Logic: Map Editor Position -> Preview Position
-     */
-    private performSyncToPreview() {
+    private syncPreview() {
         if (!this.editor || !this.preview) return;
 
         const editorScroll = this.editor.scrollDOM;
-        const previewScroll = this.preview;
+        const scrollTop = editorScroll.scrollTop;
+        const scrollHeight = editorScroll.scrollHeight;
+        const clientHeight = editorScroll.clientHeight;
+        const maxScroll = scrollHeight - clientHeight;
 
-        const editorTop = editorScroll.scrollTop;
-        const editorHeight = editorScroll.scrollHeight - editorScroll.clientHeight;
-        const previewHeight = previewScroll.scrollHeight - previewScroll.clientHeight;
-
-        // 1. Explicit Boundary Handling (Top)
-        // If editor is at absolute top, force preview to absolute top
-        if (editorTop <= 0) {
-            if (previewScroll.scrollTop !== 0) {
-                previewScroll.scrollTop = 0;
-            }
+        // 1. Handle Boundaries explicitly
+        if (scrollTop <= 0) {
+            this.preview.scrollTop = 0;
+            return;
+        }
+        if (scrollTop >= maxScroll - 1) {
+            this.preview.scrollTop = this.preview.scrollHeight - this.preview.clientHeight;
             return;
         }
 
-        // 2. Explicit Boundary Handling (Bottom)
-        // If editor is at bottom, force preview to bottom
-        if (editorTop >= editorHeight - 1) {
-            if (previewScroll.scrollTop !== previewHeight) {
-                previewScroll.scrollTop = previewHeight;
-            }
+        // 2. Fallback for sparse maps (e.g. giant code block)
+        // If map has too few points, use simple percentage
+        if (this.lineMap.length < 2) {
+            const pct = scrollTop / maxScroll;
+            this.preview.scrollTop = pct * (this.preview.scrollHeight - this.preview.clientHeight);
             return;
         }
 
-        // 3. Calculate Editor Line
-        // CodeMirror returns the line block at the visual top
-        const lineBlock = this.editor.lineBlockAtHeight(editorTop);
-        const lineNum = this.editor.state.doc.lineAt(lineBlock.from).number;
-        // Calculate fractional progress through that line (for smooth scrolling)
-        const lineProgress = (editorTop - lineBlock.top) / Math.max(1, lineBlock.height);
-        const targetLine = lineNum + lineProgress;
+        // 3. Calculate current visual line in Editor
+        const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
+        const docLine = this.editor.state.doc.lineAt(lineBlock.from);
 
-        // 4. Map to Preview Y
-        const targetY = this.interpolate(targetLine, 'line', 'y');
+        // Add fractional progress through the line for smoothness
+        // (scrollTop - lineBlock.top) is pixels scrolled PAST the start of the line
+        const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+        const currentLine = docLine.number + fraction;
+
+        // 4. Map Line -> Preview Y
+        const targetY = this.interpolate(currentLine, 'line', 'y');
 
         // 5. Scroll Preview
-        // Only scroll if difference is significant to avoid jitter
-        if (Math.abs(previewScroll.scrollTop - targetY) > 1) {
-            previewScroll.scrollTop = targetY;
+        // Use a threshold to prevent micro-adjustments
+        if (Math.abs(this.preview.scrollTop - targetY) > 2) {
+            this.preview.scrollTop = targetY;
         }
     }
 
-    /**
-     * Logic: Map Preview Position -> Editor Position
-     */
-    private performSyncToEditor() {
+    private syncEditor() {
         if (!this.editor || !this.preview) return;
 
-        const previewScroll = this.preview;
-        const editorScroll = this.editor.scrollDOM;
+        const scrollTop = this.preview.scrollTop;
+        const scrollHeight = this.preview.scrollHeight;
+        const clientHeight = this.preview.clientHeight;
+        const maxScroll = scrollHeight - clientHeight;
 
-        const previewTop = previewScroll.scrollTop;
-        const previewHeight = previewScroll.scrollHeight - previewScroll.clientHeight;
-        const editorHeight = editorScroll.scrollHeight - editorScroll.clientHeight;
-
-        // 1. Explicit Boundary Handling (Top)
-        if (previewTop <= 0) {
-            if (editorScroll.scrollTop !== 0) {
-                editorScroll.scrollTop = 0;
-            }
+        // 1. Boundaries
+        if (scrollTop <= 0) {
+            this.editor.scrollDOM.scrollTop = 0;
+            return;
+        }
+        if (scrollTop >= maxScroll - 1) {
+            this.editor.scrollDOM.scrollTop = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
             return;
         }
 
-        // 2. Explicit Boundary Handling (Bottom)
-        if (previewTop >= previewHeight - 1) {
-            if (editorScroll.scrollTop !== editorHeight) {
-                editorScroll.scrollTop = editorHeight;
-            }
+        // 2. Fallback for sparse maps
+        if (this.lineMap.length < 2) {
+            const pct = scrollTop / maxScroll;
+            const editorMax = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            this.editor.scrollDOM.scrollTop = pct * editorMax;
             return;
         }
 
-        // 3. Map to Editor Line
-        const targetLine = this.interpolate(previewTop, 'y', 'line');
+        // 3. Map Preview Y -> Editor Line
+        const targetLine = this.interpolate(scrollTop, 'y', 'line');
 
-        // 4. Convert Line -> Editor Pixels
+        // 4. Convert Line -> Editor Y
         const docLines = this.editor.state.doc.lines;
         const safeLine = Math.max(1, Math.min(targetLine, docLines));
 
-        const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(Math.floor(safeLine)).from);
-        const lineFraction = safeLine % 1;
-        const targetY = lineInfo.top + (lineInfo.height * lineFraction);
+        const lineInt = Math.floor(safeLine);
+        const lineFrac = safeLine - lineInt;
+
+        // Get pixel position of that line
+        const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
+        const targetY = lineInfo.top + (lineInfo.height * lineFrac);
 
         // 5. Scroll Editor
-        if (Math.abs(editorScroll.scrollTop - targetY) > 1) {
-            editorScroll.scrollTop = targetY;
+        if (Math.abs(this.editor.scrollDOM.scrollTop - targetY) > 2) {
+            this.editor.scrollDOM.scrollTop = targetY;
         }
     }
 
     /**
-     * Linear interpolation between mapping points.
-     * Finds the two points bounding 'value' and interpolates the output.
+     * Interpolates value from Input Domain to Output Range using the lineMap.
      */
-    private interpolate(value: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
+    private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
         const map = this.lineMap;
-        if (map.length === 0) return 0;
 
-        // Find the index where map[i] >= value
-        let idx = -1;
-        for (let i = 0; i < map.length; i++) {
-            if (map[i][inputKey] >= value) {
-                idx = i;
-                break;
+        // Find the segment [p1, p2] where p1[input] <= val <= p2[input]
+        // Binary search for efficiency
+        let lo = 0, hi = map.length - 1;
+
+        while (lo <= hi) {
+            const mid = (lo + hi) >> 1;
+            if (map[mid][inputKey] < val) {
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
             }
         }
 
-        // Exact match or value is smaller than first point
-        if (idx === 0) return map[0][outputKey];
+        // lo is the index of the first element > val.
+        // so lo-1 is the index of the first element <= val (our p1).
+        const idx = Math.max(0, Math.min(lo - 1, map.length - 2));
 
-        // Value is larger than last point
-        if (idx === -1) {
-            return map[map.length - 1][outputKey];
-        }
+        const p1 = map[idx];
+        const p2 = map[idx + 1];
 
-        // Interpolate between idx-1 and idx
-        const p1 = map[idx - 1];
-        const p2 = map[idx];
+        // Fallbacks if map is degenerate
+        if (!p2) return p1 ? p1[outputKey] : 0;
 
-        const rangeInput = p2[inputKey] - p1[inputKey];
-        const rangeOutput = p2[outputKey] - p1[outputKey];
+        const inputSpan = p2[inputKey] - p1[inputKey];
+        const outputSpan = p2[outputKey] - p1[outputKey];
 
-        if (rangeInput === 0) return p1[outputKey];
+        if (inputSpan === 0) return p1[outputKey];
 
-        const progress = (value - p1[inputKey]) / rangeInput;
-        return p1[outputKey] + (progress * rangeOutput);
+        const ratio = (val - p1[inputKey]) / inputSpan;
+        return p1[outputKey] + (ratio * outputSpan);
     }
 
-    /**
-     * Programmatic smooth scroll handler (e.g. for keyboard navigation).
-     * Forces the source to 'editor' so the preview follows.
-     */
     handleFastScroll(v: EditorView, targetY: number) {
-        this.editor = v; // Ensure ref is current
-        this.pendingSource = 'editor';
-        this.setLock();
+        // Force lock to editor
+        this.setActiveSource('editor');
 
-        const start = v.scrollDOM.scrollTop;
-        const dist = targetY - start;
-        const duration = 200;
-        const startTime = performance.now();
+        // Extend lock time to cover animation
+        if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
+        this.clearSourceTimer = window.setTimeout(() => {
+            this.activeSource = null;
+        }, 300);
 
-        const step = (now: number) => {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const ease = 1 - Math.pow(1 - progress, 3); // Cubic ease out
-
-            v.scrollDOM.scrollTop = start + (dist * ease);
-
-            // Explicitly trigger sync calculation
-            this.performSyncToPreview();
-
-            if (progress < 1) {
-                requestAnimationFrame(step);
-            } else {
-                this.pendingSource = null;
-                this.isSyncing = false;
-            }
-        };
-        requestAnimationFrame(step);
+        v.scrollDOM.scrollTop = targetY;
+        this.syncPreview();
     }
 }
 
