@@ -140,16 +140,17 @@ const horizontalRuleDeco = Decoration.mark({ class: "cm-hr" });
 
 function getHorizontalRuleDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
+    const tree = syntaxTree(view.state);
+
     for (const { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to;) {
-            const line = view.state.doc.lineAt(pos);
-            // Match lines with 3 or more dashes, optionally with leading/trailing whitespace
-            const match = /^\s*-{3,}\s*$/.exec(line.text);
-            if (match) {
-                builder.add(line.from, line.to, horizontalRuleDeco);
+        tree.iterate({
+            from, to,
+            enter: (node) => {
+                if (node.name === "HorizontalRule") {
+                    builder.add(node.from, node.to, horizontalRuleDeco);
+                }
             }
-            pos = line.to + 1;
-        }
+        });
     }
     return builder.finish();
 }
