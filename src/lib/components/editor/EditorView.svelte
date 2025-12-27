@@ -297,11 +297,47 @@
             autoComp.of([]),
             recentComp.of([]),
             closeBrackets(),
-            EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
+            EditorState.languageData.of(() => [
+                {
+                    autocomplete: completeAnyWord,
+                    closeBrackets: { brackets: ["(", "[", "{", "'", '"', "`"] },
+                },
+            ]),
             filePathPlugin,
             filePathTheme,
             keymap.of([
                 indentWithTab,
+                {
+                    key: "`",
+                    run: (view) => {
+                        const { state, dispatch } = view;
+                        const { from, empty } = state.selection.main;
+                        if (!empty) return false;
+
+                        // Check if we are inside an empty pair of backticks: `|`
+                        const surround = state.sliceDoc(from - 1, from + 1);
+
+                        if (surround === "``") {
+                            const line = state.doc.lineAt(from);
+                            const textBefore = line.text.slice(0, from - 1 - line.from);
+
+                            // Only trigger if we are at the start of the line (plus indentation)
+                            if (/^\s*$/.test(textBefore)) {
+                                const indent = textBefore;
+                                dispatch({
+                                    changes: {
+                                        from: from - 1,
+                                        to: from + 1,
+                                        insert: "```\n" + indent + "\n" + indent + "```",
+                                    },
+                                    selection: { anchor: from + 3 + indent.length },
+                                });
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+                },
                 {
                     key: "Insert",
                     run: () => {
