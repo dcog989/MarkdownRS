@@ -1,10 +1,11 @@
 import { appState } from '$lib/stores/appState.svelte.ts';
 import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
+import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { debounce } from '$lib/utils/timing';
-import { checkFileExists, normalizeLineEndings, refreshMetadata } from './fileMetadata';
+import { checkAndReloadIfChanged, checkFileExists, normalizeLineEndings, refreshMetadata, reloadFileContent } from './fileMetadata';
 import { fileWatcher } from './fileWatcher';
 
 type RustTabState = {
@@ -101,13 +102,25 @@ const persistenceManager = new SessionPersistenceManager();
 
 /**
  * Initializes a single tab's file state:
+ * - Checks if file changed on disk and reloads if necessary
  * - Reloads content if dirty and changed on disk (safety check)
  * - Refreshes metadata
  * - Checks existence
  * - Sets up watcher
  */
-async function initializeTabFileState(tab: EditorTab): Promise<void> {
+export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 	if (!tab.path) return;
+
+	// Lazy Loading Check:
+	// If the file changed on disk while we weren't watching it (e.g. startup), reload it.
+	// We must do this BEFORE refreshing metadata, as refreshMetadata updates the 'modified' timestamp
+	// which checkAndReloadIfChanged uses for comparison.
+	if (!tab.isDirty) {
+		const hasChanged = await checkAndReloadIfChanged(tab.id);
+		if (hasChanged) {
+			await reloadFileContent(tab.id);
+		}
+	}
 
 	// If tab is dirty, reload the saved content to detect changes
 	if (tab.isDirty) {
@@ -204,26 +217,12 @@ export async function loadSession(): Promise<void> {
 					appState.activeTabId = convertedTabs[0].id;
 			}
 
-			// 1. Process the active tab immediately so user sees data ASAP
+			// Process only the active tab immediately
+			// Other tabs will be lazy-loaded when focused via Editor.svelte
 			const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
 			if (activeTab) {
 				await initializeTabFileState(activeTab);
 			}
-
-			// 2. Process remaining tabs in the background, staggered to prevent I/O spike
-			const remainingTabs = editorStore.tabs.filter(t => t.id !== appState.activeTabId);
-
-			(async () => {
-				for (const tab of remainingTabs) {
-					// Check if tab is still open before processing (user might have closed it during the delay)
-					if (!editorStore.tabs.some(t => t.id === tab.id)) continue;
-
-					await initializeTabFileState(tab);
-
-					// Small delay to allow UI event loop to breathe between file operations
-					await new Promise(resolve => setTimeout(resolve, 50));
-				}
-			})();
 
 		} else {
 			// No session to restore, create new tab
@@ -239,4 +238,4 @@ export async function loadSession(): Promise<void> {
 	}
 }
 
-export const persistSessionDebounced = debounce(persistSession, 500);
+export const persistSessionDebounced = debounce(persistSession, CONFIG.SESSION.SAVE_DEBOUNCE_MS);

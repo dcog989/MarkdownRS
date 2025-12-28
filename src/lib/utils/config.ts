@@ -37,6 +37,7 @@ export const CONFIG = {
     // Session & Auto-save
     SESSION: {
         AUTO_SAVE_INTERVAL_MS: 30000,
+        SAVE_DEBOUNCE_MS: 500,
         SAVE_ON_BLUR: true,
     },
 

@@ -3,11 +3,11 @@
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { getBackendCommand, type OperationId } from "$lib/config/textOperationsRegistry";
+    import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
     import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { checkAndReloadIfChanged, checkFileExists, navigateToPath, reloadFileContent } from "$lib/utils/fileSystem";
+    import { navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
-    import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { transformText } from "$lib/utils/textTransformsRust";
@@ -56,14 +56,12 @@
                 });
             }
 
-            // 2. Tab Switch Logic
+            // 2. Tab Switch Logic (Lazy Load)
             if (tabId !== previousTabId) {
-                (async () => {
-                    if (await checkAndReloadIfChanged(tabId)) {
-                        await reloadFileContent(tabId);
-                    }
-                    await checkFileExists(tabId);
-                })();
+                const currentTab = editorStore.tabs.find((t) => t.id === tabId);
+                if (currentTab) {
+                    initializeTabFileState(currentTab).catch(console.error);
+                }
                 previousTabId = tabId;
             }
         });
@@ -128,7 +126,6 @@
             showContextMenu = true;
             return true;
         },
-        scroll: () => scrollSync.syncPreviewToEditor(),
     });
 
     onMount(() => {
