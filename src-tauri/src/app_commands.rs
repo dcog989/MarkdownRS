@@ -635,15 +635,11 @@ pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
 #[tauri::command]
 pub async fn transform_text_content(
     content: String,
-    operation: String,
+    operation: crate::text_transforms::TextOperation,
     indent_width: Option<usize>,
 ) -> Result<String, String> {
-    transform_text(&content, &operation, indent_width.unwrap_or(4)).map_err(|e| {
-        log::error!(
-            "Failed to transform text with operation '{}': {}",
-            operation,
-            e
-        );
+    transform_text(&content, operation, indent_width.unwrap_or(4)).map_err(|e| {
+        log::error!("Failed to transform text with operation: {:?}", e);
         e
     })
 }

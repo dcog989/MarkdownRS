@@ -1,13 +1,69 @@
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum TextOperation {
+    #[serde(alias = "to-uppercase")]
+    Uppercase,
+    #[serde(alias = "to-lowercase")]
+    Lowercase,
+    InvertCase,
+    RemoveAllSpaces,
+    SentenceCase,
+    CamelCase,
+    PascalCase,
+    SnakeCase,
+    KebabCase,
+    ConstantCase,
+    #[serde(alias = "sort-lines")]
+    SortAsc,
+    SortDesc,
+    SortCaseInsensitiveAsc,
+    SortCaseInsensitiveDesc,
+    SortNumericAsc,
+    SortNumericDesc,
+    SortLengthAsc,
+    SortLengthDesc,
+    Reverse,
+    Shuffle,
+    RemoveDuplicates,
+    RemoveUnique,
+    RemoveBlank,
+    RemoveTrailingSpaces,
+    RemoveLeadingSpaces,
+    TitleCase,
+    AddBullets,
+    AddNumbers,
+    AddCheckboxes,
+    RemoveBullets,
+    Blockquote,
+    RemoveBlockquote,
+    AddCodeFence,
+    IncreaseHeading,
+    DecreaseHeading,
+    TrimWhitespace,
+    NormalizeWhitespace,
+    JoinLines,
+    SplitSentences,
+    WrapQuotes,
+    AddLineNumbers,
+    IndentLines,
+    UnindentLines,
+}
+
 /// Performs text transformations
-pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Result<String, String> {
+pub fn transform_text(
+    text: &str,
+    operation: TextOperation,
+    indent_width: usize,
+) -> Result<String, String> {
     match operation {
         // Case transformations (whole-text operations)
-        "uppercase" | "to-uppercase" => Ok(text.to_uppercase()),
-        "lowercase" | "to-lowercase" => Ok(text.to_lowercase()),
+        TextOperation::Uppercase => Ok(text.to_uppercase()),
+        TextOperation::Lowercase => Ok(text.to_lowercase()),
 
-        "invert-case" => Ok(text
+        TextOperation::InvertCase => Ok(text
             .chars()
             .map(|c| {
                 if c.is_uppercase() {
@@ -18,9 +74,9 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
             })
             .collect()),
 
-        "remove-all-spaces" => Ok(text.chars().filter(|c| !c.is_whitespace()).collect()),
+        TextOperation::RemoveAllSpaces => Ok(text.chars().filter(|c| !c.is_whitespace()).collect()),
 
-        "sentence-case" => {
+        TextOperation::SentenceCase => {
             let mut result = String::with_capacity(text.len());
             let mut capitalize_next = true;
 
@@ -38,7 +94,7 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
             Ok(result)
         }
 
-        "camel-case" => {
+        TextOperation::CamelCase => {
             let words: Vec<&str> = text.split_whitespace().collect();
             let mut result = String::new();
             for (i, word) in words.iter().enumerate() {
@@ -55,7 +111,7 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
             Ok(result)
         }
 
-        "pascal-case" => {
+        TextOperation::PascalCase => {
             let words: Vec<&str> = text.split_whitespace().collect();
             let mut result = String::new();
             for word in words {
@@ -68,7 +124,7 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
             Ok(result)
         }
 
-        "snake-case" => {
+        TextOperation::SnakeCase => {
             let cleaned = text.replace(|c: char| !c.is_alphanumeric() && c != ' ', " ");
             Ok(cleaned
                 .split_whitespace()
@@ -77,7 +133,7 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
                 .join("_"))
         }
 
-        "kebab-case" => {
+        TextOperation::KebabCase => {
             let cleaned = text.replace(|c: char| !c.is_alphanumeric() && c != ' ', " ");
             Ok(cleaned
                 .split_whitespace()
@@ -86,7 +142,7 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
                 .join("-"))
         }
 
-        "constant-case" => {
+        TextOperation::ConstantCase => {
             let cleaned = text.replace(|c: char| !c.is_alphanumeric() && c != ' ', " ");
             Ok(cleaned
                 .split_whitespace()
@@ -101,37 +157,41 @@ pub fn transform_text(text: &str, operation: &str, indent_width: usize) -> Resul
 }
 
 /// Line-based text transformations
-fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<String, String> {
+fn transform_lines(
+    text: &str,
+    operation: TextOperation,
+    indent_width: usize,
+) -> Result<String, String> {
     let lines: Vec<&str> = text.lines().collect();
 
     match operation {
         // Sort operations
-        "sort-asc" | "sort-lines" => {
+        TextOperation::SortAsc => {
             let mut sorted = lines.clone();
             sorted.sort();
             Ok(sorted.join("\n"))
         }
 
-        "sort-desc" => {
+        TextOperation::SortDesc => {
             let mut sorted = lines.clone();
             sorted.sort();
             sorted.reverse();
             Ok(sorted.join("\n"))
         }
 
-        "sort-case-insensitive-asc" => {
+        TextOperation::SortCaseInsensitiveAsc => {
             let mut sorted = lines.clone();
             sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
             Ok(sorted.join("\n"))
         }
 
-        "sort-case-insensitive-desc" => {
+        TextOperation::SortCaseInsensitiveDesc => {
             let mut sorted = lines.clone();
             sorted.sort_by(|a, b| b.to_lowercase().cmp(&a.to_lowercase()));
             Ok(sorted.join("\n"))
         }
 
-        "sort-numeric-asc" => {
+        TextOperation::SortNumericAsc => {
             let mut sorted = lines.clone();
             sorted.sort_by(|a, b| {
                 let num_a = extract_first_number(a).unwrap_or(0.0);
@@ -143,7 +203,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(sorted.join("\n"))
         }
 
-        "sort-numeric-desc" => {
+        TextOperation::SortNumericDesc => {
             let mut sorted = lines.clone();
             sorted.sort_by(|a, b| {
                 let num_a = extract_first_number(a).unwrap_or(0.0);
@@ -155,25 +215,25 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(sorted.join("\n"))
         }
 
-        "sort-length-asc" => {
+        TextOperation::SortLengthAsc => {
             let mut sorted = lines.clone();
             sorted.sort_by_key(|a| a.len());
             Ok(sorted.join("\n"))
         }
 
-        "sort-length-desc" => {
+        TextOperation::SortLengthDesc => {
             let mut sorted = lines.clone();
             sorted.sort_by_key(|a| std::cmp::Reverse(a.len()));
             Ok(sorted.join("\n"))
         }
 
-        "reverse" => {
+        TextOperation::Reverse => {
             let mut reversed = lines.clone();
             reversed.reverse();
             Ok(reversed.join("\n"))
         }
 
-        "shuffle" => {
+        TextOperation::Shuffle => {
             use rand::seq::SliceRandom;
             let mut rng = rand::rng();
             let mut shuffled = lines.clone();
@@ -182,7 +242,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
         }
 
         // Remove operations
-        "remove-duplicates" => {
+        TextOperation::RemoveDuplicates => {
             let mut seen = HashSet::new();
             let unique: Vec<&str> = lines
                 .into_iter()
@@ -191,7 +251,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(unique.join("\n"))
         }
 
-        "remove-unique" => {
+        TextOperation::RemoveUnique => {
             let mut counts = HashMap::new();
             for line in &lines {
                 *counts.entry(*line).or_insert(0) += 1;
@@ -203,7 +263,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(duplicates.join("\n"))
         }
 
-        "remove-blank" => {
+        TextOperation::RemoveBlank => {
             let non_blank: Vec<&str> = lines
                 .into_iter()
                 .filter(|line| !line.trim().is_empty())
@@ -211,20 +271,20 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(non_blank.join("\n"))
         }
 
-        "remove-trailing-spaces" => Ok(lines
+        TextOperation::RemoveTrailingSpaces => Ok(lines
             .iter()
             .map(|line| line.trim_end())
             .collect::<Vec<_>>()
             .join("\n")),
 
-        "remove-leading-spaces" => Ok(lines
+        TextOperation::RemoveLeadingSpaces => Ok(lines
             .iter()
             .map(|line| line.trim_start())
             .collect::<Vec<_>>()
             .join("\n")),
 
         // Case operations on lines
-        "title-case" => {
+        TextOperation::TitleCase => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -247,7 +307,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
         }
 
         // Markdown operations
-        "add-bullets" => {
+        TextOperation::AddBullets => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -261,7 +321,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "add-numbers" => {
+        TextOperation::AddNumbers => {
             let mut number = 1;
             let result: Vec<String> = lines
                 .iter()
@@ -278,7 +338,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "add-checkboxes" => {
+        TextOperation::AddCheckboxes => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -292,7 +352,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "remove-bullets" => {
+        TextOperation::RemoveBullets => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -326,7 +386,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "blockquote" => {
+        TextOperation::Blockquote => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -340,7 +400,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "remove-blockquote" => {
+        TextOperation::RemoveBlockquote => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -353,9 +413,9 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "add-code-fence" => Ok(format!("```\n{}\n```", text)),
+        TextOperation::AddCodeFence => Ok(format!("```\n{}\n```", text)),
 
-        "increase-heading" => {
+        TextOperation::IncreaseHeading => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -369,7 +429,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "decrease-heading" => {
+        TextOperation::DecreaseHeading => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -384,13 +444,13 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
         }
 
         // Text manipulation
-        "trim-whitespace" => Ok(lines
+        TextOperation::TrimWhitespace => Ok(lines
             .iter()
             .map(|line| line.trim())
             .collect::<Vec<_>>()
             .join("\n")),
 
-        "normalize-whitespace" => {
+        TextOperation::NormalizeWhitespace => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| line.split_whitespace().collect::<Vec<_>>().join(" "))
@@ -398,7 +458,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "join-lines" => {
+        TextOperation::JoinLines => {
             let joined: Vec<String> = lines
                 .iter()
                 .map(|l| l.trim())
@@ -408,7 +468,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(joined.join(" "))
         }
 
-        "split-sentences" => {
+        TextOperation::SplitSentences => {
             let mut result = String::new();
             let mut current_sentence = String::new();
             let mut chars = text.chars().peekable();
@@ -448,7 +508,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result)
         }
 
-        "wrap-quotes" => {
+        TextOperation::WrapQuotes => {
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
@@ -462,7 +522,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "add-line-numbers" => {
+        TextOperation::AddLineNumbers => {
             let max_digits = lines.len().to_string().len();
             let result: Vec<String> = lines
                 .iter()
@@ -472,7 +532,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "indent-lines" => {
+        TextOperation::IndentLines => {
             let indent = " ".repeat(indent_width);
             let result: Vec<String> = lines
                 .iter()
@@ -487,7 +547,7 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        "unindent-lines" => {
+        TextOperation::UnindentLines => {
             let indent = " ".repeat(indent_width);
             let result: Vec<String> = lines
                 .iter()
@@ -496,7 +556,9 @@ fn transform_lines(text: &str, operation: &str, indent_width: usize) -> Result<S
             Ok(result.join("\n"))
         }
 
-        _ => Err(format!("Unknown operation: {}", operation)),
+        // Exhaustive matching implies no fallthrough to error for Enum,
+        // but we'll include a pattern for good measure if needed, though strictly not needed with Enum
+        _ => Err(format!("Operation not implemented: {:?}", operation)),
     }
 }
 
@@ -530,7 +592,7 @@ mod tests {
     #[test]
     fn test_uppercase() {
         assert_eq!(
-            transform_text("hello world", "uppercase", 4).unwrap(),
+            transform_text("hello world", TextOperation::Uppercase, 4).unwrap(),
             "HELLO WORLD"
         );
     }
@@ -538,7 +600,7 @@ mod tests {
     #[test]
     fn test_indent_custom() {
         assert_eq!(
-            transform_text("hello", "indent-lines", 2).unwrap(),
+            transform_text("hello", TextOperation::IndentLines, 2).unwrap(),
             "  hello"
         );
     }
