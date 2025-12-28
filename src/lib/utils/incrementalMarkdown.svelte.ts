@@ -12,14 +12,13 @@ interface MarkdownBlock {
 }
 
 /**
- * Incremental markdown renderer that only re-renders changed blocks
- * to improve performance for large documents
+ * Incremental markdown renderer
  */
 export class IncrementalMarkdownRenderer {
     private blocks: MarkdownBlock[] = [];
     private lastContent: string = '';
-    private readonly BLOCK_SIZE = 100; // Lines per block
-    private readonly MIN_SIZE_FOR_INCREMENTAL = 5000; // Characters
+    private readonly BLOCK_SIZE = 50;
+    private readonly MIN_SIZE_FOR_INCREMENTAL = 1000;
 
     /**
      * Render markdown with incremental updates
