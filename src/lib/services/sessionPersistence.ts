@@ -1,5 +1,5 @@
-import { appState } from '$lib/stores/appState.svelte.ts';
-import { editorStore, type EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay } from '$lib/utils/date';
@@ -29,17 +29,12 @@ type FileContent = {
 	encoding: string;
 };
 
-/**
- * Singleton class to manage session saving concurrency.
- * Ensures that saving happens sequentially and that rapid requests
- * are collapsed into a single subsequent save operation.
- */
 class SessionPersistenceManager {
 	private isSaving = false;
 	private pendingSaveRequested = false;
 
 	async requestSave(): Promise<void> {
-		if (!editorStore.sessionDirty) return;
+		if (!appContext.editor.sessionDirty) return;
 
 		if (this.isSaving) {
 			this.pendingSaveRequested = true;
@@ -49,13 +44,10 @@ class SessionPersistenceManager {
 		this.isSaving = true;
 
 		try {
-			// First save
 			await this.executeSave();
-
-			// Handle any requests that came in during the save
 			while (this.pendingSaveRequested) {
 				this.pendingSaveRequested = false;
-				if (editorStore.sessionDirty) {
+				if (appContext.editor.sessionDirty) {
 					await this.executeSave();
 				}
 			}
@@ -67,9 +59,9 @@ class SessionPersistenceManager {
 	private async executeSave(): Promise<void> {
 		try {
 			const mruPositionMap = new Map<string, number>();
-			editorStore.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
+			appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
-			const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
+			const plainTabs: RustTabState[] = appContext.editor.tabs.map(t => ({
 				id: t.id,
 				path: t.path,
 				title: t.title,
@@ -85,11 +77,10 @@ class SessionPersistenceManager {
 				mru_position: mruPositionMap.get(t.id) ?? null
 			}));
 
-			editorStore.sessionDirty = false;
+			appContext.editor.sessionDirty = false;
 			await callBackend('save_session', { tabs: plainTabs }, 'Session:Save');
 		} catch (err) {
-			editorStore.sessionDirty = true;
-			// Log error but don't show toast for background session saves
+			appContext.editor.sessionDirty = true;
 			AppError.handle('Session:Save', err, {
 				showToast: false,
 				severity: 'warning'
@@ -100,21 +91,9 @@ class SessionPersistenceManager {
 
 const persistenceManager = new SessionPersistenceManager();
 
-/**
- * Initializes a single tab's file state:
- * - Checks if file changed on disk and reloads if necessary
- * - Reloads content if dirty and changed on disk (safety check)
- * - Refreshes metadata
- * - Checks existence
- * - Sets up watcher
- */
 export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 	if (!tab.path) return;
 
-	// Lazy Loading Check:
-	// If the file changed on disk while we weren't watching it (e.g. startup), reload it.
-	// We must do this BEFORE refreshing metadata, as refreshMetadata updates the 'modified' timestamp
-	// which checkAndReloadIfChanged uses for comparison.
 	if (!tab.isDirty) {
 		const hasChanged = await checkAndReloadIfChanged(tab.id);
 		if (hasChanged) {
@@ -122,7 +101,6 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 		}
 	}
 
-	// If tab is dirty, reload the saved content to detect changes
 	if (tab.isDirty) {
 		try {
 			const res = await callBackend(
@@ -130,13 +108,12 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 				{ path: tab.path },
 				'File:Read'
 			);
-			const storeTab = editorStore.tabs.find(x => x.id === tab.id);
+			const storeTab = appContext.editor.tabs.find(x => x.id === tab.id);
 			if (storeTab) {
 				storeTab.lastSavedContent = normalizeLineEndings(res.content);
 				storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
 			}
 		} catch (err) {
-			// Silently handle - file might not exist anymore
 			AppError.handle('File:Read', err, {
 				showToast: false,
 				severity: 'warning',
@@ -145,11 +122,9 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 		}
 	}
 
-	// Refresh metadata and check file existence
 	await refreshMetadata(tab.id, tab.path);
 	await checkFileExists(tab.id);
 
-	// Watch file for changes
 	try {
 		await fileWatcher.watch(tab.path);
 	} catch (err) {
@@ -169,7 +144,7 @@ export async function loadSession(): Promise<void> {
 	try {
 		const rustTabs = await callBackend('restore_session', {}, 'Session:Load');
 		if (rustTabs && rustTabs.length > 0) {
-			const convertedTabs: EditorTab[] = rustTabs.map(t => {
+			const convertedTabs: EditorTab[] = rustTabs.map((t: RustTabState) => {
 				const content = normalizeLineEndings(t.content);
 				const timestamp = t.modified || t.created || "";
 				return {
@@ -194,47 +169,43 @@ export async function loadSession(): Promise<void> {
 				};
 			});
 
-			editorStore.tabs = convertedTabs;
+			appContext.editor.tabs = convertedTabs;
 
 			const sortedMru = rustTabs
-				.filter(t => t.mru_position !== null && t.mru_position !== undefined)
-				.sort((a, b) => (a.mru_position || 0) - (b.mru_position || 0))
-				.map(t => t.id);
+				.filter((t: RustTabState) => t.mru_position !== null && t.mru_position !== undefined)
+				.sort((a: RustTabState, b: RustTabState) => (a.mru_position || 0) - (b.mru_position || 0))
+				.map((t: RustTabState) => t.id);
 
-			editorStore.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map(t => t.id);
+			appContext.editor.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map(t => t.id);
 
-			switch (appState.startupBehavior) {
+			switch (appContext.app.startupBehavior) {
 				case 'first':
-					appState.activeTabId = convertedTabs[0].id;
+					appContext.app.activeTabId = convertedTabs[0].id;
 					break;
 				case 'last-focused':
-					appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id;
+					appContext.app.activeTabId = appContext.editor.mruStack[0] || convertedTabs[0].id;
 					break;
 				case 'new':
-					appState.activeTabId = editorStore.addTab();
+					appContext.app.activeTabId = appContext.editor.addTab();
 					break;
 				default:
-					appState.activeTabId = convertedTabs[0].id;
+					appContext.app.activeTabId = convertedTabs[0].id;
 			}
 
-			// Process only the active tab immediately
-			// Other tabs will be lazy-loaded when focused via Editor.svelte
-			const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
+			const activeTab = appContext.editor.tabs.find(t => t.id === appContext.app.activeTabId);
 			if (activeTab) {
 				await initializeTabFileState(activeTab);
 			}
 
 		} else {
-			// No session to restore, create new tab
-			appState.activeTabId = editorStore.addTab();
+			appContext.app.activeTabId = appContext.editor.addTab();
 		}
 	} catch (err) {
-		// Failed to load session, create new tab
 		AppError.handle('Session:Load', err, {
 			showToast: false,
 			severity: 'warning'
 		});
-		appState.activeTabId = editorStore.addTab();
+		appContext.app.activeTabId = appContext.editor.addTab();
 	}
 }
 

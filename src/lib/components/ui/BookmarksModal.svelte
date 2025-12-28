@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { open } from "@tauri-apps/plugin-dialog";
     import { ArrowDown, ArrowUp, Bookmark as BookmarkIcon, Pen, Plus, Search, Tag, Trash2, X } from "lucide-svelte";
@@ -30,8 +30,8 @@
     let sortDirection = $state<SortDirection>("desc");
 
     $effect(() => {
-        if (isOpen && !bookmarkStore.isLoaded) {
-            bookmarkStore.loadBookmarks();
+        if (isOpen && !appContext.bookmarks.isLoaded) {
+            appContext.bookmarks.loadBookmarks();
         }
         if (!isOpen) {
             searchQuery = "";
@@ -45,7 +45,7 @@
     });
 
     let filteredBookmarks = $derived(
-        bookmarkStore.bookmarks.filter((bookmark) => {
+        appContext.bookmarks.bookmarks.filter((bookmark) => {
             if (searchQuery.length < 2) return true;
             const query = searchQuery.toLowerCase();
             const titleMatch = bookmark.title.toLowerCase().includes(query);
@@ -85,13 +85,13 @@
         })()
     );
 
-    async function handleOpenBookmark(bookmark: (typeof bookmarkStore.bookmarks)[0]) {
-        await bookmarkStore.updateAccessTime(bookmark.id);
+    async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
+        await appContext.bookmarks.updateAccessTime(bookmark.id);
         onOpenFile(bookmark.path);
         onClose();
     }
 
-    function startEdit(bookmark: (typeof bookmarkStore.bookmarks)[0]) {
+    function startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
         editingId = bookmark.id;
         editTitle = bookmark.title;
         editTags = bookmark.tags.join(", ");
@@ -108,7 +108,7 @@
             .split(",")
             .map((t) => t.trim())
             .filter((t) => t.length > 0);
-        await bookmarkStore.updateBookmark(id, editTitle, tags);
+        await appContext.bookmarks.updateBookmark(id, editTitle, tags);
         editingId = null;
         editTitle = "";
         editTags = "";
@@ -116,7 +116,7 @@
 
     async function handleDelete(id: string, e: MouseEvent) {
         e.stopPropagation();
-        await bookmarkStore.deleteBookmark(id);
+        await appContext.bookmarks.deleteBookmark(id);
     }
 
     function startAdd() {
@@ -153,7 +153,7 @@
             browseError = "File does not exist or cannot be accessed";
             return;
         }
-        if (bookmarkStore.isBookmarked(addPath)) {
+        if (appContext.bookmarks.isBookmarked(addPath)) {
             browseError = "This file is already bookmarked";
             return;
         }
@@ -161,7 +161,7 @@
             .split(",")
             .map((t) => t.trim())
             .filter((t) => t.length > 0);
-        await bookmarkStore.addBookmark(addPath, addTitle, tags);
+        await appContext.bookmarks.addBookmark(addPath, addTitle, tags);
         showAddForm = false;
         addPath = "";
         addTitle = "";
@@ -300,7 +300,7 @@
             </div>
         {:else if searchQuery.length >= 2}
             <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">No bookmarks match your search</div>
-        {:else if bookmarkStore.bookmarks.length === 0}
+        {:else if appContext.bookmarks.bookmarks.length === 0}
             <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">
                 <BookmarkIcon size={48} class="mx-auto mb-2 opacity-30" />
                 <div class="mb-1">No bookmarks yet</div>

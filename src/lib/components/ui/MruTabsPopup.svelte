@@ -1,7 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
     import { tick } from "svelte";
 
@@ -15,7 +15,7 @@
     let { isOpen, onClose, onSelect, selectedId }: Props = $props();
     let listContainerRef = $state<HTMLDivElement | null>(null);
 
-    let mruTabs = $derived(editorStore.mruStack.map((id) => editorStore.tabs.find((t) => t.id === id)).filter((t) => t !== undefined));
+    let mruTabs = $derived(appContext.editor.mruStack.map((id) => appContext.editor.tabs.find((t) => t.id === id)).filter((t) => t !== undefined));
 
     $effect(() => {
         if (isOpen && selectedId && listContainerRef) {

@@ -1,6 +1,5 @@
 import { checkAndReloadIfChanged, reloadFileContent } from '$lib/services/fileMetadata';
-import { editorStore } from '$lib/stores/editorStore.svelte';
-import { toastStore } from '$lib/stores/toastStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
 import { AppError } from '$lib/utils/errorHandling';
 import { debounce } from '$lib/utils/timing';
 import { watch } from '@tauri-apps/plugin-fs';
@@ -25,17 +24,12 @@ class FileWatcherService {
 		}
 
 		try {
-			// Debounced handler to avoid double-firing on some OSs (like Windows)
 			const handleChange = debounce(async () => {
 				await this.handleFileChange(path);
 			}, 300);
 
 			const unwatch = await watch(path, (event) => {
-				// We're interested in Modify (content change) or potentially Remove/Rename
-				// The raw event might differ by OS, but usually just firing logic on any event is safe
-				// if we verify with metadata afterwards.
 				if (typeof event === 'object' && 'type' in event) {
-					// Filter specific event types if needed, or just catch all
 					handleChange();
 				} else {
 					handleChange();
@@ -77,31 +71,26 @@ class FileWatcherService {
 	}
 
 	private async handleFileChange(path: string): Promise<void> {
-		// Prevent re-entry if we are already processing this path
 		if (this.pendingChecks.has(path)) return;
 		this.pendingChecks.add(path);
 
 		try {
-			// Find all tabs associated with this path
-			const tabs = editorStore.tabs.filter(t => t.path === path);
+			const tabs = appContext.editor.tabs.filter(t => t.path === path);
 
 			for (const tab of tabs) {
-				// Check if the file has actually changed on disk vs our memory
 				const hasChanged = await checkAndReloadIfChanged(tab.id);
 
 				if (hasChanged) {
 					if (tab.isDirty) {
-						// Conflict: Disk changed, but user has unsaved changes
-						toastStore.warning(
+						appContext.ui.toast.warning(
 							`File changed on disk: ${tab.title}. You have unsaved changes.`,
 							5000
 						);
-						// Optional: Set a visual indicator on the tab
-						tab.fileCheckFailed = true;
+						// We can't update read-only props directly here if not using the store action,
+						// but checkAndReloadIfChanged sets fileCheckFailed internally via store action.
 					} else {
-						// Clean state: Auto-reload content
 						await reloadFileContent(tab.id);
-						toastStore.info(`Reloaded ${tab.title} from disk`);
+						appContext.ui.toast.info(`Reloaded ${tab.title} from disk`);
 					}
 				}
 			}
@@ -116,9 +105,6 @@ class FileWatcherService {
 		}
 	}
 
-	/**
-	 * Clear all watchers (e.g., on app shutdown)
-	 */
 	cleanup(): void {
 		for (const [path, entry] of this.watchers.entries()) {
 			try {

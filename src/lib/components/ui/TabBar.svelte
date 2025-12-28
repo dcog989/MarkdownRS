@@ -1,7 +1,7 @@
 <script lang="ts">
     import { SortableController } from "$lib/actions/sortable.svelte.ts";
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
     import { ChevronDown, Plus } from "lucide-svelte";
     import { onDestroy, onMount, tick } from "svelte";
@@ -32,15 +32,15 @@
     let mruTimer: number | null = null;
 
     const sortController = new SortableController<EditorTab>({
-        items: [], // Will be updated by effect
+        items: [],
         idKey: "id",
         container: undefined,
         onSort: (newItems) => {
-            editorStore.reorderTabs(newItems);
+            appContext.editor.reorderTabs(newItems);
         },
         onDragStart: (id, x, offset) => {
             draggingId = id;
-            isDragging = false; // Will set to true on move
+            isDragging = false;
             dragOffsetX = offset;
         },
         onDragMove: (x) => {
@@ -49,10 +49,10 @@
         },
         onDragEnd: () => {
             if (isDragging) {
-                editorStore.sessionDirty = true;
+                appContext.editor.sessionDirty = true;
             } else if (draggingId) {
-                appState.activeTabId = draggingId;
-                editorStore.pushToMru(draggingId);
+                appContext.app.activeTabId = draggingId;
+                appContext.editor.pushToMru(draggingId);
             }
             isDragging = false;
             draggingId = null;
@@ -60,38 +60,34 @@
         },
     });
 
-    // Reactive update for controller options
     $effect(() => {
         sortController.updateOptions({
-            items: editorStore.tabs,
+            items: appContext.editor.tabs,
             container: scrollContainer,
         });
     });
 
-    // Reactively update fade indicators when tab count changes
     $effect(() => {
-        const _ = editorStore.tabs.length;
+        const _ = appContext.editor.tabs.length;
         tick().then(updateFadeIndicators);
     });
 
     onMount(() => {
         const interval = setInterval(() => (currentTime = Date.now()), 60000);
 
-        // Listen for forced scroll events
         const handleScrollToActive = () => scrollToActive();
         window.addEventListener("scroll-to-active-tab", handleScrollToActive);
 
-        // MRU & Keyboard logic
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
                 if (!isMruCycling) {
                     isMruCycling = true;
-                    mruSelectedIndex = editorStore.mruStack.length > 1 ? 1 : 0;
+                    mruSelectedIndex = appContext.editor.mruStack.length > 1 ? 1 : 0;
                     if (mruTimer) clearTimeout(mruTimer);
                     mruTimer = window.setTimeout(() => (showMruPopup = true), 200);
                 } else {
-                    mruSelectedIndex = (mruSelectedIndex + 1) % editorStore.mruStack.length;
+                    mruSelectedIndex = (mruSelectedIndex + 1) % appContext.editor.mruStack.length;
                     showMruPopup = true;
                     if (mruTimer) clearTimeout(mruTimer);
                 }
@@ -102,10 +98,10 @@
             if (e.key === "Control" || !e.ctrlKey) {
                 if (isMruCycling) {
                     if (mruTimer) clearTimeout(mruTimer);
-                    const targetId = editorStore.mruStack[mruSelectedIndex];
+                    const targetId = appContext.editor.mruStack[mruSelectedIndex];
                     if (targetId) {
-                        appState.activeTabId = targetId;
-                        editorStore.pushToMru(targetId);
+                        appContext.app.activeTabId = targetId;
+                        appContext.editor.pushToMru(targetId);
                     }
                     isMruCycling = false;
                     showMruPopup = false;
@@ -128,7 +124,6 @@
         sortController.destroy();
     });
 
-    // Fade Indicators
     let showLeftFade = $state(false);
     let showRightFade = $state(false);
 
@@ -143,7 +138,6 @@
         await tick();
         if (!scrollContainer || isDragging) return;
 
-        // Wait a bit more for the flip animation to complete
         await new Promise((resolve) => setTimeout(resolve, 300));
 
         const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
@@ -161,21 +155,21 @@
     }
 
     $effect(() => {
-        if (appState.activeTabId) scrollToActive();
+        if (appContext.app.activeTabId) scrollToActive();
     });
 </script>
 
 <div class="h-8 flex items-stretch w-full border-b relative shrink-0 bg-bg-panel border-border-main">
     <div class="relative h-8 border-r border-border-main">
         <button type="button" class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-fg-muted text-xs" onclick={() => (showDropdown = !showDropdown)}>
-            <span>{editorStore.tabs.length}</span>
+            <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
         <TabDropdown
             isOpen={showDropdown}
             onSelect={(id) => {
-                appState.activeTabId = id;
-                editorStore.pushToMru(id);
+                appContext.app.activeTabId = id;
+                appContext.editor.pushToMru(id);
                 showDropdown = false;
             }}
             onClose={() => (showDropdown = false)}
@@ -188,11 +182,11 @@
         {/if}
 
         <section bind:this={scrollContainer} class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
-            {#each editorStore.tabs as tab (tab.id)}
+            {#each appContext.editor.tabs as tab (tab.id)}
                 <div class="h-full flex items-stretch shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
                     <TabButton
                         {tab}
-                        isActive={appState.activeTabId === tab.id}
+                        isActive={appContext.app.activeTabId === tab.id}
                         {currentTime}
                         onclose={(_, id) => requestCloseTab(id)}
                         oncontextmenu={(e, id) => {
@@ -205,10 +199,10 @@
             {/each}
 
             {#if isDragging && draggingId}
-                {@const dragTab = editorStore.tabs.find((t) => t.id === draggingId)}
+                {@const dragTab = appContext.editor.tabs.find((t) => t.id === draggingId)}
                 {#if dragTab}
                     <div class="fixed pointer-events-none z-[999]" style="left: {currentDragX - dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect().top ?? 0}px; opacity: 0.95;">
-                        <TabButton tab={dragTab} isActive={appState.activeTabId === dragTab.id} {currentTime} />
+                        <TabButton tab={dragTab} isActive={appContext.app.activeTabId === dragTab.id} {currentTime} />
                     </div>
                 {/if}
             {/if}
@@ -220,10 +214,14 @@
     </div>
 
     <div class="h-full flex items-stretch border-l border-border-main">
-        <button type="button" class="h-8 w-8 flex items-center justify-center hover:bg-white/10 text-fg-muted shrink-0" onclick={() => {
-            const newTabId = editorStore.addTab();
-            appState.activeTabId = newTabId;
-        }}>
+        <button
+            type="button"
+            class="h-8 w-8 flex items-center justify-center hover:bg-white/10 text-fg-muted shrink-0"
+            onclick={() => {
+                const newTabId = appContext.editor.addTab();
+                appContext.app.activeTabId = newTabId;
+            }}
+        >
             <Plus size={16} />
         </button>
     </div>
@@ -237,10 +235,10 @@
     isOpen={showMruPopup}
     onClose={() => (showMruPopup = false)}
     onSelect={(id) => {
-        appState.activeTabId = id;
-        editorStore.pushToMru(id);
+        appContext.app.activeTabId = id;
+        appContext.editor.pushToMru(id);
     }}
-    selectedId={isMruCycling ? editorStore.mruStack[mruSelectedIndex] : appState.activeTabId}
+    selectedId={isMruCycling ? appContext.editor.mruStack[mruSelectedIndex] : appContext.app.activeTabId}
 />
 
 <style>

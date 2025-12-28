@@ -4,8 +4,7 @@
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { getBackendCommand, type OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
-    import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
@@ -30,8 +29,7 @@
     let contextWordTo = $state(0);
     let showFindReplace = $state(false);
 
-    // Derived active tab to track content changes reactively
-    let activeTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
+    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
 
     $effect(() => {
         const tab = activeTab;
@@ -42,7 +40,6 @@
         untrack(() => {
             const currentDoc = cmView!.state.doc.toString();
 
-            // 1. Sync Content
             if (currentDoc !== content) {
                 const currentSelection = cmView!.state.selection.main;
                 const newLength = content.length;
@@ -56,9 +53,8 @@
                 });
             }
 
-            // 2. Tab Switch Logic (Lazy Load)
             if (tabId !== previousTabId) {
-                const currentTab = editorStore.tabs.find((t) => t.id === tabId);
+                const currentTab = appContext.editor.tabs.find((t) => t.id === tabId);
                 if (currentTab) {
                     initializeTabFileState(currentTab).catch(console.error);
                 }
@@ -73,12 +69,10 @@
         const hasSelection = selection.from !== selection.to;
         const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
 
-        // Get the backend command from the registry
         const backendCommand = getBackendCommand(operationId);
 
         const newText = operationId === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, backendCommand);
 
-        // Only dispatch if text actually changed
         if (newText !== targetText) {
             cmView.dispatch({
                 changes: { from: hasSelection ? selection.from : 0, to: hasSelection ? selection.to : cmView.state.doc.length, insert: newText },
@@ -130,21 +124,20 @@
 
     onMount(() => {
         initSpellcheck();
-        editorStore.registerTextOperationCallback(handleTextOperation);
+        appContext.editor.registerTextOperationCallback(handleTextOperation);
         window.addEventListener("open-find", () => {
             showFindReplace = true;
             tick().then(() => findReplacePanel?.focusInput());
         });
-        return () => editorStore.unregisterTextOperationCallback();
+        return () => appContext.editor.unregisterTextOperationCallback();
     });
 
     let initialContent = $derived(activeTab?.content || "");
-    // Use path for mode detection, defaulting to markdown for unsaved files
     let filename = $derived(activeTab?.path || "unsaved.md");
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => editorStore.updateContent(tabId, c)} onMetricsChange={(m) => editorMetrics.updateMetrics(m)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => appContext.editor.updateContent(tabId, c)} onMetricsChange={(m) => appContext.metrics.updateMetrics(m)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
@@ -171,7 +164,6 @@
         onReplaceWord={(w) => {
             if (!cmView) return;
             cmView.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
-            // Close context menu first, then refresh spell check
             showContextMenu = false;
             setTimeout(() => {
                 if (cmView) refreshSpellcheck(cmView);

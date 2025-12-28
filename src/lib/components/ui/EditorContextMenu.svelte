@@ -2,7 +2,7 @@
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { addToDictionary } from "$lib/utils/fileSystem";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, TextAlignStart, WandSparkles } from "lucide-svelte";
@@ -39,7 +39,6 @@
     let suggestions = $state<string[]>([]);
     let isLoadingSuggestions = $state(false);
 
-    // Close all submenus except the one specified
     function closeOtherSubmenus(keepOpen: "sort" | "case" | "format" | "transform" | null = null) {
         if (keepOpen !== "sort") showSortMenu = false;
         if (keepOpen !== "case") showCaseMenu = false;
@@ -47,7 +46,6 @@
         if (keepOpen !== "transform") showTransformMenu = false;
     }
 
-    // Operations
     const sortOps = getOperationsByCategory("sort");
     const caseOps = getOperationsByCategory("case");
 
@@ -57,45 +55,13 @@
         divider?: boolean;
     };
 
-    // Organized Format Menu (Non-destructive/Styling)
-    const formatOps: MenuOption[] = [
-        // Indentation & Spacing
-        { id: "indent-lines", label: "Indent Lines" },
-        { id: "unindent-lines", label: "Unindent Lines" },
-        { id: "trim-whitespace", label: "Trim Whitespace" },
-        { id: "normalize-whitespace", label: "Normalize Whitespace" },
-        { divider: true },
-        // Lists
-        { id: "add-bullets", label: "Add Bullet Points" },
-        { id: "add-numbers", label: "Add Numbering" },
-        { id: "add-checkboxes", label: "Add Checkboxes" },
-        { id: "remove-bullets", label: "Remove List Markers" },
-        { divider: true },
-        // Block Elements
-        { id: "blockquote", label: "Add Blockquote" },
-        { id: "remove-blockquote", label: "Remove Blockquote" },
-        { id: "add-code-fence", label: "Wrap in Code Block" },
-        { divider: true },
-        // Headings
-        { id: "increase-heading", label: "Increase Heading Level" },
-        { id: "decrease-heading", label: "Decrease Heading Level" },
-        { divider: true },
-        // Misc
-        { id: "wrap-quotes", label: "Wrap in Quotes" },
-    ];
+    const formatOps: MenuOption[] = [{ id: "indent-lines", label: "Indent Lines" }, { id: "unindent-lines", label: "Unindent Lines" }, { id: "trim-whitespace", label: "Trim Whitespace" }, { id: "normalize-whitespace", label: "Normalize Whitespace" }, { divider: true }, { id: "add-bullets", label: "Add Bullet Points" }, { id: "add-numbers", label: "Add Numbering" }, { id: "add-checkboxes", label: "Add Checkboxes" }, { id: "remove-bullets", label: "Remove List Markers" }, { divider: true }, { id: "blockquote", label: "Add Blockquote" }, { id: "remove-blockquote", label: "Remove Blockquote" }, { id: "add-code-fence", label: "Wrap in Code Block" }, { divider: true }, { id: "increase-heading", label: "Increase Heading Level" }, { id: "decrease-heading", label: "Decrease Heading Level" }, { divider: true }, { id: "wrap-quotes", label: "Wrap in Quotes" }];
 
-    // Transform Menu (Destructive/Structural)
     const transformOps: MenuOption[] = [{ id: "join-lines", label: "Join Lines" }, { id: "split-sentences", label: "Sentences to New Lines" }, { divider: true }, { id: "remove-duplicates", label: "Remove Duplicates" }, { id: "remove-unique", label: "Remove Unique" }, { divider: true }, { id: "remove-blank", label: "Remove Blank Lines" }, { id: "remove-all-spaces", label: "Remove All Spaces" }, { divider: true }, { id: "reverse", label: "Reverse Lines" }, { id: "shuffle", label: "Shuffle Lines" }];
 
-    // Effect to fetch suggestions when the menu becomes visible or word changes
     $effect(() => {
         const word = untrack(() => wordUnderCursor?.trim());
 
-        // Only fetch suggestions if:
-        // 1. Dictionary is loaded
-        // 2. We have a word
-        // 3. No text is selected (context menu on a single word)
-        // 4. The word is actually invalid (misspelled) according to our current state
         if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
             isLoadingSuggestions = true;
             console.log("[ContextMenu] Fetching suggestions for:", word);
@@ -131,12 +97,11 @@
 
     function handleOp(type: OperationId | undefined) {
         if (type) {
-            editorStore.performTextTransform(type);
+            appContext.editor.performTextTransform(type);
             onClose();
         }
     }
 
-    // Enhanced onClose to reset loading state
     function closeMenuAndReset() {
         onClose();
         isLoadingSuggestions = false;

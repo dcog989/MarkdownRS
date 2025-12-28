@@ -1,6 +1,4 @@
-import { appState } from '$lib/stores/appState.svelte';
-import { editorStore } from '$lib/stores/editorStore.svelte';
-import { toastStore } from '$lib/stores/toastStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
@@ -11,9 +9,9 @@ import * as htmlToImage from 'html-to-image';
 export class ExportService {
 
     private getActiveTab() {
-        const tabId = appState.activeTabId;
+        const tabId = appContext.app.activeTabId;
         if (!tabId) return null;
-        return editorStore.tabs.find(t => t.id === tabId) || null;
+        return appContext.editor.tabs.find(t => t.id === tabId) || null;
     }
 
     private getExportContainer(): HTMLElement {
@@ -22,7 +20,6 @@ export class ExportService {
             container = document.createElement('div');
             container.id = 'export-container';
             container.className = 'prose';
-            // Accessibility: hidden from screen readers during normal use
             container.setAttribute('aria-hidden', 'true');
             document.body.appendChild(container);
         }
@@ -30,28 +27,25 @@ export class ExportService {
     }
 
     private async prepareExportContent(): Promise<HTMLElement | null> {
-    const tab = this.getActiveTab();
-    if (!tab) {
-    toastStore.error("No active tab to export.");
-    return null;
-    }
+        const tab = this.getActiveTab();
+        if (!tab) {
+            appContext.ui.toast.error("No active tab to export.");
+            return null;
+        }
 
-    const container = this.getExportContainer();
+        const container = this.getExportContainer();
 
-    try {
-     // Render Markdown to HTML
-     const html = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
-			container.innerHTML = html;
-		} catch (err) {
-			AppError.handle('Export:HTML', err, {
-				showToast: true,
-				userMessage: 'Failed to render markdown for export'
-			});
-			return null;
-		}
+        try {
+            const html = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm');
+            container.innerHTML = html;
+        } catch (err) {
+            AppError.handle('Export:HTML', err, {
+                showToast: true,
+                userMessage: 'Failed to render markdown for export'
+            });
+            return null;
+        }
 
-        // Wait for DOM update/images to load
-        // A small delay ensures the browser layout engine has calculated sizes
         await new Promise(resolve => setTimeout(resolve, 150));
 
         return container;
@@ -80,19 +74,19 @@ export class ExportService {
         if (!tab) return;
 
         try {
-        const path = await save({
-        defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.html`,
-        filters: [{ name: 'HTML', extensions: ['html'] }]
-        });
+            const path = await save({
+                defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.html`,
+                filters: [{ name: 'HTML', extensions: ['html'] }]
+            });
 
-        if (!path) return;
+            if (!path) return;
 
-        const bodyContent = await renderMarkdown(tab.content, appState.markdownFlavor === 'gfm');
-        const themeCss = await getThemeCss(appState.activeTheme);
-        const baseVars = this.getComputedCssVariables();
+            const bodyContent = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm');
+            const themeCss = await getThemeCss(appContext.app.activeTheme);
+            const baseVars = this.getComputedCssVariables();
 
             const html = `<!DOCTYPE html>
-<html lang="en" data-theme="${appState.theme}">
+<html lang="en" data-theme="${appContext.app.theme}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -100,7 +94,7 @@ export class ExportService {
     <style>
         ${baseVars}
         ${themeCss}
-        body { margin: 0; padding: 2rem; background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: ${appState.previewFontFamily}; }
+        body { margin: 0; padding: 2rem; background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: ${appContext.app.previewFontFamily}; }
         .prose { max-width: 800px; margin: 0 auto; line-height: 1.6; }
         .prose h1 { border-bottom: 1px solid var(--color-border-main); padding-bottom: 0.3em; }
         .prose pre { background-color: var(--color-bg-code); padding: 1em; border-radius: 4px; overflow: auto; }
@@ -116,14 +110,14 @@ export class ExportService {
 </html>`;
 
             await callBackend('write_text_file', { path, content: html }, 'File:Write');
-            toastStore.success(`Exported to ${path}`);
-            } catch (err) {
+            appContext.ui.toast.success(`Exported to ${path}`);
+        } catch (err) {
             AppError.handle('Export:HTML', err, {
-             showToast: true,
-              userMessage: 'Failed to export to HTML',
-				additionalInfo: { path: tab?.path }
-			});
-		}
+                showToast: true,
+                userMessage: 'Failed to export to HTML',
+                additionalInfo: { path: tab?.path }
+            });
+        }
     }
 
     async exportToPdf() {
@@ -131,15 +125,13 @@ export class ExportService {
         if (!container) return;
 
         try {
-        // Directly trigger print without showing the container on screen
-        window.print();
+            window.print();
         } catch (err) {
-        AppError.handle('Export:PDF', err, {
-          showToast: true,
-				userMessage: 'Failed to open print dialog'
-			});
-		} finally {
-            // Clear after a delay to allow print dialog to read the content
+            AppError.handle('Export:PDF', err, {
+                showToast: true,
+                userMessage: 'Failed to open print dialog'
+            });
+        } finally {
             setTimeout(() => this.clearExportContent(), 500);
         }
     }
@@ -159,7 +151,7 @@ export class ExportService {
 
             if (!path) return;
 
-            toastStore.info("Generating image...", 2000);
+            appContext.ui.toast.info("Generating image...", 2000);
 
             const options = {
                 backgroundColor: 'white',
@@ -192,14 +184,14 @@ export class ExportService {
             }
 
             await callBackend('write_binary_file', { path, content: Array.from(bytes) }, 'File:Write');
-            toastStore.success(`Exported to ${path}`);
-            } catch (err) {
+            appContext.ui.toast.success(`Exported to ${path}`);
+        } catch (err) {
             AppError.handle('Export:HTML', err, {
-             showToast: true,
-              userMessage: `Failed to export to ${format.toUpperCase()}`,
-				additionalInfo: { format, path: tab?.path }
-			});
-		} finally {
+                showToast: true,
+                userMessage: `Failed to export to ${format.toUpperCase()}`,
+                additionalInfo: { format, path: tab?.path }
+            });
+        } finally {
             this.clearExportContent();
         }
     }

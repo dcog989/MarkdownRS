@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { searchManager } from "$lib/utils/searchManager.svelte.ts";
     import { findNext, findPrevious, replaceAll, replaceNext } from "@codemirror/search";
     import type { EditorView } from "@codemirror/view";
@@ -19,7 +18,6 @@
     let wasOpen = false;
     let isMouseOver = $state(false);
 
-    // Actions
     function focusAndSelectInput() {
         if (searchInputRef) {
             searchInputRef.focus();
@@ -28,7 +26,6 @@
     }
 
     function returnFocusToInput() {
-        // Only focus, do not select text
         searchInputRef?.focus();
     }
 
@@ -36,7 +33,6 @@
         isReplaceMode = enable;
     }
 
-    // Effect 1: Handle Opening/Closing Lifecycle
     $effect(() => {
         const currentlyOpen = isOpen;
 
@@ -55,7 +51,6 @@
         }
     });
 
-    // Effect 2: Handle reactive updates (Scope change, Replace mode change)
     $effect(() => {
         const _scope = searchScope;
         const _replace = isReplaceMode;
@@ -72,28 +67,20 @@
         cmView?.focus();
     }
 
-    /**
-     * Core Search Logic
-     * @param view Active EditorView
-     * @param incremental If true (typing), we select the nearest match without jumping around.
-     */
     function executeSearch(view: EditorView, incremental: boolean) {
         if (searchScope === "current") {
             if (searchManager.findText) {
                 if (incremental) {
-                    // While typing: select nearest match (preserve context)
                     searchManager.selectNearestMatch(view);
                 } else {
-                    // On scope change or fresh open: find next
                     searchManager.updateEditor(view);
                     if (searchManager.currentMatches > 0) {
-                        // If we aren't already on a match, go to next
                         findNext(view);
                         searchManager.updateEditor(view);
                     }
                 }
             } else {
-                searchManager.updateEditor(view); // Clear highlights
+                searchManager.updateEditor(view);
             }
         } else {
             searchManager.clear(view);
@@ -101,16 +88,13 @@
         }
     }
 
-    // Input Handler (Typing)
     function onInput() {
         if (!cmView) return;
         executeSearch(cmView, true);
     }
 
-    // Replace Input Handler
     function onReplaceInput() {
         if (!cmView) return;
-        // Just update the state so CM knows about the replacement text
         searchManager.updateEditor(cmView);
     }
 
@@ -132,7 +116,6 @@
 
     function onReplace() {
         if (cmView) {
-            // Ensure CM has the latest query (including replace text) before executing
             searchManager.updateEditor(cmView);
             replaceNext(cmView);
             searchManager.updateEditor(cmView);
@@ -142,7 +125,6 @@
     function onReplaceAll() {
         if (searchScope === "current") {
             if (cmView) {
-                // Ensure CM has the latest query (including replace text) before executing
                 searchManager.updateEditor(cmView);
                 replaceAll(cmView);
                 searchManager.updateEditor(cmView);
@@ -158,7 +140,7 @@
             e.stopPropagation();
             close();
         } else if (e.key === "Enter") {
-            e.preventDefault(); // Prevent form submission or newline
+            e.preventDefault();
             if (e.shiftKey) {
                 onFindPrevious();
             } else {
@@ -183,7 +165,7 @@
 
             if (!searchManager.findText && !isOpen) {
                 isOpen = true;
-                return; // Effect 1 will handle focus
+                return;
             }
 
             if (!isOpen) isOpen = true;
@@ -197,11 +179,9 @@
     }
 
     function handleBlur(e: FocusEvent) {
-        if (!appState.findPanelCloseOnBlur) return;
-        
-        // Use setTimeout to allow the focus change to complete
+        if (!appContext.app.findPanelCloseOnBlur) return;
+
         setTimeout(() => {
-            // Check if the new focused element is within the panel
             const activeElement = document.activeElement;
             if (panelRef && !panelRef.contains(activeElement) && !isMouseOver) {
                 close();
@@ -210,7 +190,7 @@
     }
 
     function navigateToTab(tabId: string) {
-        appState.activeTabId = tabId;
+        appContext.app.activeTabId = tabId;
     }
 
     onMount(() => {
@@ -222,18 +202,7 @@
 </script>
 
 {#if isOpen}
-    <div 
-        bind:this={panelRef}
-        class="find-replace-panel" 
-        class:transparent={appState.findPanelTransparent && !isMouseOver}
-        onkeydown={handleKeydown} 
-        onfocusout={handleBlur}
-        onmouseenter={() => isMouseOver = true}
-        onmouseleave={() => isMouseOver = false}
-        role="dialog" 
-        aria-label="Find and Replace"
-        tabindex="-1"
-    >
+    <div bind:this={panelRef} class="find-replace-panel" class:transparent={appContext.app.findPanelTransparent && !isMouseOver} onkeydown={handleKeydown} onfocusout={handleBlur} onmouseenter={() => (isMouseOver = true)} onmouseleave={() => (isMouseOver = false)} role="dialog" aria-label="Find and Replace" tabindex="-1">
         <div class="panel-header">
             <div class="flex items-center gap-2 flex-1">
                 <button type="button" class="icon-btn" onclick={() => (isReplaceMode = !isReplaceMode)} title="Toggle Replace Mode">
@@ -247,7 +216,6 @@
         </div>
 
         <div class="panel-content">
-            <!-- Find Input -->
             <div class="input-row">
                 <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={onInput} spellcheck="false" />
                 <div class="result-indicator">
@@ -267,14 +235,12 @@
                 </div>
             </div>
 
-            <!-- Replace Input -->
             {#if isReplaceMode}
                 <div class="input-row">
                     <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="search-input" oninput={onReplaceInput} spellcheck="false" />
                 </div>
             {/if}
 
-            <!-- Options -->
             <div class="options-row">
                 <label class="checkbox-label">
                     <input type="checkbox" bind:checked={searchManager.matchCase} onchange={() => executeSearch(cmView!, false)} />
@@ -290,7 +256,6 @@
                 </label>
             </div>
 
-            <!-- Scope Selector -->
             <div class="scope-row">
                 <label class="radio-label">
                     <input type="radio" bind:group={searchScope} value="current" />
@@ -302,7 +267,6 @@
                 </label>
             </div>
 
-            <!-- Actions -->
             <div class="actions-row">
                 <button type="button" class="action-btn" onclick={onFindPrevious} disabled={searchScope === "all"}>
                     <Search size={12} /> Previous
@@ -320,12 +284,11 @@
                 {/if}
             </div>
 
-            <!-- All Tabs Results -->
             {#if searchScope === "all" && searchManager.allTabsResults.size > 0}
                 <div class="results-list">
                     <div class="results-header">Results:</div>
                     {#each [...searchManager.allTabsResults.entries()] as [tabId, count]}
-                        {@const tab = editorStore.tabs.find((t) => t.id === tabId)}
+                        {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}
                             <button type="button" class="result-item" onclick={() => navigateToTab(tabId)}>
                                 <span class="result-filename">{tab.title}</span>

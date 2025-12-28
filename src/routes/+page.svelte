@@ -5,9 +5,8 @@
     import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import Toast from "$lib/components/ui/Toast.svelte";
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
-    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
+    import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
@@ -21,15 +20,14 @@
 
     // Configuration constants
     const AUTO_SAVE_INTERVAL_MS = 30000; // 30 seconds
-    const INIT_DELAY_MS = 150; // Window state restoration delay
 
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
+    let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
     // Unsaved tabs (no path) are treated as Markdown by default
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
-    let showPreview = $derived(appState.splitView && isMarkdown);
+    let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
     // Global Shortcut Handler (Document Level, before CodeMirror can intercept)
     function handleDocumentKeydown(e: KeyboardEvent) {
@@ -52,8 +50,8 @@
             case "w":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                if (appState.activeTabId) {
-                    requestCloseTab(appState.activeTabId);
+                if (appContext.app.activeTabId) {
+                    requestCloseTab(appContext.app.activeTabId);
                 }
                 return;
 
@@ -68,18 +66,18 @@
             case "n":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                const id = editorStore.addTab();
-                appState.activeTabId = id;
+                const id = appContext.editor.addTab();
+                appContext.app.activeTabId = id;
                 return;
 
             case "\\":
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 if (!isMarkdown) {
-                    toastStore.warning("Preview not available for this file type");
+                    appContext.ui.toast.warning("Preview not available for this file type");
                     return;
                 }
-                appState.toggleSplitView();
+                appContext.app.toggleSplitView();
                 saveSettings();
                 return;
 
@@ -110,22 +108,22 @@
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            const currentIndex = editorStore.tabs.findIndex((t: EditorTab) => t.id === appState.activeTabId);
+            const currentIndex = appContext.editor.tabs.findIndex((t: EditorTab) => t.id === appContext.app.activeTabId);
             if (currentIndex === -1) return;
 
             let newIndex;
             if (e.key === "PageUp") {
                 newIndex = currentIndex - 1;
-                if (newIndex < 0) newIndex = editorStore.tabs.length - 1;
+                if (newIndex < 0) newIndex = appContext.editor.tabs.length - 1;
             } else {
                 newIndex = currentIndex + 1;
-                if (newIndex >= editorStore.tabs.length) newIndex = 0;
+                if (newIndex >= appContext.editor.tabs.length) newIndex = 0;
             }
 
-            const newTab = editorStore.tabs[newIndex];
+            const newTab = appContext.editor.tabs[newIndex];
             if (newTab) {
-                appState.activeTabId = newTab.id;
-                editorStore.pushToMru(newTab.id);
+                appContext.app.activeTabId = newTab.id;
+                appContext.editor.pushToMru(newTab.id);
             }
         }
     }
@@ -136,9 +134,9 @@
                 await initSettings();
                 await loadSession();
 
-                if (editorStore.tabs.length === 0) {
-                    const id = editorStore.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
-                    appState.activeTabId = id;
+                if (appContext.editor.tabs.length === 0) {
+                    const id = appContext.editor.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
+                    appContext.app.activeTabId = id;
                 }
 
                 isInitialized = true;
@@ -198,24 +196,24 @@
     function startResize(e: MouseEvent) {
         e.preventDefault();
         isDragging = true;
-        dragStart = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
-        initialSplit = appState.splitPercentage;
+        dragStart = appContext.app.splitOrientation === "vertical" ? e.clientX : e.clientY;
+        initialSplit = appContext.app.splitPercentage;
         window.addEventListener("mousemove", handleResize);
         window.addEventListener("mouseup", stopResize);
-        document.body.style.cursor = appState.splitOrientation === "vertical" ? "col-resize" : "row-resize";
+        document.body.style.cursor = appContext.app.splitOrientation === "vertical" ? "col-resize" : "row-resize";
     }
 
     function handleResize(e: MouseEvent) {
         if (!isDragging || !mainContainer) return;
         const rect = mainContainer.getBoundingClientRect();
-        const totalSize = appState.splitOrientation === "vertical" ? rect.width : rect.height;
-        const currentPos = appState.splitOrientation === "vertical" ? e.clientX : e.clientY;
+        const totalSize = appContext.app.splitOrientation === "vertical" ? rect.width : rect.height;
+        const currentPos = appContext.app.splitOrientation === "vertical" ? e.clientX : e.clientY;
         const deltaPixels = currentPos - dragStart;
         const deltaPercent = deltaPixels / totalSize;
         let newSplit = initialSplit + deltaPercent;
 
         newSplit = Math.max(0.1, Math.min(0.9, newSplit));
-        appState.splitPercentage = newSplit;
+        appContext.app.splitPercentage = newSplit;
     }
 
     function stopResize() {
@@ -228,7 +226,7 @@
     }
 
     function resetSplit() {
-        appState.splitPercentage = 0.5;
+        appContext.app.splitPercentage = 0.5;
         saveSettings();
     }
 </script>
@@ -249,11 +247,11 @@
 
         <!-- Main Workspace with StatusBar positioned on top -->
         <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer} style="position: relative;">
-            {#if appState.activeTabId}
-                {#key appState.activeTabId}
-                    <div class="flex w-full h-full" style="flex-direction: {appState.splitOrientation === 'vertical' ? 'row' : 'column'};">
-                        <div style="flex: {showPreview ? `0 0 ${appState.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
-                            <Editor tabId={appState.activeTabId} />
+            {#if appContext.app.activeTabId}
+                {#key appContext.app.activeTabId}
+                    <div class="flex w-full h-full" style="flex-direction: {appContext.app.splitOrientation === 'vertical' ? 'row' : 'column'};">
+                        <div style="flex: {showPreview ? `0 0 ${appContext.app.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
+                            <Editor tabId={appContext.app.activeTabId} />
                         </div>
 
                         {#if showPreview}
@@ -261,7 +259,7 @@
                             <div
                                 class="z-20 transition-colors duration-150"
                                 style="
-                                    cursor: {appState.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
+                                    cursor: {appContext.app.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
                                     flex: 0 0 4px;
                                     background-color: var(--color-bg-panel);
                                 "
@@ -274,7 +272,7 @@
 
                         {#if showPreview}
                             <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
-                                <Preview tabId={appState.activeTabId} />
+                                <Preview tabId={appContext.app.activeTabId} />
                             </div>
                         {/if}
                     </div>

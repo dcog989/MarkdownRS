@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
     import { DEFAULT_THEMES } from "$lib/utils/themes";
@@ -23,15 +22,15 @@
                 .then((customThemes) => {
                     const defaults = Object.keys(DEFAULT_THEMES);
                     const customs = customThemes.filter((t) => !defaults.includes(t));
-                    appState.availableThemes = [...defaults, ...customs];
+                    appContext.app.availableThemes = [...defaults, ...customs];
 
-                    if (!appState.availableThemes.includes(appState.activeTheme)) {
-                        appState.activeTheme = "default-dark";
+                    if (!appContext.app.availableThemes.includes(appContext.app.activeTheme)) {
+                        appContext.app.activeTheme = "default-dark";
                         saveSettings();
                     }
                 })
                 .catch(() => {
-                    appState.availableThemes = Object.keys(DEFAULT_THEMES);
+                    appContext.app.availableThemes = Object.keys(DEFAULT_THEMES);
                 });
 
             setTimeout(() => searchInputEl?.focus(), 0);
@@ -43,7 +42,7 @@
     const settingsDefinitions = $derived([
         { key: "logLevel", label: "Log Level (Restart Required)", type: "select", category: "Advanced", defaultValue: "info", options: ["trace", "debug", "info", "warn", "error"] },
 
-        { key: "activeTheme", label: "Content Theme", type: "select", category: "Appearance", defaultValue: "default-dark", options: appState.availableThemes },
+        { key: "activeTheme", label: "Content Theme", type: "select", category: "Appearance", defaultValue: "default-dark", options: appContext.app.availableThemes },
 
         { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
@@ -103,7 +102,7 @@
     );
 
     function getSettingValue(key: string, defaultValue: any): any {
-        return (appState as any)[key] ?? defaultValue;
+        return (appContext.app as any)[key] ?? defaultValue;
     }
 
     function updateSetting(key: string, value: any, type: string) {
@@ -111,13 +110,13 @@
             value = Number(value);
         }
 
-        const oldValue = (appState as any)[key];
+        const oldValue = (appContext.app as any)[key];
         if (oldValue !== value) {
-            (appState as any)[key] = value;
+            (appContext.app as any)[key] = value;
             saveSettings();
 
             if (key === "logLevel") {
-                toastStore.info("Restart required to apply log level changes");
+                appContext.ui.toast.info("Restart required to apply log level changes");
             }
         }
     }

@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { CircleAlert, FileText, Pencil, PencilLine } from "lucide-svelte";
     import { tick } from "svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
@@ -26,7 +25,7 @@
     let mouseMovementTimer: number | null = null;
 
     let filteredTabs = $derived.by(() => {
-        const tabs = editorStore.tabs;
+        const tabs = appContext.editor.tabs;
         if (searchQuery.trim() === "") {
             return tabs;
         }
@@ -36,18 +35,14 @@
         });
     });
 
-    // Get a longer display title for the dropdown
     function getDropdownTitle(tab: any): string {
-        // If it has a custom title, use it
         if (tab.customTitle) return tab.customTitle;
 
-        // If it has a path, show the filename
         if (tab.path) {
             const parts = tab.path.split(/[\\\/]/);
             return parts[parts.length - 1] || tab.title;
         }
 
-        // For unsaved tabs, extract first line from content (up to 60 chars)
         if (tab.content) {
             const lines = tab.content.split("\n");
             const firstLine = lines.find((l: string) => l.trim().length > 0) || "";
@@ -70,12 +65,10 @@
             selectedIndex = 0;
             ignoreMouseMovement = true;
 
-            // Clear any existing timer
             if (mouseMovementTimer !== null) {
                 clearTimeout(mouseMovementTimer);
             }
 
-            // Allow mouse movement after 100ms to prevent race conditions
             mouseMovementTimer = window.setTimeout(() => {
                 ignoreMouseMovement = false;
                 mouseMovementTimer = null;
@@ -83,7 +76,6 @@
 
             setTimeout(() => searchInputRef?.focus(), 50);
         } else {
-            // Clean up timer when closing
             if (mouseMovementTimer !== null) {
                 clearTimeout(mouseMovementTimer);
                 mouseMovementTimer = null;
@@ -96,7 +88,6 @@
     }
 
     function handleHover(index: number, e: MouseEvent) {
-        // Ignore mouse movement during the opening transition
         if (ignoreMouseMovement) return;
 
         if (e.clientX === lastClientX && e.clientY === lastClientY) return;
@@ -164,7 +155,7 @@
             <div bind:this={dropdownListRef} class="dropdown-list overflow-y-auto py-1" style="max-height: 60vh;">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
-                    {@const isActive = appState.activeTabId === tab.id}
+                    {@const isActive = appContext.app.activeTabId === tab.id}
                     <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem">
                         {#if tab.fileCheckFailed}
                             <CircleAlert size={14} class="shrink-0 text-danger-text" />

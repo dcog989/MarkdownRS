@@ -3,9 +3,7 @@
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { exportService } from "$lib/services/exportService";
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { bookmarkStore } from "$lib/stores/bookmarkStore.svelte.ts";
-    import { editorStore, type EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { save } from "@tauri-apps/plugin-dialog";
@@ -23,33 +21,32 @@
     let showExportSubmenu = $state(false);
     let showRestoreSubmenu = $state(false);
 
-    let tab = $derived(editorStore.tabs.find((t) => t.id === tabId));
+    let tab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
-    let isBookmarked = $derived(tab?.path ? bookmarkStore.isBookmarked(tab.path) : false);
-    let tabIndex = $derived(editorStore.tabs.findIndex((t) => t.id === tabId));
+    let isBookmarked = $derived(tab?.path ? appContext.bookmarks.isBookmarked(tab.path) : false);
+    let tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === tabId));
 
-    // Functional State for disabling menu items
-    let hasTabsToRight = $derived(tabIndex < editorStore.tabs.length - 1);
+    let hasTabsToRight = $derived(tabIndex < appContext.editor.tabs.length - 1);
     let hasTabsToLeft = $derived(tabIndex > 0);
-    let hasOtherTabs = $derived(editorStore.tabs.length > 1);
-    let hasSavedTabs = $derived(editorStore.tabs.some((t) => !t.isDirty && t.id !== tabId));
-    let hasUnsavedTabs = $derived(editorStore.tabs.some((t) => t.isDirty && t.id !== tabId));
-    let hasCloseableTabsToRight = $derived(tabIndex < editorStore.tabs.length - 1 && editorStore.tabs.slice(tabIndex + 1).some((t) => !t.isPinned));
-    let hasCloseableTabsToLeft = $derived(tabIndex > 0 && editorStore.tabs.slice(0, tabIndex).some((t) => !t.isPinned));
-    let hasCloseableOtherTabs = $derived(editorStore.tabs.some((t) => t.id !== tabId && !t.isPinned));
+    let hasOtherTabs = $derived(appContext.editor.tabs.length > 1);
+    let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== tabId));
+    let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== tabId));
+    let hasCloseableTabsToRight = $derived(tabIndex < appContext.editor.tabs.length - 1 && appContext.editor.tabs.slice(tabIndex + 1).some((t) => !t.isPinned));
+    let hasCloseableTabsToLeft = $derived(tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned));
+    let hasCloseableOtherTabs = $derived(appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned));
 
     async function handleSave() {
-        const prevActive = appState.activeTabId;
-        appState.activeTabId = tabId;
+        const prevActive = appContext.app.activeTabId;
+        appContext.app.activeTabId = tabId;
         await saveCurrentFile();
-        appState.activeTabId = prevActive;
+        appContext.app.activeTabId = prevActive;
         onClose();
     }
 
     async function handleSaveAs() {
         if (!tab) return;
-        const prevActive = appState.activeTabId;
-        appState.activeTabId = tabId;
+        const prevActive = appContext.app.activeTabId;
+        appContext.app.activeTabId = tabId;
 
         try {
             const savePath = await save({
@@ -60,32 +57,31 @@
                 const sanitizedPath = savePath.replace(/\0/g, "").replace(/\\/g, "/");
                 await callBackend("write_text_file", { path: sanitizedPath, content: tab.content }, "File:Write");
                 const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
-                editorStore.updateTabPath(tabId, sanitizedPath, fileName);
-                editorStore.markAsSaved(tabId);
+                appContext.editor.updateTabPath(tabId, sanitizedPath, fileName);
+                appContext.editor.markAsSaved(tabId);
             }
         } finally {
-            appState.activeTabId = prevActive;
+            appContext.app.activeTabId = prevActive;
             onClose();
         }
     }
 
     function handlePin() {
         if (!tab) return;
-        editorStore.togglePin(tabId);
+        appContext.editor.togglePin(tabId);
         onClose();
     }
 
     async function handleCloseMany(mode: "right" | "left" | "others" | "saved" | "unsaved" | "all") {
-        let targets: typeof editorStore.tabs = [];
+        let targets: typeof appContext.editor.tabs = [];
 
-        if (mode === "right") targets = editorStore.tabs.slice(tabIndex + 1);
-        else if (mode === "left") targets = editorStore.tabs.slice(0, tabIndex);
-        else if (mode === "others") targets = editorStore.tabs.filter((t) => t.id !== tabId);
-        else if (mode === "saved") targets = editorStore.tabs.filter((t) => !t.isDirty && t.id !== tabId);
-        else if (mode === "unsaved") targets = editorStore.tabs.filter((t) => t.isDirty && t.id !== tabId);
-        else if (mode === "all") targets = editorStore.tabs;
+        if (mode === "right") targets = appContext.editor.tabs.slice(tabIndex + 1);
+        else if (mode === "left") targets = appContext.editor.tabs.slice(0, tabIndex);
+        else if (mode === "others") targets = appContext.editor.tabs.filter((t) => t.id !== tabId);
+        else if (mode === "saved") targets = appContext.editor.tabs.filter((t) => !t.isDirty && t.id !== tabId);
+        else if (mode === "unsaved") targets = appContext.editor.tabs.filter((t) => t.isDirty && t.id !== tabId);
+        else if (mode === "all") targets = appContext.editor.tabs;
 
-        // Sequence closing to ensure dialogs/state don't race
         for (const t of targets.filter((t) => !t.isPinned)) {
             await requestCloseTab(t.id);
         }
@@ -96,7 +92,7 @@
         if (!tab) return;
         const newTitle = prompt("Enter new title:", tab.customTitle || tab.title);
         if (newTitle && newTitle.trim()) {
-            editorStore.updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
+            appContext.editor.updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
         }
         onClose();
     }
@@ -112,7 +108,7 @@
 
         try {
             await callBackend("send_to_recycle_bin", { path: tab.path }, "File:Write");
-            editorStore.closeTab(tabId);
+            appContext.editor.closeTab(tabId);
         } catch (err) {
             // Error logged by bridge
         }
@@ -123,17 +119,17 @@
         if (!tab || !tab.path) return;
         try {
             if (isBookmarked) {
-                const bookmark = bookmarkStore.getBookmark(tab.path);
-                if (bookmark) await bookmarkStore.deleteBookmark(bookmark.id);
+                const bookmark = appContext.bookmarks.getBookmark(tab.path);
+                if (bookmark) await appContext.bookmarks.deleteBookmark(bookmark.id);
             } else {
-                await bookmarkStore.addBookmark(tab.path, tab.title, []);
+                await appContext.bookmarks.addBookmark(tab.path, tab.title, []);
             }
         } finally {
             onClose();
         }
     }
 
-    function getHistoryTooltip(tab: EditorTab): string {
+    function getHistoryTooltip(tab: any): string {
         const lines = tab.content.slice(0, 300).split("\n").slice(0, 5);
         const preview = lines.join("\n") + (tab.content.length > 300 ? "..." : "");
 
@@ -155,7 +151,6 @@
 
 <ContextMenu {x} {y} {onClose}>
     {#snippet children({ submenuSide })}
-        <!-- File Operations -->
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleSave}>
             <Save size={14} class="opacity-70" /><span>Save</span>
         </button>
@@ -165,7 +160,6 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
-        <!-- Meta Operations -->
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handlePin}>
             {#if isPinned}
                 <PinOff size={14} class="opacity-70" /><span>Unpin</span>
@@ -197,7 +191,7 @@
                 type="button"
                 class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
                 onclick={async () => {
-                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToHtml();
                     onClose();
                 }}>Export to HTML</button
@@ -206,7 +200,7 @@
                 type="button"
                 class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
                 onclick={async () => {
-                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToPdf();
                     onClose();
                 }}>Export to PDF</button
@@ -215,7 +209,7 @@
                 type="button"
                 class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
                 onclick={async () => {
-                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage("png");
                     onClose();
                 }}>Export to PNG</button
@@ -224,7 +218,7 @@
                 type="button"
                 class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
                 onclick={async () => {
-                    if (appState.activeTabId !== tabId) appState.activeTabId = tabId;
+                    if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage("webp");
                     onClose();
                 }}>Export to WEBP</button
@@ -233,21 +227,19 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
-        <!-- Tab Position Operations -->
         <button
             type="button"
             class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
             disabled={tabIndex === 0}
             onclick={async () => {
-                const newTabs = [...editorStore.tabs];
+                const newTabs = [...appContext.editor.tabs];
                 const [tab] = newTabs.splice(tabIndex, 1);
                 newTabs.unshift(tab);
-                editorStore.reorderTabs(newTabs);
-                editorStore.sessionDirty = true;
-                appState.activeTabId = tabId;
-                editorStore.pushToMru(tabId);
+                appContext.editor.reorderTabs(newTabs);
+                appContext.editor.sessionDirty = true;
+                appContext.app.activeTabId = tabId;
+                appContext.editor.pushToMru(tabId);
                 await tick();
-                // Force scroll after DOM update
                 const event = new CustomEvent("scroll-to-active-tab");
                 window.dispatchEvent(event);
                 onClose();
@@ -258,17 +250,16 @@
         <button
             type="button"
             class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-            disabled={tabIndex === editorStore.tabs.length - 1}
+            disabled={tabIndex === appContext.editor.tabs.length - 1}
             onclick={async () => {
-                const newTabs = [...editorStore.tabs];
+                const newTabs = [...appContext.editor.tabs];
                 const [tab] = newTabs.splice(tabIndex, 1);
                 newTabs.push(tab);
-                editorStore.reorderTabs(newTabs);
-                editorStore.sessionDirty = true;
-                appState.activeTabId = tabId;
-                editorStore.pushToMru(tabId);
+                appContext.editor.reorderTabs(newTabs);
+                appContext.editor.sessionDirty = true;
+                appContext.app.activeTabId = tabId;
+                appContext.editor.pushToMru(tabId);
                 await tick();
-                // Force scroll after DOM update
                 const event = new CustomEvent("scroll-to-active-tab");
                 window.dispatchEvent(event);
                 onClose();
@@ -279,7 +270,6 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
-        <!-- Closure Operations -->
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={isPinned} onclick={() => requestCloseTab(tabId)}>
             <X size={14} class="opacity-70" /><span>Close</span>
         </button>
@@ -303,24 +293,24 @@
 
         <Submenu bind:show={showRestoreSubmenu} side={submenuSide}>
             {#snippet trigger()}
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {editorStore.closedTabsHistory.length === 0 ? 'opacity-50' : ''}">
+                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {appContext.editor.closedTabsHistory.length === 0 ? 'opacity-50' : ''}">
                     <Undo2 size={14} class="mr-2 opacity-70" />
                     <span>Reopen Tabs</span>
                     <span class="ml-auto opacity-60">›</span>
                 </button>
             {/snippet}
 
-            {#if editorStore.closedTabsHistory.length > 0}
+            {#if appContext.editor.closedTabsHistory.length > 0}
                 <div class="px-3 py-1.5 text-xs opacity-50 font-semibold border-b border-[var(--color-border-main)]">RECENTLY CLOSED</div>
-                {#each editorStore.closedTabsHistory as item, i}
+                {#each appContext.editor.closedTabsHistory as item, i}
                     <button
                         type="button"
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
                         use:tooltip={getHistoryTooltip(item.tab)}
                         onclick={() => {
-                            const reopenedTabId = editorStore.reopenClosedTab(i);
+                            const reopenedTabId = appContext.editor.reopenClosedTab(i);
                             if (reopenedTabId) {
-                                appState.activeTabId = reopenedTabId;
+                                appContext.app.activeTabId = reopenedTabId;
                             }
                             onClose();
                         }}
@@ -335,7 +325,6 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
-        <!-- Path/Name Operations -->
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleRename}>
             <FilePen size={14} class="opacity-70" /><span>Rename</span>
         </button>
@@ -363,7 +352,6 @@
 
         <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
 
-        <!-- Destruction -->
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-danger-text)" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
             <Trash2 size={14} /><span>Delete to Recycle Bin</span>
         </button>

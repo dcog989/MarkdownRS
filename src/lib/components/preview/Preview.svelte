@@ -1,7 +1,6 @@
 <script lang="ts">
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
@@ -18,8 +17,7 @@
     let lastTabId = $state("");
     let debounceTimer: number | null = null;
 
-    let activeTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
-    // Unsaved tabs (no path) are treated as Markdown by default
+    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
     $effect(() => {
@@ -30,8 +28,8 @@
             htmlContent = "";
         }
 
-        const tab = editorStore.tabs.find((t) => t.id === tabId);
-        const content = appState.activeTabId === tabId ? tab?.content || "" : "";
+        const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+        const content = appContext.app.activeTabId === tabId ? tab?.content || "" : "";
 
         // If not markdown, skip rendering
         if (!isMarkdown) return;
@@ -43,7 +41,7 @@
 
         isRendering = true;
         debounceTimer = window.setTimeout(async () => {
-            const result = await renderMarkdown(content, appState.markdownFlavor, tabId);
+            const result = await renderMarkdown(content, appContext.app.markdownFlavor, tabId);
             htmlContent = result.html;
             lastRendered = content;
             if (container) {
@@ -66,8 +64,8 @@
 
 <div class="relative w-full h-full border-l" style="background-color: var(--color-bg-preview); border-color: var(--color-border-main);">
     <div class="group absolute top-2 right-2 z-10">
-        <button type="button" class="p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appState.toggleOrientation()}>
-            {#if appState.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
+        <button type="button" class="p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appContext.app.toggleOrientation()}>
+            {#if appContext.app.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
         </button>
     </div>
 
@@ -83,7 +81,7 @@
         }}
         role="none"
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0"
-        style="background-color: var(--color-bg-preview); color: var(--color-fg-default); font-family: {appState.previewFontFamily}; font-size: {appState.previewFontSize}px;"
+        style="background-color: var(--color-bg-preview); color: var(--color-fg-default); font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
     >
         {#if !isMarkdown}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">

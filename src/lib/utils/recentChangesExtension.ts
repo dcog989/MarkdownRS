@@ -1,6 +1,6 @@
-import { appState } from "$lib/stores/appState.svelte";
+import { appContext } from "$lib/stores/state.svelte.ts";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-import { EditorView, gutter, GutterMarker, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { gutter, GutterMarker, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 class LineNumberMarker extends GutterMarker {
     constructor(private lineNo: number, private alpha: number) {
@@ -27,19 +27,13 @@ class LineNumberMarker extends GutterMarker {
     }
 }
 
-/**
- * Creates the complete extension for recent changes:
- * 1. A ViewPlugin that updates the tracker state synchronously during view updates.
- * 2. The gutter that renders the line numbers based on that tracker state.
- */
 export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
     return [
         ViewPlugin.fromClass(class {
             update(update: ViewUpdate) {
                 if (!update.docChanged) return;
-                if (appState.recentChangesMode === 'disabled') return;
+                if (appContext.app.recentChangesMode === 'disabled') return;
 
-                // Detect Undo/Redo
                 const isHistoryAction = update.transactions.some(tr =>
                     tr.isUserEvent('undo') || tr.isUserEvent('redo')
                 );
@@ -58,9 +52,6 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                     return;
                 }
 
-                // Only track user-initiated changes (typing, deleting, pasting, dragging)
-                // This prevents programmatic changes (like file loading) from triggering highlights
-                // "input" covers input.type, input.paste, input.drop, input.complete
                 const isUserAction = update.transactions.some(tr =>
                     tr.isUserEvent('input') ||
                     tr.isUserEvent('delete') ||
@@ -69,7 +60,6 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
 
                 if (!isUserAction) return;
 
-                // Normal Changes
                 const changedLines = new Set<number>();
                 update.changes.iterChanges((fromA, toA, fromB, toB) => {
                     const doc = update.state.doc;
@@ -80,7 +70,6 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                         changedLines.add(line);
                     }
 
-                    // Adjust subsequent line numbers if lines were added/removed
                     const lineDelta = (endLine - startLine) - (update.startState.doc.lineAt(toA).number - update.startState.doc.lineAt(fromA).number);
                     if (lineDelta !== 0) {
                         tracker.adjustLineNumbers(endLine + 1, lineDelta);
@@ -98,19 +87,19 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                 const lineNo = view.state.doc.lineAt(line.from).number;
                 let alpha = 0;
 
-                if (appState.recentChangesMode !== 'disabled') {
+                if (appContext.app.recentChangesMode !== 'disabled') {
                     alpha = tracker.getLineAlpha(
                         lineNo,
-                        appState.recentChangesMode,
-                        appState.recentChangesTimespan,
-                        appState.recentChangesCount
+                        appContext.app.recentChangesMode,
+                        appContext.app.recentChangesTimespan,
+                        appContext.app.recentChangesCount
                     );
                 }
 
                 return new LineNumberMarker(lineNo, alpha);
             },
-            initialSpacer: (view: EditorView) => new LineNumberMarker(view.state.doc.lines, 0),
-            updateSpacer: (spacer: GutterMarker, update: ViewUpdate) => {
+            initialSpacer: (view) => new LineNumberMarker(view.state.doc.lines, 0),
+            updateSpacer: (spacer, update) => {
                 if (update.docChanged) {
                     return new LineNumberMarker(update.state.doc.lines, 0);
                 }

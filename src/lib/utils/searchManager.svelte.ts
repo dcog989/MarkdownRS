@@ -1,4 +1,4 @@
-import { editorStore } from "$lib/stores/editorStore.svelte.ts";
+import { appContext } from "$lib/stores/state.svelte.ts";
 import { SearchQuery, setSearchQuery } from "@codemirror/search";
 import { EditorView } from "@codemirror/view";
 
@@ -26,10 +26,6 @@ export class SearchManager {
         });
     }
 
-    /**
-     * Updates highlighting and calculates stats.
-     * Does NOT move the cursor or scroll.
-     */
     updateEditor(view: EditorView | undefined) {
         if (!view) return;
 
@@ -54,38 +50,30 @@ export class SearchManager {
         const cursor = query.getCursor(view.state);
         const selection = view.state.selection.main;
 
-        // First pass: count total matches
         let item = cursor.next();
         while (!item.done) {
             count++;
             item = cursor.next();
         }
 
-        // Second pass: find which match is currently selected
-        // Use exact range matching - the selected match should have exactly the same from/to
         const cursorReset = query.getCursor(view.state);
         let matchIndex = 0;
         item = cursorReset.next();
-        
+
         while (!item.done) {
-            // Check if this match is exactly selected
             if (item.value.from === selection.from && item.value.to === selection.to) {
                 idx = matchIndex;
                 break;
             }
-            // If no exact match found, check if cursor is within or before this match
             if (selection.head < item.value.from) {
-                // Cursor is before this match, so current index is this match
                 idx = matchIndex;
                 break;
             }
-            
+
             matchIndex++;
             item = cursorReset.next();
         }
 
-        // If we went through all matches without finding where cursor is,
-        // cursor is after the last match, so wrap to first
         if (matchIndex >= count && count > 0) {
             idx = 0;
         }
@@ -94,10 +82,6 @@ export class SearchManager {
         this.currentIndex = count > 0 ? idx : 0;
     }
 
-    /**
-     * Finds the nearest match to the current cursor position and SELECTS it.
-     * This ensures the "active" highlight styling is applied.
-     */
     selectNearestMatch(view: EditorView | undefined) {
         if (!view || !this.findText) return;
 
@@ -112,8 +96,6 @@ export class SearchManager {
         while (!item.done) {
             if (!firstMatch) firstMatch = item.value;
 
-            // Check if this match is at or after our current cursor position
-            // This includes matches we might be currently inside
             if (item.value.to >= currentPos) {
                 bestMatch = item.value;
                 break;
@@ -126,7 +108,7 @@ export class SearchManager {
 
         if (matchToSelect) {
             view.dispatch({
-                effects: setSearchQuery.of(query), // Ensure highlighters are active
+                effects: setSearchQuery.of(query),
                 selection: { anchor: matchToSelect.from, head: matchToSelect.to },
                 scrollIntoView: true
             });
@@ -157,7 +139,7 @@ export class SearchManager {
 
         const results = new Map<string, number>();
 
-        editorStore.tabs.forEach((tab) => {
+        appContext.editor.tabs.forEach((tab) => {
             const matches = [...tab.content.matchAll(regex)];
             if (matches.length > 0) {
                 results.set(tab.id, matches.length);
@@ -173,11 +155,11 @@ export class SearchManager {
 
         let total = 0;
 
-        editorStore.tabs.forEach((tab) => {
+        appContext.editor.tabs.forEach((tab) => {
             const matches = [...tab.content.matchAll(regex)];
             if (matches.length > 0) {
                 const newContent = tab.content.replace(regex, this.replaceText);
-                editorStore.updateContent(tab.id, newContent);
+                appContext.editor.updateContent(tab.id, newContent);
                 total += matches.length;
             }
         });

@@ -2,11 +2,8 @@
     import { tooltip } from "$lib/actions/tooltip";
     import { OPERATION_CATEGORIES, getOperationsByCategory } from "$lib/config/textOperationsRegistry";
     import { exportService } from "$lib/services/exportService";
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorStore } from "$lib/stores/editorStore.svelte.ts";
-    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
-    import { callBackend } from "$lib/utils/backend";
-    import { openFile, openFileByPath, persistSession, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
+    import { appContext } from "$lib/stores/state.svelte.ts";
+    import { openFile, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { shortcutManager } from "$lib/utils/shortcuts";
@@ -29,29 +26,26 @@
     let showBookmarksModal = $state(false);
     let showCommandPalette = $state(false);
 
-    let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
-    // Unsaved tabs (no path) are treated as Markdown by default
+    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
     function toggleSplit() {
         if (!isMarkdown) {
-            toastStore.warning("Preview not available for this file type");
+            appContext.ui.toast.warning("Preview not available for this file type");
             return;
         }
-        appState.toggleSplitView();
+        appContext.app.toggleSplitView();
         saveSettings();
     }
 
-    // All Commands with proper categories
     const allCommands: Command[] = [
-        // File Commands
         {
             id: "new",
             label: "File: New File",
             shortcut: "Ctrl+N",
             action: () => {
-                const id = editorStore.addTab();
-                appState.activeTabId = id;
+                const id = appContext.editor.addTab();
+                appContext.app.activeTabId = id;
             },
         },
         {
@@ -71,7 +65,7 @@
             label: "File: Close Tab",
             shortcut: "Ctrl+W",
             action: () => {
-                if (appState.activeTabId) requestCloseTab(appState.activeTabId);
+                if (appContext.app.activeTabId) requestCloseTab(appContext.app.activeTabId);
             },
         },
         {
@@ -89,21 +83,17 @@
             label: "File: Export to PNG",
             action: () => exportService.exportToImage("png"),
         },
-
-        // Format Commands
         {
             id: "format",
             label: "Format: Format Document",
             shortcut: "Shift+Alt+F",
-            action: () => editorStore.performTextTransform("format-document"),
+            action: () => appContext.editor.performTextTransform("format-document"),
         },
-
-        // Theme Commands
         {
             id: "theme-dark",
             label: "Theme: Dark",
             action: () => {
-                appState.setTheme("dark");
+                appContext.app.setTheme("dark");
                 saveSettings();
             },
         },
@@ -111,12 +101,10 @@
             id: "theme-light",
             label: "Theme: Light",
             action: () => {
-                appState.setTheme("light");
+                appContext.app.setTheme("light");
                 saveSettings();
             },
         },
-
-        // View Commands
         {
             id: "toggle-split",
             label: "View: Toggle Split Preview",
@@ -129,12 +117,10 @@
             id: "toggle-whitespace",
             label: "View: Toggle Whitespace",
             action: () => {
-                appState.showWhitespace = !appState.showWhitespace;
+                appContext.app.showWhitespace = !appContext.app.showWhitespace;
                 saveSettings();
             },
         },
-
-        // Window Commands
         {
             id: "bookmarks",
             label: "Window: Bookmarks",
@@ -176,62 +162,50 @@
         },
     ];
 
-    // Text operation commands from config
     const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category) =>
         getOperationsByCategory(category.id).map((op) => ({
             id: `ops-${op.id}`,
             label: `${category.title}: ${op.label}`,
-            action: () => editorStore.performTextTransform(op.id),
+            action: () => appContext.editor.performTextTransform(op.id),
         }))
     );
 
-    // Combine and sort all commands alphabetically by category, then by label
     const commands = $derived(
         [...allCommands, ...textOperationCommands].sort((a, b) => {
-            // Extract category (before colon)
             const catA = a.label.split(":")[0].trim();
             const catB = b.label.split(":")[0].trim();
-
-            // First sort by category
             if (catA !== catB) {
                 return catA.localeCompare(catB);
             }
-
-            // Then sort by full label within category
             return a.label.localeCompare(b.label);
         })
     );
 
     function registerShortcuts() {
-        // Transformations (Ctrl+T)
         const openTransform = () => {
             showTransformModal = true;
         };
         shortcutManager.register({ id: "win-transform-ctrl", key: "t", ctrl: true, category: "Window", description: "Text Transformations", handler: openTransform });
         shortcutManager.register({ id: "win-transform-meta", key: "t", meta: true, category: "Window", description: "Text Transformations", handler: openTransform });
 
-        // Command Palette (Ctrl+P)
         const openPalette = () => {
             showCommandPalette = true;
         };
         shortcutManager.register({ id: "win-palette-ctrl", key: "p", ctrl: true, category: "Window", description: "Command Palette", handler: openPalette });
         shortcutManager.register({ id: "win-palette-meta", key: "p", meta: true, category: "Window", description: "Command Palette", handler: openPalette });
 
-        // Bookmarks (Ctrl+B)
         const openBookmarks = () => {
             showBookmarksModal = true;
         };
         shortcutManager.register({ id: "win-bookmarks-ctrl", key: "b", ctrl: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
         shortcutManager.register({ id: "win-bookmarks-meta", key: "b", meta: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
 
-        // Settings (Ctrl+,)
         const openSettings = () => {
             showSettingsModal = true;
         };
         shortcutManager.register({ id: "win-settings-ctrl", key: ",", ctrl: true, category: "Window", description: "Settings", handler: openSettings });
         shortcutManager.register({ id: "win-settings-meta", key: ",", meta: true, category: "Window", description: "Settings", handler: openSettings });
 
-        // Shortcuts Help (F1)
         shortcutManager.register({
             id: "win-help",
             key: "F1",
@@ -260,7 +234,6 @@
 
         registerShortcuts();
 
-        // Listen for internal events (e.g. from Settings Modal button)
         const handleOpenShortcuts = () => {
             showShortcutsModal = true;
         };
@@ -274,16 +247,7 @@
     });
 
     async function closeApp() {
-        try {
-            await persistSession();
-            await saveSettings();
-            await callBackend("plugin:window-state|save_window_state", {}, "Session:Save");
-            // Perform incremental vacuum on shutdown to reclaim freed space
-            await callBackend("vacuum_database", {}, "Session:Vacuum");
-            await appWindow.close();
-        } catch (e) {
-            await appWindow.close();
-        }
+        await appWindow.close();
     }
 </script>
 
@@ -311,7 +275,7 @@
             {#if !isMarkdown}
                 <EyeOff size={14} class="opacity-50" />
             {:else}
-                <Eye size={14} class={appState.splitView ? "text-fg-default" : "opacity-50"} />
+                <Eye size={14} class={appContext.app.splitView ? "text-fg-default" : "opacity-50"} />
             {/if}
         </button>
         <button class="h-full w-12 flex items-center justify-center hover:bg-white/10 text-fg-muted outline-none" onclick={() => appWindow.minimize()} use:tooltip={"Minimize"}><Minus size={16} /></button>
@@ -325,6 +289,13 @@
 <CommandPalette bind:isOpen={showCommandPalette} {commands} onClose={() => (showCommandPalette = false)} />
 <SettingsModal bind:isOpen={showSettingsModal} onClose={() => (showSettingsModal = false)} />
 <AboutModal bind:isOpen={showAboutModal} onClose={() => (showAboutModal = false)} />
-<BookmarksModal bind:isOpen={showBookmarksModal} onClose={() => (showBookmarksModal = false)} onOpenFile={openFileByPath} />
+<BookmarksModal
+    bind:isOpen={showBookmarksModal}
+    onClose={() => (showBookmarksModal = false)}
+    onOpenFile={async (path) => {
+        const { openFileByPath } = await import("$lib/utils/fileSystem");
+        openFileByPath(path);
+    }}
+/>
 <TextTransformModal isOpen={showTransformModal} onClose={() => (showTransformModal = false)} />
 <ShortcutsModal bind:isOpen={showShortcutsModal} onClose={() => (showShortcutsModal = false)} />

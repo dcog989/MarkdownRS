@@ -1,5 +1,5 @@
-import { toastStore } from '$lib/stores/toastStore.svelte.ts';
-import { error as logError, warn as logWarn, info as logInfo } from '@tauri-apps/plugin-log';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
 /**
  * Centralized error handling and logging utilities
@@ -32,35 +32,14 @@ export type ErrorContext =
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 
 export interface ErrorOptions {
-	/**
-	 * Whether to show a toast notification to the user
-	 */
 	showToast?: boolean;
-	/**
-	 * Custom user-friendly message (if not provided, will use error message)
-	 */
 	userMessage?: string;
-	/**
-	 * Duration for the toast notification in milliseconds
-	 */
 	toastDuration?: number;
-	/**
-	 * Additional context information to log
-	 */
 	additionalInfo?: Record<string, any>;
-	/**
-	 * Error severity level
-	 */
 	severity?: ErrorSeverity;
-	/**
-	 * Whether to write to disk log (default: true)
-	 */
 	logToDisk?: boolean;
 }
 
-/**
- * Standardized Application Error class that handles logging, user notification, and telemetry
- */
 export class AppError extends Error {
 	public readonly context: ErrorContext;
 	public readonly timestamp: Date;
@@ -81,15 +60,11 @@ export class AppError extends Error {
 		this.additionalInfo = options.additionalInfo;
 		this.originalError = options.originalError;
 
-		// Capture stack trace
 		if (Error.captureStackTrace) {
 			Error.captureStackTrace(this, AppError);
 		}
 	}
 
-	/**
-	 * Create an AppError from an unknown error
-	 */
 	static from(
 		context: ErrorContext,
 		error: unknown,
@@ -105,18 +80,12 @@ export class AppError extends Error {
 		return new AppError(context, message, { ...options, originalError });
 	}
 
-	/**
-	 * Handle an error: log it, show toast if needed, and return the AppError
-	 */
 	static handle(context: ErrorContext, error: unknown, options: ErrorOptions = {}): AppError {
 		const appError = AppError.from(context, error, options);
 		appError.process(options);
 		return appError;
 	}
 
-	/**
-	 * Process the error: log and optionally show toast
-	 */
 	private process(options: ErrorOptions = {}): void {
 		const {
 			showToast = true,
@@ -125,10 +94,8 @@ export class AppError extends Error {
 			logToDisk = true
 		} = options;
 
-		// Log to console and disk
 		this.logError(logToDisk);
 
-		// Show toast notification if requested
 		if (showToast) {
 			const message = userMessage || this.getUserFriendlyMessage();
 			const duration = toastDuration || this.getDefaultToastDuration();
@@ -136,26 +103,22 @@ export class AppError extends Error {
 			switch (this.severity) {
 				case 'critical':
 				case 'error':
-					toastStore.error(message, duration);
+					appContext.ui.toast.error(message, duration);
 					break;
 				case 'warning':
-					toastStore.warning(message, duration);
+					appContext.ui.toast.warning(message, duration);
 					break;
 				case 'info':
-					toastStore.info(message, duration);
+					appContext.ui.toast.info(message, duration);
 					break;
 			}
 		}
 	}
 
-	/**
-	 * Log the error to console and optionally to disk
-	 */
 	private async logError(toDisk: boolean): Promise<void> {
 		const timestamp = this.timestamp.toISOString();
 		const logMessage = `[${timestamp}] [${this.context}] ${this.message}`;
 
-		// Console logging with appropriate level
 		switch (this.severity) {
 			case 'critical':
 			case 'error':
@@ -169,12 +132,10 @@ export class AppError extends Error {
 				break;
 		}
 
-		// Log additional info
 		if (this.additionalInfo) {
 			console.log('Additional Info:', this.additionalInfo);
 		}
 
-		// Log stack trace
 		if (this.stack) {
 			console.error('Stack:', this.stack);
 		}
@@ -182,7 +143,6 @@ export class AppError extends Error {
 			console.error('Original Stack:', this.originalError.stack);
 		}
 
-		// Write to disk log if requested
 		if (toDisk) {
 			try {
 				const diskMessage = this.formatForDiskLog();
@@ -193,9 +153,6 @@ export class AppError extends Error {
 		}
 	}
 
-	/**
-	 * Format error for disk logging
-	 */
 	private formatForDiskLog(): string {
 		const parts = [
 			`[${this.context}] ${this.message}`
@@ -212,20 +169,15 @@ export class AppError extends Error {
 		return parts.join(' | ');
 	}
 
-	/**
-	 * Get user-friendly error message based on context and error type
-	 */
 	private getUserFriendlyMessage(): string {
-		// File system errors
 		if (this.message.includes('No such file') || this.message.includes('does not exist') || this.message.includes('not found')) {
 			return this.getFileNotFoundMessage();
 		}
-		
+
 		if (this.message.includes('Permission denied') || this.message.includes('Access denied')) {
 			return this.getPermissionDeniedMessage();
 		}
 
-		// Context-specific messages
 		switch (this.context) {
 			case 'File:Read':
 				return 'Failed to read file';
@@ -259,25 +211,16 @@ export class AppError extends Error {
 		}
 	}
 
-	/**
-	 * Get file not found message with optional filename
-	 */
 	private getFileNotFoundMessage(): string {
 		const fileName = this.extractFileName();
 		return fileName ? `File not found: ${fileName}` : 'File not found';
 	}
 
-	/**
-	 * Get permission denied message with optional filename
-	 */
 	private getPermissionDeniedMessage(): string {
 		const fileName = this.extractFileName();
 		return fileName ? `Cannot access file: ${fileName}` : 'Permission denied';
 	}
 
-	/**
-	 * Extract filename from additional info or error message
-	 */
 	private extractFileName(): string | null {
 		if (this.additionalInfo?.path) {
 			const path = String(this.additionalInfo.path);
@@ -286,9 +229,6 @@ export class AppError extends Error {
 		return null;
 	}
 
-	/**
-	 * Get default toast duration based on severity
-	 */
 	private getDefaultToastDuration(): number {
 		switch (this.severity) {
 			case 'critical':
@@ -302,9 +242,6 @@ export class AppError extends Error {
 		}
 	}
 
-	/**
-	 * Static method to log warnings
-	 */
 	static async warn(
 		context: ErrorContext,
 		message: string,
@@ -328,16 +265,13 @@ export class AppError extends Error {
 		}
 
 		if (options.showToast) {
-			toastStore.warning(
+			appContext.ui.toast.warning(
 				options.userMessage || message,
 				options.toastDuration || 3000
 			);
 		}
 	}
 
-	/**
-	 * Static method to log info messages
-	 */
 	static async info(
 		context: ErrorContext,
 		message: string,
@@ -361,16 +295,13 @@ export class AppError extends Error {
 		}
 
 		if (options.showToast) {
-			toastStore.info(
+			appContext.ui.toast.info(
 				options.userMessage || message,
 				options.toastDuration || 2000
 			);
 		}
 	}
 
-	/**
-	 * Create a user-friendly error message from any error
-	 */
 	static toUserMessage(error: unknown): string {
 		if (error instanceof AppError) {
 			return error.getUserFriendlyMessage();
@@ -382,10 +313,6 @@ export class AppError extends Error {
 	}
 }
 
-/**
- * Async error boundary wrapper
- * Wraps async functions to automatically handle errors
- */
 export function withErrorBoundary<T extends any[], R>(
 	fn: (...args: T) => Promise<R>,
 	context: ErrorContext,
@@ -401,10 +328,6 @@ export function withErrorBoundary<T extends any[], R>(
 	};
 }
 
-/**
- * Sync error boundary wrapper
- * Wraps synchronous functions to automatically handle errors
- */
 export function withErrorBoundarySync<T extends any[], R>(
 	fn: (...args: T) => R,
 	context: ErrorContext,
@@ -420,10 +343,6 @@ export function withErrorBoundarySync<T extends any[], R>(
 	};
 }
 
-/**
- * Legacy function for backward compatibility
- * @deprecated Use AppError.handle() instead
- */
 export function handleFileSystemError(err: unknown, path?: string): void {
 	AppError.handle('File:Read', err, {
 		showToast: true,

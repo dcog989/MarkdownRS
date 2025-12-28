@@ -1,4 +1,4 @@
-import { appState } from '$lib/stores/appState.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 
 export interface FormatterOptions {
@@ -8,15 +8,12 @@ export interface FormatterOptions {
     tableAlignment: boolean;
 }
 
-/**
- * Format markdown content using the new comrak-based formatter
- */
 export async function formatMarkdown(
     content: string,
     options: Partial<FormatterOptions> = {}
 ): Promise<string> {
     const defaults: FormatterOptions = {
-        listIndent: appState.defaultIndent, // Use the shared setting
+        listIndent: appContext.app.defaultIndent,
         codeBlockFence: '```',
         bulletChar: '-',
         tableAlignment: true,
@@ -25,7 +22,7 @@ export async function formatMarkdown(
     const final = { ...defaults, ...options };
 
     const apiOptions = {
-        flavor: appState.markdownFlavor,
+        flavor: appContext.app.markdownFlavor,
         list_indent: final.listIndent,
         bullet_char: final.bulletChar,
         code_block_fence: final.codeBlockFence,

@@ -1,5 +1,4 @@
-import { appState } from "$lib/stores/appState.svelte.ts";
-import { tooltipStore } from "$lib/stores/tooltipStore.svelte.ts";
+import { appContext } from "$lib/stores/state.svelte.ts";
 
 export function tooltip(node: HTMLElement, content: string | undefined | null) {
     let timer: number | null = null;
@@ -7,12 +6,12 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
     function handleMouseEnter(e: MouseEvent) {
         if (!content) return;
 
-        const delay = appState.tooltipDelay;
+        const delay = appContext.app.tooltipDelay;
         const x = e.clientX;
         const y = e.clientY;
 
         timer = window.setTimeout(() => {
-            tooltipStore.show(content!, x, y);
+            appContext.ui.tooltip.show(content!, x, y);
         }, delay);
     }
 
@@ -21,7 +20,7 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
             clearTimeout(timer);
             timer = null;
         }
-        tooltipStore.hide();
+        appContext.ui.tooltip.hide();
     }
 
     function handleMouseDown() {
@@ -34,15 +33,13 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
 
     return {
         update(newContent: string | undefined | null) {
-            // Always reset state before updating to prevent leaks
             handleMouseLeave();
             content = newContent;
-            if (tooltipStore.visible && content) {
-                tooltipStore.content = content;
+            if (appContext.ui.tooltip.visible && content) {
+                appContext.ui.tooltip.content = content;
             }
         },
         destroy() {
-            // Ensure cleanup before destroying
             handleMouseLeave();
             node.removeEventListener("mouseenter", handleMouseEnter);
             node.removeEventListener("mouseleave", handleMouseLeave);

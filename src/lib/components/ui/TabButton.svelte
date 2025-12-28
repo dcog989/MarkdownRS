@@ -1,7 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
-    import { appState } from "$lib/stores/appState.svelte.ts";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
     import { CircleAlert, FileText, Pencil, PencilLine, Pin, X } from "lucide-svelte";
 
@@ -58,8 +58,8 @@
         border-color: var(--color-border-main);
         border-top: {borderTop};
         border-radius: 4px 4px 0 0;
-        min-width: {appState.tabWidthMin}px;
-        max-width: {appState.tabWidthMax}px;
+        min-width: {appContext.app.tabWidthMin}px;
+        max-width: {appContext.app.tabWidthMax}px;
         cursor: default;
         user-select: none;
     "
