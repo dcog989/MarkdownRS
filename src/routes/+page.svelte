@@ -27,7 +27,8 @@
     let initError = $state<string | null>(null);
 
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === appState.activeTabId));
-    let isMarkdown = $derived(activeTab ? isMarkdownFile(activeTab.path || activeTab.title) : true);
+    // Unsaved tabs (no path) are treated as Markdown by default
+    let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
     let showPreview = $derived(appState.splitView && isMarkdown);
 
     // Global Shortcut Handler (Document Level, before CodeMirror can intercept)

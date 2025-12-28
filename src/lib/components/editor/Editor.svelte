@@ -139,7 +139,8 @@
     });
 
     let initialContent = $derived(activeTab?.content || "");
-    let filename = $derived(activeTab?.title || "");
+    // Use path for mode detection, defaulting to markdown for unsaved files
+    let filename = $derived(activeTab?.path || "unsaved.md");
 </script>
 
 <div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">

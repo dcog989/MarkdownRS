@@ -19,7 +19,8 @@
     let debounceTimer: number | null = null;
 
     let activeTab = $derived(editorStore.tabs.find((t) => t.id === tabId));
-    let isMarkdown = $derived(activeTab ? isMarkdownFile(activeTab.path || activeTab.title) : true);
+    // Unsaved tabs (no path) are treated as Markdown by default
+    let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
     $effect(() => {
         // Reset local state when switching tabs
