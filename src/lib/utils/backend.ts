@@ -1,21 +1,25 @@
+import type { BackendCommands, CommandName } from '$lib/types/api';
 import { invoke } from '@tauri-apps/api/core';
 import { AppError, type ErrorContext } from './errorHandling';
 
 /**
- * Standardized wrapper for Rust backend communication.
- * Automatically handles centralized error logging with enhanced error handling.
+ * Standardized wrapper for Rust backend communication with strong typing.
+ * Automatically handles centralized error logging.
+ *
+ * @param command - The name of the Rust command to invoke
+ * @param args - Arguments matching the command signature
+ * @param context - Error context for logging
+ * @param additionalInfo - Optional extra info for error logging
  */
-export async function callBackend<T>(
-	command: string,
-	args: Record<string, any> = {},
+export async function callBackend<K extends CommandName>(
+	command: K,
+	args: BackendCommands[K]['args'],
 	context: ErrorContext,
 	additionalInfo?: Record<string, any>
-): Promise<T> {
+): Promise<BackendCommands[K]['return']> {
 	try {
-		return await invoke<T>(command, args);
+		return await invoke<BackendCommands[K]['return']>(command, args);
 	} catch (err) {
-		// Create AppError with full context but don't show toast by default
-		// The calling function can decide whether to show toast
 		throw AppError.from(context, err, {
 			additionalInfo: { command, ...args, ...additionalInfo },
 			severity: 'error'

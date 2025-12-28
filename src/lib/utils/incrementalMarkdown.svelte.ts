@@ -1,4 +1,3 @@
-import type { RenderResult } from '$lib/types/markdown';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
 import { callBackend } from './backend';
@@ -56,7 +55,7 @@ export class IncrementalMarkdownRenderer {
     private async renderFull(content: string, gfm: boolean): Promise<string> {
         try {
             const flavor = gfm ? 'gfm' : 'commonmark';
-            const result = await callBackend<RenderResult>('render_markdown', {
+            const result = await callBackend('render_markdown', {
                 content,
                 flavor
             }, 'Markdown:Render');
@@ -115,7 +114,7 @@ export class IncrementalMarkdownRenderer {
         try {
             // Render blocks in parallel for better performance
             const renderPromises = blocks.map(async (block) => {
-                const result = await callBackend<RenderResult>('render_markdown', {
+                const result = await callBackend('render_markdown', {
                     content: block.content,
                     flavor
                 }, 'Markdown:Render');

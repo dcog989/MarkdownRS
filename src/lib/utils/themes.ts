@@ -261,7 +261,7 @@ export async function getThemeCss(themeName: string): Promise<string> {
     }
 
     try {
-        return await callBackend<string>("get_theme_css", { themeName }, "Settings:Load");
+        return await callBackend("get_theme_css", { themeName }, "Settings:Load");
     } catch (e) {
         AppError.handle('Settings:Load', e, {
             showToast: false,

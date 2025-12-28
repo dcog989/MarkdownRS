@@ -50,7 +50,7 @@ function getSettingsObject() {
 
 export async function initSettings() {
     try {
-        const saved = await callBackend<Record<string, any>>('load_settings', {}, 'Settings:Load');
+        const saved = await callBackend('load_settings', {}, 'Settings:Load');
 
         if (saved && Object.keys(saved).length > 0) {
             log(`Restoring app preferences from TOML...`);

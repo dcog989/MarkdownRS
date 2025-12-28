@@ -125,7 +125,7 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 	// If tab is dirty, reload the saved content to detect changes
 	if (tab.isDirty) {
 		try {
-			const res = await callBackend<FileContent>(
+			const res = await callBackend(
 				'read_text_file',
 				{ path: tab.path },
 				'File:Read'
@@ -167,7 +167,7 @@ export async function persistSession(): Promise<void> {
 
 export async function loadSession(): Promise<void> {
 	try {
-		const rustTabs = await callBackend<RustTabState[]>('restore_session', {}, 'Session:Load');
+		const rustTabs = await callBackend('restore_session', {}, 'Session:Load');
 		if (rustTabs && rustTabs.length > 0) {
 			const convertedTabs: EditorTab[] = rustTabs.map(t => {
 				const content = normalizeLineEndings(t.content);

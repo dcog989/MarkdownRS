@@ -16,7 +16,7 @@ export class BookmarkStore {
 
     async loadBookmarks() {
         try {
-            const bookmarks = await callBackend<Bookmark[]>("get_all_bookmarks", {}, "Database:Init");
+            const bookmarks = await callBackend("get_all_bookmarks", {}, "Database:Init");
             this.bookmarks = bookmarks;
             this.isLoaded = true;
         } catch (error) {

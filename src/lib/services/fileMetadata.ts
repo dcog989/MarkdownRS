@@ -26,7 +26,7 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
 		return cached.promise;
 	}
 
-	const promise = callBackend<FileMetadata>('get_file_metadata', { path }, 'File:Metadata');
+	const promise = callBackend('get_file_metadata', { path }, 'File:Metadata');
 	metadataCache.set(path, { expires: now + CACHE_TTL_MS, promise });
 
 	return promise;
@@ -103,7 +103,7 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 
 	try {
 		const sanitizedPath = sanitizePath(tab.path);
-		const result = await callBackend<FileContent>('read_text_file', { path: sanitizedPath }, 'File:Read');
+		const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
 
 		// Detect line endings
 		const crlfCount = (result.content.match(/\r\n/g) || []).length;

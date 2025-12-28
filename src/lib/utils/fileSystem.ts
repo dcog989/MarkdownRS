@@ -1,5 +1,5 @@
 import { addToDictionary } from '$lib/services/dictionaryService';
-import { checkAndReloadIfChanged, checkFileExists, refreshMetadata, reloadFileContent, sanitizePath, type FileContent } from '$lib/services/fileMetadata';
+import { checkAndReloadIfChanged, checkFileExists, refreshMetadata, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
 import { appState } from '$lib/stores/appState.svelte.ts';
@@ -46,7 +46,7 @@ export async function openFile(path?: string): Promise<void> {
 			return;
 		}
 
-		const result = await callBackend<FileContent>('read_text_file', { path: sanitizedPath }, 'File:Read');
+		const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
 		const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
 		const crlfCount = (result.content.match(/\r\n/g) || []).length;
@@ -82,8 +82,8 @@ export async function openFileByPath(path: string): Promise<void> {
 export async function navigateToPath(clickedPath: string): Promise<void> {
 	const activeTab = editorStore.tabs.find(t => t.id === appState.activeTabId);
 	try {
-		const resolvedPath = await callBackend<string>('resolve_path_relative', {
-			basePath: activeTab?.path,
+		const resolvedPath = await callBackend('resolve_path_relative', {
+			basePath: activeTab?.path || null,
 			clickPath: clickedPath.replace(/\\/g, '/')
 		}, 'File:Read');
 

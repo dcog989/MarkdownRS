@@ -12,7 +12,7 @@ let initPromise: Promise<void> | null = null;
 
 async function loadCustomDictionary(): Promise<void> {
     try {
-        const words = await callBackend<string[]>('get_custom_dictionary', {}, 'Dictionary:Add');
+        const words = await callBackend('get_custom_dictionary', {}, 'Dictionary:Add');
         spellcheckState.customDictionary = new Set(words.map(w => w.toLowerCase()));
     } catch (err) {
         AppError.handle('Dictionary:Add', err, { showToast: false, severity: 'warning' });
@@ -51,7 +51,7 @@ export function isWordValid(word: string): boolean {
 export async function getSuggestions(word: string): Promise<string[]> {
     if (!spellcheckState.dictionaryLoaded || !word) return [];
     try {
-        return await callBackend<string[]>('get_spelling_suggestions', { word }, 'Dictionary:Add');
+        return await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add');
     } catch (err) {
         AppError.handle('Dictionary:Add', err, { showToast: false, severity: 'warning' });
         return [];

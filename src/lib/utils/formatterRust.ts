@@ -1,6 +1,5 @@
-import { appState } from '$lib/stores/appState.svelte';
-import type { FormatterOptions as FormatterOptionsAPI } from '$lib/types/markdown';
-import { formatMarkdown as formatMarkdownAPI } from './markdown';
+import { appState } from '$lib/stores/appState.svelte.ts';
+import { callBackend } from '$lib/utils/backend';
 
 export interface FormatterOptions {
     listIndent: number;
@@ -25,7 +24,7 @@ export async function formatMarkdown(
 
     const final = { ...defaults, ...options };
 
-    const apiOptions: FormatterOptionsAPI = {
+    const apiOptions = {
         flavor: appState.markdownFlavor,
         list_indent: final.listIndent,
         bullet_char: final.bulletChar,
@@ -34,7 +33,10 @@ export async function formatMarkdown(
     };
 
     try {
-        return await formatMarkdownAPI(content, apiOptions);
+        return await callBackend('format_markdown', {
+            content,
+            ...apiOptions
+        }, 'Markdown:Render');
     } catch (e) {
         console.error('Failed to format markdown:', e);
         return content;

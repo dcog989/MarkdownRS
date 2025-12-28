@@ -1,4 +1,3 @@
-import type { RenderResult } from '$lib/types/markdown';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
 import { callBackend } from './backend';
@@ -11,7 +10,7 @@ export async function renderMarkdown(content: string, gfm: boolean = true): Prom
     try {
         // Map boolean GFM to flavor string expected by backend
         const flavor = gfm ? 'gfm' : 'commonmark';
-        const result = await callBackend<RenderResult>('render_markdown', {
+        const result = await callBackend('render_markdown', {
             content,
             flavor
         }, 'Markdown:Render');

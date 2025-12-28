@@ -1,7 +1,7 @@
 // TypeScript interfaces and functions for comrak-based markdown commands
 
 import type { FormatterOptions, MarkdownFlavor, RenderResult } from '$lib/types/markdown';
-import { invoke } from '@tauri-apps/api/core';
+import { callBackend } from './backend';
 import { IncrementalMarkdownRenderer } from './incrementalMarkdown.svelte';
 
 // Global incremental renderer instance (one per document)
@@ -43,12 +43,6 @@ export function clearAllRendererCaches(): void {
  * @param flavor - Markdown flavor ('commonmark' or 'gfm'), defaults to 'gfm'
  * @param documentId - Optional document identifier for caching (defaults to 'default')
  * @returns Rendered HTML with line mapping for scroll sync
- *
- * @example
- * ```typescript
- * const result = await renderMarkdown('# Hello\n\nWorld', 'gfm', 'doc-123');
- * console.log(result.html); // <h1>Hello</h1><p>World</p>
- * ```
  */
 export async function renderMarkdown(
   content: string,
@@ -59,8 +53,6 @@ export async function renderMarkdown(
   const renderer = getRenderer(documentId);
   const html = await renderer.render(content, gfm);
 
-  // Return with empty line_map for now (incremental rendering makes this complex)
-  // The line mapping is less critical than performance for large files
   return { html, line_map: {} };
 }
 
@@ -70,28 +62,19 @@ export async function renderMarkdown(
  * @param content - The markdown content to format
  * @param options - Formatting options
  * @returns Formatted markdown string
- *
- * @example
- * ```typescript
- * const formatted = await formatMarkdown('*  item1\n+  item2', {
- *   bullet_char: '-',
- *   list_indent: 2
- * });
- * // Returns: "- item1\n- item2\n"
- * ```
  */
 export async function formatMarkdown(
   content: string,
   options?: FormatterOptions
 ): Promise<string> {
-  return invoke('format_markdown', {
+  return callBackend('format_markdown', {
     content,
     flavor: options?.flavor,
     list_indent: options?.list_indent,
     bullet_char: options?.bullet_char,
     code_block_fence: options?.code_block_fence,
     table_alignment: options?.table_alignment,
-  });
+  }, 'Markdown:Render');
 }
 
 /**
@@ -100,7 +83,7 @@ export async function formatMarkdown(
  * @returns Array of flavor names
  */
 export async function getMarkdownFlavors(): Promise<string[]> {
-  return invoke('get_markdown_flavors');
+  return callBackend('get_markdown_flavors', {}, 'Markdown:Render');
 }
 
 /**

@@ -7,7 +7,7 @@ import { AppError } from './errorHandling';
  */
 export async function transformText(text: string, operation: string): Promise<string> {
     try {
-        return await callBackend<string>('transform_text_content', {
+        return await callBackend('transform_text_content', {
             content: text,
             operation,
             indentWidth: appState.defaultIndent

@@ -69,7 +69,7 @@ export const createSpellCheckLinter = () => {
         if (wordsToVerify.size === 0) return [];
 
         try {
-            const misspelled = await callBackend<string[]>('check_words', {
+            const misspelled = await callBackend('check_words', {
                 words: Array.from(wordsToVerify.keys())
             }, 'Editor:Init');
 

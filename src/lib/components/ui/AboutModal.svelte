@@ -36,7 +36,7 @@
 
     onMount(async () => {
         try {
-            const info = await callBackend<AppInfo>("get_app_info", {}, "File:Metadata");
+            const info = await callBackend("get_app_info", {}, "File:Metadata");
             appInfo = info;
         } catch (err) {
             // Error handled by bridge

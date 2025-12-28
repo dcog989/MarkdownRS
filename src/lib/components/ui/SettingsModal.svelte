@@ -19,8 +19,8 @@
 
     $effect(() => {
         if (isOpen) {
-            callBackend<string[]>("get_available_themes", {}, "Settings:Load")
-                .then((customThemes: string[]) => {
+            callBackend("get_available_themes", {}, "Settings:Load")
+                .then((customThemes) => {
                     const defaults = Object.keys(DEFAULT_THEMES);
                     const customs = customThemes.filter((t) => !defaults.includes(t));
                     appState.availableThemes = [...defaults, ...customs];
