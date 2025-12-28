@@ -11,9 +11,10 @@ use std::collections::HashSet;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::SystemTime;
 use tauri::{Manager, State};
+use tokio::sync::Mutex;
 use unicode_bom::Bom;
 
 pub struct AppState {
@@ -74,10 +75,7 @@ fn validate_path(path: &str) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Result<(), String> {
-    let mut db = state.db.lock().map_err(|e| {
-        log::error!("Failed to acquire database lock for save_session: {:?}", e);
-        "Failed to lock database".to_string()
-    })?;
+    let mut db = state.db.lock().await;
     db.save_session(&tabs).map_err(|e| {
         log::error!("Failed to save session: {}", e);
         format!("Failed to save session: {}", e)
@@ -86,13 +84,7 @@ pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Re
 
 #[tauri::command]
 pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>, String> {
-    let db = state.db.lock().map_err(|e| {
-        log::error!(
-            "Failed to acquire database lock for restore_session: {:?}",
-            e
-        );
-        "Failed to lock database".to_string()
-    })?;
+    let db = state.db.lock().await;
     db.load_session().map_err(|e| {
         log::error!("Failed to restore session: {}", e);
         format!("Failed to restore session: {}", e)
@@ -101,13 +93,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>
 
 #[tauri::command]
 pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| {
-        log::error!(
-            "Failed to acquire database lock for vacuum_database: {:?}",
-            e
-        );
-        "Failed to lock database".to_string()
-    })?;
+    let db = state.db.lock().await;
 
     // Check if there are any free pages to reclaim
     let freelist_count = db.get_freelist_count().map_err(|e| {
@@ -292,19 +278,21 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
             format!("Failed to create directory: {}", e)
         })?;
     }
-    let existing_words = if dict_path.exists() {
-        fs::read_to_string(&dict_path)
-            .map_err(|e| {
-                log::error!("Failed to read custom dictionary: {}", e);
-                format!("Failed to read dictionary: {}", e)
-            })?
+
+    // Check existing words safely
+    let word_exists = if dict_path.exists() {
+        let content = fs::read_to_string(&dict_path).map_err(|e| {
+            log::error!("Failed to read custom dictionary: {}", e);
+            format!("Failed to read dictionary: {}", e)
+        })?;
+        content
             .lines()
-            .map(|line| line.trim().to_lowercase())
-            .collect::<HashSet<_>>()
+            .any(|line| line.trim().eq_ignore_ascii_case(&word))
     } else {
-        HashSet::new()
+        false
     };
-    if !existing_words.contains(&word.to_lowercase()) {
+
+    if !word_exists {
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)
@@ -321,9 +309,9 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
         }
     }
 
-    if let Ok(mut custom_dict) = app_handle.state::<AppState>().custom_dict.lock() {
-        custom_dict.insert(word.to_lowercase());
-    }
+    let state = app_handle.state::<AppState>();
+    let mut custom_dict = state.custom_dict.lock().await;
+    custom_dict.insert(word.to_lowercase());
 
     Ok(())
 }
@@ -342,15 +330,18 @@ pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<S
         log::debug!("Custom dictionary does not exist yet");
         return Ok(Vec::new());
     }
+
     let content = fs::read_to_string(&dict_path).map_err(|e| {
         log::error!("Failed to read custom dictionary: {}", e);
         format!("Failed to read dictionary: {}", e)
     })?;
+
     let words: Vec<String> = content
         .lines()
         .map(|line| line.trim().to_string())
         .filter(|line| !line.is_empty())
         .collect();
+
     Ok(words)
 }
 
@@ -362,15 +353,20 @@ pub async fn resolve_path_relative(
     let resolved = if Path::new(&click_path).is_absolute() {
         PathBuf::from(&click_path)
     } else if let Some(base) = base_path {
-        let base_dir = Path::new(&base).parent().unwrap_or_else(|| Path::new(""));
-        base_dir.join(click_path)
+        // Use PathBuf to own the data and avoid lifetime issues with parent() returns
+        let mut path_buf = PathBuf::from(base);
+        path_buf.pop(); // Remove filename to get directory (effectively .parent())
+        path_buf.push(click_path);
+        path_buf
     } else {
         PathBuf::from(&click_path)
     };
+
     if !resolved.exists() {
         log::debug!("Resolved path does not exist: {:?}", resolved);
         return Err("File does not exist".to_string());
     }
+
     resolved
         .canonicalize()
         .map(|p| {
@@ -415,68 +411,38 @@ pub async fn init_spellchecker(
         })?;
     }
 
+    // Download dictionaries if missing
     if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
         log::info!("Downloading spellcheck dictionary files");
         let client = reqwest::blocking::Client::new();
-        let aff_url =
-            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff";
-        let dic_url =
-            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic";
 
-        if let Ok(resp) = client.get(aff_url).send() {
-            if resp.status().is_success() {
-                if let Ok(text) = resp.text() {
-                    log::info!("Downloaded .aff dictionary file");
-                    let _ = fs::write(&aff_path, text);
-                } else {
-                    log::warn!("Failed to read .aff dictionary response body");
-                }
-            } else {
-                log::warn!(
-                    "Failed to download .aff dictionary: status {}",
-                    resp.status()
-                );
-            }
-        } else {
-            log::warn!("Failed to send request for .aff dictionary");
-        }
+        let files = [
+            (
+                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff",
+                &aff_path,
+                ".aff",
+            ),
+            (
+                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic",
+                &dic_path,
+                ".dic",
+            ),
+            (
+                "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic",
+                &jargon_path,
+                "jargon",
+            ),
+        ];
 
-        if let Ok(resp) = client.get(dic_url).send() {
-            if resp.status().is_success() {
-                if let Ok(text) = resp.text() {
-                    log::info!("Downloaded .dic dictionary file");
-                    let _ = fs::write(&dic_path, text);
-                } else {
-                    log::warn!("Failed to read .dic dictionary response body");
+        for (url, path, name) in files {
+            if let Ok(resp) = client.get(url).send() {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text() {
+                        log::info!("Downloaded {} dictionary file", name);
+                        let _ = fs::write(path, text);
+                    }
                 }
-            } else {
-                log::warn!(
-                    "Failed to download .dic dictionary: status {}",
-                    resp.status()
-                );
             }
-        } else {
-            log::warn!("Failed to send request for .dic dictionary");
-        }
-
-        let jargon_url =
-            "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic";
-        if let Ok(resp) = client.get(jargon_url).send() {
-            if resp.status().is_success() {
-                if let Ok(text) = resp.text() {
-                    log::info!("Downloaded jargon dictionary file");
-                    let _ = fs::write(&jargon_path, text);
-                } else {
-                    log::warn!("Failed to read jargon dictionary response body");
-                }
-            } else {
-                log::warn!(
-                    "Failed to download jargon dictionary: status {}",
-                    resp.status()
-                );
-            }
-        } else {
-            log::warn!("Failed to send request for jargon dictionary");
         }
     }
 
@@ -499,12 +465,9 @@ pub async fn init_spellchecker(
 
                 match Dictionary::new(aff_content, &dic_content) {
                     Ok(dict) => {
-                        if let Ok(mut speller) = speller_arc.lock() {
-                            *speller = Some(dict);
-                            log::info!("Spellchecker initialized successfully");
-                        } else {
-                            log::error!("[Spellcheck] Failed to acquire speller lock");
-                        }
+                        let mut speller = speller_arc.lock().await;
+                        *speller = Some(dict);
+                        log::info!("Spellchecker initialized successfully");
                     }
                     Err(e) => {
                         log::error!(
@@ -528,12 +491,11 @@ pub async fn init_spellchecker(
 
     if custom_path.exists() {
         if let Ok(text) = fs::read_to_string(&custom_path) {
-            if let Ok(mut custom) = custom_arc.lock() {
-                for line in text.lines() {
-                    let w = line.trim();
-                    if !w.is_empty() {
-                        custom.insert(w.to_lowercase());
-                    }
+            let mut custom = custom_arc.lock().await;
+            for line in text.lines() {
+                let w = line.trim();
+                if !w.is_empty() {
+                    custom.insert(w.to_lowercase());
                 }
             }
         }
@@ -564,14 +526,8 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock().map_err(|e| {
-        log::error!("Failed to acquire speller lock: {:?}", e);
-        "Failed to access spell checker".to_string()
-    })?;
-    let custom_guard = state.custom_dict.lock().map_err(|e| {
-        log::error!("Failed to acquire custom dictionary lock: {:?}", e);
-        "Failed to access custom dictionary".to_string()
-    })?;
+    let speller_guard = state.speller.lock().await;
+    let custom_guard = state.custom_dict.lock().await;
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
@@ -603,10 +559,7 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock().map_err(|e| {
-        log::error!("Failed to acquire speller lock for suggestions: {:?}", e);
-        "Failed to access spell checker".to_string()
-    })?;
+    let speller_guard = state.speller.lock().await;
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
@@ -689,10 +642,7 @@ pub async fn transform_text_content(
 
 #[tauri::command]
 pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| {
-        log::error!("Failed to acquire database lock for add_bookmark: {:?}", e);
-        "Failed to lock database".to_string()
-    })?;
+    let db = state.db.lock().await;
     db.add_bookmark(&bookmark).map_err(|e| {
         log::error!("Failed to add bookmark '{}': {}", bookmark.path, e);
         format!("Failed to add bookmark: {}", e)
@@ -701,13 +651,7 @@ pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Res
 
 #[tauri::command]
 pub async fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
-    let db = state.db.lock().map_err(|e| {
-        log::error!(
-            "Failed to acquire database lock for get_all_bookmarks: {:?}",
-            e
-        );
-        "Failed to lock database".to_string()
-    })?;
+    let db = state.db.lock().await;
     db.get_all_bookmarks().map_err(|e| {
         log::error!("Failed to retrieve bookmarks: {}", e);
         format!("Failed to retrieve bookmarks: {}", e)
@@ -716,13 +660,7 @@ pub async fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmar
 
 #[tauri::command]
 pub async fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| {
-        log::error!(
-            "Failed to acquire database lock for delete_bookmark: {:?}",
-            e
-        );
-        "Failed to lock database".to_string()
-    })?;
+    let db = state.db.lock().await;
     db.delete_bookmark(&id).map_err(|e| {
         log::error!("Failed to delete bookmark '{}': {}", id, e);
         format!("Failed to delete bookmark: {}", e)
@@ -735,13 +673,7 @@ pub async fn update_bookmark_access_time(
     id: String,
     last_accessed: String,
 ) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| {
-        log::error!(
-            "Failed to acquire database lock for update_bookmark_access_time: {:?}",
-            e
-        );
-        "Failed to lock database".to_string()
-    })?;
+    let db = state.db.lock().await;
     db.update_bookmark_access_time(&id, &last_accessed)
         .map_err(|e| {
             log::error!("Failed to update bookmark access time for '{}': {}", id, e);

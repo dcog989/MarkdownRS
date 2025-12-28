@@ -34,13 +34,13 @@ fn main() {
             if let Some((_, window)) = windows.iter().next() {
                 let _ = window.set_focus();
                 let _ = window.unminimize();
-                
+
                 // Handle file path argument from Windows Explorer
                 if args.len() > 1 {
                     // args[0] is the executable path, args[1] is the file path
                     let file_path = &args[1];
                     log::info!("Opening file from command line: {}", file_path);
-                    
+
                     // Emit event to frontend with the file path
                     let _ = window.emit("open-file-from-args", file_path);
                 }
@@ -178,9 +178,9 @@ fn main() {
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
             app.manage(app_commands::AppState {
-                db: std::sync::Mutex::new(db),
-                speller: std::sync::Arc::new(std::sync::Mutex::new(None)),
-                custom_dict: std::sync::Arc::new(std::sync::Mutex::new(
+                db: tokio::sync::Mutex::new(db),
+                speller: std::sync::Arc::new(tokio::sync::Mutex::new(None)),
+                custom_dict: std::sync::Arc::new(tokio::sync::Mutex::new(
                     std::collections::HashSet::new(),
                 )),
             });
@@ -191,13 +191,13 @@ fn main() {
                 // args[0] is the executable path, args[1] is the file path
                 let file_path = args[1].clone();
                 let window_clone = window.clone();
-                
+
                 tauri::async_runtime::spawn(async move {
                     std::thread::sleep(std::time::Duration::from_millis(150));
                     let _ = window_clone.show();
                     std::thread::sleep(std::time::Duration::from_millis(50));
                     let _ = window_clone.set_focus();
-                    
+
                     // Give the frontend time to initialize before sending the file path
                     std::thread::sleep(std::time::Duration::from_millis(200));
                     log::info!("Opening file from initial launch: {}", file_path);
