@@ -28,22 +28,76 @@ type FileContent = {
 	encoding: string;
 };
 
-let isSaving = false;
-let saveQueue: (() => Promise<void>)[] = [];
+/**
+ * Singleton class to manage session saving concurrency.
+ * Ensures that saving happens sequentially and that rapid requests
+ * are collapsed into a single subsequent save operation.
+ */
+class SessionPersistenceManager {
+	private isSaving = false;
+	private pendingSaveRequested = false;
 
-async function processSaveQueue() {
-	while (saveQueue.length > 0) {
-		const saveTask = saveQueue.shift();
-		if (saveTask) {
-			try {
-				await saveTask();
-			} catch (err) {
-				// Error already logged by callBackend
+	async requestSave(): Promise<void> {
+		if (!editorStore.sessionDirty) return;
+
+		if (this.isSaving) {
+			this.pendingSaveRequested = true;
+			return;
+		}
+
+		this.isSaving = true;
+
+		try {
+			// First save
+			await this.executeSave();
+
+			// Handle any requests that came in during the save
+			while (this.pendingSaveRequested) {
+				this.pendingSaveRequested = false;
+				if (editorStore.sessionDirty) {
+					await this.executeSave();
+				}
 			}
+		} finally {
+			this.isSaving = false;
 		}
 	}
-	isSaving = false;
+
+	private async executeSave(): Promise<void> {
+		try {
+			const mruPositionMap = new Map<string, number>();
+			editorStore.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
+
+			const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
+				id: t.id,
+				path: t.path,
+				title: t.title,
+				content: t.content,
+				is_dirty: t.isDirty,
+				scroll_percentage: t.scrollPercentage,
+				created: t.created || null,
+				modified: t.modified || null,
+				is_pinned: t.isPinned || false,
+				custom_title: t.customTitle || null,
+				file_check_failed: t.fileCheckFailed || false,
+				file_check_performed: t.fileCheckPerformed || false,
+				mru_position: mruPositionMap.get(t.id) ?? null
+			}));
+
+			editorStore.sessionDirty = false;
+			await callBackend('save_session', { tabs: plainTabs }, 'Session:Save');
+		} catch (err) {
+			editorStore.sessionDirty = true;
+			// Log error but don't show toast for background session saves
+			AppError.handle('Session:Save', err, {
+				showToast: false,
+				severity: 'warning'
+			});
+		}
+	}
 }
+
+const persistenceManager = new SessionPersistenceManager();
 
 /**
  * Initializes a single tab's file state:
@@ -95,55 +149,7 @@ async function initializeTabFileState(tab: EditorTab): Promise<void> {
 }
 
 export async function persistSession(): Promise<void> {
-	if (!editorStore.sessionDirty) return;
-
-	const saveTask = async () => {
-		try {
-			const mruPositionMap = new Map<string, number>();
-			editorStore.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
-
-			const plainTabs: RustTabState[] = editorStore.tabs.map(t => ({
-				id: t.id,
-				path: t.path,
-				title: t.title,
-				content: t.content,
-				is_dirty: t.isDirty,
-				scroll_percentage: t.scrollPercentage,
-				created: t.created || null,
-				modified: t.modified || null,
-				is_pinned: t.isPinned || false,
-				custom_title: t.customTitle || null,
-				file_check_failed: t.fileCheckFailed || false,
-				file_check_performed: t.fileCheckPerformed || false,
-				mru_position: mruPositionMap.get(t.id) ?? null
-			}));
-
-			editorStore.sessionDirty = false;
-			await callBackend('save_session', { tabs: plainTabs }, 'Session:Save');
-		} catch (err) {
-			editorStore.sessionDirty = true;
-			// Log error but don't show toast for background session saves
-			AppError.handle('Session:Save', err, {
-				showToast: false,
-				severity: 'warning'
-			});
-			throw err;
-		}
-	};
-
-	if (isSaving) {
-		// Add to queue if a save is already in progress
-		saveQueue.push(saveTask);
-		return;
-	}
-
-	isSaving = true;
-	try {
-		await saveTask();
-		await processSaveQueue();
-	} catch (err) {
-		isSaving = false;
-	}
+	await persistenceManager.requestSave();
 }
 
 export async function loadSession(): Promise<void> {
