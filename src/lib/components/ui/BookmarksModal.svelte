@@ -180,7 +180,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} width="700px" showCloseButton={false}>
+<Modal bind:isOpen {onClose} width="650px" showCloseButton={false}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <BookmarkIcon size={16} class="text-accent-secondary" />
@@ -189,7 +189,7 @@
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main" />
+            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main focus:border-accent-primary transition-colors" />
         </div>
 
         <div class="flex items-center gap-1 shrink-0">

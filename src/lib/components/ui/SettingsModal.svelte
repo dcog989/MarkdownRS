@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tooltip } from "$lib/actions/tooltip";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
@@ -53,9 +54,8 @@
         { key: "autocompleteDelay", label: "Autocomplete Delay (ms)", type: "number", category: "Editor", defaultValue: 250, min: 0, max: 2000 },
         { key: "defaultIndent", label: "Default Indentation (spaces)", type: "number", category: "Editor", defaultValue: 2, min: 2, max: 8 },
         { key: "undoDepth", label: "Undo History Depth", type: "number", category: "Editor", defaultValue: 200, min: 10, max: 1000 },
-        { key: "recentChangesMode", label: "Recent Changes Mode", type: "select", category: "Editor", defaultValue: "disabled", options: ["disabled", "count", "time"], optionLabels: ["Disabled", "Last N Changes", "Time-Based"] },
-        { key: "recentChangesCount", label: "Number of Changes", type: "number", category: "Editor", defaultValue: 10, min: 1, max: 50, visibleWhen: { key: "recentChangesMode", value: "count" } },
-        { key: "recentChangesTimespan", label: "Time Span (seconds)", type: "number", category: "Editor", defaultValue: 60, min: 5, max: 300, visibleWhen: { key: "recentChangesMode", value: "time" } },
+        { key: "recentChangesCount", label: "Recent Changes Number", type: "number", category: "Editor", defaultValue: 10, min: 0, max: 99, tooltip: "Max 99. Set to 0 to disable count-based filtering." },
+        { key: "recentChangesTimespan", label: "Recent Changes Time Span (secs)", type: "number", category: "Editor", defaultValue: 60, min: 0, max: 9999, groupWith: "recentChangesCount", tooltip: "Max 9999. Set to 0 for unlimited time." },
         { key: "lineEndingPreference", label: "Line Ending", type: "select", category: "Editor", defaultValue: "system", options: ["system", "LF", "CRLF"], optionLabels: ["System Default", "LF (Unix)", "CRLF (Windows)"] },
 
         { key: "formatOnSave", label: "Format on Save", type: "boolean", category: "Formatter", defaultValue: false },
@@ -128,7 +128,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} width="600px" showCloseButton={false}>
+<Modal bind:isOpen {onClose} width="650px" showCloseButton={false}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Settings size={16} class="text-accent-secondary" />
@@ -137,7 +137,7 @@
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main" />
+            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main focus:border-accent-primary transition-colors" />
         </div>
 
         <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none text-fg-muted" onclick={openShortcuts} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
@@ -151,9 +151,9 @@
 
     <div class="p-4 flex flex-col gap-4">
         {#if sortedSettings.length > 0}
-            <div class="divide-y border-border-main">
+            <div>
                 {#each sortedSettings as setting, index}
-                    <div class="py-3" style:border-top={index > 0 && !(setting as any).visibleWhen ? "1px solid var(--color-border-main)" : "none"}>
+                    <div class="py-3" style:border-top={index > 0 && !(setting as any).visibleWhen && !(setting as any).groupWith ? "1px solid var(--color-border-main)" : "none"}>
                         <div class="flex items-center justify-between gap-6">
                             <label for={setting.key} class="flex-1 flex items-center whitespace-nowrap overflow-hidden">
                                 <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0 mr-4 text-fg-muted">
@@ -169,9 +169,9 @@
                             </label>
                             <div class="w-56 shrink-0">
                                 {#if setting.type === "text"}
-                                    <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main" />
+                                    <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors" use:tooltip={(setting as any).tooltip || ""} />
                                 {:else if setting.type === "number"}
-                                    <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main" />
+                                    <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors" use:tooltip={(setting as any).tooltip || ""} />
                                 {:else if setting.type === "range"}
                                     <div class="flex items-center gap-3">
                                         <input id={setting.key} type="range" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} step={setting.step} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none bg-border-main accent-accent-primary" />

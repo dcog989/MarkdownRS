@@ -27,6 +27,7 @@
     --color-bg-quote: oklch(0.77 0.09 90 / 0.1);
     --color-border-quote: #ddce78;
     --color-bg-highlight: #d19a66;
+    --color-hr-dashes: oklch(0.55 0 0); /* Lighter dashes for dark theme */
 
     /* Borders */
     --color-border-main: oklch(0.35 0 0);
@@ -80,6 +81,7 @@
     --color-bg-quote: oklch(0.47 0.14 310 / 0.05);
     --color-border-quote: #7b1fa2;
     --color-bg-highlight: #ffe47c;
+    --color-hr-dashes: oklch(0.5 0 0); /* Darker dashes for light theme */
 
     /* Borders */
     --color-border-main: oklch(0.9 0 0);
@@ -372,11 +374,11 @@ body {
 
 /* Horizontal Rule Styling */
 .cm-hr {
-    color: var(--color-border-light);
-    font-weight: bold;
+    color: var(--color-hr-dashes);
+    font-weight: 900; /* Extra bold */
     display: block;
     text-align: center;
-    opacity: 0.8;
+    opacity: 1;
     position: relative;
     padding: 0.12em 0;
 }
@@ -396,7 +398,7 @@ body {
 /* Bullet Point Styling */
 .cm-bullet {
     color: var(--color-accent-secondary);
-    font-weight: bold;
+    font-weight: 900; /* Extra bold */
     font-size: 1.1em;
 }
 

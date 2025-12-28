@@ -32,7 +32,8 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
         ViewPlugin.fromClass(class {
             update(update: ViewUpdate) {
                 if (!update.docChanged) return;
-                if (appContext.app.recentChangesMode === 'disabled') return;
+                // Disabled if both count and timespan are 0
+                if (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0) return;
 
                 const isHistoryAction = update.transactions.some(tr =>
                     tr.isUserEvent('undo') || tr.isUserEvent('redo')
@@ -87,10 +88,10 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                 const lineNo = view.state.doc.lineAt(line.from).number;
                 let alpha = 0;
 
-                if (appContext.app.recentChangesMode !== 'disabled') {
+                // Calculate alpha if either mode is enabled
+                if (appContext.app.recentChangesCount > 0 || appContext.app.recentChangesTimespan > 0) {
                     alpha = tracker.getLineAlpha(
                         lineNo,
-                        appContext.app.recentChangesMode,
                         appContext.app.recentChangesTimespan,
                         appContext.app.recentChangesCount
                     );

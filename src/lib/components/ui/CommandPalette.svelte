@@ -79,7 +79,7 @@
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={inputRef} bind:value={query} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main" onkeydown={handleKeydown} />
+            <input bind:this={inputRef} bind:value={query} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main focus:border-accent-primary transition-colors" onkeydown={handleKeydown} />
         </div>
 
         <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 text-fg-muted" onclick={close}>

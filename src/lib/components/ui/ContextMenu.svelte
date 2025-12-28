@@ -27,8 +27,10 @@
         if (newX + rect.width > winWidth) {
             newX = winWidth - rect.width - 5;
         }
-        if (newY + rect.height > winHeight - 32) {
-            newY = winHeight - rect.height - 32;
+        // Account for status bar height (24px = h-6) when positioning near bottom
+        const statusBarHeight = 24;
+        if (newY + rect.height > winHeight - statusBarHeight) {
+            newY = winHeight - rect.height - statusBarHeight - 5;
         }
 
         adjustedX = Math.max(5, newX);

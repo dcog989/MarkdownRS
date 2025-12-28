@@ -295,47 +295,57 @@
             autoComp.of([]),
             recentComp.of([]),
             closeBrackets(),
+            // Ensure backticks always auto-close
+            EditorView.inputHandler.of((view, from, to, text) => {
+                if (text === "`" && from === to) {
+                    const state = view.state;
+                    const before = state.sliceDoc(Math.max(0, from - 2), from);
+                    const after = state.sliceDoc(from, from + 1);
+                    
+                    // If next char is a backtick AND we have at least one backtick before,
+                    // skip over it (this is the normal close-bracket behavior)
+                    if (after === "`" && state.sliceDoc(Math.max(0, from - 1), from) === "`") {
+                        view.dispatch({
+                            selection: { anchor: from + 1 }
+                        });
+                        return true;
+                    }
+                    
+                    // Check if we just typed the third backtick (`` before cursor)
+                    if (before === "``") {
+                        const line = state.doc.lineAt(from);
+                        const textBefore = line.text.slice(0, from - line.from - 2);
+                        
+                        // Only at start of line (with optional whitespace)
+                        if (/^\s*$/.test(textBefore)) {
+                            const indent = textBefore;
+                            // Insert closing triple backticks on new lines
+                            view.dispatch({
+                                changes: { from, to, insert: "`\n" + indent + "\n" + indent + "```" },
+                                selection: { anchor: from + 1 + indent.length + 1 }
+                            });
+                            return true;
+                        }
+                    }
+                    
+                    // Default: Insert closing backtick
+                    view.dispatch({
+                        changes: { from, to, insert: "``" },
+                        selection: { anchor: from + 1 }
+                    });
+                    return true;
+                }
+                return false;
+            }),
             EditorState.languageData.of(() => [
                 {
                     autocomplete: completeAnyWord,
-                    closeBrackets: { brackets: ["(", "[", "{", "'", '"', "`"] },
                 },
             ]),
             filePathPlugin,
             filePathTheme,
             keymap.of([
                 indentWithTab,
-                {
-                    key: "`",
-                    run: (view) => {
-                        const { state, dispatch } = view;
-                        const { from, empty } = state.selection.main;
-                        if (!empty) return false;
-
-                        // Check if we are inside an empty pair of backticks: `|`
-                        const surround = state.sliceDoc(from - 1, from + 1);
-
-                        if (surround === "``") {
-                            const line = state.doc.lineAt(from);
-                            const textBefore = line.text.slice(0, from - 1 - line.from);
-
-                            // Only trigger if we are at the start of the line (plus indentation)
-                            if (/^\s*$/.test(textBefore)) {
-                                const indent = textBefore;
-                                dispatch({
-                                    changes: {
-                                        from: from - 1,
-                                        to: from + 1,
-                                        insert: "```\n" + indent + "\n" + indent + "```",
-                                    },
-                                    selection: { anchor: from + 3 + indent.length },
-                                });
-                                return true;
-                            }
-                        }
-                        return false;
-                    },
-                },
                 {
                     key: "Insert",
                     run: () => {

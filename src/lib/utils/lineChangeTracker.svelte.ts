@@ -54,74 +54,79 @@ export class LineChangeTracker {
     /**
      * Get the alpha value (0-1) for a line based on recency
      * More recent = higher alpha (more opaque)
+     * Both timespan and maxCount can be active simultaneously
      */
     getLineAlpha(
         lineNumber: number, 
-        mode: 'disabled' | 'count' | 'time',
-        timespan: number, // seconds
-        maxCount: number
+        timespan: number, // seconds, 0 means unlimited
+        maxCount: number  // 0 means disabled
     ): number {
-        if (mode === 'disabled') return 0;
         const change = this.changes.find(c => c.lineNumber === lineNumber);
         if (!change) return 0;
 
-        if (mode === 'time') {
-            // Time-based: calculate based on how recently changed
+        let timeAlpha = 1.0;
+        let countAlpha = 1.0;
+
+        // Time-based filtering (if timespan > 0)
+        if (timespan > 0) {
             const now = Date.now();
             const elapsed = (now - change.timestamp) / 1000; // convert to seconds
             
             if (elapsed > timespan) return 0;
             
             // Linear fade from 1.0 (just changed) to 0.0 (at timespan limit)
-            return Math.max(0, 1 - (elapsed / timespan));
-        } else {
-            // Count-based: calculate based on position in recent changes
+            timeAlpha = Math.max(0, 1 - (elapsed / timespan));
+        }
+
+        // Count-based filtering (if maxCount > 0)
+        if (maxCount > 0) {
             // Sort by timestamp (newest first)
             const sortedChanges = [...this.changes].sort((a, b) => b.timestamp - a.timestamp);
             const index = sortedChanges.findIndex(c => c.lineNumber === lineNumber && c.timestamp === change.timestamp);
             
             if (index === -1 || index >= maxCount) return 0;
             
-            // Linear fade from 1.0 (most recent) to 0.3 (oldest in range)
+            // Linear fade from 1.0 (most recent) to lowest value (oldest in range)
             const ratio = index / Math.max(1, maxCount - 1);
-            return Math.max(0.3, 1 - (ratio * 0.7));
+            const lowestAlpha = 0.15; // Reduced minimum opacity
+            countAlpha = Math.max(lowestAlpha, 1 - (ratio * (1 - lowestAlpha)));
         }
+
+        // Return the minimum of both alphas (most restrictive)
+        return Math.min(timeAlpha, countAlpha);
     }
 
     /**
      * Get all lines that should be highlighted
      */
     getHighlightedLines(
-        mode: 'disabled' | 'count' | 'time',
         timespan: number,
         maxCount: number
     ): Map<number, number> {
-        if (mode === 'disabled') return new Map();
+        if (maxCount === 0 && timespan === 0) return new Map();
         const result = new Map<number, number>();
         
-        if (mode === 'time') {
+        // Get all potentially visible changes
+        let relevantChanges = [...this.changes];
+        
+        // Filter by time if timespan > 0
+        if (timespan > 0) {
             const now = Date.now();
             const cutoff = now - (timespan * 1000);
-            
-            for (const change of this.changes) {
-                if (change.timestamp >= cutoff) {
-                    const alpha = this.getLineAlpha(change.lineNumber, mode, timespan, maxCount);
-                    if (alpha > 0) {
-                        result.set(change.lineNumber, alpha);
-                    }
-                }
-            }
-        } else {
-            // Sort by timestamp and take the most recent N
-            const sortedChanges = [...this.changes]
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .slice(0, maxCount);
-            
-            for (const change of sortedChanges) {
-                const alpha = this.getLineAlpha(change.lineNumber, mode, timespan, maxCount);
-                if (alpha > 0) {
-                    result.set(change.lineNumber, alpha);
-                }
+            relevantChanges = relevantChanges.filter(c => c.timestamp >= cutoff);
+        }
+        
+        // Sort by timestamp (newest first) and limit by count if maxCount > 0
+        relevantChanges.sort((a, b) => b.timestamp - a.timestamp);
+        if (maxCount > 0) {
+            relevantChanges = relevantChanges.slice(0, maxCount);
+        }
+        
+        // Calculate alpha for each change
+        for (const change of relevantChanges) {
+            const alpha = this.getLineAlpha(change.lineNumber, timespan, maxCount);
+            if (alpha > 0) {
+                result.set(change.lineNumber, alpha);
             }
         }
         
