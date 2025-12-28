@@ -200,7 +200,10 @@ impl Database {
         // Commit transaction - if any error occurred above, this won't execute
         // and the transaction will rollback automatically when dropped
         tx.commit().map_err(|e| {
-            log::error!("Failed to commit database initialization transaction: {}", e);
+            log::error!(
+                "Failed to commit database initialization transaction: {}",
+                e
+            );
             e
         })?;
         log::info!("Database initialization completed successfully");
@@ -246,37 +249,65 @@ impl Database {
             e
         })?;
 
-        // Create temporary table with same structure
-        tx.execute(
-            "CREATE TEMP TABLE IF NOT EXISTS tabs_temp (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                is_dirty INTEGER NOT NULL,
-                path TEXT,
-                scroll_percentage REAL NOT NULL,
-                created TEXT,
-                modified TEXT,
-                is_pinned INTEGER DEFAULT 0,
-                custom_title TEXT,
-                file_check_failed INTEGER DEFAULT 0,
-                file_check_performed INTEGER DEFAULT 0,
-                mru_position INTEGER
-            )",
-            [],
-        )?;
+        // 1. Delete tabs that are no longer in the session
+        if tabs.is_empty() {
+            tx.execute("DELETE FROM tabs", [])?;
+        } else {
+            // Use a temporary table for IDs to safely handle the deletion of removed tabs
+            // without worrying about SQL variable limits
+            tx.execute(
+                "CREATE TEMP TABLE IF NOT EXISTS active_tab_ids (id TEXT PRIMARY KEY)",
+                [],
+            )?;
+            tx.execute("DELETE FROM active_tab_ids", [])?;
 
-        // Clear temp table in case it had data from a previous failed operation
-        tx.execute("DELETE FROM tabs_temp", [])?;
+            {
+                let mut stmt = tx.prepare_cached("INSERT INTO active_tab_ids (id) VALUES (?)")?;
+                for tab in tabs {
+                    stmt.execute([&tab.id])?;
+                }
+            }
 
-        // Insert all new data into temp table
+            tx.execute(
+                "DELETE FROM tabs WHERE id NOT IN (SELECT id FROM active_tab_ids)",
+                [],
+            )?;
+            tx.execute("DELETE FROM active_tab_ids", [])?;
+        }
+
+        // 2. Upsert current tabs
+        // The WHERE clause in ON CONFLICT ensures we only write to disk if something actually changed
         {
             let mut stmt = tx.prepare_cached(
-                "INSERT INTO tabs_temp (
+                "INSERT INTO tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
                     file_check_failed, file_check_performed, mru_position
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+                ON CONFLICT(id) DO UPDATE SET
+                    title=excluded.title,
+                    content=excluded.content,
+                    is_dirty=excluded.is_dirty,
+                    path=excluded.path,
+                    scroll_percentage=excluded.scroll_percentage,
+                    created=excluded.created,
+                    modified=excluded.modified,
+                    is_pinned=excluded.is_pinned,
+                    custom_title=excluded.custom_title,
+                    file_check_failed=excluded.file_check_failed,
+                    file_check_performed=excluded.file_check_performed,
+                    mru_position=excluded.mru_position
+                WHERE
+                    title != excluded.title OR
+                    content != excluded.content OR
+                    is_dirty != excluded.is_dirty OR
+                    path IS NOT excluded.path OR
+                    scroll_percentage != excluded.scroll_percentage OR
+                    is_pinned != excluded.is_pinned OR
+                    custom_title IS NOT excluded.custom_title OR
+                    file_check_failed != excluded.file_check_failed OR
+                    file_check_performed != excluded.file_check_performed OR
+                    mru_position != excluded.mru_position",
             )?;
 
             for tab in tabs {
@@ -297,15 +328,6 @@ impl Database {
                 ])?;
             }
         }
-
-        // Atomic swap: delete old data and rename temp table
-        // This happens within the transaction, so it's all-or-nothing
-        tx.execute("DELETE FROM tabs", [])?;
-        tx.execute(
-            "INSERT INTO tabs SELECT * FROM tabs_temp",
-            [],
-        )?;
-        tx.execute("DELETE FROM tabs_temp", [])?;
 
         tx.commit().map_err(|e| {
             log::error!("Failed to commit save_session transaction: {}", e);
@@ -399,7 +421,8 @@ impl Database {
 
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
         log::info!("Deleting bookmark: {}", id);
-        self.conn.execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
+        self.conn
+            .execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
         Ok(())
     }
 
@@ -417,7 +440,8 @@ impl Database {
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
         log::info!("Running incremental vacuum (max {} pages)", max_pages);
         if max_pages > 0 {
-            self.conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
+            self.conn
+                .execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
         } else {
             self.conn.execute("PRAGMA incremental_vacuum", [])?;
         }
@@ -426,11 +450,9 @@ impl Database {
 
     /// Returns the number of freelist pages that could be reclaimed
     pub fn get_freelist_count(&self) -> Result<i32> {
-        let count: i32 = self.conn.query_row(
-            "PRAGMA freelist_count",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i32 = self
+            .conn
+            .query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
         Ok(count)
     }
 }
