@@ -1,3 +1,4 @@
+import type { OperationId } from "$lib/config/textOperationsRegistry";
 import type { Bookmark } from "$lib/stores/bookmarkStore.svelte";
 import type { RenderResult } from "./markdown";
 
@@ -20,11 +21,14 @@ export interface FileContent {
     encoding: string;
 }
 
+// Format document is handled via format_markdown, not transform_text_content
+export type TextTransformId = Exclude<OperationId, 'format-document'>;
+
 // Maps Rust command names to their Argument and Return types
 export interface BackendCommands {
     // Session
     'save_session': {
-        args: { tabs: any[] }; // Typed as any[] to avoid circular dependency with EditorTab, strict typing can be added later
+        args: { tabs: any[] };
         return: void;
     };
     'restore_session': {
@@ -111,7 +115,7 @@ export interface BackendCommands {
         return: string[];
     };
     'transform_text_content': {
-        args: { content: string; operation: string; indentWidth?: number };
+        args: { content: string; operation: TextTransformId; indentWidth?: number };
         return: string;
     };
 
