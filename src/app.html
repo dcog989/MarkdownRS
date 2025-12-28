@@ -5,14 +5,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
 
-    <!-- Critical CSS: Prevents white flash on startup -->
+    <!-- Critical CSS: Prevents FOUC, matches default dark theme -->
     <style>
         html,
         body {
-            background-color: #1e1e1e;
             height: 100%;
             margin: 0;
             overflow: hidden;
+            background-color: #1e1e1e;
+            /* Fallback */
+        }
+
+        @media (prefers-color-scheme: light) {
+
+            html,
+            body {
+                background-color: #f9fafb;
+                /* Light theme fallback */
+            }
         }
     </style>
 

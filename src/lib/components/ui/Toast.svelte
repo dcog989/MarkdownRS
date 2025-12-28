@@ -19,16 +19,29 @@
         }
     }
 
-    function getColor(type: string) {
+    function getColorClass(type: string) {
         switch (type) {
             case "success":
-                return "#10b981"; // green
+                return "text-success border-l-success";
             case "error":
-                return "#ef4444"; // red
+                return "text-danger border-l-danger";
             case "warning":
-                return "#f59e0b"; // amber
+                return "text-accent-secondary border-l-accent-secondary"; // Using accent as warning color
             default:
-                return "#3b82f6"; // blue
+                return "text-accent-link border-l-accent-link";
+        }
+    }
+
+    function getIconColorClass(type: string) {
+        switch (type) {
+            case "success":
+                return "text-success";
+            case "error":
+                return "text-danger";
+            case "warning":
+                return "text-accent-secondary";
+            default:
+                return "text-accent-link";
         }
     }
 
@@ -67,77 +80,20 @@
     });
 </script>
 
-<div class="toast-container">
+<div class="fixed top-8 right-8 z-[9999] flex flex-col gap-2 pointer-events-none">
     {#each appContext.ui.toast.toasts as toast (toast.id)}
         {@const Icon = getIcon(toast.type)}
-        {@const color = getColor(toast.type)}
-        <div class="toast" transition:fly={{ y: -20, duration: 200 }} role="alert" aria-live="polite">
-            <div class="toast-content" style="border-left-color: {color}">
-                <Icon size={16} style="color: {color}; flex-shrink: 0;" />
-                <span class="toast-message">{toast.message}</span>
-                <button type="button" class="toast-close" onclick={() => appContext.ui.toast.dismiss(toast.id)} aria-label="Dismiss">
+        {@const colorClass = getColorClass(toast.type)}
+        {@const iconColorClass = getIconColorClass(toast.type)}
+
+        <div class="pointer-events-auto max-w-[400px] min-w-[300px]" transition:fly={{ y: -20, duration: 200 }} role="alert" aria-live="polite">
+            <div class="flex items-center gap-3 px-4 py-3 rounded-md shadow-lg border border-border-main border-l-[3px] bg-bg-panel text-fg-default {colorClass.split(' ')[1]}">
+                <Icon size={16} class="shrink-0 {iconColorClass}" />
+                <span class="flex-1 text-[13px] leading-snug">{toast.message}</span>
+                <button type="button" class="flex items-center justify-center p-1 rounded transition-all bg-transparent border-none cursor-pointer text-fg-muted hover:bg-bg-hover hover:text-fg-default shrink-0" onclick={() => appContext.ui.toast.dismiss(toast.id)} aria-label="Dismiss">
                     <X size={14} />
                 </button>
             </div>
         </div>
     {/each}
 </div>
-
-<style>
-    .toast-container {
-        position: fixed;
-        top: 2rem;
-        right: 2rem;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        pointer-events: none;
-    }
-
-    .toast {
-        pointer-events: auto;
-        max-width: 400px;
-        min-width: 300px;
-    }
-
-    .toast-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
-        background-color: var(--color-bg-panel);
-        border: 1px solid var(--color-border-main);
-        border-left: 3px solid;
-        border-radius: 6px;
-        box-shadow:
-            0 4px 6px -1px rgb(0 0 0 / 0.3),
-            0 2px 4px -2px rgb(0 0 0 / 0.3);
-        color: var(--color-fg-default);
-    }
-
-    .toast-message {
-        flex: 1;
-        font-size: 13px;
-        line-height: 1.4;
-    }
-
-    .toast-close {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.25rem;
-        background: transparent;
-        border: none;
-        border-radius: 4px;
-        color: var(--color-fg-muted);
-        cursor: pointer;
-        transition: all 150ms;
-        flex-shrink: 0;
-    }
-
-    .toast-close:hover {
-        background-color: var(--color-bg-hover);
-        color: var(--color-fg-default);
-    }
-</style>

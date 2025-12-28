@@ -1,5 +1,6 @@
 <script lang="ts">
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
     import { DEFAULT_THEMES } from "$lib/utils/themes";
@@ -19,7 +20,7 @@
     $effect(() => {
         if (isOpen) {
             callBackend("get_available_themes", {}, "Settings:Load")
-                .then((customThemes) => {
+                .then((customThemes: string[]) => {
                     const defaults = Object.keys(DEFAULT_THEMES);
                     const customs = customThemes.filter((t) => !defaults.includes(t));
                     appContext.app.availableThemes = [...defaults, ...customs];
@@ -116,7 +117,7 @@
             saveSettings();
 
             if (key === "logLevel") {
-                appContext.ui.toast.info("Restart required to apply log level changes");
+                toastStore.info("Restart required to apply log level changes");
             }
         }
     }

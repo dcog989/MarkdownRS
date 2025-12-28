@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { appState } from "$lib/stores/appState.svelte.ts";
-    import { editorMetrics } from "$lib/stores/editorMetrics.svelte.ts";
+    import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
@@ -77,7 +76,6 @@
         for (const { from, to } of view.visibleRanges) {
             for (let pos = from; pos <= to; ) {
                 const line = view.state.doc.lineAt(pos);
-                // Only show newline widget if it's not the very last line of doc (which has no newline)
                 if (line.to < view.state.doc.length) {
                     builder.add(
                         line.to,
@@ -114,9 +112,9 @@
 
     // Create debounced autocompletion configuration
     let autocompletionConfig = $derived.by(() => {
-        if (!appState.enableAutocomplete) return [];
+        if (!appContext.app.enableAutocomplete) return [];
 
-        const delay = appState.autocompleteDelay;
+        const delay = appContext.app.autocompleteDelay;
         let timeoutId: number | null = null;
 
         return autocompletion({
@@ -152,15 +150,15 @@
     });
 
     let dynamicTheme = $derived.by(() => {
-        const fontSize = appState.editorFontSize || 14;
-        const isDark = appState.theme === "dark";
+        const fontSize = appContext.app.editorFontSize || 14;
+        const isDark = appContext.app.theme === "dark";
         const whitespaceColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
 
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
-            ".cm-cursor": { borderLeftColor: editorMetrics.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: editorMetrics.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
+            ".cm-cursor": { borderLeftColor: appContext.metrics.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: appContext.metrics.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
             ".cm-scroller": {
-                fontFamily: appState.editorFontFamily,
+                fontFamily: appContext.app.editorFontFamily,
                 overflow: "auto",
                 overflowAnchor: "none",
             },
@@ -282,7 +280,7 @@
     $effect(() => {
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appState.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appState.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appState.defaultIndent)))), whitespaceComp.reconfigure(appState.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [])],
+                effects: [wrapComp.reconfigure(appContext.app.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))), whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [])],
             });
     });
 
@@ -291,7 +289,7 @@
             highlightActiveLineGutter(),
             highlightActiveLine(),
             drawSelection(),
-            historyComp.of(history({ minDepth: appState.undoDepth })),
+            historyComp.of(history({ minDepth: appContext.app.undoDepth })),
             search({ top: true }),
             highlightSelectionMatches(),
             autoComp.of([]),
@@ -341,7 +339,7 @@
                 {
                     key: "Insert",
                     run: () => {
-                        editorMetrics.toggleInsertMode();
+                        appContext.metrics.toggleInsertMode();
                         return true;
                     },
                 },
@@ -454,4 +452,4 @@
     });
 </script>
 
-<div role="none" class="w-full h-full overflow-hidden bg-[#1e1e1e] relative" bind:this={editorContainer} onclick={() => view?.focus()}></div>
+<div role="none" class="w-full h-full overflow-hidden bg-bg-main relative" bind:this={editorContainer} onclick={() => view?.focus()}></div>

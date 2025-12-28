@@ -16,13 +16,11 @@
     let showDropdown = $state(false);
     let currentTime = $state(Date.now());
 
-    // Drag State
     let isDragging = $state(false);
     let draggingId = $state<string | null>(null);
     let dragOffsetX = $state(0);
     let currentDragX = $state(0);
 
-    // Context Menu & MRU State
     let contextMenuTabId: string | null = $state(null);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);

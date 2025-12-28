@@ -31,7 +31,6 @@
     let content = $state<HTMLDivElement>();
 
     function handleBackdropClick(e: MouseEvent) {
-        // Only close on backdrop click, not content click
         if (e.target === e.currentTarget) {
             onClose();
         }
@@ -45,10 +44,9 @@
         }
     }
 
-    // Prevent tab focus from escaping the modal
     function handleFocusTrap(e: FocusEvent) {
         if (!isOpen) return;
-        const modal = (e.target as HTMLElement)?.closest('.ui-panel');
+        const modal = (e.target as HTMLElement)?.closest(".ui-panel");
         if (!modal && isOpen) {
             e.preventDefault();
             e.stopPropagation();
@@ -61,14 +59,7 @@
 {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div 
-        class="ui-backdrop" 
-        class:pt-16={position === "top"} 
-        class:items-start={position === "top"} 
-        style="z-index: {zIndex}; pointer-events: auto;" 
-        onclick={handleBackdropClick}
-        onfocusin={handleFocusTrap}
-    >
+    <div class="ui-backdrop" class:pt-16={position === "top"} class:items-start={position === "top"} style="z-index: {zIndex}; pointer-events: auto;" onclick={handleBackdropClick} onfocusin={handleFocusTrap}>
         <div class="ui-panel shadow-2xl" style="width: {width}; max-height: 85vh; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
             {#if header || title}
@@ -76,11 +67,11 @@
                     {#if header}
                         {@render header()}
                     {:else}
-                        <span class="text-sm font-semibold text-[var(--color-fg-default)]">{title}</span>
+                        <span class="text-sm font-semibold text-fg-default">{title}</span>
                     {/if}
 
                     {#if showCloseButton}
-                        <button class="p-1 rounded hover:bg-white/10 transition-colors text-[var(--color-fg-muted)]" onclick={onClose} aria-label="Close">
+                        <button class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted" onclick={onClose} aria-label="Close">
                             <X size={18} />
                         </button>
                     {/if}
@@ -101,20 +92,10 @@
 
             <!-- Footer -->
             {#if footer}
-                <div class="px-4 py-3 border-t flex justify-end gap-2 shrink-0 border-[var(--color-border-main)] bg-[var(--color-bg-panel)]">
+                <div class="px-4 py-3 border-t flex justify-end gap-2 shrink-0 border-border-main bg-bg-panel">
                     {@render footer()}
                 </div>
             {/if}
         </div>
     </div>
 {/if}
-
-<style>
-    .no-scrollbar {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-</style>

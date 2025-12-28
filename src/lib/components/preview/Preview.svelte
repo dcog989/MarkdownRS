@@ -21,7 +21,6 @@
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
     $effect(() => {
-        // Reset local state when switching tabs
         if (lastTabId !== tabId) {
             lastTabId = tabId;
             lastRendered = "";
@@ -31,10 +30,7 @@
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
         const content = appContext.app.activeTabId === tabId ? tab?.content || "" : "";
 
-        // If not markdown, skip rendering
         if (!isMarkdown) return;
-
-        // Only render if content changed or if we don't have htmlContent yet
         if (content === lastRendered && htmlContent) return;
 
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -45,7 +41,6 @@
             htmlContent = result.html;
             lastRendered = content;
             if (container) {
-                // ScrollSyncManager handles event listeners internally
                 scrollSync.registerPreview(container);
                 await scrollSync.updateMap();
             }
@@ -62,9 +57,9 @@
     });
 </script>
 
-<div class="relative w-full h-full border-l" style="background-color: var(--color-bg-preview); border-color: var(--color-border-main);">
+<div class="relative w-full h-full border-l bg-bg-preview border-border-main">
     <div class="group absolute top-2 right-2 z-10">
-        <button type="button" class="p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/20" style="background-color: var(--color-bg-panel); border: 1px solid var(--color-border-main);" onclick={() => appContext.app.toggleOrientation()}>
+        <button type="button" class="p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-bg-panel border border-border-main hover:bg-white/20" onclick={() => appContext.app.toggleOrientation()}>
             {#if appContext.app.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
         </button>
     </div>
@@ -80,8 +75,8 @@
             }
         }}
         role="none"
-        class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0"
-        style="background-color: var(--color-bg-preview); color: var(--color-fg-default); font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
+        class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0 bg-bg-preview text-fg-default"
+        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
     >
         {#if !isMarkdown}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">

@@ -22,7 +22,6 @@
 
     let query = $state("");
     let inputRef: HTMLInputElement | undefined = $state();
-    let listRef = $state<HTMLDivElement>(); // Can use this to scroll to item if needed
     let selectedIndex = $state(0);
 
     let filteredCommands = $derived(commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())));
@@ -52,8 +51,6 @@
 
     async function scrollToSelected() {
         await tick();
-        // Since Modal wraps content, we need to find the scrolling viewport if we want to scroll perfectly
-        // But for now, simple element.scrollIntoView works if the element is rendered
         const buttons = document.querySelectorAll(".command-item");
         const selected = buttons[selectedIndex] as HTMLElement;
         if (selected) {
@@ -76,16 +73,16 @@
 <Modal bind:isOpen {onClose} width="600px" showCloseButton={false}>
     {#snippet header()}
         <div class="flex items-center gap-2">
-            <Zap size={16} style="color: var(--color-accent-secondary);" />
-            <h2 class="text-ui font-semibold shrink-0" style="color: var(--color-fg-default);">Commands</h2>
+            <Zap size={16} class="text-accent-secondary" />
+            <h2 class="text-ui font-semibold shrink-0 text-fg-default">Commands</h2>
         </div>
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={inputRef} bind:value={query} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" onkeydown={handleKeydown} />
+            <input bind:this={inputRef} bind:value={query} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main" onkeydown={handleKeydown} />
         </div>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0" style="color: var(--color-fg-muted);" onclick={close}>
+        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 text-fg-muted" onclick={close}>
             <X size={16} />
         </button>
     {/snippet}
@@ -110,7 +107,7 @@
                 </button>
             {/each}
         {:else}
-            <div class="px-3 py-2 text-ui" style="color: var(--color-fg-muted);">No commands found</div>
+            <div class="px-3 py-2 text-ui text-fg-muted">No commands found</div>
         {/if}
     </div>
 </Modal>

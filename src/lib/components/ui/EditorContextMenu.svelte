@@ -64,14 +64,11 @@
 
         if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
             isLoadingSuggestions = true;
-            console.log("[ContextMenu] Fetching suggestions for:", word);
             getSuggestions(word)
                 .then((res) => {
                     suggestions = res.slice(0, 5);
-                    console.log("[ContextMenu] Suggestions loaded:", suggestions);
                 })
-                .catch((err) => {
-                    console.error("[ContextMenu] Failed to load suggestions:", err);
+                .catch(() => {
                     suggestions = [];
                 })
                 .finally(() => {
@@ -112,19 +109,19 @@
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
     {#snippet children({ submenuSide })}
         {#if suggestions.length > 0 || isLoadingSuggestions}
-            <div class="px-3 py-1 text-ui-sm font-bold uppercase opacity-50 text-[var(--color-fg-muted)]">Suggestions</div>
+            <div class="px-3 py-1 text-ui-sm font-bold uppercase opacity-50 text-fg-muted">Suggestions</div>
             {#if isLoadingSuggestions}
                 <div class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 opacity-70">
-                    <Sparkles size={14} class="text-[var(--color-accent-secondary)] animate-spin" /><span>Loading suggestions...</span>
+                    <Sparkles size={14} class="text-accent-secondary animate-spin" /><span>Loading suggestions...</span>
                 </div>
             {:else}
                 {#each suggestions as s}
                     <button class="w-full text-left px-3 py-1.5 text-ui font-medium hover:bg-white/10 flex items-center gap-2" onclick={() => onReplaceWord?.(s)}>
-                        <Sparkles size={14} class="text-[var(--color-accent-secondary)]" /><span>{s}</span>
+                        <Sparkles size={14} class="text-accent-secondary" /><span>{s}</span>
                     </button>
                 {/each}
             {/if}
-            <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+            <div class="h-px my-1 bg-border-main"></div>
         {/if}
 
         {#if selectedText}
@@ -157,14 +154,14 @@
             <ClipboardPaste size={14} /><span>Paste</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+V</span>
         </button>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" onclick={() => handleOp("format-document")}>
             <WandSparkles size={14} /><span>{selectedText ? "Format Selection" : "Format Document"}</span><span class="ml-auto text-ui-sm opacity-50">Alt+Shift+F</span>
         </button>
 
         {#if selectedText}
-            <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+            <div class="h-px my-1 bg-border-main"></div>
 
             <!-- Sort Menu -->
             <Submenu bind:show={showSortMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("sort")}>
@@ -199,7 +196,7 @@
                 {/snippet}
                 {#each formatOps as op}
                     {#if op.divider}
-                        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+                        <div class="h-px my-1 bg-border-main"></div>
                     {:else}
                         <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
                     {/if}
@@ -215,7 +212,7 @@
                 {/snippet}
                 {#each transformOps as op}
                     {#if op.divider}
-                        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+                        <div class="h-px my-1 bg-border-main"></div>
                     {:else}
                         <button class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleOp(op.id)}>{op.label}</button>
                     {/if}
@@ -224,7 +221,7 @@
         {/if}
 
         {#if canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
-            <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+            <div class="h-px my-1 bg-border-main"></div>
             {#if canAddSingle}
                 <button
                     class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"

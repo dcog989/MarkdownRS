@@ -183,22 +183,22 @@
 <Modal bind:isOpen {onClose} width="700px" showCloseButton={false}>
     {#snippet header()}
         <div class="flex items-center gap-2">
-            <BookmarkIcon size={16} style="color: var(--color-accent-secondary);" />
-            <h2 class="text-ui font-semibold shrink-0" style="color: var(--color-fg-default);">Bookmarks</h2>
+            <BookmarkIcon size={16} class="text-accent-secondary" />
+            <h2 class="text-ui font-semibold shrink-0 text-fg-default">Bookmarks</h2>
         </div>
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);" />
+            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main" />
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
-            <select bind:value={sortBy} class="px-2 py-1 rounded text-ui outline-none cursor-pointer" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border: 1px solid var(--color-border-main);">
+            <select bind:value={sortBy} class="px-2 py-1 rounded text-ui outline-none cursor-pointer bg-bg-input text-fg-default border border-border-main">
                 <option value="most-recent">Most Recent</option>
                 <option value="alphabetical">Alphabetical</option>
                 <option value="last-updated">Last Updated</option>
             </select>
-            <button onclick={toggleSortDirection} class="p-1 rounded hover:bg-white/10 transition-colors" style="color: var(--color-fg-muted);" title={sortDirection === "asc" ? "Sort Ascending" : "Sort Descending"}>
+            <button onclick={toggleSortDirection} class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted" title={sortDirection === "asc" ? "Sort Ascending" : "Sort Descending"}>
                 {#if sortDirection === "asc"}
                     <ArrowUp size={16} />
                 {:else}
@@ -207,30 +207,30 @@
             </button>
         </div>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2" style="color: var(--color-accent-primary);" onclick={startAdd} title="Add Bookmark">
+        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2 text-accent-primary" onclick={startAdd} title="Add Bookmark">
             <Plus size={16} />
         </button>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2" style="color: var(--color-fg-muted);" onclick={onClose}>
+        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2 text-fg-muted" onclick={onClose}>
             <X size={16} />
         </button>
     {/snippet}
 
     {#if showAddForm}
-        <div class="px-4 py-3 border-b" style="background-color: var(--color-bg-input); border-color: var(--color-border-main);">
+        <div class="px-4 py-3 border-b bg-bg-input border-border-main">
             <div class="space-y-2">
                 <div class="flex gap-2">
-                    <input bind:value={addPath} type="text" placeholder="File path..." class="flex-1 px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-panel); color: var(--color-fg-default); border-color: var(--color-border-main);" />
-                    <button onclick={handleBrowse} class="px-3 py-1 rounded text-ui font-medium transition-colors" style="background-color: var(--color-bg-panel); color: var(--color-fg-default); border: 1px solid var(--color-border-main);"> Browse... </button>
+                    <input bind:value={addPath} type="text" placeholder="File path..." class="flex-1 px-2 py-1 rounded text-ui outline-none border bg-bg-panel text-fg-default border-border-main" />
+                    <button onclick={handleBrowse} class="px-3 py-1 rounded text-ui font-medium transition-colors bg-bg-panel text-fg-default border border-border-main"> Browse... </button>
                 </div>
-                <input bind:value={addTitle} type="text" placeholder="Bookmark title..." class="w-full px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-panel); color: var(--color-fg-default); border-color: var(--color-border-main);" />
-                <input bind:value={addTags} type="text" placeholder="Tags (comma-separated)..." class="w-full px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-panel); color: var(--color-fg-default); border-color: var(--color-border-main);" />
+                <input bind:value={addTitle} type="text" placeholder="Bookmark title..." class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-panel text-fg-default border-border-main" />
+                <input bind:value={addTags} type="text" placeholder="Tags (comma-separated)..." class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-panel text-fg-default border-border-main" />
                 {#if browseError}
-                    <div class="text-ui-sm" style="color: var(--color-danger-text);">{browseError}</div>
+                    <div class="text-ui-sm text-danger-text">{browseError}</div>
                 {/if}
                 <div class="flex gap-2 justify-end">
                     <button onclick={() => (showAddForm = false)} class="px-3 py-1 rounded text-ui">Cancel</button>
-                    <button onclick={handleAddBookmark} disabled={!addPath || !addTitle} class="px-3 py-1 rounded text-ui font-medium disabled:opacity-50" style="background-color: var(--color-accent-primary); color: var(--color-fg-inverse);">Add</button>
+                    <button onclick={handleAddBookmark} disabled={!addPath || !addTitle} class="px-3 py-1 rounded text-ui font-medium disabled:opacity-50 bg-accent-primary text-fg-inverse">Add</button>
                 </div>
             </div>
         </div>
@@ -238,16 +238,16 @@
 
     <div class="text-ui">
         {#if sortedBookmarks.length > 0}
-            <div class="divide-y" style="border-color: var(--color-border-main);">
+            <div class="divide-y border-border-main">
                 {#each sortedBookmarks as bookmark (bookmark.id)}
                     <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
                         {#if editingId === bookmark.id}
                             <div class="space-y-2">
-                                <input bind:value={editTitle} type="text" class="w-full px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-main);" />
-                                <input bind:value={editTags} type="text" placeholder="Tags (comma-separated)" class="w-full px-2 py-1 rounded text-ui outline-none border" style="background-color: var(--color-bg-input); color: var(--color-fg-default); border-color: var(--color-border-main);" />
+                                <input bind:value={editTitle} type="text" class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main" />
+                                <input bind:value={editTags} type="text" placeholder="Tags (comma-separated)" class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main" />
                                 <div class="flex gap-2 justify-end">
                                     <button onclick={cancelEdit} class="px-2 py-1 rounded text-ui-sm">Cancel</button>
-                                    <button onclick={() => saveEdit(bookmark.id)} class="px-2 py-1 rounded text-ui-sm" style="background-color: var(--color-accent-primary); color: var(--color-fg-inverse);">Save</button>
+                                    <button onclick={() => saveEdit(bookmark.id)} class="px-2 py-1 rounded text-ui-sm bg-accent-primary text-fg-inverse">Save</button>
                                 </div>
                             </div>
                         {:else}
@@ -255,23 +255,23 @@
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div class="flex items-start gap-3 cursor-pointer" onclick={() => handleOpenBookmark(bookmark)}>
                                 <div class="flex-1 min-w-0">
-                                    <div class="font-medium truncate" style="color: var(--color-fg-default);">
+                                    <div class="font-medium truncate text-fg-default">
                                         {bookmark.title}
                                     </div>
-                                    <div class="text-ui-sm opacity-60 truncate" style="color: var(--color-fg-muted);">
+                                    <div class="text-ui-sm opacity-60 truncate text-fg-muted">
                                         {bookmark.path}
                                     </div>
                                     {#if bookmark.tags.length > 0}
                                         <div class="flex items-center gap-1 mt-1 flex-wrap">
                                             <Tag size={12} class="opacity-50" />
                                             {#each bookmark.tags as tag}
-                                                <span class="text-ui-sm px-1.5 py-0.5 rounded" style="background-color: var(--color-bg-input); color: var(--color-fg-muted);">
+                                                <span class="text-ui-sm px-1.5 py-0.5 rounded bg-bg-input text-fg-muted">
                                                     {tag}
                                                 </span>
                                             {/each}
                                         </div>
                                     {/if}
-                                    <div class="text-ui-sm opacity-50 mt-1" style="color: var(--color-fg-muted);">
+                                    <div class="text-ui-sm opacity-50 mt-1 text-fg-muted">
                                         Added: {formatDate(bookmark.created)}
                                         {#if bookmark.last_accessed}
                                             • Accessed: {formatDate(bookmark.last_accessed)}
@@ -284,12 +284,11 @@
                                             e.stopPropagation();
                                             startEdit(bookmark);
                                         }}
-                                        class="p-1.5 rounded hover:bg-white/10"
-                                        style="color: var(--color-fg-muted);"
+                                        class="p-1.5 rounded hover:bg-white/10 text-fg-muted"
                                     >
                                         <Pen size={14} />
                                     </button>
-                                    <button onclick={(e) => handleDelete(bookmark.id, e)} class="p-1.5 rounded hover:bg-white/10" style="color: var(--color-danger-text);">
+                                    <button onclick={(e) => handleDelete(bookmark.id, e)} class="p-1.5 rounded hover:bg-white/10 text-danger-text">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
@@ -299,9 +298,9 @@
                 {/each}
             </div>
         {:else if searchQuery.length >= 2}
-            <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">No bookmarks match your search</div>
+            <div class="px-4 py-8 text-center text-fg-muted">No bookmarks match your search</div>
         {:else if appContext.bookmarks.bookmarks.length === 0}
-            <div class="px-4 py-8 text-center" style="color: var(--color-fg-muted);">
+            <div class="px-4 py-8 text-center text-fg-muted">
                 <BookmarkIcon size={48} class="mx-auto mb-2 opacity-30" />
                 <div class="mb-1">No bookmarks yet</div>
                 <div class="text-ui-sm opacity-70">Click the + button above to add your first bookmark</div>

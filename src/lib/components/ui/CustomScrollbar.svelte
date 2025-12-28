@@ -11,12 +11,10 @@
     let trackRef = $state<HTMLDivElement>();
     let thumbRef = $state<HTMLDivElement>();
 
-    // Layout state (reactive)
     let thumbHeight = $state(20);
     let isVisible = $state(false);
     let isDragging = $state(false);
 
-    // Interaction state (non-reactive)
     let startY = 0;
     let startThumbTop = 0;
     let currentThumbTop = 0;
@@ -25,11 +23,9 @@
     let mutationObserver: MutationObserver;
     let frameId: number | null = null;
 
-    // Cache metrics to avoid layout thrashing
     let clientHeight = 0;
     let scrollHeight = 0;
 
-    // 1. Heavy Update: Measure layout (Resize/Mutation)
     function measure() {
         if (!viewport) return;
 
@@ -50,17 +46,13 @@
 
         if (!isVisible) return;
 
-        // Track height is clientHeight - padding (top 2px + bottom 2px = 4px)
         const trackHeight = clientHeight - 4;
         const heightRatio = clientHeight / scrollHeight;
         thumbHeight = Math.max(20, trackHeight * heightRatio);
 
-        // Force immediate sync after measurement
         syncPosition();
     }
 
-    // 2. Light Update: Sync thumb position (Scroll)
-    // Direct DOM manipulation for zero-lag performance
     function syncPosition() {
         if (!viewport || !isVisible || !thumbRef || isDragging) return;
 
@@ -90,7 +82,6 @@
         const rect = trackRef.getBoundingClientRect();
         const clickOffset = e.clientY - rect.top;
 
-        // Refresh metrics
         clientHeight = viewport.clientHeight;
         scrollHeight = viewport.scrollHeight;
 
@@ -136,11 +127,9 @@
             let newTop = startThumbTop + deltaY;
             newTop = Math.max(0, Math.min(maxThumb, newTop));
 
-            // Direct update for visual feedback
             thumbRef.style.transform = `translateY(${newTop}px)`;
             currentThumbTop = newTop;
 
-            // Calculate scroll position
             const scrollRatio = newTop / maxThumb;
             viewport.scrollTop = scrollRatio * maxScroll;
         }
@@ -178,7 +167,6 @@
         mutationObserver = new MutationObserver(debouncedMeasure);
         mutationObserver.observe(viewport, { childList: true, subtree: true, attributes: true });
 
-        // Passive listener for maximum scrolling performance
         viewport.addEventListener("scroll", onScroll, { passive: true });
 
         measure();
@@ -206,6 +194,6 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="scrollbar-track group absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
-    <div bind:this={thumbRef} class="scrollbar-thumb absolute top-0 w-1 rounded-full bg-border-light hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:w-3 transition-[width,background-color] duration-150 cursor-pointer" class:w-3={isDragging} class:bg-accent-primary={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
+<div bind:this={trackRef} class="absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200 group" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
+    <div bind:this={thumbRef} class="absolute top-0 w-1 rounded-full bg-border-light hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:w-3 transition-[width,background-color] duration-150 cursor-pointer" class:w-3={isDragging} class:bg-accent-primary={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
 </div>

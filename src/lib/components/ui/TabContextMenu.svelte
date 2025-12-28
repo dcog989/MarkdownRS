@@ -158,7 +158,7 @@
             <FileDown size={14} class="opacity-70" /><span>Save As...</span>
         </button>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handlePin}>
             {#if isPinned}
@@ -176,7 +176,7 @@
             {/if}
         </button>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <Submenu bind:show={showExportSubmenu} side={submenuSide}>
             {#snippet trigger()}
@@ -225,7 +225,7 @@
             >
         </Submenu>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <button
             type="button"
@@ -268,7 +268,7 @@
             <ArrowRight size={14} class="opacity-70" /><span>Move to End</span>
         </button>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={isPinned} onclick={() => requestCloseTab(tabId)}>
             <X size={14} class="opacity-70" /><span>Close</span>
@@ -301,7 +301,7 @@
             {/snippet}
 
             {#if appContext.editor.closedTabsHistory.length > 0}
-                <div class="px-3 py-1.5 text-xs opacity-50 font-semibold border-b border-[var(--color-border-main)]">RECENTLY CLOSED</div>
+                <div class="px-3 py-1.5 text-xs opacity-50 font-semibold border-b border-border-main">RECENTLY CLOSED</div>
                 {#each appContext.editor.closedTabsHistory as item, i}
                     <button
                         type="button"
@@ -319,11 +319,11 @@
                     </button>
                 {/each}
             {:else}
-                <div class="px-3 py-2 text-sm text-[var(--color-fg-muted)]">History empty</div>
+                <div class="px-3 py-2 text-sm text-fg-muted">History empty</div>
             {/if}
         </Submenu>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleRename}>
             <FilePen size={14} class="opacity-70" /><span>Rename</span>
@@ -350,7 +350,7 @@
             <Copy size={14} class="opacity-70" /><span>Copy Full Path</span>
         </button>
 
-        <div class="h-px my-1 bg-[var(--color-border-main)]"></div>
+        <div class="h-px my-1 bg-border-main"></div>
 
         <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-danger-text)" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
             <Trash2 size={14} /><span>Delete to Recycle Bin</span>

@@ -52,10 +52,7 @@
     });
 
     $effect(() => {
-        const _scope = searchScope;
-        const _replace = isReplaceMode;
         const view = cmView;
-
         if (isOpen && view) {
             untrack(() => executeSearch(view, false));
         }
@@ -202,23 +199,23 @@
 </script>
 
 {#if isOpen}
-    <div bind:this={panelRef} class="find-replace-panel" class:transparent={appContext.app.findPanelTransparent && !isMouseOver} onkeydown={handleKeydown} onfocusout={handleBlur} onmouseenter={() => (isMouseOver = true)} onmouseleave={() => (isMouseOver = false)} role="dialog" aria-label="Find and Replace" tabindex="-1">
-        <div class="panel-header">
+    <div bind:this={panelRef} class="absolute top-0 right-0 w-[400px] max-h-[600px] z-50 flex flex-col transition-opacity duration-200 bg-bg-panel border border-border-main border-t-0 border-r-0 shadow-lg" class:opacity-15={appContext.app.findPanelTransparent && !isMouseOver} onkeydown={handleKeydown} onfocusout={handleBlur} onmouseenter={() => (isMouseOver = true)} onmouseleave={() => (isMouseOver = false)} role="dialog" aria-label="Find and Replace" tabindex="-1">
+        <div class="flex items-center p-2 border-b border-border-main text-fg-default">
             <div class="flex items-center gap-2 flex-1">
-                <button type="button" class="icon-btn" onclick={() => (isReplaceMode = !isReplaceMode)} title="Toggle Replace Mode">
+                <button type="button" class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active" onclick={() => (isReplaceMode = !isReplaceMode)} title="Toggle Replace Mode">
                     {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
                 </button>
                 <span class="font-semibold text-ui">Find {isReplaceMode ? "& Replace" : ""}</span>
             </div>
-            <button type="button" class="icon-btn" onclick={close} title="Close (Esc)">
+            <button type="button" class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active" onclick={close} title="Close (Esc)">
                 <X size={14} />
             </button>
         </div>
 
-        <div class="panel-content">
-            <div class="input-row">
-                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="search-input" oninput={onInput} spellcheck="false" />
-                <div class="result-indicator">
+        <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-[500px]">
+            <div class="flex gap-2 items-center">
+                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onInput} spellcheck="false" />
+                <div class="text-[11px] text-fg-muted min-w-[80px] text-right">
                     {#if searchScope === "current"}
                         {#if searchManager.currentMatches > 0}
                             {searchManager.currentIndex + 1} of {searchManager.currentMatches}
@@ -236,63 +233,63 @@
             </div>
 
             {#if isReplaceMode}
-                <div class="input-row">
-                    <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="search-input" oninput={onReplaceInput} spellcheck="false" />
+                <div class="flex gap-2 items-center">
+                    <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onReplaceInput} spellcheck="false" />
                 </div>
             {/if}
 
-            <div class="options-row">
-                <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={searchManager.matchCase} onchange={() => executeSearch(cmView!, false)} />
+            <div class="flex gap-4 flex-wrap">
+                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                    <input type="checkbox" bind:checked={searchManager.matchCase} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Match Case</span>
                 </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={searchManager.matchWholeWord} onchange={() => executeSearch(cmView!, false)} />
+                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                    <input type="checkbox" bind:checked={searchManager.matchWholeWord} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Whole Word</span>
                 </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" bind:checked={searchManager.useRegex} onchange={() => executeSearch(cmView!, false)} />
+                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                    <input type="checkbox" bind:checked={searchManager.useRegex} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Regex</span>
                 </label>
             </div>
 
-            <div class="scope-row">
-                <label class="radio-label">
-                    <input type="radio" bind:group={searchScope} value="current" />
+            <div class="flex gap-4 flex-wrap">
+                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                    <input type="radio" bind:group={searchScope} value="current" class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Current Document</span>
                 </label>
-                <label class="radio-label">
-                    <input type="radio" bind:group={searchScope} value="all" />
+                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                    <input type="radio" bind:group={searchScope} value="all" class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>All Open Documents</span>
                 </label>
             </div>
 
-            <div class="actions-row">
-                <button type="button" class="action-btn" onclick={onFindPrevious} disabled={searchScope === "all"}>
+            <div class="flex gap-2 flex-wrap">
+                <button type="button" class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-50 disabled:cursor-not-allowed" onclick={onFindPrevious} disabled={searchScope === "all"}>
                     <Search size={12} /> Previous
                 </button>
-                <button type="button" class="action-btn" onclick={onFindNext} disabled={searchScope === "all"}>
+                <button type="button" class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-50 disabled:cursor-not-allowed" onclick={onFindNext} disabled={searchScope === "all"}>
                     <Search size={12} /> Next
                 </button>
                 {#if isReplaceMode}
-                    <button type="button" class="action-btn" onclick={onReplace} disabled={searchScope === "all"}>
+                    <button type="button" class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-50 disabled:cursor-not-allowed" onclick={onReplace} disabled={searchScope === "all"}>
                         <Replace size={12} /> Replace
                     </button>
-                    <button type="button" class="action-btn" onclick={onReplaceAll}>
+                    <button type="button" class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active" onclick={onReplaceAll}>
                         <Replace size={12} /> Replace All
                     </button>
                 {/if}
             </div>
 
             {#if searchScope === "all" && searchManager.allTabsResults.size > 0}
-                <div class="results-list">
-                    <div class="results-header">Results:</div>
+                <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+                    <div class="text-[11px] font-semibold mb-1 text-fg-muted">Results:</div>
                     {#each [...searchManager.allTabsResults.entries()] as [tabId, count]}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}
-                            <button type="button" class="result-item" onclick={() => navigateToTab(tabId)}>
-                                <span class="result-filename">{tab.title}</span>
-                                <span class="result-count">{count}</span>
+                            <button type="button" class="flex items-center justify-between p-1.5 px-2 rounded cursor-pointer transition-colors bg-bg-hover hover:bg-bg-active border-none w-full text-left" onclick={() => navigateToTab(tabId)}>
+                                <span class="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap text-fg-default">{tab.title}</span>
+                                <span class="text-[11px] text-fg-muted bg-bg-panel px-2 py-0.5 rounded-xl">{count}</span>
                             </button>
                         {/if}
                     {/each}
@@ -301,178 +298,3 @@
         </div>
     </div>
 {/if}
-
-<style>
-    .find-replace-panel {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 400px;
-        max-height: 600px;
-        background-color: var(--color-bg-panel);
-        border: 1px solid var(--color-border-main);
-        border-top: none;
-        border-right: none;
-        box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.3);
-        z-index: 50;
-        display: flex;
-        flex-direction: column;
-        transition: opacity 200ms ease-in-out;
-    }
-
-    .find-replace-panel.transparent {
-        opacity: 0.15;
-    }
-
-    .panel-header {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem;
-        border-bottom: 1px solid var(--color-border-main);
-        color: var(--color-fg-default);
-    }
-
-    .panel-content {
-        padding: 0.75rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        overflow-y: auto;
-        max-height: 500px;
-    }
-
-    .input-row {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-    }
-
-    .search-input {
-        flex: 1;
-        padding: 0.3rem 0.5rem;
-        background-color: var(--color-bg-input);
-        border: 1px solid var(--color-border-light);
-        border-radius: 4px;
-        color: var(--color-fg-default);
-        font-size: 13px;
-        line-height: 1.5;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: var(--color-accent-primary);
-    }
-
-    .result-indicator {
-        font-size: 11px;
-        color: var(--color-fg-muted);
-        min-width: 80px;
-        text-align: right;
-    }
-
-    .options-row,
-    .scope-row {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .checkbox-label,
-    .radio-label {
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
-        font-size: 13px;
-        color: var(--color-fg-default);
-        cursor: pointer;
-    }
-
-    .checkbox-label input[type="checkbox"],
-    .radio-label input[type="radio"] {
-        width: 14px;
-        height: 14px;
-        cursor: pointer;
-        accent-color: var(--color-accent-primary);
-    }
-
-    .actions-row {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .icon-btn,
-    .action-btn {
-        padding: 0.25rem 0.6rem;
-        background-color: var(--color-bg-hover);
-        border: 1px solid var(--color-border-light);
-        border-radius: 4px;
-        color: var(--color-fg-default);
-        font-size: 13px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
-        transition: all 150ms;
-    }
-
-    .icon-btn:hover,
-    .action-btn:hover {
-        background-color: var(--color-bg-active);
-    }
-
-    .icon-btn:disabled,
-    .action-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .results-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-
-    .results-header {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--color-fg-muted);
-        margin-bottom: 0.25rem;
-    }
-
-    .result-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.4rem 0.5rem;
-        background-color: var(--color-bg-hover);
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 150ms;
-        border: none;
-        width: 100%;
-        text-align: left;
-    }
-
-    .result-item:hover {
-        background-color: var(--color-bg-active);
-    }
-
-    .result-filename {
-        font-size: 13px;
-        color: var(--color-fg-default);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .result-count {
-        font-size: 11px;
-        color: var(--color-fg-muted);
-        background-color: var(--color-bg-panel);
-        padding: 0.125rem 0.5rem;
-        border-radius: 12px;
-    }
-</style>

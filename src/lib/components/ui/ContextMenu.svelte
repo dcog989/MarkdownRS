@@ -38,7 +38,6 @@
     }
 
     $effect(() => {
-        // Re-run whenever x or y from props change
         updatePosition();
     });
 
@@ -59,7 +58,7 @@
 >
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 bg-bg-panel border-border-light"
+        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 bg-bg-panel border-border-light text-fg-default"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;

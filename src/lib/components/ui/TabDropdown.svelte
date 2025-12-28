@@ -184,13 +184,4 @@
         color: var(--color-fg-muted);
         opacity: 0.5;
     }
-
-    .dropdown-list {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .dropdown-list::-webkit-scrollbar {
-        display: none;
-    }
 </style>

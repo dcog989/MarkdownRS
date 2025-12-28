@@ -18,18 +18,15 @@
     let dragStart = 0;
     let initialSplit = 0;
 
-    // Configuration constants
-    const AUTO_SAVE_INTERVAL_MS = 30000; // 30 seconds
+    const AUTO_SAVE_INTERVAL_MS = 30000;
 
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
     let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
-    // Unsaved tabs (no path) are treated as Markdown by default
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
     let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
-    // Global Shortcut Handler (Document Level, before CodeMirror can intercept)
     function handleDocumentKeydown(e: KeyboardEvent) {
         const isModifier = e.ctrlKey || e.metaKey;
 
@@ -37,13 +34,11 @@
 
         const key = e.key.toLowerCase();
 
-        // Critical shortcuts - ALWAYS prevent default
         switch (key) {
             case "s":
                 e.preventDefault();
-                e.stopImmediatePropagation(); // Stop ALL other handlers
+                e.stopImmediatePropagation();
                 saveCurrentFile();
-                // Use debounced version to avoid blocking on session save
                 persistSessionDebounced();
                 return;
 
@@ -59,7 +54,6 @@
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 openFile();
-                // Use debounced version to avoid blocking on session save
                 persistSessionDebounced();
                 return;
 
@@ -95,12 +89,10 @@
         }
     }
 
-    // Tab Navigation Handler (Separate for clarity)
     function handleTabNavigation(e: KeyboardEvent) {
         if (!e.ctrlKey) return;
 
         if (e.key === "Tab") {
-            // Let TabBar component handle this
             return;
         }
 
@@ -148,7 +140,6 @@
             }
         })();
 
-        // Listen for file open events from command-line arguments
         let unlistenFileOpen: (() => void) | null = null;
         import("@tauri-apps/api/event").then(({ listen }) => {
             listen<string>("open-file-from-args", async (event) => {
@@ -160,7 +151,6 @@
             });
         });
 
-        // Add document-level shortcuts with HIGHEST priority
         document.addEventListener("keydown", handleDocumentKeydown, { capture: true });
         document.addEventListener("keydown", handleTabNavigation, { capture: true });
 
@@ -232,20 +222,18 @@
 </script>
 
 {#if !isInitialized}
-    <div class="h-screen w-screen flex items-center justify-center flex-col" style="background-color: var(--color-bg-main); color: var(--color-fg-default);">
+    <div class="h-screen w-screen flex items-center justify-center flex-col bg-bg-main text-fg-default">
         <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 animate-pulse" />
-        <p class="text-sm" style="color: var(--color-fg-muted)">Loading MarkdownRS...</p>
+        <p class="text-sm text-fg-muted">Loading MarkdownRS...</p>
         {#if initError}
-            <p class="text-xs mt-2" style="color: var(--color-danger-text)">{initError}</p>
+            <p class="text-xs mt-2 text-danger-text">{initError}</p>
         {/if}
     </div>
 {:else}
-    <div class="h-screen w-screen flex flex-col overflow-hidden border" style="background-color: var(--color-bg-main); color: var(--color-fg-default); border-color: var(--color-border-main);">
-        <!-- Header Section -->
+    <div class="h-screen w-screen flex flex-col overflow-hidden border bg-bg-main text-fg-default border-border-main">
         <Titlebar />
         <TabBar />
 
-        <!-- Main Workspace with StatusBar positioned on top -->
         <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer} style="position: relative;">
             {#if appContext.app.activeTabId}
                 {#key appContext.app.activeTabId}
@@ -257,14 +245,11 @@
                         {#if showPreview}
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div
-                                class="z-20 transition-colors duration-150"
+                                class="z-20 transition-colors duration-150 bg-bg-panel hover:bg-accent-primary"
                                 style="
                                     cursor: {appContext.app.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
                                     flex: 0 0 4px;
-                                    background-color: var(--color-bg-panel);
                                 "
-                                onmouseenter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-accent-primary)")}
-                                onmouseleave={(e) => (e.currentTarget.style.backgroundColor = "var(--color-bg-panel)")}
                                 onmousedown={startResize}
                                 ondblclick={resetSplit}
                             ></div>
@@ -278,19 +263,17 @@
                     </div>
                 {/key}
             {:else}
-                <div class="flex-1 flex items-center justify-center select-none flex-col" style="color: var(--color-fg-muted)">
+                <div class="flex-1 flex items-center justify-center select-none flex-col text-fg-muted">
                     <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}
 
-            <!-- StatusBar positioned absolutely at bottom of main workspace -->
             <div style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 100;">
                 <StatusBar />
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications -->
     <Toast />
 {/if}

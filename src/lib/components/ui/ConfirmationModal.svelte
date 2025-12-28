@@ -4,7 +4,7 @@
 </script>
 
 <Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => appContext.ui.dialog.resolve("cancel")} title={appContext.ui.dialog.options.title} width="448px" zIndex={100} showCloseButton={false}>
-    <div class="p-4 text-sm leading-relaxed text-[var(--color-fg-default)]">
+    <div class="p-4 text-sm leading-relaxed text-fg-default">
         {appContext.ui.dialog.options.message}
     </div>
 

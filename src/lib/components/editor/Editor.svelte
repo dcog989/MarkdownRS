@@ -136,7 +136,7 @@
     let filename = $derived(activeTab?.path || "unsaved.md");
 </script>
 
-<div class="w-full h-full overflow-hidden bg-[#1e1e1e] relative">
+<div class="w-full h-full overflow-hidden bg-bg-main relative">
     <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => appContext.editor.updateContent(tabId, c)} onMetricsChange={(m) => appContext.metrics.updateMetrics(m)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />

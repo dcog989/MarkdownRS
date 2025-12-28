@@ -42,14 +42,14 @@
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden status-bar pointer-events-auto border-border-main"
+    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden bg-bg-panel border-border-main pointer-events-auto transition-colors duration-200 hover:!bg-bg-panel group"
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app.statusBarTransparency}%);
     "
 >
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto text-fg-muted" style="opacity: {textOpacity};">
-        <span class="metric-item min-w-[70px]" use:tooltip={"File Type"}>{fileType}</span>
-        <span class="metric-divider opacity-40">|</span>
+    <div class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100" style="opacity: {textOpacity};">
+        <span class="min-w-[70px]" use:tooltip={"File Type"}>{fileType}</span>
+        <span class="opacity-40">|</span>
 
         <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>
             <span class="opacity-70">Ln</span>
@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <div class="flex gap-4 items-center flex-shrink-0 status-bar-section pointer-events-auto text-fg-muted" style="opacity: {textOpacity};">
+    <div class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100" style="opacity: {textOpacity};">
         <button class="hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
             {lineEnding}
         </button>
@@ -103,25 +103,3 @@
         </button>
     </div>
 </footer>
-
-<style>
-    .status-bar {
-        transition: background-color 200ms ease-in-out;
-    }
-
-    .status-bar-section {
-        transition: opacity 200ms ease-in-out;
-    }
-
-    .status-bar:hover {
-        background-color: var(--color-bg-panel) !important;
-    }
-
-    .status-bar:hover .status-bar-section {
-        opacity: 1 !important;
-    }
-
-    button {
-        pointer-events: auto;
-    }
-</style>
