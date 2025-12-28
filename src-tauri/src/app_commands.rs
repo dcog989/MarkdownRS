@@ -74,7 +74,15 @@ fn validate_path(path: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn save_session(state: State<'_, AppState>, tabs: Vec<TabState>) -> Result<(), String> {
+pub async fn save_session(
+    state: State<'_, AppState>,
+    mut tabs: Vec<TabState>,
+) -> Result<(), String> {
+    // Normalize line endings to LF before saving to ensure consistent database storage
+    for tab in &mut tabs {
+        tab.content = tab.content.replace("\r\n", "\n");
+    }
+
     let mut db = state.db.lock().await;
     db.save_session(&tabs).map_err(|e| {
         log::error!("Failed to save session: {}", e);
