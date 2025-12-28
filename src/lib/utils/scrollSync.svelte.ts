@@ -1,3 +1,5 @@
+import { CONFIG } from "$lib/utils/config";
+import { throttle } from "$lib/utils/timing";
 import { EditorView } from "@codemirror/view";
 import { tick } from "svelte";
 
@@ -116,13 +118,23 @@ class ScrollSyncManager {
         }
     }
 
+    private syncPreviewThrottled = throttle(
+        () => requestAnimationFrame(() => this.syncPreview()),
+        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS
+    );
+
+    private syncEditorThrottled = throttle(
+        () => requestAnimationFrame(() => this.syncEditor()),
+        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS
+    );
+
     private onEditorScroll() {
         // If the preview is currently driving the scroll (user dragging preview scrollbar),
         // ignore the echo event from the editor.
         if (this.activeSource === 'preview') return;
 
         this.setActiveSource('editor');
-        requestAnimationFrame(() => this.syncPreview());
+        this.syncPreviewThrottled();
     }
 
     private onPreviewScroll() {
@@ -130,7 +142,7 @@ class ScrollSyncManager {
         if (this.activeSource === 'editor') return;
 
         this.setActiveSource('preview');
-        requestAnimationFrame(() => this.syncEditor());
+        this.syncEditorThrottled();
     }
 
     private setActiveSource(source: 'editor' | 'preview') {
