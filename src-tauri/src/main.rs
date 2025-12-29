@@ -238,6 +238,7 @@ fn main() {
             app_commands::get_markdown_flavors,
             app_commands::load_settings,
             app_commands::save_settings,
+            app_commands::rename_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -804,3 +804,27 @@ pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), Str
     log::debug!("Successfully wrote binary file: {}", path);
     Ok(())
 }
+
+#[tauri::command]
+pub async fn rename_file(old_path: String, new_path: String) -> Result<(), String> {
+    validate_path(&old_path)?;
+    validate_path(&new_path)?;
+
+    if !Path::new(&old_path).exists() {
+        return Err("Source file does not exist".to_string());
+    }
+
+    if Path::new(&new_path).exists() {
+        return Err("A file with that name already exists".to_string());
+    }
+
+    fs::rename(&old_path, &new_path).map_err(|e| {
+        log::error!(
+            "Failed to rename file from '{}' to '{}': {}",
+            old_path,
+            new_path,
+            e
+        );
+        format!("Failed to rename file: {}", e)
+    })
+}

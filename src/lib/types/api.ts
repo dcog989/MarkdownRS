@@ -65,6 +65,10 @@ export interface BackendCommands {
         args: { path: string };
         return: void;
     };
+    'rename_file': {
+        args: { oldPath: string; newPath: string };
+        return: void;
+    };
 
     // App Info
     'get_app_info': {

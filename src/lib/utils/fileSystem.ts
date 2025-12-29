@@ -195,3 +195,70 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 		appContext.app.activeTabId = appContext.editor.addTab();
 	}
 }
+
+export async function renameFile(tabId: string, newName: string): Promise<boolean> {
+	const tab = appContext.editor.tabs.find(t => t.id === tabId);
+	if (!tab) return false;
+
+	const cleanNewName = newName.trim();
+	if (!cleanNewName) return false;
+
+	// Case 1: Tab has no physical path (unsaved)
+	if (!tab.path) {
+		appContext.editor.updateTabTitle(tabId, cleanNewName, cleanNewName);
+		return true;
+	}
+
+	// Case 2: Tab is a physical file
+	try {
+		const oldPath = sanitizePath(tab.path);
+		const pathParts = oldPath.split('/');
+		const oldFileName = pathParts.pop() || "";
+		const directory = pathParts.join('/');
+
+		// Preserve extension if the user didn't provide one
+		let finalNewName = cleanNewName;
+		const oldExt = oldFileName.includes('.') ? oldFileName.split('.').pop() : '';
+		const newExt = cleanNewName.includes('.') ? cleanNewName.split('.').pop() : '';
+
+		if (oldExt && !newExt) {
+			finalNewName = `${cleanNewName}.${oldExt}`;
+		}
+
+		const newPath = `${directory}/${finalNewName}`;
+
+		if (oldPath === newPath) return true;
+
+		// Perform physical rename
+		await callBackend('rename_file', { oldPath: oldPath, newPath: newPath }, 'File:Write');
+
+		// Handle file watcher transition
+		fileWatcher.unwatch(oldPath);
+		await fileWatcher.watch(newPath);
+
+		// Update Editor state
+		appContext.editor.updateTabMetadataAndPath(tabId, {
+			path: newPath,
+			title: finalNewName,
+			customTitle: finalNewName
+		});
+
+		// Refresh OS-level metadata (modified/created times)
+		await refreshMetadata(tabId, newPath);
+
+		// Synchronize Bookmarks if this file was bookmarked
+		const bookmark = appContext.bookmarks.getBookmark(oldPath);
+		if (bookmark) {
+			await appContext.bookmarks.updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
+		}
+
+		appContext.ui.toast.success(`Renamed to ${finalNewName}`);
+		return true;
+	} catch (err) {
+		AppError.handle('File:Write', err, {
+			showToast: true,
+			userMessage: 'Failed to rename file'
+		});
+		return false;
+	}
+}

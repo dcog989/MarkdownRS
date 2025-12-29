@@ -53,14 +53,15 @@ export class BookmarkStore {
         }
     }
 
-    async updateBookmark(id: string, title: string, tags: string[]) {
+    async updateBookmark(id: string, title: string, tags: string[], path?: string) {
         const bookmark = this.bookmarks.find(b => b.id === id);
         if (!bookmark) return;
 
         const updated: Bookmark = {
             ...bookmark,
             title,
-            tags
+            tags,
+            path: path ?? bookmark.path
         };
 
         try {

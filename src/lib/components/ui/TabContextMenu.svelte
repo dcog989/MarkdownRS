@@ -88,11 +88,14 @@
         onClose();
     }
 
-    function handleRename() {
+    async function handleRename() {
         if (!tab) return;
-        const newTitle = prompt("Enter new title:", tab.customTitle || tab.title);
-        if (newTitle && newTitle.trim()) {
-            appContext.editor.updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
+        const currentTitle = tab.customTitle || tab.title;
+        const newTitle = prompt("Enter new name:", currentTitle);
+
+        if (newTitle && newTitle.trim() && newTitle.trim() !== currentTitle) {
+            const { renameFile } = await import("$lib/utils/fileSystem");
+            await renameFile(tabId, newTitle.trim());
         }
         onClose();
     }
