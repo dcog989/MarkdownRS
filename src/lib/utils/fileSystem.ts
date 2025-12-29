@@ -7,7 +7,7 @@ import { AppError } from '$lib/utils/errorHandling';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { callBackend } from './backend';
-import { isTextFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
+import { SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 export { addToDictionary, checkAndReloadIfChanged, checkFileExists, loadSession, persistSession, persistSessionDebounced, reloadFileContent };
@@ -72,23 +72,24 @@ export async function openFileByPath(path: string): Promise<void> {
 
 export async function navigateToPath(clickedPath: string): Promise<void> {
 	const activeTab = appContext.editor.tabs.find(t => t.id === appContext.app.activeTabId);
+
+	if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes('\n')) {
+		return;
+	}
+
 	try {
+		// Resolve the path relative to the current file (handles ./ ../ etc)
 		const resolvedPath = await callBackend('resolve_path_relative', {
 			basePath: activeTab?.path || null,
 			clickPath: clickedPath.replace(/\\/g, '/')
 		}, 'File:Read');
 
-		if (isTextFile(resolvedPath)) {
-			await openFile(resolvedPath);
-		} else {
-			await openPath(resolvedPath);
-		}
+		// Always use the system's associated application for clicked links.
+		// This handles directories (Explorer/Finder), Web URLs (Browser),
+		// and Files (Associated App) via the OS.
+		await openPath(resolvedPath);
 	} catch (err) {
-		AppError.handle('File:Read', err, {
-			showToast: true,
-			userMessage: `Failed to open: ${clickedPath}`,
-			additionalInfo: { clickedPath, basePath: activeTab?.path }
-		});
+		// Silent failure for resolution issues or cancelled actions
 	}
 }
 

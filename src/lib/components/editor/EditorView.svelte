@@ -301,37 +301,37 @@
                     const state = view.state;
                     const before = state.sliceDoc(Math.max(0, from - 2), from);
                     const after = state.sliceDoc(from, from + 1);
-                    
+
                     // If next char is a backtick AND we have at least one backtick before,
                     // skip over it (this is the normal close-bracket behavior)
                     if (after === "`" && state.sliceDoc(Math.max(0, from - 1), from) === "`") {
                         view.dispatch({
-                            selection: { anchor: from + 1 }
+                            selection: { anchor: from + 1 },
                         });
                         return true;
                     }
-                    
+
                     // Check if we just typed the third backtick (`` before cursor)
                     if (before === "``") {
                         const line = state.doc.lineAt(from);
                         const textBefore = line.text.slice(0, from - line.from - 2);
-                        
+
                         // Only at start of line (with optional whitespace)
                         if (/^\s*$/.test(textBefore)) {
                             const indent = textBefore;
                             // Insert closing triple backticks on new lines
                             view.dispatch({
                                 changes: { from, to, insert: "`\n" + indent + "\n" + indent + "```" },
-                                selection: { anchor: from + 1 + indent.length + 1 }
+                                selection: { anchor: from + 1 + indent.length + 1 },
                             });
                             return true;
                         }
                     }
-                    
+
                     // Default: Insert closing backtick
                     view.dispatch({
                         changes: { from, to, insert: "``" },
-                        selection: { anchor: from + 1 }
+                        selection: { anchor: from + 1 },
                     });
                     return true;
                 }

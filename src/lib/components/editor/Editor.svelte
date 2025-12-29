@@ -10,7 +10,9 @@
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { transformText } from "$lib/utils/textTransformsRust";
+    import { syntaxTree } from "@codemirror/language";
     import { EditorView as CM6EditorView } from "@codemirror/view";
+    import { openPath } from "@tauri-apps/plugin-opener";
     import { onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
 
@@ -86,22 +88,70 @@
         mousedown: (event, view) => {
             if ((event.ctrlKey || event.metaKey) && event.button === 0) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                if (pos !== null) {
+                if (pos === null) return false;
+
+                let targetString = "";
+
+                // 1. Precise Syntax Tree Check for Markdown Link nodes
+                let node = syntaxTree(view.state).resolveInner(pos, 1);
+                while (node && node.parent && !["URL", "Link", "LinkEmail"].includes(node.name)) {
+                    node = node.parent;
+                }
+
+                if (node && ["URL", "Link", "LinkEmail"].includes(node.name)) {
+                    if (node.name === "Link") {
+                        const urlNode = node.node.getChild("URL");
+                        if (urlNode) targetString = view.state.sliceDoc(urlNode.from, urlNode.to);
+                    } else {
+                        targetString = view.state.sliceDoc(node.from, node.to);
+                    }
+                }
+
+                // 2. Precise word-boundary extraction for raw URLs and Paths
+                if (!targetString) {
                     const line = view.state.doc.lineAt(pos);
-                    const match = line.text.match(/(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)/);
-                    if (match) navigateToPath(match[0].trim());
+                    const text = line.text;
+                    const posInLine = pos - line.from;
+
+                    if (posInLine >= 0 && posInLine < text.length && /\S/.test(text[posInLine])) {
+                        let start = posInLine;
+                        // Expand left to whitespace
+                        while (start > 0 && /\S/.test(text[start - 1])) start--;
+                        let end = posInLine;
+                        // Expand right to whitespace
+                        while (end < text.length && /\S/.test(text[end])) end++;
+
+                        // Extract chunk and strip common trailing punctuation that isn't part of paths/urls
+                        targetString = text
+                            .slice(start, end)
+                            .replace(/[.,;:!?)\]]+$/, "")
+                            .trim();
+                    }
+                }
+
+                if (targetString) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    // If it looks like a web URL, open in browser, otherwise hand to system path navigator
+                    if (/^(https?:\/\/|www\.)/i.test(targetString)) {
+                        const url = targetString.startsWith("www") ? `https://${targetString}` : targetString;
+                        openPath(url).catch(() => {});
+                    } else {
+                        navigateToPath(targetString);
+                    }
+                    return true;
                 }
             }
             return false;
         },
         contextmenu: (event, view) => {
             event.preventDefault();
-            
-            // If context menu is already open, close it first to ensure clean state
+
             if (showContextMenu) {
                 showContextMenu = false;
             }
-            
+
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
             let word = "",
@@ -123,12 +173,11 @@
             contextWordTo = to;
             contextMenuX = event.clientX;
             contextMenuY = event.clientY;
-            
-            // Use tick to ensure menu closes before reopening
+
             tick().then(() => {
                 showContextMenu = true;
             });
-            
+
             return true;
         },
     });

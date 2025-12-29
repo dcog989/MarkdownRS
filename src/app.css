@@ -313,14 +313,39 @@ body {
     font-weight: bold;
 }
 
-/* New: Editor Styling for Markdown Elements */
 .cm-url {
     color: var(--color-accent-url);
     text-decoration: underline;
 }
+
 .cm-url:hover {
     color: var(--color-accent-url-hover);
     text-decoration: underline;
+}
+
+.cm-file-path {
+    color: var(--color-accent-filepath);
+    text-decoration: underline;
+}
+
+.cm-file-path:hover {
+    color: var(--color-accent-filepath-hover);
+    text-decoration: underline;
+}
+
+/* Add pointer cursor when CTRL/CMD is held over clickable elements */
+.cm-editor.cm-modifier-down .cm-url,
+.cm-editor.cm-modifier-down .cm-link,
+.cm-editor.cm-modifier-down .cm-file-path,
+.cm-editor.cm-modifier-down .cm-formatting-link-string {
+    cursor: pointer !important;
+}
+
+/* Subtle highlight when hovering with modifier */
+.cm-editor.cm-modifier-down .cm-url:hover,
+.cm-editor.cm-modifier-down .cm-link:hover,
+.cm-editor.cm-modifier-down .cm-file-path:hover {
+    background-color: oklch(from var(--color-accent-link) l c h / 0.1);
 }
 
 .cm-file-path {
