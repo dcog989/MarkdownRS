@@ -46,18 +46,47 @@
     onMount(() => {
         updatePosition();
     });
+
+    function handleBackdropContextMenu(e: MouseEvent) {
+        e.preventDefault();
+
+        const backdrop = e.currentTarget as HTMLElement;
+        const originalDisplay = backdrop.style.display;
+
+        // Hide backdrop temporarily to find the element underneath
+        backdrop.style.display = "none";
+
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+
+        // Restore backdrop
+        backdrop.style.display = originalDisplay;
+
+        // Close current menu
+        onClose();
+
+        // Dispatch event to underlying element
+        if (target) {
+            const newEvent = new MouseEvent("contextmenu", {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                button: 2,
+                buttons: 2,
+                ctrlKey: e.ctrlKey,
+                shiftKey: e.shiftKey,
+                altKey: e.altKey,
+                metaKey: e.metaKey,
+            });
+            target.dispatchEvent(newEvent);
+        }
+    }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-    class="fixed inset-0 z-50"
-    onclick={onClose}
-    oncontextmenu={(e) => {
-        e.preventDefault();
-        // Don't close on right-click - let the new context menu event handle it
-    }}
->
+<div class="fixed inset-0 z-50" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
     <div
         bind:this={menuEl}
         class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 bg-bg-panel border-border-light text-fg-default"
@@ -67,6 +96,7 @@
             opacity: {isVisible ? 1 : 0};
         "
         onclick={(e) => e.stopPropagation()}
+        oncontextmenu={(e) => e.preventDefault()}
     >
         {@render children({ submenuSide })}
     </div>
