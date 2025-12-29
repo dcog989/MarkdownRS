@@ -96,6 +96,12 @@
         },
         contextmenu: (event, view) => {
             event.preventDefault();
+            
+            // If context menu is already open, close it first to ensure clean state
+            if (showContextMenu) {
+                showContextMenu = false;
+            }
+            
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
             let word = "",
@@ -117,7 +123,12 @@
             contextWordTo = to;
             contextMenuX = event.clientX;
             contextMenuY = event.clientY;
-            showContextMenu = true;
+            
+            // Use tick to ensure menu closes before reopening
+            tick().then(() => {
+                showContextMenu = true;
+            });
+            
             return true;
         },
     });
