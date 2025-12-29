@@ -290,6 +290,29 @@ body {
     -ms-user-select: none !important;
 }
 
+/* CodeMirror Gutter Layout - GLOBAL */
+.cm-editor .cm-gutters {
+    background-color: var(--color-bg-main) !important;
+    border-right: 1px solid var(--color-border-main) !important;
+}
+
+.cm-editor .cm-lineNumbers {
+    min-width: 5ch !important;
+}
+
+.cm-editor .cm-gutterElement {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 8px !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+    background-color: var(--color-bg-panel) !important;
+    color: var(--color-fg-muted) !important;
+    font-weight: bold;
+}
+
 /* New: Editor Styling for Markdown Elements */
 .cm-url {
     color: var(--color-accent-url);

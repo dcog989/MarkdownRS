@@ -4,7 +4,7 @@
     import { toastStore } from "$lib/stores/toastStore.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
-    import { DEFAULT_THEMES } from "$lib/utils/themes";
+    import { DEFAULT_THEME_NAMES } from "$lib/utils/themes";
     import { Keyboard, Search, Settings, X } from "lucide-svelte";
     import Modal from "./Modal.svelte";
 
@@ -22,7 +22,7 @@
         if (isOpen) {
             callBackend("get_available_themes", {}, "Settings:Load")
                 .then((customThemes: string[]) => {
-                    const defaults = Object.keys(DEFAULT_THEMES);
+                    const defaults = DEFAULT_THEME_NAMES;
                     const customs = customThemes.filter((t) => !defaults.includes(t));
                     appContext.app.availableThemes = [...defaults, ...customs];
 
@@ -32,7 +32,7 @@
                     }
                 })
                 .catch(() => {
-                    appContext.app.availableThemes = Object.keys(DEFAULT_THEMES);
+                    appContext.app.availableThemes = DEFAULT_THEME_NAMES;
                 });
 
             setTimeout(() => searchInputEl?.focus(), 0);

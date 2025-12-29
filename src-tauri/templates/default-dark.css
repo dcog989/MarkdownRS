@@ -1,43 +1,37 @@
 /* MarkdownRS Default Dark Theme */
 
-/* --- EDITOR CONTENT --- */
-.cm-editor .cm-content {
-    caret-color: #d58dff;
+/* Editor Colors */
+.cm-editor {
+    background-color: var(--color-bg-main);
+    color: var(--color-fg-default);
 }
-.cm-editor .cm-gutters {
-    background-color: var(--color-bg-main) !important;
-    border-right: 1px solid var(--color-border-main) !important;
-}
+
 .cm-editor .cm-gutterElement {
     color: #515151 !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 8px !important;
 }
+
 .cm-editor .cm-activeLineGutter {
     background-color: var(--color-bg-panel) !important;
     color: var(--color-fg-muted) !important;
     font-weight: bold;
 }
-.cm-editor {
-    background-color: var(--color-bg-main);
-    color: var(--color-fg-default);
-}
+
 .cm-editor .cm-activeLine {
     background-color: oklch(1 0 0 / 0.08) !important;
 }
 
-/* Text selection */
+/* Selection & Matching */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
     background-color: oklch(0.67 0.18 305 / 0.35) !important;
 }
+
 .cm-editor .cm-selectionMatch {
     background-color: oklch(0.68 0.11 55 / 0.35);
 }
 
+/* Syntax Highlighting */
 .cm-h1,
 .cm-h2,
 .cm-h3,
@@ -69,10 +63,15 @@
     color: #98c379;
 }
 .cm-comment {
-    color: #7f848e;
+    color: #686868;
     font-style: italic;
 }
-
+.cm-emphasis {
+    font-style: italic;
+}
+.cm-strong {
+    font-weight: bold;
+}
 .cm-link {
     color: var(--color-accent-link);
     text-decoration: underline;
@@ -83,42 +82,10 @@
 }
 .cm-file-path {
     color: var(--color-accent-filepath);
-    text-decoration: underline;
+    text-decoration: dotted;
 }
 
-.cm-emphasis {
-    font-style: italic;
-}
-.cm-strong {
-    font-weight: bold;
-}
-
-/* Markdown Elements */
-.cm-highlight {
-    background-color: var(--color-bg-highlight);
-    color: #000;
-}
-.cm-strikethrough {
-    text-decoration: line-through;
-    text-decoration-color: var(--color-fg-muted);
-}
-.cm-code {
-    background-color: var(--color-bg-code);
-    color: var(--color-fg-code);
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-}
-.cm-blockquote {
-    color: var(--color-fg-muted);
-    background-color: var(--color-bg-quote);
-    border-left: 4px solid var(--color-border-quote);
-    padding-left: 10px;
-    margin-left: 0;
-    font-style: italic;
-}
-
-/* --- PREVIEW CONTENT --- */
+/* Preview Colors */
 .prose {
     --tw-prose-body: #abb2bf;
     --tw-prose-headings: #e06c75;
@@ -129,21 +96,6 @@
 .prose blockquote {
     border-left: 4px solid #ddce78;
     background: oklch(0.77 0.09 90 / 0.18);
-    border-radius: 4px;
-}
-.prose code {
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-    font-weight: normal;
-}
-.prose h1,
-.prose h2,
-.prose h3,
-.prose h4 {
-    font-family: Georgia, "Times New Roman", Times, serif;
-}
-.prose h1 {
-    border-bottom: 1px solid oklch(1 0 0 / 0.1);
-    padding-bottom: 0.3em;
 }
 .prose pre {
     background: #333;

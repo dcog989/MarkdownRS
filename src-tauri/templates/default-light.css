@@ -1,43 +1,37 @@
 /* MarkdownRS Default Light Theme */
 
-/* --- EDITOR CONTENT --- */
-.cm-editor .cm-content {
-    caret-color: #212121;
+/* Editor Colors */
+.cm-editor {
+    background-color: var(--color-bg-main);
+    color: var(--color-fg-default);
 }
-.cm-editor .cm-gutters {
-    background-color: var(--color-bg-main) !important;
-    border-right: 1px solid var(--color-border-main) !important;
-}
+
 .cm-editor .cm-gutterElement {
     color: #9ca3af !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 8px !important;
 }
+
 .cm-editor .cm-activeLineGutter {
     background-color: var(--color-bg-panel) !important;
     color: var(--color-fg-default) !important;
     font-weight: bold;
 }
-.cm-editor {
-    background-color: var(--color-bg-main);
-    color: var(--color-fg-default);
-}
+
 .cm-editor .cm-activeLine {
     background-color: oklch(0 0 0 / 0.03) !important;
 }
 
-/* Text selection */
+/* Selection & Matching */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
     background-color: oklch(0.57 0.14 250 / 0.25) !important;
 }
+
 .cm-editor .cm-selectionMatch {
     background-color: oklch(0.76 0.14 70 / 0.3);
 }
 
+/* Syntax Highlighting */
 .cm-h1,
 .cm-h2,
 .cm-h3,
@@ -72,7 +66,12 @@
     color: #757575;
     font-style: italic;
 }
-
+.cm-emphasis {
+    font-style: italic;
+}
+.cm-strong {
+    font-weight: bold;
+}
 .cm-link {
     color: var(--color-accent-link);
     text-decoration: underline;
@@ -86,49 +85,13 @@
     text-decoration: underline;
 }
 
-.cm-emphasis {
-    font-style: italic;
-}
-.cm-strong {
-    font-weight: bold;
-}
-
-/* Markdown Elements */
-.cm-highlight {
-    background-color: var(--color-bg-highlight);
-    color: inherit;
-}
-.cm-strikethrough {
-    text-decoration: line-through;
-    text-decoration-color: var(--color-fg-muted);
-}
-.cm-code {
-    background-color: var(--color-bg-code);
-    color: var(--color-fg-code);
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-}
-.cm-blockquote {
-    color: var(--color-fg-muted);
-    background-color: var(--color-bg-quote);
-    border-left: 4px solid var(--color-border-quote);
-    padding-left: 10px;
-    margin-left: 0;
-    font-style: italic;
-}
-
-/* --- PREVIEW CONTENT --- */
+/* Preview Colors */
 .prose {
     --tw-prose-body: #374151;
     --tw-prose-headings: #d32f2f;
     --tw-prose-links: #1976d2;
     --tw-prose-code: #f9a825;
     --tw-prose-quotes: #757575;
-}
-.prose h1 {
-    border-bottom: 1px solid oklch(0 0 0 / 0.1);
-    padding-bottom: 0.3em;
 }
 .prose blockquote {
     border-left: 4px solid #7b1fa2;

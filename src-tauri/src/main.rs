@@ -86,18 +86,14 @@ fn main() {
             let _ = fs::create_dir_all(&log_dir);
             let _ = fs::create_dir_all(&themes_dir);
 
-            // Create default theme files if they don't exist
+            // Always overwrite default theme files to ensure updates are applied
             let dark_theme_path = themes_dir.join("default-dark.css");
-            if !dark_theme_path.exists() {
-                let dark_theme_content = include_str!("../templates/default-dark.css");
-                let _ = fs::write(&dark_theme_path, dark_theme_content);
-            }
+            let dark_theme_content = include_str!("../templates/default-dark.css");
+            let _ = fs::write(&dark_theme_path, dark_theme_content);
 
             let light_theme_path = themes_dir.join("default-light.css");
-            if !light_theme_path.exists() {
-                let light_theme_content = include_str!("../templates/default-light.css");
-                let _ = fs::write(&light_theme_path, light_theme_content);
-            }
+            let light_theme_content = include_str!("../templates/default-light.css");
+            let _ = fs::write(&light_theme_path, light_theme_content);
 
             // Robustly read settings from the TOML file
             let settings_level = if config_path.exists() {
