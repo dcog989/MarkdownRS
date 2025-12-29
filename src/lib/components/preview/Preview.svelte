@@ -58,8 +58,10 @@
     });
 </script>
 
+<!-- Added 'group/preview' to isolate hover state from child components like scrollbars -->
 <div class="relative w-full h-full border-l bg-bg-preview border-border-main group/preview">
     <div class="absolute top-2 right-2 z-10">
+        <!-- Uses 'group-hover/preview' to only react to the preview pane hover -->
         <button type="button" class="p-2 rounded opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200 bg-bg-panel border border-border-main hover:bg-white/20" onclick={() => appContext.app.toggleOrientation()} use:tooltip={appContext.app.splitOrientation === "vertical" ? "Switch to Horizontal Split" : "Switch to Vertical Split"}>
             {#if appContext.app.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
         </button>
@@ -104,7 +106,7 @@
 <style>
     .preview-container {
         scrollbar-width: none;
-        padding-bottom: 50vh !important;
+        padding-bottom: 40px !important;
     }
     .preview-container::-webkit-scrollbar {
         display: none;
