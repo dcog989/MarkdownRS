@@ -35,6 +35,12 @@
     let hasCloseableTabsToLeft = $derived(tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned));
     let hasCloseableOtherTabs = $derived(appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned));
 
+    function closeOtherSubmenus(keepOpen: "close" | "export" | "restore" | null = null) {
+        if (keepOpen !== "close") showCloseSubmenu = false;
+        if (keepOpen !== "export") showExportSubmenu = false;
+        if (keepOpen !== "restore") showRestoreSubmenu = false;
+    }
+
     async function handleSave() {
         const prevActive = appContext.app.activeTabId;
         appContext.app.activeTabId = tabId;
@@ -88,14 +94,11 @@
         onClose();
     }
 
-    async function handleRename() {
+    function handleRename() {
         if (!tab) return;
-        const currentTitle = tab.customTitle || tab.title;
-        const newTitle = prompt("Enter new name:", currentTitle);
-
-        if (newTitle && newTitle.trim() && newTitle.trim() !== currentTitle) {
-            const { renameFile } = await import("$lib/utils/fileSystem");
-            await renameFile(tabId, newTitle.trim());
+        const newTitle = prompt("Enter new title:", tab.customTitle || tab.title);
+        if (newTitle && newTitle.trim()) {
+            appContext.editor.updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
         }
         onClose();
     }
@@ -154,34 +157,36 @@
 
 <ContextMenu {x} {y} {onClose}>
     {#snippet children({ submenuSide })}
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleSave}>
-            <Save size={14} class="opacity-70" /><span>Save</span>
-        </button>
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleSaveAs}>
-            <FileDown size={14} class="opacity-70" /><span>Save As...</span>
-        </button>
+        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleSave}>
+                <Save size={14} class="opacity-70" /><span>Save</span>
+            </button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleSaveAs}>
+                <FileDown size={14} class="opacity-70" /><span>Save As...</span>
+            </button>
 
-        <div class="h-px my-1 bg-border-main"></div>
+            <div class="h-px my-1 bg-border-main"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handlePin}>
-            {#if isPinned}
-                <PinOff size={14} class="opacity-70" /><span>Unpin</span>
-            {:else}
-                <Pin size={14} class="opacity-70" /><span>Pin</span>
-            {/if}
-        </button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handlePin}>
+                {#if isPinned}
+                    <PinOff size={14} class="opacity-70" /><span>Unpin</span>
+                {:else}
+                    <Pin size={14} class="opacity-70" /><span>Pin</span>
+                {/if}
+            </button>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={!tab?.path} onclick={handleToggleBookmark}>
-            {#if isBookmarked}
-                <BookmarkX size={14} class="opacity-70" /><span>Remove Bookmark</span>
-            {:else}
-                <Bookmark size={14} class="opacity-70" /><span>Add Bookmark</span>
-            {/if}
-        </button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={!tab?.path} onclick={handleToggleBookmark}>
+                {#if isBookmarked}
+                    <BookmarkX size={14} class="opacity-70" /><span>Remove Bookmark</span>
+                {:else}
+                    <Bookmark size={14} class="opacity-70" /><span>Add Bookmark</span>
+                {/if}
+            </button>
 
-        <div class="h-px my-1 bg-border-main"></div>
+            <div class="h-px my-1 bg-border-main"></div>
+        </div>
 
-        <Submenu bind:show={showExportSubmenu} side={submenuSide}>
+        <Submenu bind:show={showExportSubmenu} side={submenuSide} onOpen={() => closeOtherSubmenus("export")}>
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
                     <Download size={14} class="mr-2 opacity-70" />
@@ -228,56 +233,58 @@
             >
         </Submenu>
 
-        <div class="h-px my-1 bg-border-main"></div>
+        <div class="h-px my-1 bg-border-main" onmouseenter={() => closeOtherSubmenus(null)} role="none"></div>
 
-        <button
-            type="button"
-            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-            disabled={tabIndex === 0}
-            onclick={async () => {
-                const newTabs = [...appContext.editor.tabs];
-                const [tab] = newTabs.splice(tabIndex, 1);
-                newTabs.unshift(tab);
-                appContext.editor.reorderTabs(newTabs);
-                appContext.editor.sessionDirty = true;
-                appContext.app.activeTabId = tabId;
-                appContext.editor.pushToMru(tabId);
-                await tick();
-                const event = new CustomEvent("scroll-to-active-tab");
-                window.dispatchEvent(event);
-                onClose();
-            }}
-        >
-            <ArrowLeft size={14} class="opacity-70" /><span>Move to Start</span>
-        </button>
-        <button
-            type="button"
-            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-            disabled={tabIndex === appContext.editor.tabs.length - 1}
-            onclick={async () => {
-                const newTabs = [...appContext.editor.tabs];
-                const [tab] = newTabs.splice(tabIndex, 1);
-                newTabs.push(tab);
-                appContext.editor.reorderTabs(newTabs);
-                appContext.editor.sessionDirty = true;
-                appContext.app.activeTabId = tabId;
-                appContext.editor.pushToMru(tabId);
-                await tick();
-                const event = new CustomEvent("scroll-to-active-tab");
-                window.dispatchEvent(event);
-                onClose();
-            }}
-        >
-            <ArrowRight size={14} class="opacity-70" /><span>Move to End</span>
-        </button>
+        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                disabled={tabIndex === 0}
+                onclick={async () => {
+                    const newTabs = [...appContext.editor.tabs];
+                    const [tab] = newTabs.splice(tabIndex, 1);
+                    newTabs.unshift(tab);
+                    appContext.editor.reorderTabs(newTabs);
+                    appContext.editor.sessionDirty = true;
+                    appContext.app.activeTabId = tabId;
+                    appContext.editor.pushToMru(tabId);
+                    await tick();
+                    const event = new CustomEvent("scroll-to-active-tab");
+                    window.dispatchEvent(event);
+                    onClose();
+                }}
+            >
+                <ArrowLeft size={14} class="opacity-70" /><span>Move to Start</span>
+            </button>
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                disabled={tabIndex === appContext.editor.tabs.length - 1}
+                onclick={async () => {
+                    const newTabs = [...appContext.editor.tabs];
+                    const [tab] = newTabs.splice(tabIndex, 1);
+                    newTabs.push(tab);
+                    appContext.editor.reorderTabs(newTabs);
+                    appContext.editor.sessionDirty = true;
+                    appContext.app.activeTabId = tabId;
+                    appContext.editor.pushToMru(tabId);
+                    await tick();
+                    const event = new CustomEvent("scroll-to-active-tab");
+                    window.dispatchEvent(event);
+                    onClose();
+                }}
+            >
+                <ArrowRight size={14} class="opacity-70" /><span>Move to End</span>
+            </button>
 
-        <div class="h-px my-1 bg-border-main"></div>
+            <div class="h-px my-1 bg-border-main"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={isPinned} onclick={() => requestCloseTab(tabId)}>
-            <X size={14} class="opacity-70" /><span>Close</span>
-        </button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={isPinned} onclick={() => requestCloseTab(tabId)}>
+                <X size={14} class="opacity-70" /><span>Close</span>
+            </button>
+        </div>
 
-        <Submenu bind:show={showCloseSubmenu} side={submenuSide}>
+        <Submenu bind:show={showCloseSubmenu} side={submenuSide} onOpen={() => closeOtherSubmenus("close")}>
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
                     <Files size={14} class="mr-2 opacity-70" />
@@ -294,7 +301,7 @@
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleCloseMany("all")}>Close All</button>
         </Submenu>
 
-        <Submenu bind:show={showRestoreSubmenu} side={submenuSide}>
+        <Submenu bind:show={showRestoreSubmenu} side={submenuSide} onOpen={() => closeOtherSubmenus("restore")}>
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {appContext.editor.closedTabsHistory.length === 0 ? 'opacity-50' : ''}">
                     <Undo2 size={14} class="mr-2 opacity-70" />
@@ -326,38 +333,40 @@
             {/if}
         </Submenu>
 
-        <div class="h-px my-1 bg-border-main"></div>
+        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+            <div class="h-px my-1 bg-border-main"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleRename}>
-            <FilePen size={14} class="opacity-70" /><span>Rename</span>
-        </button>
-        <button
-            type="button"
-            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-            onclick={() => {
-                navigator.clipboard.writeText(tab!.title);
-                onClose();
-            }}
-        >
-            <Copy size={14} class="opacity-70" /><span>Copy File Name</span>
-        </button>
-        <button
-            type="button"
-            class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-            disabled={!tab?.path}
-            onclick={() => {
-                navigator.clipboard.writeText(tab!.path!);
-                onClose();
-            }}
-        >
-            <Copy size={14} class="opacity-70" /><span>Copy Full Path</span>
-        </button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleRename}>
+                <FilePen size={14} class="opacity-70" /><span>Rename</span>
+            </button>
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                onclick={() => {
+                    navigator.clipboard.writeText(tab!.title);
+                    onClose();
+                }}
+            >
+                <Copy size={14} class="opacity-70" /><span>Copy File Name</span>
+            </button>
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                disabled={!tab?.path}
+                onclick={() => {
+                    navigator.clipboard.writeText(tab!.path!);
+                    onClose();
+                }}
+            >
+                <Copy size={14} class="opacity-70" /><span>Copy Full Path</span>
+            </button>
 
-        <div class="h-px my-1 bg-border-main"></div>
+            <div class="h-px my-1 bg-border-main"></div>
 
-        <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-danger-text)" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
-            <Trash2 size={14} /><span>Delete to Recycle Bin</span>
-        </button>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" style="color: var(--color-danger-text)" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
+                <Trash2 size={14} /><span>Delete to Recycle Bin</span>
+            </button>
+        </div>
     {/snippet}
 </ContextMenu>
 

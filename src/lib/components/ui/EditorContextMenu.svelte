@@ -124,41 +124,43 @@
             <div class="h-px my-1 bg-border-main"></div>
         {/if}
 
-        {#if selectedText}
+        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+            {#if selectedText}
+                <button
+                    class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
+                    onclick={() => {
+                        onCut?.();
+                        closeMenuAndReset();
+                    }}
+                >
+                    <Scissors size={14} /><span>Cut</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+X</span>
+                </button>
+                <button
+                    class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
+                    onclick={() => {
+                        onCopy?.();
+                        closeMenuAndReset();
+                    }}
+                >
+                    <ClipboardCopy size={14} /><span>Copy</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+C</span>
+                </button>
+            {/if}
             <button
                 class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                 onclick={() => {
-                    onCut?.();
+                    onPaste?.();
                     closeMenuAndReset();
                 }}
             >
-                <Scissors size={14} /><span>Cut</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+X</span>
+                <ClipboardPaste size={14} /><span>Paste</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+V</span>
             </button>
-            <button
-                class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
-                onclick={() => {
-                    onCopy?.();
-                    closeMenuAndReset();
-                }}
-            >
-                <ClipboardCopy size={14} /><span>Copy</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+C</span>
+
+            <div class="h-px my-1 bg-border-main"></div>
+
+            <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" onclick={() => handleOp("format-document")}>
+                <WandSparkles size={14} /><span>{selectedText ? "Format Selection" : "Format Document"}</span><span class="ml-auto text-ui-sm opacity-50">Alt+Shift+F</span>
             </button>
-        {/if}
-        <button
-            class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
-            onclick={() => {
-                onPaste?.();
-                closeMenuAndReset();
-            }}
-        >
-            <ClipboardPaste size={14} /><span>Paste</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+V</span>
-        </button>
-
-        <div class="h-px my-1 bg-border-main"></div>
-
-        <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" onclick={() => handleOp("format-document")}>
-            <WandSparkles size={14} /><span>{selectedText ? "Format Selection" : "Format Document"}</span><span class="ml-auto text-ui-sm opacity-50">Alt+Shift+F</span>
-        </button>
+        </div>
 
         {#if selectedText}
             <div class="h-px my-1 bg-border-main"></div>
@@ -220,26 +222,28 @@
             </Submenu>
         {/if}
 
-        {#if canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
-            <div class="h-px my-1 bg-border-main"></div>
-            {#if canAddSingle}
-                <button
-                    class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
-                    onclick={async () => {
-                        await addToDictionary(targetWord);
-                        onDictionaryUpdate?.();
-                        closeMenuAndReset();
-                    }}
-                >
-                    <BookPlus size={14} /><span class="truncate">Add "{targetWord}" to Dictionary</span><span class="ml-auto text-ui-sm opacity-50">F8</span>
-                </button>
+        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+            {#if canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
+                <div class="h-px my-1 bg-border-main"></div>
+                {#if canAddSingle}
+                    <button
+                        class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
+                        onclick={async () => {
+                            await addToDictionary(targetWord);
+                            onDictionaryUpdate?.();
+                            closeMenuAndReset();
+                        }}
+                    >
+                        <BookPlus size={14} /><span class="truncate">Add "{targetWord}" to Dictionary</span><span class="ml-auto text-ui-sm opacity-50">F8</span>
+                    </button>
+                {/if}
+                {#if selectedText && selectedText.split(/\s+/).length > 1}
+                    <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" onclick={handleAddAll}>
+                        <BookText size={14} /><span>Add All Invalid to Dictionary</span>
+                    </button>
+                {/if}
             {/if}
-            {#if selectedText && selectedText.split(/\s+/).length > 1}
-                <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10" onclick={handleAddAll}>
-                    <BookText size={14} /><span>Add All Invalid to Dictionary</span>
-                </button>
-            {/if}
-        {/if}
+        </div>
     {/snippet}
 </ContextMenu>
 
