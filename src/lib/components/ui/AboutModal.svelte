@@ -82,7 +82,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} title="About" width="500px">
+<Modal bind:isOpen {onClose} title="About">
     <div class="p-6 flex flex-col items-center gap-4 text-ui">
         <img src="/logo.svg" alt="MarkdownRS Logo" class="w-20 h-20" />
         <h1 class="text-2xl font-bold text-fg-default">{appInfo.name}</h1>

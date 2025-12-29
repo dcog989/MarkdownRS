@@ -1,5 +1,6 @@
 <script lang="ts">
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+    import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
     import { X } from "lucide-svelte";
     import type { Snippet } from "svelte";
 
@@ -7,7 +8,6 @@
         isOpen = $bindable(false),
         onClose,
         title,
-        width = "500px",
         zIndex = 50,
         showCloseButton = true,
         position = "top",
@@ -18,7 +18,6 @@
         isOpen: boolean;
         onClose: () => void;
         title?: string;
-        width?: string;
         zIndex?: number;
         showCloseButton?: boolean;
         position?: "center" | "top";
@@ -60,7 +59,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="ui-backdrop" class:pt-16={position === "top"} class:items-start={position === "top"} style="z-index: {zIndex}; pointer-events: auto;" onclick={handleBackdropClick} onfocusin={handleFocusTrap}>
-        <div class="ui-panel shadow-2xl" style="width: {width}; max-height: 85vh; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
+        <div class="ui-panel shadow-2xl" style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: {MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
             <!-- Header -->
             {#if header || title}
                 <div class="ui-header flex justify-between items-center">

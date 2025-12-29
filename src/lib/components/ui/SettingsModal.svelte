@@ -128,7 +128,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} width="650px" showCloseButton={false}>
+<Modal bind:isOpen {onClose} showCloseButton={false}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Settings size={16} class="text-accent-secondary" />

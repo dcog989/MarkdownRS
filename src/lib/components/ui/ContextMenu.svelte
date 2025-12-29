@@ -55,7 +55,7 @@
     onclick={onClose}
     oncontextmenu={(e) => {
         e.preventDefault();
-        onClose();
+        // Don't close on right-click - let the new context menu event handle it
     }}
 >
     <div

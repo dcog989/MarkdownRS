@@ -38,7 +38,7 @@
     };
 </script>
 
-<Modal bind:isOpen {onClose} width="auto" showCloseButton={false}>
+<Modal bind:isOpen {onClose} showCloseButton={false}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Keyboard size={16} class="text-accent-secondary" />
