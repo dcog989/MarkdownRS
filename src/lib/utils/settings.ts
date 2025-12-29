@@ -24,7 +24,7 @@ function getSettingsObject() {
         editorWordWrap: appContext.app.editorWordWrap,
         showWhitespace: appContext.app.showWhitespace,
         enableAutocomplete: appContext.app.enableAutocomplete,
-        recentChangesMode: appContext.app.recentChangesMode,
+        autocompleteDelay: appContext.app.autocompleteDelay,
         recentChangesTimespan: appContext.app.recentChangesTimespan,
         recentChangesCount: appContext.app.recentChangesCount,
         undoDepth: appContext.app.undoDepth,
