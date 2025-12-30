@@ -154,6 +154,7 @@ export function pushToMru(id: string) {
 
 export function reorderTabs(newTabs: EditorTab[]) {
     editorStore.tabs = newTabs;
+    editorStore.sessionDirty = true;
 }
 
 export function updateContent(id: string, content: string) {

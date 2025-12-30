@@ -23,6 +23,7 @@ type RustTabState = {
 	file_check_failed?: boolean;
 	file_check_performed?: boolean;
 	mru_position?: number | null;
+	sort_index?: number;
 };
 
 // Only import types if needed
@@ -60,7 +61,7 @@ class SessionPersistenceManager {
 			const mruPositionMap = new Map<string, number>();
 			appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
-			const plainTabs: RustTabState[] = appContext.editor.tabs.map(t => ({
+			const plainTabs: RustTabState[] = appContext.editor.tabs.map((t, index) => ({
 				id: t.id,
 				path: t.path,
 				title: t.title,
@@ -73,7 +74,8 @@ class SessionPersistenceManager {
 				custom_title: t.customTitle || null,
 				file_check_failed: t.fileCheckFailed || false,
 				file_check_performed: t.fileCheckPerformed || false,
-				mru_position: mruPositionMap.get(t.id) ?? null
+				mru_position: mruPositionMap.get(t.id) ?? null,
+				sort_index: index
 			}));
 
 			appContext.editor.sessionDirty = false;
@@ -143,6 +145,13 @@ export async function loadSession(): Promise<void> {
 	try {
 		const rustTabs = await callBackend('restore_session', {}, 'Session:Load');
 		if (rustTabs && rustTabs.length > 0) {
+			// Sort tabs by sort_index if available, otherwise by DB order (implied creation or legacy)
+			rustTabs.sort((a: RustTabState, b: RustTabState) => {
+				const idxA = a.sort_index ?? 0;
+				const idxB = b.sort_index ?? 0;
+				return idxA - idxB;
+			});
+
 			const convertedTabs: EditorTab[] = rustTabs.map((t: RustTabState) => {
 				const content = normalizeLineEndings(t.content);
 				const timestamp = t.modified || t.created || "";

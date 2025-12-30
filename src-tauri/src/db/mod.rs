@@ -24,6 +24,8 @@ pub struct TabState {
     pub file_check_performed: bool,
     #[serde(default)]
     pub mru_position: Option<i32>,
+    #[serde(default)]
+    pub sort_index: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -46,10 +48,6 @@ impl Database {
         let mut conn = Connection::open(db_path)?;
 
         // Performance & Maintenance Optimization
-        // WAL: Better concurrency for auto-saves
-        // INCREMENTAL: Reclaims disk space more efficiently than FULL without blocking I/O
-        // FULL auto_vacuum causes excessive page movement on every DELETE, impacting performance
-        // With INCREMENTAL, we can control when vacuuming happens via manual PRAGMA incremental_vacuum calls
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
              PRAGMA synchronous = NORMAL;
@@ -58,13 +56,10 @@ impl Database {
         )?;
 
         let version = Self::get_schema_version(&conn)?;
-
-        // Use transaction for all schema changes to enable rollback on error
         let tx = conn.transaction()?;
 
         match version {
             0 => {
-                // Initial schema creation
                 log::info!("Creating initial database schema");
                 tx.execute(
                     "CREATE TABLE IF NOT EXISTS tabs (
@@ -80,7 +75,8 @@ impl Database {
                         custom_title TEXT,
                         file_check_failed INTEGER DEFAULT 0,
                         file_check_performed INTEGER DEFAULT 0,
-                        mru_position INTEGER
+                        mru_position INTEGER,
+                        sort_index INTEGER DEFAULT 0
                     )",
                     [],
                 )?;
@@ -109,15 +105,13 @@ impl Database {
                     [],
                 )?;
 
-                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [5])?;
-                log::info!("Initial schema created successfully (version 5)");
+                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [6])?;
+                log::info!("Initial schema created successfully (version 6)");
             }
-            v if v < 5 => {
-                // Progressive migrations
+            v if v < 6 => {
                 let mut current_version = v;
 
                 if current_version < 2 {
-                    // Migration from v1 to v2: Add is_pinned and custom_title columns
                     log::info!(
                         "Migrating database schema from version {} to 2",
                         current_version
@@ -128,11 +122,9 @@ impl Database {
                     )?;
                     tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
                     current_version = 2;
-                    log::info!("Migration to version 2 completed successfully");
                 }
 
                 if current_version < 3 {
-                    // Migration from v2 to v3: Add file_check_failed and file_check_performed columns
                     log::info!(
                         "Migrating database schema from version {} to 3",
                         current_version
@@ -146,22 +138,18 @@ impl Database {
                         [],
                     )?;
                     current_version = 3;
-                    log::info!("Migration to version 3 completed successfully");
                 }
 
                 if current_version < 4 {
-                    // Migration from v3 to v4: Add mru_position column
                     log::info!(
                         "Migrating database schema from version {} to 4",
                         current_version
                     );
                     tx.execute("ALTER TABLE tabs ADD COLUMN mru_position INTEGER", [])?;
                     current_version = 4;
-                    log::info!("Migration to version 4 completed successfully");
                 }
 
                 if current_version < 5 {
-                    // Migration from v4 to v5: Add bookmarks table
                     log::info!(
                         "Migrating database schema from version {} to 5",
                         current_version
@@ -182,23 +170,31 @@ impl Database {
                         [],
                     )?;
                     current_version = 5;
-                    log::info!("Migration to version 5 completed successfully");
+                }
+
+                if current_version < 6 {
+                    log::info!(
+                        "Migrating database schema from version {} to 6",
+                        current_version
+                    );
+                    tx.execute(
+                        "ALTER TABLE tabs ADD COLUMN sort_index INTEGER DEFAULT 0",
+                        [],
+                    )?;
+                    current_version = 6;
                 }
 
                 tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
+                log::info!("Migration to version 6 completed successfully");
             }
-            5 => {
-                // Current version, no migration needed
+            6 => {
                 log::info!("Database schema is up to date (version {})", version);
             }
             _ => {
-                // Future migrations would go here
                 log::warn!("Unknown schema version {}, attempting to continue", version);
             }
         }
 
-        // Commit transaction - if any error occurred above, this won't execute
-        // and the transaction will rollback automatically when dropped
         tx.commit().map_err(|e| {
             log::error!(
                 "Failed to commit database initialization transaction: {}",
@@ -206,7 +202,6 @@ impl Database {
             );
             e
         })?;
-        log::info!("Database initialization completed successfully");
 
         Ok(Self { conn })
     }
@@ -222,7 +217,6 @@ impl Database {
             Ok(v) => Ok(v),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(0),
             Err(_) => {
-                // Table doesn't exist, check if tabs table exists
                 let tabs_exists: bool = conn.query_row(
                     "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='tabs'",
                     [],
@@ -232,11 +226,7 @@ impl Database {
                     },
                 )?;
 
-                if tabs_exists {
-                    Ok(0) // Old schema without version table
-                } else {
-                    Ok(0) // Fresh database
-                }
+                if tabs_exists { Ok(0) } else { Ok(0) }
             }
         }
     }
@@ -249,12 +239,9 @@ impl Database {
             e
         })?;
 
-        // 1. Delete tabs that are no longer in the session
         if tabs.is_empty() {
             tx.execute("DELETE FROM tabs", [])?;
         } else {
-            // Use a temporary table for IDs to safely handle the deletion of removed tabs
-            // without worrying about SQL variable limits
             tx.execute(
                 "CREATE TEMP TABLE IF NOT EXISTS active_tab_ids (id TEXT PRIMARY KEY)",
                 [],
@@ -275,15 +262,13 @@ impl Database {
             tx.execute("DELETE FROM active_tab_ids", [])?;
         }
 
-        // 2. Upsert current tabs
-        // The WHERE clause in ON CONFLICT ensures we only write to disk if something actually changed
         {
             let mut stmt = tx.prepare_cached(
                 "INSERT INTO tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+                    file_check_failed, file_check_performed, mru_position, sort_index
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
                 ON CONFLICT(id) DO UPDATE SET
                     title=excluded.title,
                     content=excluded.content,
@@ -296,7 +281,8 @@ impl Database {
                     custom_title=excluded.custom_title,
                     file_check_failed=excluded.file_check_failed,
                     file_check_performed=excluded.file_check_performed,
-                    mru_position=excluded.mru_position
+                    mru_position=excluded.mru_position,
+                    sort_index=excluded.sort_index
                 WHERE
                     title != excluded.title OR
                     content != excluded.content OR
@@ -307,7 +293,8 @@ impl Database {
                     custom_title IS NOT excluded.custom_title OR
                     file_check_failed != excluded.file_check_failed OR
                     file_check_performed != excluded.file_check_performed OR
-                    mru_position != excluded.mru_position",
+                    mru_position != excluded.mru_position OR
+                    sort_index != excluded.sort_index",
             )?;
 
             for tab in tabs {
@@ -324,7 +311,8 @@ impl Database {
                     &tab.custom_title,
                     if tab.file_check_failed { 1 } else { 0 },
                     if tab.file_check_performed { 1 } else { 0 },
-                    &tab.mru_position
+                    &tab.mru_position,
+                    &tab.sort_index
                 ])?;
             }
         }
@@ -341,7 +329,8 @@ impl Database {
         log::info!("Loading session from database");
 
         let mut stmt = self.conn.prepare(
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position FROM tabs ORDER BY ROWID"
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
+             FROM tabs ORDER BY sort_index ASC"
         )?;
 
         let tabs = stmt
@@ -360,6 +349,7 @@ impl Database {
                     file_check_failed: row.get::<_, i32>(10).unwrap_or(0) != 0,
                     file_check_performed: row.get::<_, i32>(11).unwrap_or(0) != 0,
                     mru_position: row.get(12).ok(),
+                    sort_index: row.get(13).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
@@ -368,14 +358,6 @@ impl Database {
         Ok(tabs)
     }
 
-    #[allow(dead_code)]
-    pub fn clear_session(&self) -> Result<()> {
-        log::info!("Clearing session data");
-        self.conn.execute("DELETE FROM tabs", [])?;
-        Ok(())
-    }
-
-    // Bookmark operations
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
         log::info!("Adding bookmark: {} ({})", bookmark.title, bookmark.path);
         let tags_json = serde_json::to_string(&bookmark.tags)?;
@@ -434,9 +416,6 @@ impl Database {
         Ok(())
     }
 
-    /// Performs incremental vacuum to reclaim freed pages
-    /// Should be called periodically (e.g., on app shutdown or after many session saves)
-    /// The parameter specifies maximum pages to reclaim (0 = reclaim all free pages)
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
         log::info!("Running incremental vacuum (max {} pages)", max_pages);
         if max_pages > 0 {
@@ -448,7 +427,6 @@ impl Database {
         Ok(())
     }
 
-    /// Returns the number of freelist pages that could be reclaimed
     pub fn get_freelist_count(&self) -> Result<i32> {
         let count: i32 = self
             .conn
