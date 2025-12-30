@@ -2,7 +2,11 @@ import { addToDictionary } from '$lib/services/dictionaryService';
 import { checkAndReloadIfChanged, checkFileExists, refreshMetadata, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
+import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { confirmDialog } from '$lib/stores/dialogStore.svelte';
+import { addTab, closeTab, markAsSaved, pushToMru, saveTabComplete, updateContentOnly, updateTabMetadataAndPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { successToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
@@ -33,7 +37,7 @@ export async function openFile(path?: string): Promise<void> {
 
 		if (existingTab) {
 			appContext.app.activeTabId = existingTab.id;
-			appContext.editor.pushToMru(existingTab.id);
+			pushToMru(existingTab.id);
 			return;
 		}
 
@@ -44,8 +48,8 @@ export async function openFile(path?: string): Promise<void> {
 		const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
 		const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
-		const id = appContext.editor.addTab(fileName, result.content);
-		appContext.editor.updateTabMetadataAndPath(id, {
+		const id = addTab(fileName, result.content);
+		updateTabMetadataAndPath(id, {
 			path: sanitizedPath,
 			isDirty: false,
 			lineEnding: detectedLineEnding,
@@ -57,7 +61,6 @@ export async function openFile(path?: string): Promise<void> {
 		await checkFileExists(id);
 		await fileWatcher.watch(sanitizedPath);
 		appContext.app.activeTabId = id;
-		appContext.editor.pushToMru(id);
 	} catch (err) {
 		AppError.handle('File:Read', err, {
 			showToast: true,
@@ -124,7 +127,7 @@ export async function saveCurrentFile(): Promise<boolean> {
 					codeBlockFence: appContext.app.formatterCodeFence,
 					tableAlignment: appContext.app.formatterTableAlignment
 				});
-				appContext.editor.updateContentOnly(tabId, contentToSave);
+				updateContentOnly(tabId, contentToSave);
 			}
 
 			const targetLineEnding = appContext.app.lineEndingPreference === 'system'
@@ -147,8 +150,8 @@ export async function saveCurrentFile(): Promise<boolean> {
 			}
 
 			const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-			appContext.editor.saveTabComplete(tabId, sanitizedPath, fileName, targetLineEnding);
-			appContext.editor.markAsSaved(tabId);
+			saveTabComplete(tabId, sanitizedPath, fileName, targetLineEnding);
+			markAsSaved(tabId);
 			await refreshMetadata(tabId, sanitizedPath);
 			return true;
 		}
@@ -167,7 +170,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 	if (!tab || (tab.isPinned && !force)) return;
 
 	if (tab.isDirty && tab.content.trim().length > 0) {
-		const result = await appContext.ui.dialog.confirm({
+		const result = await confirmDialog({
 			title: 'Unsaved Changes',
 			message: `Do you want to save changes to ${tab.title}?`,
 		});
@@ -187,12 +190,12 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 		fileWatcher.unwatch(tab.path);
 	}
 
-	appContext.editor.closeTab(id);
+	closeTab(id);
 	if (appContext.app.activeTabId === id) {
 		appContext.app.activeTabId = appContext.editor.mruStack[0] || null;
 	}
 	if (appContext.editor.tabs.length === 0) {
-		appContext.app.activeTabId = appContext.editor.addTab();
+		appContext.app.activeTabId = addTab();
 	}
 }
 
@@ -205,7 +208,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
 	// Case 1: Tab has no physical path (unsaved)
 	if (!tab.path) {
-		appContext.editor.updateTabTitle(tabId, cleanNewName, cleanNewName);
+		updateTabTitle(tabId, cleanNewName, cleanNewName);
 		return true;
 	}
 
@@ -237,7 +240,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 		await fileWatcher.watch(newPath);
 
 		// Update Editor state
-		appContext.editor.updateTabMetadataAndPath(tabId, {
+		updateTabMetadataAndPath(tabId, {
 			path: newPath,
 			title: finalNewName,
 			customTitle: finalNewName
@@ -247,12 +250,12 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 		await refreshMetadata(tabId, newPath);
 
 		// Synchronize Bookmarks if this file was bookmarked
-		const bookmark = appContext.bookmarks.getBookmark(oldPath);
+		const bookmark = getBookmarkByPath(oldPath);
 		if (bookmark) {
-			await appContext.bookmarks.updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
+			await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
 		}
 
-		appContext.ui.toast.success(`Renamed to ${finalNewName}`);
+		successToast(`Renamed to ${finalNewName}`);
 		return true;
 	} catch (err) {
 		AppError.handle('File:Write', err, {

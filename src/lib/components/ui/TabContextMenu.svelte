@@ -3,6 +3,9 @@
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { exportService } from "$lib/services/exportService";
+    import { addBookmark, deleteBookmark, getBookmarkByPath, isBookmarked as isBookmarkedSelector } from "$lib/stores/bookmarkStore.svelte";
+    import { markAsSaved, pushToMru, reopenClosedTab, reorderTabs, togglePin, updateTabPath, updateTabTitle } from "$lib/stores/editorStore.svelte";
+    import { triggerScrollToTab } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
@@ -21,7 +24,7 @@
 
     let tab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
-    let isBookmarked = $derived(tab?.path ? appContext.bookmarks.isBookmarked(tab.path) : false);
+    let isBookmarked = $derived(tab?.path ? isBookmarkedSelector(tab.path) : false);
     let tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === tabId));
 
     let hasTabsToRight = $derived(tabIndex < appContext.editor.tabs.length - 1);
@@ -55,8 +58,8 @@
                 const sanitizedPath = savePath.replace(/\0/g, "").replace(/\\/g, "/");
                 await callBackend("write_text_file", { path: sanitizedPath, content: tab.content }, "File:Write");
                 const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
-                appContext.editor.updateTabPath(tabId, sanitizedPath, fileName);
-                appContext.editor.markAsSaved(tabId);
+                updateTabPath(tabId, sanitizedPath, fileName);
+                markAsSaved(tabId);
             }
         } finally {
             appContext.app.activeTabId = prevActive;
@@ -66,7 +69,7 @@
 
     function handlePin() {
         if (!tab) return;
-        appContext.editor.togglePin(tabId);
+        togglePin(tabId);
         onClose();
     }
 
@@ -90,7 +93,7 @@
         if (!tab) return;
         const newTitle = prompt("Enter new title:", tab.customTitle || tab.title);
         if (newTitle && newTitle.trim()) {
-            appContext.editor.updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
+            updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
         }
         onClose();
     }
@@ -106,7 +109,7 @@
 
         try {
             await callBackend("send_to_recycle_bin", { path: tab.path }, "File:Write");
-            appContext.editor.closeTab(tabId);
+            requestCloseTab(tabId);
         } catch (err) {
             // Error logged by bridge
         }
@@ -117,10 +120,10 @@
         if (!tab || !tab.path) return;
         try {
             if (isBookmarked) {
-                const bookmark = appContext.bookmarks.getBookmark(tab.path);
-                if (bookmark) await appContext.bookmarks.deleteBookmark(bookmark.id);
+                const bookmark = getBookmarkByPath(tab.path);
+                if (bookmark) await deleteBookmark(bookmark.id);
             } else {
-                await appContext.bookmarks.addBookmark(tab.path, tab.title, []);
+                await addBookmark(tab.path, tab.title, []);
             }
         } finally {
             onClose();
@@ -243,12 +246,12 @@
                     const newTabs = [...appContext.editor.tabs];
                     const [tab] = newTabs.splice(tabIndex, 1);
                     newTabs.unshift(tab);
-                    appContext.editor.reorderTabs(newTabs);
+                    reorderTabs(newTabs);
                     appContext.editor.sessionDirty = true;
                     appContext.app.activeTabId = tabId;
-                    appContext.editor.pushToMru(tabId);
+                    pushToMru(tabId);
                     await tick();
-                    appContext.interface.triggerScrollToTab();
+                    triggerScrollToTab();
                     onClose();
                 }}
             >
@@ -262,12 +265,12 @@
                     const newTabs = [...appContext.editor.tabs];
                     const [tab] = newTabs.splice(tabIndex, 1);
                     newTabs.push(tab);
-                    appContext.editor.reorderTabs(newTabs);
+                    reorderTabs(newTabs);
                     appContext.editor.sessionDirty = true;
                     appContext.app.activeTabId = tabId;
-                    appContext.editor.pushToMru(tabId);
+                    pushToMru(tabId);
                     await tick();
-                    appContext.interface.triggerScrollToTab();
+                    triggerScrollToTab();
                     onClose();
                 }}
             >
@@ -329,7 +332,7 @@
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
                         use:tooltip={getHistoryTooltip(item.tab)}
                         onclick={() => {
-                            const reopenedTabId = appContext.editor.reopenClosedTab(i);
+                            const reopenedTabId = reopenClosedTab(i);
                             if (reopenedTabId) {
                                 appContext.app.activeTabId = reopenedTabId;
                             }

@@ -1,5 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
+    import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
+    import { updateLineEnding } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { TextWrap } from "lucide-svelte";
@@ -31,7 +33,7 @@
     function toggleLineEnding() {
         if (activeTab) {
             const next = activeTab.lineEnding === "LF" ? "CRLF" : "LF";
-            appContext.editor.updateLineEnding(activeTab.id, next);
+            updateLineEnding(activeTab.id, next);
         }
     }
 
@@ -94,9 +96,9 @@
             {encoding}
         </span>
 
-        <span class="font-bold w-8 text-center {appContext.metrics.insertMode === 'OVR' ? 'text-danger' : 'text-accent-secondary'}">
+        <button onclick={toggleInsertMode} class="font-bold w-8 text-center {appContext.metrics.insertMode === 'OVR' ? 'text-danger' : 'text-accent-secondary'}">
             {appContext.metrics.insertMode}
-        </span>
+        </button>
 
         <button class="flex items-center gap-1 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors {appContext.app.editorWordWrap ? 'text-accent-secondary' : 'text-inherit'}" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"}>
             <TextWrap size={14} />

@@ -1,13 +1,13 @@
 <script lang="ts">
     import { OPERATION_CATEGORIES, getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
-    import { appContext } from "$lib/stores/state.svelte.ts";
+    import { performTextTransform } from "$lib/stores/editorStore.svelte";
     import { Type, X } from "lucide-svelte";
     import Modal from "./Modal.svelte";
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
     function handleOperation(operationId: OperationId) {
-        appContext.editor.performTextTransform(operationId);
+        performTextTransform(operationId);
         onClose();
     }
 </script>

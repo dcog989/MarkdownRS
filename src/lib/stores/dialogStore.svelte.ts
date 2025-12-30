@@ -14,59 +14,59 @@ type DialogRequest = {
     resolve: (value: DialogResult) => void;
 };
 
-class DialogStore {
-    isOpen = $state(false);
-    options = $state<DialogOptions>({ title: '', message: '' });
+// Module-level private state
+let queue: DialogRequest[] = [];
+let idCounter = 0;
 
-    private queue: DialogRequest[] = [];
-    private idCounter = 0;
+// Public reactive state
+export const dialogStore = $state({
+    isOpen: false,
+    options: { title: '', message: '' } as DialogOptions,
+});
 
-    confirm(options: DialogOptions): Promise<DialogResult> {
-        return new Promise((resolve) => {
-            const id = `dialog-${++this.idCounter}`;
-            this.queue.push({
-                id,
-                options: {
-                    saveLabel: 'Save',
-                    discardLabel: "Don't Save",
-                    cancelLabel: 'Cancel',
-                    ...options
-                },
-                resolve
-            });
 
-            if (!this.isOpen) {
-                this.showNext();
-            }
-        });
+function showNext() {
+    if (queue.length === 0) {
+        dialogStore.isOpen = false;
+        return;
     }
 
-    private showNext() {
-        if (this.queue.length === 0) {
-            this.isOpen = false;
-            return;
-        }
-
-        const next = this.queue[0];
-        this.options = next.options;
-        this.isOpen = true;
-    }
-
-    resolve(result: DialogResult) {
-        // Safety check: only resolve if we have dialogs in queue
-        if (this.queue.length === 0) {
-            console.warn('dialogStore.resolve() called with empty queue');
-            return;
-        }
-
-        const current = this.queue.shift();
-        if (current) {
-            current.resolve(result);
-        }
-        
-        // Show next dialog or close
-        this.showNext();
-    }
+    const next = queue[0];
+    dialogStore.options = next.options;
+    dialogStore.isOpen = true;
 }
 
-export const dialogStore = new DialogStore();
+export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
+    return new Promise((resolve) => {
+        const id = `dialog-${++idCounter}`;
+        queue.push({
+            id,
+            options: {
+                saveLabel: 'Save',
+                discardLabel: "Don't Save",
+                cancelLabel: 'Cancel',
+                ...options
+            },
+            resolve
+        });
+
+        if (!dialogStore.isOpen) {
+            showNext();
+        }
+    });
+}
+
+
+export function resolveDialog(result: DialogResult) {
+    if (queue.length === 0) {
+        console.warn('resolveDialog() called with empty queue');
+        return;
+    }
+
+    const current = queue.shift();
+    if (current) {
+        current.resolve(result);
+    }
+
+    showNext();
+}

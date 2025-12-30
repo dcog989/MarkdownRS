@@ -1,19 +1,19 @@
-export class TooltipStore {
-    visible = $state(false);
-    content = $state("");
-    x = $state(0);
-    y = $state(0);
+// State
+export const tooltipStore = $state({
+    visible: false,
+    content: "",
+    x: 0,
+    y: 0,
+});
 
-    show(content: string, x: number, y: number) {
-        this.content = content;
-        this.x = x;
-        this.y = y;
-        this.visible = true;
-    }
-
-    hide() {
-        this.visible = false;
-    }
+// Logic
+export function showTooltip(content: string, x: number, y: number) {
+    tooltipStore.content = content;
+    tooltipStore.x = x;
+    tooltipStore.y = y;
+    tooltipStore.visible = true;
 }
 
-export const tooltipStore = new TooltipStore();
+export function hideTooltip() {
+    tooltipStore.visible = false;
+}

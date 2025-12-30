@@ -1,4 +1,4 @@
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { errorToast, infoToast, warningToast } from '$lib/stores/toastStore.svelte';
 import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
 /**
@@ -103,13 +103,13 @@ export class AppError extends Error {
 			switch (this.severity) {
 				case 'critical':
 				case 'error':
-					appContext.ui.toast.error(message, duration);
+					errorToast(message, duration);
 					break;
 				case 'warning':
-					appContext.ui.toast.warning(message, duration);
+					warningToast(message, duration);
 					break;
 				case 'info':
-					appContext.ui.toast.info(message, duration);
+					infoToast(message, duration);
 					break;
 			}
 		}
@@ -265,7 +265,7 @@ export class AppError extends Error {
 		}
 
 		if (options.showToast) {
-			appContext.ui.toast.warning(
+			warningToast(
 				options.userMessage || message,
 				options.toastDuration || 3000
 			);
@@ -295,7 +295,7 @@ export class AppError extends Error {
 		}
 
 		if (options.showToast) {
-			appContext.ui.toast.info(
+			infoToast(
 				options.userMessage || message,
 				options.toastDuration || 2000
 			);

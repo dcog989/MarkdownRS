@@ -9,23 +9,18 @@ import { tooltipStore } from './tooltipStore.svelte';
 
 /**
  * Centralized State Tree
- * Groups all individual stores into a logical hierarchy for easier access and fewer imports.
- * Renamed to appContext to avoid conflict with Svelte 5 $state rune.
+ * Groups all individual state objects for easier access and fewer imports.
+ * Logic is handled by functions exported from individual store files.
  */
 export const appContext = {
-    // Core Application State
-    get app() { return appState; },
-
-    // Editor State & Content
-    get editor() { return editorStore; },
-    get metrics() { return editorMetrics; },
-    get bookmarks() { return bookmarkStore; },
-
-    // UI Components State & Interface Signals
-    get interface() { return interfaceStore; },
+    app: appState,
+    editor: editorStore,
+    metrics: editorMetrics,
+    bookmarks: bookmarkStore,
+    interface: interfaceStore,
     ui: {
-        get tooltip() { return tooltipStore; },
-        get toast() { return toastStore; },
-        get dialog() { return dialogStore; }
+        tooltip: tooltipStore,
+        toast: toastStore,
+        dialog: dialogStore
     }
 };

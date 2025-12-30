@@ -1,4 +1,5 @@
 import { appContext } from "$lib/stores/state.svelte.ts";
+import { hideTooltip, showTooltip } from "$lib/stores/tooltipStore.svelte";
 
 export function tooltip(node: HTMLElement, content: string | undefined | null) {
     let timer: number | null = null;
@@ -11,7 +12,7 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
         const y = e.clientY;
 
         timer = window.setTimeout(() => {
-            appContext.ui.tooltip.show(content!, x, y);
+            showTooltip(content!, x, y);
         }, delay);
     }
 
@@ -20,7 +21,7 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
             clearTimeout(timer);
             timer = null;
         }
-        appContext.ui.tooltip.hide();
+        hideTooltip();
     }
 
     function handleMouseDown() {

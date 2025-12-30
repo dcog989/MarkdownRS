@@ -4,6 +4,8 @@
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import { getBackendCommand, type OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
+    import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
+    import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
@@ -193,8 +195,8 @@
 
     onMount(() => {
         initSpellcheck();
-        appContext.editor.registerTextOperationCallback(handleTextOperation);
-        return () => appContext.editor.unregisterTextOperationCallback();
+        registerTextOperationCallback(handleTextOperation);
+        return () => unregisterTextOperationCallback();
     });
 
     let initialContent = $derived(activeTab?.content || "");
@@ -202,7 +204,7 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => appContext.editor.updateContent(tabId, c)} onMetricsChange={(m) => appContext.metrics.updateMetrics(m)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}

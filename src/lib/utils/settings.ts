@@ -1,4 +1,4 @@
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appState } from '$lib/stores/appState.svelte';
 import { callBackend } from './backend';
 import { debounce } from './timing';
 
@@ -12,39 +12,39 @@ function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
 
 function getSettingsObject() {
     return {
-        splitPercentage: appContext.app.splitPercentage,
-        splitOrientation: appContext.app.splitOrientation,
-        splitView: appContext.app.splitView,
-        activeTheme: appContext.app.activeTheme,
-        tabCycling: appContext.app.tabCycling,
-        tabWidthMin: appContext.app.tabWidthMin,
-        tabWidthMax: appContext.app.tabWidthMax,
-        editorFontFamily: appContext.app.editorFontFamily,
-        editorFontSize: appContext.app.editorFontSize,
-        editorWordWrap: appContext.app.editorWordWrap,
-        showWhitespace: appContext.app.showWhitespace,
-        enableAutocomplete: appContext.app.enableAutocomplete,
-        autocompleteDelay: appContext.app.autocompleteDelay,
-        recentChangesTimespan: appContext.app.recentChangesTimespan,
-        recentChangesCount: appContext.app.recentChangesCount,
-        undoDepth: appContext.app.undoDepth,
-        previewFontFamily: appContext.app.previewFontFamily,
-        previewFontSize: appContext.app.previewFontSize,
-        markdownFlavor: appContext.app.markdownFlavor,
-        logLevel: appContext.app.logLevel,
-        statusBarTransparency: appContext.app.statusBarTransparency,
-        newTabPosition: appContext.app.newTabPosition,
-        formatOnSave: appContext.app.formatOnSave,
-        formatOnPaste: appContext.app.formatOnPaste,
-        defaultIndent: appContext.app.defaultIndent,
-        formatterBulletChar: appContext.app.formatterBulletChar,
-        formatterCodeFence: appContext.app.formatterCodeFence,
-        formatterTableAlignment: appContext.app.formatterTableAlignment,
-        startupBehavior: appContext.app.startupBehavior,
-        lineEndingPreference: appContext.app.lineEndingPreference,
-        tooltipDelay: appContext.app.tooltipDelay,
-        findPanelTransparent: appContext.app.findPanelTransparent,
-        findPanelCloseOnBlur: appContext.app.findPanelCloseOnBlur
+        splitPercentage: appState.splitPercentage,
+        splitOrientation: appState.splitOrientation,
+        splitView: appState.splitView,
+        activeTheme: appState.activeTheme,
+        tabCycling: appState.tabCycling,
+        tabWidthMin: appState.tabWidthMin,
+        tabWidthMax: appState.tabWidthMax,
+        editorFontFamily: appState.editorFontFamily,
+        editorFontSize: appState.editorFontSize,
+        editorWordWrap: appState.editorWordWrap,
+        showWhitespace: appState.showWhitespace,
+        enableAutocomplete: appState.enableAutocomplete,
+        autocompleteDelay: appState.autocompleteDelay,
+        recentChangesTimespan: appState.recentChangesTimespan,
+        recentChangesCount: appState.recentChangesCount,
+        undoDepth: appState.undoDepth,
+        previewFontFamily: appState.previewFontFamily,
+        previewFontSize: appState.previewFontSize,
+        markdownFlavor: appState.markdownFlavor,
+        logLevel: appState.logLevel,
+        statusBarTransparency: appState.statusBarTransparency,
+        newTabPosition: appState.newTabPosition,
+        formatOnSave: appState.formatOnSave,
+        formatOnPaste: appState.formatOnPaste,
+        defaultIndent: appState.defaultIndent,
+        formatterBulletChar: appState.formatterBulletChar,
+        formatterCodeFence: appState.formatterCodeFence,
+        formatterTableAlignment: appState.formatterTableAlignment,
+        startupBehavior: appState.startupBehavior,
+        lineEndingPreference: appState.lineEndingPreference,
+        tooltipDelay: appState.tooltipDelay,
+        findPanelTransparent: appState.findPanelTransparent,
+        findPanelCloseOnBlur: appState.findPanelCloseOnBlur
     };
 }
 
@@ -56,9 +56,9 @@ export async function initSettings() {
             log(`Restoring app preferences from TOML...`);
             Object.keys(saved).forEach(key => {
                 if (key === 'formatterListIndent') {
-                    appContext.app.defaultIndent = saved[key];
-                } else if (key in appContext.app) {
-                    (appContext.app as any)[key] = saved[key];
+                    appState.defaultIndent = saved[key];
+                } else if (key in appState) {
+                    (appState as any)[key] = saved[key];
                 }
             });
         }

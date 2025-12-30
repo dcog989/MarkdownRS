@@ -2,7 +2,11 @@
     import { tooltip } from "$lib/actions/tooltip";
     import { OPERATION_CATEGORIES, getOperationsByCategory } from "$lib/config/textOperationsRegistry";
     import { exportService } from "$lib/services/exportService";
+    import { setTheme, toggleSplitView } from "$lib/stores/appState.svelte";
+    import { addTab, performTextTransform } from "$lib/stores/editorStore.svelte";
+    import { toggleAbout, toggleBookmarks, toggleCommandPalette, toggleSettings, toggleShortcuts, toggleTransform } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { warningToast } from "$lib/stores/toastStore.svelte";
     import { openFile, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
@@ -25,10 +29,10 @@
 
     function toggleSplit() {
         if (!isMarkdown) {
-            appContext.ui.toast.warning("Preview not available for this file type");
+            warningToast("Preview not available for this file type");
             return;
         }
-        appContext.app.toggleSplitView();
+        toggleSplitView();
         saveSettings();
     }
 
@@ -38,7 +42,7 @@
             label: "File: New File",
             shortcut: "Ctrl+N",
             action: () => {
-                const id = appContext.editor.addTab();
+                const id = addTab();
                 appContext.app.activeTabId = id;
             },
         },
@@ -81,13 +85,13 @@
             id: "format",
             label: "Format: Format Document",
             shortcut: "Shift+Alt+F",
-            action: () => appContext.editor.performTextTransform("format-document"),
+            action: () => performTextTransform("format-document"),
         },
         {
             id: "theme-dark",
             label: "Theme: Dark",
             action: () => {
-                appContext.app.setTheme("dark");
+                setTheme("dark");
                 saveSettings();
             },
         },
@@ -95,7 +99,7 @@
             id: "theme-light",
             label: "Theme: Light",
             action: () => {
-                appContext.app.setTheme("light");
+                setTheme("light");
                 saveSettings();
             },
         },
@@ -119,30 +123,30 @@
             id: "bookmarks",
             label: "Window: Bookmarks",
             shortcut: "Ctrl+B",
-            action: () => appContext.interface.toggleBookmarks(),
+            action: () => toggleBookmarks(),
         },
         {
             id: "settings",
             label: "Window: Settings",
             shortcut: "Ctrl+,",
-            action: () => appContext.interface.toggleSettings(),
+            action: () => toggleSettings(),
         },
         {
             id: "shortcuts",
             label: "Window: Keyboard Shortcuts",
             shortcut: "F1",
-            action: () => appContext.interface.toggleShortcuts(),
+            action: () => toggleShortcuts(),
         },
         {
             id: "transform",
             label: "Window: Text Transformations",
             shortcut: "Ctrl+T",
-            action: () => appContext.interface.toggleTransform(),
+            action: () => toggleTransform(),
         },
         {
             id: "about",
             label: "Window: About",
-            action: () => appContext.interface.toggleAbout(),
+            action: () => toggleAbout(),
         },
     ];
 
@@ -150,7 +154,7 @@
         getOperationsByCategory(category.id).map((op) => ({
             id: `ops-${op.id}`,
             label: `${category.title}: ${op.label}`,
-            action: () => appContext.editor.performTextTransform(op.id),
+            action: () => performTextTransform(op.id),
         }))
     );
 
@@ -166,19 +170,19 @@
     );
 
     function registerShortcuts() {
-        const openTransform = () => appContext.interface.toggleTransform();
+        const openTransform = () => toggleTransform();
         shortcutManager.register({ id: "win-transform-ctrl", key: "t", ctrl: true, category: "Window", description: "Text Transformations", handler: openTransform });
         shortcutManager.register({ id: "win-transform-meta", key: "t", meta: true, category: "Window", description: "Text Transformations", handler: openTransform });
 
-        const openPalette = () => appContext.interface.toggleCommandPalette();
+        const openPalette = () => toggleCommandPalette();
         shortcutManager.register({ id: "win-palette-ctrl", key: "p", ctrl: true, category: "Window", description: "Command Palette", handler: openPalette });
         shortcutManager.register({ id: "win-palette-meta", key: "p", meta: true, category: "Window", description: "Command Palette", handler: openPalette });
 
-        const openBookmarks = () => appContext.interface.toggleBookmarks();
+        const openBookmarks = () => toggleBookmarks();
         shortcutManager.register({ id: "win-bookmarks-ctrl", key: "b", ctrl: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
         shortcutManager.register({ id: "win-bookmarks-meta", key: "b", meta: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
 
-        const openSettings = () => appContext.interface.toggleSettings();
+        const openSettings = () => toggleSettings();
         shortcutManager.register({ id: "win-settings-ctrl", key: ",", ctrl: true, category: "Window", description: "Settings", handler: openSettings });
         shortcutManager.register({ id: "win-settings-meta", key: ",", meta: true, category: "Window", description: "Settings", handler: openSettings });
 
@@ -187,7 +191,7 @@
             key: "F1",
             category: "Window",
             description: "Keyboard Shortcuts",
-            handler: () => appContext.interface.toggleShortcuts(),
+            handler: () => toggleShortcuts(),
         });
     }
 
@@ -221,19 +225,19 @@
 
 <div class="h-9 flex items-center select-none w-full border-b shrink-0 bg-bg-titlebar border-border-main" style="transform: translateZ(0);" data-tauri-drag-region>
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => appContext.interface.toggleAbout()} use:tooltip={"About MarkdownRS"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => toggleAbout()} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-fg-muted outline-none" onclick={() => appContext.interface.toggleSettings()} use:tooltip={"Settings (Ctrl+,)"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-fg-muted outline-none" onclick={() => toggleSettings()} use:tooltip={"Settings (Ctrl+,)"}>
             <Settings size={14} />
         </button>
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => appContext.interface.toggleCommandPalette()} use:tooltip={"Commands (Ctrl+P)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => toggleCommandPalette()} use:tooltip={"Commands (Ctrl+P)"}>
             <Zap size={14} />
         </button>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => appContext.interface.toggleBookmarks()} use:tooltip={"Bookmarks (Ctrl+B)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => toggleBookmarks()} use:tooltip={"Bookmarks (Ctrl+B)"}>
             <Bookmark size={14} />
         </button>
     </div>

@@ -9,39 +9,34 @@ export type Toast = {
     duration: number;
 };
 
-class ToastStore {
-    toasts = $state<Toast[]>([]);
-    private nextId = 0;
+let nextId = 0;
 
-    show(message: string, type: ToastType = 'info', duration: number = CONFIG.UI.TOAST_DURATION_MS) {
-        const id = `toast-${this.nextId++}`;
-        const toast: Toast = { id, message, type, duration };
+export const toastStore = $state<{ toasts: Toast[] }>({
+    toasts: [],
+});
 
-        this.toasts.push(toast);
-
-        // Timeout handling is delegated to the Toast component
-        // to support "wait for user interaction" behavior
-    }
-
-    dismiss(id: string) {
-        this.toasts = this.toasts.filter(t => t.id !== id);
-    }
-
-    info(message: string, duration?: number) {
-        this.show(message, 'info', duration);
-    }
-
-    success(message: string, duration?: number) {
-        this.show(message, 'success', duration);
-    }
-
-    warning(message: string, duration?: number) {
-        this.show(message, 'warning', duration);
-    }
-
-    error(message: string, duration?: number) {
-        this.show(message, 'error', duration);
-    }
+export function showToast(message: string, type: ToastType = 'info', duration: number = CONFIG.UI.TOAST_DURATION_MS) {
+    const id = `toast-${nextId++}`;
+    const toast: Toast = { id, message, type, duration };
+    toastStore.toasts.push(toast);
 }
 
-export const toastStore = new ToastStore();
+export function dismissToast(id: string) {
+    toastStore.toasts = toastStore.toasts.filter(t => t.id !== id);
+}
+
+export function infoToast(message: string, duration?: number) {
+    showToast(message, 'info', duration);
+}
+
+export function successToast(message: string, duration?: number) {
+    showToast(message, 'success', duration);
+}
+
+export function warningToast(message: string, duration?: number) {
+    showToast(message, 'warning', duration);
+}
+
+export function errorToast(message: string, duration?: number) {
+    showToast(message, 'error', duration);
+}

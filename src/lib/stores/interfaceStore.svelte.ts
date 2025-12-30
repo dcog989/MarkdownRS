@@ -1,50 +1,47 @@
 /**
  * Global Interface State Store
  * Manages visibility of global UI elements (modals, panels) and cross-component signaling.
- * Replaces ad-hoc window.dispatchEvent usage.
  */
-class InterfaceStore {
+
+export const interfaceStore = $state({
     // Global Modals
-    showSettings = $state(false);
-    showShortcuts = $state(false);
-    showAbout = $state(false);
-    showBookmarks = $state(false);
-    showCommandPalette = $state(false);
-    showTransform = $state(false);
+    showSettings: false,
+    showShortcuts: false,
+    showAbout: false,
+    showBookmarks: false,
+    showCommandPalette: false,
+    showTransform: false,
 
     // Editor Panels
-    // We separate 'Find' and 'Replace' intentions, though they open the same panel
-    showFind = $state(false);
-    isReplaceMode = $state(false); // Controls the mode of the find panel
+    showFind: false,
+    isReplaceMode: false,
 
-    // Signals (Counters used to trigger effects)
-    scrollToTabSignal = $state(0);
+    // Signals
+    scrollToTabSignal: 0
+});
 
-    // Actions
-    triggerScrollToTab() {
-        this.scrollToTabSignal++;
-    }
-
-    openFind() {
-        this.isReplaceMode = false;
-        this.showFind = true;
-    }
-
-    openReplace() {
-        this.isReplaceMode = true;
-        this.showFind = true;
-    }
-
-    closeFind() {
-        this.showFind = false;
-    }
-
-    toggleSettings() { this.showSettings = !this.showSettings; }
-    toggleShortcuts() { this.showShortcuts = !this.showShortcuts; }
-    toggleBookmarks() { this.showBookmarks = !this.showBookmarks; }
-    toggleCommandPalette() { this.showCommandPalette = !this.showCommandPalette; }
-    toggleTransform() { this.showTransform = !this.showTransform; }
-    toggleAbout() { this.showAbout = !this.showAbout; }
+// Actions
+export function triggerScrollToTab() {
+    interfaceStore.scrollToTabSignal++;
 }
 
-export const interfaceStore = new InterfaceStore();
+export function openFind() {
+    interfaceStore.isReplaceMode = false;
+    interfaceStore.showFind = true;
+}
+
+export function openReplace() {
+    interfaceStore.isReplaceMode = true;
+    interfaceStore.showFind = true;
+}
+
+export function closeFind() {
+    interfaceStore.showFind = false;
+}
+
+export function toggleSettings() { interfaceStore.showSettings = !interfaceStore.showSettings; }
+export function toggleShortcuts() { interfaceStore.showShortcuts = !interfaceStore.showShortcuts; }
+export function toggleBookmarks() { interfaceStore.showBookmarks = !interfaceStore.showBookmarks; }
+export function toggleCommandPalette() { interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette; }
+export function toggleTransform() { interfaceStore.showTransform = !interfaceStore.showTransform; }
+export function toggleAbout() { interfaceStore.showAbout = !interfaceStore.showAbout; }

@@ -1,4 +1,4 @@
-import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { addTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -8,6 +8,7 @@ import { debounce } from '$lib/utils/timing';
 import { checkAndReloadIfChanged, checkFileExists, normalizeLineEndings, refreshMetadata, reloadFileContent } from './fileMetadata';
 import { fileWatcher } from './fileWatcher';
 
+// Local types for backend communication
 type RustTabState = {
 	id: string;
 	title: string;
@@ -24,10 +25,8 @@ type RustTabState = {
 	mru_position?: number | null;
 };
 
-type FileContent = {
-	content: string;
-	encoding: string;
-};
+// Only import types if needed
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
 
 class SessionPersistenceManager {
 	private isSaving = false;
@@ -186,7 +185,7 @@ export async function loadSession(): Promise<void> {
 					appContext.app.activeTabId = appContext.editor.mruStack[0] || convertedTabs[0].id;
 					break;
 				case 'new':
-					appContext.app.activeTabId = appContext.editor.addTab();
+					appContext.app.activeTabId = addTab();
 					break;
 				default:
 					appContext.app.activeTabId = convertedTabs[0].id;
@@ -198,14 +197,14 @@ export async function loadSession(): Promise<void> {
 			}
 
 		} else {
-			appContext.app.activeTabId = appContext.editor.addTab();
+			appContext.app.activeTabId = addTab();
 		}
 	} catch (err) {
 		AppError.handle('Session:Load', err, {
 			showToast: false,
 			severity: 'warning'
 		});
-		appContext.app.activeTabId = appContext.editor.addTab();
+		appContext.app.activeTabId = addTab();
 	}
 }
 

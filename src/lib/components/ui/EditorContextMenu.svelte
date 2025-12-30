@@ -2,8 +2,8 @@
     import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { addToDictionary } from "$lib/utils/fileSystem";
+    import { addToDictionary } from "$lib/services/dictionaryService";
+    import { performTextTransform } from "$lib/stores/editorStore.svelte";
     import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, TextAlignStart, WandSparkles } from "lucide-svelte";
     import { untrack } from "svelte";
@@ -84,7 +84,7 @@
 
     function handleOp(type: OperationId | undefined) {
         if (type) {
-            appContext.editor.performTextTransform(type);
+            performTextTransform(type);
             onClose();
         }
     }

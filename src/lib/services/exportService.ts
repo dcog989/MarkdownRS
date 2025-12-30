@@ -1,4 +1,5 @@
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { errorToast, infoToast, successToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
@@ -29,7 +30,7 @@ export class ExportService {
     private async prepareExportContent(): Promise<HTMLElement | null> {
         const tab = this.getActiveTab();
         if (!tab) {
-            appContext.ui.toast.error("No active tab to export.");
+            errorToast("No active tab to export.");
             return null;
         }
 
@@ -110,7 +111,7 @@ export class ExportService {
 </html>`;
 
             await callBackend('write_text_file', { path, content: html }, 'File:Write');
-            appContext.ui.toast.success(`Exported to ${path}`);
+            successToast(`Exported to ${path}`);
         } catch (err) {
             AppError.handle('Export:HTML', err, {
                 showToast: true,
@@ -151,7 +152,7 @@ export class ExportService {
 
             if (!path) return;
 
-            appContext.ui.toast.info("Generating image...", 2000);
+            infoToast("Generating image...", 2000);
 
             const options = {
                 backgroundColor: 'white',
@@ -184,7 +185,7 @@ export class ExportService {
             }
 
             await callBackend('write_binary_file', { path, content: Array.from(bytes) }, 'File:Write');
-            appContext.ui.toast.success(`Exported to ${path}`);
+            successToast(`Exported to ${path}`);
         } catch (err) {
             AppError.handle('Export:HTML', err, {
                 showToast: true,

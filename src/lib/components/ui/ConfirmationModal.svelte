@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { resolveDialog } from "$lib/stores/dialogStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import Modal from "./Modal.svelte";
 </script>
 
-<Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => appContext.ui.dialog.resolve("cancel")} zIndex={100}>
+<Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog("cancel")} zIndex={100}>
     {#snippet header()}
         <span class="text-sm font-semibold text-fg-default">{appContext.ui.dialog.options.title}</span>
     {/snippet}
@@ -13,13 +14,13 @@
     </div>
 
     {#snippet footer()}
-        <button class="btn-secondary" onclick={() => appContext.ui.dialog.resolve("cancel")}>
+        <button class="btn-secondary" onclick={() => resolveDialog("cancel")}>
             {appContext.ui.dialog.options.cancelLabel}
         </button>
-        <button class="btn-danger-outline" onclick={() => appContext.ui.dialog.resolve("discard")}>
+        <button class="btn-danger-outline" onclick={() => resolveDialog("discard")}>
             {appContext.ui.dialog.options.discardLabel}
         </button>
-        <button class="btn-success" onclick={() => appContext.ui.dialog.resolve("save")}>
+        <button class="btn-success" onclick={() => resolveDialog("save")}>
             {appContext.ui.dialog.options.saveLabel}
         </button>
     {/snippet}

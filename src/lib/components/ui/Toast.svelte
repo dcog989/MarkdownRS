@@ -1,5 +1,6 @@
 <script lang="ts">
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { dismissToast } from "$lib/stores/toastStore.svelte.ts";
     import { AlertCircle, CheckCircle, Info, X, XCircle } from "lucide-svelte";
     import { onMount } from "svelte";
     import { fly } from "svelte/transition";
@@ -50,7 +51,7 @@
         activeTimers.add(id);
 
         setTimeout(() => {
-            appContext.ui.toast.dismiss(id);
+            dismissToast(id);
             activeTimers.delete(id);
         }, duration);
     }
@@ -90,7 +91,7 @@
             <div class="flex items-center gap-3 px-4 py-3 rounded-md shadow-lg border border-border-main border-l-[3px] bg-bg-panel text-fg-default {colorClass.split(' ')[1]}">
                 <Icon size={16} class="shrink-0 {iconColorClass}" />
                 <span class="flex-1 text-[13px] leading-snug">{toast.message}</span>
-                <button type="button" class="flex items-center justify-center p-1 rounded transition-all bg-transparent border-none cursor-pointer text-fg-muted hover:bg-bg-hover hover:text-fg-default shrink-0" onclick={() => appContext.ui.toast.dismiss(toast.id)} aria-label="Dismiss">
+                <button type="button" class="flex items-center justify-center p-1 rounded transition-all bg-transparent border-none cursor-pointer text-fg-muted hover:bg-bg-hover hover:text-fg-default shrink-0" onclick={() => dismissToast(toast.id)} aria-label="Dismiss">
                     <X size={14} />
                 </button>
             </div>

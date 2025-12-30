@@ -1,3 +1,4 @@
+import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
@@ -40,7 +41,7 @@ export function sanitizePath(path: string): string {
 export async function refreshMetadata(tabId: string, path: string): Promise<void> {
 	try {
 		const meta = await getCachedFileMetadata(path);
-		appContext.editor.updateMetadata(tabId, meta.created, meta.modified);
+		updateMetadata(tabId, meta.created, meta.modified);
 	} catch (err) {
 		// Silently handle
 	}
@@ -52,9 +53,9 @@ export async function checkFileExists(tabId: string): Promise<void> {
 
 	try {
 		await getCachedFileMetadata(tab.path);
-		appContext.editor.setFileCheckStatus(tabId, true, false);
+		setFileCheckStatus(tabId, true, false);
 	} catch (err) {
-		appContext.editor.setFileCheckStatus(tabId, true, true);
+		setFileCheckStatus(tabId, true, true);
 		AppError.handle('File:Metadata', err, {
 			showToast: false,
 			severity: 'warning',
@@ -77,7 +78,7 @@ export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
 		}
 		return false;
 	} catch (err) {
-		appContext.editor.setFileCheckStatus(tabId, true, true);
+		setFileCheckStatus(tabId, true, true);
 
 		AppError.handle('File:Metadata', err, {
 			showToast: false,
@@ -104,7 +105,7 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 		const content = normalizeLineEndings(result.content);
 		const sizeBytes = new TextEncoder().encode(result.content).length;
 
-		appContext.editor.reloadTabContent(
+		reloadTabContent(
 			tabId,
 			content,
 			detectedLineEnding,

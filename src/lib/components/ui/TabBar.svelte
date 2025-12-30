@@ -1,5 +1,6 @@
 <script lang="ts">
     import { SortableController } from "$lib/actions/sortable.svelte.ts";
+    import { addTab, pushToMru, reorderTabs } from "$lib/stores/editorStore.svelte";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { requestCloseTab } from "$lib/utils/fileSystem";
@@ -34,7 +35,7 @@
         idKey: "id",
         container: undefined,
         onSort: (newItems) => {
-            appContext.editor.reorderTabs(newItems);
+            reorderTabs(newItems);
         },
         onDragStart: (id, x, offset) => {
             draggingId = id;
@@ -50,7 +51,7 @@
                 appContext.editor.sessionDirty = true;
             } else if (draggingId) {
                 appContext.app.activeTabId = draggingId;
-                appContext.editor.pushToMru(draggingId);
+                pushToMru(draggingId);
             }
             isDragging = false;
             draggingId = null;
@@ -106,7 +107,7 @@
                     const targetId = appContext.editor.mruStack[mruSelectedIndex];
                     if (targetId) {
                         appContext.app.activeTabId = targetId;
-                        appContext.editor.pushToMru(targetId);
+                        pushToMru(targetId);
                     }
                     isMruCycling = false;
                     showMruPopup = false;
@@ -173,7 +174,7 @@
             isOpen={showDropdown}
             onSelect={(id) => {
                 appContext.app.activeTabId = id;
-                appContext.editor.pushToMru(id);
+                pushToMru(id);
                 showDropdown = false;
             }}
             onClose={() => (showDropdown = false)}
@@ -222,7 +223,7 @@
             type="button"
             class="h-8 w-8 flex items-center justify-center hover:bg-white/10 text-fg-muted shrink-0"
             onclick={() => {
-                const newTabId = appContext.editor.addTab();
+                const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;
             }}
         >
@@ -240,7 +241,7 @@
     onClose={() => (showMruPopup = false)}
     onSelect={(id) => {
         appContext.app.activeTabId = id;
-        appContext.editor.pushToMru(id);
+        pushToMru(id);
     }}
     selectedId={isMruCycling ? appContext.editor.mruStack[mruSelectedIndex] : appContext.app.activeTabId}
 />

@@ -1,7 +1,8 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
+    import { toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { toastStore } from "$lib/stores/toastStore.svelte.ts";
+    import { infoToast } from "$lib/stores/toastStore.svelte";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
     import { DEFAULT_THEME_NAMES } from "$lib/utils/themes";
@@ -117,7 +118,7 @@
             saveSettings();
 
             if (key === "logLevel") {
-                toastStore.info("Restart required to apply log level changes");
+                infoToast("Restart required to apply log level changes");
             }
         }
     }
@@ -135,7 +136,7 @@
             <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main focus:border-accent-primary transition-colors" />
         </div>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none text-fg-muted" onclick={() => appContext.interface.toggleShortcuts()} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
+        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none text-fg-muted" onclick={() => toggleShortcuts()} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
             <Keyboard size={16} />
         </button>
 

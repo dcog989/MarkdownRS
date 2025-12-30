@@ -1,5 +1,6 @@
 import { checkAndReloadIfChanged, reloadFileContent } from '$lib/services/fileMetadata';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { infoToast, warningToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { debounce } from '$lib/utils/timing';
 import { watch } from '@tauri-apps/plugin-fs';
@@ -82,15 +83,13 @@ class FileWatcherService {
 
 				if (hasChanged) {
 					if (tab.isDirty) {
-						appContext.ui.toast.warning(
+						warningToast(
 							`File changed on disk: ${tab.title}. You have unsaved changes.`,
 							5000
 						);
-						// We can't update read-only props directly here if not using the store action,
-						// but checkAndReloadIfChanged sets fileCheckFailed internally via store action.
 					} else {
 						await reloadFileContent(tab.id);
-						appContext.ui.toast.info(`Reloaded ${tab.title} from disk`);
+						infoToast(`Reloaded ${tab.title} from disk`);
 					}
 				}
 			}

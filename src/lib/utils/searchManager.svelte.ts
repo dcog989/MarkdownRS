@@ -1,3 +1,4 @@
+import { updateContent } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte.ts";
 import { SearchQuery, setSearchQuery } from "@codemirror/search";
 import { EditorView } from "@codemirror/view";
@@ -159,7 +160,7 @@ export class SearchManager {
             const matches = [...tab.content.matchAll(regex)];
             if (matches.length > 0) {
                 const newContent = tab.content.replace(regex, this.replaceText);
-                appContext.editor.updateContent(tab.id, newContent);
+                updateContent(tab.id, newContent);
                 total += matches.length;
             }
         });

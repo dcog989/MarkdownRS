@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
@@ -349,7 +350,7 @@
                 {
                     key: "Insert",
                     run: () => {
-                        appContext.metrics.toggleInsertMode();
+                        toggleInsertMode();
                         return true;
                     },
                 },

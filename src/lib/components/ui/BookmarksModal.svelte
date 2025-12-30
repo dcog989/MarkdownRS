@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { addBookmark, deleteBookmark, isBookmarked, loadBookmarks, updateAccessTime, updateBookmark } from "$lib/stores/bookmarkStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
     import { open } from "@tauri-apps/plugin-dialog";
@@ -31,7 +32,7 @@
 
     $effect(() => {
         if (isOpen && !appContext.bookmarks.isLoaded) {
-            appContext.bookmarks.loadBookmarks();
+            loadBookmarks();
         }
         if (!isOpen) {
             searchQuery = "";
@@ -86,7 +87,7 @@
     );
 
     async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
-        await appContext.bookmarks.updateAccessTime(bookmark.id);
+        await updateAccessTime(bookmark.id);
         onOpenFile(bookmark.path);
         onClose();
     }
@@ -108,7 +109,7 @@
             .split(",")
             .map((t) => t.trim())
             .filter((t) => t.length > 0);
-        await appContext.bookmarks.updateBookmark(id, editTitle, tags);
+        await updateBookmark(id, editTitle, tags);
         editingId = null;
         editTitle = "";
         editTags = "";
@@ -116,7 +117,7 @@
 
     async function handleDelete(id: string, e: MouseEvent) {
         e.stopPropagation();
-        await appContext.bookmarks.deleteBookmark(id);
+        await deleteBookmark(id);
     }
 
     function startAdd() {
@@ -153,7 +154,7 @@
             browseError = "File does not exist or cannot be accessed";
             return;
         }
-        if (appContext.bookmarks.isBookmarked(addPath)) {
+        if (isBookmarked(addPath)) {
             browseError = "This file is already bookmarked";
             return;
         }
@@ -161,7 +162,7 @@
             .split(",")
             .map((t) => t.trim())
             .filter((t) => t.length > 0);
-        await appContext.bookmarks.addBookmark(addPath, addTitle, tags);
+        await addBookmark(addPath, addTitle, tags);
         showAddForm = false;
         addPath = "";
         addTitle = "";

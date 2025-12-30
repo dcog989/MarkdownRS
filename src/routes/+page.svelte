@@ -5,8 +5,12 @@
     import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import Toast from "$lib/components/ui/Toast.svelte";
+    import { toggleSplitView } from "$lib/stores/appState.svelte";
+    import { addTab, pushToMru } from "$lib/stores/editorStore.svelte";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
+    import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { warningToast } from "$lib/stores/toastStore.svelte";
     import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
@@ -60,7 +64,7 @@
             case "n":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                const id = appContext.editor.addTab();
+                const id = addTab();
                 appContext.app.activeTabId = id;
                 return;
 
@@ -68,23 +72,23 @@
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 if (!isMarkdown) {
-                    appContext.ui.toast.warning("Preview not available for this file type");
+                    warningToast("Preview not available for this file type");
                     return;
                 }
-                appContext.app.toggleSplitView();
+                toggleSplitView();
                 saveSettings();
                 return;
 
             case "f":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                appContext.interface.openFind();
+                openFind();
                 return;
 
             case "h":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                appContext.interface.openReplace();
+                openReplace();
                 return;
         }
     }
@@ -115,7 +119,7 @@
             const newTab = appContext.editor.tabs[newIndex];
             if (newTab) {
                 appContext.app.activeTabId = newTab.id;
-                appContext.editor.pushToMru(newTab.id);
+                pushToMru(newTab.id);
             }
         }
     }
@@ -127,7 +131,7 @@
                 await loadSession();
 
                 if (appContext.editor.tabs.length === 0) {
-                    const id = appContext.editor.addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
+                    const id = addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
                     appContext.app.activeTabId = id;
                 }
 
