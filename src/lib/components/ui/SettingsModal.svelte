@@ -123,7 +123,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} showCloseButton={false}>
+<Modal bind:isOpen {onClose}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Settings size={16} class="text-accent-secondary" />

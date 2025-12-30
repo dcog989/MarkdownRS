@@ -9,7 +9,6 @@
         onClose,
         title,
         zIndex = 50,
-        showCloseButton = true,
         position = "top",
         header,
         footer,
@@ -19,7 +18,6 @@
         onClose: () => void;
         title?: string;
         zIndex?: number;
-        showCloseButton?: boolean;
         position?: "center" | "top";
         header?: Snippet;
         footer?: Snippet;
@@ -60,20 +58,17 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="ui-backdrop" class:pt-16={position === "top"} class:items-start={position === "top"} style="z-index: {zIndex}; pointer-events: auto;" onclick={handleBackdropClick} onfocusin={handleFocusTrap}>
         <div class="ui-panel shadow-2xl" style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: {MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
-            <!-- Header -->
-            {#if header || title}
+            <!-- Header Strategy: Snippet First, then Title+Close Default -->
+            {#if header}
                 <div class="ui-header flex justify-between items-center">
-                    {#if header}
-                        {@render header()}
-                    {:else}
-                        <span class="text-sm font-semibold text-fg-default">{title}</span>
-                    {/if}
-
-                    {#if showCloseButton}
-                        <button class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted" onclick={onClose} aria-label="Close">
-                            <X size={18} />
-                        </button>
-                    {/if}
+                    {@render header()}
+                </div>
+            {:else if title}
+                <div class="ui-header flex justify-between items-center">
+                    <span class="text-sm font-semibold text-fg-default">{title}</span>
+                    <button class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted" onclick={onClose} aria-label="Close">
+                        <X size={18} />
+                    </button>
                 </div>
             {/if}
 

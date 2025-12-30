@@ -70,7 +70,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} width="600px" showCloseButton={false}>
+<Modal bind:isOpen {onClose}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Zap size={16} class="text-accent-secondary" />
