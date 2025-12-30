@@ -279,7 +279,15 @@
 
             <div class="h-px my-1 bg-border-main"></div>
 
-            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" disabled={isPinned} onclick={() => requestCloseTab(tabId)}>
+            <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                disabled={isPinned}
+                onclick={() => {
+                    requestCloseTab(tabId);
+                    onClose();
+                }}
+            >
                 <X size={14} class="opacity-70" /><span>Close</span>
             </button>
         </div>
