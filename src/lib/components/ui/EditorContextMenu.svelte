@@ -32,19 +32,9 @@
         onReplaceWord?: (newWord: string) => void;
     }>();
 
-    let showSortMenu = $state(false);
-    let showCaseMenu = $state(false);
-    let showFormatMenu = $state(false);
-    let showTransformMenu = $state(false);
+    let activeSubmenu = $state<"sort" | "case" | "format" | "transform" | null>(null);
     let suggestions = $state<string[]>([]);
     let isLoadingSuggestions = $state(false);
-
-    function closeOtherSubmenus(keepOpen: "sort" | "case" | "format" | "transform" | null = null) {
-        if (keepOpen !== "sort") showSortMenu = false;
-        if (keepOpen !== "case") showCaseMenu = false;
-        if (keepOpen !== "format") showFormatMenu = false;
-        if (keepOpen !== "transform") showTransformMenu = false;
-    }
 
     const sortOps = getOperationsByCategory("sort");
     const caseOps = getOperationsByCategory("case");
@@ -124,7 +114,7 @@
             <div class="h-px my-1 bg-border-main"></div>
         {/if}
 
-        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+        <div onmouseenter={() => (activeSubmenu = null)} role="none">
             {#if selectedText}
                 <button
                     class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
@@ -166,7 +156,14 @@
             <div class="h-px my-1 bg-border-main"></div>
 
             <!-- Sort Menu -->
-            <Submenu bind:show={showSortMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("sort")}>
+            <Submenu
+                show={activeSubmenu === "sort"}
+                side={submenuSide}
+                onOpen={() => (activeSubmenu = "sort")}
+                onClose={() => {
+                    if (activeSubmenu === "sort") activeSubmenu = null;
+                }}
+            >
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <ArrowUpDown size={14} /><span>Sort Lines</span><span class="ml-auto opacity-50">›</span>
@@ -178,7 +175,14 @@
             </Submenu>
 
             <!-- Case Menu -->
-            <Submenu bind:show={showCaseMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("case")}>
+            <Submenu
+                show={activeSubmenu === "case"}
+                side={submenuSide}
+                onOpen={() => (activeSubmenu = "case")}
+                onClose={() => {
+                    if (activeSubmenu === "case") activeSubmenu = null;
+                }}
+            >
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <CaseSensitive size={14} /><span>Change Case</span><span class="ml-auto opacity-50">›</span>
@@ -190,7 +194,14 @@
             </Submenu>
 
             <!-- Format Menu -->
-            <Submenu bind:show={showFormatMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("format")}>
+            <Submenu
+                show={activeSubmenu === "format"}
+                side={submenuSide}
+                onOpen={() => (activeSubmenu = "format")}
+                onClose={() => {
+                    if (activeSubmenu === "format") activeSubmenu = null;
+                }}
+            >
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <TextAlignStart size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
@@ -206,7 +217,14 @@
             </Submenu>
 
             <!-- Transform Menu -->
-            <Submenu bind:show={showTransformMenu} side={submenuSide} onOpen={() => closeOtherSubmenus("transform")}>
+            <Submenu
+                show={activeSubmenu === "transform"}
+                side={submenuSide}
+                onOpen={() => (activeSubmenu = "transform")}
+                onClose={() => {
+                    if (activeSubmenu === "transform") activeSubmenu = null;
+                }}
+            >
                 {#snippet trigger()}
                     <button class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10">
                         <Rotate3d size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>
@@ -222,7 +240,7 @@
             </Submenu>
         {/if}
 
-        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+        <div onmouseenter={() => (activeSubmenu = null)} role="none">
             {#if canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
                 <div class="h-px my-1 bg-border-main"></div>
                 {#if canAddSingle}

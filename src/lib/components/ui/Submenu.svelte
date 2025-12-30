@@ -2,7 +2,7 @@
     import { onDestroy, type Snippet } from "svelte";
 
     let {
-        show = $bindable(false),
+        show = false,
         side = "right",
         trigger,
         children,
@@ -21,7 +21,7 @@
     let submenuEl = $state<HTMLDivElement>();
     let actualSide = $state<"left" | "right">("right");
     let adjustedTop = $state(0);
-    const HOVER_DELAY = 150; // Slightly reduced for snappier feel
+    const HOVER_DELAY = 150;
 
     function handleMouseEnter() {
         if (hoverTimer) {
@@ -29,16 +29,14 @@
             hoverTimer = null;
         }
         if (!show) {
-            show = true;
-            if (onOpen) onOpen();
+            onOpen?.();
         }
     }
 
     function handleMouseLeave() {
         if (hoverTimer) clearTimeout(hoverTimer);
         hoverTimer = window.setTimeout(() => {
-            show = false;
-            if (onClose) onClose();
+            onClose?.();
             hoverTimer = null;
         }, HOVER_DELAY);
     }
@@ -67,13 +65,11 @@
         adjustedTop = newTop;
     }
 
-    // Effect to handle external state changes
     $effect(() => {
         if (show) {
             actualSide = side;
             requestAnimationFrame(() => adjustPosition());
         } else {
-            // If show is set to false from outside, kill any pending open/close timers
             if (hoverTimer) {
                 clearTimeout(hoverTimer);
                 hoverTimer = null;

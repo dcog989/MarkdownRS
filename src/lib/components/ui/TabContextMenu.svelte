@@ -17,9 +17,7 @@
         onClose: () => void;
     }>();
 
-    let showCloseSubmenu = $state(false);
-    let showExportSubmenu = $state(false);
-    let showRestoreSubmenu = $state(false);
+    let activeSubmenu = $state<"close" | "export" | "restore" | null>(null);
 
     let tab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let isPinned = $derived(tab?.isPinned || false);
@@ -34,12 +32,6 @@
     let hasCloseableTabsToRight = $derived(tabIndex < appContext.editor.tabs.length - 1 && appContext.editor.tabs.slice(tabIndex + 1).some((t) => !t.isPinned));
     let hasCloseableTabsToLeft = $derived(tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned));
     let hasCloseableOtherTabs = $derived(appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned));
-
-    function closeOtherSubmenus(keepOpen: "close" | "export" | "restore" | null = null) {
-        if (keepOpen !== "close") showCloseSubmenu = false;
-        if (keepOpen !== "export") showExportSubmenu = false;
-        if (keepOpen !== "restore") showRestoreSubmenu = false;
-    }
 
     async function handleSave() {
         const prevActive = appContext.app.activeTabId;
@@ -157,7 +149,7 @@
 
 <ContextMenu {x} {y} {onClose}>
     {#snippet children({ submenuSide })}
-        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+        <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleSave}>
                 <Save size={14} class="opacity-70" /><span>Save</span>
             </button>
@@ -186,7 +178,14 @@
             <div class="h-px my-1 bg-border-main"></div>
         </div>
 
-        <Submenu bind:show={showExportSubmenu} side={submenuSide} onOpen={() => closeOtherSubmenus("export")}>
+        <Submenu
+            show={activeSubmenu === "export"}
+            side={submenuSide}
+            onOpen={() => (activeSubmenu = "export")}
+            onClose={() => {
+                if (activeSubmenu === "export") activeSubmenu = null;
+            }}
+        >
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
                     <Download size={14} class="mr-2 opacity-70" />
@@ -233,9 +232,9 @@
             >
         </Submenu>
 
-        <div class="h-px my-1 bg-border-main" onmouseenter={() => closeOtherSubmenus(null)} role="none"></div>
+        <div class="h-px my-1 bg-border-main" onmouseenter={() => (activeSubmenu = null)} role="none"></div>
 
-        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+        <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
                 class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
@@ -284,7 +283,14 @@
             </button>
         </div>
 
-        <Submenu bind:show={showCloseSubmenu} side={submenuSide} onOpen={() => closeOtherSubmenus("close")}>
+        <Submenu
+            show={activeSubmenu === "close"}
+            side={submenuSide}
+            onOpen={() => (activeSubmenu = "close")}
+            onClose={() => {
+                if (activeSubmenu === "close") activeSubmenu = null;
+            }}
+        >
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
                     <Files size={14} class="mr-2 opacity-70" />
@@ -301,7 +307,14 @@
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10" onclick={() => handleCloseMany("all")}>Close All</button>
         </Submenu>
 
-        <Submenu bind:show={showRestoreSubmenu} side={submenuSide} onOpen={() => closeOtherSubmenus("restore")}>
+        <Submenu
+            show={activeSubmenu === "restore"}
+            side={submenuSide}
+            onOpen={() => (activeSubmenu = "restore")}
+            onClose={() => {
+                if (activeSubmenu === "restore") activeSubmenu = null;
+            }}
+        >
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {appContext.editor.closedTabsHistory.length === 0 ? 'opacity-50' : ''}">
                     <Undo2 size={14} class="mr-2 opacity-70" />
@@ -333,7 +346,7 @@
             {/if}
         </Submenu>
 
-        <div onmouseenter={() => closeOtherSubmenus(null)} role="none">
+        <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <div class="h-px my-1 bg-border-main"></div>
 
             <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2" onclick={handleRename}>
