@@ -248,8 +248,7 @@
                     appContext.app.activeTabId = tabId;
                     appContext.editor.pushToMru(tabId);
                     await tick();
-                    const event = new CustomEvent("scroll-to-active-tab");
-                    window.dispatchEvent(event);
+                    appContext.interface.triggerScrollToTab();
                     onClose();
                 }}
             >
@@ -268,8 +267,7 @@
                     appContext.app.activeTabId = tabId;
                     appContext.editor.pushToMru(tabId);
                     await tick();
-                    const event = new CustomEvent("scroll-to-active-tab");
-                    window.dispatchEvent(event);
+                    appContext.interface.triggerScrollToTab();
                     onClose();
                 }}
             >

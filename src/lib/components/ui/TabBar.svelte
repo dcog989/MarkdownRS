@@ -70,11 +70,18 @@
         tick().then(updateFadeIndicators);
     });
 
+    // React to signal from interfaceStore instead of window event
+    $effect(() => {
+        // Track the signal
+        const _ = appContext.interface.scrollToTabSignal;
+        // Don't scroll on initial render (0), only subsequent increments
+        if (_ > 0) {
+            scrollToActive();
+        }
+    });
+
     onMount(() => {
         const interval = setInterval(() => (currentTime = Date.now()), 60000);
-
-        const handleScrollToActive = () => scrollToActive();
-        window.addEventListener("scroll-to-active-tab", handleScrollToActive);
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
@@ -114,7 +121,6 @@
             clearInterval(interval);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
-            window.removeEventListener("scroll-to-active-tab", handleScrollToActive);
         };
     });
 
