@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { onDestroy } from "svelte";
-
     interface Props {
         viewport: HTMLElement | null;
         content?: HTMLElement | null;
@@ -105,14 +103,9 @@
         e.preventDefault();
         e.stopPropagation();
 
-        isDragging = true;
         startY = e.clientY;
         startThumbTop = currentThumbTop;
-
-        document.body.style.userSelect = "none";
-        document.body.style.cursor = "default";
-        window.addEventListener("mousemove", onMouseMove, { passive: true });
-        window.addEventListener("mouseup", onMouseUp);
+        isDragging = true;
     }
 
     function onMouseMove(e: MouseEvent) {
@@ -137,10 +130,6 @@
 
     function onMouseUp() {
         isDragging = false;
-        document.body.style.userSelect = "";
-        document.body.style.cursor = "";
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
         measure();
     }
 
@@ -184,10 +173,19 @@
         }
     });
 
-    onDestroy(() => {
-        if (typeof window !== "undefined") {
-            window.removeEventListener("mousemove", onMouseMove);
-            window.removeEventListener("mouseup", onMouseUp);
+    $effect(() => {
+        if (isDragging) {
+            document.body.style.userSelect = "none";
+            document.body.style.cursor = "default";
+            window.addEventListener("mousemove", onMouseMove, { passive: true });
+            window.addEventListener("mouseup", onMouseUp);
+
+            return () => {
+                document.body.style.userSelect = "";
+                document.body.style.cursor = "";
+                window.removeEventListener("mousemove", onMouseMove);
+                window.removeEventListener("mouseup", onMouseUp);
+            };
         }
     });
 </script>
