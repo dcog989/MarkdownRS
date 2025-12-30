@@ -38,23 +38,12 @@
         if (e.key === "ArrowDown") {
             e.preventDefault();
             selectedIndex = (selectedIndex + 1) % filteredCommands.length;
-            scrollToSelected();
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
-            scrollToSelected();
         } else if (e.key === "Enter") {
             e.preventDefault();
             execute(filteredCommands[selectedIndex]);
-        }
-    }
-
-    async function scrollToSelected() {
-        await tick();
-        const buttons = document.querySelectorAll(".command-item");
-        const selected = buttons[selectedIndex] as HTMLElement;
-        if (selected) {
-            selected.scrollIntoView({ block: "nearest" });
         }
     }
 
@@ -67,6 +56,19 @@
     function close() {
         isOpen = false;
         if (onClose) onClose();
+    }
+
+    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
+        if (isSelected) {
+            node.scrollIntoView({ block: "nearest" });
+        }
+        return {
+            update(newIsSelected: boolean) {
+                if (newIsSelected) {
+                    node.scrollIntoView({ block: "nearest" });
+                }
+            },
+        };
     }
 </script>
 
@@ -97,6 +99,7 @@
                         background-color: {index === selectedIndex ? 'var(--color-accent-primary)' : 'transparent'};
                         color: {index === selectedIndex ? 'var(--color-fg-inverse)' : 'var(--color-fg-default)'};
                     "
+                    use:scrollIntoView={index === selectedIndex}
                     onmouseenter={() => (selectedIndex = index)}
                     onclick={() => execute(command)}
                 >

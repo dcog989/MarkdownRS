@@ -71,16 +71,6 @@
         tick().then(updateFadeIndicators);
     });
 
-    // React to signal from interfaceStore instead of window event
-    $effect(() => {
-        // Track the signal
-        const _ = appContext.interface.scrollToTabSignal;
-        // Don't scroll on initial render (0), only subsequent increments
-        if (_ > 0) {
-            scrollToActive();
-        }
-    });
-
     onMount(() => {
         const interval = setInterval(() => (currentTime = Date.now()), 60000);
 
@@ -139,29 +129,31 @@
         showRightFade = scrollLeft < scrollWidth - clientWidth - 2;
     }
 
-    async function scrollToActive() {
-        await tick();
-        if (!scrollContainer || isDragging) return;
+    function ensureVisible(node: HTMLElement, isActive: boolean) {
+        $effect(() => {
+            // Re-run if isActive changes OR signal increments
+            // Access signal to register dependency
+            const _ = appContext.interface.scrollToTabSignal;
 
-        await new Promise((resolve) => setTimeout(resolve, 300));
+            if (isActive && scrollContainer && !isDragging) {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const tabRect = node.getBoundingClientRect();
+                const PEEK_AMOUNT = 55;
 
-        const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
-        if (!activeEl) return;
-
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const tabRect = activeEl.getBoundingClientRect();
-        const PEEK_AMOUNT = 55;
-
-        if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
-            scrollContainer.scrollTo({ left: activeEl.offsetLeft + activeEl.offsetWidth - scrollContainer.clientWidth + PEEK_AMOUNT, behavior: "smooth" });
-        } else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
-            scrollContainer.scrollTo({ left: activeEl.offsetLeft - PEEK_AMOUNT, behavior: "smooth" });
-        }
+                if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
+                    scrollContainer.scrollTo({
+                        left: node.offsetLeft + node.offsetWidth - scrollContainer.clientWidth + PEEK_AMOUNT,
+                        behavior: "smooth",
+                    });
+                } else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
+                    scrollContainer.scrollTo({
+                        left: node.offsetLeft - PEEK_AMOUNT,
+                        behavior: "smooth",
+                    });
+                }
+            }
+        });
     }
-
-    $effect(() => {
-        if (appContext.app.activeTabId) scrollToActive();
-    });
 </script>
 
 <div class="h-8 flex items-stretch w-full border-b relative shrink-0 bg-bg-panel border-border-main">
@@ -188,7 +180,7 @@
 
         <section bind:this={scrollContainer} class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
             {#each appContext.editor.tabs as tab (tab.id)}
-                <div class="h-full flex items-stretch shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
+                <div class="h-full flex items-stretch shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)} use:ensureVisible={appContext.app.activeTabId === tab.id}>
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}

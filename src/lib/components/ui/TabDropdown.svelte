@@ -1,7 +1,6 @@
 <script lang="ts">
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CircleAlert, FileText, Pencil, PencilLine } from "lucide-svelte";
-    import { tick } from "svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
 
     let {
@@ -103,11 +102,9 @@
         if (e.key === "ArrowDown") {
             e.preventDefault();
             selectedIndex = (selectedIndex + 1) % filteredTabs.length;
-            scrollToSelectedItem(selectedIndex);
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             selectedIndex = (selectedIndex - 1 + filteredTabs.length) % filteredTabs.length;
-            scrollToSelectedItem(selectedIndex);
         } else if (e.key === "Enter") {
             e.preventDefault();
             if (filteredTabs[selectedIndex]) {
@@ -119,26 +116,17 @@
         }
     }
 
-    async function scrollToSelectedItem(index: number) {
-        await tick();
-        if (!dropdownListRef) return;
-
-        const buttons = dropdownListRef.querySelectorAll('button[role="menuitem"]');
-        const selectedButton = buttons[index] as HTMLElement;
-
-        if (selectedButton) {
-            const container = dropdownListRef;
-            const itemTop = selectedButton.offsetTop;
-            const itemBottom = itemTop + selectedButton.offsetHeight;
-            const containerTop = container.scrollTop;
-            const containerBottom = containerTop + container.clientHeight;
-
-            if (itemTop < containerTop) {
-                container.scrollTop = itemTop;
-            } else if (itemBottom > containerBottom) {
-                container.scrollTop = itemBottom - container.clientHeight;
-            }
+    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
+        if (isSelected) {
+            node.scrollIntoView({ block: "nearest" });
         }
+        return {
+            update(newIsSelected: boolean) {
+                if (newIsSelected) {
+                    node.scrollIntoView({ block: "nearest" });
+                }
+            },
+        };
     }
 </script>
 
@@ -156,7 +144,7 @@
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
-                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem">
+                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem" use:scrollIntoView={isSelected}>
                         {#if tab.fileCheckFailed}
                             <CircleAlert size={14} class="shrink-0 text-danger-text" />
                         {:else if !tab.path && tab.isDirty}

@@ -3,7 +3,6 @@
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
-    import { tick } from "svelte";
 
     interface Props {
         isOpen: boolean;
@@ -17,26 +16,21 @@
 
     let mruTabs = $derived(appContext.editor.mruStack.map((id) => appContext.editor.tabs.find((t) => t.id === id)).filter((t) => t !== undefined));
 
-    $effect(() => {
-        if (isOpen && selectedId && listContainerRef) {
-            const index = mruTabs.findIndex((t) => t.id === selectedId);
-            if (index >= 0) {
-                tick().then(() => {
-                    const buttons = listContainerRef?.querySelectorAll("button");
-                    const target = buttons?.[index];
-                    if (target) {
-                        target.scrollIntoView({
-                            block: "nearest",
-                            behavior: "smooth",
-                        });
-                    }
-                });
-            }
-        }
-    });
-
     function handleBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) onClose();
+    }
+
+    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
+        if (isSelected) {
+            node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+        return {
+            update(newIsSelected: boolean) {
+                if (newIsSelected) {
+                    node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                }
+            },
+        };
     }
 </script>
 
@@ -58,6 +52,7 @@
                             type="button"
                             class="mru-item"
                             data-selected={isSelected}
+                            use:scrollIntoView={isSelected}
                             onclick={() => {
                                 onSelect(tab.id);
                                 onClose();
