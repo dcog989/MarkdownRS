@@ -19,12 +19,6 @@
 
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
-    let showSettingsModal = $state(false);
-    let showAboutModal = $state(false);
-    let showTransformModal = $state(false);
-    let showShortcutsModal = $state(false);
-    let showBookmarksModal = $state(false);
-    let showCommandPalette = $state(false);
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
@@ -125,40 +119,30 @@
             id: "bookmarks",
             label: "Window: Bookmarks",
             shortcut: "Ctrl+B",
-            action: () => {
-                showBookmarksModal = true;
-            },
+            action: () => appContext.interface.toggleBookmarks(),
         },
         {
             id: "settings",
             label: "Window: Settings",
             shortcut: "Ctrl+,",
-            action: () => {
-                showSettingsModal = true;
-            },
+            action: () => appContext.interface.toggleSettings(),
         },
         {
             id: "shortcuts",
             label: "Window: Keyboard Shortcuts",
             shortcut: "F1",
-            action: () => {
-                showShortcutsModal = true;
-            },
+            action: () => appContext.interface.toggleShortcuts(),
         },
         {
             id: "transform",
             label: "Window: Text Transformations",
             shortcut: "Ctrl+T",
-            action: () => {
-                showTransformModal = true;
-            },
+            action: () => appContext.interface.toggleTransform(),
         },
         {
             id: "about",
             label: "Window: About",
-            action: () => {
-                showAboutModal = true;
-            },
+            action: () => appContext.interface.toggleAbout(),
         },
     ];
 
@@ -182,27 +166,19 @@
     );
 
     function registerShortcuts() {
-        const openTransform = () => {
-            showTransformModal = true;
-        };
+        const openTransform = () => appContext.interface.toggleTransform();
         shortcutManager.register({ id: "win-transform-ctrl", key: "t", ctrl: true, category: "Window", description: "Text Transformations", handler: openTransform });
         shortcutManager.register({ id: "win-transform-meta", key: "t", meta: true, category: "Window", description: "Text Transformations", handler: openTransform });
 
-        const openPalette = () => {
-            showCommandPalette = true;
-        };
+        const openPalette = () => appContext.interface.toggleCommandPalette();
         shortcutManager.register({ id: "win-palette-ctrl", key: "p", ctrl: true, category: "Window", description: "Command Palette", handler: openPalette });
         shortcutManager.register({ id: "win-palette-meta", key: "p", meta: true, category: "Window", description: "Command Palette", handler: openPalette });
 
-        const openBookmarks = () => {
-            showBookmarksModal = true;
-        };
+        const openBookmarks = () => appContext.interface.toggleBookmarks();
         shortcutManager.register({ id: "win-bookmarks-ctrl", key: "b", ctrl: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
         shortcutManager.register({ id: "win-bookmarks-meta", key: "b", meta: true, category: "Window", description: "Bookmarks", handler: openBookmarks });
 
-        const openSettings = () => {
-            showSettingsModal = true;
-        };
+        const openSettings = () => appContext.interface.toggleSettings();
         shortcutManager.register({ id: "win-settings-ctrl", key: ",", ctrl: true, category: "Window", description: "Settings", handler: openSettings });
         shortcutManager.register({ id: "win-settings-meta", key: ",", meta: true, category: "Window", description: "Settings", handler: openSettings });
 
@@ -211,9 +187,7 @@
             key: "F1",
             category: "Window",
             description: "Keyboard Shortcuts",
-            handler: () => {
-                showShortcutsModal = true;
-            },
+            handler: () => appContext.interface.toggleShortcuts(),
         });
     }
 
@@ -234,14 +208,8 @@
 
         registerShortcuts();
 
-        const handleOpenShortcuts = () => {
-            showShortcutsModal = true;
-        };
-        window.addEventListener("open-shortcuts", handleOpenShortcuts);
-
         return () => {
             if (unlisten) unlisten();
-            window.removeEventListener("open-shortcuts", handleOpenShortcuts);
             unregisterShortcuts();
         };
     });
@@ -253,19 +221,19 @@
 
 <div class="h-9 flex items-center select-none w-full border-b shrink-0 bg-bg-titlebar border-border-main" style="transform: translateZ(0);" data-tauri-drag-region>
     <div class="flex items-center px-3 gap-3 pointer-events-auto">
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => (showAboutModal = true)} use:tooltip={"About MarkdownRS"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto outline-none" onclick={() => appContext.interface.toggleAbout()} use:tooltip={"About MarkdownRS"}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
-        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-fg-muted outline-none" onclick={() => (showSettingsModal = true)} use:tooltip={"Settings (Ctrl+,)"}>
+        <button class="hover:bg-white/10 rounded p-1 pointer-events-auto text-fg-muted outline-none" onclick={() => appContext.interface.toggleSettings()} use:tooltip={"Settings (Ctrl+,)"}>
             <Settings size={14} />
         </button>
     </div>
 
     <div class="flex-1 flex items-center justify-center px-8 pointer-events-auto gap-2" data-tauri-drag-region>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => (showCommandPalette = true)} use:tooltip={"Commands (Ctrl+P)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => appContext.interface.toggleCommandPalette()} use:tooltip={"Commands (Ctrl+P)"}>
             <Zap size={14} />
         </button>
-        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => (showBookmarksModal = true)} use:tooltip={"Bookmarks (Ctrl+B)"}>
+        <button class="flex items-center justify-center hover:bg-white/10 rounded p-1.5 text-fg-muted transition-colors border-none outline-none" onclick={() => appContext.interface.toggleBookmarks()} use:tooltip={"Bookmarks (Ctrl+B)"}>
             <Bookmark size={14} />
         </button>
     </div>
@@ -286,16 +254,16 @@
     </div>
 </div>
 
-<CommandPalette bind:isOpen={showCommandPalette} {commands} onClose={() => (showCommandPalette = false)} />
-<SettingsModal bind:isOpen={showSettingsModal} onClose={() => (showSettingsModal = false)} />
-<AboutModal bind:isOpen={showAboutModal} onClose={() => (showAboutModal = false)} />
+<CommandPalette bind:isOpen={appContext.interface.showCommandPalette} {commands} onClose={() => (appContext.interface.showCommandPalette = false)} />
+<SettingsModal bind:isOpen={appContext.interface.showSettings} onClose={() => (appContext.interface.showSettings = false)} />
+<AboutModal bind:isOpen={appContext.interface.showAbout} onClose={() => (appContext.interface.showAbout = false)} />
 <BookmarksModal
-    bind:isOpen={showBookmarksModal}
-    onClose={() => (showBookmarksModal = false)}
+    bind:isOpen={appContext.interface.showBookmarks}
+    onClose={() => (appContext.interface.showBookmarks = false)}
     onOpenFile={async (path) => {
         const { openFileByPath } = await import("$lib/utils/fileSystem");
         openFileByPath(path);
     }}
 />
-<TextTransformModal isOpen={showTransformModal} onClose={() => (showTransformModal = false)} />
-<ShortcutsModal bind:isOpen={showShortcutsModal} onClose={() => (showShortcutsModal = false)} />
+<TextTransformModal isOpen={appContext.interface.showTransform} onClose={() => (appContext.interface.showTransform = false)} />
+<ShortcutsModal bind:isOpen={appContext.interface.showShortcuts} onClose={() => (appContext.interface.showShortcuts = false)} />

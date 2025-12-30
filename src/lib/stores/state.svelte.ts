@@ -3,6 +3,7 @@ import { bookmarkStore } from './bookmarkStore.svelte';
 import { dialogStore } from './dialogStore.svelte';
 import { editorMetrics } from './editorMetrics.svelte';
 import { editorStore } from './editorStore.svelte';
+import { interfaceStore } from './interfaceStore.svelte';
 import { toastStore } from './toastStore.svelte';
 import { tooltipStore } from './tooltipStore.svelte';
 
@@ -20,7 +21,8 @@ export const appContext = {
     get metrics() { return editorMetrics; },
     get bookmarks() { return bookmarkStore; },
 
-    // UI Components State
+    // UI Components State & Interface Signals
+    get interface() { return interfaceStore; },
     ui: {
         get tooltip() { return tooltipStore; },
         get toast() { return toastStore; },

@@ -18,15 +18,11 @@
     let wasOpen = false;
     let isMouseOver = $state(false);
 
-    function focusAndSelectInput() {
+    export function focusInput() {
         if (searchInputRef) {
             searchInputRef.focus();
             searchInputRef.select();
         }
-    }
-
-    function returnFocusToInput() {
-        searchInputRef?.focus();
     }
 
     export function setReplaceMode(enable: boolean) {
@@ -38,7 +34,7 @@
 
         if (currentlyOpen && !wasOpen) {
             wasOpen = true;
-            tick().then(focusAndSelectInput);
+            tick().then(focusInput);
 
             untrack(() => {
                 if (searchManager.findText && cmView) {
@@ -99,7 +95,7 @@
         if (cmView) {
             findNext(cmView);
             searchManager.updateEditor(cmView);
-            returnFocusToInput();
+            searchInputRef?.focus();
         }
     }
 
@@ -107,7 +103,7 @@
         if (cmView) {
             findPrevious(cmView);
             searchManager.updateEditor(cmView);
-            returnFocusToInput();
+            searchInputRef?.focus();
         }
     }
 
@@ -151,7 +147,7 @@
             e.preventDefault();
             e.stopPropagation();
             if (e.key === "h") isReplaceMode = true;
-            focusAndSelectInput();
+            focusInput();
         }
     }
 

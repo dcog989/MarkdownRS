@@ -29,7 +29,6 @@
     let contextWordUnderCursor = $state("");
     let contextWordFrom = $state(0);
     let contextWordTo = $state(0);
-    let showFindReplace = $state(false);
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
 
@@ -63,6 +62,16 @@
                 previousTabId = tabId;
             }
         });
+    });
+
+    // Handle Find/Replace visibility from global store
+    $effect(() => {
+        if (appContext.interface.showFind) {
+            tick().then(() => {
+                findReplacePanel?.setReplaceMode(appContext.interface.isReplaceMode);
+                findReplacePanel?.focusInput();
+            });
+        }
     });
 
     async function handleTextOperation(operationId: OperationId) {
@@ -185,10 +194,6 @@
     onMount(() => {
         initSpellcheck();
         appContext.editor.registerTextOperationCallback(handleTextOperation);
-        window.addEventListener("open-find", () => {
-            showFindReplace = true;
-            tick().then(() => findReplacePanel?.focusInput());
-        });
         return () => appContext.editor.unregisterTextOperationCallback();
     });
 
@@ -201,7 +206,7 @@
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
-    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={showFindReplace} {cmView} />
+    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
 </div>
 
 {#if showContextMenu}

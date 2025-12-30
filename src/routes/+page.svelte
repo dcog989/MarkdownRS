@@ -78,13 +78,13 @@
             case "f":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                window.dispatchEvent(new CustomEvent("open-find"));
+                appContext.interface.openFind();
                 return;
 
             case "h":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                window.dispatchEvent(new CustomEvent("open-replace"));
+                appContext.interface.openReplace();
                 return;
         }
     }
