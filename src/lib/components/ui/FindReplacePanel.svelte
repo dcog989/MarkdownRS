@@ -1,6 +1,6 @@
 <script lang="ts">
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { searchManager } from "$lib/utils/searchManager.svelte.ts";
+    import { clearSearch, replaceAllInTabs, searchAllTabs, searchState, selectNearestMatch, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { findNext, findPrevious, replaceAll, replaceNext } from "@codemirror/search";
     import type { EditorView } from "@codemirror/view";
     import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
@@ -37,13 +37,13 @@
             tick().then(focusInput);
 
             untrack(() => {
-                if (searchManager.findText && cmView) {
-                    searchManager.updateEditor(cmView);
+                if (searchState.findText && cmView) {
+                    updateSearchEditor(cmView);
                 }
             });
         } else if (!currentlyOpen && wasOpen) {
             wasOpen = false;
-            searchManager.clear(cmView);
+            clearSearch(cmView);
         }
     });
 
@@ -56,28 +56,28 @@
 
     function close() {
         isOpen = false;
-        searchManager.clear(cmView);
+        clearSearch(cmView);
         cmView?.focus();
     }
 
     function executeSearch(view: EditorView, incremental: boolean) {
         if (searchScope === "current") {
-            if (searchManager.findText) {
+            if (searchState.findText) {
                 if (incremental) {
-                    searchManager.selectNearestMatch(view);
+                    selectNearestMatch(view);
                 } else {
-                    searchManager.updateEditor(view);
-                    if (searchManager.currentMatches > 0) {
+                    updateSearchEditor(view);
+                    if (searchState.currentMatches > 0) {
                         findNext(view);
-                        searchManager.updateEditor(view);
+                        updateSearchEditor(view);
                     }
                 }
             } else {
-                searchManager.updateEditor(view);
+                updateSearchEditor(view);
             }
         } else {
-            searchManager.clear(view);
-            searchManager.searchAllTabs();
+            clearSearch(view);
+            searchAllTabs();
         }
     }
 
@@ -88,13 +88,13 @@
 
     function onReplaceInput() {
         if (!cmView) return;
-        searchManager.updateEditor(cmView);
+        updateSearchEditor(cmView);
     }
 
     function onFindNext() {
         if (cmView) {
             findNext(cmView);
-            searchManager.updateEditor(cmView);
+            updateSearchEditor(cmView);
             searchInputRef?.focus();
         }
     }
@@ -102,28 +102,28 @@
     function onFindPrevious() {
         if (cmView) {
             findPrevious(cmView);
-            searchManager.updateEditor(cmView);
+            updateSearchEditor(cmView);
             searchInputRef?.focus();
         }
     }
 
     function onReplace() {
         if (cmView) {
-            searchManager.updateEditor(cmView);
+            updateSearchEditor(cmView);
             replaceNext(cmView);
-            searchManager.updateEditor(cmView);
+            updateSearchEditor(cmView);
         }
     }
 
     function onReplaceAll() {
         if (searchScope === "current") {
             if (cmView) {
-                searchManager.updateEditor(cmView);
+                updateSearchEditor(cmView);
                 replaceAll(cmView);
-                searchManager.updateEditor(cmView);
+                updateSearchEditor(cmView);
             }
         } else {
-            const count = searchManager.replaceAllInTabs();
+            const count = replaceAllInTabs();
             alert(`Replaced ${count} occurrences across open tabs.`);
         }
     }
@@ -156,7 +156,7 @@
             e.preventDefault();
             e.stopPropagation();
 
-            if (!searchManager.findText && !isOpen) {
+            if (!searchState.findText && !isOpen) {
                 isOpen = true;
                 return;
             }
@@ -210,18 +210,18 @@
 
         <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-[500px]">
             <div class="flex gap-2 items-center">
-                <input bind:this={searchInputRef} type="text" bind:value={searchManager.findText} placeholder="Find" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onInput} spellcheck="false" />
+                <input bind:this={searchInputRef} type="text" bind:value={searchState.findText} placeholder="Find" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onInput} spellcheck="false" />
                 <div class="text-[11px] text-fg-muted min-w-[80px] text-right">
                     {#if searchScope === "current"}
-                        {#if searchManager.currentMatches > 0}
-                            {searchManager.currentIndex + 1} of {searchManager.currentMatches}
-                        {:else if searchManager.findText}
+                        {#if searchState.currentMatches > 0}
+                            {searchState.currentIndex + 1} of {searchState.currentMatches}
+                        {:else if searchState.findText}
                             0 of 0
                         {/if}
                     {:else if searchScope === "all"}
-                        {#if searchManager.allTabsResults.size > 0}
-                            {searchManager.allTabsResults.size} tabs
-                        {:else if searchManager.findText}
+                        {#if searchState.allTabsResults.size > 0}
+                            {searchState.allTabsResults.size} tabs
+                        {:else if searchState.findText}
                             0 tabs
                         {/if}
                     {/if}
@@ -230,21 +230,21 @@
 
             {#if isReplaceMode}
                 <div class="flex gap-2 items-center">
-                    <input type="text" bind:value={searchManager.replaceText} placeholder="Replace" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onReplaceInput} spellcheck="false" />
+                    <input type="text" bind:value={searchState.replaceText} placeholder="Replace" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onReplaceInput} spellcheck="false" />
                 </div>
             {/if}
 
             <div class="flex gap-4 flex-wrap">
                 <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
-                    <input type="checkbox" bind:checked={searchManager.matchCase} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                    <input type="checkbox" bind:checked={searchState.matchCase} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Match Case</span>
                 </label>
                 <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
-                    <input type="checkbox" bind:checked={searchManager.matchWholeWord} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                    <input type="checkbox" bind:checked={searchState.matchWholeWord} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Whole Word</span>
                 </label>
                 <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
-                    <input type="checkbox" bind:checked={searchManager.useRegex} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                    <input type="checkbox" bind:checked={searchState.useRegex} onchange={() => executeSearch(cmView!, false)} class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Regex</span>
                 </label>
             </div>
@@ -277,10 +277,10 @@
                 {/if}
             </div>
 
-            {#if searchScope === "all" && searchManager.allTabsResults.size > 0}
+            {#if searchScope === "all" && searchState.allTabsResults.size > 0}
                 <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
                     <div class="text-[11px] font-semibold mb-1 text-fg-muted">Results:</div>
-                    {#each [...searchManager.allTabsResults.entries()] as [tabId, count]}
+                    {#each [...searchState.allTabsResults.entries()] as [tabId, count]}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}
                             <button type="button" class="flex items-center justify-between p-1.5 px-2 rounded cursor-pointer transition-colors bg-bg-hover hover:bg-bg-active border-none w-full text-left" onclick={() => navigateToTab(tabId)}>

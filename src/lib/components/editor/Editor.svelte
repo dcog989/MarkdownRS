@@ -9,6 +9,7 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
+    import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { transformText } from "$lib/utils/textTransformsRust";
@@ -197,6 +198,13 @@
         initSpellcheck();
         registerTextOperationCallback(handleTextOperation);
         return () => unregisterTextOperationCallback();
+    });
+
+    // Editor view update when search changes
+    $effect(() => {
+        if (cmView && searchState.findText) {
+            updateSearchEditor(cmView);
+        }
     });
 
     let initialContent = $derived(activeTab?.content || "");

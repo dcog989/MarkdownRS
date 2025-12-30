@@ -8,7 +8,7 @@
     import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
-    import { searchManager } from "$lib/utils/searchManager.svelte.ts";
+    import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
@@ -444,8 +444,8 @@
         scrollSync.registerEditor(view);
 
         // Restore search highlights if query exists
-        if (searchManager.findText) {
-            searchManager.updateEditor(view);
+        if (searchState.findText) {
+            updateSearchEditor(view);
         }
 
         view.focus();
