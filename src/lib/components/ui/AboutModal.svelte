@@ -3,7 +3,6 @@
     import { relaunch } from "@tauri-apps/plugin-process";
     import { check } from "@tauri-apps/plugin-updater";
     import { LoaderCircle, RefreshCw } from "lucide-svelte";
-    import { onMount } from "svelte";
     import Modal from "./Modal.svelte";
 
     interface Props {
@@ -34,13 +33,15 @@
     let isChecking = $state(false);
     let updateStatus = $state<string | null>(null);
 
-    onMount(async () => {
-        try {
-            const info = await callBackend("get_app_info", {}, "File:Metadata");
-            appInfo = info;
-        } catch (err) {
-            // Error handled by bridge
-        }
+    // Replaces onMount for initial data fetch
+    $effect(() => {
+        callBackend("get_app_info", {}, "File:Metadata")
+            .then((info) => {
+                appInfo = info;
+            })
+            .catch(() => {
+                // Error handled by bridge
+            });
     });
 
     function copyToClipboard(text: string) {
