@@ -13,6 +13,7 @@
     let adjustedY = $state(0);
     let submenuSide = $state<"left" | "right">("right");
     let isVisible = $state(false);
+    let resizeObserver: ResizeObserver | null = null;
 
     function updatePosition() {
         if (!menuEl) return;
@@ -24,13 +25,20 @@
         let newX = x;
         let newY = y;
 
+        // X-Axis constraint
         if (newX + rect.width > winWidth) {
             newX = winWidth - rect.width - 5;
         }
-        // Account for status bar height (24px = h-6) when positioning near bottom
-        const statusBarHeight = 24;
+
+        // Y-Axis constraint (Status Bar protection)
+        const statusBarHeight = 32;
+        const padding = 8;
+
+        // If the menu height is taller than available space, we let flex/scroll handle it via max-h
+        // We just need to ensure the top doesn't start too low if it would push bottom off screen
+
         if (newY + rect.height > winHeight - statusBarHeight) {
-            newY = winHeight - rect.height - statusBarHeight - 5;
+            newY = winHeight - rect.height - statusBarHeight - padding;
         }
 
         adjustedX = Math.max(5, newX);
@@ -40,31 +48,35 @@
     }
 
     $effect(() => {
+        // Track input changes
+        const _x = x;
+        const _y = y;
         updatePosition();
     });
 
     onMount(() => {
+        if (menuEl) {
+            resizeObserver = new ResizeObserver(() => {
+                requestAnimationFrame(() => updatePosition());
+            });
+            resizeObserver.observe(menuEl);
+        }
+
         updatePosition();
+
+        return () => {
+            resizeObserver?.disconnect();
+        };
     });
 
     function handleBackdropContextMenu(e: MouseEvent) {
         e.preventDefault();
-
         const backdrop = e.currentTarget as HTMLElement;
         const originalDisplay = backdrop.style.display;
-
-        // Hide backdrop temporarily to find the element underneath
         backdrop.style.display = "none";
-
         const target = document.elementFromPoint(e.clientX, e.clientY);
-
-        // Restore backdrop
         backdrop.style.display = originalDisplay;
-
-        // Close current menu
         onClose();
-
-        // Dispatch event to underlying element
         if (target) {
             const newEvent = new MouseEvent("contextmenu", {
                 bubbles: true,
@@ -86,10 +98,10 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="fixed inset-0 z-50" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
+<div class="fixed inset-0 z-[200]" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] rounded-md shadow-xl border py-1 z-50 bg-bg-panel border-border-light text-fg-default"
+        class="absolute min-w-[200px] max-w-[300px] max-h-[calc(100vh-64px)] overflow-y-auto rounded-md shadow-xl border py-1 z-[200] bg-bg-panel border-border-light text-fg-default"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;
