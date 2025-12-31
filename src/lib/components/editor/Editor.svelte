@@ -5,7 +5,7 @@
     import { getBackendCommand, type OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
-    import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent } from "$lib/stores/editorStore.svelte";
+    import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
@@ -83,16 +83,36 @@
         const hasSelection = selection.from !== selection.to;
         const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
 
-        const backendCommand = getBackendCommand(operationId);
+        // Snapshot scroll and cursor
+        const scrollTop = cmView.scrollDOM.scrollTop;
 
+        const backendCommand = getBackendCommand(operationId);
         const newText = operationId === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, backendCommand);
 
         if (newText !== targetText) {
-            cmView.dispatch({
+            const transaction: any = {
                 changes: { from: hasSelection ? selection.from : 0, to: hasSelection ? selection.to : cmView.state.doc.length, insert: newText },
-                selection: { anchor: (hasSelection ? selection.from : 0) + newText.length },
                 userEvent: "input.complete",
-            });
+            };
+
+            if (hasSelection) {
+                // Select the transformed text
+                transaction.selection = { anchor: selection.from, head: selection.from + newText.length };
+            } else {
+                // Keep cursor roughly where it was (clamped to new length)
+                const newLen = newText.length;
+                transaction.selection = {
+                    anchor: Math.min(selection.anchor, newLen),
+                    head: Math.min(selection.head, newLen),
+                };
+            }
+
+            cmView.dispatch(transaction);
+
+            // Restore scroll for full document operations
+            if (!hasSelection) {
+                cmView.scrollDOM.scrollTop = scrollTop;
+            }
         }
     }
 
@@ -209,10 +229,12 @@
 
     let initialContent = $derived(activeTab?.content || "");
     let filename = $derived(activeTab?.path || "unsaved.md");
+    let initialScroll = $derived(activeTab?.scrollPercentage || 0);
+    let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} initialScrollPercentage={initialScroll} {initialSelection} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}

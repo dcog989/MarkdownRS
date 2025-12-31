@@ -13,6 +13,7 @@
     import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
+    import { throttle } from "$lib/utils/timing";
     import { autocompletion, closeBrackets, closeBracketsKeymap, completeAnyWord, completionKeymap } from "@codemirror/autocomplete";
     import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -27,8 +28,12 @@
         tabId,
         initialContent = "",
         filename = "",
+        initialScrollPercentage = 0,
+        initialSelection = { anchor: 0, head: 0 },
         onContentChange,
         onMetricsChange,
+        onScrollChange,
+        onSelectionChange,
         customKeymap = [],
         spellCheckLinter,
         eventHandlers,
@@ -37,8 +42,12 @@
         tabId: string;
         initialContent?: string;
         filename?: string;
+        initialScrollPercentage?: number;
+        initialSelection?: { anchor: number; head: number };
         onContentChange: (content: string) => void;
         onMetricsChange: (metrics: any) => void;
+        onScrollChange?: (percentage: number, topLine: number) => void;
+        onSelectionChange?: (anchor: number, head: number) => void;
         customKeymap?: any[];
         spellCheckLinter: any;
         eventHandlers: any;
@@ -414,6 +423,14 @@
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => onContentChange(update.state.doc.toString()), CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
                 }
+
+                if (update.selectionSet) {
+                    if (onSelectionChange) {
+                        const sel = update.state.selection.main;
+                        onSelectionChange(sel.anchor, sel.head);
+                    }
+                }
+
                 if (update.docChanged || update.selectionSet) {
                     if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
                     metricsUpdateTimer = window.setTimeout(() => {
@@ -424,7 +441,33 @@
             })
         );
 
-        view = new EditorView({ state: EditorState.create({ doc: initialContent, extensions }), parent: editorContainer });
+        // Sanitize selection against document length
+        const safeSelection = {
+            anchor: Math.min(initialSelection.anchor, initialContent.length),
+            head: Math.min(initialSelection.head, initialContent.length),
+        };
+
+        view = new EditorView({
+            state: EditorState.create({
+                doc: initialContent,
+                extensions,
+                selection: safeSelection,
+            }),
+            parent: editorContainer,
+        });
+
+        // Restore scroll position
+        if (initialScrollPercentage > 0) {
+            // Use setTimeout to allow layout to settle
+            setTimeout(() => {
+                if (!view) return;
+                const dom = view.scrollDOM;
+                const max = dom.scrollHeight - dom.clientHeight;
+                if (max > 0) {
+                    dom.scrollTop = initialScrollPercentage * max;
+                }
+            }, 0);
+        }
 
         const handleModifierKey = (e: KeyboardEvent) => {
             if (e.key === "Control" || e.key === "Meta") {
@@ -441,6 +484,22 @@
         window.addEventListener("keyup", handleModifierKey);
         window.addEventListener("blur", clearModifier);
 
+        // Scroll tracking
+        const handleScroll = throttle(() => {
+            if (!view || !onScrollChange) return;
+            const dom = view.scrollDOM;
+            const max = dom.scrollHeight - dom.clientHeight;
+            const percentage = max > 0 ? dom.scrollTop / max : 0;
+
+            // Also calculate top visible line
+            const lineBlock = view.lineBlockAtHeight(dom.scrollTop);
+            const docLine = view.state.doc.lineAt(lineBlock.from);
+
+            onScrollChange(percentage, docLine.number);
+        }, 100);
+
+        view.scrollDOM.addEventListener("scroll", handleScroll, { passive: true });
+
         scrollSync.registerEditor(view);
 
         // Restore search highlights if query exists
@@ -454,6 +513,7 @@
             window.removeEventListener("keydown", handleModifierKey);
             window.removeEventListener("keyup", handleModifierKey);
             window.removeEventListener("blur", clearModifier);
+            view?.scrollDOM.removeEventListener("scroll", handleScroll);
             if (view) view.destroy();
         };
     });

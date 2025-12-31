@@ -165,6 +165,7 @@ export async function loadSession(): Promise<void> {
 					path: t.path,
 					scrollPercentage: t.scroll_percentage,
 					sizeBytes: new TextEncoder().encode(content).length,
+					cursor: { anchor: 0, head: 0 }, // Reset cursor on load
 					created: t.created || undefined,
 					modified: t.modified || undefined,
 					formattedTimestamp: formatTimestampForDisplay(timestamp),

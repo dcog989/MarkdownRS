@@ -12,6 +12,7 @@ export type EditorTab = {
     path: string | null;
     scrollPercentage: number;
     sizeBytes: number;
+    cursor: { anchor: number; head: number };
     topLine?: number;
     created?: string;
     modified?: string;
@@ -91,6 +92,7 @@ export function addTab(title: string = '', content: string = '') {
         path: null,
         scrollPercentage: 0,
         sizeBytes,
+        cursor: { anchor: 0, head: 0 },
         topLine: 1,
         created: now,
         modified: now,
@@ -214,6 +216,18 @@ export function updateScroll(id: string, percentage: number, topLine: number | u
         tab.scrollPercentage = percentage;
         if (topLine !== undefined) tab.topLine = topLine;
         editorStore.sessionDirty = true;
+    }
+}
+
+export function updateCursor(id: string, anchor: number, head: number) {
+    const index = editorStore.tabs.findIndex(t => t.id === id);
+    if (index === -1) return;
+
+    // Only update if changed to avoid unnecessary reactivity
+    if (editorStore.tabs[index].cursor.anchor !== anchor || editorStore.tabs[index].cursor.head !== head) {
+        editorStore.tabs[index].cursor = { anchor, head };
+        // We generally don't mark sessionDirty for cursor changes to avoid heavy DB writes
+        // Cursor position is currently transient in-memory
     }
 }
 
