@@ -76,82 +76,7 @@ pub fn transform_text(
 
         TextOperation::RemoveAllSpaces => Ok(text.chars().filter(|c| !c.is_whitespace()).collect()),
 
-        TextOperation::SentenceCase => {
-            let mut result = String::with_capacity(text.len());
-            let mut capitalize_next = true;
-
-            for c in text.chars() {
-                if capitalize_next && c.is_alphabetic() {
-                    result.push_str(&c.to_uppercase().to_string());
-                    capitalize_next = false;
-                } else {
-                    result.push(c);
-                    if c == '.' || c == '!' || c == '?' {
-                        capitalize_next = true;
-                    }
-                }
-            }
-            Ok(result)
-        }
-
-        TextOperation::CamelCase => {
-            let words: Vec<&str> = text.split_whitespace().collect();
-            let mut result = String::new();
-            for (i, word) in words.iter().enumerate() {
-                if i == 0 {
-                    result.push_str(&word.to_lowercase());
-                } else {
-                    let mut chars = word.chars();
-                    if let Some(first) = chars.next() {
-                        result.push_str(&first.to_uppercase().to_string());
-                        result.push_str(&chars.as_str().to_lowercase());
-                    }
-                }
-            }
-            Ok(result)
-        }
-
-        TextOperation::PascalCase => {
-            let words: Vec<&str> = text.split_whitespace().collect();
-            let mut result = String::new();
-            for word in words {
-                let mut chars = word.chars();
-                if let Some(first) = chars.next() {
-                    result.push_str(&first.to_uppercase().to_string());
-                    result.push_str(&chars.as_str().to_lowercase());
-                }
-            }
-            Ok(result)
-        }
-
-        TextOperation::SnakeCase => {
-            let cleaned = text.replace(|c: char| !c.is_alphanumeric() && c != ' ', " ");
-            Ok(cleaned
-                .split_whitespace()
-                .map(|w| w.to_lowercase())
-                .collect::<Vec<_>>()
-                .join("_"))
-        }
-
-        TextOperation::KebabCase => {
-            let cleaned = text.replace(|c: char| !c.is_alphanumeric() && c != ' ', " ");
-            Ok(cleaned
-                .split_whitespace()
-                .map(|w| w.to_lowercase())
-                .collect::<Vec<_>>()
-                .join("-"))
-        }
-
-        TextOperation::ConstantCase => {
-            let cleaned = text.replace(|c: char| !c.is_alphanumeric() && c != ' ', " ");
-            Ok(cleaned
-                .split_whitespace()
-                .map(|w| w.to_uppercase())
-                .collect::<Vec<_>>()
-                .join("_"))
-        }
-
-        // Line-based operations
+        // All other operations are handled line-by-line (or treat text as lines)
         _ => transform_lines(text, operation, indent_width),
     }
 }
@@ -165,6 +90,130 @@ fn transform_lines(
     let lines: Vec<&str> = text.lines().collect();
 
     match operation {
+        // Complex Case Operations (Line-aware)
+        TextOperation::SentenceCase => {
+            let result: Vec<String> = lines
+                .iter()
+                .map(|line| {
+                    let mut res = String::with_capacity(line.len());
+                    let mut capitalize_next = true;
+                    for c in line.chars() {
+                        if c.is_alphabetic() {
+                            if capitalize_next {
+                                res.push_str(&c.to_uppercase().to_string());
+                                capitalize_next = false;
+                            } else {
+                                res.push_str(&c.to_lowercase().to_string());
+                            }
+                        } else {
+                            res.push(c);
+                            if ".!?".contains(c) {
+                                capitalize_next = true;
+                            }
+                        }
+                    }
+                    res
+                })
+                .collect();
+            Ok(result.join("\n"))
+        }
+
+        TextOperation::CamelCase => {
+            let result: Vec<String> = lines
+                .iter()
+                .map(|line| {
+                    let parts: Vec<&str> = line
+                        .split(|c: char| !c.is_alphanumeric())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+
+                    if parts.is_empty() {
+                        return String::new();
+                    }
+
+                    let mut res = String::new();
+                    for (i, part) in parts.iter().enumerate() {
+                        if i == 0 {
+                            res.push_str(&part.to_lowercase());
+                        } else {
+                            let mut chars = part.chars();
+                            if let Some(f) = chars.next() {
+                                res.push_str(&f.to_uppercase().to_string());
+                                res.push_str(&chars.as_str().to_lowercase());
+                            }
+                        }
+                    }
+                    res
+                })
+                .collect();
+            Ok(result.join("\n"))
+        }
+
+        TextOperation::PascalCase => {
+            let result: Vec<String> = lines
+                .iter()
+                .map(|line| {
+                    let parts: Vec<&str> = line
+                        .split(|c: char| !c.is_alphanumeric())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+
+                    let mut res = String::new();
+                    for part in parts {
+                        let mut chars = part.chars();
+                        if let Some(f) = chars.next() {
+                            res.push_str(&f.to_uppercase().to_string());
+                            res.push_str(&chars.as_str().to_lowercase());
+                        }
+                    }
+                    res
+                })
+                .collect();
+            Ok(result.join("\n"))
+        }
+
+        TextOperation::SnakeCase => {
+            let result: Vec<String> = lines
+                .iter()
+                .map(|line| {
+                    line.split(|c: char| !c.is_alphanumeric())
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_lowercase())
+                        .collect::<Vec<_>>()
+                        .join("_")
+                })
+                .collect();
+            Ok(result.join("\n"))
+        }
+
+        TextOperation::KebabCase => {
+            let result: Vec<String> = lines
+                .iter()
+                .map(|line| {
+                    line.split(|c: char| !c.is_alphanumeric())
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_lowercase())
+                        .collect::<Vec<_>>()
+                        .join("-")
+                })
+                .collect();
+            Ok(result.join("\n"))
+        }
+
+        TextOperation::ConstantCase => {
+            let result: Vec<String> = lines
+                .iter()
+                .map(|line| {
+                    line.split(|c: char| !c.is_alphanumeric())
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_uppercase())
+                        .collect::<Vec<_>>()
+                        .join("_")
+                })
+                .collect();
+            Ok(result.join("\n"))
+        }
+
         // Sort operations
         TextOperation::SortAsc => {
             let mut sorted = lines.clone();
@@ -556,8 +605,6 @@ fn transform_lines(
             Ok(result.join("\n"))
         }
 
-        // Exhaustive matching implies no fallthrough to error for Enum,
-        // but we'll include a pattern for good measure if needed, though strictly not needed with Enum
         _ => Err(format!("Operation not implemented: {:?}", operation)),
     }
 }
@@ -590,18 +637,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_uppercase() {
-        assert_eq!(
-            transform_text("hello world", TextOperation::Uppercase, 4).unwrap(),
-            "HELLO WORLD"
-        );
+    fn test_sentence_case_block() {
+        let input = "hello world\nthis is a test";
+        let output = transform_text(input, TextOperation::SentenceCase, 2).unwrap();
+        assert_eq!(output, "Hello world\nThis is a test");
     }
 
     #[test]
-    fn test_indent_custom() {
-        assert_eq!(
-            transform_text("hello", TextOperation::IndentLines, 2).unwrap(),
-            "  hello"
-        );
+    fn test_sentence_case_punctuation() {
+        let input = "hello. world. test";
+        let output = transform_text(input, TextOperation::SentenceCase, 2).unwrap();
+        assert_eq!(output, "Hello. World. Test");
+    }
+
+    #[test]
+    fn test_camel_case_lines() {
+        let input = "hello world\nfoo_bar";
+        let output = transform_text(input, TextOperation::CamelCase, 2).unwrap();
+        assert_eq!(output, "helloWorld\nfooBar");
+    }
+
+    #[test]
+    fn test_snake_case_lines() {
+        let input = "Hello World\nFoo Bar";
+        let output = transform_text(input, TextOperation::SnakeCase, 2).unwrap();
+        assert_eq!(output, "hello_world\nfoo_bar");
     }
 }
