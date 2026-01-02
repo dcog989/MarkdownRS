@@ -43,6 +43,31 @@
         "shortDescription": "The only markdown editor you need.",
         "longDescription": "MarkdownRS is a fast, slim, cross-platform notepad, focused on editing Markdown documents.",
         "createUpdaterArtifacts": true,
+        "fileAssociations": [
+            {
+                "ext": [
+                    "md",
+                    "markdown",
+                    "mdown",
+                    "mkdn",
+                    "mkd",
+                    "mdwn"
+                ],
+                "name": "Markdown Document",
+                "description": "Markdown Document",
+                "role": "Editor",
+                "mimeType": "text/markdown"
+            },
+            {
+                "ext": [
+                    "txt"
+                ],
+                "name": "Text Document",
+                "description": "Text Document",
+                "role": "Editor",
+                "mimeType": "text/plain"
+            }
+        ],
         "windows": {
             "nsis": {
                 "installerIcon": "icons/icon.ico",
