@@ -44,7 +44,8 @@ function getSettingsObject() {
         lineEndingPreference: appState.lineEndingPreference,
         tooltipDelay: appState.tooltipDelay,
         findPanelTransparent: appState.findPanelTransparent,
-        findPanelCloseOnBlur: appState.findPanelCloseOnBlur
+        findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
+        spellcheckDictionaries: appState.spellcheckDictionaries
     };
 }
 
