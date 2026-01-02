@@ -4,7 +4,7 @@
     import { getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
     import { addToDictionary } from "$lib/services/dictionaryService";
     import { performTextTransform } from "$lib/stores/editorStore.svelte";
-    import { getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
+    import { getCachedSuggestions, getSuggestions, isWordValid, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { ArrowUpDown, BookPlus, BookText, CaseSensitive, ClipboardCopy, ClipboardPaste, Rotate3d, Scissors, Sparkles, TextAlignStart, WandSparkles } from "lucide-svelte";
     import { untrack } from "svelte";
 
@@ -53,6 +53,15 @@
         const word = untrack(() => wordUnderCursor?.trim());
 
         if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
+            // 1. Check cache synchronously first to instant-render
+            const cached = getCachedSuggestions(word);
+            if (cached) {
+                suggestions = cached.slice(0, 5);
+                isLoadingSuggestions = false;
+                return;
+            }
+
+            // 2. Cache miss: Fetch asynchronously (spinner will show)
             isLoadingSuggestions = true;
             getSuggestions(word)
                 .then((res) => {
@@ -78,7 +87,7 @@
         const uniqueWords: string[] = Array.from(new Set(matches));
         const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
 
-        // Optimistic update - this triggers reactivity in EditorView to refresh linter
+        // Optimistic update
         const newDict = new Set(spellcheckState.customDictionary);
         invalidWords.forEach((w) => {
             newDict.add(w.toLowerCase());
@@ -258,7 +267,6 @@
                         class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                         onclick={async () => {
                             // Optimistic update to reactive state
-                            // Using reassignment to guarantee Svelte 5 reactivity in EditorView
                             const newDict = new Set(spellcheckState.customDictionary);
                             newDict.add(targetWord.toLowerCase());
                             spellcheckState.customDictionary = newDict;

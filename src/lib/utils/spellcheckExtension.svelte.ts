@@ -56,7 +56,15 @@ export const createSpellCheckLinter = () => {
                         if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
 
                         const wLower = word.toLowerCase();
+
+                        // Check custom dictionary (exact)
                         if (customDict.has(wLower)) continue;
+
+                        // Check custom dictionary (possessive 's)
+                        if (wLower.endsWith("'s")) {
+                            const base = wLower.slice(0, -2);
+                            if (customDict.has(base)) continue;
+                        }
 
                         const ranges = wordsToVerify.get(word) || [];
                         ranges.push({ from: globalFrom, to: globalTo });
@@ -84,6 +92,12 @@ export const createSpellCheckLinter = () => {
                 const wLower = word.toLowerCase();
 
                 if (freshDict.has(wLower)) continue;
+
+                // Double check possessive against fresh dict (race condition protection)
+                if (wLower.endsWith("'s")) {
+                    const base = wLower.slice(0, -2);
+                    if (freshDict.has(base)) continue;
+                }
 
                 newCache.add(wLower);
                 const ranges = wordsToVerify.get(word);

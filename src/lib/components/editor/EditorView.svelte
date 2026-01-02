@@ -7,7 +7,7 @@
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
-    import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
+    import { prefetchSuggestions, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
@@ -69,6 +69,7 @@
     let spellComp = new Compartment();
     let whitespaceComp = new Compartment();
     let languageComp = new Compartment();
+    let handlersComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
@@ -159,6 +160,22 @@
 
     $effect(() => {
         cmView = view;
+    });
+
+    // Internal handler for hover prefetching
+    // This allows us to intercept mousemove for logic without blocking other handlers
+    const internalMouseHandler = EditorView.domEventHandlers({
+        mousemove: (event, view) => {
+            const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+            if (pos === null) return;
+
+            const range = view.state.wordAt(pos);
+            if (range) {
+                const word = view.state.sliceDoc(range.from, range.to);
+                prefetchSuggestions(word);
+            }
+            return false;
+        },
     });
 
     let dynamicTheme = $derived.by(() => {
@@ -284,9 +301,10 @@
     const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin];
 
     $effect(() => {
-        if (view && spellcheckState.dictionaryLoaded) {
-            const _ = spellcheckState.customDictionary;
+        // Watch for reference changes to the dictionary to refresh linter
+        const _ = spellcheckState.customDictionary;
 
+        if (view && spellcheckState.dictionaryLoaded) {
             view.dispatch({
                 effects: spellComp.reconfigure(createSpellCheckLinter()),
             });
@@ -296,7 +314,17 @@
     $effect(() => {
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appContext.app.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))), whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []), languageComp.reconfigure(isMarkdown ? markdownExtensions : [])],
+                effects: [
+                    wrapComp.reconfigure(appContext.app.editorWordWrap ? EditorView.lineWrapping : []),
+                    autoComp.reconfigure(autocompletionConfig),
+                    recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
+                    historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })),
+                    themeComp.reconfigure(dynamicTheme),
+                    indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))),
+                    whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
+                    languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
+                    handlersComp.reconfigure(eventHandlers), // Reactively update event handlers (context menu, etc)
+                ],
             });
     });
 
@@ -416,7 +444,8 @@
             wrapComp.of([]),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
-            eventHandlers,
+            internalMouseHandler,
+            handlersComp.of(eventHandlers),
         ];
 
         extensions.push(
@@ -430,6 +459,15 @@
                     if (onSelectionChange) {
                         const sel = update.state.selection.main;
                         onSelectionChange(sel.anchor, sel.head);
+
+                        // Prefetch suggestions on caret move (word stop)
+                        if (sel.empty) {
+                            const range = update.state.wordAt(sel.head);
+                            if (range) {
+                                const word = update.state.sliceDoc(range.from, range.to);
+                                prefetchSuggestions(word);
+                            }
+                        }
                     }
                 }
 
