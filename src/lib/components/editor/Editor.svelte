@@ -13,7 +13,7 @@
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
-    import { recheckSpelling, refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
+    import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { transformText } from "$lib/utils/textTransformsRust";
     import { syntaxTree } from "@codemirror/language";
     import { EditorView as CM6EditorView } from "@codemirror/view";
@@ -292,7 +292,10 @@
         selectedText={contextSelectedText}
         wordUnderCursor={contextWordUnderCursor}
         onClose={() => (showContextMenu = false)}
-        onDictionaryUpdate={() => cmView && recheckSpelling(cmView)}
+        onDictionaryUpdate={() => {
+            // No-op: We rely on the optimistic store update in ContextMenu to trigger
+            // the EditorView reactivity. Calling refreshSpellcheck here would race with disk I/O.
+        }}
         onCut={() => {
             navigator.clipboard.writeText(contextSelectedText);
             cmView?.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: "" } });

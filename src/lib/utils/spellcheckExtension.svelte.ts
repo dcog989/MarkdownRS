@@ -124,12 +124,6 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
     triggerImmediateLint(view);
 }
 
-export function recheckSpelling(view: EditorView) {
-    // Clear cache to force re-evaluation of words against the current (optimistically updated) dictionary
-    spellcheckState.misspelledCache = new Set<string>();
-    triggerImmediateLint(view);
-}
-
 export const spellCheckKeymap = [
     {
         key: "F8",
@@ -148,24 +142,19 @@ export const spellCheckKeymap = [
 
             if (words.length > 0) {
                 // 1. Synchronous Optimistic Update
-                // We modify the set in place immediately so the very next lint pass (triggered below)
-                // sees these words as valid.
+                // Update via re-assignment to trigger Svelte 5 signals
+                const newDict = new Set(spellcheckState.customDictionary);
                 words.forEach(w => {
                     if (w && w.length > 1) {
-                        spellcheckState.customDictionary.add(w.toLowerCase());
+                        newDict.add(w.toLowerCase());
                     }
                 });
+                spellcheckState.customDictionary = newDict;
 
-                // 2. Clear cache for these words to ensure logic doesn't skip/flag them incorrectly
-                // (Though primary check is customDictionary, this keeps state clean)
+                // 2. Clear cache
                 words.forEach(w => spellcheckState.misspelledCache.delete(w.toLowerCase()));
 
-                // 3. Force Linter
-                // This queues the linter to run ASAP. Since we updated the Set above synchronously,
-                // the linter (when it runs) will see the new words in 'customDict' and exclude them.
-                forceLinting(view);
-
-                // 4. Background Persistence
+                // 3. Background Persistence
                 Promise.all(words.map((w) => addToDictionary(w))).then(() => {
                     // Optional: Resync to ensure consistency with backend file
                     refreshCustomDictionary();

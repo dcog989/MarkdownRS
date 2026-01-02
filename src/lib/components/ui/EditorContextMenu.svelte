@@ -86,8 +86,6 @@
         });
         spellcheckState.customDictionary = newDict;
 
-        // Immediately notify editor to re-lint
-        onDictionaryUpdate?.();
         onClose();
 
         // Background persistence
@@ -260,15 +258,12 @@
                         class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                         onclick={async () => {
                             // Optimistic update to reactive state
-                            // Using reassignment to guarantee Svelte 5 reactivity
+                            // Using reassignment to guarantee Svelte 5 reactivity in EditorView
                             const newDict = new Set(spellcheckState.customDictionary);
                             newDict.add(targetWord.toLowerCase());
                             spellcheckState.customDictionary = newDict;
 
                             spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
-
-                            // Immediately notify editor to re-lint
-                            onDictionaryUpdate?.();
 
                             closeMenuAndReset();
                             // Persist to disk

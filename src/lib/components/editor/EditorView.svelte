@@ -284,10 +284,9 @@
     const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin];
 
     $effect(() => {
-        // Reconfigure linter whenever dictionary changes (size check is a simple proxy for change)
-        const _ = spellcheckState.customDictionary.size;
-
         if (view && spellcheckState.dictionaryLoaded) {
+            const _ = spellcheckState.customDictionary;
+
             view.dispatch({
                 effects: spellComp.reconfigure(createSpellCheckLinter()),
             });
