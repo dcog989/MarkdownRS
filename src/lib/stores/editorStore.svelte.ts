@@ -347,12 +347,14 @@ export function saveTabComplete(id: string, path: string, title: string, lineEnd
 
 export function togglePreferredExtension(id: string) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
+    if (index === -1) {
+        return;
+    }
     const tab = editorStore.tabs[index];
-    
-    // Only toggle for unsaved files
-    if (tab.path) return;
-    
-    tab.preferredExtension = tab.preferredExtension === 'md' ? 'txt' : 'md';
+
+    const current = tab.preferredExtension || (tab.path?.endsWith('.txt') ? 'txt' : 'md');
+
+    tab.preferredExtension = current === 'md' ? 'txt' : 'md';
+
     editorStore.sessionDirty = true;
 }

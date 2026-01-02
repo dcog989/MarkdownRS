@@ -25,22 +25,23 @@
     let fileType = $derived.by(() => {
         if (!activeTab) return "markdown";
 
-        // For saved files, determine by path
+        if (activeTab.preferredExtension) {
+            return activeTab.preferredExtension === "txt" ? "text" : "markdown";
+        }
+
         if (activeTab.path) {
-            const path = activeTab.path;
+            const path = activeTab.path.toLowerCase();
             if (path.endsWith(".txt")) return "text";
-            if (path.endsWith(".md")) return "markdown";
             return "markdown";
         }
 
-        // For unsaved files, use the preferred extension
-        return activeTab.preferredExtension === "txt" ? "text" : "markdown";
+        return "markdown";
     });
 
-    let canToggleFileType = $derived(!activeTab?.path); // Only unsaved files can toggle
+    let canToggleFileType = $derived(!!activeTab);
 
     function toggleFileType() {
-        if (activeTab && !activeTab.path) {
+        if (activeTab) {
             togglePreferredExtension(activeTab.id);
         }
     }

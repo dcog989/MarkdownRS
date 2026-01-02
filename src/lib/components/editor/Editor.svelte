@@ -8,6 +8,7 @@
     import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { navigateToPath } from "$lib/utils/fileSystem";
+    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { formatMarkdown } from "$lib/utils/formatterRust";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
@@ -246,7 +247,21 @@
     });
 
     let initialContent = $derived(activeTab?.content || "");
-    let filename = $derived(activeTab?.path || "unsaved.md");
+
+    // Dynamically calculate filename based on path or preferred extension for unsaved files
+    let filename = $derived.by(() => {
+        if (activeTab?.path) return activeTab.path;
+        return activeTab?.preferredExtension === "txt" ? "unsaved.txt" : "unsaved.md";
+    });
+
+    // Explicitly determine if we should treat this as markdown
+    let isMarkdown = $derived.by(() => {
+        if (activeTab?.preferredExtension) {
+            return activeTab.preferredExtension === "md";
+        }
+        return isMarkdownFile(filename);
+    });
+
     let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
     let lineChangeTracker = $derived(activeTab?.lineChangeTracker || new LineChangeTracker());
@@ -256,7 +271,7 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} initialScrollPercentage={initialScroll} {initialSelection} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} {isMarkdown} initialScrollPercentage={initialScroll} {initialSelection} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}

@@ -3,7 +3,6 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
-    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin, urlPlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
@@ -27,6 +26,7 @@
         tabId,
         initialContent = "",
         filename = "",
+        isMarkdown = true,
         initialScrollPercentage = 0,
         initialSelection = { anchor: 0, head: 0 },
         lineChangeTracker,
@@ -42,6 +42,7 @@
         tabId: string;
         initialContent?: string;
         filename?: string;
+        isMarkdown?: boolean;
         initialScrollPercentage?: number;
         initialSelection?: { anchor: number; head: number };
         lineChangeTracker: any;
@@ -67,6 +68,7 @@
     let indentComp = new Compartment();
     let spellComp = new Compartment();
     let whitespaceComp = new Compartment();
+    let languageComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
@@ -279,6 +281,8 @@
         });
     });
 
+    const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin];
+
     $effect(() => {
         if (view && spellcheckState.dictionaryLoaded) {
             view.dispatch({
@@ -290,7 +294,7 @@
     $effect(() => {
         if (view)
             view.dispatch({
-                effects: [wrapComp.reconfigure(appContext.app.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))), whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [])],
+                effects: [wrapComp.reconfigure(appContext.app.editorWordWrap ? EditorView.lineWrapping : []), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))), whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []), languageComp.reconfigure(isMarkdown ? markdownExtensions : [])],
             });
     });
 
@@ -402,6 +406,7 @@
             themeComp.of(dynamicTheme),
             indentComp.of(indentUnit.of("  ")),
             whitespaceComp.of([]),
+            languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
 
             spellComp.of(createSpellCheckLinter()),
@@ -411,11 +416,6 @@
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
             eventHandlers,
         ];
-
-        // Conditionally apply Markdown syntax highlighting and extensions
-        if (isMarkdownFile(filename)) {
-            extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin);
-        }
 
         extensions.push(
             EditorView.updateListener.of((update) => {
