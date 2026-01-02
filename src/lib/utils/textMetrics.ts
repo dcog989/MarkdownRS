@@ -57,7 +57,7 @@ export function calculateCursorMetrics(
         cursorOffset: cursorOffset,
         cursorLine: line.number,
         cursorCol: cursorOffset - line.from + 1,
-        currentLineLength: line.text.length,
+        currentLineLength: Math.max(line.text.length, cursorOffset - line.from),
         currentWordIndex: countWords(textUpToCursor),
     };
 }

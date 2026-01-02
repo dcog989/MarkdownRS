@@ -1,9 +1,11 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
+    import DictionarySelector from "$lib/components/ui/DictionarySelector.svelte";
     import { toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { infoToast } from "$lib/stores/toastStore.svelte";
     import { callBackend } from "$lib/utils/backend";
+    import { clearDictionaries } from "$lib/utils/spellcheck.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { DEFAULT_THEME_NAMES } from "$lib/utils/themes";
     import { Keyboard, Search, Settings, X } from "lucide-svelte";
@@ -78,6 +80,8 @@
         { key: "previewFontFamily", label: "Font Family", type: "text", category: "Preview", defaultValue: "system-ui, -apple-system, sans-serif" },
         { key: "previewFontSize", label: "Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
         { key: "markdownFlavor", label: "Markdown Flavor", type: "select", category: "Preview", defaultValue: "gfm", options: ["gfm", "commonmark"], optionLabels: ["GitHub Flavored Markdown", "CommonMark"] },
+
+        { key: "spellcheckDictionaries", label: "Spellcheck Dictionaries", type: "dictionary-multi-select", category: "Spellcheck", defaultValue: ["en"], tooltip: "Select one or more dictionaries. Restart required after changes." },
     ]);
 
     let sortedSettings = $derived(
@@ -113,12 +117,15 @@
         }
 
         const oldValue = (appContext.app as any)[key];
-        if (oldValue !== value) {
+        if (oldValue !== value && JSON.stringify(oldValue) !== JSON.stringify(value)) {
             (appContext.app as any)[key] = value;
             saveSettings();
 
             if (key === "logLevel") {
                 infoToast("Restart required to apply log level changes");
+            } else if (key === "spellcheckDictionaries") {
+                clearDictionaries();
+                infoToast("Restart required to apply dictionary changes");
             }
         }
     }
@@ -181,6 +188,10 @@
                                             <option value={option}>{setting.optionLabels?.[idx] || option}</option>
                                         {/each}
                                     </select>
+                                {:else if setting.type === "dictionary-multi-select"}
+                                    <div use:tooltip={(setting as any).tooltip || ""}>
+                                        <DictionarySelector bind:selected={appContext.app.spellcheckDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
+                                    </div>
                                 {/if}
                             </div>
                         </div>

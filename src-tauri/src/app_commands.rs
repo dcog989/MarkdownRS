@@ -391,16 +391,19 @@ pub async fn resolve_path_relative(
 pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
+    dictionaries: Option<Vec<String>>,
 ) -> Result<(), String> {
-    log::info!("Initializing spellchecker");
+    let dict_codes = dictionaries.unwrap_or_else(|| vec!["en".to_string()]);
+
+    log::info!(
+        "Initializing spellchecker with dictionaries: {:?}",
+        dict_codes
+    );
     let local_dir = app_handle.path().app_local_data_dir().map_err(|e| {
         log::error!("Failed to get local data directory: {}", e);
         format!("Failed to initialize spellchecker: {}", e)
     })?;
     let cache_dir = local_dir.join("spellcheck_cache");
-    let aff_path = cache_dir.join("en_US.aff");
-    let dic_path = cache_dir.join("en_US.dic");
-    let jargon_path = cache_dir.join("jargon.dic");
 
     let app_dir = app_handle
         .path()
@@ -419,84 +422,144 @@ pub async fn init_spellchecker(
         })?;
     }
 
-    // Download dictionaries if missing
-    if !aff_path.exists() || !dic_path.exists() || !jargon_path.exists() {
-        log::info!("Downloading spellcheck dictionary files");
-        let client = reqwest::blocking::Client::new();
+    // Download and combine dictionaries
+    let mut combined_aff = String::new();
+    let mut combined_dic_lines: Vec<String> = Vec::new();
+    let mut first_dict = true;
 
-        let files = [
-            (
-                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.aff",
-                &aff_path,
-                ".aff",
-            ),
-            (
-                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic",
-                &dic_path,
-                ".dic",
-            ),
-            (
-                "https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic",
-                &jargon_path,
-                "jargon",
-            ),
-        ];
+    for dict_code in &dict_codes {
+        let aff_path = cache_dir.join(format!("{}.aff", dict_code));
+        let dic_path = cache_dir.join(format!("{}.dic", dict_code));
 
-        for (url, path, name) in files {
-            if let Ok(resp) = client.get(url).send() {
+        // Download if missing
+        if !aff_path.exists() || !dic_path.exists() {
+            log::info!("Downloading dictionary: {}", dict_code);
+            let client = reqwest::blocking::Client::new();
+
+            let aff_url = format!(
+                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
+                dict_code
+            );
+            let dic_url = format!(
+                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.dic",
+                dict_code
+            );
+
+            if let Ok(resp) = client.get(&aff_url).send() {
                 if resp.status().is_success() {
                     if let Ok(text) = resp.text() {
-                        log::info!("Downloaded {} dictionary file", name);
-                        let _ = fs::write(path, text);
+                        log::info!("Downloaded .aff file for {}", dict_code);
+                        let _ = fs::write(&aff_path, text);
+                    }
+                }
+            }
+
+            if let Ok(resp) = client.get(&dic_url).send() {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text() {
+                        log::info!("Downloaded .dic file for {}", dict_code);
+                        let _ = fs::write(&dic_path, text);
                     }
                 }
             }
         }
-    }
 
-    if aff_path.exists() && dic_path.exists() {
-        if let Ok(raw_aff) = fs::read_to_string(&aff_path) {
-            if let Ok(raw_dic) = fs::read_to_string(&dic_path) {
-                log::debug!("Successfully read dictionary files");
-                let mut combined_dic = raw_dic.clone();
-                if jargon_path.exists() {
-                    if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
-                        if let Some((_, jargon_words)) = jargon_content.split_once('\n') {
-                            combined_dic.push_str("\n");
-                            combined_dic.push_str(jargon_words);
+        // Read and merge dictionary files
+        if aff_path.exists() && dic_path.exists() {
+            if let (Ok(aff_content), Ok(dic_content)) =
+                (fs::read_to_string(&aff_path), fs::read_to_string(&dic_path))
+            {
+                // Use the first dictionary's .aff file as the base
+                if first_dict {
+                    combined_aff = aff_content.trim_start_matches('\u{feff}').to_string();
+                    first_dict = false;
+                }
+
+                // Parse and accumulate .dic entries (skip the count line)
+                let dic_clean = dic_content.trim_start_matches('\u{feff}');
+                let mut lines: Vec<&str> = dic_clean.lines().collect();
+                if !lines.is_empty() {
+                    lines.remove(0); // Remove count line
+                    for line in &lines {
+                        if !line.trim().is_empty() {
+                            combined_dic_lines.push(line.to_string());
                         }
                     }
                 }
 
-                let aff_content = raw_aff.trim_start_matches('\u{feff}');
-                let dic_content = sanitize_dic_content(&combined_dic);
-
-                match Dictionary::new(aff_content, &dic_content) {
-                    Ok(dict) => {
-                        let mut speller = speller_arc.lock().await;
-                        *speller = Some(dict);
-                        log::info!("Spellchecker initialized successfully");
-                    }
-                    Err(e) => {
-                        log::error!(
-                            "[Spellcheck] Failed to create dictionary: {:?} - Cleaning up cache files",
-                            e
-                        );
-                        let _ = fs::remove_file(&aff_path);
-                        let _ = fs::remove_file(&dic_path);
-                        let _ = fs::remove_file(&jargon_path);
-                    }
-                }
-            } else {
-                log::error!("Failed to read .dic file: {:?}", dic_path);
+                log::info!("Loaded dictionary: {} ({} words)", dict_code, lines.len());
             }
         } else {
-            log::error!("Failed to read .aff file: {:?}", aff_path);
+            log::warn!("Dictionary files not found for: {}", dict_code);
         }
-    } else {
-        log::warn!("[Spellcheck] Dictionary files missing after download attempt");
     }
 
+    // Add jargon dictionary
+    let jargon_path = cache_dir.join("jargon.dic");
+    if !jargon_path.exists() {
+        log::info!("Downloading jargon dictionary");
+        if let Ok(client) = reqwest::blocking::Client::builder().build() {
+            if let Ok(resp) = client
+                .get("https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic")
+                .send()
+            {
+                if resp.status().is_success() {
+                    if let Ok(text) = resp.text() {
+                        log::info!("Downloaded jargon dictionary");
+                        let _ = fs::write(&jargon_path, text);
+                    }
+                }
+            }
+        }
+    }
+
+    if jargon_path.exists() {
+        if let Ok(jargon_content) = fs::read_to_string(&jargon_path) {
+            let mut lines: Vec<&str> = jargon_content.lines().collect();
+            if !lines.is_empty() {
+                lines.remove(0); // Remove count line
+                for line in &lines {
+                    if !line.trim().is_empty() {
+                        combined_dic_lines.push(line.to_string());
+                    }
+                }
+            }
+            log::info!("Loaded jargon dictionary");
+        }
+    }
+
+    if !combined_aff.is_empty() && !combined_dic_lines.is_empty() {
+        // Construct final .dic with word count
+        let combined_dic = format!(
+            "{}\n{}",
+            combined_dic_lines.len(),
+            combined_dic_lines.join("\n")
+        );
+
+        match Dictionary::new(&combined_aff, &combined_dic) {
+            Ok(dict) => {
+                let mut speller = speller_arc.lock().await;
+                *speller = Some(dict);
+                log::info!(
+                    "Spellchecker initialized successfully with {} dictionaries ({} total words)",
+                    dict_codes.len(),
+                    combined_dic_lines.len()
+                );
+            }
+            Err(e) => {
+                log::error!(
+                    "[Spellcheck] Failed to create dictionary: {:?} - This may indicate corrupted cache files",
+                    e
+                );
+                return Err(format!("Failed to create spellchecker: {:?}", e));
+            }
+        }
+    } else {
+        log::warn!("[Spellcheck] No dictionary content available after download/merge");
+        return Err("Failed to load dictionaries".to_string());
+    }
+
+    // Load custom dictionary
     if custom_path.exists() {
         if let Ok(text) = fs::read_to_string(&custom_path) {
             let mut custom = custom_arc.lock().await;
@@ -510,23 +573,6 @@ pub async fn init_spellchecker(
     }
 
     Ok(())
-}
-
-fn sanitize_dic_content(content: &str) -> String {
-    let content = content.trim_start_matches('\u{feff}');
-    let normalized = content.replace("\r\n", "\n").replace('\r', "\n");
-
-    if let Some((first_line, rest)) = normalized.split_once('\n') {
-        let clean_count = first_line.trim();
-        if clean_count.chars().all(|c| c.is_ascii_digit()) {
-            format!("{}\n{}", clean_count, rest)
-        } else {
-            let line_count = normalized.lines().count();
-            format!("{}\n{}", line_count, normalized)
-        }
-    } else {
-        content.trim().to_string()
-    }
 }
 
 #[tauri::command]

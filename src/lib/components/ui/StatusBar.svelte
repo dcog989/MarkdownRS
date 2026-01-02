@@ -1,7 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
     import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
-    import { updateLineEnding } from "$lib/stores/editorStore.svelte";
+    import { togglePreferredExtension, updateLineEnding } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
     import { TextWrap } from "lucide-svelte";
@@ -24,11 +24,26 @@
 
     let fileType = $derived.by(() => {
         if (!activeTab) return "markdown";
-        const path = activeTab.path || activeTab.title || "";
-        if (path.endsWith(".txt")) return "text";
-        if (path.endsWith(".md")) return "markdown";
-        return "markdown";
+        
+        // For saved files, determine by path
+        if (activeTab.path) {
+            const path = activeTab.path;
+            if (path.endsWith(".txt")) return "text";
+            if (path.endsWith(".md")) return "markdown";
+            return "markdown";
+        }
+        
+        // For unsaved files, use the preferred extension
+        return activeTab.preferredExtension === 'txt' ? "text" : "markdown";
     });
+
+    let canToggleFileType = $derived(!activeTab?.path); // Only unsaved files can toggle
+
+    function toggleFileType() {
+        if (activeTab && !activeTab.path) {
+            togglePreferredExtension(activeTab.id);
+        }
+    }
 
     function toggleLineEnding() {
         if (activeTab) {
@@ -50,7 +65,13 @@
     "
 >
     <div class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100" style="opacity: {textOpacity};">
-        <span class="min-w-[70px]" use:tooltip={"File Type"}>{fileType}</span>
+        {#if canToggleFileType}
+            <button class="min-w-[70px] hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleFileType} use:tooltip={"Toggle File Type (markdown/text)"}>
+                {fileType}
+            </button>
+        {:else}
+            <span class="min-w-[70px] cursor-default" use:tooltip={"File Type"}>{fileType}</span>
+        {/if}
         <span class="opacity-40">|</span>
 
         <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>

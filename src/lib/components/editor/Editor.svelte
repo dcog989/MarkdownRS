@@ -9,6 +9,7 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { formatMarkdown } from "$lib/utils/formatterRust";
+    import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
@@ -34,6 +35,14 @@
     let contextWordTo = $state(0);
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
+
+    // Initialize LineChangeTracker for this tab if it doesn't exist
+    $effect(() => {
+        const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+        if (tab && !tab.lineChangeTracker) {
+            tab.lineChangeTracker = new LineChangeTracker();
+        }
+    });
 
     $effect(() => {
         const tab = activeTab;
@@ -153,11 +162,17 @@
                         // Expand right to whitespace
                         while (end < text.length && /\S/.test(text[end])) end++;
 
-                        // Extract chunk and strip common trailing punctuation that isn't part of paths/urls
-                        targetString = text
-                            .slice(start, end)
-                            .replace(/[.,;:!?)\]]+$/, "")
-                            .trim();
+                        // Extract chunk
+                        targetString = text.slice(start, end).trim();
+                        
+                        // Only strip trailing punctuation if it doesn't look like a URL
+                        // URLs can contain colons, so we need to be careful
+                        if (!/^https?:\/\//i.test(targetString)) {
+                            targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
+                        } else {
+                            // For URLs, only strip very limited trailing punctuation
+                            targetString = targetString.replace(/[.,;!?)\]]+$/, "");
+                        }
                     }
                 }
 
@@ -167,7 +182,7 @@
 
                     // If it looks like a web URL, open in browser, otherwise hand to system path navigator
                     if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-                        const url = targetString.startsWith("www") ? `https://${targetString}` : targetString;
+                        const url = targetString.startsWith("www.") ? `https://${targetString}` : targetString;
                         openPath(url).catch(() => {});
                     } else {
                         navigateToPath(targetString);
@@ -231,14 +246,25 @@
     let filename = $derived(activeTab?.path || "unsaved.md");
     let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
+    let lineChangeTracker = $derived(activeTab?.lineChangeTracker || new LineChangeTracker());
+    
+    // Show empty state when content is empty and file is unsaved
+    let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} initialScrollPercentage={initialScroll} {initialSelection} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
+    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} initialScrollPercentage={initialScroll} {initialSelection} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
     <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
+    
+    <!-- Empty State Overlay -->
+    {#if showEmptyState}
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <img src="/logo.svg" alt="MarkdownRS Logo" class="w-48 h-48 opacity-[0.08] select-none" />
+        </div>
+    {/if}
 </div>
 
 {#if showContextMenu}

@@ -30,6 +30,7 @@
         filename = "",
         initialScrollPercentage = 0,
         initialSelection = { anchor: 0, head: 0 },
+        lineChangeTracker,
         onContentChange,
         onMetricsChange,
         onScrollChange,
@@ -44,6 +45,7 @@
         filename?: string;
         initialScrollPercentage?: number;
         initialSelection?: { anchor: number; head: number };
+        lineChangeTracker: any;
         onContentChange: (content: string) => void;
         onMetricsChange: (metrics: any) => void;
         onScrollChange?: (percentage: number, topLine: number) => void;
@@ -69,7 +71,6 @@
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
-    const lineChangeTracker = new LineChangeTracker();
 
     // -- Visual Extensions --
     class NewlineWidget extends WidgetType {

@@ -108,12 +108,26 @@ export async function saveCurrentFile(): Promise<boolean> {
 	try {
 		let savePath = tab.path;
 		if (!savePath) {
-			savePath = await save({
-				filters: [
-					{ name: 'Markdown', extensions: ['md'] },
-					{ name: 'All Files', extensions: ['*'] }
-				]
-			});
+			// Use preferred extension for the save dialog
+			const preferredExt = tab.preferredExtension || 'md';
+			
+			if (preferredExt === 'txt') {
+				savePath = await save({
+					filters: [
+						{ name: 'Text', extensions: ['txt'] },
+						{ name: 'Markdown', extensions: ['md'] },
+						{ name: 'All Files', extensions: ['*'] }
+					]
+				});
+			} else {
+				savePath = await save({
+					filters: [
+						{ name: 'Markdown', extensions: ['md'] },
+						{ name: 'Text', extensions: ['txt'] },
+						{ name: 'All Files', extensions: ['*'] }
+					]
+				});
+			}
 		}
 
 		if (savePath) {

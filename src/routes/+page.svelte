@@ -28,7 +28,20 @@
     let initError = $state<string | null>(null);
 
     let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
-    let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
+    
+    // Determine if the file is markdown based on saved path or preferred extension for unsaved files
+    let isMarkdown = $derived.by(() => {
+        if (!activeTab) return true;
+        
+        // For saved files, check the path
+        if (activeTab.path) {
+            return isMarkdownFile(activeTab.path);
+        }
+        
+        // For unsaved files, use the preferred extension
+        return activeTab.preferredExtension !== 'txt';
+    });
+    
     let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
     function handleDocumentKeydown(e: KeyboardEvent) {
@@ -131,7 +144,7 @@
                 await loadSession();
 
                 if (appContext.editor.tabs.length === 0) {
-                    const id = addTab("Untitled-1", "# Welcome to MarkdownRS\n\nStart typing...");
+                    const id = addTab();
                     appContext.app.activeTabId = id;
                 }
 

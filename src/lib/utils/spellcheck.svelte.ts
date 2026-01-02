@@ -27,7 +27,12 @@ export async function initSpellcheck(): Promise<void> {
     initPromise = (async () => {
         try {
             await loadCustomDictionary();
-            await callBackend('init_spellchecker', {}, 'Editor:Init');
+
+            // Get selected dictionaries from settings
+            const { appContext } = await import('../stores/state.svelte');
+            const dictionaries = appContext.app.spellcheckDictionaries || ['en'];
+
+            await callBackend('init_spellchecker', { dictionaries }, 'Editor:Init');
             spellcheckState.dictionaryLoaded = true;
         } catch (err) {
             AppError.handle('Spellcheck:Init', err, { showToast: false, severity: 'warning' });

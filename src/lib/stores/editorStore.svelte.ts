@@ -24,6 +24,8 @@ export type EditorTab = {
     encoding: string;
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
+    lineChangeTracker?: any; // Store LineChangeTracker instance per tab
+    preferredExtension?: 'md' | 'txt'; // For unsaved files: user's preference
 };
 
 export type ClosedTab = {
@@ -76,7 +78,7 @@ export function addTab(title: string = '', content: string = '') {
             if (match) maxNewNumber = Math.max(maxNewNumber, parseInt(match[1]));
         }
         finalTitle = `New-${maxNewNumber + 1}`;
-        if (!content) finalContent = `# ${finalTitle}`;
+        // Don't pre-fill content for new tabs - keep it empty
     }
 
     const normalizedContent = normalizeLineEndings(finalContent);
@@ -98,7 +100,8 @@ export function addTab(title: string = '', content: string = '') {
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         lineEnding: 'LF',
-        encoding: 'UTF-8'
+        encoding: 'UTF-8',
+        preferredExtension: 'md' // Default to markdown for new tabs
     };
 
     if (appState.newTabPosition === 'beginning') {
@@ -339,5 +342,17 @@ export function saveTabComplete(id: string, path: string, title: string, lineEnd
     tab.lineEnding = lineEnding;
     tab.fileCheckPerformed = false;
     tab.fileCheckFailed = false;
+    editorStore.sessionDirty = true;
+}
+
+export function togglePreferredExtension(id: string) {
+    const index = editorStore.tabs.findIndex(t => t.id === id);
+    if (index === -1) return;
+    const tab = editorStore.tabs[index];
+    
+    // Only toggle for unsaved files
+    if (tab.path) return;
+    
+    tab.preferredExtension = tab.preferredExtension === 'md' ? 'txt' : 'md';
     editorStore.sessionDirty = true;
 }
