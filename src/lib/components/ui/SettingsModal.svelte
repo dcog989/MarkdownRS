@@ -236,7 +236,7 @@
                                     </select>
                                 {:else if setting.type === "dictionary-multi-select"}
                                     <div use:tooltip={(setting as any).tooltip || ""}>
-                                        <DictionarySelector bind:selected={appContext.app.spellcheckDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
+                                        <DictionarySelector selected={appContext.app.spellcheckDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
                                 {:else if setting.type === "custom-context-menu"}
                                     <input id={setting.key} type="checkbox" checked={isContextMenuEnabled} onchange={(e) => toggleContextMenu(e.currentTarget.checked)} class="w-4 h-4 rounded cursor-pointer accent-accent-primary" disabled={isCheckingContextMenu} />
