@@ -81,6 +81,7 @@
         role="none"
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0 bg-bg-preview text-fg-default"
         style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
+        spellcheck="false"
     >
         {#if !isMarkdown}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">
