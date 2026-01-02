@@ -164,13 +164,16 @@
 
                         // Extract chunk
                         targetString = text.slice(start, end).trim();
-                        
+
+                        // Clean up wrapped characters (common in markdown like [text](url) or <url> or (url))
+                        targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, "");
+
                         // Only strip trailing punctuation if it doesn't look like a URL
                         // URLs can contain colons, so we need to be careful
                         if (!/^https?:\/\//i.test(targetString)) {
                             targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
                         } else {
-                            // For URLs, only strip very limited trailing punctuation
+                            // For URLs, only strip very limited trailing punctuation that can't effectively end a URL
                             targetString = targetString.replace(/[.,;!?)\]]+$/, "");
                         }
                     }
@@ -247,7 +250,7 @@
     let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
     let lineChangeTracker = $derived(activeTab?.lineChangeTracker || new LineChangeTracker());
-    
+
     // Show empty state when content is empty and file is unsaved
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
@@ -258,7 +261,7 @@
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
     <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
-    
+
     <!-- Empty State Overlay -->
     {#if showEmptyState}
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">

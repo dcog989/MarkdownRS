@@ -22,6 +22,27 @@ export const highlightPlugin = ViewPlugin.fromClass(class {
     decorations: v => v.decorations
 });
 
+// Decorator for raw URLs (http://, https://, www.)
+// Matches valid URL characters, stopping before trailing punctuation/whitespace
+const urlMatcher = new MatchDecorator({
+    regexp: /(?:https?:\/\/|www\.)[^\s`]+?(?=[.,;:!?`)]*(?:\s|$))/g,
+    decoration: (match) => Decoration.mark({
+        class: "cm-url"
+    })
+});
+
+export const urlPlugin = ViewPlugin.fromClass(class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+        this.decorations = urlMatcher.createDeco(view);
+    }
+    update(update: ViewUpdate) {
+        this.decorations = urlMatcher.updateDeco(update, this.decorations);
+    }
+}, {
+    decorations: v => v.decorations
+});
+
 // Blockquote Styling
 const blockquoteBorderDeco = Decoration.mark({ class: "cm-blockquote-border" });
 const blockquoteBgDeco = Decoration.mark({ class: "cm-blockquote-bg" });

@@ -4,8 +4,7 @@
     import { CONFIG } from "$lib/utils/config";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
-    import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-    import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin } from "$lib/utils/markdownExtensions";
+    import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin, urlPlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
@@ -415,7 +414,7 @@
 
         // Conditionally apply Markdown syntax highlighting and extensions
         if (isMarkdownFile(filename)) {
-            extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin);
+            extensions.push(markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin);
         }
 
         extensions.push(
