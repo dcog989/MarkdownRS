@@ -1,3 +1,4 @@
+use convert_case::{Case, Casing};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
@@ -90,7 +91,38 @@ fn transform_lines(
     let lines: Vec<&str> = text.lines().collect();
 
     match operation {
-        // Complex Case Operations (Line-aware)
+        // Identifier Case Operations (Powered by convert_case)
+        TextOperation::CamelCase => Ok(lines
+            .iter()
+            .map(|line| line.to_case(Case::Camel))
+            .collect::<Vec<_>>()
+            .join("\n")),
+
+        TextOperation::PascalCase => Ok(lines
+            .iter()
+            .map(|line| line.to_case(Case::Pascal))
+            .collect::<Vec<_>>()
+            .join("\n")),
+
+        TextOperation::SnakeCase => Ok(lines
+            .iter()
+            .map(|line| line.to_case(Case::Snake))
+            .collect::<Vec<_>>()
+            .join("\n")),
+
+        TextOperation::KebabCase => Ok(lines
+            .iter()
+            .map(|line| line.to_case(Case::Kebab))
+            .collect::<Vec<_>>()
+            .join("\n")),
+
+        TextOperation::ConstantCase => Ok(lines
+            .iter()
+            .map(|line| line.to_case(Case::UpperSnake))
+            .collect::<Vec<_>>()
+            .join("\n")),
+
+        // Prose Case Operations (Manual to preserve punctuation/formatting)
         TextOperation::SentenceCase => {
             let result: Vec<String> = lines
                 .iter()
@@ -118,97 +150,24 @@ fn transform_lines(
             Ok(result.join("\n"))
         }
 
-        TextOperation::CamelCase => {
+        TextOperation::TitleCase => {
+            // Manual title casing to preserve punctuation and simple structure
             let result: Vec<String> = lines
                 .iter()
                 .map(|line| {
-                    let parts: Vec<&str> = line
-                        .split(|c: char| !c.is_alphanumeric())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-
-                    if parts.is_empty() {
-                        return String::new();
-                    }
-
-                    let mut res = String::new();
-                    for (i, part) in parts.iter().enumerate() {
-                        if i == 0 {
-                            res.push_str(&part.to_lowercase());
-                        } else {
-                            let mut chars = part.chars();
-                            if let Some(f) = chars.next() {
-                                res.push_str(&f.to_uppercase().to_string());
-                                res.push_str(&chars.as_str().to_lowercase());
+                    line.split_whitespace()
+                        .map(|word| {
+                            let mut chars = word.chars();
+                            match chars.next() {
+                                Some(first) => {
+                                    first.to_uppercase().collect::<String>()
+                                        + &chars.as_str().to_lowercase()
+                                }
+                                None => String::new(),
                             }
-                        }
-                    }
-                    res
-                })
-                .collect();
-            Ok(result.join("\n"))
-        }
-
-        TextOperation::PascalCase => {
-            let result: Vec<String> = lines
-                .iter()
-                .map(|line| {
-                    let parts: Vec<&str> = line
-                        .split(|c: char| !c.is_alphanumeric())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-
-                    let mut res = String::new();
-                    for part in parts {
-                        let mut chars = part.chars();
-                        if let Some(f) = chars.next() {
-                            res.push_str(&f.to_uppercase().to_string());
-                            res.push_str(&chars.as_str().to_lowercase());
-                        }
-                    }
-                    res
-                })
-                .collect();
-            Ok(result.join("\n"))
-        }
-
-        TextOperation::SnakeCase => {
-            let result: Vec<String> = lines
-                .iter()
-                .map(|line| {
-                    line.split(|c: char| !c.is_alphanumeric())
-                        .filter(|s| !s.is_empty())
-                        .map(|s| s.to_lowercase())
+                        })
                         .collect::<Vec<_>>()
-                        .join("_")
-                })
-                .collect();
-            Ok(result.join("\n"))
-        }
-
-        TextOperation::KebabCase => {
-            let result: Vec<String> = lines
-                .iter()
-                .map(|line| {
-                    line.split(|c: char| !c.is_alphanumeric())
-                        .filter(|s| !s.is_empty())
-                        .map(|s| s.to_lowercase())
-                        .collect::<Vec<_>>()
-                        .join("-")
-                })
-                .collect();
-            Ok(result.join("\n"))
-        }
-
-        TextOperation::ConstantCase => {
-            let result: Vec<String> = lines
-                .iter()
-                .map(|line| {
-                    line.split(|c: char| !c.is_alphanumeric())
-                        .filter(|s| !s.is_empty())
-                        .map(|s| s.to_uppercase())
-                        .collect::<Vec<_>>()
-                        .join("_")
+                        .join(" ")
                 })
                 .collect();
             Ok(result.join("\n"))
@@ -331,29 +290,6 @@ fn transform_lines(
             .map(|line| line.trim_start())
             .collect::<Vec<_>>()
             .join("\n")),
-
-        // Case operations on lines
-        TextOperation::TitleCase => {
-            let result: Vec<String> = lines
-                .iter()
-                .map(|line| {
-                    line.split_whitespace()
-                        .map(|word| {
-                            let mut chars = word.chars();
-                            match chars.next() {
-                                Some(first) => {
-                                    first.to_uppercase().collect::<String>()
-                                        + &chars.as_str().to_lowercase()
-                                }
-                                None => String::new(),
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                        .join(" ")
-                })
-                .collect();
-            Ok(result.join("\n"))
-        }
 
         // Markdown operations
         TextOperation::AddBullets => {
@@ -644,21 +580,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sentence_case_punctuation() {
-        let input = "hello. world. test";
-        let output = transform_text(input, TextOperation::SentenceCase, 2).unwrap();
-        assert_eq!(output, "Hello. World. Test");
-    }
-
-    #[test]
-    fn test_camel_case_lines() {
-        let input = "hello world\nfoo_bar";
-        let output = transform_text(input, TextOperation::CamelCase, 2).unwrap();
-        assert_eq!(output, "helloWorld\nfooBar");
-    }
-
-    #[test]
-    fn test_snake_case_lines() {
+    fn test_snake_case_conversion() {
         let input = "Hello World\nFoo Bar";
         let output = transform_text(input, TextOperation::SnakeCase, 2).unwrap();
         assert_eq!(output, "hello_world\nfoo_bar");

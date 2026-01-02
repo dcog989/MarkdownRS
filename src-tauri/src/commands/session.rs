@@ -1,0 +1,56 @@
+use crate::db::TabState;
+use crate::state::AppState;
+use tauri::State;
+
+#[tauri::command]
+pub async fn save_session(
+    state: State<'_, AppState>,
+    mut tabs: Vec<TabState>,
+) -> Result<(), String> {
+    // Normalize line endings to LF before saving to ensure consistent database storage
+    for tab in &mut tabs {
+        tab.content = tab.content.replace("\r\n", "\n");
+    }
+
+    let mut db = state.db.lock().await;
+    db.save_session(&tabs).map_err(|e| {
+        log::error!("Failed to save session: {}", e);
+        format!("Failed to save session: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>, String> {
+    let db = state.db.lock().await;
+    db.load_session().map_err(|e| {
+        log::error!("Failed to restore session: {}", e);
+        format!("Failed to restore session: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
+    let db = state.db.lock().await;
+
+    // Check if there are any free pages to reclaim
+    let freelist_count = db.get_freelist_count().map_err(|e| {
+        log::error!("Failed to get freelist count: {}", e);
+        format!("Failed to check database: {}", e)
+    })?;
+
+    if freelist_count > 0 {
+        log::info!(
+            "Vacuuming database: {} free pages to reclaim",
+            freelist_count
+        );
+        // Reclaim up to 100 pages at a time to avoid blocking
+        db.incremental_vacuum(100).map_err(|e| {
+            log::error!("Failed to vacuum database: {}", e);
+            format!("Failed to vacuum database: {}", e)
+        })?;
+    } else {
+        log::debug!("No free pages to reclaim in database");
+    }
+
+    Ok(())
+}

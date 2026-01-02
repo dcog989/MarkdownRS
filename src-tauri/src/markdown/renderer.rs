@@ -1,0 +1,225 @@
+use crate::markdown::config::MarkdownFlavor;
+use comrak::{Arena, Options, format_html_with_plugins, options::Plugins, parse_document};
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::LazyLock;
+
+// Lazy-compiled regex for file paths
+static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>\"'|?*]*|(?:\.\.?/|~/)[^\s<>\"'|?*]+)"#).unwrap()
+});
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MarkdownOptions {
+    pub flavor: MarkdownFlavor,
+}
+
+impl Default for MarkdownOptions {
+    fn default() -> Self {
+        Self {
+            flavor: MarkdownFlavor::default(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RenderResult {
+    pub html: String,
+    pub line_map: HashMap<usize, usize>,
+}
+
+/// Renders markdown to HTML with line number tracking using comrak
+pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult, String> {
+    let mut comrak_options = Options::default();
+    comrak_options.extension = options.flavor.to_extension_options();
+
+    comrak_options.render.r#unsafe = false;
+    comrak_options.render.escape = false;
+
+    comrak_options.parse.smart = true;
+    comrak_options.parse.default_info_string = None;
+
+    let arena = Arena::new();
+    let root = parse_document(&arena, content, &comrak_options);
+
+    let mut html = String::new();
+    format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
+        .map_err(|e| format!("Failed to render markdown: {}", e))?;
+
+    let html_with_lines = inject_line_numbers(&html, content);
+    let html_with_links = linkify_file_paths(&html_with_lines);
+    let line_map = build_line_map(content);
+
+    Ok(RenderResult {
+        html: html_with_links,
+        line_map,
+    })
+}
+
+fn linkify_file_paths(html: &str) -> String {
+    const SKIP_TAGS: &[&str] = &["<a", "<code", "<pre", "</"];
+    let mut result = String::with_capacity(html.len() * 2);
+
+    for line in html.lines() {
+        let should_skip = SKIP_TAGS
+            .iter()
+            .any(|tag| line.trim_start().starts_with(tag));
+
+        if should_skip {
+            result.push_str(line);
+            result.push('\n');
+            continue;
+        }
+
+        let mut last_end = 0;
+        for cap in PATH_REGEX.captures_iter(line) {
+            let full_match = cap.get(0).unwrap();
+            let path = cap.get(1).unwrap().as_str();
+            let start = full_match.start();
+            let end = full_match.end();
+
+            result.push_str(&line[last_end..start]);
+
+            let leading_space = &full_match.as_str()[..full_match.as_str().len() - path.len()];
+            result.push_str(leading_space);
+
+            result.push_str(&format!(
+                r#"<a href="{}" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">{}</a>"#,
+                path, path
+            ));
+
+            last_end = end;
+        }
+
+        result.push_str(&line[last_end..]);
+        result.push('\n');
+    }
+
+    result
+}
+
+fn inject_line_numbers(html: &str, source: &str) -> String {
+    let mut result = String::with_capacity(html.len() * 2);
+    let mut current_line = 1;
+    let source_lines: Vec<&str> = source.lines().collect();
+
+    for line in html.lines() {
+        let trimmed = line.trim_start();
+
+        if let Some(tag_end_pos) = trimmed.find('>') {
+            let tag_part = &trimmed[..tag_end_pos];
+
+            if !tag_part.starts_with("</")
+                && !tag_part.ends_with('/')
+                && !tag_part.starts_with("<!--")
+            {
+                let tag_name = tag_part
+                    .trim_start_matches('<')
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or("");
+
+                if is_block_element(tag_name) {
+                    let source_line = find_source_line(&source_lines, current_line);
+                    let indent = &line[..line.len() - trimmed.len()];
+                    let before_close = &trimmed[..tag_end_pos];
+                    let after_close = &trimmed[tag_end_pos..];
+
+                    result.push_str(indent);
+                    result.push_str(before_close);
+                    result.push_str(&format!(" data-source-line=\"{}\"", source_line));
+                    result.push_str(after_close);
+                    result.push('\n');
+                    continue;
+                }
+            }
+        }
+
+        result.push_str(line);
+        result.push('\n');
+
+        if should_increment_line(line) {
+            current_line += 1;
+        }
+    }
+
+    result
+}
+
+fn is_block_element(tag_name: &str) -> bool {
+    matches!(
+        tag_name,
+        "h1" | "h2"
+            | "h3"
+            | "h4"
+            | "h5"
+            | "h6"
+            | "p"
+            | "pre"
+            | "blockquote"
+            | "ul"
+            | "ol"
+            | "li"
+            | "table"
+            | "thead"
+            | "tbody"
+            | "tr"
+            | "th"
+            | "td"
+            | "div"
+            | "section"
+            | "article"
+            | "header"
+            | "footer"
+            | "hr"
+            | "dl"
+            | "dt"
+            | "dd"
+    )
+}
+
+fn should_increment_line(line: &str) -> bool {
+    let trimmed = line.trim();
+    if trimmed.is_empty() || trimmed.starts_with("</") {
+        return false;
+    }
+    for tag in &[
+        "<h1",
+        "<h2",
+        "<h3",
+        "<h4",
+        "<h5",
+        "<h6",
+        "<p",
+        "<li",
+        "<pre",
+        "<blockquote",
+        "<table",
+        "<tr",
+        "<hr",
+    ] {
+        if trimmed.starts_with(tag) {
+            return true;
+        }
+    }
+    false
+}
+
+fn find_source_line(source_lines: &[&str], html_line: usize) -> usize {
+    html_line.min(source_lines.len())
+}
+
+fn build_line_map(content: &str) -> HashMap<usize, usize> {
+    let mut line_map = HashMap::new();
+    let mut line_num = 1;
+    let mut offset = 0;
+
+    for line in content.lines() {
+        line_map.insert(line_num, offset);
+        offset += line.len() + 1;
+        line_num += 1;
+    }
+
+    line_map
+}

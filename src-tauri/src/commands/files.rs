@@ -1,0 +1,211 @@
+use crate::utils::{format_system_time, validate_path};
+use encoding_rs::{Encoding, UTF_8};
+use path_clean::PathClean;
+use serde::Serialize;
+use std::path::PathBuf;
+use tokio::fs;
+
+#[derive(Serialize)]
+pub struct FileMetadata {
+    pub created: Option<String>,
+    pub modified: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct FileContent {
+    pub content: String,
+    pub encoding: String,
+}
+
+#[tauri::command]
+pub async fn read_text_file(path: String) -> Result<FileContent, String> {
+    validate_path(&path)?;
+    let metadata = fs::metadata(&path).await.map_err(|e| {
+        log::error!("Failed to read metadata for '{}': {}", path, e);
+        format!("Failed to access file: {}", e)
+    })?;
+
+    if metadata.is_dir() {
+        log::warn!("Attempted to read directory as file: {}", path);
+        return Err("Cannot read a directory as a text file".to_string());
+    }
+
+    const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024;
+    if metadata.len() > MAX_FILE_SIZE {
+        log::warn!(
+            "File too large to read: {} ({} MB)",
+            path,
+            metadata.len() / 1024 / 1024
+        );
+        return Err(format!(
+            "File too large: {} MB (max {} MB)",
+            metadata.len() / 1024 / 1024,
+            MAX_FILE_SIZE / 1024 / 1024
+        ));
+    }
+
+    let bytes = fs::read(&path).await.map_err(|e| {
+        log::error!("Failed to read file '{}': {}", path, e);
+        format!("Failed to read file: {}", e)
+    })?;
+
+    if let Some((encoding, _)) = Encoding::for_bom(&bytes) {
+        let (cow, _) = encoding.decode_with_bom_removal(&bytes);
+        return Ok(FileContent {
+            content: cow.into_owned(),
+            encoding: encoding.name().to_string(),
+        });
+    }
+
+    let (cow, _, had_errors) = UTF_8.decode(&bytes);
+    if !had_errors {
+        return Ok(FileContent {
+            content: cow.into_owned(),
+            encoding: "UTF-8".to_string(),
+        });
+    }
+
+    // Fallback detection (CPU bound, fine to run here or could use spawn_blocking if huge)
+    let mut detector = chardetng::EncodingDetector::new();
+    detector.feed(&bytes, true);
+    let detected_encoding = detector.guess(None, false);
+    let (cow, _, _) = detected_encoding.decode(&bytes);
+
+    Ok(FileContent {
+        content: cow.into_owned(),
+        encoding: detected_encoding.name().to_string(),
+    })
+}
+
+#[tauri::command]
+pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
+    validate_path(&path)?;
+    let temp_path = format!("{}.tmp", path);
+
+    fs::write(&temp_path, &content).await.map_err(|e| {
+        log::error!("Failed to write temporary file '{}': {}", temp_path, e);
+        format!("Failed to write file: {}", e)
+    })?;
+
+    match fs::rename(&temp_path, &path).await {
+        Ok(_) => {
+            log::debug!("Successfully wrote file: {}", path);
+            Ok(())
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
+            log::debug!(
+                "Cross-device rename failed, falling back to copy for: {}",
+                path
+            );
+            fs::copy(&temp_path, &path).await.map_err(|ce| {
+                log::error!(
+                    "Failed to copy file from '{}' to '{}': {}",
+                    temp_path,
+                    path,
+                    ce
+                );
+                format!("Failed to save file: {}", ce)
+            })?;
+            let _ = fs::remove_file(&temp_path).await;
+            Ok(())
+        }
+        Err(e) => {
+            log::error!("Failed to rename '{}' to '{}': {}", temp_path, path, e);
+            let _ = fs::remove_file(&temp_path).await;
+            Err(format!("Failed to save file: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
+    validate_path(&path)?;
+    let metadata = fs::metadata(&path).await.map_err(|e| {
+        log::debug!("Failed to get metadata for '{}': {}", path, e);
+        format!("Failed to get file metadata: {}", e)
+    })?;
+    Ok(FileMetadata {
+        created: format_system_time(metadata.created()),
+        modified: format_system_time(metadata.modified()),
+    })
+}
+
+#[tauri::command]
+pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
+    validate_path(&path)?;
+    // trash crate is blocking, but it's a specific OS operation.
+    // It's acceptable to keep it blocking or wrap in spawn_blocking if it causes UI freezes.
+    trash::delete(&path).map_err(|e| {
+        log::error!("Failed to send file to recycle bin '{}': {}", path, e);
+        format!("Failed to send file to recycle bin: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn resolve_path_relative(
+    base_path: Option<String>,
+    click_path: String,
+) -> Result<String, String> {
+    let path_buf = if let Some(base) = base_path {
+        let mut p = PathBuf::from(base);
+        p.pop();
+        p.push(click_path);
+        p
+    } else {
+        PathBuf::from(click_path)
+    };
+
+    let cleaned = path_buf.clean();
+
+    // Async exists check using metadata
+    if fs::metadata(&cleaned).await.is_err() {
+        log::debug!("Resolved path does not exist: {:?}", cleaned);
+        return Err("File does not exist".to_string());
+    }
+
+    cleaned
+        .canonicalize()
+        .map(|p| {
+            log::debug!("Resolved path: {:?}", p);
+            p.to_string_lossy().to_string()
+        })
+        .map_err(|e| {
+            log::error!("Failed to canonicalize path {:?}: {}", cleaned, e);
+            format!("Failed to resolve path: {}", e)
+        })
+}
+
+#[tauri::command]
+pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), String> {
+    validate_path(&path)?;
+    fs::write(&path, &content).await.map_err(|e| {
+        log::error!("Failed to write binary file '{}': {}", path, e);
+        format!("Failed to write file: {}", e)
+    })?;
+    log::debug!("Successfully wrote binary file: {}", path);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn rename_file(old_path: String, new_path: String) -> Result<(), String> {
+    validate_path(&old_path)?;
+    validate_path(&new_path)?;
+
+    if fs::metadata(&old_path).await.is_err() {
+        return Err("Source file does not exist".to_string());
+    }
+
+    if fs::metadata(&new_path).await.is_ok() {
+        return Err("A file with that name already exists".to_string());
+    }
+
+    fs::rename(&old_path, &new_path).await.map_err(|e| {
+        log::error!(
+            "Failed to rename file from '{}' to '{}': {}",
+            old_path,
+            new_path,
+            e
+        );
+        format!("Failed to rename file: {}", e)
+    })
+}

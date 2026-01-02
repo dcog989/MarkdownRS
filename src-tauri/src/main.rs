@@ -1,12 +1,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod app_commands;
+mod commands;
 mod db;
-mod markdown_config;
-mod markdown_formatter;
-mod markdown_renderer;
-mod text_transforms;
+mod markdown;
+mod state;
+mod transforms;
+mod utils;
 
 use log::LevelFilter;
 use std::fs;
@@ -173,7 +173,7 @@ fn main() {
             let db_path = db_dir.join("session.db");
             let db = db::Database::new(db_path).expect("failed to initialize database");
 
-            app.manage(app_commands::AppState {
+            app.manage(state::AppState {
                 db: tokio::sync::Mutex::new(db),
                 speller: std::sync::Arc::new(tokio::sync::Mutex::new(None)),
                 custom_dict: std::sync::Arc::new(tokio::sync::Mutex::new(
@@ -211,34 +211,34 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            app_commands::save_session,
-            app_commands::restore_session,
-            app_commands::vacuum_database,
-            app_commands::read_text_file,
-            app_commands::write_text_file,
-            app_commands::write_binary_file,
-            app_commands::get_file_metadata,
-            app_commands::get_app_info,
-            app_commands::send_to_recycle_bin,
-            app_commands::add_to_dictionary,
-            app_commands::get_custom_dictionary,
-            app_commands::resolve_path_relative,
-            app_commands::init_spellchecker,
-            app_commands::check_words,
-            app_commands::get_spelling_suggestions,
-            app_commands::transform_text_content,
-            app_commands::add_bookmark,
-            app_commands::get_all_bookmarks,
-            app_commands::delete_bookmark,
-            app_commands::update_bookmark_access_time,
-            app_commands::get_available_themes,
-            app_commands::get_theme_css,
-            app_commands::render_markdown,
-            app_commands::format_markdown,
-            app_commands::get_markdown_flavors,
-            app_commands::load_settings,
-            app_commands::save_settings,
-            app_commands::rename_file,
+            commands::session::save_session,
+            commands::session::restore_session,
+            commands::session::vacuum_database,
+            commands::files::read_text_file,
+            commands::files::write_text_file,
+            commands::files::write_binary_file,
+            commands::files::get_file_metadata,
+            commands::files::send_to_recycle_bin,
+            commands::files::resolve_path_relative,
+            commands::files::rename_file,
+            commands::settings::get_app_info,
+            commands::spellcheck::add_to_dictionary,
+            commands::spellcheck::get_custom_dictionary,
+            commands::spellcheck::init_spellchecker,
+            commands::spellcheck::check_words,
+            commands::spellcheck::get_spelling_suggestions,
+            commands::markdown::render_markdown,
+            commands::markdown::format_markdown,
+            commands::markdown::get_markdown_flavors,
+            commands::markdown::transform_text_content,
+            commands::bookmarks::add_bookmark,
+            commands::bookmarks::get_all_bookmarks,
+            commands::bookmarks::delete_bookmark,
+            commands::bookmarks::update_bookmark_access_time,
+            commands::settings::get_available_themes,
+            commands::settings::get_theme_css,
+            commands::settings::load_settings,
+            commands::settings::save_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
