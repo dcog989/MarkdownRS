@@ -5,8 +5,8 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { infoToast } from "$lib/stores/toastStore.svelte";
     import { callBackend } from "$lib/utils/backend";
-    import { clearDictionaries } from "$lib/utils/spellcheck.svelte.ts";
     import { saveSettings } from "$lib/utils/settings";
+    import { clearDictionaries } from "$lib/utils/spellcheck.svelte.ts";
     import { DEFAULT_THEME_NAMES } from "$lib/utils/themes";
     import { Keyboard, Search, Settings, X } from "lucide-svelte";
     import Modal from "./Modal.svelte";
@@ -21,8 +21,30 @@
     let searchQuery = $state("");
     let searchInputEl = $state<HTMLInputElement>();
 
+    // Windows Context Menu State
+    let isContextMenuEnabled = $state(false);
+    let isCheckingContextMenu = $state(false);
+    let isWindows = $state(false);
+
     $effect(() => {
         if (isOpen) {
+            // Get platform info first
+            callBackend("get_app_info", {}, "Settings:Load").then((info) => {
+                isWindows = info.os_platform === "windows";
+
+                if (isWindows) {
+                    isCheckingContextMenu = true;
+                    callBackend("check_context_menu_status", {}, "Settings:Load")
+                        .then((enabled) => {
+                            isContextMenuEnabled = enabled;
+                        })
+                        .catch(() => {})
+                        .finally(() => {
+                            isCheckingContextMenu = false;
+                        });
+                }
+            });
+
             callBackend("get_available_themes", {}, "Settings:Load")
                 .then((customThemes: string[]) => {
                     const defaults = DEFAULT_THEME_NAMES;
@@ -43,6 +65,17 @@
             searchQuery = "";
         }
     });
+
+    async function toggleContextMenu(enable: boolean) {
+        try {
+            await callBackend("set_context_menu_item", { enable }, "Settings:Save");
+            isContextMenuEnabled = enable;
+            infoToast(enable ? "Added to context menu" : "Removed from context menu");
+        } catch (err) {
+            // Error handling usually taken care of by callBackend/AppError, but good to reset UI
+            isContextMenuEnabled = !enable; // revert
+        }
+    }
 
     const settingsDefinitions = $derived([
         { key: "logLevel", label: "Log Level (Restart Required)", type: "select", category: "Advanced", defaultValue: "info", options: ["trace", "debug", "info", "warn", "error"] },
@@ -82,6 +115,19 @@
         { key: "markdownFlavor", label: "Markdown Flavor", type: "select", category: "Preview", defaultValue: "gfm", options: ["gfm", "commonmark"], optionLabels: ["GitHub Flavored Markdown", "CommonMark"] },
 
         { key: "spellcheckDictionaries", label: "Spellcheck Dictionaries", type: "dictionary-multi-select", category: "Spellcheck", defaultValue: ["en"], tooltip: "Select one or more dictionaries. Restart required after changes." },
+
+        // Custom key for Windows Context Menu - Only visible on Windows
+        ...(isWindows
+            ? [
+                  {
+                      key: "windowsContextMenu",
+                      label: "Add 'Open with MarkdownRS' to Context Menu",
+                      type: "custom-context-menu",
+                      category: "System",
+                      defaultValue: false,
+                  },
+              ]
+            : []),
     ]);
 
     let sortedSettings = $derived(
@@ -192,6 +238,8 @@
                                     <div use:tooltip={(setting as any).tooltip || ""}>
                                         <DictionarySelector bind:selected={appContext.app.spellcheckDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
+                                {:else if setting.type === "custom-context-menu"}
+                                    <input id={setting.key} type="checkbox" checked={isContextMenuEnabled} onchange={(e) => toggleContextMenu(e.currentTarget.checked)} class="w-4 h-4 rounded cursor-pointer accent-accent-primary" disabled={isCheckingContextMenu} />
                                 {/if}
                             </div>
                         </div>

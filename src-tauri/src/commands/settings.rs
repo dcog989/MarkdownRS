@@ -11,6 +11,7 @@ pub struct AppInfo {
     pub data_path: String,
     pub cache_path: String,
     pub logs_path: String,
+    pub os_platform: String,
 }
 
 #[tauri::command]
@@ -38,6 +39,15 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         .map(|p| p.join("Logs").to_string_lossy().to_string())
         .unwrap_or_default();
 
+    let os_platform = if cfg!(target_os = "windows") {
+        "windows"
+    } else if cfg!(target_os = "macos") {
+        "macos"
+    } else {
+        "linux"
+    }
+    .to_string();
+
     Ok(AppInfo {
         name: "MarkdownRS".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -45,6 +55,7 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         data_path,
         cache_path,
         logs_path,
+        os_platform,
     })
 }
 
@@ -155,4 +166,144 @@ pub async fn save_settings(
     })?;
     log::info!("Settings saved successfully");
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+mod windows_registry {
+    use winreg::RegKey;
+    use winreg::enums::*;
+
+    pub fn set_context_menu() -> Result<(), String> {
+        let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe_path.to_str().ok_or("Invalid executable path")?;
+        let exe_name = exe_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("markdown-rs.exe");
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+        // 1. Classic Context Menu (Right-click background / file) -> "Show more options"
+        // HKCU\Software\Classes\*\shell\MarkdownRS
+        {
+            let path = r"Software\Classes\*\shell\MarkdownRS";
+            let (key, _) = hkcu.create_subkey(path).map_err(|e| e.to_string())?;
+
+            key.set_value("", &"Open with MarkdownRS")
+                .map_err(|e| e.to_string())?;
+            key.set_value("Icon", &exe_str).map_err(|e| e.to_string())?;
+
+            let (cmd_key, _) = key.create_subkey("command").map_err(|e| e.to_string())?;
+            cmd_key
+                .set_value("", &format!("\"{}\" \"%1\"", exe_str))
+                .map_err(|e| e.to_string())?;
+        }
+
+        // 2. Application Registration (Crucial for "Open With" submenu availability)
+        // HKCU\Software\Classes\Applications\markdown-rs.exe
+        {
+            let app_path = format!(r"Software\Classes\Applications\{}", exe_name);
+            let (app_key, _) = hkcu.create_subkey(&app_path).map_err(|e| e.to_string())?;
+
+            // "FriendlyAppName" is what shows up in the Open With menu
+            app_key.set_value("FriendlyAppName", &"MarkdownRS").ok();
+
+            // "SupportedTypes" helps Windows know this app handles these files
+            let (types_key, _) = app_key
+                .create_subkey("SupportedTypes")
+                .map_err(|e| e.to_string())?;
+            types_key.set_value(".md", &"").ok();
+            types_key.set_value(".markdown", &"").ok();
+            types_key.set_value(".txt", &"").ok();
+
+            // Command
+            let (cmd_key, _) = app_key
+                .create_subkey(r"shell\open\command")
+                .map_err(|e| e.to_string())?;
+            cmd_key
+                .set_value("", &format!("\"{}\" \"%1\"", exe_str))
+                .map_err(|e| e.to_string())?;
+        }
+
+        // 3. Register in global OpenWithList to encourage "Open With" submenu presence
+        // HKCU\Software\Classes\*\OpenWithList\markdown-rs.exe
+        {
+            let path = format!(r"Software\Classes\*\OpenWithList\{}", exe_name);
+            let _ = hkcu.create_subkey(path).map_err(|e| e.to_string())?;
+        }
+
+        // 4. File-specific association hints (Optional, helps rank)
+        // HKCU\Software\Classes\.md\OpenWithList\markdown-rs.exe
+        {
+            for ext in &[".md", ".markdown", ".txt"] {
+                let path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
+                let _ = hkcu.create_subkey(path).ok();
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn remove_context_menu() -> Result<(), String> {
+        let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_name = exe_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("markdown-rs.exe");
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+        // Remove Classic
+        let _ = hkcu.delete_subkey_all(r"Software\Classes\*\shell\MarkdownRS");
+
+        // Remove Application Registration
+        let app_path = format!(r"Software\Classes\Applications\{}", exe_name);
+        let _ = hkcu.delete_subkey_all(&app_path);
+
+        // Remove OpenWithList Global
+        let list_path = format!(r"Software\Classes\*\OpenWithList\{}", exe_name);
+        let _ = hkcu.delete_subkey_all(&list_path);
+
+        // Remove Ext specific
+        for ext in &[".md", ".markdown", ".txt"] {
+            let path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
+            let _ = hkcu.delete_subkey_all(&path);
+        }
+
+        Ok(())
+    }
+
+    pub fn check_context_menu() -> bool {
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let path = r"Software\Classes\*\shell\MarkdownRS";
+        hkcu.open_subkey(path).is_ok()
+    }
+}
+
+#[tauri::command]
+pub async fn set_context_menu_item(enable: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        if enable {
+            windows_registry::set_context_menu()
+        } else {
+            windows_registry::remove_context_menu()
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Context menu integration is only supported on Windows".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn check_context_menu_status() -> Result<bool, String> {
+    #[cfg(target_os = "windows")]
+    {
+        Ok(windows_registry::check_context_menu())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(false)
+    }
 }

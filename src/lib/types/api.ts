@@ -9,6 +9,7 @@ export interface AppInfo {
     data_path: string;
     cache_path: string;
     logs_path: string;
+    os_platform: string;
 }
 
 export interface FileMetadata {
@@ -33,7 +34,7 @@ export interface BackendCommands {
     };
     'restore_session': {
         args: Record<string, never>;
-        return: { active_tabs: any[]; closed_tabs: any[] } | any[];
+        return: { active_tabs: any[], closed_tabs: any[] } | any[];
     };
     'vacuum_database': {
         args: Record<string, never>;
@@ -158,13 +159,20 @@ export interface BackendCommands {
         args: { settings: any };
         return: void;
     };
+    'set_context_menu_item': {
+        args: { enable: boolean };
+        return: void;
+    };
+    'check_context_menu_status': {
+        args: Record<string, never>;
+        return: boolean;
+    };
 
     // Window State (Plugin)
     'plugin:window-state|save_window_state': {
         args: Record<string, never>;
         return: void;
     };
-
 }
 
 export type CommandName = keyof BackendCommands;
