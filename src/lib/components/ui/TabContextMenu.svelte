@@ -4,11 +4,11 @@
     import Submenu from "$lib/components/ui/Submenu.svelte";
     import { exportService } from "$lib/services/exportService";
     import { addBookmark, deleteBookmark, getBookmarkByPath, isBookmarked as isBookmarkedSelector } from "$lib/stores/bookmarkStore.svelte";
-    import { markAsSaved, pushToMru, reopenClosedTab, reorderTabs, togglePin, updateTabPath, updateTabTitle } from "$lib/stores/editorStore.svelte";
+    import { markAsSaved, pushToMru, reorderTabs, togglePin, updateTabPath, updateTabTitle } from "$lib/stores/editorStore.svelte";
     import { triggerScrollToTab } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
-    import { requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
+    import { requestCloseTab, saveCurrentFile, triggerReopenClosedTab } from "$lib/utils/fileSystem";
     import { save } from "@tauri-apps/plugin-dialog";
     import { ArrowLeft, ArrowRight, Bookmark, BookmarkX, Copy, Download, FileDown, FilePen, Files, Pin, PinOff, Save, Trash2, Undo2, X } from "lucide-svelte";
     import { tick } from "svelte";
@@ -327,7 +327,7 @@
             {#snippet trigger()}
                 <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {appContext.editor.closedTabsHistory.length === 0 ? 'opacity-50' : ''}">
                     <Undo2 size={14} class="mr-2 opacity-70" />
-                    <span>Reopen Tabs</span>
+                    <span>Reopen Recent</span>
                     <span class="ml-auto opacity-60">›</span>
                 </button>
             {/snippet}
@@ -340,10 +340,7 @@
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
                         use:tooltip={getHistoryTooltip(item.tab)}
                         onclick={() => {
-                            const reopenedTabId = reopenClosedTab(i);
-                            if (reopenedTabId) {
-                                appContext.app.activeTabId = reopenedTabId;
-                            }
+                            triggerReopenClosedTab(i);
                             onClose();
                         }}
                     >

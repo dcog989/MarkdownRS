@@ -4,7 +4,7 @@ import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-import { addTab, closeTab, markAsSaved, pushToMru, saveTabComplete, updateContentOnly, updateTabMetadataAndPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
+import { addTab, closeTab, markAsSaved, pushToMru, reopenClosedTab, saveTabComplete, updateContentOnly, updateTabMetadataAndPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { successToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
@@ -110,7 +110,7 @@ export async function saveCurrentFile(): Promise<boolean> {
 		if (!savePath) {
 			// Use preferred extension for the save dialog
 			const preferredExt = tab.preferredExtension || 'md';
-			
+
 			if (preferredExt === 'txt') {
 				savePath = await save({
 					filters: [
@@ -205,11 +205,23 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 	}
 
 	closeTab(id);
+
+	// Ensure persist happens to save the closed tab into history db
+	persistSessionDebounced();
+
 	if (appContext.app.activeTabId === id) {
 		appContext.app.activeTabId = appContext.editor.mruStack[0] || null;
 	}
 	if (appContext.editor.tabs.length === 0) {
 		appContext.app.activeTabId = addTab();
+	}
+}
+
+export function triggerReopenClosedTab(historyIndex: number): void {
+	const reopenedTabId = reopenClosedTab(historyIndex);
+	if (reopenedTabId) {
+		appContext.app.activeTabId = reopenedTabId;
+		persistSessionDebounced();
 	}
 }
 

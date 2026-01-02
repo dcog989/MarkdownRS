@@ -1,26 +1,30 @@
-use crate::db::TabState;
+use crate::db::{SessionData, TabState};
 use crate::state::AppState;
 use tauri::State;
 
 #[tauri::command]
 pub async fn save_session(
     state: State<'_, AppState>,
-    mut tabs: Vec<TabState>,
+    mut active_tabs: Vec<TabState>,
+    mut closed_tabs: Vec<TabState>,
 ) -> Result<(), String> {
     // Normalize line endings to LF before saving to ensure consistent database storage
-    for tab in &mut tabs {
+    for tab in &mut active_tabs {
+        tab.content = tab.content.replace("\r\n", "\n");
+    }
+    for tab in &mut closed_tabs {
         tab.content = tab.content.replace("\r\n", "\n");
     }
 
     let mut db = state.db.lock().await;
-    db.save_session(&tabs).map_err(|e| {
+    db.save_session(&active_tabs, &closed_tabs).map_err(|e| {
         log::error!("Failed to save session: {}", e);
         format!("Failed to save session: {}", e)
     })
 }
 
 #[tauri::command]
-pub async fn restore_session(state: State<'_, AppState>) -> Result<Vec<TabState>, String> {
+pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
     let db = state.db.lock().await;
     db.load_session().map_err(|e| {
         log::error!("Failed to restore session: {}", e);

@@ -28,12 +28,12 @@ export type TextTransformId = Exclude<OperationId, 'format-document'>;
 export interface BackendCommands {
     // Session
     'save_session': {
-        args: { tabs: any[] };
+        args: { activeTabs: any[]; closedTabs: any[] };
         return: void;
     };
     'restore_session': {
         args: Record<string, never>;
-        return: any[];
+        return: { active_tabs: any[]; closed_tabs: any[] } | any[];
     };
     'vacuum_database': {
         args: Record<string, never>;
@@ -164,6 +164,7 @@ export interface BackendCommands {
         args: Record<string, never>;
         return: void;
     };
+
 }
 
 export type CommandName = keyof BackendCommands;
