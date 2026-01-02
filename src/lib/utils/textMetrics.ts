@@ -26,9 +26,6 @@ export function countWords(text: string): number {
     return count;
 }
 
-/**
- * Calculate basic text metrics locally
- */
 export function calculateTextMetrics(content: string): TextMetrics {
     return {
         lineCount: content.split('\n').length,
@@ -57,7 +54,7 @@ export function calculateCursorMetrics(
         cursorOffset: cursorOffset,
         cursorLine: line.number,
         cursorCol: cursorOffset - line.from + 1,
-        currentLineLength: Math.max(line.text.length, cursorOffset - line.from),
+        currentLineLength: line.text.length,
         currentWordIndex: countWords(textUpToCursor),
     };
 }

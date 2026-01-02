@@ -24,7 +24,7 @@
 
     let fileType = $derived.by(() => {
         if (!activeTab) return "markdown";
-        
+
         // For saved files, determine by path
         if (activeTab.path) {
             const path = activeTab.path;
@@ -32,9 +32,9 @@
             if (path.endsWith(".md")) return "markdown";
             return "markdown";
         }
-        
+
         // For unsaved files, use the preferred extension
-        return activeTab.preferredExtension === 'txt' ? "text" : "markdown";
+        return activeTab.preferredExtension === "txt" ? "text" : "markdown";
     });
 
     let canToggleFileType = $derived(!activeTab?.path); // Only unsaved files can toggle
@@ -85,7 +85,10 @@
             <span class="opacity-70">Col</span>
             <span class="font-mono text-right inline-block w-[3ch]">{appContext.metrics.cursorCol}</span>
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[3ch]">{appContext.metrics.currentLineLength}</span>
+            <!-- Logic: If Col > Length (end of line), show Length + 1 to prevent '59 / 58' confusion -->
+            <span class="font-mono text-left inline-block w-[3ch]">
+                {Math.max(appContext.metrics.currentLineLength, appContext.metrics.cursorCol > appContext.metrics.currentLineLength ? appContext.metrics.cursorCol : appContext.metrics.currentLineLength)}
+            </span>
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Character Count"}>
