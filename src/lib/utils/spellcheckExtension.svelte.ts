@@ -124,6 +124,12 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
     triggerImmediateLint(view);
 }
 
+export function recheckSpelling(view: EditorView) {
+    // Clear cache to force re-evaluation of words against the current (optimistically updated) dictionary
+    spellcheckState.misspelledCache = new Set<string>();
+    triggerImmediateLint(view);
+}
+
 export const spellCheckKeymap = [
     {
         key: "F8",

@@ -77,9 +77,21 @@
         const matches = (selectedText as string).match(/\b[a-zA-Z']+\b/g) || [];
         const uniqueWords: string[] = Array.from(new Set(matches));
         const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
-        for (const word of invalidWords) await addToDictionary(word);
+
+        // Optimistic update - this triggers reactivity in EditorView to refresh linter
+        const newDict = new Set(spellcheckState.customDictionary);
+        invalidWords.forEach((w) => {
+            newDict.add(w.toLowerCase());
+            spellcheckState.misspelledCache.delete(w.toLowerCase());
+        });
+        spellcheckState.customDictionary = newDict;
+
+        // Immediately notify editor to re-lint
         onDictionaryUpdate?.();
         onClose();
+
+        // Background persistence
+        for (const word of invalidWords) await addToDictionary(word);
     }
 
     function handleOp(type: OperationId | undefined) {
@@ -247,9 +259,20 @@
                     <button
                         class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                         onclick={async () => {
-                            await addToDictionary(targetWord);
+                            // Optimistic update to reactive state
+                            // Using reassignment to guarantee Svelte 5 reactivity
+                            const newDict = new Set(spellcheckState.customDictionary);
+                            newDict.add(targetWord.toLowerCase());
+                            spellcheckState.customDictionary = newDict;
+
+                            spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
+
+                            // Immediately notify editor to re-lint
                             onDictionaryUpdate?.();
+
                             closeMenuAndReset();
+                            // Persist to disk
+                            await addToDictionary(targetWord);
                         }}
                     >
                         <BookPlus size={14} /><span class="truncate">Add "{targetWord}" to Dictionary</span><span class="ml-auto text-ui-sm opacity-50">F8</span>

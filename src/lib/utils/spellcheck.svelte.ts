@@ -4,7 +4,7 @@ import { AppError } from './errorHandling';
 export class SpellcheckState {
     dictionaryLoaded = $state(false);
     misspelledCache = $state(new Set<string>());
-    customDictionary: Set<string> = new Set();
+    customDictionary = $state(new Set<string>());
 }
 
 export const spellcheckState = new SpellcheckState();
