@@ -427,6 +427,9 @@ pub async fn init_spellchecker(
     let mut combined_dic_lines: Vec<String> = Vec::new();
     let mut first_dict = true;
 
+    // Use async client to avoid runtime conflicts
+    let client = reqwest::Client::new();
+
     for dict_code in &dict_codes {
         let aff_path = cache_dir.join(format!("{}.aff", dict_code));
         let dic_path = cache_dir.join(format!("{}.dic", dict_code));
@@ -434,7 +437,6 @@ pub async fn init_spellchecker(
         // Download if missing
         if !aff_path.exists() || !dic_path.exists() {
             log::info!("Downloading dictionary: {}", dict_code);
-            let client = reqwest::blocking::Client::new();
 
             let aff_url = format!(
                 "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
@@ -445,18 +447,18 @@ pub async fn init_spellchecker(
                 dict_code
             );
 
-            if let Ok(resp) = client.get(&aff_url).send() {
+            if let Ok(resp) = client.get(&aff_url).send().await {
                 if resp.status().is_success() {
-                    if let Ok(text) = resp.text() {
+                    if let Ok(text) = resp.text().await {
                         log::info!("Downloaded .aff file for {}", dict_code);
                         let _ = fs::write(&aff_path, text);
                     }
                 }
             }
 
-            if let Ok(resp) = client.get(&dic_url).send() {
+            if let Ok(resp) = client.get(&dic_url).send().await {
                 if resp.status().is_success() {
-                    if let Ok(text) = resp.text() {
+                    if let Ok(text) = resp.text().await {
                         log::info!("Downloaded .dic file for {}", dict_code);
                         let _ = fs::write(&dic_path, text);
                     }
@@ -498,16 +500,15 @@ pub async fn init_spellchecker(
     let jargon_path = cache_dir.join("jargon.dic");
     if !jargon_path.exists() {
         log::info!("Downloading jargon dictionary");
-        if let Ok(client) = reqwest::blocking::Client::builder().build() {
-            if let Ok(resp) = client
-                .get("https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic")
-                .send()
-            {
-                if resp.status().is_success() {
-                    if let Ok(text) = resp.text() {
-                        log::info!("Downloaded jargon dictionary");
-                        let _ = fs::write(&jargon_path, text);
-                    }
+        if let Ok(resp) = client
+            .get("https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic")
+            .send()
+            .await
+        {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text().await {
+                    log::info!("Downloaded jargon dictionary");
+                    let _ = fs::write(&jargon_path, text);
                 }
             }
         }
