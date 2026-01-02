@@ -81,7 +81,8 @@ impl Database {
 
         match version {
             0 => {
-                log::info!("Creating initial database schema");
+                log::info!("Creating initial database schema (v1)");
+
                 tx.execute(
                     "CREATE TABLE IF NOT EXISTS tabs (
                         id TEXT PRIMARY KEY,
@@ -147,121 +148,17 @@ impl Database {
                     [],
                 )?;
 
-                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [7])?;
-                log::info!("Initial schema created successfully (version 7)");
+                tx.execute("INSERT INTO schema_version (version) VALUES (?1)", [1])?;
+                log::info!("Database schema initialized at version 1");
             }
-            v if v < 7 => {
-                let mut current_version = v;
-
-                if current_version < 2 {
-                    log::info!(
-                        "Migrating database schema from version {} to 2",
-                        current_version
-                    );
-                    tx.execute(
-                        "ALTER TABLE tabs ADD COLUMN is_pinned INTEGER DEFAULT 0",
-                        [],
-                    )?;
-                    tx.execute("ALTER TABLE tabs ADD COLUMN custom_title TEXT", [])?;
-                    current_version = 2;
-                }
-
-                if current_version < 3 {
-                    log::info!(
-                        "Migrating database schema from version {} to 3",
-                        current_version
-                    );
-                    tx.execute(
-                        "ALTER TABLE tabs ADD COLUMN file_check_failed INTEGER DEFAULT 0",
-                        [],
-                    )?;
-                    tx.execute(
-                        "ALTER TABLE tabs ADD COLUMN file_check_performed INTEGER DEFAULT 0",
-                        [],
-                    )?;
-                    current_version = 3;
-                }
-
-                if current_version < 4 {
-                    log::info!(
-                        "Migrating database schema from version {} to 4",
-                        current_version
-                    );
-                    tx.execute("ALTER TABLE tabs ADD COLUMN mru_position INTEGER", [])?;
-                    current_version = 4;
-                }
-
-                if current_version < 5 {
-                    log::info!(
-                        "Migrating database schema from version {} to 5",
-                        current_version
-                    );
-                    tx.execute(
-                        "CREATE TABLE IF NOT EXISTS bookmarks (
-                            id TEXT PRIMARY KEY,
-                            path TEXT NOT NULL UNIQUE,
-                            title TEXT NOT NULL,
-                            tags TEXT NOT NULL,
-                            created TEXT NOT NULL,
-                            last_accessed TEXT
-                        )",
-                        [],
-                    )?;
-                    tx.execute(
-                        "CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path)",
-                        [],
-                    )?;
-                    current_version = 5;
-                }
-
-                if current_version < 6 {
-                    log::info!(
-                        "Migrating database schema from version {} to 6",
-                        current_version
-                    );
-                    tx.execute(
-                        "ALTER TABLE tabs ADD COLUMN sort_index INTEGER DEFAULT 0",
-                        [],
-                    )?;
-                    current_version = 6;
-                }
-
-                if current_version < 7 {
-                    log::info!(
-                        "Migrating database schema from version {} to 7",
-                        current_version
-                    );
-                    tx.execute(
-                        "CREATE TABLE IF NOT EXISTS closed_tabs (
-                            id TEXT PRIMARY KEY,
-                            title TEXT NOT NULL,
-                            content TEXT NOT NULL,
-                            is_dirty INTEGER NOT NULL,
-                            path TEXT,
-                            scroll_percentage REAL NOT NULL,
-                            created TEXT,
-                            modified TEXT,
-                            is_pinned INTEGER DEFAULT 0,
-                            custom_title TEXT,
-                            file_check_failed INTEGER DEFAULT 0,
-                            file_check_performed INTEGER DEFAULT 0,
-                            mru_position INTEGER,
-                            sort_index INTEGER DEFAULT 0,
-                            original_index INTEGER
-                        )",
-                        [],
-                    )?;
-                    current_version = 7;
-                }
-
-                tx.execute("UPDATE schema_version SET version = ?", [current_version])?;
-                log::info!("Migration to version 7 completed successfully");
+            1 => {
+                log::info!("Database schema is up to date (version 1)");
             }
-            7 => {
-                log::info!("Database schema is up to date (version {})", version);
-            }
-            _ => {
-                log::warn!("Unknown schema version {}, attempting to continue", version);
+            v => {
+                log::warn!(
+                    "Unknown database schema version {}, attempting to continue",
+                    v
+                );
             }
         }
 
