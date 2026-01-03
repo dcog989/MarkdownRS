@@ -48,15 +48,18 @@
     $effect(() => {
         const tab = activeTab;
         if (!tab || !cmView) return;
-
         const content = tab.content;
 
         untrack(() => {
             const currentDoc = cmView!.state.doc.toString();
-
             if (currentDoc !== content) {
                 const currentSelection = cmView!.state.selection.main;
                 const newLength = content.length;
+
+                // Snapshot scroll position before update
+                const scrollDOM = cmView!.scrollDOM;
+                const scrollTop = scrollDOM.scrollTop;
+                const scrollLeft = scrollDOM.scrollLeft;
 
                 cmView!.dispatch({
                     changes: { from: 0, to: currentDoc.length, insert: content },
@@ -64,6 +67,17 @@
                         anchor: Math.min(currentSelection.anchor, newLength),
                         head: Math.min(currentSelection.head, newLength),
                     },
+                    // Prevent CodeMirror from trying to snap to the cursor
+                    scrollIntoView: false,
+                });
+
+                // Use requestAnimationFrame to ensure the DOM update has settled
+                // before forcing the scroll position back.
+                requestAnimationFrame(() => {
+                    if (cmView && cmView.scrollDOM) {
+                        cmView.scrollDOM.scrollTop = scrollTop;
+                        cmView.scrollDOM.scrollLeft = scrollLeft;
+                    }
                 });
             }
 
