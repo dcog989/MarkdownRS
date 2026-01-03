@@ -3,6 +3,7 @@
     import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
     import { togglePreferredExtension, updateLineEnding } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { TextWrap } from "lucide-svelte";
 
@@ -30,9 +31,7 @@
         }
 
         if (activeTab.path) {
-            const path = activeTab.path.toLowerCase();
-            if (path.endsWith(".txt")) return "text";
-            return "markdown";
+            return isMarkdownFile(activeTab.path) ? "markdown" : "text";
         }
 
         return "markdown";
@@ -86,7 +85,6 @@
             <span class="opacity-70">Col</span>
             <span class="font-mono text-right inline-block w-[3ch]">{appContext.metrics.cursorCol}</span>
             <span class="opacity-30">/</span>
-            <!-- Logic: If Col > Length (end of line), show Length + 1 to prevent '59 / 58' confusion -->
             <span class="font-mono text-left inline-block w-[3ch]">
                 {Math.max(appContext.metrics.currentLineLength, appContext.metrics.cursorCol > appContext.metrics.currentLineLength ? appContext.metrics.cursorCol : appContext.metrics.currentLineLength)}
             </span>

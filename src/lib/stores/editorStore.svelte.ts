@@ -1,5 +1,6 @@
 import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
+import { isMarkdownFile } from "$lib/utils/fileValidation";
 import { clearRendererCache } from "$lib/utils/markdown";
 import { appState } from "./appState.svelte";
 
@@ -100,8 +101,8 @@ export function addTab(title: string = '', content: string = '') {
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         lineEnding: 'LF',
-        encoding: 'UTF-8',
-        preferredExtension: 'md' // Default to markdown for new tabs
+        encoding: 'UTF-8'
+        // preferredExtension is intentionally undefined to allow file extension detection
     };
 
     if (appState.newTabPosition === 'beginning') {
@@ -352,7 +353,15 @@ export function togglePreferredExtension(id: string) {
     }
     const tab = editorStore.tabs[index];
 
-    const current = tab.preferredExtension || (tab.path?.endsWith('.txt') ? 'txt' : 'md');
+    let current = tab.preferredExtension;
+
+    if (!current) {
+        if (tab.path) {
+            current = isMarkdownFile(tab.path) ? 'md' : 'txt';
+        } else {
+            current = 'md';
+        }
+    }
 
     tab.preferredExtension = current === 'md' ? 'txt' : 'md';
 
