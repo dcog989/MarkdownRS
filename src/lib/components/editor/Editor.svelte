@@ -7,6 +7,7 @@
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { ScrollManager } from "$lib/utils/cmScroll";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { formatMarkdown } from "$lib/utils/formatterRust";
@@ -36,6 +37,7 @@
     let contextWordTo = $state(0);
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
+    let scrollManager = new ScrollManager();
 
     // Initialize LineChangeTracker for this tab if it doesn't exist
     $effect(() => {
@@ -45,6 +47,7 @@
         }
     });
 
+    // Content Synchronization Effect (Save/Load)
     $effect(() => {
         const tab = activeTab;
         if (!tab || !cmView) return;
@@ -52,33 +55,26 @@
 
         untrack(() => {
             const currentDoc = cmView!.state.doc.toString();
+
             if (currentDoc !== content) {
+                // 1. Capture Scroll
+                scrollManager.capture(cmView!, "External Update");
+
                 const currentSelection = cmView!.state.selection.main;
                 const newLength = content.length;
 
-                // Snapshot scroll position before update
-                const scrollDOM = cmView!.scrollDOM;
-                const scrollTop = scrollDOM.scrollTop;
-                const scrollLeft = scrollDOM.scrollLeft;
-
+                // 2. Dispatch
                 cmView!.dispatch({
                     changes: { from: 0, to: currentDoc.length, insert: content },
                     selection: {
                         anchor: Math.min(currentSelection.anchor, newLength),
                         head: Math.min(currentSelection.head, newLength),
                     },
-                    // Prevent CodeMirror from trying to snap to the cursor
                     scrollIntoView: false,
                 });
 
-                // Use requestAnimationFrame to ensure the DOM update has settled
-                // before forcing the scroll position back.
-                requestAnimationFrame(() => {
-                    if (cmView && cmView.scrollDOM) {
-                        cmView.scrollDOM.scrollTop = scrollTop;
-                        cmView.scrollDOM.scrollLeft = scrollLeft;
-                    }
-                });
+                // 3. Restore Scroll (Pixel strategy for stability on external updates)
+                scrollManager.restore(cmView!, "pixel");
             }
 
             if (tabId !== previousTabId) {
@@ -101,14 +97,22 @@
         }
     });
 
+    // Search Highlight Sync
+    $effect(() => {
+        if (cmView && searchState.findText) {
+            updateSearchEditor(cmView);
+        }
+    });
+
     async function handleTextOperation(operationId: OperationId) {
         if (!cmView) return;
+
         const selection = cmView.state.selection.main;
         const hasSelection = selection.from !== selection.to;
         const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
 
-        // Snapshot scroll and cursor
-        const scrollTop = cmView.scrollDOM.scrollTop;
+        // 1. Capture Scroll
+        scrollManager.capture(cmView, `Op:${operationId}`);
 
         const backendCommand = getBackendCommand(operationId);
         const newText = operationId === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, backendCommand);
@@ -117,13 +121,12 @@
             const transaction: any = {
                 changes: { from: hasSelection ? selection.from : 0, to: hasSelection ? selection.to : cmView.state.doc.length, insert: newText },
                 userEvent: "input.complete",
+                scrollIntoView: false,
             };
 
             if (hasSelection) {
-                // Select the transformed text
                 transaction.selection = { anchor: selection.from, head: selection.from + newText.length };
             } else {
-                // Keep cursor roughly where it was (clamped to new length)
                 const newLen = newText.length;
                 transaction.selection = {
                     anchor: Math.min(selection.anchor, newLen),
@@ -133,9 +136,22 @@
 
             cmView.dispatch(transaction);
 
-            // Restore scroll for full document operations
+            // 3. Restore Scroll
             if (!hasSelection) {
-                cmView.scrollDOM.scrollTop = scrollTop;
+                // ALWAYS use anchor strategy for formatting, as it affects line wrapping/heights.
+                // For other operations (like sorting/case), use anchor if lines changed, pixel otherwise.
+                const snapshot = scrollManager.getSnapshot();
+                const currentLines = cmView.state.doc.lines;
+
+                let strategy: "anchor" | "pixel" = "pixel";
+
+                if (operationId === "format-document") {
+                    strategy = "anchor";
+                } else if (snapshot && Math.abs(currentLines - snapshot.totalLines) > 0) {
+                    strategy = "anchor";
+                }
+
+                scrollManager.restore(cmView, strategy);
             }
         }
     }
@@ -147,9 +163,8 @@
                 if (pos === null) return false;
 
                 let targetString = "";
-
-                // 1. Precise Syntax Tree Check for Markdown Link nodes
                 let node = syntaxTree(view.state).resolveInner(pos, 1);
+
                 while (node && node.parent && !["URL", "Link", "LinkEmail"].includes(node.name)) {
                     node = node.parent;
                 }
@@ -163,7 +178,6 @@
                     }
                 }
 
-                // 2. Precise word-boundary extraction for raw URLs and Paths
                 if (!targetString) {
                     const line = view.state.doc.lineAt(pos);
                     const text = line.text;
@@ -171,24 +185,16 @@
 
                     if (posInLine >= 0 && posInLine < text.length && /\S/.test(text[posInLine])) {
                         let start = posInLine;
-                        // Expand left to whitespace
                         while (start > 0 && /\S/.test(text[start - 1])) start--;
                         let end = posInLine;
-                        // Expand right to whitespace
                         while (end < text.length && /\S/.test(text[end])) end++;
 
-                        // Extract chunk
                         targetString = text.slice(start, end).trim();
-
-                        // Clean up wrapped characters (common in markdown like [text](url) or <url> or (url))
                         targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, "");
 
-                        // Only strip trailing punctuation if it doesn't look like a URL
-                        // URLs can contain colons, so we need to be careful
                         if (!/^https?:\/\//i.test(targetString)) {
                             targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
                         } else {
-                            // For URLs, only strip very limited trailing punctuation that can't effectively end a URL
                             targetString = targetString.replace(/[.,;!?)\]]+$/, "");
                         }
                     }
@@ -198,7 +204,6 @@
                     event.preventDefault();
                     event.stopImmediatePropagation();
 
-                    // If it looks like a web URL, open in browser, otherwise hand to system path navigator
                     if (/^(https?:\/\/|www\.)/i.test(targetString)) {
                         const url = targetString.startsWith("www.") ? `https://${targetString}` : targetString;
                         openPath(url).catch(() => {});
@@ -212,10 +217,7 @@
         },
         contextmenu: (event, view) => {
             event.preventDefault();
-
-            if (showContextMenu) {
-                showContextMenu = false;
-            }
+            showContextMenu = false;
 
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
@@ -253,45 +255,30 @@
         return () => unregisterTextOperationCallback();
     });
 
-    // Editor view update when search changes
-    $effect(() => {
-        if (cmView && searchState.findText) {
-            updateSearchEditor(cmView);
-        }
-    });
-
     let initialContent = $derived(activeTab?.content || "");
-
-    // Dynamically calculate filename based on path or preferred extension for unsaved files
     let filename = $derived.by(() => {
         if (activeTab?.path) return activeTab.path;
         return activeTab?.preferredExtension === "txt" ? "unsaved.txt" : "unsaved.md";
     });
-
-    // Explicitly determine if we should treat this as markdown
     let isMarkdown = $derived.by(() => {
         if (activeTab?.preferredExtension) {
             return activeTab.preferredExtension === "md";
         }
         return isMarkdownFile(filename);
     });
-
     let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
     let lineChangeTracker = $derived(activeTab?.lineChangeTracker || new LineChangeTracker());
-
-    // Show empty state when content is empty and file is unsaved
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:this={editorViewComponent} bind:cmView {tabId} {initialContent} {filename} {isMarkdown} initialScrollPercentage={initialScroll} {initialSelection} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
+    <EditorView bind:cmView {tabId} {initialContent} {filename} {isMarkdown} initialScrollPercentage={initialScroll} {initialSelection} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
     <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
 
-    <!-- Empty State Overlay -->
     {#if showEmptyState}
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <img src="/logo.svg" alt="MarkdownRS Logo" class="w-48 h-48 opacity-[0.08] select-none" />
@@ -306,10 +293,7 @@
         selectedText={contextSelectedText}
         wordUnderCursor={contextWordUnderCursor}
         onClose={() => (showContextMenu = false)}
-        onDictionaryUpdate={() => {
-            // No-op: We rely on the optimistic store update in ContextMenu to trigger
-            // the EditorView reactivity. Calling refreshSpellcheck here would race with disk I/O.
-        }}
+        onDictionaryUpdate={() => {}}
         onCut={() => {
             navigator.clipboard.writeText(contextSelectedText);
             cmView?.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: "" } });
