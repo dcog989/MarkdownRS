@@ -29,7 +29,6 @@
         { code: "el", name: "Greek" },
         { code: "fi", name: "Finnish" },
         { code: "fr", name: "French" },
-        { code: "he", name: "Hebrew" },
         { code: "hi", name: "Hindi" },
         { code: "hu", name: "Hungarian" },
         { code: "it", name: "Italian" },
