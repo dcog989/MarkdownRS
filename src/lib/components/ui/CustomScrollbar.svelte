@@ -21,15 +21,18 @@
     let mutationObserver: MutationObserver;
     let frameId: number | null = null;
 
-    let clientHeight = 0;
-    let scrollHeight = 0;
+    // Smooth scroll state
+    let scrollTarget = 0;
+    let scrollStartTime = 0;
+    let scrollStartPos = 0;
+    let isAnimating = false;
 
     function measure() {
         if (!viewport) return;
 
         const rect = viewport.getBoundingClientRect();
-        clientHeight = rect.height;
-        scrollHeight = viewport.scrollHeight;
+        const clientHeight = rect.height;
+        const scrollHeight = viewport.scrollHeight;
 
         if (clientHeight === 0 || isNaN(clientHeight)) {
             isVisible = false;
@@ -44,9 +47,11 @@
 
         if (!isVisible) return;
 
-        const trackHeight = clientHeight - 4;
+        // Calculate dimensions
+        const trackH = trackRef ? trackRef.getBoundingClientRect().height : clientHeight - 4;
         const heightRatio = clientHeight / scrollHeight;
-        thumbHeight = Math.max(20, trackHeight * heightRatio);
+
+        thumbHeight = Math.max(20, trackH * heightRatio);
 
         syncPosition();
     }
@@ -55,11 +60,14 @@
         if (!viewport || !isVisible || !thumbRef || isDragging) return;
 
         const scrollTop = viewport.scrollTop;
-        const maxScroll = scrollHeight - clientHeight;
-        const trackHeight = clientHeight - 4;
-        const maxThumb = trackHeight - thumbHeight;
+        const scrollHeight = viewport.scrollHeight;
+        const clientHeight = viewport.clientHeight;
+        const trackH = trackRef ? trackRef.getBoundingClientRect().height : clientHeight - 4;
 
-        if (maxScroll > 0) {
+        const maxScroll = scrollHeight - clientHeight;
+        const maxThumb = trackH - thumbHeight;
+
+        if (maxScroll > 0 && maxThumb > 0) {
             const scrollRatio = scrollTop / maxScroll;
             currentThumbTop = scrollRatio * maxThumb;
         } else {
@@ -70,32 +78,78 @@
     }
 
     function onScroll() {
-        syncPosition();
+        if (!isDragging && !isAnimating) {
+            requestAnimationFrame(syncPosition);
+        } else if (isAnimating) {
+            // During animation, we still need to sync the thumb
+            syncPosition();
+        }
+    }
+
+    function smoothScrollTo(target: number) {
+        if (!viewport) return;
+
+        scrollTarget = Math.max(0, Math.min(target, viewport.scrollHeight - viewport.clientHeight));
+        scrollStartPos = viewport.scrollTop;
+
+        if (scrollStartPos === scrollTarget) return;
+
+        scrollStartTime = performance.now();
+        isAnimating = true;
+
+        requestAnimationFrame(animateScroll);
+    }
+
+    function animateScroll(currentTime: number) {
+        if (!isAnimating || !viewport) return;
+
+        const elapsed = currentTime - scrollStartTime;
+        const duration = 200; // ms
+
+        if (elapsed >= duration) {
+            viewport.scrollTop = scrollTarget;
+            isAnimating = false;
+            syncPosition();
+            return;
+        }
+
+        // Ease out cubic
+        const progress = elapsed / duration;
+        const ease = 1 - Math.pow(1 - progress, 3);
+
+        const newPos = scrollStartPos + (scrollTarget - scrollStartPos) * ease;
+        viewport.scrollTop = newPos;
+        syncPosition(); // Keep thumb synced during animation
+
+        requestAnimationFrame(animateScroll);
     }
 
     function onTrackMouseDown(e: MouseEvent) {
         if (!viewport || !trackRef || (e.target as Element).closest(".scrollbar-thumb")) return;
         e.preventDefault();
 
-        const rect = trackRef.getBoundingClientRect();
-        const clickOffset = e.clientY - rect.top;
+        measure();
 
-        clientHeight = viewport.clientHeight;
-        scrollHeight = viewport.scrollHeight;
+        const trackRect = trackRef.getBoundingClientRect();
+        const scrollH = viewport.scrollHeight;
+        const clientH = viewport.clientHeight;
+        const trackH = trackRect.height;
 
-        const trackHeight = clientHeight - 4;
-        const maxThumb = trackHeight - thumbHeight;
-        const maxScroll = scrollHeight - clientHeight;
+        if (scrollH <= clientH) return;
 
+        const maxThumbTravel = trackH - thumbHeight;
+        const maxScrollTravel = scrollH - clientH;
+
+        if (maxThumbTravel <= 0) return;
+
+        const clickOffset = e.clientY - trackRect.top;
         let targetThumbTop = clickOffset - thumbHeight / 2;
-        targetThumbTop = Math.max(0, Math.min(maxThumb, targetThumbTop));
+        targetThumbTop = Math.max(0, Math.min(maxThumbTravel, targetThumbTop));
 
-        const scrollRatio = targetThumbTop / maxThumb;
+        const scrollRatio = targetThumbTop / maxThumbTravel;
+        const targetScrollTop = scrollRatio * maxScrollTravel;
 
-        viewport.scrollTo({
-            top: scrollRatio * maxScroll,
-            behavior: "smooth",
-        });
+        smoothScrollTo(targetScrollTop);
     }
 
     function onThumbMouseDown(e: MouseEvent) {
@@ -103,33 +157,55 @@
         e.preventDefault();
         e.stopPropagation();
 
+        // Cancel any active animation
+        isAnimating = false;
+
         startY = e.clientY;
         startThumbTop = currentThumbTop;
         isDragging = true;
+
+        document.body.style.userSelect = "none";
+        document.body.style.cursor = "default";
+
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
     }
 
     function onMouseMove(e: MouseEvent) {
-        if (!isDragging || !viewport || !thumbRef) return;
+        if (!isDragging || !viewport || !thumbRef || !trackRef) return;
+        e.preventDefault();
+
+        const trackRect = trackRef.getBoundingClientRect();
+        const trackH = trackRect.height;
+        const scrollH = viewport.scrollHeight;
+        const clientH = viewport.clientHeight;
+
+        const maxThumb = trackH - thumbHeight;
+        const maxScroll = scrollH - clientH;
+
+        if (maxThumb <= 0) return;
 
         const deltaY = e.clientY - startY;
-        const trackHeight = clientHeight - 4;
-        const maxThumb = trackHeight - thumbHeight;
-        const maxScroll = scrollHeight - clientHeight;
+        let newTop = startThumbTop + deltaY;
+        newTop = Math.max(0, Math.min(maxThumb, newTop));
 
-        if (maxThumb > 0) {
-            let newTop = startThumbTop + deltaY;
-            newTop = Math.max(0, Math.min(maxThumb, newTop));
+        currentThumbTop = newTop;
+        thumbRef.style.transform = `translateY(${newTop}px)`;
 
-            thumbRef.style.transform = `translateY(${newTop}px)`;
-            currentThumbTop = newTop;
-
-            const scrollRatio = newTop / maxThumb;
-            viewport.scrollTop = scrollRatio * maxScroll;
-        }
+        const scrollRatio = newTop / maxThumb;
+        viewport.scrollTop = scrollRatio * maxScroll;
     }
 
     function onMouseUp() {
+        if (!isDragging) return;
         isDragging = false;
+
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+
         measure();
     }
 
@@ -172,26 +248,10 @@
             };
         }
     });
-
-    $effect(() => {
-        if (isDragging) {
-            document.body.style.userSelect = "none";
-            document.body.style.cursor = "default";
-            window.addEventListener("mousemove", onMouseMove, { passive: true });
-            window.addEventListener("mouseup", onMouseUp);
-
-            return () => {
-                document.body.style.userSelect = "";
-                document.body.style.cursor = "";
-                window.removeEventListener("mousemove", onMouseMove);
-                window.removeEventListener("mouseup", onMouseUp);
-            };
-        }
-    });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div bind:this={trackRef} class="absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200 group" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
-    <div bind:this={thumbRef} class="absolute top-0 w-1 rounded-full bg-border-light hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:w-3 transition-[width,background-color] duration-150 cursor-pointer" class:w-3={isDragging} class:bg-accent-primary={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
+    <div bind:this={thumbRef} class="scrollbar-thumb absolute top-0 w-1 rounded-full bg-border-light hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:w-3 transition-[width,background-color] duration-150 cursor-pointer" class:w-3={isDragging} class:bg-accent-primary={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
 </div>
