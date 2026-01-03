@@ -246,7 +246,7 @@
     </div>
 
     <!-- Center: File Path (Drag Region) -->
-    <div class="flex-1 flex items-center justify-center min-w-0 px-4 text-xs text-fg-muted font-mono" data-tauri-drag-region>
+    <div class="flex-1 flex items-center justify-center min-w-0 px-4 text-sm text-fg-muted font-mono" data-tauri-drag-region>
         <span class="truncate opacity-60 hover:opacity-100 transition-opacity select-none pointer-events-none">
             {displayPath}
         </span>
