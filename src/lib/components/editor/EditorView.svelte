@@ -70,8 +70,8 @@
     let whitespaceComp = new Compartment();
     let languageComp = new Compartment();
     let handlersComp = new Compartment();
-    let rulerComp = new Compartment();
     let doubleClickComp = new Compartment();
+    let rulerComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
@@ -85,80 +85,6 @@
             return span;
         }
     }
-
-    // Ruler Extension
-    function createRulerExtension(column: number) {
-        if (column <= 0) return [];
-        
-        return EditorView.theme({
-            ".cm-scroller": {
-                position: "relative",
-            },
-            ".cm-ruler": {
-                position: "absolute",
-                top: "0",
-                bottom: "0",
-                width: "1px",
-                backgroundColor: "var(--color-border-main)",
-                opacity: "0.5",
-                pointerEvents: "none",
-                zIndex: "1",
-            },
-        });
-    }
-
-    const rulerPlugin = ViewPlugin.fromClass(
-        class {
-            column: number;
-            ruler: HTMLElement | null = null;
-            
-            constructor(view: EditorView) {
-                this.column = appContext.app.wrapGuideColumn;
-                this.updateRuler(view);
-            }
-            
-            update(update: ViewUpdate) {
-                if (this.column !== appContext.app.wrapGuideColumn || update.geometryChanged) {
-                    this.column = appContext.app.wrapGuideColumn;
-                    this.updateRuler(update.view);
-                }
-            }
-            
-            updateRuler(view: EditorView) {
-                // Remove existing ruler
-                if (this.ruler) {
-                    this.ruler.remove();
-                    this.ruler = null;
-                }
-                
-                if (this.column <= 0) return;
-                
-                // Create ruler element
-                this.ruler = document.createElement('div');
-                this.ruler.className = 'cm-ruler';
-                
-                // Calculate position: gutter width + (column * char width)
-                const charWidth = view.defaultCharacterWidth;
-                const gutters = view.dom.querySelector('.cm-gutters') as HTMLElement;
-                const gutterWidth = gutters ? gutters.offsetWidth : 0;
-                const left = gutterWidth + (this.column * charWidth);
-                this.ruler.style.left = `${left}px`;
-                
-                // Insert into scroller
-                const scroller = view.scrollDOM;
-                if (scroller) {
-                    scroller.appendChild(this.ruler);
-                }
-            }
-            
-            destroy() {
-                if (this.ruler) {
-                    this.ruler.remove();
-                    this.ruler = null;
-                }
-            }
-        }
-    );
 
     function getNewlineDecorations(view: EditorView): DecorationSet {
         const builder = new RangeSetBuilder<Decoration>();
@@ -197,7 +123,63 @@
             decorations: (v) => v.decorations,
         }
     );
-    // -----------------------
+
+    // Ruler Plugin
+    const rulerPlugin = ViewPlugin.fromClass(
+        class {
+            ruler: HTMLElement;
+
+            constructor(view: EditorView) {
+                this.ruler = document.createElement("div");
+                this.ruler.className = "cm-ruler-line";
+                this.ruler.style.position = "absolute";
+                this.ruler.style.top = "0";
+                this.ruler.style.bottom = "0";
+                this.ruler.style.width = "1px";
+                this.ruler.style.backgroundColor = "var(--color-border-light)";
+                this.ruler.style.opacity = "0.3";
+                this.ruler.style.pointerEvents = "none";
+                this.ruler.style.display = "none";
+                this.ruler.style.zIndex = "0";
+
+                view.scrollDOM.appendChild(this.ruler);
+                this.measure(view);
+            }
+
+            update(update: ViewUpdate) {
+                if (update.geometryChanged || update.viewportChanged) {
+                    this.measure(update.view);
+                }
+            }
+
+            measure(view: EditorView) {
+                const column = appContext.app.wrapGuideColumn;
+                if (column > 0) {
+                    const charWidth = view.defaultCharacterWidth;
+
+                    // Get gutters width
+                    const gutters = view.dom.querySelector(".cm-gutters") as HTMLElement;
+                    const gutterWidth = gutters ? gutters.offsetWidth : 0;
+
+                    // Get content padding
+                    const style = window.getComputedStyle(view.contentDOM);
+                    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+
+                    // Calculate position: Gutter + Padding + (Column * CharWidth)
+                    const left = gutterWidth + paddingLeft + column * charWidth;
+
+                    this.ruler.style.left = `${left}px`;
+                    this.ruler.style.display = "block";
+                } else {
+                    this.ruler.style.display = "none";
+                }
+            }
+
+            destroy() {
+                this.ruler.remove();
+            }
+        }
+    );
 
     // Create debounced autocompletion configuration
     let autocompletionConfig = $derived.by(() => {
@@ -234,34 +216,33 @@
         });
     });
 
-    // Wrap configuration - either at viewport or at column
+    // Wrap configuration
     function createWrapExtension() {
-        if (!appContext.app.editorWordWrap) return [];
-        
+        const wrapEnabled = appContext.app.editorWordWrap;
         const column = appContext.app.wrapGuideColumn;
-        
-        if (column > 0 && view) {
-            // Wrap at specific column - calculate pixel width
-            const charWidth = view.defaultCharacterWidth;
-            const gutters = view.dom.querySelector('.cm-gutters') as HTMLElement;
-            const gutterWidth = gutters ? gutters.offsetWidth : 0;
-            const wrapWidth = gutterWidth + (column * charWidth);
-            
-            return [
-                EditorView.lineWrapping,
-                EditorView.theme({
-                    ".cm-scroller": {
-                        maxWidth: `${wrapWidth}px`,
-                    },
-                    ".cm-content": {
-                        maxWidth: `${wrapWidth}px`,
-                    }
-                })
-            ];
-        } else {
-            // Wrap at viewport
-            return EditorView.lineWrapping;
+        const extensions = [];
+
+        if (wrapEnabled) {
+            extensions.push(EditorView.lineWrapping);
+
+            if (column > 0) {
+                // Force wrap at specific column using max-width on content
+                // Use 'ch' units for accurate character-based sizing
+                extensions.push(
+                    EditorView.theme({
+                        ".cm-content": {
+                            maxWidth: `${column}ch`,
+                        },
+                        // Ensure the scroller itself fills the parent to avoid dead space
+                        ".cm-scroller": {
+                            width: "100%",
+                        },
+                    })
+                );
+            }
         }
+
+        return extensions;
     }
 
     $effect(() => {
@@ -297,11 +278,11 @@
                 if (!range) return false;
 
                 let end = range.to;
-                
+
                 // Check if there's a space immediately after the word
                 if (end < view.state.doc.length) {
                     const nextChar = view.state.doc.sliceString(end, end + 1);
-                    if (nextChar === ' ' || nextChar === '\t') {
+                    if (nextChar === " " || nextChar === "\t") {
                         end++;
                     }
                 }
@@ -454,7 +435,12 @@
     });
 
     $effect(() => {
-        if (view)
+        if (view) {
+            // Update the ruler when config changes (since it's a ViewPlugin stored in a compartment, we can reconfigure or just let the plugin update loop handle it via prop passing if we used that, but here we just reconfigure to trigger updates)
+            // Actually, the plugin reads directly from appContext in its update method, so we just need to ensure the effect runs.
+            // But strict updates are better.
+            const _col = appContext.app.wrapGuideColumn;
+
             view.dispatch({
                 effects: [
                     wrapComp.reconfigure(createWrapExtension()),
@@ -465,11 +451,12 @@
                     indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))),
                     whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
                     languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
-                    handlersComp.reconfigure(eventHandlers), // Reactively update event handlers (context menu, etc)
-                    rulerComp.reconfigure(createRulerExtension(appContext.app.wrapGuideColumn)),
+                    handlersComp.reconfigure(eventHandlers),
                     doubleClickComp.reconfigure(createDoubleClickHandler()),
+                    rulerComp.reconfigure(rulerPlugin), // Re-assert plugin
                 ],
             });
+        }
     });
 
     onMount(() => {
@@ -584,11 +571,12 @@
             userThemeExtension,
 
             spellComp.of(createSpellCheckLinter()),
-            rulerComp.of(createRulerExtension(appContext.app.wrapGuideColumn)),
-            rulerPlugin,
             doubleClickComp.of(createDoubleClickHandler()),
 
-            wrapComp.of([]),
+            // Register ruler via compartment
+            rulerComp.of(rulerPlugin),
+
+            wrapComp.of(createWrapExtension()),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
             internalMouseHandler,
@@ -621,8 +609,10 @@
                 if (update.docChanged || update.selectionSet) {
                     if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
                     metricsUpdateTimer = window.setTimeout(() => {
-                        const line = update.state.doc.lineAt(update.state.selection.main.head);
-                        onMetricsChange(calculateCursorMetrics(update.state.doc.toString(), update.state.selection.main.head, { number: line.number, from: line.from, text: line.text }));
+                        // FIX: Use `update.view.state` to ensure we reference the correct state associated with this editor instance.
+                        const state = update.view.state;
+                        const line = state.doc.lineAt(state.selection.main.head);
+                        onMetricsChange(calculateCursorMetrics(state.doc.toString(), state.selection.main.head, { number: line.number, from: line.from, text: line.text }));
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
             })
