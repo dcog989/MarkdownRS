@@ -45,7 +45,8 @@ function getSettingsObject() {
         tooltipDelay: appState.tooltipDelay,
         findPanelTransparent: appState.findPanelTransparent,
         findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
-        spellcheckDictionaries: appState.spellcheckDictionaries
+        spellcheckDictionaries: appState.spellcheckDictionaries,
+        tabNameFromContent: appState.tabNameFromContent
     };
 }
 

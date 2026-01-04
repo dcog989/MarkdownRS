@@ -38,6 +38,7 @@ export const appState = $state({
     findPanelTransparent: false,
     findPanelCloseOnBlur: false,
     spellcheckDictionaries: ['en'] as string[],
+    tabNameFromContent: true,
 });
 
 // Logic functions
