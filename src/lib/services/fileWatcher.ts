@@ -10,6 +10,7 @@ type UnwatchFn = () => void;
 class FileWatcherService {
 	private watchers = new Map<string, { unwatch: UnwatchFn; refCount: number }>();
 	private pendingChecks = new Set<string>();
+	private pendingWatchers = new Map<string, Promise<void>>();
 
 	/**
 	 * Start watching a file path for changes.
@@ -18,32 +19,53 @@ class FileWatcherService {
 	async watch(path: string): Promise<void> {
 		if (!path) return;
 
+		// 1. Check active watchers
 		if (this.watchers.has(path)) {
 			const entry = this.watchers.get(path)!;
 			entry.refCount++;
 			return;
 		}
 
+		// 2. Check pending operations
+		if (this.pendingWatchers.has(path)) {
+			await this.pendingWatchers.get(path);
+			if (this.watchers.has(path)) {
+				this.watchers.get(path)!.refCount++;
+			}
+			return;
+		}
+
+		// 3. Initiate new watch
+		const promise = (async () => {
+			try {
+				const handleChange = debounce(async () => {
+					await this.handleFileChange(path);
+				}, 300);
+
+				const unwatch = await watch(path, (event) => {
+					if (typeof event === 'object' && 'type' in event) {
+						handleChange();
+					} else {
+						handleChange();
+					}
+				});
+
+				this.watchers.set(path, { unwatch, refCount: 1 });
+			} catch (err) {
+				AppError.handle('FileWatcher:Watch', err, {
+					showToast: false,
+					severity: 'warning',
+					additionalInfo: { path }
+				});
+			}
+		})();
+
+		this.pendingWatchers.set(path, promise);
+
 		try {
-			const handleChange = debounce(async () => {
-				await this.handleFileChange(path);
-			}, 300);
-
-			const unwatch = await watch(path, (event) => {
-				if (typeof event === 'object' && 'type' in event) {
-					handleChange();
-				} else {
-					handleChange();
-				}
-			});
-
-			this.watchers.set(path, { unwatch, refCount: 1 });
-		} catch (err) {
-			AppError.handle('FileWatcher:Watch', err, {
-				showToast: false,
-				severity: 'warning',
-				additionalInfo: { path }
-			});
+			await promise;
+		} finally {
+			this.pendingWatchers.delete(path);
 		}
 	}
 
@@ -52,6 +74,14 @@ class FileWatcherService {
 	 * Decrements ref count and stops actual watcher when count reaches 0.
 	 */
 	unwatch(path: string): void {
+		// If a watch is pending, chain a cleanup
+		if (this.pendingWatchers.has(path)) {
+			this.pendingWatchers.get(path)?.then(() => {
+				this.unwatch(path);
+			});
+			return;
+		}
+
 		if (!path || !this.watchers.has(path)) return;
 
 		const entry = this.watchers.get(path)!;
