@@ -310,6 +310,13 @@ pub async fn check_words(
                                     continue;
                                 }
                             }
+                        } else if lower.ends_with("s'") {
+                            // Check plural possessive (e.g. "Users'" -> "Users")
+                            if let Some(base) = lower.strip_suffix('\'') {
+                                if custom_guard.contains(base) {
+                                    continue;
+                                }
+                            }
                         }
 
                         if !speller.check(clean) {
