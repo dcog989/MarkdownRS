@@ -687,6 +687,8 @@
         view.focus();
 
         return () => {
+            if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
+            if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
             window.removeEventListener("keydown", handleModifierKey);
             window.removeEventListener("keyup", handleModifierKey);
             window.removeEventListener("blur", clearModifier);
