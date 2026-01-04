@@ -3,7 +3,7 @@
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { formatFileSize } from "$lib/utils/fileValidation";
-    import { CircleAlert, FileText, Pencil, PencilLine, Pin, X } from "lucide-svelte";
+    import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
 
     interface Props {
         tab: EditorTab;
@@ -75,7 +75,7 @@
     {:else if !tab.path}
         <Pencil size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
     {:else if tab.isDirty}
-        <PencilLine size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-accent-secondary'}" />
+        <SquarePen size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-accent-secondary'}" />
     {:else}
         <FileText size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
     {/if}
