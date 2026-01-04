@@ -2,7 +2,7 @@
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
-    import { getBackendCommand, type OperationId } from "$lib/config/textOperationsRegistry";
+    import type { OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateScroll } from "$lib/stores/editorStore.svelte";
@@ -10,12 +10,11 @@
     import { ScrollManager } from "$lib/utils/cmScroll";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
-    import { formatMarkdown } from "$lib/utils/formatterRust";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
-    import { transformText } from "$lib/utils/textTransformsRust";
+    import { transformText } from "$lib/utils/textTransforms";
     import { syntaxTree } from "@codemirror/language";
     import { EditorView as CM6EditorView } from "@codemirror/view";
     import { openPath } from "@tauri-apps/plugin-opener";
@@ -114,8 +113,8 @@
         // 1. Capture Scroll
         scrollManager.capture(cmView, `Op:${operationId}`);
 
-        const backendCommand = getBackendCommand(operationId);
-        const newText = operationId === "format-document" ? await formatMarkdown(targetText) : await transformText(targetText, backendCommand);
+        // 2. Transform (Unified handler: Client or Server)
+        const newText = await transformText(targetText, operationId);
 
         if (newText !== targetText) {
             const transaction: any = {

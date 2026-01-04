@@ -1,9 +1,9 @@
 /**
  * Consolidated Text Operations Registry
- * 
+ *
  * This file serves as the single source of truth for all text operations.
- * It maps operation IDs to their metadata (label, description, icon) and 
- * backend command, preventing "stringly-typed" errors.
+ * It maps operation IDs to their metadata (label, description, icon) and
+ * execution context (client vs server).
  */
 
 import {
@@ -26,7 +26,7 @@ import type { ComponentType } from "svelte";
 /**
  * Operation ID type - all valid operation identifiers
  */
-export type OperationId = 
+export type OperationId =
     // Sort & Order
     | 'sort-asc' | 'sort-desc' | 'sort-case-insensitive-asc' | 'sort-case-insensitive-desc'
     | 'sort-numeric-asc' | 'sort-numeric-desc' | 'sort-length-asc' | 'sort-length-desc'
@@ -57,12 +57,12 @@ export interface TextOperation {
     label: string;
     description: string;
     icon: ComponentType;
+    category: string;
+    execution: 'client' | 'server';
     /**
-     * Backend command name - this is what gets sent to the Rust backend.
-     * If not specified, defaults to the operation id.
+     * Backend command name - only needed if execution is 'server'.
      */
     backendCommand?: string;
-    category: string;
 }
 
 /**
@@ -87,7 +87,6 @@ export const OPERATION_CATEGORIES: OperationCategory[] = [
 
 /**
  * Complete registry of all text operations
- * This is the single source of truth for operation metadata
  */
 export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     // Sort & Order
@@ -97,6 +96,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort lines alphabetically A to Z',
         icon: ArrowDownAZ,
         category: 'sort',
+        execution: 'client'
     },
     'sort-desc': {
         id: 'sort-desc',
@@ -104,6 +104,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort lines alphabetically Z to A',
         icon: ArrowDownZA,
         category: 'sort',
+        execution: 'client'
     },
     'sort-case-insensitive-asc': {
         id: 'sort-case-insensitive-asc',
@@ -111,6 +112,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort A to Z ignoring case',
         icon: ArrowDownAZ,
         category: 'sort',
+        execution: 'client'
     },
     'sort-case-insensitive-desc': {
         id: 'sort-case-insensitive-desc',
@@ -118,6 +120,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort Z to A ignoring case',
         icon: ArrowDownZA,
         category: 'sort',
+        execution: 'client'
     },
     'sort-numeric-asc': {
         id: 'sort-numeric-asc',
@@ -125,6 +128,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort lines numerically (0-9)',
         icon: ArrowDown01,
         category: 'sort',
+        execution: 'client'
     },
     'sort-numeric-desc': {
         id: 'sort-numeric-desc',
@@ -132,6 +136,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort lines numerically (9-0)',
         icon: ArrowDown10,
         category: 'sort',
+        execution: 'client'
     },
     'sort-length-asc': {
         id: 'sort-length-asc',
@@ -139,6 +144,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort by line length ascending',
         icon: ArrowDownAZ,
         category: 'sort',
+        execution: 'client'
     },
     'sort-length-desc': {
         id: 'sort-length-desc',
@@ -146,6 +152,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Sort by line length descending',
         icon: ArrowDownZA,
         category: 'sort',
+        execution: 'client'
     },
     'reverse': {
         id: 'reverse',
@@ -153,6 +160,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Reverse the order of all lines',
         icon: ArrowDownZA,
         category: 'sort',
+        execution: 'client'
     },
     'shuffle': {
         id: 'shuffle',
@@ -160,6 +168,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Randomly shuffle line order',
         icon: FunnelX,
         category: 'sort',
+        execution: 'client'
     },
 
     // Remove & Filter
@@ -169,6 +178,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Keep only unique lines',
         icon: Eraser,
         category: 'filter',
+        execution: 'client'
     },
     'remove-unique': {
         id: 'remove-unique',
@@ -176,6 +186,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Keep only duplicate lines',
         icon: FunnelX,
         category: 'filter',
+        execution: 'client'
     },
     'remove-blank': {
         id: 'remove-blank',
@@ -183,6 +194,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Remove all empty lines',
         icon: CircleMinus,
         category: 'filter',
+        execution: 'client'
     },
     'remove-trailing-spaces': {
         id: 'remove-trailing-spaces',
@@ -190,6 +202,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Trim whitespace from line ends',
         icon: Eraser,
         category: 'filter',
+        execution: 'client'
     },
     'remove-leading-spaces': {
         id: 'remove-leading-spaces',
@@ -197,6 +210,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Trim whitespace from line starts',
         icon: Eraser,
         category: 'filter',
+        execution: 'client'
     },
     'remove-all-spaces': {
         id: 'remove-all-spaces',
@@ -204,6 +218,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Remove all whitespace characters',
         icon: Eraser,
         category: 'filter',
+        execution: 'client'
     },
 
     // Case Transformations
@@ -213,6 +228,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert all text to uppercase',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'lowercase': {
         id: 'lowercase',
@@ -220,6 +236,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert all text to lowercase',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'title-case': {
         id: 'title-case',
@@ -227,6 +244,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Capitalize first letter of each word',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'sentence-case': {
         id: 'sentence-case',
@@ -234,6 +252,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Capitalize first letter of sentences',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'camel-case': {
         id: 'camel-case',
@@ -241,6 +260,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert to camelCase format',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'pascal-case': {
         id: 'pascal-case',
@@ -248,6 +268,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert to PascalCase format',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'snake-case': {
         id: 'snake-case',
@@ -255,6 +276,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert to snake_case format',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'kebab-case': {
         id: 'kebab-case',
@@ -262,6 +284,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert to kebab-case format',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'constant-case': {
         id: 'constant-case',
@@ -269,6 +292,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Convert to CONSTANT_CASE format',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
     'invert-case': {
         id: 'invert-case',
@@ -276,6 +300,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Swap uppercase and lowercase',
         icon: Type,
         category: 'case',
+        execution: 'client'
     },
 
     // Markdown Formatting
@@ -285,6 +310,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: "Prefix lines with '- '",
         icon: List,
         category: 'markdown',
+        execution: 'client'
     },
     'add-numbers': {
         id: 'add-numbers',
@@ -292,6 +318,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: "Prefix lines with '1. 2. 3.'",
         icon: List,
         category: 'markdown',
+        execution: 'client'
     },
     'add-checkboxes': {
         id: 'add-checkboxes',
@@ -299,6 +326,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: "Prefix lines with '- [ ]'",
         icon: List,
         category: 'markdown',
+        execution: 'client'
     },
     'remove-bullets': {
         id: 'remove-bullets',
@@ -306,6 +334,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Remove bullets, numbers, checkboxes',
         icon: CircleMinus,
         category: 'markdown',
+        execution: 'client'
     },
     'blockquote': {
         id: 'blockquote',
@@ -313,6 +342,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: "Prefix lines with '> '",
         icon: TextAlignStart,
         category: 'markdown',
+        execution: 'client'
     },
     'remove-blockquote': {
         id: 'remove-blockquote',
@@ -320,6 +350,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: "Remove '> ' prefix",
         icon: CircleMinus,
         category: 'markdown',
+        execution: 'client'
     },
     'add-code-fence': {
         id: 'add-code-fence',
@@ -327,6 +358,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Wrap with ``` fences',
         icon: Hash,
         category: 'markdown',
+        execution: 'client'
     },
     'increase-heading': {
         id: 'increase-heading',
@@ -334,6 +366,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Add # to headings',
         icon: Hash,
         category: 'markdown',
+        execution: 'client'
     },
     'decrease-heading': {
         id: 'decrease-heading',
@@ -341,6 +374,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Remove # from headings',
         icon: Hash,
         category: 'markdown',
+        execution: 'client'
     },
 
     // Text Manipulation
@@ -350,6 +384,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Trim leading and trailing spaces',
         icon: Eraser,
         category: 'text',
+        execution: 'client'
     },
     'normalize-whitespace': {
         id: 'normalize-whitespace',
@@ -357,6 +392,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Replace multiple spaces with single',
         icon: Eraser,
         category: 'text',
+        execution: 'client'
     },
     'join-lines': {
         id: 'join-lines',
@@ -364,6 +400,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Combine all lines into one',
         icon: TextAlignStart,
         category: 'text',
+        execution: 'client'
     },
     'split-sentences': {
         id: 'split-sentences',
@@ -371,6 +408,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Each sentence on new line',
         icon: TextAlignStart,
         category: 'text',
+        execution: 'client'
     },
     'wrap-quotes': {
         id: 'wrap-quotes',
@@ -378,6 +416,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Wrap each line in quotes',
         icon: Type,
         category: 'text',
+        execution: 'client'
     },
     'add-line-numbers': {
         id: 'add-line-numbers',
@@ -385,6 +424,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Prefix with line numbers',
         icon: List,
         category: 'text',
+        execution: 'client'
     },
     'indent-lines': {
         id: 'indent-lines',
@@ -392,6 +432,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Indent each line by default spacing',
         icon: TextAlignStart,
         category: 'text',
+        execution: 'client'
     },
     'unindent-lines': {
         id: 'unindent-lines',
@@ -399,6 +440,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Unindent each line by default spacing',
         icon: TextAlignStart,
         category: 'text',
+        execution: 'client'
     },
 
     // Special operations
@@ -408,13 +450,13 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         description: 'Format markdown document',
         icon: Type,
         category: 'text',
+        execution: 'server',
         backendCommand: 'format_markdown',
     },
 };
 
 /**
  * Get operation metadata by ID
- * Returns undefined if operation doesn't exist (type-safe)
  */
 export function getOperation(id: OperationId): TextOperation | undefined {
     return TEXT_OPERATIONS_REGISTRY[id];
@@ -425,14 +467,6 @@ export function getOperation(id: OperationId): TextOperation | undefined {
  */
 export function getOperationsByCategory(categoryId: string): TextOperation[] {
     return Object.values(TEXT_OPERATIONS_REGISTRY).filter(op => op.category === categoryId);
-}
-
-/**
- * Get the backend command name for an operation
- */
-export function getBackendCommand(id: OperationId): string {
-    const operation = TEXT_OPERATIONS_REGISTRY[id];
-    return operation?.backendCommand || id;
 }
 
 /**
