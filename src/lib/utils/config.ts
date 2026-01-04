@@ -7,6 +7,7 @@ export const CONFIG = {
         CONTENT_DEBOUNCE_MS: 80,
         METRICS_DEBOUNCE_MS: 80,
         SCROLL_DEBOUNCE_MS: 150,
+        SEARCH_DEBOUNCE_MS: 150,
         MAX_FILE_SIZE_MB: 50,
         SMART_TITLE_MAX_LENGTH: 25,
     },
@@ -46,6 +47,7 @@ export const CONFIG = {
         LARGE_FILE_THRESHOLD_LINES: 10000,
         SCROLL_SYNC_THRESHOLD_PX: 10,
         SCROLL_SYNC_THROTTLE_MS: 16,
+        FILE_WATCH_DEBOUNCE_MS: 300,
     },
 
     // UI
