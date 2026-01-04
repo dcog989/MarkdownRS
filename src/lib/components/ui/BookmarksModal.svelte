@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Input from "$lib/components/ui/Input.svelte";
     import { addBookmark, deleteBookmark, isBookmarked, loadBookmarks, updateAccessTime, updateBookmark } from "$lib/stores/bookmarkStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { callBackend } from "$lib/utils/backend";
@@ -190,7 +191,7 @@
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main focus:border-accent-primary transition-colors" />
+            <Input bind:ref={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="pl-8 pr-3" />
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
@@ -221,11 +222,11 @@
         <div class="px-4 py-3 border-b bg-bg-input border-border-main">
             <div class="space-y-2">
                 <div class="flex gap-2">
-                    <input bind:value={addPath} type="text" placeholder="File path..." class="flex-1 px-2 py-1 rounded text-ui outline-none border bg-bg-panel text-fg-default border-border-main" />
+                    <Input bind:value={addPath} type="text" placeholder="File path..." class="flex-1 bg-bg-panel" />
                     <button onclick={handleBrowse} class="px-3 py-1 rounded text-ui font-medium transition-colors bg-bg-panel text-fg-default border border-border-main"> Browse... </button>
                 </div>
-                <input bind:value={addTitle} type="text" placeholder="Bookmark title..." class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-panel text-fg-default border-border-main" />
-                <input bind:value={addTags} type="text" placeholder="Tags (comma-separated)..." class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-panel text-fg-default border-border-main" />
+                <Input bind:value={addTitle} type="text" placeholder="Bookmark title..." class="bg-bg-panel" />
+                <Input bind:value={addTags} type="text" placeholder="Tags (comma-separated)..." class="bg-bg-panel" />
                 {#if browseError}
                     <div class="text-ui-sm text-danger-text">{browseError}</div>
                 {/if}
@@ -239,13 +240,13 @@
 
     <div class="text-ui">
         {#if sortedBookmarks.length > 0}
-            <div class="divide-y border-border-main">
+            <div class="divide-y divide-border-main border-border-main">
                 {#each sortedBookmarks as bookmark (bookmark.id)}
                     <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
                         {#if editingId === bookmark.id}
                             <div class="space-y-2">
-                                <input bind:value={editTitle} type="text" class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main" />
-                                <input bind:value={editTags} type="text" placeholder="Tags (comma-separated)" class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main" />
+                                <Input bind:value={editTitle} type="text" />
+                                <Input bind:value={editTags} type="text" placeholder="Tags (comma-separated)" />
                                 <div class="flex gap-2 justify-end">
                                     <button onclick={cancelEdit} class="px-2 py-1 rounded text-ui-sm">Cancel</button>
                                     <button onclick={() => saveEdit(bookmark.id)} class="px-2 py-1 rounded text-ui-sm bg-accent-primary text-fg-inverse">Save</button>

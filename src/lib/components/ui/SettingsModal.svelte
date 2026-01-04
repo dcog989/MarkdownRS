@@ -1,6 +1,7 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
     import DictionarySelector from "$lib/components/ui/DictionarySelector.svelte";
+    import Input from "$lib/components/ui/Input.svelte";
     import { toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { infoToast } from "$lib/stores/toastStore.svelte";
@@ -189,7 +190,7 @@
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <input bind:this={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search..." class="w-full pl-8 pr-3 py-1 rounded outline-none text-ui bg-bg-input text-fg-default border border-border-main focus:border-accent-primary transition-colors" />
+            <Input bind:ref={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search..." class="pl-8 pr-3" />
         </div>
 
         <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none text-fg-muted" onclick={() => toggleShortcuts()} title="Keyboard Shortcuts (F1)" aria-label="Keyboard Shortcuts">
@@ -219,11 +220,11 @@
                                     {setting.label}
                                 </span>
                             </label>
-                            <div class="{setting.type === 'dictionary-multi-select' ? 'flex-1 max-w-md' : 'w-56'} shrink-0">
+                            <div class="{setting.type === 'dictionary-multi-select' ? 'flex-1 max-w-md' : 'w-56'} shrink-0" use:tooltip={(setting as any).tooltip || ""}>
                                 {#if setting.type === "text"}
-                                    <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors" use:tooltip={(setting as any).tooltip || ""} />
+                                    <Input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} />
                                 {:else if setting.type === "number"}
-                                    <input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors" use:tooltip={(setting as any).tooltip || ""} />
+                                    <Input id={setting.key} type="number" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} />
                                 {:else if setting.type === "range"}
                                     <div class="flex items-center gap-3">
                                         <input id={setting.key} type="range" value={getSettingValue(setting.key, setting.defaultValue)} min={setting.min} max={setting.max} step={setting.step} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none bg-border-main accent-accent-primary" />
@@ -238,7 +239,7 @@
                                         {/each}
                                     </select>
                                 {:else if setting.type === "dictionary-multi-select"}
-                                    <div use:tooltip={(setting as any).tooltip || ""}>
+                                    <div>
                                         <DictionarySelector selected={appContext.app.spellcheckDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
                                 {:else if setting.type === "custom-context-menu"}

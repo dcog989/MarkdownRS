@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Input from "$lib/components/ui/Input.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { clearSearch, replaceAllInTabs, searchAllTabs, searchState, selectNearestMatch, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
@@ -220,7 +221,7 @@
 
         <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-[500px]">
             <div class="flex gap-2 items-center">
-                <input bind:this={searchInputRef} type="text" bind:value={searchState.findText} placeholder="Find" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onInput} spellcheck="false" />
+                <Input bind:ref={searchInputRef} type="text" bind:value={searchState.findText} placeholder="Find" class="flex-1 text-[13px] leading-6" oninput={onInput} spellcheck="false" />
                 <div class="text-[11px] text-fg-muted min-w-[80px] text-right">
                     {#if searchScope === "current"}
                         {#if searchState.currentMatches > 0}
@@ -240,7 +241,7 @@
 
             {#if isReplaceMode}
                 <div class="flex gap-2 items-center">
-                    <input type="text" bind:value={searchState.replaceText} placeholder="Replace" class="flex-1 px-2 py-1 rounded text-[13px] leading-6 outline-none bg-bg-input border border-border-light text-fg-default focus:border-accent-primary" oninput={onReplaceInput} spellcheck="false" />
+                    <Input type="text" bind:value={searchState.replaceText} placeholder="Replace" class="flex-1 text-[13px] leading-6" oninput={onReplaceInput} spellcheck="false" />
                 </div>
             {/if}
 
