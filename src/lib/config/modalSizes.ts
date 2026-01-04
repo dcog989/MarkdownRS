@@ -9,5 +9,5 @@ export const MODAL_CONSTRAINTS = {
 	/** Maximum width for all modals */
 	MAX_WIDTH: '800px',
 	/** Maximum height for modal content */
-	MAX_HEIGHT: '85vh'
+	MAX_HEIGHT: 'calc(100vh - 6rem)' // Leave 3rem (48px) top + 3rem bottom for spacing
 } as const;

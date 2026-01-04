@@ -57,7 +57,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="ui-backdrop" class:pt-16={position === "top"} class:items-start={position === "top"} style="z-index: {zIndex}; pointer-events: auto;" onclick={handleBackdropClick} onfocusin={handleFocusTrap}>
-        <div class="ui-panel shadow-2xl" style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: {MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
+        <div class="ui-panel shadow-2xl" style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: {position === 'top' ? 'calc(100vh - 5rem)' : MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;" onclick={(e) => e.stopPropagation()}>
             <!-- Header Strategy: Snippet First, then Title+Close Default -->
             {#if header}
                 <div class="ui-header flex justify-between items-center">
