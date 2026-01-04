@@ -70,6 +70,8 @@
     let whitespaceComp = new Compartment();
     let languageComp = new Compartment();
     let handlersComp = new Compartment();
+    let rulerComp = new Compartment();
+    let doubleClickComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
@@ -83,6 +85,73 @@
             return span;
         }
     }
+
+    // Ruler Extension
+    function createRulerExtension(column: number) {
+        if (column <= 0) return [];
+        
+        return EditorView.theme({
+            ".cm-content": {
+                position: "relative",
+            },
+            ".cm-ruler": {
+                position: "absolute",
+                top: "0",
+                bottom: "0",
+                width: "1px",
+                backgroundColor: "var(--color-border-main)",
+                opacity: "0.5",
+                pointerEvents: "none",
+                zIndex: "0",
+            },
+        }).extension;
+    }
+
+    const rulerPlugin = ViewPlugin.fromClass(
+        class {
+            column: number;
+            
+            constructor(view: EditorView) {
+                this.column = appContext.app.wrapGuideColumn;
+                this.updateRuler(view);
+            }
+            
+            update(update: ViewUpdate) {
+                if (this.column !== appContext.app.wrapGuideColumn) {
+                    this.column = appContext.app.wrapGuideColumn;
+                    this.updateRuler(update.view);
+                }
+            }
+            
+            updateRuler(view: EditorView) {
+                // Remove existing ruler
+                const existing = view.dom.querySelector('.cm-ruler');
+                if (existing) existing.remove();
+                
+                if (this.column <= 0) return;
+                
+                // Create ruler element
+                const ruler = document.createElement('div');
+                ruler.className = 'cm-ruler';
+                
+                // Calculate position based on character width
+                const charWidth = view.defaultCharacterWidth;
+                const left = this.column * charWidth;
+                ruler.style.left = `${left}px`;
+                
+                // Insert into content element
+                const content = view.contentDOM;
+                if (content.parentElement) {
+                    content.parentElement.appendChild(ruler);
+                }
+            }
+            
+            destroy() {
+                const ruler = document.querySelector('.cm-ruler');
+                if (ruler) ruler.remove();
+            }
+        }
+    );
 
     function getNewlineDecorations(view: EditorView): DecorationSet {
         const builder = new RangeSetBuilder<Decoration>();
@@ -177,6 +246,42 @@
             return false;
         },
     });
+
+    // Custom double-click handler for selecting trailing space
+    function createDoubleClickHandler() {
+        if (!appContext.app.doubleClickSelectsTrailingSpace) return [];
+
+        return EditorView.domEventHandlers({
+            dblclick: (event, view) => {
+                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                if (pos === null) return false;
+
+                const range = view.state.wordAt(pos);
+                if (!range) return false;
+
+                let end = range.to;
+                
+                // Check if there's a space immediately after the word
+                if (end < view.state.doc.length) {
+                    const nextChar = view.state.doc.sliceString(end, end + 1);
+                    if (nextChar === ' ' || nextChar === '\t') {
+                        end++;
+                    }
+                }
+
+                // Only modify selection if we're actually including trailing space
+                if (end > range.to) {
+                    view.dispatch({
+                        selection: { anchor: range.from, head: end },
+                    });
+                    event.preventDefault();
+                    return true;
+                }
+
+                return false;
+            },
+        });
+    }
 
     let dynamicTheme = $derived.by(() => {
         const fontSize = appContext.app.editorFontSize || 14;
@@ -324,6 +429,8 @@
                     whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
                     languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
                     handlersComp.reconfigure(eventHandlers), // Reactively update event handlers (context menu, etc)
+                    rulerComp.reconfigure(createRulerExtension(appContext.app.wrapGuideColumn)),
+                    doubleClickComp.reconfigure(createDoubleClickHandler()),
                 ],
             });
     });
@@ -440,6 +547,9 @@
             userThemeExtension,
 
             spellComp.of(createSpellCheckLinter()),
+            rulerComp.of(createRulerExtension(appContext.app.wrapGuideColumn)),
+            rulerPlugin,
+            doubleClickComp.of(createDoubleClickHandler()),
 
             wrapComp.of([]),
             EditorView.contentAttributes.of({ spellcheck: "false" }),

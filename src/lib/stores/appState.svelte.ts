@@ -39,6 +39,8 @@ export const appState = $state({
     findPanelCloseOnBlur: false,
     spellcheckDictionaries: ['en'] as string[],
     tabNameFromContent: true,
+    wrapGuideColumn: 0,
+    doubleClickSelectsTrailingSpace: false,
 });
 
 // Logic functions

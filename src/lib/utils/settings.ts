@@ -46,7 +46,9 @@ function getSettingsObject() {
         findPanelTransparent: appState.findPanelTransparent,
         findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
         spellcheckDictionaries: appState.spellcheckDictionaries,
-        tabNameFromContent: appState.tabNameFromContent
+        tabNameFromContent: appState.tabNameFromContent,
+        wrapGuideColumn: appState.wrapGuideColumn,
+        doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace
     };
 }
 
