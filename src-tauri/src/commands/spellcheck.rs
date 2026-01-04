@@ -187,7 +187,9 @@ pub async fn init_spellchecker(
     }
 
     let mut combined_aff = String::new();
-    let mut combined_dic_lines: Vec<String> = Vec::new();
+    // Pre-allocate buffer (e.g. 5MB) to reduce reallocations
+    let mut combined_dic_body = String::with_capacity(5 * 1024 * 1024);
+    let mut total_word_count = 0;
     let mut first_dict = true;
 
     let client = reqwest::Client::new();
@@ -237,18 +239,22 @@ pub async fn init_spellchecker(
                 }
 
                 let dic_clean = dic_content.trim_start_matches('\u{feff}');
-                let mut lines: Vec<&str> = dic_clean.lines().collect();
-                if !lines.is_empty() {
-                    // Remove the count from the first line
-                    lines.remove(0);
-                    for line in &lines {
-                        if !line.trim().is_empty() {
-                            combined_dic_lines.push(line.to_string());
+
+                // Use iterator to avoid Vec<String> allocation
+                let mut lines = dic_clean.lines();
+                // Skip the count line
+                if lines.next().is_some() {
+                    for line in lines {
+                        let trimmed = line.trim();
+                        if !trimmed.is_empty() {
+                            combined_dic_body.push_str(trimmed);
+                            combined_dic_body.push('\n');
+                            total_word_count += 1;
                         }
                     }
                 }
 
-                log::info!("Loaded dictionary: {} ({} words)", dict_code, lines.len());
+                log::info!("Loaded dictionary: {}", dict_code);
             }
         } else {
             log::warn!("Dictionary files not found for: {}", dict_code);
@@ -282,11 +288,17 @@ pub async fn init_spellchecker(
                     let mut count = 0;
                     for line in content.lines() {
                         let trimmed = line.trim();
-                        if !trimmed.is_empty() && !trimmed.starts_with('#') {
-                            combined_dic_lines.push(trimmed.to_string());
+                        // Filter comments and empty lines
+                        if !trimmed.is_empty()
+                            && !trimmed.starts_with('#')
+                            && !trimmed.starts_with("//")
+                        {
+                            combined_dic_body.push_str(trimmed);
+                            combined_dic_body.push('\n');
                             count += 1;
                         }
                     }
+                    total_word_count += count;
                     log::info!(
                         "Loaded specialist dictionary: {} ({} words)",
                         spec_id,
@@ -297,20 +309,17 @@ pub async fn init_spellchecker(
         }
     }
 
-    if !combined_aff.is_empty() && !combined_dic_lines.is_empty() {
-        let combined_dic = format!(
-            "{}\n{}",
-            combined_dic_lines.len(),
-            combined_dic_lines.join("\n")
-        );
+    if !combined_aff.is_empty() && total_word_count > 0 {
+        // Construct final dictionary string with header
+        let combined_dic = format!("{}\n{}", total_word_count, combined_dic_body);
 
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
                 let mut speller = speller_arc.lock().await;
                 *speller = Some(dict);
                 log::info!(
-                    "Spellchecker initialized successfully with {} words",
-                    combined_dic_lines.len()
+                    "Spellchecker initialized successfully with {} total words",
+                    total_word_count
                 );
             }
             Err(e) => {
