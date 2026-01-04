@@ -123,8 +123,13 @@ export function closeTab(id: string) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
     if (index !== -1) {
         const tab = editorStore.tabs[index];
-        // Store up to 12 recently closed tabs
-        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...editorStore.closedTabsHistory.slice(0, 11)];
+
+        // Only add to history if it's a saved file or has content
+        if (tab.path || tab.content.trim().length > 0) {
+            // Store up to 12 recently closed tabs
+            editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...editorStore.closedTabsHistory.slice(0, 11)];
+        }
+
         editorStore.tabs.splice(index, 1);
         editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);
         editorStore.sessionDirty = true;
