@@ -1,6 +1,7 @@
 <script lang="ts">
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { clearSearch, replaceAllInTabs, searchAllTabs, searchState, selectNearestMatch, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
+    import { debounce } from "$lib/utils/timing";
     import { findNext, findPrevious, replaceAll, replaceNext } from "@codemirror/search";
     import type { EditorView } from "@codemirror/view";
     import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
@@ -81,14 +82,22 @@
         }
     }
 
+    const debouncedSearch = debounce((view: EditorView) => {
+        executeSearch(view, true);
+    }, 150);
+
+    const debouncedReplace = debounce((view: EditorView) => {
+        updateSearchEditor(view);
+    }, 150);
+
     function onInput() {
         if (!cmView) return;
-        executeSearch(cmView, true);
+        debouncedSearch(cmView);
     }
 
     function onReplaceInput() {
         if (!cmView) return;
-        updateSearchEditor(cmView);
+        debouncedReplace(cmView);
     }
 
     function onFindNext() {
