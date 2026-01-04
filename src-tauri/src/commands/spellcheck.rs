@@ -4,6 +4,58 @@ use tauri::{Manager, State};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 
+// Map of ID -> URL
+fn get_specialist_url(id: &str) -> Option<&'static str> {
+    match id {
+        "software-terms" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
+        ),
+        "companies" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
+        ),
+        "medical-terms" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medical-terms/dict/medicalTerms.txt",
+        ),
+        "scientific-terms-us" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific-terms-us/dict/scientificTermsUS.txt",
+        ),
+        "typescript" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/typescript/dict/typescript.txt",
+        ),
+        "fullstack" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fullstack/dict/fullstack.txt",
+        ),
+        "npm" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/npm/dict/npm.txt",
+        ),
+        "fonts" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fonts/dict/fonts.txt",
+        ),
+        "filetypes" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/dict/filetypes.txt",
+        ),
+        "html" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/html/dict/html.txt",
+        ),
+        "css" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/css/dict/css.txt",
+        ),
+        "python" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/python/dict/python.txt",
+        ),
+        "rust" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/rust/dict/rust.txt",
+        ),
+        "cpp" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/cpp/dict/cpp.txt",
+        ),
+        "aws" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aws/dict/aws.txt",
+        ),
+        _ => None,
+    }
+}
+
 #[tauri::command]
 pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
     let app_dir = app_handle.path().app_data_dir().map_err(|e| {
@@ -91,18 +143,23 @@ pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
     dictionaries: Option<Vec<String>>,
+    specialist_dictionaries: Option<Vec<String>>,
 ) -> Result<(), String> {
     let dict_codes = dictionaries.unwrap_or_else(|| vec!["en".to_string()]);
+    let spec_codes = specialist_dictionaries
+        .unwrap_or_else(|| vec!["software-terms".to_string(), "companies".to_string()]);
 
     log::info!(
-        "Initializing spellchecker with dictionaries: {:?}",
-        dict_codes
+        "Initializing spellchecker with dictionaries: {:?} and specialist: {:?}",
+        dict_codes,
+        spec_codes
     );
     let local_dir = app_handle.path().app_local_data_dir().map_err(|e| {
         log::error!("Failed to get local data directory: {}", e);
         format!("Failed to initialize spellchecker: {}", e)
     })?;
     let cache_dir = local_dir.join("spellcheck_cache");
+    let specialist_cache_dir = local_dir.join("spellcheck_cache").join("specialist");
 
     let app_dir = app_handle
         .path()
@@ -114,11 +171,19 @@ pub async fn init_spellchecker(
     let custom_arc = state.custom_dict.clone();
 
     if !cache_dir.exists() {
-        log::info!("Creating spellcheck cache directory: {:?}", cache_dir);
         fs::create_dir_all(&cache_dir).await.map_err(|e| {
             log::error!("Failed to create spellcheck cache directory: {}", e);
             format!("Failed to create cache directory: {}", e)
         })?;
+    }
+
+    if !specialist_cache_dir.exists() {
+        fs::create_dir_all(&specialist_cache_dir)
+            .await
+            .map_err(|e| {
+                log::error!("Failed to create specialist cache directory: {}", e);
+                format!("Failed to create specialist cache directory: {}", e)
+            })?;
     }
 
     let mut combined_aff = String::new();
@@ -127,6 +192,7 @@ pub async fn init_spellchecker(
 
     let client = reqwest::Client::new();
 
+    // 1. Load Standard Dictionaries (Affix based)
     for dict_code in &dict_codes {
         let aff_path = cache_dir.join(format!("{}.aff", dict_code));
         let dic_path = cache_dir.join(format!("{}.dic", dict_code));
@@ -146,7 +212,6 @@ pub async fn init_spellchecker(
             if let Ok(resp) = client.get(&aff_url).send().await {
                 if resp.status().is_success() {
                     if let Ok(text) = resp.text().await {
-                        log::info!("Downloaded .aff file for {}", dict_code);
                         let _ = fs::write(&aff_path, text).await;
                     }
                 }
@@ -155,7 +220,6 @@ pub async fn init_spellchecker(
             if let Ok(resp) = client.get(&dic_url).send().await {
                 if resp.status().is_success() {
                     if let Ok(text) = resp.text().await {
-                        log::info!("Downloaded .dic file for {}", dict_code);
                         let _ = fs::write(&dic_path, text).await;
                     }
                 }
@@ -175,6 +239,7 @@ pub async fn init_spellchecker(
                 let dic_clean = dic_content.trim_start_matches('\u{feff}');
                 let mut lines: Vec<&str> = dic_clean.lines().collect();
                 if !lines.is_empty() {
+                    // Remove the count from the first line
                     lines.remove(0);
                     for line in &lines {
                         if !line.trim().is_empty() {
@@ -190,35 +255,45 @@ pub async fn init_spellchecker(
         }
     }
 
-    let jargon_path = cache_dir.join("jargon.dic");
-    if !jargon_path.exists() {
-        log::info!("Downloading jargon dictionary");
-        if let Ok(resp) = client
-            .get("https://raw.githubusercontent.com/smoeding/hunspell-jargon/master/jargon.dic")
-            .send()
-            .await
-        {
-            if resp.status().is_success() {
-                if let Ok(text) = resp.text().await {
-                    log::info!("Downloaded jargon dictionary");
-                    let _ = fs::write(&jargon_path, text).await;
-                }
-            }
-        }
-    }
+    // 2. Load Specialist Dictionaries (Simple word lists)
+    for spec_id in &spec_codes {
+        if let Some(url) = get_specialist_url(spec_id) {
+            let cache_path = specialist_cache_dir.join(format!("{}.txt", spec_id));
 
-    if jargon_path.exists() {
-        if let Ok(jargon_content) = fs::read_to_string(&jargon_path).await {
-            let mut lines: Vec<&str> = jargon_content.lines().collect();
-            if !lines.is_empty() {
-                lines.remove(0);
-                for line in &lines {
-                    if !line.trim().is_empty() {
-                        combined_dic_lines.push(line.to_string());
+            if !cache_path.exists() {
+                log::info!("Downloading specialist dictionary: {}", spec_id);
+                if let Ok(resp) = client.get(url).send().await {
+                    if resp.status().is_success() {
+                        if let Ok(text) = resp.text().await {
+                            let _ = fs::write(&cache_path, text).await;
+                        }
+                    } else {
+                        log::warn!(
+                            "Failed to download specialist dictionary: {} (Status: {})",
+                            spec_id,
+                            resp.status()
+                        );
                     }
                 }
             }
-            log::info!("Loaded jargon dictionary");
+
+            if cache_path.exists() {
+                if let Ok(content) = fs::read_to_string(&cache_path).await {
+                    let mut count = 0;
+                    for line in content.lines() {
+                        let trimmed = line.trim();
+                        if !trimmed.is_empty() && !trimmed.starts_with('#') {
+                            combined_dic_lines.push(trimmed.to_string());
+                            count += 1;
+                        }
+                    }
+                    log::info!(
+                        "Loaded specialist dictionary: {} ({} words)",
+                        spec_id,
+                        count
+                    );
+                }
+            }
         }
     }
 
@@ -229,15 +304,12 @@ pub async fn init_spellchecker(
             combined_dic_lines.join("\n")
         );
 
-        // spellbook::Dictionary::new is CPU bound and synchronous (computation),
-        // so it's safe to call here without blocking an async runtime's I/O resources
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
                 let mut speller = speller_arc.lock().await;
                 *speller = Some(dict);
                 log::info!(
-                    "Spellchecker initialized successfully with {} dictionaries ({} total words)",
-                    dict_codes.len(),
+                    "Spellchecker initialized successfully with {} words",
                     combined_dic_lines.len()
                 );
             }
@@ -277,7 +349,6 @@ pub async fn check_words(
     let mut misspelled = Vec::new();
 
     // Process in chunks to prevent holding the lock for the entire duration
-    // and to allow other tasks (like suggestions) to acquire the lock.
     for chunk in words.chunks(50) {
         let speller_guard = state.speller.lock().await;
         let custom_guard = state.custom_dict.lock().await;
@@ -317,6 +388,9 @@ pub async fn check_words(
                 }
             }
         }
+
+        // Yield to allow other tasks (suggestions) to access the lock
+        tokio::task::yield_now().await;
     }
 
     Ok(misspelled)

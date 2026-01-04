@@ -38,6 +38,7 @@ export const appState = $state({
     findPanelTransparent: false,
     findPanelCloseOnBlur: false,
     spellcheckDictionaries: ['en'] as string[],
+    specialistDictionaries: ['software-terms', 'companies'] as string[],
     tabNameFromContent: true,
     wrapGuideColumn: 0,
     doubleClickSelectsTrailingSpace: false,

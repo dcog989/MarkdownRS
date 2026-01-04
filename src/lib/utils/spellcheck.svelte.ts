@@ -33,8 +33,9 @@ export async function initSpellcheck(): Promise<void> {
             // Get selected dictionaries from settings
             const { appContext } = await import('../stores/state.svelte');
             const dictionaries = appContext.app.spellcheckDictionaries || ['en'];
+            const specialistDictionaries = appContext.app.specialistDictionaries || ['software-terms', 'companies'];
 
-            await callBackend('init_spellchecker', { dictionaries }, 'Editor:Init');
+            await callBackend('init_spellchecker', { dictionaries, specialistDictionaries }, 'Editor:Init');
             spellcheckState.dictionaryLoaded = true;
         } catch (err) {
             AppError.handle('Spellcheck:Init', err, { showToast: false, severity: 'warning' });

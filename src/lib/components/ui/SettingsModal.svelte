@@ -2,6 +2,7 @@
     import { tooltip } from "$lib/actions/tooltip";
     import DictionarySelector from "$lib/components/ui/DictionarySelector.svelte";
     import Input from "$lib/components/ui/Input.svelte";
+    import SpecialistDictSelector from "$lib/components/ui/SpecialistDictSelector.svelte";
     import { toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { infoToast } from "$lib/stores/toastStore.svelte";
@@ -118,7 +119,8 @@
         { key: "previewFontSize", label: "Font Size (px)", type: "number", category: "Preview", defaultValue: 16, min: 10, max: 32 },
         { key: "markdownFlavor", label: "Markdown Flavor", type: "select", category: "Preview", defaultValue: "gfm", options: ["gfm", "commonmark"], optionLabels: ["GitHub Flavored Markdown", "CommonMark"] },
 
-        { key: "spellcheckDictionaries", label: "Spellcheck Dictionaries", type: "dictionary-multi-select", category: "Spellcheck", defaultValue: ["en"], tooltip: "Select one or more dictionaries. Restart required after changes." },
+        { key: "spellcheckDictionaries", label: "Standard Dictionaries", type: "dictionary-multi-select", category: "Spellcheck", defaultValue: ["en"], tooltip: "Select one or more standard languages." },
+        { key: "specialistDictionaries", label: "Specialist Dictionaries", type: "specialist-multi-select", category: "Spellcheck", defaultValue: ["software-terms", "companies"], tooltip: "Select one or more specialist term lists." },
 
         // Custom key for Windows Context Menu - Only visible on Windows
         ...(isWindows
@@ -173,7 +175,7 @@
 
             if (key === "logLevel") {
                 infoToast("Restart required to apply log level changes");
-            } else if (key === "spellcheckDictionaries") {
+            } else if (key === "spellcheckDictionaries" || key === "specialistDictionaries") {
                 clearDictionaries();
                 infoToast("Restart required to apply dictionary changes");
             }
@@ -208,7 +210,7 @@
                 {#each sortedSettings as setting, index}
                     <div class="py-3" style:border-top={index > 0 && !(setting as any).visibleWhen && !(setting as any).groupWith ? "1px solid var(--color-border-main)" : "none"}>
                         <div class="flex items-start justify-between gap-6">
-                            <label for={setting.key} class="flex-1 flex items-center whitespace-nowrap overflow-hidden {setting.type === 'dictionary-multi-select' ? 'pt-1.5' : ''}">
+                            <label for={setting.key} class="flex-1 flex items-center whitespace-nowrap overflow-hidden {setting.type.includes('multi-select') ? 'pt-1.5' : ''}">
                                 <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0 mr-4 text-fg-muted">
                                     {#if (setting as any).visibleWhen}
                                         <!-- Indented child -->
@@ -220,7 +222,7 @@
                                     {setting.label}
                                 </span>
                             </label>
-                            <div class="{setting.type === 'dictionary-multi-select' ? 'flex-1 max-w-md' : 'w-56'} shrink-0" use:tooltip={(setting as any).tooltip || ""}>
+                            <div class="{setting.type.includes('multi-select') ? 'flex-1 max-w-md' : 'w-56'} shrink-0" use:tooltip={(setting as any).tooltip || ""}>
                                 {#if setting.type === "text"}
                                     <Input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} />
                                 {:else if setting.type === "number"}
@@ -241,6 +243,10 @@
                                 {:else if setting.type === "dictionary-multi-select"}
                                     <div>
                                         <DictionarySelector selected={appContext.app.spellcheckDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
+                                    </div>
+                                {:else if setting.type === "specialist-multi-select"}
+                                    <div>
+                                        <SpecialistDictSelector selected={appContext.app.specialistDictionaries} onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
                                 {:else if setting.type === "custom-context-menu"}
                                     <input id={setting.key} type="checkbox" checked={isContextMenuEnabled} onchange={(e) => toggleContextMenu(e.currentTarget.checked)} class="w-4 h-4 rounded cursor-pointer accent-accent-primary" disabled={isCheckingContextMenu} />

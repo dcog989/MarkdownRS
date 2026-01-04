@@ -87,7 +87,7 @@ export interface BackendCommands {
         return: string[];
     };
     'init_spellchecker': {
-        args: { dictionaries?: string[] };
+        args: { dictionaries?: string[]; specialistDictionaries?: string[] };
         return: void;
     };
     'check_words': {
