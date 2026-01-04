@@ -88,22 +88,22 @@
 
 <div class="relative w-full" bind:this={dropdownEl}>
     <!-- svelte-ignore a11y_interactive_supports_focus -->
-    <div role="button" tabindex="0" onclick={toggleDropdown} onkeydown={handleKeydown} class="w-full px-2 py-1 rounded text-ui text-left outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors flex items-center justify-between gap-2 cursor-pointer">
-        <div class="flex-1 flex flex-wrap gap-1 items-center min-h-[1.5rem]">
+    <div role="button" tabindex="0" onclick={toggleDropdown} onkeydown={handleKeydown} class="w-full px-2 py-1.5 rounded text-ui text-left outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors flex items-center justify-between gap-2 cursor-pointer min-h-[2.25rem]">
+        <div class="flex-1 flex flex-wrap gap-1.5 items-center">
             {#if selected.length === 0}
-                <span class="opacity-50">Select dictionaries...</span>
+                <span class="opacity-50 text-ui-sm">Select dictionaries...</span>
             {:else}
                 {#each selected as code}
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-primary/20 text-ui-sm">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-accent-primary/20 text-ui-sm whitespace-nowrap">
                         {availableDictionaries.find((d) => d.code === code)?.name || code}
-                        <button type="button" onclick={(e) => removeDict(code, e)} class="hover:text-danger transition-colors flex items-center">
+                        <button type="button" onclick={(e) => removeDict(code, e)} class="hover:text-danger transition-colors flex items-center" aria-label="Remove {code}">
                             <X size={12} />
                         </button>
                     </span>
                 {/each}
             {/if}
         </div>
-        <ChevronDown size={14} class="opacity-50 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
+        <ChevronDown size={14} class="opacity-50 shrink-0 transition-transform self-start mt-0.5 {isOpen ? 'rotate-180' : ''}" />
     </div>
 
     {#if isOpen}

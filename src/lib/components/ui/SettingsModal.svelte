@@ -206,8 +206,8 @@
             <div>
                 {#each sortedSettings as setting, index}
                     <div class="py-3" style:border-top={index > 0 && !(setting as any).visibleWhen && !(setting as any).groupWith ? "1px solid var(--color-border-main)" : "none"}>
-                        <div class="flex items-center justify-between gap-6">
-                            <label for={setting.key} class="flex-1 flex items-center whitespace-nowrap overflow-hidden">
+                        <div class="flex items-start justify-between gap-6">
+                            <label for={setting.key} class="flex-1 flex items-center whitespace-nowrap overflow-hidden {setting.type === 'dictionary-multi-select' ? 'pt-1.5' : ''}">
                                 <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0 mr-4 text-fg-muted">
                                     {#if (setting as any).visibleWhen}
                                         <!-- Indented child -->
@@ -219,7 +219,7 @@
                                     {setting.label}
                                 </span>
                             </label>
-                            <div class="w-56 shrink-0">
+                            <div class="{setting.type === 'dictionary-multi-select' ? 'flex-1 max-w-md' : 'w-56'} shrink-0">
                                 {#if setting.type === "text"}
                                     <input id={setting.key} type="text" value={getSettingValue(setting.key, setting.defaultValue)} oninput={(e) => updateSetting(setting.key, e.currentTarget.value, setting.type)} class="w-full px-2 py-1 rounded text-ui outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors" use:tooltip={(setting as any).tooltip || ""} />
                                 {:else if setting.type === "number"}
