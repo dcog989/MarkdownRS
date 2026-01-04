@@ -150,6 +150,8 @@ export class SortableController<T> {
             if (this.currentDragX < swapThreshold) targetIndex = currentIndex - 1;
         }
 
+        targetIndex = Math.max(0, Math.min(targetIndex, this.options.items.length - 1));
+
         if (targetIndex !== currentIndex) {
             const newItems = [...this.options.items];
             const [item] = newItems.splice(currentIndex, 1);
