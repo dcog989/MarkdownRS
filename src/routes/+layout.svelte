@@ -1,6 +1,7 @@
 <script lang="ts">
     import ConfirmationModal from "$lib/components/ui/ConfirmationModal.svelte";
     import GlobalTooltip from "$lib/components/ui/GlobalTooltip.svelte";
+    import ModalManager from "$lib/components/ui/ModalManager.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { shortcutManager } from "$lib/utils/shortcuts";
     import { getThemeCss } from "$lib/utils/themes";
@@ -49,4 +50,5 @@
 
 <ConfirmationModal />
 <GlobalTooltip />
+<ModalManager />
 {@render children()}
