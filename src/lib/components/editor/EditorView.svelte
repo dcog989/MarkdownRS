@@ -104,7 +104,7 @@
                 pointerEvents: "none",
                 zIndex: "0",
             },
-        }).extension;
+        });
     }
 
     const rulerPlugin = ViewPlugin.fromClass(

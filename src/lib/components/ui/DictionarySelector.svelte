@@ -10,6 +10,9 @@
 
     let isOpen = $state(false);
     let dropdownEl = $state<HTMLDivElement>();
+    let buttonEl = $state<HTMLDivElement>();
+    let dropdownPosition = $state<'below' | 'above'>('below');
+    let dropdownMaxHeight = $state(256); // Default 256px (max-h-64)
 
     // Popular dictionaries from wooorm/dictionaries
     const availableDictionaries = [
@@ -48,6 +51,28 @@
     ];
 
     function toggleDropdown() {
+        if (!isOpen && buttonEl) {
+            // Calculate optimal position and max height before opening
+            const rect = buttonEl.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            const minDropdownHeight = 200; // Minimum usable height
+            const padding = 16; // Leave some padding from viewport edges
+            
+            // Calculate max height based on available space
+            if (spaceBelow < minDropdownHeight && spaceAbove > spaceBelow) {
+                // Open above
+                dropdownPosition = 'above';
+                dropdownMaxHeight = Math.min(spaceAbove - padding, 500); // Max 500px
+            } else {
+                // Open below
+                dropdownPosition = 'below';
+                dropdownMaxHeight = Math.min(spaceBelow - padding, 500); // Max 500px
+            }
+            
+            // Ensure minimum height
+            dropdownMaxHeight = Math.max(dropdownMaxHeight, minDropdownHeight);
+        }
         isOpen = !isOpen;
     }
 
@@ -88,7 +113,7 @@
 
 <div class="relative w-full" bind:this={dropdownEl}>
     <!-- svelte-ignore a11y_interactive_supports_focus -->
-    <div role="button" tabindex="0" onclick={toggleDropdown} onkeydown={handleKeydown} class="w-full px-2 py-1.5 rounded text-ui text-left outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors flex items-center justify-between gap-2 cursor-pointer min-h-[2.25rem]">
+    <div bind:this={buttonEl} role="button" tabindex="0" onclick={toggleDropdown} onkeydown={handleKeydown} class="w-full px-2 py-1.5 rounded text-ui text-left outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors flex items-center justify-between gap-2 cursor-pointer min-h-[2.25rem]">
         <div class="flex-1 flex flex-wrap gap-1.5 items-center">
             {#if selected.length === 0}
                 <span class="opacity-50 text-ui-sm">Select dictionaries...</span>
@@ -107,7 +132,7 @@
     </div>
 
     {#if isOpen}
-        <div class="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded border bg-bg-panel border-border-main shadow-lg">
+        <div class="absolute z-50 w-full overflow-y-auto rounded border bg-bg-panel border-border-main shadow-lg {dropdownPosition === 'above' ? 'bottom-full mb-1' : 'top-full mt-1'}" style="max-height: {dropdownMaxHeight}px;">
             {#each availableDictionaries as dict}
                 <button type="button" onclick={() => toggleDict(dict.code)} class="w-full px-3 py-2 text-left hover:bg-white/5 transition-colors flex items-center justify-between gap-2 text-ui text-fg-default">
                     <span>{dict.name}</span>
