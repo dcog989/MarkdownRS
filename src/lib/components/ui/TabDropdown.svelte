@@ -1,6 +1,6 @@
 <script lang="ts">
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { CircleAlert, FileText, Pencil, PencilLine } from "lucide-svelte";
+    import { CircleAlert, FileText, Pencil, PencilLine, SquarePen } from "lucide-svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
 
     let {
@@ -35,25 +35,7 @@
     });
 
     function getDropdownTitle(tab: any): string {
-        if (tab.customTitle) return tab.customTitle;
-
-        if (tab.path) {
-            const parts = tab.path.split(/[\\\/]/);
-            return parts[parts.length - 1] || tab.title;
-        }
-
-        if (tab.content) {
-            const lines = tab.content.split("\n");
-            const firstLine = lines.find((l: string) => l.trim().length > 0) || "";
-            let displayTitle = firstLine.replace(/^#+\s*/, "").trim();
-            const MAX_LEN = 60;
-            if (displayTitle.length > MAX_LEN) {
-                displayTitle = displayTitle.substring(0, MAX_LEN).trim() + "...";
-            }
-            return displayTitle.length > 0 ? displayTitle : tab.title;
-        }
-
-        return tab.title;
+        return tab.customTitle || tab.title;
     }
 
     $effect(() => {
@@ -152,7 +134,7 @@
                         {:else if !tab.path}
                             <Pencil size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
                         {:else if tab.isDirty}
-                            <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
+                            <SquarePen size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-accent-secondary'}" />
                         {:else}
                             <FileText size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
                         {/if}
