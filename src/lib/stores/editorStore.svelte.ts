@@ -26,6 +26,7 @@ export type EditorTab = {
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
     lineChangeTracker?: any; // Store LineChangeTracker instance per tab
+    historyState?: any; // CodeMirror history state
     preferredExtension?: 'md' | 'txt'; // For unsaved files: user's preference
 };
 
@@ -235,8 +236,6 @@ export function updateCursor(id: string, anchor: number, head: number) {
     // Only update if changed to avoid unnecessary reactivity
     if (editorStore.tabs[index].cursor.anchor !== anchor || editorStore.tabs[index].cursor.head !== head) {
         editorStore.tabs[index].cursor = { anchor, head };
-        // We generally don't mark sessionDirty for cursor changes to avoid heavy DB writes
-        // Cursor position is currently transient in-memory
     }
 }
 
@@ -252,6 +251,14 @@ export function updateMetadata(id: string, created?: string, modified?: string) 
         tab.formattedTimestamp = formatTimestampForDisplay(tsToFormat);
         editorStore.sessionDirty = true;
     }
+}
+
+export function updateHistoryState(id: string, state: any) {
+    const index = editorStore.tabs.findIndex(t => t.id === id);
+    if (index === -1) return;
+    // We don't mark sessionDirty for history changes to avoid excessive DB writes,
+    // as history is transient in this version.
+    editorStore.tabs[index].historyState = state;
 }
 
 export function markAsSaved(id: string) {

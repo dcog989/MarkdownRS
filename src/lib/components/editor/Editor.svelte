@@ -5,7 +5,7 @@
     import type { OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
-    import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateScroll } from "$lib/stores/editorStore.svelte";
+    import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateHistoryState, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { ScrollManager } from "$lib/utils/cmScroll";
     import { navigateToPath } from "$lib/utils/fileSystem";
@@ -18,12 +18,11 @@
     import { syntaxTree } from "@codemirror/language";
     import { EditorView as CM6EditorView } from "@codemirror/view";
     import { openPath } from "@tauri-apps/plugin-opener";
-    import { onMount, tick, untrack } from "svelte";
+    import { onDestroy, onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
 
     let { tabId } = $props<{ tabId: string }>();
-    let editorViewComponent = $state<any>(null);
-    let cmView = $state<CM6EditorView>();
+    let cmView = $state<CM6EditorView & { getHistoryState?: () => any }>();
     let findReplacePanel = $state<any>(null);
     let previousTabId: string = "";
 
@@ -38,7 +37,6 @@
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let scrollManager = new ScrollManager();
 
-    // Initialize LineChangeTracker for this tab if it doesn't exist
     $effect(() => {
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
         if (tab && !tab.lineChangeTracker) {
@@ -46,7 +44,6 @@
         }
     });
 
-    // Content Synchronization Effect (Save/Load)
     $effect(() => {
         const tab = activeTab;
         if (!tab || !cmView) return;
@@ -56,13 +53,9 @@
             const currentDoc = cmView!.state.doc.toString();
 
             if (currentDoc !== content) {
-                // 1. Capture Scroll
                 scrollManager.capture(cmView!, "External Update");
-
                 const currentSelection = cmView!.state.selection.main;
                 const newLength = content.length;
-
-                // 2. Dispatch
                 cmView!.dispatch({
                     changes: { from: 0, to: currentDoc.length, insert: content },
                     selection: {
@@ -71,8 +64,6 @@
                     },
                     scrollIntoView: false,
                 });
-
-                // 3. Restore Scroll (Pixel strategy for stability on external updates)
                 scrollManager.restore(cmView!, "pixel");
             }
 
@@ -86,7 +77,6 @@
         });
     });
 
-    // Handle Find/Replace visibility from global store
     $effect(() => {
         if (appContext.interface.showFind) {
             tick().then(() => {
@@ -96,7 +86,6 @@
         }
     });
 
-    // Search Highlight Sync
     $effect(() => {
         if (cmView && searchState.findText) {
             updateSearchEditor(cmView);
@@ -105,15 +94,10 @@
 
     async function handleTextOperation(operationId: OperationId) {
         if (!cmView) return;
-
         const selection = cmView.state.selection.main;
         const hasSelection = selection.from !== selection.to;
         const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
-
-        // 1. Capture Scroll
         scrollManager.capture(cmView, `Op:${operationId}`);
-
-        // 2. Transform (Unified handler: Client or Server)
         const newText = await transformText(targetText, operationId);
 
         if (newText !== targetText) {
@@ -122,7 +106,6 @@
                 userEvent: "input.complete",
                 scrollIntoView: false,
             };
-
             if (hasSelection) {
                 transaction.selection = { anchor: selection.from, head: selection.from + newText.length };
             } else {
@@ -132,24 +115,16 @@
                     head: Math.min(selection.head, newLen),
                 };
             }
-
             cmView.dispatch(transaction);
-
-            // 3. Restore Scroll
             if (!hasSelection) {
-                // ALWAYS use anchor strategy for formatting, as it affects line wrapping/heights.
-                // For other operations (like sorting/case), use anchor if lines changed, pixel otherwise.
                 const snapshot = scrollManager.getSnapshot();
                 const currentLines = cmView.state.doc.lines;
-
                 let strategy: "anchor" | "pixel" = "pixel";
-
                 if (operationId === "format-document") {
                     strategy = "anchor";
                 } else if (snapshot && Math.abs(currentLines - snapshot.totalLines) > 0) {
                     strategy = "anchor";
                 }
-
                 scrollManager.restore(cmView, strategy);
             }
         }
@@ -160,14 +135,11 @@
             if ((event.ctrlKey || event.metaKey) && event.button === 0) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (pos === null) return false;
-
                 let targetString = "";
                 let node = syntaxTree(view.state).resolveInner(pos, 1);
-
                 while (node && node.parent && !["URL", "Link", "LinkEmail"].includes(node.name)) {
                     node = node.parent;
                 }
-
                 if (node && ["URL", "Link", "LinkEmail"].includes(node.name)) {
                     if (node.name === "Link") {
                         const urlNode = node.node.getChild("URL");
@@ -176,21 +148,17 @@
                         targetString = view.state.sliceDoc(node.from, node.to);
                     }
                 }
-
                 if (!targetString) {
                     const line = view.state.doc.lineAt(pos);
                     const text = line.text;
                     const posInLine = pos - line.from;
-
                     if (posInLine >= 0 && posInLine < text.length && /\S/.test(text[posInLine])) {
                         let start = posInLine;
                         while (start > 0 && /\S/.test(text[start - 1])) start--;
                         let end = posInLine;
                         while (end < text.length && /\S/.test(text[end])) end++;
-
                         targetString = text.slice(start, end).trim();
                         targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, "");
-
                         if (!/^https?:\/\//i.test(targetString)) {
                             targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
                         } else {
@@ -198,11 +166,9 @@
                         }
                     }
                 }
-
                 if (targetString) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
-
                     if (/^(https?:\/\/|www\.)/i.test(targetString)) {
                         const url = targetString.startsWith("www.") ? `https://${targetString}` : targetString;
                         openPath(url).catch(() => {});
@@ -217,13 +183,11 @@
         contextmenu: (event, view) => {
             event.preventDefault();
             showContextMenu = false;
-
             const selection = view.state.selection.main;
             const selectedText = view.state.sliceDoc(selection.from, selection.to);
             let word = "",
                 from = 0,
                 to = 0;
-
             if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
                 const range = view.state.wordAt(view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head);
                 if (range) {
@@ -232,18 +196,15 @@
                     word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, "");
                 }
             }
-
             contextSelectedText = selectedText;
             contextWordUnderCursor = word;
             contextWordFrom = from;
             contextWordTo = to;
             contextMenuX = event.clientX;
             contextMenuY = event.clientY;
-
             tick().then(() => {
                 showContextMenu = true;
             });
-
             return true;
         },
     });
@@ -253,6 +214,28 @@
         registerTextOperationCallback(handleTextOperation);
         return () => unregisterTextOperationCallback();
     });
+
+    onDestroy(() => {
+        if (cmView && cmView.getHistoryState) {
+            const state = cmView.getHistoryState();
+            if (state) {
+                updateHistoryState(tabId, state);
+            }
+        }
+    });
+
+    function handleContentChange(c: string) {
+        updateContent(tabId, c);
+    }
+    function handleMetricsChange(m: any) {
+        updateMetrics(m);
+    }
+    function handleScrollChange(p: number, t: number) {
+        updateScroll(tabId, p, t, "editor");
+    }
+    function handleSelectionChange(a: number, h: number) {
+        updateCursor(tabId, a, h);
+    }
 
     let initialContent = $derived(activeTab?.content || "");
     let filename = $derived.by(() => {
@@ -267,12 +250,13 @@
     });
     let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
+    let initialHistoryState = $derived(activeTab?.historyState || undefined);
     let lineChangeTracker = $derived(activeTab?.lineChangeTracker || new LineChangeTracker());
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:cmView {tabId} {initialContent} {filename} {isMarkdown} initialScrollPercentage={initialScroll} {initialSelection} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={(c) => updateContent(tabId, c)} onMetricsChange={(m) => updateMetrics(m)} onScrollChange={(p, t) => updateScroll(tabId, p, t, "editor")} onSelectionChange={(a, h) => updateCursor(tabId, a, h)} />
+    <EditorView bind:cmView {tabId} {initialContent} {filename} {isMarkdown} initialScrollPercentage={initialScroll} {initialSelection} {initialHistoryState} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={handleContentChange} onMetricsChange={handleMetricsChange} onScrollChange={handleScrollChange} onSelectionChange={handleSelectionChange} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
