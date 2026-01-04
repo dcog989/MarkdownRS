@@ -48,7 +48,25 @@ export async function openFile(path?: string): Promise<void> {
 		const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
 		const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
-		const id = addTab(fileName, result.content);
+		// Determine initial title based on setting
+		let initialTitle = fileName;
+		if (appContext.app.tabNameFromContent) {
+			const trimmed = result.content.trim();
+			if (trimmed.length > 0) {
+				const lines = result.content.split('\n');
+				const firstLine = lines.find(l => l.trim().length > 0) || "";
+				let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
+				const MAX_LEN = 25;
+				if (smartTitle.length > MAX_LEN) {
+					smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
+				}
+				if (smartTitle.length > 0) {
+					initialTitle = smartTitle;
+				}
+			}
+		}
+
+		const id = addTab(initialTitle, result.content);
 		updateTabMetadataAndPath(id, {
 			path: sanitizedPath,
 			isDirty: false,
@@ -164,7 +182,26 @@ export async function saveCurrentFile(): Promise<boolean> {
 			}
 
 			const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-			saveTabComplete(tabId, sanitizedPath, fileName, targetLineEnding);
+			
+			// Determine title based on setting
+			let finalTitle = fileName;
+			if (appContext.app.tabNameFromContent) {
+				const trimmed = contentToSave.trim();
+				if (trimmed.length > 0) {
+					const lines = contentToSave.split('\n');
+					const firstLine = lines.find(l => l.trim().length > 0) || "";
+					let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
+					const MAX_LEN = 25;
+					if (smartTitle.length > MAX_LEN) {
+						smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
+					}
+					if (smartTitle.length > 0) {
+						finalTitle = smartTitle;
+					}
+				}
+			}
+			
+			saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
 			markAsSaved(tabId);
 			await refreshMetadata(tabId, sanitizedPath);
 			return true;

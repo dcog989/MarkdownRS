@@ -177,7 +177,7 @@ export function updateContent(id: string, content: string) {
 
     let newTitle = oldTab.title;
 
-    if (!oldTab.path && appState.tabNameFromContent) {
+    if (appState.tabNameFromContent) {
         const trimmed = content.trim();
         if (trimmed.length > 0) {
             const lines = content.split('\n');
