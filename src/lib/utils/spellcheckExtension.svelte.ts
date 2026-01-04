@@ -61,14 +61,17 @@ export const createSpellCheckLinter = () => {
                         if (customDict.has(wLower)) continue;
 
                         // Check custom dictionary (possessive 's)
+                        let checkWord = word;
                         if (wLower.endsWith("'s")) {
                             const base = wLower.slice(0, -2);
                             if (customDict.has(base)) continue;
+                            // Use base form for backend check
+                            checkWord = word.slice(0, -2);
                         }
 
-                        const ranges = wordsToVerify.get(word) || [];
+                        const ranges = wordsToVerify.get(checkWord) || [];
                         ranges.push({ from: globalFrom, to: globalTo });
-                        wordsToVerify.set(word, ranges);
+                        wordsToVerify.set(checkWord, ranges);
                     }
                 }
             }
