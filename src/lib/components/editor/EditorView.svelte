@@ -91,7 +91,7 @@
         if (column <= 0) return [];
         
         return EditorView.theme({
-            ".cm-content": {
+            ".cm-scroller": {
                 position: "relative",
             },
             ".cm-ruler": {
@@ -102,7 +102,7 @@
                 backgroundColor: "var(--color-border-main)",
                 opacity: "0.5",
                 pointerEvents: "none",
-                zIndex: "0",
+                zIndex: "1",
             },
         });
     }
@@ -110,6 +110,7 @@
     const rulerPlugin = ViewPlugin.fromClass(
         class {
             column: number;
+            ruler: HTMLElement | null = null;
             
             constructor(view: EditorView) {
                 this.column = appContext.app.wrapGuideColumn;
@@ -117,7 +118,7 @@
             }
             
             update(update: ViewUpdate) {
-                if (this.column !== appContext.app.wrapGuideColumn) {
+                if (this.column !== appContext.app.wrapGuideColumn || update.geometryChanged) {
                     this.column = appContext.app.wrapGuideColumn;
                     this.updateRuler(update.view);
                 }
@@ -125,30 +126,36 @@
             
             updateRuler(view: EditorView) {
                 // Remove existing ruler
-                const existing = view.dom.querySelector('.cm-ruler');
-                if (existing) existing.remove();
+                if (this.ruler) {
+                    this.ruler.remove();
+                    this.ruler = null;
+                }
                 
                 if (this.column <= 0) return;
                 
                 // Create ruler element
-                const ruler = document.createElement('div');
-                ruler.className = 'cm-ruler';
+                this.ruler = document.createElement('div');
+                this.ruler.className = 'cm-ruler';
                 
-                // Calculate position based on character width
+                // Calculate position: gutter width + (column * char width)
                 const charWidth = view.defaultCharacterWidth;
-                const left = this.column * charWidth;
-                ruler.style.left = `${left}px`;
+                const gutters = view.dom.querySelector('.cm-gutters') as HTMLElement;
+                const gutterWidth = gutters ? gutters.offsetWidth : 0;
+                const left = gutterWidth + (this.column * charWidth);
+                this.ruler.style.left = `${left}px`;
                 
-                // Insert into content element
-                const content = view.contentDOM;
-                if (content.parentElement) {
-                    content.parentElement.appendChild(ruler);
+                // Insert into scroller
+                const scroller = view.scrollDOM;
+                if (scroller) {
+                    scroller.appendChild(this.ruler);
                 }
             }
             
             destroy() {
-                const ruler = document.querySelector('.cm-ruler');
-                if (ruler) ruler.remove();
+                if (this.ruler) {
+                    this.ruler.remove();
+                    this.ruler = null;
+                }
             }
         }
     );
@@ -226,6 +233,36 @@
                     : undefined,
         });
     });
+
+    // Wrap configuration - either at viewport or at column
+    function createWrapExtension() {
+        if (!appContext.app.editorWordWrap) return [];
+        
+        const column = appContext.app.wrapGuideColumn;
+        
+        if (column > 0 && view) {
+            // Wrap at specific column - calculate pixel width
+            const charWidth = view.defaultCharacterWidth;
+            const gutters = view.dom.querySelector('.cm-gutters') as HTMLElement;
+            const gutterWidth = gutters ? gutters.offsetWidth : 0;
+            const wrapWidth = gutterWidth + (column * charWidth);
+            
+            return [
+                EditorView.lineWrapping,
+                EditorView.theme({
+                    ".cm-scroller": {
+                        maxWidth: `${wrapWidth}px`,
+                    },
+                    ".cm-content": {
+                        maxWidth: `${wrapWidth}px`,
+                    }
+                })
+            ];
+        } else {
+            // Wrap at viewport
+            return EditorView.lineWrapping;
+        }
+    }
 
     $effect(() => {
         cmView = view;
@@ -420,7 +457,7 @@
         if (view)
             view.dispatch({
                 effects: [
-                    wrapComp.reconfigure(appContext.app.editorWordWrap ? EditorView.lineWrapping : []),
+                    wrapComp.reconfigure(createWrapExtension()),
                     autoComp.reconfigure(autocompletionConfig),
                     recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
                     historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })),

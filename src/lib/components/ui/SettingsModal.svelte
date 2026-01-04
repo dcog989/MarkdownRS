@@ -85,7 +85,7 @@
         { key: "editorFontFamily", label: "Font Family", type: "text", category: "Editor", defaultValue: "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace" },
         { key: "editorFontSize", label: "Font Size (px)", type: "number", category: "Editor", defaultValue: 14, min: 8, max: 32 },
         { key: "editorWordWrap", label: "Word Wrap", type: "boolean", category: "Editor", defaultValue: true },
-        { key: "wrapGuideColumn", label: "Wrap Guide Column", type: "number", category: "Editor", defaultValue: 0, min: 0, max: 500, tooltip: "Show a vertical guide at this column (0 to disable)" },
+        { key: "wrapGuideColumn", label: "Wrap Column", type: "number", category: "Editor", defaultValue: 0, min: 0, max: 500, tooltip: "Hard wrap + show a guide at this column (0 wraps at viewport)" },
         { key: "showWhitespace", label: "Show Whitespace", type: "boolean", category: "Editor", defaultValue: false },
         { key: "enableAutocomplete", label: "Enable Autocomplete", type: "boolean", category: "Editor", defaultValue: true },
         { key: "autocompleteDelay", label: "Autocomplete Delay (ms)", type: "number", category: "Editor", defaultValue: 250, min: 0, max: 2000 },
