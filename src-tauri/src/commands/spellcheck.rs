@@ -274,68 +274,52 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    let speller_arc = state.speller.clone();
-    let custom_arc = state.custom_dict.clone();
+    let mut misspelled = Vec::new();
 
-    // Offload CPU-intensive dictionary lookups to a blocking thread
-    let result = tokio::task::spawn_blocking(move || {
-        let mut misspelled = Vec::new();
+    // Process in chunks to prevent holding the lock for the entire duration
+    // and to allow other tasks (like suggestions) to acquire the lock.
+    for chunk in words.chunks(50) {
+        let speller_guard = state.speller.lock().await;
+        let custom_guard = state.custom_dict.lock().await;
 
-        // Process in chunks to prevent holding the lock for the entire duration.
-        // This allows get_spelling_suggestions (which is time-sensitive for UI)
-        // to acquire the lock in between chunks if it's waiting.
-        for chunk in words.chunks(50) {
-            {
-                let speller_guard = speller_arc.blocking_lock();
-                let custom_guard = custom_arc.blocking_lock();
+        if let Some(speller) = speller_guard.as_ref() {
+            for word in chunk {
+                let clean = word.trim();
+                if clean.is_empty() {
+                    continue;
+                }
 
-                if let Some(speller) = speller_guard.as_ref() {
-                    for word in chunk {
-                        let clean = word.trim();
-                        if clean.is_empty() {
+                let lower = clean.to_lowercase();
+
+                // Check exact custom match
+                if custom_guard.contains(&lower) {
+                    continue;
+                }
+
+                // Check possessive custom match (e.g. "Svelte's" -> "Svelte")
+                if lower.ends_with("'s") {
+                    if let Some(base) = lower.strip_suffix("'s") {
+                        if custom_guard.contains(base) {
                             continue;
                         }
-
-                        let lower = clean.to_lowercase();
-
-                        // Check exact custom match
-                        if custom_guard.contains(&lower) {
+                    }
+                } else if lower.ends_with("s'") {
+                    // Check plural possessive (e.g. "Users'" -> "Users")
+                    if let Some(base) = lower.strip_suffix('\'') {
+                        if custom_guard.contains(base) {
                             continue;
-                        }
-
-                        // Check possessive custom match (e.g. "Svelte's" -> "Svelte")
-                        if lower.ends_with("'s") {
-                            if let Some(base) = lower.strip_suffix("'s") {
-                                if custom_guard.contains(base) {
-                                    continue;
-                                }
-                            }
-                        } else if lower.ends_with("s'") {
-                            // Check plural possessive (e.g. "Users'" -> "Users")
-                            if let Some(base) = lower.strip_suffix('\'') {
-                                if custom_guard.contains(base) {
-                                    continue;
-                                }
-                            }
-                        }
-
-                        if !speller.check(clean) {
-                            misspelled.push(word.to_string());
                         }
                     }
                 }
-            } // Locks dropped here
 
-            // Yield to let other threads/tasks (like suggestions) acquire the lock
-            std::thread::yield_now();
+                if !speller.check(clean) {
+                    misspelled.push(word.to_string());
+                }
+            }
         }
+    }
 
-        Ok::<Vec<String>, String>(misspelled)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))??;
-
-    Ok(result)
+    Ok(misspelled)
 }
 
 #[tauri::command]
@@ -343,24 +327,14 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let speller_arc = state.speller.clone();
+    let speller_guard = state.speller.lock().await;
 
-    // Move suggestion logic to blocking thread as well, as 'suggest' can be slow
-    // and we want to compete fairly for the lock
-    let suggestions = tokio::task::spawn_blocking(move || {
-        let speller_guard = speller_arc.blocking_lock();
+    let speller = match speller_guard.as_ref() {
+        Some(s) => s,
+        None => return Ok(Vec::new()),
+    };
 
-        let speller = match speller_guard.as_ref() {
-            Some(s) => s,
-            None => return Ok(Vec::new()),
-        };
-
-        let mut suggestions = Vec::new();
-        speller.suggest(&word, &mut suggestions);
-        Ok::<Vec<String>, String>(suggestions.into_iter().take(5).collect())
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))??;
-
-    Ok(suggestions)
+    let mut suggestions = Vec::new();
+    speller.suggest(&word, &mut suggestions);
+    Ok(suggestions.into_iter().take(5).collect())
 }
