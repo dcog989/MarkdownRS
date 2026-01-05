@@ -290,7 +290,7 @@
                                     >
                                         <Pen size={14} />
                                     </button>
-                                    <button onclick={(e) => handleDelete(bookmark.id, e)} class="p-1.5 rounded hover:bg-white/10 text-danger-text">
+                                    <button onclick={(e) => handleDelete(bookmark.id, e)} class="p-1.5 rounded hover:bg-white/10 text-fg-muted hover:text-danger-text">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
