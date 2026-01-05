@@ -39,6 +39,7 @@ export async function initSpellcheck(): Promise<void> {
             spellcheckState.dictionaryLoaded = true;
         } catch (err) {
             AppError.handle('Spellcheck:Init', err, { showToast: false, severity: 'warning' });
+            initPromise = null; // Clear promise to allow retry
         }
     })();
 
