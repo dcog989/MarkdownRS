@@ -56,6 +56,86 @@ fn get_specialist_url(id: &str) -> Option<&'static str> {
     }
 }
 
+async fn fetch_standard_dictionary(
+    client: reqwest::Client,
+    cache_dir: std::path::PathBuf,
+    dict_code: String,
+) -> Result<(String, String), String> {
+    let aff_path = cache_dir.join(format!("{}.aff", dict_code));
+    let dic_path = cache_dir.join(format!("{}.dic", dict_code));
+
+    if !aff_path.exists() || !dic_path.exists() {
+        log::info!("Downloading dictionary: {}", dict_code);
+
+        let aff_url = format!(
+            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
+            dict_code
+        );
+        let dic_url = format!(
+            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.dic",
+            dict_code
+        );
+
+        // Download concurrently
+        let (aff_res, dic_res) =
+            tokio::join!(client.get(&aff_url).send(), client.get(&dic_url).send());
+
+        if let Ok(resp) = aff_res {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text().await {
+                    let _ = fs::write(&aff_path, text).await;
+                }
+            }
+        }
+
+        if let Ok(resp) = dic_res {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text().await {
+                    let _ = fs::write(&dic_path, text).await;
+                }
+            }
+        }
+    }
+
+    if aff_path.exists() && dic_path.exists() {
+        let (aff, dic) =
+            tokio::try_join!(fs::read_to_string(&aff_path), fs::read_to_string(&dic_path))
+                .map_err(|e| format!("Failed to read dictionary files for {}: {}", dict_code, e))?;
+
+        Ok((aff, dic))
+    } else {
+        Err(format!("Dictionary files not found for: {}", dict_code))
+    }
+}
+
+async fn fetch_specialist_dictionary(
+    client: reqwest::Client,
+    cache_dir: std::path::PathBuf,
+    id: String,
+) -> Result<String, String> {
+    let url = get_specialist_url(&id).ok_or_else(|| format!("Unknown specialist ID: {}", id))?;
+    let cache_path = cache_dir.join(format!("{}.txt", id));
+
+    if !cache_path.exists() {
+        log::info!("Downloading specialist dictionary: {}", id);
+        if let Ok(resp) = client.get(url).send().await {
+            if resp.status().is_success() {
+                if let Ok(text) = resp.text().await {
+                    let _ = fs::write(&cache_path, text).await;
+                }
+            }
+        }
+    }
+
+    if cache_path.exists() {
+        fs::read_to_string(&cache_path)
+            .await
+            .map_err(|e| format!("Failed to read specialist file {}: {}", id, e))
+    } else {
+        Err(format!("Failed to load specialist dictionary: {}", id))
+    }
+}
+
 #[tauri::command]
 pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
     let app_dir = app_handle.path().app_data_dir().map_err(|e| {
@@ -183,63 +263,51 @@ pub async fn init_spellchecker(
             })?;
     }
 
+    let client = reqwest::Client::new();
     let mut combined_aff = String::new();
-    // Pre-allocate buffer (e.g. 5MB) to reduce reallocations
     let mut combined_dic_body = String::with_capacity(5 * 1024 * 1024);
     let mut total_word_count = 0;
-    let mut first_dict = true;
 
-    let client = reqwest::Client::new();
+    // 1. Parallel Load Standard Dictionaries
+    let mut dict_tasks = Vec::new();
+    for (i, code) in dict_codes.into_iter().enumerate() {
+        let c = client.clone();
+        let d = cache_dir.clone();
+        dict_tasks.push(tokio::spawn(async move {
+            (i, fetch_standard_dictionary(c, d, code).await)
+        }));
+    }
 
-    // 1. Load Standard Dictionaries (Affix based)
-    for dict_code in &dict_codes {
-        let aff_path = cache_dir.join(format!("{}.aff", dict_code));
-        let dic_path = cache_dir.join(format!("{}.dic", dict_code));
+    // 2. Parallel Load Specialist Dictionaries
+    let mut spec_tasks = Vec::new();
+    for code in spec_codes {
+        let c = client.clone();
+        let d = specialist_cache_dir.clone();
+        spec_tasks.push(tokio::spawn(async move {
+            (code.clone(), fetch_specialist_dictionary(c, d, code).await)
+        }));
+    }
 
-        if !aff_path.exists() || !dic_path.exists() {
-            log::info!("Downloading dictionary: {}", dict_code);
-
-            let aff_url = format!(
-                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
-                dict_code
-            );
-            let dic_url = format!(
-                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.dic",
-                dict_code
-            );
-
-            if let Ok(resp) = client.get(&aff_url).send().await {
-                if resp.status().is_success() {
-                    if let Ok(text) = resp.text().await {
-                        let _ = fs::write(&aff_path, text).await;
-                    }
-                }
-            }
-
-            if let Ok(resp) = client.get(&dic_url).send().await {
-                if resp.status().is_success() {
-                    if let Ok(text) = resp.text().await {
-                        let _ = fs::write(&dic_path, text).await;
-                    }
-                }
-            }
+    // Process Standard Results (Preserve Order for Affix)
+    let mut dict_results = Vec::new();
+    for task in dict_tasks {
+        if let Ok((i, res)) = task.await {
+            dict_results.push((i, res));
         }
+    }
+    dict_results.sort_by_key(|k| k.0);
 
-        if aff_path.exists() && dic_path.exists() {
-            if let (Ok(aff_content), Ok(dic_content)) = (
-                fs::read_to_string(&aff_path).await,
-                fs::read_to_string(&dic_path).await,
-            ) {
-                if first_dict {
-                    combined_aff = aff_content.trim_start_matches('\u{feff}').to_string();
-                    first_dict = false;
+    for (_, res) in dict_results {
+        match res {
+            Ok((aff, dic)) => {
+                // Use first valid dictionary's affix
+                if combined_aff.is_empty() {
+                    combined_aff = aff.trim_start_matches('\u{feff}').to_string();
                 }
 
-                let dic_clean = dic_content.trim_start_matches('\u{feff}');
-
-                // Use iterator to avoid Vec<String> allocation
+                let dic_clean = dic.trim_start_matches('\u{feff}');
                 let mut lines = dic_clean.lines();
-                // Skip the count line
+                // Skip count line
                 if lines.next().is_some() {
                     for line in lines {
                         let trimmed = line.trim();
@@ -250,42 +318,19 @@ pub async fn init_spellchecker(
                         }
                     }
                 }
-
-                log::info!("Loaded dictionary: {}", dict_code);
             }
-        } else {
-            log::warn!("Dictionary files not found for: {}", dict_code);
+            Err(e) => log::warn!("Failed to load standard dictionary: {}", e),
         }
     }
 
-    // 2. Load Specialist Dictionaries (Simple word lists)
-    for spec_id in &spec_codes {
-        if let Some(url) = get_specialist_url(spec_id) {
-            let cache_path = specialist_cache_dir.join(format!("{}.txt", spec_id));
-
-            if !cache_path.exists() {
-                log::info!("Downloading specialist dictionary: {}", spec_id);
-                if let Ok(resp) = client.get(url).send().await {
-                    if resp.status().is_success() {
-                        if let Ok(text) = resp.text().await {
-                            let _ = fs::write(&cache_path, text).await;
-                        }
-                    } else {
-                        log::warn!(
-                            "Failed to download specialist dictionary: {} (Status: {})",
-                            spec_id,
-                            resp.status()
-                        );
-                    }
-                }
-            }
-
-            if cache_path.exists() {
-                if let Ok(content) = fs::read_to_string(&cache_path).await {
+    // Process Specialist Results
+    for task in spec_tasks {
+        if let Ok((code, res)) = task.await {
+            match res {
+                Ok(content) => {
                     let mut count = 0;
                     for line in content.lines() {
                         let trimmed = line.trim();
-                        // Filter comments and empty lines
                         if !trimmed.is_empty()
                             && !trimmed.starts_with('#')
                             && !trimmed.starts_with("//")
@@ -296,20 +341,18 @@ pub async fn init_spellchecker(
                         }
                     }
                     total_word_count += count;
-                    log::info!(
-                        "Loaded specialist dictionary: {} ({} words)",
-                        spec_id,
-                        count
-                    );
+                    log::info!("Loaded specialist dictionary: {} ({} words)", code, count);
                 }
+                Err(e) => log::warn!("Failed to load specialist dictionary {}: {}", code, e),
             }
         }
     }
 
     if !combined_aff.is_empty() && total_word_count > 0 {
-        // Construct final dictionary string with header
         let combined_dic = format!("{}\n{}", total_word_count, combined_dic_body);
 
+        // Dictionary creation is CPU intensive, runs in blocking thread if needed,
+        // but for now running on main thread is acceptable during init
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
                 let mut speller = state.speller.lock().await;
@@ -320,18 +363,16 @@ pub async fn init_spellchecker(
                 );
             }
             Err(e) => {
-                log::error!(
-                    "[Spellcheck] Failed to create dictionary: {:?} - This may indicate corrupted cache files",
-                    e
-                );
+                log::error!("[Spellcheck] Failed to create dictionary: {:?}", e);
                 return Err(format!("Failed to create spellchecker: {:?}", e));
             }
         }
     } else {
-        log::warn!("[Spellcheck] No dictionary content available after download/merge");
+        log::warn!("[Spellcheck] No dictionary content available");
         return Err("Failed to load dictionaries".to_string());
     }
 
+    // Load custom dictionary
     if custom_path.exists() {
         if let Ok(text) = fs::read_to_string(&custom_path).await {
             let mut custom = state.custom_dict.lock().await;
@@ -354,7 +395,6 @@ pub async fn check_words(
 ) -> Result<Vec<String>, String> {
     let mut misspelled = Vec::new();
 
-    // Process in chunks to prevent holding the lock for the entire duration
     for chunk in words.chunks(50) {
         let speller_guard = state.speller.lock().await;
         let custom_guard = state.custom_dict.lock().await;
@@ -368,12 +408,10 @@ pub async fn check_words(
 
                 let lower = clean.to_lowercase();
 
-                // Check exact custom match
                 if custom_guard.contains(&lower) {
                     continue;
                 }
 
-                // Check possessive custom match (e.g. "Svelte's" -> "Svelte")
                 if lower.ends_with("'s") {
                     if let Some(base) = lower.strip_suffix("'s") {
                         if custom_guard.contains(base) {
@@ -381,7 +419,6 @@ pub async fn check_words(
                         }
                     }
                 } else if lower.ends_with("s'") {
-                    // Check plural possessive (e.g. "Users'" -> "Users")
                     if let Some(base) = lower.strip_suffix('\'') {
                         if custom_guard.contains(base) {
                             continue;
@@ -394,8 +431,6 @@ pub async fn check_words(
                 }
             }
         }
-
-        // Yield to allow other tasks (suggestions) to access the lock
         tokio::task::yield_now().await;
     }
 
