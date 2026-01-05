@@ -6,17 +6,15 @@ interface MarkdownBlock {
     startLine: number;
     endLine: number;
     content: string;
-    html: string;
     hash: string;
 }
 
 /**
  * Incremental markdown renderer
+ * Uses semantic splitting and caching to minimize re-renders.
  */
 export class IncrementalMarkdownRenderer {
-    private blocks: MarkdownBlock[] = [];
-    private lastContent: string = '';
-    private readonly BLOCK_SIZE = 50;
+    private htmlCache = new Map<string, string>();
     private readonly MIN_SIZE_FOR_INCREMENTAL = 1000;
 
     /**
@@ -28,29 +26,44 @@ export class IncrementalMarkdownRenderer {
             return this.renderFull(content, gfm);
         }
 
-        // Detect changes and render incrementally
-        const changedBlocks = this.detectChanges(content);
+        try {
+            const blocks = this.splitIntoBlocks(content);
+            const flavor = gfm ? 'gfm' : 'commonmark';
 
-        if (changedBlocks.length === 0 && this.blocks.length > 0) {
-            // No changes, return cached HTML
-            return this.assembleHtml();
+            // Process blocks (render missing ones in parallel)
+            const renderedSegments = await Promise.all(
+                blocks.map(async (block) => {
+                    // Check cache
+                    let baseHtml = this.htmlCache.get(block.hash);
+
+                    if (!baseHtml) {
+                        const result = await callBackend('render_markdown', {
+                            content: block.content,
+                            flavor
+                        }, 'Markdown:Render');
+
+                        baseHtml = DOMPurify.sanitize(result.html, {
+                            USE_PROFILES: { html: true },
+                            ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
+                        });
+
+                        this.htmlCache.set(block.hash, baseHtml);
+                    }
+
+                    // Adjust line numbers for this segment's position in the full doc
+                    return this.adjustLineNumbers(baseHtml, block.startLine);
+                })
+            );
+
+            return renderedSegments.join('\n');
+        } catch (e) {
+            await error(`[Markdown] Incremental render error: ${e}`);
+            return this.renderFull(content, gfm); // Fallback
         }
-
-        // If too many blocks changed (>50%), do full render
-        const totalBlocks = Math.ceil(content.split('\n').length / this.BLOCK_SIZE);
-        if (changedBlocks.length > totalBlocks * 0.5 || this.blocks.length === 0) {
-            return this.renderFull(content, gfm);
-        }
-
-        // Render only changed blocks
-        await this.renderBlocks(changedBlocks, gfm);
-        this.lastContent = content;
-
-        return this.assembleHtml();
     }
 
     /**
-     * Full document render (for small files or major changes)
+     * Full document render (fallback or small files)
      */
     private async renderFull(content: string, gfm: boolean): Promise<string> {
         try {
@@ -60,160 +73,124 @@ export class IncrementalMarkdownRenderer {
                 flavor
             }, 'Markdown:Render');
 
-            const cleanHtml = DOMPurify.sanitize(result.html, {
+            return DOMPurify.sanitize(result.html, {
                 USE_PROFILES: { html: true },
                 ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
             });
-
-            // Update block cache for future incremental updates
-            this.updateBlockCache(content, cleanHtml);
-            this.lastContent = content;
-
-            return cleanHtml;
         } catch (e) {
             await error(`[Markdown] Render error: ${e}`);
-            return this.getErrorHtml(String(e));
+            return `<div style="color: #ff6b6b; padding: 1rem; border: 1px solid #ff6b6b;">
+            <strong>Preview Error:</strong><br/>${String(e)}
+        </div>`;
         }
     }
 
     /**
-     * Detect which blocks have changed
+     * Split content into semantic blocks to preserve cache validity during edits.
+     * Splits on headers, horizontal rules, and large gaps, while respecting code fences.
      */
-    private detectChanges(content: string): MarkdownBlock[] {
+    private splitIntoBlocks(content: string): MarkdownBlock[] {
         const lines = content.split('\n');
-        const changedBlocks: MarkdownBlock[] = [];
-        const blockCount = Math.ceil(lines.length / this.BLOCK_SIZE);
+        const blocks: MarkdownBlock[] = [];
+        let currentLines: string[] = [];
+        let currentStartLine = 0;
+        let inFence = false;
 
-        for (let i = 0; i < blockCount; i++) {
-            const startLine = i * this.BLOCK_SIZE;
-            const endLine = Math.min((i + 1) * this.BLOCK_SIZE, lines.length);
-            const blockContent = lines.slice(startLine, endLine).join('\n');
-            const hash = this.hashString(blockContent);
+        // Regex patterns
+        const fenceRegex = /^(\s{0,3})(`{3,}|~{3,})/;
+        const headerRegex = /^#{1,6}\s/;
+        const hrRegex = /^(\s{0,3})([-*_])\s*(\2\s*){2,}$/;
 
-            const existingBlock = this.blocks[i];
-            if (!existingBlock || existingBlock.hash !== hash) {
-                changedBlocks.push({
-                    startLine,
-                    endLine,
-                    content: blockContent,
-                    html: '',
-                    hash
-                });
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // Check for fence toggle
+            if (fenceRegex.test(line)) {
+                inFence = !inFence;
             }
-        }
 
-        return changedBlocks;
-    }
+            let shouldSplit = false;
 
-    /**
-     * Render specific blocks
-     */
-    private async renderBlocks(blocks: MarkdownBlock[], gfm: boolean): Promise<void> {
-        const flavor = gfm ? 'gfm' : 'commonmark';
+            // Semantic splitting logic
+            if (!inFence && currentLines.length > 0) {
+                // Always split before a header (starts a new section)
+                if (headerRegex.test(line)) {
+                    shouldSplit = true;
+                }
+                // Split before a horizontal rule
+                else if (hrRegex.test(line)) {
+                    shouldSplit = true;
+                }
+                // Split if we have a blank line followed by text (paragraph break)
+                // Only if current block is getting large (> 20 lines) to avoid fragmentation
+                else if (currentLines.length > 20 && line.trim() === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') {
+                    shouldSplit = true;
+                }
+            }
 
-        try {
-            // Render blocks in parallel for better performance
-            const renderPromises = blocks.map(async (block) => {
-                const result = await callBackend('render_markdown', {
-                    content: block.content,
-                    flavor
-                }, 'Markdown:Render');
+            // Safety: Force split if block gets too large to keep UI responsive
+            if (currentLines.length >= 200 && !inFence) {
+                shouldSplit = true;
+            }
 
-                block.html = DOMPurify.sanitize(result.html, {
-                    USE_PROFILES: { html: true },
-                    ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
+            if (shouldSplit) {
+                const blockContent = currentLines.join('\n');
+                blocks.push({
+                    startLine: currentStartLine,
+                    endLine: i,
+                    content: blockContent,
+                    hash: this.hashString(blockContent)
                 });
+                currentLines = [];
+                currentStartLine = i;
+            }
 
-                return block;
-            });
-
-            const renderedBlocks = await Promise.all(renderPromises);
-
-            // Update block cache
-            renderedBlocks.forEach(block => {
-                const blockIndex = Math.floor(block.startLine / this.BLOCK_SIZE);
-                this.blocks[blockIndex] = block;
-            });
-        } catch (e) {
-            await error(`[Markdown] Block render error: ${e}`);
-            throw e;
+            currentLines.push(line);
         }
-    }
 
-    /**
-     * Update block cache after full render
-     */
-    private updateBlockCache(content: string, html: string): void {
-        const lines = content.split('\n');
-        const htmlLines = html.split('\n');
-        const blockCount = Math.ceil(lines.length / this.BLOCK_SIZE);
-
-        this.blocks = [];
-
-        for (let i = 0; i < blockCount; i++) {
-            const startLine = i * this.BLOCK_SIZE;
-            const endLine = Math.min((i + 1) * this.BLOCK_SIZE, lines.length);
-            const blockContent = lines.slice(startLine, endLine).join('\n');
-
-            // Approximate HTML mapping (simplified)
-            const htmlStartLine = Math.floor((startLine / lines.length) * htmlLines.length);
-            const htmlEndLine = Math.floor((endLine / lines.length) * htmlLines.length);
-            const blockHtml = htmlLines.slice(htmlStartLine, htmlEndLine).join('\n');
-
-            this.blocks.push({
-                startLine,
-                endLine,
+        // Add remaining lines
+        if (currentLines.length > 0) {
+            const blockContent = currentLines.join('\n');
+            blocks.push({
+                startLine: currentStartLine,
+                endLine: lines.length,
                 content: blockContent,
-                html: blockHtml,
                 hash: this.hashString(blockContent)
             });
         }
+
+        return blocks;
     }
 
     /**
-     * Assemble HTML from cached blocks
+     * Offset line numbers in HTML to match document position
      */
-    private assembleHtml(): string {
-        return this.blocks.map(block => block.html).join('\n');
+    private adjustLineNumbers(html: string, offset: number): string {
+        if (offset === 0) return html;
+        // Regex finds data-source-line="123" and adds offset
+        return html.replace(/data-source-line="(\d+)"/g, (_, line) => {
+            return `data-source-line="${parseInt(line, 10) + offset}"`;
+        });
     }
 
-    /**
-     * Simple string hash function
-     */
     private hashString(str: string): string {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
+            hash = hash & hash;
         }
         return hash.toString(36);
     }
 
-    /**
-     * Get error HTML
-     */
-    private getErrorHtml(message: string): string {
-        return `<div style="color: #ff6b6b; padding: 1rem; border: 1px solid #ff6b6b;">
-            <strong>Preview Error:</strong><br/>${message}
-        </div>`;
-    }
-
-    /**
-     * Clear cache (useful when switching documents)
-     */
     clear(): void {
-        this.blocks = [];
-        this.lastContent = '';
+        this.htmlCache.clear();
     }
 
-    /**
-     * Get cache statistics for debugging
-     */
-    getStats(): { blocks: number; totalSize: number } {
+    getStats(): { blocks: number; cacheSize: number } {
         return {
-            blocks: this.blocks.length,
-            totalSize: this.blocks.reduce((sum, b) => sum + b.content.length, 0)
+            blocks: 0,
+            cacheSize: this.htmlCache.size
         };
     }
 }
