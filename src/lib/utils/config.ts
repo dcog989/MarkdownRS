@@ -10,6 +10,8 @@ export const CONFIG = {
         SEARCH_DEBOUNCE_MS: 150,
         MAX_FILE_SIZE_MB: 50,
         SMART_TITLE_MAX_LENGTH: 25,
+        CLOSED_TABS_HISTORY_LIMIT: 12,
+        LINE_CHANGE_TRACK_LIMIT: 50,
     },
 
     // Spellcheck Settings
@@ -48,6 +50,8 @@ export const CONFIG = {
         SCROLL_SYNC_THRESHOLD_PX: 10,
         SCROLL_SYNC_THROTTLE_MS: 16,
         FILE_WATCH_DEBOUNCE_MS: 300,
+        INCREMENTAL_RENDER_MIN_SIZE: 1000,
+        INCREMENTAL_BLOCK_SIZE_LIMIT: 200,
     },
 
     // UI

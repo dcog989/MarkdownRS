@@ -1,3 +1,5 @@
+import { CONFIG } from "$lib/utils/config";
+
 export type LineChange = {
     lineNumber: number;
     timestamp: number;
@@ -6,7 +8,7 @@ export type LineChange = {
 export class LineChangeTracker {
     private changes: LineChange[] = [];
     private deletions: LineChange[] = [];
-    private maxChanges = 50;
+    private maxChanges = CONFIG.EDITOR.LINE_CHANGE_TRACK_LIMIT;
 
     recordChange(lineNumber: number): void {
         const timestamp = Date.now();

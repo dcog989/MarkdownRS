@@ -1,4 +1,5 @@
 import type { OperationId } from "$lib/config/textOperationsRegistry";
+import { CONFIG } from "$lib/utils/config";
 import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
 import { isMarkdownFile } from "$lib/utils/fileValidation";
 import { clearRendererCache } from "$lib/utils/markdown";
@@ -123,7 +124,8 @@ export function closeTab(id: string) {
     if (index !== -1) {
         const tab = editorStore.tabs[index];
         if (tab.path || tab.content.trim().length > 0) {
-            editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...editorStore.closedTabsHistory.slice(0, 11)];
+            const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
+            editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...editorStore.closedTabsHistory.slice(0, limit - 1)];
         }
         editorStore.tabs.splice(index, 1);
         editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);

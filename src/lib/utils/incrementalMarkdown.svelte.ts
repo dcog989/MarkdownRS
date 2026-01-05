@@ -1,6 +1,7 @@
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
 import { callBackend } from './backend';
+import { CONFIG } from './config';
 
 interface MarkdownBlock {
     startLine: number;
@@ -15,14 +16,13 @@ interface MarkdownBlock {
  */
 export class IncrementalMarkdownRenderer {
     private htmlCache = new Map<string, string>();
-    private readonly MIN_SIZE_FOR_INCREMENTAL = 1000;
 
     /**
      * Render markdown with incremental updates
      */
     async render(content: string, gfm: boolean = true): Promise<string> {
         // For small documents, use full rendering (faster for small files)
-        if (content.length < this.MIN_SIZE_FOR_INCREMENTAL) {
+        if (content.length < CONFIG.PERFORMANCE.INCREMENTAL_RENDER_MIN_SIZE) {
             return this.renderFull(content, gfm);
         }
 
@@ -129,7 +129,7 @@ export class IncrementalMarkdownRenderer {
             }
 
             // Safety: Force split if block gets too large to keep UI responsive
-            if (currentLines.length >= 200 && !inFence) {
+            if (currentLines.length >= CONFIG.PERFORMANCE.INCREMENTAL_BLOCK_SIZE_LIMIT && !inFence) {
                 shouldSplit = true;
             }
 
