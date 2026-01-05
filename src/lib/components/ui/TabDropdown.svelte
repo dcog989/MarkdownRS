@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { tooltip } from "$lib/actions/tooltip";
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { formatFileSize } from "$lib/utils/fileValidation";
     import { CircleAlert, FileText, Pencil, PencilLine, SquarePen } from "lucide-svelte";
     import CustomScrollbar from "./CustomScrollbar.svelte";
 
@@ -36,6 +38,22 @@
 
     function getDropdownTitle(tab: any): string {
         return tab.customTitle || tab.title;
+    }
+
+    function getTooltipContent(tab: any): string {
+        const parts: string[] = [];
+        const sizeStr = formatFileSize(tab.sizeBytes || 0);
+        const formattedTime = tab.formattedTimestamp || "";
+        const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
+
+        if (tab.fileCheckFailed) {
+            parts.push("File missing from original location");
+            if (tab.path) parts.push(tab.path);
+        } else {
+            parts.push(tab.path || "Unsaved content");
+        }
+        parts.push(bottomLine);
+        return parts.join("\n");
     }
 
     $effect(() => {
@@ -126,7 +144,7 @@
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
-                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem" use:scrollIntoView={isSelected}>
+                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem" use:scrollIntoView={isSelected} use:tooltip={getTooltipContent(tab)}>
                         {#if tab.fileCheckFailed}
                             <CircleAlert size={14} class="shrink-0 text-danger-text" />
                         {:else if !tab.path && tab.isDirty}
@@ -138,7 +156,7 @@
                         {:else}
                             <FileText size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
                         {/if}
-                        <span class="truncate flex-1" title={tab.path || "Unsaved content"}>{getDropdownTitle(tab)}</span>
+                        <span class="truncate flex-1">{getDropdownTitle(tab)}</span>
                     </button>
                 {/each}
             </div>
