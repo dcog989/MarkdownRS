@@ -376,7 +376,7 @@
             ]),
             themeComp.of(dynamicTheme),
             indentComp.of(indentUnit.of("  ")),
-            whitespaceComp.of([]),
+            whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
             languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
             spellComp.of(createSpellCheckLinter()),
