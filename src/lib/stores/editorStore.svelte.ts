@@ -125,7 +125,14 @@ export function closeTab(id: string) {
         const tab = editorStore.tabs[index];
         if (tab.path || tab.content.trim().length > 0) {
             const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
-            editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...editorStore.closedTabsHistory.slice(0, limit - 1)];
+
+            let filteredHistory = editorStore.closedTabsHistory;
+            // Prevent duplicate file entries in history
+            if (tab.path) {
+                filteredHistory = filteredHistory.filter(entry => entry.tab.path !== tab.path);
+            }
+
+            editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(0, limit);
         }
         editorStore.tabs.splice(index, 1);
         editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);
