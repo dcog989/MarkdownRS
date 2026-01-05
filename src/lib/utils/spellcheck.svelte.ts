@@ -1,3 +1,4 @@
+import { appState } from '$lib/stores/appState.svelte';
 import { callBackend } from './backend';
 
 export class SpellcheckManager {
@@ -22,10 +23,8 @@ export class SpellcheckManager {
             try {
                 await this.loadCustomDictionary();
 
-                // Get selected dictionaries from settings (dynamic import to avoid circular dep if needed, or assume global context available)
-                const { appContext } = await import('../stores/state.svelte');
-                const dictionaries = appContext.app.spellcheckDictionaries || ['en'];
-                const specialistDictionaries = appContext.app.specialistDictionaries || ['software-terms', 'companies'];
+                const dictionaries = appState.spellcheckDictionaries || ['en'];
+                const specialistDictionaries = appState.specialistDictionaries || ['software-terms', 'companies'];
 
                 await callBackend('init_spellchecker', { dictionaries, specialistDictionaries }, 'Spellcheck:Init', undefined, { report: true });
                 this.dictionaryLoaded = true;

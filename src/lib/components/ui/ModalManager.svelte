@@ -6,7 +6,7 @@
     import { toggleAbout, toggleBookmarks, toggleCommandPalette, toggleSettings, toggleShortcuts, toggleTransform } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { warningToast } from "$lib/stores/toastStore.svelte";
-    import { openFile, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
+    import { openFile, openFileByPath, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { shortcutManager } from "$lib/utils/shortcuts";
@@ -203,13 +203,6 @@
 <CommandPalette bind:isOpen={appContext.interface.showCommandPalette} {commands} onClose={() => (appContext.interface.showCommandPalette = false)} />
 <SettingsModal bind:isOpen={appContext.interface.showSettings} onClose={() => (appContext.interface.showSettings = false)} />
 <AboutModal bind:isOpen={appContext.interface.showAbout} onClose={() => (appContext.interface.showAbout = false)} />
-<BookmarksModal
-    bind:isOpen={appContext.interface.showBookmarks}
-    onClose={() => (appContext.interface.showBookmarks = false)}
-    onOpenFile={async (path) => {
-        const { openFileByPath } = await import("$lib/utils/fileSystem");
-        openFileByPath(path);
-    }}
-/>
+<BookmarksModal bind:isOpen={appContext.interface.showBookmarks} onClose={() => (appContext.interface.showBookmarks = false)} onOpenFile={(path) => openFileByPath(path)} />
 <TextTransformModal isOpen={appContext.interface.showTransform} onClose={() => (appContext.interface.showTransform = false)} />
 <ShortcutsModal bind:isOpen={appContext.interface.showShortcuts} onClose={() => (appContext.interface.showShortcuts = false)} />

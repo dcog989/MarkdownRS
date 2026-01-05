@@ -1,4 +1,4 @@
-import { markTabPersisted } from '$lib/stores/editorStore.svelte';
+import { addTab, markTabPersisted } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -250,14 +250,10 @@ export async function loadSession(): Promise<void> {
 
 		// Ensure there's always one tab if empty or requested "new"
 		if (appContext.editor.tabs.length === 0 || appContext.app.startupBehavior === 'new') {
-			// If behaviour is new, we might want to keep loaded tabs but focus a new one
-			// For now, if tabs were loaded, just adding a new one and focusing it
 			if (appContext.app.startupBehavior === 'new' && activeRustTabs.length > 0) {
-				const id = await import('../stores/editorStore.svelte').then(m => m.addTab());
-				appContext.app.activeTabId = id;
+				appContext.app.activeTabId = addTab();
 			} else if (appContext.editor.tabs.length === 0) {
-				const id = await import('../stores/editorStore.svelte').then(m => m.addTab());
-				appContext.app.activeTabId = id;
+				appContext.app.activeTabId = addTab();
 			}
 		}
 
@@ -275,8 +271,6 @@ export async function loadSession(): Promise<void> {
 			showToast: false,
 			severity: 'warning'
 		});
-		// Ensure we have a tab on error
-		const { addTab } = await import('../stores/editorStore.svelte');
 		appContext.app.activeTabId = addTab();
 	}
 }
