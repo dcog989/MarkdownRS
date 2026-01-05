@@ -263,7 +263,13 @@ pub async fn init_spellchecker(
             })?;
     }
 
-    let client = reqwest::Client::new();
+    // Configure client with short timeouts to fail fast if offline
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(2))
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new());
+
     let mut combined_aff = String::new();
     let mut combined_dic_body = String::with_capacity(5 * 1024 * 1024);
     let mut total_word_count = 0;
@@ -351,8 +357,6 @@ pub async fn init_spellchecker(
     if !combined_aff.is_empty() && total_word_count > 0 {
         let combined_dic = format!("{}\n{}", total_word_count, combined_dic_body);
 
-        // Dictionary creation is CPU intensive, runs in blocking thread if needed,
-        // but for now running on main thread is acceptable during init
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
                 let mut speller = state.speller.lock().await;
