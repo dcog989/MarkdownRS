@@ -10,10 +10,18 @@ pub async fn save_session(
 ) -> Result<(), String> {
     // Normalize line endings to LF before saving to ensure consistent database storage
     for tab in &mut active_tabs {
-        tab.content = tab.content.replace("\r\n", "\n");
+        if let Some(content) = &mut tab.content {
+            if content.contains("\r\n") {
+                *content = content.replace("\r\n", "\n");
+            }
+        }
     }
     for tab in &mut closed_tabs {
-        tab.content = tab.content.replace("\r\n", "\n");
+        if let Some(content) = &mut tab.content {
+            if content.contains("\r\n") {
+                *content = content.replace("\r\n", "\n");
+            }
+        }
     }
 
     let mut db = state.db.lock().await;

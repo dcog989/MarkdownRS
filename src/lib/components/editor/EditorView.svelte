@@ -58,7 +58,7 @@
         cmView?: EditorView & { getHistoryState?: () => any };
     }>();
 
-    let editorContainer: HTMLDivElement;
+    let editorContainer = $state<HTMLDivElement>();
     let view = $state<EditorView & { getHistoryState?: () => any }>();
 
     let wrapComp = new Compartment();
@@ -244,14 +244,15 @@
 
     let dynamicTheme = $derived.by(() => {
         const fontSize = appContext.app.editorFontSize || 14;
+        const fontFamily = appContext.app.editorFontFamily || "ui-monospace, monospace";
         const isDark = appContext.app.theme === "dark";
         const whitespaceColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
         return EditorView.theme({
             "&": { height: "100%", fontSize: `${fontSize}px` },
             ".cm-cursor": { borderLeftColor: appContext.metrics.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: appContext.metrics.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
-            ".cm-scroller": { fontFamily: appContext.app.editorFontFamily, overflow: "auto", overflowAnchor: "none" },
+            ".cm-scroller": { fontFamily, overflow: "auto", overflowAnchor: "none" },
+            ".cm-content": { fontFamily, paddingBottom: "40px !important" },
             ".cm-scroller::-webkit-scrollbar": { display: "none" },
-            ".cm-content": { paddingBottom: "40px !important" },
             ".cm-gutters": { border: "none", backgroundColor: "transparent" },
             ".cm-gutterElement": { alignItems: "flex-start !important" },
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": { backgroundColor: "var(--color-selection-bg) !important" },
@@ -388,7 +389,6 @@
             handlersComp.of(eventHandlers),
         ];
 
-        // Hydrate history if available
         if (initialHistoryState) {
             extensions.push(historyField.init(() => initialHistoryState));
         }
@@ -422,6 +422,8 @@
                 }
             })
         );
+
+        if (!editorContainer) return;
 
         const safeSelection = {
             anchor: Math.min(initialSelection.anchor, initialContent.length),

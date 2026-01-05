@@ -25,9 +25,12 @@ export type EditorTab = {
     encoding: string;
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
-    lineChangeTracker?: any; // Store LineChangeTracker instance per tab
-    historyState?: any; // CodeMirror history state
-    preferredExtension?: 'md' | 'txt'; // For unsaved files: user's preference
+    lineChangeTracker?: any;
+    historyState?: any;
+    preferredExtension?: 'md' | 'txt';
+    // Persistence optimization flags
+    contentChanged?: boolean; // Content has changed since last DB persist
+    isPersisted?: boolean;    // Tab exists in DB
 };
 
 export type ClosedTab = {
@@ -41,11 +44,8 @@ function normalizeLineEndings(text: string): string {
 
 type TextOperationCallback = (operationId: OperationId) => void;
 
-// Module-level private state
 let textOperationCallback: TextOperationCallback | null = null;
 
-// Public reactive state
-// Using $state (not .raw) to ensure array mutations (push, splice) trigger updates
 export const editorStore = $state({
     tabs: [] as EditorTab[],
     sessionDirty: false,
@@ -54,8 +54,6 @@ export const editorStore = $state({
     lastScrollSource: null as 'editor' | 'preview' | null,
 });
 
-
-// Logic Functions
 export function registerTextOperationCallback(callback: TextOperationCallback) {
     textOperationCallback = callback;
 }
@@ -80,7 +78,6 @@ export function addTab(title: string = '', content: string = '') {
             if (match) maxNewNumber = Math.max(maxNewNumber, parseInt(match[1]));
         }
         finalTitle = `New-${maxNewNumber + 1}`;
-        // Don't pre-fill content for new tabs - keep it empty
     }
 
     const normalizedContent = normalizeLineEndings(finalContent);
@@ -102,8 +99,9 @@ export function addTab(title: string = '', content: string = '') {
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         lineEnding: 'LF',
-        encoding: 'UTF-8'
-        // preferredExtension is intentionally undefined to allow file extension detection
+        encoding: 'UTF-8',
+        contentChanged: true, // New tab needs content saved
+        isPersisted: false    // New tab not yet in DB
     };
 
     if (appState.newTabPosition === 'beginning') {
@@ -124,13 +122,9 @@ export function closeTab(id: string) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
     if (index !== -1) {
         const tab = editorStore.tabs[index];
-
-        // Only add to history if it's a saved file or has content
         if (tab.path || tab.content.trim().length > 0) {
-            // Store up to 12 recently closed tabs
             editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...editorStore.closedTabsHistory.slice(0, 11)];
         }
-
         editorStore.tabs.splice(index, 1);
         editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);
         editorStore.sessionDirty = true;
@@ -149,6 +143,10 @@ export function reopenClosedTab(historyIndex: number): string | null {
 
     const entry = editorStore.closedTabsHistory[historyIndex];
     editorStore.closedTabsHistory.splice(historyIndex, 1);
+
+    // Reopened tab needs full persistence
+    entry.tab.contentChanged = true;
+    entry.tab.isPersisted = false;
 
     const insertIndex = Math.min(entry.index, editorStore.tabs.length);
     editorStore.tabs.splice(insertIndex, 0, entry.tab);
@@ -177,7 +175,6 @@ export function updateContent(id: string, content: string) {
     if (oldTab.content === content) return;
 
     let newTitle = oldTab.title;
-
     if (appState.tabNameFromContent) {
         const trimmed = content.trim();
         if (trimmed.length > 0) {
@@ -206,7 +203,8 @@ export function updateContent(id: string, content: string) {
         isDirty: content !== oldTab.lastSavedContent,
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
-        sizeBytes: new TextEncoder().encode(content).length
+        sizeBytes: new TextEncoder().encode(content).length,
+        contentChanged: true // Mark for persistence
     };
 
     editorStore.tabs[index] = updatedTab;
@@ -233,7 +231,6 @@ export function updateCursor(id: string, anchor: number, head: number) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
     if (index === -1) return;
 
-    // Only update if changed to avoid unnecessary reactivity
     if (editorStore.tabs[index].cursor.anchor !== anchor || editorStore.tabs[index].cursor.head !== head) {
         editorStore.tabs[index].cursor = { anchor, head };
     }
@@ -256,8 +253,6 @@ export function updateMetadata(id: string, created?: string, modified?: string) 
 export function updateHistoryState(id: string, state: any) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
     if (index === -1) return;
-    // We don't mark sessionDirty for history changes to avoid excessive DB writes,
-    // as history is transient in this version.
     editorStore.tabs[index].historyState = state;
 }
 
@@ -329,6 +324,7 @@ export function reloadTabContent(id: string, content: string, lineEnding: 'LF' |
     tab.encoding = encoding;
     tab.sizeBytes = sizeBytes;
     tab.fileCheckPerformed = false;
+    tab.contentChanged = true; // Reload means new content to persist
     editorStore.sessionDirty = true;
 }
 
@@ -336,6 +332,7 @@ export function updateContentOnly(id: string, content: string) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
     if (index === -1) return;
     editorStore.tabs[index].content = content;
+    editorStore.tabs[index].contentChanged = true;
     editorStore.sessionDirty = true;
 }
 
@@ -360,13 +357,9 @@ export function saveTabComplete(id: string, path: string, title: string, lineEnd
 
 export function togglePreferredExtension(id: string) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) {
-        return;
-    }
+    if (index === -1) return;
     const tab = editorStore.tabs[index];
-
     let current = tab.preferredExtension;
-
     if (!current) {
         if (tab.path) {
             current = isMarkdownFile(tab.path) ? 'md' : 'txt';
@@ -374,8 +367,14 @@ export function togglePreferredExtension(id: string) {
             current = 'md';
         }
     }
-
     tab.preferredExtension = current === 'md' ? 'txt' : 'md';
-
     editorStore.sessionDirty = true;
+}
+
+export function markTabPersisted(id: string) {
+    const index = editorStore.tabs.findIndex(t => t.id === id);
+    if (index !== -1) {
+        editorStore.tabs[index].contentChanged = false;
+        editorStore.tabs[index].isPersisted = true;
+    }
 }

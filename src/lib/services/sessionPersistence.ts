@@ -1,4 +1,4 @@
-import { addTab } from '$lib/stores/editorStore.svelte';
+import { markTabPersisted } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -8,11 +8,13 @@ import { debounce } from '$lib/utils/timing';
 import { checkAndReloadIfChanged, checkFileExists, normalizeLineEndings, refreshMetadata, reloadFileContent } from './fileMetadata';
 import { fileWatcher } from './fileWatcher';
 
-// Local types for backend communication
+// Only import types if needed
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
+
 type RustTabState = {
 	id: string;
 	title: string;
-	content: string;
+	content: string | null;
 	is_dirty: boolean;
 	path: string | null;
 	scroll_percentage: number;
@@ -26,14 +28,6 @@ type RustTabState = {
 	sort_index?: number;
 	original_index?: number | null;
 };
-
-type SessionData = {
-	active_tabs: RustTabState[];
-	closed_tabs: RustTabState[];
-};
-
-// Only import types if needed
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
 
 class SessionPersistenceManager {
 	private isSaving = false;
@@ -67,24 +61,30 @@ class SessionPersistenceManager {
 			const mruPositionMap = new Map<string, number>();
 			appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
-			const activeTabs: RustTabState[] = appContext.editor.tabs.map((t, index) => ({
-				id: t.id,
-				path: t.path,
-				title: t.title,
-				content: t.content,
-				is_dirty: t.isDirty,
-				scroll_percentage: t.scrollPercentage,
-				created: t.created || null,
-				modified: t.modified || null,
-				is_pinned: t.isPinned || false,
-				custom_title: t.customTitle || null,
-				file_check_failed: t.fileCheckFailed || false,
-				file_check_performed: t.fileCheckPerformed || false,
-				mru_position: mruPositionMap.get(t.id) ?? null,
-				sort_index: index,
-				original_index: null
-			}));
+			// 1. Map Active Tabs (Optimized content payload)
+			const activeTabs = appContext.editor.tabs;
+			const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
+				const needsContent = t.contentChanged || !t.isPersisted;
+				return {
+					id: t.id,
+					path: t.path,
+					title: t.title,
+					content: needsContent ? t.content : null,
+					is_dirty: t.isDirty,
+					scroll_percentage: t.scrollPercentage,
+					created: t.created || null,
+					modified: t.modified || null,
+					is_pinned: t.isPinned || false,
+					custom_title: t.customTitle || null,
+					file_check_failed: t.fileCheckFailed || false,
+					file_check_performed: t.fileCheckPerformed || false,
+					mru_position: mruPositionMap.get(t.id) ?? null,
+					sort_index: index,
+					original_index: null
+				};
+			});
 
+			// 2. Map Closed Tabs (Always send content as we replace table)
 			const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map((entry, index) => ({
 				id: entry.tab.id,
 				path: entry.tab.path,
@@ -103,9 +103,12 @@ class SessionPersistenceManager {
 				original_index: entry.index
 			}));
 
+			await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
+
+			// 3. Update persistence state on success
 			appContext.editor.sessionDirty = false;
-			// Use camelCase keys for arguments to match Tauri's default mapping to snake_case in Rust
-			await callBackend('save_session', { activeTabs: activeTabs, closedTabs: closedTabs }, 'Session:Save');
+			activeTabs.forEach(t => markTabPersisted(t.id));
+
 		} catch (err) {
 			appContext.editor.sessionDirty = true;
 			AppError.handle('Session:Save', err, {
@@ -168,7 +171,8 @@ export async function persistSession(): Promise<void> {
 }
 
 function convertRustTabToEditorTab(t: RustTabState): EditorTab {
-	const content = normalizeLineEndings(t.content);
+	const rawContent = t.content || "";
+	const content = normalizeLineEndings(rawContent);
 	const timestamp = t.modified || t.created || "";
 	return {
 		id: t.id,
@@ -186,10 +190,12 @@ function convertRustTabToEditorTab(t: RustTabState): EditorTab {
 		formattedTimestamp: formatTimestampForDisplay(timestamp),
 		isPinned: t.is_pinned,
 		customTitle: t.custom_title || undefined,
-		lineEnding: t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
+		lineEnding: t.content && t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
 		encoding: 'UTF-8',
 		fileCheckFailed: t.file_check_failed || false,
-		fileCheckPerformed: t.file_check_performed || false
+		fileCheckPerformed: t.file_check_performed || false,
+		contentChanged: false,
+		isPersisted: true
 	};
 }
 
@@ -197,7 +203,6 @@ export async function loadSession(): Promise<void> {
 	try {
 		const sessionData = await callBackend('restore_session', {}, 'Session:Load');
 
-		// Handle legacy return (array) or new return (object) for smooth transition during dev
 		let activeRustTabs: RustTabState[] = [];
 		let closedRustTabs: RustTabState[] = [];
 
@@ -209,7 +214,6 @@ export async function loadSession(): Promise<void> {
 		}
 
 		if (activeRustTabs.length > 0) {
-			// Sort tabs by sort_index
 			activeRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
 			const convertedTabs: EditorTab[] = activeRustTabs.map(convertRustTabToEditorTab);
@@ -222,7 +226,7 @@ export async function loadSession(): Promise<void> {
 
 			appContext.editor.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map(t => t.id);
 
-			// Initialize Active Tab
+			// Initialize Active Tab Logic
 			switch (appContext.app.startupBehavior) {
 				case 'first':
 					appContext.app.activeTabId = convertedTabs[0].id;
@@ -231,7 +235,7 @@ export async function loadSession(): Promise<void> {
 					appContext.app.activeTabId = appContext.editor.mruStack[0] || convertedTabs[0].id;
 					break;
 				case 'new':
-					appContext.app.activeTabId = addTab();
+					// Logic moved to addTab call below if no tabs
 					break;
 				default:
 					appContext.app.activeTabId = convertedTabs[0].id;
@@ -242,11 +246,21 @@ export async function loadSession(): Promise<void> {
 				await initializeTabFileState(activeTab);
 			}
 
-		} else {
-			appContext.app.activeTabId = addTab();
 		}
 
-		// Restore Closed Tabs History
+		// Ensure there's always one tab if empty or requested "new"
+		if (appContext.editor.tabs.length === 0 || appContext.app.startupBehavior === 'new') {
+			// If behaviour is new, we might want to keep loaded tabs but focus a new one
+			// For now, if tabs were loaded, just adding a new one and focusing it
+			if (appContext.app.startupBehavior === 'new' && activeRustTabs.length > 0) {
+				const id = await import('../stores/editorStore.svelte').then(m => m.addTab());
+				appContext.app.activeTabId = id;
+			} else if (appContext.editor.tabs.length === 0) {
+				const id = await import('../stores/editorStore.svelte').then(m => m.addTab());
+				appContext.app.activeTabId = id;
+			}
+		}
+
 		if (closedRustTabs.length > 0) {
 			closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
@@ -261,6 +275,8 @@ export async function loadSession(): Promise<void> {
 			showToast: false,
 			severity: 'warning'
 		});
+		// Ensure we have a tab on error
+		const { addTab } = await import('../stores/editorStore.svelte');
 		appContext.app.activeTabId = addTab();
 	}
 }

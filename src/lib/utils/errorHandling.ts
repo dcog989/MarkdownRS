@@ -1,10 +1,6 @@
 import { errorToast, infoToast, warningToast } from '$lib/stores/toastStore.svelte';
 import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
-/**
- * Centralized error handling and logging utilities
- */
-
 export type ErrorContext =
 	| 'Session:Save'
 	| 'Session:Load'
@@ -38,6 +34,24 @@ export interface ErrorOptions {
 	additionalInfo?: Record<string, any>;
 	severity?: ErrorSeverity;
 	logToDisk?: boolean;
+}
+
+// Helper to truncate long strings in error logs
+function safeStringify(obj: any): string {
+	try {
+		return JSON.stringify(obj, (key, value) => {
+			if (typeof value === 'string' && value.length > 500) {
+				return value.substring(0, 500) + '... [truncated]';
+			}
+			if (Array.isArray(value) && value.length > 20) {
+				// Truncate large arrays, but keep structure valid for JSON
+				return [...value.slice(0, 20), `... (${value.length - 20} more items)`];
+			}
+			return value;
+		});
+	} catch (e) {
+		return '[Circular or Non-Serializable Data]';
+	}
 }
 
 export class AppError extends Error {
@@ -133,7 +147,7 @@ export class AppError extends Error {
 		}
 
 		if (this.additionalInfo) {
-			console.log('Additional Info:', this.additionalInfo);
+			console.log('Additional Info:', safeStringify(this.additionalInfo));
 		}
 
 		if (this.stack) {
@@ -159,7 +173,7 @@ export class AppError extends Error {
 		];
 
 		if (this.additionalInfo) {
-			parts.push(`Additional Info: ${JSON.stringify(this.additionalInfo)}`);
+			parts.push(`Additional Info: ${safeStringify(this.additionalInfo)}`);
 		}
 
 		if (this.originalError) {
@@ -253,7 +267,7 @@ export class AppError extends Error {
 		console.warn(logMessage);
 
 		if (options.additionalInfo) {
-			console.warn('Additional Info:', options.additionalInfo);
+			console.warn('Additional Info:', safeStringify(options.additionalInfo));
 		}
 
 		if (options.logToDisk !== false) {
@@ -283,7 +297,7 @@ export class AppError extends Error {
 		console.info(logMessage);
 
 		if (options.additionalInfo) {
-			console.info('Additional Info:', options.additionalInfo);
+			console.info('Additional Info:', safeStringify(options.additionalInfo));
 		}
 
 		if (options.logToDisk !== false) {
