@@ -108,6 +108,10 @@ export function formatFileSize(bytes: number): string {
         return `${mb.toFixed(2)} MB`;
     }
 
+    if (kb < 0.1) {
+        return "0.1 KB";
+    }
+
     if (kb < 10) {
         return `${kb.toFixed(1)} KB`;
     }
