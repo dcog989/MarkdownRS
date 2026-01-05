@@ -96,10 +96,23 @@ export function validateFile(
  * Format file size for display
  */
 export function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    if (bytes === 0) return "0 KB";
+
+    const kb = bytes / 1024;
+
+    if (kb > 999) {
+        const mb = kb / 1024;
+        if (mb > 999) {
+            return `${(mb / 1024).toFixed(2)} GB`;
+        }
+        return `${mb.toFixed(2)} MB`;
+    }
+
+    if (kb < 10) {
+        return `${kb.toFixed(1)} KB`;
+    }
+
+    return `${Math.round(kb)} KB`;
 }
 
 /**

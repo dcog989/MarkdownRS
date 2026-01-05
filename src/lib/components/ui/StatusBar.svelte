@@ -3,7 +3,7 @@
     import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
     import { togglePreferredExtension, updateLineEnding } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { isMarkdownFile } from "$lib/utils/fileValidation";
+    import { formatFileSize, isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { TextWrap } from "lucide-svelte";
 
@@ -14,14 +14,7 @@
 
     let textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
 
-    let fileSizeDisplay = $derived.by(() => {
-        const bytes = activeTab?.sizeBytes || 0;
-        const kb = bytes / 1024;
-        if (kb < 100) {
-            return kb.toFixed(1);
-        }
-        return Math.round(kb).toString();
-    });
+    let fileSizeDisplay = $derived(formatFileSize(activeTab?.sizeBytes || 0));
 
     let fileType = $derived.by(() => {
         if (!activeTab) return "markdown";
@@ -105,8 +98,7 @@
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"File Size"}>
-            <span class="font-mono text-right inline-block w-[5ch]">{fileSizeDisplay}</span>
-            <span class="opacity-70 uppercase">kb</span>
+            <span class="font-mono text-right inline-block min-w-[7ch]">{fileSizeDisplay}</span>
         </div>
     </div>
 
