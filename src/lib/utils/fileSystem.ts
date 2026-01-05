@@ -1,5 +1,5 @@
 import { addToDictionary } from '$lib/services/dictionaryService';
-import { checkAndReloadIfChanged, checkFileExists, refreshMetadata, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
+import { checkAndReloadIfChanged, checkFileExists, invalidateMetadataCache, refreshMetadata, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
@@ -48,7 +48,6 @@ export async function openFile(path?: string): Promise<void> {
 		const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
 		const detectedLineEnding: 'LF' | 'CRLF' = crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
-		// Determine initial title based on setting
 		let initialTitle = fileName;
 		if (appContext.app.tabNameFromContent) {
 			const trimmed = result.content.trim();
@@ -99,18 +98,14 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 	}
 
 	try {
-		// Resolve the path relative to the current file (handles ./ ../ etc)
 		const resolvedPath = await callBackend('resolve_path_relative', {
 			basePath: activeTab?.path || null,
 			clickPath: clickedPath.replace(/\\/g, '/')
 		}, 'File:Read');
 
-		// Always use the system's associated application for clicked links.
-		// This handles directories (Explorer/Finder), Web URLs (Browser),
-		// and Files (Associated App) via the OS.
 		await openPath(resolvedPath);
 	} catch (err) {
-		// Silent failure for resolution issues or cancelled actions
+		// Silent failure
 	}
 }
 
@@ -126,7 +121,6 @@ export async function saveCurrentFile(): Promise<boolean> {
 	try {
 		let savePath = tab.path;
 		if (!savePath) {
-			// Use preferred extension for the save dialog
 			const preferredExt = tab.preferredExtension || 'md';
 
 			if (preferredExt === 'txt') {
@@ -172,7 +166,7 @@ export async function saveCurrentFile(): Promise<boolean> {
 				contentToSave = contentToSave.replace(/\r\n/g, '\n');
 			}
 
-			await callBackend('write_text_file', { path: sanitizedPath, content: contentToSave }, 'File:Write');
+			await callBackend('write_text_file', { path: sanitizedPath, content: contentToSave }, 'File:Write', undefined, { report: true, msg: 'Failed to save file' });
 
 			if (oldPath && oldPath !== sanitizedPath) {
 				fileWatcher.unwatch(oldPath);
@@ -182,8 +176,7 @@ export async function saveCurrentFile(): Promise<boolean> {
 			}
 
 			const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-			
-			// Determine title based on setting
+
 			let finalTitle = fileName;
 			if (appContext.app.tabNameFromContent) {
 				const trimmed = contentToSave.trim();
@@ -200,18 +193,19 @@ export async function saveCurrentFile(): Promise<boolean> {
 					}
 				}
 			}
-			
+
 			saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
 			markAsSaved(tabId);
+
+			// Invalidate cache immediately to ensure we get the fresh mtime after our write
+			invalidateMetadataCache(sanitizedPath);
 			await refreshMetadata(tabId, sanitizedPath);
 			return true;
 		}
 		return false;
 	} catch (err) {
-		AppError.handle('File:Write', err, {
-			showToast: true,
-			additionalInfo: { path: tab.path || 'new file' }
-		});
+		// AppError handled by callBackend if reported, but we might catch others
+		// If we didn't report, handle here. `callBackend` above has `report: true`.
 		return false;
 	}
 }
@@ -243,7 +237,6 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
 	closeTab(id);
 
-	// Ensure persist happens to save the closed tab into history db
 	persistSessionDebounced();
 
 	if (appContext.app.activeTabId === id) {
@@ -269,20 +262,17 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 	const cleanNewName = newName.trim();
 	if (!cleanNewName) return false;
 
-	// Case 1: Tab has no physical path (unsaved)
 	if (!tab.path) {
 		updateTabTitle(tabId, cleanNewName, cleanNewName);
 		return true;
 	}
 
-	// Case 2: Tab is a physical file
 	try {
 		const oldPath = sanitizePath(tab.path);
 		const pathParts = oldPath.split('/');
 		const oldFileName = pathParts.pop() || "";
 		const directory = pathParts.join('/');
 
-		// Preserve extension if the user didn't provide one
 		let finalNewName = cleanNewName;
 		const oldExt = oldFileName.includes('.') ? oldFileName.split('.').pop() : '';
 		const newExt = cleanNewName.includes('.') ? cleanNewName.split('.').pop() : '';
@@ -295,24 +285,20 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
 		if (oldPath === newPath) return true;
 
-		// Perform physical rename
-		await callBackend('rename_file', { oldPath: oldPath, newPath: newPath }, 'File:Write');
+		await callBackend('rename_file', { oldPath: oldPath, newPath: newPath }, 'File:Write', undefined, { report: true, msg: 'Failed to rename file' });
 
-		// Handle file watcher transition
 		fileWatcher.unwatch(oldPath);
 		await fileWatcher.watch(newPath);
 
-		// Update Editor state
 		updateTabMetadataAndPath(tabId, {
 			path: newPath,
 			title: finalNewName,
 			customTitle: finalNewName
 		});
 
-		// Refresh OS-level metadata (modified/created times)
+		invalidateMetadataCache(newPath);
 		await refreshMetadata(tabId, newPath);
 
-		// Synchronize Bookmarks if this file was bookmarked
 		const bookmark = getBookmarkByPath(oldPath);
 		if (bookmark) {
 			await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
@@ -321,10 +307,6 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 		successToast(`Renamed to ${finalNewName}`);
 		return true;
 	} catch (err) {
-		AppError.handle('File:Write', err, {
-			showToast: true,
-			userMessage: 'Failed to rename file'
-		});
 		return false;
 	}
 }

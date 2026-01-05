@@ -30,6 +30,10 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
 	return promise;
 }
 
+export function invalidateMetadataCache(path: string) {
+	metadataCache.delete(path);
+}
+
 export function normalizeLineEndings(text: string): string {
 	return text.replace(/\r\n/g, '\n');
 }
