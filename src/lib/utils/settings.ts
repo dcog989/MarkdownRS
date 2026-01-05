@@ -48,7 +48,8 @@ function getSettingsObject() {
         spellcheckDictionaries: appState.spellcheckDictionaries,
         tabNameFromContent: appState.tabNameFromContent,
         wrapGuideColumn: appState.wrapGuideColumn,
-        doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace
+        doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
+        collapsePinnedTabs: appState.collapsePinnedTabs
     };
 }
 

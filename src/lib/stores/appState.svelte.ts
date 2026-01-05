@@ -42,6 +42,7 @@ export const appState = $state({
     tabNameFromContent: true,
     wrapGuideColumn: 0,
     doubleClickSelectsTrailingSpace: false,
+    collapsePinnedTabs: false,
 });
 
 // Logic functions

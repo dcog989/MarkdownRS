@@ -17,6 +17,7 @@
     let { tab, isActive, currentTime, onclick, onclose, oncontextmenu }: Props = $props();
 
     let isFileMissing = $derived(tab.fileCheckFailed === true);
+    let isCollapsed = $derived(appContext.app.collapsePinnedTabs && tab.isPinned);
 
     let iconColor = $derived.by(() => {
         const _ = currentTime; // Reactivity trigger
@@ -38,6 +39,12 @@
             parts.push(tab.path || "Unsaved content");
         }
         parts.push(bottomLine);
+
+        // If collapsed, add title to tooltip since it's hidden
+        if (isCollapsed) {
+            return `${tab.customTitle || tab.title}\n${parts.join("\n")}`;
+        }
+
         return parts.join("\n");
     });
 </script>
@@ -58,8 +65,9 @@
     class:border-t-accent-secondary={isActive}
     class:border-t-transparent={!isActive}
     style="
-        min-width: {appContext.app.tabWidthMin}px;
-        max-width: {appContext.app.tabWidthMax}px;
+        min-width: {isCollapsed ? 'auto' : `${appContext.app.tabWidthMin}px`};
+        max-width: {isCollapsed ? 'none' : `${appContext.app.tabWidthMax}px`};
+        width: {isCollapsed ? 'fit-content' : 'auto'};
     "
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
@@ -67,6 +75,7 @@
         oncontextmenu?.(e, tab.id);
     }}
     onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
+    use:tooltip={isCollapsed ? tooltipContent : null}
 >
     {#if isFileMissing}
         <CircleAlert size={14} class="flex-shrink-0 text-danger-text" />
@@ -80,18 +89,19 @@
         <FileText size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
     {/if}
 
-    <div class="truncate flex-1" use:tooltip={tooltipContent}>
-        <span class="truncate pointer-events-none">{tab.customTitle || tab.title}</span>
-    </div>
+    {#if !isCollapsed}
+        <div class="truncate flex-1" use:tooltip={tooltipContent}>
+            <span class="truncate pointer-events-none">{tab.customTitle || tab.title}</span>
+        </div>
+    {/if}
 
-    <div class="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center">
+    <div class={isCollapsed ? "flex items-center justify-center" : "absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center"}>
         {#if tab.isPinned}
-            <div class="absolute inset-0 flex items-center justify-center {isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover'}">
+            <div class={isCollapsed ? "" : "absolute inset-0 flex items-center justify-center " + (isActive ? "bg-bg-main" : "bg-bg-panel group-hover:bg-bg-hover")}>
                 <Pin size={12} class="flex-shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
             </div>
         {:else}
             <!-- Gradient Overlay for Close Button -->
-            <!-- Use Tailwind gradients with group-hover variants to match the tab background -->
             <div class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-gradient-to-r from-transparent via-40%" class:via-bg-main={isActive} class:to-bg-main={isActive} class:via-bg-panel={!isActive} class:to-bg-panel={!isActive} class:group-hover:via-bg-hover={!isActive} class:group-hover:to-bg-hover={!isActive}>
                 <span
                     role="button"

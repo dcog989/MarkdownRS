@@ -106,6 +106,7 @@
 
         { key: "tabWidthMin", label: "Tab Width Minimum (px)", type: "number", category: "Interface", defaultValue: 120, min: 80, max: 300 },
         { key: "tabWidthMax", label: "Tab Width Maximum (px)", type: "number", category: "Interface", defaultValue: 180, min: 100, max: 400 },
+        { key: "collapsePinnedTabs", label: "Collapse Pinned Tabs", type: "boolean", category: "Interface", defaultValue: false, tooltip: "Shrink pinned tabs to icon only" },
         { key: "tabCycling", label: "Tab Cycling Mode", type: "select", category: "Interface", defaultValue: "mru", options: ["sequential", "mru"], optionLabels: ["Sequential", "MRU"] },
         { key: "tabNameFromContent", label: "Name Tabs from First Line", type: "boolean", category: "Interface", defaultValue: true, tooltip: "Automatically name unsaved tabs from first line of content (strips leading whitespace and #)" },
         { key: "newTabPosition", label: "New Tab Position", type: "select", category: "Interface", defaultValue: "end", options: ["beginning", "right", "end"], optionLabels: ["At the Beginning", "To the Right", "At the End"] },
