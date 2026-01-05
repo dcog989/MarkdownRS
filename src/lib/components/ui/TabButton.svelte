@@ -40,7 +40,6 @@
         }
         parts.push(bottomLine);
 
-        // If collapsed, add title to tooltip since it's hidden
         if (isCollapsed) {
             return `${tab.customTitle || tab.title}\n${parts.join("\n")}`;
         }
@@ -56,7 +55,7 @@
     tabindex="0"
     data-active={isActive}
     data-tab-id={tab.id}
-    class="group relative h-8 px-2 flex items-center gap-2 text-ui-sm cursor-default border-r border-t-2 outline-none text-left shrink-0 overflow-hidden transition-colors duration-150 select-none border-border-main rounded-t-[4px]"
+    class="group relative h-8 flex items-center gap-2 text-ui-sm cursor-default border-r border-t-2 outline-none text-left shrink-0 overflow-hidden transition-colors duration-150 select-none border-border-main rounded-t-[4px]"
     class:bg-bg-main={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
@@ -64,10 +63,12 @@
     class:text-fg-muted={!isActive}
     class:border-t-accent-secondary={isActive}
     class:border-t-transparent={!isActive}
+    class:justify-center={isCollapsed}
+    class:px-2={!isCollapsed}
     style="
-        min-width: {isCollapsed ? 'auto' : `${appContext.app.tabWidthMin}px`};
-        max-width: {isCollapsed ? 'none' : `${appContext.app.tabWidthMax}px`};
-        width: {isCollapsed ? 'fit-content' : 'auto'};
+        min-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMin}px`};
+        max-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMax}px`};
+        width: {isCollapsed ? '36px' : 'auto'};
     "
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
@@ -93,30 +94,29 @@
         <div class="truncate flex-1" use:tooltip={tooltipContent}>
             <span class="truncate pointer-events-none">{tab.customTitle || tab.title}</span>
         </div>
-    {/if}
 
-    <div class={isCollapsed ? "flex items-center justify-center" : "absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center"}>
-        {#if tab.isPinned}
-            <div class={isCollapsed ? "" : "absolute inset-0 flex items-center justify-center " + (isActive ? "bg-bg-main" : "bg-bg-panel group-hover:bg-bg-hover")}>
-                <Pin size={12} class="flex-shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
-            </div>
-        {:else}
-            <!-- Gradient Overlay for Close Button -->
-            <div class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-gradient-to-r from-transparent via-40%" class:via-bg-main={isActive} class:to-bg-main={isActive} class:via-bg-panel={!isActive} class:to-bg-panel={!isActive} class:group-hover:via-bg-hover={!isActive} class:group-hover:to-bg-hover={!isActive}>
-                <span
-                    role="button"
-                    tabindex="0"
-                    class="p-1 rounded hover:bg-white/20 flex items-center justify-center cursor-pointer text-fg-muted hover:text-danger-text"
-                    onclick={(e) => {
-                        e.stopPropagation();
-                        if (onclose) onclose(e as unknown as MouseEvent, tab.id);
-                    }}
-                    onkeydown={(e) => e.key === "Enter" && onclose?.(e as unknown as MouseEvent, tab.id)}
-                    use:tooltip={`Close ${tab.title}`}
-                >
-                    <X size={14} class="transition-colors" />
-                </span>
-            </div>
-        {/if}
-    </div>
+        <div class="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center">
+            {#if tab.isPinned}
+                <div class={"absolute inset-0 flex items-center justify-center " + (isActive ? "bg-bg-main" : "bg-bg-panel group-hover:bg-bg-hover")}>
+                    <Pin size={12} class="flex-shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
+                </div>
+            {:else}
+                <div class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-gradient-to-r from-transparent via-40%" class:via-bg-main={isActive} class:to-bg-main={isActive} class:via-bg-panel={!isActive} class:to-bg-panel={!isActive} class:group-hover:via-bg-hover={!isActive} class:group-hover:to-bg-hover={!isActive}>
+                    <span
+                        role="button"
+                        tabindex="0"
+                        class="p-1 rounded hover:bg-white/20 flex items-center justify-center cursor-pointer text-fg-muted hover:text-danger-text"
+                        onclick={(e) => {
+                            e.stopPropagation();
+                            if (onclose) onclose(e as unknown as MouseEvent, tab.id);
+                        }}
+                        onkeydown={(e) => e.key === "Enter" && onclose?.(e as unknown as MouseEvent, tab.id)}
+                        use:tooltip={`Close ${tab.title}`}
+                    >
+                        <X size={14} class="transition-colors" />
+                    </span>
+                </div>
+            {/if}
+        </div>
+    {/if}
 </div>
