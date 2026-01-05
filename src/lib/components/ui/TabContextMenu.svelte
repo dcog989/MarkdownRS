@@ -382,8 +382,8 @@
 
             <div class="h-px my-1 bg-border-main"></div>
 
-            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2 text-fg-muted hover:text-danger-text" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
-                <Trash2 size={14} /><span>Delete to Recycle Bin</span>
+            <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2 hover:text-danger-text" disabled={!tab?.path || isPinned} onclick={handleSendToRecycleBin}>
+                <Trash2 size={14} class="opacity-70" /><span>Delete to Recycle Bin</span>
             </button>
         </div>
     {/snippet}
