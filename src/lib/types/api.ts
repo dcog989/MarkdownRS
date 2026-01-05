@@ -119,10 +119,6 @@ export interface BackendCommands {
         args: Record<string, never>;
         return: string[];
     };
-    'transform_text_content': {
-        args: { content: string; operation: TextTransformId; indentWidth?: number };
-        return: string;
-    };
 
     // Bookmarks
     'add_bookmark': {

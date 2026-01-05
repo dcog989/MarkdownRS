@@ -1,7 +1,6 @@
 use crate::markdown::config::MarkdownFlavor;
 use crate::markdown::formatter::{self, FormatterOptions};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
-use crate::transforms::transform_text;
 
 #[tauri::command]
 pub async fn render_markdown(
@@ -54,16 +53,4 @@ pub async fn format_markdown(
 #[tauri::command]
 pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
     Ok(vec!["commonmark".to_string(), "gfm".to_string()])
-}
-
-#[tauri::command]
-pub async fn transform_text_content(
-    content: String,
-    operation: crate::transforms::TextOperation,
-    indent_width: Option<usize>,
-) -> Result<String, String> {
-    transform_text(&content, operation, indent_width.unwrap_or(4)).map_err(|e| {
-        log::error!("Failed to transform text with operation: {:?}", e);
-        e
-    })
 }

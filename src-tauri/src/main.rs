@@ -5,7 +5,6 @@ mod commands;
 mod db;
 mod markdown;
 mod state;
-mod transforms;
 mod utils;
 
 use log::LevelFilter;
@@ -228,7 +227,6 @@ fn main() {
             commands::markdown::render_markdown,
             commands::markdown::format_markdown,
             commands::markdown::get_markdown_flavors,
-            commands::markdown::transform_text_content,
             commands::bookmarks::add_bookmark,
             commands::bookmarks::get_all_bookmarks,
             commands::bookmarks::delete_bookmark,
