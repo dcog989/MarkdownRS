@@ -167,9 +167,6 @@ pub async fn init_spellchecker(
         .map_err(|e| e.to_string())?;
     let custom_path = app_dir.join("custom-spelling.dic");
 
-    let speller_arc = state.speller.clone();
-    let custom_arc = state.custom_dict.clone();
-
     if !cache_dir.exists() {
         fs::create_dir_all(&cache_dir).await.map_err(|e| {
             log::error!("Failed to create spellcheck cache directory: {}", e);
@@ -315,7 +312,7 @@ pub async fn init_spellchecker(
 
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
-                let mut speller = speller_arc.lock().await;
+                let mut speller = state.speller.lock().await;
                 *speller = Some(dict);
                 log::info!(
                     "Spellchecker initialized successfully with {} total words",
@@ -337,7 +334,7 @@ pub async fn init_spellchecker(
 
     if custom_path.exists() {
         if let Ok(text) = fs::read_to_string(&custom_path).await {
-            let mut custom = custom_arc.lock().await;
+            let mut custom = state.custom_dict.lock().await;
             for line in text.lines() {
                 let w = line.trim();
                 if !w.is_empty() {

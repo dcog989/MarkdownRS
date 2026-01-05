@@ -175,10 +175,8 @@ fn main() {
 
             app.manage(state::AppState {
                 db: tokio::sync::Mutex::new(db),
-                speller: std::sync::Arc::new(tokio::sync::Mutex::new(None)),
-                custom_dict: std::sync::Arc::new(tokio::sync::Mutex::new(
-                    std::collections::HashSet::new(),
-                )),
+                speller: tokio::sync::Mutex::new(None),
+                custom_dict: tokio::sync::Mutex::new(std::collections::HashSet::new()),
             });
 
             // Check for command-line arguments on first launch
