@@ -33,9 +33,8 @@ export async function formatMarkdown(
         return await callBackend('format_markdown', {
             content,
             ...apiOptions
-        }, 'Markdown:Render');
+        }, 'Markdown:Render', undefined, { report: true });
     } catch (e) {
-        console.error('Failed to format markdown:', e);
         return content;
     }
 }

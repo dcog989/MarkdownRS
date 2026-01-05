@@ -18,14 +18,9 @@ export const bookmarkStore = $state({
 
 // Logic functions (async actions)
 export async function loadBookmarks() {
-    try {
-        const bookmarks = await callBackend("get_all_bookmarks", {}, "Database:Init");
-        bookmarkStore.bookmarks = bookmarks;
-        bookmarkStore.isLoaded = true;
-    } catch (error) {
-        bookmarkStore.bookmarks = [];
-        bookmarkStore.isLoaded = true;
-    }
+    const bookmarks = await callBackend("get_all_bookmarks", {}, "Database:Init", undefined, { ignore: true });
+    bookmarkStore.bookmarks = bookmarks || [];
+    bookmarkStore.isLoaded = true;
 }
 
 export async function addBookmark(path: string, title: string, tags: string[] = []) {
@@ -38,22 +33,14 @@ export async function addBookmark(path: string, title: string, tags: string[] = 
         last_accessed: null
     };
 
-    try {
-        await callBackend("add_bookmark", { bookmark }, "File:Read");
-        bookmarkStore.bookmarks.unshift(bookmark);
-        return bookmark;
-    } catch (error) {
-        throw error;
-    }
+    await callBackend("add_bookmark", { bookmark }, "Bookmark:Add", undefined, { report: true });
+    bookmarkStore.bookmarks.unshift(bookmark);
+    return bookmark;
 }
 
 export async function deleteBookmark(id: string) {
-    try {
-        await callBackend("delete_bookmark", { id }, "File:Write");
-        bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter(b => b.id !== id);
-    } catch (error) {
-        throw error;
-    }
+    await callBackend("delete_bookmark", { id }, "Bookmark:Remove", undefined, { report: true });
+    bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter(b => b.id !== id);
 }
 
 export async function updateBookmark(id: string, title: string, tags: string[], path?: string) {
@@ -67,24 +54,18 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
         path: path ?? bookmarkStore.bookmarks[index].path
     };
 
-    try {
-        await callBackend("add_bookmark", { bookmark: updated }, "File:Write");
-        bookmarkStore.bookmarks[index] = updated;
-    } catch (error) {
-        throw error;
-    }
+    await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add", undefined, { report: true });
+    bookmarkStore.bookmarks[index] = updated;
 }
 
 export async function updateAccessTime(id: string) {
     const lastAccessed = getCurrentTimestamp();
-    try {
-        await callBackend("update_bookmark_access_time", { id, lastAccessed }, "File:Read");
-        const index = bookmarkStore.bookmarks.findIndex(b => b.id === id);
-        if (index !== -1) {
-            bookmarkStore.bookmarks[index].last_accessed = lastAccessed;
-        }
-    } catch (error) {
-        // Error logged by bridge
+    // fire and forget, ignore errors
+    callBackend("update_bookmark_access_time", { id, lastAccessed }, "File:Read", undefined, { ignore: true });
+
+    const index = bookmarkStore.bookmarks.findIndex(b => b.id === id);
+    if (index !== -1) {
+        bookmarkStore.bookmarks[index].last_accessed = lastAccessed;
     }
 }
 

@@ -1,5 +1,4 @@
 import { callBackend } from './backend';
-import { AppError } from './errorHandling';
 
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
@@ -11,13 +10,8 @@ export class SpellcheckManager {
     private pendingFetches = new Set<string>();
 
     async loadCustomDictionary(): Promise<void> {
-        try {
-            const words = await callBackend('get_custom_dictionary', {}, 'Dictionary:Add');
-            this.customDictionary = new Set(words.map(w => w.toLowerCase()));
-        } catch (err) {
-            AppError.handle('Dictionary:Add', err, { showToast: false, severity: 'warning' });
-            this.customDictionary = new Set();
-        }
+        const words = await callBackend('get_custom_dictionary', {}, 'Dictionary:Add', undefined, { ignore: true });
+        this.customDictionary = new Set((words || []).map(w => w.toLowerCase()));
     }
 
     async init(): Promise<void> {
@@ -33,10 +27,9 @@ export class SpellcheckManager {
                 const dictionaries = appContext.app.spellcheckDictionaries || ['en'];
                 const specialistDictionaries = appContext.app.specialistDictionaries || ['software-terms', 'companies'];
 
-                await callBackend('init_spellchecker', { dictionaries, specialistDictionaries }, 'Editor:Init');
+                await callBackend('init_spellchecker', { dictionaries, specialistDictionaries }, 'Spellcheck:Init', undefined, { report: true });
                 this.dictionaryLoaded = true;
             } catch (err) {
-                AppError.handle('Spellcheck:Init', err, { showToast: false, severity: 'warning' });
                 this.initPromise = null;
             }
         })();
@@ -67,10 +60,8 @@ export class SpellcheckManager {
         this.pendingFetches.add(w);
 
         try {
-            const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Dictionary:Add');
-            this.suggestionCache.set(w, suggestions);
-        } catch (err) {
-            // Silent fail for prefetch
+            const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Dictionary:Add', undefined, { ignore: true });
+            if (suggestions) this.suggestionCache.set(w, suggestions);
         } finally {
             this.pendingFetches.delete(w);
         }
@@ -87,14 +78,12 @@ export class SpellcheckManager {
             return this.suggestionCache.get(word)!;
         }
 
-        try {
-            const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add');
+        const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add', undefined, { report: true });
+        if (suggestions) {
             this.suggestionCache.set(word, suggestions);
             return suggestions;
-        } catch (err) {
-            AppError.handle('Dictionary:Add', err, { showToast: false, severity: 'warning' });
-            return [];
         }
+        return [];
     }
 
     getCustomDictionarySet(): Set<string> {
@@ -112,7 +101,7 @@ export class SpellcheckManager {
 
 export const spellcheckState = new SpellcheckManager();
 
-// Backward compatibility exports / Shortcuts
+// Backward compatibility exports
 export const initSpellcheck = () => spellcheckState.init();
 export const refreshCustomDictionary = () => spellcheckState.refreshCustomDictionary();
 export const isWordValid = (w: string) => spellcheckState.isWordValid(w);

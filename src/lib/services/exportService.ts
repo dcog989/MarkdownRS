@@ -110,14 +110,10 @@ export class ExportService {
 </body>
 </html>`;
 
-            await callBackend('write_text_file', { path, content: html }, 'File:Write');
+            await callBackend('write_text_file', { path, content: html }, 'File:Write', { path: tab?.path }, { report: true, msg: 'Failed to save HTML file' });
             successToast(`Exported to ${path}`);
         } catch (err) {
-            AppError.handle('Export:HTML', err, {
-                showToast: true,
-                userMessage: 'Failed to export to HTML',
-                additionalInfo: { path: tab?.path }
-            });
+            // Error already reported by backend
         }
     }
 
@@ -184,14 +180,10 @@ export class ExportService {
                 bytes[i] = binaryString.charCodeAt(i);
             }
 
-            await callBackend('write_binary_file', { path, content: Array.from(bytes) }, 'File:Write');
+            await callBackend('write_binary_file', { path, content: Array.from(bytes) }, 'File:Write', { path: tab?.path }, { report: true, msg: `Failed to save ${format.toUpperCase()}` });
             successToast(`Exported to ${path}`);
         } catch (err) {
-            AppError.handle('Export:HTML', err, {
-                showToast: true,
-                userMessage: `Failed to export to ${format.toUpperCase()}`,
-                additionalInfo: { format, path: tab?.path }
-            });
+            // Error already reported
         } finally {
             this.clearExportContent();
         }
