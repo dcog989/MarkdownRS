@@ -1,3 +1,5 @@
+import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import { appState } from './appState.svelte';
 import { bookmarkStore } from './bookmarkStore.svelte';
 import { dialogStore } from './dialogStore.svelte';
@@ -18,6 +20,8 @@ export const appContext = {
     metrics: editorMetrics,
     bookmarks: bookmarkStore,
     interface: interfaceStore,
+    scrollSync: scrollSync,
+    spellcheck: spellcheckState,
     ui: {
         tooltip: tooltipStore,
         toast: toastStore,
