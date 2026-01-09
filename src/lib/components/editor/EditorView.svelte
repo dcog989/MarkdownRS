@@ -118,6 +118,7 @@
     const rulerPlugin = ViewPlugin.fromClass(
         class {
             ruler: HTMLElement;
+            gutters: HTMLElement | null;
             constructor(view: EditorView) {
                 this.ruler = document.createElement("div");
                 this.ruler.className = "cm-ruler-line";
@@ -131,6 +132,7 @@
                 this.ruler.style.display = "none";
                 this.ruler.style.zIndex = "0";
                 view.scrollDOM.appendChild(this.ruler);
+                this.gutters = view.dom.querySelector(".cm-gutters") as HTMLElement;
                 this.measure(view);
             }
             update(update: ViewUpdate) {
@@ -142,8 +144,7 @@
                 const column = appContext.app.wrapGuideColumn;
                 if (column > 0) {
                     const charWidth = view.defaultCharacterWidth;
-                    const gutters = view.dom.querySelector(".cm-gutters") as HTMLElement;
-                    const gutterWidth = gutters ? gutters.offsetWidth : 0;
+                    const gutterWidth = this.gutters?.offsetWidth || 0;
                     const style = window.getComputedStyle(view.contentDOM);
                     const paddingLeft = parseFloat(style.paddingLeft) || 0;
                     const left = gutterWidth + paddingLeft + column * charWidth;
