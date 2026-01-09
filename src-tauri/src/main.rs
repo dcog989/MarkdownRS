@@ -59,19 +59,26 @@ fn main() {
         )
         .setup(|app| {
             let app_handle = app.handle();
-            let window = app.get_webview_window("main").unwrap();
+            let window = app.get_webview_window("main")
+                .ok_or("Failed to get main window")?;
 
             // Roaming Data (Settings, Session DB, Custom Dictionary)
             let app_dir = app_handle
                 .path()
                 .app_data_dir()
-                .expect("failed to get app data dir");
+                .map_err(|e| {
+                    log::error!("Failed to get app data dir: {}", e);
+                    format!("Failed to get app data dir: {}", e)
+                })?;
 
             // Local Data (Logs, Spellcheck Cache)
             let local_dir = app_handle
                 .path()
                 .app_local_data_dir()
-                .expect("failed to get app local data dir");
+                .map_err(|e| {
+                    log::error!("Failed to get local data dir: {}", e);
+                    format!("Failed to get local data dir: {}", e)
+                })?;
 
             let db_dir = app_dir.join("Database");
             let log_dir = local_dir.join("Logs");
@@ -170,7 +177,10 @@ fn main() {
             }
 
             let db_path = db_dir.join("session.db");
-            let db = db::Database::new(db_path).expect("failed to initialize database");
+            let db = db::Database::new(db_path).map_err(|e| {
+                log::error!("Failed to initialize database: {}", e);
+                format!("Failed to initialize database: {}", e)
+            })?;
 
             app.manage(state::AppState {
                 db: tokio::sync::Mutex::new(db),
@@ -239,5 +249,8 @@ fn main() {
             commands::settings::check_context_menu_status,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .map_err(|e| {
+            log::error!("Error while running tauri application: {}", e);
+            e
+        }).expect("Error while running tauri application");
 }

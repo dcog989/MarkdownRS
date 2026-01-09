@@ -7,7 +7,8 @@ use std::sync::LazyLock;
 
 // Lazy-compiled regex for file paths
 static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>\"'|?*]*|(?:\.\.?/|~/)[^\s<>\"'|?*]+)"#).unwrap()
+    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>\"'|?*]*|(?:\.\.?/|~/)[^\s<>\"'|?*]+)"#)
+        .expect("Invalid PATH_REGEX pattern")
 });
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,8 +75,11 @@ fn linkify_file_paths(html: &str) -> String {
 
         let mut last_end = 0;
         for cap in PATH_REGEX.captures_iter(line) {
-            let full_match = cap.get(0).unwrap();
-            let path = cap.get(1).unwrap().as_str();
+            let full_match = cap.get(0)
+                .expect("Regex capture should always have group 0");
+            let path = cap.get(1)
+                .expect("Regex capture should always have group 1")
+                .as_str();
             let start = full_match.start();
             let end = full_match.end();
 
