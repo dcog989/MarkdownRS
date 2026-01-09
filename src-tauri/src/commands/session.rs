@@ -11,15 +11,15 @@ pub async fn save_session(
     // Normalize line endings to LF before saving to ensure consistent database storage
     for tab in &mut active_tabs {
         if let Some(content) = &mut tab.content {
-            if content.contains("\r\n") {
-                *content = content.replace("\r\n", "\n");
+            if content.contains('\r') {
+                *content = content.replace('\r', "");
             }
         }
     }
     for tab in &mut closed_tabs {
         if let Some(content) = &mut tab.content {
-            if content.contains("\r\n") {
-                *content = content.replace("\r\n", "\n");
+            if content.contains('\r') {
+                *content = content.replace('\r', "");
             }
         }
     }
