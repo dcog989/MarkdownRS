@@ -133,12 +133,15 @@ pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
 #[tauri::command]
 pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
     validate_path(&path)?;
-    // trash crate is blocking, but it's a specific OS operation.
-    // It's acceptable to keep it blocking or wrap in spawn_blocking if it causes UI freezes.
-    trash::delete(&path).map_err(|e| {
-        log::error!("Failed to send file to recycle bin '{}': {}", path, e);
-        format!("Failed to send file to recycle bin: {}", e)
+    // trash crate is blocking, so we wrap it in spawn_blocking to prevent UI freezes
+    tokio::task::spawn_blocking(move || {
+        trash::delete(&path).map_err(|e| {
+            log::error!("Failed to send file to recycle bin '{}': {}", path, e);
+            format!("Failed to send file to recycle bin: {}", e)
+        })
     })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
 }
 
 #[tauri::command]
