@@ -16,7 +16,7 @@ export const CONFIG = {
 
     // Spellcheck Settings
     SPELLCHECK: {
-        LINT_DELAY_MS: 350,
+        LINT_DELAY_MS: 750,
         STARTUP_DELAY_MS: 200,
     },
 
