@@ -101,12 +101,6 @@
     async function handleSendToRecycleBin() {
         if (!tab || !tab.path) return;
 
-        const confirmed = confirm(`Are you sure you want to send "${tab.title}" to the Recycle Bin?`);
-        if (!confirmed) {
-            onClose();
-            return;
-        }
-
         try {
             await callBackend("send_to_recycle_bin", { path: tab.path }, "File:Write");
             requestCloseTab(tabId);
