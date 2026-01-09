@@ -358,14 +358,22 @@
                 {
                     key: "PageDown",
                     run: (v) => {
-                        scrollSync.handleFastScroll(v, v.scrollDOM.scrollTop + v.scrollDOM.clientHeight);
+                        const newScrollTop = v.scrollDOM.scrollTop + v.scrollDOM.clientHeight;
+                        v.scrollDOM.scrollTop = newScrollTop;
+                        const lineBlock = v.lineBlockAtHeight(newScrollTop);
+                        v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
+                        scrollSync.handleFastScroll(v, newScrollTop);
                         return true;
                     },
                 },
                 {
                     key: "PageUp",
                     run: (v) => {
-                        scrollSync.handleFastScroll(v, v.scrollDOM.scrollTop - v.scrollDOM.clientHeight);
+                        const newScrollTop = Math.max(0, v.scrollDOM.scrollTop - v.scrollDOM.clientHeight);
+                        v.scrollDOM.scrollTop = newScrollTop;
+                        const lineBlock = v.lineBlockAtHeight(newScrollTop);
+                        v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
+                        scrollSync.handleFastScroll(v, newScrollTop);
                         return true;
                     },
                 },
