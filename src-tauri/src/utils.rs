@@ -13,8 +13,20 @@ pub fn validate_path(path: &str) -> Result<(), String> {
     if path.contains('\0') {
         return Err("Invalid path: contains null bytes".to_string());
     }
-    if path.contains("..") {
-        return Err("Invalid path: contains parent directory references".to_string());
+
+    // Check for problematic directory traversal patterns
+    // Normalize path and count parent directory references
+    let normalized = path.replace('\\', "/");
+    let parent_dir_count = normalized.matches("../").count();
+
+    // Block excessive parent directory traversal (more than 3 levels up)
+    if parent_dir_count > 3 {
+        return Err("Invalid path: excessive directory traversal".to_string());
+    }
+
+    // Block patterns that try to escape using various encodings
+    if path.contains("..%2e") || path.contains("%2e%2e") || path.contains("%252e") {
+        return Err("Invalid path: contains encoded directory traversal".to_string());
     }
 
     if let Some(stem) = Path::new(path).file_stem().and_then(|s| s.to_str()) {
