@@ -18,36 +18,72 @@
     let lastRendered = $state("");
     let lastTabId = $state("");
     let debounceTimer: number | null = null;
+    let renderAbortController: AbortController | null = null;
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
     $effect(() => {
+        // Tab changed - reset state immediately
         if (lastTabId !== tabId) {
             lastTabId = tabId;
             lastRendered = "";
             htmlContent = "";
+            if (renderAbortController) {
+                renderAbortController.abort();
+                renderAbortController = null;
+            }
         }
 
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
         const content = appContext.app.activeTabId === tabId ? tab?.content || "" : "";
 
+        // Early exit conditions
         if (!isMarkdown) return;
         if (content === lastRendered && htmlContent) return;
 
+        // Cancel previous render if still in progress
         if (debounceTimer) clearTimeout(debounceTimer);
+        if (renderAbortController) {
+            renderAbortController.abort();
+        }
+
+        // For large files, use longer debounce to reduce render frequency
+        const debounceMs = content.length > CONFIG.PERFORMANCE.INCREMENTAL_RENDER_MIN_SIZE
+            ? CONFIG.EDITOR.CONTENT_DEBOUNCE_MS * 2
+            : CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
 
         isRendering = true;
         debounceTimer = window.setTimeout(async () => {
-            const result = await renderMarkdown(content, appContext.app.markdownFlavor, tabId);
-            htmlContent = result.html;
-            lastRendered = content;
-            if (container) {
-                scrollSync.registerPreview(container);
-                await scrollSync.updateMap();
+            renderAbortController = new AbortController();
+            const currentController = renderAbortController;
+
+            try {
+                const result = await renderMarkdown(content, appContext.app.markdownFlavor, tabId);
+                
+                // Check if this render was aborted
+                if (currentController.signal.aborted) {
+                    return;
+                }
+
+                htmlContent = result.html;
+                lastRendered = content;
+                
+                if (container) {
+                    scrollSync.registerPreview(container);
+                    await scrollSync.updateMap();
+                }
+            } catch (err) {
+                // Ignore aborted renders
+                if (!currentController.signal.aborted) {
+                    console.error('Preview render error:', err);
+                }
+            } finally {
+                if (!currentController.signal.aborted) {
+                    isRendering = false;
+                }
             }
-            isRendering = false;
-        }, CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
+        }, debounceMs);
 
         return () => {
             if (debounceTimer) clearTimeout(debounceTimer);
@@ -56,6 +92,7 @@
 
     onDestroy(() => {
         if (debounceTimer) clearTimeout(debounceTimer);
+        if (renderAbortController) renderAbortController.abort();
     });
 </script>
 
