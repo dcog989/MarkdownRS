@@ -120,13 +120,23 @@
         window.addEventListener("keyup", handleKeyUp);
 
         return () => {
-            clearInterval(interval);
+            if (interval) {
+                clearInterval(interval);
+            }
+            if (mruTimer) {
+                clearTimeout(mruTimer);
+                mruTimer = null;
+            }
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
     });
 
     onDestroy(() => {
+        if (mruTimer) {
+            clearTimeout(mruTimer);
+            mruTimer = null;
+        }
         sortController.destroy();
     });
 
