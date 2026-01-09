@@ -279,12 +279,14 @@
         onDictionaryUpdate={() => {}}
         onCut={() => {
             navigator.clipboard.writeText(contextSelectedText);
-            cmView?.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: "" } });
+            if (!cmView) return;
+            cmView.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: "" } });
         }}
         onCopy={() => navigator.clipboard.writeText(contextSelectedText)}
         onPaste={async () => {
             const t = await navigator.clipboard.readText();
-            cmView?.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: t }, selection: { anchor: cmView.state.selection.main.from + t.length }, scrollIntoView: true });
+            if (!cmView) return;
+            cmView.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: t }, selection: { anchor: cmView.state.selection.main.from + t.length }, scrollIntoView: true });
         }}
         onReplaceWord={(w) => {
             if (!cmView) return;
