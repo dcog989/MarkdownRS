@@ -34,9 +34,22 @@ pub async fn save_session(
 #[tauri::command]
 pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
     let db = state.db.lock().await;
+    // Use optimized loading without content by default
     db.load_session().map_err(|e| {
         log::error!("Failed to restore session: {}", e);
         format!("Failed to restore session: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn load_tab_content(
+    state: State<'_, AppState>,
+    tab_id: String,
+) -> Result<Option<String>, String> {
+    let db = state.db.lock().await;
+    db.load_tab_content(&tab_id).map_err(|e| {
+        log::error!("Failed to load tab content for {}: {}", tab_id, e);
+        format!("Failed to load tab content: {}", e)
     })
 }
 

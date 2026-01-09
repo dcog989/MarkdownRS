@@ -360,19 +360,31 @@ impl Database {
     }
 
     pub fn load_session(&self) -> Result<SessionData> {
-        // Load Active Tabs
-        let mut active_stmt = self.conn.prepare(
+        self.load_session_with_content(false)
+    }
+
+    pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
+        // Load Active Tabs - optionally exclude content for better performance
+        let query = if include_content {
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
              FROM tabs ORDER BY sort_index ASC"
-        )?;
+        } else {
+            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
+             FROM tabs ORDER BY sort_index ASC"
+        };
+
+        let mut active_stmt = self.conn.prepare(query)?;
 
         let active_tabs = active_stmt
             .query_map([], |row| {
                 Ok(TabState {
                     id: row.get(0)?,
                     title: row.get(1)?,
-                    // Handle potential NULL if DB was manually modified, though app logic tries to prevent it
-                    content: Some(row.get::<_, Option<String>>(2)?.unwrap_or_default()),
+                    content: if include_content {
+                        Some(row.get::<_, Option<String>>(2)?.unwrap_or_default())
+                    } else {
+                        None
+                    },
                     is_dirty: row.get::<_, i32>(3)? != 0,
                     path: row.get(4)?,
                     scroll_percentage: row.get(5)?,
@@ -389,18 +401,27 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        // Load Closed Tabs
-        let mut closed_stmt = self.conn.prepare(
+        // Load Closed Tabs - optionally exclude content
+        let closed_query = if include_content {
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
              FROM closed_tabs ORDER BY sort_index ASC"
-        )?;
+        } else {
+            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
+             FROM closed_tabs ORDER BY sort_index ASC"
+        };
+
+        let mut closed_stmt = self.conn.prepare(closed_query)?;
 
         let closed_tabs = closed_stmt
             .query_map([], |row| {
                 Ok(TabState {
                     id: row.get(0)?,
                     title: row.get(1)?,
-                    content: Some(row.get::<_, Option<String>>(2)?.unwrap_or_default()),
+                    content: if include_content {
+                        Some(row.get::<_, Option<String>>(2)?.unwrap_or_default())
+                    } else {
+                        None
+                    },
                     is_dirty: row.get::<_, i32>(3)? != 0,
                     path: row.get(4)?,
                     scroll_percentage: row.get(5)?,
@@ -421,6 +442,23 @@ impl Database {
             active_tabs,
             closed_tabs,
         })
+    }
+
+    /// Load content for a specific tab by ID
+    pub fn load_tab_content(&self, tab_id: &str) -> Result<Option<String>> {
+        let content = self.conn.query_row(
+            "SELECT content FROM tabs WHERE id = ?1
+             UNION ALL
+             SELECT content FROM closed_tabs WHERE id = ?1",
+            params![tab_id],
+            |row| row.get::<_, Option<String>>(0),
+        );
+
+        match content {
+            Ok(c) => Ok(c),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(e.into()),
+        }
     }
 
     // Bookmarks and other methods
