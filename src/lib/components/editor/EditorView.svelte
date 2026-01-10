@@ -291,10 +291,7 @@
             const _wrap = appContext.app.editorWordWrap;
             const _col = appContext.app.wrapGuideColumn;
             view.dispatch({
-                effects: [
-                    wrapComp.reconfigure(createWrapExtension()),
-                    rulerComp.reconfigure(rulerPlugin)
-                ]
+                effects: [wrapComp.reconfigure(createWrapExtension()), rulerComp.reconfigure(rulerPlugin)],
             });
         }
     });
