@@ -2,6 +2,7 @@ import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { CONFIG } from "$lib/utils/config";
 import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
 import { isMarkdownFile } from "$lib/utils/fileValidation";
+import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 import { clearRendererCache } from "$lib/utils/markdown";
 import { appState } from "./appState.svelte";
 
@@ -26,7 +27,7 @@ export type EditorTab = {
     encoding: string;
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
-    lineChangeTracker?: any;
+    lineChangeTracker?: LineChangeTracker;
     historyState?: any;
     preferredExtension?: 'md' | 'txt';
     // Persistence optimization flags
