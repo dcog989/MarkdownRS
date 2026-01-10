@@ -19,9 +19,10 @@
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
+    import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { readText } from "@tauri-apps/plugin-clipboard-manager";
-    import { tick, untrack } from "svelte";
+    import { onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
     // Imports for type only
     import type { EditorView as CM6EditorView } from "@codemirror/view";
@@ -49,6 +50,10 @@
 
     // Initialize Helpers
     const eventHandlers = createEditorEventHandlers(onContextMenu);
+
+    onMount(() => {
+        initSpellcheck();
+    });
 
     $effect(() => {
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
