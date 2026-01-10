@@ -263,7 +263,6 @@ pub async fn init_spellchecker(
             })?;
     }
 
-    // Configure client with short timeouts to fail fast if offline
     let client = reqwest::Client::builder()
         .connect_timeout(std::time::Duration::from_secs(2))
         .timeout(std::time::Duration::from_secs(5))
@@ -271,10 +270,8 @@ pub async fn init_spellchecker(
         .unwrap_or_else(|_| reqwest::Client::new());
 
     let mut combined_aff = String::new();
-    let mut combined_dic_body = String::with_capacity(5 * 1024 * 1024);
     let mut total_word_count = 0;
 
-    // 1. Parallel Load Standard Dictionaries
     let mut dict_tasks = Vec::new();
     for (i, code) in dict_codes.into_iter().enumerate() {
         let c = client.clone();
@@ -284,7 +281,6 @@ pub async fn init_spellchecker(
         }));
     }
 
-    // 2. Parallel Load Specialist Dictionaries
     let mut spec_tasks = Vec::new();
     for code in spec_codes {
         let c = client.clone();
@@ -294,7 +290,6 @@ pub async fn init_spellchecker(
         }));
     }
 
-    // Process Standard Results (Preserve Order for Affix)
     let mut dict_results = Vec::new();
     for task in dict_tasks {
         if let Ok((i, res)) = task.await {
@@ -303,17 +298,37 @@ pub async fn init_spellchecker(
     }
     dict_results.sort_by_key(|k| k.0);
 
+    let mut spec_results = Vec::new();
+    for task in spec_tasks {
+        if let Ok(res) = task.await {
+            spec_results.push(res);
+        }
+    }
+
+    // Calculate total capacity required to minimize re-allocations
+    let mut capacity_hint = 0;
+    for (_, res) in &dict_results {
+        if let Ok((_, dic)) = res {
+            capacity_hint += dic.len();
+        }
+    }
+    for (_, res) in &spec_results {
+        if let Ok(content) = res {
+            capacity_hint += content.len();
+        }
+    }
+
+    let mut combined_dic_body = String::with_capacity(capacity_hint);
+
     for (_, res) in dict_results {
         match res {
             Ok((aff, dic)) => {
-                // Use first valid dictionary's affix
                 if combined_aff.is_empty() {
                     combined_aff = aff.trim_start_matches('\u{feff}').to_string();
                 }
 
                 let dic_clean = dic.trim_start_matches('\u{feff}');
                 let mut lines = dic_clean.lines();
-                // Skip count line
                 if lines.next().is_some() {
                     for line in lines {
                         let trimmed = line.trim();
@@ -329,33 +344,34 @@ pub async fn init_spellchecker(
         }
     }
 
-    // Process Specialist Results
-    for task in spec_tasks {
-        if let Ok((code, res)) = task.await {
-            match res {
-                Ok(content) => {
-                    let mut count = 0;
-                    for line in content.lines() {
-                        let trimmed = line.trim();
-                        if !trimmed.is_empty()
-                            && !trimmed.starts_with('#')
-                            && !trimmed.starts_with("//")
-                        {
-                            combined_dic_body.push_str(trimmed);
-                            combined_dic_body.push('\n');
-                            count += 1;
-                        }
+    for (code, res) in spec_results {
+        match res {
+            Ok(content) => {
+                let mut count = 0;
+                for line in content.lines() {
+                    let trimmed = line.trim();
+                    if !trimmed.is_empty()
+                        && !trimmed.starts_with('#')
+                        && !trimmed.starts_with("//")
+                    {
+                        combined_dic_body.push_str(trimmed);
+                        combined_dic_body.push('\n');
+                        count += 1;
                     }
-                    total_word_count += count;
-                    log::info!("Loaded specialist dictionary: {} ({} words)", code, count);
                 }
-                Err(e) => log::warn!("Failed to load specialist dictionary {}: {}", code, e),
+                total_word_count += count;
+                log::info!("Loaded specialist dictionary: {} ({} words)", code, count);
             }
+            Err(e) => log::warn!("Failed to load specialist dictionary {}: {}", code, e),
         }
     }
 
     if !combined_aff.is_empty() && total_word_count > 0 {
-        let combined_dic = format!("{}\n{}", total_word_count, combined_dic_body);
+        // Build the final dictionary string efficiently without duplication
+        let mut combined_dic = String::with_capacity(combined_dic_body.len() + 16);
+        combined_dic.push_str(&total_word_count.to_string());
+        combined_dic.push('\n');
+        combined_dic.push_str(&combined_dic_body);
 
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
@@ -376,7 +392,6 @@ pub async fn init_spellchecker(
         return Err("Failed to load dictionaries".to_string());
     }
 
-    // Load custom dictionary
     if custom_path.exists() {
         if let Ok(text) = fs::read_to_string(&custom_path).await {
             let mut custom = state.custom_dict.lock().await;
