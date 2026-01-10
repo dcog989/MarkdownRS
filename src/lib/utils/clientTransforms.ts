@@ -6,29 +6,37 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
     switch (operationId) {
         // --- Sort & Order ---
         case 'sort-asc':
-            return lines.sort().join('\n');
+            return lines.slice().sort().join('\n');
         case 'sort-desc':
-            return lines.sort().reverse().join('\n');
+            return lines.slice().sort().reverse().join('\n');
         case 'sort-case-insensitive-asc':
-            return lines.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).join('\n');
+            return lines.slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).join('\n');
         case 'sort-case-insensitive-desc':
-            return lines.sort((a, b) => b.localeCompare(a, undefined, { sensitivity: 'base' })).join('\n');
+            return lines.slice().sort((a, b) => b.localeCompare(a, undefined, { sensitivity: 'base' })).join('\n');
         case 'sort-numeric-asc':
-            return lines.sort((a, b) => extractNumber(a) - extractNumber(b)).join('\n');
+            return lines.slice().sort((a, b) => extractNumber(a) - extractNumber(b)).join('\n');
         case 'sort-numeric-desc':
-            return lines.sort((a, b) => extractNumber(b) - extractNumber(a)).join('\n');
+            return lines.slice().sort((a, b) => extractNumber(b) - extractNumber(a)).join('\n');
         case 'sort-length-asc':
-            return lines.sort((a, b) => a.length - b.length).join('\n');
+            return lines.slice().sort((a, b) => a.length - b.length).join('\n');
         case 'sort-length-desc':
-            return lines.sort((a, b) => b.length - a.length).join('\n');
+            return lines.slice().sort((a, b) => b.length - a.length).join('\n');
         case 'reverse':
-            return lines.reverse().join('\n');
+            return lines.slice().reverse().join('\n');
         case 'shuffle':
             return shuffle(lines).join('\n');
 
         // --- Remove & Filter ---
-        case 'remove-duplicates':
-            return [...new Set(lines)].join('\n');
+        case 'remove-duplicates': {
+            const seen = new Set<string>();
+            return lines.filter(l => {
+                const normalized = l.trim();
+                if (normalized === '') return true; // Keep blank lines
+                if (seen.has(normalized)) return false;
+                seen.add(normalized);
+                return true;
+            }).join('\n');
+        }
         case 'remove-unique': {
             const counts = new Map<string, number>();
             lines.forEach(l => counts.set(l, (counts.get(l) || 0) + 1));
@@ -66,8 +74,19 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
             return lines.map(l => toSnakeCase(l).toUpperCase()).join('\n');
 
         // --- Markdown ---
-        case 'add-bullets':
-            return lines.map(l => l.trim() ? `- ${l}` : l).join('\n');
+        case 'add-bullets': {
+            return lines.map(l => {
+                const trimmed = l.trim();
+                if (!trimmed) return l; // Keep blank lines as-is
+                // Check if already has a bullet
+                if (/^[-*+]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
+                    return l; // Already has a bullet or number
+                }
+                // Add bullet while preserving original indentation
+                const leadingSpace = l.match(/^\s*/)?.[0] || '';
+                return `${leadingSpace}- ${trimmed}`;
+            }).join('\n');
+        }
         case 'add-numbers':
             let num = 1;
             return lines.map(l => l.trim() ? `${num++}. ${l}` : l).join('\n');

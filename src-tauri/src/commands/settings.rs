@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::fs;
 use tauri::Manager;
 use unicode_bom::Bom;
-use encoding_rs::{UTF_16LE, UTF_16BE, Encoding};
+use encoding_rs::{UTF_16LE, UTF_16BE};
 
 #[derive(Serialize)]
 pub struct AppInfo {
