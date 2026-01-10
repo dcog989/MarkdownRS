@@ -79,18 +79,38 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
     }
 
     // Handle list indentation adjustment
+    // dprint defaults to 2 spaces; we adjust if different via regex post-processing
     if options.list_indent != 2 {
         result = adjust_list_indentation(&result, options.list_indent);
     }
 
+    // Handle whitespace normalization (limit consecutive blank lines)
+    if options.normalize_whitespace {
+        result = normalize_blank_lines(&result, options.max_blank_lines);
+    }
+
+    // Log warning if table alignment disabling was requested (not supported by current dprint engine)
+    if !options.table_alignment {
+        log::warn!("Table alignment disabling is not currently supported by the formatter.");
+    }
+
     result
+}
+
+fn normalize_blank_lines(content: &str, max_blank_lines: usize) -> String {
+    let threshold = max_blank_lines + 2;
+    // Regex to find 'threshold' or more newlines (e.g. max=1 -> match 3+ newlines to reduce to 2)
+    // Note: Assumes \n endings from dprint
+    let re = Regex::new(&format!(r"\n{{{threshold},}}")).unwrap();
+    let replacement = "\n".repeat(max_blank_lines + 1);
+    re.replace_all(content, replacement.as_str()).to_string()
 }
 
 /// Convert bullet characters from - to +
 fn convert_bullets_to_plus(content: &str) -> String {
     let mut result = String::new();
     let mut in_code_block = false;
-    
+
     for line in content.lines() {
         // Track code block boundaries
         if line.trim_start().starts_with("```") || line.trim_start().starts_with("~~~") {
@@ -129,10 +149,10 @@ fn convert_bullets_to_plus(content: &str) -> String {
 fn convert_code_fences(content: &str, from: &str, to: &str) -> String {
     let mut result = String::new();
     let mut in_code_block = false;
-    
+
     for line in content.lines() {
         let trimmed = line.trim_start();
-        
+
         // Check if this line starts a code block with the "from" fence
         if trimmed.starts_with(from) {
             let indent = line.len() - trimmed.len();
@@ -164,7 +184,7 @@ fn convert_code_fences(content: &str, from: &str, to: &str) -> String {
 fn adjust_list_indentation(content: &str, target_indent: usize) -> String {
     let mut result = String::new();
     let mut in_code_block = false;
-    
+
     for line in content.lines() {
         // Track code block boundaries
         if line.trim_start().starts_with("```") || line.trim_start().starts_with("~~~") {
@@ -183,7 +203,7 @@ fn adjust_list_indentation(content: &str, target_indent: usize) -> String {
         // Match list items (unordered and ordered)
         let unordered_re = Regex::new(r"^(\s*)[-*+] ").unwrap();
         let ordered_re = Regex::new(r"^(\s*)\d+\. ").unwrap();
-        
+
         if let Some(caps) = unordered_re.captures(line) {
             let current_indent = caps.get(1).map_or(0, |m| m.as_str().len());
             let list_level = current_indent / 2; // Assume default 2-space indent
