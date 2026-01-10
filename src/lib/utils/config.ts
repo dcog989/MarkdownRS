@@ -18,6 +18,7 @@ export const CONFIG = {
     SPELLCHECK: {
         LINT_DELAY_MS: 750,
         STARTUP_DELAY_MS: 200,
+        REFRESH_DELAY_MS: 50,
     },
 
     // Tab Settings

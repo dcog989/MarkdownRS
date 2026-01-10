@@ -8,6 +8,7 @@
     import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateHistoryState, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { ScrollManager } from "$lib/utils/cmScroll";
+    import { CONFIG } from "$lib/utils/config";
     import { navigateToPath } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
@@ -338,7 +339,7 @@
             showContextMenu = false;
             setTimeout(() => {
                 if (cmView) refreshSpellcheck(cmView);
-            }, 50);
+            }, CONFIG.SPELLCHECK.REFRESH_DELAY_MS);
         }}
     />
 {/if}
