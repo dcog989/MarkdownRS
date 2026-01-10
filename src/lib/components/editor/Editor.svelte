@@ -27,7 +27,7 @@
     let cmView = $state<CM6EditorView & { getHistoryState?: () => any }>();
     let findReplacePanel = $state<any>(null);
     let previousTabId: string = "";
-    let isTransforming = $state(false);
+    let isTransforming = false;
 
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
@@ -107,29 +107,30 @@
 
             const currentDoc = cmView!.state.doc.toString();
             if (currentDoc !== content) {
-                // If the editor has focus, it is the source of truth.
-                // Overwriting it with the (lagging) store content reverts typing/deletions.
-                if (cmView!.hasFocus || isTransforming) return;
+                const isEmpty = currentDoc === "";
+                const shouldSync = isEmpty || !cmView!.hasFocus || Math.abs(currentDoc.length - content.length) > 100;
 
-                scrollManager.capture(cmView!, "External Update");
-                const currentSelection = cmView!.state.selection.main;
-                const newLength = content.length;
+                if (shouldSync && !isTransforming) {
+                    scrollManager.capture(cmView!, "External Update");
+                    const currentSelection = cmView!.state.selection.main;
+                    const newLength = content.length;
 
-                cmView!.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: content },
-                    selection: {
-                        anchor: Math.min(currentSelection.anchor, newLength),
-                        head: Math.min(currentSelection.head, newLength),
-                    },
-                    scrollIntoView: false,
-                });
+                    cmView!.dispatch({
+                        changes: { from: 0, to: currentDoc.length, insert: content },
+                        selection: {
+                            anchor: Math.min(currentSelection.anchor, newLength),
+                            head: Math.min(currentSelection.head, newLength),
+                        },
+                        scrollIntoView: false,
+                    });
 
-                requestAnimationFrame(() => {
-                    if (cmView) {
-                        cmView.requestMeasure();
-                        scrollManager.restore(cmView, "pixel");
-                    }
-                });
+                    requestAnimationFrame(() => {
+                        if (cmView) {
+                            cmView.requestMeasure();
+                            scrollManager.restore(cmView, "pixel");
+                        }
+                    });
+                }
             }
         });
     });

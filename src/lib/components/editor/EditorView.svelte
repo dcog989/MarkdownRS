@@ -2,6 +2,8 @@
     import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
+    import { newlinePlugin, rulerPlugin } from "$lib/utils/editorPlugins";
+    import { generateDynamicTheme } from "$lib/utils/editorTheme";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
     import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin, urlPlugin } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
@@ -18,8 +20,8 @@
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { Compartment, EditorState, RangeSetBuilder } from "@codemirror/state";
-    import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightWhitespace, keymap, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
+    import { Compartment, EditorState, Prec } from "@codemirror/state";
+    import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightWhitespace, keymap } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -77,89 +79,6 @@
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
 
-    class NewlineWidget extends WidgetType {
-        toDOM() {
-            const span = document.createElement("span");
-            span.className = "cm-newline";
-            span.textContent = "¬";
-            return span;
-        }
-    }
-
-    function getNewlineDecorations(view: EditorView): DecorationSet {
-        const builder = new RangeSetBuilder<Decoration>();
-        for (const { from, to } of view.visibleRanges) {
-            for (let pos = from; pos <= to; ) {
-                const line = view.state.doc.lineAt(pos);
-                if (line.to < view.state.doc.length) {
-                    builder.add(line.to, line.to, Decoration.widget({ widget: new NewlineWidget(), side: 1 }));
-                }
-                pos = line.to + 1;
-            }
-        }
-        return builder.finish();
-    }
-
-    const newlinePlugin = ViewPlugin.fromClass(
-        class {
-            decorations: DecorationSet;
-            constructor(view: EditorView) {
-                this.decorations = getNewlineDecorations(view);
-            }
-            update(update: ViewUpdate) {
-                if (update.docChanged || update.viewportChanged) {
-                    this.decorations = getNewlineDecorations(update.view);
-                }
-            }
-        },
-        { decorations: (v) => v.decorations }
-    );
-
-    const rulerPlugin = ViewPlugin.fromClass(
-        class {
-            ruler: HTMLElement;
-            gutters: HTMLElement | null;
-            constructor(view: EditorView) {
-                this.ruler = document.createElement("div");
-                this.ruler.className = "cm-ruler-line";
-                this.ruler.style.position = "absolute";
-                this.ruler.style.top = "0";
-                this.ruler.style.bottom = "0";
-                this.ruler.style.width = "1px";
-                this.ruler.style.backgroundColor = "var(--color-border-light)";
-                this.ruler.style.opacity = "0.3";
-                this.ruler.style.pointerEvents = "none";
-                this.ruler.style.display = "none";
-                this.ruler.style.zIndex = "0";
-                view.scrollDOM.appendChild(this.ruler);
-                this.gutters = view.dom.querySelector(".cm-gutters") as HTMLElement;
-                this.measure(view);
-            }
-            update(update: ViewUpdate) {
-                if (update.geometryChanged || update.viewportChanged) {
-                    this.measure(update.view);
-                }
-            }
-            measure(view: EditorView) {
-                const column = appContext.app.wrapGuideColumn;
-                if (column > 0) {
-                    const charWidth = view.defaultCharacterWidth;
-                    const gutterWidth = this.gutters?.offsetWidth || 0;
-                    const style = window.getComputedStyle(view.contentDOM);
-                    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-                    const left = gutterWidth + paddingLeft + column * charWidth;
-                    this.ruler.style.left = `${left}px`;
-                    this.ruler.style.display = "block";
-                } else {
-                    this.ruler.style.display = "none";
-                }
-            }
-            destroy() {
-                this.ruler.remove();
-            }
-        }
-    );
-
     let autocompletionConfig = $derived.by(() => {
         if (!appContext.app.enableAutocomplete) return [];
         const delay = appContext.app.autocompleteDelay;
@@ -203,23 +122,6 @@
         return extensions;
     }
 
-    $effect(() => {
-        cmView = view;
-    });
-
-    const internalMouseHandler = EditorView.domEventHandlers({
-        mousemove: (event, view) => {
-            const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-            if (pos === null) return;
-            const range = view.state.wordAt(pos);
-            if (range) {
-                const word = view.state.sliceDoc(range.from, range.to);
-                prefetchSuggestions(word);
-            }
-            return false;
-        },
-    });
-
     function createDoubleClickHandler() {
         if (!appContext.app.doubleClickSelectsTrailingSpace) return [];
         return EditorView.domEventHandlers({
@@ -243,39 +145,11 @@
         });
     }
 
-    let dynamicTheme = $derived.by(() => {
-        const fontSize = appContext.app.editorFontSize || 14;
-        const fontFamily = appContext.app.editorFontFamily || "ui-monospace, monospace";
-        const isDark = appContext.app.theme === "dark";
-        const whitespaceColor = isDark ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
-        return EditorView.theme({
-            "&": { height: "100%", fontSize: `${fontSize}px` },
-            ".cm-cursor": { borderLeftColor: appContext.metrics.insertMode === "OVR" ? "transparent" : "var(--color-fg-default)", borderBottom: appContext.metrics.insertMode === "OVR" ? "2px solid var(--color-accent-secondary)" : "none" },
-            ".cm-scroller": { fontFamily, overflow: "auto", overflowAnchor: "none" },
-            ".cm-content": { fontFamily, paddingBottom: "40px !important" },
-            ".cm-scroller::-webkit-scrollbar": { display: "none" },
-            ".cm-gutters": { border: "none", backgroundColor: "transparent" },
-            ".cm-gutterElement": { alignItems: "flex-start !important" },
-            "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": { backgroundColor: "var(--color-selection-bg) !important" },
-            ".cm-selectionMatch": { backgroundColor: "var(--color-selection-match-bg)" },
-            ".cm-searchMatch": { backgroundColor: isDark ? "rgba(255, 255, 0, 0.2)" : "rgba(255, 215, 0, 0.4)", outline: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)", borderRadius: "2px" },
-            ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: isDark ? "#d19a66 !important" : "#ff9900 !important", color: isDark ? "#000 !important" : "#fff !important", borderRadius: "2px" },
-            ".cm-tooltip": { backgroundColor: "var(--color-bg-panel)", border: "1px solid var(--color-border-light)", color: "var(--color-fg-default)", borderRadius: "6px" },
-            ".cm-tooltip.cm-tooltip-autocomplete": { borderRadius: "6px", overflow: "hidden", border: "1px solid var(--color-border-light)", backgroundColor: "var(--color-bg-panel)", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)" },
-            ".cm-tooltip.cm-tooltip-autocomplete > ul > li": { padding: "4px 8px" },
-            ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--color-accent-primary) !important", color: "var(--color-fg-inverse) !important" },
-            ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionLabel": { color: "var(--color-fg-inverse) !important" },
-            ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail": { color: "rgba(255, 255, 255, 0.7) !important" },
-            ".cm-completionIcon": { marginRight: "0.5em", opacity: "0.7" },
-            ".cm-completionDetail": { marginLeft: "0.5em", fontStyle: "italic", opacity: "0.5" },
-            ".cm-tooltip.cm-tooltip-lint": { backgroundColor: "var(--color-bg-panel)", border: "1px solid var(--color-border-light)", color: "var(--color-fg-default)" },
-            ".cm-highlightSpace": { backgroundImage: "none !important", position: "relative", "&:before": { content: "'·'", color: whitespaceColor, position: "absolute", top: "0", left: "0", pointerEvents: "none", fontWeight: "bold", transform: "scale(1.2)" } },
-            ".cm-highlightTab": { backgroundImage: "none !important", position: "relative", "&:before": { content: "'→'", color: whitespaceColor, position: "absolute", top: "0", left: "0", pointerEvents: "none", fontWeight: "bold", transform: "scale(1.2)" } },
-            ".cm-newline": { color: whitespaceColor, userSelect: "none", pointerEvents: "none", display: "inline-block", verticalAlign: "middle", marginLeft: "2px", fontWeight: "bold", transform: "scale(1.2)" },
-        });
-    });
-
     const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin];
+
+    $effect(() => {
+        cmView = view;
+    });
 
     $effect(() => {
         const _ = spellcheckState.customDictionary;
@@ -286,8 +160,6 @@
 
     $effect(() => {
         if (view) {
-            const _wrap = appContext.app.editorWordWrap;
-            const _col = appContext.app.wrapGuideColumn;
             view.dispatch({
                 effects: [wrapComp.reconfigure(createWrapExtension()), rulerComp.reconfigure(rulerPlugin)],
             });
@@ -296,26 +168,22 @@
 
     $effect(() => {
         if (view) {
-            const _enabled = appContext.app.enableAutocomplete;
-            const _delay = appContext.app.autocompleteDelay;
             view.dispatch({ effects: autoComp.reconfigure(autocompletionConfig) });
         }
     });
 
     $effect(() => {
         if (view) {
-            const _theme = appContext.app.theme;
-            const _fontSize = appContext.app.editorFontSize;
-            const _fontFamily = appContext.app.editorFontFamily;
-            const _insertMode = appContext.metrics.insertMode;
-            view.dispatch({ effects: themeComp.reconfigure(dynamicTheme) });
+            const isDark = appContext.app.theme === "dark";
+            view.dispatch({
+                effects: themeComp.reconfigure(generateDynamicTheme(appContext.app.editorFontSize, appContext.app.editorFontFamily, isDark, appContext.metrics.insertMode)),
+            });
         }
     });
 
     $effect(() => {
         if (view) {
-            const _depth = appContext.app.undoDepth;
-            view.dispatch({ effects: historyComp.reconfigure(history({ minDepth: _depth })) });
+            view.dispatch({ effects: historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })) });
         }
     });
 
@@ -328,40 +196,36 @@
 
     $effect(() => {
         if (view) {
-            const _show = appContext.app.showWhitespace;
-            view.dispatch({ effects: whitespaceComp.reconfigure(_show ? [highlightWhitespace(), newlinePlugin] : []) });
+            view.dispatch({ effects: whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []) });
         }
     });
 
     $effect(() => {
         if (view) {
-            const _doubleClick = appContext.app.doubleClickSelectsTrailingSpace;
             view.dispatch({ effects: doubleClickComp.reconfigure(createDoubleClickHandler()) });
         }
     });
 
     $effect(() => {
         if (view) {
-            const _isMarkdown = isMarkdown;
-            view.dispatch({ effects: languageComp.reconfigure(_isMarkdown ? markdownExtensions : []) });
+            view.dispatch({ effects: languageComp.reconfigure(isMarkdown ? markdownExtensions : []) });
         }
     });
 
     $effect(() => {
         if (view) {
-            const _handlers = eventHandlers;
-            view.dispatch({ effects: handlersComp.reconfigure(_handlers) });
+            view.dispatch({ effects: handlersComp.reconfigure(eventHandlers) });
         }
     });
 
     $effect(() => {
         if (view) {
-            const _tracker = lineChangeTracker;
-            view.dispatch({ effects: recentComp.reconfigure(createRecentChangesHighlighter(_tracker)) });
+            view.dispatch({ effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)) });
         }
     });
 
     onMount(() => {
+        const isDark = appContext.app.theme === "dark";
         const extensions = [
             highlightActiveLineGutter(),
             highlightActiveLine(),
@@ -447,11 +311,11 @@
                     },
                 },
             ]),
-            keymap.of(historyKeymap),
-            keymap.of(closeBracketsKeymap),
+            Prec.highest(keymap.of(historyKeymap)),
+            Prec.highest(keymap.of(defaultKeymap)),
             keymap.of(completionKeymap),
-            keymap.of(defaultKeymap),
-            themeComp.of(dynamicTheme),
+            keymap.of(closeBracketsKeymap),
+            themeComp.of(generateDynamicTheme(appContext.app.editorFontSize, appContext.app.editorFontFamily, isDark, appContext.metrics.insertMode)),
             indentComp.of(indentUnit.of("  ")),
             whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
             languageComp.of(isMarkdown ? markdownExtensions : []),
@@ -462,7 +326,18 @@
             wrapComp.of(createWrapExtension()),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
-            internalMouseHandler,
+            EditorView.domEventHandlers({
+                mousemove: (event, view) => {
+                    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                    if (pos === null) return;
+                    const range = view.state.wordAt(pos);
+                    if (range) {
+                        const word = view.state.sliceDoc(range.from, range.to);
+                        prefetchSuggestions(word);
+                    }
+                    return false;
+                },
+            }),
             handlersComp.of(eventHandlers),
         ];
 
