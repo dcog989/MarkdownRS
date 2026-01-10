@@ -79,31 +79,23 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
     }
 
     // Handle list indentation adjustment
-    // dprint defaults to 2 spaces; we adjust if different via regex post-processing
     if options.list_indent != 2 {
         result = adjust_list_indentation(&result, options.list_indent);
     }
 
-    // Handle whitespace normalization (limit consecutive blank lines)
-    if options.normalize_whitespace {
-        result = normalize_blank_lines(&result, options.max_blank_lines);
-    }
-
-    // Log warning if table alignment disabling was requested (not supported by current dprint engine)
-    if !options.table_alignment {
-        log::warn!("Table alignment disabling is not currently supported by the formatter.");
-    }
+    // Convert backslashes inserted by dprint back to trailing spaces (invisible hard breaks)
+    result = convert_backslashes_to_spaces(&result);
 
     result
 }
 
-fn normalize_blank_lines(content: &str, max_blank_lines: usize) -> String {
-    let threshold = max_blank_lines + 2;
-    // Regex to find 'threshold' or more newlines (e.g. max=1 -> match 3+ newlines to reduce to 2)
-    // Note: Assumes \n endings from dprint
-    let re = Regex::new(&format!(r"\n{{{threshold},}}")).unwrap();
-    let replacement = "\n".repeat(max_blank_lines + 1);
-    re.replace_all(content, replacement.as_str()).to_string()
+/// Convert trailing backslashes (hard breaks) back to two spaces
+fn convert_backslashes_to_spaces(content: &str) -> String {
+    // Regex matches a backslash at the end of a line that is NOT preceded by another backslash.
+    // Matches the preceding character (group 1) to preserve it.
+    let re = Regex::new(r"(?m)(^|[^\\])\\\r?$").unwrap();
+    // Replace the backslash with two spaces, keeping the preceding character.
+    re.replace_all(content, "${1}  ").to_string()
 }
 
 /// Convert bullet characters from - to +
