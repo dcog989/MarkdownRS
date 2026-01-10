@@ -27,6 +27,7 @@
     let cmView = $state<CM6EditorView & { getHistoryState?: () => any }>();
     let findReplacePanel = $state<any>(null);
     let previousTabId: string = "";
+    let isTransforming = false;
 
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
@@ -96,7 +97,7 @@
 
             const currentDoc = cmView!.state.doc.toString();
             if (currentDoc !== content) {
-                if (!cmView!.hasFocus) {
+                if (!cmView!.hasFocus && !isTransforming) {
                     scrollManager.capture(cmView!, "External Update");
                     const currentSelection = cmView!.state.selection.main;
                     const newLength = content.length;
@@ -132,20 +133,33 @@
 
     async function handleTextOperation(operationId: OperationId) {
         if (!cmView) return;
+
+        isTransforming = true;
         const selection = cmView.state.selection.main;
         const hasSelection = selection.from !== selection.to;
         const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
+
         scrollManager.capture(cmView, `Op:${operationId}`);
         const newText = await transformText(targetText, operationId);
 
         if (newText !== targetText) {
+            cmView.focus();
+
             const transaction: any = {
-                changes: { from: hasSelection ? selection.from : 0, to: hasSelection ? selection.to : cmView.state.doc.length, insert: newText },
+                changes: {
+                    from: hasSelection ? selection.from : 0,
+                    to: hasSelection ? selection.to : cmView.state.doc.length,
+                    insert: newText,
+                },
                 userEvent: "input.complete",
-                scrollIntoView: false,
+                scrollIntoView: true,
             };
+
             if (hasSelection) {
-                transaction.selection = { anchor: selection.from, head: selection.from + newText.length };
+                transaction.selection = {
+                    anchor: selection.from,
+                    head: selection.from + newText.length,
+                };
             } else {
                 const newLen = newText.length;
                 transaction.selection = {
@@ -153,7 +167,9 @@
                     head: Math.min(selection.head, newLen),
                 };
             }
+
             cmView.dispatch(transaction);
+
             if (!hasSelection) {
                 const snapshot = scrollManager.getSnapshot();
                 const currentLines = cmView.state.doc.lines;
@@ -166,6 +182,10 @@
                 scrollManager.restore(cmView, strategy);
             }
         }
+
+        setTimeout(() => {
+            isTransforming = false;
+        }, 100);
     }
 
     const eventHandlers = CM6EditorView.domEventHandlers({
