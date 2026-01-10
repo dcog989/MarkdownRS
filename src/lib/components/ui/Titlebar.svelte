@@ -3,7 +3,7 @@
     import { toggleSplitView } from "$lib/stores/appState.svelte";
     import { toggleAbout, toggleBookmarks, toggleCommandPalette, toggleSettings } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { warningToast } from "$lib/stores/toastStore.svelte";
+    import { showToast } from "$lib/stores/toastStore.svelte";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -19,7 +19,7 @@
 
     function toggleSplit() {
         if (!isMarkdown) {
-            warningToast("Preview not available for this file type");
+            showToast("warning", "Preview not available for this file type");
             return;
         }
         toggleSplitView();

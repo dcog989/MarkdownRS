@@ -6,7 +6,7 @@ import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.sve
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import { addTab, closeTab, markAsSaved, pushToMru, reopenClosedTab, saveTabComplete, updateContentOnly, updateTabMetadataAndPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { successToast } from '$lib/stores/toastStore.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
@@ -42,11 +42,11 @@ export async function openFile(path?: string): Promise<void> {
 		}
 
 		const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
-		
+
 		if (!result) {
 			throw new Error('Failed to read file: null result');
 		}
-		
+
 		const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
 		const crlfCount = (result.content.match(/\r\n/g) || []).length;
@@ -107,7 +107,7 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 			basePath: activeTab?.path || null,
 			clickPath: clickedPath.replace(/\\/g, '/')
 		}, 'File:Read');
-		
+
 		if (!resolvedPath) {
 			return;
 		}
@@ -313,7 +313,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 			await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
 		}
 
-		successToast(`Renamed to ${finalNewName}`);
+		showToast('success', `Renamed to ${finalNewName}`);
 		return true;
 	} catch (err) {
 		return false;

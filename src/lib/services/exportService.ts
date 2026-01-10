@@ -1,5 +1,5 @@
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { errorToast, infoToast, successToast } from '$lib/stores/toastStore.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
@@ -30,7 +30,7 @@ export class ExportService {
     private async prepareExportContent(): Promise<HTMLElement | null> {
         const tab = this.getActiveTab();
         if (!tab) {
-            errorToast("No active tab to export.");
+            showToast('error', "No active tab to export.");
             return null;
         }
 
@@ -111,7 +111,7 @@ export class ExportService {
 </html>`;
 
             await callBackend('write_text_file', { path, content: html }, 'File:Write', { path: tab?.path }, { report: true, msg: 'Failed to save HTML file' });
-            successToast(`Exported to ${path}`);
+            showToast('success', `Exported to ${path}`);
         } catch (err) {
             // Error already reported by backend
         }
@@ -148,7 +148,7 @@ export class ExportService {
 
             if (!path) return;
 
-            infoToast("Generating image...", 2000);
+            showToast('info', "Generating image...");
 
             const options = {
                 backgroundColor: 'white',
@@ -181,7 +181,7 @@ export class ExportService {
             }
 
             await callBackend('write_binary_file', { path, content: Array.from(bytes) }, 'File:Write', { path: tab?.path }, { report: true, msg: `Failed to save ${format.toUpperCase()}` });
-            successToast(`Exported to ${path}`);
+            showToast('success', `Exported to ${path}`);
         } catch (err) {
             // Error already reported
         } finally {

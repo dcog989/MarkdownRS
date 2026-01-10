@@ -5,7 +5,7 @@
     import { addTab, performTextTransform } from "$lib/stores/editorStore.svelte";
     import { toggleAbout, toggleBookmarks, toggleCommandPalette, toggleSettings, toggleShortcuts, toggleTransform } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { warningToast } from "$lib/stores/toastStore.svelte";
+    import { showToast } from "$lib/stores/toastStore.svelte";
     import { openFile, openFileByPath, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
@@ -23,7 +23,7 @@
 
     function toggleSplit() {
         if (!isMarkdown) {
-            warningToast("Preview not available for this file type");
+            showToast("warning", "Preview not available for this file type");
             return;
         }
         toggleSplitView();

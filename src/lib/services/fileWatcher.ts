@@ -1,7 +1,7 @@
 import { checkAndReloadIfChanged, reloadFileContent } from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { infoToast, warningToast } from '$lib/stores/toastStore.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { debounce } from '$lib/utils/timing';
 import { watch } from '@tauri-apps/plugin-fs';
@@ -130,7 +130,8 @@ class FileWatcherService {
 			if (dirtyTabs.length > 0) {
 				// Show warning for dirty tabs (once, not per tab)
 				const tabNames = dirtyTabs.map(t => t.title).join(', ');
-				warningToast(
+				showToast(
+					'warning',
 					`File changed on disk: ${tabNames}. You have unsaved changes.`,
 					5000
 				);
@@ -139,7 +140,7 @@ class FileWatcherService {
 			if (cleanTabs.length > 0) {
 				// Reload content once, then apply to all clean tabs
 				await reloadFileContent(cleanTabs[0].id);
-				
+
 				// Apply the reloaded content to other clean tabs with same path
 				if (cleanTabs.length > 1) {
 					const reloadedTab = appContext.editor.tabs.find(t => t.id === cleanTabs[0].id);
@@ -157,7 +158,7 @@ class FileWatcherService {
 				}
 
 				const tabNames = cleanTabs.map(t => t.title).join(', ');
-				infoToast(`Reloaded ${tabNames} from disk`);
+				showToast('info', `Reloaded ${tabNames} from disk`);
 			}
 		} catch (err) {
 			AppError.handle('FileWatcher:Watch', err, {

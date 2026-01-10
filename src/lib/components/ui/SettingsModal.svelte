@@ -5,7 +5,7 @@
     import SpecialistDictSelector from "$lib/components/ui/SpecialistDictSelector.svelte";
     import { toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { infoToast } from "$lib/stores/toastStore.svelte";
+    import { showToast } from "$lib/stores/toastStore.svelte";
     import { callBackend } from "$lib/utils/backend";
     import { saveSettings } from "$lib/utils/settings";
     import { clearDictionaries } from "$lib/utils/spellcheck.svelte.ts";
@@ -74,7 +74,7 @@
         try {
             await callBackend("set_context_menu_item", { enable }, "Settings:Save");
             isContextMenuEnabled = enable;
-            infoToast(enable ? "Added to context menu" : "Removed from context menu");
+            showToast("info", enable ? "Added to context menu" : "Removed from context menu");
         } catch (err) {
             // Error handling usually taken care of by callBackend/AppError, but good to reset UI
             isContextMenuEnabled = !enable; // revert
@@ -177,10 +177,10 @@
             saveSettings();
 
             if (key === "logLevel") {
-                infoToast("Restart required to apply log level changes");
+                showToast("info", "Restart required to apply log level changes");
             } else if (key === "spellcheckDictionaries" || key === "specialistDictionaries") {
                 clearDictionaries();
-                infoToast("Restart required to apply dictionary changes");
+                showToast("info", "Restart required to apply dictionary changes");
             }
         }
     }

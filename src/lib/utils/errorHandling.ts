@@ -1,4 +1,4 @@
-import { errorToast, infoToast, warningToast } from '$lib/stores/toastStore.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
 export type ErrorContext =
@@ -102,7 +102,7 @@ export class AppError extends Error {
 
 	private process(options: ErrorOptions = {}): void {
 		const {
-			showToast = true,
+			showToast: shouldShowToast = true,
 			userMessage,
 			toastDuration,
 			logToDisk = true
@@ -110,20 +110,20 @@ export class AppError extends Error {
 
 		this.logError(logToDisk);
 
-		if (showToast) {
+		if (shouldShowToast) {
 			const message = userMessage || this.getUserFriendlyMessage();
 			const duration = toastDuration || this.getDefaultToastDuration();
 
 			switch (this.severity) {
 				case 'critical':
 				case 'error':
-					errorToast(message, duration);
+					showToast('error', message, duration);
 					break;
 				case 'warning':
-					warningToast(message, duration);
+					showToast('warning', message, duration);
 					break;
 				case 'info':
-					infoToast(message, duration);
+					showToast('info', message, duration);
 					break;
 			}
 		}
@@ -279,7 +279,8 @@ export class AppError extends Error {
 		}
 
 		if (options.showToast) {
-			warningToast(
+			showToast(
+				'warning',
 				options.userMessage || message,
 				options.toastDuration || 3000
 			);
@@ -309,7 +310,8 @@ export class AppError extends Error {
 		}
 
 		if (options.showToast) {
-			infoToast(
+			showToast(
+				'info',
 				options.userMessage || message,
 				options.toastDuration || 2000
 			);

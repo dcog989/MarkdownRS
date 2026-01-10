@@ -5,13 +5,13 @@
     import TabBar from "$lib/components/ui/TabBar.svelte";
     import Titlebar from "$lib/components/ui/Titlebar.svelte";
     import Toast from "$lib/components/ui/Toast.svelte";
+    import { loadTabContentLazy } from "$lib/services/sessionPersistence";
     import { toggleSplitView } from "$lib/stores/appState.svelte";
     import { addTab, pushToMru } from "$lib/stores/editorStore.svelte";
     import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
     import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { warningToast } from "$lib/stores/toastStore.svelte";
-    import { loadTabContentLazy } from "$lib/services/sessionPersistence";
+    import { showToast } from "$lib/stores/toastStore.svelte";
     import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
@@ -29,30 +29,30 @@
     let initError = $state<string | null>(null);
 
     let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
-    
+
     // Lazy load tab content when switching tabs
     $effect(() => {
         const tab = activeTab;
         if (tab && !tab.contentLoaded && isInitialized) {
             loadTabContentLazy(tab.id).catch((err) => {
-                console.error('Failed to lazy load tab content:', err);
+                console.error("Failed to lazy load tab content:", err);
             });
         }
     });
-    
+
     // Determine if the file is markdown based on saved path or preferred extension for unsaved files
     let isMarkdown = $derived.by(() => {
         if (!activeTab) return true;
-        
+
         // For saved files, check the path
         if (activeTab.path) {
             return isMarkdownFile(activeTab.path);
         }
-        
+
         // For unsaved files, use the preferred extension
-        return activeTab.preferredExtension !== 'txt';
+        return activeTab.preferredExtension !== "txt";
     });
-    
+
     let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
     function handleDocumentKeydown(e: KeyboardEvent) {
@@ -96,7 +96,7 @@
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 if (!isMarkdown) {
-                    warningToast("Preview not available for this file type");
+                    showToast("warning", "Preview not available for this file type");
                     return;
                 }
                 toggleSplitView();
