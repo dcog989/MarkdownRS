@@ -56,7 +56,6 @@ export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
     });
 }
 
-
 export function resolveDialog(result: DialogResult) {
     if (queue.length === 0) {
         console.warn('resolveDialog() called with empty queue');
