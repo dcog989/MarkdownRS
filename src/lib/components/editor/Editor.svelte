@@ -62,38 +62,33 @@
                     initializeTabFileState(currentTab).catch(console.error);
                 }
                 previousTabId = currentTabId;
-            }
 
-            const currentDoc = cmView!.state.doc.toString();
-            const newContent = tab.content;
+                const currentDoc = cmView!.state.doc.toString();
+                const newContent = tab.content;
 
-            // If content is not yet loaded, we skip updating CodeMirror to avoid flickering empty strings
-            if (!tab.contentLoaded && newContent === "") {
-                return;
-            }
+                if (currentDoc !== newContent) {
+                    scrollManager.capture(cmView!, "Tab Switch");
+                    const newLength = newContent.length;
+                    const currentSelection = cmView!.state.selection.main;
 
-            if (currentDoc !== newContent || isTabSwitch) {
-                if (isTabSwitch) scrollManager.capture(cmView!, "Tab Switch");
-
-                const newLength = newContent.length;
-                const currentSelection = cmView!.state.selection.main;
-
-                cmView!.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: newContent },
-                    selection: {
-                        anchor: Math.min(currentSelection.anchor, newLength),
-                        head: Math.min(currentSelection.head, newLength),
-                    },
-                    scrollIntoView: false,
-                });
+                    cmView!.dispatch({
+                        changes: { from: 0, to: currentDoc.length, insert: newContent },
+                        selection: {
+                            anchor: Math.min(currentSelection.anchor, newLength),
+                            head: Math.min(currentSelection.head, newLength),
+                        },
+                        scrollIntoView: false,
+                    });
+                }
 
                 requestAnimationFrame(() => {
                     if (cmView) {
                         cmView.requestMeasure();
-                        if (isTabSwitch) {
-                            scrollManager.restore(cmView, "pixel");
-                            cmView.focus();
-                        }
+                        scrollManager.restore(cmView, "pixel");
+                        requestAnimationFrame(() => {
+                            cmView?.requestMeasure();
+                            cmView?.focus();
+                        });
                     }
                 });
             }
@@ -112,7 +107,12 @@
 
             const currentDoc = cmView!.state.doc.toString();
             if (currentDoc !== content) {
-                if (!cmView!.hasFocus && !isTransforming) {
+                // If editor is focused, the user is likely typing/deleting.
+                // We must NOT sync content from the store unless the change is massive (external reload)
+                // or the editor is not focused.
+                const shouldSync = !cmView!.hasFocus || Math.abs(currentDoc.length - content.length) > 100;
+
+                if (shouldSync && !isTransforming) {
                     scrollManager.capture(cmView!, "External Update");
                     const currentSelection = cmView!.state.selection.main;
                     const newLength = content.length;
