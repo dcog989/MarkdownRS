@@ -12,22 +12,17 @@ class FileWatcherService {
 	private watchers = new Map<string, { unwatch: UnwatchFn; refCount: number }>();
 	private pendingChecks = new Set<string>();
 	private pendingWatchers = new Map<string, Promise<void>>();
+	private abortControllers = new Map<string, AbortController>();
 
-	/**
-	 * Start watching a file path for changes.
-	 * Safe to call multiple times for the same path (increments ref count).
-	 */
 	async watch(path: string): Promise<void> {
 		if (!path) return;
 
-		// 1. Check active watchers
 		if (this.watchers.has(path)) {
 			const entry = this.watchers.get(path)!;
 			entry.refCount++;
 			return;
 		}
 
-		// 2. Check pending operations
 		if (this.pendingWatchers.has(path)) {
 			await this.pendingWatchers.get(path);
 			if (this.watchers.has(path)) {
@@ -36,28 +31,36 @@ class FileWatcherService {
 			return;
 		}
 
-		// 3. Initiate new watch
+		const controller = new AbortController();
+		this.abortControllers.set(path, controller);
+
 		const promise = (async () => {
 			try {
 				const handleChange = debounce(async () => {
-					await this.handleFileChange(path);
+					if (controller.signal.aborted) return;
+					await this.handleFileChange(path, controller.signal);
 				}, 300);
 
 				const unwatch = await watch(path, (event) => {
-					if (typeof event === 'object' && 'type' in event) {
-						handleChange();
-					} else {
-						handleChange();
-					}
+					if (controller.signal.aborted) return;
+					handleChange();
 				});
+
+				if (controller.signal.aborted) {
+					unwatch();
+					return;
+				}
 
 				this.watchers.set(path, { unwatch, refCount: 1 });
 			} catch (err) {
+				if (controller.signal.aborted) return;
 				AppError.handle('FileWatcher:Watch', err, {
 					showToast: false,
 					severity: 'warning',
 					additionalInfo: { path }
 				});
+			} finally {
+				this.abortControllers.delete(path);
 			}
 		})();
 
@@ -70,12 +73,12 @@ class FileWatcherService {
 		}
 	}
 
-	/**
-	 * Stop watching a file path.
-	 * Decrements ref count and stops actual watcher when count reaches 0.
-	 */
 	unwatch(path: string): void {
-		// If a watch is pending, chain a cleanup
+		const controller = this.abortControllers.get(path);
+		if (controller) {
+			controller.abort();
+		}
+
 		if (this.pendingWatchers.has(path)) {
 			this.pendingWatchers.get(path)?.then(() => {
 				this.unwatch(path);
@@ -102,33 +105,29 @@ class FileWatcherService {
 		}
 	}
 
-	private async handleFileChange(path: string): Promise<void> {
-		if (this.pendingChecks.has(path)) return;
+	private async handleFileChange(path: string, signal?: AbortSignal): Promise<void> {
+		if (this.pendingChecks.has(path) || signal?.aborted) return;
 		this.pendingChecks.add(path);
 
 		try {
-			// Get all tabs with this path
 			const tabs = appContext.editor.tabs.filter(t => t.path === path);
-			if (tabs.length === 0) {
+			if (tabs.length === 0 || signal?.aborted) {
 				this.pendingChecks.delete(path);
 				return;
 			}
 
-			// Single metadata check for all tabs with the same path
 			const firstTab = tabs[0];
 			const hasChanged = await checkAndReloadIfChanged(firstTab.id);
 
-			if (!hasChanged) {
+			if (!hasChanged || signal?.aborted) {
 				this.pendingChecks.delete(path);
 				return;
 			}
 
-			// File has changed - check if any tabs are dirty
 			const dirtyTabs = tabs.filter(t => t.isDirty);
 			const cleanTabs = tabs.filter(t => !t.isDirty);
 
-			if (dirtyTabs.length > 0) {
-				// Show warning for dirty tabs (once, not per tab)
+			if (dirtyTabs.length > 0 && !signal?.aborted) {
 				const tabNames = dirtyTabs.map(t => t.title).join(', ');
 				showToast(
 					'warning',
@@ -137,15 +136,14 @@ class FileWatcherService {
 				);
 			}
 
-			if (cleanTabs.length > 0) {
-				// Reload content once, then apply to all clean tabs
+			if (cleanTabs.length > 0 && !signal?.aborted) {
 				await reloadFileContent(cleanTabs[0].id);
 
-				// Apply the reloaded content to other clean tabs with same path
-				if (cleanTabs.length > 1) {
+				if (cleanTabs.length > 1 && !signal?.aborted) {
 					const reloadedTab = appContext.editor.tabs.find(t => t.id === cleanTabs[0].id);
 					if (reloadedTab) {
 						for (let i = 1; i < cleanTabs.length; i++) {
+							if (signal?.aborted) break;
 							reloadTabContent(
 								cleanTabs[i].id,
 								reloadedTab.content,
@@ -157,10 +155,13 @@ class FileWatcherService {
 					}
 				}
 
-				const tabNames = cleanTabs.map(t => t.title).join(', ');
-				showToast('info', `Reloaded ${tabNames} from disk`);
+				if (!signal?.aborted) {
+					const tabNames = cleanTabs.map(t => t.title).join(', ');
+					showToast('info', `Reloaded ${tabNames} from disk`);
+				}
 			}
 		} catch (err) {
+			if (signal?.aborted) return;
 			AppError.handle('FileWatcher:Watch', err, {
 				showToast: false,
 				severity: 'warning',
@@ -172,6 +173,11 @@ class FileWatcherService {
 	}
 
 	cleanup(): void {
+		for (const controller of this.abortControllers.values()) {
+			controller.abort();
+		}
+		this.abortControllers.clear();
+
 		for (const [path, entry] of this.watchers.entries()) {
 			try {
 				entry.unwatch();
