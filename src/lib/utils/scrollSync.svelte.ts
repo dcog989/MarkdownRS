@@ -116,14 +116,33 @@ export class ScrollSyncManager {
     }
 
     private syncPreviewThrottled = throttle(
-        () => requestAnimationFrame(() => this.syncPreview()),
+        () => {
+            // Use requestAnimationFrame to batch DOM writes
+            if (!this.syncPreviewRAF) {
+                this.syncPreviewRAF = requestAnimationFrame(() => {
+                    this.syncPreviewRAF = null;
+                    this.syncPreview();
+                });
+            }
+        },
         CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS
     );
 
     private syncEditorThrottled = throttle(
-        () => requestAnimationFrame(() => this.syncEditor()),
+        () => {
+            // Use requestAnimationFrame to batch DOM writes
+            if (!this.syncEditorRAF) {
+                this.syncEditorRAF = requestAnimationFrame(() => {
+                    this.syncEditorRAF = null;
+                    this.syncEditor();
+                });
+            }
+        },
         CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS
     );
+
+    private syncPreviewRAF: number | null = null;
+    private syncEditorRAF: number | null = null;
 
     private onEditorScroll() {
         if (this.activeSource === 'preview') return;
@@ -155,17 +174,25 @@ export class ScrollSyncManager {
         const maxScroll = scrollHeight - clientHeight;
 
         if (scrollTop <= 0) {
-            this.preview.scrollTop = 0;
+            if (this.preview.scrollTop > 0) {
+                this.preview.scrollTop = 0;
+            }
             return;
         }
         if (scrollTop >= maxScroll - 1) {
-            this.preview.scrollTop = this.preview.scrollHeight - this.preview.clientHeight;
+            const targetBottom = this.preview.scrollHeight - this.preview.clientHeight;
+            if (Math.abs(this.preview.scrollTop - targetBottom) > 2) {
+                this.preview.scrollTop = targetBottom;
+            }
             return;
         }
 
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
-            this.preview.scrollTop = pct * (this.preview.scrollHeight - this.preview.clientHeight);
+            const targetTop = pct * (this.preview.scrollHeight - this.preview.clientHeight);
+            if (Math.abs(this.preview.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+                this.preview.scrollTop = targetTop;
+            }
             return;
         }
 
@@ -176,7 +203,7 @@ export class ScrollSyncManager {
 
         const targetY = this.interpolate(currentLine, 'line', 'y');
 
-        if (Math.abs(this.preview.scrollTop - targetY) > 2) {
+        if (Math.abs(this.preview.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
             this.preview.scrollTop = targetY;
         }
     }
@@ -190,18 +217,26 @@ export class ScrollSyncManager {
         const maxScroll = scrollHeight - clientHeight;
 
         if (scrollTop <= 0) {
-            this.editor.scrollDOM.scrollTop = 0;
+            if (this.editor.scrollDOM.scrollTop > 0) {
+                this.editor.scrollDOM.scrollTop = 0;
+            }
             return;
         }
         if (scrollTop >= maxScroll - 1) {
-            this.editor.scrollDOM.scrollTop = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            const targetBottom = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            if (Math.abs(this.editor.scrollDOM.scrollTop - targetBottom) > 2) {
+                this.editor.scrollDOM.scrollTop = targetBottom;
+            }
             return;
         }
 
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
             const editorMax = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
-            this.editor.scrollDOM.scrollTop = pct * editorMax;
+            const targetTop = pct * editorMax;
+            if (Math.abs(this.editor.scrollDOM.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+                this.editor.scrollDOM.scrollTop = targetTop;
+            }
             return;
         }
 
@@ -215,7 +250,7 @@ export class ScrollSyncManager {
         const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
         const targetY = lineInfo.top + (lineInfo.height * lineFrac);
 
-        if (Math.abs(this.editor.scrollDOM.scrollTop - targetY) > 2) {
+        if (Math.abs(this.editor.scrollDOM.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
             this.editor.scrollDOM.scrollTop = targetY;
         }
     }
