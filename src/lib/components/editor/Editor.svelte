@@ -3,6 +3,7 @@
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import type { OperationId } from "$lib/config/textOperationsRegistry";
+    import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateHistoryState, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
@@ -26,7 +27,7 @@
     let cmView = $state<CM6EditorView & { getHistoryState?: () => any }>();
     let findReplacePanel = $state<any>(null);
     let previousTabId: string = "";
-    let isTransforming = false;
+    let isTransforming = $state(false);
 
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
@@ -47,32 +48,45 @@
     });
 
     $effect(() => {
+        const currentTabId = tabId;
         const tab = activeTab;
+
         if (!tab || !cmView) return;
 
-        const content = tab.content;
-        const currentTabId = tabId;
-
         untrack(() => {
-            if (currentTabId !== previousTabId) return;
+            const isTabSwitch = currentTabId !== previousTabId;
 
-            const currentDoc = cmView!.state.doc.toString();
-            if (currentDoc !== content) {
-                // Determine if we should sync from the store to the editor.
-                // 1. If we are currently focused, we trust the editor (user is typing/deleting).
-                // 2. If we are in the middle of a text transform, we handle dispatching manually.
-                // 3. We only sync if the editor is NOT focused OR the change is clearly an external reload
-                //    (indicated by the tab being clean but content differing).
+            if (isTabSwitch) {
+                const currentTab = appContext.editor.tabs.find((t) => t.id === currentTabId);
+                if (currentTab) {
+                    initializeTabFileState(currentTab).catch(console.error);
+                }
+                previousTabId = currentTabId;
+            }
+        });
+
+        const currentDoc = cmView!.state.doc.toString();
+        const newContent = tab.content;
+        const isLoaded = tab.contentLoaded;
+
+        if (!isLoaded && newContent === "") return;
+
+        if (currentDoc !== newContent) {
+            untrack(() => {
                 const isFocused = cmView!.hasFocus;
-                const shouldSync = (!isFocused || !tab.isDirty) && !isTransforming;
+                const isExternalReload = !isFocused && !tab.isDirty;
+                const isJustLoaded = isLoaded && currentDoc === "";
+
+                const shouldSync = isJustLoaded || isExternalReload || (!isFocused && !isTransforming);
 
                 if (shouldSync) {
-                    scrollManager.capture(cmView!, "External Update");
+                    scrollManager.capture(cmView!, "Content Sync");
+
+                    const newLength = newContent.length;
                     const currentSelection = cmView!.state.selection.main;
-                    const newLength = content.length;
 
                     cmView!.dispatch({
-                        changes: { from: 0, to: currentDoc.length, insert: content },
+                        changes: { from: 0, to: currentDoc.length, insert: newContent },
                         selection: {
                             anchor: Math.min(currentSelection.anchor, newLength),
                             head: Math.min(currentSelection.head, newLength),
@@ -84,51 +98,14 @@
                         if (cmView) {
                             cmView.requestMeasure();
                             scrollManager.restore(cmView, "pixel");
+                            if (isJustLoaded) {
+                                cmView.focus();
+                            }
                         }
                     });
                 }
-            }
-        });
-    });
-
-    $effect(() => {
-        const tab = activeTab;
-        if (!tab || !cmView) return;
-
-        const content = tab.content;
-        const currentTabId = tabId;
-
-        untrack(() => {
-            if (currentTabId !== previousTabId) return;
-
-            const currentDoc = cmView!.state.doc.toString();
-            if (currentDoc !== content) {
-                const isEmpty = currentDoc === "";
-                const shouldSync = isEmpty || !cmView!.hasFocus || Math.abs(currentDoc.length - content.length) > 100;
-
-                if (shouldSync && !isTransforming) {
-                    scrollManager.capture(cmView!, "External Update");
-                    const currentSelection = cmView!.state.selection.main;
-                    const newLength = content.length;
-
-                    cmView!.dispatch({
-                        changes: { from: 0, to: currentDoc.length, insert: content },
-                        selection: {
-                            anchor: Math.min(currentSelection.anchor, newLength),
-                            head: Math.min(currentSelection.head, newLength),
-                        },
-                        scrollIntoView: false,
-                    });
-
-                    requestAnimationFrame(() => {
-                        if (cmView) {
-                            cmView.requestMeasure();
-                            scrollManager.restore(cmView, "pixel");
-                        }
-                    });
-                }
-            }
-        });
+            });
+        }
     });
 
     $effect(() => {
@@ -324,7 +301,7 @@
     let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
     let initialHistoryState = $derived(activeTab?.historyState || undefined);
-    let lineChangeTracker = $derived(activeTab?.lineChangeTracker || new LineChangeTracker());
+    let lineChangeTracker = $derived(activeTab?.lineChangeTracker);
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
 

@@ -244,16 +244,21 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 		fileWatcher.unwatch(tab.path);
 	}
 
+	// Tab is removed from store here
 	closeTab(id);
 
-	persistSessionDebounced();
-
+	// Update active tab ID from the refreshed MRU stack
 	if (appContext.app.activeTabId === id) {
 		appContext.app.activeTabId = appContext.editor.mruStack[0] || null;
 	}
+
+	// Ensure at least one tab exists
 	if (appContext.editor.tabs.length === 0) {
-		appContext.app.activeTabId = addTab();
+		const newId = addTab();
+		appContext.app.activeTabId = newId;
 	}
+
+	persistSessionDebounced();
 }
 
 export function triggerReopenClosedTab(historyIndex: number): void {

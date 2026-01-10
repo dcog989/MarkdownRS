@@ -279,7 +279,6 @@ impl Database {
         }
 
         {
-            // Use COALESCE to keep existing content if new content is NULL
             let mut stmt = tx.prepare_cached(
                 "INSERT INTO tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
@@ -326,8 +325,9 @@ impl Database {
         tx.execute("DELETE FROM closed_tabs", [])?;
 
         if !closed_tabs.is_empty() {
+            // Using INSERT OR REPLACE to prevent UNIQUE constraint failures if duplicate IDs are provided
             let mut stmt = tx.prepare_cached(
-                "INSERT INTO closed_tabs (
+                "INSERT OR REPLACE INTO closed_tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
                     file_check_failed, file_check_performed, mru_position, sort_index, original_index

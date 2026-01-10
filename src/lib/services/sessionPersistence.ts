@@ -159,11 +159,11 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
                 { path: tab.path },
                 "File:Read",
             );
-            
+
             if (!res) {
                 throw new Error('Failed to read file: null result');
             }
-            
+
             const storeTab = appContext.editor.tabs.find((x) => x.id === tab.id);
             if (storeTab) {
                 storeTab.lastSavedContent = normalizeLineEndings(res.content);
@@ -200,30 +200,31 @@ export async function persistSession(): Promise<void> {
  * Lazy load content for a tab from the database
  */
 export async function loadTabContentLazy(tabId: string): Promise<void> {
-    const tab = appContext.editor.tabs.find((t) => t.id === tabId) ||
-                appContext.editor.closedTabsHistory.find((c) => c.tab.id === tabId)?.tab;
-    
-    if (!tab) return;
-    
-    // Already loaded or content is available
+    const index = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+    if (index === -1) return;
+
+    const tab = appContext.editor.tabs[index];
     if (tab.contentLoaded) return;
-    
+
     try {
         const content = await callBackend(
             "load_tab_content",
             { tabId },
             "Session:Load",
         );
-        
+
         if (content !== null && content !== undefined) {
             const normalizedContent = normalizeLineEndings(content);
-            tab.content = normalizedContent;
-            tab.lastSavedContent = normalizedContent;
-            tab.sizeBytes = new TextEncoder().encode(normalizedContent).length;
-            tab.lineEnding = normalizedContent.indexOf("\r\n") !== -1 ? "CRLF" : "LF";
-            tab.contentLoaded = true;
+            // Use reassignment to ensure Svelte 5 triggers reactivity for nested properties
+            appContext.editor.tabs[index] = {
+                ...tab,
+                content: normalizedContent,
+                lastSavedContent: normalizedContent,
+                sizeBytes: new TextEncoder().encode(normalizedContent).length,
+                lineEnding: normalizedContent.indexOf("\r\n") !== -1 ? "CRLF" : "LF",
+                contentLoaded: true
+            };
         } else {
-            // Content not found in DB, mark as loaded with empty content
             tab.contentLoaded = true;
         }
     } catch (err) {
@@ -232,7 +233,6 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             severity: "warning",
             additionalInfo: { tabId },
         });
-        // Mark as loaded even on error to prevent retry loops
         tab.contentLoaded = true;
     }
 }

@@ -153,24 +153,26 @@ export function addTab(title: string = '', content: string = '') {
 
 export function closeTab(id: string) {
     const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index !== -1) {
-        const tab = editorStore.tabs[index];
-        if (tab.path || tab.content.trim().length > 0) {
-            const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
+    if (index === -1) return;
 
-            let filteredHistory = editorStore.closedTabsHistory;
-            // Prevent duplicate file entries in history
-            if (tab.path) {
-                filteredHistory = filteredHistory.filter(entry => entry.tab.path !== tab.path);
-            }
+    const tab = editorStore.tabs[index];
 
-            editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(0, limit);
-        }
-        editorStore.tabs.splice(index, 1);
-        editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);
-        editorStore.sessionDirty = true;
-        clearRendererCache(id);
+    if (tab.path || (tab.content && tab.content.trim().length > 0)) {
+        const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
+
+        const filteredHistory = editorStore.closedTabsHistory.filter(entry =>
+            entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path)
+        );
+
+        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(0, limit);
     }
+
+    // Atomic reassignment to ensure Svelte 5 reactivity triggers across all components
+    editorStore.tabs = editorStore.tabs.filter(t => t.id !== id);
+    editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);
+
+    editorStore.sessionDirty = true;
+    clearRendererCache(id);
 }
 
 export function reopenLastClosed() {
