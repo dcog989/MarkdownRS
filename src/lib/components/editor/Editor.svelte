@@ -28,6 +28,7 @@
     let findReplacePanel = $state<any>(null);
     let previousTabId: string = "";
     let isTransforming = $state(false);
+    let lastForceSyncCounter = $state(0);
 
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
@@ -66,6 +67,7 @@
         const currentDoc = cmView!.state.doc.toString();
         const storeContent = tab.content;
         const isLoaded = tab.contentLoaded;
+        const forceSyncCounter = tab.forceSync ?? 0;
 
         // 2. Determine if we must sync Store -> Editor
         // We sync if:
@@ -73,10 +75,12 @@
         // - Content just arrived via lazy-load (isInitialPopulate)
         // - Editor is NOT focused (external disk reload)
         // - A transformation is active (Transform Menu/Format Document)
+        // - forceSync flag has been incremented (format on save)
         const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
         const isFocused = cmView!.hasFocus;
+        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
-        const shouldSync = isTabSwitch || isInitialPopulate || !isFocused || isTransforming;
+        const shouldSync = isTabSwitch || isInitialPopulate || !isFocused || isTransforming || isForcedSync;
 
         if (shouldSync && currentDoc !== storeContent) {
             untrack(() => {
@@ -102,6 +106,11 @@
                         if (isTabSwitch || isInitialPopulate) cmView.focus();
                     }
                 });
+
+                // Update the last seen counter to prevent re-syncing on next effect run
+                if (isForcedSync) {
+                    lastForceSyncCounter = forceSyncCounter;
+                }
             });
         }
     });

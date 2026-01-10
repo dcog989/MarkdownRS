@@ -162,9 +162,9 @@ export async function saveCurrentFile(): Promise<boolean> {
 					codeBlockFence: appContext.app.formatterCodeFence,
 					tableAlignment: appContext.app.formatterTableAlignment
 				});
-				if (formatted) {
+				if (formatted && formatted !== contentToSave) {
 					contentToSave = formatted;
-					updateContentOnly(tabId, contentToSave);
+					updateContentOnly(tabId, contentToSave, true);
 				}
 			}
 

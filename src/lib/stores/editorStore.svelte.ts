@@ -34,6 +34,7 @@ export type EditorTab = {
     contentChanged?: boolean; // Content has changed since last DB persist
     isPersisted?: boolean;    // Tab exists in DB
     contentLoaded?: boolean;  // Content has been loaded from DB (for lazy loading)
+    forceSync?: number;       // Counter to force editor sync when incremented
 };
 
 export type ClosedTab = {
@@ -359,8 +360,12 @@ export function reloadTabContent(id: string, content: string, lineEnding: 'LF' |
     }));
 }
 
-export function updateContentOnly(id: string, content: string) {
-    updateTab(id, () => ({ content, contentChanged: true }));
+export function updateContentOnly(id: string, content: string, forceSync: boolean = false) {
+    updateTab(id, (tab) => ({ 
+        content, 
+        contentChanged: true,
+        forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync 
+    }));
 }
 
 export function updateLineEnding(id: string, lineEnding: 'LF' | 'CRLF') {
