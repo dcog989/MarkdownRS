@@ -254,55 +254,50 @@ impl Database {
     ) -> Result<()> {
         let tx = self.conn.transaction()?;
 
-        // --- Save Active Tabs ---
+        // --- Save Active Tabs with Incremental Updates ---
         if active_tabs.is_empty() {
             tx.execute("DELETE FROM tabs", [])?;
         } else {
-            tx.execute(
-                "CREATE TEMP TABLE IF NOT EXISTS active_tab_ids (id TEXT PRIMARY KEY)",
-                [],
-            )?;
-            tx.execute("DELETE FROM active_tab_ids", [])?;
+            // Collect IDs of tabs that should exist
+            let active_ids: Vec<&str> = active_tabs.iter().map(|t| t.id.as_str()).collect();
+            
+            // Delete tabs that are no longer in the active list
+            // Build placeholders for IN clause
+            let placeholders = active_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+            let delete_query = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
+            let mut delete_stmt = tx.prepare(&delete_query)?;
+            let params: Vec<&dyn rusqlite::ToSql> = active_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+            delete_stmt.execute(params.as_slice())?;
 
-            {
-                let mut stmt = tx.prepare_cached("INSERT INTO active_tab_ids (id) VALUES (?)")?;
-                for tab in active_tabs {
-                    stmt.execute([&tab.id])?;
-                }
-            }
-
-            tx.execute(
-                "DELETE FROM tabs WHERE id NOT IN (SELECT id FROM active_tab_ids)",
-                [],
-            )?;
-            tx.execute("DELETE FROM active_tab_ids", [])?;
-        }
-
-        {
-            let mut stmt = tx.prepare_cached(
+            // Prepare statements for insert/update
+            let mut insert_stmt = tx.prepare_cached(
                 "INSERT INTO tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
                     file_check_failed, file_check_performed, mru_position, sort_index
                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
-                ON CONFLICT(id) DO UPDATE SET
-                    title=excluded.title,
-                    content=COALESCE(excluded.content, tabs.content),
-                    is_dirty=excluded.is_dirty,
-                    path=excluded.path,
-                    scroll_percentage=excluded.scroll_percentage,
-                    created=excluded.created,
-                    modified=excluded.modified,
-                    is_pinned=excluded.is_pinned,
-                    custom_title=excluded.custom_title,
-                    file_check_failed=excluded.file_check_failed,
-                    file_check_performed=excluded.file_check_performed,
-                    mru_position=excluded.mru_position,
-                    sort_index=excluded.sort_index",
+                ON CONFLICT(id) DO NOTHING",
+            )?;
+
+            let mut update_full_stmt = tx.prepare_cached(
+                "UPDATE tabs SET
+                    title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
+                    created=?7, modified=?8, is_pinned=?9, custom_title=?10,
+                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14
+                WHERE id=?1",
+            )?;
+
+            let mut update_metadata_stmt = tx.prepare_cached(
+                "UPDATE tabs SET
+                    title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
+                    created=?6, modified=?7, is_pinned=?8, custom_title=?9,
+                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13
+                WHERE id=?1",
             )?;
 
             for tab in active_tabs {
-                stmt.execute(params![
+                // Try to insert first (for new tabs)
+                let insert_result = insert_stmt.execute(params![
                     &tab.id,
                     &tab.title,
                     &tab.content,
@@ -317,15 +312,55 @@ impl Database {
                     if tab.file_check_performed { 1 } else { 0 },
                     &tab.mru_position,
                     &tab.sort_index
-                ])?;
+                ]);
+
+                // If insert failed (tab exists), update it
+                if insert_result.is_ok() && insert_result.unwrap() == 0 {
+                    // Tab already exists, do incremental update
+                    if tab.content.is_some() {
+                        // Full update including content
+                        update_full_stmt.execute(params![
+                            &tab.id,
+                            &tab.title,
+                            &tab.content,
+                            if tab.is_dirty { 1 } else { 0 },
+                            &tab.path,
+                            tab.scroll_percentage,
+                            &tab.created,
+                            &tab.modified,
+                            if tab.is_pinned { 1 } else { 0 },
+                            &tab.custom_title,
+                            if tab.file_check_failed { 1 } else { 0 },
+                            if tab.file_check_performed { 1 } else { 0 },
+                            &tab.mru_position,
+                            &tab.sort_index
+                        ])?;
+                    } else {
+                        // Metadata-only update (skip content)
+                        update_metadata_stmt.execute(params![
+                            &tab.id,
+                            &tab.title,
+                            if tab.is_dirty { 1 } else { 0 },
+                            &tab.path,
+                            tab.scroll_percentage,
+                            &tab.created,
+                            &tab.modified,
+                            if tab.is_pinned { 1 } else { 0 },
+                            &tab.custom_title,
+                            if tab.file_check_failed { 1 } else { 0 },
+                            if tab.file_check_performed { 1 } else { 0 },
+                            &tab.mru_position,
+                            &tab.sort_index
+                        ])?;
+                    }
+                }
             }
         }
 
-        // --- Save Closed Tabs ---
+        // --- Save Closed Tabs (Keep existing clear-and-replace for simplicity) ---
         tx.execute("DELETE FROM closed_tabs", [])?;
 
         if !closed_tabs.is_empty() {
-            // Using INSERT OR REPLACE to prevent UNIQUE constraint failures if duplicate IDs are provided
             let mut stmt = tx.prepare_cached(
                 "INSERT OR REPLACE INTO closed_tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
