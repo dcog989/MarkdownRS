@@ -110,6 +110,7 @@
         if (!appContext.app.enableAutocomplete) return [];
         return autocompletion({
             activateOnTyping: true,
+            activateOnTypingDelay: appContext.app.autocompleteDelay,
             closeOnBlur: true,
             defaultKeymap: true,
             aboveCursor: false,
