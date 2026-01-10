@@ -5,7 +5,15 @@
     import { newlinePlugin, rulerPlugin } from "$lib/utils/editorPlugins";
     import { generateDynamicTheme } from "$lib/utils/editorTheme";
     import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
-    import { blockquotePlugin, bulletPointPlugin, codeBlockPlugin, highlightPlugin, horizontalRulePlugin, inlineCodePlugin, urlPlugin } from "$lib/utils/markdownExtensions";
+    import {
+        blockquotePlugin,
+        bulletPointPlugin,
+        codeBlockPlugin,
+        highlightPlugin,
+        horizontalRulePlugin,
+        inlineCodePlugin,
+        urlPlugin,
+    } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
@@ -14,14 +22,33 @@
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
     import { throttle } from "$lib/utils/timing";
-    import { autocompletion, closeBrackets, closeBracketsKeymap, completeAnyWord, completionKeymap } from "@codemirror/autocomplete";
-    import { defaultKeymap, history, historyField, historyKeymap, indentWithTab } from "@codemirror/commands";
+    import {
+        autocompletion,
+        closeBrackets,
+        closeBracketsKeymap,
+        completeAnyWord,
+        completionKeymap,
+    } from "@codemirror/autocomplete";
+    import {
+        defaultKeymap,
+        history,
+        historyField,
+        historyKeymap,
+        indentWithTab,
+    } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
     import { Compartment, EditorState } from "@codemirror/state";
-    import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightWhitespace, keymap } from "@codemirror/view";
+    import {
+        drawSelection,
+        EditorView,
+        highlightActiveLine,
+        highlightActiveLineGutter,
+        highlightWhitespace,
+        keymap,
+    } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
     let {
@@ -132,7 +159,16 @@
         });
     }
 
-    const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages: languages }), highlightPlugin, blockquotePlugin, codeBlockPlugin, inlineCodePlugin, horizontalRulePlugin, bulletPointPlugin, urlPlugin];
+    const markdownExtensions = [
+        markdown({ base: markdownLanguage, codeLanguages: languages }),
+        highlightPlugin,
+        blockquotePlugin,
+        codeBlockPlugin,
+        inlineCodePlugin,
+        horizontalRulePlugin,
+        bulletPointPlugin,
+        urlPlugin,
+    ];
 
     $effect(() => {
         cmView = view;
@@ -148,7 +184,10 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: [wrapComp.reconfigure(createWrapExtension()), rulerComp.reconfigure(rulerPlugin)],
+                effects: [
+                    wrapComp.reconfigure(createWrapExtension()),
+                    rulerComp.reconfigure(rulerPlugin),
+                ],
             });
         }
     });
@@ -163,27 +202,42 @@
         if (view) {
             const isDark = appContext.app.theme === "dark";
             view.dispatch({
-                effects: themeComp.reconfigure(generateDynamicTheme(appContext.app.editorFontSize, appContext.app.editorFontFamily, isDark, appContext.metrics.insertMode)),
+                effects: themeComp.reconfigure(
+                    generateDynamicTheme(
+                        appContext.app.editorFontSize,
+                        appContext.app.editorFontFamily,
+                        isDark,
+                        appContext.metrics.insertMode
+                    )
+                ),
             });
         }
     });
 
     $effect(() => {
         if (view) {
-            view.dispatch({ effects: historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })) });
+            view.dispatch({
+                effects: historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })),
+            });
         }
     });
 
     $effect(() => {
         if (view) {
             const _indent = appContext.app.defaultIndent;
-            view.dispatch({ effects: indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, _indent)))) });
+            view.dispatch({
+                effects: indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, _indent)))),
+            });
         }
     });
 
     $effect(() => {
         if (view) {
-            view.dispatch({ effects: whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []) });
+            view.dispatch({
+                effects: whitespaceComp.reconfigure(
+                    appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []
+                ),
+            });
         }
     });
 
@@ -195,7 +249,9 @@
 
     $effect(() => {
         if (view) {
-            view.dispatch({ effects: languageComp.reconfigure(isMarkdown ? markdownExtensions : []) });
+            view.dispatch({
+                effects: languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
+            });
         }
     });
 
@@ -207,7 +263,9 @@
 
     $effect(() => {
         if (view) {
-            view.dispatch({ effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)) });
+            view.dispatch({
+                effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
+            });
         }
     });
 
@@ -237,11 +295,21 @@
                         const textBefore = line.text.slice(0, from - line.from - 2);
                         if (/^\s*$/.test(textBefore)) {
                             const indent = textBefore;
-                            view.dispatch({ changes: { from, to, insert: "`\n" + indent + "\n" + indent + "```" }, selection: { anchor: from + 1 + indent.length + 1 } });
+                            view.dispatch({
+                                changes: {
+                                    from,
+                                    to,
+                                    insert: "`\n" + indent + "\n" + indent + "```",
+                                },
+                                selection: { anchor: from + 1 + indent.length + 1 },
+                            });
                             return true;
                         }
                     }
-                    view.dispatch({ changes: { from, to, insert: "``" }, selection: { anchor: from + 1 } });
+                    view.dispatch({
+                        changes: { from, to, insert: "``" },
+                        selection: { anchor: from + 1 },
+                    });
                     return true;
                 }
                 return false;
@@ -289,7 +357,10 @@
                 {
                     key: "PageUp",
                     run: (v) => {
-                        const newScrollTop = Math.max(0, v.scrollDOM.scrollTop - v.scrollDOM.clientHeight);
+                        const newScrollTop = Math.max(
+                            0,
+                            v.scrollDOM.scrollTop - v.scrollDOM.clientHeight
+                        );
                         v.scrollDOM.scrollTop = newScrollTop;
                         const lineBlock = v.lineBlockAtHeight(newScrollTop);
                         v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
@@ -302,9 +373,18 @@
                 ...closeBracketsKeymap,
                 ...defaultKeymap,
             ]),
-            themeComp.of(generateDynamicTheme(appContext.app.editorFontSize, appContext.app.editorFontFamily, isDark, appContext.metrics.insertMode)),
+            themeComp.of(
+                generateDynamicTheme(
+                    appContext.app.editorFontSize,
+                    appContext.app.editorFontFamily,
+                    isDark,
+                    appContext.metrics.insertMode
+                )
+            ),
             indentComp.of(indentUnit.of("  ")),
-            whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
+            whitespaceComp.of(
+                appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []
+            ),
             languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
             spellComp.of(createSpellCheckLinter()),
@@ -336,7 +416,10 @@
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
-                    contentUpdateTimer = window.setTimeout(() => onContentChange(update.state.doc.toString()), CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
+                    contentUpdateTimer = window.setTimeout(
+                        () => onContentChange(update.state.doc.toString()),
+                        CONFIG.EDITOR.CONTENT_DEBOUNCE_MS
+                    );
                 }
                 if (update.selectionSet) {
                     if (onSelectionChange) {
@@ -356,7 +439,13 @@
                     metricsUpdateTimer = window.setTimeout(() => {
                         const state = update.view.state;
                         const line = state.doc.lineAt(state.selection.main.head);
-                        onMetricsChange(calculateCursorMetrics(state.doc.toString(), state.selection.main.head, { number: line.number, from: line.from, text: line.text }));
+                        onMetricsChange(
+                            calculateCursorMetrics(
+                                state.doc.toString(),
+                                state.selection.main.head,
+                                { number: line.number, from: line.from, text: line.text }
+                            )
+                        );
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
             })
@@ -383,6 +472,7 @@
         };
 
         view = viewInstance;
+        scrollSync.registerEditor(viewInstance);
 
         if (initialScrollPercentage > 0) {
             setTimeout(() => {
@@ -421,7 +511,6 @@
         }, 100);
 
         view.scrollDOM.addEventListener("scroll", handleScroll, { passive: true });
-        scrollSync.registerEditor(view);
 
         if (searchState.findText) {
             updateSearchEditor(view);
@@ -445,4 +534,9 @@
     });
 </script>
 
-<div role="none" class="w-full h-full overflow-hidden bg-bg-main relative" bind:this={editorContainer} onclick={() => view?.focus()}></div>
+<div
+    role="none"
+    class="w-full h-full overflow-hidden bg-bg-main relative"
+    bind:this={editorContainer}
+    onclick={() => view?.focus()}
+></div>

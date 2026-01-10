@@ -6,8 +6,7 @@
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import {
-        registerTextOperationCallback,
-        unregisterTextOperationCallback,
+        editorStore,
         updateContent,
         updateCursor,
         updateHistoryState,
@@ -48,10 +47,22 @@
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let scrollManager = new ScrollManager();
 
+    // Pass pending transform down to effect
+    let pendingTransform = $derived(editorStore.pendingTransform);
+
     $effect(() => {
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
         if (tab && !tab.lineChangeTracker) {
             tab.lineChangeTracker = new LineChangeTracker();
+        }
+    });
+
+    // Reactive Command Listener (Fixes the text operation race condition)
+    $effect(() => {
+        if (pendingTransform && pendingTransform.tabId === tabId && cmView) {
+            untrack(() => {
+                handleTextOperation(pendingTransform!.op);
+            });
         }
     });
 
@@ -77,18 +88,12 @@
         const forceSyncCounter = tab.forceSync ?? 0;
 
         // 2. Determine if we must sync Store -> Editor
-        // We sync if:
-        // - We just switched tabs (isTabSwitch)
-        // - Content just arrived via lazy-load (isInitialPopulate)
-        // - Editor is NOT focused (external disk reload)
-        // - A transformation is active (Transform Menu/Format Document)
-        // - forceSync flag has been incremented (format on save)
         const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
         const isFocused = cmView!.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
         const shouldSync =
-            isTabSwitch || isInitialPopulate || !isFocused || isTransforming || isForcedSync;
+            isTabSwitch || isInitialPopulate || (!isFocused && !isTransforming) || isForcedSync;
 
         if (shouldSync && currentDoc !== storeContent) {
             untrack(() => {
@@ -121,7 +126,6 @@
                     }
                 });
 
-                // Update the last seen counter to prevent re-syncing on next effect run
                 if (isForcedSync) {
                     lastForceSyncCounter = forceSyncCounter;
                 }
@@ -288,8 +292,6 @@
 
     onMount(() => {
         initSpellcheck();
-        registerTextOperationCallback(handleTextOperation);
-        return () => unregisterTextOperationCallback();
     });
 
     onDestroy(() => {

@@ -30,11 +30,10 @@ export type EditorTab = {
     lineChangeTracker?: LineChangeTracker;
     historyState?: any;
     preferredExtension?: "md" | "txt";
-    // Persistence optimization flags
-    contentChanged?: boolean; // Content has changed since last DB persist
-    isPersisted?: boolean; // Tab exists in DB
-    contentLoaded?: boolean; // Content has been loaded from DB (for lazy loading)
-    forceSync?: number; // Counter to force editor sync when incremented
+    contentChanged?: boolean;
+    isPersisted?: boolean;
+    contentLoaded?: boolean;
+    forceSync?: number;
 };
 
 export type ClosedTab = {
@@ -46,24 +45,19 @@ function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, "\n");
 }
 
-type TextOperationCallback = (operationId: OperationId) => void;
-
-let textOperationCallback: TextOperationCallback | null = null;
-
+// Replaced callback registry with reactive state pattern
 export const editorStore = $state({
     tabs: [] as EditorTab[],
     sessionDirty: false,
     mruStack: [] as string[],
     closedTabsHistory: [] as ClosedTab[],
     lastScrollSource: null as "editor" | "preview" | null,
+    // New: Reactive command state
+    pendingTransform: null as { tabId: string; op: OperationId; timestamp: number } | null,
 });
 
 /**
  * Generic helper to find and update a tab
- * @param id - Tab ID to find
- * @param updater - Function that receives the tab and returns updated properties or void
- * @param markDirty - Whether to mark session as dirty (default: true)
- * @returns true if tab was found and updated, false otherwise
  */
 function updateTab(
     id: string,
@@ -87,12 +81,28 @@ function updateTab(
     return true;
 }
 
-export function registerTextOperationCallback(callback: TextOperationCallback) {
-    textOperationCallback = callback;
+// Deprecated: Registry functions removed in favor of reactive state
+export function registerTextOperationCallback(tabId: string, callback: any) {
+    console.warn("registerTextOperationCallback is deprecated. Use reactive state instead.");
+}
+export function unregisterTextOperationCallback(tabId: string) {
+    // No-op
 }
 
-export function unregisterTextOperationCallback() {
-    textOperationCallback = null;
+export function performTextTransform(operationId: OperationId) {
+    const activeId = appState.activeTabId;
+    console.log(`[EditorStore] performTextTransform: ${operationId}, Active Tab: ${activeId}`);
+
+    if (activeId) {
+        // Trigger reactive update
+        editorStore.pendingTransform = {
+            tabId: activeId,
+            op: operationId,
+            timestamp: Date.now()
+        };
+    } else {
+        console.error(`[EditorStore] No active tab ID`);
+    }
 }
 
 export function addTab(title: string = "", content: string = "") {
@@ -133,9 +143,9 @@ export function addTab(title: string = "", content: string = "") {
         formattedTimestamp: formatTimestampForDisplay(now),
         lineEnding: "LF",
         encoding: "UTF-8",
-        contentChanged: true, // New tab needs content saved
-        isPersisted: false, // New tab not yet in DB
-        contentLoaded: true, // New tab's content is already in memory
+        contentChanged: true,
+        isPersisted: false,
+        contentLoaded: true,
     };
 
     if (appState.newTabPosition === "beginning") {
@@ -171,7 +181,6 @@ export function closeTab(id: string) {
         );
     }
 
-    // Atomic reassignment to ensure Svelte 5 reactivity triggers across all components
     editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);
     editorStore.mruStack = editorStore.mruStack.filter((tId) => tId !== id);
 
@@ -191,11 +200,8 @@ export function reopenClosedTab(historyIndex: number): string | null {
     const entry = editorStore.closedTabsHistory[historyIndex];
     editorStore.closedTabsHistory.splice(historyIndex, 1);
 
-    // Reopened tab needs full persistence
     entry.tab.contentChanged = true;
     entry.tab.isPersisted = false;
-    // Content is already loaded since it's in closedTabsHistory
-    // But mark it as needing verification
     if (entry.tab.contentLoaded === false) {
         entry.tab.contentLoaded = false;
     }
@@ -256,7 +262,7 @@ export function updateContent(id: string, content: string) {
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         sizeBytes: new TextEncoder().encode(content).length,
-        contentChanged: true, // Mark for persistence
+        contentChanged: true,
     };
 
     editorStore.tabs[index] = updatedTab;
@@ -321,10 +327,6 @@ export function markAsSaved(id: string) {
     }));
 }
 
-export function performTextTransform(operationId: OperationId) {
-    if (textOperationCallback) textOperationCallback(operationId);
-}
-
 export function togglePin(id: string) {
     updateTab(id, (tab) => ({ isPinned: !tab.isPinned }));
 }
@@ -375,7 +377,7 @@ export function reloadTabContent(
         encoding,
         sizeBytes,
         fileCheckPerformed: false,
-        contentChanged: true, // Reload means new content to persist
+        contentChanged: true,
     }));
 }
 
