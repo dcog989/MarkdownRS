@@ -56,6 +56,35 @@ export const editorStore = $state({
     lastScrollSource: null as 'editor' | 'preview' | null,
 });
 
+/**
+ * Generic helper to find and update a tab
+ * @param id - Tab ID to find
+ * @param updater - Function that receives the tab and returns updated properties or void
+ * @param markDirty - Whether to mark session as dirty (default: true)
+ * @returns true if tab was found and updated, false otherwise
+ */
+function updateTab(
+    id: string,
+    updater: (tab: EditorTab) => Partial<EditorTab> | void,
+    markDirty: boolean = true
+): boolean {
+    const index = editorStore.tabs.findIndex(t => t.id === id);
+    if (index === -1) return false;
+
+    const tab = editorStore.tabs[index];
+    const updates = updater(tab);
+
+    if (updates) {
+        editorStore.tabs[index] = { ...tab, ...updates };
+    }
+
+    if (markDirty) {
+        editorStore.sessionDirty = true;
+    }
+
+    return true;
+}
+
 export function registerTextOperationCallback(callback: TextOperationCallback) {
     textOperationCallback = callback;
 }
@@ -244,41 +273,35 @@ export function updateScroll(id: string, percentage: number, topLine: number | u
 }
 
 export function updateCursor(id: string, anchor: number, head: number) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-
-    if (editorStore.tabs[index].cursor.anchor !== anchor || editorStore.tabs[index].cursor.head !== head) {
-        editorStore.tabs[index].cursor = { anchor, head };
-    }
+    updateTab(id, (tab) => {
+        if (tab.cursor.anchor !== anchor || tab.cursor.head !== head) {
+            return { cursor: { anchor, head } };
+        }
+    }, false);
 }
 
 export function updateMetadata(id: string, created?: string, modified?: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-
-    const tab = editorStore.tabs[index];
-    if (tab.created !== created || tab.modified !== modified) {
-        const tsToFormat = modified || tab.modified || created || tab.created || "";
-        tab.created = created || tab.created;
-        tab.modified = modified || tab.modified;
-        tab.formattedTimestamp = formatTimestampForDisplay(tsToFormat);
-        editorStore.sessionDirty = true;
-    }
+    updateTab(id, (tab) => {
+        if (tab.created !== created || tab.modified !== modified) {
+            const tsToFormat = modified || tab.modified || created || tab.created || "";
+            return {
+                created: created || tab.created,
+                modified: modified || tab.modified,
+                formattedTimestamp: formatTimestampForDisplay(tsToFormat)
+            };
+        }
+    });
 }
 
 export function updateHistoryState(id: string, state: any) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    editorStore.tabs[index].historyState = state;
+    updateTab(id, () => ({ historyState: state }), false);
 }
 
 export function markAsSaved(id: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    const tab = editorStore.tabs[index];
-    tab.lastSavedContent = tab.content;
-    tab.isDirty = false;
-    editorStore.sessionDirty = true;
+    updateTab(id, (tab) => ({
+        lastSavedContent: tab.content,
+        isDirty: false
+    }));
 }
 
 export function performTextTransform(operationId: OperationId) {
@@ -286,111 +309,85 @@ export function performTextTransform(operationId: OperationId) {
 }
 
 export function togglePin(id: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    editorStore.tabs[index].isPinned = !editorStore.tabs[index].isPinned;
-    editorStore.sessionDirty = true;
+    updateTab(id, (tab) => ({ isPinned: !tab.isPinned }));
 }
 
 export function updateTabTitle(id: string, title: string, customTitle?: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    const tab = editorStore.tabs[index];
-    tab.title = title;
-    if (customTitle !== undefined) {
-        tab.customTitle = customTitle;
-    }
-    editorStore.sessionDirty = true;
+    updateTab(id, () => {
+        const updates: Partial<EditorTab> = { title };
+        if (customTitle !== undefined) {
+            updates.customTitle = customTitle;
+        }
+        return updates;
+    });
 }
 
 export function updateTabPath(id: string, path: string, title?: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    const tab = editorStore.tabs[index];
-    tab.path = path;
-    if (title !== undefined) tab.title = title;
-    editorStore.sessionDirty = true;
+    updateTab(id, () => {
+        const updates: Partial<EditorTab> = { path };
+        if (title !== undefined) {
+            updates.title = title;
+        }
+        return updates;
+    });
 }
 
 export function updateTabMetadataAndPath(id: string, updates: Partial<EditorTab>) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    editorStore.tabs[index] = { ...editorStore.tabs[index], ...updates };
-    editorStore.sessionDirty = true;
+    updateTab(id, () => updates);
 }
 
 export function setFileCheckStatus(id: string, performed: boolean, failed: boolean) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    const tab = editorStore.tabs[index];
-    tab.fileCheckPerformed = performed;
-    tab.fileCheckFailed = failed;
-    editorStore.sessionDirty = true;
+    updateTab(id, () => ({
+        fileCheckPerformed: performed,
+        fileCheckFailed: failed
+    }));
 }
 
 export function reloadTabContent(id: string, content: string, lineEnding: 'LF' | 'CRLF', encoding: string, sizeBytes: number) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-
-    const tab = editorStore.tabs[index];
-    tab.content = content;
-    tab.lastSavedContent = content;
-    tab.isDirty = false;
-    tab.lineEnding = lineEnding;
-    tab.encoding = encoding;
-    tab.sizeBytes = sizeBytes;
-    tab.fileCheckPerformed = false;
-    tab.contentChanged = true; // Reload means new content to persist
-    editorStore.sessionDirty = true;
+    updateTab(id, () => ({
+        content,
+        lastSavedContent: content,
+        isDirty: false,
+        lineEnding,
+        encoding,
+        sizeBytes,
+        fileCheckPerformed: false,
+        contentChanged: true // Reload means new content to persist
+    }));
 }
 
 export function updateContentOnly(id: string, content: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    editorStore.tabs[index].content = content;
-    editorStore.tabs[index].contentChanged = true;
-    editorStore.sessionDirty = true;
+    updateTab(id, () => ({ content, contentChanged: true }));
 }
 
 export function updateLineEnding(id: string, lineEnding: 'LF' | 'CRLF') {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    editorStore.tabs[index].lineEnding = lineEnding;
-    editorStore.sessionDirty = true;
+    updateTab(id, () => ({ lineEnding }));
 }
 
 export function saveTabComplete(id: string, path: string, title: string, lineEnding: 'LF' | 'CRLF') {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    const tab = editorStore.tabs[index];
-    tab.path = path;
-    tab.title = title;
-    tab.lineEnding = lineEnding;
-    tab.fileCheckPerformed = false;
-    tab.fileCheckFailed = false;
-    editorStore.sessionDirty = true;
+    updateTab(id, () => ({
+        path,
+        title,
+        lineEnding,
+        fileCheckPerformed: false,
+        fileCheckFailed: false
+    }));
 }
 
 export function togglePreferredExtension(id: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index === -1) return;
-    const tab = editorStore.tabs[index];
-    let current = tab.preferredExtension;
-    if (!current) {
-        if (tab.path) {
-            current = isMarkdownFile(tab.path) ? 'md' : 'txt';
-        } else {
-            current = 'md';
+    updateTab(id, (tab) => {
+        let current = tab.preferredExtension;
+        if (!current) {
+            if (tab.path) {
+                current = isMarkdownFile(tab.path) ? 'md' : 'txt';
+            } else {
+                current = 'md';
+            }
         }
-    }
-    tab.preferredExtension = current === 'md' ? 'txt' : 'md';
-    editorStore.sessionDirty = true;
+        return { preferredExtension: current === 'md' ? 'txt' : 'md' };
+    });
 }
 
 export function markTabPersisted(id: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
-    if (index !== -1) {
-        editorStore.tabs[index].contentChanged = false;
-        editorStore.tabs[index].isPersisted = true;
-    }
+    updateTab(id, () => ({ contentChanged: false, isPersisted: true }), false);
 }
