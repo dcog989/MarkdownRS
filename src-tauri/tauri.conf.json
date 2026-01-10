@@ -45,23 +45,14 @@
         "createUpdaterArtifacts": true,
         "fileAssociations": [
             {
-                "ext": [
-                    "md",
-                    "markdown",
-                    "mdown",
-                    "mkdn",
-                    "mkd",
-                    "mdwn"
-                ],
+                "ext": ["md", "markdown", "mdown", "mkdn", "mkd", "mdwn"],
                 "name": "Markdown Document",
                 "description": "Markdown Document",
                 "role": "Editor",
                 "mimeType": "text/markdown"
             },
             {
-                "ext": [
-                    "txt"
-                ],
+                "ext": ["txt"],
                 "name": "Text Document",
                 "description": "Text Document",
                 "role": "Editor",
@@ -72,9 +63,7 @@
             "nsis": {
                 "installerIcon": "icons/icon.ico",
                 "installMode": "currentUser",
-                "languages": [
-                    "English"
-                ],
+                "languages": ["English"],
                 "displayLanguageSelector": false
             }
         }
@@ -84,9 +73,7 @@
             "open": true
         },
         "updater": {
-            "endpoints": [
-                "https://github.com/USERNAME/REPO/releases/latest/download/latest.json"
-            ],
+            "endpoints": ["https://github.com/USERNAME/REPO/releases/latest/download/latest.json"],
             "dialog": true,
             "pubkey": "YOUR_PUBLIC_KEY_HERE"
         }

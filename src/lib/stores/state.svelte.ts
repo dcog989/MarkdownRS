@@ -1,13 +1,13 @@
-import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import { appState } from './appState.svelte';
-import { bookmarkStore } from './bookmarkStore.svelte';
-import { dialogStore } from './dialogStore.svelte';
-import { editorMetrics } from './editorMetrics.svelte';
-import { editorStore } from './editorStore.svelte';
-import { interfaceStore } from './interfaceStore.svelte';
-import { toastStore } from './toastStore.svelte';
-import { tooltipStore } from './tooltipStore.svelte';
+import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
+import { appState } from "./appState.svelte";
+import { bookmarkStore } from "./bookmarkStore.svelte";
+import { dialogStore } from "./dialogStore.svelte";
+import { editorMetrics } from "./editorMetrics.svelte";
+import { editorStore } from "./editorStore.svelte";
+import { interfaceStore } from "./interfaceStore.svelte";
+import { toastStore } from "./toastStore.svelte";
+import { tooltipStore } from "./tooltipStore.svelte";
 
 /**
  * Centralized State Tree
@@ -25,6 +25,6 @@ export const appContext = {
     ui: {
         tooltip: tooltipStore,
         toast: toastStore,
-        dialog: dialogStore
-    }
+        dialog: dialogStore,
+    },
 };

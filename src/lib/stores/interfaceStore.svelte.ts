@@ -17,7 +17,7 @@ export const interfaceStore = $state({
     isReplaceMode: false,
 
     // Signals
-    scrollToTabSignal: 0
+    scrollToTabSignal: 0,
 });
 
 // Actions
@@ -39,9 +39,21 @@ export function closeFind() {
     interfaceStore.showFind = false;
 }
 
-export function toggleSettings() { interfaceStore.showSettings = !interfaceStore.showSettings; }
-export function toggleShortcuts() { interfaceStore.showShortcuts = !interfaceStore.showShortcuts; }
-export function toggleBookmarks() { interfaceStore.showBookmarks = !interfaceStore.showBookmarks; }
-export function toggleCommandPalette() { interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette; }
-export function toggleTransform() { interfaceStore.showTransform = !interfaceStore.showTransform; }
-export function toggleAbout() { interfaceStore.showAbout = !interfaceStore.showAbout; }
+export function toggleSettings() {
+    interfaceStore.showSettings = !interfaceStore.showSettings;
+}
+export function toggleShortcuts() {
+    interfaceStore.showShortcuts = !interfaceStore.showShortcuts;
+}
+export function toggleBookmarks() {
+    interfaceStore.showBookmarks = !interfaceStore.showBookmarks;
+}
+export function toggleCommandPalette() {
+    interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette;
+}
+export function toggleTransform() {
+    interfaceStore.showTransform = !interfaceStore.showTransform;
+}
+export function toggleAbout() {
+    interfaceStore.showAbout = !interfaceStore.showAbout;
+}

@@ -1,6 +1,6 @@
-import { error } from '@tauri-apps/plugin-log';
-import DOMPurify from 'dompurify';
-import { callBackend } from './backend';
+import { error } from "@tauri-apps/plugin-log";
+import DOMPurify from "dompurify";
+import { callBackend } from "./backend";
 
 /**
  * Renders markdown using the Rust backend
@@ -9,20 +9,33 @@ import { callBackend } from './backend';
 export async function renderMarkdown(content: string, gfm: boolean = true): Promise<string> {
     try {
         // Map boolean GFM to flavor string expected by backend
-        const flavor = gfm ? 'gfm' : 'commonmark';
-        const result = await callBackend('render_markdown', {
-            content,
-            flavor
-        }, 'Markdown:Render');
+        const flavor = gfm ? "gfm" : "commonmark";
+        const result = await callBackend(
+            "render_markdown",
+            {
+                content,
+                flavor,
+            },
+            "Markdown:Render"
+        );
 
         if (!result) {
-            throw new Error('Markdown rendering failed: null result');
+            throw new Error("Markdown rendering failed: null result");
         }
 
         // Sanitize HTML (file paths are already linkified by Rust backend)
         const cleanHtml = DOMPurify.sanitize(result.html, {
             USE_PROFILES: { html: true },
-            ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
+            ADD_ATTR: [
+                "target",
+                "class",
+                "data-source-line",
+                "align",
+                "start",
+                "type",
+                "disabled",
+                "checked",
+            ],
         });
 
         return cleanHtml;

@@ -373,7 +373,9 @@ body {
     color: var(--color-fg-code);
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    font-family:
+        ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono",
+        monospace;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
 }

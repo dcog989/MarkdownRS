@@ -3,11 +3,12 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from "@codemirror
 
 // Regex to match file paths: Windows paths (C:\...), Unix paths (/...), or relative paths (./... or ../....)
 // Unix absolute paths must have at least one slash after the initial slash (e.g., /home/user, not /hibernate)
-const FILE_PATH_REGEX = /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)|(?:(?:^|\s)\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]*)/g;
+const FILE_PATH_REGEX =
+    /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)|(?:(?:^|\s)\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]*)/g;
 
 // Mark to apply to file paths
 const filePathMark = Decoration.mark({
-    class: "cm-file-path"
+    class: "cm-file-path",
 });
 
 function findFilePaths(view: EditorView) {
@@ -15,7 +16,7 @@ function findFilePaths(view: EditorView) {
     const doc = view.state.doc;
 
     for (let { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to;) {
+        for (let pos = from; pos <= to; ) {
             const line = doc.lineAt(pos);
             const lineText = line.text;
 
@@ -39,21 +40,24 @@ function findFilePaths(view: EditorView) {
     return builder.finish();
 }
 
-export const filePathPlugin: Extension = ViewPlugin.fromClass(class {
-    decorations;
+export const filePathPlugin: Extension = ViewPlugin.fromClass(
+    class {
+        decorations;
 
-    constructor(view: EditorView) {
-        this.decorations = findFilePaths(view);
-    }
-
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            this.decorations = findFilePaths(update.view);
+        constructor(view: EditorView) {
+            this.decorations = findFilePaths(view);
         }
+
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = findFilePaths(update.view);
+            }
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Theme to style file paths
 export const filePathTheme = EditorView.baseTheme({
@@ -62,11 +66,11 @@ export const filePathTheme = EditorView.baseTheme({
         textDecoration: "underline",
         "&:hover": {
             color: "var(--color-accent-link-hover)",
-            textDecoration: "underline"
-        }
+            textDecoration: "underline",
+        },
     },
     // Only show pointer cursor when the editor has the modifier-down class
     "&.cm-modifier-down .cm-file-path": {
-        cursor: "pointer"
-    }
+        cursor: "pointer",
+    },
 });

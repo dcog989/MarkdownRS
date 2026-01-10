@@ -15,7 +15,7 @@ export interface CursorMetrics extends TextMetrics {
 /**
  * Robust word counter using Intl.Segmenter for Unicode awareness
  */
-const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
+const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
 
 export function countWords(text: string): number {
     if (!text.trim()) return 0;
@@ -28,7 +28,7 @@ export function countWords(text: string): number {
 
 export function calculateTextMetrics(content: string): TextMetrics {
     return {
-        lineCount: content.split('\n').length,
+        lineCount: content.split("\n").length,
         wordCount: countWords(content),
         charCount: content.length,
     };
@@ -48,7 +48,7 @@ export function calculateCursorMetrics(
     const textUpToCursor = content.substring(0, cursorOffset);
 
     return {
-        lineCount: content.split('\n').length,
+        lineCount: content.split("\n").length,
         wordCount: countWords(content),
         charCount: content.length,
         cursorOffset: cursorOffset,

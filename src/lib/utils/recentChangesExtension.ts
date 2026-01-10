@@ -3,7 +3,11 @@ import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 import { gutter, GutterMarker, lineNumbers, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 class LineNumberMarker extends GutterMarker {
-    constructor(private lineNo: number, private alpha: number, private deletionAlpha: number) {
+    constructor(
+        private lineNo: number,
+        private alpha: number,
+        private deletionAlpha: number
+    ) {
         super();
     }
 
@@ -38,85 +42,93 @@ class LineNumberMarker extends GutterMarker {
     }
 
     eq(other: LineNumberMarker) {
-        return this.lineNo === other.lineNo &&
+        return (
+            this.lineNo === other.lineNo &&
             Math.abs(this.alpha - other.alpha) < 0.01 &&
-            Math.abs(this.deletionAlpha - other.deletionAlpha) < 0.01;
+            Math.abs(this.deletionAlpha - other.deletionAlpha) < 0.01
+        );
     }
 }
 
 export function createRecentChangesHighlighter(tracker: LineChangeTracker | undefined) {
-    if (!tracker || (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0)) {
+    if (
+        !tracker ||
+        (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0)
+    ) {
         return [lineNumbers()];
     }
 
     return [
-        ViewPlugin.fromClass(class {
-            update(update: ViewUpdate) {
-                if (!update.docChanged || !tracker) return;
+        ViewPlugin.fromClass(
+            class {
+                update(update: ViewUpdate) {
+                    if (!update.docChanged || !tracker) return;
 
-                const isHistoryAction = update.transactions.some(tr =>
-                    tr.isUserEvent('undo') || tr.isUserEvent('redo')
-                );
+                    const isHistoryAction = update.transactions.some(
+                        (tr) => tr.isUserEvent("undo") || tr.isUserEvent("redo")
+                    );
 
-                if (isHistoryAction) {
-                    const affectedLines = new Set<number>();
+                    if (isHistoryAction) {
+                        const affectedLines = new Set<number>();
+                        update.changes.iterChanges((fromA, toA, fromB, toB) => {
+                            const doc = update.state.doc;
+                            const startLine = doc.lineAt(fromB).number;
+                            const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
+                            for (let line = startLine; line <= endLine; line++) {
+                                affectedLines.add(line);
+                            }
+                        });
+                        tracker.removeLines(Array.from(affectedLines));
+                        return;
+                    }
+
+                    const isUserAction = update.transactions.some(
+                        (tr) =>
+                            tr.isUserEvent("input") ||
+                            tr.isUserEvent("delete") ||
+                            tr.isUserEvent("move")
+                    );
+
+                    if (!isUserAction) return;
+
+                    const changedLines = new Set<number>();
+                    const deletions = new Set<number>();
+
                     update.changes.iterChanges((fromA, toA, fromB, toB) => {
-                        const doc = update.state.doc;
-                        const startLine = doc.lineAt(fromB).number;
-                        const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
+                        const docA = update.startState.doc;
+                        const docB = update.state.doc;
+
+                        const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
+                        const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
+
+                        if (linesA > linesB) {
+                            const lineNo = docB.lineAt(fromB).number;
+                            deletions.add(lineNo);
+                        }
+
+                        const startLine = docB.lineAt(fromB).number;
+                        const endLine = docB.lineAt(Math.min(toB, docB.length)).number;
+
                         for (let line = startLine; line <= endLine; line++) {
-                            affectedLines.add(line);
+                            changedLines.add(line);
+                        }
+
+                        const lineDelta = linesB - linesA;
+                        if (lineDelta !== 0) {
+                            tracker.adjustLineNumbers(endLine + 1, lineDelta);
                         }
                     });
-                    tracker.removeLines(Array.from(affectedLines));
-                    return;
-                }
 
-                const isUserAction = update.transactions.some(tr =>
-                    tr.isUserEvent('input') ||
-                    tr.isUserEvent('delete') ||
-                    tr.isUserEvent('move')
-                );
-
-                if (!isUserAction) return;
-
-                const changedLines = new Set<number>();
-                const deletions = new Set<number>();
-
-                update.changes.iterChanges((fromA, toA, fromB, toB) => {
-                    const docA = update.startState.doc;
-                    const docB = update.state.doc;
-
-                    const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
-                    const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
-
-                    if (linesA > linesB) {
-                        const lineNo = docB.lineAt(fromB).number;
-                        deletions.add(lineNo);
+                    if (changedLines.size > 0) {
+                        tracker.recordChanges(Array.from(changedLines));
                     }
 
-                    const startLine = docB.lineAt(fromB).number;
-                    const endLine = docB.lineAt(Math.min(toB, docB.length)).number;
-
-                    for (let line = startLine; line <= endLine; line++) {
-                        changedLines.add(line);
+                    if (deletions.size > 0) {
+                        deletions.forEach((line) => tracker.recordDeletion(line));
                     }
-
-                    const lineDelta = linesB - linesA;
-                    if (lineDelta !== 0) {
-                        tracker.adjustLineNumbers(endLine + 1, lineDelta);
-                    }
-                });
-
-                if (changedLines.size > 0) {
-                    tracker.recordChanges(Array.from(changedLines));
-                }
-
-                if (deletions.size > 0) {
-                    deletions.forEach(line => tracker.recordDeletion(line));
                 }
             }
-        }),
+        ),
         gutter({
             class: "cm-lineNumbers",
             lineMarker(view, line) {
@@ -146,7 +158,7 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                     return new LineNumberMarker(update.state.doc.lines, 0, 0);
                 }
                 return spacer;
-            }
-        })
+            },
+        }),
     ];
 }

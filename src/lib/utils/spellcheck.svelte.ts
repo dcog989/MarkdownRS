@@ -1,5 +1,5 @@
-import { appState } from '$lib/stores/appState.svelte';
-import { callBackend } from './backend';
+import { appState } from "$lib/stores/appState.svelte";
+import { callBackend } from "./backend";
 
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
@@ -11,8 +11,10 @@ export class SpellcheckManager {
     private pendingFetches = new Set<string>();
 
     async loadCustomDictionary(): Promise<void> {
-        const words = await callBackend('get_custom_dictionary', {}, 'Dictionary:Add', undefined, { ignore: true });
-        this.customDictionary = new Set((words || []).map(w => w.toLowerCase()));
+        const words = await callBackend("get_custom_dictionary", {}, "Dictionary:Add", undefined, {
+            ignore: true,
+        });
+        this.customDictionary = new Set((words || []).map((w) => w.toLowerCase()));
     }
 
     async init(): Promise<void> {
@@ -23,10 +25,19 @@ export class SpellcheckManager {
             try {
                 await this.loadCustomDictionary();
 
-                const dictionaries = appState.spellcheckDictionaries || ['en'];
-                const specialistDictionaries = appState.specialistDictionaries || ['software-terms', 'companies'];
+                const dictionaries = appState.spellcheckDictionaries || ["en"];
+                const specialistDictionaries = appState.specialistDictionaries || [
+                    "software-terms",
+                    "companies",
+                ];
 
-                await callBackend('init_spellchecker', { dictionaries, specialistDictionaries }, 'Spellcheck:Init', undefined, { report: true });
+                await callBackend(
+                    "init_spellchecker",
+                    { dictionaries, specialistDictionaries },
+                    "Spellcheck:Init",
+                    undefined,
+                    { report: true }
+                );
                 this.dictionaryLoaded = true;
             } catch (err) {
                 this.initPromise = null;
@@ -59,7 +70,13 @@ export class SpellcheckManager {
         this.pendingFetches.add(w);
 
         try {
-            const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Dictionary:Add', undefined, { ignore: true });
+            const suggestions = await callBackend(
+                "get_spelling_suggestions",
+                { word: w },
+                "Dictionary:Add",
+                undefined,
+                { ignore: true }
+            );
             if (suggestions) this.suggestionCache.set(w, suggestions);
         } finally {
             this.pendingFetches.delete(w);
@@ -77,7 +94,13 @@ export class SpellcheckManager {
             return this.suggestionCache.get(word)!;
         }
 
-        const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add', undefined, { report: true });
+        const suggestions = await callBackend(
+            "get_spelling_suggestions",
+            { word },
+            "Dictionary:Add",
+            undefined,
+            { report: true }
+        );
         if (suggestions) {
             this.suggestionCache.set(word, suggestions);
             return suggestions;

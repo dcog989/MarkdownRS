@@ -23,18 +23,18 @@ export type EditorTab = {
     originalTitle?: string;
     isPinned?: boolean;
     customTitle?: string;
-    lineEnding: 'LF' | 'CRLF';
+    lineEnding: "LF" | "CRLF";
     encoding: string;
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
     lineChangeTracker?: LineChangeTracker;
     historyState?: any;
-    preferredExtension?: 'md' | 'txt';
+    preferredExtension?: "md" | "txt";
     // Persistence optimization flags
     contentChanged?: boolean; // Content has changed since last DB persist
-    isPersisted?: boolean;    // Tab exists in DB
-    contentLoaded?: boolean;  // Content has been loaded from DB (for lazy loading)
-    forceSync?: number;       // Counter to force editor sync when incremented
+    isPersisted?: boolean; // Tab exists in DB
+    contentLoaded?: boolean; // Content has been loaded from DB (for lazy loading)
+    forceSync?: number; // Counter to force editor sync when incremented
 };
 
 export type ClosedTab = {
@@ -43,7 +43,7 @@ export type ClosedTab = {
 };
 
 function normalizeLineEndings(text: string): string {
-    return text.replace(/\r\n/g, '\n');
+    return text.replace(/\r\n/g, "\n");
 }
 
 type TextOperationCallback = (operationId: OperationId) => void;
@@ -55,7 +55,7 @@ export const editorStore = $state({
     sessionDirty: false,
     mruStack: [] as string[],
     closedTabsHistory: [] as ClosedTab[],
-    lastScrollSource: null as 'editor' | 'preview' | null,
+    lastScrollSource: null as "editor" | "preview" | null,
 });
 
 /**
@@ -70,7 +70,7 @@ function updateTab(
     updater: (tab: EditorTab) => Partial<EditorTab> | void,
     markDirty: boolean = true
 ): boolean {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
+    const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) return false;
 
     const tab = editorStore.tabs[index];
@@ -95,14 +95,14 @@ export function unregisterTextOperationCallback() {
     textOperationCallback = null;
 }
 
-export function addTab(title: string = '', content: string = '') {
+export function addTab(title: string = "", content: string = "") {
     const id = crypto.randomUUID();
     const now = getCurrentTimestamp();
 
     let finalTitle = title;
     let finalContent = content;
 
-    if (!title || title === 'Untitled' || title === '') {
+    if (!title || title === "Untitled" || title === "") {
         const newTabPattern = /New-(\d+)/;
         let maxNewNumber = 0;
         for (const tab of editorStore.tabs) {
@@ -131,17 +131,17 @@ export function addTab(title: string = '', content: string = '') {
         created: now,
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
-        lineEnding: 'LF',
-        encoding: 'UTF-8',
+        lineEnding: "LF",
+        encoding: "UTF-8",
         contentChanged: true, // New tab needs content saved
-        isPersisted: false,   // New tab not yet in DB
-        contentLoaded: true,  // New tab's content is already in memory
+        isPersisted: false, // New tab not yet in DB
+        contentLoaded: true, // New tab's content is already in memory
     };
 
-    if (appState.newTabPosition === 'beginning') {
+    if (appState.newTabPosition === "beginning") {
         editorStore.tabs.unshift(newTab);
-    } else if (appState.newTabPosition === 'right' && appState.activeTabId) {
-        const activeIndex = editorStore.tabs.findIndex(t => t.id === appState.activeTabId);
+    } else if (appState.newTabPosition === "right" && appState.activeTabId) {
+        const activeIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
         editorStore.tabs.splice(activeIndex + 1, 0, newTab);
     } else {
         editorStore.tabs.push(newTab);
@@ -153,7 +153,7 @@ export function addTab(title: string = '', content: string = '') {
 }
 
 export function closeTab(id: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
+    const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) return;
 
     const tab = editorStore.tabs[index];
@@ -161,16 +161,19 @@ export function closeTab(id: string) {
     if (tab.path || (tab.content && tab.content.trim().length > 0)) {
         const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
 
-        const filteredHistory = editorStore.closedTabsHistory.filter(entry =>
-            entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path)
+        const filteredHistory = editorStore.closedTabsHistory.filter(
+            (entry) => entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path)
         );
 
-        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(0, limit);
+        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(
+            0,
+            limit
+        );
     }
 
     // Atomic reassignment to ensure Svelte 5 reactivity triggers across all components
-    editorStore.tabs = editorStore.tabs.filter(t => t.id !== id);
-    editorStore.mruStack = editorStore.mruStack.filter(tId => tId !== id);
+    editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);
+    editorStore.mruStack = editorStore.mruStack.filter((tId) => tId !== id);
 
     editorStore.sessionDirty = true;
     clearRendererCache(id);
@@ -207,7 +210,7 @@ export function reopenClosedTab(historyIndex: number): string | null {
 
 export function pushToMru(id: string) {
     if (editorStore.mruStack.length > 0 && editorStore.mruStack[0] === id) return;
-    editorStore.mruStack = [id, ...editorStore.mruStack.filter(tId => tId !== id)];
+    editorStore.mruStack = [id, ...editorStore.mruStack.filter((tId) => tId !== id)];
     editorStore.sessionDirty = true;
 }
 
@@ -217,7 +220,7 @@ export function reorderTabs(newTabs: EditorTab[]) {
 }
 
 export function updateContent(id: string, content: string) {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
+    const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) return;
 
     const oldTab = editorStore.tabs[index];
@@ -227,8 +230,8 @@ export function updateContent(id: string, content: string) {
     if (appState.tabNameFromContent) {
         const trimmed = content.trim();
         if (trimmed.length > 0) {
-            const lines = content.split('\n');
-            const firstLine = lines.find(l => l.trim().length > 0) || "";
+            const lines = content.split("\n");
+            const firstLine = lines.find((l) => l.trim().length > 0) || "";
             let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
             const MAX_LEN = 25;
             if (smartTitle.length > MAX_LEN) {
@@ -253,19 +256,25 @@ export function updateContent(id: string, content: string) {
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         sizeBytes: new TextEncoder().encode(content).length,
-        contentChanged: true // Mark for persistence
+        contentChanged: true, // Mark for persistence
     };
 
     editorStore.tabs[index] = updatedTab;
     editorStore.sessionDirty = true;
 }
 
-export function updateScroll(id: string, percentage: number, topLine: number | undefined, source: 'editor' | 'preview') {
-    const index = editorStore.tabs.findIndex(t => t.id === id);
+export function updateScroll(
+    id: string,
+    percentage: number,
+    topLine: number | undefined,
+    source: "editor" | "preview"
+) {
+    const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) return;
 
     const tab = editorStore.tabs[index];
-    const isSignificant = Math.abs(tab.scrollPercentage - percentage) > 0.001 ||
+    const isSignificant =
+        Math.abs(tab.scrollPercentage - percentage) > 0.001 ||
         (topLine !== undefined && Math.abs((tab.topLine || 0) - topLine) > 0.01);
 
     if (isSignificant) {
@@ -277,11 +286,15 @@ export function updateScroll(id: string, percentage: number, topLine: number | u
 }
 
 export function updateCursor(id: string, anchor: number, head: number) {
-    updateTab(id, (tab) => {
-        if (tab.cursor.anchor !== anchor || tab.cursor.head !== head) {
-            return { cursor: { anchor, head } };
-        }
-    }, false);
+    updateTab(
+        id,
+        (tab) => {
+            if (tab.cursor.anchor !== anchor || tab.cursor.head !== head) {
+                return { cursor: { anchor, head } };
+            }
+        },
+        false
+    );
 }
 
 export function updateMetadata(id: string, created?: string, modified?: string) {
@@ -291,7 +304,7 @@ export function updateMetadata(id: string, created?: string, modified?: string) 
             return {
                 created: created || tab.created,
                 modified: modified || tab.modified,
-                formattedTimestamp: formatTimestampForDisplay(tsToFormat)
+                formattedTimestamp: formatTimestampForDisplay(tsToFormat),
             };
         }
     });
@@ -304,7 +317,7 @@ export function updateHistoryState(id: string, state: any) {
 export function markAsSaved(id: string) {
     updateTab(id, (tab) => ({
         lastSavedContent: tab.content,
-        isDirty: false
+        isDirty: false,
     }));
 }
 
@@ -343,11 +356,17 @@ export function updateTabMetadataAndPath(id: string, updates: Partial<EditorTab>
 export function setFileCheckStatus(id: string, performed: boolean, failed: boolean) {
     updateTab(id, () => ({
         fileCheckPerformed: performed,
-        fileCheckFailed: failed
+        fileCheckFailed: failed,
     }));
 }
 
-export function reloadTabContent(id: string, content: string, lineEnding: 'LF' | 'CRLF', encoding: string, sizeBytes: number) {
+export function reloadTabContent(
+    id: string,
+    content: string,
+    lineEnding: "LF" | "CRLF",
+    encoding: string,
+    sizeBytes: number
+) {
     updateTab(id, () => ({
         content,
         lastSavedContent: content,
@@ -356,29 +375,34 @@ export function reloadTabContent(id: string, content: string, lineEnding: 'LF' |
         encoding,
         sizeBytes,
         fileCheckPerformed: false,
-        contentChanged: true // Reload means new content to persist
+        contentChanged: true, // Reload means new content to persist
     }));
 }
 
 export function updateContentOnly(id: string, content: string, forceSync: boolean = false) {
-    updateTab(id, (tab) => ({ 
-        content, 
+    updateTab(id, (tab) => ({
+        content,
         contentChanged: true,
-        forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync 
+        forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync,
     }));
 }
 
-export function updateLineEnding(id: string, lineEnding: 'LF' | 'CRLF') {
+export function updateLineEnding(id: string, lineEnding: "LF" | "CRLF") {
     updateTab(id, () => ({ lineEnding }));
 }
 
-export function saveTabComplete(id: string, path: string, title: string, lineEnding: 'LF' | 'CRLF') {
+export function saveTabComplete(
+    id: string,
+    path: string,
+    title: string,
+    lineEnding: "LF" | "CRLF"
+) {
     updateTab(id, () => ({
         path,
         title,
         lineEnding,
         fileCheckPerformed: false,
-        fileCheckFailed: false
+        fileCheckFailed: false,
     }));
 }
 
@@ -387,12 +411,12 @@ export function togglePreferredExtension(id: string) {
         let current = tab.preferredExtension;
         if (!current) {
             if (tab.path) {
-                current = isMarkdownFile(tab.path) ? 'md' : 'txt';
+                current = isMarkdownFile(tab.path) ? "md" : "txt";
             } else {
-                current = 'md';
+                current = "md";
             }
         }
-        return { preferredExtension: current === 'md' ? 'txt' : 'md' };
+        return { preferredExtension: current === "md" ? "txt" : "md" };
     });
 }
 

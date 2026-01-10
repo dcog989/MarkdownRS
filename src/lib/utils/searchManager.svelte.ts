@@ -14,7 +14,7 @@ export const searchState = $state({
     // Results
     currentMatches: 0,
     currentIndex: 0,
-    allTabsResults: new Map<string, number>()
+    allTabsResults: new Map<string, number>(),
 });
 
 // Logic
@@ -24,7 +24,7 @@ export function getSearchQuery(): SearchQuery {
         caseSensitive: searchState.matchCase,
         regexp: searchState.useRegex,
         wholeWord: searchState.matchWholeWord,
-        replace: searchState.replaceText
+        replace: searchState.replaceText,
     });
 }
 
@@ -34,7 +34,7 @@ export function updateSearchEditor(view: EditorView | undefined) {
     const query = getSearchQuery();
 
     view.dispatch({
-        effects: setSearchQuery.of(query)
+        effects: setSearchQuery.of(query),
     });
 
     calculateSearchStats(view, query);
@@ -112,7 +112,7 @@ export function selectNearestMatch(view: EditorView | undefined) {
         view.dispatch({
             effects: setSearchQuery.of(query),
             selection: { anchor: matchToSelect.from, head: matchToSelect.to },
-            scrollIntoView: true
+            scrollIntoView: true,
         });
 
         calculateSearchStats(view, query);
@@ -124,7 +124,7 @@ export function selectNearestMatch(view: EditorView | undefined) {
 export function clearSearch(view: EditorView | undefined) {
     if (!view) return;
     view.dispatch({
-        effects: setSearchQuery.of(new SearchQuery({ search: "" }))
+        effects: setSearchQuery.of(new SearchQuery({ search: "" })),
     });
     searchState.currentMatches = 0;
     searchState.currentIndex = 0;

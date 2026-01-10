@@ -65,9 +65,7 @@ class SessionPersistenceManager {
     private async executeSave(): Promise<void> {
         try {
             const mruPositionMap = new Map<string, number>();
-            appContext.editor.mruStack.forEach((tabId, index) =>
-                mruPositionMap.set(tabId, index),
-            );
+            appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
             // 1. Map Active Tabs (Optimized content payload)
             const activeTabs = appContext.editor.tabs;
@@ -93,10 +91,9 @@ class SessionPersistenceManager {
             });
 
             // 2. Map Closed Tabs (Optimized content payload - only when changed or new)
-            const closedTabs: RustTabState[] =
-                appContext.editor.closedTabsHistory.map((entry, index) => {
-                    const needsContent =
-                        entry.tab.contentChanged || !entry.tab.isPersisted;
+            const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map(
+                (entry, index) => {
+                    const needsContent = entry.tab.contentChanged || !entry.tab.isPersisted;
                     return {
                         id: entry.tab.id,
                         path: entry.tab.path,
@@ -114,12 +111,13 @@ class SessionPersistenceManager {
                         sort_index: index,
                         original_index: entry.index,
                     };
-                });
+                }
+            );
 
             await callBackend(
                 "save_session",
                 { activeTabs: activeRustTabs, closedTabs: closedTabs },
-                "Session:Save",
+                "Session:Save"
             );
 
             // 3. Update persistence state on success
@@ -154,14 +152,10 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 
     if (tab.isDirty) {
         try {
-            const res = await callBackend(
-                "read_text_file",
-                { path: tab.path },
-                "File:Read",
-            );
+            const res = await callBackend("read_text_file", { path: tab.path }, "File:Read");
 
             if (!res) {
-                throw new Error('Failed to read file: null result');
+                throw new Error("Failed to read file: null result");
             }
 
             const storeTab = appContext.editor.tabs.find((x) => x.id === tab.id);
@@ -207,11 +201,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     if (tab.contentLoaded) return;
 
     try {
-        const content = await callBackend(
-            "load_tab_content",
-            { tabId },
-            "Session:Load",
-        );
+        const content = await callBackend("load_tab_content", { tabId }, "Session:Load");
 
         if (content !== null && content !== undefined) {
             const normalizedContent = normalizeLineEndings(content);
@@ -222,7 +212,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                 lastSavedContent: normalizedContent,
                 sizeBytes: new TextEncoder().encode(normalizedContent).length,
                 lineEnding: normalizedContent.indexOf("\r\n") !== -1 ? "CRLF" : "LF",
-                contentLoaded: true
+                contentLoaded: true,
             };
         } else {
             tab.contentLoaded = true;
@@ -269,11 +259,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 
 export async function loadSession(): Promise<void> {
     try {
-        const sessionData = await callBackend(
-            "restore_session",
-            {},
-            "Session:Load",
-        );
+        const sessionData = await callBackend("restore_session", {}, "Session:Load");
 
         let activeRustTabs: RustTabState[] = [];
         let closedRustTabs: RustTabState[] = [];
@@ -320,7 +306,7 @@ export async function loadSession(): Promise<void> {
             }
 
             const activeTab = appContext.editor.tabs.find(
-                (t) => t.id === appContext.app.activeTabId,
+                (t) => t.id === appContext.app.activeTabId
             );
             if (activeTab) {
                 // Lazy load content for the active tab if not already loaded
@@ -332,14 +318,8 @@ export async function loadSession(): Promise<void> {
         }
 
         // Ensure there's always one tab if empty or requested "new"
-        if (
-            appContext.editor.tabs.length === 0 ||
-            appContext.app.startupBehavior === "new"
-        ) {
-            if (
-                appContext.app.startupBehavior === "new" &&
-                activeRustTabs.length > 0
-            ) {
+        if (appContext.editor.tabs.length === 0 || appContext.app.startupBehavior === "new") {
+            if (appContext.app.startupBehavior === "new" && activeRustTabs.length > 0) {
                 appContext.app.activeTabId = addTab();
             } else if (appContext.editor.tabs.length === 0) {
                 appContext.app.activeTabId = addTab();
@@ -366,7 +346,4 @@ export async function loadSession(): Promise<void> {
     }
 }
 
-export const persistSessionDebounced = debounce(
-    persistSession,
-    CONFIG.SESSION.SAVE_DEBOUNCE_MS,
-);
+export const persistSessionDebounced = debounce(persistSession, CONFIG.SESSION.SAVE_DEBOUNCE_MS);

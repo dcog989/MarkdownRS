@@ -1,47 +1,62 @@
 import { syntaxTree } from "@codemirror/language";
 import { RangeSetBuilder } from "@codemirror/state";
-import { Decoration, MatchDecorator, ViewPlugin, type DecorationSet, type EditorView, type ViewUpdate } from "@codemirror/view";
+import {
+    Decoration,
+    MatchDecorator,
+    ViewPlugin,
+    type DecorationSet,
+    type EditorView,
+    type ViewUpdate,
+} from "@codemirror/view";
 
 // Decorator for ==highlight== syntax
 const highlightMatcher = new MatchDecorator({
     regexp: /==([^=]+)==/g,
-    decoration: (match) => Decoration.mark({
-        class: "cm-highlight"
-    })
+    decoration: (match) =>
+        Decoration.mark({
+            class: "cm-highlight",
+        }),
 });
 
-export const highlightPlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = highlightMatcher.createDeco(view);
+export const highlightPlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = highlightMatcher.createDeco(view);
+        }
+        update(update: ViewUpdate) {
+            this.decorations = highlightMatcher.updateDeco(update, this.decorations);
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-    update(update: ViewUpdate) {
-        this.decorations = highlightMatcher.updateDeco(update, this.decorations);
-    }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Decorator for raw URLs (http://, https://, www.)
 // Matches valid URL characters, stopping before trailing punctuation/whitespace
 const urlMatcher = new MatchDecorator({
     regexp: /(?:https?:\/\/|www\.)[^\s`]+?(?=[.,;:!?`)]*(?:\s|$))/g,
-    decoration: (match) => Decoration.mark({
-        class: "cm-url"
-    })
+    decoration: (match) =>
+        Decoration.mark({
+            class: "cm-url",
+        }),
 });
 
-export const urlPlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = urlMatcher.createDeco(view);
+export const urlPlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = urlMatcher.createDeco(view);
+        }
+        update(update: ViewUpdate) {
+            this.decorations = urlMatcher.updateDeco(update, this.decorations);
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-    update(update: ViewUpdate) {
-        this.decorations = urlMatcher.updateDeco(update, this.decorations);
-    }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Blockquote Styling
 const blockquoteBorderDeco = Decoration.mark({ class: "cm-blockquote-border" });
@@ -50,11 +65,15 @@ const blockquoteBgDeco = Decoration.mark({ class: "cm-blockquote-bg" });
 function getBlockquoteDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
     for (const { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to;) {
+        for (let pos = from; pos <= to; ) {
             const line = view.state.doc.lineAt(pos);
             const match = /^\s*> ?/.exec(line.text);
             if (match) {
-                builder.add(line.from + match.index, line.from + match.index + match[0].length, blockquoteBorderDeco);
+                builder.add(
+                    line.from + match.index,
+                    line.from + match.index + match[0].length,
+                    blockquoteBorderDeco
+                );
                 builder.add(line.from, line.to, blockquoteBgDeco);
             }
             pos = line.to + 1;
@@ -63,23 +82,26 @@ function getBlockquoteDecorations(view: EditorView) {
     return builder.finish();
 }
 
-export const blockquotePlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = getBlockquoteDecorations(view);
-    }
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            this.decorations = getBlockquoteDecorations(update.view);
+export const blockquotePlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = getBlockquoteDecorations(view);
         }
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = getBlockquoteDecorations(update.view);
+            }
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Decorator for Fenced Code Block content (content width only)
 const codeBlockMarkDeco = Decoration.mark({
-    class: "cm-code"
+    class: "cm-code",
 });
 
 function getCodeBlockDecorations(view: EditorView) {
@@ -89,7 +111,8 @@ function getCodeBlockDecorations(view: EditorView) {
 
     for (const { from, to } of view.visibleRanges) {
         tree.iterate({
-            from, to,
+            from,
+            to,
             enter: (node) => {
                 if (node.name === "FencedCode") {
                     const startLine = view.state.doc.lineAt(node.from);
@@ -103,25 +126,28 @@ function getCodeBlockDecorations(view: EditorView) {
                         }
                     }
                 }
-            }
+            },
         });
     }
     return builder.finish();
 }
 
-export const codeBlockPlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = getCodeBlockDecorations(view);
-    }
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            this.decorations = getCodeBlockDecorations(update.view);
+export const codeBlockPlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = getCodeBlockDecorations(view);
         }
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = getCodeBlockDecorations(update.view);
+            }
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Plugin for Inline Code `...` to ensure backticks are colored
 function getInlineCodeDecorations(view: EditorView) {
@@ -130,31 +156,35 @@ function getInlineCodeDecorations(view: EditorView) {
 
     for (const { from, to } of view.visibleRanges) {
         tree.iterate({
-            from, to,
+            from,
+            to,
             enter: (node) => {
                 // InlineCode encompasses the backticks and content
                 if (node.name === "InlineCode") {
                     builder.add(node.from, node.to, codeBlockMarkDeco);
                 }
-            }
+            },
         });
     }
     return builder.finish();
 }
 
-export const inlineCodePlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = getInlineCodeDecorations(view);
-    }
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            this.decorations = getInlineCodeDecorations(update.view);
+export const inlineCodePlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = getInlineCodeDecorations(view);
         }
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = getInlineCodeDecorations(update.view);
+            }
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Horizontal Rule Styling (---, -----, etc.)
 const horizontalRuleDeco = Decoration.mark({ class: "cm-hr" });
@@ -165,30 +195,34 @@ function getHorizontalRuleDecorations(view: EditorView) {
 
     for (const { from, to } of view.visibleRanges) {
         tree.iterate({
-            from, to,
+            from,
+            to,
             enter: (node) => {
                 if (node.name === "HorizontalRule") {
                     builder.add(node.from, node.to, horizontalRuleDeco);
                 }
-            }
+            },
         });
     }
     return builder.finish();
 }
 
-export const horizontalRulePlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = getHorizontalRuleDecorations(view);
-    }
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            this.decorations = getHorizontalRuleDecorations(update.view);
+export const horizontalRulePlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = getHorizontalRuleDecorations(view);
         }
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = getHorizontalRuleDecorations(update.view);
+            }
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-}, {
-    decorations: v => v.decorations
-});
+);
 
 // Bullet Point Styling (- at start of line)
 const bulletPointDeco = Decoration.mark({ class: "cm-bullet" });
@@ -196,7 +230,7 @@ const bulletPointDeco = Decoration.mark({ class: "cm-bullet" });
 function getBulletPointDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
     for (const { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to;) {
+        for (let pos = from; pos <= to; ) {
             const line = view.state.doc.lineAt(pos);
             // Match lines starting with optional whitespace, then a dash, then a space
             const match = /^(\s*)-\s/.exec(line.text);
@@ -212,16 +246,19 @@ function getBulletPointDecorations(view: EditorView) {
     return builder.finish();
 }
 
-export const bulletPointPlugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-        this.decorations = getBulletPointDecorations(view);
-    }
-    update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            this.decorations = getBulletPointDecorations(update.view);
+export const bulletPointPlugin = ViewPlugin.fromClass(
+    class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+            this.decorations = getBulletPointDecorations(view);
         }
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = getBulletPointDecorations(update.view);
+            }
+        }
+    },
+    {
+        decorations: (v) => v.decorations,
     }
-}, {
-    decorations: v => v.decorations
-});
+);

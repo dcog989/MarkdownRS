@@ -45,6 +45,6 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
             node.removeEventListener("mouseenter", handleMouseEnter);
             node.removeEventListener("mouseleave", handleMouseLeave);
             node.removeEventListener("mousedown", handleMouseDown);
-        }
+        },
     };
 }

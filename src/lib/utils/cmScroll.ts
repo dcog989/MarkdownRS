@@ -1,9 +1,14 @@
 import { EditorView } from "@codemirror/view";
 
-export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
+export type RestoreStrategy = "pixel" | "anchor" | "auto";
 
 export class ScrollManager {
-    private snapshot: { scrollTop: number; anchorLine: number; anchorOffset: number; totalLines: number } | null = null;
+    private snapshot: {
+        scrollTop: number;
+        anchorLine: number;
+        anchorOffset: number;
+        totalLines: number;
+    } | null = null;
 
     public capture(view: EditorView, context: string) {
         if (!view.scrollDOM) return;
@@ -18,11 +23,11 @@ export class ScrollManager {
             scrollTop: scrollTop,
             anchorLine: line.number,
             anchorOffset: scrollTop - block.top,
-            totalLines: view.state.doc.lines
+            totalLines: view.state.doc.lines,
         };
     }
 
-    public restore(view: EditorView, strategy: RestoreStrategy = 'auto') {
+    public restore(view: EditorView, strategy: RestoreStrategy = "auto") {
         if (!this.snapshot || !view.scrollDOM) {
             return;
         }
@@ -42,12 +47,12 @@ export class ScrollManager {
                     let effectiveStrategy = strategy;
                     let reason = "Manual override";
 
-                    if (strategy === 'auto') {
+                    if (strategy === "auto") {
                         if (currentLines !== target.totalLines) {
-                            effectiveStrategy = 'anchor';
+                            effectiveStrategy = "anchor";
                             reason = `Line count changed (${target.totalLines} -> ${currentLines})`;
                         } else {
-                            effectiveStrategy = 'pixel';
+                            effectiveStrategy = "pixel";
                             reason = "Line count stable";
                         }
                     }
@@ -55,7 +60,7 @@ export class ScrollManager {
                     let targetTop = target.scrollTop;
                     let logDetail = "";
 
-                    if (effectiveStrategy === 'anchor') {
+                    if (effectiveStrategy === "anchor") {
                         try {
                             const safeLine = Math.max(1, Math.min(target.anchorLine, currentLines));
                             const lineInfo = currentDoc.line(safeLine);
@@ -83,11 +88,10 @@ export class ScrollManager {
                         strategy: effectiveStrategy,
                         reason,
                         logDetail,
-                        domReady: scrollHeight > clientHeight
+                        domReady: scrollHeight > clientHeight,
                     };
                 },
                 write: ({ targetTop, strategy, reason, logDetail, domReady }) => {
-
                     if (!domReady && targetTop > 0) {
                     }
 
@@ -101,7 +105,7 @@ export class ScrollManager {
                             }
                         });
                     }
-                }
+                },
             });
         });
     }

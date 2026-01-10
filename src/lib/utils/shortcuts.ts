@@ -36,7 +36,7 @@ export class KeyboardShortcutManager {
      * Unregister a keyboard shortcut
      */
     unregister(shortcutOrId: ShortcutDefinition | string): void {
-        if (typeof shortcutOrId === 'string') {
+        if (typeof shortcutOrId === "string") {
             // Remove by ID
             for (const [key, shortcut] of this.shortcuts) {
                 if (shortcut.id === shortcutOrId) {
@@ -110,14 +110,14 @@ export class KeyboardShortcutManager {
     getShortcutString(shortcut: ShortcutDefinition): string {
         const parts: string[] = [];
 
-        if (shortcut.ctrl) parts.push('Ctrl');
-        if (shortcut.alt) parts.push('Alt');
-        if (shortcut.shift) parts.push('Shift');
-        if (shortcut.meta) parts.push('Cmd');
+        if (shortcut.ctrl) parts.push("Ctrl");
+        if (shortcut.alt) parts.push("Alt");
+        if (shortcut.shift) parts.push("Shift");
+        if (shortcut.meta) parts.push("Cmd");
 
         parts.push(shortcut.key.toUpperCase());
 
-        return parts.join('+');
+        return parts.join("+");
     }
 
     /**
@@ -126,14 +126,14 @@ export class KeyboardShortcutManager {
     private getShortcutKey(shortcut: ShortcutDefinition): string {
         const parts: string[] = [];
 
-        if (shortcut.ctrl) parts.push('ctrl');
-        if (shortcut.alt) parts.push('alt');
-        if (shortcut.shift) parts.push('shift');
-        if (shortcut.meta) parts.push('meta');
+        if (shortcut.ctrl) parts.push("ctrl");
+        if (shortcut.alt) parts.push("alt");
+        if (shortcut.shift) parts.push("shift");
+        if (shortcut.meta) parts.push("meta");
 
         parts.push(shortcut.key.toLowerCase());
 
-        return parts.join('+');
+        return parts.join("+");
     }
 
     /**
@@ -142,14 +142,14 @@ export class KeyboardShortcutManager {
     private getEventKey(e: KeyboardEvent): string {
         const parts: string[] = [];
 
-        if (e.ctrlKey) parts.push('ctrl');
-        if (e.altKey) parts.push('alt');
-        if (e.shiftKey) parts.push('shift');
-        if (e.metaKey) parts.push('meta');
+        if (e.ctrlKey) parts.push("ctrl");
+        if (e.altKey) parts.push("alt");
+        if (e.shiftKey) parts.push("shift");
+        if (e.metaKey) parts.push("meta");
 
         parts.push(e.key.toLowerCase());
 
-        return parts.join('+');
+        return parts.join("+");
     }
 
     /**

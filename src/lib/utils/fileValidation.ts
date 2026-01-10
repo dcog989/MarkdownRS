@@ -97,7 +97,7 @@ const DEFAULT_ALLOWED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS;
 export function validateFile(
     path: string,
     sizeBytes: number,
-    options: FileValidationOptions = {},
+    options: FileValidationOptions = {}
 ): FileValidationResult {
     const {
         maxSizeBytes = DEFAULT_MAX_FILE_SIZE,
@@ -151,9 +151,7 @@ export function validateFile(
         return { valid: true };
     }
 
-    const extension = filename.includes(".")
-        ? filename.split(".").pop()?.toLowerCase()
-        : null;
+    const extension = filename.includes(".") ? filename.split(".").pop()?.toLowerCase() : null;
 
     if (requireExtension && !extension) {
         return { valid: false, error: "File must have an extension" };

@@ -8,7 +8,7 @@ export class ScrollSyncManager {
     private lineMap: { line: number; y: number }[] = [];
 
     // State to prevent circular scroll loops
-    private activeSource = $state<'editor' | 'preview' | null>(null);
+    private activeSource = $state<"editor" | "preview" | null>(null);
     private clearSourceTimer: number | null = null;
     private resizeObserver: ResizeObserver | null = null;
 
@@ -24,7 +24,7 @@ export class ScrollSyncManager {
 
                     // Observe container and children
                     this.resizeObserver.observe(this.preview);
-                    Array.from(this.preview.children).forEach(child => {
+                    Array.from(this.preview.children).forEach((child) => {
                         this.resizeObserver?.observe(child);
                     });
 
@@ -40,25 +40,25 @@ export class ScrollSyncManager {
         if (this.editor === view) return;
 
         if (this.editor) {
-            this.editor.scrollDOM.removeEventListener('scroll', this.onEditorScroll);
+            this.editor.scrollDOM.removeEventListener("scroll", this.onEditorScroll);
         }
 
         this.editor = view;
         // Bind to class instance
         this.onEditorScroll = this.onEditorScroll.bind(this);
-        view.scrollDOM.addEventListener('scroll', this.onEditorScroll, { passive: true });
+        view.scrollDOM.addEventListener("scroll", this.onEditorScroll, { passive: true });
     }
 
     registerPreview(el: HTMLElement) {
         if (this.preview === el) return;
 
         if (this.preview) {
-            this.preview.removeEventListener('scroll', this.onPreviewScroll);
+            this.preview.removeEventListener("scroll", this.onPreviewScroll);
         }
 
         this.preview = el;
         this.onPreviewScroll = this.onPreviewScroll.bind(this);
-        el.addEventListener('scroll', this.onPreviewScroll, { passive: true });
+        el.addEventListener("scroll", this.onPreviewScroll, { passive: true });
     }
 
     updateMap() {
@@ -70,16 +70,20 @@ export class ScrollSyncManager {
 
         // Query only elements with data-source-line attribute
         // We use a more specific query to avoid layout thrashing if possible, but map build is heavy anyway
-        const elements = Array.from(container.querySelectorAll("[data-source-line]")) as HTMLElement[];
+        const elements = Array.from(
+            container.querySelectorAll("[data-source-line]")
+        ) as HTMLElement[];
 
         // 1. Build Raw Map: Line -> Pixel Y (absolute in scrollable area)
-        let rawMap = elements.map(el => {
-            const rect = el.getBoundingClientRect();
-            // Calculate Y relative to the top of the scrollable content
-            const y = (rect.top - containerRect.top) + scrollTop;
-            const line = parseInt(el.getAttribute("data-source-line") || "0", 10);
-            return { line, y };
-        }).filter(item => !isNaN(item.line));
+        let rawMap = elements
+            .map((el) => {
+                const rect = el.getBoundingClientRect();
+                // Calculate Y relative to the top of the scrollable content
+                const y = rect.top - containerRect.top + scrollTop;
+                const line = parseInt(el.getAttribute("data-source-line") || "0", 10);
+                return { line, y };
+            })
+            .filter((item) => !isNaN(item.line));
 
         // 2. Sanitize Map
         if (rawMap.length > 0) {
@@ -115,48 +119,42 @@ export class ScrollSyncManager {
         }
     }
 
-    private syncPreviewThrottled = throttle(
-        () => {
-            // Use requestAnimationFrame to batch DOM writes
-            if (!this.syncPreviewRAF) {
-                this.syncPreviewRAF = requestAnimationFrame(() => {
-                    this.syncPreviewRAF = null;
-                    this.syncPreview();
-                });
-            }
-        },
-        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS
-    );
+    private syncPreviewThrottled = throttle(() => {
+        // Use requestAnimationFrame to batch DOM writes
+        if (!this.syncPreviewRAF) {
+            this.syncPreviewRAF = requestAnimationFrame(() => {
+                this.syncPreviewRAF = null;
+                this.syncPreview();
+            });
+        }
+    }, CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS);
 
-    private syncEditorThrottled = throttle(
-        () => {
-            // Use requestAnimationFrame to batch DOM writes
-            if (!this.syncEditorRAF) {
-                this.syncEditorRAF = requestAnimationFrame(() => {
-                    this.syncEditorRAF = null;
-                    this.syncEditor();
-                });
-            }
-        },
-        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS
-    );
+    private syncEditorThrottled = throttle(() => {
+        // Use requestAnimationFrame to batch DOM writes
+        if (!this.syncEditorRAF) {
+            this.syncEditorRAF = requestAnimationFrame(() => {
+                this.syncEditorRAF = null;
+                this.syncEditor();
+            });
+        }
+    }, CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS);
 
     private syncPreviewRAF: number | null = null;
     private syncEditorRAF: number | null = null;
 
     private onEditorScroll() {
-        if (this.activeSource === 'preview') return;
-        this.setActiveSource('editor');
+        if (this.activeSource === "preview") return;
+        this.setActiveSource("editor");
         this.syncPreviewThrottled();
     }
 
     private onPreviewScroll() {
-        if (this.activeSource === 'editor') return;
-        this.setActiveSource('preview');
+        if (this.activeSource === "editor") return;
+        this.setActiveSource("preview");
         this.syncEditorThrottled();
     }
 
-    private setActiveSource(source: 'editor' | 'preview') {
+    private setActiveSource(source: "editor" | "preview") {
         this.activeSource = source;
         if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
         this.clearSourceTimer = window.setTimeout(() => {
@@ -190,7 +188,10 @@ export class ScrollSyncManager {
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
             const targetTop = pct * (this.preview.scrollHeight - this.preview.clientHeight);
-            if (Math.abs(this.preview.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+            if (
+                Math.abs(this.preview.scrollTop - targetTop) >
+                CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+            ) {
                 this.preview.scrollTop = targetTop;
             }
             return;
@@ -201,9 +202,11 @@ export class ScrollSyncManager {
         const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
         const currentLine = docLine.number + fraction;
 
-        const targetY = this.interpolate(currentLine, 'line', 'y');
+        const targetY = this.interpolate(currentLine, "line", "y");
 
-        if (Math.abs(this.preview.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+        if (
+            Math.abs(this.preview.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+        ) {
             this.preview.scrollTop = targetY;
         }
     }
@@ -223,7 +226,8 @@ export class ScrollSyncManager {
             return;
         }
         if (scrollTop >= maxScroll - 1) {
-            const targetBottom = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            const targetBottom =
+                this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
             if (Math.abs(this.editor.scrollDOM.scrollTop - targetBottom) > 2) {
                 this.editor.scrollDOM.scrollTop = targetBottom;
             }
@@ -232,15 +236,19 @@ export class ScrollSyncManager {
 
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
-            const editorMax = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            const editorMax =
+                this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
             const targetTop = pct * editorMax;
-            if (Math.abs(this.editor.scrollDOM.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+            if (
+                Math.abs(this.editor.scrollDOM.scrollTop - targetTop) >
+                CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+            ) {
                 this.editor.scrollDOM.scrollTop = targetTop;
             }
             return;
         }
 
-        const targetLine = this.interpolate(scrollTop, 'y', 'line');
+        const targetLine = this.interpolate(scrollTop, "y", "line");
         const docLines = this.editor.state.doc.lines;
         const safeLine = Math.max(1, Math.min(targetLine, docLines));
 
@@ -248,16 +256,20 @@ export class ScrollSyncManager {
         const lineFrac = safeLine - lineInt;
 
         const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
-        const targetY = lineInfo.top + (lineInfo.height * lineFrac);
+        const targetY = lineInfo.top + lineInfo.height * lineFrac;
 
-        if (Math.abs(this.editor.scrollDOM.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+        if (
+            Math.abs(this.editor.scrollDOM.scrollTop - targetY) >
+            CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+        ) {
             this.editor.scrollDOM.scrollTop = targetY;
         }
     }
 
-    private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
+    private interpolate(val: number, inputKey: "line" | "y", outputKey: "line" | "y"): number {
         const map = this.lineMap;
-        let lo = 0, hi = map.length - 1;
+        let lo = 0,
+            hi = map.length - 1;
 
         while (lo <= hi) {
             const mid = (lo + hi) >> 1;
@@ -280,11 +292,11 @@ export class ScrollSyncManager {
         if (inputSpan === 0) return p1[outputKey];
 
         const ratio = (val - p1[inputKey]) / inputSpan;
-        return p1[outputKey] + (ratio * outputSpan);
+        return p1[outputKey] + ratio * outputSpan;
     }
 
     handleFastScroll(v: EditorView, targetY: number) {
-        this.setActiveSource('editor');
+        this.setActiveSource("editor");
         if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
         this.clearSourceTimer = window.setTimeout(() => {
             this.activeSource = null;

@@ -1,43 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-
-    <!-- Critical CSS: Prevents FOUC, matches default dark theme -->
-    <style>
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            overflow: hidden;
-            background-color: #1e1e1e;
-            /* Fallback */
-        }
-
-        @media (prefers-color-scheme: light) {
-
+        <!-- Critical CSS: Prevents FOUC, matches default dark theme -->
+        <style>
             html,
             body {
-                background-color: #f9fafb;
-                /* Light theme fallback */
+                height: 100%;
+                margin: 0;
+                overflow: hidden;
+                background-color: #1e1e1e;
+                /* Fallback */
             }
-        }
-    </style>
 
-    <script>
-        // Prevent browser context menu globally
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        }, { passive: false });
-    </script>
+            @media (prefers-color-scheme: light) {
+                html,
+                body {
+                    background-color: #f9fafb;
+                    /* Light theme fallback */
+                }
+            }
+        </style>
 
-    %sveltekit.head%
-</head>
+        <script>
+            // Prevent browser context menu globally
+            document.addEventListener(
+                "contextmenu",
+                (e) => {
+                    e.preventDefault();
+                },
+                { passive: false }
+            );
+        </script>
 
-<body data-sveltekit-preload-data="hover">
-    <div style="display: contents">%sveltekit.body%</div>
-</body>
+        %sveltekit.head%
+    </head>
 
+    <body data-sveltekit-preload-data="hover">
+        <div style="display: contents">%sveltekit.body%</div>
+    </body>
 </html>

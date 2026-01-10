@@ -1,6 +1,13 @@
 import { appContext } from "$lib/stores/state.svelte.ts";
 import { RangeSetBuilder } from "@codemirror/state";
-import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
+import {
+    Decoration,
+    EditorView,
+    ViewPlugin,
+    WidgetType,
+    type DecorationSet,
+    type ViewUpdate,
+} from "@codemirror/view";
 
 class NewlineWidget extends WidgetType {
     toDOM() {
@@ -14,10 +21,14 @@ class NewlineWidget extends WidgetType {
 function getNewlineDecorations(view: EditorView): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     for (const { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to;) {
+        for (let pos = from; pos <= to; ) {
             const line = view.state.doc.lineAt(pos);
             if (line.to < view.state.doc.length) {
-                builder.add(line.to, line.to, Decoration.widget({ widget: new NewlineWidget(), side: 1 }));
+                builder.add(
+                    line.to,
+                    line.to,
+                    Decoration.widget({ widget: new NewlineWidget(), side: 1 })
+                );
             }
             pos = line.to + 1;
         }

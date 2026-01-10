@@ -13,7 +13,7 @@ export function debounce<T extends (...args: any[]) => any>(
     delay: number
 ): (...args: Parameters<T>) => void {
     let timeout: number | null = null;
-    
+
     return (...args: Parameters<T>) => {
         if (timeout !== null) {
             clearTimeout(timeout);
@@ -38,11 +38,11 @@ export function throttle<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
     let lastCall = 0;
     let timeout: number | null = null;
-    
+
     return (...args: Parameters<T>) => {
         const now = Date.now();
         const timeSinceLastCall = now - lastCall;
-        
+
         if (timeSinceLastCall >= interval) {
             lastCall = now;
             fn(...args);
@@ -87,7 +87,7 @@ export function createTimeout(fn: () => void, delay: number): () => void {
  */
 export class ManagedTimer {
     private timeout: number | null = null;
-    
+
     set(fn: () => void, delay: number): void {
         this.clear();
         this.timeout = window.setTimeout(() => {
@@ -95,14 +95,14 @@ export class ManagedTimer {
             this.timeout = null;
         }, delay);
     }
-    
+
     clear(): void {
         if (this.timeout !== null) {
             clearTimeout(this.timeout);
             this.timeout = null;
         }
     }
-    
+
     isActive(): boolean {
         return this.timeout !== null;
     }

@@ -1,7 +1,7 @@
-import { error } from '@tauri-apps/plugin-log';
-import DOMPurify from 'dompurify';
-import { callBackend } from './backend';
-import { CONFIG } from './config';
+import { error } from "@tauri-apps/plugin-log";
+import DOMPurify from "dompurify";
+import { callBackend } from "./backend";
+import { CONFIG } from "./config";
 
 interface MarkdownBlock {
     startLine: number;
@@ -28,7 +28,7 @@ export class IncrementalMarkdownRenderer {
 
         try {
             const blocks = this.splitIntoBlocks(content);
-            const flavor = gfm ? 'gfm' : 'commonmark';
+            const flavor = gfm ? "gfm" : "commonmark";
 
             // Process blocks (render missing ones in parallel)
             const renderedSegments = await Promise.all(
@@ -37,18 +37,31 @@ export class IncrementalMarkdownRenderer {
                     let baseHtml = this.htmlCache.get(block.hash);
 
                     if (!baseHtml) {
-                        const result = await callBackend('render_markdown', {
-                            content: block.content,
-                            flavor
-                        }, 'Markdown:Render');
+                        const result = await callBackend(
+                            "render_markdown",
+                            {
+                                content: block.content,
+                                flavor,
+                            },
+                            "Markdown:Render"
+                        );
 
                         if (!result) {
-                            throw new Error('Markdown rendering failed: null result');
+                            throw new Error("Markdown rendering failed: null result");
                         }
 
                         baseHtml = DOMPurify.sanitize(result.html, {
                             USE_PROFILES: { html: true },
-                            ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
+                            ADD_ATTR: [
+                                "target",
+                                "class",
+                                "data-source-line",
+                                "align",
+                                "start",
+                                "type",
+                                "disabled",
+                                "checked",
+                            ],
                         });
 
                         this.htmlCache.set(block.hash, baseHtml);
@@ -59,7 +72,7 @@ export class IncrementalMarkdownRenderer {
                 })
             );
 
-            return renderedSegments.join('\n');
+            return renderedSegments.join("\n");
         } catch (e) {
             await error(`[Markdown] Incremental render error: ${e}`);
             return this.renderFull(content, gfm); // Fallback
@@ -71,19 +84,32 @@ export class IncrementalMarkdownRenderer {
      */
     private async renderFull(content: string, gfm: boolean): Promise<string> {
         try {
-            const flavor = gfm ? 'gfm' : 'commonmark';
-            const result = await callBackend('render_markdown', {
-                content,
-                flavor
-            }, 'Markdown:Render');
+            const flavor = gfm ? "gfm" : "commonmark";
+            const result = await callBackend(
+                "render_markdown",
+                {
+                    content,
+                    flavor,
+                },
+                "Markdown:Render"
+            );
 
             if (!result) {
-                throw new Error('Markdown rendering failed: null result');
+                throw new Error("Markdown rendering failed: null result");
             }
 
             return DOMPurify.sanitize(result.html, {
                 USE_PROFILES: { html: true },
-                ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
+                ADD_ATTR: [
+                    "target",
+                    "class",
+                    "data-source-line",
+                    "align",
+                    "start",
+                    "type",
+                    "disabled",
+                    "checked",
+                ],
             });
         } catch (e) {
             await error(`[Markdown] Render error: ${e}`);
@@ -98,7 +124,7 @@ export class IncrementalMarkdownRenderer {
      * Splits on headers, horizontal rules, and large gaps, while respecting code fences.
      */
     private splitIntoBlocks(content: string): MarkdownBlock[] {
-        const lines = content.split('\n');
+        const lines = content.split("\n");
         const blocks: MarkdownBlock[] = [];
         let currentLines: string[] = [];
         let currentStartLine = 0;
@@ -131,23 +157,31 @@ export class IncrementalMarkdownRenderer {
                 }
                 // Split if we have a blank line followed by text (paragraph break)
                 // Only if current block is getting large (> 20 lines) to avoid fragmentation
-                else if (currentLines.length > 20 && line.trim() === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') {
+                else if (
+                    currentLines.length > 20 &&
+                    line.trim() === "" &&
+                    i + 1 < lines.length &&
+                    lines[i + 1].trim() !== ""
+                ) {
                     shouldSplit = true;
                 }
             }
 
             // Safety: Force split if block gets too large to keep UI responsive
-            if (currentLines.length >= CONFIG.PERFORMANCE.INCREMENTAL_BLOCK_SIZE_LIMIT && !inFence) {
+            if (
+                currentLines.length >= CONFIG.PERFORMANCE.INCREMENTAL_BLOCK_SIZE_LIMIT &&
+                !inFence
+            ) {
                 shouldSplit = true;
             }
 
             if (shouldSplit) {
-                const blockContent = currentLines.join('\n');
+                const blockContent = currentLines.join("\n");
                 blocks.push({
                     startLine: currentStartLine,
                     endLine: i,
                     content: blockContent,
-                    hash: this.hashString(blockContent)
+                    hash: this.hashString(blockContent),
                 });
                 currentLines = [];
                 currentStartLine = i;
@@ -158,12 +192,12 @@ export class IncrementalMarkdownRenderer {
 
         // Add remaining lines
         if (currentLines.length > 0) {
-            const blockContent = currentLines.join('\n');
+            const blockContent = currentLines.join("\n");
             blocks.push({
                 startLine: currentStartLine,
                 endLine: lines.length,
                 content: blockContent,
-                hash: this.hashString(blockContent)
+                hash: this.hashString(blockContent),
             });
         }
 
@@ -185,7 +219,7 @@ export class IncrementalMarkdownRenderer {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
+            hash = (hash << 5) - hash + char;
             hash = hash & hash;
         }
         return hash.toString(36);
@@ -198,7 +232,7 @@ export class IncrementalMarkdownRenderer {
     getStats(): { blocks: number; cacheSize: number } {
         return {
             blocks: 0,
-            cacheSize: this.htmlCache.size
+            cacheSize: this.htmlCache.size,
         };
     }
 }

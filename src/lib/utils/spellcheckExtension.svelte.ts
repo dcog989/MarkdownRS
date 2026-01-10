@@ -1,10 +1,7 @@
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { addToDictionary } from "$lib/utils/fileSystem";
-import {
-    refreshCustomDictionary,
-    spellcheckState,
-} from "$lib/utils/spellcheck.svelte.ts";
+import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
 import { syntaxTree } from "@codemirror/language";
 import { forceLinting, linter, type Diagnostic } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
@@ -63,9 +60,7 @@ export const createSpellCheckLinter = () => {
 
                             // Heuristic: Skip if looks like path/url
                             const charBefore =
-                                globalFrom > 0
-                                    ? doc.sliceString(globalFrom - 1, globalFrom)
-                                    : "";
+                                globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
                             const charAfter =
                                 globalTo < doc.length
                                     ? doc.sliceString(globalTo, globalTo + 1)
@@ -106,9 +101,9 @@ export const createSpellCheckLinter = () => {
                     {
                         words: Array.from(wordsToVerify.keys()),
                     },
-                    "Editor:Init",
+                    "Editor:Init"
                 );
-                
+
                 if (!misspelled) {
                     return [];
                 }
@@ -156,7 +151,7 @@ export const createSpellCheckLinter = () => {
                 return [];
             }
         },
-        { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS },
+        { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS }
     );
 };
 
@@ -178,22 +173,16 @@ export const spellCheckKeymap = [
         run: (view: EditorView) => {
             const selection = view.state.sliceDoc(
                 view.state.selection.main.from,
-                view.state.selection.main.to,
+                view.state.selection.main.to
             );
             let words: string[] = [];
 
             if (selection && selection.trim().length > 0) {
-                words = selection
-                    .split(/\s+/)
-                    .map((w) => w.replace(/[^a-zA-Z'-]/g, ""));
+                words = selection.split(/\s+/).map((w) => w.replace(/[^a-zA-Z'-]/g, ""));
             } else {
                 const range = view.state.wordAt(view.state.selection.main.head);
                 if (range) {
-                    words = [
-                        view.state
-                            .sliceDoc(range.from, range.to)
-                            .replace(/[^a-zA-Z'-]/g, ""),
-                    ];
+                    words = [view.state.sliceDoc(range.from, range.to).replace(/[^a-zA-Z'-]/g, "")];
                 }
             }
 
@@ -209,9 +198,7 @@ export const spellCheckKeymap = [
                 spellcheckState.customDictionary = newDict;
 
                 // 2. Clear cache
-                words.forEach((w) =>
-                    spellcheckState.misspelledCache.delete(w.toLowerCase()),
-                );
+                words.forEach((w) => spellcheckState.misspelledCache.delete(w.toLowerCase()));
 
                 // 3. Background Persistence
                 Promise.all(words.map((w) => addToDictionary(w))).then(() => {

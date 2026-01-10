@@ -61,9 +61,9 @@ export class SortableController<T> {
 
         this.options.onDragStart(id, e.clientX, offset);
 
-        window.addEventListener('pointermove', this._handleMove);
-        window.addEventListener('pointerup', this._handleUp);
-        window.addEventListener('pointercancel', this._handleUp);
+        window.addEventListener("pointermove", this._handleMove);
+        window.addEventListener("pointerup", this._handleUp);
+        window.addEventListener("pointercancel", this._handleUp);
     }
 
     handleMove(e: PointerEvent) {
@@ -103,9 +103,9 @@ export class SortableController<T> {
     }
 
     private cleanupListeners() {
-        window.removeEventListener('pointermove', this._handleMove);
-        window.removeEventListener('pointerup', this._handleUp);
-        window.removeEventListener('pointercancel', this._handleUp);
+        window.removeEventListener("pointermove", this._handleMove);
+        window.removeEventListener("pointerup", this._handleUp);
+        window.removeEventListener("pointercancel", this._handleUp);
     }
 
     destroy() {
@@ -130,7 +130,9 @@ export class SortableController<T> {
         if (!this.draggingId) return;
 
         // Find index of dragged item in current list
-        const currentIndex = this.options.items.findIndex((item) => String(item[this.options.idKey]) === this.draggingId);
+        const currentIndex = this.options.items.findIndex(
+            (item) => String(item[this.options.idKey]) === this.draggingId
+        );
         if (currentIndex === -1) return;
 
         const currentCenter = this.layoutCache[currentIndex]?.center || 0;
@@ -146,7 +148,9 @@ export class SortableController<T> {
         // Swap Left
         else if (deltaX < 0 && currentIndex > 0) {
             const leftTab = this.layoutCache[currentIndex - 1];
-            const swapThreshold = this.layoutCache[currentIndex - 1].center + (currentCenter - this.layoutCache[currentIndex - 1].center) / 2;
+            const swapThreshold =
+                this.layoutCache[currentIndex - 1].center +
+                (currentCenter - this.layoutCache[currentIndex - 1].center) / 2;
             if (this.currentDragX < swapThreshold) targetIndex = currentIndex - 1;
         }
 
