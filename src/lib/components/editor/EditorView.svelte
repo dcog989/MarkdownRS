@@ -1,5 +1,14 @@
 <script lang="ts">
-    import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
+    import {
+        createDoubleClickHandler,
+        createWrapExtension,
+        getAutocompletionConfig,
+        getEditorKeymap,
+    } from "$lib/components/editor/codemirror/config";
+    import {
+        prefetchHoverHandler,
+        smartBacktickHandler,
+    } from "$lib/components/editor/codemirror/handlers";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { CONFIG } from "$lib/utils/config";
     import { newlinePlugin, rulerPlugin } from "$lib/utils/editorPlugins";
@@ -17,25 +26,13 @@
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
-    import { prefetchSuggestions, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
+    import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
     import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
     import { calculateCursorMetrics } from "$lib/utils/textMetrics";
     import { userThemeExtension } from "$lib/utils/themeMapper";
     import { throttle } from "$lib/utils/timing";
-    import {
-        autocompletion,
-        closeBrackets,
-        closeBracketsKeymap,
-        completeAnyWord,
-        completionKeymap,
-    } from "@codemirror/autocomplete";
-    import {
-        defaultKeymap,
-        history,
-        historyField,
-        historyKeymap,
-        indentWithTab,
-    } from "@codemirror/commands";
+    import { closeBrackets, completeAnyWord } from "@codemirror/autocomplete";
+    import { history, historyField } from "@codemirror/commands";
     import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
@@ -47,7 +44,6 @@
         highlightActiveLine,
         highlightActiveLineGutter,
         highlightWhitespace,
-        keymap,
     } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
@@ -64,6 +60,7 @@
         onMetricsChange,
         onScrollChange,
         onSelectionChange,
+        onHistoryUpdate,
         customKeymap = [],
         spellCheckLinter,
         eventHandlers,
@@ -81,6 +78,7 @@
         onMetricsChange: (metrics: any) => void;
         onScrollChange?: (percentage: number, topLine: number) => void;
         onSelectionChange?: (anchor: number, head: number) => void;
+        onHistoryUpdate?: (state: any) => void;
         customKeymap?: any[];
         spellCheckLinter: any;
         eventHandlers: any;
@@ -90,6 +88,7 @@
     let editorContainer = $state<HTMLDivElement>();
     let view = $state<EditorView & { getHistoryState?: () => any }>();
 
+    // Compartments for dynamic reconfiguration
     let wrapComp = new Compartment();
     let autoComp = new Compartment();
     let recentComp = new Compartment();
@@ -106,59 +105,7 @@
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
 
-    let autocompletionConfig = $derived.by(() => {
-        if (!appContext.app.enableAutocomplete) return [];
-        return autocompletion({
-            activateOnTyping: true,
-            activateOnTypingDelay: appContext.app.autocompleteDelay,
-            closeOnBlur: true,
-            defaultKeymap: true,
-            aboveCursor: false,
-            maxRenderedOptions: 100,
-            override: [completeAnyWord],
-        });
-    });
-
-    function createWrapExtension() {
-        const wrapEnabled = appContext.app.editorWordWrap;
-        const column = appContext.app.wrapGuideColumn;
-        const extensions = [];
-        if (wrapEnabled) {
-            extensions.push(EditorView.lineWrapping);
-            if (column > 0) {
-                extensions.push(
-                    EditorView.theme({
-                        ".cm-content": { maxWidth: `${column}ch` },
-                        ".cm-scroller": { width: "100%" },
-                    })
-                );
-            }
-        }
-        return extensions;
-    }
-
-    function createDoubleClickHandler() {
-        if (!appContext.app.doubleClickSelectsTrailingSpace) return [];
-        return EditorView.domEventHandlers({
-            dblclick: (event, view) => {
-                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                if (pos === null) return false;
-                const range = view.state.wordAt(pos);
-                if (!range) return false;
-                let end = range.to;
-                if (end < view.state.doc.length) {
-                    const nextChar = view.state.doc.sliceString(end, end + 1);
-                    if (nextChar === " " || nextChar === "\t") end++;
-                }
-                if (end > range.to) {
-                    view.dispatch({ selection: { anchor: range.from, head: end } });
-                    event.preventDefault();
-                    return true;
-                }
-                return false;
-            },
-        });
-    }
+    let autocompletionConfig = $derived(getAutocompletionConfig());
 
     const markdownExtensions = [
         markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -175,6 +122,7 @@
         cmView = view;
     });
 
+    // --- Dynamic Configuration Effects ---
     $effect(() => {
         const _ = spellcheckState.customDictionary;
         if (view && spellcheckState.dictionaryLoaded) {
@@ -282,98 +230,12 @@
             autoComp.of(autocompletionConfig),
             recentComp.of(createRecentChangesHighlighter(lineChangeTracker)),
             closeBrackets(),
-            EditorView.inputHandler.of((view, from, to, text) => {
-                if (text === "`" && from === to) {
-                    const state = view.state;
-                    const before = state.sliceDoc(Math.max(0, from - 2), from);
-                    const after = state.sliceDoc(from, from + 1);
-                    if (after === "`" && state.sliceDoc(Math.max(0, from - 1), from) === "`") {
-                        view.dispatch({ selection: { anchor: from + 1 } });
-                        return true;
-                    }
-                    if (before === "``") {
-                        const line = state.doc.lineAt(from);
-                        const textBefore = line.text.slice(0, from - line.from - 2);
-                        if (/^\s*$/.test(textBefore)) {
-                            const indent = textBefore;
-                            view.dispatch({
-                                changes: {
-                                    from,
-                                    to,
-                                    insert: "`\n" + indent + "\n" + indent + "```",
-                                },
-                                selection: { anchor: from + 1 + indent.length + 1 },
-                            });
-                            return true;
-                        }
-                    }
-                    view.dispatch({
-                        changes: { from, to, insert: "``" },
-                        selection: { anchor: from + 1 },
-                    });
-                    return true;
-                }
-                return false;
-            }),
+            smartBacktickHandler,
+            prefetchHoverHandler,
             EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
             filePathPlugin,
             filePathTheme,
-            keymap.of([
-                ...customKeymap,
-                indentWithTab,
-                {
-                    key: "Insert",
-                    run: () => {
-                        toggleInsertMode();
-                        return true;
-                    },
-                },
-                {
-                    key: "Mod-Home",
-                    run: (v) => {
-                        v.dispatch({ selection: { anchor: 0 } });
-                        scrollSync.handleFastScroll(v, 0);
-                        return true;
-                    },
-                },
-                {
-                    key: "Mod-End",
-                    run: (v) => {
-                        v.dispatch({ selection: { anchor: v.state.doc.length } });
-                        scrollSync.handleFastScroll(v, v.scrollDOM.scrollHeight);
-                        return true;
-                    },
-                },
-                {
-                    key: "PageDown",
-                    run: (v) => {
-                        const newScrollTop = v.scrollDOM.scrollTop + v.scrollDOM.clientHeight;
-                        v.scrollDOM.scrollTop = newScrollTop;
-                        const lineBlock = v.lineBlockAtHeight(newScrollTop);
-                        v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
-                        scrollSync.handleFastScroll(v, newScrollTop);
-                        return true;
-                    },
-                },
-                {
-                    key: "PageUp",
-                    run: (v) => {
-                        const newScrollTop = Math.max(
-                            0,
-                            v.scrollDOM.scrollTop - v.scrollDOM.clientHeight
-                        );
-                        v.scrollDOM.scrollTop = newScrollTop;
-                        const lineBlock = v.lineBlockAtHeight(newScrollTop);
-                        v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
-                        scrollSync.handleFastScroll(v, newScrollTop);
-                        return true;
-                    },
-                },
-                ...completionKeymap,
-                ...historyKeymap,
-                ...closeBracketsKeymap,
-                ...defaultKeymap,
-            ]),
+            getEditorKeymap(customKeymap),
             themeComp.of(
                 generateDynamicTheme(
                     appContext.app.editorFontSize,
@@ -394,18 +256,6 @@
             wrapComp.of(createWrapExtension()),
             EditorView.contentAttributes.of({ spellcheck: "false" }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
-            EditorView.domEventHandlers({
-                mousemove: (event, view) => {
-                    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                    if (pos === null) return;
-                    const range = view.state.wordAt(pos);
-                    if (range) {
-                        const word = view.state.sliceDoc(range.from, range.to);
-                        prefetchSuggestions(word);
-                    }
-                    return false;
-                },
-            }),
             handlersComp.of(eventHandlers),
         ];
 
@@ -426,13 +276,6 @@
                     if (onSelectionChange) {
                         const sel = update.state.selection.main;
                         onSelectionChange(sel.anchor, sel.head);
-                        if (sel.empty) {
-                            const range = update.state.wordAt(sel.head);
-                            if (range) {
-                                const word = update.state.sliceDoc(range.from, range.to);
-                                prefetchSuggestions(word);
-                            }
-                        }
                     }
                 }
                 if (update.docChanged || update.selectionSet) {
@@ -501,7 +344,7 @@
         window.addEventListener("keyup", handleModifierKey);
         window.addEventListener("blur", clearModifier);
 
-        const handleScroll = throttle(() => {
+        const throttleScroll = throttle(() => {
             if (!view || !onScrollChange) return;
             const dom = view.scrollDOM;
             const max = dom.scrollHeight - dom.clientHeight;
@@ -511,7 +354,7 @@
             onScrollChange(percentage, docLine.number);
         }, 100);
 
-        view.scrollDOM.addEventListener("scroll", handleScroll, { passive: true });
+        view.scrollDOM.addEventListener("scroll", throttleScroll, { passive: true });
 
         if (searchState.findText) {
             updateSearchEditor(view);
@@ -525,7 +368,10 @@
             window.removeEventListener("keydown", handleModifierKey);
             window.removeEventListener("keyup", handleModifierKey);
             window.removeEventListener("blur", clearModifier);
-            view?.scrollDOM.removeEventListener("scroll", handleScroll);
+            view?.scrollDOM.removeEventListener("scroll", throttleScroll);
+            if (onHistoryUpdate && view && view.getHistoryState) {
+                onHistoryUpdate(view.getHistoryState());
+            }
             if (view) view.destroy();
         };
     });

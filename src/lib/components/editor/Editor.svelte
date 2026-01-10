@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { createEditorEventHandlers } from "$lib/components/editor/codemirror/events";
+    import { performTextOperation } from "$lib/components/editor/logic/operations";
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
-    import type { OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import {
@@ -15,27 +16,20 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { ScrollManager } from "$lib/utils/cmScroll";
     import { CONFIG } from "$lib/utils/config";
-    import { navigateToPath } from "$lib/utils/fileSystem";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
-    import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
-    import { transformText } from "$lib/utils/textTransforms";
-    import { syntaxTree } from "@codemirror/language";
-    import { EditorView as CM6EditorView } from "@codemirror/view";
     import { readText } from "@tauri-apps/plugin-clipboard-manager";
-    import { openPath } from "@tauri-apps/plugin-opener";
-    import { onDestroy, onMount, tick, untrack } from "svelte";
+    import { tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
+    // Imports for type only
+    import type { EditorView as CM6EditorView } from "@codemirror/view";
 
     let { tabId } = $props<{ tabId: string }>();
+
     let cmView = $state<CM6EditorView & { getHistoryState?: () => any }>();
     let findReplacePanel = $state<any>(null);
-    let previousTabId: string = "";
-    let isTransforming = $state(false);
-    let lastForceSyncCounter = $state(0);
-
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
@@ -45,10 +39,16 @@
     let contextWordTo = $state(0);
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
-    let scrollManager = new ScrollManager();
-
-    // Pass pending transform down to effect
     let pendingTransform = $derived(editorStore.pendingTransform);
+
+    // Logic State
+    let scrollManager = new ScrollManager();
+    let previousTabId: string = "";
+    let isTransforming = $state(false);
+    let lastForceSyncCounter = $state(0);
+
+    // Initialize Helpers
+    const eventHandlers = createEditorEventHandlers(onContextMenu);
 
     $effect(() => {
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
@@ -57,11 +57,31 @@
         }
     });
 
-    // Reactive Command Listener (Fixes the text operation race condition)
+    $effect(() => {
+        if (appContext.interface.showFind) {
+            tick().then(() => {
+                findReplacePanel?.setReplaceMode(appContext.interface.isReplaceMode);
+                findReplacePanel?.focusInput();
+            });
+        }
+    });
+
+    $effect(() => {
+        if (cmView && searchState.findText) {
+            updateSearchEditor(cmView);
+        }
+    });
+
+    // Reactive Command Listener
     $effect(() => {
         if (pendingTransform && pendingTransform.tabId === tabId && cmView) {
             untrack(() => {
-                handleTextOperation(pendingTransform!.op);
+                performTextOperation(
+                    cmView!,
+                    pendingTransform!.op,
+                    scrollManager,
+                    (val) => (isTransforming = val)
+                );
             });
         }
     });
@@ -72,7 +92,6 @@
         const tab = activeTab;
         if (!tab || !cmView) return;
 
-        // 1. Detect Tab Switch
         const isTabSwitch = untrack(() => {
             const switched = currentTabId !== previousTabId;
             if (switched) {
@@ -87,7 +106,6 @@
         const isLoaded = tab.contentLoaded;
         const forceSyncCounter = tab.forceSync ?? 0;
 
-        // 2. Determine if we must sync Store -> Editor
         const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
         const isFocused = cmView!.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
@@ -133,175 +151,34 @@
         }
     });
 
-    $effect(() => {
-        if (appContext.interface.showFind) {
-            tick().then(() => {
-                findReplacePanel?.setReplaceMode(appContext.interface.isReplaceMode);
-                findReplacePanel?.focusInput();
-            });
-        }
-    });
-
-    $effect(() => {
-        if (cmView && searchState.findText) {
-            updateSearchEditor(cmView);
-        }
-    });
-
-    async function handleTextOperation(operationId: OperationId) {
-        if (!cmView) return;
-
-        isTransforming = true;
-        const selection = cmView.state.selection.main;
-        const hasSelection = selection.from !== selection.to;
-        const targetText = hasSelection
-            ? cmView.state.sliceDoc(selection.from, selection.to)
-            : cmView.state.doc.toString();
-
-        scrollManager.capture(cmView, `Op:${operationId}`);
-        const newText = await transformText(targetText, operationId);
-
-        if (newText !== targetText) {
-            cmView.focus();
-
-            const transaction: any = {
-                changes: {
-                    from: hasSelection ? selection.from : 0,
-                    to: hasSelection ? selection.to : cmView.state.doc.length,
-                    insert: newText,
-                },
-                userEvent: "input.complete",
-                scrollIntoView: true,
-            };
-
-            if (hasSelection) {
-                transaction.selection = {
-                    anchor: selection.from,
-                    head: selection.from + newText.length,
-                };
-            } else {
-                const newLen = newText.length;
-                transaction.selection = {
-                    anchor: Math.min(selection.anchor, newLen),
-                    head: Math.min(selection.head, newLen),
-                };
-            }
-
-            cmView.dispatch(transaction);
-
-            if (!hasSelection) {
-                const snapshot = scrollManager.getSnapshot();
-                const currentLines = cmView.state.doc.lines;
-                let strategy: "anchor" | "pixel" = "pixel";
-                if (operationId === "format-document") {
-                    strategy = "anchor";
-                } else if (snapshot && Math.abs(currentLines - snapshot.totalLines) > 0) {
-                    strategy = "anchor";
-                }
-                scrollManager.restore(cmView, strategy);
+    function onContextMenu(event: MouseEvent, view: CM6EditorView) {
+        event.preventDefault();
+        showContextMenu = false;
+        const selection = view.state.selection.main;
+        const selectedText = view.state.sliceDoc(selection.from, selection.to);
+        let word = "",
+            from = 0,
+            to = 0;
+        if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
+            const range = view.state.wordAt(
+                view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head
+            );
+            if (range) {
+                from = range.from;
+                to = range.to;
+                word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, "");
             }
         }
-
-        setTimeout(() => {
-            isTransforming = false;
-        }, 100);
+        contextSelectedText = selectedText;
+        contextWordUnderCursor = word;
+        contextWordFrom = from;
+        contextWordTo = to;
+        contextMenuX = event.clientX;
+        contextMenuY = event.clientY;
+        tick().then(() => {
+            showContextMenu = true;
+        });
     }
-
-    const eventHandlers = CM6EditorView.domEventHandlers({
-        mousedown: (event, view) => {
-            if ((event.ctrlKey || event.metaKey) && event.button === 0) {
-                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                if (pos === null) return false;
-                let targetString = "";
-                let node = syntaxTree(view.state).resolveInner(pos, 1);
-                while (node && node.parent && !["URL", "Link", "LinkEmail"].includes(node.name)) {
-                    node = node.parent;
-                }
-                if (node && ["URL", "Link", "LinkEmail"].includes(node.name)) {
-                    if (node.name === "Link") {
-                        const urlNode = node.node.getChild("URL");
-                        if (urlNode) targetString = view.state.sliceDoc(urlNode.from, urlNode.to);
-                    } else {
-                        targetString = view.state.sliceDoc(node.from, node.to);
-                    }
-                }
-                if (!targetString) {
-                    const line = view.state.doc.lineAt(pos);
-                    const text = line.text;
-                    const posInLine = pos - line.from;
-                    if (posInLine >= 0 && posInLine < text.length && /\S/.test(text[posInLine])) {
-                        let start = posInLine;
-                        while (start > 0 && /\S/.test(text[start - 1])) start--;
-                        let end = posInLine;
-                        while (end < text.length && /\S/.test(text[end])) end++;
-                        targetString = text.slice(start, end).trim();
-                        targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, "");
-                        if (!/^https?:\/\//i.test(targetString)) {
-                            targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
-                        } else {
-                            targetString = targetString.replace(/[.,;!?)\]]+$/, "");
-                        }
-                    }
-                }
-                if (targetString) {
-                    event.preventDefault();
-                    event.stopImmediatePropagation();
-                    if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-                        const url = targetString.startsWith("www.")
-                            ? `https://${targetString}`
-                            : targetString;
-                        openPath(url).catch(() => {});
-                    } else {
-                        navigateToPath(targetString);
-                    }
-                    return true;
-                }
-            }
-            return false;
-        },
-        contextmenu: (event, view) => {
-            event.preventDefault();
-            showContextMenu = false;
-            const selection = view.state.selection.main;
-            const selectedText = view.state.sliceDoc(selection.from, selection.to);
-            let word = "",
-                from = 0,
-                to = 0;
-            if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
-                const range = view.state.wordAt(
-                    view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head
-                );
-                if (range) {
-                    from = range.from;
-                    to = range.to;
-                    word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, "");
-                }
-            }
-            contextSelectedText = selectedText;
-            contextWordUnderCursor = word;
-            contextWordFrom = from;
-            contextWordTo = to;
-            contextMenuX = event.clientX;
-            contextMenuY = event.clientY;
-            tick().then(() => {
-                showContextMenu = true;
-            });
-            return true;
-        },
-    });
-
-    onMount(() => {
-        initSpellcheck();
-    });
-
-    onDestroy(() => {
-        if (cmView && cmView.getHistoryState) {
-            const state = cmView.getHistoryState();
-            if (state) {
-                updateHistoryState(tabId, state);
-            }
-        }
-    });
 
     function handleContentChange(c: string) {
         updateContent(tabId, c);
@@ -314,6 +191,9 @@
     }
     function handleSelectionChange(a: number, h: number) {
         updateCursor(tabId, a, h);
+    }
+    function handleHistoryUpdate(state: any) {
+        updateHistoryState(tabId, state);
     }
 
     let initialContent = $derived(activeTab?.content || "");
@@ -352,6 +232,7 @@
         onMetricsChange={handleMetricsChange}
         onScrollChange={handleScrollChange}
         onSelectionChange={handleSelectionChange}
+        onHistoryUpdate={handleHistoryUpdate}
     />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
