@@ -62,25 +62,40 @@
                     initializeTabFileState(currentTab).catch(console.error);
                 }
                 previousTabId = currentTabId;
+            }
 
-                const currentDoc = cmView!.state.doc.toString();
-                const newContent = tab.content;
+            const currentDoc = cmView!.state.doc.toString();
+            const newContent = tab.content;
 
-                if (currentDoc !== newContent) {
-                    scrollManager.capture(cmView!, "Tab Switch");
-                    const newLength = newContent.length;
-                    const currentSelection = cmView!.state.selection.main;
+            // If content is not yet loaded, we skip updating CodeMirror to avoid flickering empty strings
+            if (!tab.contentLoaded && newContent === "") {
+                return;
+            }
 
-                    cmView!.dispatch({
-                        changes: { from: 0, to: currentDoc.length, insert: newContent },
-                        selection: {
-                            anchor: Math.min(currentSelection.anchor, newLength),
-                            head: Math.min(currentSelection.head, newLength),
-                        },
-                        scrollIntoView: false,
-                    });
-                    scrollManager.restore(cmView!, "pixel");
-                }
+            if (currentDoc !== newContent || isTabSwitch) {
+                if (isTabSwitch) scrollManager.capture(cmView!, "Tab Switch");
+
+                const newLength = newContent.length;
+                const currentSelection = cmView!.state.selection.main;
+
+                cmView!.dispatch({
+                    changes: { from: 0, to: currentDoc.length, insert: newContent },
+                    selection: {
+                        anchor: Math.min(currentSelection.anchor, newLength),
+                        head: Math.min(currentSelection.head, newLength),
+                    },
+                    scrollIntoView: false,
+                });
+
+                requestAnimationFrame(() => {
+                    if (cmView) {
+                        cmView.requestMeasure();
+                        if (isTabSwitch) {
+                            scrollManager.restore(cmView, "pixel");
+                            cmView.focus();
+                        }
+                    }
+                });
             }
         });
     });
@@ -110,7 +125,13 @@
                         },
                         scrollIntoView: false,
                     });
-                    scrollManager.restore(cmView!, "pixel");
+
+                    requestAnimationFrame(() => {
+                        if (cmView) {
+                            cmView.requestMeasure();
+                            scrollManager.restore(cmView, "pixel");
+                        }
+                    });
                 }
             }
         });
