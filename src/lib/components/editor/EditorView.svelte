@@ -18,7 +18,7 @@
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { Compartment, EditorState, Prec, RangeSetBuilder } from "@codemirror/state";
+    import { Compartment, EditorState, RangeSetBuilder } from "@codemirror/state";
     import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightWhitespace, keymap, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
@@ -447,10 +447,10 @@
                     },
                 },
             ]),
-            Prec.highest(keymap.of(historyKeymap)),
-            Prec.highest(keymap.of(defaultKeymap)),
-            keymap.of(completionKeymap),
+            keymap.of(historyKeymap),
             keymap.of(closeBracketsKeymap),
+            keymap.of(completionKeymap),
+            keymap.of(defaultKeymap),
             themeComp.of(dynamicTheme),
             indentComp.of(indentUnit.of("  ")),
             whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
