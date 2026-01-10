@@ -20,7 +20,7 @@
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { Compartment, EditorState, Prec } from "@codemirror/state";
+    import { Compartment, EditorState } from "@codemirror/state";
     import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightWhitespace, keymap } from "@codemirror/view";
     import { onDestroy, onMount } from "svelte";
 
@@ -310,11 +310,11 @@
                         return true;
                     },
                 },
+                ...completionKeymap,
+                ...historyKeymap,
+                ...closeBracketsKeymap,
+                ...defaultKeymap,
             ]),
-            Prec.highest(keymap.of(historyKeymap)),
-            Prec.highest(keymap.of(defaultKeymap)),
-            keymap.of(completionKeymap),
-            keymap.of(closeBracketsKeymap),
             themeComp.of(generateDynamicTheme(appContext.app.editorFontSize, appContext.app.editorFontFamily, isDark, appContext.metrics.insertMode)),
             indentComp.of(indentUnit.of("  ")),
             whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),

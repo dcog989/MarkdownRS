@@ -3,7 +3,6 @@
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
     import type { OperationId } from "$lib/config/textOperationsRegistry";
-    import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateHistoryState, updateScroll } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
@@ -48,49 +47,46 @@
     });
 
     $effect(() => {
-        const currentTabId = tabId;
         const tab = activeTab;
-
         if (!tab || !cmView) return;
 
+        const content = tab.content;
+        const currentTabId = tabId;
+
         untrack(() => {
-            const isTabSwitch = currentTabId !== previousTabId;
+            if (currentTabId !== previousTabId) return;
 
-            if (isTabSwitch) {
-                const currentTab = appContext.editor.tabs.find((t) => t.id === currentTabId);
-                if (currentTab) {
-                    initializeTabFileState(currentTab).catch(console.error);
-                }
-                previousTabId = currentTabId;
+            const currentDoc = cmView!.state.doc.toString();
+            if (currentDoc !== content) {
+                // Determine if we should sync from the store to the editor.
+                // 1. If we are currently focused, we trust the editor (user is typing/deleting).
+                // 2. If we are in the middle of a text transform, we handle dispatching manually.
+                // 3. We only sync if the editor is NOT focused OR the change is clearly an external reload
+                //    (indicated by the tab being clean but content differing).
+                const isFocused = cmView!.hasFocus;
+                const shouldSync = (!isFocused || !tab.isDirty) && !isTransforming;
 
-                const currentDoc = cmView!.state.doc.toString();
-                const newContent = tab.content;
-
-                if (currentDoc !== newContent) {
-                    scrollManager.capture(cmView!, "Tab Switch");
-                    const newLength = newContent.length;
+                if (shouldSync) {
+                    scrollManager.capture(cmView!, "External Update");
                     const currentSelection = cmView!.state.selection.main;
+                    const newLength = content.length;
 
                     cmView!.dispatch({
-                        changes: { from: 0, to: currentDoc.length, insert: newContent },
+                        changes: { from: 0, to: currentDoc.length, insert: content },
                         selection: {
                             anchor: Math.min(currentSelection.anchor, newLength),
                             head: Math.min(currentSelection.head, newLength),
                         },
                         scrollIntoView: false,
                     });
-                }
 
-                requestAnimationFrame(() => {
-                    if (cmView) {
-                        cmView.requestMeasure();
-                        scrollManager.restore(cmView, "pixel");
-                        requestAnimationFrame(() => {
-                            cmView?.requestMeasure();
-                            cmView?.focus();
-                        });
-                    }
-                });
+                    requestAnimationFrame(() => {
+                        if (cmView) {
+                            cmView.requestMeasure();
+                            scrollManager.restore(cmView, "pixel");
+                        }
+                    });
+                }
             }
         });
     });
