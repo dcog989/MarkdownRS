@@ -40,6 +40,7 @@ class SessionPersistenceManager {
     private pendingSaveRequested = false;
 
     async requestSave(): Promise<void> {
+        console.log('[SessionPersistence] requestSave called, sessionDirty:', appContext.editor.sessionDirty);
         if (!appContext.editor.sessionDirty) return;
 
         if (this.isSaving) {
@@ -63,14 +64,23 @@ class SessionPersistenceManager {
     }
 
     private async executeSave(): Promise<void> {
+        console.log('[SessionPersistence] executeSave - Starting save');
         try {
             const mruPositionMap = new Map<string, number>();
             appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
-            // 1. Map Active Tabs (Optimized content payload)
+            // 1. Map Active Tabs
             const activeTabs = appContext.editor.tabs;
             const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
-                const needsContent = t.contentChanged || !t.isPersisted;
+                // Always save content for unsaved tabs (no path), or if content changed, or if not persisted yet
+                const needsContent = !t.path || t.contentChanged || !t.isPersisted;
+                console.log(`[SessionPersistence] Tab ${t.id} (${t.title}):`, {
+                    hasPath: !!t.path,
+                    contentChanged: t.contentChanged,
+                    isPersisted: t.isPersisted,
+                    needsContent,
+                    contentLength: t.content.length
+                });
                 return {
                     id: t.id,
                     path: t.path,
@@ -90,10 +100,11 @@ class SessionPersistenceManager {
                 };
             });
 
-            // 2. Map Closed Tabs (Optimized content payload - only when changed or new)
+            // 2. Map Closed Tabs
             const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map(
                 (entry, index) => {
-                    const needsContent = entry.tab.contentChanged || !entry.tab.isPersisted;
+                    // Always save content for unsaved tabs (no path), or if content changed, or if not persisted yet
+                    const needsContent = !entry.tab.path || entry.tab.contentChanged || !entry.tab.isPersisted;
                     return {
                         id: entry.tab.id,
                         path: entry.tab.path,
@@ -201,15 +212,43 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     if (tab.contentLoaded) return;
 
     try {
-        const content = await callBackend("load_tab_content", { tabId }, "Session:Load");
+        // Now returns { content }
+        const data = await callBackend("load_tab_content", { tabId }, "Session:Load");
 
-        if (content !== null && content !== undefined) {
-            const normalizedContent = normalizeLineEndings(content);
+        if (data && data.content !== null && data.content !== undefined) {
+            const normalizedContent = normalizeLineEndings(data.content);
+            
+            // Determine the correct lastSavedContent
+            // For unsaved tabs (no path): lastSavedContent should be empty since there's no file
+            // For saved tabs with isDirty: load from disk to get the actual last saved content
+            // For clean saved tabs: content === lastSavedContent
+            let lastSavedContent = "";
+            
+            if (!tab.path) {
+                // Unsaved tab - no file on disk, so lastSavedContent is empty
+                lastSavedContent = "";
+            } else if (tab.isDirty) {
+                // Dirty tab with a file - read from disk to get the actual last saved content
+                try {
+                    const fileData = await callBackend("read_text_file", { path: tab.path }, "File:Read");
+                    if (fileData && fileData.content) {
+                        lastSavedContent = normalizeLineEndings(fileData.content);
+                    }
+                } catch (err) {
+                    // If we can't read the file, treat normalized content as last saved
+                    // This handles cases where the file was deleted or is inaccessible
+                    lastSavedContent = normalizedContent;
+                }
+            } else {
+                // Clean tab - content matches what's on disk
+                lastSavedContent = normalizedContent;
+            }
+            
             // Use reassignment to ensure Svelte 5 triggers reactivity for nested properties
             appContext.editor.tabs[index] = {
                 ...tab,
                 content: normalizedContent,
-                lastSavedContent: normalizedContent,
+                lastSavedContent,
                 sizeBytes: new TextEncoder().encode(normalizedContent).length,
                 lineEnding: normalizedContent.indexOf("\r\n") !== -1 ? "CRLF" : "LF",
                 contentLoaded: true,
@@ -231,12 +270,17 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     const rawContent = t.content || "";
     const content = normalizeLineEndings(rawContent);
     const timestamp = t.modified || t.created || "";
+    
+    // For unsaved tabs (no path), lastSavedContent should be empty
+    // For saved tabs, if content is loaded, it equals content (will be corrected later for dirty tabs)
+    const lastSavedContent = !t.path ? "" : content;
+    
     return {
         id: t.id,
         title: t.title,
         originalTitle: t.title,
         content,
-        lastSavedContent: content,
+        lastSavedContent,
         isDirty: t.is_dirty,
         path: t.path,
         scrollPercentage: t.scroll_percentage,
@@ -253,7 +297,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         fileCheckPerformed: t.file_check_performed || false,
         contentChanged: false,
         isPersisted: true,
-        contentLoaded, // Track whether content has been loaded from DB
+        contentLoaded,
     };
 }
 
@@ -277,7 +321,8 @@ export async function loadSession(): Promise<void> {
             // Convert tabs, marking whether content was loaded
             const convertedTabs: EditorTab[] = activeRustTabs.map((t) => {
                 const hasContent = t.content !== null && t.content !== undefined;
-                return convertRustTabToEditorTab(t, hasContent);
+                // Since we now always load content, mark all tabs as contentLoaded
+                return convertRustTabToEditorTab(t, true);
             });
             appContext.editor.tabs = convertedTabs;
 
@@ -309,10 +354,7 @@ export async function loadSession(): Promise<void> {
                 (t) => t.id === appContext.app.activeTabId
             );
             if (activeTab) {
-                // Lazy load content for the active tab if not already loaded
-                if (!activeTab.contentLoaded) {
-                    await loadTabContentLazy(activeTab.id);
-                }
+                // Content is already loaded, just initialize file state
                 await initializeTabFileState(activeTab);
             }
         }
@@ -330,9 +372,9 @@ export async function loadSession(): Promise<void> {
             closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
             appContext.editor.closedTabsHistory = closedRustTabs.map((t) => {
-                const hasContent = t.content !== null && t.content !== undefined;
+                // Content is always loaded now
                 return {
-                    tab: convertRustTabToEditorTab(t, hasContent),
+                    tab: convertRustTabToEditorTab(t, true),
                     index: t.original_index ?? 0,
                 };
             });

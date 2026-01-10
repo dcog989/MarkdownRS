@@ -11,7 +11,6 @@
     } from "$lib/components/editor/codemirror/handlers";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { appContext } from "$lib/stores/state.svelte.ts";
-    import { ScrollManager } from "$lib/utils/cmScroll";
     import { CONFIG } from "$lib/utils/config";
     import { newlinePlugin, rulerPlugin } from "$lib/utils/editorPlugins";
     import { generateDynamicTheme } from "$lib/utils/editorTheme";
@@ -26,6 +25,7 @@
         urlPlugin,
     } from "$lib/utils/markdownExtensions";
     import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
+    import { ScrollManager } from "$lib/utils/scrollManager";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
@@ -272,10 +272,13 @@
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
-                    contentUpdateTimer = window.setTimeout(
-                        () => onContentChange(update.state.doc.toString()),
-                        CONFIG.EDITOR.CONTENT_DEBOUNCE_MS
-                    );
+                    contentUpdateTimer = window.setTimeout(() => {
+                        onContentChange(update.state.doc.toString());
+                        // Sync history state to store on content change
+                        if (onHistoryUpdate && view && view.getHistoryState) {
+                            onHistoryUpdate(view.getHistoryState());
+                        }
+                    }, CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
                 }
                 if (update.selectionSet) {
                     if (onSelectionChange) {
@@ -336,10 +339,10 @@
         // Case 1: Tab Switch (Hard State Swap)
         if (isTabSwitch) {
             untrack(() => {
-                // Load new state
+                // Load new state WITHOUT history (history state is not serializable)
                 const newState = EditorState.create({
                     doc: storeContent,
-                    extensions: createExtensions(initialHistoryState), // Use history from props
+                    extensions: createExtensions(undefined),
                     selection: {
                         anchor: Math.min(initialSelection.anchor, storeContent.length),
                         head: Math.min(initialSelection.head, storeContent.length),
@@ -355,38 +358,68 @@
                         const max = dom.scrollHeight - dom.clientHeight;
                         if (max > 0) dom.scrollTop = initialScrollPercentage * max;
                     }
-                    view!.focus();
+                    // Ensure editor is focused and properly measured after tab switch
+                    if (view) {
+                        view.focus();
+                        view.requestMeasure();
+                    }
                     initializeTabFileState(storeTab).catch(() => {});
                 });
             });
             return;
         }
 
-        // Case 2: Content Sync (External Change / Force Sync)
+        // Case 2: Content Sync (External Change / Force Sync / Initial Load)
         const shouldSync = isInitialPopulate || !isFocused || isForcedSync;
 
         if (shouldSync && currentDoc !== storeContent) {
             untrack(() => {
-                scrollManager.capture(view!, "Sync");
+                // If it's the initial populate, we use setState to ensure history is also restored
+                if (isInitialPopulate) {
+                    // Create new state WITHOUT history (history state is not serializable)
+                    const newState = EditorState.create({
+                        doc: storeContent,
+                        extensions: createExtensions(undefined),
+                        selection: {
+                            anchor: Math.min(storeTab.cursor?.anchor ?? 0, storeContent.length),
+                            head: Math.min(storeTab.cursor?.head ?? 0, storeContent.length),
+                        },
+                    });
 
-                view!.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: storeContent },
-                    selection: isInitialPopulate
-                        ? {
-                              anchor: Math.min(storeTab.cursor.anchor, storeContent.length),
-                              head: Math.min(storeTab.cursor.head, storeContent.length),
-                          }
-                        : undefined,
-                    scrollIntoView: false,
-                });
+                    view!.setState(newState);
 
-                requestAnimationFrame(() => {
-                    if (view) {
-                        view.requestMeasure();
-                        scrollManager.restore(view, "pixel");
-                        if (isInitialPopulate) view.focus();
-                    }
-                });
+                    // Restore scroll and initialize file state
+                    requestAnimationFrame(() => {
+                        if (view && initialScrollPercentage > 0) {
+                            const dom = view.scrollDOM;
+                            const max = dom.scrollHeight - dom.clientHeight;
+                            if (max > 0) dom.scrollTop = initialScrollPercentage * max;
+                        }
+                        // Ensure editor is focused and editable after state restoration
+                        if (view) {
+                            view.focus();
+                            // Force a measure to ensure the editor is properly laid out
+                            view.requestMeasure();
+                        }
+                        initializeTabFileState(storeTab).catch(() => {});
+                    });
+                } else {
+                    // Regular update
+                    scrollManager.capture(view!, "Sync");
+
+                    view!.dispatch({
+                        changes: { from: 0, to: currentDoc.length, insert: storeContent },
+                        selection: undefined,
+                        scrollIntoView: false,
+                    });
+
+                    requestAnimationFrame(() => {
+                        if (view) {
+                            view.requestMeasure();
+                            scrollManager.restore(view, "pixel");
+                        }
+                    });
+                }
 
                 if (isForcedSync) {
                     lastForceSyncCounter = forceSyncCounter;
@@ -406,7 +439,7 @@
         const viewInstance = new EditorView({
             state: EditorState.create({
                 doc: initialContent,
-                extensions: createExtensions(initialHistoryState),
+                extensions: createExtensions(undefined), // Don't use history state - it's not serializable
                 selection: safeSelection,
             }),
             parent: editorContainer,

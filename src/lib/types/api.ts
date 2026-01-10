@@ -22,6 +22,11 @@ export interface FileContent {
     encoding: string;
 }
 
+export interface TabData {
+    content: string | null;
+    history_state: any;
+}
+
 // Format document is handled via format_markdown, not transform_text_content
 export type TextTransformId = Exclude<OperationId, "format-document">;
 
@@ -38,7 +43,7 @@ export interface BackendCommands {
     };
     load_tab_content: {
         args: { tabId: string };
-        return: string | null;
+        return: TabData;
     };
     vacuum_database: {
         args: Record<string, never>;

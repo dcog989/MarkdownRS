@@ -1,4 +1,4 @@
-use crate::db::{SessionData, TabState};
+use crate::db::{SessionData, TabData, TabState};
 use crate::state::AppState;
 use tauri::State;
 
@@ -44,11 +44,11 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
 pub async fn load_tab_content(
     state: State<'_, AppState>,
     tab_id: String,
-) -> Result<Option<String>, String> {
+) -> Result<TabData, String> {
     let db = state.db.lock().await;
-    db.load_tab_content(&tab_id).map_err(|e| {
-        log::error!("Failed to load tab content for {}: {}", tab_id, e);
-        format!("Failed to load tab content: {}", e)
+    db.load_tab_data(&tab_id).map_err(|e| {
+        log::error!("Failed to load tab data for {}: {}", tab_id, e);
+        format!("Failed to load tab data: {}", e)
     })
 }
 

@@ -64,6 +64,11 @@ pub struct Bookmark {
     pub last_accessed: Option<String>,
 }
 
+#[derive(Serialize)]
+pub struct TabData {
+    pub content: Option<String>,
+}
+
 pub struct Database {
     conn: Connection,
 }
@@ -216,6 +221,18 @@ impl Database {
             )?;
         }
 
+        if version < 3 {
+            log::info!("Migrating database schema to v3 (History State)");
+            // Add history_state column to tabs and closed_tabs
+            tx.execute("ALTER TABLE tabs ADD COLUMN history_state TEXT", [])?;
+            tx.execute("ALTER TABLE closed_tabs ADD COLUMN history_state TEXT", [])?;
+
+            tx.execute(
+                "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
+                [3],
+            )?;
+        }
+
         tx.commit()?;
 
         Ok(Self { conn })
@@ -235,7 +252,8 @@ impl Database {
                 [],
                 |row| row.get(0),
             )?;
-            return Ok(if tabs_exists > 0 { 0 } else { 0 }); // Treat implicit v1 as v0 for migration check logic flow
+            // If tabs exist but no version table, assume v0/v1 base state
+            return Ok(if tabs_exists > 0 { 0 } else { 0 });
         }
 
         let version = conn.query_row(
@@ -260,13 +278,15 @@ impl Database {
         } else {
             // Collect IDs of tabs that should exist
             let active_ids: Vec<&str> = active_tabs.iter().map(|t| t.id.as_str()).collect();
-            
+
             // Delete tabs that are no longer in the active list
-            // Build placeholders for IN clause
             let placeholders = active_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
             let delete_query = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
             let mut delete_stmt = tx.prepare(&delete_query)?;
-            let params: Vec<&dyn rusqlite::ToSql> = active_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+            let params: Vec<&dyn rusqlite::ToSql> = active_ids
+                .iter()
+                .map(|id| id as &dyn rusqlite::ToSql)
+                .collect();
             delete_stmt.execute(params.as_slice())?;
 
             // Prepare statements for insert/update
@@ -357,7 +377,7 @@ impl Database {
             }
         }
 
-        // --- Save Closed Tabs (Keep existing clear-and-replace for simplicity) ---
+        // --- Save Closed Tabs ---
         tx.execute("DELETE FROM closed_tabs", [])?;
 
         if !closed_tabs.is_empty() {
@@ -395,11 +415,13 @@ impl Database {
     }
 
     pub fn load_session(&self) -> Result<SessionData> {
-        self.load_session_with_content(false)
+        // Always load content to ensure tabs are fully restored
+        // This prevents issues with lazy loading and ensures unsaved content is immediately available
+        self.load_session_with_content(true)
     }
 
     pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
-        // Load Active Tabs - optionally exclude content for better performance
+        // Load Active Tabs
         let query = if include_content {
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
              FROM tabs ORDER BY sort_index ASC"
@@ -436,7 +458,7 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        // Load Closed Tabs - optionally exclude content
+        // Load Closed Tabs
         let closed_query = if include_content {
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
              FROM closed_tabs ORDER BY sort_index ASC"
@@ -479,21 +501,23 @@ impl Database {
         })
     }
 
-    /// Load content for a specific tab by ID
-    pub fn load_tab_content(&self, tab_id: &str) -> Result<Option<String>> {
-        let content = self.conn.query_row(
-            "SELECT content FROM tabs WHERE id = ?1
+    /// Load content and history for a specific tab by ID
+    pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {
+        let content = self
+            .conn
+            .query_row(
+                "SELECT content FROM tabs WHERE id = ?1
              UNION ALL
              SELECT content FROM closed_tabs WHERE id = ?1",
-            params![tab_id],
-            |row| row.get::<_, Option<String>>(0),
-        );
+                params![tab_id],
+                |row| row.get::<_, Option<String>>(0),
+            )
+            .map_err(|e| match e {
+                rusqlite::Error::QueryReturnedNoRows => anyhow::anyhow!("Tab not found"),
+                _ => anyhow::anyhow!(e),
+            })?;
 
-        match content {
-            Ok(c) => Ok(c),
-            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(e.into()),
-        }
+        Ok(TabData { content })
     }
 
     // Bookmarks and other methods
