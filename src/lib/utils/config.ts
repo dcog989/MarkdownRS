@@ -1,7 +1,7 @@
 // Application Configuration Constants
 // Centralized configuration to avoid magic numbers throughout the codebase
 
-export const CONFIG = {
+const DEFAULT_CONFIG = {
     // Editor Settings
     EDITOR: {
         CONTENT_DEBOUNCE_MS: 80,
@@ -63,7 +63,41 @@ export const CONFIG = {
         TOOLTIP_SCREEN_PADDING: 10,
         TOOLTIP_FLIP_OFFSET: 5,
     },
-} as const;
+};
 
-// Type-safe configuration access
-export type AppConfig = typeof CONFIG;
+export type AppConfig = typeof DEFAULT_CONFIG;
+
+/**
+ * Validates and merges configuration overrides.
+ * Ensures types are correct and numeric values are within safe runtime ranges.
+ */
+function validateConfig(overrides: Partial<AppConfig>): AppConfig {
+    const merged = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig;
+
+    const validate = (target: any, source: any) => {
+        for (const key in source) {
+            if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                if (!target[key]) target[key] = {};
+                validate(target[key], source[key]);
+            } else {
+                target[key] = source[key];
+            }
+        }
+    };
+
+    validate(merged, overrides);
+
+    // Runtime Range Validation
+    merged.EDITOR.MAX_FILE_SIZE_MB = Math.max(1, Math.min(500, merged.EDITOR.MAX_FILE_SIZE_MB));
+    merged.EDITOR.CONTENT_DEBOUNCE_MS = Math.max(10, merged.EDITOR.CONTENT_DEBOUNCE_MS);
+
+    merged.SPLIT.MIN_PERCENTAGE = Math.max(0, Math.min(0.45, merged.SPLIT.MIN_PERCENTAGE));
+    merged.SPLIT.MAX_PERCENTAGE = Math.max(0.55, Math.min(1, merged.SPLIT.MAX_PERCENTAGE));
+
+    merged.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS = Math.max(8, merged.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS);
+
+    return merged;
+}
+
+// Global immutable configuration instance
+export const CONFIG: AppConfig = Object.freeze(validateConfig(DEFAULT_CONFIG));
