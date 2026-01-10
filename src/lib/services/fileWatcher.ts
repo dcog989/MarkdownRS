@@ -137,6 +137,13 @@ class FileWatcherService {
 			}
 
 			if (cleanTabs.length > 0 && !signal?.aborted) {
+				// Validate first tab still exists before reloading
+				const firstTabStillExists = appContext.editor.tabs.some(t => t.id === cleanTabs[0].id);
+				if (!firstTabStillExists || signal?.aborted) {
+					this.pendingChecks.delete(path);
+					return;
+				}
+
 				await reloadFileContent(cleanTabs[0].id);
 
 				if (cleanTabs.length > 1 && !signal?.aborted) {
@@ -144,6 +151,11 @@ class FileWatcherService {
 					if (reloadedTab) {
 						for (let i = 1; i < cleanTabs.length; i++) {
 							if (signal?.aborted) break;
+
+							// Validate each tab still exists before reloading
+							const tabStillExists = appContext.editor.tabs.some(t => t.id === cleanTabs[i].id);
+							if (!tabStillExists) continue;
+
 							reloadTabContent(
 								cleanTabs[i].id,
 								reloadedTab.content,
