@@ -1,4 +1,4 @@
-import { checkAndReloadIfChanged, reloadFileContent } from "$lib/services/fileMetadata";
+import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from "$lib/services/fileMetadata";
 import { reloadTabContent } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte.ts";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -17,8 +17,9 @@ class FileWatcherService {
     // Tracks paths that should be ignored temporarily (e.g. during internal saves)
     private suspendedPaths = new Map<string, number>();
 
-    async watch(path: string): Promise<void> {
-        if (!path) return;
+    async watch(rawPath: string): Promise<void> {
+        if (!rawPath) return;
+        const path = sanitizePath(rawPath);
 
         if (this.watchers.has(path)) {
             const entry = this.watchers.get(path)!;
@@ -44,6 +45,8 @@ class FileWatcherService {
                     await this.handleFileChange(path, controller.signal);
                 }, 300);
 
+                // Note: We watch the sanitized path. Ensure Tauri/OS accepts forward slashes on Windows (usually yes).
+                // If not, we might need platform-specific normalization, but sanitizePath is widely used in this app.
                 const unwatch = await watch(path, (event) => {
                     if (controller.signal.aborted) return;
                     handleChange();
@@ -76,7 +79,8 @@ class FileWatcherService {
         }
     }
 
-    unwatch(path: string): void {
+    unwatch(rawPath: string): void {
+        const path = sanitizePath(rawPath);
         const controller = this.abortControllers.get(path);
         if (controller) {
             controller.abort();
@@ -111,10 +115,11 @@ class FileWatcherService {
     /**
      * Temporarily suspends watcher checks for a specific path.
      * Use this before performing internal file write operations.
-     * @param path The file path to ignore
+     * @param rawPath The file path to ignore
      * @param duration Duration in ms to ignore changes (default 2000ms)
      */
-    suspendWatcher(path: string, duration: number = 2000) {
+    suspendWatcher(rawPath: string, duration: number = 2000) {
+        const path = sanitizePath(rawPath);
         const expiry = Date.now() + duration;
         this.suspendedPaths.set(path, Math.max(this.suspendedPaths.get(path) || 0, expiry));
 
@@ -138,6 +143,7 @@ class FileWatcherService {
         this.pendingChecks.add(path);
 
         try {
+            // Compare against tab paths (which should also be sanitized in store)
             const tabs = appContext.editor.tabs.filter((t) => t.path === path);
             if (tabs.length === 0 || signal?.aborted) {
                 this.pendingChecks.delete(path);
