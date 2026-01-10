@@ -20,11 +20,17 @@
     let debounceTimer: number | null = null;
     let renderAbortController: AbortController | null = null;
 
-    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
-    let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
+    // Optimization: Derive primitives directly to prevent reactive cascading
+    // when unrelated tab properties (cursor, scroll) change.
+    let tabPath = $derived.by(() => {
+        return appContext.editor.tabs.find((t) => t.id === tabId)?.path;
+    });
 
-    // Isolate content and flavor to prevent effect triggering on unrelated tab metadata changes
-    let tabContent = $derived(activeTab?.content || "");
+    let tabContent = $derived.by(() => {
+        return appContext.editor.tabs.find((t) => t.id === tabId)?.content || "";
+    });
+
+    let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
     let flavor = $derived(appContext.app.markdownFlavor);
 
     $effect(() => {
@@ -48,7 +54,10 @@
         if (debounceTimer) clearTimeout(debounceTimer);
         if (renderAbortController) renderAbortController.abort();
 
-        const debounceMs = content.length > CONFIG.PERFORMANCE.INCREMENTAL_RENDER_MIN_SIZE ? CONFIG.EDITOR.CONTENT_DEBOUNCE_MS * 2 : CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
+        const debounceMs =
+            content.length > CONFIG.PERFORMANCE.INCREMENTAL_RENDER_MIN_SIZE
+                ? CONFIG.EDITOR.CONTENT_DEBOUNCE_MS * 2
+                : CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
 
         isRendering = true;
         debounceTimer = window.setTimeout(async () => {
@@ -88,8 +97,17 @@
 <div class="relative w-full h-full border-l bg-bg-preview border-border-main group/preview">
     <div class="absolute top-2 right-2 z-10">
         <!-- Uses 'group-hover/preview' to only react to the preview pane hover -->
-        <button type="button" class="p-2 rounded opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200 bg-bg-panel border border-border-main hover:bg-white/20" onclick={() => toggleOrientation()} use:tooltip={appContext.app.splitOrientation === "vertical" ? "Switch to Horizontal Split" : "Switch to Vertical Split"}>
-            {#if appContext.app.splitOrientation === "vertical"}<FlipVertical size={16} />{:else}<FlipHorizontal size={16} />{/if}
+        <button
+            type="button"
+            class="p-2 rounded opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200 bg-bg-panel border border-border-main hover:bg-white/20"
+            onclick={() => toggleOrientation()}
+            use:tooltip={appContext.app.splitOrientation === "vertical"
+                ? "Switch to Horizontal Split"
+                : "Switch to Vertical Split"}
+        >
+            {#if appContext.app.splitOrientation === "vertical"}<FlipVertical
+                    size={16}
+                />{:else}<FlipHorizontal size={16} />{/if}
         </button>
     </div>
 
@@ -105,16 +123,21 @@
         }}
         role="none"
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0 bg-bg-preview text-fg-default"
-        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
+        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
+            .previewFontSize}px;"
         spellcheck="false"
     >
         {#if !isMarkdown}
-            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">
+            <div
+                class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none"
+            >
                 <FileText size={64} class="mb-4" />
                 <p>Preview not available for this file type</p>
             </div>
         {:else if isRendering && !htmlContent}
-            <div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
+            <div class="absolute inset-0 flex items-center justify-center opacity-50">
+                Rendering...
+            </div>
         {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
                 <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
