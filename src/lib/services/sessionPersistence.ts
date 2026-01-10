@@ -159,6 +159,11 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
                 { path: tab.path },
                 "File:Read",
             );
+            
+            if (!res) {
+                throw new Error('Failed to read file: null result');
+            }
+            
             const storeTab = appContext.editor.tabs.find((x) => x.id === tab.id);
             if (storeTab) {
                 storeTab.lastSavedContent = normalizeLineEndings(res.content);
@@ -207,7 +212,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         const content = await callBackend(
             "load_tab_content",
             { tabId },
-            "Session:LoadContent",
+            "Session:Load",
         );
         
         if (content !== null && content !== undefined) {
@@ -215,14 +220,14 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             tab.content = normalizedContent;
             tab.lastSavedContent = normalizedContent;
             tab.sizeBytes = new TextEncoder().encode(normalizedContent).length;
-            tab.lineEnding = content.indexOf("\r\n") !== -1 ? "CRLF" : "LF";
+            tab.lineEnding = normalizedContent.indexOf("\r\n") !== -1 ? "CRLF" : "LF";
             tab.contentLoaded = true;
         } else {
             // Content not found in DB, mark as loaded with empty content
             tab.contentLoaded = true;
         }
     } catch (err) {
-        AppError.handle("Session:LoadContent", err, {
+        AppError.handle("Session:Load", err, {
             showToast: false,
             severity: "warning",
             additionalInfo: { tabId },

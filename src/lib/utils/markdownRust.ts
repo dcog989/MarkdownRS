@@ -15,6 +15,10 @@ export async function renderMarkdown(content: string, gfm: boolean = true): Prom
             flavor
         }, 'Markdown:Render');
 
+        if (!result) {
+            throw new Error('Markdown rendering failed: null result');
+        }
+
         // Sanitize HTML (file paths are already linkified by Rust backend)
         const cleanHtml = DOMPurify.sanitize(result.html, {
             USE_PROFILES: { html: true },

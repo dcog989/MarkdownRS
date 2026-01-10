@@ -36,6 +36,10 @@ export interface BackendCommands {
         args: Record<string, never>;
         return: { active_tabs: any[], closed_tabs: any[] } | any[];
     };
+    'load_tab_content': {
+        args: { tabId: string };
+        return: string | null;
+    };
     'vacuum_database': {
         args: Record<string, never>;
         return: void;

@@ -32,13 +32,14 @@
         if (isOpen) {
             // Get platform info first
             callBackend("get_app_info", {}, "Settings:Load").then((info) => {
+                if (!info) return;
                 isWindows = info.os_platform === "windows";
 
                 if (isWindows) {
                     isCheckingContextMenu = true;
                     callBackend("check_context_menu_status", {}, "Settings:Load")
                         .then((enabled) => {
-                            isContextMenuEnabled = enabled;
+                            isContextMenuEnabled = enabled ?? false;
                         })
                         .catch(() => {})
                         .finally(() => {
@@ -48,7 +49,8 @@
             });
 
             callBackend("get_available_themes", {}, "Settings:Load")
-                .then((customThemes: string[]) => {
+                .then((customThemes) => {
+                    if (!customThemes) return;
                     const defaults = DEFAULT_THEME_NAMES;
                     const customs = customThemes.filter((t) => !defaults.includes(t));
                     appContext.app.availableThemes = [...defaults, ...customs];

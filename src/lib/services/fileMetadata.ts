@@ -24,7 +24,12 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
 		return cached.promise;
 	}
 
-	const promise = callBackend('get_file_metadata', { path }, 'File:Metadata');
+	const promise = callBackend('get_file_metadata', { path }, 'File:Metadata').then(result => {
+		if (!result) {
+			throw new Error('Failed to get file metadata: null result');
+		}
+		return result;
+	});
 	metadataCache.set(path, { expires: now + CACHE_TTL_MS, promise });
 
 	return promise;
@@ -100,6 +105,10 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 	try {
 		const sanitizedPath = sanitizePath(tab.path);
 		const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
+
+		if (!result) {
+			throw new Error('Failed to read file: null result');
+		}
 
 		const crlfCount = (result.content.match(/\r\n/g) || []).length;
 		const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;

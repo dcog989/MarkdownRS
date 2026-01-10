@@ -108,6 +108,10 @@ export const createSpellCheckLinter = () => {
                     },
                     "Editor:Init",
                 );
+                
+                if (!misspelled) {
+                    return [];
+                }
 
                 const newCache = new Set<string>();
                 const diagnostics: Diagnostic[] = [];

@@ -37,7 +37,9 @@
     $effect(() => {
         callBackend("get_app_info", {}, "File:Metadata")
             .then((info) => {
-                appInfo = info;
+                if (info) {
+                    appInfo = info;
+                }
             })
             .catch(() => {
                 // Error handled by bridge

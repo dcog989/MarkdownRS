@@ -67,7 +67,7 @@ export async function formatMarkdown(
   content: string,
   options?: FormatterOptions
 ): Promise<string> {
-  return callBackend('format_markdown', {
+  const result = await callBackend('format_markdown', {
     content,
     flavor: options?.flavor,
     list_indent: options?.list_indent,
@@ -75,6 +75,12 @@ export async function formatMarkdown(
     code_block_fence: options?.code_block_fence,
     table_alignment: options?.table_alignment,
   }, 'Markdown:Render');
+  
+  if (result === null) {
+    throw new Error('Markdown formatting failed: null result');
+  }
+  
+  return result;
 }
 
 /**
@@ -83,7 +89,13 @@ export async function formatMarkdown(
  * @returns Array of flavor names
  */
 export async function getMarkdownFlavors(): Promise<string[]> {
-  return callBackend('get_markdown_flavors', {}, 'Markdown:Render');
+  const result = await callBackend('get_markdown_flavors', {}, 'Markdown:Render');
+  
+  if (result === null) {
+    return [];
+  }
+  
+  return result;
 }
 
 /**

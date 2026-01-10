@@ -30,10 +30,11 @@ export async function formatMarkdown(
     };
 
     try {
-        return await callBackend('format_markdown', {
+        const result = await callBackend('format_markdown', {
             content,
             ...apiOptions
         }, 'Markdown:Render', undefined, { report: true });
+        return result ?? content;
     } catch (e) {
         return content;
     }

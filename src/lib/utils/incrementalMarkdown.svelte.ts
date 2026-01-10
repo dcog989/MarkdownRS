@@ -42,6 +42,10 @@ export class IncrementalMarkdownRenderer {
                             flavor
                         }, 'Markdown:Render');
 
+                        if (!result) {
+                            throw new Error('Markdown rendering failed: null result');
+                        }
+
                         baseHtml = DOMPurify.sanitize(result.html, {
                             USE_PROFILES: { html: true },
                             ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked']
@@ -72,6 +76,10 @@ export class IncrementalMarkdownRenderer {
                 content,
                 flavor
             }, 'Markdown:Render');
+
+            if (!result) {
+                throw new Error('Markdown rendering failed: null result');
+            }
 
             return DOMPurify.sanitize(result.html, {
                 USE_PROFILES: { html: true },

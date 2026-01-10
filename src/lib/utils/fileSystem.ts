@@ -42,6 +42,11 @@ export async function openFile(path?: string): Promise<void> {
 		}
 
 		const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
+		
+		if (!result) {
+			throw new Error('Failed to read file: null result');
+		}
+		
 		const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
 		const crlfCount = (result.content.match(/\r\n/g) || []).length;
@@ -102,6 +107,10 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 			basePath: activeTab?.path || null,
 			clickPath: clickedPath.replace(/\\/g, '/')
 		}, 'File:Read');
+		
+		if (!resolvedPath) {
+			return;
+		}
 
 		await openPath(resolvedPath);
 	} catch (err) {

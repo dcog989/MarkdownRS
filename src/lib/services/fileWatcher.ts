@@ -1,4 +1,5 @@
 import { checkAndReloadIfChanged, reloadFileContent } from '$lib/services/fileMetadata';
+import { reloadTabContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { infoToast, warningToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
