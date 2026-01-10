@@ -4,7 +4,6 @@
     import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
     import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
     import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
-    import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
     import {
         editorStore,
@@ -91,69 +90,23 @@
         }
     });
 
-    // Unified Tab Switch and Content Sync Handler
+    // Tab Switch State Saver and Sync
     $effect(() => {
         const currentTabId = tabId;
-        const tab = activeTab;
-        if (!tab || !cmView) return;
+        const currentView = cmView;
 
-        const isTabSwitch = untrack(() => {
-            const switched = currentTabId !== previousTabId;
-            if (switched) {
-                initializeTabFileState(tab).catch(console.error);
-                previousTabId = currentTabId;
+        untrack(() => {
+            if (
+                previousTabId &&
+                previousTabId !== currentTabId &&
+                currentView &&
+                currentView.getHistoryState
+            ) {
+                // Save history of the outgoing tab BEFORE the props update propagates down to EditorView
+                updateHistoryState(previousTabId, currentView.getHistoryState());
             }
-            return switched;
+            previousTabId = currentTabId;
         });
-
-        const currentDoc = cmView!.state.doc.toString();
-        const storeContent = tab.content;
-        const isLoaded = tab.contentLoaded;
-        const forceSyncCounter = tab.forceSync ?? 0;
-
-        const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
-        const isFocused = cmView!.hasFocus;
-        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
-
-        const shouldSync =
-            isTabSwitch || isInitialPopulate || (!isFocused && !isTransforming) || isForcedSync;
-
-        if (shouldSync && currentDoc !== storeContent) {
-            untrack(() => {
-                scrollManager.capture(cmView!, "Sync");
-
-                cmView!.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: storeContent },
-                    selection: isTabSwitch
-                        ? tab.cursor.head > storeContent.length
-                            ? { anchor: 0 }
-                            : { anchor: tab.cursor.anchor, head: tab.cursor.head }
-                        : {
-                              anchor: Math.min(
-                                  cmView!.state.selection.main.anchor,
-                                  storeContent.length
-                              ),
-                              head: Math.min(
-                                  cmView!.state.selection.main.head,
-                                  storeContent.length
-                              ),
-                          },
-                    scrollIntoView: false,
-                });
-
-                requestAnimationFrame(() => {
-                    if (cmView) {
-                        cmView.requestMeasure();
-                        scrollManager.restore(cmView, "pixel");
-                        if (isTabSwitch || isInitialPopulate) cmView.focus();
-                    }
-                });
-
-                if (isForcedSync) {
-                    lastForceSyncCounter = forceSyncCounter;
-                }
-            });
-        }
     });
 
     function onContextMenu(event: MouseEvent, view: CM6EditorView) {

@@ -9,7 +9,9 @@
         prefetchHoverHandler,
         smartBacktickHandler,
     } from "$lib/components/editor/codemirror/handlers";
+    import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { appContext } from "$lib/stores/state.svelte.ts";
+    import { ScrollManager } from "$lib/utils/cmScroll";
     import { CONFIG } from "$lib/utils/config";
     import { newlinePlugin, rulerPlugin } from "$lib/utils/editorPlugins";
     import { generateDynamicTheme } from "$lib/utils/editorTheme";
@@ -37,7 +39,7 @@
     import { indentUnit } from "@codemirror/language";
     import { languages } from "@codemirror/language-data";
     import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { Compartment, EditorState } from "@codemirror/state";
+    import { Compartment, EditorState, type Extension } from "@codemirror/state";
     import {
         drawSelection,
         EditorView,
@@ -45,7 +47,7 @@
         highlightActiveLineGutter,
         highlightWhitespace,
     } from "@codemirror/view";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount, untrack } from "svelte";
 
     let {
         tabId,
@@ -88,7 +90,10 @@
     let editorContainer = $state<HTMLDivElement>();
     let view = $state<EditorView & { getHistoryState?: () => any }>();
 
-    // Compartments for dynamic reconfiguration
+    // Internal state for sync logic
+    let scrollManager = new ScrollManager();
+    let lastForceSyncCounter = $state(0);
+
     let wrapComp = new Compartment();
     let autoComp = new Compartment();
     let recentComp = new Compartment();
@@ -218,7 +223,7 @@
         }
     });
 
-    onMount(() => {
+    function createExtensions(currentHistoryState: any): Extension[] {
         const isDark = appContext.app.theme === "dark";
         const extensions = [
             highlightActiveLineGutter(),
@@ -259,8 +264,8 @@
             handlersComp.of(eventHandlers),
         ];
 
-        if (initialHistoryState) {
-            extensions.push(historyField.init(() => initialHistoryState));
+        if (currentHistoryState) {
+            extensions.push(historyField.init(() => currentHistoryState));
         }
 
         extensions.push(
@@ -295,6 +300,102 @@
             })
         );
 
+        return extensions;
+    }
+
+    // --- Content Sync & Tab Switch Handling ---
+    $effect(() => {
+        // Dependencies
+        const tId = tabId;
+        const storeTab = appContext.editor.tabs.find((t) => t.id === tId);
+
+        if (!view || !storeTab) return;
+
+        const currentDoc = view.state.doc.toString();
+        const storeContent = storeTab.content;
+        const isLoaded = storeTab.contentLoaded;
+        const forceSyncCounter = storeTab.forceSync ?? 0;
+
+        const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
+        const isFocused = view.hasFocus;
+        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
+
+        // Detect if this is a Tab Switch (content mismatch + we are not focused/transforming)
+        // OR if it's an explicit "tab switch" signaled by `tabId` prop change (which triggers this effect)
+        // When `tabId` changes, we must perform a setState to swap history context.
+
+        // We track the previous ID handled by this view to detect switches
+        const isTabSwitch = untrack(() => {
+            if (view && (view as any)._lastHandledTabId !== tId) {
+                (view as any)._lastHandledTabId = tId;
+                return true;
+            }
+            return false;
+        });
+
+        // Case 1: Tab Switch (Hard State Swap)
+        if (isTabSwitch) {
+            untrack(() => {
+                // Load new state
+                const newState = EditorState.create({
+                    doc: storeContent,
+                    extensions: createExtensions(initialHistoryState), // Use history from props
+                    selection: {
+                        anchor: Math.min(initialSelection.anchor, storeContent.length),
+                        head: Math.min(initialSelection.head, storeContent.length),
+                    },
+                });
+
+                view!.setState(newState);
+
+                // Restore scroll
+                requestAnimationFrame(() => {
+                    if (view && initialScrollPercentage > 0) {
+                        const dom = view.scrollDOM;
+                        const max = dom.scrollHeight - dom.clientHeight;
+                        if (max > 0) dom.scrollTop = initialScrollPercentage * max;
+                    }
+                    view!.focus();
+                    initializeTabFileState(storeTab).catch(() => {});
+                });
+            });
+            return;
+        }
+
+        // Case 2: Content Sync (External Change / Force Sync)
+        const shouldSync = isInitialPopulate || !isFocused || isForcedSync;
+
+        if (shouldSync && currentDoc !== storeContent) {
+            untrack(() => {
+                scrollManager.capture(view!, "Sync");
+
+                view!.dispatch({
+                    changes: { from: 0, to: currentDoc.length, insert: storeContent },
+                    selection: isInitialPopulate
+                        ? {
+                              anchor: Math.min(storeTab.cursor.anchor, storeContent.length),
+                              head: Math.min(storeTab.cursor.head, storeContent.length),
+                          }
+                        : undefined,
+                    scrollIntoView: false,
+                });
+
+                requestAnimationFrame(() => {
+                    if (view) {
+                        view.requestMeasure();
+                        scrollManager.restore(view, "pixel");
+                        if (isInitialPopulate) view.focus();
+                    }
+                });
+
+                if (isForcedSync) {
+                    lastForceSyncCounter = forceSyncCounter;
+                }
+            });
+        }
+    });
+
+    onMount(() => {
         if (!editorContainer) return;
 
         const safeSelection = {
@@ -305,7 +406,7 @@
         const viewInstance = new EditorView({
             state: EditorState.create({
                 doc: initialContent,
-                extensions,
+                extensions: createExtensions(initialHistoryState),
                 selection: safeSelection,
             }),
             parent: editorContainer,
@@ -314,6 +415,7 @@
         (viewInstance as any).getHistoryState = () => {
             return viewInstance.state.field(historyField, false);
         };
+        (viewInstance as any)._lastHandledTabId = tabId;
 
         view = viewInstance;
         scrollSync.registerEditor(viewInstance);

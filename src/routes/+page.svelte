@@ -12,7 +12,15 @@
     import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { showToast } from "$lib/stores/toastStore.svelte";
-    import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
+    import {
+        loadSession,
+        openFile,
+        openFileByPath,
+        persistSession,
+        persistSessionDebounced,
+        requestCloseTab,
+        saveCurrentFile,
+    } from "$lib/utils/fileSystem.ts";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
     import { onDestroy, onMount } from "svelte";
@@ -28,7 +36,9 @@
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
+    let activeTab = $derived(
+        appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId)
+    );
 
     // Lazy load tab content when switching tabs
     $effect(() => {
@@ -128,7 +138,9 @@
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            const currentIndex = appContext.editor.tabs.findIndex((t: EditorTab) => t.id === appContext.app.activeTabId);
+            const currentIndex = appContext.editor.tabs.findIndex(
+                (t: EditorTab) => t.id === appContext.app.activeTabId
+            );
             if (currentIndex === -1) return;
 
             let newIndex;
@@ -218,7 +230,8 @@
         initialSplit = appContext.app.splitPercentage;
         window.addEventListener("mousemove", handleResize);
         window.addEventListener("mouseup", stopResize);
-        document.body.style.cursor = appContext.app.splitOrientation === "vertical" ? "col-resize" : "row-resize";
+        document.body.style.cursor =
+            appContext.app.splitOrientation === "vertical" ? "col-resize" : "row-resize";
     }
 
     function handleResize(e: MouseEvent) {
@@ -250,7 +263,9 @@
 </script>
 
 {#if !isInitialized}
-    <div class="h-screen w-screen flex items-center justify-center flex-col bg-bg-main text-fg-default">
+    <div
+        class="h-screen w-screen flex items-center justify-center flex-col bg-bg-main text-fg-default"
+    >
         <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 animate-pulse" />
         <p class="text-sm text-fg-muted">Loading MarkdownRS...</p>
         {#if initError}
@@ -258,41 +273,63 @@
         {/if}
     </div>
 {:else}
-    <div class="h-screen w-screen flex flex-col overflow-hidden border bg-bg-main text-fg-default border-border-main">
+    <div
+        class="h-screen w-screen flex flex-col overflow-hidden border bg-bg-main text-fg-default border-border-main"
+    >
         <Titlebar />
         <TabBar />
 
-        <div class="flex-1 flex overflow-hidden relative z-0 outline-none" bind:this={mainContainer} style="position: relative;">
+        <div
+            class="flex-1 flex overflow-hidden relative z-0 outline-none"
+            bind:this={mainContainer}
+            style="position: relative;"
+        >
+            <!-- Removed #key block to allow Editor to reuse instance -->
             {#if appContext.app.activeTabId}
-                {#key appContext.app.activeTabId}
-                    <div class="flex w-full h-full" style="flex-direction: {appContext.app.splitOrientation === 'vertical' ? 'row' : 'column'};">
-                        <div style="flex: {showPreview ? `0 0 ${appContext.app.splitPercentage * 100}%` : '1 1 100%'}; height: 100%; overflow: hidden;">
-                            <Editor tabId={appContext.app.activeTabId} />
-                        </div>
-
-                        {#if showPreview}
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div
-                                class="z-20 transition-colors duration-150 bg-bg-panel hover:bg-accent-primary"
-                                style="
-                                    cursor: {appContext.app.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
-                                    flex: 0 0 4px;
-                                "
-                                onmousedown={startResize}
-                                ondblclick={resetSplit}
-                            ></div>
-                        {/if}
-
-                        {#if showPreview}
-                            <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
-                                <Preview tabId={appContext.app.activeTabId} />
-                            </div>
-                        {/if}
+                <div
+                    class="flex w-full h-full"
+                    style="flex-direction: {appContext.app.splitOrientation === 'vertical'
+                        ? 'row'
+                        : 'column'};"
+                >
+                    <div
+                        style="flex: {showPreview
+                            ? `0 0 ${appContext.app.splitPercentage * 100}%`
+                            : '1 1 100%'}; height: 100%; overflow: hidden;"
+                    >
+                        <Editor tabId={appContext.app.activeTabId} />
                     </div>
-                {/key}
+
+                    {#if showPreview}
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div
+                            class="z-20 transition-colors duration-150 bg-bg-panel hover:bg-accent-primary"
+                            style="
+                                cursor: {appContext.app.splitOrientation === 'vertical'
+                                ? 'col-resize'
+                                : 'row-resize'};
+                                flex: 0 0 4px;
+                            "
+                            onmousedown={startResize}
+                            ondblclick={resetSplit}
+                        ></div>
+                    {/if}
+
+                    {#if showPreview}
+                        <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
+                            <Preview tabId={appContext.app.activeTabId} />
+                        </div>
+                    {/if}
+                </div>
             {:else}
-                <div class="flex-1 flex items-center justify-center select-none flex-col text-fg-muted">
-                    <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
+                <div
+                    class="flex-1 flex items-center justify-center select-none flex-col text-fg-muted"
+                >
+                    <img
+                        src="/logo.svg"
+                        alt="App Logo"
+                        class="h-16 w-16 mb-4 opacity-50 grayscale"
+                    />
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}
