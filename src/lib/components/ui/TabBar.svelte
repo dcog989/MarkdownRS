@@ -15,7 +15,6 @@
 
     let scrollContainer = $state<HTMLElement>();
     let showDropdown = $state(false);
-    let currentTime = $state(Date.now());
 
     let isDragging = $state(false);
     let draggingId = $state<string | null>(null);
@@ -72,19 +71,14 @@
         tick().then(updateFadeIndicators);
     });
 
-    // React to signal from interfaceStore instead of window event
     $effect(() => {
-        // Track the signal
         const _ = appContext.interface.scrollToTabSignal;
-        // Don't scroll on initial render (0), only subsequent increments
         if (_ > 0) {
             scrollToActive();
         }
     });
 
     onMount(() => {
-        const interval = setInterval(() => (currentTime = Date.now()), 60000);
-
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === "Tab") {
                 e.preventDefault();
@@ -120,9 +114,6 @@
         window.addEventListener("keyup", handleKeyUp);
 
         return () => {
-            if (interval) {
-                clearInterval(interval);
-            }
             if (mruTimer) {
                 clearTimeout(mruTimer);
                 mruTimer = null;
@@ -203,7 +194,6 @@
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}
-                        {currentTime}
                         onclose={(_, id) => requestCloseTab(id)}
                         oncontextmenu={(e, id) => {
                             contextMenuTabId = id;
@@ -218,7 +208,7 @@
                 {@const dragTab = appContext.editor.tabs.find((t) => t.id === draggingId)}
                 {#if dragTab}
                     <div class="fixed pointer-events-none z-[999]" style="left: {currentDragX - dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect().top ?? 0}px; opacity: 0.95;">
-                        <TabButton tab={dragTab} isActive={appContext.app.activeTabId === dragTab.id} {currentTime} />
+                        <TabButton tab={dragTab} isActive={appContext.app.activeTabId === dragTab.id} />
                     </div>
                 {/if}
             {/if}
