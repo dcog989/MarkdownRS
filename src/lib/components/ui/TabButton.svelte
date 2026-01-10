@@ -8,22 +8,15 @@
     interface Props {
         tab: EditorTab;
         isActive: boolean;
-        currentTime: number;
         onclick?: (id: string) => void;
         onclose?: (e: MouseEvent, tabId: string) => void;
         oncontextmenu?: (e: MouseEvent, tabId: string) => void;
     }
 
-    let { tab, isActive, currentTime, onclick, onclose, oncontextmenu }: Props = $props();
+    let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
 
     let isFileMissing = $derived(tab.fileCheckFailed === true);
     let isCollapsed = $derived(appContext.app.collapsePinnedTabs && tab.isPinned);
-
-    let iconColor = $derived.by(() => {
-        const _ = currentTime; // Reactivity trigger
-        if (isActive) return "text-fg-inverse";
-        return "text-fg-muted";
-    });
 
     let tooltipContent = $derived.by(() => {
         const parts: string[] = [];

@@ -9,7 +9,7 @@
     import { renderMarkdown } from "$lib/utils/markdown";
     import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
     import { FileText, FlipHorizontal, FlipVertical } from "lucide-svelte";
-    import { onDestroy } from "svelte";
+    import { onDestroy, untrack } from "svelte";
 
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
@@ -23,6 +23,10 @@
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
     let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
+    // Isolate content and flavor to prevent effect triggering on unrelated tab metadata changes
+    let tabContent = $derived(activeTab?.content || "");
+    let flavor = $derived(appContext.app.markdownFlavor);
+
     $effect(() => {
         // Tab changed - reset state immediately
         if (lastTabId !== tabId) {
@@ -35,23 +39,16 @@
             }
         }
 
-        const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-        const content = appContext.app.activeTabId === tabId ? tab?.content || "" : "";
+        const content = tabContent;
+        const currentFlavor = flavor;
 
-        // Early exit conditions
         if (!isMarkdown) return;
         if (content === lastRendered && htmlContent) return;
 
-        // Cancel previous render if still in progress
         if (debounceTimer) clearTimeout(debounceTimer);
-        if (renderAbortController) {
-            renderAbortController.abort();
-        }
+        if (renderAbortController) renderAbortController.abort();
 
-        // For large files, use longer debounce to reduce render frequency
-        const debounceMs = content.length > CONFIG.PERFORMANCE.INCREMENTAL_RENDER_MIN_SIZE
-            ? CONFIG.EDITOR.CONTENT_DEBOUNCE_MS * 2
-            : CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
+        const debounceMs = content.length > CONFIG.PERFORMANCE.INCREMENTAL_RENDER_MIN_SIZE ? CONFIG.EDITOR.CONTENT_DEBOUNCE_MS * 2 : CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
 
         isRendering = true;
         debounceTimer = window.setTimeout(async () => {
@@ -59,29 +56,20 @@
             const currentController = renderAbortController;
 
             try {
-                const result = await renderMarkdown(content, appContext.app.markdownFlavor, tabId);
-                
-                // Check if this render was aborted
-                if (currentController.signal.aborted) {
-                    return;
-                }
+                const result = await renderMarkdown(content, currentFlavor, tabId);
+                if (currentController.signal.aborted) return;
 
                 htmlContent = result.html;
                 lastRendered = content;
-                
+
                 if (container) {
                     scrollSync.registerPreview(container);
-                    await scrollSync.updateMap();
+                    untrack(() => scrollSync.updateMap());
                 }
             } catch (err) {
-                // Ignore aborted renders
-                if (!currentController.signal.aborted) {
-                    console.error('Preview render error:', err);
-                }
+                if (!currentController.signal.aborted) console.error("Preview render error:", err);
             } finally {
-                if (!currentController.signal.aborted) {
-                    isRendering = false;
-                }
+                if (!currentController.signal.aborted) isRendering = false;
             }
         }, debounceMs);
 

@@ -9,39 +9,34 @@
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
 
+    // De-structure dependencies to prevent re-renders on unrelated tab property changes (like cursor)
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
+    let sizeBytes = $derived(activeTab?.sizeBytes || 0);
+    let preferredExtension = $derived(activeTab?.preferredExtension);
+    let path = $derived(activeTab?.path);
+    let tabId = $derived(activeTab?.id);
 
     let textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
-
-    let fileSizeDisplay = $derived(formatFileSize(activeTab?.sizeBytes || 0));
+    let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
     let fileType = $derived.by(() => {
-        if (!activeTab) return "markdown";
-
-        if (activeTab.preferredExtension) {
-            return activeTab.preferredExtension === "txt" ? "text" : "markdown";
-        }
-
-        if (activeTab.path) {
-            return isMarkdownFile(activeTab.path) ? "markdown" : "text";
-        }
-
+        if (!tabId) return "markdown";
+        if (preferredExtension) return preferredExtension === "txt" ? "text" : "markdown";
+        if (path) return isMarkdownFile(path) ? "markdown" : "text";
         return "markdown";
     });
 
-    let canToggleFileType = $derived(!!activeTab);
+    let canToggleFileType = $derived(!!tabId);
 
     function toggleFileType() {
-        if (activeTab) {
-            togglePreferredExtension(activeTab.id);
-        }
+        if (tabId) togglePreferredExtension(tabId);
     }
 
     function toggleLineEnding() {
-        if (activeTab) {
-            const next = activeTab.lineEnding === "LF" ? "CRLF" : "LF";
-            updateLineEnding(activeTab.id, next);
+        if (tabId) {
+            const next = lineEnding === "LF" ? "CRLF" : "LF";
+            updateLineEnding(tabId, next);
         }
     }
 
