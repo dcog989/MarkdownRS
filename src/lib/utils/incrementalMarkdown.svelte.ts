@@ -209,10 +209,23 @@ export class IncrementalMarkdownRenderer {
      */
     private adjustLineNumbers(html: string, offset: number): string {
         if (offset === 0) return html;
-        // Regex finds data-source-line="123" and adds offset
-        return html.replace(/data-source-line="(\d+)"/g, (_, line) => {
-            return `data-source-line="${parseInt(line, 10) + offset}"`;
-        });
+
+        // Use a DOM parser to safely target attributes without affecting text content
+        // This avoids issues where code blocks might contain the string "data-source-line"
+        const template = document.createElement("template");
+        template.innerHTML = html;
+
+        const elements = template.content.querySelectorAll("[data-source-line]");
+
+        for (const el of elements) {
+            const val = el.getAttribute("data-source-line");
+            if (val) {
+                const newLine = parseInt(val, 10) + offset;
+                el.setAttribute("data-source-line", newLine.toString());
+            }
+        }
+
+        return template.innerHTML;
     }
 
     private hashString(str: string): string {
