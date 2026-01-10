@@ -42,7 +42,7 @@ export {
     loadSession,
     persistSession,
     persistSessionDebounced,
-    reloadFileContent,
+    reloadFileContent
 };
 
 export async function openFile(path?: string): Promise<void> {
@@ -212,6 +212,9 @@ export async function saveCurrentFile(): Promise<boolean> {
             } else {
                 contentToSave = contentToSave.replace(/\r\n/g, "\n");
             }
+
+            // Suspend watcher to prevent triggering "external change" reload
+            fileWatcher.suspendWatcher(sanitizedPath, 2000);
 
             await callBackend(
                 "write_text_file",

@@ -14,6 +14,9 @@ class FileWatcherService {
     private pendingWatchers = new Map<string, Promise<void>>();
     private abortControllers = new Map<string, AbortController>();
 
+    // Tracks paths that should be ignored temporarily (e.g. during internal saves)
+    private suspendedPaths = new Map<string, number>();
+
     async watch(path: string): Promise<void> {
         if (!path) return;
 
@@ -105,7 +108,32 @@ class FileWatcherService {
         }
     }
 
+    /**
+     * Temporarily suspends watcher checks for a specific path.
+     * Use this before performing internal file write operations.
+     * @param path The file path to ignore
+     * @param duration Duration in ms to ignore changes (default 2000ms)
+     */
+    suspendWatcher(path: string, duration: number = 2000) {
+        const expiry = Date.now() + duration;
+        this.suspendedPaths.set(path, Math.max(this.suspendedPaths.get(path) || 0, expiry));
+
+        // Cleanup map to prevent growth
+        setTimeout(() => {
+            const current = this.suspendedPaths.get(path);
+            if (current && current <= expiry) {
+                this.suspendedPaths.delete(path);
+            }
+        }, duration + 100);
+    }
+
     private async handleFileChange(path: string, signal?: AbortSignal): Promise<void> {
+        // Check if path is currently suspended
+        const suspendedUntil = this.suspendedPaths.get(path);
+        if (suspendedUntil && Date.now() < suspendedUntil) {
+            return;
+        }
+
         if (this.pendingChecks.has(path) || signal?.aborted) return;
         this.pendingChecks.add(path);
 
@@ -175,7 +203,7 @@ class FileWatcherService {
 
                 if (!signal?.aborted) {
                     const tabNames = cleanTabs.map((t) => t.title).join(", ");
-                    showToast("info", `Reloaded ${tabNames} from disk`);
+                    showToast("info", `Loaded ${tabNames} from disk`);
                 }
             }
         } catch (err) {
@@ -208,6 +236,7 @@ class FileWatcherService {
             }
         }
         this.watchers.clear();
+        this.suspendedPaths.clear();
     }
 }
 
