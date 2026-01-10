@@ -284,12 +284,94 @@
         }
     });
 
+    // Separate effects for different setting groups to avoid unnecessary reconfigs
+    // Word wrap and wrap guide
     $effect(() => {
         if (view) {
+            const _wrap = appContext.app.editorWordWrap;
             const _col = appContext.app.wrapGuideColumn;
             view.dispatch({
-                effects: [wrapComp.reconfigure(createWrapExtension()), autoComp.reconfigure(autocompletionConfig), recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)), historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })), themeComp.reconfigure(dynamicTheme), indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))), whitespaceComp.reconfigure(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []), languageComp.reconfigure(isMarkdown ? markdownExtensions : []), handlersComp.reconfigure(eventHandlers), doubleClickComp.reconfigure(createDoubleClickHandler()), rulerComp.reconfigure(rulerPlugin)],
+                effects: [
+                    wrapComp.reconfigure(createWrapExtension()),
+                    rulerComp.reconfigure(rulerPlugin)
+                ]
             });
+        }
+    });
+
+    // Autocomplete settings
+    $effect(() => {
+        if (view) {
+            const _enabled = appContext.app.enableAutocomplete;
+            const _delay = appContext.app.autocompleteDelay;
+            view.dispatch({ effects: autoComp.reconfigure(autocompletionConfig) });
+        }
+    });
+
+    // Theme and font settings
+    $effect(() => {
+        if (view) {
+            const _theme = appContext.app.theme;
+            const _fontSize = appContext.app.editorFontSize;
+            const _fontFamily = appContext.app.editorFontFamily;
+            const _insertMode = appContext.metrics.insertMode;
+            view.dispatch({ effects: themeComp.reconfigure(dynamicTheme) });
+        }
+    });
+
+    // Undo depth
+    $effect(() => {
+        if (view) {
+            const _depth = appContext.app.undoDepth;
+            view.dispatch({ effects: historyComp.reconfigure(history({ minDepth: _depth })) });
+        }
+    });
+
+    // Indentation
+    $effect(() => {
+        if (view) {
+            const _indent = appContext.app.defaultIndent;
+            view.dispatch({ effects: indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, _indent)))) });
+        }
+    });
+
+    // Whitespace visibility
+    $effect(() => {
+        if (view) {
+            const _show = appContext.app.showWhitespace;
+            view.dispatch({ effects: whitespaceComp.reconfigure(_show ? [highlightWhitespace(), newlinePlugin] : []) });
+        }
+    });
+
+    // Double-click behavior
+    $effect(() => {
+        if (view) {
+            const _doubleClick = appContext.app.doubleClickSelectsTrailingSpace;
+            view.dispatch({ effects: doubleClickComp.reconfigure(createDoubleClickHandler()) });
+        }
+    });
+
+    // Language mode (markdown vs plain text)
+    $effect(() => {
+        if (view) {
+            const _isMarkdown = isMarkdown;
+            view.dispatch({ effects: languageComp.reconfigure(_isMarkdown ? markdownExtensions : []) });
+        }
+    });
+
+    // Event handlers (rarely changes, but keep for completeness)
+    $effect(() => {
+        if (view) {
+            const _handlers = eventHandlers;
+            view.dispatch({ effects: handlersComp.reconfigure(_handlers) });
+        }
+    });
+
+    // Recent changes highlighter (updates with line tracker)
+    $effect(() => {
+        if (view) {
+            const _tracker = lineChangeTracker;
+            view.dispatch({ effects: recentComp.reconfigure(createRecentChangesHighlighter(_tracker)) });
         }
     });
 

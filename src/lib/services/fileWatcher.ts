@@ -106,22 +106,57 @@ class FileWatcherService {
 		this.pendingChecks.add(path);
 
 		try {
+			// Get all tabs with this path
 			const tabs = appContext.editor.tabs.filter(t => t.path === path);
+			if (tabs.length === 0) {
+				this.pendingChecks.delete(path);
+				return;
+			}
 
-			for (const tab of tabs) {
-				const hasChanged = await checkAndReloadIfChanged(tab.id);
+			// Single metadata check for all tabs with the same path
+			const firstTab = tabs[0];
+			const hasChanged = await checkAndReloadIfChanged(firstTab.id);
 
-				if (hasChanged) {
-					if (tab.isDirty) {
-						warningToast(
-							`File changed on disk: ${tab.title}. You have unsaved changes.`,
-							5000
-						);
-					} else {
-						await reloadFileContent(tab.id);
-						infoToast(`Reloaded ${tab.title} from disk`);
+			if (!hasChanged) {
+				this.pendingChecks.delete(path);
+				return;
+			}
+
+			// File has changed - check if any tabs are dirty
+			const dirtyTabs = tabs.filter(t => t.isDirty);
+			const cleanTabs = tabs.filter(t => !t.isDirty);
+
+			if (dirtyTabs.length > 0) {
+				// Show warning for dirty tabs (once, not per tab)
+				const tabNames = dirtyTabs.map(t => t.title).join(', ');
+				warningToast(
+					`File changed on disk: ${tabNames}. You have unsaved changes.`,
+					5000
+				);
+			}
+
+			if (cleanTabs.length > 0) {
+				// Reload content once, then apply to all clean tabs
+				await reloadFileContent(cleanTabs[0].id);
+				
+				// Apply the reloaded content to other clean tabs with same path
+				if (cleanTabs.length > 1) {
+					const reloadedTab = appContext.editor.tabs.find(t => t.id === cleanTabs[0].id);
+					if (reloadedTab) {
+						for (let i = 1; i < cleanTabs.length; i++) {
+							reloadTabContent(
+								cleanTabs[i].id,
+								reloadedTab.content,
+								reloadedTab.lineEnding,
+								reloadedTab.encoding,
+								reloadedTab.sizeBytes
+							);
+						}
 					}
 				}
+
+				const tabNames = cleanTabs.map(t => t.title).join(', ');
+				infoToast(`Reloaded ${tabNames} from disk`);
 			}
 		} catch (err) {
 			AppError.handle('FileWatcher:Watch', err, {

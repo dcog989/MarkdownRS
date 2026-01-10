@@ -32,6 +32,7 @@ export type EditorTab = {
     // Persistence optimization flags
     contentChanged?: boolean; // Content has changed since last DB persist
     isPersisted?: boolean;    // Tab exists in DB
+    contentLoaded?: boolean;  // Content has been loaded from DB (for lazy loading)
 };
 
 export type ClosedTab = {
@@ -102,7 +103,8 @@ export function addTab(title: string = '', content: string = '') {
         lineEnding: 'LF',
         encoding: 'UTF-8',
         contentChanged: true, // New tab needs content saved
-        isPersisted: false    // New tab not yet in DB
+        isPersisted: false,   // New tab not yet in DB
+        contentLoaded: true,  // New tab's content is already in memory
     };
 
     if (appState.newTabPosition === 'beginning') {
@@ -156,6 +158,11 @@ export function reopenClosedTab(historyIndex: number): string | null {
     // Reopened tab needs full persistence
     entry.tab.contentChanged = true;
     entry.tab.isPersisted = false;
+    // Content is already loaded since it's in closedTabsHistory
+    // But mark it as needing verification
+    if (entry.tab.contentLoaded === false) {
+        entry.tab.contentLoaded = false;
+    }
 
     const insertIndex = Math.min(entry.index, editorStore.tabs.length);
     editorStore.tabs.splice(insertIndex, 0, entry.tab);

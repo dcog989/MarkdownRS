@@ -11,6 +11,7 @@
     import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { warningToast } from "$lib/stores/toastStore.svelte";
+    import { loadTabContentLazy } from "$lib/services/sessionPersistence";
     import { loadSession, openFile, openFileByPath, persistSession, persistSessionDebounced, requestCloseTab, saveCurrentFile } from "$lib/utils/fileSystem.ts";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
@@ -28,6 +29,16 @@
     let initError = $state<string | null>(null);
 
     let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
+    
+    // Lazy load tab content when switching tabs
+    $effect(() => {
+        const tab = activeTab;
+        if (tab && !tab.contentLoaded && isInitialized) {
+            loadTabContentLazy(tab.id).catch((err) => {
+                console.error('Failed to lazy load tab content:', err);
+            });
+        }
+    });
     
     // Determine if the file is markdown based on saved path or preferred extension for unsaved files
     let isMarkdown = $derived.by(() => {

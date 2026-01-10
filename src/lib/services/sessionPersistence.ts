@@ -191,7 +191,48 @@ export async function persistSession(): Promise<void> {
     await persistenceManager.requestSave();
 }
 
-function convertRustTabToEditorTab(t: RustTabState): EditorTab {
+/**
+ * Lazy load content for a tab from the database
+ */
+export async function loadTabContentLazy(tabId: string): Promise<void> {
+    const tab = appContext.editor.tabs.find((t) => t.id === tabId) ||
+                appContext.editor.closedTabsHistory.find((c) => c.tab.id === tabId)?.tab;
+    
+    if (!tab) return;
+    
+    // Already loaded or content is available
+    if (tab.contentLoaded) return;
+    
+    try {
+        const content = await callBackend(
+            "load_tab_content",
+            { tabId },
+            "Session:LoadContent",
+        );
+        
+        if (content !== null && content !== undefined) {
+            const normalizedContent = normalizeLineEndings(content);
+            tab.content = normalizedContent;
+            tab.lastSavedContent = normalizedContent;
+            tab.sizeBytes = new TextEncoder().encode(normalizedContent).length;
+            tab.lineEnding = content.indexOf("\r\n") !== -1 ? "CRLF" : "LF";
+            tab.contentLoaded = true;
+        } else {
+            // Content not found in DB, mark as loaded with empty content
+            tab.contentLoaded = true;
+        }
+    } catch (err) {
+        AppError.handle("Session:LoadContent", err, {
+            showToast: false,
+            severity: "warning",
+            additionalInfo: { tabId },
+        });
+        // Mark as loaded even on error to prevent retry loops
+        tab.contentLoaded = true;
+    }
+}
+
+function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = true): EditorTab {
     const rawContent = t.content || "";
     const content = normalizeLineEndings(rawContent);
     const timestamp = t.modified || t.created || "";
@@ -217,6 +258,7 @@ function convertRustTabToEditorTab(t: RustTabState): EditorTab {
         fileCheckPerformed: t.file_check_performed || false,
         contentChanged: false,
         isPersisted: true,
+        contentLoaded, // Track whether content has been loaded from DB
     };
 }
 
@@ -241,9 +283,11 @@ export async function loadSession(): Promise<void> {
         if (activeRustTabs.length > 0) {
             activeRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-            const convertedTabs: EditorTab[] = activeRustTabs.map(
-                convertRustTabToEditorTab,
-            );
+            // Convert tabs, marking whether content was loaded
+            const convertedTabs: EditorTab[] = activeRustTabs.map((t) => {
+                const hasContent = t.content !== null && t.content !== undefined;
+                return convertRustTabToEditorTab(t, hasContent);
+            });
             appContext.editor.tabs = convertedTabs;
 
             const sortedMru = activeRustTabs
@@ -274,6 +318,10 @@ export async function loadSession(): Promise<void> {
                 (t) => t.id === appContext.app.activeTabId,
             );
             if (activeTab) {
+                // Lazy load content for the active tab if not already loaded
+                if (!activeTab.contentLoaded) {
+                    await loadTabContentLazy(activeTab.id);
+                }
                 await initializeTabFileState(activeTab);
             }
         }
@@ -296,10 +344,13 @@ export async function loadSession(): Promise<void> {
         if (closedRustTabs.length > 0) {
             closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-            appContext.editor.closedTabsHistory = closedRustTabs.map((t) => ({
-                tab: convertRustTabToEditorTab(t),
-                index: t.original_index ?? 0,
-            }));
+            appContext.editor.closedTabsHistory = closedRustTabs.map((t) => {
+                const hasContent = t.content !== null && t.content !== undefined;
+                return {
+                    tab: convertRustTabToEditorTab(t, hasContent),
+                    index: t.original_index ?? 0,
+                };
+            });
         }
     } catch (err) {
         AppError.handle("Session:Load", err, {
