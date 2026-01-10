@@ -217,13 +217,13 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
 
         if (data && data.content !== null && data.content !== undefined) {
             const normalizedContent = normalizeLineEndings(data.content);
-            
+
             // Determine the correct lastSavedContent
             // For unsaved tabs (no path): lastSavedContent should be empty since there's no file
             // For saved tabs with isDirty: load from disk to get the actual last saved content
             // For clean saved tabs: content === lastSavedContent
             let lastSavedContent = "";
-            
+
             if (!tab.path) {
                 // Unsaved tab - no file on disk, so lastSavedContent is empty
                 lastSavedContent = "";
@@ -243,7 +243,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                 // Clean tab - content matches what's on disk
                 lastSavedContent = normalizedContent;
             }
-            
+
             // Use reassignment to ensure Svelte 5 triggers reactivity for nested properties
             appContext.editor.tabs[index] = {
                 ...tab,
@@ -270,11 +270,11 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     const rawContent = t.content || "";
     const content = normalizeLineEndings(rawContent);
     const timestamp = t.modified || t.created || "";
-    
+
     // For unsaved tabs (no path), lastSavedContent should be empty
     // For saved tabs, if content is loaded, it equals content (will be corrected later for dirty tabs)
     const lastSavedContent = !t.path ? "" : content;
-    
+
     return {
         id: t.id,
         title: t.title,
