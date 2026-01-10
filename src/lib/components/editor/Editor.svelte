@@ -50,12 +50,12 @@
         // Only track tabId changes, not content changes
         const currentTabId = tabId;
         const tab = activeTab;
-        
+
         if (!tab || !cmView) return;
-        
+
         untrack(() => {
             const isTabSwitch = currentTabId !== previousTabId;
-            
+
             if (isTabSwitch) {
                 // Tab switch: Initialize new tab state
                 const currentTab = appContext.editor.tabs.find((t) => t.id === currentTabId);
@@ -63,16 +63,16 @@
                     initializeTabFileState(currentTab).catch(console.error);
                 }
                 previousTabId = currentTabId;
-                
+
                 // On tab switch, update editor content if it differs
                 const currentDoc = cmView!.state.doc.toString();
                 const newContent = tab.content;
-                
+
                 if (currentDoc !== newContent) {
                     scrollManager.capture(cmView!, "Tab Switch");
                     const newLength = newContent.length;
                     const currentSelection = cmView!.state.selection.main;
-                    
+
                     cmView!.dispatch({
                         changes: { from: 0, to: currentDoc.length, insert: newContent },
                         selection: {
@@ -86,29 +86,29 @@
             }
         });
     });
-    
+
     // Separate effect for handling external content updates (file reloads)
     // This only runs when content actually changes from external sources
     $effect(() => {
         const tab = activeTab;
         if (!tab || !cmView) return;
-        
+
         const content = tab.content;
         const currentTabId = tabId;
-        
+
         untrack(() => {
             // Skip if this is a tab switch (handled by the other effect)
             if (currentTabId !== previousTabId) return;
-            
-            // Only update if content differs from editor state
-            // This handles external updates (file reloads) while avoiding
-            // unnecessary updates from user typing (since typing updates the store first)
+
             const currentDoc = cmView!.state.doc.toString();
-            if (currentDoc !== content) {
+            const isInternalUpdate = cmView!.hasFocus;
+            const isSignificantChange = Math.abs(currentDoc.length - content.length) > 100;
+
+            if (currentDoc !== content && (!isInternalUpdate || isSignificantChange)) {
                 scrollManager.capture(cmView!, "External Update");
                 const currentSelection = cmView!.state.selection.main;
                 const newLength = content.length;
-                
+
                 cmView!.dispatch({
                     changes: { from: 0, to: currentDoc.length, insert: content },
                     selection: {

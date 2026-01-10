@@ -284,8 +284,6 @@
         }
     });
 
-    // Separate effects for different setting groups to avoid unnecessary reconfigs
-    // Word wrap and wrap guide
     $effect(() => {
         if (view) {
             const _wrap = appContext.app.editorWordWrap;
@@ -296,7 +294,6 @@
         }
     });
 
-    // Autocomplete settings
     $effect(() => {
         if (view) {
             const _enabled = appContext.app.enableAutocomplete;
@@ -305,7 +302,6 @@
         }
     });
 
-    // Theme and font settings
     $effect(() => {
         if (view) {
             const _theme = appContext.app.theme;
@@ -316,7 +312,6 @@
         }
     });
 
-    // Undo depth
     $effect(() => {
         if (view) {
             const _depth = appContext.app.undoDepth;
@@ -324,7 +319,6 @@
         }
     });
 
-    // Indentation
     $effect(() => {
         if (view) {
             const _indent = appContext.app.defaultIndent;
@@ -332,7 +326,6 @@
         }
     });
 
-    // Whitespace visibility
     $effect(() => {
         if (view) {
             const _show = appContext.app.showWhitespace;
@@ -340,7 +333,6 @@
         }
     });
 
-    // Double-click behavior
     $effect(() => {
         if (view) {
             const _doubleClick = appContext.app.doubleClickSelectsTrailingSpace;
@@ -348,7 +340,6 @@
         }
     });
 
-    // Language mode (markdown vs plain text)
     $effect(() => {
         if (view) {
             const _isMarkdown = isMarkdown;
@@ -356,7 +347,6 @@
         }
     });
 
-    // Event handlers (rarely changes, but keep for completeness)
     $effect(() => {
         if (view) {
             const _handlers = eventHandlers;
@@ -364,7 +354,6 @@
         }
     });
 
-    // Recent changes highlighter (updates with line tracker)
     $effect(() => {
         if (view) {
             const _tracker = lineChangeTracker;
@@ -380,7 +369,7 @@
             historyComp.of(history({ minDepth: appContext.app.undoDepth })),
             search({ top: true }),
             highlightSelectionMatches(),
-            autoComp.of([]),
+            autoComp.of(autocompletionConfig),
             recentComp.of([]),
             closeBrackets(),
             EditorView.inputHandler.of((view, from, to, text) => {
@@ -410,6 +399,7 @@
             filePathPlugin,
             filePathTheme,
             keymap.of([
+                ...customKeymap,
                 indentWithTab,
                 {
                     key: "Insert",
@@ -456,10 +446,9 @@
                         return true;
                     },
                 },
-                ...customKeymap,
                 ...completionKeymap,
-                ...closeBracketsKeymap,
                 ...historyKeymap,
+                ...closeBracketsKeymap,
                 ...defaultKeymap,
             ]),
             themeComp.of(dynamicTheme),
