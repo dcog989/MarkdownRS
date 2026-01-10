@@ -34,19 +34,16 @@ fn main() {
                 let _ = window.set_focus();
                 let _ = window.unminimize();
 
-                // Handle file path argument from Windows Explorer
                 if args.len() > 1 {
-                    // args[0] is the executable path, args[1] is the file path
                     let file_path = &args[1];
                     log::info!("Opening file from command line: {}", file_path);
-
-                    // Emit event to frontend with the file path
                     let _ = window.emit("open-file-from-args", file_path);
                 }
             }
         }))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())

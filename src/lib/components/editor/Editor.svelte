@@ -18,6 +18,7 @@
     import { transformText } from "$lib/utils/textTransforms";
     import { syntaxTree } from "@codemirror/language";
     import { EditorView as CM6EditorView } from "@codemirror/view";
+    import { readText } from "@tauri-apps/plugin-clipboard-manager";
     import { openPath } from "@tauri-apps/plugin-opener";
     import { onDestroy, onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
@@ -45,9 +46,7 @@
         }
     });
 
-    // Effect for handling tab switches
     $effect(() => {
-        // Only track tabId changes, not content changes
         const currentTabId = tabId;
         const tab = activeTab;
 
@@ -57,14 +56,12 @@
             const isTabSwitch = currentTabId !== previousTabId;
 
             if (isTabSwitch) {
-                // Tab switch: Initialize new tab state
                 const currentTab = appContext.editor.tabs.find((t) => t.id === currentTabId);
                 if (currentTab) {
                     initializeTabFileState(currentTab).catch(console.error);
                 }
                 previousTabId = currentTabId;
 
-                // On tab switch, update editor content if it differs
                 const currentDoc = cmView!.state.doc.toString();
                 const newContent = tab.content;
 
@@ -87,8 +84,6 @@
         });
     });
 
-    // Separate effect for handling external content updates (file reloads)
-    // This only runs when content actually changes from external sources
     $effect(() => {
         const tab = activeTab;
         if (!tab || !cmView) return;
@@ -97,27 +92,25 @@
         const currentTabId = tabId;
 
         untrack(() => {
-            // Skip if this is a tab switch (handled by the other effect)
             if (currentTabId !== previousTabId) return;
 
             const currentDoc = cmView!.state.doc.toString();
-            const isInternalUpdate = cmView!.hasFocus;
-            const isSignificantChange = Math.abs(currentDoc.length - content.length) > 100;
+            if (currentDoc !== content) {
+                if (!cmView!.hasFocus) {
+                    scrollManager.capture(cmView!, "External Update");
+                    const currentSelection = cmView!.state.selection.main;
+                    const newLength = content.length;
 
-            if (currentDoc !== content && (!isInternalUpdate || isSignificantChange)) {
-                scrollManager.capture(cmView!, "External Update");
-                const currentSelection = cmView!.state.selection.main;
-                const newLength = content.length;
-
-                cmView!.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: content },
-                    selection: {
-                        anchor: Math.min(currentSelection.anchor, newLength),
-                        head: Math.min(currentSelection.head, newLength),
-                    },
-                    scrollIntoView: false,
-                });
-                scrollManager.restore(cmView!, "pixel");
+                    cmView!.dispatch({
+                        changes: { from: 0, to: currentDoc.length, insert: content },
+                        selection: {
+                            anchor: Math.min(currentSelection.anchor, newLength),
+                            head: Math.min(currentSelection.head, newLength),
+                        },
+                        scrollIntoView: false,
+                    });
+                    scrollManager.restore(cmView!, "pixel");
+                }
             }
         });
     });
@@ -329,9 +322,21 @@
         }}
         onCopy={() => navigator.clipboard.writeText(contextSelectedText)}
         onPaste={async () => {
-            const t = await navigator.clipboard.readText();
             if (!cmView) return;
-            cmView.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: t }, selection: { anchor: cmView.state.selection.main.from + t.length }, scrollIntoView: true });
+            showContextMenu = false;
+            cmView.focus();
+            try {
+                const t = await readText();
+                if (t) {
+                    cmView.dispatch({
+                        changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: t },
+                        selection: { anchor: cmView.state.selection.main.from + t.length },
+                        scrollIntoView: true,
+                    });
+                }
+            } catch (err) {
+                console.error("Paste failed:", err);
+            }
         }}
         onReplaceWord={(w) => {
             if (!cmView) return;
