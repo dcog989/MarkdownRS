@@ -11,7 +11,7 @@ import { AppError } from '$lib/utils/errorHandling';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { callBackend } from './backend';
-import { SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
+import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 export { addToDictionary, checkAndReloadIfChanged, checkFileExists, loadSession, persistSession, persistSessionDebounced, reloadFileContent };
@@ -155,14 +155,17 @@ export async function saveCurrentFile(): Promise<boolean> {
 			const sanitizedPath = sanitizePath(savePath);
 			let contentToSave = tab.content;
 
-			if (appContext.app.formatOnSave && !sanitizedPath.endsWith('.txt')) {
-				contentToSave = await formatMarkdown(contentToSave, {
+			if (appContext.app.formatOnSave && isMarkdownFile(sanitizedPath)) {
+				const formatted = await formatMarkdown(contentToSave, {
 					listIndent: appContext.app.defaultIndent,
 					bulletChar: appContext.app.formatterBulletChar,
 					codeBlockFence: appContext.app.formatterCodeFence,
 					tableAlignment: appContext.app.formatterTableAlignment
 				});
-				updateContentOnly(tabId, contentToSave);
+				if (formatted) {
+					contentToSave = formatted;
+					updateContentOnly(tabId, contentToSave);
+				}
 			}
 
 			const targetLineEnding = appContext.app.lineEndingPreference === 'system'
@@ -206,15 +209,12 @@ export async function saveCurrentFile(): Promise<boolean> {
 			saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
 			markAsSaved(tabId);
 
-			// Invalidate cache immediately to ensure we get the fresh mtime after our write
 			invalidateMetadataCache(sanitizedPath);
 			await refreshMetadata(tabId, sanitizedPath);
 			return true;
 		}
 		return false;
 	} catch (err) {
-		// AppError handled by callBackend if reported, but we might catch others
-		// If we didn't report, handle here. `callBackend` above has `report: true`.
 		return false;
 	}
 }

@@ -47,63 +47,61 @@
         }
     });
 
+    // Unified Tab Switch and Content Sync Handler
     $effect(() => {
         const currentTabId = tabId;
         const tab = activeTab;
-
         if (!tab || !cmView) return;
 
-        untrack(() => {
-            const isTabSwitch = currentTabId !== previousTabId;
-
-            if (isTabSwitch) {
-                const currentTab = appContext.editor.tabs.find((t) => t.id === currentTabId);
-                if (currentTab) {
-                    initializeTabFileState(currentTab).catch(console.error);
-                }
+        // 1. Detect Tab Switch
+        const isTabSwitch = untrack(() => {
+            const switched = currentTabId !== previousTabId;
+            if (switched) {
+                initializeTabFileState(tab).catch(console.error);
                 previousTabId = currentTabId;
             }
+            return switched;
         });
 
         const currentDoc = cmView!.state.doc.toString();
-        const newContent = tab.content;
+        const storeContent = tab.content;
         const isLoaded = tab.contentLoaded;
 
-        if (!isLoaded && newContent === "") return;
+        // 2. Determine if we must sync Store -> Editor
+        // We sync if:
+        // - We just switched tabs (isTabSwitch)
+        // - Content just arrived via lazy-load (isInitialPopulate)
+        // - Editor is NOT focused (external disk reload)
+        // - A transformation is active (Transform Menu/Format Document)
+        const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
+        const isFocused = cmView!.hasFocus;
 
-        if (currentDoc !== newContent) {
+        const shouldSync = isTabSwitch || isInitialPopulate || !isFocused || isTransforming;
+
+        if (shouldSync && currentDoc !== storeContent) {
             untrack(() => {
-                const isFocused = cmView!.hasFocus;
-                const isExternalReload = !isFocused && !tab.isDirty;
-                const isJustLoaded = isLoaded && currentDoc === "";
+                scrollManager.capture(cmView!, "Sync");
 
-                const shouldSync = isJustLoaded || isExternalReload || (!isFocused && !isTransforming);
+                cmView!.dispatch({
+                    changes: { from: 0, to: currentDoc.length, insert: storeContent },
+                    selection: isTabSwitch
+                        ? tab.cursor.head > storeContent.length
+                            ? { anchor: 0 }
+                            : { anchor: tab.cursor.anchor, head: tab.cursor.head }
+                        : {
+                              anchor: Math.min(cmView!.state.selection.main.anchor, storeContent.length),
+                              head: Math.min(cmView!.state.selection.main.head, storeContent.length),
+                          },
+                    scrollIntoView: false,
+                });
 
-                if (shouldSync) {
-                    scrollManager.capture(cmView!, "Content Sync");
-
-                    const newLength = newContent.length;
-                    const currentSelection = cmView!.state.selection.main;
-
-                    cmView!.dispatch({
-                        changes: { from: 0, to: currentDoc.length, insert: newContent },
-                        selection: {
-                            anchor: Math.min(currentSelection.anchor, newLength),
-                            head: Math.min(currentSelection.head, newLength),
-                        },
-                        scrollIntoView: false,
-                    });
-
-                    requestAnimationFrame(() => {
-                        if (cmView) {
-                            cmView.requestMeasure();
-                            scrollManager.restore(cmView, "pixel");
-                            if (isJustLoaded) {
-                                cmView.focus();
-                            }
-                        }
-                    });
-                }
+                requestAnimationFrame(() => {
+                    if (cmView) {
+                        cmView.requestMeasure();
+                        scrollManager.restore(cmView, "pixel");
+                        if (isTabSwitch || isInitialPopulate) cmView.focus();
+                    }
+                });
             });
         }
     });

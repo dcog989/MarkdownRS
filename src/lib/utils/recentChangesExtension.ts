@@ -1,6 +1,6 @@
 import { appContext } from "$lib/stores/state.svelte.ts";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-import { gutter, GutterMarker, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { gutter, GutterMarker, lineNumbers, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 class LineNumberMarker extends GutterMarker {
     constructor(private lineNo: number, private alpha: number, private deletionAlpha: number) {
@@ -30,7 +30,6 @@ class LineNumberMarker extends GutterMarker {
             delMarker.style.height = "2px";
             delMarker.style.backgroundColor = `color-mix(in srgb, var(--color-danger), transparent ${Math.round((1 - this.deletionAlpha) * 100)}%)`;
             delMarker.style.pointerEvents = "none";
-            // Ensure marker is visible above other elements
             delMarker.style.zIndex = "10";
             span.appendChild(delMarker);
         }
@@ -45,21 +44,21 @@ class LineNumberMarker extends GutterMarker {
     }
 }
 
-export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
+export function createRecentChangesHighlighter(tracker: LineChangeTracker | undefined) {
+    if (!tracker || (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0)) {
+        return [lineNumbers()];
+    }
+
     return [
         ViewPlugin.fromClass(class {
             update(update: ViewUpdate) {
-                if (!update.docChanged) return;
-                // Disabled if both count and timespan are 0
-                if (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0) return;
+                if (!update.docChanged || !tracker) return;
 
                 const isHistoryAction = update.transactions.some(tr =>
                     tr.isUserEvent('undo') || tr.isUserEvent('redo')
                 );
 
                 if (isHistoryAction) {
-                    // For undo/redo, simpler to just clear invalid trackers or ideally reconstruct from history
-                    // For now, simple clear of affected areas to avoid ghosts
                     const affectedLines = new Set<number>();
                     update.changes.iterChanges((fromA, toA, fromB, toB) => {
                         const doc = update.state.doc;
@@ -91,18 +90,11 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                     const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
                     const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
 
-                    // Deletion Logic
                     if (linesA > linesB) {
-                        // Mark the line where the deletion collapsed to
                         const lineNo = docB.lineAt(fromB).number;
-                        // Determine visual position:
-                        // If we deleted text at end of line 5 (merging line 6 into 5), line 5 remains.
-                        // The 'gap' is roughly after line 5.
-                        // If we deleted line 1 entirely, content shifts up.
                         deletions.add(lineNo);
                     }
 
-                    // Modification Logic
                     const startLine = docB.lineAt(fromB).number;
                     const endLine = docB.lineAt(Math.min(toB, docB.length)).number;
 
@@ -110,10 +102,8 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                         changedLines.add(line);
                     }
 
-                    // Adjust markers for shifting lines
                     const lineDelta = linesB - linesA;
                     if (lineDelta !== 0) {
-                        // We pass the line *after* the change range for adjustment
                         tracker.adjustLineNumbers(endLine + 1, lineDelta);
                     }
                 });
@@ -134,8 +124,7 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker) {
                 let alpha = 0;
                 let deletionAlpha = 0;
 
-                // Calculate alpha if either mode is enabled
-                if (appContext.app.recentChangesCount > 0 || appContext.app.recentChangesTimespan > 0) {
+                if (tracker) {
                     alpha = tracker.getLineAlpha(
                         lineNo,
                         appContext.app.recentChangesTimespan,

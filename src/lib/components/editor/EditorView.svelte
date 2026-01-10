@@ -81,26 +81,13 @@
 
     let autocompletionConfig = $derived.by(() => {
         if (!appContext.app.enableAutocomplete) return [];
-        const delay = appContext.app.autocompleteDelay;
-        let timeoutId: number | null = null;
         return autocompletion({
             activateOnTyping: true,
             closeOnBlur: true,
             defaultKeymap: true,
             aboveCursor: false,
             maxRenderedOptions: 100,
-            override:
-                delay > 0
-                    ? [
-                          async (context) => {
-                              if (timeoutId !== null) clearTimeout(timeoutId);
-                              await new Promise((resolve) => {
-                                  timeoutId = window.setTimeout(resolve, delay);
-                              });
-                              return completeAnyWord(context);
-                          },
-                      ]
-                    : undefined,
+            override: [completeAnyWord],
         });
     });
 
@@ -234,7 +221,7 @@
             search({ top: true }),
             highlightSelectionMatches(),
             autoComp.of(autocompletionConfig),
-            recentComp.of([]),
+            recentComp.of(createRecentChangesHighlighter(lineChangeTracker)),
             closeBrackets(),
             EditorView.inputHandler.of((view, from, to, text) => {
                 if (text === "`" && from === to) {
