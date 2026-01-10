@@ -5,7 +5,14 @@
     import type { OperationId } from "$lib/config/textOperationsRegistry";
     import { initializeTabFileState } from "$lib/services/sessionPersistence";
     import { updateMetrics } from "$lib/stores/editorMetrics.svelte";
-    import { registerTextOperationCallback, unregisterTextOperationCallback, updateContent, updateCursor, updateHistoryState, updateScroll } from "$lib/stores/editorStore.svelte";
+    import {
+        registerTextOperationCallback,
+        unregisterTextOperationCallback,
+        updateContent,
+        updateCursor,
+        updateHistoryState,
+        updateScroll,
+    } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { ScrollManager } from "$lib/utils/cmScroll";
     import { CONFIG } from "$lib/utils/config";
@@ -80,7 +87,8 @@
         const isFocused = cmView!.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
-        const shouldSync = isTabSwitch || isInitialPopulate || !isFocused || isTransforming || isForcedSync;
+        const shouldSync =
+            isTabSwitch || isInitialPopulate || !isFocused || isTransforming || isForcedSync;
 
         if (shouldSync && currentDoc !== storeContent) {
             untrack(() => {
@@ -93,8 +101,14 @@
                             ? { anchor: 0 }
                             : { anchor: tab.cursor.anchor, head: tab.cursor.head }
                         : {
-                              anchor: Math.min(cmView!.state.selection.main.anchor, storeContent.length),
-                              head: Math.min(cmView!.state.selection.main.head, storeContent.length),
+                              anchor: Math.min(
+                                  cmView!.state.selection.main.anchor,
+                                  storeContent.length
+                              ),
+                              head: Math.min(
+                                  cmView!.state.selection.main.head,
+                                  storeContent.length
+                              ),
                           },
                     scrollIntoView: false,
                 });
@@ -136,7 +150,9 @@
         isTransforming = true;
         const selection = cmView.state.selection.main;
         const hasSelection = selection.from !== selection.to;
-        const targetText = hasSelection ? cmView.state.sliceDoc(selection.from, selection.to) : cmView.state.doc.toString();
+        const targetText = hasSelection
+            ? cmView.state.sliceDoc(selection.from, selection.to)
+            : cmView.state.doc.toString();
 
         scrollManager.capture(cmView, `Op:${operationId}`);
         const newText = await transformText(targetText, operationId);
@@ -227,7 +243,9 @@
                     event.preventDefault();
                     event.stopImmediatePropagation();
                     if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-                        const url = targetString.startsWith("www.") ? `https://${targetString}` : targetString;
+                        const url = targetString.startsWith("www.")
+                            ? `https://${targetString}`
+                            : targetString;
                         openPath(url).catch(() => {});
                     } else {
                         navigateToPath(targetString);
@@ -246,7 +264,9 @@
                 from = 0,
                 to = 0;
             if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
-                const range = view.state.wordAt(view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head);
+                const range = view.state.wordAt(
+                    view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head
+                );
                 if (range) {
                     from = range.from;
                     to = range.to;
@@ -313,15 +333,40 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView bind:cmView {tabId} {initialContent} {filename} {isMarkdown} initialScrollPercentage={initialScroll} {initialSelection} {initialHistoryState} {lineChangeTracker} customKeymap={spellCheckKeymap} spellCheckLinter={null} {eventHandlers} onContentChange={handleContentChange} onMetricsChange={handleMetricsChange} onScrollChange={handleScrollChange} onSelectionChange={handleSelectionChange} />
+    <EditorView
+        bind:cmView
+        {tabId}
+        {initialContent}
+        {filename}
+        {isMarkdown}
+        initialScrollPercentage={initialScroll}
+        {initialSelection}
+        {initialHistoryState}
+        {lineChangeTracker}
+        customKeymap={spellCheckKeymap}
+        spellCheckLinter={null}
+        {eventHandlers}
+        onContentChange={handleContentChange}
+        onMetricsChange={handleMetricsChange}
+        onScrollChange={handleScrollChange}
+        onSelectionChange={handleSelectionChange}
+    />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
-    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
+    <FindReplacePanel
+        bind:this={findReplacePanel}
+        bind:isOpen={appContext.interface.showFind}
+        {cmView}
+    />
 
     {#if showEmptyState}
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <img src="/logo.svg" alt="MarkdownRS Logo" class="w-48 h-48 opacity-[0.08] select-none" />
+            <img
+                src="/logo.svg"
+                alt="MarkdownRS Logo"
+                class="w-48 h-48 opacity-[0.08] select-none"
+            />
         </div>
     {/if}
 </div>
@@ -337,7 +382,13 @@
         onCut={() => {
             navigator.clipboard.writeText(contextSelectedText);
             if (!cmView) return;
-            cmView.dispatch({ changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: "" } });
+            cmView.dispatch({
+                changes: {
+                    from: cmView.state.selection.main.from,
+                    to: cmView.state.selection.main.to,
+                    insert: "",
+                },
+            });
         }}
         onCopy={() => navigator.clipboard.writeText(contextSelectedText)}
         onPaste={async () => {
@@ -348,7 +399,11 @@
                 const t = await readText();
                 if (t) {
                     cmView.dispatch({
-                        changes: { from: cmView.state.selection.main.from, to: cmView.state.selection.main.to, insert: t },
+                        changes: {
+                            from: cmView.state.selection.main.from,
+                            to: cmView.state.selection.main.to,
+                            insert: t,
+                        },
                         selection: { anchor: cmView.state.selection.main.from + t.length },
                         scrollIntoView: true,
                     });
