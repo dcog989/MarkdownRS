@@ -57,8 +57,10 @@
 
         try {
             const update = await check();
-            if (update?.available) {
-                const confirmed = confirm(`Update available: ${update.version}\n\n${update.body || "No release notes available."}\n\nDo you want to install it now?`);
+            if (update) {
+                const confirmed = confirm(
+                    `Update available: ${update.version}\n\n${update.body || "No release notes available."}\n\nDo you want to install it now?`
+                );
 
                 if (confirmed) {
                     updateStatus = "Downloading and installing...";
@@ -90,13 +92,21 @@
         <img src="/logo.svg" alt="MarkdownRS Logo" class="w-20 h-20" />
         <h1 class="text-2xl font-bold text-fg-default">{appInfo.name}</h1>
         <p class="text-fg-muted">The only markdown editor you need.</p>
-        <p class="italic text-center text-accent-secondary">"I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."</p>
+        <p class="italic text-center text-accent-secondary">
+            "I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."
+        </p>
 
         <div class="w-full mt-4 space-y-1">
             <div class="flex items-center py-2 border-b gap-3 border-border-main">
                 <span class="font-medium shrink-0 w-16 text-fg-muted">Version</span>
-                <span class="font-mono font-bold flex-1 text-left text-fg-default">{appInfo.version}</span>
-                <button class="text-ui-sm px-2 py-0.5 rounded flex items-center gap-1 transition-colors border shrink-0 bg-bg-input text-fg-default border-border-light" onclick={checkForUpdates} disabled={isChecking}>
+                <span class="font-mono font-bold flex-1 text-left text-fg-default"
+                    >{appInfo.version}</span
+                >
+                <button
+                    class="text-ui-sm px-2 py-0.5 rounded flex items-center gap-1 transition-colors border shrink-0 bg-bg-input text-fg-default border-border-light"
+                    onclick={checkForUpdates}
+                    disabled={isChecking}
+                >
                     {#if isChecking}
                         <LoaderCircle size={12} class="animate-spin" />
                     {:else}
@@ -108,26 +118,50 @@
 
             <div class="flex items-center py-2 border-b gap-3 border-border-main">
                 <span class="font-medium shrink-0 w-16 text-fg-muted">Install</span>
-                <span class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default" title={appInfo.install_path}>{appInfo.install_path}</span>
-                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary" onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
+                <span
+                    class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default"
+                    title={appInfo.install_path}>{appInfo.install_path}</span
+                >
+                <button
+                    class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary"
+                    onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button
+                >
             </div>
 
             <div class="flex items-center py-2 border-b gap-3 border-border-main">
                 <span class="font-medium shrink-0 w-16 text-fg-muted">Data</span>
-                <span class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default" title={appInfo.data_path}>{appInfo.data_path}</span>
-                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary" onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
+                <span
+                    class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default"
+                    title={appInfo.data_path}>{appInfo.data_path}</span
+                >
+                <button
+                    class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary"
+                    onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button
+                >
             </div>
 
             <div class="flex items-center py-2 border-b gap-3 border-border-main">
                 <span class="font-medium shrink-0 w-16 text-fg-muted">Cache</span>
-                <span class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default" title={appInfo.cache_path}>{appInfo.cache_path}</span>
-                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary" onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button>
+                <span
+                    class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default"
+                    title={appInfo.cache_path}>{appInfo.cache_path}</span
+                >
+                <button
+                    class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary"
+                    onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button
+                >
             </div>
 
             <div class="flex items-center py-2 border-b gap-3 border-border-main">
                 <span class="font-medium shrink-0 w-16 text-fg-muted">Logs</span>
-                <span class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default" title={appInfo.logs_path}>{appInfo.logs_path}</span>
-                <button class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary" onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button>
+                <span
+                    class="text-ui-sm font-mono truncate flex-1 text-left text-fg-default"
+                    title={appInfo.logs_path}>{appInfo.logs_path}</span
+                >
+                <button
+                    class="text-ui-sm px-2 py-0.5 rounded hover:bg-white/10 shrink-0 text-accent-primary"
+                    onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button
+                >
             </div>
         </div>
 
