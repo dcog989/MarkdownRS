@@ -64,6 +64,18 @@ export class IncrementalMarkdownRenderer {
                             ],
                         });
 
+                        // Prevent memory leak: Evict oldest entry if limit reached
+                        if (this.htmlCache.size >= CONFIG.PERFORMANCE.INCREMENTAL_CACHE_LIMIT) {
+                            const oldestKey = this.htmlCache.keys().next().value;
+                            if (oldestKey !== undefined) {
+                                this.htmlCache.delete(oldestKey);
+                            }
+                        }
+
+                        this.htmlCache.set(block.hash, baseHtml);
+                    } else {
+                        // Refresh position in Map for LRU behavior
+                        this.htmlCache.delete(block.hash);
                         this.htmlCache.set(block.hash, baseHtml);
                     }
 
