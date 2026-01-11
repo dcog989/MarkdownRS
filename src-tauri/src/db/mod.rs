@@ -94,27 +94,7 @@ impl Database {
                 "CREATE TABLE IF NOT EXISTS tabs (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    is_dirty INTEGER NOT NULL,
-                    path TEXT,
-                    scroll_percentage REAL NOT NULL,
-                    created TEXT,
-                    modified TEXT,
-                    is_pinned INTEGER DEFAULT 0,
-                    custom_title TEXT,
-                    file_check_failed INTEGER DEFAULT 0,
-                    file_check_performed INTEGER DEFAULT 0,
-                    mru_position INTEGER,
-                    sort_index INTEGER DEFAULT 0
-                )",
-                [],
-            )?;
-
-            tx.execute(
-                "CREATE TABLE IF NOT EXISTS closed_tabs (
-                    id TEXT PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    content TEXT NOT NULL,
+                    content TEXT,
                     is_dirty INTEGER NOT NULL,
                     path TEXT,
                     scroll_percentage REAL NOT NULL,
@@ -126,7 +106,29 @@ impl Database {
                     file_check_performed INTEGER DEFAULT 0,
                     mru_position INTEGER,
                     sort_index INTEGER DEFAULT 0,
-                    original_index INTEGER
+                    history_state TEXT
+                )",
+                [],
+            )?;
+
+            tx.execute(
+                "CREATE TABLE IF NOT EXISTS closed_tabs (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    content TEXT,
+                    is_dirty INTEGER NOT NULL,
+                    path TEXT,
+                    scroll_percentage REAL NOT NULL,
+                    created TEXT,
+                    modified TEXT,
+                    is_pinned INTEGER DEFAULT 0,
+                    custom_title TEXT,
+                    file_check_failed INTEGER DEFAULT 0,
+                    file_check_performed INTEGER DEFAULT 0,
+                    mru_position INTEGER,
+                    sort_index INTEGER DEFAULT 0,
+                    original_index INTEGER,
+                    history_state TEXT
                 )",
                 [],
             )?;
@@ -161,78 +163,6 @@ impl Database {
             )?;
         }
 
-        if version < 2 {
-            log::info!("Migrating database schema to v2 (Nullable Content)");
-
-            // Migrate 'tabs' table to allow NULL content
-            tx.execute(
-                "CREATE TABLE tabs_v2 (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                content TEXT, -- Made Nullable
-                is_dirty INTEGER NOT NULL,
-                path TEXT,
-                scroll_percentage REAL NOT NULL,
-                created TEXT,
-                modified TEXT,
-                is_pinned INTEGER DEFAULT 0,
-                custom_title TEXT,
-                file_check_failed INTEGER DEFAULT 0,
-                file_check_performed INTEGER DEFAULT 0,
-                mru_position INTEGER,
-                sort_index INTEGER DEFAULT 0
-            )",
-                [],
-            )?;
-
-            tx.execute("INSERT INTO tabs_v2 SELECT * FROM tabs", [])?;
-            tx.execute("DROP TABLE tabs", [])?;
-            tx.execute("ALTER TABLE tabs_v2 RENAME TO tabs", [])?;
-
-            // Migrate 'closed_tabs' table
-            tx.execute(
-                "CREATE TABLE closed_tabs_v2 (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                content TEXT, -- Made Nullable
-                is_dirty INTEGER NOT NULL,
-                path TEXT,
-                scroll_percentage REAL NOT NULL,
-                created TEXT,
-                modified TEXT,
-                is_pinned INTEGER DEFAULT 0,
-                custom_title TEXT,
-                file_check_failed INTEGER DEFAULT 0,
-                file_check_performed INTEGER DEFAULT 0,
-                mru_position INTEGER,
-                sort_index INTEGER DEFAULT 0,
-                original_index INTEGER
-            )",
-                [],
-            )?;
-
-            tx.execute("INSERT INTO closed_tabs_v2 SELECT * FROM closed_tabs", [])?;
-            tx.execute("DROP TABLE closed_tabs", [])?;
-            tx.execute("ALTER TABLE closed_tabs_v2 RENAME TO closed_tabs", [])?;
-
-            tx.execute(
-                "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
-                [2],
-            )?;
-        }
-
-        if version < 3 {
-            log::info!("Migrating database schema to v3 (History State)");
-            // Add history_state column to tabs and closed_tabs
-            tx.execute("ALTER TABLE tabs ADD COLUMN history_state TEXT", [])?;
-            tx.execute("ALTER TABLE closed_tabs ADD COLUMN history_state TEXT", [])?;
-
-            tx.execute(
-                "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
-                [3],
-            )?;
-        }
-
         tx.commit()?;
 
         Ok(Self { conn })
@@ -246,14 +176,7 @@ impl Database {
         )?;
 
         if exists == 0 {
-            // Check if legacy tables exist to determine if it's v0 or brand new
-            let tabs_exists: i32 = conn.query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='tabs'",
-                [],
-                |row| row.get(0),
-            )?;
-            // If tabs exist but no version table, assume v0/v1 base state
-            return Ok(if tabs_exists > 0 { 0 } else { 0 });
+            return Ok(0);
         }
 
         let version = conn.query_row(
@@ -415,8 +338,6 @@ impl Database {
     }
 
     pub fn load_session(&self) -> Result<SessionData> {
-        // Always load content to ensure tabs are fully restored
-        // This prevents issues with lazy loading and ensures unsaved content is immediately available
         self.load_session_with_content(true)
     }
 
@@ -437,7 +358,7 @@ impl Database {
                 let id: String = row.get(0)?;
                 let title: String = row.get(1)?;
                 let path: Option<String> = row.get(4)?;
-                
+
                 Ok(TabState {
                     id,
                     title,
@@ -505,7 +426,6 @@ impl Database {
         })
     }
 
-    /// Load content and history for a specific tab by ID
     pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {
         let content = self
             .conn
@@ -524,7 +444,6 @@ impl Database {
         Ok(TabData { content })
     }
 
-    // Bookmarks and other methods
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
         let tags_json = serde_json::to_string(&bookmark.tags)?;
         self.conn.execute(
