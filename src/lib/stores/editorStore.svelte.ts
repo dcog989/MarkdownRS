@@ -441,10 +441,8 @@ export function togglePreferredExtension(id: string) {
 export function markTabPersisted(id: string) {
     updateTab(
         id,
-        (tab) => ({
-            // CRITICAL: Unsaved tabs (no path) must keep contentChanged: true
-            // so they continue to be saved on subsequent cycles
-            contentChanged: !tab.path && tab.content.length > 0 ? true : false,
+        () => ({
+            contentChanged: false,
             isPersisted: true,
         }),
         false

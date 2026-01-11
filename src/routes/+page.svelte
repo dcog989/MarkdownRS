@@ -77,7 +77,7 @@
             case "s":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                
+
                 // Ctrl+Shift+S = Save As (force new path)
                 if (e.shiftKey) {
                     saveCurrentFileAs();
@@ -202,7 +202,9 @@
         document.addEventListener("keydown", handleTabNavigation, { capture: true });
 
         autoSaveInterval = window.setInterval(() => {
-            persistSession();
+            if (appContext.editor.sessionDirty) {
+                persistSession();
+            }
             saveSettings();
         }, AUTO_SAVE_INTERVAL_MS);
 

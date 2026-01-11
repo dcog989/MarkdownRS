@@ -74,8 +74,6 @@ class SessionPersistenceManager {
             // 1. Map Active Tabs
             const activeTabs = appContext.editor.tabs;
             const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
-                // CRITICAL FIX: Always save content for unsaved tabs OR if content has changed
-                // contentChanged flag tracks if content needs to be saved since last persist
                 const needsContent = !t.path || t.contentChanged || !t.isPersisted;
 
                 return {
@@ -130,19 +128,15 @@ class SessionPersistenceManager {
             );
 
             // 3. Update persistence state on success
-            const hasUnsavedTabsWithContent = activeTabs.some(
-                (t) => !t.path && t.content.length > 0
-            );
-            appContext.editor.sessionDirty = hasUnsavedTabsWithContent;
+            appContext.editor.sessionDirty = false;
 
             activeTabs.forEach((t) => {
                 markTabPersisted(t.id);
             });
 
             appContext.editor.closedTabsHistory.forEach((entry) => {
-                if (entry.tab.isPersisted) {
-                    entry.tab.contentChanged = false;
-                }
+                entry.tab.contentChanged = false;
+                entry.tab.isPersisted = true;
             });
         } catch (err) {
             appContext.editor.sessionDirty = true;
@@ -261,9 +255,10 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
 
             // Use reassignment to ensure Svelte 5 triggers reactivity for nested properties
             const sizeBytes = new TextEncoder().encode(normalizedContent).length;
-            const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-                ? countWords(normalizedContent)
-                : fastCountWords(normalizedContent);
+            const wordCount =
+                sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+                    ? countWords(normalizedContent)
+                    : fastCountWords(normalizedContent);
             appContext.editor.tabs[index] = {
                 ...tab,
                 content: normalizedContent,
@@ -295,9 +290,10 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     // For saved tabs, if content is loaded, it equals content (will be corrected later for dirty tabs)
     const lastSavedContent = !t.path ? "" : content;
     const sizeBytes = new TextEncoder().encode(content).length;
-    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-        ? countWords(content)
-        : fastCountWords(content);
+    const wordCount =
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(content)
+            : fastCountWords(content);
 
     const editorTab: EditorTab = {
         id: t.id,
@@ -316,7 +312,9 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         formattedTimestamp: formatTimestampForDisplay(timestamp),
         isPinned: t.is_pinned,
         customTitle: t.custom_title || undefined,
-        lineEnding: (t.content && t.content.indexOf("\r\n") !== -1 ? "CRLF" : "LF") as "LF" | "CRLF",
+        lineEnding: (t.content && t.content.indexOf("\r\n") !== -1 ? "CRLF" : "LF") as
+            | "LF"
+            | "CRLF",
         encoding: "UTF-8",
         fileCheckFailed: t.file_check_failed || false,
         fileCheckPerformed: t.file_check_performed || false,
