@@ -55,6 +55,7 @@
         filename = "",
         isMarkdown = true,
         initialScrollPercentage = 0,
+        initialScrollTop = 0,
         initialSelection = { anchor: 0, head: 0 },
         initialHistoryState,
         lineChangeTracker,
@@ -73,12 +74,13 @@
         filename?: string;
         isMarkdown?: boolean;
         initialScrollPercentage?: number;
+        initialScrollTop?: number;
         initialSelection?: { anchor: number; head: number };
         initialHistoryState?: any;
         lineChangeTracker: any;
         onContentChange: (content: string) => void;
         onMetricsChange: (metrics: any) => void;
-        onScrollChange?: (percentage: number, topLine: number) => void;
+        onScrollChange?: (percentage: number, scrollTop: number, topLine: number) => void;
         onSelectionChange?: (anchor: number, head: number) => void;
         onHistoryUpdate?: (state: any) => void;
         customKeymap?: any[];
@@ -295,7 +297,6 @@
                         const docString = state.doc.toString();
                         const line = state.doc.lineAt(state.selection.main.head);
 
-                        // Calculate ONLY cursor metrics to avoid overwriting tab-specific document totals
                         onMetricsChange(
                             calculateCursorMetrics(docString, state.selection.main.head, {
                                 number: line.number,
@@ -338,17 +339,16 @@
             untrack(() => {
                 const newState = EditorState.create({
                     doc: storeContent,
-                    extensions: createExtensions(undefined),
+                    extensions: createExtensions(storeTab.historyState),
                     selection: {
-                        anchor: Math.min(initialSelection.anchor, storeContent.length),
-                        head: Math.min(initialSelection.head, storeContent.length),
+                        anchor: Math.min(storeTab.cursor.anchor, storeContent.length),
+                        head: Math.min(storeTab.cursor.head, storeContent.length),
                     },
                 });
 
                 view!.setState(newState);
 
-                // Immediately calculate and update metrics for the new tab's cursor position
-                const cursorPos = Math.min(initialSelection.head, storeContent.length);
+                const cursorPos = Math.min(storeTab.cursor.head, storeContent.length);
                 const line = newState.doc.lineAt(cursorPos);
                 onMetricsChange(
                     calculateCursorMetrics(storeContent, cursorPos, {
@@ -358,18 +358,15 @@
                     })
                 );
 
-                requestAnimationFrame(() => {
-                    if (view && initialScrollPercentage > 0) {
-                        const dom = view.scrollDOM;
-                        const max = dom.scrollHeight - dom.clientHeight;
-                        if (max > 0) dom.scrollTop = initialScrollPercentage * max;
-                    }
-                    if (view) {
-                        view.focus();
-                        view.requestMeasure();
-                    }
-                    initializeTabFileState(storeTab).catch(() => {});
+                view!.requestMeasure({
+                    read: () => {},
+                    write: () => {
+                        if (!view) return;
+                        view.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                    },
                 });
+
+                initializeTabFileState(storeTab).catch(() => {});
             });
             return;
         }
@@ -381,7 +378,7 @@
                 if (isInitialPopulate) {
                     const newState = EditorState.create({
                         doc: storeContent,
-                        extensions: createExtensions(undefined),
+                        extensions: createExtensions(storeTab.historyState),
                         selection: {
                             anchor: Math.min(storeTab.cursor?.anchor ?? 0, storeContent.length),
                             head: Math.min(storeTab.cursor?.head ?? 0, storeContent.length),
@@ -390,18 +387,15 @@
 
                     view!.setState(newState);
 
-                    requestAnimationFrame(() => {
-                        if (view && initialScrollPercentage > 0) {
-                            const dom = view.scrollDOM;
-                            const max = dom.scrollHeight - dom.clientHeight;
-                            if (max > 0) dom.scrollTop = initialScrollPercentage * max;
-                        }
-                        if (view) {
-                            view.focus();
-                            view.requestMeasure();
-                        }
-                        initializeTabFileState(storeTab).catch(() => {});
+                    view!.requestMeasure({
+                        read: () => {},
+                        write: () => {
+                            if (!view) return;
+                            view.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                        },
                     });
+
+                    initializeTabFileState(storeTab).catch(() => {});
                 } else {
                     scrollManager.capture(view!, "Sync");
 
@@ -437,7 +431,7 @@
         const viewInstance = new EditorView({
             state: EditorState.create({
                 doc: initialContent,
-                extensions: createExtensions(undefined),
+                extensions: createExtensions(initialHistoryState),
                 selection: safeSelection,
             }),
             parent: editorContainer,
@@ -461,16 +455,12 @@
         view = viewInstance as any;
         scrollSync.registerEditor(viewInstance);
 
-        if (initialScrollPercentage > 0) {
-            setTimeout(() => {
-                if (!view) return;
-                const dom = view.scrollDOM;
-                const max = dom.scrollHeight - dom.clientHeight;
-                if (max > 0) {
-                    dom.scrollTop = initialScrollPercentage * max;
-                }
-            }, 0);
-        }
+        viewInstance.requestMeasure({
+            read: () => {},
+            write: () => {
+                viewInstance.scrollDOM.scrollTop = initialScrollTop;
+            },
+        });
 
         const handleModifierKey = (e: KeyboardEvent) => {
             if (e.key === "Control" || e.key === "Meta") {
@@ -490,11 +480,12 @@
         const throttleScroll = throttle(() => {
             if (!view || !onScrollChange) return;
             const dom = view.scrollDOM;
+            const scrollTop = dom.scrollTop;
             const max = dom.scrollHeight - dom.clientHeight;
-            const percentage = max > 0 ? dom.scrollTop / max : 0;
-            const lineBlock = view.lineBlockAtHeight(dom.scrollTop);
+            const percentage = max > 0 ? scrollTop / max : 0;
+            const lineBlock = view.lineBlockAtHeight(scrollTop);
             const docLine = view.state.doc.lineAt(lineBlock.from);
-            onScrollChange(percentage, docLine.number);
+            onScrollChange(percentage, scrollTop, docLine.number);
         }, 100);
 
         viewInstance.scrollDOM.addEventListener("scroll", throttleScroll, { passive: true });

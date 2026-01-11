@@ -157,8 +157,8 @@
     function handleMetricsChange(m: any) {
         updateMetrics(m);
     }
-    function handleScrollChange(p: number, t: number) {
-        updateScroll(tabId, p, t, "editor");
+    function handleScrollChange(p: number, s: number, t: number) {
+        updateScroll(tabId, p, s, t, "editor");
     }
     function handleSelectionChange(a: number, h: number) {
         updateCursor(tabId, a, h);
@@ -193,6 +193,7 @@
         {filename}
         {isMarkdown}
         initialScrollPercentage={initialScroll}
+        initialScrollTop={activeTab?.scrollTop || 0}
         {initialSelection}
         {initialHistoryState}
         {lineChangeTracker}

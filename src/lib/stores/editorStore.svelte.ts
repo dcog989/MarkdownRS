@@ -15,6 +15,7 @@ export type EditorTab = {
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
+    scrollTop?: number;
     sizeBytes: number;
     wordCount: number;
     cursor: { anchor: number; head: number };
@@ -118,9 +119,10 @@ export function addTab(title: string = "", content: string = "") {
 
     const normalizedContent = normalizeLineEndings(finalContent);
     const sizeBytes = new TextEncoder().encode(normalizedContent).length;
-    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-        ? countWords(normalizedContent)
-        : fastCountWords(normalizedContent);
+    const wordCount =
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(normalizedContent)
+            : fastCountWords(normalizedContent);
 
     const newTab: EditorTab = {
         id,
@@ -255,9 +257,10 @@ export function updateContent(id: string, content: string) {
 
     const now = getCurrentTimestamp();
     const sizeBytes = new TextEncoder().encode(content).length;
-    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-        ? countWords(content)
-        : fastCountWords(content);
+    const wordCount =
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(content)
+            : fastCountWords(content);
     const updatedTab = {
         ...oldTab,
         title: newTitle,
@@ -277,6 +280,7 @@ export function updateContent(id: string, content: string) {
 export function updateScroll(
     id: string,
     percentage: number,
+    scrollTop: number,
     topLine: number | undefined,
     source: "editor" | "preview"
 ) {
@@ -286,11 +290,13 @@ export function updateScroll(
     const tab = editorStore.tabs[index];
     const isSignificant =
         Math.abs(tab.scrollPercentage - percentage) > 0.001 ||
+        Math.abs((tab.scrollTop || 0) - scrollTop) > 0.5 ||
         (topLine !== undefined && Math.abs((tab.topLine || 0) - topLine) > 0.01);
 
     if (isSignificant) {
         editorStore.lastScrollSource = source;
         tab.scrollPercentage = percentage;
+        tab.scrollTop = scrollTop;
         if (topLine !== undefined) tab.topLine = topLine;
         editorStore.sessionDirty = true;
     }
@@ -374,9 +380,10 @@ export function reloadTabContent(
     encoding: string,
     sizeBytes: number
 ) {
-    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-        ? countWords(content)
-        : fastCountWords(content);
+    const wordCount =
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(content)
+            : fastCountWords(content);
     updateTab(id, () => ({
         content,
         lastSavedContent: content,
