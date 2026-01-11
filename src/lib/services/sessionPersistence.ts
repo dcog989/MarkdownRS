@@ -299,7 +299,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         ? countWords(content)
         : fastCountWords(content);
 
-    return {
+    const editorTab: EditorTab = {
         id: t.id,
         title: t.title,
         originalTitle: t.title,
@@ -316,7 +316,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         formattedTimestamp: formatTimestampForDisplay(timestamp),
         isPinned: t.is_pinned,
         customTitle: t.custom_title || undefined,
-        lineEnding: t.content && t.content.indexOf("\r\n") !== -1 ? "CRLF" : "LF",
+        lineEnding: (t.content && t.content.indexOf("\r\n") !== -1 ? "CRLF" : "LF") as "LF" | "CRLF",
         encoding: "UTF-8",
         fileCheckFailed: t.file_check_failed || false,
         fileCheckPerformed: t.file_check_performed || false,
@@ -326,6 +326,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         isPersisted: true,
         contentLoaded,
     };
+
+    return editorTab;
 }
 
 export async function loadSession(): Promise<void> {

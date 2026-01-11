@@ -20,6 +20,7 @@
         persistSessionDebounced,
         requestCloseTab,
         saveCurrentFile,
+        saveCurrentFileAs,
     } from "$lib/utils/fileSystem.ts";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { initSettings, saveSettings } from "$lib/utils/settings";
@@ -76,7 +77,14 @@
             case "s":
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                saveCurrentFile();
+                
+                // Ctrl+Shift+S = Save As (force new path)
+                if (e.shiftKey) {
+                    saveCurrentFileAs();
+                } else {
+                    // Ctrl+S = Normal save
+                    saveCurrentFile();
+                }
                 persistSessionDebounced();
                 return;
 

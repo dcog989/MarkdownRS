@@ -434,16 +434,20 @@ impl Database {
 
         let active_tabs = active_stmt
             .query_map([], |row| {
+                let id: String = row.get(0)?;
+                let title: String = row.get(1)?;
+                let path: Option<String> = row.get(4)?;
+                
                 Ok(TabState {
-                    id: row.get(0)?,
-                    title: row.get(1)?,
+                    id,
+                    title,
                     content: if include_content {
                         Some(row.get::<_, Option<String>>(2)?.unwrap_or_default())
                     } else {
                         None
                     },
                     is_dirty: row.get::<_, i32>(3)? != 0,
-                    path: row.get(4)?,
+                    path,
                     scroll_percentage: row.get(5)?,
                     created: row.get(6)?,
                     modified: row.get(7)?,

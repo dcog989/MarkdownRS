@@ -171,6 +171,14 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 }
 
 export async function saveCurrentFile(): Promise<boolean> {
+    return saveFile(false);
+}
+
+export async function saveCurrentFileAs(): Promise<boolean> {
+    return saveFile(true);
+}
+
+async function saveFile(forceNewPath: boolean): Promise<boolean> {
     const tabId = appContext.app.activeTabId;
     if (!tabId) return false;
 
@@ -180,8 +188,15 @@ export async function saveCurrentFile(): Promise<boolean> {
     const oldPath = tab.path;
 
     try {
-        let savePath = tab.path;
-        if (!savePath) {
+        // For normal save: use existing path if it exists
+        // For save as: always force new path selection
+        let savePath: string | null = null;
+        
+        if (!forceNewPath && tab.path) {
+            // Normal save with existing path - use it directly
+            savePath = tab.path;
+        } else {
+            // Show file picker: either forced save-as OR new file
             const preferredExt = tab.preferredExtension || "md";
 
             if (preferredExt === "txt") {
