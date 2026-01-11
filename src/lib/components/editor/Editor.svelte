@@ -15,16 +15,16 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { ScrollManager } from "$lib/utils/cmScroll";
     import { CONFIG } from "$lib/utils/config";
+    import { AppError } from "$lib/utils/errorHandling";
     import { isMarkdownFile } from "$lib/utils/fileValidation";
     import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
     import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
     import { initSpellcheck } from "$lib/utils/spellcheck.svelte.ts";
     import { refreshSpellcheck, spellCheckKeymap } from "$lib/utils/spellcheckExtension.svelte.ts";
+    import type { EditorView as CM6EditorView } from "@codemirror/view";
     import { readText } from "@tauri-apps/plugin-clipboard-manager";
     import { onMount, tick, untrack } from "svelte";
     import EditorView from "./EditorView.svelte";
-    // Imports for type only
-    import type { EditorView as CM6EditorView } from "@codemirror/view";
 
     let { tabId } = $props<{ tabId: string }>();
 
@@ -251,21 +251,29 @@
             showContextMenu = false;
             cmView.focus();
             try {
-                const t = await readText();
-                if (t) {
+                const text = await readText();
+                if (typeof text === "string" && text.length > 0) {
                     cmView.dispatch({
                         changes: {
                             from: cmView.state.selection.main.from,
                             to: cmView.state.selection.main.to,
-                            insert: t,
+                            insert: text,
                         },
-                        selection: { anchor: cmView.state.selection.main.from + t.length },
+                        selection: { anchor: cmView.state.selection.main.from + text.length },
                         scrollIntoView: true,
+                    });
+                } else if (text === null) {
+                    AppError.info("UI:DragDrop", "Clipboard content is not text", {
+                        showToast: true,
+                        userMessage: "Clipboard does not contain valid text",
                     });
                 }
             } catch (err) {
-                // ! TO DO - can we write to logging system from Svelte? do not use console.
-                console.error("Paste failed:", err);
+                AppError.handle("UI:DragDrop", err, {
+                    showToast: true,
+                    userMessage: "Failed to paste from clipboard",
+                    severity: "error",
+                });
             }
         }}
         onReplaceWord={(w) => {
