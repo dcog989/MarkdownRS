@@ -336,16 +336,6 @@
 
         if (isTabSwitch) {
             untrack(() => {
-                // HARD RESET: Clear current session metrics to force a recalculation
-                // in the measure step below, ensuring status bar updates instantly.
-                onMetricsChange({
-                    cursorOffset: storeTab.cursor.head,
-                    cursorLine: 1,
-                    cursorCol: 1,
-                    currentLineLength: 0,
-                    currentWordIndex: 0,
-                });
-
                 const newState = EditorState.create({
                     doc: storeContent,
                     extensions: createExtensions(undefined),
@@ -357,6 +347,17 @@
 
                 view!.setState(newState);
 
+                // Immediately calculate and update metrics for the new tab's cursor position
+                const cursorPos = Math.min(initialSelection.head, storeContent.length);
+                const line = newState.doc.lineAt(cursorPos);
+                onMetricsChange(
+                    calculateCursorMetrics(storeContent, cursorPos, {
+                        number: line.number,
+                        from: line.from,
+                        text: line.text,
+                    })
+                );
+
                 requestAnimationFrame(() => {
                     if (view && initialScrollPercentage > 0) {
                         const dom = view.scrollDOM;
@@ -365,7 +366,6 @@
                     }
                     if (view) {
                         view.focus();
-                        // Force measure triggers the updateListener which refreshes the metrics
                         view.requestMeasure();
                     }
                     initializeTabFileState(storeTab).catch(() => {});

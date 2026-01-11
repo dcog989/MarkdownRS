@@ -4,6 +4,7 @@ import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { formatTimestampForDisplay } from "$lib/utils/date";
 import { AppError } from "$lib/utils/errorHandling";
+import { countWords, fastCountWords } from "$lib/utils/textMetrics";
 import { debounce } from "$lib/utils/timing";
 import {
     checkAndReloadIfChanged,
@@ -259,11 +260,16 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             }
 
             // Use reassignment to ensure Svelte 5 triggers reactivity for nested properties
+            const sizeBytes = new TextEncoder().encode(normalizedContent).length;
+            const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+                ? countWords(normalizedContent)
+                : fastCountWords(normalizedContent);
             appContext.editor.tabs[index] = {
                 ...tab,
                 content: normalizedContent,
                 lastSavedContent,
-                sizeBytes: new TextEncoder().encode(normalizedContent).length,
+                sizeBytes,
+                wordCount,
                 lineEnding: normalizedContent.indexOf("\r\n") !== -1 ? "CRLF" : "LF",
                 contentLoaded: true,
             };
@@ -288,6 +294,10 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     // For unsaved tabs (no path), lastSavedContent should be empty
     // For saved tabs, if content is loaded, it equals content (will be corrected later for dirty tabs)
     const lastSavedContent = !t.path ? "" : content;
+    const sizeBytes = new TextEncoder().encode(content).length;
+    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+        ? countWords(content)
+        : fastCountWords(content);
 
     return {
         id: t.id,
@@ -298,7 +308,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         isDirty: t.is_dirty,
         path: t.path,
         scrollPercentage: t.scroll_percentage,
-        sizeBytes: new TextEncoder().encode(content).length,
+        sizeBytes,
+        wordCount,
         cursor: { anchor: 0, head: 0 },
         created: t.created || undefined,
         modified: t.modified || undefined,

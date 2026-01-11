@@ -168,30 +168,35 @@ export function validateFile(
 }
 
 /**
- * Format file size for display
+ * Format file size for display with smart rounding:
+ * - Below 1 KB: round up to nearest tenth (e.g., 0.1 KB, 0.5 KB)
+ * - From 1 KB to < 1 MB: round up to whole KB (e.g., 15 KB, 500 KB)
+ * - MB and above: round up to nearest tenth (e.g., 1.5 MB, 2.3 GB)
  */
 export function formatFileSize(bytes: number): string {
     if (bytes === 0) return "0 KB";
 
     const kb = bytes / 1024;
 
-    if (kb > 999) {
+    // MB range and above
+    if (kb >= 1024) {
         const mb = kb / 1024;
-        if (mb > 999) {
-            return `${(mb / 1024).toFixed(2)} GB`;
+        if (mb >= 1024) {
+            // GB range - round up to nearest tenth
+            return `${Math.ceil(mb / 102.4) / 10} GB`;
         }
-        return `${mb.toFixed(2)} MB`;
+        // MB range - round up to nearest tenth
+        return `${Math.ceil(mb * 10) / 10} MB`;
     }
 
-    if (kb < 0.1) {
-        return "0.1 KB";
+    // Below 1 KB - round up to nearest tenth
+    if (kb < 1) {
+        const rounded = Math.ceil(kb * 10) / 10;
+        return `${rounded} KB`;
     }
 
-    if (kb < 10) {
-        return `${kb.toFixed(1)} KB`;
-    }
-
-    return `${Math.round(kb)} KB`;
+    // From 1 KB to < 1 MB - round up to whole KB
+    return `${Math.ceil(kb)} KB`;
 }
 
 /**

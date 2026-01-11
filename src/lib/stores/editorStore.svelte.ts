@@ -4,6 +4,7 @@ import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date"
 import { isMarkdownFile } from "$lib/utils/fileValidation";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 import { clearRendererCache } from "$lib/utils/markdown";
+import { countWords, fastCountWords } from "$lib/utils/textMetrics";
 import { appState } from "./appState.svelte";
 
 export type EditorTab = {
@@ -117,6 +118,9 @@ export function addTab(title: string = "", content: string = "") {
 
     const normalizedContent = normalizeLineEndings(finalContent);
     const sizeBytes = new TextEncoder().encode(normalizedContent).length;
+    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+        ? countWords(normalizedContent)
+        : fastCountWords(normalizedContent);
 
     const newTab: EditorTab = {
         id,
@@ -128,7 +132,7 @@ export function addTab(title: string = "", content: string = "") {
         path: null,
         scrollPercentage: 0,
         sizeBytes,
-        wordCount: 0,
+        wordCount,
         cursor: { anchor: 0, head: 0 },
         topLine: 1,
         created: now,
@@ -250,6 +254,10 @@ export function updateContent(id: string, content: string) {
     }
 
     const now = getCurrentTimestamp();
+    const sizeBytes = new TextEncoder().encode(content).length;
+    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+        ? countWords(content)
+        : fastCountWords(content);
     const updatedTab = {
         ...oldTab,
         title: newTitle,
@@ -257,7 +265,8 @@ export function updateContent(id: string, content: string) {
         isDirty: content !== oldTab.lastSavedContent,
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
-        sizeBytes: new TextEncoder().encode(content).length,
+        sizeBytes,
+        wordCount,
         contentChanged: true,
     };
 
@@ -365,6 +374,9 @@ export function reloadTabContent(
     encoding: string,
     sizeBytes: number
 ) {
+    const wordCount = sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+        ? countWords(content)
+        : fastCountWords(content);
     updateTab(id, () => ({
         content,
         lastSavedContent: content,
@@ -372,6 +384,7 @@ export function reloadTabContent(
         lineEnding,
         encoding,
         sizeBytes,
+        wordCount,
         fileCheckPerformed: false,
         contentChanged: true,
     }));
