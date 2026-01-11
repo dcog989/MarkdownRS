@@ -359,10 +359,12 @@
                 );
 
                 view!.requestMeasure({
-                    read: () => {},
-                    write: () => {
+                    read: () => {
+                        return { targetTop: storeTab.scrollTop ?? 0 };
+                    },
+                    write: ({ targetTop }) => {
                         if (!view) return;
-                        view.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                        view.scrollDOM.scrollTop = targetTop;
                     },
                 });
 
@@ -388,10 +390,12 @@
                     view!.setState(newState);
 
                     view!.requestMeasure({
-                        read: () => {},
-                        write: () => {
+                        read: () => {
+                            return { targetTop: storeTab.scrollTop ?? 0 };
+                        },
+                        write: ({ targetTop }) => {
                             if (!view) return;
-                            view.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                            view.scrollDOM.scrollTop = targetTop;
                         },
                     });
 
@@ -456,9 +460,11 @@
         scrollSync.registerEditor(viewInstance);
 
         viewInstance.requestMeasure({
-            read: () => {},
-            write: () => {
-                viewInstance.scrollDOM.scrollTop = initialScrollTop;
+            read: () => {
+                return { targetTop: initialScrollTop };
+            },
+            write: ({ targetTop }) => {
+                viewInstance.scrollDOM.scrollTop = targetTop;
             },
         });
 
