@@ -32,7 +32,10 @@
         }
         const query = searchQuery.toLowerCase();
         return tabs.filter((tab) => {
-            return (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || "").toLowerCase().includes(query);
+            return (
+                (tab.customTitle || tab.title).toLowerCase().includes(query) ||
+                (tab.path || "").toLowerCase().includes(query)
+            );
         });
     });
 
@@ -134,27 +137,78 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="fixed inset-0 z-40" onclick={onClose}></div>
-    <div bind:this={dropdownContainerRef} class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50 bg-bg-panel border-border-light max-h-[calc(100vh-120px)]" role="menu">
+    <div
+        bind:this={dropdownContainerRef}
+        class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50 bg-bg-panel border-border-light max-h-[calc(100vh-120px)]"
+        role="menu"
+    >
         <div class="p-2 border-b shrink-0 border-border-light">
-            <input bind:this={searchInputRef} bind:value={searchQuery} type="text" placeholder="Filter tabs..." class="w-full bg-transparent outline-none px-2 py-1 text-sm text-fg-default" onkeydown={handleKeydown} />
+            <input
+                bind:this={searchInputRef}
+                bind:value={searchQuery}
+                type="text"
+                placeholder="Filter tabs..."
+                class="w-full bg-transparent outline-none px-2 py-1 text-sm text-fg-default"
+                onkeydown={handleKeydown}
+            />
         </div>
 
         <div class="relative min-h-0 flex-1">
-            <div bind:this={dropdownListRef} class="dropdown-list overflow-y-auto py-1" style="max-height: 60vh;">
+            <div
+                bind:this={dropdownListRef}
+                class="dropdown-list overflow-y-auto py-1"
+                style="max-height: 60vh;"
+            >
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
-                    <button type="button" class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected ? 'bg-accent-primary text-fg-inverse' : 'bg-transparent'} {isSelected ? '' : isActive ? 'text-accent-secondary' : 'text-fg-default'}" onclick={() => handleSelect(tab.id)} onmousemove={(e) => handleHover(index, e)} role="menuitem" use:scrollIntoView={isSelected} use:tooltip={getTooltipContent(tab)}>
+                    <button
+                        type="button"
+                        class="w-full text-left px-3 py-2 text-sm flex items-center gap-2 {isSelected
+                            ? 'bg-accent-primary text-fg-inverse'
+                            : 'bg-transparent'} {isSelected
+                            ? ''
+                            : isActive
+                              ? 'text-accent-secondary'
+                              : 'text-fg-default'}"
+                        onclick={() => handleSelect(tab.id)}
+                        onmousemove={(e) => handleHover(index, e)}
+                        role="menuitem"
+                        use:scrollIntoView={isSelected}
+                        use:tooltip={getTooltipContent(tab)}
+                    >
                         {#if tab.fileCheckFailed}
                             <CircleAlert size={14} class="shrink-0 text-danger-text" />
-                        {:else if !tab.path && tab.isDirty}
-                            <PencilLine size={14} class="shrink-0" style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'};" />
                         {:else if !tab.path}
-                            <Pencil size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
+                            {#if tab.content.length > 0}
+                                <PencilLine
+                                    size={14}
+                                    class="shrink-0"
+                                    style="color: {isSelected
+                                        ? 'var(--color-fg-inverse)'
+                                        : tab.isDirty
+                                          ? '#5deb47'
+                                          : 'var(--color-fg-muted)'}"
+                                />
+                            {:else}
+                                <Pencil
+                                    size={14}
+                                    class="shrink-0 {isSelected
+                                        ? 'text-fg-inverse'
+                                        : 'text-fg-muted'}"
+                                />
+                            {/if}
                         {:else if tab.isDirty}
-                            <SquarePen size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-accent-secondary'}" />
+                            <SquarePen
+                                size={14}
+                                class="shrink-0"
+                                style="color: {isSelected ? 'var(--color-fg-inverse)' : '#5deb47'}"
+                            />
                         {:else}
-                            <FileText size={14} class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}" />
+                            <FileText
+                                size={14}
+                                class="shrink-0 {isSelected ? 'text-fg-inverse' : 'text-fg-muted'}"
+                            />
                         {/if}
                         <span class="truncate flex-1">{getDropdownTitle(tab)}</span>
                     </button>
