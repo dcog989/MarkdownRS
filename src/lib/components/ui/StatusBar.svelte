@@ -79,22 +79,22 @@
 
         <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>
             <span class="opacity-70">Ln</span>
-            <span class="font-mono text-right inline-block min-w-[1ch]"
+            <span class="font-mono text-right inline-block min-w-[4ch]"
                 >{formatNumber(appContext.metrics.cursorLine)}</span
             >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[1ch]"
+            <span class="font-mono text-left inline-block min-w-[4ch]"
                 >{formatNumber(totalLines)}</span
             >
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Column Position"}>
             <span class="opacity-70">Col</span>
-            <span class="font-mono text-right inline-block min-w-[1ch]"
+            <span class="font-mono text-right inline-block min-w-[3ch]"
                 >{formatNumber(appContext.metrics.cursorCol)}</span
             >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[1ch]">
+            <span class="font-mono text-left inline-block min-w-[3ch]">
                 {formatNumber(
                     Math.max(
                         appContext.metrics.currentLineLength,
@@ -108,22 +108,22 @@
 
         <div class="flex gap-1 items-center" use:tooltip={"Character Count"}>
             <span class="opacity-70">Char</span>
-            <span class="font-mono text-right inline-block min-w-[1ch]"
+            <span class="font-mono text-right inline-block min-w-[5ch]"
                 >{formatNumber(appContext.metrics.cursorOffset)}</span
             >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[1ch]"
+            <span class="font-mono text-left inline-block min-w-[5ch]"
                 >{formatNumber(totalChars)}</span
             >
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Word Position"}>
             <span class="opacity-70">Word</span>
-            <span class="font-mono text-right inline-block min-w-[1ch]"
+            <span class="font-mono text-right inline-block min-w-[4ch]"
                 >{formatNumber(appContext.metrics.currentWordIndex)}</span
             >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[1ch]"
+            <span class="font-mono text-left inline-block min-w-[4ch]"
                 >{formatNumber(totalWords)}</span
             >
         </div>
