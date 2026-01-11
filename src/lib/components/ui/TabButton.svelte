@@ -94,7 +94,11 @@
         <SquarePen
             size={14}
             class="flex-shrink-0"
-            style="color: {isActive ? '#5deb47' : 'var(--color-accent-secondary)'}"
+            style="color: {isActive && tab.isDirty
+                ? '#5deb47'
+                : isActive
+                  ? 'var(--color-fg-inverse)'
+                  : 'var(--color-accent-secondary)'}"
         />
     {:else}
         <FileText
