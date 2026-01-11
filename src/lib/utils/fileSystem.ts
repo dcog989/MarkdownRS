@@ -42,7 +42,7 @@ export {
     loadSession,
     persistSession,
     persistSessionDebounced,
-    reloadFileContent
+    reloadFileContent,
 };
 
 export async function openFile(path?: string): Promise<void> {
@@ -213,48 +213,55 @@ export async function saveCurrentFile(): Promise<boolean> {
                 contentToSave = contentToSave.replace(/\r\n/g, "\n");
             }
 
-            // Suspend watcher to prevent triggering "external change" reload
-            fileWatcher.suspendWatcher(sanitizedPath, 2000);
+            // Explicitly lock the path to prevent the watcher from triggering a reload
+            fileWatcher.setWriteLock(sanitizedPath, true);
 
-            await callBackend(
-                "write_text_file",
-                { path: sanitizedPath, content: contentToSave },
-                "File:Write",
-                undefined,
-                { report: true, msg: "Failed to save file" }
-            );
+            try {
+                await callBackend(
+                    "write_text_file",
+                    { path: sanitizedPath, content: contentToSave },
+                    "File:Write",
+                    undefined,
+                    { report: true, msg: "Failed to save file" }
+                );
 
-            if (oldPath && oldPath !== sanitizedPath) {
-                fileWatcher.unwatch(oldPath);
-            }
-            if (oldPath !== sanitizedPath) {
-                await fileWatcher.watch(sanitizedPath);
-            }
+                if (oldPath && oldPath !== sanitizedPath) {
+                    fileWatcher.unwatch(oldPath);
+                }
+                if (oldPath !== sanitizedPath) {
+                    await fileWatcher.watch(sanitizedPath);
+                }
 
-            const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
+                const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
 
-            let finalTitle = fileName;
-            if (appContext.app.tabNameFromContent) {
-                const trimmed = contentToSave.trim();
-                if (trimmed.length > 0) {
-                    const lines = contentToSave.split("\n");
-                    const firstLine = lines.find((l) => l.trim().length > 0) || "";
-                    let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
-                    const MAX_LEN = 25;
-                    if (smartTitle.length > MAX_LEN) {
-                        smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
-                    }
-                    if (smartTitle.length > 0) {
-                        finalTitle = smartTitle;
+                let finalTitle = fileName;
+                if (appContext.app.tabNameFromContent) {
+                    const trimmed = contentToSave.trim();
+                    if (trimmed.length > 0) {
+                        const lines = contentToSave.split("\n");
+                        const firstLine = lines.find((l) => l.trim().length > 0) || "";
+                        let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
+                        const MAX_LEN = 25;
+                        if (smartTitle.length > MAX_LEN) {
+                            smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
+                        }
+                        if (smartTitle.length > 0) {
+                            finalTitle = smartTitle;
+                        }
                     }
                 }
+
+                saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
+                markAsSaved(tabId);
+
+                invalidateMetadataCache(sanitizedPath);
+                // Refresh metadata records the new disk modification time in the tab state,
+                // acting as a second layer of defense for the watcher.
+                await refreshMetadata(tabId, sanitizedPath);
+            } finally {
+                fileWatcher.setWriteLock(sanitizedPath, false);
             }
 
-            saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
-            markAsSaved(tabId);
-
-            invalidateMetadataCache(sanitizedPath);
-            await refreshMetadata(tabId, sanitizedPath);
             return true;
         }
         return false;

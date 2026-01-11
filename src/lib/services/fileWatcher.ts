@@ -1,7 +1,12 @@
-import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from "$lib/services/fileMetadata";
+import {
+    checkAndReloadIfChanged,
+    reloadFileContent,
+    sanitizePath,
+} from "$lib/services/fileMetadata";
 import { reloadTabContent } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte.ts";
 import { showToast } from "$lib/stores/toastStore.svelte";
+import { CONFIG } from "$lib/utils/config";
 import { AppError } from "$lib/utils/errorHandling";
 import { debounce } from "$lib/utils/timing";
 import { watch } from "@tauri-apps/plugin-fs";
@@ -14,8 +19,8 @@ class FileWatcherService {
     private pendingWatchers = new Map<string, Promise<void>>();
     private abortControllers = new Map<string, AbortController>();
 
-    // Tracks paths that should be ignored temporarily (e.g. during internal saves)
-    private suspendedPaths = new Map<string, number>();
+    // Tracks paths currently being written to by the application
+    private activeWriteLocks = new Set<string>();
 
     async watch(rawPath: string): Promise<void> {
         if (!rawPath) return;
@@ -43,10 +48,8 @@ class FileWatcherService {
                 const handleChange = debounce(async () => {
                     if (controller.signal.aborted) return;
                     await this.handleFileChange(path, controller.signal);
-                }, 300);
+                }, CONFIG.PERFORMANCE.FILE_WATCH_DEBOUNCE_MS);
 
-                // Note: We watch the sanitized path. Ensure Tauri/OS accepts forward slashes on Windows (usually yes).
-                // If not, we might need platform-specific normalization, but sanitizePath is widely used in this app.
                 const unwatch = await watch(path, (event) => {
                     if (controller.signal.aborted) return;
                     handleChange();
@@ -113,29 +116,24 @@ class FileWatcherService {
     }
 
     /**
-     * Temporarily suspends watcher checks for a specific path.
-     * Use this before performing internal file write operations.
-     * @param rawPath The file path to ignore
-     * @param duration Duration in ms to ignore changes (default 2000ms)
+     * Explicitly locks a path to ignore file watcher events during internal writes.
      */
-    suspendWatcher(rawPath: string, duration: number = 2000) {
+    setWriteLock(rawPath: string, locked: boolean) {
         const path = sanitizePath(rawPath);
-        const expiry = Date.now() + duration;
-        this.suspendedPaths.set(path, Math.max(this.suspendedPaths.get(path) || 0, expiry));
-
-        // Cleanup map to prevent growth
-        setTimeout(() => {
-            const current = this.suspendedPaths.get(path);
-            if (current && current <= expiry) {
-                this.suspendedPaths.delete(path);
-            }
-        }, duration + 100);
+        if (locked) {
+            this.activeWriteLocks.add(path);
+        } else {
+            // Use a small buffer after the write completes to allow the OS
+            // file system events to propagate and be discarded.
+            setTimeout(() => {
+                this.activeWriteLocks.delete(path);
+            }, CONFIG.PERFORMANCE.FILE_WATCHER_LOCK_BUFFER_MS);
+        }
     }
 
     private async handleFileChange(path: string, signal?: AbortSignal): Promise<void> {
-        // Check if path is currently suspended
-        const suspendedUntil = this.suspendedPaths.get(path);
-        if (suspendedUntil && Date.now() < suspendedUntil) {
+        // Discard events if the app is currently writing to this file
+        if (this.activeWriteLocks.has(path)) {
             return;
         }
 
@@ -143,7 +141,6 @@ class FileWatcherService {
         this.pendingChecks.add(path);
 
         try {
-            // Compare against tab paths (which should also be sanitized in store)
             const tabs = appContext.editor.tabs.filter((t) => t.path === path);
             if (tabs.length === 0 || signal?.aborted) {
                 this.pendingChecks.delete(path);
@@ -171,7 +168,6 @@ class FileWatcherService {
             }
 
             if (cleanTabs.length > 0 && !signal?.aborted) {
-                // Validate first tab still exists before reloading
                 const firstTabStillExists = appContext.editor.tabs.some(
                     (t) => t.id === cleanTabs[0].id
                 );
@@ -190,7 +186,6 @@ class FileWatcherService {
                         for (let i = 1; i < cleanTabs.length; i++) {
                             if (signal?.aborted) break;
 
-                            // Validate each tab still exists before reloading
                             const tabStillExists = appContext.editor.tabs.some(
                                 (t) => t.id === cleanTabs[i].id
                             );
@@ -242,7 +237,7 @@ class FileWatcherService {
             }
         }
         this.watchers.clear();
-        this.suspendedPaths.clear();
+        this.activeWriteLocks.clear();
     }
 }
 
