@@ -15,25 +15,29 @@ export const searchState = $state({
     currentMatches: 0,
     currentIndex: 0,
     allTabsResults: new Map<string, number>(),
-    
+
     // Validation
     regexError: null as string | null,
 });
 
-// Logic
 export function getSearchQuery(): SearchQuery {
-    // Validate regex before creating query
     if (searchState.useRegex && searchState.findText) {
         try {
             new RegExp(searchState.findText);
             searchState.regexError = null;
         } catch (e) {
             searchState.regexError = e instanceof Error ? e.message : "Invalid regex pattern";
+            // Return a safe non-regex query to prevent CodeMirror internal crashes
+            return new SearchQuery({
+                search: "",
+                caseSensitive: searchState.matchCase,
+                wholeWord: searchState.matchWholeWord,
+            });
         }
     } else {
         searchState.regexError = null;
     }
-    
+
     return new SearchQuery({
         search: searchState.findText,
         caseSensitive: searchState.matchCase,
@@ -199,7 +203,7 @@ function buildSearchRegex(): RegExp | null {
 
         const flags = searchState.matchCase ? "g" : "gi";
         const regex = new RegExp(pattern, flags);
-        
+
         // Clear any previous error on success
         searchState.regexError = null;
         return regex;
