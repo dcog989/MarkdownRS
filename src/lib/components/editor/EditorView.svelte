@@ -387,7 +387,7 @@
                 scrollManager.capture(view!, "Sync");
 
                 view!.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: storeContent },
+                    changes: { from: 0, to: view!.state.doc.length, insert: storeContent },
                     userEvent: "input.type.sync",
                 });
 

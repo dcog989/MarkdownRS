@@ -176,10 +176,16 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 }
 
 export async function saveCurrentFile(): Promise<boolean> {
+    if (typeof window !== "undefined" && (window as any)._editorFlushFunctions) {
+        (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
+    }
     return saveFile(false);
 }
 
 export async function saveCurrentFileAs(): Promise<boolean> {
+    if (typeof window !== "undefined" && (window as any)._editorFlushFunctions) {
+        (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
+    }
     return saveFile(true);
 }
 
@@ -187,40 +193,34 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
     const tabId = appContext.app.activeTabId;
     if (!tabId) return false;
 
-    const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+    // Get a fresh reference to the tab to avoid closure staleness
+    const getTab = () => appContext.editor.tabs.find((t) => t.id === tabId);
+    let tab = getTab();
     if (!tab) return false;
 
     const oldPath = tab.path;
 
     try {
-        // For normal save: use existing path if it exists
-        // For save as: always force new path selection
         let savePath: string | null = null;
 
         if (!forceNewPath && tab.path) {
-            // Normal save with existing path - use it directly
             savePath = tab.path;
         } else {
-            // Show file picker: either forced save-as OR new file
             const preferredExt = tab.preferredExtension || "md";
+            const filters =
+                preferredExt === "txt"
+                    ? [
+                          { name: "Text", extensions: ["txt"] },
+                          { name: "Markdown", extensions: ["md"] },
+                          { name: "All Files", extensions: ["*"] },
+                      ]
+                    : [
+                          { name: "Markdown", extensions: ["md"] },
+                          { name: "Text", extensions: ["txt"] },
+                          { name: "All Files", extensions: ["*"] },
+                      ];
 
-            if (preferredExt === "txt") {
-                savePath = await save({
-                    filters: [
-                        { name: "Text", extensions: ["txt"] },
-                        { name: "Markdown", extensions: ["md"] },
-                        { name: "All Files", extensions: ["*"] },
-                    ],
-                });
-            } else {
-                savePath = await save({
-                    filters: [
-                        { name: "Markdown", extensions: ["md"] },
-                        { name: "Text", extensions: ["txt"] },
-                        { name: "All Files", extensions: ["*"] },
-                    ],
-                });
-            }
+            savePath = await save({ filters });
         }
 
         if (savePath) {
@@ -234,9 +234,12 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     codeBlockFence: appContext.app.formatterCodeFence,
                     tableAlignment: appContext.app.formatterTableAlignment,
                 });
+
                 if (formatted && formatted !== contentToSave) {
                     contentToSave = formatted;
                     updateContentOnly(tabId, contentToSave, true);
+                    // Refresh local reference after store update
+                    tab = getTab()!;
                 }
             }
 
@@ -245,19 +248,19 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     ? tab.lineEnding || "LF"
                     : appContext.app.lineEndingPreference;
 
+            let diskContent = contentToSave;
             if (targetLineEnding === "CRLF") {
-                contentToSave = contentToSave.replace(/\r\n/g, "\n").replace(/\n/g, "\r\n");
+                diskContent = diskContent.replace(/\r\n/g, "\n").replace(/\n/g, "\r\n");
             } else {
-                contentToSave = contentToSave.replace(/\r\n/g, "\n");
+                diskContent = diskContent.replace(/\r\n/g, "\n");
             }
 
-            // Explicitly lock the path to prevent the watcher from triggering a reload
             fileWatcher.setWriteLock(sanitizedPath, true);
 
             try {
                 await callBackend(
                     "write_text_file",
-                    { path: sanitizedPath, content: contentToSave },
+                    { path: sanitizedPath, content: diskContent },
                     "File:Write",
                     undefined,
                     { report: true, msg: "Failed to save file" }
@@ -271,30 +274,20 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 }
 
                 const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
-
                 let finalTitle = fileName;
+
                 if (appContext.app.tabNameFromContent) {
-                    const trimmed = contentToSave.trim();
-                    if (trimmed.length > 0) {
-                        const lines = contentToSave.split("\n");
-                        const firstLine = lines.find((l) => l.trim().length > 0) || "";
-                        let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
-                        const MAX_LEN = 25;
-                        if (smartTitle.length > MAX_LEN) {
-                            smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
-                        }
-                        if (smartTitle.length > 0) {
-                            finalTitle = smartTitle;
-                        }
-                    }
+                    const firstLine =
+                        contentToSave.split("\n").find((l) => l.trim().length > 0) || "";
+                    let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
+                    if (smartTitle.length > 25)
+                        smartTitle = smartTitle.substring(0, 25).trim() + "...";
+                    if (smartTitle.length > 0) finalTitle = smartTitle;
                 }
 
                 saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
                 markAsSaved(tabId);
-
                 invalidateMetadataCache(sanitizedPath);
-                // Refresh metadata records the new disk modification time in the tab state,
-                // acting as a second layer of defense for the watcher.
                 await refreshMetadata(tabId, sanitizedPath);
             } finally {
                 fileWatcher.setWriteLock(sanitizedPath, false);
