@@ -286,10 +286,13 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     const content = normalizeLineEndings(rawContent);
     const timestamp = t.modified || t.created || "";
 
-    // For unsaved tabs (no path), lastSavedContent should be empty
-    // For saved tabs, if content is loaded, it equals content (will be corrected later for dirty tabs)
     const lastSavedContent = !t.path ? "" : content;
     const sizeBytes = new TextEncoder().encode(content).length;
+
+    const lineArray = content.split("\n");
+    const lineCount = lineArray.length;
+    const widestColumn = Math.max(...lineArray.map((l) => l.length));
+
     const wordCount =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
             ? countWords(content)
@@ -306,6 +309,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         scrollPercentage: t.scroll_percentage,
         sizeBytes,
         wordCount,
+        lineCount,
+        widestColumn,
         cursor: { anchor: 0, head: 0 },
         created: t.created || undefined,
         modified: t.modified || undefined,
@@ -318,8 +323,6 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         encoding: "UTF-8",
         fileCheckFailed: t.file_check_failed || false,
         fileCheckPerformed: t.file_check_performed || false,
-        // CRITICAL: Mark content as changed if it's an unsaved tab with content
-        // This ensures it will be saved on the next session save
         contentChanged: !t.path && content.length > 0,
         isPersisted: true,
         contentLoaded,

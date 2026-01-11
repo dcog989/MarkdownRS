@@ -130,7 +130,7 @@ export interface BackendCommands {
     };
     compute_text_metrics: {
         args: { content: string };
-        return: [number, number, number];
+        return: [number, number, number, number];
     };
 
     // Bookmarks

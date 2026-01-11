@@ -104,7 +104,10 @@ export async function openFile(path?: string): Promise<void> {
 
         const id = addTab(initialTitle, result.content);
 
-        // Fetch accurate initial metrics from Rust for large files
+        const lineArray = result.content.split("\n");
+        const lineCount = lineArray.length;
+        const widestColumn = Math.max(...lineArray.map((l) => l.length));
+
         let initialWordCount = 0;
         if (result.content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
             const metrics = await callBackend(
@@ -125,6 +128,8 @@ export async function openFile(path?: string): Promise<void> {
             fileCheckPerformed: false,
             sizeBytes: new TextEncoder().encode(result.content).length,
             wordCount: initialWordCount,
+            lineCount,
+            widestColumn,
         });
 
         await refreshMetadata(id, sanitizedPath);
@@ -191,7 +196,7 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
         // For normal save: use existing path if it exists
         // For save as: always force new path selection
         let savePath: string | null = null;
-        
+
         if (!forceNewPath && tab.path) {
             // Normal save with existing path - use it directly
             savePath = tab.path;

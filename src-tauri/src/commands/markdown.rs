@@ -4,11 +4,13 @@ use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use unicode_segmentation::UnicodeSegmentation;
 
 #[tauri::command]
-pub async fn compute_text_metrics(content: String) -> Result<(usize, usize, usize), String> {
-    let line_count = content.lines().count();
+pub async fn compute_text_metrics(content: String) -> Result<(usize, usize, usize, usize), String> {
+    let lines: Vec<&str> = content.lines().collect();
+    let line_count = lines.len();
     let word_count = content.unicode_words().count();
     let char_count = content.chars().count();
-    Ok((line_count, word_count, char_count))
+    let widest_column = lines.iter().map(|l| l.chars().count()).max().unwrap_or(0);
+    Ok((line_count, word_count, char_count, widest_column))
 }
 
 #[tauri::command]

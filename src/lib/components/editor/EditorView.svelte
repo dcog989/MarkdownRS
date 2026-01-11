@@ -86,12 +86,20 @@
         customKeymap?: any[];
         spellCheckLinter: any;
         eventHandlers: any;
-        cmView?: EditorView & { getHistoryState?: () => any; flushPendingContent?: () => void };
+        cmView?: EditorView & {
+            getHistoryState?: () => any;
+            flushPendingContent?: () => void;
+            _currentTabId?: string;
+        };
     }>();
 
     let editorContainer = $state<HTMLDivElement>();
     let view = $state<
-        EditorView & { getHistoryState?: () => any; flushPendingContent?: () => void }
+        EditorView & {
+            getHistoryState?: () => any;
+            flushPendingContent?: () => void;
+            _currentTabId?: string;
+        }
     >();
 
     let scrollManager = new ScrollManager();
@@ -318,22 +326,18 @@
 
         if (!view || !storeTab) return;
 
-        const currentDoc = view.state.doc.toString();
-        const storeContent = storeTab.content;
-        const isLoaded = storeTab.contentLoaded;
-        const forceSyncCounter = storeTab.forceSync ?? 0;
-
-        const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
-        const isFocused = view.hasFocus;
-        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
-
         const isTabSwitch = untrack(() => {
-            if (view && (view as any)._lastHandledTabId !== tId) {
-                (view as any)._lastHandledTabId = tId;
+            if (view && view._currentTabId !== tId) {
+                view._currentTabId = tId;
                 return true;
             }
             return false;
         });
+
+        const currentDoc = view.state.doc.toString();
+        const storeContent = storeTab.content;
+        const isLoaded = storeTab.contentLoaded;
+        const forceSyncCounter = storeTab.forceSync ?? 0;
 
         if (isTabSwitch) {
             untrack(() => {
@@ -359,12 +363,11 @@
                 );
 
                 view!.requestMeasure({
-                    read: () => {
-                        return { targetTop: storeTab.scrollTop ?? 0 };
-                    },
-                    write: ({ targetTop }) => {
-                        if (!view) return;
-                        view.scrollDOM.scrollTop = targetTop;
+                    read: () => {},
+                    write: () => {
+                        if (view && view._currentTabId === tId) {
+                            view.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                        }
                     },
                 });
 
@@ -373,49 +376,27 @@
             return;
         }
 
-        const shouldSync = isInitialPopulate || !isFocused || isForcedSync;
+        const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
+        const isFocused = view.hasFocus;
+        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
+        const shouldSync =
+            isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync;
 
-        if (shouldSync && currentDoc !== storeContent) {
+        if (shouldSync) {
             untrack(() => {
-                if (isInitialPopulate) {
-                    const newState = EditorState.create({
-                        doc: storeContent,
-                        extensions: createExtensions(storeTab.historyState),
-                        selection: {
-                            anchor: Math.min(storeTab.cursor?.anchor ?? 0, storeContent.length),
-                            head: Math.min(storeTab.cursor?.head ?? 0, storeContent.length),
-                        },
-                    });
+                scrollManager.capture(view!, "Sync");
 
-                    view!.setState(newState);
+                view!.dispatch({
+                    changes: { from: 0, to: currentDoc.length, insert: storeContent },
+                    userEvent: "input.type.sync",
+                });
 
-                    view!.requestMeasure({
-                        read: () => {
-                            return { targetTop: storeTab.scrollTop ?? 0 };
-                        },
-                        write: ({ targetTop }) => {
-                            if (!view) return;
-                            view.scrollDOM.scrollTop = targetTop;
-                        },
-                    });
-
-                    initializeTabFileState(storeTab).catch(() => {});
-                } else {
-                    scrollManager.capture(view!, "Sync");
-
-                    view!.dispatch({
-                        changes: { from: 0, to: currentDoc.length, insert: storeContent },
-                        selection: undefined,
-                        scrollIntoView: false,
-                    });
-
-                    requestAnimationFrame(() => {
-                        if (view) {
-                            view.requestMeasure();
-                            scrollManager.restore(view, "pixel");
-                        }
-                    });
-                }
+                requestAnimationFrame(() => {
+                    if (view && view._currentTabId === tId) {
+                        view.requestMeasure();
+                        scrollManager.restore(view, "pixel");
+                    }
+                });
 
                 if (isForcedSync) {
                     lastForceSyncCounter = forceSyncCounter;
@@ -441,30 +422,27 @@
             parent: editorContainer,
         });
 
-        (viewInstance as any).getHistoryState = () => {
-            return viewInstance.state.field(historyField, false);
-        };
-        (viewInstance as any)._lastHandledTabId = tabId;
+        const typedView = viewInstance as any;
+        typedView.getHistoryState = () => typedView.state.field(historyField, false);
+        typedView._currentTabId = tabId;
 
-        (viewInstance as any).flushPendingContent = () => {
+        typedView.flushPendingContent = () => {
             if (contentUpdateTimer) {
                 clearTimeout(contentUpdateTimer);
-                onContentChange(viewInstance.state.doc.toString());
-                if (onHistoryUpdate && (viewInstance as any).getHistoryState) {
-                    onHistoryUpdate((viewInstance as any).getHistoryState());
+                onContentChange(typedView.state.doc.toString());
+                if (onHistoryUpdate && typedView.getHistoryState) {
+                    onHistoryUpdate(typedView.getHistoryState());
                 }
             }
         };
 
-        view = viewInstance as any;
+        view = typedView;
         scrollSync.registerEditor(viewInstance);
 
         viewInstance.requestMeasure({
-            read: () => {
-                return { targetTop: initialScrollTop };
-            },
-            write: ({ targetTop }) => {
-                viewInstance.scrollDOM.scrollTop = targetTop;
+            read: () => {},
+            write: () => {
+                viewInstance.scrollDOM.scrollTop = initialScrollTop;
             },
         });
 
@@ -484,15 +462,17 @@
         window.addEventListener("blur", clearModifier);
 
         const throttleScroll = throttle(() => {
-            if (!view || !onScrollChange) return;
+            if (!view || !onScrollChange || view._currentTabId !== tabId) return;
+
             const dom = view.scrollDOM;
-            const scrollTop = dom.scrollTop;
             const max = dom.scrollHeight - dom.clientHeight;
-            const percentage = max > 0 ? scrollTop / max : 0;
+            const percentage = max > 0 ? dom.scrollTop / max : 0;
+            const scrollTop = dom.scrollTop;
+
             const lineBlock = view.lineBlockAtHeight(scrollTop);
             const docLine = view.state.doc.lineAt(lineBlock.from);
             onScrollChange(percentage, scrollTop, docLine.number);
-        }, 100);
+        }, 50);
 
         viewInstance.scrollDOM.addEventListener("scroll", throttleScroll, { passive: true });
 

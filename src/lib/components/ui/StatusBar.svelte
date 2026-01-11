@@ -13,18 +13,14 @@
         appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId)
     );
 
-    // Reactive totals pulled directly from the tab
+    // Reactive totals pulled directly from pre-calculated state in the tab
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
     let sizeBytes = $derived(activeTab?.sizeBytes || 0);
     let totalWords = $derived(activeTab?.wordCount || 0);
     let totalChars = $derived(activeTab?.content.length || 0);
-    let totalLines = $derived(activeTab?.content.split("\n").length || 1);
-
-    let widestColumn = $derived.by(() => {
-        if (!activeTab?.content) return 0;
-        return Math.max(...activeTab.content.split("\n").map((l) => l.length));
-    });
+    let totalLines = $derived(activeTab?.lineCount || 1);
+    let widestColumn = $derived(activeTab?.widestColumn || 0);
 
     let preferredExtension = $derived(activeTab?.preferredExtension);
     let path = $derived(activeTab?.path);

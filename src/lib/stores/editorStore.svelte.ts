@@ -18,6 +18,8 @@ export type EditorTab = {
     scrollTop?: number;
     sizeBytes: number;
     wordCount: number;
+    lineCount: number;
+    widestColumn: number;
     cursor: { anchor: number; head: number };
     topLine?: number;
     created?: string;
@@ -119,10 +121,20 @@ export function addTab(title: string = "", content: string = "") {
 
     const normalizedContent = normalizeLineEndings(finalContent);
     const sizeBytes = new TextEncoder().encode(normalizedContent).length;
-    const wordCount =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-            ? countWords(normalizedContent)
-            : fastCountWords(normalizedContent);
+
+    let wordCount = 0;
+    let lineCount = 1;
+    let widestColumn = 0;
+
+    if (normalizedContent.length > 0) {
+        const lines = normalizedContent.split("\n");
+        lineCount = lines.length;
+        widestColumn = Math.max(...lines.map((l) => l.length));
+        wordCount =
+            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+                ? countWords(normalizedContent)
+                : fastCountWords(normalizedContent);
+    }
 
     const newTab: EditorTab = {
         id,
@@ -135,6 +147,8 @@ export function addTab(title: string = "", content: string = "") {
         scrollPercentage: 0,
         sizeBytes,
         wordCount,
+        lineCount,
+        widestColumn,
         cursor: { anchor: 0, head: 0 },
         topLine: 1,
         created: now,
@@ -257,10 +271,17 @@ export function updateContent(id: string, content: string) {
 
     const now = getCurrentTimestamp();
     const sizeBytes = new TextEncoder().encode(content).length;
+
+    // Performance optimization: Avoid repeated splits and heavy regex on keystroke
+    const lineArray = content.split("\n");
+    const lineCount = lineArray.length;
+    const widestColumn = Math.max(...lineArray.map((l) => l.length));
+
     const wordCount =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
             ? countWords(content)
             : fastCountWords(content);
+
     const updatedTab = {
         ...oldTab,
         title: newTitle,
@@ -270,6 +291,8 @@ export function updateContent(id: string, content: string) {
         formattedTimestamp: formatTimestampForDisplay(now),
         sizeBytes,
         wordCount,
+        lineCount,
+        widestColumn,
         contentChanged: true,
     };
 
@@ -380,10 +403,15 @@ export function reloadTabContent(
     encoding: string,
     sizeBytes: number
 ) {
+    const lineArray = content.split("\n");
+    const lineCount = lineArray.length;
+    const widestColumn = Math.max(...lineArray.map((l) => l.length));
+
     const wordCount =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
             ? countWords(content)
             : fastCountWords(content);
+
     updateTab(id, () => ({
         content,
         lastSavedContent: content,
@@ -392,6 +420,8 @@ export function reloadTabContent(
         encoding,
         sizeBytes,
         wordCount,
+        lineCount,
+        widestColumn,
         fileCheckPerformed: false,
         contentChanged: true,
     }));
