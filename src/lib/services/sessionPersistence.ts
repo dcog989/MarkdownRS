@@ -40,11 +40,13 @@ class SessionPersistenceManager {
     private pendingSaveRequested = false;
 
     async requestSave(): Promise<void> {
-        console.log('[SessionPersistence] requestSave called, sessionDirty:', appContext.editor.sessionDirty);
-        if (!appContext.editor.sessionDirty) return;
+        if (!appContext.editor.sessionDirty) {
+            return;
+        }
 
         if (this.isSaving) {
             this.pendingSaveRequested = true;
+
             return;
         }
 
@@ -64,7 +66,6 @@ class SessionPersistenceManager {
     }
 
     private async executeSave(): Promise<void> {
-        console.log('[SessionPersistence] executeSave - Starting save');
         try {
             const mruPositionMap = new Map<string, number>();
             appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
@@ -72,15 +73,10 @@ class SessionPersistenceManager {
             // 1. Map Active Tabs
             const activeTabs = appContext.editor.tabs;
             const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
-                // Always save content for unsaved tabs (no path), or if content changed, or if not persisted yet
+                // CRITICAL FIX: Always save content for unsaved tabs OR if content has changed
+                // contentChanged flag tracks if content needs to be saved since last persist
                 const needsContent = !t.path || t.contentChanged || !t.isPersisted;
-                console.log(`[SessionPersistence] Tab ${t.id} (${t.title}):`, {
-                    hasPath: !!t.path,
-                    contentChanged: t.contentChanged,
-                    isPersisted: t.isPersisted,
-                    needsContent,
-                    contentLength: t.content.length
-                });
+
                 return {
                     id: t.id,
                     path: t.path,
@@ -103,8 +99,9 @@ class SessionPersistenceManager {
             // 2. Map Closed Tabs
             const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map(
                 (entry, index) => {
-                    // Always save content for unsaved tabs (no path), or if content changed, or if not persisted yet
-                    const needsContent = !entry.tab.path || entry.tab.contentChanged || !entry.tab.isPersisted;
+                    const needsContent =
+                        !entry.tab.path || entry.tab.contentChanged || !entry.tab.isPersisted;
+
                     return {
                         id: entry.tab.id,
                         path: entry.tab.path,
@@ -132,8 +129,15 @@ class SessionPersistenceManager {
             );
 
             // 3. Update persistence state on success
-            appContext.editor.sessionDirty = false;
-            activeTabs.forEach((t) => markTabPersisted(t.id));
+            const hasUnsavedTabsWithContent = activeTabs.some(
+                (t) => !t.path && t.content.length > 0
+            );
+            appContext.editor.sessionDirty = hasUnsavedTabsWithContent;
+
+            activeTabs.forEach((t) => {
+                markTabPersisted(t.id);
+            });
+
             appContext.editor.closedTabsHistory.forEach((entry) => {
                 if (entry.tab.isPersisted) {
                     entry.tab.contentChanged = false;
@@ -152,7 +156,9 @@ class SessionPersistenceManager {
 const persistenceManager = new SessionPersistenceManager();
 
 export async function initializeTabFileState(tab: EditorTab): Promise<void> {
-    if (!tab.path) return;
+    if (!tab.path) {
+        return;
+    }
 
     if (!tab.isDirty) {
         const hasChanged = await checkAndReloadIfChanged(tab.id);
@@ -206,10 +212,14 @@ export async function persistSession(): Promise<void> {
  */
 export async function loadTabContentLazy(tabId: string): Promise<void> {
     const index = appContext.editor.tabs.findIndex((t) => t.id === tabId);
-    if (index === -1) return;
+    if (index === -1) {
+        return;
+    }
 
     const tab = appContext.editor.tabs[index];
-    if (tab.contentLoaded) return;
+    if (tab.contentLoaded) {
+        return;
+    }
 
     try {
         // Now returns { content }
@@ -230,7 +240,11 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             } else if (tab.isDirty) {
                 // Dirty tab with a file - read from disk to get the actual last saved content
                 try {
-                    const fileData = await callBackend("read_text_file", { path: tab.path }, "File:Read");
+                    const fileData = await callBackend(
+                        "read_text_file",
+                        { path: tab.path },
+                        "File:Read"
+                    );
                     if (fileData && fileData.content) {
                         lastSavedContent = normalizeLineEndings(fileData.content);
                     }
@@ -295,7 +309,9 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         encoding: "UTF-8",
         fileCheckFailed: t.file_check_failed || false,
         fileCheckPerformed: t.file_check_performed || false,
-        contentChanged: false,
+        // CRITICAL: Mark content as changed if it's an unsaved tab with content
+        // This ensures it will be saved on the next session save
+        contentChanged: !t.path && content.length > 0,
         isPersisted: true,
         contentLoaded,
     };
@@ -318,12 +334,12 @@ export async function loadSession(): Promise<void> {
         if (activeRustTabs.length > 0) {
             activeRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-            // Convert tabs, marking whether content was loaded
+            // Convert tabs - all content is now loaded immediately
             const convertedTabs: EditorTab[] = activeRustTabs.map((t) => {
-                const hasContent = t.content !== null && t.content !== undefined;
-                // Since we now always load content, mark all tabs as contentLoaded
-                return convertRustTabToEditorTab(t, true);
+                const tab = convertRustTabToEditorTab(t, true);
+                return tab;
             });
+
             appContext.editor.tabs = convertedTabs;
 
             const sortedMru = activeRustTabs
@@ -335,16 +351,18 @@ export async function loadSession(): Promise<void> {
                 sortedMru.length > 0 ? sortedMru : convertedTabs.map((t) => t.id);
 
             // Initialize Active Tab Logic
+
             switch (appContext.app.startupBehavior) {
                 case "first":
                     appContext.app.activeTabId = convertedTabs[0].id;
+
                     break;
                 case "last-focused":
                     appContext.app.activeTabId =
                         appContext.editor.mruStack[0] || convertedTabs[0].id;
+
                     break;
                 case "new":
-                    // Logic moved to addTab call below if no tabs
                     break;
                 default:
                     appContext.app.activeTabId = convertedTabs[0].id;
@@ -354,7 +372,6 @@ export async function loadSession(): Promise<void> {
                 (t) => t.id === appContext.app.activeTabId
             );
             if (activeTab) {
-                // Content is already loaded, just initialize file state
                 await initializeTabFileState(activeTab);
             }
         }
@@ -372,18 +389,26 @@ export async function loadSession(): Promise<void> {
             closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
             appContext.editor.closedTabsHistory = closedRustTabs.map((t) => {
-                // Content is always loaded now
+                const tab = convertRustTabToEditorTab(t, true);
+
                 return {
-                    tab: convertRustTabToEditorTab(t, true),
+                    tab,
                     index: t.original_index ?? 0,
                 };
             });
         }
+
+        // Set sessionDirty if there are unsaved tabs with content
+        const hasUnsavedTabsWithContent = appContext.editor.tabs.some(
+            (t) => !t.path && t.content.length > 0
+        );
+        appContext.editor.sessionDirty = hasUnsavedTabsWithContent;
     } catch (err) {
         AppError.handle("Session:Load", err, {
             showToast: false,
             severity: "warning",
         });
+
         appContext.app.activeTabId = addTab();
     }
 }

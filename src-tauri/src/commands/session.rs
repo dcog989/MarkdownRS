@@ -8,13 +8,24 @@ pub async fn save_session(
     mut active_tabs: Vec<TabState>,
     mut closed_tabs: Vec<TabState>,
 ) -> Result<(), String> {
+    log::info!("[Rust] save_session called");
+    log::info!("  Active tabs: {}", active_tabs.len());
+    log::info!("  Closed tabs: {}", closed_tabs.len());
+    
+    let mut tabs_with_content = 0;
     for tab in &mut active_tabs {
         if let Some(content) = &mut tab.content {
+            tabs_with_content += 1;
+            log::debug!("  Tab '{}' has content: {} bytes", tab.title, content.len());
             if content.contains("\r\n") {
                 *content = content.replace("\r\n", "\n");
             }
+        } else {
+            log::debug!("  Tab '{}' has no content (metadata only)", tab.title);
         }
     }
+    log::info!("  Tabs with content to save: {}", tabs_with_content);
+    
     for tab in &mut closed_tabs {
         if let Some(content) = &mut tab.content {
             if content.contains("\r\n") {
@@ -24,20 +35,35 @@ pub async fn save_session(
     }
 
     let mut db = state.db.lock().await;
-    db.save_session(&active_tabs, &closed_tabs).map_err(|e| {
+    let result = db.save_session(&active_tabs, &closed_tabs).map_err(|e| {
         log::error!("Failed to save session: {}", e);
         format!("Failed to save session: {}", e)
-    })
+    });
+    
+    if result.is_ok() {
+        log::info!("[Rust] Session saved successfully");
+    }
+    
+    result
 }
 
 #[tauri::command]
 pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
+    log::info!("[Rust] restore_session called");
     let db = state.db.lock().await;
-    // Use optimized loading without content by default
-    db.load_session().map_err(|e| {
+    let result = db.load_session().map_err(|e| {
         log::error!("Failed to restore session: {}", e);
         format!("Failed to restore session: {}", e)
-    })
+    });
+    
+    if let Ok(ref session) = result {
+        log::info!("  Loaded active tabs: {}", session.active_tabs.len());
+        log::info!("  Loaded closed tabs: {}", session.closed_tabs.len());
+        let tabs_with_content = session.active_tabs.iter().filter(|t| t.content.is_some()).count();
+        log::info!("  Active tabs with content: {}", tabs_with_content);
+    }
+    
+    result
 }
 
 #[tauri::command]

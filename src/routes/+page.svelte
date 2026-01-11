@@ -31,7 +31,7 @@
     let dragStart = 0;
     let initialSplit = 0;
 
-    const AUTO_SAVE_INTERVAL_MS = 30000;
+    const AUTO_SAVE_INTERVAL_MS = 5000; // 5 seconds for more frequent saves
 
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
@@ -204,23 +204,41 @@
             saveSettings();
         };
 
+        const handleBeforeUnload = () => {
+            console.log('[+page] beforeunload - flushing all editor content');
+            // Flush all pending editor content updates
+            if ((window as any)._editorFlushFunctions) {
+                (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
+            }
+            console.log('[+page] Active tab:', appContext.app.activeTabId);
+            console.log('[+page] Tabs count:', appContext.editor.tabs.length);
+            console.log('[+page] Session dirty:', appContext.editor.sessionDirty);
+            // Force immediate save before window closes
+            persistSession();
+            saveSettings();
+        };
+
         window.addEventListener("blur", handleBlur);
+        window.addEventListener("beforeunload", handleBeforeUnload);
 
         return () => {
             document.removeEventListener("keydown", handleDocumentKeydown, { capture: true });
             document.removeEventListener("keydown", handleTabNavigation, { capture: true });
             window.removeEventListener("blur", handleBlur);
+            window.removeEventListener("beforeunload", handleBeforeUnload);
             if (unlistenFileOpen) unlistenFileOpen();
         };
     });
 
     onDestroy(() => {
+        console.log('[+page] onDestroy - saving session and settings');
         if (autoSaveInterval !== null) {
             clearInterval(autoSaveInterval);
             autoSaveInterval = null;
         }
         persistSession();
         saveSettings();
+        console.log('[+page] onDestroy complete');
     });
 
     function startResize(e: MouseEvent) {

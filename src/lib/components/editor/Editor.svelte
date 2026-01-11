@@ -49,6 +49,19 @@
 
     // Initialize Helpers
     const eventHandlers = createEditorEventHandlers(onContextMenu);
+    
+    // Global flush function accessible from window for shutdown
+    if (typeof window !== 'undefined') {
+        if (!(window as any)._editorFlushFunctions) {
+            (window as any)._editorFlushFunctions = [];
+        }
+        const flushFn = () => {
+            if (cmView && (cmView as any).flushPendingContent) {
+                (cmView as any).flushPendingContent();
+            }
+        };
+        (window as any)._editorFlushFunctions.push(flushFn);
+    }
 
     onMount(() => {
         initSpellcheck();

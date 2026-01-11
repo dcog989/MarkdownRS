@@ -449,6 +449,17 @@
             return viewInstance.state.field(historyField, false);
         };
         (viewInstance as any)._lastHandledTabId = tabId;
+        
+        // Add global flush function for shutdown
+        (viewInstance as any).flushPendingContent = () => {
+            if (contentUpdateTimer) {
+                clearTimeout(contentUpdateTimer);
+                onContentChange(viewInstance.state.doc.toString());
+                if (onHistoryUpdate && viewInstance.getHistoryState) {
+                    onHistoryUpdate(viewInstance.getHistoryState());
+                }
+            }
+        };
 
         view = viewInstance;
         scrollSync.registerEditor(viewInstance);

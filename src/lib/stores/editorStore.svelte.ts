@@ -227,10 +227,23 @@ export function reorderTabs(newTabs: EditorTab[]) {
 
 export function updateContent(id: string, content: string) {
     const index = editorStore.tabs.findIndex((t) => t.id === id);
-    if (index === -1) return;
+    if (index === -1) {
+        console.warn('[EditorStore] updateContent: tab not found:', id);
+        return;
+    }
 
     const oldTab = editorStore.tabs[index];
     if (oldTab.content === content) return;
+    
+    console.log('[EditorStore] updateContent:', {
+        id,
+        title: oldTab.title,
+        hasPath: !!oldTab.path,
+        oldContentLength: oldTab.content.length,
+        newContentLength: content.length,
+        wasPersisted: oldTab.isPersisted,
+        wasChanged: oldTab.contentChanged
+    });
 
     let newTitle = oldTab.title;
     if (appState.tabNameFromContent) {
@@ -267,6 +280,13 @@ export function updateContent(id: string, content: string) {
 
     editorStore.tabs[index] = updatedTab;
     editorStore.sessionDirty = true;
+    
+    console.log('[EditorStore] Content updated, new state:', {
+        isDirty: updatedTab.isDirty,
+        contentChanged: updatedTab.contentChanged,
+        isPersisted: updatedTab.isPersisted,
+        sessionDirty: editorStore.sessionDirty
+    });
 }
 
 export function updateScroll(
@@ -423,5 +443,11 @@ export function togglePreferredExtension(id: string) {
 }
 
 export function markTabPersisted(id: string) {
-    updateTab(id, () => ({ contentChanged: false, isPersisted: true }), false);
+    console.log('[EditorStore] markTabPersisted:', id);
+    updateTab(id, (tab) => ({
+        // CRITICAL: Unsaved tabs (no path) must keep contentChanged: true
+        // so they continue to be saved on subsequent cycles
+        contentChanged: !tab.path && tab.content.length > 0 ? true : false,
+        isPersisted: true
+    }), false);
 }
