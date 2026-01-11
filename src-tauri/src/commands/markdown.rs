@@ -1,6 +1,15 @@
 use crate::markdown::config::MarkdownFlavor;
 use crate::markdown::formatter::{self, FormatterOptions};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
+use unicode_segmentation::UnicodeSegmentation;
+
+#[tauri::command]
+pub async fn compute_text_metrics(content: String) -> Result<(usize, usize, usize), String> {
+    let line_count = content.lines().count();
+    let word_count = content.unicode_words().count();
+    let char_count = content.chars().count();
+    Ok((line_count, word_count, char_count))
+}
 
 #[tauri::command]
 pub async fn render_markdown(

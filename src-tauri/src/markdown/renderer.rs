@@ -4,6 +4,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
+use unicode_segmentation::UnicodeSegmentation;
 
 // Lazy-compiled regex for file paths
 static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -28,9 +29,11 @@ impl Default for MarkdownOptions {
 pub struct RenderResult {
     pub html: String,
     pub line_map: HashMap<usize, usize>,
+    pub word_count: usize,
+    pub char_count: usize,
 }
 
-/// Renders markdown to HTML with line number tracking using comrak
+/// Renders markdown to HTML with line number tracking and document metrics
 pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult, String> {
     let mut comrak_options = Options::default();
     comrak_options.extension = options.flavor.to_extension_options();
@@ -52,9 +55,15 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     let html_with_links = linkify_file_paths(&html_with_lines);
     let line_map = build_line_map(content);
 
+    // Accurate O(N) metrics calculation using alphanumeric segmentation
+    let word_count = content.unicode_words().count();
+    let char_count = content.chars().count();
+
     Ok(RenderResult {
         html: html_with_links,
         line_map,
+        word_count,
+        char_count,
     })
 }
 
@@ -75,9 +84,11 @@ fn linkify_file_paths(html: &str) -> String {
 
         let mut last_end = 0;
         for cap in PATH_REGEX.captures_iter(line) {
-            let full_match = cap.get(0)
+            let full_match = cap
+                .get(0)
                 .expect("Regex capture should always have group 0");
-            let path = cap.get(1)
+            let path = cap
+                .get(1)
                 .expect("Regex capture should always have group 1")
                 .as_str();
             let start = full_match.start();

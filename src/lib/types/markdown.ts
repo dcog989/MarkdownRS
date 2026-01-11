@@ -11,4 +11,6 @@ export interface FormatterOptions {
 export interface RenderResult {
     html: string;
     line_map: Record<number, number>;
+    word_count: number;
+    char_count: number;
 }

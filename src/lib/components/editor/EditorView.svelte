@@ -84,13 +84,14 @@
         customKeymap?: any[];
         spellCheckLinter: any;
         eventHandlers: any;
-        cmView?: EditorView & { getHistoryState?: () => any };
+        cmView?: EditorView & { getHistoryState?: () => any; flushPendingContent?: () => void };
     }>();
 
     let editorContainer = $state<HTMLDivElement>();
-    let view = $state<EditorView & { getHistoryState?: () => any }>();
+    let view = $state<
+        EditorView & { getHistoryState?: () => any; flushPendingContent?: () => void }
+    >();
 
-    // Internal state for sync logic
     let scrollManager = new ScrollManager();
     let lastForceSyncCounter = $state(0);
 
@@ -127,7 +128,6 @@
         cmView = view;
     });
 
-    // --- Dynamic Configuration Effects ---
     $effect(() => {
         const _ = spellcheckState.customDictionary;
         if (view && spellcheckState.dictionaryLoaded) {
@@ -249,7 +249,7 @@
                     appContext.metrics.insertMode
                 )
             ),
-            indentComp.of(indentUnit.of("  ")),
+            indentComp.of(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))),
             whitespaceComp.of(
                 appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []
             ),
@@ -274,9 +274,11 @@
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => {
                         onContentChange(update.state.doc.toString());
-                        // Sync history state to store on content change
-                        if (onHistoryUpdate && view && view.getHistoryState) {
-                            onHistoryUpdate(view.getHistoryState());
+                        const v = view as
+                            | (EditorView & { getHistoryState?: () => any })
+                            | undefined;
+                        if (onHistoryUpdate && v && v.getHistoryState) {
+                            onHistoryUpdate(v.getHistoryState());
                         }
                     }, CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
                 }
@@ -290,13 +292,16 @@
                     if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
                     metricsUpdateTimer = window.setTimeout(() => {
                         const state = update.view.state;
+                        const docString = state.doc.toString();
                         const line = state.doc.lineAt(state.selection.main.head);
+
+                        // Calculate ONLY cursor metrics to avoid overwriting tab-specific document totals
                         onMetricsChange(
-                            calculateCursorMetrics(
-                                state.doc.toString(),
-                                state.selection.main.head,
-                                { number: line.number, from: line.from, text: line.text }
-                            )
+                            calculateCursorMetrics(docString, state.selection.main.head, {
+                                number: line.number,
+                                from: line.from,
+                                text: line.text,
+                            })
                         );
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
@@ -306,9 +311,7 @@
         return extensions;
     }
 
-    // --- Content Sync & Tab Switch Handling ---
     $effect(() => {
-        // Dependencies
         const tId = tabId;
         const storeTab = appContext.editor.tabs.find((t) => t.id === tId);
 
@@ -323,11 +326,6 @@
         const isFocused = view.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
-        // Detect if this is a Tab Switch (content mismatch + we are not focused/transforming)
-        // OR if it's an explicit "tab switch" signaled by `tabId` prop change (which triggers this effect)
-        // When `tabId` changes, we must perform a setState to swap history context.
-
-        // We track the previous ID handled by this view to detect switches
         const isTabSwitch = untrack(() => {
             if (view && (view as any)._lastHandledTabId !== tId) {
                 (view as any)._lastHandledTabId = tId;
@@ -336,10 +334,18 @@
             return false;
         });
 
-        // Case 1: Tab Switch (Hard State Swap)
         if (isTabSwitch) {
             untrack(() => {
-                // Load new state WITHOUT history (history state is not serializable)
+                // HARD RESET: Clear current session metrics to force a recalculation
+                // in the measure step below, ensuring status bar updates instantly.
+                onMetricsChange({
+                    cursorOffset: storeTab.cursor.head,
+                    cursorLine: 1,
+                    cursorCol: 1,
+                    currentLineLength: 0,
+                    currentWordIndex: 0,
+                });
+
                 const newState = EditorState.create({
                     doc: storeContent,
                     extensions: createExtensions(undefined),
@@ -351,16 +357,15 @@
 
                 view!.setState(newState);
 
-                // Restore scroll
                 requestAnimationFrame(() => {
                     if (view && initialScrollPercentage > 0) {
                         const dom = view.scrollDOM;
                         const max = dom.scrollHeight - dom.clientHeight;
                         if (max > 0) dom.scrollTop = initialScrollPercentage * max;
                     }
-                    // Ensure editor is focused and properly measured after tab switch
                     if (view) {
                         view.focus();
+                        // Force measure triggers the updateListener which refreshes the metrics
                         view.requestMeasure();
                     }
                     initializeTabFileState(storeTab).catch(() => {});
@@ -369,14 +374,11 @@
             return;
         }
 
-        // Case 2: Content Sync (External Change / Force Sync / Initial Load)
         const shouldSync = isInitialPopulate || !isFocused || isForcedSync;
 
         if (shouldSync && currentDoc !== storeContent) {
             untrack(() => {
-                // If it's the initial populate, we use setState to ensure history is also restored
                 if (isInitialPopulate) {
-                    // Create new state WITHOUT history (history state is not serializable)
                     const newState = EditorState.create({
                         doc: storeContent,
                         extensions: createExtensions(undefined),
@@ -388,23 +390,19 @@
 
                     view!.setState(newState);
 
-                    // Restore scroll and initialize file state
                     requestAnimationFrame(() => {
                         if (view && initialScrollPercentage > 0) {
                             const dom = view.scrollDOM;
                             const max = dom.scrollHeight - dom.clientHeight;
                             if (max > 0) dom.scrollTop = initialScrollPercentage * max;
                         }
-                        // Ensure editor is focused and editable after state restoration
                         if (view) {
                             view.focus();
-                            // Force a measure to ensure the editor is properly laid out
                             view.requestMeasure();
                         }
                         initializeTabFileState(storeTab).catch(() => {});
                     });
                 } else {
-                    // Regular update
                     scrollManager.capture(view!, "Sync");
 
                     view!.dispatch({
@@ -439,7 +437,7 @@
         const viewInstance = new EditorView({
             state: EditorState.create({
                 doc: initialContent,
-                extensions: createExtensions(undefined), // Don't use history state - it's not serializable
+                extensions: createExtensions(undefined),
                 selection: safeSelection,
             }),
             parent: editorContainer,
@@ -449,19 +447,18 @@
             return viewInstance.state.field(historyField, false);
         };
         (viewInstance as any)._lastHandledTabId = tabId;
-        
-        // Add global flush function for shutdown
+
         (viewInstance as any).flushPendingContent = () => {
             if (contentUpdateTimer) {
                 clearTimeout(contentUpdateTimer);
                 onContentChange(viewInstance.state.doc.toString());
-                if (onHistoryUpdate && viewInstance.getHistoryState) {
-                    onHistoryUpdate(viewInstance.getHistoryState());
+                if (onHistoryUpdate && (viewInstance as any).getHistoryState) {
+                    onHistoryUpdate((viewInstance as any).getHistoryState());
                 }
             }
         };
 
-        view = viewInstance;
+        view = viewInstance as any;
         scrollSync.registerEditor(viewInstance);
 
         if (initialScrollPercentage > 0) {
@@ -500,13 +497,13 @@
             onScrollChange(percentage, docLine.number);
         }, 100);
 
-        view.scrollDOM.addEventListener("scroll", throttleScroll, { passive: true });
+        viewInstance.scrollDOM.addEventListener("scroll", throttleScroll, { passive: true });
 
         if (searchState.findText) {
-            updateSearchEditor(view);
+            updateSearchEditor(viewInstance);
         }
 
-        view.focus();
+        viewInstance.focus();
 
         return () => {
             if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
@@ -515,10 +512,12 @@
             window.removeEventListener("keyup", handleModifierKey);
             window.removeEventListener("blur", clearModifier);
             view?.scrollDOM.removeEventListener("scroll", throttleScroll);
-            if (onHistoryUpdate && view && view.getHistoryState) {
-                onHistoryUpdate(view.getHistoryState());
+
+            const v = view;
+            if (onHistoryUpdate && v && v.getHistoryState) {
+                onHistoryUpdate(v.getHistoryState());
             }
-            if (view) view.destroy();
+            if (v) v.destroy();
         };
     });
 

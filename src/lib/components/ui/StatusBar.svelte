@@ -5,14 +5,21 @@
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { formatFileSize, isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
+    import { formatNumber } from "$lib/utils/textMetrics";
     import { TextWrap } from "lucide-svelte";
 
-    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
+    let activeTab = $derived(
+        appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId)
+    );
 
-    // De-structure dependencies to prevent re-renders on unrelated tab property changes (like cursor)
+    // Reactive totals pulled directly from the tab to prevent cross-tab leakage
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
     let sizeBytes = $derived(activeTab?.sizeBytes || 0);
+    let totalWords = $derived(activeTab?.wordCount || 0);
+    let totalChars = $derived(activeTab?.content.length || 0);
+    let totalLines = $derived(activeTab?.content.split("\n").length || 1);
+
     let preferredExtension = $derived(activeTab?.preferredExtension);
     let path = $derived(activeTab?.path);
     let tabId = $derived(activeTab?.id);
@@ -49,12 +56,20 @@
 <footer
     class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden bg-bg-panel border-border-main pointer-events-auto transition-colors duration-200 hover:!bg-bg-panel group"
     style="
-        background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app.statusBarTransparency}%);
+        background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
+        .statusBarTransparency}%);
     "
 >
-    <div class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100" style="opacity: {textOpacity};">
+    <div
+        class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
+        style="opacity: {textOpacity};"
+    >
         {#if canToggleFileType}
-            <button class="min-w-[70px] hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleFileType} use:tooltip={"Toggle File Type (markdown/text)"}>
+            <button
+                class="min-w-[70px] hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
+                onclick={toggleFileType}
+                use:tooltip={"Toggle File Type (markdown/text)"}
+            >
                 {fileType}
             </button>
         {:else}
@@ -64,41 +79,69 @@
 
         <div class="flex gap-1 items-center" use:tooltip={"Line Position"}>
             <span class="opacity-70">Ln</span>
-            <span class="font-mono text-right inline-block w-[4ch]">{appContext.metrics.cursorLine}</span>
+            <span class="font-mono text-right inline-block min-w-[1ch]"
+                >{formatNumber(appContext.metrics.cursorLine)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[4ch]">{appContext.metrics.lineCount}</span>
+            <span class="font-mono text-left inline-block min-w-[1ch]"
+                >{formatNumber(totalLines)}</span
+            >
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Column Position"}>
             <span class="opacity-70">Col</span>
-            <span class="font-mono text-right inline-block w-[3ch]">{appContext.metrics.cursorCol}</span>
+            <span class="font-mono text-right inline-block min-w-[1ch]"
+                >{formatNumber(appContext.metrics.cursorCol)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[3ch]">
-                {Math.max(appContext.metrics.currentLineLength, appContext.metrics.cursorCol > appContext.metrics.currentLineLength ? appContext.metrics.cursorCol : appContext.metrics.currentLineLength)}
+            <span class="font-mono text-left inline-block min-w-[1ch]">
+                {formatNumber(
+                    Math.max(
+                        appContext.metrics.currentLineLength,
+                        appContext.metrics.cursorCol > appContext.metrics.currentLineLength
+                            ? appContext.metrics.cursorCol
+                            : appContext.metrics.currentLineLength
+                    )
+                )}
             </span>
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Character Count"}>
             <span class="opacity-70">Char</span>
-            <span class="font-mono text-right inline-block w-[6ch]">{appContext.metrics.cursorOffset}</span>
+            <span class="font-mono text-right inline-block min-w-[1ch]"
+                >{formatNumber(appContext.metrics.cursorOffset)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[6ch]">{appContext.metrics.charCount}</span>
+            <span class="font-mono text-left inline-block min-w-[1ch]"
+                >{formatNumber(totalChars)}</span
+            >
         </div>
 
         <div class="flex gap-1 items-center" use:tooltip={"Word Position"}>
             <span class="opacity-70">Word</span>
-            <span class="font-mono text-right inline-block w-[5ch]">{appContext.metrics.currentWordIndex}</span>
+            <span class="font-mono text-right inline-block min-w-[1ch]"
+                >{formatNumber(appContext.metrics.currentWordIndex)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block w-[5ch]">{appContext.metrics.wordCount}</span>
+            <span class="font-mono text-left inline-block min-w-[1ch]"
+                >{formatNumber(totalWords)}</span
+            >
         </div>
 
-        <div class="flex gap-1 items-center" use:tooltip={"File Size"}>
+        <div class="flex gap-1 items-center ml-2" use:tooltip={"File Size"}>
             <span class="font-mono text-right inline-block min-w-[7ch]">{fileSizeDisplay}</span>
         </div>
     </div>
 
-    <div class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100" style="opacity: {textOpacity};">
-        <button class="hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors" onclick={toggleLineEnding} use:tooltip={"Toggle Line Ending"}>
+    <div
+        class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
+        style="opacity: {textOpacity};"
+    >
+        <button
+            class="hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
+            onclick={toggleLineEnding}
+            use:tooltip={"Toggle Line Ending"}
+        >
             {lineEnding}
         </button>
 
@@ -106,11 +149,23 @@
             {encoding}
         </span>
 
-        <button onclick={toggleInsertMode} class="font-bold w-8 text-center {appContext.metrics.insertMode === 'OVR' ? 'text-danger' : 'text-accent-secondary'}">
+        <button
+            onclick={toggleInsertMode}
+            class="font-bold w-8 text-center {appContext.metrics.insertMode === 'OVR'
+                ? 'text-danger'
+                : 'text-accent-secondary'}"
+        >
             {appContext.metrics.insertMode}
         </button>
 
-        <button class="flex items-center gap-1 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors {appContext.app.editorWordWrap ? 'text-accent-secondary' : 'text-inherit'}" onclick={toggleWordWrap} use:tooltip={"Toggle Word Wrap"}>
+        <button
+            class="flex items-center gap-1 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors {appContext
+                .app.editorWordWrap
+                ? 'text-accent-secondary'
+                : 'text-inherit'}"
+            onclick={toggleWordWrap}
+            use:tooltip={"Toggle Word Wrap"}
+        >
             <TextWrap size={14} />
         </button>
     </div>

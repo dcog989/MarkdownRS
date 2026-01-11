@@ -32,8 +32,10 @@ import { AppError } from "$lib/utils/errorHandling";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { callBackend } from "./backend";
+import { CONFIG } from "./config";
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
 import { formatMarkdown } from "./formatterRust";
+import { countWords } from "./textMetrics";
 
 export {
     addToDictionary,
@@ -101,6 +103,20 @@ export async function openFile(path?: string): Promise<void> {
         }
 
         const id = addTab(initialTitle, result.content);
+
+        // Fetch accurate initial metrics from Rust for large files
+        let initialWordCount = 0;
+        if (result.content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
+            const metrics = await callBackend(
+                "compute_text_metrics",
+                { content: result.content },
+                "File:Read"
+            );
+            if (metrics) initialWordCount = metrics[1];
+        } else {
+            initialWordCount = countWords(result.content);
+        }
+
         updateTabMetadataAndPath(id, {
             path: sanitizedPath,
             isDirty: false,
@@ -108,7 +124,9 @@ export async function openFile(path?: string): Promise<void> {
             encoding: result.encoding.toUpperCase(),
             fileCheckPerformed: false,
             sizeBytes: new TextEncoder().encode(result.content).length,
+            wordCount: initialWordCount,
         });
+
         await refreshMetadata(id, sanitizedPath);
         await checkFileExists(id);
         await fileWatcher.watch(sanitizedPath);

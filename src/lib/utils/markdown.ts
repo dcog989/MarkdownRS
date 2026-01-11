@@ -2,7 +2,9 @@
 
 import type { FormatterOptions, MarkdownFlavor, RenderResult } from "$lib/types/markdown";
 import { callBackend } from "./backend";
+import { CONFIG } from "./config";
 import { IncrementalMarkdownRenderer } from "./incrementalMarkdown.svelte";
+import { countWords } from "./textMetrics";
 
 // Global incremental renderer instance (one per document)
 const rendererCache = new Map<string, IncrementalMarkdownRenderer>();
@@ -53,7 +55,27 @@ export async function renderMarkdown(
     const renderer = getRenderer(documentId);
     const html = await renderer.render(content, gfm);
 
-    return { html, line_map: {} };
+    let wordCount = 0;
+    let charCount = 0;
+
+    if (content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
+        // Offload large file word counting to Rust to avoid UI jank
+        const result = await callBackend("compute_text_metrics", { content }, "Markdown:Render");
+        if (result) {
+            wordCount = result[1];
+            charCount = result[2];
+        }
+    } else {
+        wordCount = countWords(content);
+        charCount = content.length;
+    }
+
+    return {
+        html,
+        line_map: {},
+        word_count: wordCount,
+        char_count: charCount,
+    };
 }
 
 /**

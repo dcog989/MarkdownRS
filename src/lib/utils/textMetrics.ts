@@ -1,10 +1,12 @@
+import { CONFIG } from "./config";
+
 export interface TextMetrics {
     lineCount: number;
     wordCount: number;
     charCount: number;
 }
 
-export interface CursorMetrics extends TextMetrics {
+export interface CursorMetrics {
     cursorOffset: number;
     cursorLine: number;
     cursorCol: number;
@@ -12,9 +14,6 @@ export interface CursorMetrics extends TextMetrics {
     currentWordIndex: number;
 }
 
-/**
- * Robust word counter using Intl.Segmenter for Unicode awareness
- */
 const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
 
 export function countWords(text: string): number {
@@ -26,35 +25,53 @@ export function countWords(text: string): number {
     return count;
 }
 
-export function calculateTextMetrics(content: string): TextMetrics {
-    return {
-        lineCount: content.split("\n").length,
-        wordCount: countWords(content),
-        charCount: content.length,
-    };
+export function fastCountWords(text: string): number {
+    let count = 0;
+    let inWord = false;
+    for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i);
+        const isAlpha =
+            (code >= 65 && code <= 90) ||
+            (code >= 97 && code <= 122) ||
+            (code >= 48 && code <= 57) ||
+            code === 39;
+
+        if (isAlpha) {
+            if (!inWord) {
+                count++;
+                inWord = true;
+            }
+        } else {
+            inWord = false;
+        }
+    }
+    return count;
 }
 
-/**
- * Calculate full cursor and document metrics locally
- * @param content Full document text
- * @param cursorOffset Byte/char offset from CodeMirror
- * @param line Information for the current line provided by CodeMirror
- */
 export function calculateCursorMetrics(
     content: string,
     cursorOffset: number,
     line: { number: number; from: number; text: string }
 ): CursorMetrics {
-    const textUpToCursor = content.substring(0, cursorOffset);
+    let currentWordIndex = 0;
+
+    if (content.length < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
+        const textUpToCursor = content.substring(0, cursorOffset);
+        currentWordIndex = countWords(textUpToCursor);
+    } else {
+        const textUpToCursor = content.substring(0, cursorOffset);
+        currentWordIndex = fastCountWords(textUpToCursor);
+    }
 
     return {
-        lineCount: content.split("\n").length,
-        wordCount: countWords(content),
-        charCount: content.length,
-        cursorOffset: cursorOffset,
+        cursorOffset,
         cursorLine: line.number,
         cursorCol: cursorOffset - line.from + 1,
         currentLineLength: line.text.length,
-        currentWordIndex: countWords(textUpToCursor),
+        currentWordIndex,
     };
+}
+
+export function formatNumber(num: number): string {
+    return new Intl.NumberFormat().format(num);
 }

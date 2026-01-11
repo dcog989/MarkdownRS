@@ -235,6 +235,7 @@ fn main() {
             commands::markdown::render_markdown,
             commands::markdown::format_markdown,
             commands::markdown::get_markdown_flavors,
+            commands::markdown::compute_text_metrics,
             commands::bookmarks::add_bookmark,
             commands::bookmarks::get_all_bookmarks,
             commands::bookmarks::delete_bookmark,

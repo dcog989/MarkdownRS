@@ -15,6 +15,7 @@ export type EditorTab = {
     path: string | null;
     scrollPercentage: number;
     sizeBytes: number;
+    wordCount: number;
     cursor: { anchor: number; head: number };
     topLine?: number;
     created?: string;
@@ -127,6 +128,7 @@ export function addTab(title: string = "", content: string = "") {
         path: null,
         scrollPercentage: 0,
         sizeBytes,
+        wordCount: 0,
         cursor: { anchor: 0, head: 0 },
         topLine: 1,
         created: now,

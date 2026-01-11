@@ -1,7 +1,4 @@
 export type EditorMetrics = {
-    lineCount: number;
-    wordCount: number;
-    charCount: number;
     cursorOffset: number;
     cursorLine: number;
     cursorCol: number;
@@ -12,9 +9,6 @@ export type EditorMetrics = {
 
 // The state object
 export const editorMetrics = $state({
-    lineCount: 1,
-    wordCount: 0,
-    charCount: 0,
     cursorOffset: 0,
     cursorLine: 1,
     cursorCol: 1,
@@ -25,9 +19,6 @@ export const editorMetrics = $state({
 
 // Logic functions
 export function updateMetrics(metrics: Partial<EditorMetrics>) {
-    if (metrics.lineCount !== undefined) editorMetrics.lineCount = metrics.lineCount;
-    if (metrics.wordCount !== undefined) editorMetrics.wordCount = metrics.wordCount;
-    if (metrics.charCount !== undefined) editorMetrics.charCount = metrics.charCount;
     if (metrics.cursorOffset !== undefined) editorMetrics.cursorOffset = metrics.cursorOffset;
     if (metrics.cursorLine !== undefined) editorMetrics.cursorLine = metrics.cursorLine;
     if (metrics.cursorCol !== undefined) editorMetrics.cursorCol = metrics.cursorCol;

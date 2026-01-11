@@ -128,6 +128,10 @@ export interface BackendCommands {
         args: Record<string, never>;
         return: string[];
     };
+    compute_text_metrics: {
+        args: { content: string };
+        return: [number, number, number];
+    };
 
     // Bookmarks
     add_bookmark: {

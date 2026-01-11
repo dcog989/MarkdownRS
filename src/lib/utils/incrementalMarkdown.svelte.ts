@@ -133,83 +133,80 @@ export class IncrementalMarkdownRenderer {
 
     /**
      * Split content into semantic blocks to preserve cache validity during edits.
-     * Splits on headers, horizontal rules, and large gaps, while respecting code fences.
+     * Uses a scanner pattern (indexOf) to avoid massive array allocations from .split('\n').
      */
     private splitIntoBlocks(content: string): MarkdownBlock[] {
-        const lines = content.split("\n");
         const blocks: MarkdownBlock[] = [];
-        let currentLines: string[] = [];
         let currentStartLine = 0;
+        let lineIndex = 0;
+        let lastLinePos = 0;
+        let currentBlockContent = "";
+        let lineCountInBlock = 0;
         let inFence = false;
 
-        // Regex patterns
         const fenceRegex = /^(\s{0,3})(`{3,}|~{3,})/;
         const headerRegex = /^#{1,6}\s/;
         const hrRegex = /^(\s{0,3})([-*_])\s*(\2\s*){2,}$/;
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
+        let nextLinePos = content.indexOf("\n", 0);
 
-            // Check for fence toggle
-            if (fenceRegex.test(line)) {
-                inFence = !inFence;
-            }
+        while (lineIndex <= content.length) {
+            const endOfLine = nextLinePos === -1 ? content.length : nextLinePos;
+            const line = content.substring(lastLinePos, endOfLine);
+
+            if (fenceRegex.test(line)) inFence = !inFence;
 
             let shouldSplit = false;
-
-            // Semantic splitting logic
-            if (!inFence && currentLines.length > 0) {
-                // Always split before a header (starts a new section)
-                if (headerRegex.test(line)) {
+            if (!inFence && lineCountInBlock > 0) {
+                if (headerRegex.test(line) || hrRegex.test(line)) {
                     shouldSplit = true;
-                }
-                // Split before a horizontal rule
-                else if (hrRegex.test(line)) {
-                    shouldSplit = true;
-                }
-                // Split if we have a blank line followed by text (paragraph break)
-                // Only if current block is getting large (> 20 lines) to avoid fragmentation
-                else if (
-                    currentLines.length > 20 &&
-                    line.trim() === "" &&
-                    i + 1 < lines.length &&
-                    lines[i + 1].trim() !== ""
-                ) {
-                    shouldSplit = true;
+                } else if (lineCountInBlock > 20 && line.trim() === "") {
+                    // Check if next line is text (paragraph break)
+                    const nextLineStart = endOfLine + 1;
+                    if (nextLineStart < content.length) {
+                        const afterBreak = content.indexOf("\n", nextLineStart);
+                        const nextLine = content.substring(
+                            nextLineStart,
+                            afterBreak === -1 ? content.length : afterBreak
+                        );
+                        if (nextLine.trim() !== "") shouldSplit = true;
+                    }
                 }
             }
 
-            // Safety: Force split if block gets too large to keep UI responsive
-            if (
-                currentLines.length >= CONFIG.PERFORMANCE.INCREMENTAL_BLOCK_SIZE_LIMIT &&
-                !inFence
-            ) {
+            if (lineCountInBlock >= CONFIG.PERFORMANCE.INCREMENTAL_BLOCK_SIZE_LIMIT && !inFence) {
                 shouldSplit = true;
             }
 
             if (shouldSplit) {
-                const blockContent = currentLines.join("\n");
                 blocks.push({
                     startLine: currentStartLine,
-                    endLine: i,
-                    content: blockContent,
-                    hash: this.hashString(blockContent),
+                    endLine: lineIndex,
+                    content: currentBlockContent.endsWith("\n")
+                        ? currentBlockContent.slice(0, -1)
+                        : currentBlockContent,
+                    hash: this.hashString(currentBlockContent),
                 });
-                currentLines = [];
-                currentStartLine = i;
+                currentBlockContent = "";
+                currentStartLine = lineIndex;
+                lineCountInBlock = 0;
             }
 
-            currentLines.push(line);
+            currentBlockContent += line + (nextLinePos === -1 ? "" : "\n");
+            lineCountInBlock++;
+            lineIndex++;
+
+            if (nextLinePos === -1) break;
+            lastLinePos = nextLinePos + 1;
+            nextLinePos = content.indexOf("\n", lastLinePos);
         }
 
-        // Add remaining lines
-        if (currentLines.length > 0) {
-            const blockContent = currentLines.join("\n");
+        if (currentBlockContent) {
             blocks.push({
                 startLine: currentStartLine,
-                endLine: lines.length,
-                content: blockContent,
-                hash: this.hashString(blockContent),
+                endLine: lineIndex,
+                content: currentBlockContent,
+                hash: this.hashString(currentBlockContent),
             });
         }
 
