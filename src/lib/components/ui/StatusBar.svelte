@@ -1,24 +1,30 @@
 <script lang="ts">
     import { tooltip } from "$lib/actions/tooltip";
+    import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
     import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
     import { togglePreferredExtension, updateLineEnding } from "$lib/stores/editorStore.svelte";
     import { appContext } from "$lib/stores/state.svelte.ts";
     import { formatFileSize, isMarkdownFile } from "$lib/utils/fileValidation";
     import { saveSettings } from "$lib/utils/settings";
     import { formatNumber } from "$lib/utils/textMetrics";
-    import { TextWrap } from "lucide-svelte";
+    import { ClipboardCopy, TextWrap } from "lucide-svelte";
 
     let activeTab = $derived(
         appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId)
     );
 
-    // Reactive totals pulled directly from the tab to prevent cross-tab leakage
+    // Reactive totals pulled directly from the tab
     let lineEnding = $derived(activeTab?.lineEnding || "LF");
     let encoding = $derived(activeTab?.encoding || "UTF-8");
     let sizeBytes = $derived(activeTab?.sizeBytes || 0);
     let totalWords = $derived(activeTab?.wordCount || 0);
     let totalChars = $derived(activeTab?.content.length || 0);
     let totalLines = $derived(activeTab?.content.split("\n").length || 1);
+
+    let widestColumn = $derived.by(() => {
+        if (!activeTab?.content) return 0;
+        return Math.max(...activeTab.content.split("\n").map((l) => l.length));
+    });
 
     let preferredExtension = $derived(activeTab?.preferredExtension);
     let path = $derived(activeTab?.path);
@@ -36,6 +42,11 @@
 
     let canToggleFileType = $derived(!!tabId);
 
+    // Context Menu State
+    let showMenu = $state(false);
+    let menuX = $state(0);
+    let menuY = $state(0);
+
     function toggleFileType() {
         if (tabId) togglePreferredExtension(tabId);
     }
@@ -51,6 +62,38 @@
         appContext.app.editorWordWrap = !appContext.app.editorWordWrap;
         saveSettings();
     }
+
+    function handleContextMenu(e: MouseEvent) {
+        e.preventDefault();
+        menuX = e.clientX;
+        menuY = e.clientY;
+        showMenu = true;
+    }
+
+    async function copyAllStats() {
+        if (!activeTab) return;
+
+        const preciseSize =
+            sizeBytes < 1024
+                ? `${sizeBytes} B`
+                : sizeBytes < 1024 * 1024
+                  ? `${(sizeBytes / 1024).toFixed(2)} KB`
+                  : `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`;
+
+        const stats = [
+            `File Path: ${activeTab.path || "Unsaved"}`,
+            `File Size: ${preciseSize} (${sizeBytes.toLocaleString()} bytes)`,
+            `Total Lines: ${totalLines.toLocaleString()}`,
+            `Widest Column: ${widestColumn.toLocaleString()}`,
+            `Total Characters: ${totalChars.toLocaleString()}`,
+            `Total Words: ${totalWords.toLocaleString()}`,
+            `Line Ending: ${lineEnding}`,
+            `Encoding: ${encoding}`,
+        ].join("\n");
+
+        await navigator.clipboard.writeText(stats);
+        showMenu = false;
+    }
 </script>
 
 <footer
@@ -59,6 +102,7 @@
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
     "
+    oncontextmenu={handleContextMenu}
 >
     <div
         class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
@@ -170,3 +214,17 @@
         </button>
     </div>
 </footer>
+
+{#if showMenu}
+    <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
+        {#snippet children()}
+            <button
+                class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
+                onclick={copyAllStats}
+            >
+                <ClipboardCopy size={14} class="opacity-70" />
+                <span>Copy all document stats</span>
+            </button>
+        {/snippet}
+    </ContextMenu>
+{/if}
