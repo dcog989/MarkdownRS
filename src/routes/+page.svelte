@@ -184,7 +184,6 @@
         import("@tauri-apps/api/event").then(({ listen }) => {
             listen<string>("open-file-from-args", async (event) => {
                 const filePath = event.payload;
-                console.log("Opening file from command line:", filePath);
                 await openFileByPath(filePath);
             }).then((unlisten) => {
                 unlistenFileOpen = unlisten;
@@ -205,14 +204,10 @@
         };
 
         const handleBeforeUnload = () => {
-            console.log('[+page] beforeunload - flushing all editor content');
             // Flush all pending editor content updates
             if ((window as any)._editorFlushFunctions) {
                 (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
             }
-            console.log('[+page] Active tab:', appContext.app.activeTabId);
-            console.log('[+page] Tabs count:', appContext.editor.tabs.length);
-            console.log('[+page] Session dirty:', appContext.editor.sessionDirty);
             // Force immediate save before window closes
             persistSession();
             saveSettings();
@@ -231,14 +226,12 @@
     });
 
     onDestroy(() => {
-        console.log('[+page] onDestroy - saving session and settings');
         if (autoSaveInterval !== null) {
             clearInterval(autoSaveInterval);
             autoSaveInterval = null;
         }
         persistSession();
         saveSettings();
-        console.log('[+page] onDestroy complete');
     });
 
     function startResize(e: MouseEvent) {

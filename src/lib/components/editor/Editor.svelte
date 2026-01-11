@@ -49,9 +49,9 @@
 
     // Initialize Helpers
     const eventHandlers = createEditorEventHandlers(onContextMenu);
-    
+
     // Global flush function accessible from window for shutdown
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
         if (!(window as any)._editorFlushFunctions) {
             (window as any)._editorFlushFunctions = [];
         }
@@ -263,6 +263,7 @@
                     });
                 }
             } catch (err) {
+                // ! TO DO - can we write to logging system from Svelte? do not use console.
                 console.error("Paste failed:", err);
             }
         }}
