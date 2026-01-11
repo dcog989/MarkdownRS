@@ -74,7 +74,8 @@ class SessionPersistenceManager {
             // 1. Map Active Tabs
             const activeTabs = appContext.editor.tabs;
             const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
-                const needsContent = !t.path || t.contentChanged || !t.isPersisted;
+                // Only send content if it changed since last save or has never been persisted
+                const needsContent = t.contentChanged || !t.isPersisted;
 
                 return {
                     id: t.id,
@@ -98,8 +99,7 @@ class SessionPersistenceManager {
             // 2. Map Closed Tabs
             const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map(
                 (entry, index) => {
-                    const needsContent =
-                        !entry.tab.path || entry.tab.contentChanged || !entry.tab.isPersisted;
+                    const needsContent = entry.tab.contentChanged || !entry.tab.isPersisted;
 
                     return {
                         id: entry.tab.id,
