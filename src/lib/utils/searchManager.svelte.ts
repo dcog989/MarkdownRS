@@ -15,10 +15,25 @@ export const searchState = $state({
     currentMatches: 0,
     currentIndex: 0,
     allTabsResults: new Map<string, number>(),
+    
+    // Validation
+    regexError: null as string | null,
 });
 
 // Logic
 export function getSearchQuery(): SearchQuery {
+    // Validate regex before creating query
+    if (searchState.useRegex && searchState.findText) {
+        try {
+            new RegExp(searchState.findText);
+            searchState.regexError = null;
+        } catch (e) {
+            searchState.regexError = e instanceof Error ? e.message : "Invalid regex pattern";
+        }
+    } else {
+        searchState.regexError = null;
+    }
+    
     return new SearchQuery({
         search: searchState.findText,
         caseSensitive: searchState.matchCase,
@@ -128,6 +143,7 @@ export function clearSearch(view: EditorView | undefined) {
     });
     searchState.currentMatches = 0;
     searchState.currentIndex = 0;
+    searchState.regexError = null;
 }
 
 export function searchAllTabs() {
@@ -182,8 +198,18 @@ function buildSearchRegex(): RegExp | null {
         }
 
         const flags = searchState.matchCase ? "g" : "gi";
-        return new RegExp(pattern, flags);
+        const regex = new RegExp(pattern, flags);
+        
+        // Clear any previous error on success
+        searchState.regexError = null;
+        return regex;
     } catch (e) {
+        // Set error message for user feedback
+        if (searchState.useRegex && searchState.findText) {
+            searchState.regexError = e instanceof Error ? e.message : "Invalid regex pattern";
+        } else {
+            searchState.regexError = null;
+        }
         return null;
     }
 }

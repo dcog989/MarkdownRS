@@ -221,7 +221,7 @@
 
         <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-[500px]">
             <div class="flex gap-2 items-center">
-                <Input bind:ref={searchInputRef} type="text" bind:value={searchState.findText} placeholder="Find" class="flex-1 text-[13px] leading-6" oninput={onInput} spellcheck="false" />
+                <Input bind:ref={searchInputRef} type="text" bind:value={searchState.findText} placeholder="Find" class="flex-1 text-[13px] leading-6 {searchState.regexError ? 'border-danger' : ''}" oninput={onInput} spellcheck="false" />
                 <div class="text-[11px] text-fg-muted min-w-[80px] text-right">
                     {#if searchScope === "current"}
                         {#if searchState.currentMatches > 0}
@@ -238,6 +238,12 @@
                     {/if}
                 </div>
             </div>
+            
+            {#if searchState.regexError}
+                <div class="text-[11px] text-danger bg-danger/10 px-2 py-1 rounded border border-danger/30">
+                    {searchState.regexError}
+                </div>
+            {/if}
 
             {#if isReplaceMode}
                 <div class="flex gap-2 items-center">
