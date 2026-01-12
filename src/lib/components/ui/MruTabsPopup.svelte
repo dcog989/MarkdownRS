@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { tooltip } from "$lib/actions/tooltip";
-    import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
+    import { tooltip } from '$lib/actions/tooltip';
+    import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { CircleAlert, FileText, PencilLine, SquarePen } from 'lucide-svelte';
 
     interface Props {
         isOpen: boolean;
@@ -14,7 +14,11 @@
     let { isOpen, onClose, onSelect, selectedId }: Props = $props();
     let listContainerRef = $state<HTMLDivElement | null>(null);
 
-    let mruTabs = $derived(appContext.editor.mruStack.map((id) => appContext.editor.tabs.find((t) => t.id === id)).filter((t) => t !== undefined));
+    let mruTabs = $derived(
+        appContext.editor.mruStack
+            .map((id) => appContext.editor.tabs.find((t) => t.id === id))
+            .filter((t) => t !== undefined),
+    );
 
     function handleBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) onClose();
@@ -22,12 +26,12 @@
 
     function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         if (isSelected) {
-            node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
         return {
             update(newIsSelected: boolean) {
                 if (newIsSelected) {
-                    node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                    node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                 }
             },
         };
@@ -56,8 +60,7 @@
                             onclick={() => {
                                 onSelect(tab.id);
                                 onClose();
-                            }}
-                        >
+                            }}>
                             <div class="mru-badge">
                                 {index + 1}
                             </div>
@@ -88,7 +91,7 @@
                             </div>
 
                             {#if tab.isDirty}
-                                <div class="mru-dot" use:tooltip={"Modified"}></div>
+                                <div class="mru-dot" use:tooltip={'Modified'}></div>
                             {/if}
                         </button>
                     {/each}

@@ -1,8 +1,12 @@
 <script lang="ts">
-    import { OPERATION_CATEGORIES, getOperationsByCategory, type OperationId } from "$lib/config/textOperationsRegistry";
-    import { performTextTransform } from "$lib/stores/editorStore.svelte";
-    import { Type, X } from "lucide-svelte";
-    import Modal from "./Modal.svelte";
+    import {
+        OPERATION_CATEGORIES,
+        getOperationsByCategory,
+        type OperationId,
+    } from '$lib/config/textOperationsRegistry';
+    import { performTextTransform } from '$lib/stores/editorStore.svelte';
+    import { Type, X } from 'lucide-svelte';
+    import Modal from './Modal.svelte';
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
@@ -37,7 +41,10 @@
                 <div class="grid grid-cols-2 gap-2">
                     {#each operations as operation}
                         {@const OperationIcon = operation.icon}
-                        <button type="button" class="flex items-start gap-3 p-3 rounded text-left hover:bg-white/10 transition-colors border border-border-main" onclick={() => handleOperation(operation.id)}>
+                        <button
+                            type="button"
+                            class="flex items-start gap-3 p-3 rounded text-left hover:bg-white/10 transition-colors border border-border-main"
+                            onclick={() => handleOperation(operation.id)}>
                             <div class="flex-shrink-0 mt-0.5">
                                 <OperationIcon size={16} class="text-accent-secondary" />
                             </div>
@@ -58,6 +65,11 @@
 
     {#snippet footer()}
         <p class="text-xs mr-auto text-fg-muted">All operations support undo (Ctrl+Z)</p>
-        <button type="button" class="px-4 py-2 rounded text-sm font-medium hover:opacity-80 bg-accent-primary text-fg-inverse" onclick={onClose}> Close </button>
+        <button
+            type="button"
+            class="px-4 py-2 rounded text-sm font-medium hover:opacity-80 bg-accent-primary text-fg-inverse"
+            onclick={onClose}>
+            Close
+        </button>
     {/snippet}
 </Modal>

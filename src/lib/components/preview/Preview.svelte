@@ -1,23 +1,23 @@
 <script lang="ts">
-    import { tooltip } from "$lib/actions/tooltip";
-    import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
-    import { toggleOrientation } from "$lib/stores/appState.svelte";
-    import { updateTabMetadataAndPath } from "$lib/stores/editorStore.svelte";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { callBackend } from "$lib/utils/backend";
-    import { CONFIG } from "$lib/utils/config";
-    import { navigateToPath } from "$lib/utils/fileSystem";
-    import { isMarkdownFile } from "$lib/utils/fileValidation";
-    import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
-    import { FileText, FlipHorizontal, FlipVertical } from "lucide-svelte";
-    import { onDestroy, untrack } from "svelte";
+    import { tooltip } from '$lib/actions/tooltip';
+    import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+    import { toggleOrientation } from '$lib/stores/appState.svelte';
+    import { updateTabMetadataAndPath } from '$lib/stores/editorStore.svelte';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { callBackend } from '$lib/utils/backend';
+    import { CONFIG } from '$lib/utils/config';
+    import { navigateToPath } from '$lib/utils/fileSystem';
+    import { isMarkdownFile } from '$lib/utils/fileValidation';
+    import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
+    import { FileText, FlipHorizontal, FlipVertical } from 'lucide-svelte';
+    import { onDestroy, untrack } from 'svelte';
 
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
     let isRendering = $state(false);
-    let htmlContent = $state("");
-    let lastRendered = $state("");
-    let lastTabId = $state("");
+    let htmlContent = $state('');
+    let lastRendered = $state('');
+    let lastTabId = $state('');
     let debounceTimer: number | null = null;
     let renderAbortController: AbortController | null = null;
 
@@ -28,7 +28,7 @@
     });
 
     let tabContent = $derived.by(() => {
-        return appContext.editor.tabs.find((t) => t.id === tabId)?.content || "";
+        return appContext.editor.tabs.find((t) => t.id === tabId)?.content || '';
     });
 
     let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
@@ -38,8 +38,8 @@
         // Tab changed - reset state immediately
         if (lastTabId !== tabId) {
             lastTabId = tabId;
-            lastRendered = "";
-            htmlContent = "";
+            lastRendered = '';
+            htmlContent = '';
             if (renderAbortController) {
                 renderAbortController.abort();
                 renderAbortController = null;
@@ -70,12 +70,8 @@
 
             try {
                 // The render call now returns metrics as part of the rich payload
-                const flavorStr = currentFlavor === "gfm" ? "gfm" : "commonmark";
-                const result = await callBackend(
-                    "render_markdown",
-                    { content, flavor: flavorStr },
-                    "Markdown:Render"
-                );
+                const flavorStr = currentFlavor === 'gfm' ? 'gfm' : 'commonmark';
+                const result = await callBackend('render_markdown', { content, flavor: flavorStr }, 'Markdown:Render');
 
                 if (currentController.signal.aborted || !result) return;
 
@@ -93,7 +89,7 @@
                     untrack(() => scrollSync.updateMap());
                 }
             } catch (err) {
-                if (!currentController.signal.aborted) console.error("Preview render error:", err);
+                if (!currentController.signal.aborted) console.error('Preview render error:', err);
             } finally {
                 if (!currentController.signal.aborted) isRendering = false;
             }
@@ -118,13 +114,11 @@
             type="button"
             class="p-2 rounded opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200 bg-bg-panel border border-border-main hover:bg-white/20"
             onclick={() => toggleOrientation()}
-            use:tooltip={appContext.app.splitOrientation === "vertical"
-                ? "Switch to Horizontal Split"
-                : "Switch to Vertical Split"}
-        >
-            {#if appContext.app.splitOrientation === "vertical"}<FlipVertical
-                    size={16}
-                />{:else}<FlipHorizontal size={16} />{/if}
+            use:tooltip={appContext.app.splitOrientation === 'vertical'
+                ? 'Switch to Horizontal Split'
+                : 'Switch to Vertical Split'}>
+            {#if appContext.app.splitOrientation === 'vertical'}<FlipVertical size={16} />{:else}<FlipHorizontal
+                    size={16} />{/if}
         </button>
     </div>
 
@@ -132,29 +126,24 @@
         bind:this={container}
         id="active-preview-container"
         onclick={(e) => {
-            const a = (e.target as HTMLElement).closest("a");
+            const a = (e.target as HTMLElement).closest('a');
             if (a) {
                 e.preventDefault();
-                navigateToPath(a.getAttribute("href") || "");
+                navigateToPath(a.getAttribute('href') || '');
             }
         }}
         role="none"
         class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0 bg-bg-preview text-fg-default"
-        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
-            .previewFontSize}px;"
-        spellcheck="false"
-    >
+        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
+        spellcheck="false">
         {#if !isMarkdown}
             <div
-                class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none"
-            >
+                class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">
                 <FileText size={64} class="mb-4" />
                 <p>Preview not available for this file type</p>
             </div>
         {:else if isRendering && !htmlContent}
-            <div class="absolute inset-0 flex items-center justify-center opacity-50">
-                Rendering...
-            </div>
+            <div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
         {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
                 <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />

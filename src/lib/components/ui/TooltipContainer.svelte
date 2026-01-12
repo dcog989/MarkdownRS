@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { CONFIG } from "$lib/utils/config";
-    import type { Snippet } from "svelte";
-    import { fade } from "svelte/transition";
+    import { CONFIG } from '$lib/utils/config';
+    import type { Snippet } from 'svelte';
+    import { fade } from 'svelte/transition';
 
     let {
         x,
         y,
         isVisible,
         children,
-        className = "break-words w-max",
+        className = 'break-words w-max',
     } = $props<{
         x: number;
         y: number;
@@ -55,8 +55,13 @@
 </script>
 
 {#if isVisible}
-    <div bind:this={tooltipEl} class="fixed z-[9999] pointer-events-none" style="left: {adjustedX}px; top: {adjustedY}px;" transition:fade={{ duration: CONFIG.UI.ANIMATION_DURATION_MS }}>
-        <div class="p-2 rounded shadow-2xl border text-ui-sm whitespace-pre-line max-w-lg leading-relaxed {className} bg-bg-header border-border-light text-fg-default">
+    <div
+        bind:this={tooltipEl}
+        class="fixed z-[9999] pointer-events-none"
+        style="left: {adjustedX}px; top: {adjustedY}px;"
+        transition:fade={{ duration: CONFIG.UI.ANIMATION_DURATION_MS }}>
+        <div
+            class="p-2 rounded shadow-2xl border text-ui-sm whitespace-pre-line max-w-lg leading-relaxed {className} bg-bg-header border-border-light text-fg-default">
             {@render children()}
         </div>
     </div>

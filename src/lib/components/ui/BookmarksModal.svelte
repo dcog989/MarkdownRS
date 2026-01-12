@@ -1,11 +1,18 @@
 <script lang="ts">
-    import Input from "$lib/components/ui/Input.svelte";
-    import { addBookmark, deleteBookmark, isBookmarked, loadBookmarks, updateAccessTime, updateBookmark } from "$lib/stores/bookmarkStore.svelte";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { callBackend } from "$lib/utils/backend";
-    import { open } from "@tauri-apps/plugin-dialog";
-    import { ArrowDown, ArrowUp, Bookmark as BookmarkIcon, Pen, Plus, Search, Tag, Trash2, X } from "lucide-svelte";
-    import Modal from "./Modal.svelte";
+    import Input from '$lib/components/ui/Input.svelte';
+    import {
+        addBookmark,
+        deleteBookmark,
+        isBookmarked,
+        loadBookmarks,
+        updateAccessTime,
+        updateBookmark,
+    } from '$lib/stores/bookmarkStore.svelte';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { callBackend } from '$lib/utils/backend';
+    import { open } from '@tauri-apps/plugin-dialog';
+    import { ArrowDown, ArrowUp, Bookmark as BookmarkIcon, Pen, Plus, Search, Tag, Trash2, X } from 'lucide-svelte';
+    import Modal from './Modal.svelte';
 
     interface Props {
         isOpen: boolean;
@@ -15,31 +22,31 @@
 
     let { isOpen = $bindable(false), onClose, onOpenFile }: Props = $props();
 
-    type SortOption = "most-recent" | "alphabetical" | "last-updated";
-    type SortDirection = "asc" | "desc";
+    type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
+    type SortDirection = 'asc' | 'desc';
 
-    let searchQuery = $state("");
+    let searchQuery = $state('');
     let searchInputEl = $state<HTMLInputElement>();
     let editingId = $state<string | null>(null);
-    let editTitle = $state("");
-    let editTags = $state("");
+    let editTitle = $state('');
+    let editTags = $state('');
     let showAddForm = $state(false);
-    let addPath = $state("");
-    let addTitle = $state("");
-    let addTags = $state("");
-    let browseError = $state("");
-    let sortBy = $state<SortOption>("most-recent");
-    let sortDirection = $state<SortDirection>("desc");
+    let addPath = $state('');
+    let addTitle = $state('');
+    let addTags = $state('');
+    let browseError = $state('');
+    let sortBy = $state<SortOption>('most-recent');
+    let sortDirection = $state<SortDirection>('desc');
 
     $effect(() => {
         if (isOpen && !appContext.bookmarks.isLoaded) {
             loadBookmarks();
         }
         if (!isOpen) {
-            searchQuery = "";
+            searchQuery = '';
             editingId = null;
             showAddForm = false;
-            browseError = "";
+            browseError = '';
         }
         if (isOpen) {
             setTimeout(() => searchInputEl?.focus(), 0);
@@ -54,37 +61,37 @@
             const pathMatch = bookmark.path.toLowerCase().includes(query);
             const tagsMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query));
             return titleMatch || pathMatch || tagsMatch;
-        })
+        }),
     );
 
     let sortedBookmarks = $derived(
         (() => {
             const sorted = [...filteredBookmarks];
             switch (sortBy) {
-                case "most-recent":
+                case 'most-recent':
                     sorted.sort((a, b) => {
-                        const dateA = a.created || "";
-                        const dateB = b.created || "";
-                        return sortDirection === "desc" ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+                        const dateA = a.created || '';
+                        const dateB = b.created || '';
+                        return sortDirection === 'desc' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
                     });
                     break;
-                case "alphabetical":
+                case 'alphabetical':
                     sorted.sort((a, b) => {
                         const titleA = a.title.toLowerCase();
                         const titleB = b.title.toLowerCase();
-                        return sortDirection === "desc" ? titleB.localeCompare(titleA) : titleA.localeCompare(titleB);
+                        return sortDirection === 'desc' ? titleB.localeCompare(titleA) : titleA.localeCompare(titleB);
                     });
                     break;
-                case "last-updated":
+                case 'last-updated':
                     sorted.sort((a, b) => {
-                        const dateA = a.last_accessed || a.created || "";
-                        const dateB = b.last_accessed || b.created || "";
-                        return sortDirection === "desc" ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+                        const dateA = a.last_accessed || a.created || '';
+                        const dateB = b.last_accessed || b.created || '';
+                        return sortDirection === 'desc' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
                     });
                     break;
             }
             return sorted;
-        })()
+        })(),
     );
 
     async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
@@ -96,24 +103,24 @@
     function startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
         editingId = bookmark.id;
         editTitle = bookmark.title;
-        editTags = bookmark.tags.join(", ");
+        editTags = bookmark.tags.join(', ');
     }
 
     function cancelEdit() {
         editingId = null;
-        editTitle = "";
-        editTags = "";
+        editTitle = '';
+        editTags = '';
     }
 
     async function saveEdit(id: string) {
         const tags = editTags
-            .split(",")
+            .split(',')
             .map((t) => t.trim())
             .filter((t) => t.length > 0);
         await updateBookmark(id, editTitle, tags);
         editingId = null;
-        editTitle = "";
-        editTags = "";
+        editTitle = '';
+        editTags = '';
     }
 
     async function handleDelete(id: string, e: MouseEvent) {
@@ -123,62 +130,62 @@
 
     function startAdd() {
         showAddForm = true;
-        addPath = "";
-        addTitle = "";
-        addTags = "";
-        browseError = "";
+        addPath = '';
+        addTitle = '';
+        addTags = '';
+        browseError = '';
     }
 
     async function handleBrowse() {
         try {
             const selected = await open({
                 multiple: false,
-                filters: [{ name: "Markdown Files", extensions: ["md", "markdown", "txt"] }],
+                filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown', 'txt'] }],
             });
-            if (selected && typeof selected === "string") {
+            if (selected && typeof selected === 'string') {
                 addPath = selected;
-                browseError = "";
-                const filename = selected.split(/[\\/]/).pop() || "";
-                const titleWithoutExt = filename.replace(/\.[^/.]+$/, "");
+                browseError = '';
+                const filename = selected.split(/[\\/]/).pop() || '';
+                const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
                 if (!addTitle) addTitle = titleWithoutExt;
             }
         } catch (error) {
-            browseError = "Failed to open file browser";
+            browseError = 'Failed to open file browser';
         }
     }
 
     async function handleAddBookmark() {
         if (!addPath || !addTitle) return;
         try {
-            await callBackend("get_file_metadata", { path: addPath }, "File:Metadata");
+            await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
         } catch (error) {
-            browseError = "File does not exist or cannot be accessed";
+            browseError = 'File does not exist or cannot be accessed';
             return;
         }
         if (isBookmarked(addPath)) {
-            browseError = "This file is already bookmarked";
+            browseError = 'This file is already bookmarked';
             return;
         }
         const tags = addTags
-            .split(",")
+            .split(',')
             .map((t) => t.trim())
             .filter((t) => t.length > 0);
         await addBookmark(addPath, addTitle, tags);
         showAddForm = false;
-        addPath = "";
-        addTitle = "";
-        addTags = "";
-        browseError = "";
+        addPath = '';
+        addTitle = '';
+        addTags = '';
+        browseError = '';
     }
 
     function formatDate(timestamp: string | null): string {
-        if (!timestamp) return "Never";
-        const [date] = timestamp.split(" / ");
+        if (!timestamp) return 'Never';
+        const [date] = timestamp.split(' / ');
         return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
     }
 
     function toggleSortDirection() {
-        sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
     }
 </script>
 
@@ -191,17 +198,27 @@
 
         <div class="flex-1 relative mx-4">
             <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-            <Input bind:ref={searchInputEl} bind:value={searchQuery} type="text" placeholder="Search bookmarks..." class="pl-8 pr-3" />
+            <Input
+                bind:ref={searchInputEl}
+                bind:value={searchQuery}
+                type="text"
+                placeholder="Search bookmarks..."
+                class="pl-8 pr-3" />
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
-            <select bind:value={sortBy} class="px-2 py-1 rounded text-ui outline-none cursor-pointer bg-bg-input text-fg-default border border-border-main">
+            <select
+                bind:value={sortBy}
+                class="px-2 py-1 rounded text-ui outline-none cursor-pointer bg-bg-input text-fg-default border border-border-main">
                 <option value="most-recent">Most Recent</option>
                 <option value="alphabetical">Alphabetical</option>
                 <option value="last-updated">Last Updated</option>
             </select>
-            <button onclick={toggleSortDirection} class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted" title={sortDirection === "asc" ? "Sort Ascending" : "Sort Descending"}>
-                {#if sortDirection === "asc"}
+            <button
+                onclick={toggleSortDirection}
+                class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted"
+                title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
+                {#if sortDirection === 'asc'}
                     <ArrowUp size={16} />
                 {:else}
                     <ArrowDown size={16} />
@@ -209,7 +226,10 @@
             </button>
         </div>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2 text-accent-primary" onclick={startAdd} title="Add Bookmark">
+        <button
+            class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2 text-accent-primary"
+            onclick={startAdd}
+            title="Add Bookmark">
             <Plus size={16} />
         </button>
 
@@ -223,7 +243,11 @@
             <div class="space-y-2">
                 <div class="flex gap-2">
                     <Input bind:value={addPath} type="text" placeholder="File path..." class="flex-1 bg-bg-panel" />
-                    <button onclick={handleBrowse} class="px-3 py-1 rounded text-ui font-medium transition-colors bg-bg-panel text-fg-default border border-border-main"> Browse... </button>
+                    <button
+                        onclick={handleBrowse}
+                        class="px-3 py-1 rounded text-ui font-medium transition-colors bg-bg-panel text-fg-default border border-border-main">
+                        Browse...
+                    </button>
                 </div>
                 <Input bind:value={addTitle} type="text" placeholder="Bookmark title..." class="bg-bg-panel" />
                 <Input bind:value={addTags} type="text" placeholder="Tags (comma-separated)..." class="bg-bg-panel" />
@@ -232,7 +256,11 @@
                 {/if}
                 <div class="flex gap-2 justify-end">
                     <button onclick={() => (showAddForm = false)} class="px-3 py-1 rounded text-ui">Cancel</button>
-                    <button onclick={handleAddBookmark} disabled={!addPath || !addTitle} class="px-3 py-1 rounded text-ui font-medium disabled:opacity-50 bg-accent-primary text-fg-inverse">Add</button>
+                    <button
+                        onclick={handleAddBookmark}
+                        disabled={!addPath || !addTitle}
+                        class="px-3 py-1 rounded text-ui font-medium disabled:opacity-50 bg-accent-primary text-fg-inverse"
+                        >Add</button>
                 </div>
             </div>
         </div>
@@ -249,13 +277,18 @@
                                 <Input bind:value={editTags} type="text" placeholder="Tags (comma-separated)" />
                                 <div class="flex gap-2 justify-end">
                                     <button onclick={cancelEdit} class="px-2 py-1 rounded text-ui-sm">Cancel</button>
-                                    <button onclick={() => saveEdit(bookmark.id)} class="px-2 py-1 rounded text-ui-sm bg-accent-primary text-fg-inverse">Save</button>
+                                    <button
+                                        onclick={() => saveEdit(bookmark.id)}
+                                        class="px-2 py-1 rounded text-ui-sm bg-accent-primary text-fg-inverse"
+                                        >Save</button>
                                 </div>
                             </div>
                         {:else}
                             <!-- svelte-ignore a11y_click_events_have_key_events -->
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div class="flex items-start gap-3 cursor-pointer" onclick={() => handleOpenBookmark(bookmark)}>
+                            <div
+                                class="flex items-start gap-3 cursor-pointer"
+                                onclick={() => handleOpenBookmark(bookmark)}>
                                 <div class="flex-1 min-w-0">
                                     <div class="font-medium truncate text-fg-default">
                                         {bookmark.title}
@@ -267,7 +300,8 @@
                                         <div class="flex items-center gap-1 mt-1 flex-wrap">
                                             <Tag size={12} class="opacity-50" />
                                             {#each bookmark.tags as tag}
-                                                <span class="text-ui-sm px-1.5 py-0.5 rounded bg-bg-input text-fg-muted">
+                                                <span
+                                                    class="text-ui-sm px-1.5 py-0.5 rounded bg-bg-input text-fg-muted">
                                                     {tag}
                                                 </span>
                                             {/each}
@@ -286,11 +320,12 @@
                                             e.stopPropagation();
                                             startEdit(bookmark);
                                         }}
-                                        class="p-1.5 rounded hover:bg-white/10 text-fg-muted"
-                                    >
+                                        class="p-1.5 rounded hover:bg-white/10 text-fg-muted">
                                         <Pen size={14} />
                                     </button>
-                                    <button onclick={(e) => handleDelete(bookmark.id, e)} class="p-1.5 rounded hover:bg-white/10 text-fg-muted hover:text-danger-text">
+                                    <button
+                                        onclick={(e) => handleDelete(bookmark.id, e)}
+                                        class="p-1.5 rounded hover:bg-white/10 text-fg-muted hover:text-danger-text">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>

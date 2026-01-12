@@ -125,7 +125,7 @@
     }
 
     function onTrackMouseDown(e: MouseEvent) {
-        if (!viewport || !trackRef || (e.target as Element).closest(".scrollbar-thumb")) return;
+        if (!viewport || !trackRef || (e.target as Element).closest('.scrollbar-thumb')) return;
         e.preventDefault();
 
         measure();
@@ -164,11 +164,11 @@
         startThumbTop = currentThumbTop;
         isDragging = true;
 
-        document.body.style.userSelect = "none";
-        document.body.style.cursor = "default";
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'default';
 
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
     }
 
     function onMouseMove(e: MouseEvent) {
@@ -200,11 +200,11 @@
         if (!isDragging) return;
         isDragging = false;
 
-        document.body.style.userSelect = "";
-        document.body.style.cursor = "";
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
 
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
 
         measure();
     }
@@ -232,7 +232,7 @@
         mutationObserver = new MutationObserver(debouncedMeasure);
         mutationObserver.observe(viewport, { childList: true, subtree: true, attributes: true });
 
-        viewport.addEventListener("scroll", onScroll, { passive: true });
+        viewport.addEventListener('scroll', onScroll, { passive: true });
 
         measure();
     }
@@ -242,7 +242,7 @@
             setup();
             return () => {
                 if (frameId) cancelAnimationFrame(frameId);
-                viewport?.removeEventListener("scroll", onScroll);
+                viewport?.removeEventListener('scroll', onScroll);
                 resizeObserver?.disconnect();
                 mutationObserver?.disconnect();
             };
@@ -252,6 +252,20 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div bind:this={trackRef} class="absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200 group" class:opacity-0={!isVisible} class:opacity-100={isVisible} class:pointer-events-none={!isVisible} onmousedown={onTrackMouseDown}>
-    <div bind:this={thumbRef} class="scrollbar-thumb absolute top-0 w-1 rounded-full bg-border-light opacity-50 hover:opacity-100 hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:opacity-100 active:w-3 transition-[width,background-color,opacity] duration-150 cursor-pointer" class:w-3={isDragging} class:!opacity-100={isDragging} class:bg-accent-primary={isDragging} style="height: {thumbHeight}px; will-change: transform;" onmousedown={onThumbMouseDown}></div>
+<div
+    bind:this={trackRef}
+    class="absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200 group"
+    class:opacity-0={!isVisible}
+    class:opacity-100={isVisible}
+    class:pointer-events-none={!isVisible}
+    onmousedown={onTrackMouseDown}>
+    <div
+        bind:this={thumbRef}
+        class="scrollbar-thumb absolute top-0 w-1 rounded-full bg-border-light opacity-50 hover:opacity-100 hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:opacity-100 active:w-3 transition-[width,background-color,opacity] duration-150 cursor-pointer"
+        class:w-3={isDragging}
+        class:!opacity-100={isDragging}
+        class:bg-accent-primary={isDragging}
+        style="height: {thumbHeight}px; will-change: transform;"
+        onmousedown={onThumbMouseDown}>
+    </div>
 </div>

@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { onMount, type Snippet } from "svelte";
+    import { onMount, type Snippet } from 'svelte';
 
     let { x, y, onClose, children } = $props<{
         x: number;
         y: number;
         onClose: () => void;
-        children: Snippet<[{ submenuSide: "left" | "right" }]>;
+        children: Snippet<[{ submenuSide: 'left' | 'right' }]>;
     }>();
 
     let menuEl = $state<HTMLDivElement>();
     let adjustedX = $state(0);
     let adjustedY = $state(0);
-    let submenuSide = $state<"left" | "right">("right");
+    let submenuSide = $state<'left' | 'right'>('right');
     let isVisible = $state(false);
     let resizeObserver: ResizeObserver | null = null;
 
@@ -43,7 +43,7 @@
 
         adjustedX = Math.max(5, newX);
         adjustedY = Math.max(5, newY);
-        submenuSide = adjustedX + rect.width + 180 > winWidth ? "left" : "right";
+        submenuSide = adjustedX + rect.width + 180 > winWidth ? 'left' : 'right';
         isVisible = true;
     }
 
@@ -73,12 +73,12 @@
         e.preventDefault();
         const backdrop = e.currentTarget as HTMLElement;
         const originalDisplay = backdrop.style.display;
-        backdrop.style.display = "none";
+        backdrop.style.display = 'none';
         const target = document.elementFromPoint(e.clientX, e.clientY);
         backdrop.style.display = originalDisplay;
         onClose();
         if (target) {
-            const newEvent = new MouseEvent("contextmenu", {
+            const newEvent = new MouseEvent('contextmenu', {
                 bubbles: true,
                 cancelable: true,
                 view: window,
@@ -108,8 +108,7 @@
             opacity: {isVisible ? 1 : 0};
         "
         onclick={(e) => e.stopPropagation()}
-        oncontextmenu={(e) => e.preventDefault()}
-    >
+        oncontextmenu={(e) => e.preventDefault()}>
         {@render children({ submenuSide })}
     </div>
 </div>

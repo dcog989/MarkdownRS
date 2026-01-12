@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
-    import { formatFileSize } from "$lib/utils/fileValidation";
-    import TooltipContainer from "./TooltipContainer.svelte";
+    import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+    import { formatFileSize } from '$lib/utils/fileValidation';
+    import TooltipContainer from './TooltipContainer.svelte';
 
     let {
         tab,
@@ -21,11 +21,11 @@
         if (tab.path) {
             parts.push(tab.path);
         } else {
-            parts.push("Unsaved content");
+            parts.push('Unsaved content');
         }
 
         const sizeStr = formatFileSize(tab.sizeBytes || 0);
-        const formattedTime = tab.formattedTimestamp || "";
+        const formattedTime = tab.formattedTimestamp || '';
 
         if (formattedTime) {
             parts.push(`${formattedTime}, ${sizeStr}`);
@@ -33,7 +33,7 @@
             parts.push(sizeStr);
         }
 
-        return parts.join("\n");
+        return parts.join('\n');
     });
 </script>
 

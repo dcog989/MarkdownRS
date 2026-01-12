@@ -1,16 +1,16 @@
 <script lang="ts">
-    import { onDestroy, type Snippet } from "svelte";
+    import { onDestroy, type Snippet } from 'svelte';
 
     let {
         show = false,
-        side = "right",
+        side = 'right',
         trigger,
         children,
         onOpen,
         onClose,
     } = $props<{
         show?: boolean;
-        side?: "left" | "right";
+        side?: 'left' | 'right';
         trigger: Snippet;
         children: Snippet;
         onOpen?: () => void;
@@ -54,7 +54,7 @@
 
         let x = triggerRect.right;
 
-        if (side === "left" || x + submenuRect.width > winWidth - 5) {
+        if (side === 'left' || x + submenuRect.width > winWidth - 5) {
             x = triggerRect.left - submenuRect.width;
 
             if (x < 5) {
@@ -98,11 +98,21 @@
     });
 </script>
 
-<div bind:this={containerEl} class="relative submenu-container w-full" onmouseenter={handleMouseEnter} onmouseleave={handleMouseLeave} role="none">
+<div
+    bind:this={containerEl}
+    class="relative submenu-container w-full"
+    onmouseenter={handleMouseEnter}
+    onmouseleave={handleMouseLeave}
+    role="none">
     {@render trigger()}
     {#if show}
         <!-- ! NOTE: position fixed is crucial here to escape the overflow:hidden/auto of the parent -->
-        <div bind:this={submenuEl} class="fixed flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[50vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-[250] whitespace-nowrap bg-bg-panel border-border-light" style="left: {fixedX}px; top: {fixedY}px;" role="menu" tabindex="-1">
+        <div
+            bind:this={submenuEl}
+            class="fixed flex flex-col w-max min-w-[160px] max-w-[350px] max-h-[50vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-[250] whitespace-nowrap bg-bg-panel border-border-light"
+            style="left: {fixedX}px; top: {fixedY}px;"
+            role="menu"
+            tabindex="-1">
             {@render children()}
         </div>
     {/if}

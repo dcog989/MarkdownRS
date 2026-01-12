@@ -1,7 +1,7 @@
 <script lang="ts">
-    import Input from "$lib/components/ui/Input.svelte";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { CONFIG } from "$lib/utils/config";
+    import Input from '$lib/components/ui/Input.svelte';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { CONFIG } from '$lib/utils/config';
     import {
         clearSearch,
         replaceAllInTabs,
@@ -9,19 +9,19 @@
         searchState,
         selectNearestMatch,
         updateSearchEditor,
-    } from "$lib/utils/searchManager.svelte.ts";
-    import { debounce } from "$lib/utils/timing";
-    import { findNext, findPrevious, replaceAll, replaceNext } from "@codemirror/search";
-    import type { EditorView } from "@codemirror/view";
-    import { ChevronDown, ChevronRight, Replace, Search, X } from "lucide-svelte";
-    import { onMount, tick, untrack } from "svelte";
+    } from '$lib/utils/searchManager.svelte.ts';
+    import { debounce } from '$lib/utils/timing';
+    import { findNext, findPrevious, replaceAll, replaceNext } from '@codemirror/search';
+    import type { EditorView } from '@codemirror/view';
+    import { ChevronDown, ChevronRight, Replace, Search, X } from 'lucide-svelte';
+    import { onMount, tick, untrack } from 'svelte';
 
     let { isOpen = $bindable(false), cmView } = $props<{
         isOpen?: boolean;
         cmView: EditorView | undefined;
     }>();
 
-    let searchScope = $state<"current" | "all">("current");
+    let searchScope = $state<'current' | 'all'>('current');
     let isReplaceMode = $state(false);
     let searchInputRef = $state<HTMLInputElement>();
     let panelRef = $state<HTMLDivElement>();
@@ -71,7 +71,7 @@
     }
 
     function executeSearch(view: EditorView, incremental: boolean) {
-        if (searchScope === "current") {
+        if (searchScope === 'current') {
             if (searchState.findText) {
                 if (incremental) {
                     selectNearestMatch(view);
@@ -136,7 +136,7 @@
     function onReplaceAll() {
         if (searchState.regexError) return;
 
-        if (searchScope === "current") {
+        if (searchScope === 'current') {
             if (cmView) {
                 updateSearchEditor(cmView);
                 replaceAll(cmView);
@@ -151,10 +151,10 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        if (e.key === "Escape") {
+        if (e.key === 'Escape') {
             e.stopPropagation();
             close();
-        } else if (e.key === "Enter") {
+        } else if (e.key === 'Enter') {
             e.preventDefault();
             if (e.shiftKey) {
                 onFindPrevious();
@@ -165,16 +165,16 @@
                     onFindNext();
                 }
             }
-        } else if ((e.key === "f" || e.key === "h") && (e.ctrlKey || e.metaKey)) {
+        } else if ((e.key === 'f' || e.key === 'h') && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             e.stopPropagation();
-            if (e.key === "h") isReplaceMode = true;
+            if (e.key === 'h') isReplaceMode = true;
             focusInput();
         }
     }
 
     function handleGlobalKeydown(e: KeyboardEvent) {
-        if (e.key === "F3") {
+        if (e.key === 'F3') {
             e.preventDefault();
             e.stopPropagation();
 
@@ -209,9 +209,9 @@
     }
 
     onMount(() => {
-        window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
+        window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
         return () => {
-            window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
+            window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
         };
     });
 </script>
@@ -227,28 +227,23 @@
         onmouseleave={() => (isMouseOver = false)}
         role="dialog"
         aria-label="Find and Replace"
-        tabindex="-1"
-    >
+        tabindex="-1">
         <div class="flex items-center p-2 border-b border-border-main text-fg-default">
             <div class="flex items-center gap-2 flex-1">
                 <button
                     type="button"
                     class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active"
                     onclick={() => (isReplaceMode = !isReplaceMode)}
-                    title="Toggle Replace Mode"
-                >
-                    {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight
-                            size={14}
-                        />{/if}
+                    title="Toggle Replace Mode">
+                    {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
                 </button>
-                <span class="font-semibold text-ui">Find {isReplaceMode ? "& Replace" : ""}</span>
+                <span class="font-semibold text-ui">Find {isReplaceMode ? '& Replace' : ''}</span>
             </div>
             <button
                 type="button"
                 class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active"
                 onclick={close}
-                title="Close (Esc)"
-            >
+                title="Close (Esc)">
                 <X size={14} />
             </button>
         </div>
@@ -260,20 +255,17 @@
                     type="text"
                     bind:value={searchState.findText}
                     placeholder="Find"
-                    class="flex-1 text-[13px] leading-6 {searchState.regexError
-                        ? 'border-danger'
-                        : ''}"
+                    class="flex-1 text-[13px] leading-6 {searchState.regexError ? 'border-danger' : ''}"
                     oninput={onInput}
-                    spellcheck="false"
-                />
+                    spellcheck="false" />
                 <div class="text-[11px] text-fg-muted min-w-[80px] text-right">
-                    {#if searchScope === "current"}
+                    {#if searchScope === 'current'}
                         {#if searchState.currentMatches > 0}
                             {searchState.currentIndex + 1} of {searchState.currentMatches}
                         {:else if searchState.findText}
                             0 of 0
                         {/if}
-                    {:else if searchScope === "all"}
+                    {:else if searchScope === 'all'}
                         {#if searchState.allTabsResults.size > 0}
                             {searchState.allTabsResults.size} tabs
                         {:else if searchState.findText}
@@ -284,9 +276,7 @@
             </div>
 
             {#if searchState.regexError}
-                <div
-                    class="text-[11px] text-danger bg-danger/10 px-2 py-1 rounded border border-danger/30"
-                >
+                <div class="text-[11px] text-danger bg-danger/10 px-2 py-1 rounded border border-danger/30">
                     {searchState.regexError}
                 </div>
             {/if}
@@ -299,8 +289,7 @@
                         placeholder="Replace"
                         class="flex-1 text-[13px] leading-6"
                         oninput={onReplaceInput}
-                        spellcheck="false"
-                    />
+                        spellcheck="false" />
                 </div>
             {/if}
 
@@ -310,8 +299,7 @@
                         type="checkbox"
                         bind:checked={searchState.matchCase}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary"
-                    />
+                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Match Case</span>
                 </label>
                 <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
@@ -319,8 +307,7 @@
                         type="checkbox"
                         bind:checked={searchState.matchWholeWord}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary"
-                    />
+                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Whole Word</span>
                 </label>
                 <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
@@ -328,8 +315,7 @@
                         type="checkbox"
                         bind:checked={searchState.useRegex}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary"
-                    />
+                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Regex</span>
                 </label>
             </div>
@@ -340,8 +326,7 @@
                         type="radio"
                         bind:group={searchScope}
                         value="current"
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary"
-                    />
+                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>Current Document</span>
                 </label>
                 <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
@@ -349,8 +334,7 @@
                         type="radio"
                         bind:group={searchScope}
                         value="all"
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary"
-                    />
+                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
                     <span>All Open Documents</span>
                 </label>
             </div>
@@ -360,16 +344,14 @@
                     type="button"
                     class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
                     onclick={onFindPrevious}
-                    disabled={searchScope === "all" || !!searchState.regexError}
-                >
+                    disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} /> Previous
                 </button>
                 <button
                     type="button"
                     class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
                     onclick={onFindNext}
-                    disabled={searchScope === "all" || !!searchState.regexError}
-                >
+                    disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} /> Next
                 </button>
                 {#if isReplaceMode}
@@ -377,22 +359,20 @@
                         type="button"
                         class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
                         onclick={onReplace}
-                        disabled={searchScope === "all" || !!searchState.regexError}
-                    >
+                        disabled={searchScope === 'all' || !!searchState.regexError}>
                         <Replace size={12} /> Replace
                     </button>
                     <button
                         type="button"
                         class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
                         onclick={onReplaceAll}
-                        disabled={!!searchState.regexError}
-                    >
+                        disabled={!!searchState.regexError}>
                         <Replace size={12} /> Replace All
                     </button>
                 {/if}
             </div>
 
-            {#if searchScope === "all" && searchState.allTabsResults.size > 0}
+            {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
                 <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
                     <div class="text-[11px] font-semibold mb-1 text-fg-muted">Results:</div>
                     {#each [...searchState.allTabsResults.entries()] as [tabId, count]}
@@ -401,16 +381,12 @@
                             <button
                                 type="button"
                                 class="flex items-center justify-between p-1.5 px-2 rounded cursor-pointer transition-colors bg-bg-hover hover:bg-bg-active border-none w-full text-left"
-                                onclick={() => navigateToTab(tabId)}
-                            >
+                                onclick={() => navigateToTab(tabId)}>
                                 <span
                                     class="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap text-fg-default"
-                                    >{tab.title}</span
-                                >
-                                <span
-                                    class="text-[11px] text-fg-muted bg-bg-panel px-2 py-0.5 rounded-xl"
-                                    >{count}</span
-                                >
+                                    >{tab.title}</span>
+                                <span class="text-[11px] text-fg-muted bg-bg-panel px-2 py-0.5 rounded-xl"
+                                    >{count}</span>
                             </button>
                         {/if}
                     {/each}

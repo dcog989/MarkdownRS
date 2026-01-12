@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { SortableController } from "$lib/actions/sortable.svelte.ts";
-    import { addTab, pushToMru, reorderTabs } from "$lib/stores/editorStore.svelte";
-    import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { persistSessionDebounced, requestCloseTab } from "$lib/utils/fileSystem";
-    import { ChevronDown, Plus } from "lucide-svelte";
-    import { onDestroy, onMount, tick } from "svelte";
-    import { flip } from "svelte/animate";
-    import { fade } from "svelte/transition";
-    import MruTabsPopup from "./MruTabsPopup.svelte";
-    import TabButton from "./TabButton.svelte";
-    import TabContextMenu from "./TabContextMenu.svelte";
-    import TabDropdown from "./TabDropdown.svelte";
+    import { SortableController } from '$lib/actions/sortable.svelte.ts';
+    import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
+    import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
+    import { ChevronDown, Plus } from 'lucide-svelte';
+    import { onDestroy, onMount, tick } from 'svelte';
+    import { flip } from 'svelte/animate';
+    import { fade } from 'svelte/transition';
+    import MruTabsPopup from './MruTabsPopup.svelte';
+    import TabButton from './TabButton.svelte';
+    import TabContextMenu from './TabContextMenu.svelte';
+    import TabDropdown from './TabDropdown.svelte';
 
     let scrollContainer = $state<HTMLElement>();
     let showDropdown = $state(false);
@@ -31,7 +31,7 @@
 
     const sortController = new SortableController<EditorTab>({
         items: [],
-        idKey: "id",
+        idKey: 'id',
         container: undefined,
         onSort: (newItems) => {
             reorderTabs(newItems);
@@ -80,7 +80,7 @@
 
     onMount(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.ctrlKey && e.key === "Tab") {
+            if (e.ctrlKey && e.key === 'Tab') {
                 e.preventDefault();
                 if (!isMruCycling) {
                     isMruCycling = true;
@@ -96,7 +96,7 @@
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (e.key === "Control" || !e.ctrlKey) {
+            if (e.key === 'Control' || !e.ctrlKey) {
                 if (isMruCycling) {
                     if (mruTimer) clearTimeout(mruTimer);
                     const targetId = appContext.editor.mruStack[mruSelectedIndex];
@@ -110,16 +110,16 @@
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
 
         return () => {
             if (mruTimer) {
                 clearTimeout(mruTimer);
                 mruTimer = null;
             }
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
         };
     });
 
@@ -155,9 +155,12 @@
         const PEEK_AMOUNT = 55;
 
         if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
-            scrollContainer.scrollTo({ left: activeEl.offsetLeft + activeEl.offsetWidth - scrollContainer.clientWidth + PEEK_AMOUNT, behavior: "smooth" });
+            scrollContainer.scrollTo({
+                left: activeEl.offsetLeft + activeEl.offsetWidth - scrollContainer.clientWidth + PEEK_AMOUNT,
+                behavior: 'smooth',
+            });
         } else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
-            scrollContainer.scrollTo({ left: activeEl.offsetLeft - PEEK_AMOUNT, behavior: "smooth" });
+            scrollContainer.scrollTo({ left: activeEl.offsetLeft - PEEK_AMOUNT, behavior: 'smooth' });
         }
     }
 
@@ -168,7 +171,10 @@
 
 <div class="h-8 flex items-stretch w-full border-b relative shrink-0 bg-bg-panel border-border-main">
     <div class="relative h-8 border-r border-border-main">
-        <button type="button" class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-fg-muted text-xs" onclick={() => (showDropdown = !showDropdown)}>
+        <button
+            type="button"
+            class="h-full px-2 flex items-center gap-1 hover:bg-white/10 text-fg-muted text-xs"
+            onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
@@ -179,18 +185,32 @@
                 pushToMru(id);
                 showDropdown = false;
             }}
-            onClose={() => (showDropdown = false)}
-        />
+            onClose={() => (showDropdown = false)} />
     </div>
 
     <div class="flex-1 h-full relative min-w-0">
         {#if showLeftFade}
-            <div class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20" transition:fade={{ duration: 150 }} style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
+            <div
+                class="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20"
+                transition:fade={{ duration: 150 }}
+                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);">
+            </div>
         {/if}
 
-        <section bind:this={scrollContainer} class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container" onscroll={updateFadeIndicators}>
+        <section
+            bind:this={scrollContainer}
+            class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container"
+            onscroll={updateFadeIndicators}>
             {#each appContext.editor.tabs as tab (tab.id)}
-                <div class="h-full flex items-stretch shrink-0 outline-none select-none touch-none" animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }} role="listitem" style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};" onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
+                <div
+                    class="h-full flex items-stretch shrink-0 outline-none select-none touch-none"
+                    animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
+                    role="listitem"
+                    style="opacity: {isDragging && draggingId === tab.id ? '0.4' : '1'}; z-index: {isDragging &&
+                    draggingId === tab.id
+                        ? 100
+                        : 0};"
+                    onpointerdown={(e) => sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}
@@ -199,15 +219,17 @@
                             contextMenuTabId = id;
                             contextMenuX = e.clientX;
                             contextMenuY = e.clientY;
-                        }}
-                    />
+                        }} />
                 </div>
             {/each}
 
             {#if isDragging && draggingId}
                 {@const dragTab = appContext.editor.tabs.find((t) => t.id === draggingId)}
                 {#if dragTab}
-                    <div class="fixed pointer-events-none z-[999]" style="left: {currentDragX - dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect().top ?? 0}px; opacity: 0.95;">
+                    <div
+                        class="fixed pointer-events-none z-[999]"
+                        style="left: {currentDragX - dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect()
+                            .top ?? 0}px; opacity: 0.95;">
                         <TabButton tab={dragTab} isActive={appContext.app.activeTabId === dragTab.id} />
                     </div>
                 {/if}
@@ -215,7 +237,11 @@
         </section>
 
         {#if showRightFade}
-            <div class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-20" transition:fade={{ duration: 150 }} style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"></div>
+            <div
+                class="absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-20"
+                transition:fade={{ duration: 150 }}
+                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);">
+            </div>
         {/if}
     </div>
 
@@ -226,15 +252,18 @@
             onclick={() => {
                 const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;
-            }}
-        >
+            }}>
             <Plus size={16} />
         </button>
     </div>
 </div>
 
 {#if contextMenuTabId}
-    <TabContextMenu tabId={contextMenuTabId} x={contextMenuX} y={contextMenuY} onClose={() => (contextMenuTabId = null)} />
+    <TabContextMenu
+        tabId={contextMenuTabId}
+        x={contextMenuX}
+        y={contextMenuY}
+        onClose={() => (contextMenuTabId = null)} />
 {/if}
 
 <MruTabsPopup
@@ -244,8 +273,7 @@
         appContext.app.activeTabId = id;
         pushToMru(id);
     }}
-    selectedId={isMruCycling ? appContext.editor.mruStack[mruSelectedIndex] : appContext.app.activeTabId}
-/>
+    selectedId={isMruCycling ? appContext.editor.mruStack[mruSelectedIndex] : appContext.app.activeTabId} />
 
 <style>
     .no-scrollbar::-webkit-scrollbar {
