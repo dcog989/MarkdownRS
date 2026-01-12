@@ -85,7 +85,17 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
         case 'title-case':
             return lines.map((line) => line.toLowerCase().replace(/(?:^|\s)\S/g, (c) => c.toUpperCase())).join('\n');
         case 'sentence-case':
-            return lines.map((line) => line.charAt(0).toUpperCase() + line.slice(1).toLowerCase()).join('\n');
+            return lines.map((line) => {
+                // Match markdown prefixes: bullets (-, *, +), numbers (1.), checkboxes (- [ ], - [x])
+                const match = line.match(/^(\s*)(-|\*|\+|[0-9]+\.|\-\s*\[[ x]\])\s*(.*)$/);
+                if (match) {
+                    const [, indent, prefix, content] = match;
+                    if (!content) return line; // No content after prefix
+                    return `${indent}${prefix} ${content.charAt(0).toUpperCase()}${content.slice(1).toLowerCase()}`;
+                }
+                // No markdown prefix, just capitalize first char
+                return line.charAt(0).toUpperCase() + line.slice(1).toLowerCase();
+            }).join('\n');
         case 'camel-case':
             return lines.map(toCamelCase).join('\n');
         case 'pascal-case':
