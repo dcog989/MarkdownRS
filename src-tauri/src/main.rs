@@ -174,10 +174,32 @@ fn main() {
             }
 
             let db_path = db_dir.join("session.db");
-            let db = db::Database::new(db_path).map_err(|e| {
-                log::error!("Failed to initialize database: {}", e);
-                format!("Failed to initialize database: {}", e)
-            })?;
+
+            // Database initialization with corruption recovery
+            let db = match db::Database::new(db_path.clone()) {
+                Ok(db) => db,
+                Err(e) => {
+                    log::error!("Failed to initialize database: {}", e);
+                    log::warn!("Attempting database recovery...");
+
+                    if db_path.exists() {
+                        let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
+                        let backup_path = db_dir.join(format!("session.db.bak.{}", timestamp));
+
+                        if let Err(io_err) = fs::rename(&db_path, &backup_path) {
+                            log::error!("Failed to rename corrupted database: {}", io_err);
+                            return Err(format!("Database corruption detected. Failed to backup: {}", io_err).into());
+                        }
+                        log::info!("Corrupted database moved to {:?}", backup_path);
+                    }
+
+                    // Retry initialization
+                    db::Database::new(db_path).map_err(|retry_err| {
+                        log::error!("Failed to initialize fresh database: {}", retry_err);
+                        format!("Critical: Failed to create new database after corruption: {}", retry_err)
+                    })?
+                }
+            };
 
             app.manage(state::AppState {
                 db: tokio::sync::Mutex::new(db),
