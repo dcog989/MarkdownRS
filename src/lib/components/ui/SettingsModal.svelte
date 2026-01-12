@@ -375,7 +375,7 @@
 
         {
             key: 'spellcheckDictionaries',
-            label: 'Standard Dictionaries',
+            label: 'Language Dictionaries',
             type: 'dictionary-multi-select',
             category: 'Spellcheck',
             defaultValue: ['en'],

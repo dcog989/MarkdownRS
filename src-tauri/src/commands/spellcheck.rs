@@ -340,7 +340,7 @@ pub async fn init_spellchecker(
                     }
                 }
             }
-            Err(e) => log::warn!("Failed to load standard dictionary: {}", e),
+            Err(e) => log::warn!("Failed to load language dictionary: {}", e),
         }
     }
 
