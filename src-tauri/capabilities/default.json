@@ -19,31 +19,26 @@
         "fs:allow-read-text-file",
         "fs:allow-write-text-file",
         "fs:allow-rename",
+        "fs:allow-unwatch",
+        {
+            "identifier": "fs:allow-read-file",
+            "allow": [{ "path": "**" }]
+        },
         {
             "identifier": "fs:allow-watch",
-            "allow": [
-                {
-                    "path": "**"
-                }
-            ]
+            "allow": [{ "path": "**" }]
         },
-        "fs:allow-unwatch",
         "shell:allow-open",
         "opener:default",
         {
             "identifier": "opener:allow-open-path",
-            "allow": [
-                {
-                    "path": "**"
-                }
-            ]
+            "allow": [{ "path": "**" }]
         },
         "dialog:default",
         "store:default",
         "window-state:default",
         "log:default",
         "updater:default",
-        "clipboard-manager:allow-read-text",
-        "clipboard-manager:allow-write-text"
+        "clipboard-manager:default"
     ]
 }

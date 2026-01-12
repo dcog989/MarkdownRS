@@ -4,10 +4,10 @@
     import { toggleOrientation } from '$lib/stores/appState.svelte';
     import { updateTabMetadataAndPath } from '$lib/stores/editorStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
-    import { callBackend } from '$lib/utils/backend';
     import { CONFIG } from '$lib/utils/config';
     import { navigateToPath } from '$lib/utils/fileSystem';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
+    import { renderMarkdown } from '$lib/utils/markdownRust';
     import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
     import { FileText, FlipHorizontal, FlipVertical } from 'lucide-svelte';
     import { onDestroy, untrack } from 'svelte';
@@ -21,8 +21,6 @@
     let debounceTimer: number | null = null;
     let renderAbortController: AbortController | null = null;
 
-    // Optimization: Derive primitives directly to prevent reactive cascading
-    // when unrelated tab properties (cursor, scroll) change.
     let tabPath = $derived.by(() => {
         return appContext.editor.tabs.find((t) => t.id === tabId)?.path;
     });
@@ -35,7 +33,6 @@
     let flavor = $derived(appContext.app.markdownFlavor);
 
     $effect(() => {
-        // Tab changed - reset state immediately
         if (lastTabId !== tabId) {
             lastTabId = tabId;
             lastRendered = '';
@@ -55,7 +52,6 @@
         if (debounceTimer) clearTimeout(debounceTimer);
         if (renderAbortController) renderAbortController.abort();
 
-        // Adaptive Debounce based on file size
         let debounceMs = CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
         if (content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES * 2) {
             debounceMs = 500;
@@ -69,14 +65,10 @@
             const currentController = renderAbortController;
 
             try {
-                // The render call now returns metrics as part of the rich payload
-                const flavorStr = currentFlavor === 'gfm' ? 'gfm' : 'commonmark';
-                const result = await callBackend('render_markdown', { content, flavor: flavorStr }, 'Markdown:Render');
+                const result = await renderMarkdown(content, currentFlavor === 'gfm', tabPath);
 
                 if (currentController.signal.aborted || !result) return;
 
-                // Sync the accurate word count from Rust to the specific tab object
-                // The Status Bar pulls totals directly from the tab to prevent cross-tab bleeding
                 updateTabMetadataAndPath(tabId, {
                     wordCount: result.word_count,
                 });

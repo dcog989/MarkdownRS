@@ -36,8 +36,8 @@ export class ExportService {
         const container = this.getExportContainer();
 
         try {
-            const html = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm');
-            container.innerHTML = html;
+            const result = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm', tab.path);
+            container.innerHTML = result.html;
         } catch (err) {
             AppError.handle('Export:HTML', err, {
                 showToast: true,
@@ -81,7 +81,8 @@ export class ExportService {
 
             if (!path) return;
 
-            const bodyContent = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm');
+            const result = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm', tab.path);
+            const bodyContent = result.html;
             const themeCss = await getThemeCss(appContext.app.activeTheme);
             const baseVars = this.getComputedCssVariables();
 
