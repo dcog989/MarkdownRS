@@ -26,18 +26,11 @@ export class SpellcheckManager {
                 await this.loadCustomDictionary();
 
                 const dictionaries = appState.spellcheckDictionaries || ['en-US'];
-                // Match Rust backend parameter name: technical_words
-                const technical_words = appState.technicalWords;
+                const technicalWords = appState.technicalWords;
 
-                await callBackend(
-                    'init_spellchecker',
-                    { dictionaries, technical_words },
-                    'Spellcheck:Init',
-                    undefined,
-                    {
-                        report: true,
-                    },
-                );
+                await callBackend('init_spellchecker', { dictionaries, technicalWords }, 'Spellcheck:Init', undefined, {
+                    report: true,
+                });
                 this.dictionaryLoaded = true;
             } catch (err) {
                 this.initPromise = null;

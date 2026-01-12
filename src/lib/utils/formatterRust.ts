@@ -20,10 +20,10 @@ export async function formatMarkdown(content: string, options: Partial<Formatter
 
     const apiOptions = {
         flavor: appContext.app.markdownFlavor,
-        list_indent: final.listIndent,
-        bullet_char: final.bulletChar,
-        code_block_fence: final.codeBlockFence,
-        table_alignment: final.tableAlignment,
+        listIndent: final.listIndent,
+        bulletChar: final.bulletChar,
+        codeBlockFence: final.codeBlockFence,
+        tableAlignment: final.tableAlignment,
     };
 
     try {

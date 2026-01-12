@@ -96,7 +96,7 @@ export interface BackendCommands {
         return: string[];
     };
     init_spellchecker: {
-        args: { dictionaries?: string[]; technical_words?: boolean };
+        args: { dictionaries?: string[]; technicalWords?: boolean };
         return: void;
     };
     check_words: {
@@ -117,10 +117,10 @@ export interface BackendCommands {
         args: {
             content: string;
             flavor?: string;
-            list_indent?: number;
-            bullet_char?: string;
-            code_block_fence?: string;
-            table_alignment?: boolean;
+            listIndent?: number;
+            bulletChar?: string;
+            codeBlockFence?: string;
+            tableAlignment?: boolean;
         };
         return: string;
     };

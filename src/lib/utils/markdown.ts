@@ -91,10 +91,10 @@ export async function formatMarkdown(content: string, options?: FormatterOptions
         {
             content,
             flavor: options?.flavor,
-            list_indent: options?.list_indent,
-            bullet_char: options?.bullet_char,
-            code_block_fence: options?.code_block_fence,
-            table_alignment: options?.table_alignment,
+            listIndent: options?.list_indent,
+            bulletChar: options?.bullet_char,
+            codeBlockFence: options?.code_block_fence,
+            tableAlignment: options?.table_alignment,
         },
         'Markdown:Render',
     );

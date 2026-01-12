@@ -297,7 +297,7 @@ pub async fn init_spellchecker(
         format!("Failed to initialize spellchecker: {}", e)
     })?;
     let cache_dir = local_dir.join("spellcheck_cache");
-    let specialist_cache_dir = local_dir.join("spellcheck_cache").join("specialist");
+    let technical_cache_dir = local_dir.join("spellcheck_cache").join("technical");
 
     let app_dir = app_handle
         .path()
@@ -312,12 +312,12 @@ pub async fn init_spellchecker(
         })?;
     }
 
-    if !specialist_cache_dir.exists() {
-        fs::create_dir_all(&specialist_cache_dir)
+    if !spec_codes.is_empty() && !technical_cache_dir.exists() {
+        fs::create_dir_all(&technical_cache_dir)
             .await
             .map_err(|e| {
-                log::error!("Failed to create specialist cache directory: {}", e);
-                format!("Failed to create specialist cache directory: {}", e)
+                log::error!("Failed to create technical cache directory: {}", e);
+                format!("Failed to create technical cache directory: {}", e)
             })?;
     }
 
@@ -342,7 +342,7 @@ pub async fn init_spellchecker(
     let mut spec_tasks = Vec::new();
     for code in spec_codes {
         let c = client.clone();
-        let d = specialist_cache_dir.clone();
+        let d = technical_cache_dir.clone();
         spec_tasks.push(tokio::spawn(async move {
             (code.clone(), fetch_specialist_dictionary(c, d, code).await)
         }));
