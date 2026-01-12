@@ -30,7 +30,7 @@ function findFilePaths(view: EditorView) {
                 // Find the actual path start (skip quote/backtick if present)
                 const pathStart = matchText.match(/^['\"`]/) ? 1 : 0;
                 const cleanPath = matchText.slice(pathStart);
-                
+
                 const startOffset = match.index + (match[0].length - matchText.length) + pathStart;
                 const matchFrom = line.from + startOffset;
                 const matchTo = matchFrom + cleanPath.length;
