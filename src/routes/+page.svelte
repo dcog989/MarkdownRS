@@ -1,17 +1,17 @@
 <script lang="ts">
-    import Editor from "$lib/components/editor/Editor.svelte";
-    import Preview from "$lib/components/preview/Preview.svelte";
-    import StatusBar from "$lib/components/ui/StatusBar.svelte";
-    import TabBar from "$lib/components/ui/TabBar.svelte";
-    import Titlebar from "$lib/components/ui/Titlebar.svelte";
-    import Toast from "$lib/components/ui/Toast.svelte";
-    import { loadTabContentLazy } from "$lib/services/sessionPersistence";
-    import { toggleSplitView } from "$lib/stores/appState.svelte";
-    import { addTab, pushToMru } from "$lib/stores/editorStore.svelte";
-    import type { EditorTab } from "$lib/stores/editorStore.svelte.ts";
-    import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { showToast } from "$lib/stores/toastStore.svelte";
+    import Editor from '$lib/components/editor/Editor.svelte';
+    import Preview from '$lib/components/preview/Preview.svelte';
+    import StatusBar from '$lib/components/ui/StatusBar.svelte';
+    import TabBar from '$lib/components/ui/TabBar.svelte';
+    import Titlebar from '$lib/components/ui/Titlebar.svelte';
+    import Toast from '$lib/components/ui/Toast.svelte';
+    import { loadTabContentLazy } from '$lib/services/sessionPersistence';
+    import { toggleSplitView } from '$lib/stores/appState.svelte';
+    import { addTab, pushToMru } from '$lib/stores/editorStore.svelte';
+    import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+    import { openFind, openReplace } from '$lib/stores/interfaceStore.svelte';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { showToast } from '$lib/stores/toastStore.svelte';
     import {
         loadSession,
         openFile,
@@ -21,10 +21,10 @@
         requestCloseTab,
         saveCurrentFile,
         saveCurrentFileAs,
-    } from "$lib/utils/fileSystem.ts";
-    import { isMarkdownFile } from "$lib/utils/fileValidation";
-    import { initSettings, saveSettings } from "$lib/utils/settings";
-    import { onDestroy, onMount } from "svelte";
+    } from '$lib/utils/fileSystem.ts';
+    import { isMarkdownFile } from '$lib/utils/fileValidation';
+    import { initSettings, saveSettings } from '$lib/utils/settings';
+    import { onDestroy, onMount } from 'svelte';
 
     let autoSaveInterval: number | null = null;
     let mainContainer = $state<HTMLDivElement>();
@@ -37,16 +37,14 @@
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
-    let activeTab = $derived(
-        appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId)
-    );
+    let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
 
     // Lazy load tab content when switching tabs
     $effect(() => {
         const tab = activeTab;
         if (tab && !tab.contentLoaded && isInitialized) {
             loadTabContentLazy(tab.id).catch((err) => {
-                console.error("Failed to lazy load tab content:", err);
+                console.error('Failed to lazy load tab content:', err);
             });
         }
     });
@@ -61,7 +59,7 @@
         }
 
         // For unsaved files, use the preferred extension
-        return activeTab.preferredExtension !== "txt";
+        return activeTab.preferredExtension !== 'txt';
     });
 
     let showPreview = $derived(appContext.app.splitView && isMarkdown);
@@ -74,7 +72,7 @@
         const key = e.key.toLowerCase();
 
         switch (key) {
-            case "s":
+            case 's':
                 e.preventDefault();
                 e.stopImmediatePropagation();
 
@@ -88,7 +86,7 @@
                 persistSessionDebounced();
                 return;
 
-            case "w":
+            case 'w':
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 if (appContext.app.activeTabId) {
@@ -96,38 +94,38 @@
                 }
                 return;
 
-            case "o":
+            case 'o':
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 openFile();
                 persistSessionDebounced();
                 return;
 
-            case "n":
+            case 'n':
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 const id = addTab();
                 appContext.app.activeTabId = id;
                 return;
 
-            case "\\":
+            case '\\':
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 if (!isMarkdown) {
-                    showToast("warning", "Preview not available for this file type");
+                    showToast('warning', 'Preview not available for this file type');
                     return;
                 }
                 toggleSplitView();
                 saveSettings();
                 return;
 
-            case "f":
+            case 'f':
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 openFind();
                 return;
 
-            case "h":
+            case 'h':
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 openReplace();
@@ -138,21 +136,21 @@
     function handleTabNavigation(e: KeyboardEvent) {
         if (!e.ctrlKey) return;
 
-        if (e.key === "Tab") {
+        if (e.key === 'Tab') {
             return;
         }
 
-        if (e.key === "PageUp" || e.key === "PageDown") {
+        if (e.key === 'PageUp' || e.key === 'PageDown') {
             e.preventDefault();
             e.stopImmediatePropagation();
 
             const currentIndex = appContext.editor.tabs.findIndex(
-                (t: EditorTab) => t.id === appContext.app.activeTabId
+                (t: EditorTab) => t.id === appContext.app.activeTabId,
             );
             if (currentIndex === -1) return;
 
             let newIndex;
-            if (e.key === "PageUp") {
+            if (e.key === 'PageUp') {
                 newIndex = currentIndex - 1;
                 if (newIndex < 0) newIndex = appContext.editor.tabs.length - 1;
             } else {
@@ -182,24 +180,36 @@
                 isInitialized = true;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                console.error("Initialization Failed:", msg);
+                console.error('Initialization Failed:', msg);
                 initError = msg;
                 isInitialized = true;
             }
         })();
 
         let unlistenFileOpen: (() => void) | null = null;
-        import("@tauri-apps/api/event").then(({ listen }) => {
-            listen<string>("open-file-from-args", async (event) => {
+        let unlistenDragDrop: (() => void) | null = null;
+
+        import('@tauri-apps/api/event').then(({ listen }) => {
+            // CLI / External Argument handling
+            listen<string>('open-file-from-args', async (event) => {
                 const filePath = event.payload;
                 await openFileByPath(filePath);
             }).then((unlisten) => {
                 unlistenFileOpen = unlisten;
             });
+
+            // Drag and Drop handling
+            listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
+                for (const path of event.payload.paths) {
+                    await openFileByPath(path);
+                }
+            }).then((unlisten) => {
+                unlistenDragDrop = unlisten;
+            });
         });
 
-        document.addEventListener("keydown", handleDocumentKeydown, { capture: true });
-        document.addEventListener("keydown", handleTabNavigation, { capture: true });
+        document.addEventListener('keydown', handleDocumentKeydown, { capture: true });
+        document.addEventListener('keydown', handleTabNavigation, { capture: true });
 
         autoSaveInterval = window.setInterval(() => {
             if (appContext.editor.sessionDirty) {
@@ -223,15 +233,16 @@
             saveSettings();
         };
 
-        window.addEventListener("blur", handleBlur);
-        window.addEventListener("beforeunload", handleBeforeUnload);
+        window.addEventListener('blur', handleBlur);
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
         return () => {
-            document.removeEventListener("keydown", handleDocumentKeydown, { capture: true });
-            document.removeEventListener("keydown", handleTabNavigation, { capture: true });
-            window.removeEventListener("blur", handleBlur);
-            window.removeEventListener("beforeunload", handleBeforeUnload);
+            document.removeEventListener('keydown', handleDocumentKeydown, { capture: true });
+            document.removeEventListener('keydown', handleTabNavigation, { capture: true });
+            window.removeEventListener('blur', handleBlur);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
             if (unlistenFileOpen) unlistenFileOpen();
+            if (unlistenDragDrop) unlistenDragDrop();
         };
     });
 
@@ -247,19 +258,18 @@
     function startResize(e: MouseEvent) {
         e.preventDefault();
         isDragging = true;
-        dragStart = appContext.app.splitOrientation === "vertical" ? e.clientX : e.clientY;
+        dragStart = appContext.app.splitOrientation === 'vertical' ? e.clientX : e.clientY;
         initialSplit = appContext.app.splitPercentage;
-        window.addEventListener("mousemove", handleResize);
-        window.addEventListener("mouseup", stopResize);
-        document.body.style.cursor =
-            appContext.app.splitOrientation === "vertical" ? "col-resize" : "row-resize";
+        window.addEventListener('mousemove', handleResize);
+        window.addEventListener('mouseup', stopResize);
+        document.body.style.cursor = appContext.app.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize';
     }
 
     function handleResize(e: MouseEvent) {
         if (!isDragging || !mainContainer) return;
         const rect = mainContainer.getBoundingClientRect();
-        const totalSize = appContext.app.splitOrientation === "vertical" ? rect.width : rect.height;
-        const currentPos = appContext.app.splitOrientation === "vertical" ? e.clientX : e.clientY;
+        const totalSize = appContext.app.splitOrientation === 'vertical' ? rect.width : rect.height;
+        const currentPos = appContext.app.splitOrientation === 'vertical' ? e.clientX : e.clientY;
         const deltaPixels = currentPos - dragStart;
         const deltaPercent = deltaPixels / totalSize;
         let newSplit = initialSplit + deltaPercent;
@@ -271,9 +281,9 @@
     function stopResize() {
         if (!isDragging) return;
         isDragging = false;
-        window.removeEventListener("mousemove", handleResize);
-        window.removeEventListener("mouseup", stopResize);
-        document.body.style.cursor = "default";
+        window.removeEventListener('mousemove', handleResize);
+        window.removeEventListener('mouseup', stopResize);
+        document.body.style.cursor = 'default';
         saveSettings();
     }
 
@@ -284,9 +294,7 @@
 </script>
 
 {#if !isInitialized}
-    <div
-        class="h-screen w-screen flex items-center justify-center flex-col bg-bg-main text-fg-default"
-    >
+    <div class="h-screen w-screen flex items-center justify-center flex-col bg-bg-main text-fg-default">
         <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 animate-pulse" />
         <p class="text-sm text-fg-muted">Loading MarkdownRS...</p>
         {#if initError}
@@ -294,30 +302,23 @@
         {/if}
     </div>
 {:else}
-    <div
-        class="h-screen w-screen flex flex-col overflow-hidden border bg-bg-main text-fg-default border-border-main"
-    >
+    <div class="h-screen w-screen flex flex-col overflow-hidden border bg-bg-main text-fg-default border-border-main">
         <Titlebar />
         <TabBar />
 
         <div
             class="flex-1 flex overflow-hidden relative z-0 outline-none"
             bind:this={mainContainer}
-            style="position: relative;"
-        >
+            style="position: relative;">
             <!-- Removed #key block to allow Editor to reuse instance -->
             {#if appContext.app.activeTabId}
                 <div
                     class="flex w-full h-full"
-                    style="flex-direction: {appContext.app.splitOrientation === 'vertical'
-                        ? 'row'
-                        : 'column'};"
-                >
+                    style="flex-direction: {appContext.app.splitOrientation === 'vertical' ? 'row' : 'column'};">
                     <div
                         style="flex: {showPreview
                             ? `0 0 ${appContext.app.splitPercentage * 100}%`
-                            : '1 1 100%'}; height: 100%; overflow: hidden;"
-                    >
+                            : '1 1 100%'}; height: 100%; overflow: hidden;">
                         <Editor tabId={appContext.app.activeTabId} />
                     </div>
 
@@ -326,14 +327,12 @@
                         <div
                             class="z-20 transition-colors duration-150 bg-bg-panel hover:bg-accent-primary"
                             style="
-                                cursor: {appContext.app.splitOrientation === 'vertical'
-                                ? 'col-resize'
-                                : 'row-resize'};
+                                cursor: {appContext.app.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize'};
                                 flex: 0 0 4px;
                             "
                             onmousedown={startResize}
-                            ondblclick={resetSplit}
-                        ></div>
+                            ondblclick={resetSplit}>
+                        </div>
                     {/if}
 
                     {#if showPreview}
@@ -343,14 +342,8 @@
                     {/if}
                 </div>
             {:else}
-                <div
-                    class="flex-1 flex items-center justify-center select-none flex-col text-fg-muted"
-                >
-                    <img
-                        src="/logo.svg"
-                        alt="App Logo"
-                        class="h-16 w-16 mb-4 opacity-50 grayscale"
-                    />
+                <div class="flex-1 flex items-center justify-center select-none flex-col text-fg-muted">
+                    <img src="/logo.svg" alt="App Logo" class="h-16 w-16 mb-4 opacity-50 grayscale" />
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}
