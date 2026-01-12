@@ -64,6 +64,7 @@ export type OperationId =
     | 'add-bullets'
     | 'add-numbers'
     | 'add-checkboxes'
+    | 'format-document'
     | 'remove-bullets'
     | 'blockquote'
     | 'remove-blockquote'
@@ -83,9 +84,7 @@ export type OperationId =
     | 'wrap-quotes'
     | 'add-line-numbers'
     | 'indent-lines'
-    | 'unindent-lines'
-    // Special
-    | 'format-document';
+    | 'unindent-lines';
 
 /**
  * Operation definition with metadata and backend mapping
@@ -116,11 +115,11 @@ export interface OperationCategory {
  * All operation categories
  */
 export const OPERATION_CATEGORIES: OperationCategory[] = [
-    { id: 'sort', title: 'Sort & Order', icon: ArrowDownAZ },
-    { id: 'filter', title: 'Remove & Filter', icon: Trash2 },
-    { id: 'case', title: 'Case Transformations', icon: CaseSensitive },
-    { id: 'markdown', title: 'Markdown Formatting', icon: Hash },
-    { id: 'text', title: 'Text Manipulation', icon: Type },
+    { id: 'sort', title: 'Sort', icon: ArrowDownAZ },
+    { id: 'filter', title: 'Remove', icon: Trash2 },
+    { id: 'case', title: 'Case', icon: CaseSensitive },
+    { id: 'markdown', title: 'Markdown', icon: Hash },
+    { id: 'text', title: 'Text', icon: Type },
 ];
 
 /**
@@ -366,6 +365,15 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         category: 'markdown',
         execution: 'client',
     },
+    'format-document': {
+        id: 'format-document',
+        label: 'Format Document',
+        description: 'Format markdown document',
+        icon: Type,
+        category: 'markdown',
+        execution: 'server',
+        backendCommand: 'format_markdown',
+    },
     'remove-bullets': {
         id: 'remove-bullets',
         label: 'Remove List Markers',
@@ -519,17 +527,6 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         icon: TextAlignStart,
         category: 'text',
         execution: 'client',
-    },
-
-    // Special operations
-    'format-document': {
-        id: 'format-document',
-        label: 'Format Document',
-        description: 'Format markdown document',
-        icon: Type,
-        category: 'text',
-        execution: 'server',
-        backendCommand: 'format_markdown',
     },
 };
 

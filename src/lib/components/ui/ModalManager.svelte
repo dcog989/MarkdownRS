@@ -95,11 +95,6 @@
             action: () => exportService.exportToImage('png'),
         },
         {
-            id: 'format',
-            label: 'Format: Format Document',
-            action: () => performTextTransform('format-document'),
-        },
-        {
             id: 'theme-dark',
             label: 'Theme: Dark',
             action: () => {
@@ -155,7 +150,7 @@
         },
         {
             id: 'editor.bookmark_add',
-            label: 'Edit: Add Current to Bookmarks',
+            label: 'File: Add Current to Bookmarks',
             action: async () => {
                 const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
                 if (tab?.path) {
