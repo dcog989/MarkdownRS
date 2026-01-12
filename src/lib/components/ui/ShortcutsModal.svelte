@@ -1,6 +1,9 @@
 <script lang="ts">
-    import { Keyboard, X } from "lucide-svelte";
-    import Modal from "./Modal.svelte";
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { saveSettings } from '$lib/utils/settings';
+    import { shortcutManager } from '$lib/utils/shortcuts';
+    import { Keyboard, RotateCcw, X } from 'lucide-svelte';
+    import Modal from './Modal.svelte';
 
     interface Props {
         isOpen: boolean;
@@ -9,33 +12,61 @@
 
     let { isOpen = $bindable(false), onClose }: Props = $props();
 
-    const shortcutsByCategory = {
-        File: [
-            { description: "Create new file", shortcut: "Ctrl+N" },
-            { description: "Open file", shortcut: "Ctrl+O" },
-            { description: "Save file", shortcut: "Ctrl+S" },
-            { description: "Close tab", shortcut: "Ctrl+W" },
-            { description: "Cycle tabs (sequential)", shortcut: "Ctrl+Tab" },
-            { description: "Cycle tabs backward", shortcut: "Ctrl+Shift+Tab" },
-        ],
-        Edit: [
-            { description: "Format document", shortcut: "Shift+Alt+F" },
-            { description: "Text transformations", shortcut: "Ctrl+T" },
-            { description: "Add to dictionary", shortcut: "F8" },
-            { description: "Jump to start", shortcut: "Ctrl+Home" },
-            { description: "Jump to end", shortcut: "Ctrl+End" },
-            { description: "Toggle insert/overwrite", shortcut: "Insert" },
-        ],
-        View: [
-            { description: "Toggle split preview", shortcut: "Ctrl+\\" },
-            { description: "Command palette", shortcut: "Ctrl+P" },
-            { description: "Bookmarks", shortcut: "Ctrl+B" },
-        ],
-        Help: [
-            { description: "Keyboard shortcuts", shortcut: "F1" },
-            { description: "Settings", shortcut: "Ctrl+," },
-        ],
-    };
+    let recordingCommandId = $state<string | null>(null);
+
+    function startRecording(commandId: string) {
+        recordingCommandId = commandId;
+        window.addEventListener('keydown', handleRecordKey, { capture: true });
+    }
+
+    function handleRecordKey(e: KeyboardEvent) {
+        if (!recordingCommandId) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.key === 'Escape') {
+            stopRecording();
+            return;
+        }
+
+        // Don't record if only modifiers are pressed
+        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+
+        const parts: string[] = [];
+        if (e.ctrlKey) parts.push('ctrl');
+        if (e.altKey) parts.push('alt');
+        if (e.shiftKey) parts.push('shift');
+        if (e.metaKey) parts.push('meta');
+        parts.push(e.key.toLowerCase());
+
+        const keyStr = parts.join('+');
+
+        appContext.app.customShortcuts[recordingCommandId] = keyStr;
+        shortcutManager.setCustomMappings(appContext.app.customShortcuts);
+        saveSettings();
+        stopRecording();
+    }
+
+    function stopRecording() {
+        recordingCommandId = null;
+        window.removeEventListener('keydown', handleRecordKey, { capture: true });
+    }
+
+    function resetShortcut(commandId: string) {
+        delete appContext.app.customShortcuts[commandId];
+        shortcutManager.setCustomMappings(appContext.app.customShortcuts);
+        saveSettings();
+    }
+
+    const categories = $derived.by(() => {
+        const defs = shortcutManager.getDefinitions();
+        const map = new Map<string, any[]>();
+        defs.forEach((d) => {
+            if (!map.has(d.category)) map.set(d.category, []);
+            map.get(d.category)!.push(d);
+        });
+        return Array.from(map.entries());
+    });
 </script>
 
 <Modal bind:isOpen {onClose}>
@@ -44,38 +75,52 @@
             <Keyboard size={16} class="text-accent-secondary" />
             <h2 class="text-ui font-semibold shrink-0 text-fg-default">Keyboard Shortcuts</h2>
         </div>
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 text-fg-muted" onclick={onClose} aria-label="Close Shortcuts">
+        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 text-fg-muted" onclick={onClose}>
             <X size={16} />
         </button>
     {/snippet}
 
-    <div class="text-ui min-w-[400px]">
-        {#if Object.keys(shortcutsByCategory).length > 0}
-            <div class="divide-y border-border-main">
-                {#each Object.entries(shortcutsByCategory) as [category, shortcuts]}
-                    <div class="px-4 py-3">
-                        <h3 class="text-ui-sm font-bold uppercase tracking-widest mb-2 text-accent-secondary">
-                            {category}
-                        </h3>
-                        <div class="space-y-2">
-                            {#each shortcuts as shortcut}
-                                <div class="flex items-center justify-between group gap-8">
-                                    <span class="text-fg-default">
-                                        {shortcut.description}
-                                    </span>
-                                    <kbd class="px-2 py-0.5 rounded font-mono font-bold border shrink-0 bg-bg-input text-fg-default border-border-main text-[13px]">
-                                        {shortcut.shortcut}
-                                    </kbd>
+    <div class="text-ui min-w-[500px] p-4">
+        <div class="space-y-6">
+            {#each categories as [category, defs]}
+                <div>
+                    <h3
+                        class="text-ui-sm font-bold uppercase tracking-widest mb-2 text-accent-secondary border-b border-border-main pb-1">
+                        {category}
+                    </h3>
+                    <div class="divide-y divide-border-main/30">
+                        {#each defs as def}
+                            <div class="flex items-center justify-between py-2 group">
+                                <button
+                                    class="text-left flex-1 cursor-pointer text-fg-default hover:text-accent-secondary transition-colors outline-none"
+                                    onclick={() => startRecording(def.command)}>
+                                    {def.description}
+                                </button>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        class="px-3 py-1 rounded font-mono text-sm border transition-all min-w-[100px] text-center
+                                            {recordingCommandId === def.command
+                                            ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
+                                            : 'bg-bg-input text-fg-default border-border-main hover:border-accent-secondary'}"
+                                        onclick={() => startRecording(def.command)}>
+                                        {recordingCommandId === def.command
+                                            ? 'Press keys...'
+                                            : shortcutManager.getShortcutDisplay(def.command)}
+                                    </button>
+                                    {#if appContext.app.customShortcuts[def.command]}
+                                        <button
+                                            class="p-1 opacity-0 group-hover:opacity-100 text-fg-muted hover:text-accent-primary transition-all"
+                                            onclick={() => resetShortcut(def.command)}
+                                            title="Reset to default">
+                                            <RotateCcw size={14} />
+                                        </button>
+                                    {/if}
                                 </div>
-                            {/each}
-                        </div>
+                            </div>
+                        {/each}
                     </div>
-                {/each}
-            </div>
-        {:else}
-            <div class="text-center py-12 text-fg-muted">
-                <p>No shortcuts registered</p>
-            </div>
-        {/if}
+                </div>
+            {/each}
+        </div>
     </div>
 </Modal>

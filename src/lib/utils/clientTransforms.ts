@@ -145,6 +145,16 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
             return lines.map((l) => (l.startsWith('##') ? l.slice(1) : l.startsWith('# ') ? l.slice(2) : l)).join('\n');
 
         // --- Text Manipulation ---
+        case 'bold':
+            return `**${text}**`;
+        case 'italic':
+            return `*${text}*`;
+        case 'strike':
+            return `~~${text}~~`;
+        case 'inline-code':
+            return `\`${text}\``;
+        case 'insert-link':
+            return `[${text}](https://)`;
         case 'trim-whitespace':
             return lines.map((l) => l.trim()).join('\n');
         case 'normalize-whitespace':

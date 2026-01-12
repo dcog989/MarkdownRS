@@ -50,6 +50,7 @@ function getSettingsObject() {
         wrapGuideColumn: appState.wrapGuideColumn,
         doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
         collapsePinnedTabs: appState.collapsePinnedTabs,
+        customShortcuts: appState.customShortcuts,
     };
 }
 

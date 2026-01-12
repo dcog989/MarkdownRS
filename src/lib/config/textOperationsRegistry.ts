@@ -11,17 +11,21 @@ import {
     ArrowDown10,
     ArrowDownAZ,
     ArrowDownZA,
+    Bold,
     CaseSensitive,
     CircleMinus,
+    Code,
     Eraser,
     FunnelX,
     Hash,
+    Italic,
+    Link,
     List,
+    Strikethrough,
     TextAlignStart,
     Trash2,
     Type,
 } from 'lucide-svelte';
-import type { ComponentType } from 'svelte';
 
 /**
  * Operation ID type - all valid operation identifiers
@@ -66,6 +70,11 @@ export type OperationId =
     | 'add-code-fence'
     | 'increase-heading'
     | 'decrease-heading'
+    | 'bold'
+    | 'italic'
+    | 'insert-link'
+    | 'strike'
+    | 'inline-code'
     // Text Manipulation
     | 'trim-whitespace'
     | 'normalize-whitespace'
@@ -85,7 +94,7 @@ export interface TextOperation {
     id: OperationId;
     label: string;
     description: string;
-    icon: ComponentType;
+    icon: any;
     category: string;
     execution: 'client' | 'server';
     /**
@@ -100,7 +109,7 @@ export interface TextOperation {
 export interface OperationCategory {
     id: string;
     title: string;
-    icon: ComponentType;
+    icon: any;
 }
 
 /**
@@ -402,6 +411,46 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         label: 'Decrease Heading Level',
         description: 'Remove # from headings',
         icon: Hash,
+        category: 'markdown',
+        execution: 'client',
+    },
+    bold: {
+        id: 'bold',
+        label: 'Bold',
+        description: 'Wrap selection in **',
+        icon: Bold,
+        category: 'markdown',
+        execution: 'client',
+    },
+    italic: {
+        id: 'italic',
+        label: 'Italic',
+        description: 'Wrap selection in *',
+        icon: Italic,
+        category: 'markdown',
+        execution: 'client',
+    },
+    'insert-link': {
+        id: 'insert-link',
+        label: 'Insert Link',
+        description: 'Wrap selection in [text](url)',
+        icon: Link,
+        category: 'markdown',
+        execution: 'client',
+    },
+    strike: {
+        id: 'strike',
+        label: 'Strikethrough',
+        description: 'Wrap selection in ~~',
+        icon: Strikethrough,
+        category: 'markdown',
+        execution: 'client',
+    },
+    'inline-code': {
+        id: 'inline-code',
+        label: 'Inline Code',
+        description: 'Wrap selection in `',
+        icon: Code,
         category: 'markdown',
         execution: 'client',
     },

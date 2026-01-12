@@ -1,162 +1,139 @@
 /**
  * Centralized Keyboard Shortcut Manager
- * Handles all application-wide keyboard shortcuts
+ * Handles application-wide shortcuts with support for custom remapping.
  */
 
 export type ShortcutHandler = (e: KeyboardEvent) => void | Promise<void>;
 
 export interface ShortcutDefinition {
-    id: string;
-    key: string;
-    ctrl?: boolean;
-    shift?: boolean;
-    alt?: boolean;
-    meta?: boolean;
+    id: string; // Unique identifier for the command
+    command: string; // Command identifier for remapping logic
+    defaultKey: string; // e.g., 'ctrl+s'
     description: string;
-    handler: ShortcutHandler;
     category: string;
+    handler?: ShortcutHandler;
 }
 
 export class KeyboardShortcutManager {
-    private shortcuts: Map<string, ShortcutDefinition> = new Map();
+    private definitions: Map<string, ShortcutDefinition> = new Map();
+    private customMappings: Record<string, string> = {};
     private enabled: boolean = true;
 
     /**
-     * Register a keyboard shortcut
+     * Register a shortcut definition
      */
-    register(shortcut: ShortcutDefinition): void {
-        const key = this.getShortcutKey(shortcut);
-        if (this.shortcuts.has(key)) {
-            console.warn(`Shortcut ${key} is already registered. Overwriting.`);
-        }
-        this.shortcuts.set(key, shortcut);
+    register(definition: ShortcutDefinition): void {
+        this.definitions.set(definition.command, definition);
     }
 
     /**
-     * Unregister a keyboard shortcut
+     * Set user-defined shortcut mappings
      */
-    unregister(shortcutOrId: ShortcutDefinition | string): void {
-        if (typeof shortcutOrId === 'string') {
-            // Remove by ID
-            for (const [key, shortcut] of this.shortcuts) {
-                if (shortcut.id === shortcutOrId) {
-                    this.shortcuts.delete(key);
-                    return;
-                }
-            }
-        } else {
-            // Remove by shortcut key
-            const key = this.getShortcutKey(shortcutOrId);
-            this.shortcuts.delete(key);
-        }
+    setCustomMappings(mappings: Record<string, string>): void {
+        this.customMappings = mappings;
     }
 
     /**
-     * Handle keyboard event
+     * Unregister a command
+     */
+    unregister(commandId: string): void {
+        this.definitions.delete(commandId);
+    }
+
+    /**
+     * Handle keyboard events by matching against current mappings
      */
     async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
-        if (!this.enabled) return false;
+        if (!this.enabled || e.repeat) return false;
 
-        const key = this.getEventKey(e);
-        const shortcut = this.shortcuts.get(key);
+        const pressedKey = this.getEventKey(e);
 
-        if (shortcut) {
-            e.preventDefault();
-            e.stopPropagation();
-            await shortcut.handler(e);
-            return true;
+        for (const def of this.definitions.values()) {
+            const mappedKey = this.customMappings[def.command] || def.defaultKey;
+            if (pressedKey === mappedKey.toLowerCase() && def.handler) {
+                e.preventDefault();
+                e.stopPropagation();
+                await def.handler(e);
+                return true;
+            }
         }
 
         return false;
     }
 
     /**
-     * Get all registered shortcuts grouped by category
+     * Get all definitions grouped by category for the UI
      */
     getShortcutsByCategory(): Map<string, ShortcutDefinition[]> {
         const grouped = new Map<string, ShortcutDefinition[]>();
-
-        for (const shortcut of this.shortcuts.values()) {
-            const category = shortcut.category;
-            if (!grouped.has(category)) {
-                grouped.set(category, []);
+        for (const def of this.definitions.values()) {
+            if (!grouped.has(def.category)) {
+                grouped.set(def.category, []);
             }
-            grouped.get(category)!.push(shortcut);
+            grouped.get(def.category)!.push(def);
         }
-
         return grouped;
     }
 
     /**
-     * Enable or disable the shortcut manager
+     * Get a human-readable display string for a command's current shortcut
+     */
+    getShortcutDisplay(commandId: string): string {
+        const def = this.definitions.get(commandId);
+        if (!def) return '';
+        const key = this.customMappings[commandId] || def.defaultKey;
+        return key
+            .split('+')
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join('+');
+    }
+
+    /**
+     * Check if a command ID is registered
+     */
+    isRegistered(commandId: string): boolean {
+        return this.definitions.has(commandId);
+    }
+
+    /**
+     * Enable or disable the manager
      */
     setEnabled(enabled: boolean): void {
         this.enabled = enabled;
     }
 
     /**
-     * Check if a shortcut is registered
+     * Clear all registered shortcuts
      */
-    isRegistered(id: string): boolean {
-        for (const shortcut of this.shortcuts.values()) {
-            if (shortcut.id === id) return true;
-        }
-        return false;
+    clear(): void {
+        this.definitions.clear();
     }
 
     /**
-     * Get human-readable shortcut string
+     * Get all registered definitions
      */
-    getShortcutString(shortcut: ShortcutDefinition): string {
-        const parts: string[] = [];
-
-        if (shortcut.ctrl) parts.push('Ctrl');
-        if (shortcut.alt) parts.push('Alt');
-        if (shortcut.shift) parts.push('Shift');
-        if (shortcut.meta) parts.push('Cmd');
-
-        parts.push(shortcut.key.toUpperCase());
-
-        return parts.join('+');
+    getDefinitions(): ShortcutDefinition[] {
+        return Array.from(this.definitions.values());
     }
 
     /**
-     * Generate internal key for shortcut lookup
-     */
-    private getShortcutKey(shortcut: ShortcutDefinition): string {
-        const parts: string[] = [];
-
-        if (shortcut.ctrl) parts.push('ctrl');
-        if (shortcut.alt) parts.push('alt');
-        if (shortcut.shift) parts.push('shift');
-        if (shortcut.meta) parts.push('meta');
-
-        parts.push(shortcut.key.toLowerCase());
-
-        return parts.join('+');
-    }
-
-    /**
-     * Generate key from keyboard event
+     * Helper to generate a normalized key string from a keyboard event
      */
     private getEventKey(e: KeyboardEvent): string {
         const parts: string[] = [];
-
         if (e.ctrlKey) parts.push('ctrl');
         if (e.altKey) parts.push('alt');
         if (e.shiftKey) parts.push('shift');
         if (e.metaKey) parts.push('meta');
 
-        parts.push(e.key.toLowerCase());
+        let key = e.key.toLowerCase();
+        if (key === ' ') key = 'space';
+
+        if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
+            parts.push(key);
+        }
 
         return parts.join('+');
-    }
-
-    /**
-     * Clear all shortcuts
-     */
-    clear(): void {
-        this.shortcuts.clear();
     }
 }
 
