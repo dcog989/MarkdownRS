@@ -11,13 +11,11 @@ export async function transformText(text: string, operationId: OperationId): Pro
     const op = getOperation(operationId);
     if (!op) return text;
 
-    // Client-side operations
     if (op.execution === 'client') {
         const indent = appContext.app.defaultIndent;
         return applyClientTransform(text, operationId, indent);
     }
 
-    // Server-side: Format Document
     if (operationId === 'format-document') {
         return formatMarkdown(text);
     }
