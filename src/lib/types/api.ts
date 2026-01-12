@@ -15,6 +15,7 @@ export interface AppInfo {
 export interface FileMetadata {
     created?: string;
     modified?: string;
+    size: number;
 }
 
 export interface FileContent {

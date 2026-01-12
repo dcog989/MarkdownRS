@@ -9,6 +9,7 @@ use tokio::fs;
 pub struct FileMetadata {
     pub created: Option<String>,
     pub modified: Option<String>,
+    pub size: u64,
 }
 
 #[derive(Serialize)]
@@ -111,9 +112,9 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
                 "Cross-device rename failed, falling back to copy for: {}",
                 path
             );
-            fs::copy(&temp_path, &path)
-                .await
-                .map_err(|e| handle_file_error_custom(&temp_path, "copy file", e, "Failed to save file"))?;
+            fs::copy(&temp_path, &path).await.map_err(|e| {
+                handle_file_error_custom(&temp_path, "copy file", e, "Failed to save file")
+            })?;
             let _ = fs::remove_file(&temp_path).await;
             Ok(())
         }
@@ -128,15 +129,14 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
 #[tauri::command]
 pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
     validate_path(&path)?;
-    let metadata = fs::metadata(&path)
-        .await
-        .map_err(|e| {
-            log::debug!("Failed to get metadata for '{}': {}", path, e);
-            format!("Failed to get file metadata: {}", e)
-        })?;
+    let metadata = fs::metadata(&path).await.map_err(|e| {
+        log::debug!("Failed to get metadata for '{}': {}", path, e);
+        format!("Failed to get file metadata: {}", e)
+    })?;
     Ok(FileMetadata {
         created: format_system_time(metadata.created()),
         modified: format_system_time(metadata.modified()),
+        size: metadata.len(),
     })
 }
 
@@ -145,8 +145,7 @@ pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
     validate_path(&path)?;
     // trash crate is blocking, so we wrap it in spawn_blocking to prevent UI freezes
     tokio::task::spawn_blocking(move || {
-        trash::delete(&path)
-            .map_err(|e| handle_file_error(&path, "send to recycle bin", e))
+        trash::delete(&path).map_err(|e| handle_file_error(&path, "send to recycle bin", e))
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?
@@ -211,15 +210,13 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
         return Err("A file with that name already exists".to_string());
     }
 
-    fs::rename(&old_path, &new_path)
-        .await
-        .map_err(|e| {
-            log::error!(
-                "Failed to rename file from '{}' to '{}': {}",
-                old_path,
-                new_path,
-                e
-            );
-            format!("Failed to rename file: {}", e)
-        })
+    fs::rename(&old_path, &new_path).await.map_err(|e| {
+        log::error!(
+            "Failed to rename file from '{}' to '{}': {}",
+            old_path,
+            new_path,
+            e
+        );
+        format!("Failed to rename file: {}", e)
+    })
 }

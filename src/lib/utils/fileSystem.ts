@@ -68,6 +68,22 @@ export async function openFile(path?: string): Promise<void> {
             return;
         }
 
+        // Sanity check: Check file size metadata before attempting to read content
+        const metadata = await callBackend('get_file_metadata', { path: sanitizedPath }, 'File:Metadata');
+
+        const BYTES_PER_MB = 1024 * 1024;
+        const maxBytes = CONFIG.EDITOR.MAX_FILE_SIZE_MB * BYTES_PER_MB;
+
+        if (!metadata) {
+            throw new Error('Failed to retrieve file metadata');
+        }
+
+        if (metadata.size > maxBytes) {
+            throw new Error(
+                `File is too large (${(metadata.size / BYTES_PER_MB).toFixed(2)} MB). Maximum allowed is ${CONFIG.EDITOR.MAX_FILE_SIZE_MB} MB.`,
+            );
+        }
+
         const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
 
         if (!result) {

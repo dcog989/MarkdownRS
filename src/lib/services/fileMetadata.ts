@@ -11,6 +11,7 @@ export type FileContent = {
 type FileMetadata = {
     created?: string;
     modified?: string;
+    size: number;
 };
 
 const metadataCache = new Map<string, { expires: number; promise: Promise<FileMetadata> }>();
