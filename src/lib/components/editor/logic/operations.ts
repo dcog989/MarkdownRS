@@ -1,13 +1,13 @@
-import type { OperationId } from "$lib/config/textOperationsRegistry";
-import type { ScrollManager } from "$lib/utils/cmScroll";
-import { transformText } from "$lib/utils/textTransforms";
-import type { EditorView } from "@codemirror/view";
+import type { OperationId } from '$lib/config/textOperationsRegistry';
+import type { ScrollManager } from '$lib/utils/cmScroll';
+import { transformText } from '$lib/utils/textTransforms';
+import type { EditorView } from '@codemirror/view';
 
 export async function performTextOperation(
     view: EditorView,
     operationId: OperationId,
     scrollManager: ScrollManager,
-    onStateChange?: (isTransforming: boolean) => void
+    onStateChange?: (isTransforming: boolean) => void,
 ) {
     if (!view) return;
 
@@ -16,9 +16,7 @@ export async function performTextOperation(
 
         const selection = view.state.selection.main;
         const hasSelection = selection.from !== selection.to;
-        const targetText = hasSelection
-            ? view.state.sliceDoc(selection.from, selection.to)
-            : view.state.doc.toString();
+        const targetText = hasSelection ? view.state.sliceDoc(selection.from, selection.to) : view.state.doc.toString();
 
         // Capture scroll state before operation
         scrollManager.capture(view, `Op:${operationId}`);
@@ -34,7 +32,7 @@ export async function performTextOperation(
                     to: hasSelection ? selection.to : view.state.doc.length,
                     insert: newText,
                 },
-                userEvent: "input.complete",
+                userEvent: 'input.complete',
                 scrollIntoView: true,
             };
 
@@ -58,12 +56,12 @@ export async function performTextOperation(
             if (!hasSelection) {
                 const snapshot = scrollManager.getSnapshot();
                 const currentLines = view.state.doc.lines;
-                let strategy: "anchor" | "pixel" = "pixel";
+                let strategy: 'anchor' | 'pixel' = 'pixel';
 
-                if (operationId === "format-document") {
-                    strategy = "anchor";
+                if (operationId === 'format-document') {
+                    strategy = 'anchor';
                 } else if (snapshot && Math.abs(currentLines - snapshot.totalLines) > 0) {
-                    strategy = "anchor";
+                    strategy = 'anchor';
                 }
                 scrollManager.restore(view, strategy);
             }

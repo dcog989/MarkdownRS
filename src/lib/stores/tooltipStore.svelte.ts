@@ -1,7 +1,7 @@
 // State
 export const tooltipStore = $state({
     visible: false,
-    content: "",
+    content: '',
     x: 0,
     y: 0,
 });

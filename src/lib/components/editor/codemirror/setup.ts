@@ -1,6 +1,6 @@
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { autocompletion, completeAnyWord } from "@codemirror/autocomplete";
-import { EditorView } from "@codemirror/view";
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { autocompletion, completeAnyWord } from '@codemirror/autocomplete';
+import { EditorView } from '@codemirror/view';
 
 export function getAutocompletionConfig() {
     if (!appContext.app.enableAutocomplete) return [];
@@ -24,9 +24,9 @@ export function createWrapExtension() {
         if (column > 0) {
             extensions.push(
                 EditorView.theme({
-                    ".cm-content": { maxWidth: `${column}ch` },
-                    ".cm-scroller": { width: "100%" },
-                })
+                    '.cm-content': { maxWidth: `${column}ch` },
+                    '.cm-scroller': { width: '100%' },
+                }),
             );
         }
     }
@@ -44,7 +44,7 @@ export function createDoubleClickHandler() {
             let end = range.to;
             if (end < view.state.doc.length) {
                 const nextChar = view.state.doc.sliceString(end, end + 1);
-                if (nextChar === " " || nextChar === "\t") end++;
+                if (nextChar === ' ' || nextChar === '\t') end++;
             }
             if (end > range.to) {
                 view.dispatch({ selection: { anchor: range.from, head: end } });

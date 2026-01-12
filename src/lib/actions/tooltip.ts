@@ -1,5 +1,5 @@
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { hideTooltip, showTooltip } from "$lib/stores/tooltipStore.svelte";
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { hideTooltip, showTooltip } from '$lib/stores/tooltipStore.svelte';
 
 export function tooltip(node: HTMLElement, content: string | undefined | null) {
     let timer: number | null = null;
@@ -28,9 +28,9 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
         handleMouseLeave();
     }
 
-    node.addEventListener("mouseenter", handleMouseEnter);
-    node.addEventListener("mouseleave", handleMouseLeave);
-    node.addEventListener("mousedown", handleMouseDown);
+    node.addEventListener('mouseenter', handleMouseEnter);
+    node.addEventListener('mouseleave', handleMouseLeave);
+    node.addEventListener('mousedown', handleMouseDown);
 
     return {
         update(newContent: string | undefined | null) {
@@ -42,9 +42,9 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
         },
         destroy() {
             handleMouseLeave();
-            node.removeEventListener("mouseenter", handleMouseEnter);
-            node.removeEventListener("mouseleave", handleMouseLeave);
-            node.removeEventListener("mousedown", handleMouseDown);
+            node.removeEventListener('mouseenter', handleMouseEnter);
+            node.removeEventListener('mouseleave', handleMouseLeave);
+            node.removeEventListener('mousedown', handleMouseDown);
         },
     };
 }

@@ -1,15 +1,11 @@
-import {
-    checkAndReloadIfChanged,
-    reloadFileContent,
-    sanitizePath,
-} from "$lib/services/fileMetadata";
-import { reloadTabContent } from "$lib/stores/editorStore.svelte";
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { showToast } from "$lib/stores/toastStore.svelte";
-import { CONFIG } from "$lib/utils/config";
-import { AppError } from "$lib/utils/errorHandling";
-import { debounce } from "$lib/utils/timing";
-import { watch } from "@tauri-apps/plugin-fs";
+import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
+import { reloadTabContent } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { CONFIG } from '$lib/utils/config';
+import { AppError } from '$lib/utils/errorHandling';
+import { debounce } from '$lib/utils/timing';
+import { watch } from '@tauri-apps/plugin-fs';
 
 type UnwatchFn = () => void;
 
@@ -63,9 +59,9 @@ class FileWatcherService {
                 this.watchers.set(path, { unwatch, refCount: 1 });
             } catch (err) {
                 if (controller.signal.aborted) return;
-                AppError.handle("FileWatcher:Watch", err, {
+                AppError.handle('FileWatcher:Watch', err, {
                     showToast: false,
-                    severity: "warning",
+                    severity: 'warning',
                     additionalInfo: { path },
                 });
             } finally {
@@ -105,9 +101,9 @@ class FileWatcherService {
             try {
                 entry.unwatch();
             } catch (err) {
-                AppError.handle("FileWatcher:Unwatch", err, {
+                AppError.handle('FileWatcher:Unwatch', err, {
                     showToast: false,
-                    severity: "warning",
+                    severity: 'warning',
                     additionalInfo: { path },
                 });
             }
@@ -159,18 +155,12 @@ class FileWatcherService {
             const cleanTabs = tabs.filter((t) => !t.isDirty);
 
             if (dirtyTabs.length > 0 && !signal?.aborted) {
-                const tabNames = dirtyTabs.map((t) => t.title).join(", ");
-                showToast(
-                    "warning",
-                    `File changed on disk: ${tabNames}. You have unsaved changes.`,
-                    5000
-                );
+                const tabNames = dirtyTabs.map((t) => t.title).join(', ');
+                showToast('warning', `File changed on disk: ${tabNames}. You have unsaved changes.`, 5000);
             }
 
             if (cleanTabs.length > 0 && !signal?.aborted) {
-                const firstTabStillExists = appContext.editor.tabs.some(
-                    (t) => t.id === cleanTabs[0].id
-                );
+                const firstTabStillExists = appContext.editor.tabs.some((t) => t.id === cleanTabs[0].id);
                 if (!firstTabStillExists || signal?.aborted) {
                     this.pendingChecks.delete(path);
                     return;
@@ -179,16 +169,12 @@ class FileWatcherService {
                 await reloadFileContent(cleanTabs[0].id);
 
                 if (cleanTabs.length > 1 && !signal?.aborted) {
-                    const reloadedTab = appContext.editor.tabs.find(
-                        (t) => t.id === cleanTabs[0].id
-                    );
+                    const reloadedTab = appContext.editor.tabs.find((t) => t.id === cleanTabs[0].id);
                     if (reloadedTab) {
                         for (let i = 1; i < cleanTabs.length; i++) {
                             if (signal?.aborted) break;
 
-                            const tabStillExists = appContext.editor.tabs.some(
-                                (t) => t.id === cleanTabs[i].id
-                            );
+                            const tabStillExists = appContext.editor.tabs.some((t) => t.id === cleanTabs[i].id);
                             if (!tabStillExists) continue;
 
                             reloadTabContent(
@@ -196,22 +182,22 @@ class FileWatcherService {
                                 reloadedTab.content,
                                 reloadedTab.lineEnding,
                                 reloadedTab.encoding,
-                                reloadedTab.sizeBytes
+                                reloadedTab.sizeBytes,
                             );
                         }
                     }
                 }
 
                 if (!signal?.aborted) {
-                    const tabNames = cleanTabs.map((t) => t.title).join(", ");
-                    showToast("info", `Loaded ${tabNames} from disk`);
+                    const tabNames = cleanTabs.map((t) => t.title).join(', ');
+                    showToast('info', `Loaded ${tabNames} from disk`);
                 }
             }
         } catch (err) {
             if (signal?.aborted) return;
-            AppError.handle("FileWatcher:Watch", err, {
+            AppError.handle('FileWatcher:Watch', err, {
                 showToast: false,
-                severity: "warning",
+                severity: 'warning',
                 additionalInfo: { path },
             });
         } finally {
@@ -229,9 +215,9 @@ class FileWatcherService {
             try {
                 entry.unwatch();
             } catch (err) {
-                AppError.handle("FileWatcher:Unwatch", err, {
+                AppError.handle('FileWatcher:Unwatch', err, {
                     showToast: false,
-                    severity: "warning",
+                    severity: 'warning',
                     additionalInfo: { path },
                 });
             }

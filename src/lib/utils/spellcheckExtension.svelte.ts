@@ -1,11 +1,11 @@
-import { callBackend } from "$lib/utils/backend";
-import { CONFIG } from "$lib/utils/config";
-import { addToDictionary } from "$lib/utils/fileSystem";
-import { refreshCustomDictionary, spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
-import { syntaxTree } from "@codemirror/language";
-import { forceLinting, linter, type Diagnostic } from "@codemirror/lint";
-import { EditorView } from "@codemirror/view";
-import type { SyntaxNodeRef } from "@lezer/common";
+import { callBackend } from '$lib/utils/backend';
+import { CONFIG } from '$lib/utils/config';
+import { addToDictionary } from '$lib/utils/fileSystem';
+import { refreshCustomDictionary, spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { syntaxTree } from '@codemirror/language';
+import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
+import { EditorView } from '@codemirror/view';
+import type { SyntaxNodeRef } from '@lezer/common';
 
 export const createSpellCheckLinter = () => {
     return linter(
@@ -17,17 +17,17 @@ export const createSpellCheckLinter = () => {
             const wordsToVerify = new Map<string, { from: number; to: number }[]>();
 
             const safeNodeTypes = new Set([
-                "Paragraph",
-                "Text",
-                "Emphasis",
-                "StrongEmphasis",
-                "ListItem",
-                "HeaderMark",
-                "SetextHeading1",
-                "SetextHeading2",
-                "ATXHeading1",
-                "ATXHeading2",
-                "ATXHeading3",
+                'Paragraph',
+                'Text',
+                'Emphasis',
+                'StrongEmphasis',
+                'ListItem',
+                'HeaderMark',
+                'SetextHeading1',
+                'SetextHeading2',
+                'ATXHeading1',
+                'ATXHeading2',
+                'ATXHeading3',
             ]);
 
             // Snapshot dictionary for consistency during this pass
@@ -36,12 +36,12 @@ export const createSpellCheckLinter = () => {
             syntaxTree(state).iterate({
                 enter: (node: SyntaxNodeRef): boolean | void => {
                     if (
-                        node.name.includes("Code") ||
-                        node.name.includes("Link") ||
-                        node.name.includes("Url") ||
-                        node.name.includes("Comment") ||
-                        node.name.includes("Attribute") ||
-                        node.name === "HtmlTag"
+                        node.name.includes('Code') ||
+                        node.name.includes('Link') ||
+                        node.name.includes('Url') ||
+                        node.name.includes('Comment') ||
+                        node.name.includes('Attribute') ||
+                        node.name === 'HtmlTag'
                     )
                         return false;
 
@@ -59,14 +59,9 @@ export const createSpellCheckLinter = () => {
                             const globalTo = globalFrom + word.length;
 
                             // Heuristic: Skip if looks like path/url
-                            const charBefore =
-                                globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
-                            const charAfter =
-                                globalTo < doc.length
-                                    ? doc.sliceString(globalTo, globalTo + 1)
-                                    : "";
-                            if (/[\\/:@\.~]/.test(charBefore) || /[\\/:@]/.test(charAfter))
-                                continue;
+                            const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : '';
+                            const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : '';
+                            if (/[\\/:@\.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
 
                             // Heuristic: Skip mixed case/numbers
                             if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
@@ -97,11 +92,11 @@ export const createSpellCheckLinter = () => {
 
             try {
                 const misspelled = await callBackend(
-                    "check_words",
+                    'check_words',
                     {
                         words: Array.from(wordsToVerify.keys()),
                     },
-                    "Editor:Init"
+                    'Editor:Init',
                 );
 
                 if (!misspelled) {
@@ -136,9 +131,9 @@ export const createSpellCheckLinter = () => {
                                 diagnostics.push({
                                     from: range.from,
                                     to: range.to,
-                                    severity: "error",
+                                    severity: 'error',
                                     message: `Misspelled: ${word}`,
-                                    source: "Spellchecker",
+                                    source: 'Spellchecker',
                                 });
                             }
                         }
@@ -151,7 +146,7 @@ export const createSpellCheckLinter = () => {
                 return [];
             }
         },
-        { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS }
+        { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS },
     );
 };
 
@@ -169,20 +164,17 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
 
 export const spellCheckKeymap = [
     {
-        key: "F8",
+        key: 'F8',
         run: (view: EditorView) => {
-            const selection = view.state.sliceDoc(
-                view.state.selection.main.from,
-                view.state.selection.main.to
-            );
+            const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
             let words: string[] = [];
 
             if (selection && selection.trim().length > 0) {
-                words = selection.split(/\s+/).map((w) => w.replace(/[^a-zA-Z'-]/g, ""));
+                words = selection.split(/\s+/).map((w) => w.replace(/[^a-zA-Z'-]/g, ''));
             } else {
                 const range = view.state.wordAt(view.state.selection.main.head);
                 if (range) {
-                    words = [view.state.sliceDoc(range.from, range.to).replace(/[^a-zA-Z'-]/g, "")];
+                    words = [view.state.sliceDoc(range.from, range.to).replace(/[^a-zA-Z'-]/g, '')];
                 }
             }
 

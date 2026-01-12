@@ -1,4 +1,4 @@
-import { CONFIG } from "$lib/utils/config";
+import { CONFIG } from '$lib/utils/config';
 
 export type LineChange = {
     lineNumber: number;
@@ -72,12 +72,7 @@ export class LineChangeTracker {
         return this.calculateAlpha(deletion, this.deletions, timespan, maxCount);
     }
 
-    private calculateAlpha(
-        item: LineChange,
-        collection: LineChange[],
-        timespan: number,
-        maxCount: number
-    ): number {
+    private calculateAlpha(item: LineChange, collection: LineChange[], timespan: number, maxCount: number): number {
         let timeAlpha = 1.0;
         let countAlpha = 1.0;
 
@@ -90,9 +85,7 @@ export class LineChangeTracker {
 
         if (maxCount > 0) {
             const sorted = [...collection].sort((a, b) => b.timestamp - a.timestamp);
-            const index = sorted.findIndex(
-                (c) => c.lineNumber === item.lineNumber && c.timestamp === item.timestamp
-            );
+            const index = sorted.findIndex((c) => c.lineNumber === item.lineNumber && c.timestamp === item.timestamp);
 
             if (index === -1 || index >= maxCount) return 0;
 

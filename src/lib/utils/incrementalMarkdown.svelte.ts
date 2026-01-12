@@ -1,7 +1,7 @@
-import { error } from "@tauri-apps/plugin-log";
-import DOMPurify from "dompurify";
-import { callBackend } from "./backend";
-import { CONFIG } from "./config";
+import { error } from '@tauri-apps/plugin-log';
+import DOMPurify from 'dompurify';
+import { callBackend } from './backend';
+import { CONFIG } from './config';
 
 interface MarkdownBlock {
     startLine: number;
@@ -28,7 +28,7 @@ export class IncrementalMarkdownRenderer {
 
         try {
             const blocks = this.splitIntoBlocks(content);
-            const flavor = gfm ? "gfm" : "commonmark";
+            const flavor = gfm ? 'gfm' : 'commonmark';
 
             // Process blocks (render missing ones in parallel)
             const renderedSegments = await Promise.all(
@@ -38,29 +38,29 @@ export class IncrementalMarkdownRenderer {
 
                     if (!baseHtml) {
                         const result = await callBackend(
-                            "render_markdown",
+                            'render_markdown',
                             {
                                 content: block.content,
                                 flavor,
                             },
-                            "Markdown:Render"
+                            'Markdown:Render',
                         );
 
                         if (!result) {
-                            throw new Error("Markdown rendering failed: null result");
+                            throw new Error('Markdown rendering failed: null result');
                         }
 
                         baseHtml = DOMPurify.sanitize(result.html, {
                             USE_PROFILES: { html: true },
                             ADD_ATTR: [
-                                "target",
-                                "class",
-                                "data-source-line",
-                                "align",
-                                "start",
-                                "type",
-                                "disabled",
-                                "checked",
+                                'target',
+                                'class',
+                                'data-source-line',
+                                'align',
+                                'start',
+                                'type',
+                                'disabled',
+                                'checked',
                             ],
                         });
 
@@ -81,10 +81,10 @@ export class IncrementalMarkdownRenderer {
 
                     // Adjust line numbers for this segment's position in the full doc
                     return this.adjustLineNumbers(baseHtml, block.startLine);
-                })
+                }),
             );
 
-            return renderedSegments.join("\n");
+            return renderedSegments.join('\n');
         } catch (e) {
             await error(`[Markdown] Incremental render error: ${e}`);
             return this.renderFull(content, gfm); // Fallback
@@ -96,32 +96,23 @@ export class IncrementalMarkdownRenderer {
      */
     private async renderFull(content: string, gfm: boolean): Promise<string> {
         try {
-            const flavor = gfm ? "gfm" : "commonmark";
+            const flavor = gfm ? 'gfm' : 'commonmark';
             const result = await callBackend(
-                "render_markdown",
+                'render_markdown',
                 {
                     content,
                     flavor,
                 },
-                "Markdown:Render"
+                'Markdown:Render',
             );
 
             if (!result) {
-                throw new Error("Markdown rendering failed: null result");
+                throw new Error('Markdown rendering failed: null result');
             }
 
             return DOMPurify.sanitize(result.html, {
                 USE_PROFILES: { html: true },
-                ADD_ATTR: [
-                    "target",
-                    "class",
-                    "data-source-line",
-                    "align",
-                    "start",
-                    "type",
-                    "disabled",
-                    "checked",
-                ],
+                ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked'],
             });
         } catch (e) {
             await error(`[Markdown] Render error: ${e}`);
@@ -140,7 +131,7 @@ export class IncrementalMarkdownRenderer {
         let currentStartLine = 0;
         let lineIndex = 0;
         let lastLinePos = 0;
-        let currentBlockContent = "";
+        let currentBlockContent = '';
         let lineCountInBlock = 0;
         let inFence = false;
 
@@ -148,7 +139,7 @@ export class IncrementalMarkdownRenderer {
         const headerRegex = /^#{1,6}\s/;
         const hrRegex = /^(\s{0,3})([-*_])\s*(\2\s*){2,}$/;
 
-        let nextLinePos = content.indexOf("\n", 0);
+        let nextLinePos = content.indexOf('\n', 0);
 
         while (lineIndex <= content.length) {
             const endOfLine = nextLinePos === -1 ? content.length : nextLinePos;
@@ -160,16 +151,16 @@ export class IncrementalMarkdownRenderer {
             if (!inFence && lineCountInBlock > 0) {
                 if (headerRegex.test(line) || hrRegex.test(line)) {
                     shouldSplit = true;
-                } else if (lineCountInBlock > 20 && line.trim() === "") {
+                } else if (lineCountInBlock > 20 && line.trim() === '') {
                     // Check if next line is text (paragraph break)
                     const nextLineStart = endOfLine + 1;
                     if (nextLineStart < content.length) {
-                        const afterBreak = content.indexOf("\n", nextLineStart);
+                        const afterBreak = content.indexOf('\n', nextLineStart);
                         const nextLine = content.substring(
                             nextLineStart,
-                            afterBreak === -1 ? content.length : afterBreak
+                            afterBreak === -1 ? content.length : afterBreak,
                         );
-                        if (nextLine.trim() !== "") shouldSplit = true;
+                        if (nextLine.trim() !== '') shouldSplit = true;
                     }
                 }
             }
@@ -182,23 +173,23 @@ export class IncrementalMarkdownRenderer {
                 blocks.push({
                     startLine: currentStartLine,
                     endLine: lineIndex,
-                    content: currentBlockContent.endsWith("\n")
+                    content: currentBlockContent.endsWith('\n')
                         ? currentBlockContent.slice(0, -1)
                         : currentBlockContent,
                     hash: this.hashString(currentBlockContent),
                 });
-                currentBlockContent = "";
+                currentBlockContent = '';
                 currentStartLine = lineIndex;
                 lineCountInBlock = 0;
             }
 
-            currentBlockContent += line + (nextLinePos === -1 ? "" : "\n");
+            currentBlockContent += line + (nextLinePos === -1 ? '' : '\n');
             lineCountInBlock++;
             lineIndex++;
 
             if (nextLinePos === -1) break;
             lastLinePos = nextLinePos + 1;
-            nextLinePos = content.indexOf("\n", lastLinePos);
+            nextLinePos = content.indexOf('\n', lastLinePos);
         }
 
         if (currentBlockContent) {
@@ -221,16 +212,16 @@ export class IncrementalMarkdownRenderer {
 
         // Use a DOM parser to safely target attributes without affecting text content
         // This avoids issues where code blocks might contain the string "data-source-line"
-        const template = document.createElement("template");
+        const template = document.createElement('template');
         template.innerHTML = html;
 
-        const elements = template.content.querySelectorAll("[data-source-line]");
+        const elements = template.content.querySelectorAll('[data-source-line]');
 
         for (const el of elements) {
-            const val = el.getAttribute("data-source-line");
+            const val = el.getAttribute('data-source-line');
             if (val) {
                 const newLine = parseInt(val, 10) + offset;
-                el.setAttribute("data-source-line", newLine.toString());
+                el.setAttribute('data-source-line', newLine.toString());
             }
         }
 

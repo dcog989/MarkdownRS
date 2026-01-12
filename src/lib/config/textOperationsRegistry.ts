@@ -20,63 +20,63 @@ import {
     TextAlignStart,
     Trash2,
     Type,
-} from "lucide-svelte";
-import type { ComponentType } from "svelte";
+} from 'lucide-svelte';
+import type { ComponentType } from 'svelte';
 
 /**
  * Operation ID type - all valid operation identifiers
  */
 export type OperationId =
     // Sort & Order
-    | "sort-asc"
-    | "sort-desc"
-    | "sort-case-insensitive-asc"
-    | "sort-case-insensitive-desc"
-    | "sort-numeric-asc"
-    | "sort-numeric-desc"
-    | "sort-length-asc"
-    | "sort-length-desc"
-    | "reverse"
-    | "shuffle"
+    | 'sort-asc'
+    | 'sort-desc'
+    | 'sort-case-insensitive-asc'
+    | 'sort-case-insensitive-desc'
+    | 'sort-numeric-asc'
+    | 'sort-numeric-desc'
+    | 'sort-length-asc'
+    | 'sort-length-desc'
+    | 'reverse'
+    | 'shuffle'
     // Remove & Filter
-    | "remove-duplicates"
-    | "remove-unique"
-    | "remove-blank"
-    | "remove-trailing-spaces"
-    | "remove-leading-spaces"
-    | "remove-all-spaces"
+    | 'remove-duplicates'
+    | 'remove-unique'
+    | 'remove-blank'
+    | 'remove-trailing-spaces'
+    | 'remove-leading-spaces'
+    | 'remove-all-spaces'
     // Case Transformations
-    | "uppercase"
-    | "lowercase"
-    | "title-case"
-    | "sentence-case"
-    | "camel-case"
-    | "pascal-case"
-    | "snake-case"
-    | "kebab-case"
-    | "constant-case"
-    | "invert-case"
+    | 'uppercase'
+    | 'lowercase'
+    | 'title-case'
+    | 'sentence-case'
+    | 'camel-case'
+    | 'pascal-case'
+    | 'snake-case'
+    | 'kebab-case'
+    | 'constant-case'
+    | 'invert-case'
     // Markdown Formatting
-    | "add-bullets"
-    | "add-numbers"
-    | "add-checkboxes"
-    | "remove-bullets"
-    | "blockquote"
-    | "remove-blockquote"
-    | "add-code-fence"
-    | "increase-heading"
-    | "decrease-heading"
+    | 'add-bullets'
+    | 'add-numbers'
+    | 'add-checkboxes'
+    | 'remove-bullets'
+    | 'blockquote'
+    | 'remove-blockquote'
+    | 'add-code-fence'
+    | 'increase-heading'
+    | 'decrease-heading'
     // Text Manipulation
-    | "trim-whitespace"
-    | "normalize-whitespace"
-    | "join-lines"
-    | "split-sentences"
-    | "wrap-quotes"
-    | "add-line-numbers"
-    | "indent-lines"
-    | "unindent-lines"
+    | 'trim-whitespace'
+    | 'normalize-whitespace'
+    | 'join-lines'
+    | 'split-sentences'
+    | 'wrap-quotes'
+    | 'add-line-numbers'
+    | 'indent-lines'
+    | 'unindent-lines'
     // Special
-    | "format-document";
+    | 'format-document';
 
 /**
  * Operation definition with metadata and backend mapping
@@ -87,7 +87,7 @@ export interface TextOperation {
     description: string;
     icon: ComponentType;
     category: string;
-    execution: "client" | "server";
+    execution: 'client' | 'server';
     /**
      * Backend command name - only needed if execution is 'server'.
      */
@@ -107,11 +107,11 @@ export interface OperationCategory {
  * All operation categories
  */
 export const OPERATION_CATEGORIES: OperationCategory[] = [
-    { id: "sort", title: "Sort & Order", icon: ArrowDownAZ },
-    { id: "filter", title: "Remove & Filter", icon: Trash2 },
-    { id: "case", title: "Case Transformations", icon: CaseSensitive },
-    { id: "markdown", title: "Markdown Formatting", icon: Hash },
-    { id: "text", title: "Text Manipulation", icon: Type },
+    { id: 'sort', title: 'Sort & Order', icon: ArrowDownAZ },
+    { id: 'filter', title: 'Remove & Filter', icon: Trash2 },
+    { id: 'case', title: 'Case Transformations', icon: CaseSensitive },
+    { id: 'markdown', title: 'Markdown Formatting', icon: Hash },
+    { id: 'text', title: 'Text Manipulation', icon: Type },
 ];
 
 /**
@@ -119,368 +119,368 @@ export const OPERATION_CATEGORIES: OperationCategory[] = [
  */
 export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     // Sort & Order
-    "sort-asc": {
-        id: "sort-asc",
-        label: "Ascending",
-        description: "Sort lines alphabetically A to Z",
+    'sort-asc': {
+        id: 'sort-asc',
+        label: 'Ascending',
+        description: 'Sort lines alphabetically A to Z',
         icon: ArrowDownAZ,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-desc": {
-        id: "sort-desc",
-        label: "Descending",
-        description: "Sort lines alphabetically Z to A",
+    'sort-desc': {
+        id: 'sort-desc',
+        label: 'Descending',
+        description: 'Sort lines alphabetically Z to A',
         icon: ArrowDownZA,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-case-insensitive-asc": {
-        id: "sort-case-insensitive-asc",
-        label: "Ascending (Ignore Case)",
-        description: "Sort A to Z ignoring case",
+    'sort-case-insensitive-asc': {
+        id: 'sort-case-insensitive-asc',
+        label: 'Ascending (Ignore Case)',
+        description: 'Sort A to Z ignoring case',
         icon: ArrowDownAZ,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-case-insensitive-desc": {
-        id: "sort-case-insensitive-desc",
-        label: "Descending (Ignore Case)",
-        description: "Sort Z to A ignoring case",
+    'sort-case-insensitive-desc': {
+        id: 'sort-case-insensitive-desc',
+        label: 'Descending (Ignore Case)',
+        description: 'Sort Z to A ignoring case',
         icon: ArrowDownZA,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-numeric-asc": {
-        id: "sort-numeric-asc",
-        label: "Numeric Ascending",
-        description: "Sort lines numerically (0-9)",
+    'sort-numeric-asc': {
+        id: 'sort-numeric-asc',
+        label: 'Numeric Ascending',
+        description: 'Sort lines numerically (0-9)',
         icon: ArrowDown01,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-numeric-desc": {
-        id: "sort-numeric-desc",
-        label: "Numeric Descending",
-        description: "Sort lines numerically (9-0)",
+    'sort-numeric-desc': {
+        id: 'sort-numeric-desc',
+        label: 'Numeric Descending',
+        description: 'Sort lines numerically (9-0)',
         icon: ArrowDown10,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-length-asc": {
-        id: "sort-length-asc",
-        label: "By Shortest",
-        description: "Sort by line length ascending",
+    'sort-length-asc': {
+        id: 'sort-length-asc',
+        label: 'By Shortest',
+        description: 'Sort by line length ascending',
         icon: ArrowDownAZ,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
-    "sort-length-desc": {
-        id: "sort-length-desc",
-        label: "By Longest",
-        description: "Sort by line length descending",
+    'sort-length-desc': {
+        id: 'sort-length-desc',
+        label: 'By Longest',
+        description: 'Sort by line length descending',
         icon: ArrowDownZA,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
     reverse: {
-        id: "reverse",
-        label: "Reverse",
-        description: "Reverse the order of all lines",
+        id: 'reverse',
+        label: 'Reverse',
+        description: 'Reverse the order of all lines',
         icon: ArrowDownZA,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
     shuffle: {
-        id: "shuffle",
-        label: "Shuffle",
-        description: "Randomly shuffle line order",
+        id: 'shuffle',
+        label: 'Shuffle',
+        description: 'Randomly shuffle line order',
         icon: FunnelX,
-        category: "sort",
-        execution: "client",
+        category: 'sort',
+        execution: 'client',
     },
 
     // Remove & Filter
-    "remove-duplicates": {
-        id: "remove-duplicates",
-        label: "Remove Duplicates",
-        description: "Keep only unique lines",
+    'remove-duplicates': {
+        id: 'remove-duplicates',
+        label: 'Remove Duplicates',
+        description: 'Keep only unique lines',
         icon: Eraser,
-        category: "filter",
-        execution: "client",
+        category: 'filter',
+        execution: 'client',
     },
-    "remove-unique": {
-        id: "remove-unique",
-        label: "Remove Unique",
-        description: "Keep only duplicate lines",
+    'remove-unique': {
+        id: 'remove-unique',
+        label: 'Remove Unique',
+        description: 'Keep only duplicate lines',
         icon: FunnelX,
-        category: "filter",
-        execution: "client",
+        category: 'filter',
+        execution: 'client',
     },
-    "remove-blank": {
-        id: "remove-blank",
-        label: "Remove Blank Lines",
-        description: "Remove all empty lines",
+    'remove-blank': {
+        id: 'remove-blank',
+        label: 'Remove Blank Lines',
+        description: 'Remove all empty lines',
         icon: CircleMinus,
-        category: "filter",
-        execution: "client",
+        category: 'filter',
+        execution: 'client',
     },
-    "remove-trailing-spaces": {
-        id: "remove-trailing-spaces",
-        label: "Remove Trailing Spaces",
-        description: "Trim whitespace from line ends",
+    'remove-trailing-spaces': {
+        id: 'remove-trailing-spaces',
+        label: 'Remove Trailing Spaces',
+        description: 'Trim whitespace from line ends',
         icon: Eraser,
-        category: "filter",
-        execution: "client",
+        category: 'filter',
+        execution: 'client',
     },
-    "remove-leading-spaces": {
-        id: "remove-leading-spaces",
-        label: "Remove Leading Spaces",
-        description: "Trim whitespace from line starts",
+    'remove-leading-spaces': {
+        id: 'remove-leading-spaces',
+        label: 'Remove Leading Spaces',
+        description: 'Trim whitespace from line starts',
         icon: Eraser,
-        category: "filter",
-        execution: "client",
+        category: 'filter',
+        execution: 'client',
     },
-    "remove-all-spaces": {
-        id: "remove-all-spaces",
-        label: "Remove All Spaces",
-        description: "Remove all whitespace characters",
+    'remove-all-spaces': {
+        id: 'remove-all-spaces',
+        label: 'Remove All Spaces',
+        description: 'Remove all whitespace characters',
         icon: Eraser,
-        category: "filter",
-        execution: "client",
+        category: 'filter',
+        execution: 'client',
     },
 
     // Case Transformations
     uppercase: {
-        id: "uppercase",
-        label: "UPPER CASE",
-        description: "Convert all text to uppercase",
+        id: 'uppercase',
+        label: 'UPPER CASE',
+        description: 'Convert all text to uppercase',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
     lowercase: {
-        id: "lowercase",
-        label: "lower case",
-        description: "Convert all text to lowercase",
+        id: 'lowercase',
+        label: 'lower case',
+        description: 'Convert all text to lowercase',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "title-case": {
-        id: "title-case",
-        label: "Title Case",
-        description: "Capitalize first letter of each word",
+    'title-case': {
+        id: 'title-case',
+        label: 'Title Case',
+        description: 'Capitalize first letter of each word',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "sentence-case": {
-        id: "sentence-case",
-        label: "Sentence case",
-        description: "Capitalize first letter of sentences",
+    'sentence-case': {
+        id: 'sentence-case',
+        label: 'Sentence case',
+        description: 'Capitalize first letter of sentences',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "camel-case": {
-        id: "camel-case",
-        label: "camelCase",
-        description: "Convert to camelCase format",
+    'camel-case': {
+        id: 'camel-case',
+        label: 'camelCase',
+        description: 'Convert to camelCase format',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "pascal-case": {
-        id: "pascal-case",
-        label: "PascalCase",
-        description: "Convert to PascalCase format",
+    'pascal-case': {
+        id: 'pascal-case',
+        label: 'PascalCase',
+        description: 'Convert to PascalCase format',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "snake-case": {
-        id: "snake-case",
-        label: "snake_case",
-        description: "Convert to snake_case format",
+    'snake-case': {
+        id: 'snake-case',
+        label: 'snake_case',
+        description: 'Convert to snake_case format',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "kebab-case": {
-        id: "kebab-case",
-        label: "kebab-case",
-        description: "Convert to kebab-case format",
+    'kebab-case': {
+        id: 'kebab-case',
+        label: 'kebab-case',
+        description: 'Convert to kebab-case format',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "constant-case": {
-        id: "constant-case",
-        label: "CONSTANT_CASE",
-        description: "Convert to CONSTANT_CASE format",
+    'constant-case': {
+        id: 'constant-case',
+        label: 'CONSTANT_CASE',
+        description: 'Convert to CONSTANT_CASE format',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
-    "invert-case": {
-        id: "invert-case",
-        label: "iNVERT cASE",
-        description: "Swap uppercase and lowercase",
+    'invert-case': {
+        id: 'invert-case',
+        label: 'iNVERT cASE',
+        description: 'Swap uppercase and lowercase',
         icon: Type,
-        category: "case",
-        execution: "client",
+        category: 'case',
+        execution: 'client',
     },
 
     // Markdown Formatting
-    "add-bullets": {
-        id: "add-bullets",
-        label: "Add Bullet Points",
+    'add-bullets': {
+        id: 'add-bullets',
+        label: 'Add Bullet Points',
         description: "Prefix lines with '- '",
         icon: List,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "add-numbers": {
-        id: "add-numbers",
-        label: "Add Numbering",
+    'add-numbers': {
+        id: 'add-numbers',
+        label: 'Add Numbering',
         description: "Prefix lines with '1. 2. 3.'",
         icon: List,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "add-checkboxes": {
-        id: "add-checkboxes",
-        label: "Add Checkboxes",
+    'add-checkboxes': {
+        id: 'add-checkboxes',
+        label: 'Add Checkboxes',
         description: "Prefix lines with '- [ ]'",
         icon: List,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "remove-bullets": {
-        id: "remove-bullets",
-        label: "Remove List Markers",
-        description: "Remove bullets, numbers, checkboxes",
+    'remove-bullets': {
+        id: 'remove-bullets',
+        label: 'Remove List Markers',
+        description: 'Remove bullets, numbers, checkboxes',
         icon: CircleMinus,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
     blockquote: {
-        id: "blockquote",
-        label: "Add Blockquote",
+        id: 'blockquote',
+        label: 'Add Blockquote',
         description: "Prefix lines with '> '",
         icon: TextAlignStart,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "remove-blockquote": {
-        id: "remove-blockquote",
-        label: "Remove Blockquote",
+    'remove-blockquote': {
+        id: 'remove-blockquote',
+        label: 'Remove Blockquote',
         description: "Remove '> ' prefix",
         icon: CircleMinus,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "add-code-fence": {
-        id: "add-code-fence",
-        label: "Wrap in Code Block",
-        description: "Wrap with ``` fences",
+    'add-code-fence': {
+        id: 'add-code-fence',
+        label: 'Wrap in Code Block',
+        description: 'Wrap with ``` fences',
         icon: Hash,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "increase-heading": {
-        id: "increase-heading",
-        label: "Increase Heading Level",
-        description: "Add # to headings",
+    'increase-heading': {
+        id: 'increase-heading',
+        label: 'Increase Heading Level',
+        description: 'Add # to headings',
         icon: Hash,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
-    "decrease-heading": {
-        id: "decrease-heading",
-        label: "Decrease Heading Level",
-        description: "Remove # from headings",
+    'decrease-heading': {
+        id: 'decrease-heading',
+        label: 'Decrease Heading Level',
+        description: 'Remove # from headings',
         icon: Hash,
-        category: "markdown",
-        execution: "client",
+        category: 'markdown',
+        execution: 'client',
     },
 
     // Text Manipulation
-    "trim-whitespace": {
-        id: "trim-whitespace",
-        label: "Trim Whitespace",
-        description: "Trim leading and trailing spaces",
+    'trim-whitespace': {
+        id: 'trim-whitespace',
+        label: 'Trim Whitespace',
+        description: 'Trim leading and trailing spaces',
         icon: Eraser,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "normalize-whitespace": {
-        id: "normalize-whitespace",
-        label: "Normalize Whitespace",
-        description: "Replace multiple spaces with single",
+    'normalize-whitespace': {
+        id: 'normalize-whitespace',
+        label: 'Normalize Whitespace',
+        description: 'Replace multiple spaces with single',
         icon: Eraser,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "join-lines": {
-        id: "join-lines",
-        label: "Join Lines",
-        description: "Combine all lines into one",
+    'join-lines': {
+        id: 'join-lines',
+        label: 'Join Lines',
+        description: 'Combine all lines into one',
         icon: TextAlignStart,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "split-sentences": {
-        id: "split-sentences",
-        label: "Sentences to new lines",
-        description: "Each sentence on new line",
+    'split-sentences': {
+        id: 'split-sentences',
+        label: 'Sentences to new lines',
+        description: 'Each sentence on new line',
         icon: TextAlignStart,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "wrap-quotes": {
-        id: "wrap-quotes",
-        label: "Wrap in Quotes",
-        description: "Wrap each line in quotes",
+    'wrap-quotes': {
+        id: 'wrap-quotes',
+        label: 'Wrap in Quotes',
+        description: 'Wrap each line in quotes',
         icon: Type,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "add-line-numbers": {
-        id: "add-line-numbers",
-        label: "Number Each Line",
-        description: "Prefix with line numbers",
+    'add-line-numbers': {
+        id: 'add-line-numbers',
+        label: 'Number Each Line',
+        description: 'Prefix with line numbers',
         icon: List,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "indent-lines": {
-        id: "indent-lines",
-        label: "Indent Lines",
-        description: "Indent each line by default spacing",
+    'indent-lines': {
+        id: 'indent-lines',
+        label: 'Indent Lines',
+        description: 'Indent each line by default spacing',
         icon: TextAlignStart,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
-    "unindent-lines": {
-        id: "unindent-lines",
-        label: "Unindent Lines",
-        description: "Unindent each line by default spacing",
+    'unindent-lines': {
+        id: 'unindent-lines',
+        label: 'Unindent Lines',
+        description: 'Unindent each line by default spacing',
         icon: TextAlignStart,
-        category: "text",
-        execution: "client",
+        category: 'text',
+        execution: 'client',
     },
 
     // Special operations
-    "format-document": {
-        id: "format-document",
-        label: "Format Document",
-        description: "Format markdown document",
+    'format-document': {
+        id: 'format-document',
+        label: 'Format Document',
+        description: 'Format markdown document',
         icon: Type,
-        category: "text",
-        execution: "server",
-        backendCommand: "format_markdown",
+        category: 'text',
+        execution: 'server',
+        backendCommand: 'format_markdown',
     },
 };
 

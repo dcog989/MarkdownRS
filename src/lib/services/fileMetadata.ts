@@ -1,11 +1,7 @@
-import {
-    reloadTabContent,
-    setFileCheckStatus,
-    updateMetadata,
-} from "$lib/stores/editorStore.svelte";
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { callBackend } from "$lib/utils/backend";
-import { AppError } from "$lib/utils/errorHandling";
+import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { callBackend } from '$lib/utils/backend';
+import { AppError } from '$lib/utils/errorHandling';
 
 export type FileContent = {
     content: string;
@@ -28,9 +24,9 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
         return cached.promise;
     }
 
-    const promise = callBackend("get_file_metadata", { path }, "File:Metadata").then((result) => {
+    const promise = callBackend('get_file_metadata', { path }, 'File:Metadata').then((result) => {
         if (!result) {
-            throw new Error("Failed to get file metadata: null result");
+            throw new Error('Failed to get file metadata: null result');
         }
         return result;
     });
@@ -44,11 +40,11 @@ export function invalidateMetadataCache(path: string) {
 }
 
 export function normalizeLineEndings(text: string): string {
-    return text.replace(/\r\n/g, "\n");
+    return text.replace(/\r\n/g, '\n');
 }
 
 export function sanitizePath(path: string): string {
-    return path.replace(/\0/g, "").replace(/\\/g, "/");
+    return path.replace(/\0/g, '').replace(/\\/g, '/');
 }
 
 export async function refreshMetadata(tabId: string, path: string): Promise<void> {
@@ -69,9 +65,9 @@ export async function checkFileExists(tabId: string): Promise<void> {
         setFileCheckStatus(tabId, true, false);
     } catch (err) {
         setFileCheckStatus(tabId, true, true);
-        AppError.handle("File:Metadata", err, {
+        AppError.handle('File:Metadata', err, {
             showToast: false,
-            severity: "warning",
+            severity: 'warning',
             additionalInfo: { path: tab.path, tabId },
         });
     }
@@ -93,9 +89,9 @@ export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
     } catch (err) {
         setFileCheckStatus(tabId, true, true);
 
-        AppError.handle("File:Metadata", err, {
+        AppError.handle('File:Metadata', err, {
             showToast: false,
-            severity: "warning",
+            severity: 'warning',
             additionalInfo: { path: tab.path, tabId },
         });
         return false;
@@ -108,33 +104,27 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 
     try {
         const sanitizedPath = sanitizePath(tab.path);
-        const result = await callBackend("read_text_file", { path: sanitizedPath }, "File:Read");
+        const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
 
         if (!result) {
-            throw new Error("Failed to read file: null result");
+            throw new Error('Failed to read file: null result');
         }
 
         const crlfCount = (result.content.match(/\r\n/g) || []).length;
         const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-        const detectedLineEnding: "LF" | "CRLF" =
-            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? "CRLF" : "LF";
+        const detectedLineEnding: 'LF' | 'CRLF' =
+            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
         const content = normalizeLineEndings(result.content);
         const sizeBytes = new TextEncoder().encode(result.content).length;
 
-        reloadTabContent(
-            tabId,
-            content,
-            detectedLineEnding,
-            result.encoding.toUpperCase(),
-            sizeBytes
-        );
+        reloadTabContent(tabId, content, detectedLineEnding, result.encoding.toUpperCase(), sizeBytes);
 
         await refreshMetadata(tabId, sanitizedPath);
     } catch (err) {
-        AppError.handle("File:Read", err, {
+        AppError.handle('File:Read', err, {
             showToast: true,
-            userMessage: "Failed to reload file",
+            userMessage: 'Failed to reload file',
             additionalInfo: { path: tab.path, tabId },
         });
     }

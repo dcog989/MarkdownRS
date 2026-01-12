@@ -1,6 +1,6 @@
-import { EditorView } from "@codemirror/view";
+import { EditorView } from '@codemirror/view';
 
-export type RestoreStrategy = "pixel" | "anchor" | "auto";
+export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
 
 export class ScrollManager {
     private snapshot: {
@@ -27,7 +27,7 @@ export class ScrollManager {
         };
     }
 
-    public restore(view: EditorView, strategy: RestoreStrategy = "auto") {
+    public restore(view: EditorView, strategy: RestoreStrategy = 'auto') {
         if (!this.snapshot || !view.scrollDOM) {
             return;
         }
@@ -45,22 +45,22 @@ export class ScrollManager {
                     const clientHeight = view.scrollDOM.clientHeight;
 
                     let effectiveStrategy = strategy;
-                    let reason = "Manual override";
+                    let reason = 'Manual override';
 
-                    if (strategy === "auto") {
+                    if (strategy === 'auto') {
                         if (currentLines !== target.totalLines) {
-                            effectiveStrategy = "anchor";
+                            effectiveStrategy = 'anchor';
                             reason = `Line count changed (${target.totalLines} -> ${currentLines})`;
                         } else {
-                            effectiveStrategy = "pixel";
-                            reason = "Line count stable";
+                            effectiveStrategy = 'pixel';
+                            reason = 'Line count stable';
                         }
                     }
 
                     let targetTop = target.scrollTop;
-                    let logDetail = "";
+                    let logDetail = '';
 
-                    if (effectiveStrategy === "anchor") {
+                    if (effectiveStrategy === 'anchor') {
                         try {
                             const safeLine = Math.max(1, Math.min(target.anchorLine, currentLines));
                             const lineInfo = currentDoc.line(safeLine);
@@ -69,7 +69,7 @@ export class ScrollManager {
                             logDetail = `Line ${safeLine} @ ${block.top} + ${target.anchorOffset} = ${targetTop}`;
                         } catch (e) {
                             targetTop = target.scrollTop; // Fallback
-                            logDetail = "Error (Fallback to pixel)";
+                            logDetail = 'Error (Fallback to pixel)';
                         }
                     } else {
                         logDetail = `Pixel: ${target.scrollTop}`;

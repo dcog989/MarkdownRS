@@ -1,5 +1,5 @@
-import { callBackend } from "$lib/utils/backend";
-import { getCurrentTimestamp } from "$lib/utils/date";
+import { callBackend } from '$lib/utils/backend';
+import { getCurrentTimestamp } from '$lib/utils/date';
 
 export type Bookmark = {
     id: string;
@@ -18,7 +18,7 @@ export const bookmarkStore = $state({
 
 // Logic functions (async actions)
 export async function loadBookmarks() {
-    const bookmarks = await callBackend("get_all_bookmarks", {}, "Database:Init", undefined, {
+    const bookmarks = await callBackend('get_all_bookmarks', {}, 'Database:Init', undefined, {
         ignore: true,
     });
     bookmarkStore.bookmarks = bookmarks || [];
@@ -35,13 +35,13 @@ export async function addBookmark(path: string, title: string, tags: string[] = 
         last_accessed: null,
     };
 
-    await callBackend("add_bookmark", { bookmark }, "Bookmark:Add", undefined, { report: true });
+    await callBackend('add_bookmark', { bookmark }, 'Bookmark:Add', undefined, { report: true });
     bookmarkStore.bookmarks.unshift(bookmark);
     return bookmark;
 }
 
 export async function deleteBookmark(id: string) {
-    await callBackend("delete_bookmark", { id }, "Bookmark:Remove", undefined, { report: true });
+    await callBackend('delete_bookmark', { id }, 'Bookmark:Remove', undefined, { report: true });
     bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => b.id !== id);
 }
 
@@ -56,7 +56,7 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
         path: path ?? bookmarkStore.bookmarks[index].path,
     };
 
-    await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add", undefined, {
+    await callBackend('add_bookmark', { bookmark: updated }, 'Bookmark:Add', undefined, {
         report: true,
     });
     bookmarkStore.bookmarks[index] = updated;
@@ -65,7 +65,7 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
 export async function updateAccessTime(id: string) {
     const lastAccessed = getCurrentTimestamp();
     // fire and forget, ignore errors
-    callBackend("update_bookmark_access_time", { id, lastAccessed }, "File:Read", undefined, {
+    callBackend('update_bookmark_access_time', { id, lastAccessed }, 'File:Read', undefined, {
         ignore: true,
     });
 

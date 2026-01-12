@@ -1,9 +1,9 @@
-import { toggleInsertMode } from "$lib/stores/editorMetrics.svelte";
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
-import { autocompletion, closeBracketsKeymap, completeAnyWord, completionKeymap } from "@codemirror/autocomplete";
-import { defaultKeymap, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { EditorView, keymap } from "@codemirror/view";
+import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
+import { autocompletion, closeBracketsKeymap, completeAnyWord, completionKeymap } from '@codemirror/autocomplete';
+import { defaultKeymap, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { EditorView, keymap } from '@codemirror/view';
 
 export function getAutocompletionConfig() {
     if (!appContext.app.enableAutocomplete) return [];
@@ -27,9 +27,9 @@ export function createWrapExtension() {
         if (column > 0) {
             extensions.push(
                 EditorView.theme({
-                    ".cm-content": { maxWidth: `${column}ch` },
-                    ".cm-scroller": { width: "100%" },
-                })
+                    '.cm-content': { maxWidth: `${column}ch` },
+                    '.cm-scroller': { width: '100%' },
+                }),
             );
         }
     }
@@ -47,7 +47,7 @@ export function createDoubleClickHandler() {
             let end = range.to;
             if (end < view.state.doc.length) {
                 const nextChar = view.state.doc.sliceString(end, end + 1);
-                if (nextChar === " " || nextChar === "\t") end++;
+                if (nextChar === ' ' || nextChar === '\t') end++;
             }
             if (end > range.to) {
                 view.dispatch({ selection: { anchor: range.from, head: end } });
@@ -64,14 +64,14 @@ export function getEditorKeymap(customKeymap: any[] = []) {
         ...customKeymap,
         indentWithTab,
         {
-            key: "Insert",
+            key: 'Insert',
             run: () => {
                 toggleInsertMode();
                 return true;
             },
         },
         {
-            key: "Mod-Home",
+            key: 'Mod-Home',
             run: (v) => {
                 v.dispatch({ selection: { anchor: 0 } });
                 scrollSync.handleFastScroll(v, 0);
@@ -79,7 +79,7 @@ export function getEditorKeymap(customKeymap: any[] = []) {
             },
         },
         {
-            key: "Mod-End",
+            key: 'Mod-End',
             run: (v) => {
                 v.dispatch({ selection: { anchor: v.state.doc.length } });
                 scrollSync.handleFastScroll(v, v.scrollDOM.scrollHeight);
@@ -87,7 +87,7 @@ export function getEditorKeymap(customKeymap: any[] = []) {
             },
         },
         {
-            key: "PageDown",
+            key: 'PageDown',
             run: (v) => {
                 const newScrollTop = v.scrollDOM.scrollTop + v.scrollDOM.clientHeight;
                 v.scrollDOM.scrollTop = newScrollTop;
@@ -98,7 +98,7 @@ export function getEditorKeymap(customKeymap: any[] = []) {
             },
         },
         {
-            key: "PageUp",
+            key: 'PageUp',
             run: (v) => {
                 const newScrollTop = Math.max(0, v.scrollDOM.scrollTop - v.scrollDOM.clientHeight);
                 v.scrollDOM.scrollTop = newScrollTop;

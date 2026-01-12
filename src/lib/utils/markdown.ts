@@ -1,10 +1,10 @@
 // TypeScript interfaces and functions for comrak-based markdown commands
 
-import type { FormatterOptions, MarkdownFlavor, RenderResult } from "$lib/types/markdown";
-import { callBackend } from "./backend";
-import { CONFIG } from "./config";
-import { IncrementalMarkdownRenderer } from "./incrementalMarkdown.svelte";
-import { countWords } from "./textMetrics";
+import type { FormatterOptions, MarkdownFlavor, RenderResult } from '$lib/types/markdown';
+import { callBackend } from './backend';
+import { CONFIG } from './config';
+import { IncrementalMarkdownRenderer } from './incrementalMarkdown.svelte';
+import { countWords } from './textMetrics';
 
 // Global incremental renderer instance (one per document)
 const rendererCache = new Map<string, IncrementalMarkdownRenderer>();
@@ -49,9 +49,9 @@ export function clearAllRendererCaches(): void {
 export async function renderMarkdown(
     content: string,
     flavor?: MarkdownFlavor,
-    documentId: string = "default"
+    documentId: string = 'default',
 ): Promise<RenderResult> {
-    const gfm = !flavor || flavor === "gfm";
+    const gfm = !flavor || flavor === 'gfm';
     const renderer = getRenderer(documentId);
     const html = await renderer.render(content, gfm);
 
@@ -60,7 +60,7 @@ export async function renderMarkdown(
 
     if (content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
         // Offload large file word counting to Rust to avoid UI jank
-        const result = await callBackend("compute_text_metrics", { content }, "Markdown:Render");
+        const result = await callBackend('compute_text_metrics', { content }, 'Markdown:Render');
         if (result) {
             wordCount = result[1];
             charCount = result[2];
@@ -87,7 +87,7 @@ export async function renderMarkdown(
  */
 export async function formatMarkdown(content: string, options?: FormatterOptions): Promise<string> {
     const result = await callBackend(
-        "format_markdown",
+        'format_markdown',
         {
             content,
             flavor: options?.flavor,
@@ -96,11 +96,11 @@ export async function formatMarkdown(content: string, options?: FormatterOptions
             code_block_fence: options?.code_block_fence,
             table_alignment: options?.table_alignment,
         },
-        "Markdown:Render"
+        'Markdown:Render',
     );
 
     if (result === null) {
-        throw new Error("Markdown formatting failed: null result");
+        throw new Error('Markdown formatting failed: null result');
     }
 
     return result;
@@ -112,7 +112,7 @@ export async function formatMarkdown(content: string, options?: FormatterOptions
  * @returns Array of flavor names
  */
 export async function getMarkdownFlavors(): Promise<string[]> {
-    const result = await callBackend("get_markdown_flavors", {}, "Markdown:Render");
+    const result = await callBackend('get_markdown_flavors', {}, 'Markdown:Render');
 
     if (result === null) {
         return [];
@@ -125,12 +125,12 @@ export async function getMarkdownFlavors(): Promise<string[]> {
  * Helper to check if a flavor is supported
  */
 export function isValidFlavor(flavor: string): flavor is MarkdownFlavor {
-    return flavor === "commonmark" || flavor === "gfm";
+    return flavor === 'commonmark' || flavor === 'gfm';
 }
 
 /**
  * Get display name for a markdown flavor
  */
 export function getFlavorDisplayName(flavor: MarkdownFlavor): string {
-    return flavor === "commonmark" ? "CommonMark" : "GitHub Flavored Markdown";
+    return flavor === 'commonmark' ? 'CommonMark' : 'GitHub Flavored Markdown';
 }

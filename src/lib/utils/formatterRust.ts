@@ -1,21 +1,18 @@
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { callBackend } from "$lib/utils/backend";
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { callBackend } from '$lib/utils/backend';
 
 export interface FormatterOptions {
     listIndent: number;
-    codeBlockFence: "```" | "~~~";
-    bulletChar: "-" | "*" | "+";
+    codeBlockFence: '```' | '~~~';
+    bulletChar: '-' | '*' | '+';
     tableAlignment: boolean;
 }
 
-export async function formatMarkdown(
-    content: string,
-    options: Partial<FormatterOptions> = {}
-): Promise<string> {
+export async function formatMarkdown(content: string, options: Partial<FormatterOptions> = {}): Promise<string> {
     const defaults: FormatterOptions = {
         listIndent: appContext.app.defaultIndent,
-        codeBlockFence: "```",
-        bulletChar: "-",
+        codeBlockFence: '```',
+        bulletChar: '-',
         tableAlignment: true,
     };
 
@@ -31,14 +28,14 @@ export async function formatMarkdown(
 
     try {
         const result = await callBackend(
-            "format_markdown",
+            'format_markdown',
             {
                 content,
                 ...apiOptions,
             },
-            "Markdown:Render",
+            'Markdown:Render',
             undefined,
-            { report: true }
+            { report: true },
         );
         return result ?? content;
     } catch (e) {

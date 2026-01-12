@@ -2,17 +2,17 @@
 export const appState = $state({
     activeTabId: null as string | null,
     splitView: true,
-    theme: "dark" as "dark" | "light",
-    activeTheme: "default-dark",
-    availableThemes: ["default-dark", "default-light"] as string[],
+    theme: 'dark' as 'dark' | 'light',
+    activeTheme: 'default-dark',
+    availableThemes: ['default-dark', 'default-light'] as string[],
     splitPercentage: 0.5,
-    splitOrientation: "vertical" as "vertical" | "horizontal",
-    tabCycling: "mru" as "mru" | "sequential",
+    splitOrientation: 'vertical' as 'vertical' | 'horizontal',
+    tabCycling: 'mru' as 'mru' | 'sequential',
     tabWidthMin: 100,
     tabWidthMax: 200,
     statusBarTransparency: 0,
-    newTabPosition: "end" as "beginning" | "right" | "end",
-    startupBehavior: "last-focused" as "first" | "last-focused" | "new",
+    newTabPosition: 'end' as 'beginning' | 'right' | 'end',
+    startupBehavior: 'last-focused' as 'first' | 'last-focused' | 'new',
     editorFontFamily:
         "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace",
     editorFontSize: 14,
@@ -23,23 +23,23 @@ export const appState = $state({
     recentChangesTimespan: 60,
     recentChangesCount: 16,
     undoDepth: 100,
-    previewFontFamily: "system-ui, -apple-system, sans-serif",
+    previewFontFamily: 'system-ui, -apple-system, sans-serif',
     previewFontSize: 16,
     gfmEnabled: true,
-    markdownFlavor: "gfm" as "commonmark" | "gfm",
-    logLevel: "info" as "trace" | "debug" | "info" | "warn" | "error",
+    markdownFlavor: 'gfm' as 'commonmark' | 'gfm',
+    logLevel: 'info' as 'trace' | 'debug' | 'info' | 'warn' | 'error',
     formatOnSave: false,
     formatOnPaste: false,
     defaultIndent: 2,
-    formatterBulletChar: "-" as "-" | "*" | "+",
-    formatterCodeFence: "```" as "```" | "~~~",
+    formatterBulletChar: '-' as '-' | '*' | '+',
+    formatterCodeFence: '```' as '```' | '~~~',
     formatterTableAlignment: true,
-    lineEndingPreference: "system" as "system" | "LF" | "CRLF",
+    lineEndingPreference: 'system' as 'system' | 'LF' | 'CRLF',
     tooltipDelay: 1000,
     findPanelTransparent: false,
     findPanelCloseOnBlur: false,
-    spellcheckDictionaries: ["en"] as string[],
-    specialistDictionaries: ["software-terms", "companies"] as string[],
+    spellcheckDictionaries: ['en'] as string[],
+    specialistDictionaries: ['software-terms', 'companies'] as string[],
     tabNameFromContent: false,
     wrapGuideColumn: 0,
     doubleClickSelectsTrailingSpace: false,
@@ -51,12 +51,11 @@ export function toggleSplitView() {
     appState.splitView = !appState.splitView;
 }
 
-export function setTheme(newTheme: "dark" | "light") {
+export function setTheme(newTheme: 'dark' | 'light') {
     appState.theme = newTheme;
-    appState.activeTheme = newTheme === "dark" ? "default-dark" : "default-light";
+    appState.activeTheme = newTheme === 'dark' ? 'default-dark' : 'default-light';
 }
 
 export function toggleOrientation() {
-    appState.splitOrientation =
-        appState.splitOrientation === "vertical" ? "horizontal" : "vertical";
+    appState.splitOrientation = appState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
 }

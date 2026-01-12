@@ -1,4 +1,4 @@
-import type { EditorView } from "@codemirror/view";
+import type { EditorView } from '@codemirror/view';
 
 /**
  * Manages scroll position capture and restoration for CodeMirror editor views
@@ -23,16 +23,16 @@ export class ScrollManager {
      * @param view - The CodeMirror EditorView instance
      * @param mode - How to restore: "pixel" for exact position, "percentage" for relative position
      */
-    restore(view: EditorView, mode: "pixel" | "percentage" = "pixel"): void {
+    restore(view: EditorView, mode: 'pixel' | 'percentage' = 'pixel'): void {
         const dom = view.scrollDOM;
-        
-        if (mode === "pixel") {
+
+        if (mode === 'pixel') {
             dom.scrollTop = this.savedScrollTop;
             dom.scrollLeft = this.savedScrollLeft;
-        } else if (mode === "percentage") {
+        } else if (mode === 'percentage') {
             const maxTop = dom.scrollHeight - dom.clientHeight;
             const maxLeft = dom.scrollWidth - dom.clientWidth;
-            
+
             if (maxTop > 0) {
                 const percentage = this.savedScrollTop / maxTop;
                 dom.scrollTop = percentage * maxTop;

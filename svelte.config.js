@@ -1,28 +1,25 @@
-import adapter from "@sveltejs/adapter-static";
-import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
     preprocess: vitePreprocess(),
     onwarn: (warning, handler) => {
-        if (
-            warning.code === "state_referenced_locally" &&
-            warning.filename?.includes(".svelte-kit")
-        ) {
+        if (warning.code === 'state_referenced_locally' && warning.filename?.includes('.svelte-kit')) {
             return;
         }
         handler(warning);
     },
     kit: {
         adapter: adapter({
-            pages: "build",
-            assets: "build",
-            fallback: "404.html",
+            pages: 'build',
+            assets: 'build',
+            fallback: '404.html',
             precompress: false,
             strict: true,
         }),
         alias: {
-            $lib: "./src/lib",
+            $lib: './src/lib',
         },
     },
 };

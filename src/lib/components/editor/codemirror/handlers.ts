@@ -1,5 +1,5 @@
-import { prefetchSuggestions } from "$lib/utils/spellcheck.svelte.ts";
-import { EditorView } from "@codemirror/view";
+import { prefetchSuggestions } from '$lib/utils/spellcheck.svelte.ts';
+import { EditorView } from '@codemirror/view';
 
 /**
  * Handles smart backtick insertion for code blocks.
@@ -7,19 +7,19 @@ import { EditorView } from "@codemirror/view";
  * or handles inline code backticks.
  */
 export const smartBacktickHandler = EditorView.inputHandler.of((view, from, to, text) => {
-    if (text === "`" && from === to) {
+    if (text === '`' && from === to) {
         const state = view.state;
         const before = state.sliceDoc(Math.max(0, from - 2), from);
         const after = state.sliceDoc(from, from + 1);
 
         // Skip over closing backtick if it exists
-        if (after === "`" && state.sliceDoc(Math.max(0, from - 1), from) === "`") {
+        if (after === '`' && state.sliceDoc(Math.max(0, from - 1), from) === '`') {
             view.dispatch({ selection: { anchor: from + 1 } });
             return true;
         }
 
         // Handle triple backtick expansion
-        if (before === "``") {
+        if (before === '``') {
             const line = state.doc.lineAt(from);
             const textBefore = line.text.slice(0, from - line.from - 2);
 
@@ -30,9 +30,9 @@ export const smartBacktickHandler = EditorView.inputHandler.of((view, from, to, 
                     changes: {
                         from,
                         to,
-                        insert: "`\n" + indent + "\n" + indent + "```"
+                        insert: '`\n' + indent + '\n' + indent + '```',
                     },
-                    selection: { anchor: from + 1 + indent.length + 1 }
+                    selection: { anchor: from + 1 + indent.length + 1 },
                 });
                 return true;
             }
@@ -40,8 +40,8 @@ export const smartBacktickHandler = EditorView.inputHandler.of((view, from, to, 
 
         // Auto-close single backtick
         view.dispatch({
-            changes: { from, to, insert: "``" },
-            selection: { anchor: from + 1 }
+            changes: { from, to, insert: '``' },
+            selection: { anchor: from + 1 },
         });
         return true;
     }

@@ -1,4 +1,4 @@
-export type DialogResult = "save" | "discard" | "cancel";
+export type DialogResult = 'save' | 'discard' | 'cancel';
 
 export type DialogOptions = {
     title: string;
@@ -21,7 +21,7 @@ let idCounter = 0;
 // Public reactive state
 export const dialogStore = $state({
     isOpen: false,
-    options: { title: "", message: "" } as DialogOptions,
+    options: { title: '', message: '' } as DialogOptions,
 });
 
 function showNext() {
@@ -41,9 +41,9 @@ export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
         queue.push({
             id,
             options: {
-                saveLabel: "Save",
+                saveLabel: 'Save',
                 discardLabel: "Don't Save",
-                cancelLabel: "Cancel",
+                cancelLabel: 'Cancel',
                 ...options,
             },
             resolve,
@@ -57,7 +57,7 @@ export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
 
 export function resolveDialog(result: DialogResult) {
     if (queue.length === 0) {
-        console.warn("resolveDialog() called with empty queue");
+        console.warn('resolveDialog() called with empty queue');
         return;
     }
 

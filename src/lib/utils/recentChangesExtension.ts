@@ -1,40 +1,40 @@
-import { appContext } from "$lib/stores/state.svelte.ts";
-import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-import { gutter, GutterMarker, lineNumbers, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { appContext } from '$lib/stores/state.svelte.ts';
+import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+import { gutter, GutterMarker, lineNumbers, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 class LineNumberMarker extends GutterMarker {
     constructor(
         private lineNo: number,
         private alpha: number,
-        private deletionAlpha: number
+        private deletionAlpha: number,
     ) {
         super();
     }
 
     toDOM() {
-        const span = document.createElement("span");
+        const span = document.createElement('span');
         span.textContent = String(this.lineNo);
-        span.style.position = "relative";
-        span.style.display = "block";
+        span.style.position = 'relative';
+        span.style.display = 'block';
 
         if (this.alpha > 0) {
             span.style.color = `color-mix(in srgb, var(--color-highlight-line), var(--color-fg-muted) ${Math.round((1 - this.alpha) * 100)}%)`;
-            span.style.fontWeight = "bold";
+            span.style.fontWeight = 'bold';
 
             const shadowAlpha = Math.round(this.alpha * 40);
             span.style.textShadow = `0 0 4px color-mix(in srgb, var(--color-highlight-line), transparent ${100 - shadowAlpha}%)`;
         }
 
         if (this.deletionAlpha > 0) {
-            const delMarker = document.createElement("div");
-            delMarker.style.position = "absolute";
-            delMarker.style.bottom = "-2px";
-            delMarker.style.left = "0";
-            delMarker.style.right = "0";
-            delMarker.style.height = "2px";
+            const delMarker = document.createElement('div');
+            delMarker.style.position = 'absolute';
+            delMarker.style.bottom = '-2px';
+            delMarker.style.left = '0';
+            delMarker.style.right = '0';
+            delMarker.style.height = '2px';
             delMarker.style.backgroundColor = `color-mix(in srgb, var(--color-danger), transparent ${Math.round((1 - this.deletionAlpha) * 100)}%)`;
-            delMarker.style.pointerEvents = "none";
-            delMarker.style.zIndex = "10";
+            delMarker.style.pointerEvents = 'none';
+            delMarker.style.zIndex = '10';
             span.appendChild(delMarker);
         }
 
@@ -51,10 +51,7 @@ class LineNumberMarker extends GutterMarker {
 }
 
 export function createRecentChangesHighlighter(tracker: LineChangeTracker | undefined) {
-    if (
-        !tracker ||
-        (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0)
-    ) {
+    if (!tracker || (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0)) {
         return [lineNumbers()];
     }
 
@@ -65,7 +62,7 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                     if (!update.docChanged || !tracker) return;
 
                     const isHistoryAction = update.transactions.some(
-                        (tr) => tr.isUserEvent("undo") || tr.isUserEvent("redo")
+                        (tr) => tr.isUserEvent('undo') || tr.isUserEvent('redo'),
                     );
 
                     if (isHistoryAction) {
@@ -83,10 +80,7 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                     }
 
                     const isUserAction = update.transactions.some(
-                        (tr) =>
-                            tr.isUserEvent("input") ||
-                            tr.isUserEvent("delete") ||
-                            tr.isUserEvent("move")
+                        (tr) => tr.isUserEvent('input') || tr.isUserEvent('delete') || tr.isUserEvent('move'),
                     );
 
                     if (!isUserAction) return;
@@ -127,10 +121,10 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                         deletions.forEach((line) => tracker.recordDeletion(line));
                     }
                 }
-            }
+            },
         ),
         gutter({
-            class: "cm-lineNumbers",
+            class: 'cm-lineNumbers',
             lineMarker(view, line) {
                 const lineNo = view.state.doc.lineAt(line.from).number;
                 let alpha = 0;
@@ -140,13 +134,13 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                     alpha = tracker.getLineAlpha(
                         lineNo,
                         appContext.app.recentChangesTimespan,
-                        appContext.app.recentChangesCount
+                        appContext.app.recentChangesCount,
                     );
 
                     deletionAlpha = tracker.getDeletionAlpha(
                         lineNo,
                         appContext.app.recentChangesTimespan,
-                        appContext.app.recentChangesCount
+                        appContext.app.recentChangesCount,
                     );
                 }
 

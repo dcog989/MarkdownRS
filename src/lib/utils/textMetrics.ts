@@ -1,4 +1,4 @@
-import { CONFIG } from "./config";
+import { CONFIG } from './config';
 
 export interface TextMetrics {
     lineCount: number;
@@ -14,7 +14,7 @@ export interface CursorMetrics {
     currentWordIndex: number;
 }
 
-const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
+const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
 
 export function countWords(text: string): number {
     if (!text.trim()) return 0;
@@ -31,10 +31,7 @@ export function fastCountWords(text: string): number {
     for (let i = 0; i < text.length; i++) {
         const code = text.charCodeAt(i);
         const isAlpha =
-            (code >= 65 && code <= 90) ||
-            (code >= 97 && code <= 122) ||
-            (code >= 48 && code <= 57) ||
-            code === 39;
+            (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || (code >= 48 && code <= 57) || code === 39;
 
         if (isAlpha) {
             if (!inWord) {
@@ -51,7 +48,7 @@ export function fastCountWords(text: string): number {
 export function calculateCursorMetrics(
     content: string,
     cursorOffset: number,
-    line: { number: number; from: number; text: string }
+    line: { number: number; from: number; text: string },
 ): CursorMetrics {
     let currentWordIndex = 0;
 

@@ -1,5 +1,5 @@
-import { RangeSetBuilder, type Extension } from "@codemirror/state";
-import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { RangeSetBuilder, type Extension } from '@codemirror/state';
+import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 // Regex to match file paths: Windows paths (C:\...), Unix paths (/...), or relative paths (./... or ../....)
 // Unix absolute paths must have at least one slash after the initial slash (e.g., /home/user, not /hibernate)
@@ -8,7 +8,7 @@ const FILE_PATH_REGEX =
 
 // Mark to apply to file paths
 const filePathMark = Decoration.mark({
-    class: "cm-file-path",
+    class: 'cm-file-path',
 });
 
 function findFilePaths(view: EditorView) {
@@ -56,21 +56,21 @@ export const filePathPlugin: Extension = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Theme to style file paths
 export const filePathTheme = EditorView.baseTheme({
-    ".cm-file-path": {
-        color: "var(--color-accent-link)",
-        textDecoration: "underline",
-        "&:hover": {
-            color: "var(--color-accent-link-hover)",
-            textDecoration: "underline",
+    '.cm-file-path': {
+        color: 'var(--color-accent-link)',
+        textDecoration: 'underline',
+        '&:hover': {
+            color: 'var(--color-accent-link-hover)',
+            textDecoration: 'underline',
         },
     },
     // Only show pointer cursor when the editor has the modifier-down class
-    "&.cm-modifier-down .cm-file-path": {
-        cursor: "pointer",
+    '&.cm-modifier-down .cm-file-path': {
+        cursor: 'pointer',
     },
 });

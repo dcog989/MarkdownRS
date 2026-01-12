@@ -1,12 +1,12 @@
-import { updateContent } from "$lib/stores/editorStore.svelte";
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { SearchQuery, setSearchQuery } from "@codemirror/search";
-import { EditorView } from "@codemirror/view";
+import { updateContent } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { SearchQuery, setSearchQuery } from '@codemirror/search';
+import { EditorView } from '@codemirror/view';
 
 // State
 export const searchState = $state({
-    findText: "",
-    replaceText: "",
+    findText: '',
+    replaceText: '',
     matchCase: false,
     matchWholeWord: false,
     useRegex: false,
@@ -26,10 +26,10 @@ export function getSearchQuery(): SearchQuery {
             new RegExp(searchState.findText);
             searchState.regexError = null;
         } catch (e) {
-            searchState.regexError = e instanceof Error ? e.message : "Invalid regex pattern";
+            searchState.regexError = e instanceof Error ? e.message : 'Invalid regex pattern';
             // Return a safe non-regex query to prevent CodeMirror internal crashes
             return new SearchQuery({
-                search: "",
+                search: '',
                 caseSensitive: searchState.matchCase,
                 wholeWord: searchState.matchWholeWord,
             });
@@ -143,7 +143,7 @@ export function selectNearestMatch(view: EditorView | undefined) {
 export function clearSearch(view: EditorView | undefined) {
     if (!view) return;
     view.dispatch({
-        effects: setSearchQuery.of(new SearchQuery({ search: "" })),
+        effects: setSearchQuery.of(new SearchQuery({ search: '' })),
     });
     searchState.currentMatches = 0;
     searchState.currentIndex = 0;
@@ -194,14 +194,14 @@ function buildSearchRegex(): RegExp | null {
     try {
         let pattern = searchState.findText;
         if (!searchState.useRegex) {
-            pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         if (searchState.matchWholeWord) {
             pattern = `\\b${pattern}\\b`;
         }
 
-        const flags = searchState.matchCase ? "g" : "gi";
+        const flags = searchState.matchCase ? 'g' : 'gi';
         const regex = new RegExp(pattern, flags);
 
         // Clear any previous error on success
@@ -210,7 +210,7 @@ function buildSearchRegex(): RegExp | null {
     } catch (e) {
         // Set error message for user feedback
         if (searchState.useRegex && searchState.findText) {
-            searchState.regexError = e instanceof Error ? e.message : "Invalid regex pattern";
+            searchState.regexError = e instanceof Error ? e.message : 'Invalid regex pattern';
         } else {
             searchState.regexError = null;
         }

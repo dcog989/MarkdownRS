@@ -1,6 +1,6 @@
-import type { OperationId } from "$lib/config/textOperationsRegistry";
-import type { Bookmark } from "$lib/stores/bookmarkStore.svelte";
-import type { RenderResult } from "./markdown";
+import type { OperationId } from '$lib/config/textOperationsRegistry';
+import type { Bookmark } from '$lib/stores/bookmarkStore.svelte';
+import type { RenderResult } from './markdown';
 
 export interface AppInfo {
     name: string;
@@ -28,7 +28,7 @@ export interface TabData {
 }
 
 // Format document is handled via format_markdown, not transform_text_content
-export type TextTransformId = Exclude<OperationId, "format-document">;
+export type TextTransformId = Exclude<OperationId, 'format-document'>;
 
 // Maps Rust command names to their Argument and Return types
 export interface BackendCommands {
@@ -178,7 +178,7 @@ export interface BackendCommands {
     };
 
     // Window State (Plugin)
-    "plugin:window-state|save_window_state": {
+    'plugin:window-state|save_window_state': {
         args: Record<string, never>;
         return: void;
     };

@@ -34,7 +34,7 @@ export class SortableController<T> {
 
         // Ignore clicks on close buttons or interactive elements
         const target = e.target as HTMLElement;
-        if (target.closest(".close-btn-wrapper") || target.closest("button")) return;
+        if (target.closest('.close-btn-wrapper') || target.closest('button')) return;
 
         e.preventDefault();
 
@@ -52,7 +52,7 @@ export class SortableController<T> {
         // Cache layout
         if (this.options.container) {
             this.layoutCache = Array.from(this.options.container.children)
-                .filter((el) => el.getAttribute("role") === "listitem")
+                .filter((el) => el.getAttribute('role') === 'listitem')
                 .map((el) => {
                     const r = el.getBoundingClientRect();
                     return { center: r.left + r.width / 2, width: r.width };
@@ -61,9 +61,9 @@ export class SortableController<T> {
 
         this.options.onDragStart(id, e.clientX, offset);
 
-        window.addEventListener("pointermove", this._handleMove);
-        window.addEventListener("pointerup", this._handleUp);
-        window.addEventListener("pointercancel", this._handleUp);
+        window.addEventListener('pointermove', this._handleMove);
+        window.addEventListener('pointerup', this._handleUp);
+        window.addEventListener('pointercancel', this._handleUp);
     }
 
     handleMove(e: PointerEvent) {
@@ -103,9 +103,9 @@ export class SortableController<T> {
     }
 
     private cleanupListeners() {
-        window.removeEventListener("pointermove", this._handleMove);
-        window.removeEventListener("pointerup", this._handleUp);
-        window.removeEventListener("pointercancel", this._handleUp);
+        window.removeEventListener('pointermove', this._handleMove);
+        window.removeEventListener('pointerup', this._handleUp);
+        window.removeEventListener('pointercancel', this._handleUp);
     }
 
     destroy() {
@@ -131,7 +131,7 @@ export class SortableController<T> {
 
         // Find index of dragged item in current list
         const currentIndex = this.options.items.findIndex(
-            (item) => String(item[this.options.idKey]) === this.draggingId
+            (item) => String(item[this.options.idKey]) === this.draggingId,
         );
         if (currentIndex === -1) return;
 

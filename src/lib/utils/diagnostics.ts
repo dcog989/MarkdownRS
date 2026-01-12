@@ -1,5 +1,5 @@
-import { info } from "@tauri-apps/plugin-log";
-import { throttle } from "./timing";
+import { info } from '@tauri-apps/plugin-log';
+import { throttle } from './timing';
 
 // Use Vite's environment variable to strip logging in production
 const ENABLE_SCROLL_LOGGING = import.meta.env.DEV;
@@ -11,22 +11,18 @@ const logToBackend = throttle((message: string) => {
     info(message).catch(() => {});
 }, 100);
 
-export function logScroll(
-    source: "Editor" | "Preview",
-    action: string,
-    data?: Record<string, any>
-) {
+export function logScroll(source: 'Editor' | 'Preview', action: string, data?: Record<string, any>) {
     // Immediate return in production - allows for dead code elimination/optimization
     if (!ENABLE_SCROLL_LOGGING) return;
 
-    const prefix = source === "Editor" ? "[Editor]" : "[Preview]";
+    const prefix = source === 'Editor' ? '[Editor]' : '[Preview]';
     let message = `${prefix} ${action}`;
 
     // Expensive string construction only happens if logging is actually enabled
     if (data) {
         const dataStr = Object.entries(data)
             .map(([k, v]) => `${k}=${v}`)
-            .join(", ");
+            .join(', ');
         message += ` | ${dataStr}`;
     }
 

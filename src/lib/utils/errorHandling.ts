@@ -1,31 +1,31 @@
-import { showToast } from "$lib/stores/toastStore.svelte";
-import { error as logError, info as logInfo, warn as logWarn } from "@tauri-apps/plugin-log";
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
 export type ErrorContext =
-    | "Session:Save"
-    | "Session:Load"
-    | "Session:Vacuum"
-    | "File:Read"
-    | "File:Write"
-    | "File:Metadata"
-    | "Markdown:Render"
-    | "Settings:Load"
-    | "Settings:Save"
-    | "Editor:Init"
-    | "Database:Init"
-    | "Database:Migration"
-    | "Transform:Text"
-    | "Dictionary:Add"
-    | "UI:DragDrop"
-    | "FileWatcher:Watch"
-    | "FileWatcher:Unwatch"
-    | "Export:PDF"
-    | "Export:HTML"
-    | "Spellcheck:Init"
-    | "Bookmark:Add"
-    | "Bookmark:Remove";
+    | 'Session:Save'
+    | 'Session:Load'
+    | 'Session:Vacuum'
+    | 'File:Read'
+    | 'File:Write'
+    | 'File:Metadata'
+    | 'Markdown:Render'
+    | 'Settings:Load'
+    | 'Settings:Save'
+    | 'Editor:Init'
+    | 'Database:Init'
+    | 'Database:Migration'
+    | 'Transform:Text'
+    | 'Dictionary:Add'
+    | 'UI:DragDrop'
+    | 'FileWatcher:Watch'
+    | 'FileWatcher:Unwatch'
+    | 'Export:PDF'
+    | 'Export:HTML'
+    | 'Spellcheck:Init'
+    | 'Bookmark:Add'
+    | 'Bookmark:Remove';
 
-export type ErrorSeverity = "info" | "warning" | "error" | "critical";
+export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 
 export interface ErrorOptions {
     showToast?: boolean;
@@ -40,8 +40,8 @@ export interface ErrorOptions {
 function safeStringify(obj: any): string {
     try {
         return JSON.stringify(obj, (key, value) => {
-            if (typeof value === "string" && value.length > 500) {
-                return value.substring(0, 500) + "... [truncated]";
+            if (typeof value === 'string' && value.length > 500) {
+                return value.substring(0, 500) + '... [truncated]';
             }
             if (Array.isArray(value) && value.length > 20) {
                 // Truncate large arrays, but keep structure valid for JSON
@@ -50,7 +50,7 @@ function safeStringify(obj: any): string {
             return value;
         });
     } catch (e) {
-        return "[Circular or Non-Serializable Data]";
+        return '[Circular or Non-Serializable Data]';
     }
 }
 
@@ -64,13 +64,13 @@ export class AppError extends Error {
     constructor(
         context: ErrorContext,
         message: string,
-        options: Omit<ErrorOptions, "userMessage"> & { originalError?: Error } = {}
+        options: Omit<ErrorOptions, 'userMessage'> & { originalError?: Error } = {},
     ) {
         super(message);
-        this.name = "AppError";
+        this.name = 'AppError';
         this.context = context;
         this.timestamp = new Date();
-        this.severity = options.severity || "error";
+        this.severity = options.severity || 'error';
         this.additionalInfo = options.additionalInfo;
         this.originalError = options.originalError;
 
@@ -79,11 +79,7 @@ export class AppError extends Error {
         }
     }
 
-    static from(
-        context: ErrorContext,
-        error: unknown,
-        options: Omit<ErrorOptions, "userMessage"> = {}
-    ): AppError {
+    static from(context: ErrorContext, error: unknown, options: Omit<ErrorOptions, 'userMessage'> = {}): AppError {
         if (error instanceof AppError) {
             return error;
         }
@@ -101,12 +97,7 @@ export class AppError extends Error {
     }
 
     private process(options: ErrorOptions = {}): void {
-        const {
-            showToast: shouldShowToast = true,
-            userMessage,
-            toastDuration,
-            logToDisk = true,
-        } = options;
+        const { showToast: shouldShowToast = true, userMessage, toastDuration, logToDisk = true } = options;
 
         this.logError(logToDisk);
 
@@ -115,15 +106,15 @@ export class AppError extends Error {
             const duration = toastDuration || this.getDefaultToastDuration();
 
             switch (this.severity) {
-                case "critical":
-                case "error":
-                    showToast("error", message, duration);
+                case 'critical':
+                case 'error':
+                    showToast('error', message, duration);
                     break;
-                case "warning":
-                    showToast("warning", message, duration);
+                case 'warning':
+                    showToast('warning', message, duration);
                     break;
-                case "info":
-                    showToast("info", message, duration);
+                case 'info':
+                    showToast('info', message, duration);
                     break;
             }
         }
@@ -134,27 +125,27 @@ export class AppError extends Error {
         const logMessage = `[${timestamp}] [${this.context}] ${this.message}`;
 
         switch (this.severity) {
-            case "critical":
-            case "error":
+            case 'critical':
+            case 'error':
                 console.error(logMessage);
                 break;
-            case "warning":
+            case 'warning':
                 console.warn(logMessage);
                 break;
-            case "info":
+            case 'info':
                 console.info(logMessage);
                 break;
         }
 
         if (this.additionalInfo) {
-            console.log("Additional Info:", safeStringify(this.additionalInfo));
+            console.log('Additional Info:', safeStringify(this.additionalInfo));
         }
 
         if (this.stack) {
-            console.error("Stack:", this.stack);
+            console.error('Stack:', this.stack);
         }
         if (this.originalError?.stack) {
-            console.error("Original Stack:", this.originalError.stack);
+            console.error('Original Stack:', this.originalError.stack);
         }
 
         if (toDisk) {
@@ -162,7 +153,7 @@ export class AppError extends Error {
                 const diskMessage = this.formatForDiskLog();
                 await logError(diskMessage);
             } catch (e) {
-                console.error("Failed to write to disk log:", e);
+                console.error('Failed to write to disk log:', e);
             }
         }
     }
@@ -178,63 +169,63 @@ export class AppError extends Error {
             parts.push(`Original Error: ${this.originalError.message}`);
         }
 
-        return parts.join(" | ");
+        return parts.join(' | ');
     }
 
     private getUserFriendlyMessage(): string {
         if (
-            this.message.includes("No such file") ||
-            this.message.includes("does not exist") ||
-            this.message.includes("not found")
+            this.message.includes('No such file') ||
+            this.message.includes('does not exist') ||
+            this.message.includes('not found')
         ) {
             return this.getFileNotFoundMessage();
         }
 
-        if (this.message.includes("Permission denied") || this.message.includes("Access denied")) {
+        if (this.message.includes('Permission denied') || this.message.includes('Access denied')) {
             return this.getPermissionDeniedMessage();
         }
 
         switch (this.context) {
-            case "File:Read":
-                return "Failed to read file";
-            case "File:Write":
-                return "Failed to save file";
-            case "File:Metadata":
-                return "Failed to read file metadata";
-            case "Session:Save":
-                return "Failed to save session";
-            case "Session:Load":
-                return "Failed to load previous session";
-            case "Markdown:Render":
-                return "Failed to render markdown";
-            case "Settings:Save":
-                return "Failed to save settings";
-            case "Settings:Load":
-                return "Failed to load settings";
-            case "Transform:Text":
-                return "Failed to transform text";
-            case "Dictionary:Add":
-                return "Failed to add word to dictionary";
-            case "Export:PDF":
-            case "Export:HTML":
-                return "Export failed";
-            case "Bookmark:Add":
-                return "Failed to add bookmark";
-            case "Bookmark:Remove":
-                return "Failed to remove bookmark";
+            case 'File:Read':
+                return 'Failed to read file';
+            case 'File:Write':
+                return 'Failed to save file';
+            case 'File:Metadata':
+                return 'Failed to read file metadata';
+            case 'Session:Save':
+                return 'Failed to save session';
+            case 'Session:Load':
+                return 'Failed to load previous session';
+            case 'Markdown:Render':
+                return 'Failed to render markdown';
+            case 'Settings:Save':
+                return 'Failed to save settings';
+            case 'Settings:Load':
+                return 'Failed to load settings';
+            case 'Transform:Text':
+                return 'Failed to transform text';
+            case 'Dictionary:Add':
+                return 'Failed to add word to dictionary';
+            case 'Export:PDF':
+            case 'Export:HTML':
+                return 'Export failed';
+            case 'Bookmark:Add':
+                return 'Failed to add bookmark';
+            case 'Bookmark:Remove':
+                return 'Failed to remove bookmark';
             default:
-                return this.message || "An error occurred";
+                return this.message || 'An error occurred';
         }
     }
 
     private getFileNotFoundMessage(): string {
         const fileName = this.extractFileName();
-        return fileName ? `File not found: ${fileName}` : "File not found";
+        return fileName ? `File not found: ${fileName}` : 'File not found';
     }
 
     private getPermissionDeniedMessage(): string {
         const fileName = this.extractFileName();
-        return fileName ? `Cannot access file: ${fileName}` : "Permission denied";
+        return fileName ? `Cannot access file: ${fileName}` : 'Permission denied';
     }
 
     private extractFileName(): string | null {
@@ -247,68 +238,60 @@ export class AppError extends Error {
 
     private getDefaultToastDuration(): number {
         switch (this.severity) {
-            case "critical":
+            case 'critical':
                 return 6000;
-            case "error":
+            case 'error':
                 return 4000;
-            case "warning":
+            case 'warning':
                 return 3000;
-            case "info":
+            case 'info':
                 return 2000;
         }
     }
 
-    static async warn(
-        context: ErrorContext,
-        message: string,
-        options: ErrorOptions = {}
-    ): Promise<void> {
+    static async warn(context: ErrorContext, message: string, options: ErrorOptions = {}): Promise<void> {
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] [${context}] ${message}`;
 
         console.warn(logMessage);
 
         if (options.additionalInfo) {
-            console.warn("Additional Info:", safeStringify(options.additionalInfo));
+            console.warn('Additional Info:', safeStringify(options.additionalInfo));
         }
 
         if (options.logToDisk !== false) {
             try {
                 await logWarn(`[${context}] ${message}`);
             } catch (e) {
-                console.error("Failed to write warning to disk log:", e);
+                console.error('Failed to write warning to disk log:', e);
             }
         }
 
         if (options.showToast) {
-            showToast("warning", options.userMessage || message, options.toastDuration || 3000);
+            showToast('warning', options.userMessage || message, options.toastDuration || 3000);
         }
     }
 
-    static async info(
-        context: ErrorContext,
-        message: string,
-        options: ErrorOptions = {}
-    ): Promise<void> {
+    static async info(context: ErrorContext, message: string, options: ErrorOptions = {}): Promise<void> {
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] [${context}] ${message}`;
 
         console.info(logMessage);
 
         if (options.additionalInfo) {
-            console.info("Additional Info:", safeStringify(options.additionalInfo));
+            console.info('Additional Info:', safeStringify(options.additionalInfo));
         }
 
         if (options.logToDisk !== false) {
             try {
                 await logInfo(`[${context}] ${message}`);
             } catch (e) {
-                console.error("Failed to write info to disk log:", e);
+                console.error('Failed to write info to disk log:', e);
             }
         }
 
         if (options.showToast) {
-            showToast("info", options.userMessage || message, options.toastDuration || 2000);
+            showToast('info', options.userMessage || message, options.toastDuration || 2000);
         }
     }
 
@@ -326,7 +309,7 @@ export class AppError extends Error {
 export function withErrorBoundary<T extends any[], R>(
     fn: (...args: T) => Promise<R>,
     context: ErrorContext,
-    options: ErrorOptions = {}
+    options: ErrorOptions = {},
 ): (...args: T) => Promise<R | null> {
     return async (...args: T): Promise<R | null> => {
         try {
@@ -341,7 +324,7 @@ export function withErrorBoundary<T extends any[], R>(
 export function withErrorBoundarySync<T extends any[], R>(
     fn: (...args: T) => R,
     context: ErrorContext,
-    options: ErrorOptions = {}
+    options: ErrorOptions = {},
 ): (...args: T) => R | null {
     return (...args: T): R | null => {
         try {
@@ -354,7 +337,7 @@ export function withErrorBoundarySync<T extends any[], R>(
 }
 
 export function handleFileSystemError(err: unknown, path?: string): void {
-    AppError.handle("File:Read", err, {
+    AppError.handle('File:Read', err, {
         showToast: true,
         additionalInfo: path ? { path } : undefined,
     });

@@ -1,5 +1,5 @@
-import { syntaxTree } from "@codemirror/language";
-import { RangeSetBuilder } from "@codemirror/state";
+import { syntaxTree } from '@codemirror/language';
+import { RangeSetBuilder } from '@codemirror/state';
 import {
     Decoration,
     MatchDecorator,
@@ -7,14 +7,14 @@ import {
     type DecorationSet,
     type EditorView,
     type ViewUpdate,
-} from "@codemirror/view";
+} from '@codemirror/view';
 
 // Decorator for ==highlight== syntax
 const highlightMatcher = new MatchDecorator({
     regexp: /==([^=]+)==/g,
     decoration: (match) =>
         Decoration.mark({
-            class: "cm-highlight",
+            class: 'cm-highlight',
         }),
 });
 
@@ -30,7 +30,7 @@ export const highlightPlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Decorator for raw URLs (http://, https://, www.)
@@ -39,7 +39,7 @@ const urlMatcher = new MatchDecorator({
     regexp: /(?:https?:\/\/|www\.)[^\s`]+?(?=[.,;:!?`)]*(?:\s|$))/g,
     decoration: (match) =>
         Decoration.mark({
-            class: "cm-url",
+            class: 'cm-url',
         }),
 });
 
@@ -55,12 +55,12 @@ export const urlPlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Blockquote Styling
-const blockquoteBorderDeco = Decoration.mark({ class: "cm-blockquote-border" });
-const blockquoteBgDeco = Decoration.mark({ class: "cm-blockquote-bg" });
+const blockquoteBorderDeco = Decoration.mark({ class: 'cm-blockquote-border' });
+const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
 
 function getBlockquoteDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
@@ -69,11 +69,7 @@ function getBlockquoteDecorations(view: EditorView) {
             const line = view.state.doc.lineAt(pos);
             const match = /^\s*> ?/.exec(line.text);
             if (match) {
-                builder.add(
-                    line.from + match.index,
-                    line.from + match.index + match[0].length,
-                    blockquoteBorderDeco
-                );
+                builder.add(line.from + match.index, line.from + match.index + match[0].length, blockquoteBorderDeco);
                 builder.add(line.from, line.to, blockquoteBgDeco);
             }
             pos = line.to + 1;
@@ -96,12 +92,12 @@ export const blockquotePlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Decorator for Fenced Code Block content (content width only)
 const codeBlockMarkDeco = Decoration.mark({
-    class: "cm-code",
+    class: 'cm-code',
 });
 
 function getCodeBlockDecorations(view: EditorView) {
@@ -114,7 +110,7 @@ function getCodeBlockDecorations(view: EditorView) {
             from,
             to,
             enter: (node) => {
-                if (node.name === "FencedCode") {
+                if (node.name === 'FencedCode') {
                     const startLine = view.state.doc.lineAt(node.from);
                     const endLine = view.state.doc.lineAt(node.to);
 
@@ -146,7 +142,7 @@ export const codeBlockPlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Plugin for Inline Code `...` to ensure backticks are colored
@@ -160,7 +156,7 @@ function getInlineCodeDecorations(view: EditorView) {
             to,
             enter: (node) => {
                 // InlineCode encompasses the backticks and content
-                if (node.name === "InlineCode") {
+                if (node.name === 'InlineCode') {
                     builder.add(node.from, node.to, codeBlockMarkDeco);
                 }
             },
@@ -183,11 +179,11 @@ export const inlineCodePlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Horizontal Rule Styling (---, -----, etc.)
-const horizontalRuleDeco = Decoration.mark({ class: "cm-hr" });
+const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 
 function getHorizontalRuleDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
@@ -198,7 +194,7 @@ function getHorizontalRuleDecorations(view: EditorView) {
             from,
             to,
             enter: (node) => {
-                if (node.name === "HorizontalRule") {
+                if (node.name === 'HorizontalRule') {
                     builder.add(node.from, node.to, horizontalRuleDeco);
                 }
             },
@@ -221,11 +217,11 @@ export const horizontalRulePlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );
 
 // Bullet Point Styling (- at start of line)
-const bulletPointDeco = Decoration.mark({ class: "cm-bullet" });
+const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
 
 function getBulletPointDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
@@ -260,5 +256,5 @@ export const bulletPointPlugin = ViewPlugin.fromClass(
     },
     {
         decorations: (v) => v.decorations,
-    }
+    },
 );

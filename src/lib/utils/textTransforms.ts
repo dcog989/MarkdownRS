@@ -1,7 +1,7 @@
-import { getOperation, type OperationId } from "$lib/config/textOperationsRegistry";
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { applyClientTransform } from "./clientTransforms";
-import { formatMarkdown } from "./formatterRust";
+import { getOperation, type OperationId } from '$lib/config/textOperationsRegistry';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { applyClientTransform } from './clientTransforms';
+import { formatMarkdown } from './formatterRust';
 
 /**
  * Unified text transformation entry point.
@@ -12,13 +12,13 @@ export async function transformText(text: string, operationId: OperationId): Pro
     if (!op) return text;
 
     // Client-side operations
-    if (op.execution === "client") {
+    if (op.execution === 'client') {
         const indent = appContext.app.defaultIndent;
         return applyClientTransform(text, operationId, indent);
     }
 
     // Server-side: Format Document
-    if (operationId === "format-document") {
+    if (operationId === 'format-document') {
         return formatMarkdown(text);
     }
 

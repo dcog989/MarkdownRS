@@ -1,4 +1,4 @@
-import { addToDictionary } from "$lib/services/dictionaryService";
+import { addToDictionary } from '$lib/services/dictionaryService';
 import {
     checkAndReloadIfChanged,
     checkFileExists,
@@ -6,15 +6,11 @@ import {
     refreshMetadata,
     reloadFileContent,
     sanitizePath,
-} from "$lib/services/fileMetadata";
-import { fileWatcher } from "$lib/services/fileWatcher";
-import {
-    loadSession,
-    persistSession,
-    persistSessionDebounced,
-} from "$lib/services/sessionPersistence";
-import { getBookmarkByPath, updateBookmark } from "$lib/stores/bookmarkStore.svelte";
-import { confirmDialog } from "$lib/stores/dialogStore.svelte";
+} from '$lib/services/fileMetadata';
+import { fileWatcher } from '$lib/services/fileWatcher';
+import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
+import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import {
     addTab,
     closeTab,
@@ -25,17 +21,17 @@ import {
     updateContentOnly,
     updateTabMetadataAndPath,
     updateTabTitle,
-} from "$lib/stores/editorStore.svelte";
-import { appContext } from "$lib/stores/state.svelte.ts";
-import { showToast } from "$lib/stores/toastStore.svelte";
-import { AppError } from "$lib/utils/errorHandling";
-import { open, save } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
-import { callBackend } from "./backend";
-import { CONFIG } from "./config";
-import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
-import { formatMarkdown } from "./formatterRust";
-import { countWords } from "./textMetrics";
+} from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { AppError } from '$lib/utils/errorHandling';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { openPath } from '@tauri-apps/plugin-opener';
+import { callBackend } from './backend';
+import { CONFIG } from './config';
+import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
+import { formatMarkdown } from './formatterRust';
+import { countWords } from './textMetrics';
 
 export {
     addToDictionary,
@@ -55,11 +51,11 @@ export async function openFile(path?: string): Promise<void> {
             const selected = await open({
                 multiple: false,
                 filters: [
-                    { name: "Text Files", extensions: SUPPORTED_TEXT_EXTENSIONS },
-                    { name: "All Files", extensions: ["*"] },
+                    { name: 'Text Files', extensions: SUPPORTED_TEXT_EXTENSIONS },
+                    { name: 'All Files', extensions: ['*'] },
                 ],
             });
-            if (!selected || typeof selected !== "string") return;
+            if (!selected || typeof selected !== 'string') return;
             targetPath = selected;
         }
 
@@ -72,29 +68,29 @@ export async function openFile(path?: string): Promise<void> {
             return;
         }
 
-        const result = await callBackend("read_text_file", { path: sanitizedPath }, "File:Read");
+        const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
 
         if (!result) {
-            throw new Error("Failed to read file: null result");
+            throw new Error('Failed to read file: null result');
         }
 
-        const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
+        const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
         const crlfCount = (result.content.match(/\r\n/g) || []).length;
         const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-        const detectedLineEnding: "LF" | "CRLF" =
-            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? "CRLF" : "LF";
+        const detectedLineEnding: 'LF' | 'CRLF' =
+            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
         let initialTitle = fileName;
         if (appContext.app.tabNameFromContent) {
             const trimmed = result.content.trim();
             if (trimmed.length > 0) {
-                const lines = result.content.split("\n");
-                const firstLine = lines.find((l) => l.trim().length > 0) || "";
-                let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
+                const lines = result.content.split('\n');
+                const firstLine = lines.find((l) => l.trim().length > 0) || '';
+                let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
                 const MAX_LEN = 25;
                 if (smartTitle.length > MAX_LEN) {
-                    smartTitle = smartTitle.substring(0, MAX_LEN).trim() + "...";
+                    smartTitle = smartTitle.substring(0, MAX_LEN).trim() + '...';
                 }
                 if (smartTitle.length > 0) {
                     initialTitle = smartTitle;
@@ -104,17 +100,13 @@ export async function openFile(path?: string): Promise<void> {
 
         const id = addTab(initialTitle, result.content);
 
-        const lineArray = result.content.split("\n");
+        const lineArray = result.content.split('\n');
         const lineCount = lineArray.length;
         const widestColumn = Math.max(...lineArray.map((l) => l.length));
 
         let initialWordCount = 0;
         if (result.content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
-            const metrics = await callBackend(
-                "compute_text_metrics",
-                { content: result.content },
-                "File:Read"
-            );
+            const metrics = await callBackend('compute_text_metrics', { content: result.content }, 'File:Read');
             if (metrics) initialWordCount = metrics[1];
         } else {
             initialWordCount = countWords(result.content);
@@ -137,7 +129,7 @@ export async function openFile(path?: string): Promise<void> {
         await fileWatcher.watch(sanitizedPath);
         appContext.app.activeTabId = id;
     } catch (err) {
-        AppError.handle("File:Read", err, {
+        AppError.handle('File:Read', err, {
             showToast: true,
             additionalInfo: { path },
         });
@@ -151,18 +143,18 @@ export async function openFileByPath(path: string): Promise<void> {
 export async function navigateToPath(clickedPath: string): Promise<void> {
     const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
 
-    if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes("\n")) {
+    if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes('\n')) {
         return;
     }
 
     try {
         const resolvedPath = await callBackend(
-            "resolve_path_relative",
+            'resolve_path_relative',
             {
                 basePath: activeTab?.path || null,
-                clickPath: clickedPath.replace(/\\/g, "/"),
+                clickPath: clickedPath.replace(/\\/g, '/'),
             },
-            "File:Read"
+            'File:Read',
         );
 
         if (!resolvedPath) {
@@ -176,14 +168,14 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 }
 
 export async function saveCurrentFile(): Promise<boolean> {
-    if (typeof window !== "undefined" && (window as any)._editorFlushFunctions) {
+    if (typeof window !== 'undefined' && (window as any)._editorFlushFunctions) {
         (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
     }
     return saveFile(false);
 }
 
 export async function saveCurrentFileAs(): Promise<boolean> {
-    if (typeof window !== "undefined" && (window as any)._editorFlushFunctions) {
+    if (typeof window !== 'undefined' && (window as any)._editorFlushFunctions) {
         (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
     }
     return saveFile(true);
@@ -206,18 +198,18 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
         if (!forceNewPath && tab.path) {
             savePath = tab.path;
         } else {
-            const preferredExt = tab.preferredExtension || "md";
+            const preferredExt = tab.preferredExtension || 'md';
             const filters =
-                preferredExt === "txt"
+                preferredExt === 'txt'
                     ? [
-                          { name: "Text", extensions: ["txt"] },
-                          { name: "Markdown", extensions: ["md"] },
-                          { name: "All Files", extensions: ["*"] },
+                          { name: 'Text', extensions: ['txt'] },
+                          { name: 'Markdown', extensions: ['md'] },
+                          { name: 'All Files', extensions: ['*'] },
                       ]
                     : [
-                          { name: "Markdown", extensions: ["md"] },
-                          { name: "Text", extensions: ["txt"] },
-                          { name: "All Files", extensions: ["*"] },
+                          { name: 'Markdown', extensions: ['md'] },
+                          { name: 'Text', extensions: ['txt'] },
+                          { name: 'All Files', extensions: ['*'] },
                       ];
 
             savePath = await save({ filters });
@@ -244,26 +236,26 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
             }
 
             const targetLineEnding =
-                appContext.app.lineEndingPreference === "system"
-                    ? tab.lineEnding || "LF"
+                appContext.app.lineEndingPreference === 'system'
+                    ? tab.lineEnding || 'LF'
                     : appContext.app.lineEndingPreference;
 
             let diskContent = contentToSave;
-            if (targetLineEnding === "CRLF") {
-                diskContent = diskContent.replace(/\r\n/g, "\n").replace(/\n/g, "\r\n");
+            if (targetLineEnding === 'CRLF') {
+                diskContent = diskContent.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
             } else {
-                diskContent = diskContent.replace(/\r\n/g, "\n");
+                diskContent = diskContent.replace(/\r\n/g, '\n');
             }
 
             fileWatcher.setWriteLock(sanitizedPath, true);
 
             try {
                 await callBackend(
-                    "write_text_file",
+                    'write_text_file',
                     { path: sanitizedPath, content: diskContent },
-                    "File:Write",
+                    'File:Write',
                     undefined,
-                    { report: true, msg: "Failed to save file" }
+                    { report: true, msg: 'Failed to save file' },
                 );
 
                 if (oldPath && oldPath !== sanitizedPath) {
@@ -273,15 +265,13 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     await fileWatcher.watch(sanitizedPath);
                 }
 
-                const fileName = sanitizedPath.split(/[\\/]/).pop() || "Untitled";
+                const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
                 let finalTitle = fileName;
 
                 if (appContext.app.tabNameFromContent) {
-                    const firstLine =
-                        contentToSave.split("\n").find((l) => l.trim().length > 0) || "";
-                    let smartTitle = firstLine.replace(/^#+\s*/, "").trim();
-                    if (smartTitle.length > 25)
-                        smartTitle = smartTitle.substring(0, 25).trim() + "...";
+                    const firstLine = contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
+                    let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
+                    if (smartTitle.length > 25) smartTitle = smartTitle.substring(0, 25).trim() + '...';
                     if (smartTitle.length > 0) finalTitle = smartTitle;
                 }
 
@@ -307,12 +297,12 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
     if (tab.isDirty && tab.content.trim().length > 0) {
         const result = await confirmDialog({
-            title: "Unsaved Changes",
+            title: 'Unsaved Changes',
             message: `Do you want to save changes to ${tab.title}?`,
         });
 
-        if (result === "cancel") return;
-        if (result === "save") {
+        if (result === 'cancel') return;
+        if (result === 'save') {
             const prev = appContext.app.activeTabId;
             appContext.app.activeTabId = id;
             if (!(await saveCurrentFile())) {
@@ -365,13 +355,13 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
     try {
         const oldPath = sanitizePath(tab.path);
-        const pathParts = oldPath.split("/");
-        const oldFileName = pathParts.pop() || "";
-        const directory = pathParts.join("/");
+        const pathParts = oldPath.split('/');
+        const oldFileName = pathParts.pop() || '';
+        const directory = pathParts.join('/');
 
         let finalNewName = cleanNewName;
-        const oldExt = oldFileName.includes(".") ? oldFileName.split(".").pop() : "";
-        const newExt = cleanNewName.includes(".") ? cleanNewName.split(".").pop() : "";
+        const oldExt = oldFileName.includes('.') ? oldFileName.split('.').pop() : '';
+        const newExt = cleanNewName.includes('.') ? cleanNewName.split('.').pop() : '';
 
         if (oldExt && !newExt) {
             finalNewName = `${cleanNewName}.${oldExt}`;
@@ -381,13 +371,10 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
         if (oldPath === newPath) return true;
 
-        await callBackend(
-            "rename_file",
-            { oldPath: oldPath, newPath: newPath },
-            "File:Write",
-            undefined,
-            { report: true, msg: "Failed to rename file" }
-        );
+        await callBackend('rename_file', { oldPath: oldPath, newPath: newPath }, 'File:Write', undefined, {
+            report: true,
+            msg: 'Failed to rename file',
+        });
 
         fileWatcher.unwatch(oldPath);
         await fileWatcher.watch(newPath);
@@ -406,7 +393,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
             await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
         }
 
-        showToast("success", `Renamed to ${finalNewName}`);
+        showToast('success', `Renamed to ${finalNewName}`);
         return true;
     } catch (err) {
         return false;

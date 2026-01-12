@@ -15,78 +15,69 @@ export interface FileValidationResult {
 
 const DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-export const MARKDOWN_EXTENSIONS = [
-    "md",
-    "markdown",
-    "mdown",
-    "mkdn",
-    "mkd",
-    "mdwn",
-    "mdtxt",
-    "mdtext",
-];
+export const MARKDOWN_EXTENSIONS = ['md', 'markdown', 'mdown', 'mkdn', 'mkd', 'mdwn', 'mdtxt', 'mdtext'];
 
 export const SUPPORTED_TEXT_EXTENSIONS = [
     // Markdown & Text
     ...MARKDOWN_EXTENSIONS,
-    "txt",
-    "log",
-    "asc",
-    "adoc",
+    'txt',
+    'log',
+    'asc',
+    'adoc',
     // Web
-    "html",
-    "htm",
-    "css",
-    "scss",
-    "less",
-    "js",
-    "jsx",
-    "ts",
-    "tsx",
-    "svelte",
-    "vue",
-    "json",
+    'html',
+    'htm',
+    'css',
+    'scss',
+    'less',
+    'js',
+    'jsx',
+    'ts',
+    'tsx',
+    'svelte',
+    'vue',
+    'json',
     // Config
-    "yaml",
-    "yml",
-    "toml",
-    "ini",
-    "cfg",
-    "conf",
-    "properties",
-    "env",
-    "gitignore",
+    'yaml',
+    'yml',
+    'toml',
+    'ini',
+    'cfg',
+    'conf',
+    'properties',
+    'env',
+    'gitignore',
     // Code
-    "rs",
-    "py",
-    "rb",
-    "php",
-    "pl",
-    "go",
-    "java",
-    "c",
-    "cpp",
-    "h",
-    "hpp",
-    "cs",
-    "swift",
-    "kt",
-    "kts",
-    "sh",
-    "bash",
-    "zsh",
-    "bat",
-    "cmd",
-    "ps1",
-    "lua",
-    "sql",
+    'rs',
+    'py',
+    'rb',
+    'php',
+    'pl',
+    'go',
+    'java',
+    'c',
+    'cpp',
+    'h',
+    'hpp',
+    'cs',
+    'swift',
+    'kt',
+    'kts',
+    'sh',
+    'bash',
+    'zsh',
+    'bat',
+    'cmd',
+    'ps1',
+    'lua',
+    'sql',
     // Data/Misc
-    "xml",
-    "svg",
-    "diff",
-    "patch",
-    "csv",
-    "tsv",
+    'xml',
+    'svg',
+    'diff',
+    'patch',
+    'csv',
+    'tsv',
 ];
 
 const DEFAULT_ALLOWED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS;
@@ -97,7 +88,7 @@ const DEFAULT_ALLOWED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS;
 export function validateFile(
     path: string,
     sizeBytes: number,
-    options: FileValidationOptions = {}
+    options: FileValidationOptions = {},
 ): FileValidationResult {
     const {
         maxSizeBytes = DEFAULT_MAX_FILE_SIZE,
@@ -106,21 +97,21 @@ export function validateFile(
     } = options;
 
     // Check for null bytes
-    if (path.includes("\0")) {
-        return { valid: false, error: "Invalid path: contains null bytes" };
+    if (path.includes('\0')) {
+        return { valid: false, error: 'Invalid path: contains null bytes' };
     }
 
     // Check for problematic directory traversal patterns
     // Normalize path and check for suspicious patterns that could be attacks
     // Allow legitimate relative paths like "../config.json" but block "../../../etc/passwd"
-    const normalizedPath = path.replace(/\\/g, "/");
+    const normalizedPath = path.replace(/\\/g, '/');
     const parentDirCount = (normalizedPath.match(/\.\.\//g) || []).length;
 
     // Block excessive parent directory traversal (more than 3 levels up)
     if (parentDirCount > 3) {
         return {
             valid: false,
-            error: "Invalid path: excessive directory traversal",
+            error: 'Invalid path: excessive directory traversal',
         };
     }
 
@@ -128,7 +119,7 @@ export function validateFile(
     if (/\.\.%2e|%2e%2e|%252e/i.test(path)) {
         return {
             valid: false,
-            error: "Invalid path: contains encoded directory traversal",
+            error: 'Invalid path: contains encoded directory traversal',
         };
     }
 
@@ -144,17 +135,17 @@ export function validateFile(
 
     // Check file extension
     const parts = path.split(/[\\/]/);
-    const filename = parts.pop() || "";
+    const filename = parts.pop() || '';
 
     // Dotfiles (like .gitignore) are considered valid if they match a known type or generally
-    if (filename.startsWith(".") && filename.length > 1) {
+    if (filename.startsWith('.') && filename.length > 1) {
         return { valid: true };
     }
 
-    const extension = filename.includes(".") ? filename.split(".").pop()?.toLowerCase() : null;
+    const extension = filename.includes('.') ? filename.split('.').pop()?.toLowerCase() : null;
 
     if (requireExtension && !extension) {
-        return { valid: false, error: "File must have an extension" };
+        return { valid: false, error: 'File must have an extension' };
     }
 
     if (extension && !allowedExtensions.includes(extension)) {
@@ -174,7 +165,7 @@ export function validateFile(
  * - MB and above: round up to nearest tenth (e.g., 1.5 MB, 2.3 GB)
  */
 export function formatFileSize(bytes: number): string {
-    if (bytes === 0) return "0 KB";
+    if (bytes === 0) return '0 KB';
 
     const kb = bytes / 1024;
 
@@ -204,13 +195,13 @@ export function formatFileSize(bytes: number): string {
  */
 export function isTextFile(path: string): boolean {
     const parts = path.split(/[\\/]/);
-    const filename = parts.pop() || "";
+    const filename = parts.pop() || '';
 
     // Dotfiles often text (gitignore, env, etc)
-    if (filename.startsWith(".")) return true;
-    if (!filename.includes(".")) return true; // No extension often implies text/script
+    if (filename.startsWith('.')) return true;
+    if (!filename.includes('.')) return true; // No extension often implies text/script
 
-    const extension = filename.split(".").pop()?.toLowerCase();
+    const extension = filename.split('.').pop()?.toLowerCase();
     if (!extension) return false;
     return DEFAULT_ALLOWED_EXTENSIONS.includes(extension);
 }
@@ -220,11 +211,11 @@ export function isTextFile(path: string): boolean {
  */
 export function isMarkdownFile(path: string): boolean {
     const parts = path.split(/[\\/]/);
-    const filename = parts.pop() || "";
+    const filename = parts.pop() || '';
 
     // Assume files without extensions (e.g. "New-1") are markdown
-    if (!filename.includes(".")) return true;
+    if (!filename.includes('.')) return true;
 
-    const extension = filename.split(".").pop()?.toLowerCase();
+    const extension = filename.split('.').pop()?.toLowerCase();
     return extension ? MARKDOWN_EXTENSIONS.includes(extension) : false;
 }

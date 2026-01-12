@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 
 /* Tailwind Configuration */
 @theme {
@@ -63,7 +63,7 @@
     --color-selection-match-bg: oklch(0.35 0.05 60);
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
     /* Backgrounds */
     --color-bg-main: oklch(0.98 0 0);
     --color-bg-preview: oklch(1 0 0);
@@ -165,7 +165,7 @@ body {
 /* Centralized UI Utilities */
 
 @utility btn-base {
-    @apply px-3 py-1.5 rounded text-xs border transition-colors cursor-pointer;
+    @apply cursor-pointer rounded border px-3 py-1.5 text-xs transition-colors;
 }
 
 @utility btn-secondary {
@@ -208,24 +208,24 @@ body {
 }
 
 @utility ui-panel {
-    @apply w-[31.25rem] max-h-[25rem] rounded-lg shadow-2xl border overflow-hidden flex flex-col;
+    @apply flex max-h-[25rem] w-[31.25rem] flex-col overflow-hidden rounded-lg border shadow-2xl;
     background-color: var(--color-bg-panel);
     border-color: var(--color-border-light);
 }
 
 @utility ui-header {
-    @apply px-4 py-3 border-b shrink-0;
+    @apply shrink-0 border-b px-4 py-3;
     background-color: var(--color-bg-header);
     border-color: var(--color-border-light);
 }
 
 /* MRU List Items */
 @utility mru-item {
-    @apply w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors shrink-0;
+    @apply flex w-full shrink-0 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors;
     background-color: transparent;
     color: var(--color-fg-default);
 
-    &[data-selected="true"] {
+    &[data-selected='true'] {
         background-color: var(--color-accent-primary);
         color: var(--color-fg-inverse);
 
@@ -249,18 +249,18 @@ body {
 }
 
 @utility mru-badge {
-    @apply w-6 h-6 rounded flex items-center justify-center text-[0.625rem] font-bold shrink-0;
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded text-[0.625rem] font-bold;
     background-color: var(--color-accent-secondary);
     color: var(--color-accent-primary);
 }
 
 @utility mru-path {
-    @apply text-[0.6875rem] truncate opacity-70;
+    @apply truncate text-[0.6875rem] opacity-70;
     color: var(--color-fg-muted);
 }
 
 @utility mru-dot {
-    @apply w-2 h-2 rounded-full shrink-0;
+    @apply h-2 w-2 shrink-0 rounded-full;
     background-color: var(--color-accent-secondary);
 }
 
@@ -373,9 +373,7 @@ body {
     color: var(--color-fg-code);
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
-    font-family:
-        ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono",
-        monospace;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
 }
@@ -434,7 +432,7 @@ body {
 }
 
 .cm-hr::after {
-    content: "";
+    content: '';
     position: absolute;
     left: 0;
     right: 0;

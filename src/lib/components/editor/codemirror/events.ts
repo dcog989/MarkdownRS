@@ -1,7 +1,7 @@
-import { navigateToPath } from "$lib/utils/fileSystem";
-import { syntaxTree } from "@codemirror/language";
-import { EditorView } from "@codemirror/view";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { navigateToPath } from '$lib/utils/fileSystem';
+import { syntaxTree } from '@codemirror/language';
+import { EditorView } from '@codemirror/view';
+import { openPath } from '@tauri-apps/plugin-opener';
 
 export type ContextMenuCallback = (event: MouseEvent, view: EditorView) => void;
 
@@ -13,17 +13,17 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
                 const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                 if (pos === null) return false;
 
-                let targetString = "";
+                let targetString = '';
 
                 // 1. Check syntax tree for Link/URL nodes
                 let node = syntaxTree(view.state).resolveInner(pos, 1);
-                while (node && node.parent && !["URL", "Link", "LinkEmail"].includes(node.name)) {
+                while (node && node.parent && !['URL', 'Link', 'LinkEmail'].includes(node.name)) {
                     node = node.parent;
                 }
 
-                if (node && ["URL", "Link", "LinkEmail"].includes(node.name)) {
-                    if (node.name === "Link") {
-                        const urlNode = node.node.getChild("URL");
+                if (node && ['URL', 'Link', 'LinkEmail'].includes(node.name)) {
+                    if (node.name === 'Link') {
+                        const urlNode = node.node.getChild('URL');
                         if (urlNode) targetString = view.state.sliceDoc(urlNode.from, urlNode.to);
                     } else {
                         targetString = view.state.sliceDoc(node.from, node.to);
@@ -44,13 +44,13 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
                         targetString = text.slice(start, end).trim();
                         // Strip wrapping brackets common in markdown/text
-                        targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, "");
+                        targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, '');
 
                         // Strip trailing punctuation
                         if (!/^https?:\/\//i.test(targetString)) {
-                            targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
+                            targetString = targetString.replace(/[.,;:!?)\]]+$/, '');
                         } else {
-                            targetString = targetString.replace(/[.,;!?)\]]+$/, "");
+                            targetString = targetString.replace(/[.,;!?)\]]+$/, '');
                         }
                     }
                 }
@@ -60,10 +60,8 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
                     event.stopImmediatePropagation();
 
                     if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-                        const url = targetString.startsWith("www.")
-                            ? `https://${targetString}`
-                            : targetString;
-                        openPath(url).catch(() => { });
+                        const url = targetString.startsWith('www.') ? `https://${targetString}` : targetString;
+                        openPath(url).catch(() => {});
                     } else {
                         navigateToPath(targetString);
                     }

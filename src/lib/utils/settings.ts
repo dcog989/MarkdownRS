@@ -1,12 +1,12 @@
-import { appState } from "$lib/stores/appState.svelte";
-import { callBackend } from "./backend";
-import { debounce } from "./timing";
+import { appState } from '$lib/stores/appState.svelte';
+import { callBackend } from './backend';
+import { debounce } from './timing';
 
-let lastSavedState: string = "";
+let lastSavedState: string = '';
 
-function log(msg: string, level: "debug" | "info" | "error" = "debug") {
+function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
     const output = `[Settings] ${msg}`;
-    if (level === "error") console.error(output);
+    if (level === 'error') console.error(output);
     else console.log(output);
 }
 
@@ -55,12 +55,12 @@ function getSettingsObject() {
 
 export async function initSettings() {
     try {
-        const saved = await callBackend("load_settings", {}, "Settings:Load");
+        const saved = await callBackend('load_settings', {}, 'Settings:Load');
 
         if (saved && Object.keys(saved).length > 0) {
             log(`Restoring app preferences from TOML...`);
             Object.keys(saved).forEach((key) => {
-                if (key === "formatterListIndent") {
+                if (key === 'formatterListIndent') {
                     appState.defaultIndent = saved[key];
                 } else if (key in appState) {
                     (appState as any)[key] = saved[key];
@@ -70,7 +70,7 @@ export async function initSettings() {
 
         lastSavedState = JSON.stringify(getSettingsObject());
     } catch (err) {
-        log(`Failed to load settings: ${err}`, "error");
+        log(`Failed to load settings: ${err}`, 'error');
     }
 }
 
@@ -83,10 +83,10 @@ async function saveSettingsImmediate() {
             return;
         }
 
-        await callBackend("save_settings", { settings: settingsToSave }, "Settings:Save");
+        await callBackend('save_settings', { settings: settingsToSave }, 'Settings:Save');
         lastSavedState = serialized;
     } catch (err) {
-        log(`Failed to save settings: ${err}`, "error");
+        log(`Failed to save settings: ${err}`, 'error');
     }
 }
 
