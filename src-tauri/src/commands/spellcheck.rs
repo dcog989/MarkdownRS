@@ -1,24 +1,37 @@
 use crate::state::AppState;
 use spellbook::Dictionary;
 use std::collections::HashSet;
+use std::path::PathBuf;
 use tauri::{Manager, State};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
+
+// Helper for atomic file writes to prevent corrupted partial downloads
+async fn write_atomic(path: &PathBuf, content: &str) -> std::io::Result<()> {
+    let tmp_path = path.with_extension("download.tmp");
+    {
+        let mut file = fs::File::create(&tmp_path).await?;
+        file.write_all(content.as_bytes()).await?;
+        file.flush().await?;
+    }
+    fs::rename(&tmp_path, path).await?;
+    Ok(())
+}
 
 // Map of ID -> URL
 fn get_specialist_url(id: &str) -> Option<&'static str> {
     match id {
         "software-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/software-terms.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
         ),
         "companies" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
         ),
         "medical-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medical-terms/dict/medical-terms.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/medicalterms/dict/medicalterms-en.txt",
         ),
         "scientific-terms-us" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific-terms-us/dict/scientific-terms-us.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/scientific_terms_US/src/custom_scientific_US.dic.txt",
         ),
         "typescript" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/typescript/dict/typescript.txt",
@@ -33,7 +46,7 @@ fn get_specialist_url(id: &str) -> Option<&'static str> {
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fonts/dict/fonts.txt",
         ),
         "filetypes" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/dict/filetypes.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/filetypes/src/filetypes.txt",
         ),
         "html" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/html/dict/html.txt",
@@ -86,7 +99,7 @@ fn get_dictionary_urls(dict_code: &str) -> Option<(&'static str, &'static str)> 
 
 async fn fetch_standard_dictionary(
     client: reqwest::Client,
-    cache_dir: std::path::PathBuf,
+    cache_dir: PathBuf,
     dict_code: String,
 ) -> Result<(String, String), String> {
     let aff_path = cache_dir.join(format!("{}.aff", dict_code));
@@ -118,18 +131,36 @@ async fn fetch_standard_dictionary(
         if let Ok(resp) = aff_res {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text().await {
-                    let _ = fs::write(&aff_path, text).await;
+                    if let Err(e) = write_atomic(&aff_path, &text).await {
+                        log::error!("Failed to save .aff file for {}: {}", dict_code, e);
+                    }
                 }
+            } else {
+                log::warn!(
+                    "Failed to download .aff for {}: Status {}",
+                    dict_code,
+                    resp.status()
+                );
             }
         }
 
         if let Ok(resp) = dic_res {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text().await {
-                    let _ = fs::write(&dic_path, text).await;
+                    if let Err(e) = write_atomic(&dic_path, &text).await {
+                        log::error!("Failed to save .dic file for {}: {}", dict_code, e);
+                    }
                 }
+            } else {
+                log::warn!(
+                    "Failed to download .dic for {}: Status {}",
+                    dict_code,
+                    resp.status()
+                );
             }
         }
+    } else {
+        log::debug!("Using cached dictionary: {}", dict_code);
     }
 
     if aff_path.exists() && dic_path.exists() {
@@ -145,7 +176,7 @@ async fn fetch_standard_dictionary(
 
 async fn fetch_specialist_dictionary(
     client: reqwest::Client,
-    cache_dir: std::path::PathBuf,
+    cache_dir: PathBuf,
     id: String,
 ) -> Result<String, String> {
     let url = get_specialist_url(&id).ok_or_else(|| format!("Unknown specialist ID: {}", id))?;
@@ -156,10 +187,20 @@ async fn fetch_specialist_dictionary(
         if let Ok(resp) = client.get(url).send().await {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text().await {
-                    let _ = fs::write(&cache_path, text).await;
+                    if let Err(e) = write_atomic(&cache_path, &text).await {
+                        log::error!("Failed to save specialist dict {}: {}", id, e);
+                    }
                 }
+            } else {
+                log::warn!(
+                    "Failed to download specialist dict {}: Status {}",
+                    id,
+                    resp.status()
+                );
             }
         }
+    } else {
+        log::debug!("Using cached specialist dictionary: {}", id);
     }
 
     if cache_path.exists() {
