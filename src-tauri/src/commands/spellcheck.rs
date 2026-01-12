@@ -1,5 +1,6 @@
 use crate::state::AppState;
 use spellbook::Dictionary;
+use std::collections::HashSet;
 use tauri::{Manager, State};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -327,9 +328,6 @@ pub async fn init_spellchecker(
         .build()
         .unwrap_or_else(|_| reqwest::Client::new());
 
-    let mut combined_aff = String::new();
-    let mut total_word_count = 0;
-
     let mut dict_tasks = Vec::new();
     for (i, code) in dict_codes.into_iter().enumerate() {
         let c = client.clone();
@@ -348,12 +346,14 @@ pub async fn init_spellchecker(
         }));
     }
 
+    // Collect all results
     let mut dict_results = Vec::new();
     for task in dict_tasks {
         if let Ok((i, res)) = task.await {
             dict_results.push((i, res));
         }
     }
+    // Ensure primary dictionary is processed first for AFF selection
     dict_results.sort_by_key(|k| k.0);
 
     let mut spec_results = Vec::new();
@@ -363,22 +363,11 @@ pub async fn init_spellchecker(
         }
     }
 
-    // Calculate total capacity required to minimize re-allocations
-    let mut capacity_hint = 0;
+    // Processing & Deduplication
+    let mut combined_aff = String::new();
+    let mut unique_words = HashSet::new();
+
     for (_, res) in &dict_results {
-        if let Ok((_, dic)) = res {
-            capacity_hint += dic.len();
-        }
-    }
-    for (_, res) in &spec_results {
-        if let Ok(content) = res {
-            capacity_hint += content.len();
-        }
-    }
-
-    let mut combined_dic_body = String::with_capacity(capacity_hint);
-
-    for (_, res) in dict_results {
         match res {
             Ok((aff, dic)) => {
                 if combined_aff.is_empty() {
@@ -386,15 +375,10 @@ pub async fn init_spellchecker(
                 }
 
                 let dic_clean = dic.trim_start_matches('\u{feff}');
-                let mut lines = dic_clean.lines();
-                if lines.next().is_some() {
-                    for line in lines {
-                        let trimmed = line.trim();
-                        if !trimmed.is_empty() {
-                            combined_dic_body.push_str(trimmed);
-                            combined_dic_body.push('\n');
-                            total_word_count += 1;
-                        }
+                for line in dic_clean.lines() {
+                    let trimmed = line.trim();
+                    if !trimmed.is_empty() && !trimmed.chars().all(char::is_numeric) {
+                        unique_words.insert(trimmed);
                     }
                 }
             }
@@ -402,7 +386,7 @@ pub async fn init_spellchecker(
         }
     }
 
-    for (code, res) in spec_results {
+    for (code, res) in &spec_results {
         match res {
             Ok(content) => {
                 let mut count = 0;
@@ -412,31 +396,40 @@ pub async fn init_spellchecker(
                         && !trimmed.starts_with('#')
                         && !trimmed.starts_with("//")
                     {
-                        combined_dic_body.push_str(trimmed);
-                        combined_dic_body.push('\n');
+                        unique_words.insert(trimmed);
                         count += 1;
                     }
                 }
-                total_word_count += count;
-                log::info!("Loaded specialist dictionary: {} ({} words)", code, count);
+                log::info!("Loaded specialist dictionary: {} ({} entries)", code, count);
             }
             Err(e) => log::warn!("Failed to load specialist dictionary {}: {}", code, e),
         }
     }
 
+    let total_word_count = unique_words.len();
+
     if !combined_aff.is_empty() && total_word_count > 0 {
-        // Build the final dictionary string efficiently without duplication
-        let mut combined_dic = String::with_capacity(combined_dic_body.len() + 16);
+        // Sort for determinism and optimization
+        let mut sorted_words: Vec<_> = unique_words.into_iter().collect();
+        sorted_words.sort_unstable();
+
+        // Build the final dictionary string
+        // Capacity: avg word length ~8 chars + newline = 9. + Header.
+        let mut combined_dic = String::with_capacity(total_word_count * 9 + 64);
         combined_dic.push_str(&total_word_count.to_string());
         combined_dic.push('\n');
-        combined_dic.push_str(&combined_dic_body);
+
+        for word in sorted_words {
+            combined_dic.push_str(word);
+            combined_dic.push('\n');
+        }
 
         match Dictionary::new(&combined_aff, &combined_dic) {
             Ok(dict) => {
                 let mut speller = state.speller.lock().await;
                 *speller = Some(dict);
                 log::info!(
-                    "Spellchecker initialized successfully with {} total words",
+                    "Spellchecker initialized successfully with {} unique words",
                     total_word_count
                 );
             }
