@@ -6,6 +6,7 @@
     import {
         toggleAbout,
         toggleBookmarks,
+        toggleCommandPalette,
         toggleSettings,
         toggleShortcuts,
         toggleTransform,
@@ -81,18 +82,28 @@
         },
         {
             id: 'export-html',
-            label: 'File: Export to HTML',
+            label: 'Export: HTML',
             action: () => exportService.exportToHtml(),
         },
         {
             id: 'export-pdf',
-            label: 'File: Export to PDF',
+            label: 'Export: PDF',
             action: () => exportService.exportToPdf(),
         },
         {
             id: 'export-png',
-            label: 'File: Export to PNG',
+            label: 'Export: PNG',
             action: () => exportService.exportToImage('png'),
+        },
+        {
+            id: 'export-webp',
+            label: 'Export: WebP',
+            action: () => exportService.exportToImage('webp'),
+        },
+        {
+            id: 'export-svg',
+            label: 'Export: SVG',
+            action: () => exportService.exportToImage('svg'),
         },
         {
             id: 'theme-dark',
@@ -127,6 +138,11 @@
             id: 'bookmarks',
             label: 'Window: Bookmarks',
             action: () => toggleBookmarks(),
+        },
+        {
+            id: 'command-palette',
+            label: 'Window: Command Palette',
+            action: () => toggleCommandPalette(),
         },
         {
             id: 'settings',
@@ -208,6 +224,7 @@
             else if (id === 'format') defaultKey = 'shift+alt+f';
             else if (id === 'toggle-split') defaultKey = 'ctrl+\\';
             else if (id === 'bookmarks') defaultKey = 'ctrl+shift+b';
+            else if (id === 'command-palette') defaultKey = 'ctrl+shift+p';
             else if (id === 'settings') defaultKey = 'ctrl+,';
             else if (id === 'shortcuts') defaultKey = 'f1';
             else if (id === 'transform') defaultKey = 'ctrl+t';
