@@ -371,7 +371,6 @@ body {
     /* `code` and ```code``` */
     background-color: var(--color-bg-code);
     color: var(--color-fg-code);
-    padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
     font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     box-decoration-break: clone;
@@ -384,7 +383,6 @@ body {
 .cm-meta.cm-code {
     background-color: var(--color-bg-code) !important;
     color: var(--color-fg-code) !important;
-    padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
 }
 
