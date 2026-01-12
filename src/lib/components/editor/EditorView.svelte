@@ -4,17 +4,14 @@
         createWrapExtension,
         getAutocompletionConfig,
         getEditorKeymap,
-    } from "$lib/components/editor/codemirror/config";
-    import {
-        prefetchHoverHandler,
-        smartBacktickHandler,
-    } from "$lib/components/editor/codemirror/handlers";
-    import { initializeTabFileState } from "$lib/services/sessionPersistence";
-    import { appContext } from "$lib/stores/state.svelte.ts";
-    import { CONFIG } from "$lib/utils/config";
-    import { newlinePlugin, rulerPlugin } from "$lib/utils/editorPlugins";
-    import { generateDynamicTheme } from "$lib/utils/editorTheme";
-    import { filePathPlugin, filePathTheme } from "$lib/utils/filePathExtension";
+    } from '$lib/components/editor/codemirror/config';
+    import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
+    import { initializeTabFileState } from '$lib/services/sessionPersistence';
+    import { appContext } from '$lib/stores/state.svelte.ts';
+    import { CONFIG } from '$lib/utils/config';
+    import { newlinePlugin, rulerPlugin } from '$lib/utils/editorPlugins';
+    import { generateDynamicTheme } from '$lib/utils/editorTheme';
+    import { filePathPlugin, filePathTheme } from '$lib/utils/filePathExtension';
     import {
         blockquotePlugin,
         bulletPointPlugin,
@@ -23,36 +20,36 @@
         horizontalRulePlugin,
         inlineCodePlugin,
         urlPlugin,
-    } from "$lib/utils/markdownExtensions";
-    import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
-    import { ScrollManager } from "$lib/utils/scrollManager";
-    import { scrollSync } from "$lib/utils/scrollSync.svelte.ts";
-    import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte.ts";
-    import { spellcheckState } from "$lib/utils/spellcheck.svelte.ts";
-    import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte.ts";
-    import { calculateCursorMetrics } from "$lib/utils/textMetrics";
-    import { userThemeExtension } from "$lib/utils/themeMapper";
-    import { throttle } from "$lib/utils/timing";
-    import { closeBrackets, completeAnyWord } from "@codemirror/autocomplete";
-    import { history, historyField } from "@codemirror/commands";
-    import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-    import { indentUnit } from "@codemirror/language";
-    import { languages } from "@codemirror/language-data";
-    import { highlightSelectionMatches, search } from "@codemirror/search";
-    import { Compartment, EditorState, type Extension } from "@codemirror/state";
+    } from '$lib/utils/markdownExtensions';
+    import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
+    import { ScrollManager } from '$lib/utils/scrollManager';
+    import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
+    import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
+    import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+    import { applyImmediateSpellcheck, createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
+    import { calculateCursorMetrics } from '$lib/utils/textMetrics';
+    import { userThemeExtension } from '$lib/utils/themeMapper';
+    import { throttle } from '$lib/utils/timing';
+    import { closeBrackets, completeAnyWord } from '@codemirror/autocomplete';
+    import { history, historyField } from '@codemirror/commands';
+    import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+    import { indentUnit } from '@codemirror/language';
+    import { languages } from '@codemirror/language-data';
+    import { highlightSelectionMatches, search } from '@codemirror/search';
+    import { Compartment, EditorState, type Extension } from '@codemirror/state';
     import {
         drawSelection,
         EditorView,
         highlightActiveLine,
         highlightActiveLineGutter,
         highlightWhitespace,
-    } from "@codemirror/view";
-    import { onDestroy, onMount, untrack } from "svelte";
+    } from '@codemirror/view';
+    import { onDestroy, onMount, untrack } from 'svelte';
 
     let {
         tabId,
-        initialContent = "",
-        filename = "",
+        initialContent = '',
+        filename = '',
         isMarkdown = true,
         initialScrollPercentage = 0,
         initialScrollTop = 0,
@@ -148,10 +145,7 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: [
-                    wrapComp.reconfigure(createWrapExtension()),
-                    rulerComp.reconfigure(rulerPlugin),
-                ],
+                effects: [wrapComp.reconfigure(createWrapExtension()), rulerComp.reconfigure(rulerPlugin)],
             });
         }
     });
@@ -164,15 +158,15 @@
 
     $effect(() => {
         if (view) {
-            const isDark = appContext.app.theme === "dark";
+            const isDark = appContext.app.theme === 'dark';
             view.dispatch({
                 effects: themeComp.reconfigure(
                     generateDynamicTheme(
                         appContext.app.editorFontSize,
                         appContext.app.editorFontFamily,
                         isDark,
-                        appContext.metrics.insertMode
-                    )
+                        appContext.metrics.insertMode,
+                    ),
                 ),
             });
         }
@@ -190,7 +184,7 @@
         if (view) {
             const _indent = appContext.app.defaultIndent;
             view.dispatch({
-                effects: indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, _indent)))),
+                effects: indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, _indent)))),
             });
         }
     });
@@ -199,7 +193,7 @@
         if (view) {
             view.dispatch({
                 effects: whitespaceComp.reconfigure(
-                    appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []
+                    appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [],
                 ),
             });
         }
@@ -234,7 +228,7 @@
     });
 
     function createExtensions(currentHistoryState: any): Extension[] {
-        const isDark = appContext.app.theme === "dark";
+        const isDark = appContext.app.theme === 'dark';
         const extensions = [
             highlightActiveLineGutter(),
             highlightActiveLine(),
@@ -256,20 +250,18 @@
                     appContext.app.editorFontSize,
                     appContext.app.editorFontFamily,
                     isDark,
-                    appContext.metrics.insertMode
-                )
+                    appContext.metrics.insertMode,
+                ),
             ),
-            indentComp.of(indentUnit.of(" ".repeat(Math.max(1, appContext.app.defaultIndent)))),
-            whitespaceComp.of(
-                appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []
-            ),
+            indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))),
+            whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
             languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
             spellComp.of(createSpellCheckLinter()),
             doubleClickComp.of(createDoubleClickHandler()),
             rulerComp.of(rulerPlugin),
             wrapComp.of(createWrapExtension()),
-            EditorView.contentAttributes.of({ spellcheck: "false" }),
+            EditorView.contentAttributes.of({ spellcheck: 'false' }),
             EditorView.scrollMargins.of(() => ({ bottom: 30 })),
             handlersComp.of(eventHandlers),
         ];
@@ -284,9 +276,7 @@
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => {
                         onContentChange(update.state.doc.toString());
-                        const v = view as
-                            | (EditorView & { getHistoryState?: () => any })
-                            | undefined;
+                        const v = view as (EditorView & { getHistoryState?: () => any }) | undefined;
                         if (onHistoryUpdate && v && v.getHistoryState) {
                             onHistoryUpdate(v.getHistoryState());
                         }
@@ -310,11 +300,11 @@
                                 number: line.number,
                                 from: line.from,
                                 text: line.text,
-                            })
+                            }),
                         );
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
-            })
+            }),
         );
 
         return extensions;
@@ -359,7 +349,7 @@
                         number: line.number,
                         from: line.from,
                         text: line.text,
-                    })
+                    }),
                 );
 
                 view!.requestMeasure({
@@ -371,30 +361,34 @@
                     },
                 });
 
+                // Apply immediate spellcheck if dictionary is loaded and we have cached results
+                if (spellcheckState.dictionaryLoaded) {
+                    applyImmediateSpellcheck(view!);
+                }
+
                 initializeTabFileState(storeTab).catch(() => {});
             });
             return;
         }
 
-        const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
+        const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
         const isFocused = view.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
-        const shouldSync =
-            isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync;
+        const shouldSync = isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync;
 
         if (shouldSync) {
             untrack(() => {
-                scrollManager.capture(view!, "Sync");
+                scrollManager.capture(view!, 'Sync');
 
                 view!.dispatch({
                     changes: { from: 0, to: view!.state.doc.length, insert: storeContent },
-                    userEvent: "input.type.sync",
+                    userEvent: 'input.type.sync',
                 });
 
                 requestAnimationFrame(() => {
                     if (view && view._currentTabId === tId) {
                         view.requestMeasure();
-                        scrollManager.restore(view, "pixel");
+                        scrollManager.restore(view, 'pixel');
                     }
                 });
 
@@ -447,19 +441,19 @@
         });
 
         const handleModifierKey = (e: KeyboardEvent) => {
-            if (e.key === "Control" || e.key === "Meta") {
-                if (e.type === "keydown") {
-                    view?.dom.classList.add("cm-modifier-down");
+            if (e.key === 'Control' || e.key === 'Meta') {
+                if (e.type === 'keydown') {
+                    view?.dom.classList.add('cm-modifier-down');
                 } else {
-                    view?.dom.classList.remove("cm-modifier-down");
+                    view?.dom.classList.remove('cm-modifier-down');
                 }
             }
         };
-        const clearModifier = () => view?.dom.classList.remove("cm-modifier-down");
+        const clearModifier = () => view?.dom.classList.remove('cm-modifier-down');
 
-        window.addEventListener("keydown", handleModifierKey);
-        window.addEventListener("keyup", handleModifierKey);
-        window.addEventListener("blur", clearModifier);
+        window.addEventListener('keydown', handleModifierKey);
+        window.addEventListener('keyup', handleModifierKey);
+        window.addEventListener('blur', clearModifier);
 
         const throttleScroll = throttle(() => {
             if (!view || !onScrollChange || view._currentTabId !== tabId) return;
@@ -474,7 +468,7 @@
             onScrollChange(percentage, scrollTop, docLine.number);
         }, 50);
 
-        viewInstance.scrollDOM.addEventListener("scroll", throttleScroll, { passive: true });
+        viewInstance.scrollDOM.addEventListener('scroll', throttleScroll, { passive: true });
 
         if (searchState.findText) {
             updateSearchEditor(viewInstance);
@@ -485,10 +479,10 @@
         return () => {
             if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
             if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
-            window.removeEventListener("keydown", handleModifierKey);
-            window.removeEventListener("keyup", handleModifierKey);
-            window.removeEventListener("blur", clearModifier);
-            view?.scrollDOM.removeEventListener("scroll", throttleScroll);
+            window.removeEventListener('keydown', handleModifierKey);
+            window.removeEventListener('keyup', handleModifierKey);
+            window.removeEventListener('blur', clearModifier);
+            view?.scrollDOM.removeEventListener('scroll', throttleScroll);
 
             const v = view;
             if (onHistoryUpdate && v && v.getHistoryState) {
@@ -507,5 +501,5 @@
     role="none"
     class="w-full h-full overflow-hidden bg-bg-main relative"
     bind:this={editorContainer}
-    onclick={() => view?.focus()}
-></div>
+    onclick={() => view?.focus()}>
+</div>

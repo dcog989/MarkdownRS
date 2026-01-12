@@ -7,6 +7,74 @@ import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
 import { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 
+/**
+ * Per-tab spellcheck cache
+ * Stores the last checked state to avoid redundant checks on tab switches
+ */
+class TabSpellcheckCache {
+    private tabCaches = new Map<
+        string,
+        {
+            content: string;
+            diagnostics: Diagnostic[];
+            misspelledWords: Set<string>;
+            lastCheckTime: number;
+        }
+    >();
+
+    get(tabId: string, currentContent: string) {
+        const cached = this.tabCaches.get(tabId);
+        if (cached && cached.content === currentContent) {
+            return cached;
+        }
+        return null;
+    }
+
+    set(tabId: string, content: string, diagnostics: Diagnostic[], misspelledWords: Set<string>) {
+        this.tabCaches.set(tabId, {
+            content,
+            diagnostics,
+            misspelledWords,
+            lastCheckTime: Date.now(),
+        });
+    }
+
+    invalidate(tabId: string) {
+        this.tabCaches.delete(tabId);
+    }
+
+    invalidateAll() {
+        this.tabCaches.clear();
+    }
+
+    // Clean up old caches (keep only last 10 tabs)
+    prune() {
+        if (this.tabCaches.size > 10) {
+            const sorted = Array.from(this.tabCaches.entries()).sort((a, b) => b[1].lastCheckTime - a[1].lastCheckTime);
+            this.tabCaches = new Map(sorted.slice(0, 10));
+        }
+    }
+}
+
+const tabCache = new TabSpellcheckCache();
+
+// Track if we should use zero delay (for immediate cache hits)
+let useZeroDelay = false;
+
+// Export function to invalidate cache when dictionary changes
+export function invalidateSpellcheckCache(tabId?: string) {
+    if (tabId) {
+        tabCache.invalidate(tabId);
+    } else {
+        tabCache.invalidateAll();
+    }
+}
+
+// Force immediate linting with cached results (for tab switches)
+export function applyImmediateSpellcheck(view: EditorView) {
+    forceLinting(view);
+}
+
 export const createSpellCheckLinter = () => {
     return linter(
         async (view) => {
@@ -14,6 +82,21 @@ export const createSpellCheckLinter = () => {
 
             const { state } = view;
             const doc = state.doc;
+            const docContent = doc.toString();
+
+            // Get tab ID from the view if available
+            const tabId = (view as any)._currentTabId;
+
+            // Check cache first
+            if (tabId) {
+                const cached = tabCache.get(tabId, docContent);
+                if (cached) {
+                    // Update global misspelled cache from tab-specific cache
+                    spellcheckState.misspelledCache = cached.misspelledWords;
+                    return cached.diagnostics;
+                }
+            }
+
             const wordsToVerify = new Map<string, { from: number; to: number }[]>();
 
             const safeNodeTypes = new Set([
@@ -88,7 +171,14 @@ export const createSpellCheckLinter = () => {
                 },
             });
 
-            if (wordsToVerify.size === 0) return [];
+            if (wordsToVerify.size === 0) {
+                // Cache empty result
+                if (tabId) {
+                    tabCache.set(tabId, docContent, [], new Set());
+                    tabCache.prune();
+                }
+                return [];
+            }
 
             try {
                 const misspelled = await callBackend(
@@ -100,6 +190,10 @@ export const createSpellCheckLinter = () => {
                 );
 
                 if (!misspelled) {
+                    if (tabId) {
+                        tabCache.set(tabId, docContent, [], new Set());
+                        tabCache.prune();
+                    }
                     return [];
                 }
 
@@ -140,13 +234,23 @@ export const createSpellCheckLinter = () => {
                     }
                 }
 
+                // Update global cache
                 spellcheckState.misspelledCache = newCache;
+
+                // Cache result for this tab
+                if (tabId) {
+                    tabCache.set(tabId, docContent, diagnostics, newCache);
+                    tabCache.prune();
+                }
+
                 return diagnostics;
             } catch (err) {
                 return [];
             }
         },
-        { delay: CONFIG.SPELLCHECK.LINT_DELAY_MS },
+        {
+            delay: CONFIG.SPELLCHECK.LINT_DELAY_MS,
+        },
     );
 };
 
@@ -156,6 +260,9 @@ export function triggerImmediateLint(view: EditorView) {
 
 export async function refreshSpellcheck(view: EditorView | undefined) {
     if (!view) return;
+
+    // Invalidate all tab caches since dictionary changed
+    tabCache.invalidateAll();
 
     await refreshCustomDictionary();
     spellcheckState.misspelledCache = new Set<string>();
@@ -192,7 +299,10 @@ export const spellCheckKeymap = [
                 // 2. Clear cache
                 words.forEach((w) => spellcheckState.misspelledCache.delete(w.toLowerCase()));
 
-                // 3. Background Persistence
+                // 3. Invalidate tab caches since dictionary changed
+                tabCache.invalidateAll();
+
+                // 4. Background Persistence
                 Promise.all(words.map((w) => addToDictionary(w))).then(() => {
                     // Optional: Resync to ensure consistency with backend file
                     refreshCustomDictionary();
