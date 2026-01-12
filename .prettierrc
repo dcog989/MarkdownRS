@@ -5,6 +5,7 @@
     "embeddedLanguageFormatting": "auto",
     "endOfLine": "lf",
     "jsxSingleQuote": false,
+    "plugins": ["prettier-plugin-tailwindcss"],
     "printWidth": 120,
     "quoteProps": "as-needed",
     "semi": true,
