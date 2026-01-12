@@ -56,10 +56,10 @@ fn get_specialist_url(id: &str) -> Option<&'static str> {
     }
 }
 
-// Map dictionary codes to their Marco Pinto URLs (for supported English variants)
-fn get_marco_pinto_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
+// Map dictionary codes to their URLs (for supported English variants)
+fn get_dictionary_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
     match dict_code {
-        "en" | "en-US" => Some((
+        "en-US" => Some((
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff",
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.dic",
         )),
@@ -68,8 +68,8 @@ fn get_marco_pinto_urls(dict_code: &str) -> Option<(&'static str, &'static str)>
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.dic",
         )),
         "en-CA" => Some((
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Marco%20Pinto)%20(-ise)%20(alt)/en_CA.aff",
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Marco%20Pinto)%20(-ise)%20(alt)/en_CA.dic",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.aff",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.dic",
         )),
         "en-GB" => Some((
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.aff",
@@ -94,8 +94,7 @@ async fn fetch_standard_dictionary(
     if !aff_path.exists() || !dic_path.exists() {
         log::info!("Downloading dictionary: {}", dict_code);
 
-        // Try Marco Pinto URLs first for supported English variants
-        let (aff_url, dic_url) = if let Some((aff, dic)) = get_marco_pinto_urls(&dict_code) {
+        let (aff_url, dic_url) = if let Some((aff, dic)) = get_dictionary_urls(&dict_code) {
             (aff.to_string(), dic.to_string())
         } else {
             // Fall back to wooorm/dictionaries for other languages

@@ -38,7 +38,7 @@ export const appState = $state({
     tooltipDelay: 1000,
     findPanelTransparent: false,
     findPanelCloseOnBlur: false,
-    spellcheckDictionaries: ['en'] as string[],
+    spellcheckDictionaries: ['en-US'] as string[],
     technicalWords: true,
     tabNameFromContent: false,
     wrapGuideColumn: 0,

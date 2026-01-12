@@ -2,7 +2,6 @@
     import { tooltip } from '$lib/actions/tooltip';
     import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
     import Input from '$lib/components/ui/Input.svelte';
-    import TechnicalWordsToggle from '$lib/components/ui/TechnicalWordsToggle.svelte';
     import { toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
@@ -378,7 +377,7 @@
             label: 'Language Dictionaries',
             type: 'dictionary-multi-select',
             category: 'Spellcheck',
-            defaultValue: ['en'],
+            defaultValue: ['en-US'],
             tooltip: 'Select one or more standard languages.',
         },
         {
