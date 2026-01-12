@@ -8,6 +8,7 @@
     import { callBackend } from '$lib/utils/backend';
     import { saveSettings } from '$lib/utils/settings';
     import { clearDictionaries } from '$lib/utils/spellcheck.svelte.ts';
+    import { triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
     import { Keyboard, Search, Settings, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
@@ -444,7 +445,11 @@
                 showToast('info', 'Restart required to apply log level changes');
             } else if (key === 'spellcheckDictionaries' || key === 'technicalWords') {
                 clearDictionaries();
-                showToast('info', 'Restart required to apply dictionary changes');
+                appContext.spellcheck.init(true).then(() => {
+                    showToast('success', 'Spellcheck settings updated');
+                    const activeView = (window as any)._activeEditorView;
+                    if (activeView) triggerImmediateLint(activeView);
+                });
             }
         }
     }

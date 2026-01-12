@@ -17,23 +17,31 @@ export class SpellcheckManager {
         this.customDictionary = new Set((words || []).map((w) => w.toLowerCase()));
     }
 
-    async init(): Promise<void> {
-        if (this.initPromise) return this.initPromise;
-        if (this.dictionaryLoaded) return;
+    async init(force = false): Promise<void> {
+        if (this.initPromise && !force) return this.initPromise;
+        if (this.dictionaryLoaded && !force) return;
 
         this.initPromise = (async () => {
             try {
                 await this.loadCustomDictionary();
 
                 const dictionaries = appState.spellcheckDictionaries || ['en-US'];
-                const technicalWords = appState.technicalWords ?? true;
+                // Match Rust backend parameter name: technical_words
+                const technical_words = appState.technicalWords;
 
-                await callBackend('init_spellchecker', { dictionaries, technicalWords }, 'Spellcheck:Init', undefined, {
-                    report: true,
-                });
+                await callBackend(
+                    'init_spellchecker',
+                    { dictionaries, technical_words },
+                    'Spellcheck:Init',
+                    undefined,
+                    {
+                        report: true,
+                    },
+                );
                 this.dictionaryLoaded = true;
             } catch (err) {
                 this.initPromise = null;
+                this.dictionaryLoaded = false;
             }
         })();
 

@@ -16,6 +16,7 @@ function getSettingsObject() {
         splitOrientation: appState.splitOrientation,
         splitView: appState.splitView,
         activeTheme: appState.activeTheme,
+        theme: appState.theme,
         tabCycling: appState.tabCycling,
         tabWidthMin: appState.tabWidthMin,
         tabWidthMax: appState.tabWidthMax,
@@ -46,6 +47,7 @@ function getSettingsObject() {
         findPanelTransparent: appState.findPanelTransparent,
         findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
         spellcheckDictionaries: appState.spellcheckDictionaries,
+        technicalWords: appState.technicalWords,
         tabNameFromContent: appState.tabNameFromContent,
         wrapGuideColumn: appState.wrapGuideColumn,
         doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
@@ -61,9 +63,7 @@ export async function initSettings() {
         if (saved && Object.keys(saved).length > 0) {
             log(`Restoring app preferences from TOML...`);
             Object.keys(saved).forEach((key) => {
-                if (key === 'formatterListIndent') {
-                    appState.defaultIndent = saved[key];
-                } else if (key in appState) {
+                if (key in appState) {
                     (appState as any)[key] = saved[key];
                 }
             });

@@ -96,7 +96,7 @@ export interface BackendCommands {
         return: string[];
     };
     init_spellchecker: {
-        args: { dictionaries?: string[]; specialistDictionaries?: string[] };
+        args: { dictionaries?: string[]; technical_words?: boolean };
         return: void;
     };
     check_words: {

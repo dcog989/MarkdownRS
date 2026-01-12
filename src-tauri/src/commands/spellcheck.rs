@@ -8,16 +8,16 @@ use tokio::io::AsyncWriteExt;
 fn get_specialist_url(id: &str) -> Option<&'static str> {
     match id {
         "software-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/software-terms.txt",
         ),
         "companies" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
         ),
         "medical-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medical-terms/dict/medicalTerms.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medical-terms/dict/medical-terms.txt",
         ),
         "scientific-terms-us" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific-terms-us/dict/scientificTermsUS.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific-terms-us/dict/scientific-terms-us.txt",
         ),
         "typescript" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/typescript/dict/typescript.txt",
