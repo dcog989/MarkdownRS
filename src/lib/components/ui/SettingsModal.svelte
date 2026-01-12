@@ -2,7 +2,7 @@
     import { tooltip } from '$lib/actions/tooltip';
     import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
     import Input from '$lib/components/ui/Input.svelte';
-    import SpecialistDictSelector from '$lib/components/ui/SpecialistDictSelector.svelte';
+    import TechnicalWordsToggle from '$lib/components/ui/TechnicalWordsToggle.svelte';
     import { toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
@@ -382,12 +382,12 @@
             tooltip: 'Select one or more standard languages.',
         },
         {
-            key: 'specialistDictionaries',
-            label: 'Specialist Dictionaries',
-            type: 'specialist-multi-select',
+            key: 'technicalWords',
+            label: 'Include Technical Words',
+            type: 'boolean',
             category: 'Spellcheck',
-            defaultValue: ['software-terms', 'companies'],
-            tooltip: 'Select one or more specialist term lists.',
+            defaultValue: true,
+            tooltip: 'Include technical dictionaries (software, companies, medical, scientific, fullstack, programming languages, etc.)',
         },
 
         // Custom key for Windows Context Menu - Only visible on Windows
@@ -443,7 +443,7 @@
 
             if (key === 'logLevel') {
                 showToast('info', 'Restart required to apply log level changes');
-            } else if (key === 'spellcheckDictionaries' || key === 'specialistDictionaries') {
+            } else if (key === 'spellcheckDictionaries' || key === 'technicalWords') {
                 clearDictionaries();
                 showToast('info', 'Restart required to apply dictionary changes');
             }
@@ -569,12 +569,6 @@
                                     <div>
                                         <DictionarySelector
                                             selected={appContext.app.spellcheckDictionaries}
-                                            onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
-                                    </div>
-                                {:else if setting.type === 'specialist-multi-select'}
-                                    <div>
-                                        <SpecialistDictSelector
-                                            selected={appContext.app.specialistDictionaries}
                                             onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
                                 {:else if setting.type === 'custom-context-menu'}

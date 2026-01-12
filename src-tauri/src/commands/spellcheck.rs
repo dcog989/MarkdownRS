@@ -56,6 +56,33 @@ fn get_specialist_url(id: &str) -> Option<&'static str> {
     }
 }
 
+// Map dictionary codes to their Marco Pinto URLs (for supported English variants)
+fn get_marco_pinto_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
+    match dict_code {
+        "en" | "en-US" => Some((
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.dic",
+        )),
+        "en-AU" => Some((
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.aff",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.dic",
+        )),
+        "en-CA" => Some((
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Marco%20Pinto)%20(-ise)%20(alt)/en_CA.aff",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Marco%20Pinto)%20(-ise)%20(alt)/en_CA.dic",
+        )),
+        "en-GB" => Some((
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.aff",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.dic",
+        )),
+        "en-ZA" => Some((
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.aff",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.dic",
+        )),
+        _ => None,
+    }
+}
+
 async fn fetch_standard_dictionary(
     client: reqwest::Client,
     cache_dir: std::path::PathBuf,
@@ -67,14 +94,22 @@ async fn fetch_standard_dictionary(
     if !aff_path.exists() || !dic_path.exists() {
         log::info!("Downloading dictionary: {}", dict_code);
 
-        let aff_url = format!(
-            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
-            dict_code
-        );
-        let dic_url = format!(
-            "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.dic",
-            dict_code
-        );
+        // Try Marco Pinto URLs first for supported English variants
+        let (aff_url, dic_url) = if let Some((aff, dic)) = get_marco_pinto_urls(&dict_code) {
+            (aff.to_string(), dic.to_string())
+        } else {
+            // Fall back to wooorm/dictionaries for other languages
+            (
+                format!(
+                    "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
+                    dict_code
+                ),
+                format!(
+                    "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.dic",
+                    dict_code
+                ),
+            )
+        };
 
         // Download concurrently
         let (aff_res, dic_res) =
@@ -218,21 +253,45 @@ pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<S
     Ok(words)
 }
 
+// List of all technical dictionaries to load when technical_words is enabled
+fn get_all_technical_dictionaries() -> Vec<String> {
+    vec![
+        "software-terms".to_string(),
+        "companies".to_string(),
+        "medical-terms".to_string(),
+        "scientific-terms-us".to_string(),
+        "typescript".to_string(),
+        "fullstack".to_string(),
+        "npm".to_string(),
+        "fonts".to_string(),
+        "filetypes".to_string(),
+        "html".to_string(),
+        "css".to_string(),
+        "python".to_string(),
+        "rust".to_string(),
+        "cpp".to_string(),
+        "aws".to_string(),
+    ]
+}
+
 #[tauri::command]
 pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
     dictionaries: Option<Vec<String>>,
-    specialist_dictionaries: Option<Vec<String>>,
+    technical_words: Option<bool>,
 ) -> Result<(), String> {
     let dict_codes = dictionaries.unwrap_or_else(|| vec!["en".to_string()]);
-    let spec_codes = specialist_dictionaries
-        .unwrap_or_else(|| vec!["software-terms".to_string(), "companies".to_string()]);
+    let spec_codes = if technical_words.unwrap_or(true) {
+        get_all_technical_dictionaries()
+    } else {
+        Vec::new()
+    };
 
     log::info!(
-        "Initializing spellchecker with dictionaries: {:?} and specialist: {:?}",
+        "Initializing spellchecker with dictionaries: {:?}, technical words: {}",
         dict_codes,
-        spec_codes
+        technical_words.unwrap_or(true)
     );
     let local_dir = app_handle.path().app_local_data_dir().map_err(|e| {
         log::error!("Failed to get local data directory: {}", e);

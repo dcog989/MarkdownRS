@@ -26,11 +26,11 @@ export class SpellcheckManager {
                 await this.loadCustomDictionary();
 
                 const dictionaries = appState.spellcheckDictionaries || ['en'];
-                const specialistDictionaries = appState.specialistDictionaries || ['software-terms', 'companies'];
+                const technicalWords = appState.technicalWords ?? true;
 
                 await callBackend(
                     'init_spellchecker',
-                    { dictionaries, specialistDictionaries },
+                    { dictionaries, technicalWords },
                     'Spellcheck:Init',
                     undefined,
                     { report: true },
