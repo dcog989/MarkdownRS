@@ -12,7 +12,8 @@
         "clean:rust": "node -e \"require('fs').rmSync('src-tauri/target', {recursive: true, force: true, maxRetries: 3, retryDelay: 500});\"",
         "clean": "npm run clean:node && npm run clean:rust",
         "dev": "svelte-kit sync && vite dev",
-        "format": "prettier --write .",
+        "format": "prettier . --write",
+        "format:check": "prettier . --check",
         "preview": "vite preview",
         "tauri": "tauri"
     },
