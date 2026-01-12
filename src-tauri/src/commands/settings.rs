@@ -1,8 +1,8 @@
+use encoding_rs::{UTF_16BE, UTF_16LE};
 use serde::Serialize;
 use std::fs;
 use tauri::Manager;
 use unicode_bom::Bom;
-use encoding_rs::{UTF_16LE, UTF_16BE};
 
 #[derive(Serialize)]
 pub struct AppInfo {
@@ -161,7 +161,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         // Handle all other exotic BOM types (Bocu1, Gb18030, Scsu, Utf7, UtfEbcdic, Plus)
         bom => {
             // These are extremely rare encodings
-            log::warn!("Exotic BOM type {:?} detected in settings file, falling back to UTF-8", bom);
+            log::warn!(
+                "Exotic BOM type {:?} detected in settings file, falling back to UTF-8",
+                bom
+            );
             let without_bom = &raw_bytes[bom.len()..];
             String::from_utf8_lossy(without_bom).to_string()
         }
@@ -265,12 +268,27 @@ mod windows_registry {
             let _ = hkcu.create_subkey(path).map_err(|e| e.to_string())?;
         }
 
-        // 4. File-specific association hints (Optional, helps rank)
-        // HKCU\Software\Classes\.md\OpenWithList\markdown-rs.exe
+        // 4. File-specific association hints
         {
             for ext in &[".md", ".markdown", ".txt"] {
                 let path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
                 let _ = hkcu.create_subkey(path).ok();
+            }
+        }
+
+        // 5. Register "Edit" verb for Markdown files (Primary handler registration)
+        {
+            for ext in &[".md", ".markdown"] {
+                let path = format!(r"Software\Classes\{}\shell\Edit", ext);
+                let (key, _) = hkcu.create_subkey(&path).map_err(|e| e.to_string())?;
+
+                key.set_value("", &"Edit with MarkdownRS").ok();
+                key.set_value("Icon", &exe_str).ok();
+
+                let (cmd_key, _) = key.create_subkey("command").map_err(|e| e.to_string())?;
+                cmd_key
+                    .set_value("", &format!("\"{}\" \"%1\"", exe_str))
+                    .map_err(|e| e.to_string())?;
             }
         }
 
@@ -297,10 +315,15 @@ mod windows_registry {
         let list_path = format!(r"Software\Classes\*\OpenWithList\{}", exe_name);
         let _ = hkcu.delete_subkey_all(&list_path);
 
-        // Remove Ext specific
+        // Remove Ext specific associations and Edit verbs
         for ext in &[".md", ".markdown", ".txt"] {
-            let path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
-            let _ = hkcu.delete_subkey_all(&path);
+            let list_path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
+            let _ = hkcu.delete_subkey_all(&list_path);
+
+            if *ext != ".txt" {
+                let edit_path = format!(r"Software\Classes\{}\shell\Edit", ext);
+                let _ = hkcu.delete_subkey_all(&edit_path);
+            }
         }
 
         Ok(())
