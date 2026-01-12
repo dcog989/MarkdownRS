@@ -361,6 +361,9 @@
                     },
                 });
 
+                // Ensure the editor gains focus after the state swap
+                view!.focus();
+
                 // Apply immediate spellcheck if dictionary is loaded and we have cached results
                 if (spellcheckState.dictionaryLoaded) {
                     applyImmediateSpellcheck(view!);
