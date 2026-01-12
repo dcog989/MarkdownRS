@@ -3,8 +3,9 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 
 // Regex to match file paths: Windows paths (C:\...), Unix paths (/...), or relative paths (./... or ../....)
 // Unix absolute paths must have at least one slash after the initial slash (e.g., /home/user, not /hibernate)
+// Allows paths to be preceded by whitespace, quotes, backticks, or start of line
 const FILE_PATH_REGEX =
-    /(?:(?:^|\s)(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]+)|(?:(?:^|\s)\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+]*)/g;
+    /(?:(?:^|\s|['\"`])(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]+)|(?:(?:^|\s|['\"`])\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]*)/g;
 
 // Mark to apply to file paths
 const filePathMark = Decoration.mark({
@@ -26,9 +27,13 @@ function findFilePaths(view: EditorView) {
             let match: RegExpExecArray | null;
             while ((match = FILE_PATH_REGEX.exec(lineText)) !== null) {
                 const matchText = match[0].trim();
-                const startOffset = match.index + (match[0].length - matchText.length);
+                // Find the actual path start (skip quote/backtick if present)
+                const pathStart = matchText.match(/^['\"`]/) ? 1 : 0;
+                const cleanPath = matchText.slice(pathStart);
+                
+                const startOffset = match.index + (match[0].length - matchText.length) + pathStart;
                 const matchFrom = line.from + startOffset;
-                const matchTo = matchFrom + matchText.length;
+                const matchTo = matchFrom + cleanPath.length;
 
                 builder.add(matchFrom, matchTo, filePathMark);
             }
