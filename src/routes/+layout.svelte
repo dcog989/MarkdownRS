@@ -41,9 +41,18 @@
         const handleKeydown = (e: KeyboardEvent) => {
             shortcutManager.handleKeyEvent(e);
         };
+
+        // Prevent browser context menu globally
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+        };
+
         window.addEventListener('keydown', handleKeydown, { capture: true });
+        document.addEventListener('contextmenu', handleContextMenu, { passive: false });
+
         return () => {
             window.removeEventListener('keydown', handleKeydown, { capture: true });
+            document.removeEventListener('contextmenu', handleContextMenu);
         };
     });
 </script>
