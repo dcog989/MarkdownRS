@@ -8,6 +8,7 @@
     import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import { appContext } from '$lib/stores/state.svelte.ts';
+    import { ScrollManager } from '$lib/utils/cmScroll';
     import { CONFIG } from '$lib/utils/config';
     import { newlinePlugin, rulerPlugin } from '$lib/utils/editorPlugins';
     import { generateDynamicTheme } from '$lib/utils/editorTheme';
@@ -22,7 +23,6 @@
         urlPlugin,
     } from '$lib/utils/markdownExtensions';
     import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
-    import { ScrollManager } from '$lib/utils/scrollManager';
     import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
     import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
     import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
@@ -386,15 +386,45 @@
             untrack(() => {
                 scrollManager.capture(view!, 'Sync');
 
+                // 1. Capture current visual cursor position (Line/Col)
+                // This allows us to preserve position across formatting changes better than absolute offsets
+                const state = view!.state;
+                const selection = state.selection.main;
+                const anchorLineObj = state.doc.lineAt(selection.anchor);
+                const headLineObj = state.doc.lineAt(selection.head);
+
+                const anchorInfo = { line: anchorLineObj.number, col: selection.anchor - anchorLineObj.from };
+                const headInfo = { line: headLineObj.number, col: selection.head - headLineObj.from };
+
+                // 2. Update content
                 view!.dispatch({
-                    changes: { from: 0, to: view!.state.doc.length, insert: storeContent },
+                    changes: { from: 0, to: state.doc.length, insert: storeContent },
                     userEvent: 'input.type.sync',
+                });
+
+                // 3. Restore cursor based on Line/Col mapping in the new document
+                // This prevents the cursor from "jumping" when formatting adds/removes characters
+                const newState = view!.state;
+                const newDoc = newState.doc;
+
+                const safeAnchorLine = Math.min(anchorInfo.line, newDoc.lines);
+                const safeHeadLine = Math.min(headInfo.line, newDoc.lines);
+
+                const newAnchorLineObj = newDoc.line(safeAnchorLine);
+                const newHeadLineObj = newDoc.line(safeHeadLine);
+
+                const newAnchor = Math.min(newAnchorLineObj.from + anchorInfo.col, newAnchorLineObj.to);
+                const newHead = Math.min(newHeadLineObj.from + headInfo.col, newHeadLineObj.to);
+
+                view!.dispatch({
+                    selection: { anchor: newAnchor, head: newHead },
+                    scrollIntoView: false
                 });
 
                 requestAnimationFrame(() => {
                     if (view && view._currentTabId === tId) {
                         view.requestMeasure();
-                        scrollManager.restore(view, 'pixel');
+                        scrollManager.restore(view, 'anchor');
                     }
                 });
 
