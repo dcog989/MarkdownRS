@@ -3,6 +3,20 @@ use dprint_plugin_markdown::configuration::{ConfigurationBuilder, TextWrap, Unor
 use dprint_plugin_markdown::format_text;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
+
+// Lazy-compiled regexes to prevent recompilation in loops
+static BACKSLASH_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?m)(^|[^\\])\\\r?$").expect("Invalid BACKSLASH_RE"));
+
+static BULLET_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(\s*)- ").expect("Invalid BULLET_RE"));
+
+static UNORDERED_LIST_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(\s*)[-*+] ").expect("Invalid UNORDERED_LIST_RE"));
+
+static ORDERED_LIST_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(\s*)\d+\. ").expect("Invalid ORDERED_LIST_RE"));
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FormatterOptions {
@@ -91,16 +105,13 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
 
 /// Convert trailing backslashes (hard breaks) back to two spaces
 fn convert_backslashes_to_spaces(content: &str) -> String {
-    // Regex matches a backslash at the end of a line that is NOT preceded by another backslash.
-    // Matches the preceding character (group 1) to preserve it.
-    let re = Regex::new(r"(?m)(^|[^\\])\\\r?$").unwrap();
     // Replace the backslash with two spaces, keeping the preceding character.
-    re.replace_all(content, "${1}  ").to_string()
+    BACKSLASH_RE.replace_all(content, "${1}  ").to_string()
 }
 
 /// Convert bullet characters from - to +
 fn convert_bullets_to_plus(content: &str) -> String {
-    let mut result = String::new();
+    let mut result = String::with_capacity(content.len());
     let mut in_code_block = false;
 
     for line in content.lines() {
@@ -119,9 +130,8 @@ fn convert_bullets_to_plus(content: &str) -> String {
         }
 
         // Convert unordered list bullets from - to +
-        let re = Regex::new(r"^(\s*)- ").unwrap();
-        if re.is_match(line) {
-            let converted = re.replace(line, "$1+ ");
+        if BULLET_RE.is_match(line) {
+            let converted = BULLET_RE.replace(line, "$1+ ");
             result.push_str(&converted);
         } else {
             result.push_str(line);
@@ -139,7 +149,7 @@ fn convert_bullets_to_plus(content: &str) -> String {
 
 /// Convert code fence markers
 fn convert_code_fences(content: &str, from: &str, to: &str) -> String {
-    let mut result = String::new();
+    let mut result = String::with_capacity(content.len());
     let mut in_code_block = false;
 
     for line in content.lines() {
@@ -174,7 +184,7 @@ fn convert_code_fences(content: &str, from: &str, to: &str) -> String {
 
 /// Adjust list indentation to match the specified width
 fn adjust_list_indentation(content: &str, target_indent: usize) -> String {
-    let mut result = String::new();
+    let mut result = String::with_capacity(content.len());
     let mut in_code_block = false;
 
     for line in content.lines() {
@@ -193,17 +203,14 @@ fn adjust_list_indentation(content: &str, target_indent: usize) -> String {
         }
 
         // Match list items (unordered and ordered)
-        let unordered_re = Regex::new(r"^(\s*)[-*+] ").unwrap();
-        let ordered_re = Regex::new(r"^(\s*)\d+\. ").unwrap();
-
-        if let Some(caps) = unordered_re.captures(line) {
+        if let Some(caps) = UNORDERED_LIST_RE.captures(line) {
             let current_indent = caps.get(1).map_or(0, |m| m.as_str().len());
             let list_level = current_indent / 2; // Assume default 2-space indent
             let new_indent = list_level * target_indent;
             let new_spaces = " ".repeat(new_indent);
             let rest = &line[current_indent..];
             result.push_str(&format!("{}{}", new_spaces, rest));
-        } else if let Some(caps) = ordered_re.captures(line) {
+        } else if let Some(caps) = ORDERED_LIST_RE.captures(line) {
             let current_indent = caps.get(1).map_or(0, |m| m.as_str().len());
             let list_level = current_indent / 2; // Assume default 2-space indent
             let new_indent = list_level * target_indent;
