@@ -4,7 +4,7 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 // Regex to match file paths: Windows paths (C:\...), Unix paths (/...), or relative paths (./... or ../....)
 // Unix absolute paths must have at least one slash after the initial slash (e.g., /home/user, not /hibernate)
 // Allows paths to be preceded by whitespace, quotes, backticks, or start of line
-const FILE_PATH_REGEX =
+export const FILE_PATH_REGEX =
     /(?:(?:^|\s|['\"`])(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]+)|(?:(?:^|\s|['\"`])\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]*)/g;
 
 // Mark to apply to file paths
