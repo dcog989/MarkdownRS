@@ -27,9 +27,10 @@
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
     import type { EditorView as CM6EditorView } from '@codemirror/view';
+    import { EditorView } from '@codemirror/view';
     import { readText } from '@tauri-apps/plugin-clipboard-manager';
     import { onMount, tick, untrack } from 'svelte';
-    import EditorView from './EditorView.svelte';
+    import EditorViewComponent from './EditorView.svelte';
 
     let { tabId } = $props<{ tabId: string }>();
 
@@ -166,6 +167,20 @@
         }
     }
 
+    function handleScrollbarClick(ratio: number) {
+        if (!cmView) return;
+
+        const doc = cmView.state.doc;
+        // Clamp to valid line numbers (1 to doc.lines)
+        const targetLineNumber = Math.max(1, Math.min(doc.lines, Math.round(doc.lines * ratio)));
+        const line = doc.line(targetLineNumber);
+
+        // Use 'start' alignment to snap the line to the top of the viewport
+        cmView.dispatch({
+            effects: EditorView.scrollIntoView(line.from, { y: 'start' })
+        });
+    }
+
     let initialContent = $derived(activeTab?.content || '');
     let filename = $derived.by(() => {
         if (activeTab?.path) return activeTab.path;
@@ -185,7 +200,7 @@
 </script>
 
 <div class="w-full h-full overflow-hidden bg-bg-main relative">
-    <EditorView
+    <EditorViewComponent
         bind:cmView
         {tabId}
         {initialContent}
@@ -205,7 +220,7 @@
         onSelectionChange={handleSelectionChange}
         onHistoryUpdate={handleHistoryUpdate} />
     {#if cmView}
-        <CustomScrollbar viewport={cmView.scrollDOM} />
+        <CustomScrollbar viewport={cmView.scrollDOM} onScrollClick={handleScrollbarClick} />
     {/if}
     <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
 

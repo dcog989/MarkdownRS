@@ -2,9 +2,10 @@
     interface Props {
         viewport: HTMLElement | null;
         content?: HTMLElement | null;
+        onScrollClick?: (ratio: number) => void;
     }
 
-    let { viewport, content }: Props = $props();
+    let { viewport, content, onScrollClick }: Props = $props();
 
     let trackRef = $state<HTMLDivElement>();
     let thumbRef = $state<HTMLDivElement>();
@@ -147,9 +148,13 @@
         targetThumbTop = Math.max(0, Math.min(maxThumbTravel, targetThumbTop));
 
         const scrollRatio = targetThumbTop / maxThumbTravel;
-        const targetScrollTop = scrollRatio * maxScrollTravel;
 
-        smoothScrollTo(targetScrollTop);
+        if (onScrollClick) {
+            onScrollClick(scrollRatio);
+        } else {
+            const targetScrollTop = scrollRatio * maxScrollTravel;
+            smoothScrollTo(targetScrollTop);
+        }
     }
 
     function onThumbMouseDown(e: MouseEvent) {
