@@ -66,7 +66,7 @@ pub async fn format_markdown(
 
     std::thread::Builder::new()
         .name("markdown-formatter".into())
-        .stack_size(8 * 1024 * 1024) // 8MB stack
+        .stack_size(10 * 1024 * 1024) // 10 MB stack
         .spawn(move || {
             let result = formatter::format_markdown(&content, &options);
             let _ = tx.send(result);
