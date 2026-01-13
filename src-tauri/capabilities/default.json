@@ -15,15 +15,7 @@
         "core:window:allow-set-position",
         "core:window:allow-show",
         "core:window:allow-set-focus",
-        "fs:default",
-        "fs:allow-read-text-file",
-        "fs:allow-write-text-file",
-        "fs:allow-rename",
         "fs:allow-unwatch",
-        {
-            "identifier": "fs:allow-read-file",
-            "allow": [{ "path": "**" }]
-        },
         {
             "identifier": "fs:allow-watch",
             "allow": [{ "path": "**" }]
