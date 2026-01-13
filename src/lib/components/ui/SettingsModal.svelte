@@ -386,7 +386,7 @@
             label: 'Include Technical Words',
             type: 'boolean',
             category: 'Spellcheck',
-            defaultValue: true,
+            defaultValue: false,
             tooltip: 'Include technical dictionaries (software, companies, medical, scientific, fullstack, programming languages, etc.)',
         },
 
