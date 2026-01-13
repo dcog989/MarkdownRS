@@ -71,6 +71,54 @@ export function getEditorKeymap(customKeymap: any[] = []) {
             },
         },
         {
+            key: 'Delete',
+            run: (v) => {
+                const selection = v.state.selection.main;
+                if (selection.empty) {
+                    // Default delete behavior - delete char after cursor
+                    if (selection.head < v.state.doc.length) {
+                        v.dispatch({
+                            changes: { from: selection.head, to: selection.head + 1 },
+                            scrollIntoView: true,
+                        });
+                        return true;
+                    }
+                } else {
+                    // Delete selection
+                    v.dispatch({
+                        changes: { from: selection.from, to: selection.to },
+                        scrollIntoView: true,
+                    });
+                    return true;
+                }
+                return false;
+            },
+        },
+        {
+            key: 'Backspace',
+            run: (v) => {
+                const selection = v.state.selection.main;
+                if (selection.empty) {
+                    // Default backspace behavior - delete char before cursor
+                    if (selection.head > 0) {
+                        v.dispatch({
+                            changes: { from: selection.head - 1, to: selection.head },
+                            scrollIntoView: true,
+                        });
+                        return true;
+                    }
+                } else {
+                    // Delete selection
+                    v.dispatch({
+                        changes: { from: selection.from, to: selection.to },
+                        scrollIntoView: true,
+                    });
+                    return true;
+                }
+                return false;
+            },
+        },
+        {
             key: 'Mod-Home',
             run: (v) => {
                 v.dispatch({ selection: { anchor: 0 } });
