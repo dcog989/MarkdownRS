@@ -26,6 +26,7 @@
 
     let viewport = $state<HTMLDivElement>();
     let content = $state<HTMLDivElement>();
+    let modalPanel = $state<HTMLDivElement>();
 
     function handleBackdropClick(e: MouseEvent) {
         if (e.target === e.currentTarget) {
@@ -41,14 +42,84 @@
         }
     }
 
-    function handleFocusTrap(e: FocusEvent) {
-        if (!isOpen) return;
-        const modal = (e.target as HTMLElement)?.closest('.ui-panel');
-        if (!modal && isOpen) {
-            e.preventDefault();
-            e.stopPropagation();
+    function getFocusableElements(container: HTMLElement): HTMLElement[] {
+        const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        return Array.from(container.querySelectorAll(selector));
+    }
+
+    function handleTabKey(e: KeyboardEvent) {
+        if (!isOpen || !modalPanel) return;
+        if (e.key !== 'Tab') return;
+
+        const focusableElements = getFocusableElements(modalPanel);
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+            // Shift + Tab: moving backwards
+            if (document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            }
+        } else {
+            // Tab: moving forwards
+            if (document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
+            }
         }
     }
+
+    // Store the previously focused element to restore focus when modal closes
+    let previouslyFocusedElement = $state<HTMLElement | null>(null);
+
+    $effect(() => {
+        if (isOpen && modalPanel) {
+            // Store the previously focused element
+            previouslyFocusedElement = document.activeElement as HTMLElement;
+
+            // Focus the first focusable element when modal opens
+            const focusableElements = getFocusableElements(modalPanel);
+            if (focusableElements.length > 0) {
+                // Delay to ensure DOM is ready and child components have initialized
+                setTimeout(() => {
+                    // Re-query in case DOM changed
+                    const currentFocusable = getFocusableElements(modalPanel);
+                    if (currentFocusable.length > 0 && !modalPanel.contains(document.activeElement)) {
+                        currentFocusable[0].focus();
+                    }
+                }, 50);
+            }
+
+            // Set up a focus monitor to catch focus escaping the modal
+            const handleFocusOut = (e: FocusEvent) => {
+                if (!modalPanel) return;
+                const target = e.relatedTarget as HTMLElement;
+                
+                // If focus is moving outside the modal, bring it back
+                if (target && !modalPanel.contains(target)) {
+                    e.preventDefault();
+                    const focusable = getFocusableElements(modalPanel);
+                    if (focusable.length > 0) {
+                        focusable[0].focus();
+                    }
+                }
+            };
+
+            modalPanel.addEventListener('focusout', handleFocusOut);
+
+            return () => {
+                modalPanel?.removeEventListener('focusout', handleFocusOut);
+                
+                // Restore focus to the previously focused element
+                if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
+                    previouslyFocusedElement.focus();
+                }
+            };
+        }
+    });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -62,8 +133,9 @@
         class:items-start={position === 'top'}
         style="z-index: {zIndex}; pointer-events: auto;"
         onclick={handleBackdropClick}
-        onfocusin={handleFocusTrap}>
+        onkeydown={handleTabKey}>
         <div
+            bind:this={modalPanel}
             class="ui-panel shadow-2xl"
             style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: {position ===
             'top'
