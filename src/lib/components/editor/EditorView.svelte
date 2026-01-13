@@ -364,6 +364,9 @@
                 // Ensure the editor gains focus after the state swap
                 view!.focus();
 
+                // Set global reference for spellcheck
+                (window as any)._activeEditorView = view;
+
                 // Apply immediate spellcheck if dictionary is loaded and we have cached results
                 if (spellcheckState.dictionaryLoaded) {
                     applyImmediateSpellcheck(view!);
@@ -434,6 +437,8 @@
         };
 
         view = typedView;
+        (window as any)._activeEditorView = view;
+
         scrollSync.registerEditor(viewInstance);
 
         viewInstance.requestMeasure({
@@ -486,6 +491,10 @@
             window.removeEventListener('keyup', handleModifierKey);
             window.removeEventListener('blur', clearModifier);
             view?.scrollDOM.removeEventListener('scroll', throttleScroll);
+
+            if ((window as any)._activeEditorView === view) {
+                (window as any)._activeEditorView = null;
+            }
 
             const v = view;
             if (onHistoryUpdate && v && v.getHistoryState) {

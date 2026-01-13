@@ -8,7 +8,7 @@
     import { callBackend } from '$lib/utils/backend';
     import { saveSettings } from '$lib/utils/settings';
     import { clearDictionaries } from '$lib/utils/spellcheck.svelte.ts';
-    import { triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
+    import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
     import { Keyboard, Search, Settings, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
@@ -386,7 +386,7 @@
             label: 'Include Technical Words',
             type: 'boolean',
             category: 'Spellcheck',
-            defaultValue: false,
+            defaultValue: true,
             tooltip: 'Include technical dictionaries (software, companies, medical, scientific, fullstack, programming languages, etc.)',
         },
 
@@ -445,6 +445,8 @@
                 showToast('info', 'Restart required to apply log level changes');
             } else if (key === 'spellcheckDictionaries' || key === 'technicalWords') {
                 clearDictionaries();
+                invalidateSpellcheckCache();
+
                 appContext.spellcheck.init(true).then(() => {
                     showToast('success', 'Spellcheck settings updated');
                     const activeView = (window as any)._activeEditorView;
