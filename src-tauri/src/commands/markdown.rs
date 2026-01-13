@@ -26,7 +26,6 @@ pub async fn render_markdown(
         flavor: markdown_flavor,
     };
 
-    // Rendering can be heavy, run on a blocking thread
     tokio::task::spawn_blocking(move || {
         renderer::render_markdown(&content, options).map_err(|e| {
             log::error!("Failed to render markdown: {}", e);
@@ -60,20 +59,18 @@ pub async fn format_markdown(
         max_blank_lines: 2,
     };
 
-    // Format on a dedicated thread with a larger stack to prevent overflows on large/deep markdown files
-    // dprint's recursive parser can hit the default 2MB stack limit on large files
+    // Increase stack size to 16MB for very large files to prevent dprint recursion overflow
     let (tx, rx) = std::sync::mpsc::channel();
 
     std::thread::Builder::new()
         .name("markdown-formatter".into())
-        .stack_size(10 * 1024 * 1024) // 10 MB stack
+        .stack_size(16 * 1024 * 1024)
         .spawn(move || {
             let result = formatter::format_markdown(&content, &options);
             let _ = tx.send(result);
         })
         .map_err(|e| format!("Failed to spawn formatter thread: {}", e))?;
 
-    // Await the result (non-blocking for the runtime)
     match tokio::task::spawn_blocking(move || rx.recv()).await {
         Ok(Ok(result)) => result.map_err(|e| {
             log::error!("Failed to format markdown: {}", e);
