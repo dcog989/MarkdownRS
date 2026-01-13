@@ -1,7 +1,7 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
     "productName": "MarkdownRS",
-    "version": "0.1.124",
+    "version": "0.1.125",
     "identifier": "MarkdownRS",
     "build": {
         "beforeDevCommand": "npm run dev",
@@ -30,7 +30,13 @@
     "bundle": {
         "active": true,
         "targets": "all",
-        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
         "resources": [],
         "copyright": "",
         "category": "Productivity",
@@ -39,14 +45,23 @@
         "createUpdaterArtifacts": true,
         "fileAssociations": [
             {
-                "ext": ["md", "markdown", "mdown", "mkdn", "mkd", "mdwn"],
+                "ext": [
+                    "md",
+                    "markdown",
+                    "mdown",
+                    "mkdn",
+                    "mkd",
+                    "mdwn"
+                ],
                 "name": "Markdown Document",
                 "description": "Markdown Document",
                 "role": "Editor",
                 "mimeType": "text/markdown"
             },
             {
-                "ext": ["txt"],
+                "ext": [
+                    "txt"
+                ],
                 "name": "Text Document",
                 "description": "Text Document",
                 "role": "Editor",
@@ -57,7 +72,9 @@
             "nsis": {
                 "installerIcon": "icons/icon.ico",
                 "installMode": "currentUser",
-                "languages": ["English"],
+                "languages": [
+                    "English"
+                ],
                 "displayLanguageSelector": false
             }
         }
@@ -67,7 +84,9 @@
             "open": true
         },
         "updater": {
-            "endpoints": ["https://github.com/USERNAME/REPO/releases/latest/download/latest.json"],
+            "endpoints": [
+                "https://github.com/USERNAME/REPO/releases/latest/download/latest.json"
+            ],
             "dialog": true,
             "pubkey": "YOUR_PUBLIC_KEY_HERE"
         }
