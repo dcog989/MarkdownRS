@@ -17,6 +17,10 @@
         "core:window:allow-set-focus",
         "fs:allow-unwatch",
         {
+            "identifier": "fs:allow-read-file",
+            "allow": [{ "path": "**" }]
+        },
+        {
             "identifier": "fs:allow-watch",
             "allow": [{ "path": "**" }]
         },
