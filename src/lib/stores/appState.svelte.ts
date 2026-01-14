@@ -40,6 +40,7 @@ export const appState = $state({
     findPanelCloseOnBlur: false,
     languageDictionaries: ['en-US'] as string[],
     technicalDictionaries: true,
+    scienceDictionaries: false,
     tabNameFromContent: false,
     wrapGuideColumn: 0,
     doubleClickSelectsTrailingSpace: false,

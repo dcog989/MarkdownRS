@@ -389,7 +389,16 @@
             type: 'boolean',
             category: 'Spellcheck',
             defaultValue: false,
-            tooltip: 'Include non-language dictionaries (coding, companies, medical, scientific, etc.).',
+            tooltip: 'Include non-language dictionaries (coding, companies, frameworks, etc.).',
+        },
+        {
+            key: 'scienceDictionaries',
+            label: 'Science+ Dictionaries',
+            type: 'boolean',
+            category: 'Spellcheck',
+            defaultValue: false,
+            tooltip:
+                'Includes scientific (670k+) and medical (98k+) terms. Warning: Large download and higher memory usage.',
         },
 
         // Windows Only
@@ -446,7 +455,11 @@
 
             if (key === 'logLevel') {
                 showToast('info', 'Restart required to apply log level changes');
-            } else if (key === 'languageDictionaries' || key === 'technicalDictionaries') {
+            } else if (
+                key === 'languageDictionaries' ||
+                key === 'technicalDictionaries' ||
+                key === 'scienceDictionaries'
+            ) {
                 clearDictionaries();
                 invalidateSpellcheckCache();
 

@@ -27,10 +27,11 @@ export class SpellcheckManager {
 
                 const dictionaries = appState.languageDictionaries || ['en-US'];
                 const technicalDictionaries = appState.technicalDictionaries;
+                const scienceDictionaries = appState.scienceDictionaries;
 
                 await callBackend(
                     'init_spellchecker',
-                    { dictionaries, technicalDictionaries },
+                    { dictionaries, technicalDictionaries, scienceDictionaries },
                     'Spellcheck:Init',
                     undefined,
                     {

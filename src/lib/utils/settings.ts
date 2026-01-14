@@ -48,6 +48,7 @@ function getSettingsObject() {
         findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
         languageDictionaries: appState.languageDictionaries,
         technicalDictionaries: appState.technicalDictionaries,
+        scienceDictionaries: appState.scienceDictionaries,
         tabNameFromContent: appState.tabNameFromContent,
         wrapGuideColumn: appState.wrapGuideColumn,
         doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,

@@ -18,7 +18,6 @@ async fn write_atomic(path: &PathBuf, content: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-// Map of ID -> URL
 fn get_technical_url(id: &str) -> Option<&'static str> {
     match id {
         "medical-terms" => Some(
@@ -43,7 +42,6 @@ fn get_technical_url(id: &str) -> Option<&'static str> {
     }
 }
 
-// Map dictionary codes to their URLs (for supported English variants)
 fn get_dictionary_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
     match dict_code {
         "en-US" => Some((
@@ -267,15 +265,21 @@ pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<S
     Ok(words)
 }
 
-// List of all technical dictionaries to load when technical_words is enabled
+// List of all technical dictionaries to load when technical_dictionaries is enabled
 fn get_all_technical_dictionaries() -> Vec<String> {
     vec![
-        "medical-terms".to_string(),
-        "scientific-terms-us".to_string(),
         "software-terms".to_string(),
         "companies".to_string(),
         "fullstack".to_string(),
         "filetypes".to_string(),
+    ]
+}
+
+// Separate list for large/medical dictionaries
+fn get_scientific_dictionaries() -> Vec<String> {
+    vec![
+        "medical-terms".to_string(),
+        "scientific-terms-us".to_string(),
     ]
 }
 
@@ -284,19 +288,25 @@ pub async fn init_spellchecker(
     app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
     dictionaries: Option<Vec<String>>,
-    technical_words: Option<bool>,
+    technical_dictionaries: Option<bool>,
+    science_dictionaries: Option<bool>,
 ) -> Result<(), String> {
     let dict_codes = dictionaries.unwrap_or_else(|| vec!["en".to_string()]);
-    let spec_codes = if technical_words.unwrap_or(true) {
-        get_all_technical_dictionaries()
-    } else {
-        Vec::new()
-    };
+    let mut spec_codes = Vec::new();
+
+    if technical_dictionaries.unwrap_or(true) {
+        spec_codes.extend(get_all_technical_dictionaries());
+    }
+
+    if science_dictionaries.unwrap_or(false) {
+        spec_codes.extend(get_scientific_dictionaries());
+    }
 
     log::info!(
-        "Initializing spellchecker with dictionaries: {:?}, technical words: {}",
+        "Initializing spellchecker with dictionaries: {:?}, technical: {}, science: {}",
         dict_codes,
-        technical_words.unwrap_or(true)
+        technical_dictionaries.unwrap_or(true),
+        science_dictionaries.unwrap_or(false)
     );
     let local_dir = app_handle.path().app_local_data_dir().map_err(|e| {
         log::error!("Failed to get local data directory: {}", e);
