@@ -133,29 +133,34 @@
     }
 
     async function handleSendToRecycleBin() {
-        if (!tab || !tab.path) return;
+        // Capture data while component is mounted
+        const targetPath = tab?.path;
+        const targetTitle = tab?.title;
+
+        if (!targetPath) return;
+
+        // Close the menu immediately so it doesn't obscure the modal
+        onClose();
 
         if (!appContext.app.neverPrompt) {
             const result = await confirmDialog({
                 title: 'Delete File',
-                message: `Are you sure you want to move "${tab.title}" to the Recycle Bin?`,
+                message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,
                 discardLabel: 'Delete',
                 saveLabel: undefined,
             });
 
             if (result !== 'discard') {
-                onClose();
                 return;
             }
         }
 
         try {
-            await callBackend('send_to_recycle_bin', { path: tab.path }, 'File:Write');
+            await callBackend('send_to_recycle_bin', { path: targetPath }, 'File:Write');
             requestCloseTab(tabId, true);
         } catch (err) {
             // Error logged by bridge
         }
-        onClose();
     }
 
     async function handleToggleBookmark() {
