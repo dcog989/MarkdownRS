@@ -1,8 +1,8 @@
 # MarkdownRS
 
-The only markdown editor you need.
+MarkdownRS is a fast, low-resource, cross-platform desktop Markdown editor with clean, minimal UI. It's built with the latest Rust / Tauri / Svelte (Runes) / Tailwind stack.
 
-MarkdownRS is a fast, low-resource, cross-platform desktop markdown editor with clean, minimal UI. It's built with the latest Rust / Tauri / Svelte (Runes) / Tailwind stack.
+The only markdown editor you need.
 
 ## Features
 
@@ -14,7 +14,7 @@ MarkdownRS is a fast, low-resource, cross-platform desktop markdown editor with 
 - **Multi-Tab**: Work on multiple documents simultaneously
 - **Text Operations**: Sort lines, trim whitespace, change case, etc.
 - **Bookmark System**: Bookmark and tag local documents with instant filter search
-- **Full GFM Support**: GitHub Flavored Markdown with tables, strikethrough, task lists (powered by comrak)
+- **Full Markdown Support**: GFM (GitHub Flavored Markdown) and CommonMark with tables, strikethrough, task lists, etc.
 - **Smart Formatting**: AST-based markdown formatting for consistent, semantic-preserving results
 
 ## Development
@@ -78,10 +78,10 @@ npm run tauri build
 
 ### Frontend (Svelte 5 + TypeScript)
 
-- **Editor**: CodeMirror 6 for markdown editing with syntax highlighting
+- **Editor**: CodeMirror for markdown editing with syntax highlighting
 - **Preview**: Rust `comrak` for full CommonMark / GFM markdown parsing with security hardening
-- **State Management**: Svelte 5 runes for reactive state
-- **Styling**: TailwindCSS v4 for modern, utility-first styling
+- **State Management**: Svelte with Runes for reactive state
+- **Styling**: TailwindCSS for modern, utility-first styling
 
 ### Backend (Rust + Tauri)
 
@@ -120,12 +120,24 @@ npm run tauri build
 - ✅ Smart formatting
 - ✅ Custom themes
 - ✅ Find & replace across all documents
+- ✅ Export to PDF/PNG/WEBP/HTML
 
 ### v2 (Planned)
 
-- Export to PDF/PNG/WEBP/HTML
-- Git integration - what does this mean??
+- Git integration - TBD???
 - Context menu with "Send to..." options
+- fix / implement restore Undo History on restart: although `history_state TEXT` is added to the SQLite schema and the frontend sends history data to the backend, the Rust `TabState` struct in `src-tauri/src/db/mod.rs` is missing the `history_state` field. **note**: cm6 history is not stored in json format. verify format for this to work.
+- Recent Files: see D:/Code/MarkdownRS/.docs/Recent Files Plus.md
+- customise format function to auto replace words?
+- Set up GitHub Actions for macOS / Linux / portable formats
+- comprehensive Markdown formatting options.
+- OS Theme Sync: the app query the System Theme mode on install and apply dark / light theme as appropriate.
+- add region / languages
+- add option to close and / or minimize to tray - https://v2.tauri.app/learn/system-tray/
+- focused writer mode: F11, full screen, all ui hidden - titlebar + tabs display on hover, content centered in app and constrained to NN characters (settings option).
+- Sidebar / File Explorer: a collapsible sidebar showing the folder structure of the currently open file’s directory.
+- Table of Contents: generate TOC For long documents
+- Math and Diagrams: Support for `KaTeX` or `MathJax`. Support for `Mermaid.js`.
 
 ## License
 
@@ -133,4 +145,4 @@ MIT.
 
 ## Contributing
 
-Contributions are welcome. Please feel free to submit a Pull Request or submit an issue for bugs and feature requests.
+Contributions are welcome. Please submit a Pull Request or an issue for bugs and feature requests.
