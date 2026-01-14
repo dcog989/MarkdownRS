@@ -250,7 +250,7 @@ fn main() {
             commands::files::rename_file,
             commands::settings::get_app_info,
             commands::spellcheck::add_to_dictionary,
-            commands::spellcheck::get_custom_dictionary,
+            commands::spellcheck::load_user_dictionary,
             commands::spellcheck::init_spellchecker,
             commands::spellcheck::check_words,
             commands::spellcheck::get_spelling_suggestions,

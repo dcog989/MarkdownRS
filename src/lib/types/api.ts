@@ -92,7 +92,7 @@ export interface BackendCommands {
         args: { word: string };
         return: void;
     };
-    get_custom_dictionary: {
+    load_user_dictionary: {
         args: Record<string, never>;
         return: string[];
     };

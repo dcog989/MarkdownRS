@@ -11,7 +11,7 @@ export class SpellcheckManager {
     private pendingFetches = new Set<string>();
 
     async loadCustomDictionary(): Promise<void> {
-        const words = await callBackend('get_custom_dictionary', {}, 'Dictionary:Add', undefined, {
+        const words = await callBackend('load_user_dictionary', {}, 'Dictionary:Add', undefined, {
             ignore: true,
         });
         this.customDictionary = new Set((words || []).map((w) => w.toLowerCase()));
