@@ -39,12 +39,6 @@ fn get_technical_url(id: &str) -> Option<&'static str> {
         "filetypes" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/src/filetypes.txt",
         ),
-        "html" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/html/dict/html.txt",
-        ),
-        "css" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/css/dict/css.txt",
-        ),
         _ => None,
     }
 }
@@ -276,21 +270,12 @@ pub async fn get_custom_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<S
 // List of all technical dictionaries to load when technical_words is enabled
 fn get_all_technical_dictionaries() -> Vec<String> {
     vec![
-        "software-terms".to_string(),
-        "companies".to_string(),
         "medical-terms".to_string(),
         "scientific-terms-us".to_string(),
-        "typescript".to_string(),
+        "software-terms".to_string(),
+        "companies".to_string(),
         "fullstack".to_string(),
-        "npm".to_string(),
-        "fonts".to_string(),
         "filetypes".to_string(),
-        "html".to_string(),
-        "css".to_string(),
-        "python".to_string(),
-        "rust".to_string(),
-        "cpp".to_string(),
-        "aws".to_string(),
     ]
 }
 

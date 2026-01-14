@@ -15,21 +15,15 @@
 
     // Curated list of technical dictionaries
     const availableDictionaries = [
-        { code: 'software-terms', name: 'Software Terms' },
-        { code: 'companies', name: 'Companies' },
         { code: 'medical-terms', name: 'Medical Terms' },
         { code: 'scientific-terms-us', name: 'Scientific Terms (US)' },
-        { code: 'typescript', name: 'TypeScript / JavaScript' },
+        { code: 'software-terms', name: 'Software Terms' },
+        { code: 'companies', name: 'Companies' },
         { code: 'fullstack', name: 'Fullstack Development' },
-        { code: 'npm', name: 'NPM Packages' },
         { code: 'fonts', name: 'Fonts' },
         { code: 'filetypes', name: 'File Types' },
         { code: 'html', name: 'HTML' },
         { code: 'css', name: 'CSS' },
-        { code: 'python', name: 'Python' },
-        { code: 'rust', name: 'Rust' },
-        { code: 'cpp', name: 'C / C++' },
-        { code: 'aws', name: 'AWS' },
     ];
 
     function toggleDropdown() {
