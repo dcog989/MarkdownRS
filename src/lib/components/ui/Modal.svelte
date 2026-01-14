@@ -43,7 +43,8 @@
     }
 
     function getFocusableElements(container: HTMLElement): HTMLElement[] {
-        const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const selector =
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
         return Array.from(container.querySelectorAll(selector));
     }
 
@@ -85,6 +86,7 @@
             if (focusableElements.length > 0) {
                 // Delay to ensure DOM is ready and child components have initialized
                 setTimeout(() => {
+                    if (!modalPanel) return;
                     // Re-query in case DOM changed
                     const currentFocusable = getFocusableElements(modalPanel);
                     if (currentFocusable.length > 0 && !modalPanel.contains(document.activeElement)) {
@@ -97,7 +99,7 @@
             const handleFocusOut = (e: FocusEvent) => {
                 if (!modalPanel) return;
                 const target = e.relatedTarget as HTMLElement;
-                
+
                 // If focus is moving outside the modal, bring it back
                 if (target && !modalPanel.contains(target)) {
                     e.preventDefault();
@@ -112,7 +114,7 @@
 
             return () => {
                 modalPanel?.removeEventListener('focusout', handleFocusOut);
-                
+
                 // Restore focus to the previously focused element
                 if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
                     previouslyFocusedElement.focus();
