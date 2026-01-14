@@ -348,6 +348,14 @@
             defaultValue: false,
             tooltip: 'The Find Panel will close on any click outside the Find Panel.',
         },
+        {
+            key: 'neverPrompt',
+            label: 'Never Prompt',
+            type: 'boolean',
+            category: 'Interface',
+            defaultValue: false,
+            tooltip: 'Suppress confirmation dialogs (unsaved changes will be discarded immediately when closing tabs).',
+        },
 
         {
             key: 'previewFontFamily',

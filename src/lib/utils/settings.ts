@@ -54,6 +54,7 @@ function getSettingsObject() {
         doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
         collapsePinnedTabs: appState.collapsePinnedTabs,
         customShortcuts: appState.customShortcuts,
+        neverPrompt: appState.neverPrompt,
     };
 }
 

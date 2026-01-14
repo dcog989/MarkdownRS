@@ -46,6 +46,7 @@ export const appState = $state({
     doubleClickSelectsTrailingSpace: false,
     collapsePinnedTabs: false,
     customShortcuts: {} as Record<string, string>,
+    neverPrompt: false,
 });
 
 // Logic functions
