@@ -93,6 +93,7 @@ export function getEditorKeymap(customKeymap: any[] = []) {
                 return true;
             },
         },
+        // ! IMPORTANT
         // Explicitly bind Delete/Backspace operations to ensure selection handling works reliably
         // This fixes edge cases where default keymap might falter on specific line/block boundaries
         { key: 'Backspace', run: withSelectionCheck(deleteCharBackward) },
