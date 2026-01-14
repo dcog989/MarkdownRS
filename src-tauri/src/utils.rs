@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local};
 use std::path::Path;
 use std::time::SystemTime;
+use tokio::fs;
 
 pub fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     time.ok().map(|t| {
@@ -40,4 +41,30 @@ pub fn validate_path(path: &str) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// atomic_write writes content to a temporary file and then renames it to the target path.
+/// This ensures that the target file is not corrupted if the write fails or is interrupted.
+pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
+    // Append .tmp to the filename to avoid extension replacement collision
+    let file_name = path
+        .file_name()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid path"))?
+        .to_string_lossy();
+    let temp_path = path.with_file_name(format!("{}.tmp", file_name));
+
+    fs::write(&temp_path, content).await?;
+
+    match fs::rename(&temp_path, path).await {
+        Ok(_) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
+            fs::copy(&temp_path, path).await?;
+            fs::remove_file(&temp_path).await?;
+            Ok(())
+        }
+        Err(e) => {
+            let _ = fs::remove_file(&temp_path).await;
+            Err(e)
+        }
+    }
 }

@@ -8,18 +8,6 @@ use tokio::io::AsyncWriteExt;
 
 // --- Helper Functions ---
 
-/// Atomic file write to prevent corrupted partial downloads
-async fn write_atomic(path: &PathBuf, content: &str) -> std::io::Result<()> {
-    let tmp_path = path.with_extension("download.tmp");
-    {
-        let mut file = fs::File::create(&tmp_path).await?;
-        file.write_all(content.as_bytes()).await?;
-        file.flush().await?;
-    }
-    fs::rename(&tmp_path, path).await?;
-    Ok(())
-}
-
 /// Generic download helper: Checks cache, downloads if missing, returns content
 async fn ensure_file_downloaded(
     client: &reqwest::Client,
@@ -34,7 +22,9 @@ async fn ensure_file_downloaded(
                 if resp.status().is_success() {
                     match resp.text().await {
                         Ok(text) => {
-                            if let Err(e) = write_atomic(cache_path, &text).await {
+                            if let Err(e) =
+                                crate::utils::atomic_write(cache_path, text.as_bytes()).await
+                            {
                                 log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
                                 return Err(format!("Write error: {}", e));
                             }

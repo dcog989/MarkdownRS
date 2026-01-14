@@ -1,5 +1,19 @@
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 
+// Pre-compiled regexes for better performance
+const SENTENCE_CASE_PREFIX_RE = /^(\s*)(-|\*|\+|[0-9]+\.|\-\s*\[[ x]\])\s*(.*)$/;
+const CAMEL_CASE_RE = /[^a-zA-Z0-9]+(.)/g;
+const CAMEL_CASE_START_RE = /^[A-Z]/;
+const SNAKE_CASE_RE = /[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g;
+const BULLET_RE = /^[-*+]\s/;
+const NUMBER_RE = /^\d+\.\s/;
+const INDENT_RE = /^\s*/;
+const BULLET_REPLACE_RE = /^(\s*)(-|\*|\+|[0-9]+\.|- \[[ x]\])\s+/;
+const BLOCKQUOTE_RE = /^>\s?/;
+const WHITESPACE_RE = /\s+/g;
+const SENTENCE_SPLIT_RE = /([.!?])\s+(?=[A-Z])/g;
+const NUMBER_EXTRACT_RE = /-?\d+(\.\d+)?/;
+
 export function applyClientTransform(text: string, operationId: OperationId, indentWidth: number = 2): string {
     const lines = text.split('\n');
 
@@ -85,17 +99,19 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
         case 'title-case':
             return lines.map((line) => line.toLowerCase().replace(/(?:^|\s)\S/g, (c) => c.toUpperCase())).join('\n');
         case 'sentence-case':
-            return lines.map((line) => {
-                // Match markdown prefixes: bullets (-, *, +), numbers (1.), checkboxes (- [ ], - [x])
-                const match = line.match(/^(\s*)(-|\*|\+|[0-9]+\.|\-\s*\[[ x]\])\s*(.*)$/);
-                if (match) {
-                    const [, indent, prefix, content] = match;
-                    if (!content) return line; // No content after prefix
-                    return `${indent}${prefix} ${content.charAt(0).toUpperCase()}${content.slice(1).toLowerCase()}`;
-                }
-                // No markdown prefix, just capitalize first char
-                return line.charAt(0).toUpperCase() + line.slice(1).toLowerCase();
-            }).join('\n');
+            return lines
+                .map((line) => {
+                    // Match markdown prefixes: bullets (-, *, +), numbers (1.), checkboxes (- [ ], - [x])
+                    const match = line.match(SENTENCE_CASE_PREFIX_RE);
+                    if (match) {
+                        const [, indent, prefix, content] = match;
+                        if (!content) return line; // No content after prefix
+                        return `${indent}${prefix} ${content.charAt(0).toUpperCase()}${content.slice(1).toLowerCase()}`;
+                    }
+                    // No markdown prefix, just capitalize first char
+                    return line.charAt(0).toUpperCase() + line.slice(1).toLowerCase();
+                })
+                .join('\n');
         case 'camel-case':
             return lines.map(toCamelCase).join('\n');
         case 'pascal-case':
@@ -114,11 +130,11 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
                     const trimmed = l.trim();
                     if (!trimmed) return l; // Keep blank lines as-is
                     // Check if already has a bullet
-                    if (/^[-*+]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
+                    if (BULLET_RE.test(trimmed) || NUMBER_RE.test(trimmed)) {
                         return l; // Already has a bullet or number
                     }
                     // Add bullet while preserving original indentation
-                    const leadingSpace = l.match(/^\s*/)?.[0] || '';
+                    const leadingSpace = l.match(INDENT_RE)?.[0] || '';
                     return `${leadingSpace}- ${trimmed}`;
                 })
                 .join('\n');
@@ -142,11 +158,11 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
                 })
                 .join('\n');
         case 'remove-bullets':
-            return lines.map((l) => l.replace(/^(\s*)(-|\*|\+|[0-9]+\.|- \[[ x]\])\s+/, '$1')).join('\n');
+            return lines.map((l) => l.replace(BULLET_REPLACE_RE, '$1')).join('\n');
         case 'blockquote':
             return lines.map((l) => (l.trim() ? `> ${l}` : l)).join('\n');
         case 'remove-blockquote':
-            return lines.map((l) => l.replace(/^>\s?/, '')).join('\n');
+            return lines.map((l) => l.replace(BLOCKQUOTE_RE, '')).join('\n');
         case 'add-code-fence':
             return `\`\`\`\n${text}\n\`\`\``;
         case 'increase-heading':
@@ -168,14 +184,14 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
         case 'trim-whitespace':
             return lines.map((l) => l.trim()).join('\n');
         case 'normalize-whitespace':
-            return lines.map((l) => l.replace(/\s+/g, ' ')).join('\n');
+            return lines.map((l) => l.replace(WHITESPACE_RE, ' ')).join('\n');
         case 'join-lines':
             return lines
                 .map((l) => l.trim())
                 .filter((l) => l)
                 .join(' ');
         case 'split-sentences':
-            return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n');
+            return text.replace(SENTENCE_SPLIT_RE, '$1\n');
         case 'wrap-quotes':
             return lines
                 .map((l) => {
@@ -200,7 +216,7 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
                 .map((l) => {
                     const trimmed = l.trim();
                     if (!trimmed) return l;
-                    const leadingSpace = l.match(/^\s*/)?.[0] || '';
+                    const leadingSpace = l.match(INDENT_RE)?.[0] || '';
                     return `${leadingSpace}${indent}${trimmed}`;
                 })
                 .join('\n');
@@ -216,7 +232,7 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
 
 // Helpers
 function extractNumber(str: string): number {
-    const match = str.match(/-?\d+(\.\d+)?/);
+    const match = str.match(NUMBER_EXTRACT_RE);
     return match ? parseFloat(match[0]) : 0;
 }
 
@@ -231,9 +247,9 @@ function shuffle(array: string[]): string[] {
 
 function toCamelCase(str: string): string {
     return str
-        .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
+        .replace(CAMEL_CASE_RE, (_, chr) => chr.toUpperCase())
         .trim()
-        .replace(/^[A-Z]/, (c) => c.toLowerCase());
+        .replace(CAMEL_CASE_START_RE, (c) => c.toLowerCase());
 }
 
 function toPascalCase(str: string): string {
@@ -244,7 +260,7 @@ function toPascalCase(str: string): string {
 function toSnakeCase(str: string): string {
     return (
         str
-            .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
+            .match(SNAKE_CASE_RE)
             ?.map((x) => x.toLowerCase())
             .join('_') || str
     );

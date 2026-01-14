@@ -24,17 +24,6 @@ fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> 
     format!("Failed to {}: {}", operation, e)
 }
 
-/// Standardized error handler for file operations with custom message
-fn handle_file_error_custom(
-    path: &str,
-    operation: &str,
-    e: impl std::fmt::Display,
-    user_message: &str,
-) -> String {
-    log::error!("Failed to {} '{}': {}", operation, path, e);
-    format!("{}: {}", user_message, e)
-}
-
 #[tauri::command]
 pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     validate_path(&path)?;
@@ -96,34 +85,17 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
     validate_path(&path)?;
-    let temp_path = format!("{}.tmp", path);
+    let path_buf = PathBuf::from(&path);
 
-    fs::write(&temp_path, &content)
+    crate::utils::atomic_write(&path_buf, content.as_bytes())
         .await
-        .map_err(|e| handle_file_error(&temp_path, "write temporary file", e))?;
+        .map_err(|e| {
+            log::error!("Failed to save file '{}': {}", path, e);
+            format!("Failed to save file: {}", e)
+        })?;
 
-    match fs::rename(&temp_path, &path).await {
-        Ok(_) => {
-            log::debug!("Successfully wrote file: {}", path);
-            Ok(())
-        }
-        Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
-            log::debug!(
-                "Cross-device rename failed, falling back to copy for: {}",
-                path
-            );
-            fs::copy(&temp_path, &path).await.map_err(|e| {
-                handle_file_error_custom(&temp_path, "copy file", e, "Failed to save file")
-            })?;
-            let _ = fs::remove_file(&temp_path).await;
-            Ok(())
-        }
-        Err(e) => {
-            log::error!("Failed to rename '{}' to '{}': {}", temp_path, path, e);
-            let _ = fs::remove_file(&temp_path).await;
-            Err(format!("Failed to save file: {}", e))
-        }
-    }
+    log::debug!("Successfully wrote file: {}", path);
+    Ok(())
 }
 
 #[tauri::command]
@@ -188,9 +160,12 @@ pub async fn resolve_path_relative(
 #[tauri::command]
 pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), String> {
     validate_path(&path)?;
-    fs::write(&path, &content)
+    let path_buf = PathBuf::from(&path);
+
+    crate::utils::atomic_write(&path_buf, &content)
         .await
         .map_err(|e| handle_file_error(&path, "write binary file", e))?;
+
     log::debug!("Successfully wrote binary file: {}", path);
     Ok(())
 }

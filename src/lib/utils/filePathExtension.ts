@@ -7,6 +7,36 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 export const FILE_PATH_REGEX =
     /(?:(?:^|\s|['\"`])(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]+)|(?:(?:^|\s|['\"`])\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]*)/g;
 
+/**
+ * Extracts a file path from a line of text at a specific position.
+ * Returns the path string if the position is within a valid path, or null.
+ */
+export function extractPathAtPos(text: string, pos: number): string | null {
+    FILE_PATH_REGEX.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = FILE_PATH_REGEX.exec(text)) !== null) {
+        const fullMatch = match[0];
+        const trimmedMatch = fullMatch.trim();
+
+        const leadingSpaceCount = fullMatch.length - fullMatch.trimStart().length;
+        const quoteStartOffset = trimmedMatch.match(/^['\"`]/) ? 1 : 0;
+        const quoteEndOffset = trimmedMatch.match(/['\"`]$/) ? 1 : 0;
+
+        const cleanPath = trimmedMatch.slice(
+            quoteStartOffset,
+            trimmedMatch.length - (quoteEndOffset && quoteStartOffset ? 1 : 0),
+        );
+
+        const start = match.index + leadingSpaceCount + quoteStartOffset;
+        const end = start + cleanPath.length;
+
+        if (pos >= start && pos <= end) {
+            return cleanPath;
+        }
+    }
+    return null;
+}
+
 // Mark to apply to file paths
 const filePathMark = Decoration.mark({
     class: 'cm-file-path',
