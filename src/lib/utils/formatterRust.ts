@@ -37,7 +37,9 @@ export async function formatMarkdown(content: string, options: Partial<Formatter
             undefined,
             { report: true },
         );
-        return result ?? content;
+        // Ensure consistent line endings (LF) to match CodeMirror's internal state
+        // This prevents the editor from detecting changes when only line endings differ
+        return result ? result.replace(/\r\n/g, '\n') : content;
     } catch (e) {
         return content;
     }
