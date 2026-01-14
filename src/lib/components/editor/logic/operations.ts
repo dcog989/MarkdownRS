@@ -26,13 +26,16 @@ export async function performTextOperation(
         if (newText !== targetText) {
             view.focus();
 
+            // Determine event type: 'format' events are ignored by the recent changes tracker
+            const userEvent = operationId === 'format-document' ? 'format' : 'input.complete';
+
             const transaction: any = {
                 changes: {
                     from: hasSelection ? selection.from : 0,
                     to: hasSelection ? selection.to : view.state.doc.length,
                     insert: newText,
                 },
-                userEvent: 'input.complete',
+                userEvent: userEvent,
                 scrollIntoView: true,
             };
 
