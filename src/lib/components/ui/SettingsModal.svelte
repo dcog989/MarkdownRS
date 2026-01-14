@@ -272,7 +272,7 @@
         },
         {
             key: 'collapsePinnedTabs',
-            label: 'Collapse Pinned Tabs',
+            label: 'Pinned Tabs Collapse',
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
@@ -342,7 +342,7 @@
         },
         {
             key: 'findPanelCloseOnBlur',
-            label: 'Find Panel Close on Blur',
+            label: 'Find Panel Closes on Blur',
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
@@ -385,7 +385,7 @@
         },
         {
             key: 'technicalWords',
-            label: 'Technical Words',
+            label: 'Technical Dictionaries',
             type: 'boolean',
             category: 'Spellcheck',
             defaultValue: false,
@@ -397,10 +397,11 @@
             ? [
                   {
                       key: 'windowsContextMenu',
-                      label: "Context Menu > Open with MarkdownRS",
+                      label: 'Add to System Context Menu',
                       type: 'custom-context-menu',
                       category: 'System',
                       defaultValue: false,
+                      tooltip: 'Include non-language dictionaries (coding, companies, medical, scientific, etc.).',
                   },
               ]
             : []),
