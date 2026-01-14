@@ -19,52 +19,31 @@ async fn write_atomic(path: &PathBuf, content: &str) -> std::io::Result<()> {
 }
 
 // Map of ID -> URL
-fn get_specialist_url(id: &str) -> Option<&'static str> {
+fn get_technical_url(id: &str) -> Option<&'static str> {
     match id {
+        "medical-terms" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medicalterms/dict/medicalterms-en.txt",
+        ),
+        "scientific-terms-us" => Some(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific_terms_US/src/custom_scientific_US.dic.txt",
+        ),
         "software-terms" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
         ),
         "companies" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
         ),
-        "medical-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/medicalterms/dict/medicalterms-en.txt",
-        ),
-        "scientific-terms-us" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/scientific_terms_US/src/custom_scientific_US.dic.txt",
-        ),
-        "typescript" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/typescript/dict/typescript.txt",
-        ),
         "fullstack" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fullstack/dict/fullstack.txt",
         ),
-        "npm" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/npm/dict/npm.txt",
-        ),
-        "fonts" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fonts/dict/fonts.txt",
-        ),
         "filetypes" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/filetypes/src/filetypes.txt",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/src/filetypes.txt",
         ),
         "html" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/html/dict/html.txt",
         ),
         "css" => Some(
             "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/css/dict/css.txt",
-        ),
-        "python" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/python/dict/python.txt",
-        ),
-        "rust" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/rust/dict/rust.txt",
-        ),
-        "cpp" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/cpp/dict/cpp.txt",
-        ),
-        "aws" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aws/dict/aws.txt",
         ),
         _ => None,
     }
@@ -174,41 +153,41 @@ async fn fetch_standard_dictionary(
     }
 }
 
-async fn fetch_specialist_dictionary(
+async fn fetch_technical_dictionary(
     client: reqwest::Client,
     cache_dir: PathBuf,
     id: String,
 ) -> Result<String, String> {
-    let url = get_specialist_url(&id).ok_or_else(|| format!("Unknown specialist ID: {}", id))?;
+    let url = get_technical_url(&id).ok_or_else(|| format!("Unknown technical ID: {}", id))?;
     let cache_path = cache_dir.join(format!("{}.txt", id));
 
     if !cache_path.exists() {
-        log::info!("Downloading specialist dictionary: {}", id);
+        log::info!("Downloading technical dictionary: {}", id);
         if let Ok(resp) = client.get(url).send().await {
             if resp.status().is_success() {
                 if let Ok(text) = resp.text().await {
                     if let Err(e) = write_atomic(&cache_path, &text).await {
-                        log::error!("Failed to save specialist dict {}: {}", id, e);
+                        log::error!("Failed to save technical dict {}: {}", id, e);
                     }
                 }
             } else {
                 log::warn!(
-                    "Failed to download specialist dict {}: Status {}",
+                    "Failed to download technical dict {}: Status {}",
                     id,
                     resp.status()
                 );
             }
         }
     } else {
-        log::debug!("Using cached specialist dictionary: {}", id);
+        log::debug!("Using cached technical dictionary: {}", id);
     }
 
     if cache_path.exists() {
         fs::read_to_string(&cache_path)
             .await
-            .map_err(|e| format!("Failed to read specialist file {}: {}", id, e))
+            .map_err(|e| format!("Failed to read technical file {}: {}", id, e))
     } else {
-        Err(format!("Failed to load specialist dictionary: {}", id))
+        Err(format!("Failed to load technical dictionary: {}", id))
     }
 }
 
@@ -383,7 +362,7 @@ pub async fn init_spellchecker(
         let c = client.clone();
         let d = technical_cache_dir.clone();
         spec_tasks.push(tokio::spawn(async move {
-            (code.clone(), fetch_specialist_dictionary(c, d, code).await)
+            (code.clone(), fetch_technical_dictionary(c, d, code).await)
         }));
     }
 
@@ -441,9 +420,9 @@ pub async fn init_spellchecker(
                         count += 1;
                     }
                 }
-                log::info!("Loaded specialist dictionary: {} ({} entries)", code, count);
+                log::info!("Loaded technical dictionary: {} ({} entries)", code, count);
             }
-            Err(e) => log::warn!("Failed to load specialist dictionary {}: {}", code, e),
+            Err(e) => log::warn!("Failed to load technical dictionary {}: {}", code, e),
         }
     }
 

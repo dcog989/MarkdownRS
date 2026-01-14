@@ -13,7 +13,7 @@
     let buttonEl = $state<HTMLDivElement>();
     let dropdownPosition = $state<'below' | 'above'>('below');
 
-    // Curated list of specialist dictionaries
+    // Curated list of technical dictionaries
     const availableDictionaries = [
         { code: 'software-terms', name: 'Software Terms' },
         { code: 'companies', name: 'Companies' },

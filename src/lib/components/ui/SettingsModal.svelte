@@ -376,7 +376,7 @@
         },
 
         {
-            key: 'spellcheckDictionaries',
+            key: 'languageDictionaries',
             label: 'Language Dictionaries',
             type: 'dictionary-multi-select',
             category: 'Spellcheck',
@@ -384,7 +384,7 @@
             tooltip: 'Select one or more languages, duplicate words are removed by the app.',
         },
         {
-            key: 'technicalWords',
+            key: 'technicalDictionaries',
             label: 'Technical Dictionaries',
             type: 'boolean',
             category: 'Spellcheck',
@@ -446,7 +446,7 @@
 
             if (key === 'logLevel') {
                 showToast('info', 'Restart required to apply log level changes');
-            } else if (key === 'spellcheckDictionaries' || key === 'technicalWords') {
+            } else if (key === 'languageDictionaries' || key === 'technicalDictionaries') {
                 clearDictionaries();
                 invalidateSpellcheckCache();
 
@@ -577,7 +577,7 @@
                                 {:else if setting.type === 'dictionary-multi-select'}
                                     <div>
                                         <DictionarySelector
-                                            selected={appContext.app.spellcheckDictionaries}
+                                            selected={appContext.app.languageDictionaries}
                                             onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
                                 {:else if setting.type === 'custom-context-menu'}

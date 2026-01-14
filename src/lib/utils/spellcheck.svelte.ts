@@ -25,12 +25,18 @@ export class SpellcheckManager {
             try {
                 await this.loadCustomDictionary();
 
-                const dictionaries = appState.spellcheckDictionaries || ['en-US'];
-                const technicalWords = appState.technicalWords;
+                const dictionaries = appState.languageDictionaries || ['en-US'];
+                const technicalDictionaries = appState.technicalDictionaries;
 
-                await callBackend('init_spellchecker', { dictionaries, technicalWords }, 'Spellcheck:Init', undefined, {
-                    report: true,
-                });
+                await callBackend(
+                    'init_spellchecker',
+                    { dictionaries, technicalDictionaries },
+                    'Spellcheck:Init',
+                    undefined,
+                    {
+                        report: true,
+                    },
+                );
                 this.dictionaryLoaded = true;
             } catch (err) {
                 this.initPromise = null;
