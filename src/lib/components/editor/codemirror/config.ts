@@ -2,7 +2,15 @@ import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 import { autocompletion, closeBracketsKeymap, completeAnyWord, completionKeymap } from '@codemirror/autocomplete';
-import { defaultKeymap, historyKeymap, indentWithTab } from '@codemirror/commands';
+import {
+    defaultKeymap,
+    deleteCharBackward,
+    deleteCharForward,
+    deleteGroupBackward,
+    deleteGroupForward,
+    historyKeymap,
+    indentWithTab,
+} from '@codemirror/commands';
 import { EditorView, keymap } from '@codemirror/view';
 
 export function getAutocompletionConfig() {
@@ -59,6 +67,21 @@ export function createDoubleClickHandler() {
     });
 }
 
+// Helper wrapper to ensure selections are strictly deleted before any movement/group logic applies
+const withSelectionCheck = (cmd: (view: EditorView) => boolean) => (view: EditorView) => {
+    if (!view.state.selection.main.empty) {
+        view.dispatch(
+            view.state.update({
+                changes: { from: view.state.selection.main.from, to: view.state.selection.main.to },
+                userEvent: 'delete.selection',
+                scrollIntoView: true,
+            }),
+        );
+        return true;
+    }
+    return cmd(view);
+};
+
 export function getEditorKeymap(customKeymap: any[] = []) {
     return keymap.of([
         ...customKeymap,
@@ -70,6 +93,12 @@ export function getEditorKeymap(customKeymap: any[] = []) {
                 return true;
             },
         },
+        // Explicitly bind Delete/Backspace operations to ensure selection handling works reliably
+        // This fixes edge cases where default keymap might falter on specific line/block boundaries
+        { key: 'Backspace', run: withSelectionCheck(deleteCharBackward) },
+        { key: 'Delete', run: withSelectionCheck(deleteCharForward) },
+        { key: 'Ctrl-Backspace', run: withSelectionCheck(deleteGroupBackward) },
+        { key: 'Ctrl-Delete', run: withSelectionCheck(deleteGroupForward) },
         {
             key: 'Mod-Home',
             run: (v) => {
