@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self' ipc: https://tauri.localhost; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https: data: blob:; connect-src 'self' ipc: https://tauri.localhost http://ipc.localhost; font-src 'self' asset: data:;" />
 
         <!-- Critical CSS: Prevents FOUC, matches default dark theme -->
         <style>
