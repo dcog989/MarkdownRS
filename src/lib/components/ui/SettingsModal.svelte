@@ -106,7 +106,7 @@
             type: 'text',
             category: 'Editor',
             defaultValue:
-                "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace",
+                "'Source Code Pro', 'Cascadia Code', Menlo, Consolas, 'DejaVu Sans Mono', ui-monospace, monospace",
         },
         {
             key: 'editorFontSize',
@@ -136,7 +136,7 @@
         },
         {
             key: 'showWhitespace',
-            label: 'Show Whitespace',
+            label: 'Whitespace Displayed',
             type: 'boolean',
             category: 'Editor',
             defaultValue: false,
@@ -159,7 +159,7 @@
         },
         {
             key: 'doubleClickSelectsTrailingSpace',
-            label: 'Double-Click Selects Trailing Space',
+            label: 'Trailing Space Selected on Double-Click',
             type: 'boolean',
             category: 'Editor',
             defaultValue: false,
@@ -167,7 +167,7 @@
         },
         {
             key: 'defaultIndent',
-            label: 'Default Indentation (spaces)',
+            label: 'Indent Default (spaces)',
             type: 'number',
             category: 'Editor',
             defaultValue: 2,
@@ -181,17 +181,17 @@
             category: 'Editor',
             defaultValue: 100,
             min: 10,
-            max: 1000,
+            max: 999,
         },
         {
             key: 'recentChangesCount',
-            label: 'Recent Changes Number',
+            label: 'Recent Changes Count',
             type: 'number',
             category: 'Editor',
             defaultValue: 16,
             min: 0,
             max: 99,
-            tooltip: 'Max 99. Set to 0 to disable count-based filtering.',
+            tooltip: 'Highlight recent changes. Maximum 99. Set to 0 to disable count-based filtering.',
         },
         {
             key: 'recentChangesTimespan',
@@ -280,7 +280,7 @@
         },
         {
             key: 'tabCycling',
-            label: 'Tab Cycling Mode',
+            label: 'Tab Cycling',
             type: 'select',
             category: 'Interface',
             defaultValue: 'mru',
@@ -289,7 +289,7 @@
         },
         {
             key: 'tabNameFromContent',
-            label: 'Name Tabs from First Line',
+            label: 'Tabs Named from Content',
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
@@ -297,12 +297,12 @@
         },
         {
             key: 'newTabPosition',
-            label: 'New Tab Position',
+            label: 'Tabs Created At',
             type: 'select',
             category: 'Interface',
             defaultValue: 'end',
             options: ['beginning', 'right', 'end'],
-            optionLabels: ['At the Beginning', 'To the Right', 'At the End'],
+            optionLabels: ['The Beginning', 'The Right', 'The End'],
         },
         {
             key: 'startupBehavior',
@@ -311,7 +311,7 @@
             category: 'Interface',
             defaultValue: 'last-focused',
             options: ['first', 'last-focused', 'new'],
-            optionLabels: ['Show First Tab', 'Show Last Focused Tab', 'Create New Tab'],
+            optionLabels: ['Show First', 'Show Last Focused', 'Create New'],
         },
         {
             key: 'statusBarTransparency',
@@ -334,10 +334,11 @@
         },
         {
             key: 'findPanelTransparent',
-            label: 'Find Panel Transparent',
+            label: 'Find Panel Hides',
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
+            tooltip: 'The Find Panel will be almost completely transparent when not hovered.',
         },
         {
             key: 'findPanelCloseOnBlur',
@@ -345,6 +346,7 @@
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
+            tooltip: 'The Find Panel will close on any click outside the Find Panel.',
         },
 
         {
@@ -379,7 +381,7 @@
             type: 'dictionary-multi-select',
             category: 'Spellcheck',
             defaultValue: ['en-US'],
-            tooltip: 'Select one or more standard languages.',
+            tooltip: 'Select one or more languages, duplicate words are removed by the app.',
         },
         {
             key: 'technicalWords',
@@ -387,15 +389,15 @@
             type: 'boolean',
             category: 'Spellcheck',
             defaultValue: false,
-            tooltip: 'Include technical dictionaries (software, companies, medical, scientific, fullstack, programming languages, etc.)',
+            tooltip: 'Include non-language dictionaries (coding, companies, medical, scientific, etc.).',
         },
 
-        // Custom key for Windows Context Menu - Only visible on Windows
+        // Windows Only
         ...(isWindows
             ? [
                   {
                       key: 'windowsContextMenu',
-                      label: "Add 'Open with MarkdownRS' to Context Menu",
+                      label: "Context Menu > Open with MarkdownRS",
                       type: 'custom-context-menu',
                       category: 'System',
                       defaultValue: false,
