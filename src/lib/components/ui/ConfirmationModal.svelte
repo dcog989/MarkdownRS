@@ -14,14 +14,20 @@
     </div>
 
     {#snippet footer()}
-        <button class="btn-secondary" onclick={() => resolveDialog('cancel')}>
-            {appContext.ui.dialog.options.cancelLabel}
-        </button>
-        <button class="btn-danger-outline" onclick={() => resolveDialog('discard')}>
-            {appContext.ui.dialog.options.discardLabel}
-        </button>
-        <button class="btn-success" onclick={() => resolveDialog('save')}>
-            {appContext.ui.dialog.options.saveLabel}
-        </button>
+        {#if appContext.ui.dialog.options.cancelLabel}
+            <button class="btn-secondary" onclick={() => resolveDialog('cancel')}>
+                {appContext.ui.dialog.options.cancelLabel}
+            </button>
+        {/if}
+        {#if appContext.ui.dialog.options.discardLabel}
+            <button class="btn-danger-outline" onclick={() => resolveDialog('discard')}>
+                {appContext.ui.dialog.options.discardLabel}
+            </button>
+        {/if}
+        {#if appContext.ui.dialog.options.saveLabel}
+            <button class="btn-success" onclick={() => resolveDialog('save')}>
+                {appContext.ui.dialog.options.saveLabel}
+            </button>
+        {/if}
     {/snippet}
 </Modal>

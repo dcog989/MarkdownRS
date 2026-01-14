@@ -9,6 +9,7 @@
         getBookmarkByPath,
         isBookmarked as isBookmarkedSelector,
     } from '$lib/stores/bookmarkStore.svelte';
+    import { confirmDialog } from '$lib/stores/dialogStore.svelte';
     import {
         markAsSaved,
         pushToMru,
@@ -134,9 +135,23 @@
     async function handleSendToRecycleBin() {
         if (!tab || !tab.path) return;
 
+        if (!appContext.app.neverPrompt) {
+            const result = await confirmDialog({
+                title: 'Delete File',
+                message: `Are you sure you want to move "${tab.title}" to the Recycle Bin?`,
+                discardLabel: 'Delete',
+                saveLabel: undefined,
+            });
+
+            if (result !== 'discard') {
+                onClose();
+                return;
+            }
+        }
+
         try {
             await callBackend('send_to_recycle_bin', { path: tab.path }, 'File:Write');
-            requestCloseTab(tabId);
+            requestCloseTab(tabId, true);
         } catch (err) {
             // Error logged by bridge
         }
