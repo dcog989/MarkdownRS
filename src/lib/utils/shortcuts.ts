@@ -48,6 +48,12 @@ export class KeyboardShortcutManager {
 
         const pressedKey = this.getEventKey(e);
 
+        const isEditorKey = ['ctrl+backspace', 'ctrl+delete', 'backspace', 'delete', 'ctrl+s', 'ctrl+o'].includes(
+            pressedKey.toLowerCase(),
+        );
+
+        if (!isEditorKey && e.repeat) return false;
+
         for (const def of this.definitions.values()) {
             const mappedKey = this.customMappings[def.command] || def.defaultKey;
             if (pressedKey === mappedKey.toLowerCase() && def.handler) {
