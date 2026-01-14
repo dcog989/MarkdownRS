@@ -26,6 +26,23 @@ function resolvePath(baseDir: string, relativePath: string): string {
     return /^[a-zA-Z]:/.test(result) ? result : '/' + result;
 }
 
+/**
+ * Detects if a path references the static assets directory
+ */
+function isStaticAssetPath(src: string): boolean {
+    return src.includes('../static/') || src.includes('./static/');
+}
+
+/**
+ * Converts static asset path to web-root path
+ */
+function resolveStaticAssetPath(src: string): string {
+    // Extract just the filename and serve from web root
+    const cleanSrc = src.replace(/\\/g, '/');
+    const filename = cleanSrc.split('/').pop();
+    return '/' + filename;
+}
+
 export async function renderMarkdown(
     content: string,
     gfm: boolean = true,
@@ -53,6 +70,12 @@ export async function renderMarkdown(
 
                     // Standardize slashes before resolution to prevent encoding errors
                     src = src.replace(/\\/g, '/');
+
+                    // Handle static assets specially
+                    if (isStaticAssetPath(src)) {
+                        img.setAttribute('src', resolveStaticAssetPath(src));
+                        return;
+                    }
 
                     const absolutePath =
                         src.startsWith('/') || /^[a-zA-Z]:/.test(src)
