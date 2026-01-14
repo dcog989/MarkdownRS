@@ -89,6 +89,9 @@ fn main() {
             let _ = fs::create_dir_all(&log_dir);
             let _ = fs::create_dir_all(&themes_dir);
 
+            println!("[INFO] Data Directory: {:?}", app_dir);
+            println!("[INFO] Log Directory: {:?}", log_dir);
+
             // Always overwrite default theme files to ensure updates are applied
             let dark_theme_path = themes_dir.join("default-dark.css");
             let dark_theme_content = include_str!("../templates/default-dark.css");
