@@ -52,9 +52,21 @@ export async function callBackend<K extends CommandName>(
     additionalInfo?: Record<string, any>,
     options?: BackendCallOptions,
 ): Promise<BackendCommands[K]['return'] | null> {
+    const start = performance.now();
     try {
-        return await invoke<BackendCommands[K]['return']>(command, args);
+        const result = await invoke<BackendCommands[K]['return']>(command, args);
+        const duration = (performance.now() - start).toFixed(2);
+        
+        // Log any call taking longer than 16ms (1 frame)
+        if (Number(duration) > 16) {
+            console.debug(`[Bridge] ${command} | duration=${duration}ms | args=${JSON.stringify(args).substring(0, 100)}`);
+        }
+        
+        return result;
     } catch (err) {
+        const duration = (performance.now() - start).toFixed(2);
+        console.error(`[Bridge] ${command} FAILED | duration=${duration}ms | err=${err}`);
+        
         const errorOpts = {
             additionalInfo: { command, ...args, ...additionalInfo },
             severity: 'error' as const,

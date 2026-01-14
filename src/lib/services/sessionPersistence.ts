@@ -4,6 +4,7 @@ import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
+import { logger } from '$lib/utils/logger';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { debounce } from '$lib/utils/timing';
 import {
@@ -67,6 +68,8 @@ class SessionPersistenceManager {
     }
 
     private async executeSave(): Promise<void> {
+        const start = performance.now();
+        
         try {
             const mruPositionMap = new Map<string, number>();
             appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
@@ -120,6 +123,15 @@ class SessionPersistenceManager {
             });
 
             await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
+
+            const duration = (performance.now() - start).toFixed(2);
+            const tabsWithContent = activeRustTabs.filter(t => t.content !== null).length;
+            logger.session.info('SessionSaved', {
+                duration: `${duration}ms`,
+                activeTabs: activeRustTabs.length,
+                closedTabs: closedTabs.length,
+                withContent: tabsWithContent
+            });
 
             // 3. Update persistence state on success
             appContext.editor.sessionDirty = false;
@@ -200,6 +212,7 @@ export async function persistSession(): Promise<void> {
  * Lazy load content for a tab from the database
  */
 export async function loadTabContentLazy(tabId: string): Promise<void> {
+    const start = performance.now();
     const index = appContext.editor.tabs.findIndex((t) => t.id === tabId);
     if (index === -1) {
         return;
@@ -258,6 +271,13 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                 lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
                 contentLoaded: true,
             };
+            
+            const duration = (performance.now() - start).toFixed(2);
+            logger.session.debug('TabContentLazyLoaded', {
+                duration: `${duration}ms`,
+                tabId,
+                size: tab.sizeBytes
+            });
         } else {
             tab.contentLoaded = true;
         }
@@ -318,6 +338,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 }
 
 export async function loadSession(): Promise<void> {
+    const start = performance.now();
+    
     try {
         const sessionData = await callBackend('restore_session', {}, 'Session:Load');
 
@@ -397,6 +419,13 @@ export async function loadSession(): Promise<void> {
         // Set sessionDirty if there are unsaved tabs with content
         const hasUnsavedTabsWithContent = appContext.editor.tabs.some((t) => !t.path && t.content.length > 0);
         appContext.editor.sessionDirty = hasUnsavedTabsWithContent;
+        
+        const duration = (performance.now() - start).toFixed(2);
+        logger.session.info('SessionLoaded', {
+            duration: `${duration}ms`,
+            activeTabs: appContext.editor.tabs.length,
+            closedTabs: appContext.editor.closedTabsHistory.length
+        });
     } catch (err) {
         AppError.handle('Session:Load', err, {
             showToast: false,

@@ -26,6 +26,8 @@ fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> 
 
 #[tauri::command]
 pub async fn read_text_file(path: String) -> Result<FileContent, String> {
+    let start = std::time::Instant::now();
+    
     validate_path(&path)?;
     let metadata = fs::metadata(&path)
         .await
@@ -76,14 +78,27 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
     let detected_encoding = detector.guess(None, false);
     let (cow, _, _) = detected_encoding.decode(&bytes);
 
-    Ok(FileContent {
+    let result = FileContent {
         content: cow.into_owned(),
         encoding: detected_encoding.name().to_string(),
-    })
+    };
+    
+    let duration = start.elapsed();
+    log::info!(
+        "[Storage] read_text_file | duration={:?} | size={} bytes | path={}",
+        duration,
+        result.content.len(),
+        path
+    );
+    
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
+    let start = std::time::Instant::now();
+    let content_size = content.len();
+    
     validate_path(&path)?;
     let path_buf = PathBuf::from(&path);
 
@@ -94,7 +109,14 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
             format!("Failed to save file: {}", e)
         })?;
 
-    log::debug!("Successfully wrote file: {}", path);
+    let duration = start.elapsed();
+    log::info!(
+        "[Storage] write_text_file | duration={:?} | size={} bytes | path={}",
+        duration,
+        content_size,
+        path
+    );
+    
     Ok(())
 }
 

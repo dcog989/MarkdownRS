@@ -18,6 +18,9 @@ pub async fn render_markdown(
     content: String,
     flavor: Option<String>,
 ) -> Result<RenderResult, String> {
+    let start = std::time::Instant::now();
+    let content_size = content.len();
+    
     let markdown_flavor = flavor
         .and_then(|f| MarkdownFlavor::from_str(&f))
         .unwrap_or_default();
@@ -26,14 +29,23 @@ pub async fn render_markdown(
         flavor: markdown_flavor,
     };
 
-    tokio::task::spawn_blocking(move || {
+    let result = tokio::task::spawn_blocking(move || {
         renderer::render_markdown(&content, options).map_err(|e| {
             log::error!("Failed to render markdown: {}", e);
             e
         })
     })
     .await
-    .map_err(|e| format!("Render task failed: {}", e))?
+    .map_err(|e| format!("Render task failed: {}", e))?;
+    
+    let duration = start.elapsed();
+    log::info!(
+        "[Markdown] render_markdown | duration={:?} | size={} bytes",
+        duration,
+        content_size
+    );
+    
+    result
 }
 
 #[tauri::command]
@@ -45,6 +57,9 @@ pub async fn format_markdown(
     code_block_fence: Option<String>,
     table_alignment: Option<bool>,
 ) -> Result<String, String> {
+    let start = std::time::Instant::now();
+    let content_size = content.len();
+    
     let markdown_flavor = flavor
         .and_then(|f| MarkdownFlavor::from_str(&f))
         .unwrap_or_default();
@@ -71,14 +86,23 @@ pub async fn format_markdown(
         })
         .map_err(|e| format!("Failed to spawn formatter thread: {}", e))?;
 
-    match tokio::task::spawn_blocking(move || rx.recv()).await {
+    let result = match tokio::task::spawn_blocking(move || rx.recv()).await {
         Ok(Ok(result)) => result.map_err(|e| {
             log::error!("Failed to format markdown: {}", e);
             e
         }),
         Ok(Err(_)) => Err("Formatter thread panicked or disconnected".to_string()),
         Err(e) => Err(format!("Formatter task join error: {}", e)),
-    }
+    };
+    
+    let duration = start.elapsed();
+    log::info!(
+        "[Markdown] format_markdown | duration={:?} | size={} bytes",
+        duration,
+        content_size
+    );
+    
+    result
 }
 
 #[tauri::command]

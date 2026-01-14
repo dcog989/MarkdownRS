@@ -23,6 +23,7 @@
         saveCurrentFileAs,
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
+    import { logger } from '$lib/utils/logger';
     import { initSettings, saveSettings } from '$lib/utils/settings';
     import { onDestroy, onMount } from 'svelte';
 
@@ -39,13 +40,37 @@
 
     let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
 
+    // Track tab switches for performance monitoring
+    let previousTabId = $state<string | null>(null);
+    
     // Lazy load tab content when switching tabs
     $effect(() => {
         const tab = activeTab;
-        if (tab && !tab.contentLoaded && isInitialized) {
-            loadTabContentLazy(tab.id).catch((err) => {
-                console.error('Failed to lazy load tab content:', err);
+        const currentTabId = tab?.id || null;
+        
+        // Log tab switch if the tab changed and app is initialized
+        if (isInitialized && currentTabId && currentTabId !== previousTabId) {
+            logger.editor.debug('TabSwitched', { 
+                from: previousTabId || 'none',
+                to: currentTabId,
+                title: tab?.title || 'unknown'
             });
+            previousTabId = currentTabId;
+        }
+        
+        if (tab && !tab.contentLoaded && isInitialized) {
+            const loadStart = performance.now();
+            loadTabContentLazy(tab.id)
+                .then(() => {
+                    const duration = (performance.now() - loadStart).toFixed(2);
+                    logger.session.debug('TabContentLoaded', { 
+                        tabId: tab.id,
+                        duration: `${duration}ms`
+                    });
+                })
+                .catch((err) => {
+                    console.error('Failed to lazy load tab content:', err);
+                });
         }
     });
 
@@ -167,16 +192,28 @@
     }
 
     onMount(() => {
+        const appStartTime = performance.now();
+        
         (async () => {
             try {
+                const settingsStart = performance.now();
                 await initSettings();
+                const settingsDuration = (performance.now() - settingsStart).toFixed(2);
+                logger.editor.debug('SettingsInitialized', { duration: `${settingsDuration}ms` });
+                
+                const sessionStart = performance.now();
                 await loadSession();
+                const sessionDuration = (performance.now() - sessionStart).toFixed(2);
+                logger.session.info('SessionRestored', { duration: `${sessionDuration}ms` });
 
                 if (appContext.editor.tabs.length === 0) {
                     const id = addTab();
                     appContext.app.activeTabId = id;
                 }
 
+                const appDuration = (performance.now() - appStartTime).toFixed(2);
+                logger.editor.info('AppInitialized', { duration: `${appDuration}ms` });
+                
                 isInitialized = true;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);

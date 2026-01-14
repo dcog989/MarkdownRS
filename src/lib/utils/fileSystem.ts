@@ -25,6 +25,7 @@ import {
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
+import { logger } from '$lib/utils/logger';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { callBackend } from './backend';
@@ -44,6 +45,8 @@ export {
 };
 
 export async function openFile(path?: string): Promise<void> {
+    const start = performance.now();
+    
     try {
         let targetPath = path;
 
@@ -144,6 +147,14 @@ export async function openFile(path?: string): Promise<void> {
         await checkFileExists(id);
         await fileWatcher.watch(sanitizedPath);
         appContext.app.activeTabId = id;
+        
+        const duration = (performance.now() - start).toFixed(2);
+        logger.file.info('FileOpened', {
+            duration: `${duration}ms`,
+            path: sanitizedPath,
+            size: metadata.size,
+            encoding: result.encoding
+        });
     } catch (err) {
         AppError.handle('File:Read', err, {
             showToast: true,
@@ -198,6 +209,7 @@ export async function saveCurrentFileAs(): Promise<boolean> {
 }
 
 async function saveFile(forceNewPath: boolean): Promise<boolean> {
+    const start = performance.now();
     const tabId = appContext.app.activeTabId;
     if (!tabId) return false;
 
@@ -295,6 +307,14 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 markAsSaved(tabId);
                 invalidateMetadataCache(sanitizedPath);
                 await refreshMetadata(tabId, sanitizedPath);
+                
+                const duration = (performance.now() - start).toFixed(2);
+                logger.file.info('FileSaved', {
+                    duration: `${duration}ms`,
+                    path: sanitizedPath,
+                    size: new TextEncoder().encode(diskContent).length,
+                    saveAs: forceNewPath
+                });
             } finally {
                 fileWatcher.setWriteLock(sanitizedPath, false);
             }
