@@ -1,7 +1,7 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
     "productName": "MarkdownRS",
-    "version": "0.1.128",
+    "version": "0.1.129",
     "identifier": "MarkdownRS",
     "build": {
         "beforeDevCommand": "npm run dev",
@@ -11,7 +11,41 @@
     },
     "app": {
         "security": {
-            "csp": null
+            "csp": {
+                "default-src": [
+                    "'self'",
+                    "ipc:",
+                    "https://tauri.localhost"
+                ],
+                "script-src": [
+                    "'self'",
+                    "'unsafe-inline'",
+                    "'unsafe-eval'"
+                ],
+                "style-src": [
+                    "'self'",
+                    "'unsafe-inline'"
+                ],
+                "img-src": [
+                    "'self'",
+                    "asset:",
+                    "https:",
+                    "data:",
+                    "blob:",
+                    "http://asset.localhost"
+                ],
+                "connect-src": [
+                    "'self'",
+                    "ipc:",
+                    "https://tauri.localhost",
+                    "http://ipc.localhost"
+                ],
+                "font-src": [
+                    "'self'",
+                    "asset:",
+                    "data:"
+                ]
+            }
         },
         "windows": [
             {
@@ -30,7 +64,13 @@
     "bundle": {
         "active": true,
         "targets": "all",
-        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
         "resources": [],
         "copyright": "",
         "category": "Productivity",
@@ -39,14 +79,23 @@
         "createUpdaterArtifacts": true,
         "fileAssociations": [
             {
-                "ext": ["md", "markdown", "mdown", "mkdn", "mkd", "mdwn"],
+                "ext": [
+                    "md",
+                    "markdown",
+                    "mdown",
+                    "mkdn",
+                    "mkd",
+                    "mdwn"
+                ],
                 "name": "Markdown Document",
                 "description": "Markdown Document",
                 "role": "Editor",
                 "mimeType": "text/markdown"
             },
             {
-                "ext": ["txt"],
+                "ext": [
+                    "txt"
+                ],
                 "name": "Text Document",
                 "description": "Text Document",
                 "role": "Editor",
@@ -57,7 +106,9 @@
             "nsis": {
                 "installerIcon": "icons/icon.ico",
                 "installMode": "currentUser",
-                "languages": ["English"],
+                "languages": [
+                    "English"
+                ],
                 "displayLanguageSelector": false
             }
         }
@@ -67,7 +118,9 @@
             "open": true
         },
         "updater": {
-            "endpoints": ["https://github.com/dcog989/markdown-rs/releases/latest/download/latest.json"],
+            "endpoints": [
+                "https://github.com/dcog989/markdown-rs/releases/latest/download/latest.json"
+            ],
             "dialog": true,
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5dkJybEN1NTBvSFFoTU9LMU5UQWtQWCthUytoUGlDcGdSNk5LNmVONUZ2d0FBQkFBQUFBQUFBQUFBQUlBQUFBQWViWWwxL25NVVpEelRFaU1weXh6c1hLZ2wyaGt5WGNrT08yTHRhbERTR0xtdjVHSEhzU0VNSERiM1lYejBXODFGdE5MTTVzc2ZPOGhGMXQ2Z2JsNHYxVFZhWGlCcE1iL29ySGRmVFJsTHJHaHRGNGplRWM4RG1QS0NCdGlBWkRiWU9PcWg5eWs2QmM9Cg=="
         }
