@@ -1,8 +1,9 @@
 <script lang="ts">
     import { callBackend } from '$lib/utils/backend';
+    import { openPath } from '@tauri-apps/plugin-opener';
     import { relaunch } from '@tauri-apps/plugin-process';
     import { check } from '@tauri-apps/plugin-updater';
-    import { LoaderCircle, RefreshCw } from 'lucide-svelte';
+    import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
     interface Props {
@@ -19,6 +20,7 @@
         data_path: string;
         cache_path: string;
         logs_path: string;
+        os_platform: string;
     }
 
     let appInfo = $state<AppInfo>({
@@ -28,6 +30,7 @@
         data_path: '',
         cache_path: '',
         logs_path: '',
+        os_platform: '',
     });
 
     let isChecking = $state(false);
@@ -48,6 +51,18 @@
 
     function copyToClipboard(text: string) {
         navigator.clipboard.writeText(text);
+    }
+
+    async function openLogFile() {
+        if (!appInfo.logs_path) return;
+        const separator = appInfo.os_platform === 'windows' ? '\\' : '/';
+        const logFile = `${appInfo.logs_path}${separator}markdown-rs.log`;
+        try {
+            await openPath(logFile);
+        } catch (e) {
+            console.error('Failed to open log file, opening directory instead:', e);
+            await openPath(appInfo.logs_path);
+        }
     }
 
     async function checkForUpdates() {
@@ -150,6 +165,13 @@
                     onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button>
             </div>
         </div>
+
+        <button
+            class="text-ui-sm text-accent-link hover:text-accent-link-hover hover:underline flex items-center gap-1.5 transition-colors"
+            onclick={openLogFile}>
+            <span>Open Current Log File</span>
+            <ExternalLink size={12} />
+        </button>
 
         {#if updateStatus}
             <div class="text-center text-ui-sm py-1 text-accent-primary">
