@@ -180,7 +180,7 @@
         {/if}
 
         <div class="mt-4 text-center text-ui-sm">
-            <p class="text-fg-muted">Giants' Shoulders = Rust / Tauri + Vite / Svelte / Tailwind</p>
+            <p class="text-fg-muted">Giants' Shoulders = Vite / Rust / Tauri / Svelte / Tailwind</p>
             <p class="mt-1 text-fg-muted">© MarkdownRS. All rights reserved.</p>
         </div>
     </div>
