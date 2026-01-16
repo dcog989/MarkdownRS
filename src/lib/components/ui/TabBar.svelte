@@ -9,6 +9,7 @@
     import { flip } from 'svelte/animate';
     import { fade } from 'svelte/transition';
     import MruTabsPopup from './MruTabsPopup.svelte';
+    import TabBarContextMenu from './TabBarContextMenu.svelte';
     import TabButton from './TabButton.svelte';
     import TabContextMenu from './TabContextMenu.svelte';
     import TabDropdown from './TabDropdown.svelte';
@@ -24,6 +25,9 @@
     let contextMenuTabId: string | null = $state(null);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
+    let showTabBarContextMenu = $state(false);
+    let tabBarContextMenuX = $state(0);
+    let tabBarContextMenuY = $state(0);
     let showMruPopup = $state(false);
     let mruSelectedIndex = $state(0);
     let isMruCycling = $state(false);
@@ -67,13 +71,14 @@
     });
 
     $effect(() => {
-        const _ = appContext.editor.tabs.length;
+        // Trigger fade indicator update when tab count changes
+        void appContext.editor.tabs.length;
         tick().then(updateFadeIndicators);
     });
 
     $effect(() => {
-        const _ = appContext.interface.scrollToTabSignal;
-        if (_ > 0) {
+        const scrollSignal = appContext.interface.scrollToTabSignal;
+        if (scrollSignal > 0) {
             scrollToActive();
         }
     });
@@ -200,7 +205,23 @@
         <section
             bind:this={scrollContainer}
             class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container"
-            onscroll={updateFadeIndicators}>
+            onscroll={updateFadeIndicators}
+            oncontextmenu={(e) => {
+                // Check if the right-click is on an empty area (not on a tab)
+                const target = e.target as HTMLElement;
+                if (
+                    target.classList.contains('tab-scroll-container') ||
+                    target.closest('section')?.classList.contains('tab-scroll-container')
+                ) {
+                    // Only show context menu if we didn't click on a tab button
+                    if (!target.closest('[role="listitem"]') && !target.closest('button')) {
+                        e.preventDefault();
+                        showTabBarContextMenu = true;
+                        tabBarContextMenuX = e.clientX;
+                        tabBarContextMenuY = e.clientY;
+                    }
+                }
+            }}>
             {#each appContext.editor.tabs as tab (tab.id)}
                 <div
                     class="h-full flex items-stretch shrink-0 outline-none select-none touch-none"
@@ -264,6 +285,10 @@
         x={contextMenuX}
         y={contextMenuY}
         onClose={() => (contextMenuTabId = null)} />
+{/if}
+
+{#if showTabBarContextMenu}
+    <TabBarContextMenu x={tabBarContextMenuX} y={tabBarContextMenuY} onClose={() => (showTabBarContextMenu = false)} />
 {/if}
 
 <MruTabsPopup
