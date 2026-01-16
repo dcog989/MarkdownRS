@@ -9,9 +9,9 @@ import {
     deleteGroupBackward,
     deleteGroupForward,
     historyKeymap,
-    indentWithTab,
 } from '@codemirror/commands';
 import { EditorView, keymap } from '@codemirror/view';
+import type { KeyBinding } from '@codemirror/view';
 
 export function getAutocompletionConfig() {
     if (!appContext.app.enableAutocomplete) return [];
@@ -82,10 +82,21 @@ const withSelectionCheck = (cmd: (view: EditorView) => boolean) => (view: Editor
     return cmd(view);
 };
 
-export function getEditorKeymap(customKeymap: any[] = []) {
+// Custom tab handler that inserts tab at cursor position
+const insertTabAtCursor = (view: EditorView) => {
+    const { from, to } = view.state.selection.main;
+    view.dispatch({
+        changes: { from, to, insert: '\t' },
+        selection: { anchor: from + 1, head: from + 1 },
+        scrollIntoView: true,
+    });
+    return true;
+};
+
+export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     return keymap.of([
         ...customKeymap,
-        indentWithTab,
+        { key: 'Tab', run: insertTabAtCursor },
         {
             key: 'Insert',
             run: () => {
