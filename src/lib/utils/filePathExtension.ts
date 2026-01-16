@@ -5,7 +5,7 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 // Unix absolute paths must have at least one slash after the initial slash (e.g., /home/user, not /hibernate)
 // Allows paths to be preceded by whitespace, quotes, backticks, or start of line
 export const FILE_PATH_REGEX =
-    /(?:(?:^|\s|['\"`])(?:[a-zA-Z]:[\\\/]|\.\.?[\\\/])[a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]+)|(?:(?:^|\s|['\"`])\/[a-zA-Z0-9._\-]+[\\\/][a-zA-Z0-9._\-\/\\!@#$%^&()\[\]{}~`+ ]*)/g;
+    /(?:(?:^|\s|['"`])(?:[a-zA-Z]:[/\\]|\.\.\.?[/\\])[a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+ -]+)|(?:(?:^|\s|['"`])\/[a-zA-Z0-9._-]+[/\\][a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+ -]*)/g;
 
 /**
  * Extracts a file path from a line of text at a specific position.
@@ -19,8 +19,8 @@ export function extractPathAtPos(text: string, pos: number): string | null {
         const trimmedMatch = fullMatch.trim();
 
         const leadingSpaceCount = fullMatch.length - fullMatch.trimStart().length;
-        const quoteStartOffset = trimmedMatch.match(/^['\"`]/) ? 1 : 0;
-        const quoteEndOffset = trimmedMatch.match(/['\"`]$/) ? 1 : 0;
+        const quoteStartOffset = trimmedMatch.match(/^['"`]/) ? 1 : 0;
+        const quoteEndOffset = trimmedMatch.match(/['"`]$/) ? 1 : 0;
 
         const cleanPath = trimmedMatch.slice(
             quoteStartOffset,
@@ -46,7 +46,7 @@ function findFilePaths(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
     const doc = view.state.doc;
 
-    for (let { from, to } of view.visibleRanges) {
+    for (const { from, to } of view.visibleRanges) {
         for (let pos = from; pos <= to; ) {
             const line = doc.lineAt(pos);
             const lineText = line.text;
@@ -58,7 +58,7 @@ function findFilePaths(view: EditorView) {
             while ((match = FILE_PATH_REGEX.exec(lineText)) !== null) {
                 const matchText = match[0].trim();
                 // Find the actual path start (skip quote/backtick if present)
-                const pathStart = matchText.match(/^['\"`]/) ? 1 : 0;
+                const pathStart = matchText.match(/^['"`]/) ? 1 : 0;
                 const cleanPath = matchText.slice(pathStart);
 
                 const startOffset = match.index + (match[0].length - matchText.length) + pathStart;
