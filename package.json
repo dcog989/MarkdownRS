@@ -16,8 +16,8 @@
         "preview": "vite preview",
         "release": "bun scripts/version.js --git",
         "tauri": "tauri",
-        "ui:build": "vite build",
-        "ui:dev": "vite dev",
+        "ui:build": "bunx --bun vite build",
+        "ui:dev": "bunx --bun vite dev",
         "version": "bun scripts/version.js"
     },
     "dependencies": {
