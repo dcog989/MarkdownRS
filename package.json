@@ -5,7 +5,6 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "bun scripts/package.js",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "clean": "bun scripts/clean.js",
         "dev": "tauri dev",
