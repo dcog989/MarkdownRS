@@ -32,7 +32,6 @@ __pycache__/
 bin/
 obj/
 .vs/
-.vscode/
 *.user
 *.suo
 *.sln.dotsettings.user

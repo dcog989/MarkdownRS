@@ -24,8 +24,6 @@ _UpgradeReport_Files/
 .repomixignore
 .sass-cache/
 .vs/
-.vscode/
-.vscode/*
 .vshistory/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64[Ee][Cc]/
