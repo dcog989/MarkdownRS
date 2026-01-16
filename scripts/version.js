@@ -16,7 +16,9 @@ const shouldGit = args.includes('--git');
 const versionArg = args.find((arg) => !arg.startsWith('--'));
 
 // 1. Read current version from package.json
+/** @type {string} */
 let currentVersion;
+/** @type {{version: string}} */
 let packageJson;
 
 try {
@@ -28,7 +30,8 @@ try {
 }
 
 // 2. Determine new version
-let newVersion = versionArg;
+/** @type {string} */
+let newVersion = versionArg || '';
 
 if (!newVersion) {
     // No argument provided: Auto-increment patch
@@ -117,7 +120,7 @@ if (shouldGit) {
         console.log(`✅ Git commit and tag '${tagName}' created successfully`);
     } catch (error) {
         console.error('\n❌ Git operations failed. The files were updated, but git actions were skipped.');
-        console.error(error.message);
+        console.error(error instanceof Error ? error.message : String(error));
         // We don't exit(1) here because the primary bump operation succeeded.
     }
 } else {

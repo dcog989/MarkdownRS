@@ -11,6 +11,8 @@ const pathsToRemove = [
     '.svelte-kit',
     'node_modules',
     'package-lock.json',
+    'bun.lockb',
+    'bun.lock',
     // Rust / Backend
     'src-tauri/target',
     'src-tauri/Cargo.lock',
@@ -24,7 +26,7 @@ pathsToRemove.forEach((p) => {
     try {
         fs.rmSync(fullPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 500 });
     } catch (e) {
-        console.error(`❌ Failed to remove ${p}: ${e.message}`);
+        console.error(`❌ Failed to remove ${p}: ${e instanceof Error ? e.message : String(e)}`);
     }
 });
 

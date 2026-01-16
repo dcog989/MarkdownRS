@@ -4,8 +4,8 @@
     "version": "0.1.130",
     "identifier": "MarkdownRS",
     "build": {
-        "beforeDevCommand": "npm run ui:dev",
-        "beforeBuildCommand": "npm run ui:build",
+        "beforeDevCommand": "bun run ui:dev",
+        "beforeBuildCommand": "bun run ui:build",
         "devUrl": "http://localhost:1420",
         "frontendDist": "../build"
     },
