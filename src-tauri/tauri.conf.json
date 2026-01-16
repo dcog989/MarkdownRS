@@ -58,7 +58,8 @@
                 "installerIcon": "icons/icon.ico",
                 "installMode": "currentUser",
                 "languages": ["English"],
-                "displayLanguageSelector": false
+                "displayLanguageSelector": false,
+                "compression": "zlib"
             }
         }
     },
