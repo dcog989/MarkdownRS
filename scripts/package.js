@@ -45,19 +45,31 @@ try {
 const outDir = path.join(rootDir, 'releases');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
 
+// Create clean distribution directory
+const distDir = path.join(rootDir, 'dist');
+if (fs.existsSync(distDir)) {
+    fs.rmSync(distDir, { recursive: true, force: true });
+}
+fs.mkdirSync(distDir, { recursive: true });
+
+// Copy only the essential files to dist directory
+const sourceExe = path.join(srcTauri, 'target', 'release', 'markdown-rs.exe');
+const targetExe = path.join(distDir, 'markdown-rs.exe');
+fs.copyFileSync(sourceExe, targetExe);
+
 console.log('📦 Creating Release Artifacts...');
 try {
     const cmd = [
         'vpk pack',
         '--packId MarkdownRS',
         `--packVersion ${version}`,
-        `--packDir "${path.join(srcTauri, 'target', 'release')}"`,
+        `--packDir "${distDir}"`,
         '--mainExe markdown-rs.exe',
         `--icon "${iconPath}"`,
         `--outputDir "${outDir}"`,
     ].join(' ');
 
-    execSync(cmd, { stdio: 'inherit', cwd: srcTauri });
+    execSync(cmd, { stdio: 'inherit', cwd: distDir });
 
     console.log('\n✅ Build Successful!');
     console.log(`   📂 Artifacts Location: ${path.resolve(outDir)}`);
