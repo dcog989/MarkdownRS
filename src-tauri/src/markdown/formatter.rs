@@ -80,9 +80,9 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
     .map_err(|e| format!("Formatting failed: {}", e))?;
 
     // Restore protected lines with their original whitespace
-    let mut result = formatted;
-    if !protected_lines.is_empty() {
-        let formatted_lines: Vec<&str> = result.lines().collect();
+    let result = if !protected_lines.is_empty() {
+        let ends_with_newline = formatted.ends_with('\n');
+        let formatted_lines: Vec<&str> = formatted.lines().collect();
         let mut restored_lines: Vec<String> = Vec::with_capacity(formatted_lines.len());
         
         for (idx, line) in formatted_lines.iter().enumerate() {
@@ -94,11 +94,14 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
             }
         }
         
-        result = restored_lines.join("\n");
-        if formatted.ends_with('\n') {
+        let mut result = restored_lines.join("\n");
+        if ends_with_newline {
             result.push('\n');
         }
-    }
+        result
+    } else {
+        formatted
+    };
 
     // Post-processing
     Ok(post_process_formatting(&result, options))
