@@ -7,8 +7,13 @@ use std::sync::LazyLock;
 use unicode_segmentation::UnicodeSegmentation;
 
 // Lazy-compiled regex for file paths
+// Matches:
+// - Windows absolute paths: C:/ or C:\
+// - Relative paths: ./ or ../
+// - Home directory: ~/
+// Does NOT match Unix absolute paths starting with just /
 static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>\"'|?*]*|(?:\.\.?/|~/)[^\s<>\"'|?*]+)"#)
+    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+)"#)
         .expect("Invalid PATH_REGEX pattern")
 });
 
@@ -76,7 +81,11 @@ fn linkify_file_paths(html: &str) -> String {
             .iter()
             .any(|tag| line.trim_start().starts_with(tag));
 
-        if should_skip {
+        // Also skip lines that contain <code> tags anywhere in them to avoid
+        // linkifying paths inside inline code
+        let contains_code = line.contains("<code>") || line.contains("</code>");
+
+        if should_skip || contains_code {
             result.push_str(line);
             result.push('\n');
             continue;

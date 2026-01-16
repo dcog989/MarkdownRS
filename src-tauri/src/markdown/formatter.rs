@@ -18,6 +18,11 @@ static UNORDERED_LIST_RE: LazyLock<Regex> =
 static ORDERED_LIST_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(\s*)\d+\. ").expect("Invalid ORDERED_LIST_RE"));
 
+// Regex to detect box-drawing characters and ASCII art
+static BOX_DRAWING_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"[│┤┐└┴┬├─┼╔╗╚╝║═╠╣╦╩╬▀▄█▌▐░▒▓■□▪▫]").expect("Invalid BOX_DRAWING_RE")
+});
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FormatterOptions {
     pub flavor: MarkdownFlavor,
@@ -44,6 +49,16 @@ impl Default for FormatterOptions {
 }
 
 pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<String, String> {
+    // Pre-scan for lines with box-drawing characters that should be preserved
+    let lines: Vec<&str> = content.lines().collect();
+    let mut protected_lines: Vec<(usize, String)> = Vec::new();
+    
+    for (idx, line) in lines.iter().enumerate() {
+        if BOX_DRAWING_RE.is_match(line) {
+            protected_lines.push((idx, line.to_string()));
+        }
+    }
+
     let mut builder = ConfigurationBuilder::new();
     builder.text_wrap(TextWrap::Maintain);
 
@@ -64,8 +79,29 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
     .map(|result| result.unwrap_or_else(|| content.to_string()))
     .map_err(|e| format!("Formatting failed: {}", e))?;
 
+    // Restore protected lines with their original whitespace
+    let mut result = formatted;
+    if !protected_lines.is_empty() {
+        let formatted_lines: Vec<&str> = result.lines().collect();
+        let mut restored_lines: Vec<String> = Vec::with_capacity(formatted_lines.len());
+        
+        for (idx, line) in formatted_lines.iter().enumerate() {
+            // Check if this line should be restored
+            if let Some((_, original)) = protected_lines.iter().find(|(orig_idx, _)| *orig_idx == idx) {
+                restored_lines.push(original.clone());
+            } else {
+                restored_lines.push(line.to_string());
+            }
+        }
+        
+        result = restored_lines.join("\n");
+        if formatted.ends_with('\n') {
+            result.push('\n');
+        }
+    }
+
     // Post-processing
-    Ok(post_process_formatting(&formatted, options))
+    Ok(post_process_formatting(&result, options))
 }
 
 fn post_process_formatting(content: &str, options: &FormatterOptions) -> String {
