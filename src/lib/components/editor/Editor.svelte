@@ -177,7 +177,7 @@
 
         // Use 'start' alignment to snap the line to the top of the viewport
         cmView.dispatch({
-            effects: EditorView.scrollIntoView(line.from, { y: 'start' })
+            effects: EditorView.scrollIntoView(line.from, { y: 'start' }),
         });
     }
 

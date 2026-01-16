@@ -418,7 +418,7 @@
 
                 view!.dispatch({
                     selection: { anchor: newAnchor, head: newHead },
-                    scrollIntoView: false
+                    scrollIntoView: false,
                 });
 
                 requestAnimationFrame(() => {

@@ -42,30 +42,30 @@
 
     // Track tab switches for performance monitoring
     let previousTabId = $state<string | null>(null);
-    
+
     // Lazy load tab content when switching tabs
     $effect(() => {
         const tab = activeTab;
         const currentTabId = tab?.id || null;
-        
+
         // Log tab switch if the tab changed and app is initialized
         if (isInitialized && currentTabId && currentTabId !== previousTabId) {
-            logger.editor.debug('TabSwitched', { 
+            logger.editor.debug('TabSwitched', {
                 from: previousTabId || 'none',
                 to: currentTabId,
-                title: tab?.title || 'unknown'
+                title: tab?.title || 'unknown',
             });
             previousTabId = currentTabId;
         }
-        
+
         if (tab && !tab.contentLoaded && isInitialized) {
             const loadStart = performance.now();
             loadTabContentLazy(tab.id)
                 .then(() => {
                     const duration = (performance.now() - loadStart).toFixed(2);
-                    logger.session.debug('TabContentLoaded', { 
+                    logger.session.debug('TabContentLoaded', {
                         tabId: tab.id,
-                        duration: `${duration}ms`
+                        duration: `${duration}ms`,
                     });
                 })
                 .catch((err) => {
@@ -193,14 +193,14 @@
 
     onMount(() => {
         const appStartTime = performance.now();
-        
+
         (async () => {
             try {
                 const settingsStart = performance.now();
                 await initSettings();
                 const settingsDuration = (performance.now() - settingsStart).toFixed(2);
                 logger.editor.debug('SettingsInitialized', { duration: `${settingsDuration}ms` });
-                
+
                 const sessionStart = performance.now();
                 await loadSession();
                 const sessionDuration = (performance.now() - sessionStart).toFixed(2);
@@ -213,7 +213,7 @@
 
                 const appDuration = (performance.now() - appStartTime).toFixed(2);
                 logger.editor.info('AppInitialized', { duration: `${appDuration}ms` });
-                
+
                 isInitialized = true;
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);

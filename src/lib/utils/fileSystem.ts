@@ -46,7 +46,7 @@ export {
 
 export async function openFile(path?: string): Promise<void> {
     const start = performance.now();
-    
+
     try {
         let targetPath = path;
 
@@ -147,13 +147,13 @@ export async function openFile(path?: string): Promise<void> {
         await checkFileExists(id);
         await fileWatcher.watch(sanitizedPath);
         appContext.app.activeTabId = id;
-        
+
         const duration = (performance.now() - start).toFixed(2);
         logger.file.info('FileOpened', {
             duration: `${duration}ms`,
             path: sanitizedPath,
             size: metadata.size,
-            encoding: result.encoding
+            encoding: result.encoding,
         });
     } catch (err) {
         AppError.handle('File:Read', err, {
@@ -307,13 +307,13 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 markAsSaved(tabId);
                 invalidateMetadataCache(sanitizedPath);
                 await refreshMetadata(tabId, sanitizedPath);
-                
+
                 const duration = (performance.now() - start).toFixed(2);
                 logger.file.info('FileSaved', {
                     duration: `${duration}ms`,
                     path: sanitizedPath,
                     size: new TextEncoder().encode(diskContent).length,
-                    saveAs: forceNewPath
+                    saveAs: forceNewPath,
                 });
             } finally {
                 fileWatcher.setWriteLock(sanitizedPath, false);
