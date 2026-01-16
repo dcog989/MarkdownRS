@@ -30,6 +30,10 @@
             "identifier": "opener:allow-open-path",
             "allow": [{ "path": "**" }]
         },
+        {
+            "identifier": "opener:allow-open-url",
+            "allow": [{ "url": "http://**" }, { "url": "https://**" }]
+        },
         "dialog:default",
         "store:default",
         "window-state:default",
