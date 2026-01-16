@@ -19,11 +19,13 @@
         ClipboardPaste,
         Rotate3d,
         Scissors,
+        Search,
         Sparkles,
         TextAlignStart,
         WandSparkles,
     } from 'lucide-svelte';
     import { untrack } from 'svelte';
+    import { openUrl } from '@tauri-apps/plugin-opener';
 
     let {
         x,
@@ -138,9 +140,8 @@
         const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
 
         // Optimistic update
-        const newDict = new Set(spellcheckState.customDictionary);
+        const newDict = new Set([...spellcheckState.customDictionary, ...invalidWords.map((w) => w.toLowerCase())]);
         invalidWords.forEach((w) => {
-            newDict.add(w.toLowerCase());
             spellcheckState.misspelledCache.delete(w.toLowerCase());
         });
         spellcheckState.customDictionary = newDict;
@@ -175,7 +176,7 @@
                     <Sparkles size={14} class="text-accent-secondary animate-spin" /><span>Loading suggestions...</span>
                 </div>
             {:else}
-                {#each suggestions as s}
+                {#each suggestions as s, i (i)}
                     <button
                         class="w-full text-left px-3 py-1.5 text-ui font-medium hover:bg-white/10 flex items-center gap-2"
                         onclick={() => onReplaceWord?.(s)}>
@@ -215,6 +216,19 @@
                 <ClipboardPaste size={14} /><span>Paste</span><span class="ml-auto text-ui-sm opacity-50">Ctrl+V</span>
             </button>
 
+            {#if selectedText}
+                <div class="h-px my-1 bg-border-main"></div>
+                <button
+                    class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
+                    onclick={async () => {
+                        const text = selectedText as string;
+                        await openUrl(text);
+                        closeMenuAndReset();
+                    }}>
+                    <Search size={14} /><span>Send to browser</span>
+                </button>
+            {/if}
+
             <div class="h-px my-1 bg-border-main"></div>
 
             <button
@@ -241,7 +255,7 @@
                         <ArrowUpDown size={14} /><span>Sort Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                {#each sortOps as op}
+                {#each sortOps as op, i (i)}
                     <button
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
                         onclick={() => handleOp(op.id)}>{op.label}</button>
@@ -261,7 +275,7 @@
                         <CaseSensitive size={14} /><span>Change Case</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                {#each caseOps as op}
+                {#each caseOps as op, i (i)}
                     <button
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
                         onclick={() => handleOp(op.id)}>{op.label}</button>
@@ -281,7 +295,7 @@
                         <TextAlignStart size={14} /><span>Format Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                {#each formatOps as op}
+                {#each formatOps as op, i (i)}
                     {#if op.divider}
                         <div class="h-px my-1 bg-border-main"></div>
                     {:else}
@@ -305,7 +319,7 @@
                         <Rotate3d size={14} /><span>Transform Lines</span><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
-                {#each transformOps as op}
+                {#each transformOps as op, i (i)}
                     {#if op.divider}
                         <div class="h-px my-1 bg-border-main"></div>
                     {:else}
@@ -325,8 +339,7 @@
                         class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                         onclick={async () => {
                             // Optimistic update to reactive state
-                            const newDict = new Set(spellcheckState.customDictionary);
-                            newDict.add(targetWord.toLowerCase());
+                            const newDict = new Set([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
                             spellcheckState.customDictionary = newDict;
 
                             spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
