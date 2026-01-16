@@ -222,7 +222,19 @@
                     class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                     onclick={async () => {
                         const text = selectedText as string;
-                        await openUrl(text);
+                        // Check if the text is a valid URL
+                        const urlPattern = /^(https?:\/\/|www\.)/i;
+                        const isUrl = urlPattern.test(text.trim());
+
+                        if (isUrl) {
+                            // If it's a URL, open it directly
+                            const url = text.trim().startsWith('www.') ? `https://${text.trim()}` : text.trim();
+                            await openUrl(url);
+                        } else {
+                            // If it's not a URL, search for it using the default search engine
+                            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text.trim())}`;
+                            await openUrl(searchUrl);
+                        }
                         closeMenuAndReset();
                     }}>
                     <Search size={14} /><span>Send to browser</span>
