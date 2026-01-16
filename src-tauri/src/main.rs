@@ -13,12 +13,16 @@ use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 use unicode_bom::Bom;
+use velopack::VelopackApp;
 
 fn default_log_level() -> String {
     "info".to_string()
 }
 
 fn main() {
+    // Velopack Hook: Handles install/update events and exits if necessary
+    VelopackApp::build().run();
+
     #[cfg(target_os = "windows")]
     unsafe {
         std::env::set_var(
