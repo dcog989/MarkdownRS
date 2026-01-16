@@ -5,19 +5,20 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "bump": "node scripts/bump.js",
+        "build": "tauri build",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "clean:node": "node -e \"const fs = require('fs'); ['build', '.svelte-kit', 'node_modules', 'package-lock.json'].forEach(p => fs.rmSync(p, {recursive: true, force: true, maxRetries: 3, retryDelay: 500}));\"",
-        "clean:rust": "node -e \"const fs = require('fs'); ['src-tauri/target', 'src-tauri/Cargo.lock', 'src-tauri/gen'].forEach(p => fs.rmSync(p, {recursive: true, force: true, maxRetries: 3, retryDelay: 500}));\"",
-        "clean": "npm run clean:node && npm run clean:rust",
-        "dev": "svelte-kit sync && vite dev",
-        "format": "prettier . --write",
+        "clean": "node scripts/clean.js",
+        "dev": "tauri dev",
         "format:check": "prettier . --check",
+        "format": "prettier . --write",
         "lint": "eslint .",
+        "prepare": "husky",
         "preview": "vite preview",
+        "release": "node scripts/version.js --git",
         "tauri": "tauri",
-        "prepare": "husky"
+        "ui:build": "vite build",
+        "ui:dev": "svelte-kit sync && vite dev",
+        "version": "node scripts/version.js"
     },
     "dependencies": {
         "@codemirror/autocomplete": "^6.20.0",

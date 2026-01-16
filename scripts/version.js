@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const packageJsonPath = path.join(rootDir, 'package.json');
+const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
+const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
+
+// Parse arguments
+const args = process.argv.slice(2);
+const shouldGit = args.includes('--git');
+const versionArg = args.find((arg) => !arg.startsWith('--'));
 
 // 1. Read current version from package.json
 let currentVersion;
@@ -20,7 +28,7 @@ try {
 }
 
 // 2. Determine new version
-let newVersion = process.argv[2];
+let newVersion = versionArg;
 
 if (!newVersion) {
     // No argument provided: Auto-increment patch
@@ -58,7 +66,6 @@ try {
 }
 
 // 4. Update tauri.conf.json
-const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
 try {
     const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
     content.version = newVersion;
@@ -70,16 +77,8 @@ try {
 }
 
 // 5. Update Cargo.toml
-const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
 try {
     let content = fs.readFileSync(cargoTomlPath, 'utf8');
-
-    // Regex explanation:
-    // 1. Start with [package] header
-    // 2. Match any character (including newlines via [\s\S]) non-greedily (*?)
-    // 3. Until we find 'version = "' at the start of a line (m flag)
-    // 4. Capture the version number
-    // 5. Capture the closing quote
     const regex = /(\[package\][\s\S]*?^version = ")([^"]+)(")/m;
 
     if (regex.test(content)) {
@@ -95,4 +94,33 @@ try {
     process.exit(1);
 }
 
-console.log(`\n🎉 Successfully bumped all files to v${newVersion}`);
+// 6. Git Integration
+if (shouldGit) {
+    try {
+        console.log('\n📦 Processing Git operations...');
+
+        // Stage the files
+        // We use forward slashes for cross-platform compatibility in exec commands,
+        // although path.join handles OS separators, git usually accepts forward slashes.
+        // Using strict paths ensures we only add what we changed.
+        const files = [packageJsonPath, tauriConfPath, cargoTomlPath].map((p) => `"${p}"`).join(' ');
+        execSync(`git add ${files}`, { stdio: 'inherit' });
+
+        // Commit
+        const commitMsg = `chore: release v${newVersion}`;
+        execSync(`git commit -m "${commitMsg}"`, { stdio: 'inherit' });
+
+        // Tag
+        const tagName = `v${newVersion}`;
+        execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
+
+        console.log(`✅ Git commit and tag '${tagName}' created successfully`);
+    } catch (error) {
+        console.error('\n❌ Git operations failed. The files were updated, but git actions were skipped.');
+        console.error(error.message);
+        // We don't exit(1) here because the primary bump operation succeeded.
+    }
+} else {
+    console.log(`\n🎉 Successfully updated version to v${newVersion}`);
+    console.log('   (Run with --git to automatically commit and tag)');
+}
