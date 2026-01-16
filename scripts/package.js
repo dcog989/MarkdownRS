@@ -14,7 +14,7 @@ const version = packageJson.version;
 
 // Check prerequisites
 try {
-    execSync('vpk --version', { stdio: 'ignore' });
+    execSync('vpk --help', { stdio: 'ignore' });
 } catch {
     console.error('❌ Error: "vpk" is not installed.');
     console.error('   Please install it using: dotnet tool install -g vpk');
