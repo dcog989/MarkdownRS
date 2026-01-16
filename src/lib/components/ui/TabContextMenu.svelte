@@ -56,9 +56,6 @@
     let isBookmarked = $derived(tab?.path ? isBookmarkedSelector(tab.path) : false);
     let tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === tabId));
 
-    let hasTabsToRight = $derived(tabIndex < appContext.editor.tabs.length - 1);
-    let hasTabsToLeft = $derived(tabIndex > 0);
-    let hasOtherTabs = $derived(appContext.editor.tabs.length > 1);
     let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== tabId));
     let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== tabId));
     let hasCloseableTabsToRight = $derived(
@@ -123,19 +120,81 @@
         onClose();
     }
 
-    function handleRename() {
+    async function handleRename() {
         if (!tab) return;
-        const newTitle = prompt('Enter new title:', tab.customTitle || tab.title);
-        if (newTitle && newTitle.trim()) {
-            updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
+
+        // If tab has no path, just rename the tab title
+        if (!tab.path) {
+            const newTitle = prompt('Enter new title:', tab.customTitle || tab.title);
+            if (newTitle && newTitle.trim()) {
+                updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
+            }
+            onClose();
+            return;
         }
-        onClose();
+
+        // If tab has a path, rename the actual file
+        const oldPath = tab.path; // Save the old path before any changes
+        const currentFileName = oldPath.split(/[\\/]/).pop() || '';
+        const currentBaseName = currentFileName.replace(/\.md$/, '');
+        const newFileName = prompt('Enter new file name (without .md):', currentBaseName);
+
+        if (!newFileName || !newFileName.trim() || newFileName.trim() === currentBaseName) {
+            onClose();
+            return;
+        }
+
+        const sanitizedName = newFileName.trim().replace(/[<>:"|?*]/g, '_');
+        const newPath = oldPath.replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`).replace(/\\/g, '/');
+
+        try {
+            // Import services dynamically to avoid circular dependencies
+            const { fileWatcher } = await import('$lib/services/fileWatcher');
+            const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
+
+            // Unwatch the old path
+            fileWatcher.unwatch(oldPath);
+
+            // Rename the file on disk
+            await callBackend('rename_file', { oldPath, newPath }, 'File:Write');
+
+            // Invalidate metadata cache for both old and new paths
+            invalidateMetadataCache(oldPath);
+            invalidateMetadataCache(newPath);
+
+            // Update the tab with the new path and title
+            updateTabPath(tabId, newPath, `${sanitizedName}.md`);
+
+            // Watch the new path
+            await fileWatcher.watch(newPath);
+
+            // Update all other tabs with the same old path
+            for (const t of appContext.editor.tabs) {
+                if (t.id !== tabId && t.path === oldPath) {
+                    updateTabPath(t.id, newPath, `${sanitizedName}.md`);
+                }
+            }
+
+            // If bookmarked, update the bookmark path
+            if (isBookmarked) {
+                const bookmark = getBookmarkByPath(oldPath);
+                if (bookmark) {
+                    await deleteBookmark(bookmark.id);
+                    await addBookmark(newPath, `${sanitizedName}.md`, bookmark.tags);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to rename file:', err);
+        } finally {
+            onClose();
+        }
     }
 
     async function handleSendToRecycleBin() {
         // Capture data while component is mounted
         const targetPath = tab?.path;
         const targetTitle = tab?.title;
+        const targetId = tabId;
 
         if (!targetPath) return;
 
@@ -156,10 +215,26 @@
         }
 
         try {
+            // Import services
+            const { fileWatcher } = await import('$lib/services/fileWatcher');
+            const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
+
+            // Unwatch the file before deleting
+            fileWatcher.unwatch(targetPath);
+
+            // Delete the file
             await callBackend('send_to_recycle_bin', { path: targetPath }, 'File:Write');
-            requestCloseTab(tabId, true);
+
+            // Invalidate the metadata cache
+            invalidateMetadataCache(targetPath);
+
+            // Close the tab (force close to bypass pinned check)
+            await requestCloseTab(targetId, true);
         } catch (err) {
-            // Error logged by bridge
+            console.error('Failed to delete file:', err);
+            // If deletion failed, re-watch the file
+            const { fileWatcher } = await import('$lib/services/fileWatcher');
+            await fileWatcher.watch(targetPath);
         }
     }
 
@@ -177,7 +252,7 @@
         }
     }
 
-    function getHistoryTooltip(tab: any): string {
+    function getHistoryTooltip(tab: { content: string; title: string; path?: string | null }): string {
         const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
         const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
 
@@ -414,7 +489,7 @@
                 <div class="px-3 py-1.5 text-xs opacity-50 font-semibold border-b border-border-main">
                     RECENTLY CLOSED
                 </div>
-                {#each appContext.editor.closedTabsHistory as item, i}
+                {#each appContext.editor.closedTabsHistory as item, i (item.tab.id)}
                     <button
                         type="button"
                         class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
