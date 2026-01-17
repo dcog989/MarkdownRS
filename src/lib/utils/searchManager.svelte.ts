@@ -2,6 +2,7 @@ import { updateContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { SearchQuery, setSearchQuery } from '@codemirror/search';
 import { EditorView } from '@codemirror/view';
+import { SvelteMap } from 'svelte/reactivity';
 
 // State
 export const searchState = $state({
@@ -14,12 +15,16 @@ export const searchState = $state({
     // Results
     currentMatches: 0,
     currentIndex: 0,
-    allTabsResults: new Map<string, number>(),
+    allTabsResults: new SvelteMap<string, number>(),
 
     // Validation
     regexError: null as string | null,
 });
 
+/**
+ * Creates a SearchQuery with consistent case sensitivity settings.
+ * This ensures both highlighting and cursor navigation use the same configuration.
+ */
 export function getSearchQuery(): SearchQuery {
     if (searchState.useRegex && searchState.findText) {
         try {
@@ -59,6 +64,24 @@ export function updateSearchEditor(view: EditorView | undefined) {
     calculateSearchStats(view, query);
 }
 
+/**
+ * Ensures the search query is synchronized with the editor state.
+ * Call this before navigation operations (findNext, findPrevious) to ensure
+ * case sensitivity and other settings are applied correctly.
+ */
+export function ensureQuerySync(view: EditorView | undefined): SearchQuery | null {
+    if (!view || !searchState.findText) return null;
+
+    const query = getSearchQuery();
+
+    // Dispatch the query to ensure CodeMirror's internal state is updated
+    view.dispatch({
+        effects: setSearchQuery.of(query),
+    });
+
+    return query;
+}
+
 function calculateSearchStats(view: EditorView, query: SearchQuery) {
     if (!searchState.findText) {
         searchState.currentMatches = 0;
@@ -68,6 +91,8 @@ function calculateSearchStats(view: EditorView, query: SearchQuery) {
 
     let count = 0;
     let idx = 0;
+
+    // Use query.getCursor to ensure case sensitivity is respected
     const cursor = query.getCursor(view.state);
     const selection = view.state.selection.main;
 
@@ -77,6 +102,7 @@ function calculateSearchStats(view: EditorView, query: SearchQuery) {
         item = cursor.next();
     }
 
+    // Reset cursor to find current position
     const cursorReset = query.getCursor(view.state);
     let matchIndex = 0;
     item = cursorReset.next();
@@ -103,6 +129,10 @@ function calculateSearchStats(view: EditorView, query: SearchQuery) {
     searchState.currentIndex = count > 0 ? idx : 0;
 }
 
+/**
+ * Selects the nearest match to the current cursor position.
+ * Uses the current search query settings including case sensitivity.
+ */
 export function selectNearestMatch(view: EditorView | undefined) {
     if (!view || !searchState.findText) return;
 
@@ -159,7 +189,7 @@ export function searchAllTabs() {
     const regex = buildSearchRegex();
     if (!regex) return;
 
-    const results = new Map<string, number>();
+    const results = new SvelteMap<string, number>();
 
     appContext.editor.tabs.forEach((tab) => {
         const matches = [...tab.content.matchAll(regex)];
@@ -168,7 +198,10 @@ export function searchAllTabs() {
         }
     });
 
-    searchState.allTabsResults = results;
+    searchState.allTabsResults.clear();
+    results.forEach((value, key) => {
+        searchState.allTabsResults.set(key, value);
+    });
 }
 
 export function replaceAllInTabs(): number {
@@ -190,6 +223,10 @@ export function replaceAllInTabs(): number {
     return total;
 }
 
+/**
+ * Builds a regular expression for search operations across multiple tabs.
+ * Respects case sensitivity, whole word matching, and regex mode settings.
+ */
 function buildSearchRegex(): RegExp | null {
     try {
         let pattern = searchState.findText;

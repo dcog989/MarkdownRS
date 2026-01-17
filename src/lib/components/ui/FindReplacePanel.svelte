@@ -4,6 +4,7 @@
     import { CONFIG } from '$lib/utils/config';
     import {
         clearSearch,
+        ensureQuerySync,
         replaceAllInTabs,
         searchAllTabs,
         searchState,
@@ -76,6 +77,8 @@
                 if (incremental) {
                     selectNearestMatch(view);
                 } else {
+                    // Ensure query is synced before finding next to respect case sensitivity
+                    ensureQuerySync(view);
                     updateSearchEditor(view);
                     if (searchState.currentMatches > 0) {
                         findNext(view);
@@ -111,6 +114,8 @@
 
     function onFindNext() {
         if (cmView && !searchState.regexError) {
+            // Ensure query is synced before navigation to respect case sensitivity
+            ensureQuerySync(cmView);
             findNext(cmView);
             updateSearchEditor(cmView);
             searchInputRef?.focus();
@@ -119,6 +124,8 @@
 
     function onFindPrevious() {
         if (cmView && !searchState.regexError) {
+            // Ensure query is synced before navigation to respect case sensitivity
+            ensureQuerySync(cmView);
             findPrevious(cmView);
             updateSearchEditor(cmView);
             searchInputRef?.focus();
@@ -127,7 +134,8 @@
 
     function onReplace() {
         if (cmView && !searchState.regexError) {
-            updateSearchEditor(cmView);
+            // Ensure query is synced before replace to respect case sensitivity
+            ensureQuerySync(cmView);
             replaceNext(cmView);
             updateSearchEditor(cmView);
         }
@@ -138,7 +146,8 @@
 
         if (searchScope === 'current') {
             if (cmView) {
-                updateSearchEditor(cmView);
+                // Ensure query is synced before replace all to respect case sensitivity
+                ensureQuerySync(cmView);
                 replaceAll(cmView);
                 updateSearchEditor(cmView);
             }
@@ -193,7 +202,7 @@
         }
     }
 
-    function handleBlur(e: FocusEvent) {
+    function handleBlur() {
         if (!appContext.app.findPanelCloseOnBlur) return;
 
         setTimeout(() => {
@@ -375,7 +384,7 @@
             {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
                 <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
                     <div class="text-[11px] font-semibold mb-1 text-fg-muted">Results:</div>
-                    {#each [...searchState.allTabsResults.entries()] as [tabId, count]}
+                    {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}
                             <button
