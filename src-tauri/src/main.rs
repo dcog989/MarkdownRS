@@ -26,15 +26,17 @@ fn main() {
     // Detect portable mode BEFORE initializing Tauri
     // This allows plugins to use the correct paths
     let exe_path = std::env::current_exe().expect("Failed to get executable path");
-    let exe_dir = exe_path.parent().expect("Failed to get executable directory");
+    let exe_dir = exe_path
+        .parent()
+        .expect("Failed to get executable directory");
     let portable_marker = exe_dir.join(".portable");
-    
+
     if portable_marker.exists() {
         // Set custom environment variable to indicate portable mode
         // Override Tauri's data directory paths for portable mode
         // Tauri will append the app identifier, so we use the parent directory
         let portable_data_dir = exe_dir.join("Data");
-        
+
         unsafe {
             std::env::set_var("MARKDOWN_RS_PORTABLE", "1");
             std::env::set_var("APPDATA", portable_data_dir.as_os_str());

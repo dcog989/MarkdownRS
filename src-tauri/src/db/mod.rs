@@ -81,19 +81,18 @@ pub struct Database {
 impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         log::info!("Initializing database at {:?}", db_path);
-        
+
         // Create connection manager
-        let manager = SqliteConnectionManager::file(&db_path)
-            .with_init(|conn| {
-                conn.execute_batch(
-                    "PRAGMA journal_mode = WAL;
+        let manager = SqliteConnectionManager::file(&db_path).with_init(|conn| {
+            conn.execute_batch(
+                "PRAGMA journal_mode = WAL;
                      PRAGMA synchronous = NORMAL;
                      PRAGMA auto_vacuum = INCREMENTAL;
                      PRAGMA foreign_keys = ON;
                      PRAGMA busy_timeout = 5000;",
-                )?;
-                Ok(())
-            });
+            )?;
+            Ok(())
+        });
 
         // Create connection pool with appropriate settings
         let pool = r2d2::Pool::builder()
@@ -105,11 +104,11 @@ impl Database {
         // Initialize schema using a connection from the pool
         let mut conn = pool.get()?;
         let version = Self::get_schema_version(&conn)?;
-        
+
         if version < 1 {
             let tx = conn.transaction()?;
             log::info!("Creating initial database schema (v1)");
-            
+
             tx.execute(
                 "CREATE TABLE IF NOT EXISTS tabs (
                     id TEXT PRIMARY KEY,
@@ -181,10 +180,10 @@ impl Database {
                 "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
                 [1],
             )?;
-            
+
             tx.commit()?;
         }
-        
+
         drop(conn); // Release connection back to pool
 
         Ok(Self { pool })
@@ -210,11 +209,7 @@ impl Database {
         Ok(version.unwrap_or(0))
     }
 
-    pub fn save_session(
-        &self,
-        active_tabs: &[TabState],
-        closed_tabs: &[TabState],
-    ) -> Result<()> {
+    pub fn save_session(&self, active_tabs: &[TabState], closed_tabs: &[TabState]) -> Result<()> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
 
@@ -366,7 +361,7 @@ impl Database {
 
     pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
         let conn = self.pool.get()?;
-        
+
         // Load Active Tabs
         let query = if include_content {
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index

@@ -32,7 +32,9 @@ pub async fn update_bookmark_access_time(
     id: String,
     last_accessed: String,
 ) -> Result<(), String> {
-    state.db.update_bookmark_access_time(&id, &last_accessed)
+    state
+        .db
+        .update_bookmark_access_time(&id, &last_accessed)
         .map_err(|e| {
             log::error!("Failed to update bookmark access time for '{}': {}", id, e);
             format!("Failed to update bookmark: {}", e)

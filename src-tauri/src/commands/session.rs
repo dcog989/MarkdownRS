@@ -36,10 +36,13 @@ pub async fn save_session(
         }
     }
 
-    let result = state.db.save_session(&active_tabs, &closed_tabs).map_err(|e| {
-        log::error!("Failed to save session: {}", e);
-        format!("Failed to save session: {}", e)
-    });
+    let result = state
+        .db
+        .save_session(&active_tabs, &closed_tabs)
+        .map_err(|e| {
+            log::error!("Failed to save session: {}", e);
+            format!("Failed to save session: {}", e)
+        });
 
     let duration = start.elapsed();
     if result.is_ok() {

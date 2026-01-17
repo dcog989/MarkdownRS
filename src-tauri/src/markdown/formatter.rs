@@ -52,7 +52,7 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
     // Pre-scan for lines with box-drawing characters that should be preserved
     let lines: Vec<&str> = content.lines().collect();
     let mut protected_lines: Vec<(usize, String)> = Vec::new();
-    
+
     for (idx, line) in lines.iter().enumerate() {
         if BOX_DRAWING_RE.is_match(line) {
             protected_lines.push((idx, line.to_string()));
@@ -84,16 +84,19 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
         let ends_with_newline = formatted.ends_with('\n');
         let formatted_lines: Vec<&str> = formatted.lines().collect();
         let mut restored_lines: Vec<String> = Vec::with_capacity(formatted_lines.len());
-        
+
         for (idx, line) in formatted_lines.iter().enumerate() {
             // Check if this line should be restored
-            if let Some((_, original)) = protected_lines.iter().find(|(orig_idx, _)| *orig_idx == idx) {
+            if let Some((_, original)) = protected_lines
+                .iter()
+                .find(|(orig_idx, _)| *orig_idx == idx)
+            {
                 restored_lines.push(original.clone());
             } else {
                 restored_lines.push(line.to_string());
             }
         }
-        
+
         let mut result = restored_lines.join("\n");
         if ends_with_newline {
             result.push('\n');

@@ -20,7 +20,7 @@ pub async fn render_markdown(
 ) -> Result<RenderResult, String> {
     let start = std::time::Instant::now();
     let content_size = content.len();
-    
+
     let markdown_flavor = flavor
         .and_then(|f| MarkdownFlavor::from_str(&f))
         .unwrap_or_default();
@@ -37,14 +37,14 @@ pub async fn render_markdown(
     })
     .await
     .map_err(|e| format!("Render task failed: {}", e))?;
-    
+
     let duration = start.elapsed();
     log::info!(
         "[Markdown] render_markdown | duration={:?} | size={} bytes",
         duration,
         content_size
     );
-    
+
     result
 }
 
@@ -59,7 +59,7 @@ pub async fn format_markdown(
 ) -> Result<String, String> {
     let start = std::time::Instant::now();
     let content_size = content.len();
-    
+
     let markdown_flavor = flavor
         .and_then(|f| MarkdownFlavor::from_str(&f))
         .unwrap_or_default();
@@ -94,14 +94,14 @@ pub async fn format_markdown(
         Ok(Err(_)) => Err("Formatter thread panicked or disconnected".to_string()),
         Err(e) => Err(format!("Formatter task join error: {}", e)),
     };
-    
+
     let duration = start.elapsed();
     log::info!(
         "[Markdown] format_markdown | duration={:?} | size={} bytes",
         duration,
         content_size
     );
-    
+
     result
 }
 
