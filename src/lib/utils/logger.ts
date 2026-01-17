@@ -3,14 +3,8 @@ import { debug, error, info, warn } from '@tauri-apps/plugin-log';
 /**
  * Frontend Logging Utility
  *
- * Provides structured logging following the Namespace-Action-Metadata pattern.
- * All logs follow: [Namespace] Action | key=value | key=value
- *
- * Namespaces:
- * - [Editor] - Lifecycle events (tab switches, content updates, initialization)
- * - [Session] - Session persistence operations
- * - [File] - File I/O operations
- * - [Bridge] - IPC calls (handled automatically by backend.ts)
+ * Provides structured logging with a batching mechanism to minimize IPC overhead.
+ * Logs are collected and sent to the backend every 500ms or when the buffer is full.
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -20,13 +14,23 @@ interface LogMetadata {
 }
 
 class Logger {
+    private buffer: { level: LogLevel; message: string }[] = [];
+    private flushTimer: number | null = null;
+    private readonly MAX_BUFFER_SIZE = 50;
+    private readonly FLUSH_INTERVAL_MS = 500;
+
+    constructor() {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('beforeunload', () => this.flush());
+        }
+    }
+
     private formatMetadata(metadata?: LogMetadata): string {
         if (!metadata) return '';
 
         return Object.entries(metadata)
-            .filter(([_, value]) => value !== undefined && value !== null)
+            .filter(([, value]) => value !== undefined && value !== null)
             .map(([key, value]) => {
-                // Truncate long strings
                 if (typeof value === 'string' && value.length > 100) {
                     return `${key}=${value.substring(0, 100)}...`;
                 }
@@ -39,7 +43,7 @@ class Logger {
         const metadataStr = this.formatMetadata(metadata);
         const message = metadataStr ? `[${namespace}] ${action} | ${metadataStr}` : `[${namespace}] ${action}`;
 
-        // 1. Output to Browser Console (Standard)
+        // Standard Browser Console output
         switch (level) {
             case 'debug':
                 console.debug(message);
@@ -55,25 +59,60 @@ class Logger {
                 break;
         }
 
-        // 2. Forward to Backend Logger (Disk + Terminal)
-        // Fire-and-forget to avoid awaiting IPC calls during UI rendering
-        switch (level) {
-            case 'debug':
-                debug(message).catch(() => {});
-                break;
-            case 'info':
-                info(message).catch(() => {});
-                break;
-            case 'warn':
-                warn(message).catch(() => {});
-                break;
-            case 'error':
-                error(message).catch(() => {});
-                break;
+        // Buffer for Backend Logger
+        this.buffer.push({ level, message });
+
+        if (this.buffer.length >= this.MAX_BUFFER_SIZE) {
+            this.flush();
+        } else if (!this.flushTimer) {
+            this.flushTimer = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL_MS);
         }
     }
 
-    // Editor namespace
+    private async flush(): Promise<void> {
+        if (this.flushTimer) {
+            clearTimeout(this.flushTimer);
+            this.flushTimer = null;
+        }
+
+        if (this.buffer.length === 0) return;
+
+        const currentBuffer = [...this.buffer];
+        this.buffer = [];
+
+        // Group by level to send combined messages per level
+        const grouped = currentBuffer.reduce(
+            (acc, { level, message }) => {
+                if (!acc[level]) acc[level] = [];
+                acc[level].push(message);
+                return acc;
+            },
+            {} as Record<LogLevel, string[]>,
+        );
+
+        for (const [level, messages] of Object.entries(grouped)) {
+            const combined = messages.join('\n');
+            try {
+                switch (level as LogLevel) {
+                    case 'debug':
+                        await debug(combined);
+                        break;
+                    case 'info':
+                        await info(combined);
+                        break;
+                    case 'warn':
+                        await warn(combined);
+                        break;
+                    case 'error':
+                        await error(combined);
+                        break;
+                }
+            } catch (e) {
+                console.error('[Logger] Batch flush failed:', e);
+            }
+        }
+    }
+
     editor = {
         debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Editor', action, metadata),
         info: (action: string, metadata?: LogMetadata) => this.log('info', 'Editor', action, metadata),
@@ -81,7 +120,6 @@ class Logger {
         error: (action: string, metadata?: LogMetadata) => this.log('error', 'Editor', action, metadata),
     };
 
-    // Session namespace
     session = {
         debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Session', action, metadata),
         info: (action: string, metadata?: LogMetadata) => this.log('info', 'Session', action, metadata),
@@ -89,7 +127,6 @@ class Logger {
         error: (action: string, metadata?: LogMetadata) => this.log('error', 'Session', action, metadata),
     };
 
-    // File namespace
     file = {
         debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'File', action, metadata),
         info: (action: string, metadata?: LogMetadata) => this.log('info', 'File', action, metadata),
@@ -97,7 +134,6 @@ class Logger {
         error: (action: string, metadata?: LogMetadata) => this.log('error', 'File', action, metadata),
     };
 
-    // Performance timing helper
     startTimer(namespace: string, action: string): () => void {
         const start = performance.now();
         return (metadata?: LogMetadata) => {
