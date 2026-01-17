@@ -20,5 +20,9 @@
             "files": ["**/*.svelte"]
         }
     },
-    "eslint.workingDirectories": [{ "mode": "auto" }]
+    "eslint.workingDirectories": [{ "mode": "auto" }],
+
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.check.extraArgs": ["--all-features"],
+    "rust-analyzer.check.overrideCommand": null
 }
