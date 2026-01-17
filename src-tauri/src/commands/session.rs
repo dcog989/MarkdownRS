@@ -36,8 +36,7 @@ pub async fn save_session(
         }
     }
 
-    let mut db = state.db.lock().await;
-    let result = db.save_session(&active_tabs, &closed_tabs).map_err(|e| {
+    let result = state.db.save_session(&active_tabs, &closed_tabs).map_err(|e| {
         log::error!("Failed to save session: {}", e);
         format!("Failed to save session: {}", e)
     });
@@ -60,8 +59,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
     let start = std::time::Instant::now();
 
     log::info!("[Rust] restore_session called");
-    let db = state.db.lock().await;
-    let result = db.load_session().map_err(|e| {
+    let result = state.db.load_session().map_err(|e| {
         log::error!("Failed to restore session: {}", e);
         format!("Failed to restore session: {}", e)
     });
@@ -92,8 +90,7 @@ pub async fn load_tab_content(
 ) -> Result<TabData, String> {
     let start = std::time::Instant::now();
 
-    let db = state.db.lock().await;
-    let result = db.load_tab_data(&tab_id).map_err(|e| {
+    let result = state.db.load_tab_data(&tab_id).map_err(|e| {
         log::error!("Failed to load tab data for {}: {}", tab_id, e);
         format!("Failed to load tab data: {}", e)
     });
@@ -113,10 +110,8 @@ pub async fn load_tab_content(
 
 #[tauri::command]
 pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    let db = state.db.lock().await;
-
     // Check if there are any free pages to reclaim
-    let freelist_count = db.get_freelist_count().map_err(|e| {
+    let freelist_count = state.db.get_freelist_count().map_err(|e| {
         log::error!("Failed to get freelist count: {}", e);
         format!("Failed to check database: {}", e)
     })?;
@@ -127,7 +122,7 @@ pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
             freelist_count
         );
         // Reclaim up to 100 pages at a time to avoid blocking
-        db.incremental_vacuum(100).map_err(|e| {
+        state.db.incremental_vacuum(100).map_err(|e| {
             log::error!("Failed to vacuum database: {}", e);
             format!("Failed to vacuum database: {}", e)
         })?;

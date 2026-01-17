@@ -17,6 +17,8 @@ dprint-plugin-markdown = "0.20"
 encoding_rs = "0.8"
 log = "0.4"
 path-clean = "1.0"
+r2d2 = "0.8"
+r2d2_sqlite = "0.32"
 regex = "1.12"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 rusqlite = { version = "0.38", features = ["bundled"] }

@@ -31,13 +31,15 @@ fn main() {
     
     if portable_marker.exists() {
         // Set custom environment variable to indicate portable mode
-        std::env::set_var("MARKDOWN_RS_PORTABLE", "1");
-        
         // Override Tauri's data directory paths for portable mode
         // Tauri will append the app identifier, so we use the parent directory
         let portable_data_dir = exe_dir.join("Data");
-        std::env::set_var("APPDATA", portable_data_dir.as_os_str());
-        std::env::set_var("LOCALAPPDATA", portable_data_dir.as_os_str());
+        
+        unsafe {
+            std::env::set_var("MARKDOWN_RS_PORTABLE", "1");
+            std::env::set_var("APPDATA", portable_data_dir.as_os_str());
+            std::env::set_var("LOCALAPPDATA", portable_data_dir.as_os_str());
+        }
     }
 
     #[cfg(target_os = "windows")]
@@ -73,7 +75,6 @@ fn main() {
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(tauri_plugin_window_state::StateFlags::all())
                 .with_filename(".window-state.json")
-                .skip_initial_state(false)
                 .build(),
         )
         .setup(|app| {
@@ -230,7 +231,7 @@ fn main() {
             };
 
             app.manage(state::AppState {
-                db: tokio::sync::Mutex::new(db),
+                db,
                 speller: tokio::sync::Mutex::new(None),
                 custom_dict: tokio::sync::Mutex::new(std::collections::HashSet::new()),
             });

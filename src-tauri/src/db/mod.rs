@@ -1,5 +1,7 @@
 use anyhow::Result;
 use log;
+use r2d2;
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -69,27 +71,45 @@ pub struct TabData {
     pub content: Option<String>,
 }
 
+pub type DbPool = r2d2::Pool<SqliteConnectionManager>;
+
+#[derive(Clone)]
 pub struct Database {
-    conn: Connection,
+    pool: DbPool,
 }
 
 impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         log::info!("Initializing database at {:?}", db_path);
-        let mut conn = Connection::open(db_path)?;
+        
+        // Create connection manager
+        let manager = SqliteConnectionManager::file(&db_path)
+            .with_init(|conn| {
+                conn.execute_batch(
+                    "PRAGMA journal_mode = WAL;
+                     PRAGMA synchronous = NORMAL;
+                     PRAGMA auto_vacuum = INCREMENTAL;
+                     PRAGMA foreign_keys = ON;
+                     PRAGMA busy_timeout = 5000;",
+                )?;
+                Ok(())
+            });
 
-        conn.execute_batch(
-            "PRAGMA journal_mode = WAL;
-             PRAGMA synchronous = NORMAL;
-             PRAGMA auto_vacuum = INCREMENTAL;
-             PRAGMA foreign_keys = ON;",
-        )?;
+        // Create connection pool with appropriate settings
+        let pool = r2d2::Pool::builder()
+            .max_size(10) // Max 10 concurrent connections
+            .min_idle(Some(1)) // Keep at least 1 connection ready
+            .connection_timeout(std::time::Duration::from_secs(5))
+            .build(manager)?;
 
+        // Initialize schema using a connection from the pool
+        let mut conn = pool.get()?;
         let version = Self::get_schema_version(&conn)?;
-        let tx = conn.transaction()?;
-
+        
         if version < 1 {
+            let tx = conn.transaction()?;
             log::info!("Creating initial database schema (v1)");
+            
             tx.execute(
                 "CREATE TABLE IF NOT EXISTS tabs (
                     id TEXT PRIMARY KEY,
@@ -161,11 +181,13 @@ impl Database {
                 "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
                 [1],
             )?;
+            
+            tx.commit()?;
         }
+        
+        drop(conn); // Release connection back to pool
 
-        tx.commit()?;
-
-        Ok(Self { conn })
+        Ok(Self { pool })
     }
 
     fn get_schema_version(conn: &Connection) -> Result<i32> {
@@ -189,11 +211,12 @@ impl Database {
     }
 
     pub fn save_session(
-        &mut self,
+        &self,
         active_tabs: &[TabState],
         closed_tabs: &[TabState],
     ) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
 
         // --- Save Active Tabs with Incremental Updates ---
         if active_tabs.is_empty() {
@@ -342,6 +365,8 @@ impl Database {
     }
 
     pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
+        let conn = self.pool.get()?;
+        
         // Load Active Tabs
         let query = if include_content {
             "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
@@ -351,7 +376,7 @@ impl Database {
              FROM tabs ORDER BY sort_index ASC"
         };
 
-        let mut active_stmt = self.conn.prepare(query)?;
+        let mut active_stmt = conn.prepare(query)?;
 
         let active_tabs = active_stmt
             .query_map([], |row| {
@@ -392,7 +417,7 @@ impl Database {
              FROM closed_tabs ORDER BY sort_index ASC"
         };
 
-        let mut closed_stmt = self.conn.prepare(closed_query)?;
+        let mut closed_stmt = conn.prepare(closed_query)?;
 
         let closed_tabs = closed_stmt
             .query_map([], |row| {
@@ -427,8 +452,8 @@ impl Database {
     }
 
     pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {
-        let content = self
-            .conn
+        let conn = self.pool.get()?;
+        let content = conn
             .query_row(
                 "SELECT content FROM tabs WHERE id = ?1
              UNION ALL
@@ -445,8 +470,9 @@ impl Database {
     }
 
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
+        let conn = self.pool.get()?;
         let tags_json = serde_json::to_string(&bookmark.tags)?;
-        self.conn.execute(
+        conn.execute(
             "INSERT OR REPLACE INTO bookmarks (id, path, title, tags, created, last_accessed)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![
@@ -462,7 +488,8 @@ impl Database {
     }
 
     pub fn get_all_bookmarks(&self) -> Result<Vec<Bookmark>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare(
             "SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC"
         )?;
 
@@ -484,13 +511,14 @@ impl Database {
     }
 
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
-        self.conn
-            .execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
+        let conn = self.pool.get()?;
+        conn.execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
         Ok(())
     }
 
     pub fn update_bookmark_access_time(&self, id: &str, last_accessed: &str) -> Result<()> {
-        self.conn.execute(
+        let conn = self.pool.get()?;
+        conn.execute(
             "UPDATE bookmarks SET last_accessed = ?1 WHERE id = ?2",
             params![last_accessed, id],
         )?;
@@ -498,19 +526,18 @@ impl Database {
     }
 
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
+        let conn = self.pool.get()?;
         if max_pages > 0 {
-            self.conn
-                .execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
+            conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
         } else {
-            self.conn.execute("PRAGMA incremental_vacuum", [])?;
+            conn.execute("PRAGMA incremental_vacuum", [])?;
         }
         Ok(())
     }
 
     pub fn get_freelist_count(&self) -> Result<i32> {
-        let count: i32 = self
-            .conn
-            .query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
+        let conn = self.pool.get()?;
+        let count: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
         Ok(count)
     }
 }
