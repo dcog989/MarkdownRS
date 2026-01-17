@@ -10,6 +10,7 @@
         isWordValid,
         spellcheckState,
     } from '$lib/utils/spellcheck.svelte.ts';
+    import { openUrl } from '@tauri-apps/plugin-opener';
     import {
         ArrowUpDown,
         BookPlus,
@@ -25,7 +26,7 @@
         WandSparkles,
     } from 'lucide-svelte';
     import { untrack } from 'svelte';
-    import { openUrl } from '@tauri-apps/plugin-opener';
+    import { SvelteSet } from 'svelte/reactivity';
 
     let {
         x,
@@ -103,7 +104,6 @@
         const word = untrack(() => wordUnderCursor?.trim());
 
         if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
-            // 1. Check cache synchronously first to instant-render
             const cached = getCachedSuggestions(word);
             if (cached) {
                 suggestions = cached.slice(0, 5);
@@ -111,7 +111,6 @@
                 return;
             }
 
-            // 2. Cache miss: Fetch asynchronously (spinner will show)
             isLoadingSuggestions = true;
             getSuggestions(word)
                 .then((res) => {
@@ -139,7 +138,6 @@
         const uniqueWords: string[] = Array.from(new Set(matches));
         const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
 
-        // Optimistic update
         const newDict = new Set([...spellcheckState.customDictionary, ...invalidWords.map((w) => w.toLowerCase())]);
         invalidWords.forEach((w) => {
             spellcheckState.misspelledCache.delete(w.toLowerCase());
@@ -149,7 +147,6 @@
         onDictionaryUpdate?.();
         onClose();
 
-        // Background persistence
         for (const word of invalidWords) await addToDictionary(word);
     }
 
@@ -158,6 +155,23 @@
             performTextTransform(type);
             onClose();
         }
+    }
+
+    async function handleSendToBrowser() {
+        const text = selectedText.trim();
+        if (!text) return;
+
+        const urlPattern = /^(https?:\/\/|www\.)/i;
+        const isUrl = urlPattern.test(text);
+
+        if (isUrl) {
+            const url = text.startsWith('www.') ? `https://${text}` : text;
+            await openUrl(url);
+        } else {
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+            await openUrl(searchUrl);
+        }
+        closeMenuAndReset();
     }
 
     function closeMenuAndReset() {
@@ -220,23 +234,7 @@
                 <div class="h-px my-1 bg-border-main"></div>
                 <button
                     class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
-                    onclick={async () => {
-                        const text = selectedText as string;
-                        // Check if the text is a valid URL
-                        const urlPattern = /^(https?:\/\/|www\.)/i;
-                        const isUrl = urlPattern.test(text.trim());
-
-                        if (isUrl) {
-                            // If it's a URL, open it directly
-                            const url = text.trim().startsWith('www.') ? `https://${text.trim()}` : text.trim();
-                            await openUrl(url);
-                        } else {
-                            // If it's not a URL, search for it using the default search engine
-                            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text.trim())}`;
-                            await openUrl(searchUrl);
-                        }
-                        closeMenuAndReset();
-                    }}>
+                    onclick={handleSendToBrowser}>
                     <Search size={14} /><span>Send to browser</span>
                 </button>
             {/if}
@@ -254,7 +252,6 @@
         {#if selectedText}
             <div class="h-px my-1 bg-border-main"></div>
 
-            <!-- Sort Menu -->
             <Submenu
                 show={activeSubmenu === 'sort'}
                 side={submenuSide}
@@ -274,7 +271,6 @@
                 {/each}
             </Submenu>
 
-            <!-- Case Menu -->
             <Submenu
                 show={activeSubmenu === 'case'}
                 side={submenuSide}
@@ -294,7 +290,6 @@
                 {/each}
             </Submenu>
 
-            <!-- Format Menu -->
             <Submenu
                 show={activeSubmenu === 'format'}
                 side={submenuSide}
@@ -318,7 +313,6 @@
                 {/each}
             </Submenu>
 
-            <!-- Transform Menu -->
             <Submenu
                 show={activeSubmenu === 'transform'}
                 side={submenuSide}
@@ -350,15 +344,16 @@
                     <button
                         class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
                         onclick={async () => {
-                            // Optimistic update to reactive state
-                            const newDict = new Set([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
+                            const newDict = new SvelteSet([
+                                ...spellcheckState.customDictionary,
+                                targetWord.toLowerCase(),
+                            ]);
                             spellcheckState.customDictionary = newDict;
 
                             spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
 
                             onDictionaryUpdate?.();
                             closeMenuAndReset();
-                            // Persist to disk
                             await addToDictionary(targetWord);
                         }}>
                         <BookPlus size={14} /><span class="truncate">Add "{targetWord}" to Dictionary</span><span
