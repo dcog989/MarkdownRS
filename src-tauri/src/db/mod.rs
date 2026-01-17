@@ -1,5 +1,4 @@
 use anyhow::Result;
-use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};

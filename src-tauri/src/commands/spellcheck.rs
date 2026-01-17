@@ -386,14 +386,12 @@ pub async fn init_spellchecker(
     }
 
     // Load custom user dictionary into State (for ignore logic)
-    if custom_path.exists() {
-        if let Ok(text) = fs::read_to_string(&custom_path).await {
-            let mut custom = state.custom_dict.lock().await;
-            for line in text.lines() {
-                let w = line.trim();
-                if !w.is_empty() {
-                    custom.insert(w.to_lowercase());
-                }
+    if let Ok(text) = fs::read_to_string(&custom_path).await {
+        let mut custom = state.custom_dict.lock().await;
+        for line in text.lines() {
+            let w = line.trim();
+            if !w.is_empty() {
+                custom.insert(w.to_lowercase());
             }
         }
     }
@@ -426,18 +424,14 @@ pub async fn check_words(
                 }
 
                 // Handle possessives ('s and s')
-                if lower.ends_with("'s") {
-                    if let Some(base) = lower.strip_suffix("'s") {
-                        if custom_guard.contains(base) {
-                            continue;
-                        }
-                    }
-                } else if lower.ends_with("s'") {
-                    if let Some(base) = lower.strip_suffix('\'') {
-                        if custom_guard.contains(base) {
-                            continue;
-                        }
-                    }
+                if lower
+                    .strip_suffix("'s")
+                    .is_some_and(|b| custom_guard.contains(b))
+                    || lower
+                        .strip_suffix('\'')
+                        .is_some_and(|b| custom_guard.contains(b))
+                {
+                    continue;
                 }
 
                 if !speller.check(clean) {

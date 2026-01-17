@@ -78,10 +78,14 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
     if let Ok(entries) = fs::read_dir(themes_dir) {
         log::debug!("Scanning themes directory");
         for entry in entries.flatten() {
-            if entry.path().extension().and_then(|s| s.to_str()) == Some("css") {
-                if let Some(name) = entry.path().file_stem().and_then(|s| s.to_str()) {
-                    themes.push(name.to_string());
-                }
+            let path = entry.path();
+            if let Some(name) = path
+                .extension()
+                .filter(|&s| s == "css")
+                .and_then(|_| path.file_stem())
+                .and_then(|s| s.to_str())
+            {
+                themes.push(name.to_string());
             }
         }
     }
@@ -140,51 +144,29 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         format!("Failed to read settings: {}", e)
     })?;
 
-    // Strip BOM and decode according to the detected encoding
     let content = match Bom::from(raw_bytes.as_slice()) {
-        Bom::Null => {
-            // No BOM detected, decode as UTF-8
-            String::from_utf8_lossy(&raw_bytes).to_string()
-        }
-        Bom::Utf8 => {
-            // UTF-8 BOM detected (EF BB BF), strip it and decode as UTF-8
-            let without_bom = &raw_bytes[3..];
-            String::from_utf8_lossy(without_bom).to_string()
-        }
+        Bom::Null => String::from_utf8_lossy(&raw_bytes).to_string(),
+        Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
         Bom::Utf16Le => {
-            // UTF-16 LE BOM detected (FF FE), decode as UTF-16LE
-            let without_bom = &raw_bytes[2..];
-            let (decoded, _encoding, had_errors) = UTF_16LE.decode(without_bom);
+            let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);
             if had_errors {
                 log::warn!("UTF-16LE decoding encountered errors in settings file");
             }
             decoded.to_string()
         }
         Bom::Utf16Be => {
-            // UTF-16 BE BOM detected (FE FF), decode as UTF-16BE
-            let without_bom = &raw_bytes[2..];
-            let (decoded, _encoding, had_errors) = UTF_16BE.decode(without_bom);
+            let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
             if had_errors {
                 log::warn!("UTF-16BE decoding encountered errors in settings file");
             }
             decoded.to_string()
         }
-        Bom::Utf32Le | Bom::Utf32Be => {
-            // UTF-32 BOMs are rare but technically possible
-            // Fall back to UTF-8 lossy conversion with a warning
-            log::warn!("UTF-32 BOM detected in settings file, falling back to UTF-8");
-            let without_bom = &raw_bytes[4..];
-            String::from_utf8_lossy(without_bom).to_string()
-        }
-        // Handle all other exotic BOM types (Bocu1, Gb18030, Scsu, Utf7, UtfEbcdic, Plus)
         bom => {
-            // These are extremely rare encodings
             log::warn!(
                 "Exotic BOM type {:?} detected in settings file, falling back to UTF-8",
                 bom
             );
-            let without_bom = &raw_bytes[bom.len()..];
-            String::from_utf8_lossy(without_bom).to_string()
+            String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
         }
     };
 
@@ -193,10 +175,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         format!("Failed to parse settings: {}", e)
     })?;
 
-    Ok(serde_json::to_value(toml_val).map_err(|e| {
+    serde_json::to_value(toml_val).map_err(|e| {
         log::error!("Failed to convert settings to JSON: {}", e);
         format!("Failed to process settings: {}", e)
-    })?)
+    })
 }
 
 #[tauri::command]

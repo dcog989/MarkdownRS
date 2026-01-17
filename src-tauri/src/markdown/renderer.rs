@@ -17,17 +17,9 @@ static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
         .expect("Invalid PATH_REGEX pattern")
 });
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
     pub flavor: MarkdownFlavor,
-}
-
-impl Default for MarkdownOptions {
-    fn default() -> Self {
-        Self {
-            flavor: MarkdownFlavor::default(),
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

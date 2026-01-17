@@ -133,11 +133,11 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
         if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
             // Check for fence conversion
             if convert_fences {
-                if trimmed.starts_with("```") {
+                if let Some(rest) = trimmed.strip_prefix("```") {
                     let indent = line.len() - trimmed.len();
                     result.push_str(&" ".repeat(indent));
                     result.push_str("~~~");
-                    result.push_str(&trimmed[3..]);
+                    result.push_str(rest);
                 } else if trimmed.starts_with("~~~") && in_code_block {
                     // Closing fence
                     let indent = line.len() - trimmed.len();
@@ -164,43 +164,34 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
         let mut processed_line = std::borrow::Cow::Borrowed(line);
 
         // 1. Bullet Conversion
-        if convert_bullets {
-            if BULLET_RE.is_match(&processed_line) {
-                let replaced = BULLET_RE.replace(&processed_line, "$1+ ").into_owned();
-                processed_line = std::borrow::Cow::Owned(replaced);
-            }
+        if convert_bullets && BULLET_RE.is_match(&processed_line) {
+            let replaced = BULLET_RE.replace(&processed_line, "$1+ ").into_owned();
+            processed_line = std::borrow::Cow::Owned(replaced);
         }
 
         // 2. Indent Adjustment
         if adjust_indent {
-            // Check for list items
-            // We need to calculate the new string in a block to ensure the borrow of `processed_line`
-            // by `captures` is dropped before we assign to `processed_line`.
-            let new_line_opt = if let Some(caps) = UNORDERED_LIST_RE.captures(&processed_line) {
+            let new_line = if let Some(caps) = UNORDERED_LIST_RE.captures(&processed_line) {
                 let current_indent = caps.get(1).map_or(0, |m| m.len());
-                if current_indent > 0 {
+                (current_indent > 0).then(|| {
                     let list_level = current_indent / 2;
                     let new_indent = list_level * options.list_indent;
                     let rest = &processed_line[current_indent..];
-                    Some(format!("{}{}", " ".repeat(new_indent), rest))
-                } else {
-                    None
-                }
+                    format!("{}{}", " ".repeat(new_indent), rest)
+                })
             } else if let Some(caps) = ORDERED_LIST_RE.captures(&processed_line) {
                 let current_indent = caps.get(1).map_or(0, |m| m.len());
-                if current_indent > 0 {
+                (current_indent > 0).then(|| {
                     let list_level = current_indent / 2;
                     let new_indent = list_level * options.list_indent;
                     let rest = &processed_line[current_indent..];
-                    Some(format!("{}{}", " ".repeat(new_indent), rest))
-                } else {
-                    None
-                }
+                    format!("{}{}", " ".repeat(new_indent), rest)
+                })
             } else {
                 None
             };
 
-            if let Some(nl) = new_line_opt {
+            if let Some(nl) = new_line {
                 processed_line = std::borrow::Cow::Owned(nl);
             }
         }

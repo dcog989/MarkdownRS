@@ -29,10 +29,8 @@ pub async fn save_session(
     log::info!("  Tabs with content to save: {}", tabs_with_content);
 
     for tab in &mut closed_tabs {
-        if let Some(content) = &mut tab.content {
-            if content.contains("\r\n") {
-                *content = content.replace("\r\n", "\n");
-            }
+        if let Some(content) = tab.content.as_mut().filter(|c| c.contains("\r\n")) {
+            *content = content.replace("\r\n", "\n");
         }
     }
 
@@ -113,7 +111,6 @@ pub async fn load_tab_content(
 
 #[tauri::command]
 pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    // Check if there are any free pages to reclaim
     let freelist_count = state.db.get_freelist_count().map_err(|e| {
         log::error!("Failed to get freelist count: {}", e);
         format!("Failed to check database: {}", e)
@@ -124,7 +121,6 @@ pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
             "Vacuuming database: {} free pages to reclaim",
             freelist_count
         );
-        // Reclaim up to 100 pages at a time to avoid blocking
         state.db.incremental_vacuum(100).map_err(|e| {
             log::error!("Failed to vacuum database: {}", e);
             format!("Failed to vacuum database: {}", e)
