@@ -13,6 +13,8 @@ const pathsToRemove = [
     'package-lock.json',
     'bun.lockb',
     'bun.lock',
+    'dist',
+    'releases',
     // Rust / Backend
     'src-tauri/target',
     'src-tauri/Cargo.lock',
@@ -24,7 +26,10 @@ console.log('🗑️  Cleaning directories...');
 pathsToRemove.forEach((p) => {
     const fullPath = path.join(rootDir, p);
     try {
-        fs.rmSync(fullPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 500 });
+        if (fs.existsSync(fullPath)) {
+            fs.rmSync(fullPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 500 });
+            console.log(`✅ Removed: ${p}`);
+        }
     } catch (e) {
         console.error(`❌ Failed to remove ${p}: ${e instanceof Error ? e.message : String(e)}`);
     }
