@@ -36,7 +36,6 @@
 
         // If the menu height is taller than available space, we let flex/scroll handle it via max-h
         // We just need to ensure the top doesn't start too low if it would push bottom off screen
-
         if (newY + rect.height > winHeight - statusBarHeight) {
             newY = winHeight - rect.height - statusBarHeight - padding;
         }
@@ -48,9 +47,6 @@
     }
 
     $effect(() => {
-        // Track input changes
-        const _x = x;
-        const _y = y;
         updatePosition();
     });
 
@@ -98,10 +94,10 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="fixed inset-0 z-[200]" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
+<div class="fixed inset-0 z-200" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
     <div
         bind:this={menuEl}
-        class="absolute min-w-[200px] max-w-[300px] max-h-[calc(100vh-64px)] overflow-y-auto rounded-md shadow-xl border py-1 z-[200] bg-bg-panel border-border-light text-fg-default"
+        class="absolute min-w-50 max-w-75 max-h-[calc(100vh-64px)] overflow-y-auto rounded-md shadow-xl border py-1 z-200 bg-bg-panel border-border-light text-fg-default"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;
