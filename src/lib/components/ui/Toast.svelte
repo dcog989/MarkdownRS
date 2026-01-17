@@ -1,20 +1,21 @@
 <script lang="ts">
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { dismissToast } from '$lib/stores/toastStore.svelte.ts';
-    import { AlertCircle, CheckCircle, Info, X, XCircle } from 'lucide-svelte';
+    import { CircleAlert, CircleCheckBig, CircleX, Info, X } from 'lucide-svelte';
     import { onMount } from 'svelte';
+    import { SvelteSet } from 'svelte/reactivity';
     import { fly } from 'svelte/transition';
 
-    const activeTimers = new Set<string>();
+    const activeTimers = new SvelteSet<string>();
 
     function getIcon(type: string) {
         switch (type) {
             case 'success':
-                return CheckCircle;
+                return CircleCheckBig;
             case 'error':
-                return XCircle;
+                return CircleX;
             case 'warning':
-                return AlertCircle;
+                return CircleAlert;
             default:
                 return Info;
         }
@@ -81,14 +82,14 @@
     });
 </script>
 
-<div class="fixed top-8 right-8 z-[9999] flex flex-col gap-2 pointer-events-none">
+<div class="fixed top-8 right-8 z-9999 flex flex-col gap-2 pointer-events-none">
     {#each appContext.ui.toast.toasts as toast (toast.id)}
         {@const Icon = getIcon(toast.type)}
         {@const colorClass = getColorClass(toast.type)}
         {@const iconColorClass = getIconColorClass(toast.type)}
 
         <div
-            class="pointer-events-auto max-w-[400px] min-w-[300px]"
+            class="pointer-events-auto max-w-100 min-w-75"
             transition:fly={{ y: -20, duration: 200 }}
             role="alert"
             aria-live="polite">

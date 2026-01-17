@@ -137,19 +137,18 @@
 </script>
 
 <div class="relative w-full" bind:this={dropdownEl}>
-    <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div
         bind:this={buttonEl}
         role="button"
         tabindex="0"
         onclick={toggleDropdown}
         onkeydown={handleKeydown}
-        class="w-full px-2 py-1.5 rounded text-ui text-left outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors flex items-center justify-between gap-2 cursor-pointer min-h-[2.25rem]">
+        class="w-full px-2 py-1.5 rounded text-ui text-left outline-none border bg-bg-input text-fg-default border-border-main focus:border-accent-primary transition-colors flex items-center justify-between gap-2 cursor-pointer min-h-9">
         <div class="flex-1 flex flex-wrap gap-1.5 items-center">
             {#if selected.length === 0}
                 <span class="opacity-50 text-ui-sm">Select dictionaries...</span>
             {:else}
-                {#each selected as code}
+                {#each selected as code (code)}
                     <span
                         class="inline-flex items-center gap-1 px-2 py-1 rounded bg-accent-primary/20 text-ui-sm whitespace-nowrap">
                         {availableDictionaries.find((d) => d.code === code)?.name || code}
@@ -176,7 +175,7 @@
                 ? 'bottom-full mb-1'
                 : 'top-full mt-1'}"
             style="max-height: {dropdownMaxHeight}px;">
-            {#each availableDictionaries as dict}
+            {#each availableDictionaries as dict (dict.code)}
                 <button
                     type="button"
                     onclick={() => toggleDict(dict.code)}

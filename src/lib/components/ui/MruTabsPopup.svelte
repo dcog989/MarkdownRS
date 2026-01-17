@@ -50,7 +50,7 @@
 
             <div class="flex-1 relative overflow-hidden flex flex-col min-h-0">
                 <div bind:this={listContainerRef} class="flex-1 overflow-y-auto py-1 no-scrollbar">
-                    {#each mruTabs as tab, index}
+                    {#each mruTabs as tab, index (tab.id)}
                         {@const isSelected = tab.id === selectedId}
                         <button
                             type="button"
@@ -66,7 +66,7 @@
                             </div>
 
                             {#if tab.fileCheckFailed}
-                                <div class="mru-icon text-danger-text">
+                                <div class="mru-icon">
                                     <CircleAlert size={14} class="shrink-0" />
                                 </div>
                             {:else if tab.path && tab.isDirty}
@@ -74,11 +74,11 @@
                                     <SquarePen size={14} class="shrink-0" />
                                 </div>
                             {:else if !tab.path}
-                                <div class="mru-icon text-accent-file">
+                                <div class="mru-icon">
                                     <PencilLine size={14} class="shrink-0" />
                                 </div>
                             {:else}
-                                <div class="mru-icon text-accent-file">
+                                <div class="mru-icon">
                                     <FileText size={14} class="shrink-0" />
                                 </div>
                             {/if}

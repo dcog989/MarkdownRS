@@ -28,7 +28,7 @@
     {/snippet}
 
     <div class="p-4 space-y-6">
-        {#each OPERATION_CATEGORIES as category}
+        {#each OPERATION_CATEGORIES as category (category.id)}
             {@const CategoryIcon = category.icon}
             {@const operations = getOperationsByCategory(category.id)}
             <div>
@@ -39,13 +39,13 @@
                     </h3>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                    {#each operations as operation}
+                    {#each operations as operation (operation.id)}
                         {@const OperationIcon = operation.icon}
                         <button
                             type="button"
                             class="flex items-start gap-3 p-3 rounded text-left hover:bg-white/10 transition-colors border border-border-main"
                             onclick={() => handleOperation(operation.id)}>
-                            <div class="flex-shrink-0 mt-0.5">
+                            <div class="shrink-0 mt-0.5">
                                 <OperationIcon size={16} class="text-accent-secondary" />
                             </div>
                             <div class="flex-1 min-w-0">

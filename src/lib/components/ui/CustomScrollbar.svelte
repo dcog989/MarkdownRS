@@ -255,17 +255,17 @@
     });
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     bind:this={trackRef}
-    class="absolute right-0 top-0.5 bottom-0.5 z-[60] flex w-4 justify-center bg-transparent transition-opacity duration-200 group"
+    role="none"
+    class="absolute right-0 top-0.5 bottom-0.5 z-60 flex w-4 justify-center bg-transparent transition-opacity duration-200 group"
     class:opacity-0={!isVisible}
     class:opacity-100={isVisible}
     class:pointer-events-none={!isVisible}
     onmousedown={onTrackMouseDown}>
     <div
         bind:this={thumbRef}
+        role="none"
         class="scrollbar-thumb absolute top-0 w-1 rounded-full bg-border-light opacity-50 hover:opacity-100 hover:bg-fg-muted group-hover:w-3 active:bg-accent-primary active:opacity-100 active:w-3 transition-[width,background-color,opacity] duration-150 cursor-pointer"
         class:w-3={isDragging}
         class:!opacity-100={isDragging}

@@ -91,24 +91,24 @@
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden bg-bg-panel border-border-main pointer-events-auto transition-colors duration-200 hover:!bg-bg-panel group"
+    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden bg-bg-panel border-border-main pointer-events-auto transition-colors duration-200 hover:bg-bg-panel! group"
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
     "
     oncontextmenu={handleContextMenu}>
     <div
-        class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
+        class="flex gap-4 items-center shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
         {#if canToggleFileType}
             <button
-                class="min-w-[70px] hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
+                class="min-w-17.5 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
                 onclick={toggleFileType}
                 use:tooltip={'Toggle File Type (markdown/text)'}>
                 {fileType}
             </button>
         {:else}
-            <span class="min-w-[70px] cursor-default" use:tooltip={'File Type'}>{fileType}</span>
+            <span class="min-w-17.5 cursor-default" use:tooltip={'File Type'}>{fileType}</span>
         {/if}
         <span class="opacity-40">|</span>
 
@@ -159,7 +159,7 @@
     </div>
 
     <div
-        class="flex gap-4 items-center flex-shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
+        class="flex gap-4 items-center shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
         <button
             class="hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
@@ -194,13 +194,11 @@
 
 {#if showMenu}
     <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
-        {#snippet children()}
-            <button
-                class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
-                onclick={copyAllStats}>
-                <ClipboardCopy size={14} class="opacity-70" />
-                <span>Copy all document stats</span>
-            </button>
-        {/snippet}
+        <button
+            class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
+            onclick={copyAllStats}>
+            <ClipboardCopy size={14} class="opacity-70" />
+            <span>Copy all document stats</span>
+        </button>
     </ContextMenu>
 {/if}

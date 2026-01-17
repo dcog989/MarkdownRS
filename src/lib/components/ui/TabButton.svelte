@@ -41,14 +41,12 @@
     });
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     role="button"
     tabindex="0"
     data-active={isActive}
     data-tab-id={tab.id}
-    class="group relative h-8 flex items-center gap-2 text-ui-sm cursor-default border-r border-t-2 outline-none text-left shrink-0 overflow-hidden transition-colors duration-150 select-none border-border-main rounded-t-[4px]"
+    class="group relative h-8 flex items-center gap-2 text-ui-sm cursor-default border-r border-t-2 outline-none text-left shrink-0 overflow-hidden transition-colors duration-150 select-none border-border-main rounded-t-sm"
     class:bg-bg-main={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
@@ -71,31 +69,31 @@
     onkeydown={(e) => e.key === 'Enter' && onclick?.(tab.id)}
     use:tooltip={isCollapsed ? tooltipContent : null}>
     {#if isFileMissing}
-        <CircleAlert size={14} class="flex-shrink-0 text-danger-text" />
+        <CircleAlert size={14} class="shrink-0 text-danger-text" />
     {:else if !tab.path}
         {#if tab.content.length > 0}
             <PencilLine
                 size={14}
-                class="flex-shrink-0"
+                class="shrink-0"
                 style="color: {isActive && tab.isDirty
                     ? '#5deb47'
                     : isActive
                       ? 'var(--color-fg-inverse)'
                       : 'var(--color-fg-muted)'}" />
         {:else}
-            <Pencil size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
+            <Pencil size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
         {/if}
     {:else if tab.isDirty}
         <SquarePen
             size={14}
-            class="flex-shrink-0"
+            class="shrink-0"
             style="color: {isActive && tab.isDirty
                 ? '#5deb47'
                 : isActive
                   ? 'var(--color-fg-inverse)'
                   : 'var(--color-accent-secondary)'}" />
     {:else}
-        <FileText size={14} class="flex-shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
+        <FileText size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
     {/if}
 
     {#if !isCollapsed}
@@ -108,11 +106,11 @@
                 <div
                     class={'absolute inset-0 flex items-center justify-center ' +
                         (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}>
-                    <Pin size={12} class="flex-shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
+                    <Pin size={12} class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
                 </div>
             {:else}
                 <div
-                    class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-gradient-to-r from-transparent via-40%"
+                    class="close-btn-wrapper absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-linear-to-r from-transparent via-40%"
                     class:via-bg-main={isActive}
                     class:to-bg-main={isActive}
                     class:via-bg-panel={!isActive}

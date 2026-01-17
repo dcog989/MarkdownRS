@@ -1,8 +1,9 @@
 <script lang="ts">
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { saveSettings } from '$lib/utils/settings';
-    import { shortcutManager } from '$lib/utils/shortcuts';
+    import { shortcutManager, type ShortcutDefinition } from '$lib/utils/shortcuts';
     import { Keyboard, RotateCcw, X } from 'lucide-svelte';
+    import { SvelteMap } from 'svelte/reactivity';
     import Modal from './Modal.svelte';
 
     interface Props {
@@ -60,7 +61,7 @@
 
     const categories = $derived.by(() => {
         const defs = shortcutManager.getDefinitions();
-        const map = new Map<string, any[]>();
+        const map = new SvelteMap<string, ShortcutDefinition[]>();
         defs.forEach((d) => {
             if (!map.has(d.category)) map.set(d.category, []);
             map.get(d.category)!.push(d);
@@ -80,16 +81,16 @@
         </button>
     {/snippet}
 
-    <div class="text-ui min-w-[500px] p-4">
+    <div class="text-ui min-w-125 p-4">
         <div class="space-y-6">
-            {#each categories as [category, defs]}
+            {#each categories as [category, defs] (category)}
                 <div>
                     <h3
                         class="text-ui-sm font-bold uppercase tracking-widest mb-2 text-accent-secondary border-b border-border-main pb-1">
                         {category}
                     </h3>
                     <div class="divide-y divide-border-main/30">
-                        {#each defs as def}
+                        {#each defs as def (def.command)}
                             <div class="flex items-center justify-between py-2 group">
                                 <button
                                     class="text-left flex-1 cursor-pointer text-fg-default hover:text-accent-secondary transition-colors outline-none"
@@ -98,7 +99,7 @@
                                 </button>
                                 <div class="flex items-center gap-2">
                                     <button
-                                        class="px-3 py-1 rounded font-mono text-sm border transition-all min-w-[100px] text-center
+                                        class="px-3 py-1 rounded font-mono text-sm border transition-all min-w-25 text-center
                                             {recordingCommandId === def.command
                                             ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
                                             : 'bg-bg-input text-fg-default border-border-main hover:border-accent-secondary'}"
