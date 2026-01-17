@@ -23,6 +23,23 @@ fn main() {
     // Velopack Hook: Handles install/update events and exits if necessary
     VelopackApp::build().run();
 
+    // Detect portable mode BEFORE initializing Tauri
+    // This allows plugins to use the correct paths
+    let exe_path = std::env::current_exe().expect("Failed to get executable path");
+    let exe_dir = exe_path.parent().expect("Failed to get executable directory");
+    let portable_marker = exe_dir.join(".portable");
+    
+    if portable_marker.exists() {
+        // Set custom environment variable to indicate portable mode
+        std::env::set_var("MARKDOWN_RS_PORTABLE", "1");
+        
+        // Override Tauri's data directory paths for portable mode
+        // Tauri will append the app identifier, so we use the parent directory
+        let portable_data_dir = exe_dir.join("Data");
+        std::env::set_var("APPDATA", portable_data_dir.as_os_str());
+        std::env::set_var("LOCALAPPDATA", portable_data_dir.as_os_str());
+    }
+
     #[cfg(target_os = "windows")]
     unsafe {
         std::env::set_var(
@@ -56,6 +73,7 @@ fn main() {
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(tauri_plugin_window_state::StateFlags::all())
                 .with_filename(".window-state.json")
+                .skip_initial_state(false)
                 .build(),
         )
         .setup(|app| {
@@ -63,7 +81,10 @@ fn main() {
             let window = app.get_webview_window("main")
                 .ok_or("Failed to get main window")?;
 
-            // Roaming Data (Settings, Session DB, Custom Dictionary)
+            // Check if portable mode is enabled (set in main() before Tauri init)
+            let is_portable = std::env::var("MARKDOWN_RS_PORTABLE").is_ok();
+
+            // Get app directories - these will use the overridden APPDATA if in portable mode
             let app_dir = app_handle
                 .path()
                 .app_data_dir()
@@ -72,7 +93,6 @@ fn main() {
                     format!("Failed to get app data dir: {}", e)
                 })?;
 
-            // Local Data (Logs, Spellcheck Cache)
             let local_dir = app_handle
                 .path()
                 .app_local_data_dir()
@@ -93,6 +113,7 @@ fn main() {
             let _ = fs::create_dir_all(&log_dir);
             let _ = fs::create_dir_all(&themes_dir);
 
+            println!("[INFO] Portable Mode: {}", is_portable);
             println!("[INFO] Data Directory: {:?}", app_dir);
             println!("[INFO] Log Directory: {:?}", log_dir);
 

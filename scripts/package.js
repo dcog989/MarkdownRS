@@ -71,10 +71,39 @@ try {
 
     execSync(cmd, { stdio: 'inherit', cwd: distDir });
 
+    // Add .portable marker to portable build
+    const portableZip = path.join(outDir, `MarkdownRS-${version}-Portable.zip`);
+    if (fs.existsSync(portableZip)) {
+        console.log('📝 Adding .portable marker to portable build...');
+        const tempExtractDir = path.join(outDir, 'temp_portable');
+
+        try {
+            // Create temp directory
+            fs.mkdirSync(tempExtractDir, { recursive: true });
+
+            // Extract portable zip
+            execSync(`tar -xf "${portableZip}" -C "${tempExtractDir}"`, { stdio: 'inherit' });
+
+            // Add .portable marker file
+            fs.writeFileSync(path.join(tempExtractDir, '.portable'), 'This file indicates portable mode');
+
+            // Re-create zip with marker
+            fs.rmSync(portableZip);
+            execSync(`tar -a -c -f "${portableZip}" -C "${tempExtractDir}" .`, { stdio: 'inherit' });
+
+            // Clean up temp directory
+            fs.rmSync(tempExtractDir, { recursive: true, force: true });
+
+            console.log('✅ Portable marker added successfully!');
+        } catch (err) {
+            console.warn('⚠️  Failed to add portable marker:', err instanceof Error ? err.message : String(err));
+        }
+    }
+
     console.log('\n✅ Build Successful!');
     console.log(`   📂 Artifacts Location: ${path.resolve(outDir)}`);
     console.log(`   - Installer: MarkdownRS-Setup.exe`);
-    console.log(`   - Portable:  MarkdownRS-${version}-Portable.zip`);
+    console.log(`   - Portable:  MarkdownRS-${version}-Portable.zip (with .portable marker)`);
 } catch (error) {
     console.error('❌ Velopack packaging failed.');
     console.error(error instanceof Error ? error.message : String(error));
