@@ -228,7 +228,7 @@
 {#if isOpen}
     <div
         bind:this={panelRef}
-        class="absolute top-0 right-0 w-[400px] max-h-[600px] z-50 flex flex-col transition-opacity duration-200 bg-bg-panel border border-border-main border-t-0 border-r-0 shadow-lg"
+        class="absolute top-0 right-0 w-100 max-h-150 z-50 flex flex-col transition-opacity duration-200 bg-bg-panel border border-border-main border-t-0 border-r-0 shadow-lg"
         class:opacity-15={appContext.app.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
         onfocusout={handleBlur}
@@ -257,7 +257,7 @@
             </button>
         </div>
 
-        <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-[500px]">
+        <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-125">
             <div class="flex gap-2 items-center">
                 <Input
                     bind:ref={searchInputRef}
@@ -267,7 +267,7 @@
                     class="flex-1 text-[13px] leading-6 {searchState.regexError ? 'border-danger' : ''}"
                     oninput={onInput}
                     spellcheck="false" />
-                <div class="text-[11px] text-fg-muted min-w-[80px] text-right">
+                <div class="text-[11px] text-fg-muted min-w-20 text-right">
                     {#if searchScope === 'current'}
                         {#if searchState.currentMatches > 0}
                             {searchState.currentIndex + 1} of {searchState.currentMatches}
@@ -382,7 +382,7 @@
             </div>
 
             {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
-                <div class="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+                <div class="flex flex-col gap-1 max-h-50 overflow-y-auto">
                     <div class="text-[11px] font-semibold mb-1 text-fg-muted">Results:</div>
                     {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
