@@ -57,7 +57,7 @@
 {#if isVisible}
     <div
         bind:this={tooltipEl}
-        class="fixed z-[9999] pointer-events-none"
+        class="fixed z-9999 pointer-events-none"
         style="left: {adjustedX}px; top: {adjustedY}px;"
         transition:fade={{ duration: CONFIG.UI.ANIMATION_DURATION_MS }}>
         <div
