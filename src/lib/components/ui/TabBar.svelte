@@ -204,6 +204,7 @@
 
         <section
             bind:this={scrollContainer}
+            role="list"
             class="w-full h-full flex items-stretch overflow-x-auto no-scrollbar tab-scroll-container"
             onscroll={updateFadeIndicators}
             oncontextmenu={(e) => {
@@ -248,7 +249,7 @@
                 {@const dragTab = appContext.editor.tabs.find((t) => t.id === draggingId)}
                 {#if dragTab}
                     <div
-                        class="fixed pointer-events-none z-[999]"
+                        class="fixed pointer-events-none z-999"
                         style="left: {currentDragX - dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect()
                             .top ?? 0}px; opacity: 0.95;">
                         <TabButton tab={dragTab} isActive={appContext.app.activeTabId === dragTab.id} />
