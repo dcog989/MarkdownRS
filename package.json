@@ -7,6 +7,7 @@
     "scripts": {
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "clean": "bun scripts/clean.js",
+        "crates": "cd src-tauri && cargo update --verbose",
         "dev": "tauri dev",
         "format:check": "prettier . --check",
         "format": "prettier . --write",
