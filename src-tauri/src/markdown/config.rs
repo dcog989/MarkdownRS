@@ -1,20 +1,16 @@
+use comrak::Options;
 use comrak::options::Extension;
 use serde::{Deserialize, Serialize};
 
 /// Markdown flavor specification
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum MarkdownFlavor {
     /// Pure CommonMark (no extensions)
     CommonMark,
     /// GitHub Flavored Markdown (full GFM spec)
+    #[default]
     GFM,
-}
-
-impl Default for MarkdownFlavor {
-    fn default() -> Self {
-        Self::GFM
-    }
 }
 
 impl MarkdownFlavor {
@@ -27,9 +23,11 @@ impl MarkdownFlavor {
         }
     }
 
-    /// Get comrak extension options for this flavor
-    pub fn to_extension_options(&self) -> Extension<'static> {
-        match self {
+    /// Get central comrak options for this flavor
+    pub fn to_comrak_options(&self) -> Options<'static> {
+        let mut options = Options::default();
+
+        options.extension = match self {
             Self::CommonMark => Extension {
                 strikethrough: false,
                 tagfilter: false,
@@ -90,6 +88,13 @@ impl MarkdownFlavor {
                 highlight: false,
                 phoenix_heex: false,
             },
-        }
+        };
+
+        options.render.r#unsafe = false;
+        options.render.escape = false;
+        options.parse.smart = true;
+        options.parse.default_info_string = None;
+
+        options
     }
 }

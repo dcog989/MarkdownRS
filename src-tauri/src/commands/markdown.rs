@@ -74,7 +74,6 @@ pub async fn format_markdown(
         max_blank_lines: 2,
     };
 
-    // Increase stack size to 16MB for very large files to prevent dprint recursion overflow
     let (tx, rx) = std::sync::mpsc::channel();
 
     std::thread::Builder::new()

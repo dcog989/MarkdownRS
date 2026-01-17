@@ -1,5 +1,5 @@
 use crate::markdown::config::MarkdownFlavor;
-use comrak::{Arena, Options, format_html_with_plugins, options::Plugins, parse_document};
+use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -40,14 +40,7 @@ pub struct RenderResult {
 
 /// Renders markdown to HTML with line number tracking and document metrics
 pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult, String> {
-    let mut comrak_options = Options::default();
-    comrak_options.extension = options.flavor.to_extension_options();
-
-    comrak_options.render.r#unsafe = false;
-    comrak_options.render.escape = false;
-
-    comrak_options.parse.smart = true;
-    comrak_options.parse.default_info_string = None;
+    let comrak_options = options.flavor.to_comrak_options();
 
     let arena = Arena::new();
     let root = parse_document(&arena, content, &comrak_options);
