@@ -211,6 +211,8 @@ export async function persistSession(): Promise<void> {
 /**
  * Lazy load content for a tab from the database
  */
+const loadingRequests = new Map<string, number>();
+
 export async function loadTabContentLazy(tabId: string): Promise<void> {
     const start = performance.now();
     const index = appContext.editor.tabs.findIndex((t) => t.id === tabId);
@@ -223,71 +225,84 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         return;
     }
 
+    const requestId = Date.now();
+    loadingRequests.set(tabId, requestId);
+
     try {
-        // Now returns { content }
         const data = await callBackend('load_tab_content', { tabId }, 'Session:Load');
+
+        if (loadingRequests.get(tabId) !== requestId) {
+            return;
+        }
 
         if (data && data.content !== null && data.content !== undefined) {
             const normalizedContent = normalizeLineEndings(data.content);
 
-            // Determine the correct lastSavedContent
-            // For unsaved tabs (no path): lastSavedContent should be empty since there's no file
-            // For saved tabs with isDirty: load from disk to get the actual last saved content
-            // For clean saved tabs: content === lastSavedContent
             let lastSavedContent = '';
 
             if (!tab.path) {
-                // Unsaved tab - no file on disk, so lastSavedContent is empty
                 lastSavedContent = '';
             } else if (tab.isDirty) {
-                // Dirty tab with a file - read from disk to get the actual last saved content
                 try {
                     const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
                     if (fileData && fileData.content) {
                         lastSavedContent = normalizeLineEndings(fileData.content);
                     }
-                } catch (err) {
-                    // If we can't read the file, treat normalized content as last saved
-                    // This handles cases where the file was deleted or is inaccessible
+                } catch {
                     lastSavedContent = normalizedContent;
                 }
             } else {
-                // Clean tab - content matches what's on disk
                 lastSavedContent = normalizedContent;
             }
 
-            // Use reassignment to ensure Svelte 5 triggers reactivity for nested properties
             const sizeBytes = new TextEncoder().encode(normalizedContent).length;
             const wordCount =
                 sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
                     ? countWords(normalizedContent)
                     : fastCountWords(normalizedContent);
-            appContext.editor.tabs[index] = {
-                ...tab,
-                content: normalizedContent,
-                lastSavedContent,
-                sizeBytes,
-                wordCount,
-                lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
-                contentLoaded: true,
-            };
+
+            const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+            if (currentIndex !== -1) {
+                const currentTab = appContext.editor.tabs[currentIndex];
+                appContext.editor.tabs[currentIndex] = {
+                    ...currentTab,
+                    content: normalizedContent,
+                    lastSavedContent,
+                    sizeBytes,
+                    wordCount,
+                    lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
+                    contentLoaded: true,
+                };
+            }
 
             const duration = (performance.now() - start).toFixed(2);
             logger.session.debug('TabContentLazyLoaded', {
                 duration: `${duration}ms`,
                 tabId,
-                size: tab.sizeBytes,
+                size: sizeBytes,
             });
         } else {
-            tab.contentLoaded = true;
+            const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+            if (currentIndex !== -1) {
+                appContext.editor.tabs[currentIndex].contentLoaded = true;
+            }
         }
     } catch (err) {
-        AppError.handle('Session:Load', err, {
-            showToast: false,
-            severity: 'warning',
-            additionalInfo: { tabId },
-        });
-        tab.contentLoaded = true;
+        if (loadingRequests.get(tabId) === requestId) {
+            AppError.handle('Session:Load', err, {
+                showToast: false,
+                severity: 'warning',
+                additionalInfo: { tabId },
+            });
+            const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+            if (currentIndex !== -1) {
+                appContext.editor.tabs[currentIndex].contentLoaded = true;
+            }
+        }
+    } finally {
+        if (loadingRequests.get(tabId) === requestId) {
+            loadingRequests.delete(tabId);
+        }
     }
 }
 
