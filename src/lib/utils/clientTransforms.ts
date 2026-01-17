@@ -1,7 +1,7 @@
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 
 // Pre-compiled regexes for better performance
-const SENTENCE_CASE_PREFIX_RE = /^(\s*)(-|\*|\+|[0-9]+\.|\-\s*\[[ x]\])\s*(.*)$/;
+const SENTENCE_CASE_PREFIX_RE = /^(\s*)(-|\*|\+|[0-9]+\.|-\s*\[[ x]\])\s*(.*)$/;
 const CAMEL_CASE_RE = /[^a-zA-Z0-9]+(.)/g;
 const CAMEL_CASE_START_RE = /^[A-Z]/;
 const SNAKE_CASE_RE = /[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g;
@@ -221,9 +221,10 @@ export function applyClientTransform(text: string, operationId: OperationId, ind
                 })
                 .join('\n');
         }
-        case 'unindent-lines':
+        case 'unindent-lines': {
             const regex = new RegExp(`^ {1,${indentWidth}}`);
             return lines.map((l) => l.replace(regex, '')).join('\n');
+        }
 
         default:
             return text;

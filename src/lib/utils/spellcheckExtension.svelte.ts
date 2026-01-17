@@ -6,13 +6,21 @@ import { syntaxTree } from '@codemirror/language';
 import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
 import { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+
+/**
+ * Extension of EditorView to support internal application properties
+ */
+interface AppEditorView extends EditorView {
+    _currentTabId?: string;
+}
 
 /**
  * Per-tab spellcheck cache
  * Stores the last checked state to avoid redundant checks on tab switches
  */
 class TabSpellcheckCache {
-    private tabCaches = new Map<
+    private tabCaches = new SvelteMap<
         string,
         {
             content: string;
@@ -51,15 +59,12 @@ class TabSpellcheckCache {
     prune() {
         if (this.tabCaches.size > 10) {
             const sorted = Array.from(this.tabCaches.entries()).sort((a, b) => b[1].lastCheckTime - a[1].lastCheckTime);
-            this.tabCaches = new Map(sorted.slice(0, 10));
+            this.tabCaches = new SvelteMap(sorted.slice(0, 10));
         }
     }
 }
 
 const tabCache = new TabSpellcheckCache();
-
-// Track if we should use zero delay (for immediate cache hits)
-let useZeroDelay = false;
 
 // Export function to invalidate cache when dictionary changes
 export function invalidateSpellcheckCache(tabId?: string) {
@@ -85,7 +90,7 @@ export const createSpellCheckLinter = () => {
             const docContent = doc.toString();
 
             // Get tab ID from the view if available
-            const tabId = (view as any)._currentTabId;
+            const tabId = (view as AppEditorView)._currentTabId;
 
             // Check cache first
             if (tabId) {
@@ -97,9 +102,9 @@ export const createSpellCheckLinter = () => {
                 }
             }
 
-            const wordsToVerify = new Map<string, { from: number; to: number }[]>();
+            const wordsToVerify = new SvelteMap<string, { from: number; to: number }[]>();
 
-            const safeNodeTypes = new Set([
+            const safeNodeTypes = new SvelteSet([
                 'Paragraph',
                 'Text',
                 'Emphasis',
@@ -114,7 +119,7 @@ export const createSpellCheckLinter = () => {
             ]);
 
             // Snapshot dictionary for consistency during this pass
-            const customDict = new Set(spellcheckState.customDictionary);
+            const customDict = new SvelteSet(spellcheckState.customDictionary);
 
             syntaxTree(state).iterate({
                 enter: (node: SyntaxNodeRef): boolean | void => {
@@ -144,7 +149,7 @@ export const createSpellCheckLinter = () => {
                             // Heuristic: Skip if looks like path/url
                             const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : '';
                             const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : '';
-                            if (/[\\/:@\.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
+                            if (/[\\/:@.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
 
                             // Heuristic: Skip mixed case/numbers
                             if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
@@ -174,7 +179,7 @@ export const createSpellCheckLinter = () => {
             if (wordsToVerify.size === 0) {
                 // Cache empty result
                 if (tabId) {
-                    tabCache.set(tabId, docContent, [], new Set());
+                    tabCache.set(tabId, docContent, [], new SvelteSet());
                     tabCache.prune();
                 }
                 return [];
@@ -191,15 +196,15 @@ export const createSpellCheckLinter = () => {
 
                 if (!misspelled) {
                     if (tabId) {
-                        tabCache.set(tabId, docContent, [], new Set());
+                        tabCache.set(tabId, docContent, [], new SvelteSet());
                         tabCache.prune();
                     }
                     return [];
                 }
 
-                const newCache = new Set<string>();
+                const newCache = new SvelteSet<string>();
                 const diagnostics: Diagnostic[] = [];
-                const diagnosticKeys = new Set<string>();
+                const diagnosticKeys = new SvelteSet<string>();
 
                 // Get fresh reference in case of updates during await
                 const freshDict = spellcheckState.customDictionary;
@@ -244,7 +249,7 @@ export const createSpellCheckLinter = () => {
                 }
 
                 return diagnostics;
-            } catch (err) {
+            } catch {
                 return [];
             }
         },
@@ -265,7 +270,7 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
     tabCache.invalidateAll();
 
     await refreshCustomDictionary();
-    spellcheckState.misspelledCache = new Set<string>();
+    spellcheckState.misspelledCache = new SvelteSet<string>();
     triggerImmediateLint(view);
 }
 
@@ -288,7 +293,7 @@ export const spellCheckKeymap = [
             if (words.length > 0) {
                 // 1. Synchronous Optimistic Update
                 // Update via re-assignment to trigger Svelte 5 signals
-                const newDict = new Set(spellcheckState.customDictionary);
+                const newDict = new SvelteSet(spellcheckState.customDictionary);
                 words.forEach((w) => {
                     if (w && w.length > 1) {
                         newDict.add(w.toLowerCase());

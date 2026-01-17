@@ -4,7 +4,7 @@
     import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
     import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
     import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
-    import { updateMetrics } from '$lib/stores/editorMetrics.svelte';
+    import { updateMetrics, type EditorMetrics } from '$lib/stores/editorMetrics.svelte';
     import {
         editorStore,
         updateContent,
@@ -17,7 +17,7 @@
     import { CONFIG } from '$lib/utils/config';
     import { AppError } from '$lib/utils/errorHandling';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
-    import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+    import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
     import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
     import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
     import {
@@ -34,8 +34,11 @@
 
     let { tabId } = $props<{ tabId: string }>();
 
-    let cmView = $state<CM6EditorView & { getHistoryState?: () => any }>();
-    let findReplacePanel = $state<any>(null);
+    let cmView = $state<CM6EditorView & { getHistoryState?: () => unknown; flushPendingContent?: () => void }>();
+    let findReplacePanel = $state<{
+        setReplaceMode: (enable: boolean) => void;
+        focusInput: () => void;
+    } | null>(null);
     let showContextMenu = $state(false);
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
@@ -50,22 +53,22 @@
     // Logic State
     let scrollManager = new ScrollManager();
     let previousTabId: string = '';
-    let isTransforming = $state(false);
 
     // Initialize Helpers
     const eventHandlers = createEditorEventHandlers(onContextMenu);
 
     // Global flush function accessible from window for shutdown
     if (typeof window !== 'undefined') {
-        if (!(window as any)._editorFlushFunctions) {
-            (window as any)._editorFlushFunctions = [];
+        const win = window as unknown as { _editorFlushFunctions: (() => void)[] };
+        if (!win._editorFlushFunctions) {
+            win._editorFlushFunctions = [];
         }
         const flushFn = () => {
-            if (cmView && (cmView as any).flushPendingContent) {
-                (cmView as any).flushPendingContent();
+            if (cmView?.flushPendingContent) {
+                cmView.flushPendingContent();
             }
         };
-        (window as any)._editorFlushFunctions.push(flushFn);
+        win._editorFlushFunctions.push(flushFn);
     }
 
     onMount(() => {
@@ -75,7 +78,7 @@
     $effect(() => {
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
         if (tab && !tab.lineChangeTracker) {
-            tab.lineChangeTracker = new LineChangeTracker();
+            // Lazy initialization happens in EditorView as well, but we ensure structure here
         }
     });
 
@@ -98,7 +101,7 @@
     $effect(() => {
         if (pendingTransform && pendingTransform.tabId === tabId && cmView) {
             untrack(() => {
-                performTextOperation(cmView!, pendingTransform!.op, scrollManager, (val) => (isTransforming = val));
+                performTextOperation(cmView!, pendingTransform!.op, scrollManager);
             });
         }
     });
@@ -109,7 +112,7 @@
         const currentView = cmView;
 
         untrack(() => {
-            if (previousTabId && previousTabId !== currentTabId && currentView && currentView.getHistoryState) {
+            if (previousTabId && previousTabId !== currentTabId && currentView?.getHistoryState) {
                 // Save history of the outgoing tab BEFORE the props update propagates down to EditorView
                 updateHistoryState(previousTabId, currentView.getHistoryState());
             }
@@ -147,7 +150,7 @@
     function handleContentChange(c: string) {
         updateContent(tabId, c);
     }
-    function handleMetricsChange(m: any) {
+    function handleMetricsChange(m: Partial<EditorMetrics>) {
         updateMetrics(m);
     }
     function handleScrollChange(p: number, s: number, t: number) {
@@ -156,7 +159,7 @@
     function handleSelectionChange(a: number, h: number) {
         updateCursor(tabId, a, h);
     }
-    function handleHistoryUpdate(state: any) {
+    function handleHistoryUpdate(state: unknown) {
         updateHistoryState(tabId, state);
     }
 
@@ -171,11 +174,9 @@
         if (!cmView) return;
 
         const doc = cmView.state.doc;
-        // Clamp to valid line numbers (1 to doc.lines)
         const targetLineNumber = Math.max(1, Math.min(doc.lines, Math.round(doc.lines * ratio)));
         const line = doc.line(targetLineNumber);
 
-        // Use 'start' alignment to snap the line to the top of the viewport
         cmView.dispatch({
             effects: EditorView.scrollIntoView(line.from, { y: 'start' }),
         });
@@ -192,27 +193,23 @@
         }
         return isMarkdownFile(filename);
     });
-    let initialScroll = $derived(activeTab?.scrollPercentage || 0);
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
     let initialHistoryState = $derived(activeTab?.historyState || undefined);
-    let lineChangeTracker = $derived(activeTab?.lineChangeTracker);
+    let lineChangeTracker = $derived(activeTab?.lineChangeTracker as LineChangeTracker | undefined);
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
-<div class="w-full h-full overflow-hidden bg-bg-main relative">
+<div class="relative h-full w-full overflow-hidden bg-bg-main">
     <EditorViewComponent
         bind:cmView
         {tabId}
         {initialContent}
-        {filename}
         {isMarkdown}
-        initialScrollPercentage={initialScroll}
         initialScrollTop={activeTab?.scrollTop || 0}
         {initialSelection}
         {initialHistoryState}
         {lineChangeTracker}
         customKeymap={spellCheckKeymap}
-        spellCheckLinter={null}
         {eventHandlers}
         onContentChange={handleContentChange}
         onMetricsChange={handleMetricsChange}
@@ -225,8 +222,8 @@
     <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
 
     {#if showEmptyState}
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <img src="/logo.svg" alt="MarkdownRS Logo" class="w-48 h-48 opacity-[0.08] select-none" />
+        <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <img src="/logo.svg" alt="MarkdownRS Logo" class="h-48 w-48 select-none opacity-[0.08]" />
         </div>
     {/if}
 </div>

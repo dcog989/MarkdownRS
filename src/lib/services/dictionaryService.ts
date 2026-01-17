@@ -6,7 +6,7 @@ export async function addToDictionary(word: string): Promise<boolean> {
             report: true,
         });
         return true;
-    } catch (err) {
+    } catch (_err) {
         return false;
     }
 }

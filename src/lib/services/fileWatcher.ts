@@ -46,7 +46,7 @@ class FileWatcherService {
                     await this.handleFileChange(path, controller.signal);
                 }, CONFIG.PERFORMANCE.FILE_WATCH_DEBOUNCE_MS);
 
-                const unwatch = await watch(path, (event) => {
+                const unwatch = await watch(path, (_event) => {
                     if (controller.signal.aborted) return;
                     handleChange();
                 });

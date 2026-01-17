@@ -73,7 +73,7 @@ export class ScrollSyncManager {
         const elements = Array.from(container.querySelectorAll('[data-source-line]')) as HTMLElement[];
 
         // 1. Build Raw Map: Line -> Pixel Y (absolute in scrollable area)
-        let rawMap = elements
+        const rawMap = elements
             .map((el) => {
                 const rect = el.getBoundingClientRect();
                 // Calculate Y relative to the top of the scrollable content

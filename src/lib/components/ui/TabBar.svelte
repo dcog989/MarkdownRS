@@ -40,7 +40,7 @@
         onSort: (newItems) => {
             reorderTabs(newItems);
         },
-        onDragStart: (id, x, offset) => {
+        onDragStart: (id, _, offset) => {
             draggingId = id;
             isDragging = false;
             dragOffsetX = offset;

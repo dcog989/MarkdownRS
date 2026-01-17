@@ -1,5 +1,6 @@
 <script lang="ts">
     import { tooltip } from '$lib/actions/tooltip';
+    import type { EditorTab } from '$lib/stores/editorStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { requestCloseTab } from '$lib/utils/fileSystem';
     import { formatFileSize } from '$lib/utils/fileValidation';
@@ -20,7 +21,6 @@
     let selectedIndex = $state(0);
     let searchInputRef = $state<HTMLInputElement>();
     let dropdownListRef = $state<HTMLDivElement>();
-    let dropdownContainerRef = $state<HTMLDivElement>();
     let lastClientX = 0;
     let lastClientY = 0;
     let ignoreMouseMovement = $state(false);
@@ -40,11 +40,11 @@
         });
     });
 
-    function getDropdownTitle(tab: any): string {
+    function getDropdownTitle(tab: EditorTab): string {
         return tab.customTitle || tab.title;
     }
 
-    function getTooltipContent(tab: any): string {
+    function getTooltipContent(tab: EditorTab): string {
         const parts: string[] = [];
         const sizeStr = formatFileSize(tab.sizeBytes || 0);
         const formattedTime = tab.formattedTimestamp || '';
@@ -135,11 +135,8 @@
 </script>
 
 {#if isOpen}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-40" onclick={onClose}></div>
+    <div class="fixed inset-0 z-40" role="presentation" onclick={onClose}></div>
     <div
-        bind:this={dropdownContainerRef}
         class="absolute left-0 top-full mt-1 w-80 rounded-lg shadow-2xl border flex flex-col z-50 bg-bg-panel border-border-light max-h-[calc(100vh-120px)]"
         role="menu">
         <div class="p-2 border-b shrink-0 border-border-light">
@@ -157,7 +154,6 @@
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <div
                         role="none"
                         class="group flex items-stretch w-full {isSelected ? 'bg-accent-primary' : 'bg-transparent'}"

@@ -31,25 +31,24 @@ export interface ErrorOptions {
     showToast?: boolean;
     userMessage?: string;
     toastDuration?: number;
-    additionalInfo?: Record<string, any>;
+    additionalInfo?: Record<string, unknown>;
     severity?: ErrorSeverity;
     logToDisk?: boolean;
 }
 
 // Helper to truncate long strings in error logs
-function safeStringify(obj: any): string {
+function safeStringify(obj: unknown): string {
     try {
-        return JSON.stringify(obj, (key, value) => {
+        return JSON.stringify(obj, (_, value: unknown) => {
             if (typeof value === 'string' && value.length > 500) {
                 return value.substring(0, 500) + '... [truncated]';
             }
             if (Array.isArray(value) && value.length > 20) {
-                // Truncate large arrays, but keep structure valid for JSON
                 return [...value.slice(0, 20), `... (${value.length - 20} more items)`];
             }
             return value;
         });
-    } catch (e) {
+    } catch {
         return '[Circular or Non-Serializable Data]';
     }
 }
@@ -58,7 +57,7 @@ export class AppError extends Error {
     public readonly context: ErrorContext;
     public readonly timestamp: Date;
     public readonly severity: ErrorSeverity;
-    public readonly additionalInfo?: Record<string, any>;
+    public readonly additionalInfo?: Record<string, unknown>;
     public readonly originalError?: Error;
 
     constructor(
@@ -306,7 +305,7 @@ export class AppError extends Error {
     }
 }
 
-export function withErrorBoundary<T extends any[], R>(
+export function withErrorBoundary<T extends unknown[], R>(
     fn: (...args: T) => Promise<R>,
     context: ErrorContext,
     options: ErrorOptions = {},
@@ -321,7 +320,7 @@ export function withErrorBoundary<T extends any[], R>(
     };
 }
 
-export function withErrorBoundarySync<T extends any[], R>(
+export function withErrorBoundarySync<T extends unknown[], R>(
     fn: (...args: T) => R,
     context: ErrorContext,
     options: ErrorOptions = {},

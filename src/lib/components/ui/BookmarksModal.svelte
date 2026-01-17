@@ -149,7 +149,7 @@
                 const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
                 if (!addTitle) addTitle = titleWithoutExt;
             }
-        } catch (error) {
+        } catch (_error) {
             browseError = 'Failed to open file browser';
         }
     }
@@ -158,7 +158,7 @@
         if (!addPath || !addTitle) return;
         try {
             await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
-        } catch (error) {
+        } catch (_error) {
             browseError = 'File does not exist or cannot be accessed';
             return;
         }
@@ -299,7 +299,7 @@
                                     {#if bookmark.tags.length > 0}
                                         <div class="flex items-center gap-1 mt-1 flex-wrap">
                                             <Tag size={12} class="opacity-50" />
-                                            {#each bookmark.tags as tag}
+                                            {#each bookmark.tags as tag (tag)}
                                                 <span
                                                     class="text-ui-sm px-1.5 py-0.5 rounded bg-bg-input text-fg-muted">
                                                     {tag}

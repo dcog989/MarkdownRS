@@ -118,7 +118,7 @@ export class ExportService {
                 { report: true, msg: 'Failed to save HTML file' },
             );
             showToast('success', `Exported to ${path}`);
-        } catch (err) {
+        } catch {
             // Error already reported by backend
         }
     }
@@ -194,7 +194,7 @@ export class ExportService {
                 { report: true, msg: `Failed to save ${format.toUpperCase()}` },
             );
             showToast('success', `Exported to ${path}`);
-        } catch (err) {
+        } catch {
             // Error already reported
         } finally {
             this.clearExportContent();

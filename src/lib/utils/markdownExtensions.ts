@@ -12,7 +12,7 @@ import {
 // Decorator for ==highlight== syntax
 const highlightMatcher = new MatchDecorator({
     regexp: /==([^=]+)==/g,
-    decoration: (match) =>
+    decoration: (_match) =>
         Decoration.mark({
             class: 'cm-highlight',
         }),
@@ -37,7 +37,7 @@ export const highlightPlugin = ViewPlugin.fromClass(
 // Matches valid URL characters, stopping before trailing punctuation/whitespace
 const urlMatcher = new MatchDecorator({
     regexp: /(?:https?:\/\/|www\.)[^\s`]+?(?=[.,;:!?`)]*(?:\s|$))/g,
-    decoration: (match) =>
+    decoration: (_match) =>
         Decoration.mark({
             class: 'cm-url',
         }),

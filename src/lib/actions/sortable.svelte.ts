@@ -147,7 +147,6 @@ export class SortableController<T> {
         }
         // Swap Left
         else if (deltaX < 0 && currentIndex > 0) {
-            const leftTab = this.layoutCache[currentIndex - 1];
             const swapThreshold =
                 this.layoutCache[currentIndex - 1].center +
                 (currentCenter - this.layoutCache[currentIndex - 1].center) / 2;

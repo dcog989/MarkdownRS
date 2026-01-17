@@ -52,7 +52,7 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
                         targetString = text.slice(start, end).trim();
                         // Strip wrapping brackets common in markdown/text
-                        targetString = targetString.replace(/^[<(\[]+|[>)\]]+$/g, '');
+                        targetString = targetString.replace(/^[<([]+|[>)\]]+$/g, '');
 
                         // Strip trailing punctuation
                         if (!/^https?:\/\//i.test(targetString)) {

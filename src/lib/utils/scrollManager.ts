@@ -12,7 +12,7 @@ export class ScrollManager {
      * @param view - The CodeMirror EditorView instance
      * @param context - Optional context string for debugging
      */
-    capture(view: EditorView, context?: string): void {
+    capture(view: EditorView, _context?: string): void {
         const dom = view.scrollDOM;
         this.savedScrollTop = dom.scrollTop;
         this.savedScrollLeft = dom.scrollLeft;

@@ -52,7 +52,7 @@ export async function refreshMetadata(tabId: string, path: string): Promise<void
     try {
         const meta = await getCachedFileMetadata(path);
         updateMetadata(tabId, meta.created, meta.modified);
-    } catch (err) {
+    } catch {
         // Silently handle
     }
 }

@@ -9,7 +9,7 @@ export async function getThemeCss(themeName: string): Promise<string> {
             msg: `Failed to load theme '${themeName}'`,
         });
         return result ?? '';
-    } catch (e) {
+    } catch (_e) {
         return '';
     }
 }

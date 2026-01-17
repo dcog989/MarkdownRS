@@ -33,7 +33,7 @@ export type EditorTab = {
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
     lineChangeTracker?: LineChangeTracker;
-    historyState?: any;
+    historyState?: unknown;
     preferredExtension?: 'md' | 'txt';
     contentChanged?: boolean;
     isPersisted?: boolean;
@@ -106,7 +106,7 @@ export function addTab(title: string = '', content: string = '') {
     const now = getCurrentTimestamp();
 
     let finalTitle = title;
-    let finalContent = content;
+    const finalContent = content;
 
     if (!title || title === 'Untitled' || title === '') {
         const newTabPattern = /New-(\d+)/;
@@ -345,7 +345,7 @@ export function updateMetadata(id: string, created?: string, modified?: string) 
     });
 }
 
-export function updateHistoryState(id: string, state: any) {
+export function updateHistoryState(id: string, state: unknown) {
     updateTab(id, () => ({ historyState: state }), false);
 }
 

@@ -67,7 +67,7 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
 
                     if (isHistoryAction) {
                         const affectedLines = new Set<number>();
-                        update.changes.iterChanges((fromA, toA, fromB, toB) => {
+                        update.changes.iterChanges((_, __, fromB, toB) => {
                             const doc = update.state.doc;
                             const startLine = doc.lineAt(fromB).number;
                             const endLine = doc.lineAt(Math.min(toB, doc.length)).number;

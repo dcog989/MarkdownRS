@@ -96,7 +96,7 @@ export async function renderMarkdown(
             USE_PROFILES: { html: true },
             ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked', 'src'],
             ALLOWED_URI_REGEXP:
-                /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+                /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
         });
 
         return { ...result, html: cleanHtml };

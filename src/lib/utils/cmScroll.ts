@@ -10,7 +10,7 @@ export class ScrollManager {
         totalLines: number;
     } | null = null;
 
-    public capture(view: EditorView, context: string) {
+    public capture(view: EditorView, _context: string) {
         if (!view.scrollDOM) return;
 
         const dom = view.scrollDOM;
@@ -67,7 +67,7 @@ export class ScrollManager {
                             const block = view.lineBlockAt(lineInfo.from);
                             targetTop = block.top + target.anchorOffset;
                             logDetail = `Line ${safeLine} @ ${block.top} + ${target.anchorOffset} = ${targetTop}`;
-                        } catch (e) {
+                        } catch {
                             targetTop = target.scrollTop; // Fallback
                             logDetail = 'Error (Fallback to pixel)';
                         }
@@ -91,10 +91,7 @@ export class ScrollManager {
                         domReady: scrollHeight > clientHeight,
                     };
                 },
-                write: ({ targetTop, strategy, reason, logDetail, domReady }) => {
-                    if (!domReady && targetTop > 0) {
-                    }
-
+                write: ({ targetTop }) => {
                     view.scrollDOM.scrollTop = targetTop;
 
                     // Verify

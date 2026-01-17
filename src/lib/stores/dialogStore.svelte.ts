@@ -15,7 +15,7 @@ type DialogRequest = {
 };
 
 // Module-level private state
-let queue: DialogRequest[] = [];
+const queue: DialogRequest[] = [];
 let idCounter = 0;
 
 // Public reactive state

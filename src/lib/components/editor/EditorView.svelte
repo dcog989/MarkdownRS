@@ -7,12 +7,14 @@
     } from '$lib/components/editor/codemirror/config';
     import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
+    import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { ScrollManager } from '$lib/utils/cmScroll';
     import { CONFIG } from '$lib/utils/config';
     import { newlinePlugin, rulerPlugin } from '$lib/utils/editorPlugins';
     import { generateDynamicTheme } from '$lib/utils/editorTheme';
     import { filePathPlugin, filePathTheme } from '$lib/utils/filePathExtension';
+    import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
     import {
         blockquotePlugin,
         bulletPointPlugin,
@@ -27,7 +29,7 @@
     import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
     import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
     import { applyImmediateSpellcheck, createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
-    import { calculateCursorMetrics } from '$lib/utils/textMetrics';
+    import { calculateCursorMetrics, type CursorMetrics } from '$lib/utils/textMetrics';
     import { userThemeExtension } from '$lib/utils/themeMapper';
     import { throttle } from '$lib/utils/timing';
     import { closeBrackets, completeAnyWord } from '@codemirror/autocomplete';
@@ -43,15 +45,30 @@
         highlightActiveLine,
         highlightActiveLineGutter,
         highlightWhitespace,
+        type KeyBinding,
     } from '@codemirror/view';
     import { onDestroy, onMount, untrack } from 'svelte';
+
+    /**
+     * Internal interface for CodeMirror view with application-specific properties
+     */
+    interface AppEditorView extends EditorView {
+        getHistoryState?: () => unknown;
+        flushPendingContent?: () => void;
+        _currentTabId?: string;
+    }
+
+    /**
+     * Interface for the global window object to avoid 'any' casts
+     */
+    interface AppWindow extends Window {
+        _activeEditorView: AppEditorView | null;
+    }
 
     let {
         tabId,
         initialContent = '',
-        filename = '',
         isMarkdown = true,
-        initialScrollPercentage = 0,
         initialScrollTop = 0,
         initialSelection = { anchor: 0, head: 0 },
         initialHistoryState,
@@ -62,42 +79,28 @@
         onSelectionChange,
         onHistoryUpdate,
         customKeymap = [],
-        spellCheckLinter,
         eventHandlers,
         cmView = $bindable(),
     } = $props<{
         tabId: string;
         initialContent?: string;
-        filename?: string;
         isMarkdown?: boolean;
-        initialScrollPercentage?: number;
         initialScrollTop?: number;
         initialSelection?: { anchor: number; head: number };
-        initialHistoryState?: any;
-        lineChangeTracker: any;
+        initialHistoryState?: unknown;
+        lineChangeTracker: LineChangeTracker | undefined;
         onContentChange: (content: string) => void;
-        onMetricsChange: (metrics: any) => void;
+        onMetricsChange: (metrics: Partial<EditorMetrics>) => void;
         onScrollChange?: (percentage: number, scrollTop: number, topLine: number) => void;
         onSelectionChange?: (anchor: number, head: number) => void;
-        onHistoryUpdate?: (state: any) => void;
-        customKeymap?: any[];
-        spellCheckLinter: any;
-        eventHandlers: any;
-        cmView?: EditorView & {
-            getHistoryState?: () => any;
-            flushPendingContent?: () => void;
-            _currentTabId?: string;
-        };
+        onHistoryUpdate?: (state: unknown) => void;
+        customKeymap?: readonly KeyBinding[];
+        eventHandlers: Extension;
+        cmView?: AppEditorView;
     }>();
 
     let editorContainer = $state<HTMLDivElement>();
-    let view = $state<
-        EditorView & {
-            getHistoryState?: () => any;
-            flushPendingContent?: () => void;
-            _currentTabId?: string;
-        }
-    >();
+    let view = $state<AppEditorView>();
 
     let scrollManager = new ScrollManager();
     let lastForceSyncCounter = $state(0);
@@ -136,7 +139,7 @@
     });
 
     $effect(() => {
-        const _ = spellcheckState.customDictionary;
+        void spellcheckState.customDictionary;
         if (view && spellcheckState.dictionaryLoaded) {
             view.dispatch({ effects: spellComp.reconfigure(createSpellCheckLinter()) });
         }
@@ -227,7 +230,7 @@
         }
     });
 
-    function createExtensions(currentHistoryState: any): Extension[] {
+    function createExtensions(currentHistoryState: unknown): Extension[] {
         const isDark = appContext.app.theme === 'dark';
         const extensions = [
             highlightActiveLineGutter(),
@@ -244,7 +247,7 @@
             EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
             filePathPlugin,
             filePathTheme,
-            getEditorKeymap(customKeymap),
+            getEditorKeymap([...customKeymap]),
             themeComp.of(
                 generateDynamicTheme(
                     appContext.app.editorFontSize,
@@ -276,9 +279,8 @@
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => {
                         onContentChange(update.state.doc.toString());
-                        const v = view as (EditorView & { getHistoryState?: () => any }) | undefined;
-                        if (onHistoryUpdate && v && v.getHistoryState) {
-                            onHistoryUpdate(v.getHistoryState());
+                        if (onHistoryUpdate && view?.getHistoryState) {
+                            onHistoryUpdate(view.getHistoryState());
                         }
                     }, CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
                 }
@@ -295,13 +297,12 @@
                         const docString = state.doc.toString();
                         const line = state.doc.lineAt(state.selection.main.head);
 
-                        onMetricsChange(
-                            calculateCursorMetrics(docString, state.selection.main.head, {
-                                number: line.number,
-                                from: line.from,
-                                text: line.text,
-                            }),
-                        );
+                        const metrics: CursorMetrics = calculateCursorMetrics(docString, state.selection.main.head, {
+                            number: line.number,
+                            from: line.from,
+                            text: line.text,
+                        });
+                        onMetricsChange(metrics);
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
             }),
@@ -361,13 +362,10 @@
                     },
                 });
 
-                // Ensure the editor gains focus after the state swap
                 view!.focus();
 
-                // Set global reference for spellcheck
-                (window as any)._activeEditorView = view;
+                (window as unknown as AppWindow)._activeEditorView = view!;
 
-                // Apply immediate spellcheck if dictionary is loaded and we have cached results
                 if (spellcheckState.dictionaryLoaded) {
                     applyImmediateSpellcheck(view!);
                 }
@@ -386,8 +384,6 @@
             untrack(() => {
                 scrollManager.capture(view!, 'Sync');
 
-                // 1. Capture current visual cursor position (Line/Col)
-                // This allows us to preserve position across formatting changes better than absolute offsets
                 const state = view!.state;
                 const selection = state.selection.main;
                 const anchorLineObj = state.doc.lineAt(selection.anchor);
@@ -396,14 +392,11 @@
                 const anchorInfo = { line: anchorLineObj.number, col: selection.anchor - anchorLineObj.from };
                 const headInfo = { line: headLineObj.number, col: selection.head - headLineObj.from };
 
-                // 2. Update content
                 view!.dispatch({
                     changes: { from: 0, to: state.doc.length, insert: storeContent },
                     userEvent: 'input.type.sync',
                 });
 
-                // 3. Restore cursor based on Line/Col mapping in the new document
-                // This prevents the cursor from "jumping" when formatting adds/removes characters
                 const newState = view!.state;
                 const newDoc = newState.doc;
 
@@ -452,7 +445,7 @@
             parent: editorContainer,
         });
 
-        const typedView = viewInstance as any;
+        const typedView = viewInstance as AppEditorView;
         typedView.getHistoryState = () => typedView.state.field(historyField, false);
         typedView._currentTabId = tabId;
 
@@ -467,7 +460,7 @@
         };
 
         view = typedView;
-        (window as any)._activeEditorView = view;
+        (window as unknown as AppWindow)._activeEditorView = view;
 
         scrollSync.registerEditor(viewInstance);
 
@@ -522,8 +515,9 @@
             window.removeEventListener('blur', clearModifier);
             view?.scrollDOM.removeEventListener('scroll', throttleScroll);
 
-            if ((window as any)._activeEditorView === view) {
-                (window as any)._activeEditorView = null;
+            const appWin = window as unknown as AppWindow;
+            if (appWin._activeEditorView === view) {
+                appWin._activeEditorView = null;
             }
 
             const v = view;
@@ -541,7 +535,7 @@
 
 <div
     role="none"
-    class="w-full h-full overflow-hidden bg-bg-main relative"
+    class="relative h-full w-full overflow-hidden bg-bg-main"
     bind:this={editorContainer}
     onclick={() => view?.focus()}>
 </div>
