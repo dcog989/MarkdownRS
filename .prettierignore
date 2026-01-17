@@ -46,3 +46,4 @@ Thumbs.db
 .docs/
 .assets/
 .git/
+*.md
