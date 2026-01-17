@@ -1,5 +1,4 @@
 use anyhow::Result;
-use log;
 use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, params};
@@ -31,6 +30,8 @@ pub struct TabState {
     pub sort_index: Option<i32>,
     #[serde(default)]
     pub original_index: Option<i32>,
+    #[serde(default)]
+    pub history_state: Option<String>,
 }
 
 impl fmt::Debug for TabState {
@@ -78,149 +79,117 @@ pub struct Database {
     pool: DbPool,
 }
 
+const MIGRATIONS: &[&str] = &[
+    // v1: Initial Schema
+    "CREATE TABLE IF NOT EXISTS tabs (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT,
+        is_dirty INTEGER NOT NULL,
+        path TEXT,
+        scroll_percentage REAL NOT NULL,
+        created TEXT,
+        modified TEXT,
+        is_pinned INTEGER DEFAULT 0,
+        custom_title TEXT,
+        file_check_failed INTEGER DEFAULT 0,
+        file_check_performed INTEGER DEFAULT 0,
+        mru_position INTEGER,
+        sort_index INTEGER DEFAULT 0,
+        history_state TEXT
+    );
+    CREATE TABLE IF NOT EXISTS closed_tabs (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT,
+        is_dirty INTEGER NOT NULL,
+        path TEXT,
+        scroll_percentage REAL NOT NULL,
+        created TEXT,
+        modified TEXT,
+        is_pinned INTEGER DEFAULT 0,
+        custom_title TEXT,
+        file_check_failed INTEGER DEFAULT 0,
+        file_check_performed INTEGER DEFAULT 0,
+        mru_position INTEGER,
+        sort_index INTEGER DEFAULT 0,
+        original_index INTEGER,
+        history_state TEXT
+    );
+    CREATE TABLE IF NOT EXISTS bookmarks (
+        id TEXT PRIMARY KEY,
+        path TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        created TEXT NOT NULL,
+        last_accessed TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path);",
+];
+
 impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         log::info!("Initializing database at {:?}", db_path);
 
-        // Create connection manager
         let manager = SqliteConnectionManager::file(&db_path).with_init(|conn| {
             conn.execute_batch(
                 "PRAGMA journal_mode = WAL;
-                     PRAGMA synchronous = NORMAL;
-                     PRAGMA auto_vacuum = INCREMENTAL;
-                     PRAGMA foreign_keys = ON;
-                     PRAGMA busy_timeout = 5000;",
+                 PRAGMA synchronous = NORMAL;
+                 PRAGMA auto_vacuum = INCREMENTAL;
+                 PRAGMA foreign_keys = ON;
+                 PRAGMA busy_timeout = 5000;",
             )?;
             Ok(())
         });
 
-        // Create connection pool with appropriate settings
         let pool = r2d2::Pool::builder()
-            .max_size(10) // Max 10 concurrent connections
-            .min_idle(Some(1)) // Keep at least 1 connection ready
+            .max_size(10)
+            .min_idle(Some(1))
             .connection_timeout(std::time::Duration::from_secs(5))
             .build(manager)?;
 
-        // Initialize schema using a connection from the pool
         let mut conn = pool.get()?;
-        let version = Self::get_schema_version(&conn)?;
-
-        if version < 1 {
-            let tx = conn.transaction()?;
-            log::info!("Creating initial database schema (v1)");
-
-            tx.execute(
-                "CREATE TABLE IF NOT EXISTS tabs (
-                    id TEXT PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    content TEXT,
-                    is_dirty INTEGER NOT NULL,
-                    path TEXT,
-                    scroll_percentage REAL NOT NULL,
-                    created TEXT,
-                    modified TEXT,
-                    is_pinned INTEGER DEFAULT 0,
-                    custom_title TEXT,
-                    file_check_failed INTEGER DEFAULT 0,
-                    file_check_performed INTEGER DEFAULT 0,
-                    mru_position INTEGER,
-                    sort_index INTEGER DEFAULT 0,
-                    history_state TEXT
-                )",
-                [],
-            )?;
-
-            tx.execute(
-                "CREATE TABLE IF NOT EXISTS closed_tabs (
-                    id TEXT PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    content TEXT,
-                    is_dirty INTEGER NOT NULL,
-                    path TEXT,
-                    scroll_percentage REAL NOT NULL,
-                    created TEXT,
-                    modified TEXT,
-                    is_pinned INTEGER DEFAULT 0,
-                    custom_title TEXT,
-                    file_check_failed INTEGER DEFAULT 0,
-                    file_check_performed INTEGER DEFAULT 0,
-                    mru_position INTEGER,
-                    sort_index INTEGER DEFAULT 0,
-                    original_index INTEGER,
-                    history_state TEXT
-                )",
-                [],
-            )?;
-
-            tx.execute(
-                "CREATE TABLE IF NOT EXISTS bookmarks (
-                    id TEXT PRIMARY KEY,
-                    path TEXT NOT NULL UNIQUE,
-                    title TEXT NOT NULL,
-                    tags TEXT NOT NULL,
-                    created TEXT NOT NULL,
-                    last_accessed TEXT
-                )",
-                [],
-            )?;
-
-            tx.execute(
-                "CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path)",
-                [],
-            )?;
-
-            tx.execute(
-                "CREATE TABLE IF NOT EXISTS schema_version (
-                    version INTEGER PRIMARY KEY
-                )",
-                [],
-            )?;
-
-            tx.execute(
-                "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
-                [1],
-            )?;
-
-            tx.commit()?;
-        }
-
-        drop(conn); // Release connection back to pool
+        Self::setup_schema(&mut conn)?;
+        drop(conn);
 
         Ok(Self { pool })
     }
 
-    fn get_schema_version(conn: &Connection) -> Result<i32> {
-        let exists: i32 = conn.query_row(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='schema_version'",
+    fn setup_schema(conn: &mut Connection) -> Result<()> {
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY)",
             [],
-            |row| row.get(0),
         )?;
 
-        if exists == 0 {
-            return Ok(0);
+        let current_version: i32 = conn
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap_or(0);
+
+        for (i, migration) in MIGRATIONS.iter().enumerate() {
+            let version = (i + 1) as i32;
+            if version > current_version {
+                log::info!("Applying database migration v{}", version);
+                let tx = conn.transaction()?;
+                tx.execute_batch(migration)?;
+                tx.execute(
+                    "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
+                    [version],
+                )?;
+                tx.commit()?;
+            }
         }
 
-        let version = conn.query_row(
-            "SELECT version FROM schema_version ORDER BY version DESC LIMIT 1",
-            [],
-            |row| row.get(0),
-        );
-
-        Ok(version.unwrap_or(0))
+        Ok(())
     }
 
     pub fn save_session(&self, active_tabs: &[TabState], closed_tabs: &[TabState]) -> Result<()> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
 
-        // --- Save Active Tabs with Incremental Updates ---
         if active_tabs.is_empty() {
             tx.execute("DELETE FROM tabs", [])?;
         } else {
-            // Collect IDs of tabs that should exist
             let active_ids: Vec<&str> = active_tabs.iter().map(|t| t.id.as_str()).collect();
-
-            // Delete tabs that are no longer in the active list
             let placeholders = active_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
             let delete_query = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
             let mut delete_stmt = tx.prepare(&delete_query)?;
@@ -230,13 +199,12 @@ impl Database {
                 .collect();
             delete_stmt.execute(params.as_slice())?;
 
-            // Prepare statements for insert/update
             let mut insert_stmt = tx.prepare_cached(
                 "INSERT INTO tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position, sort_index
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+                    file_check_failed, file_check_performed, mru_position, sort_index, history_state
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
                 ON CONFLICT(id) DO NOTHING",
             )?;
 
@@ -244,7 +212,7 @@ impl Database {
                 "UPDATE tabs SET
                     title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
                     created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14
+                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, history_state=?15
                 WHERE id=?1",
             )?;
 
@@ -252,12 +220,11 @@ impl Database {
                 "UPDATE tabs SET
                     title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
                     created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13
+                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, history_state=?14
                 WHERE id=?1",
             )?;
 
             for tab in active_tabs {
-                // Try to insert first (for new tabs)
                 let insert_result = insert_stmt.execute(params![
                     &tab.id,
                     &tab.title,
@@ -272,14 +239,12 @@ impl Database {
                     if tab.file_check_failed { 1 } else { 0 },
                     if tab.file_check_performed { 1 } else { 0 },
                     &tab.mru_position,
-                    &tab.sort_index
-                ]);
+                    &tab.sort_index,
+                    &tab.history_state
+                ])?;
 
-                // If insert failed (tab exists), update it
-                if insert_result.is_ok() && insert_result.unwrap() == 0 {
-                    // Tab already exists, do incremental update
+                if insert_result == 0 {
                     if tab.content.is_some() {
-                        // Full update including content
                         update_full_stmt.execute(params![
                             &tab.id,
                             &tab.title,
@@ -294,10 +259,10 @@ impl Database {
                             if tab.file_check_failed { 1 } else { 0 },
                             if tab.file_check_performed { 1 } else { 0 },
                             &tab.mru_position,
-                            &tab.sort_index
+                            &tab.sort_index,
+                            &tab.history_state
                         ])?;
                     } else {
-                        // Metadata-only update (skip content)
                         update_metadata_stmt.execute(params![
                             &tab.id,
                             &tab.title,
@@ -311,14 +276,14 @@ impl Database {
                             if tab.file_check_failed { 1 } else { 0 },
                             if tab.file_check_performed { 1 } else { 0 },
                             &tab.mru_position,
-                            &tab.sort_index
+                            &tab.sort_index,
+                            &tab.history_state
                         ])?;
                     }
                 }
             }
         }
 
-        // --- Save Closed Tabs ---
         tx.execute("DELETE FROM closed_tabs", [])?;
 
         if !closed_tabs.is_empty() {
@@ -326,8 +291,8 @@ impl Database {
                 "INSERT OR REPLACE INTO closed_tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position, sort_index, original_index
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+                    file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
             )?;
 
             for (i, tab) in closed_tabs.iter().enumerate() {
@@ -346,7 +311,8 @@ impl Database {
                     if tab.file_check_performed { 1 } else { 0 },
                     &tab.mru_position,
                     i as i32,
-                    &tab.original_index
+                    &tab.original_index,
+                    &tab.history_state
                 ])?;
             }
         }
@@ -362,12 +328,11 @@ impl Database {
     pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
         let conn = self.pool.get()?;
 
-        // Load Active Tabs
         let query = if include_content {
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, history_state
              FROM tabs ORDER BY sort_index ASC"
         } else {
-            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
+            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, history_state
              FROM tabs ORDER BY sort_index ASC"
         };
 
@@ -375,20 +340,16 @@ impl Database {
 
         let active_tabs = active_stmt
             .query_map([], |row| {
-                let id: String = row.get(0)?;
-                let title: String = row.get(1)?;
-                let path: Option<String> = row.get(4)?;
-
                 Ok(TabState {
-                    id,
-                    title,
+                    id: row.get(0)?,
+                    title: row.get(1)?,
                     content: if include_content {
                         Some(row.get::<_, Option<String>>(2)?.unwrap_or_default())
                     } else {
                         None
                     },
                     is_dirty: row.get::<_, i32>(3)? != 0,
-                    path,
+                    path: row.get(4)?,
                     scroll_percentage: row.get(5)?,
                     created: row.get(6)?,
                     modified: row.get(7)?,
@@ -399,16 +360,16 @@ impl Database {
                     mru_position: row.get(12).ok(),
                     sort_index: row.get(13).ok(),
                     original_index: None,
+                    history_state: row.get(14).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        // Load Closed Tabs
         let closed_query = if include_content {
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
              FROM closed_tabs ORDER BY sort_index ASC"
         } else {
-            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
+            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
              FROM closed_tabs ORDER BY sort_index ASC"
         };
 
@@ -436,6 +397,7 @@ impl Database {
                     mru_position: row.get(12).ok(),
                     sort_index: row.get(13).ok(),
                     original_index: row.get(14).ok(),
+                    history_state: row.get(15).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
