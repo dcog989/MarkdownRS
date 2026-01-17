@@ -1,8 +1,14 @@
 use encoding_rs::{UTF_16BE, UTF_16LE};
 use serde::Serialize;
+use std::collections::HashMap;
 use std::fs;
+use std::sync::LazyLock;
 use tauri::Manager;
+use tokio::sync::Mutex;
 use unicode_bom::Bom;
+
+static THEME_CACHE: LazyLock<Mutex<HashMap<String, String>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Serialize)]
 pub struct AppInfo {
@@ -87,6 +93,13 @@ pub async fn get_theme_css(
     app_handle: tauri::AppHandle,
     theme_name: String,
 ) -> Result<String, String> {
+    {
+        let cache = THEME_CACHE.lock().await;
+        if let Some(css) = cache.get(&theme_name) {
+            return Ok(css.clone());
+        }
+    }
+
     let app_dir = app_handle.path().app_data_dir().map_err(|e| {
         log::error!("Failed to get app data directory for theme CSS: {}", e);
         format!("Failed to access theme: {}", e)
@@ -99,10 +112,15 @@ pub async fn get_theme_css(
         return Err(format!("Custom theme '{}' not found", theme_name));
     }
 
-    fs::read_to_string(theme_path).map_err(|e| {
+    let css = fs::read_to_string(theme_path).map_err(|e| {
         log::error!("Failed to read theme '{}': {}", theme_name, e);
         format!("Failed to load theme: {}", e)
-    })
+    })?;
+
+    let mut cache = THEME_CACHE.lock().await;
+    cache.insert(theme_name, css.clone());
+
+    Ok(css)
 }
 
 #[tauri::command]
