@@ -193,8 +193,8 @@ class FileWatcherService {
                 if (!signal?.aborted) {
                     const now = Date.now();
                     const lastTime = this.lastToastTime.get(path) || 0;
-                    // Limit toasts to once every 5 seconds per file to prevent spamming
-                    if (now - lastTime > 5000) {
+                    const toastTimeLimit = 5000;
+                    if (now - lastTime > toastTimeLimit) {
                         const tabNames = cleanTabs.map((t) => t.title).join(', ');
                         showToast('info', `Loaded ${tabNames} from disk`);
                         this.lastToastTime.set(path, now);
