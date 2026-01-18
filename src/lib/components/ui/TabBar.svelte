@@ -182,14 +182,12 @@
 </script>
 
 <div
-    class="bg-bg-panel border-border-main relative flex h-8 w-full shrink-0 items-stretch border-b"
->
+    class="bg-bg-panel border-border-main relative flex h-8 w-full shrink-0 items-stretch border-b">
     <div class="border-border-main relative h-8 border-r">
         <button
             type="button"
             class="text-fg-muted flex h-full items-center gap-1 px-2 text-xs hover:bg-white/10"
-            onclick={() => (showDropdown = !showDropdown)}
-        >
+            onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
@@ -200,8 +198,7 @@
                 pushToMru(id);
                 showDropdown = false;
             }}
-            onClose={() => (showDropdown = false)}
-        />
+            onClose={() => (showDropdown = false)} />
     </div>
 
     <div class="relative h-full min-w-0 flex-1">
@@ -209,8 +206,8 @@
             <div
                 class="pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"
-            ></div>
+                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);">
+            </div>
         {/if}
 
         <section
@@ -233,8 +230,7 @@
                         tabBarContextMenuY = e.clientY;
                     }
                 }
-            }}
-        >
+            }}>
             {#each appContext.editor.tabs as tab (tab.id)}
                 <div
                     class="flex h-full shrink-0 touch-none items-stretch outline-none select-none"
@@ -244,8 +240,7 @@
                         ? '0.4'
                         : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};"
                     onpointerdown={(e) =>
-                        sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}
-                >
+                        sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}
@@ -254,8 +249,7 @@
                             contextMenuTabId = id;
                             contextMenuX = e.clientX;
                             contextMenuY = e.clientY;
-                        }}
-                    />
+                        }} />
                 </div>
             {/each}
 
@@ -266,12 +260,10 @@
                         class="pointer-events-none fixed z-999"
                         style="left: {currentDragX -
                             dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect().top ??
-                            0}px; opacity: 0.95;"
-                    >
+                            0}px; opacity: 0.95;">
                         <TabButton
                             tab={dragTab}
-                            isActive={appContext.app.activeTabId === dragTab.id}
-                        />
+                            isActive={appContext.app.activeTabId === dragTab.id} />
                     </div>
                 {/if}
             {/if}
@@ -281,8 +273,8 @@
             <div
                 class="pointer-events-none absolute top-0 right-0 bottom-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"
-            ></div>
+                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);">
+            </div>
         {/if}
     </div>
 
@@ -293,8 +285,7 @@
             onclick={() => {
                 const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;
-            }}
-        >
+            }}>
             <Plus size={16} />
         </button>
     </div>
@@ -305,16 +296,14 @@
         tabId={contextMenuTabId}
         x={contextMenuX}
         y={contextMenuY}
-        onClose={() => (contextMenuTabId = null)}
-    />
+        onClose={() => (contextMenuTabId = null)} />
 {/if}
 
 {#if showTabBarContextMenu}
     <TabBarContextMenu
         x={tabBarContextMenuX}
         y={tabBarContextMenuY}
-        onClose={() => (showTabBarContextMenu = false)}
-    />
+        onClose={() => (showTabBarContextMenu = false)} />
 {/if}
 
 <MruTabsPopup
@@ -326,8 +315,7 @@
     }}
     selectedId={isMruCycling
         ? appContext.editor.mruStack[mruSelectedIndex]
-        : appContext.app.activeTabId}
-/>
+        : appContext.app.activeTabId} />
 
 <style>
     .no-scrollbar::-webkit-scrollbar {

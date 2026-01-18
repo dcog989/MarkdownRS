@@ -115,13 +115,11 @@
             <div class="border-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Version</span>
                 <span class="text-fg-default flex-1 text-left font-mono font-bold"
-                    >{appInfo.version}</span
-                >
+                    >{appInfo.version}</span>
                 <button
                     class="text-ui-sm bg-bg-input text-fg-default border-border-light flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
                     onclick={checkForUpdates}
-                    disabled={isChecking}
-                >
+                    disabled={isChecking}>
                     {#if isChecking}
                         <LoaderCircle size={12} class="animate-spin" />
                     {:else}
@@ -135,55 +133,46 @@
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Install</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.install_path}>{appInfo.install_path}</span
-                >
+                    title={appInfo.install_path}>{appInfo.install_path}</span>
                 <button
                     class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
-                    onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button
-                >
+                    onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
             </div>
 
             <div class="border-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Data</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.data_path}>{appInfo.data_path}</span
-                >
+                    title={appInfo.data_path}>{appInfo.data_path}</span>
                 <button
                     class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
-                    onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button
-                >
+                    onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
             </div>
 
             <div class="border-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Cache</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.cache_path}>{appInfo.cache_path}</span
-                >
+                    title={appInfo.cache_path}>{appInfo.cache_path}</span>
                 <button
                     class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
-                    onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button
-                >
+                    onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button>
             </div>
 
             <div class="border-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Logs</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.logs_path}>{appInfo.logs_path}</span
-                >
+                    title={appInfo.logs_path}>{appInfo.logs_path}</span>
                 <button
                     class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
-                    onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button
-                >
+                    onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button>
             </div>
         </div>
 
         <button
             class="text-ui-sm text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
-            onclick={openLogFile}
-        >
+            onclick={openLogFile}>
             <span>Open Current Log File</span>
             <ExternalLink size={12} />
         </button>

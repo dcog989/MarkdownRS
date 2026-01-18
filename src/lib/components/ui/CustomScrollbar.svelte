@@ -262,8 +262,7 @@
     class:opacity-0={!isVisible}
     class:opacity-100={isVisible}
     class:pointer-events-none={!isVisible}
-    onmousedown={onTrackMouseDown}
->
+    onmousedown={onTrackMouseDown}>
     <div
         bind:this={thumbRef}
         role="none"
@@ -272,6 +271,6 @@
         class:!opacity-100={isDragging}
         class:bg-accent-primary={isDragging}
         style="height: {thumbHeight}px; will-change: transform;"
-        onmousedown={onThumbMouseDown}
-    ></div>
+        onmousedown={onThumbMouseDown}>
+    </div>
 </div>

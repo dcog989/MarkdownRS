@@ -236,19 +236,16 @@
         onmouseleave={() => (isMouseOver = false)}
         role="dialog"
         aria-label="Find and Replace"
-        tabindex="-1"
-    >
+        tabindex="-1">
         <div class="border-border-main text-fg-default flex items-center border-b p-2">
             <div class="flex flex-1 items-center gap-2">
                 <button
                     type="button"
                     class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all"
                     onclick={() => (isReplaceMode = !isReplaceMode)}
-                    title="Toggle Replace Mode"
-                >
+                    title="Toggle Replace Mode">
                     {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight
-                            size={14}
-                        />{/if}
+                            size={14} />{/if}
                 </button>
                 <span class="text-ui font-semibold">Find {isReplaceMode ? '& Replace' : ''}</span>
             </div>
@@ -256,8 +253,7 @@
                 type="button"
                 class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all"
                 onclick={close}
-                title="Close (Esc)"
-            >
+                title="Close (Esc)">
                 <X size={14} />
             </button>
         </div>
@@ -273,8 +269,7 @@
                         ? 'border-danger'
                         : ''}"
                     oninput={onInput}
-                    spellcheck="false"
-                />
+                    spellcheck="false" />
                 <div class="text-fg-muted min-w-20 text-right text-[11px]">
                     {#if searchScope === 'current'}
                         {#if searchState.currentMatches > 0}
@@ -294,8 +289,7 @@
 
             {#if searchState.regexError}
                 <div
-                    class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-[11px]"
-                >
+                    class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-[11px]">
                     {searchState.regexError}
                 </div>
             {/if}
@@ -308,8 +302,7 @@
                         placeholder="Replace"
                         class="flex-1 text-[13px] leading-6"
                         oninput={onReplaceInput}
-                        spellcheck="false"
-                    />
+                        spellcheck="false" />
                 </div>
             {/if}
 
@@ -319,8 +312,7 @@
                         type="checkbox"
                         bind:checked={searchState.matchCase}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-                    />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Match Case</span>
                 </label>
                 <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
@@ -328,8 +320,7 @@
                         type="checkbox"
                         bind:checked={searchState.matchWholeWord}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-                    />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Whole Word</span>
                 </label>
                 <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
@@ -337,8 +328,7 @@
                         type="checkbox"
                         bind:checked={searchState.useRegex}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-                    />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Regex</span>
                 </label>
             </div>
@@ -349,8 +339,7 @@
                         type="radio"
                         bind:group={searchScope}
                         value="current"
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-                    />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Current Document</span>
                 </label>
                 <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
@@ -358,8 +347,7 @@
                         type="radio"
                         bind:group={searchScope}
                         value="all"
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-                    />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>All Open Documents</span>
                 </label>
             </div>
@@ -369,16 +357,14 @@
                     type="button"
                     class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                     onclick={onFindPrevious}
-                    disabled={searchScope === 'all' || !!searchState.regexError}
-                >
+                    disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} /> Previous
                 </button>
                 <button
                     type="button"
                     class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                     onclick={onFindNext}
-                    disabled={searchScope === 'all' || !!searchState.regexError}
-                >
+                    disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} /> Next
                 </button>
                 {#if isReplaceMode}
@@ -386,16 +372,14 @@
                         type="button"
                         class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                         onclick={onReplace}
-                        disabled={searchScope === 'all' || !!searchState.regexError}
-                    >
+                        disabled={searchScope === 'all' || !!searchState.regexError}>
                         <Replace size={12} /> Replace
                     </button>
                     <button
                         type="button"
                         class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                         onclick={onReplaceAll}
-                        disabled={!!searchState.regexError}
-                    >
+                        disabled={!!searchState.regexError}>
                         <Replace size={12} /> Replace All
                     </button>
                 {/if}
@@ -410,16 +394,13 @@
                             <button
                                 type="button"
                                 class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
-                                onclick={() => navigateToTab(tabId)}
-                            >
+                                onclick={() => navigateToTab(tabId)}>
                                 <span
                                     class="text-fg-default overflow-hidden text-[13px] text-ellipsis whitespace-nowrap"
-                                    >{tab.title}</span
-                                >
+                                    >{tab.title}</span>
                                 <span
                                     class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-[11px]"
-                                    >{count}</span
-                                >
+                                    >{count}</span>
                             </button>
                         {/if}
                     {/each}

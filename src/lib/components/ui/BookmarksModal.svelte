@@ -215,22 +215,19 @@
         <div class="relative mx-4 flex-1">
             <Search
                 size={12}
-                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50"
-            />
+                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
             <Input
                 bind:ref={searchInputEl}
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search bookmarks..."
-                class="pr-3 pl-8"
-            />
+                class="pr-3 pl-8" />
         </div>
 
         <div class="flex shrink-0 items-center gap-1">
             <select
                 bind:value={sortBy}
-                class="text-ui bg-bg-input text-fg-default border-border-main cursor-pointer rounded border px-2 py-1 outline-none"
-            >
+                class="text-ui bg-bg-input text-fg-default border-border-main cursor-pointer rounded border px-2 py-1 outline-none">
                 <option value="most-recent">Most Recent</option>
                 <option value="alphabetical">Alphabetical</option>
                 <option value="last-updated">Last Updated</option>
@@ -238,8 +235,7 @@
             <button
                 onclick={toggleSortDirection}
                 class="text-fg-muted rounded p-1 transition-colors hover:bg-white/10"
-                title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}
-            >
+                title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
                 {#if sortDirection === 'asc'}
                     <ArrowUp size={16} />
                 {:else}
@@ -251,15 +247,13 @@
         <button
             class="text-accent-primary ml-2 shrink-0 rounded p-1 transition-colors hover:bg-white/10"
             onclick={startAdd}
-            title="Add Bookmark"
-        >
+            title="Add Bookmark">
             <Plus size={16} />
         </button>
 
         <button
             class="text-fg-muted ml-2 shrink-0 rounded p-1 transition-colors hover:bg-white/10"
-            onclick={onClose}
-        >
+            onclick={onClose}>
             <X size={16} />
         </button>
     {/snippet}
@@ -272,12 +266,10 @@
                         bind:value={addPath}
                         type="text"
                         placeholder="File path..."
-                        class="bg-bg-panel flex-1"
-                    />
+                        class="bg-bg-panel flex-1" />
                     <button
                         onclick={handleBrowse}
-                        class="text-ui bg-bg-panel text-fg-default border-border-main rounded border px-3 py-1 font-medium transition-colors"
-                    >
+                        class="text-ui bg-bg-panel text-fg-default border-border-main rounded border px-3 py-1 font-medium transition-colors">
                         Browse...
                     </button>
                 </div>
@@ -285,27 +277,23 @@
                     bind:value={addTitle}
                     type="text"
                     placeholder="Bookmark title..."
-                    class="bg-bg-panel"
-                />
+                    class="bg-bg-panel" />
                 <Input
                     bind:value={addTags}
                     type="text"
                     placeholder="Tags (comma-separated)..."
-                    class="bg-bg-panel"
-                />
+                    class="bg-bg-panel" />
                 {#if browseError}
                     <div class="text-ui-sm text-danger-text">{browseError}</div>
                 {/if}
                 <div class="flex justify-end gap-2">
                     <button onclick={() => (showAddForm = false)} class="text-ui rounded px-3 py-1"
-                        >Cancel</button
-                    >
+                        >Cancel</button>
                     <button
                         onclick={handleAddBookmark}
                         disabled={!addPath || !addTitle}
                         class="text-ui bg-accent-primary text-fg-inverse rounded px-3 py-1 font-medium disabled:opacity-50"
-                        >Add</button
-                    >
+                        >Add</button>
                 </div>
             </div>
         </div>
@@ -322,18 +310,15 @@
                                 <Input
                                     bind:value={editTags}
                                     type="text"
-                                    placeholder="Tags (comma-separated)"
-                                />
+                                    placeholder="Tags (comma-separated)" />
                                 <div class="flex justify-end gap-2">
                                     <button
                                         onclick={cancelEdit}
-                                        class="text-ui-sm rounded px-2 py-1">Cancel</button
-                                    >
+                                        class="text-ui-sm rounded px-2 py-1">Cancel</button>
                                     <button
                                         onclick={() => saveEdit(bookmark.id)}
                                         class="text-ui-sm bg-accent-primary text-fg-inverse rounded px-2 py-1"
-                                        >Save</button
-                                    >
+                                        >Save</button>
                                 </div>
                             </div>
                         {:else}
@@ -341,8 +326,7 @@
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div
                                 class="flex cursor-pointer items-start gap-3"
-                                onclick={() => handleOpenBookmark(bookmark)}
-                            >
+                                onclick={() => handleOpenBookmark(bookmark)}>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-fg-default truncate font-medium">
                                         {bookmark.title}
@@ -355,8 +339,7 @@
                                             <Tag size={12} class="opacity-50" />
                                             {#each bookmark.tags as tag (tag)}
                                                 <span
-                                                    class="text-ui-sm bg-bg-input text-fg-muted rounded px-1.5 py-0.5"
-                                                >
+                                                    class="text-ui-sm bg-bg-input text-fg-muted rounded px-1.5 py-0.5">
                                                     {tag}
                                                 </span>
                                             {/each}
@@ -375,14 +358,12 @@
                                             e.stopPropagation();
                                             startEdit(bookmark);
                                         }}
-                                        class="text-fg-muted rounded p-1.5 hover:bg-white/10"
-                                    >
+                                        class="text-fg-muted rounded p-1.5 hover:bg-white/10">
                                         <Pen size={14} />
                                     </button>
                                     <button
                                         onclick={(e) => handleDelete(bookmark.id, e)}
-                                        class="text-fg-muted hover:text-danger-text rounded p-1.5 hover:bg-white/10"
-                                    >
+                                        class="text-fg-muted hover:text-danger-text rounded p-1.5 hover:bg-white/10">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>

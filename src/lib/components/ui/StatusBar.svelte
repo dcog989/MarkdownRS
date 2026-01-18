@@ -98,18 +98,15 @@
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
     "
-    oncontextmenu={handleContextMenu}
->
+    oncontextmenu={handleContextMenu}>
     <div
         class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
-        style="opacity: {textOpacity};"
-    >
+        style="opacity: {textOpacity};">
         {#if canToggleFileType}
             <button
                 class="hover:text-fg-default min-w-17.5 cursor-pointer rounded px-1 transition-colors hover:bg-white/10"
                 onclick={toggleFileType}
-                use:tooltip={'Toggle File Type (markdown/text)'}
-            >
+                use:tooltip={'Toggle File Type (markdown/text)'}>
                 {fileType}
             </button>
         {:else}
@@ -120,19 +117,16 @@
         <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
             <span class="opacity-70">Ln</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.cursorLine)}</span
-            >
+                >{formatNumber(appContext.metrics.cursorLine)}</span>
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[4ch] text-left font-mono"
-                >{formatNumber(totalLines)}</span
-            >
+                >{formatNumber(totalLines)}</span>
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Column Position'}>
             <span class="opacity-70">Col</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.cursorCol)}</span
-            >
+                >{formatNumber(appContext.metrics.cursorCol)}</span>
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[3ch] text-left font-mono">
                 {formatNumber(
@@ -149,23 +143,19 @@
         <div class="flex items-center gap-1" use:tooltip={'Character Position'}>
             <span class="opacity-70">Char</span>
             <span class="inline-block min-w-[5ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.cursorOffset)}</span
-            >
+                >{formatNumber(appContext.metrics.cursorOffset)}</span>
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[5ch] text-left font-mono"
-                >{formatNumber(totalChars)}</span
-            >
+                >{formatNumber(totalChars)}</span>
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Word Position'}>
             <span class="opacity-70">Word</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.currentWordIndex)}</span
-            >
+                >{formatNumber(appContext.metrics.currentWordIndex)}</span>
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[4ch] text-left font-mono"
-                >{formatNumber(totalWords)}</span
-            >
+                >{formatNumber(totalWords)}</span>
         </div>
 
         <div class="ml-2 flex items-center gap-1" use:tooltip={'File Size'}>
@@ -175,13 +165,11 @@
 
     <div
         class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
-        style="opacity: {textOpacity};"
-    >
+        style="opacity: {textOpacity};">
         <button
             class="hover:text-fg-default cursor-pointer rounded px-1 transition-colors hover:bg-white/10"
             onclick={toggleLineEnding}
-            use:tooltip={'Toggle Line Ending'}
-        >
+            use:tooltip={'Toggle Line Ending'}>
             {lineEnding}
         </button>
 
@@ -193,8 +181,7 @@
             onclick={toggleInsertMode}
             class="w-8 text-center font-bold {appContext.metrics.insertMode === 'OVR'
                 ? 'text-danger'
-                : 'text-accent-secondary'}"
-        >
+                : 'text-accent-secondary'}">
             {appContext.metrics.insertMode}
         </button>
 
@@ -204,8 +191,7 @@
                 ? 'text-accent-secondary'
                 : 'text-inherit'}"
             onclick={toggleWordWrap}
-            use:tooltip={'Toggle Word Wrap'}
-        >
+            use:tooltip={'Toggle Word Wrap'}>
             <TextWrap size={14} />
         </button>
     </div>
@@ -215,8 +201,7 @@
     <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
         <button
             class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
-            onclick={copyAllStats}
-        >
+            onclick={copyAllStats}>
             <ClipboardCopy size={14} class="opacity-70" />
             <span>Copy all document stats</span>
         </button>

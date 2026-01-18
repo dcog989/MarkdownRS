@@ -67,8 +67,7 @@
         oncontextmenu?.(e, tab.id);
     }}
     onkeydown={(e) => e.key === 'Enter' && onclick?.(tab.id)}
-    use:tooltip={isCollapsed ? tooltipContent : null}
->
+    use:tooltip={isCollapsed ? tooltipContent : null}>
     {#if isFileMissing}
         <CircleAlert size={14} class="text-danger-text shrink-0" />
     {:else if !tab.path}
@@ -80,8 +79,7 @@
                     ? '#5deb47'
                     : isActive
                       ? 'var(--color-fg-inverse)'
-                      : 'var(--color-fg-muted)'}"
-            />
+                      : 'var(--color-fg-muted)'}" />
         {:else}
             <Pencil size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
         {/if}
@@ -93,8 +91,7 @@
                 ? '#5deb47'
                 : isActive
                   ? 'var(--color-fg-inverse)'
-                  : 'var(--color-accent-secondary)'}"
-        />
+                  : 'var(--color-accent-secondary)'}" />
     {:else}
         <FileText size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
     {/if}
@@ -108,12 +105,10 @@
             {#if tab.isPinned}
                 <div
                     class={'absolute inset-0 flex items-center justify-center ' +
-                        (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}
-                >
+                        (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}>
                     <Pin
                         size={12}
-                        class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}"
-                    />
+                        class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
                 </div>
             {:else}
                 <div
@@ -123,8 +118,7 @@
                     class:via-bg-panel={!isActive}
                     class:to-bg-panel={!isActive}
                     class:group-hover:via-bg-hover={!isActive}
-                    class:group-hover:to-bg-hover={!isActive}
-                >
+                    class:group-hover:to-bg-hover={!isActive}>
                     <span
                         role="button"
                         tabindex="0"
@@ -135,8 +129,7 @@
                         }}
                         onkeydown={(e) =>
                             e.key === 'Enter' && onclose?.(e as unknown as MouseEvent, tab.id)}
-                        use:tooltip={`Close ${tab.title}`}
-                    >
+                        use:tooltip={`Close ${tab.title}`}>
                         <X size={14} class="transition-colors" />
                     </span>
                 </div>

@@ -85,22 +85,19 @@
         <div class="relative mx-4 flex-1">
             <Search
                 size={12}
-                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50"
-            />
+                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
             <Input
                 bind:ref={inputRef}
                 bind:value={query}
                 type="text"
                 placeholder="Search..."
                 class="pr-3 pl-8"
-                onkeydown={handleKeydown}
-            />
+                onkeydown={handleKeydown} />
         </div>
 
         <button
             class="text-fg-muted shrink-0 rounded p-1 transition-colors hover:bg-white/10"
-            onclick={close}
-        >
+            onclick={close}>
             <X size={16} />
         </button>
     {/snippet}
@@ -121,8 +118,7 @@
                     "
                     use:scrollIntoView={index === selectedIndex}
                     onmouseenter={() => (selectedIndex = index)}
-                    onclick={() => execute(command)}
-                >
+                    onclick={() => execute(command)}>
                     <span>{command.label}</span>
                     {#if command.shortcut}
                         <span class="text-ui-sm opacity-60">{command.shortcut}</span>

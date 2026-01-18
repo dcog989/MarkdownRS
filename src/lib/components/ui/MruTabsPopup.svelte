@@ -60,8 +60,7 @@
                             onclick={() => {
                                 onSelect(tab.id);
                                 onClose();
-                            }}
-                        >
+                            }}>
                             <div class="mru-badge">
                                 {index + 1}
                             </div>

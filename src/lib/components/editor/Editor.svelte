@@ -228,24 +228,21 @@
         onMetricsChange={handleMetricsChange}
         onScrollChange={handleScrollChange}
         onSelectionChange={handleSelectionChange}
-        onHistoryUpdate={handleHistoryUpdate}
-    />
+        onHistoryUpdate={handleHistoryUpdate} />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} onScrollClick={handleScrollbarClick} />
     {/if}
     <FindReplacePanel
         bind:this={findReplacePanel}
         bind:isOpen={appContext.interface.showFind}
-        {cmView}
-    />
+        {cmView} />
 
     {#if showEmptyState}
         <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
             <img
                 src="/logo.svg"
                 alt="MarkdownRS Logo"
-                class="h-48 w-48 opacity-[0.08] select-none"
-            />
+                class="h-48 w-48 opacity-[0.08] select-none" />
         </div>
     {/if}
 </div>
@@ -307,6 +304,5 @@
             setTimeout(() => {
                 if (cmView) refreshSpellcheck(cmView);
             }, CONFIG.SPELLCHECK.REFRESH_DELAY_MS);
-        }}
-    />
+        }} />
 {/if}

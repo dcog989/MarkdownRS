@@ -92,21 +92,18 @@
             class="pointer-events-auto max-w-100 min-w-75"
             transition:fly={{ y: -20, duration: 200 }}
             role="alert"
-            aria-live="polite"
-        >
+            aria-live="polite">
             <div
                 class="border-border-main bg-bg-panel text-fg-default flex items-center gap-3 rounded-md border border-l-[3px] px-4 py-3 shadow-lg {colorClass.split(
                     ' ',
-                )[1]}"
-            >
+                )[1]}">
                 <Icon size={16} class="shrink-0 {iconColorClass}" />
                 <span class="flex-1 text-[13px] leading-snug">{toast.message}</span>
                 <button
                     type="button"
                     class="text-fg-muted hover:bg-bg-hover hover:text-fg-default flex shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent p-1 transition-all"
                     onclick={() => dismissToast(toast.id)}
-                    aria-label="Dismiss"
-                >
+                    aria-label="Dismiss">
                     <X size={14} />
                 </button>
             </div>

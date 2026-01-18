@@ -21,6 +21,7 @@
     "eslint.workingDirectories": [{ "mode": "auto" }],
     "eslint.useFlatConfig": true,
     "prettier.requireConfig": true,
+    "prettier.bracketSameLine": true,
     "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@tauri-apps/**"],
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer",

@@ -338,8 +338,7 @@
 
 {#if !isInitialized}
     <div
-        class="bg-bg-main text-fg-default flex h-screen w-screen flex-col items-center justify-center"
-    >
+        class="bg-bg-main text-fg-default flex h-screen w-screen flex-col items-center justify-center">
         <img src="/logo.svg" alt="App Logo" class="mb-4 h-16 w-16 animate-pulse opacity-50" />
         <p class="text-fg-muted text-sm">Loading MarkdownRS...</p>
         {#if initError}
@@ -348,29 +347,25 @@
     </div>
 {:else}
     <div
-        class="bg-bg-main text-fg-default border-border-main flex h-screen w-screen flex-col overflow-hidden border"
-    >
+        class="bg-bg-main text-fg-default border-border-main flex h-screen w-screen flex-col overflow-hidden border">
         <Titlebar />
         <TabBar />
 
         <div
             class="relative z-0 flex flex-1 overflow-hidden outline-none"
             bind:this={mainContainer}
-            style="position: relative;"
-        >
+            style="position: relative;">
             <!-- Removed #key block to allow Editor to reuse instance -->
             {#if appContext.app.activeTabId}
                 <div
                     class="flex h-full w-full"
                     style="flex-direction: {appContext.app.splitOrientation === 'vertical'
                         ? 'row'
-                        : 'column'};"
-                >
+                        : 'column'};">
                     <div
                         style="flex: {showPreview
                             ? `0 0 ${appContext.app.splitPercentage * 100}%`
-                            : '1 1 100%'}; height: 100%; overflow: hidden;"
-                    >
+                            : '1 1 100%'}; height: 100%; overflow: hidden;">
                         <Editor tabId={appContext.app.activeTabId} />
                     </div>
 
@@ -385,8 +380,8 @@
                                 flex: 0 0 4px;
                             "
                             onmousedown={startResize}
-                            ondblclick={resetSplit}
-                        ></div>
+                            ondblclick={resetSplit}>
+                        </div>
                     {/if}
 
                     {#if showPreview}
@@ -397,13 +392,11 @@
                 </div>
             {:else}
                 <div
-                    class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none"
-                >
+                    class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none">
                     <img
                         src="/logo.svg"
                         alt="App Logo"
-                        class="mb-4 h-16 w-16 opacity-50 grayscale"
-                    />
+                        class="mb-4 h-16 w-16 opacity-50 grayscale" />
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}

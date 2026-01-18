@@ -571,5 +571,5 @@
     role="none"
     class="bg-bg-main relative h-full w-full overflow-hidden"
     bind:this={editorContainer}
-    onclick={() => view?.focus()}
-></div>
+    onclick={() => view?.focus()}>
+</div>

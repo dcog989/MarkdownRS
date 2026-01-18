@@ -117,11 +117,9 @@
             onclick={() => toggleOrientation()}
             use:tooltip={appContext.app.splitOrientation === 'vertical'
                 ? 'Switch to Horizontal Split'
-                : 'Switch to Vertical Split'}
-        >
+                : 'Switch to Vertical Split'}>
             {#if appContext.app.splitOrientation === 'vertical'}<FlipVertical
-                    size={16}
-                />{:else}<FlipHorizontal size={16} />{/if}
+                    size={16} />{:else}<FlipHorizontal size={16} />{/if}
         </button>
     </div>
 
@@ -139,12 +137,10 @@
         class="preview-container prose prose-invert prose-sm bg-bg-preview text-fg-default relative z-0 h-full w-full max-w-none overflow-y-auto p-8"
         style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
             .previewFontSize}px;"
-        spellcheck="false"
-    >
+        spellcheck="false">
         {#if !isMarkdown}
             <div
-                class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none"
-            >
+                class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none">
                 <FileText size={64} class="mb-4" />
                 <p>Preview not available for this file type</p>
             </div>

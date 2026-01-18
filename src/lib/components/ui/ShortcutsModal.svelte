@@ -78,8 +78,7 @@
         </div>
         <button
             class="text-fg-muted shrink-0 rounded p-1 transition-colors hover:bg-white/10"
-            onclick={onClose}
-        >
+            onclick={onClose}>
             <X size={16} />
         </button>
     {/snippet}
@@ -89,8 +88,7 @@
             {#each categories as [category, defs] (category)}
                 <div>
                     <h3
-                        class="text-ui-sm text-accent-secondary border-border-main mb-2 border-b pb-1 font-bold tracking-widest uppercase"
-                    >
+                        class="text-ui-sm text-accent-secondary border-border-main mb-2 border-b pb-1 font-bold tracking-widest uppercase">
                         {category}
                     </h3>
                     <div class="divide-border-main/30 divide-y">
@@ -98,8 +96,7 @@
                             <div class="group flex items-center justify-between py-2">
                                 <button
                                     class="text-fg-default hover:text-accent-secondary flex-1 cursor-pointer text-left transition-colors outline-none"
-                                    onclick={() => startRecording(def.command)}
-                                >
+                                    onclick={() => startRecording(def.command)}>
                                     {def.description}
                                 </button>
                                 <div class="flex items-center gap-2">
@@ -108,8 +105,7 @@
                                             {recordingCommandId === def.command
                                             ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
                                             : 'bg-bg-input text-fg-default border-border-main hover:border-accent-secondary'}"
-                                        onclick={() => startRecording(def.command)}
-                                    >
+                                        onclick={() => startRecording(def.command)}>
                                         {recordingCommandId === def.command
                                             ? 'Press keys...'
                                             : shortcutManager.getShortcutDisplay(def.command)}
@@ -118,8 +114,7 @@
                                         <button
                                             class="text-fg-muted hover:text-accent-primary p-1 opacity-0 transition-all group-hover:opacity-100"
                                             onclick={() => resetShortcut(def.command)}
-                                            title="Reset to default"
-                                        >
+                                            title="Reset to default">
                                             <RotateCcw size={14} />
                                         </button>
                                     {/if}

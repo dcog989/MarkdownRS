@@ -104,8 +104,7 @@
             opacity: {isVisible ? 1 : 0};
         "
         onclick={(e) => e.stopPropagation()}
-        oncontextmenu={(e) => e.preventDefault()}
-    >
+        oncontextmenu={(e) => e.preventDefault()}>
         {@render children({ submenuSide })}
     </div>
 </div>

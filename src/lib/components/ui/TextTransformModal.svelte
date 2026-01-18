@@ -26,8 +26,7 @@
             type="button"
             class="rounded p-1 hover:bg-white/10"
             onclick={onClose}
-            aria-label="Close"
-        >
+            aria-label="Close">
             <X size={18} class="text-fg-muted" />
         </button>
     {/snippet}
@@ -49,8 +48,7 @@
                         <button
                             type="button"
                             class="border-border-main flex items-start gap-3 rounded border p-3 text-left transition-colors hover:bg-white/10"
-                            onclick={() => handleOperation(operation.id)}
-                        >
+                            onclick={() => handleOperation(operation.id)}>
                             <div class="mt-0.5 shrink-0">
                                 <OperationIcon size={16} class="text-accent-secondary" />
                             </div>
@@ -74,8 +72,7 @@
         <button
             type="button"
             class="bg-accent-primary text-fg-inverse rounded px-4 py-2 text-sm font-medium hover:opacity-80"
-            onclick={onClose}
-        >
+            onclick={onClose}>
             Close
         </button>
     {/snippet}

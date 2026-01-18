@@ -268,26 +268,20 @@
 <CommandPalette
     bind:isOpen={appContext.interface.showCommandPalette}
     {commands}
-    onClose={() => (appContext.interface.showCommandPalette = false)}
-/>
+    onClose={() => (appContext.interface.showCommandPalette = false)} />
 <SettingsModal
     bind:isOpen={appContext.interface.showSettings}
-    onClose={() => (appContext.interface.showSettings = false)}
-/>
+    onClose={() => (appContext.interface.showSettings = false)} />
 <AboutModal
     bind:isOpen={appContext.interface.showAbout}
-    onClose={() => (appContext.interface.showAbout = false)}
-/>
+    onClose={() => (appContext.interface.showAbout = false)} />
 <BookmarksModal
     bind:isOpen={appContext.interface.showBookmarks}
     onClose={() => (appContext.interface.showBookmarks = false)}
-    onOpenFile={(path) => openFileByPath(path)}
-/>
+    onOpenFile={(path) => openFileByPath(path)} />
 <TextTransformModal
     isOpen={appContext.interface.showTransform}
-    onClose={() => (appContext.interface.showTransform = false)}
-/>
+    onClose={() => (appContext.interface.showTransform = false)} />
 <ShortcutsModal
     bind:isOpen={appContext.interface.showShortcuts}
-    onClose={() => (appContext.interface.showShortcuts = false)}
-/>
+    onClose={() => (appContext.interface.showShortcuts = false)} />

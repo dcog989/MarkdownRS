@@ -138,8 +138,7 @@
     <div class="fixed inset-0 z-40" role="presentation" onclick={onClose}></div>
     <div
         class="bg-bg-panel border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
-        role="menu"
-    >
+        role="menu">
         <div class="border-border-light shrink-0 border-b p-2">
             <input
                 bind:this={searchInputRef}
@@ -147,16 +146,14 @@
                 type="text"
                 placeholder="Filter tabs..."
                 class="text-fg-default w-full bg-transparent px-2 py-1 text-sm outline-none"
-                onkeydown={handleKeydown}
-            />
+                onkeydown={handleKeydown} />
         </div>
 
         <div class="relative min-h-0 flex-1">
             <div
                 bind:this={dropdownListRef}
                 class="dropdown-list overflow-y-auto py-1"
-                style="max-height: 60vh;"
-            >
+                style="max-height: 60vh;">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
@@ -166,8 +163,7 @@
                             ? 'bg-accent-primary'
                             : 'bg-transparent'}"
                         onmousemove={(e) => handleHover(index, e)}
-                        use:scrollIntoView={isSelected}
-                    >
+                        use:scrollIntoView={isSelected}>
                         <button
                             type="button"
                             class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none {isSelected
@@ -177,8 +173,7 @@
                                   : 'text-fg-default'}"
                             onclick={() => handleSelect(tab.id)}
                             role="menuitem"
-                            use:tooltip={getTooltipContent(tab)}
-                        >
+                            use:tooltip={getTooltipContent(tab)}>
                             {#if tab.fileCheckFailed}
                                 <CircleAlert size={14} class="text-danger-text shrink-0" />
                             {:else if !tab.path}
@@ -190,15 +185,13 @@
                                             ? '#5deb47'
                                             : isSelected
                                               ? 'var(--color-fg-inverse)'
-                                              : 'var(--color-fg-muted)'};"
-                                    />
+                                              : 'var(--color-fg-muted)'};" />
                                 {:else}
                                     <Pencil
                                         size={14}
                                         class="shrink-0 {isSelected
                                             ? 'text-fg-inverse'
-                                            : 'text-fg-muted'}"
-                                    />
+                                            : 'text-fg-muted'}" />
                                 {/if}
                             {:else if tab.isDirty}
                                 <SquarePen
@@ -208,15 +201,13 @@
                                         ? '#5deb47'
                                         : isSelected
                                           ? 'var(--color-fg-inverse)'
-                                          : 'var(--color-accent-secondary)'}"
-                                />
+                                          : 'var(--color-accent-secondary)'}" />
                             {:else}
                                 <FileText
                                     size={14}
                                     class="shrink-0 {isSelected
                                         ? 'text-fg-inverse'
-                                        : 'text-fg-muted'}"
-                                />
+                                        : 'text-fg-muted'}" />
                             {/if}
 
                             <span class="flex-1 truncate">{getDropdownTitle(tab)}</span>
@@ -226,8 +217,7 @@
                                     size={12}
                                     class="ml-1 shrink-0 {isSelected
                                         ? 'text-fg-inverse'
-                                        : 'text-accent-secondary'}"
-                                />
+                                        : 'text-accent-secondary'}" />
                             {/if}
                         </button>
 
@@ -243,8 +233,7 @@
                                 e.stopPropagation();
                                 requestCloseTab(tab.id);
                             }}
-                            aria-label="Close tab"
-                        >
+                            aria-label="Close tab">
                             <X size={14} />
                         </button>
                     </div>

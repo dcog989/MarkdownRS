@@ -138,8 +138,7 @@
         class:items-start={position === 'top'}
         style="z-index: {zIndex}; pointer-events: auto;"
         onclick={handleBackdropClick}
-        onkeydown={handleTabKey}
-    >
+        onkeydown={handleTabKey}>
         <div
             bind:this={modalPanel}
             class="ui-panel shadow-2xl"
@@ -147,8 +146,7 @@
             'top'
                 ? 'calc(100vh - 5rem)'
                 : MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;"
-            onclick={(e) => e.stopPropagation()}
-        >
+            onclick={(e) => e.stopPropagation()}>
             <!-- Header Strategy: Snippet First, then Title+Close Default -->
             {#if header}
                 <div class="ui-header flex items-center justify-between">
@@ -160,8 +158,7 @@
                     <button
                         class="text-fg-muted rounded p-1 transition-colors hover:bg-white/10"
                         onclick={onClose}
-                        aria-label="Close"
-                    >
+                        aria-label="Close">
                         <X size={18} />
                     </button>
                 </div>
@@ -182,8 +179,7 @@
             <!-- Footer -->
             {#if footer}
                 <div
-                    class="border-border-main bg-bg-panel flex shrink-0 justify-end gap-2 border-t px-4 py-3"
-                >
+                    class="border-border-main bg-bg-panel flex shrink-0 justify-end gap-2 border-t px-4 py-3">
                     {@render footer()}
                 </div>
             {/if}

@@ -143,23 +143,20 @@
         tabindex="0"
         onclick={toggleDropdown}
         onkeydown={handleKeydown}
-        class="text-ui bg-bg-input text-fg-default border-border-main focus:border-accent-primary flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none"
-    >
+        class="text-ui bg-bg-input text-fg-default border-border-main focus:border-accent-primary flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none">
         <div class="flex flex-1 flex-wrap items-center gap-1.5">
             {#if selected.length === 0}
                 <span class="text-ui-sm opacity-50">Select dictionaries...</span>
             {:else}
                 {#each selected as code (code)}
                     <span
-                        class="bg-accent-primary/20 text-ui-sm inline-flex items-center gap-1 rounded px-2 py-1 whitespace-nowrap"
-                    >
+                        class="bg-accent-primary/20 text-ui-sm inline-flex items-center gap-1 rounded px-2 py-1 whitespace-nowrap">
                         {availableDictionaries.find((d) => d.code === code)?.name || code}
                         <button
                             type="button"
                             onclick={(e) => removeDict(code, e)}
                             class="hover:text-danger flex items-center transition-colors"
-                            aria-label="Remove {code}"
-                        >
+                            aria-label="Remove {code}">
                             <X size={12} />
                         </button>
                     </span>
@@ -170,8 +167,7 @@
             size={14}
             class="mt-0.5 shrink-0 self-start opacity-50 transition-transform {isOpen
                 ? 'rotate-180'
-                : ''}"
-        />
+                : ''}" />
     </div>
 
     {#if isOpen}
@@ -180,14 +176,12 @@
             'above'
                 ? 'bottom-full mb-1'
                 : 'top-full mt-1'}"
-            style="max-height: {dropdownMaxHeight}px;"
-        >
+            style="max-height: {dropdownMaxHeight}px;">
             {#each availableDictionaries as dict (dict.code)}
                 <button
                     type="button"
                     onclick={() => toggleDict(dict.code)}
-                    class="text-ui text-fg-default flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5"
-                >
+                    class="text-ui text-fg-default flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5">
                     <span>{dict.name}</span>
                     {#if selected.includes(dict.code)}
                         <Check size={14} class="text-accent-primary" />

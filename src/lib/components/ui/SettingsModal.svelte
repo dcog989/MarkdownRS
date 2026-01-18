@@ -520,31 +520,27 @@
         <div class="relative mx-4 flex-1">
             <Search
                 size={12}
-                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50"
-            />
+                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
             <Input
                 bind:ref={searchInputEl}
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search..."
-                class="pr-3 pl-8"
-            />
+                class="pr-3 pl-8" />
         </div>
 
         <button
             class="text-fg-muted shrink-0 rounded p-1 transition-colors outline-none hover:bg-white/10"
             onclick={() => toggleShortcuts()}
             title="Keyboard Shortcuts (F1)"
-            aria-label="Keyboard Shortcuts"
-        >
+            aria-label="Keyboard Shortcuts">
             <Keyboard size={16} />
         </button>
 
         <button
             class="text-fg-muted shrink-0 rounded p-1 transition-colors outline-none hover:bg-white/10"
             onclick={onClose}
-            aria-label="Close Settings"
-        >
+            aria-label="Close Settings">
             <X size={16} />
         </button>
     {/snippet}
@@ -557,8 +553,7 @@
                         class="py-3"
                         style:border-top={index > 0 && !setting.visibleWhen && !setting.groupWith
                             ? '1px solid var(--color-border-main)'
-                            : 'none'}
-                    >
+                            : 'none'}>
                         <div class="flex items-start justify-between gap-6">
                             <label
                                 for={setting.key}
@@ -566,11 +561,9 @@
                                     'multi-select',
                                 )
                                     ? 'pt-1.5'
-                                    : ''}"
-                            >
+                                    : ''}">
                                 <span
-                                    class="text-ui-sm text-fg-muted mr-4 inline-block w-24 shrink-0 opacity-60"
-                                >
+                                    class="text-ui-sm text-fg-muted mr-4 inline-block w-24 shrink-0 opacity-60">
                                     {#if setting.visibleWhen}
                                         <!-- Indented child -->
                                     {:else}
@@ -585,8 +578,7 @@
                                 class="{setting.type.includes('multi-select')
                                     ? 'max-w-md flex-1'
                                     : 'w-56'} shrink-0"
-                                use:tooltip={setting.tooltip || ''}
-                            >
+                                use:tooltip={setting.tooltip || ''}>
                                 {#if setting.type === 'text'}
                                     <Input
                                         id={setting.key}
@@ -597,8 +589,7 @@
                                                 setting.key,
                                                 e.currentTarget.value,
                                                 setting.type,
-                                            )}
-                                    />
+                                            )} />
                                 {:else if setting.type === 'number'}
                                     <Input
                                         id={setting.key}
@@ -611,8 +602,7 @@
                                                 setting.key,
                                                 e.currentTarget.value,
                                                 setting.type,
-                                            )}
-                                    />
+                                            )} />
                                 {:else if setting.type === 'range'}
                                     <div class="flex items-center gap-3">
                                         <input
@@ -631,15 +621,13 @@
                                                     e.currentTarget.value,
                                                     setting.type,
                                                 )}
-                                            class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full"
-                                        />
+                                            class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full" />
                                         <span
                                             class="text-ui-sm text-fg-muted w-10 text-right font-mono opacity-80"
                                             >{getSettingValue(
                                                 setting.key,
                                                 setting.defaultValue,
-                                            )}%</span
-                                        >
+                                            )}%</span>
                                     </div>
                                 {:else if setting.type === 'boolean'}
                                     <input
@@ -652,8 +640,7 @@
                                                 e.currentTarget.checked,
                                                 setting.type,
                                             )}
-                                        class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
-                                    />
+                                        class="accent-accent-primary h-4 w-4 cursor-pointer rounded" />
                                 {:else if setting.type === 'select'}
                                     <select
                                         id={setting.key}
@@ -664,12 +651,10 @@
                                                 e.currentTarget.value,
                                                 setting.type,
                                             )}
-                                        class="text-ui bg-bg-input text-fg-default border-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none"
-                                    >
+                                        class="text-ui bg-bg-input text-fg-default border-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
                                         {#each setting.options || [] as option, idx (option)}
                                             <option value={option}
-                                                >{setting.optionLabels?.[idx] || option}</option
-                                            >
+                                                >{setting.optionLabels?.[idx] || option}</option>
                                         {/each}
                                     </select>
                                 {:else if setting.type === 'dictionary-multi-select'}
@@ -677,8 +662,7 @@
                                         <DictionarySelector
                                             selected={appContext.app.languageDictionaries}
                                             onChange={(dicts) =>
-                                                updateSetting(setting.key, dicts, setting.type)}
-                                        />
+                                                updateSetting(setting.key, dicts, setting.type)} />
                                     </div>
                                 {:else if setting.type === 'custom-context-menu'}
                                     <input
@@ -687,8 +671,7 @@
                                         checked={isContextMenuEnabled}
                                         onchange={(e) => toggleContextMenu(e.currentTarget.checked)}
                                         class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
-                                        disabled={isCheckingContextMenu}
-                                    />
+                                        disabled={isCheckingContextMenu} />
                                 {/if}
                             </div>
                         </div>

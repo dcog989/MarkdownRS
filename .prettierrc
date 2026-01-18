@@ -6,13 +6,17 @@
     "printWidth": 100,
     "useTabs": false,
     "arrowParens": "always",
+    "bracketSameLine": true,
     "endOfLine": "lf",
     "plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+
     "overrides": [
         {
             "files": "*.svelte",
             "options": {
-                "parser": "svelte"
+                "parser": "svelte",
+                "svelteStrictMode": false,
+                "svelteBracketNewLine": false
             }
         },
         {
