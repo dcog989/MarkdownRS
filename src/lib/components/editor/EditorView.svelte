@@ -332,6 +332,9 @@
 
         if (isTabSwitch) {
             untrack(() => {
+                // Reset sync counter for the new tab to ensure future updates are caught
+                lastForceSyncCounter = forceSyncCounter;
+
                 const newState = EditorState.create({
                     doc: storeContent,
                     extensions: createExtensions(storeTab.historyState),
