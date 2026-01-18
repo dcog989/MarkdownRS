@@ -14,6 +14,7 @@ class FileWatcherService {
     private pendingChecks = new Set<string>();
     private pendingWatchers = new Map<string, Promise<void>>();
     private abortControllers = new Map<string, AbortController>();
+    private lastToastTime = new Map<string, number>();
 
     // Tracks paths currently being written to by the application
     private activeWriteLocks = new Set<string>();
@@ -108,6 +109,7 @@ class FileWatcherService {
                 });
             }
             this.watchers.delete(path);
+            this.lastToastTime.delete(path);
         }
     }
 
@@ -189,8 +191,14 @@ class FileWatcherService {
                 }
 
                 if (!signal?.aborted) {
-                    const tabNames = cleanTabs.map((t) => t.title).join(', ');
-                    showToast('info', `Loaded ${tabNames} from disk`);
+                    const now = Date.now();
+                    const lastTime = this.lastToastTime.get(path) || 0;
+                    // Limit toasts to once every 5 seconds per file to prevent spamming
+                    if (now - lastTime > 5000) {
+                        const tabNames = cleanTabs.map((t) => t.title).join(', ');
+                        showToast('info', `Loaded ${tabNames} from disk`);
+                        this.lastToastTime.set(path, now);
+                    }
                 }
             }
         } catch (err) {
@@ -224,6 +232,7 @@ class FileWatcherService {
         }
         this.watchers.clear();
         this.activeWriteLocks.clear();
+        this.lastToastTime.clear();
     }
 }
 
