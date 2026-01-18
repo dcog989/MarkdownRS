@@ -255,9 +255,8 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
             const sanitizedPath = sanitizePath(savePath);
             let contentToSave = tab.content;
 
-            // Only format if NOT during tab switching
-            const shouldFormat =
-                appContext.app.formatOnSave && isMarkdownFile(sanitizedPath) && !appContext.app.isTabSwitching;
+            // Allow formatting on explicit save actions regardless of tab switching state
+            const shouldFormat = appContext.app.formatOnSave && isMarkdownFile(sanitizedPath);
 
             if (shouldFormat) {
                 const formatted = await formatMarkdown(contentToSave, {

@@ -378,10 +378,12 @@
         const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
         const isFocused = view.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
+
         // Skip sync during tab switching to prevent content corruption
+        // But allow forced syncs (e.g. formatting) to proceed regardless of switching state
         const shouldSync =
             (isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync) &&
-            !appContext.app.isTabSwitching;
+            (!appContext.app.isTabSwitching || isForcedSync);
 
         if (shouldSync) {
             untrack(() => {
