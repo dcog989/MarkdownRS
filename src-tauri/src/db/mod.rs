@@ -228,14 +228,14 @@ impl Database {
                 let mut final_content = tab.content.clone();
 
                 // Content Migration: If payload is null, try to harvest content from the other table before it's deleted
-                if final_content.is_none() {
-                    if let Ok(existing) = tx.query_row(
+                if final_content.is_none()
+                    && let Ok(existing) = tx.query_row(
                         "SELECT content FROM closed_tabs WHERE id = ?1",
                         params![&tab.id],
                         |row| row.get::<_, Option<String>>(0),
-                    ) {
-                        final_content = existing;
-                    }
+                    )
+                {
+                    final_content = existing;
                 }
 
                 let insert_result = insert_stmt.execute(params![
@@ -341,14 +341,14 @@ impl Database {
                 let mut final_content = tab.content.clone();
 
                 // Content Migration: If payload is null, harvest from active table before re-inserting
-                if final_content.is_none() {
-                    if let Ok(existing) = tx.query_row(
+                if final_content.is_none()
+                    && let Ok(existing) = tx.query_row(
                         "SELECT content FROM tabs WHERE id = ?1",
                         params![&tab.id],
                         |row| row.get::<_, Option<String>>(0),
-                    ) {
-                        final_content = existing;
-                    }
+                    )
+                {
+                    final_content = existing;
                 }
 
                 let insert_result = insert_stmt.execute(params![
