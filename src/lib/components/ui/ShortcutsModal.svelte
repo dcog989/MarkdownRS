@@ -74,9 +74,12 @@
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Keyboard size={16} class="text-accent-secondary" />
-            <h2 class="text-ui font-semibold shrink-0 text-fg-default">Keyboard Shortcuts</h2>
+            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Keyboard Shortcuts</h2>
         </div>
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 text-fg-muted" onclick={onClose}>
+        <button
+            class="text-fg-muted shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            onclick={onClose}
+        >
             <X size={16} />
         </button>
     {/snippet}
@@ -86,33 +89,37 @@
             {#each categories as [category, defs] (category)}
                 <div>
                     <h3
-                        class="text-ui-sm font-bold uppercase tracking-widest mb-2 text-accent-secondary border-b border-border-main pb-1">
+                        class="text-ui-sm text-accent-secondary border-border-main mb-2 border-b pb-1 font-bold tracking-widest uppercase"
+                    >
                         {category}
                     </h3>
-                    <div class="divide-y divide-border-main/30">
+                    <div class="divide-border-main/30 divide-y">
                         {#each defs as def (def.command)}
-                            <div class="flex items-center justify-between py-2 group">
+                            <div class="group flex items-center justify-between py-2">
                                 <button
-                                    class="text-left flex-1 cursor-pointer text-fg-default hover:text-accent-secondary transition-colors outline-none"
-                                    onclick={() => startRecording(def.command)}>
+                                    class="text-fg-default hover:text-accent-secondary flex-1 cursor-pointer text-left transition-colors outline-none"
+                                    onclick={() => startRecording(def.command)}
+                                >
                                     {def.description}
                                 </button>
                                 <div class="flex items-center gap-2">
                                     <button
-                                        class="px-3 py-1 rounded font-mono text-sm border transition-all min-w-25 text-center
+                                        class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
                                             {recordingCommandId === def.command
                                             ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
                                             : 'bg-bg-input text-fg-default border-border-main hover:border-accent-secondary'}"
-                                        onclick={() => startRecording(def.command)}>
+                                        onclick={() => startRecording(def.command)}
+                                    >
                                         {recordingCommandId === def.command
                                             ? 'Press keys...'
                                             : shortcutManager.getShortcutDisplay(def.command)}
                                     </button>
                                     {#if appContext.app.customShortcuts[def.command]}
                                         <button
-                                            class="p-1 opacity-0 group-hover:opacity-100 text-fg-muted hover:text-accent-primary transition-all"
+                                            class="text-fg-muted hover:text-accent-primary p-1 opacity-0 transition-all group-hover:opacity-100"
                                             onclick={() => resetShortcut(def.command)}
-                                            title="Reset to default">
+                                            title="Reset to default"
+                                        >
                                             <RotateCcw size={14} />
                                         </button>
                                     {/if}

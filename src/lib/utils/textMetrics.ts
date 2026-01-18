@@ -31,7 +31,10 @@ export function fastCountWords(text: string): number {
     for (let i = 0; i < text.length; i++) {
         const code = text.charCodeAt(i);
         const isAlpha =
-            (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || (code >= 48 && code <= 57) || code === 39;
+            (code >= 65 && code <= 90) ||
+            (code >= 97 && code <= 122) ||
+            (code >= 48 && code <= 57) ||
+            code === 39;
 
         if (isAlpha) {
             if (!inWord) {

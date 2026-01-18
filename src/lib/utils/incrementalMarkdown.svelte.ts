@@ -1,5 +1,6 @@
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
+import { SvelteMap } from 'svelte/reactivity';
 import { callBackend } from './backend';
 import { CONFIG } from './config';
 
@@ -15,7 +16,7 @@ interface MarkdownBlock {
  * Uses semantic splitting and caching to minimize re-renders.
  */
 export class IncrementalMarkdownRenderer {
-    private htmlCache = new Map<string, string>();
+    private htmlCache = new SvelteMap<string, string>();
 
     /**
      * Render markdown with incremental updates
@@ -112,7 +113,16 @@ export class IncrementalMarkdownRenderer {
 
             return DOMPurify.sanitize(result.html, {
                 USE_PROFILES: { html: true },
-                ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked'],
+                ADD_ATTR: [
+                    'target',
+                    'class',
+                    'data-source-line',
+                    'align',
+                    'start',
+                    'type',
+                    'disabled',
+                    'checked',
+                ],
             });
         } catch (e) {
             await error(`[Markdown] Render error: ${e}`);

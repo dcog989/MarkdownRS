@@ -44,12 +44,12 @@
     <div class="ui-backdrop" onclick={handleBackdropClick}>
         <div class="ui-panel">
             <div class="ui-header">
-                <h3 class="text-sm font-semibold text-fg-default">Recent Tabs</h3>
-                <p class="text-ui-sm mt-1 text-fg-muted">Release Ctrl to switch</p>
+                <h3 class="text-fg-default text-sm font-semibold">Recent Tabs</h3>
+                <p class="text-ui-sm text-fg-muted mt-1">Release Ctrl to switch</p>
             </div>
 
-            <div class="flex-1 relative overflow-hidden flex flex-col min-h-0">
-                <div bind:this={listContainerRef} class="flex-1 overflow-y-auto py-1 no-scrollbar">
+            <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div bind:this={listContainerRef} class="no-scrollbar flex-1 overflow-y-auto py-1">
                     {#each mruTabs as tab, index (tab.id)}
                         {@const isSelected = tab.id === selectedId}
                         <button
@@ -60,7 +60,8 @@
                             onclick={() => {
                                 onSelect(tab.id);
                                 onClose();
-                            }}>
+                            }}
+                        >
                             <div class="mru-badge">
                                 {index + 1}
                             </div>
@@ -83,7 +84,7 @@
                                 </div>
                             {/if}
 
-                            <div class="flex-1 min-w-0">
+                            <div class="min-w-0 flex-1">
                                 <div class="truncate font-medium">{tab.title}</div>
                                 {#if tab.path}
                                     <div class="mru-path">{tab.path}</div>

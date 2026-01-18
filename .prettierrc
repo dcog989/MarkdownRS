@@ -3,7 +3,7 @@
     "tabWidth": 4,
     "semi": true,
     "singleQuote": true,
-    "printWidth": 120,
+    "printWidth": 100,
     "useTabs": false,
     "arrowParens": "always",
     "endOfLine": "lf",
@@ -13,6 +13,12 @@
             "files": "*.svelte",
             "options": {
                 "parser": "svelte"
+            }
+        },
+        {
+            "files": ["*.yml", "*.yaml", "package.json"],
+            "options": {
+                "tabWidth": 2
             }
         }
     ]

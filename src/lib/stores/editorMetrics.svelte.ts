@@ -22,8 +22,10 @@ export function updateMetrics(metrics: Partial<EditorMetrics>) {
     if (metrics.cursorOffset !== undefined) editorMetrics.cursorOffset = metrics.cursorOffset;
     if (metrics.cursorLine !== undefined) editorMetrics.cursorLine = metrics.cursorLine;
     if (metrics.cursorCol !== undefined) editorMetrics.cursorCol = metrics.cursorCol;
-    if (metrics.currentLineLength !== undefined) editorMetrics.currentLineLength = metrics.currentLineLength;
-    if (metrics.currentWordIndex !== undefined) editorMetrics.currentWordIndex = metrics.currentWordIndex;
+    if (metrics.currentLineLength !== undefined)
+        editorMetrics.currentLineLength = metrics.currentLineLength;
+    if (metrics.currentWordIndex !== undefined)
+        editorMetrics.currentWordIndex = metrics.currentWordIndex;
     if (metrics.insertMode !== undefined) editorMetrics.insertMode = metrics.insertMode;
 }
 

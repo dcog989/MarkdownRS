@@ -79,38 +79,50 @@
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Zap size={16} class="text-accent-secondary" />
-            <h2 class="text-ui font-semibold shrink-0 text-fg-default">Commands</h2>
+            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Commands</h2>
         </div>
 
-        <div class="flex-1 relative mx-4">
-            <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+        <div class="relative mx-4 flex-1">
+            <Search
+                size={12}
+                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50"
+            />
             <Input
                 bind:ref={inputRef}
                 bind:value={query}
                 type="text"
                 placeholder="Search..."
-                class="pl-8 pr-3"
-                onkeydown={handleKeydown} />
+                class="pr-3 pl-8"
+                onkeydown={handleKeydown}
+            />
         </div>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 text-fg-muted" onclick={close}>
+        <button
+            class="text-fg-muted shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            onclick={close}
+        >
             <X size={16} />
         </button>
     {/snippet}
 
     <div class="py-1">
         {#if filteredCommands.length > 0}
-            {#each filteredCommands as command, index}
+            {#each filteredCommands as command, index (command.id)}
                 <button
                     type="button"
-                    class="command-item w-full text-left px-3 py-2 text-ui flex justify-between items-center outline-none"
+                    class="command-item text-ui flex w-full items-center justify-between px-3 py-2 text-left outline-none"
                     style="
-                        background-color: {index === selectedIndex ? 'var(--color-accent-primary)' : 'transparent'};
-                        color: {index === selectedIndex ? 'var(--color-fg-inverse)' : 'var(--color-fg-default)'};
+                        background-color: {index === selectedIndex
+                        ? 'var(--color-accent-primary)'
+                        : 'transparent'};
+                        color: {index === selectedIndex
+                        ? 'var(--color-fg-inverse)'
+                        : 'var(--color-fg-default)'};
                     "
                     use:scrollIntoView={index === selectedIndex}
                     onmouseenter={() => (selectedIndex = index)}
-                    onclick={() => execute(command)}>
+                    onclick={() => execute(command)}
+                >
                     <span>{command.label}</span>
                     {#if command.shortcut}
                         <span class="text-ui-sm opacity-60">{command.shortcut}</span>
@@ -118,7 +130,7 @@
                 </button>
             {/each}
         {:else}
-            <div class="px-3 py-2 text-ui text-fg-muted">No commands found</div>
+            <div class="text-ui text-fg-muted px-3 py-2">No commands found</div>
         {/if}
     </div>
 </Modal>

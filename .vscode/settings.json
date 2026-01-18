@@ -19,7 +19,7 @@
         }
     },
     "eslint.workingDirectories": [{ "mode": "auto" }],
-    "eslint.experimental.useFlatConfig": true,
+    "eslint.useFlatConfig": true,
     "prettier.requireConfig": true,
     "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@tauri-apps/**"],
     "[rust]": {

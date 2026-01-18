@@ -228,7 +228,7 @@
 {#if isOpen}
     <div
         bind:this={panelRef}
-        class="absolute top-0 right-0 w-100 max-h-150 z-50 flex flex-col transition-opacity duration-200 bg-bg-panel border border-border-main border-t-0 border-r-0 shadow-lg"
+        class="bg-bg-panel border-border-main absolute top-0 right-0 z-50 flex max-h-150 w-100 flex-col border border-t-0 border-r-0 shadow-lg transition-opacity duration-200"
         class:opacity-15={appContext.app.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
         onfocusout={handleBlur}
@@ -236,38 +236,46 @@
         onmouseleave={() => (isMouseOver = false)}
         role="dialog"
         aria-label="Find and Replace"
-        tabindex="-1">
-        <div class="flex items-center p-2 border-b border-border-main text-fg-default">
-            <div class="flex items-center gap-2 flex-1">
+        tabindex="-1"
+    >
+        <div class="border-border-main text-fg-default flex items-center border-b p-2">
+            <div class="flex flex-1 items-center gap-2">
                 <button
                     type="button"
-                    class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active"
+                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all"
                     onclick={() => (isReplaceMode = !isReplaceMode)}
-                    title="Toggle Replace Mode">
-                    {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
+                    title="Toggle Replace Mode"
+                >
+                    {#if isReplaceMode}<ChevronDown size={14} />{:else}<ChevronRight
+                            size={14}
+                        />{/if}
                 </button>
-                <span class="font-semibold text-ui">Find {isReplaceMode ? '& Replace' : ''}</span>
+                <span class="text-ui font-semibold">Find {isReplaceMode ? '& Replace' : ''}</span>
             </div>
             <button
                 type="button"
-                class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active"
+                class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all"
                 onclick={close}
-                title="Close (Esc)">
+                title="Close (Esc)"
+            >
                 <X size={14} />
             </button>
         </div>
 
-        <div class="p-3 flex flex-col gap-3 overflow-y-auto max-h-125">
-            <div class="flex gap-2 items-center">
+        <div class="flex max-h-125 flex-col gap-3 overflow-y-auto p-3">
+            <div class="flex items-center gap-2">
                 <Input
                     bind:ref={searchInputRef}
                     type="text"
                     bind:value={searchState.findText}
                     placeholder="Find"
-                    class="flex-1 text-[13px] leading-6 {searchState.regexError ? 'border-danger' : ''}"
+                    class="flex-1 text-[13px] leading-6 {searchState.regexError
+                        ? 'border-danger'
+                        : ''}"
                     oninput={onInput}
-                    spellcheck="false" />
-                <div class="text-[11px] text-fg-muted min-w-20 text-right">
+                    spellcheck="false"
+                />
+                <div class="text-fg-muted min-w-20 text-right text-[11px]">
                     {#if searchScope === 'current'}
                         {#if searchState.currentMatches > 0}
                             {searchState.currentIndex + 1} of {searchState.currentMatches}
@@ -285,117 +293,133 @@
             </div>
 
             {#if searchState.regexError}
-                <div class="text-[11px] text-danger bg-danger/10 px-2 py-1 rounded border border-danger/30">
+                <div
+                    class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-[11px]"
+                >
                     {searchState.regexError}
                 </div>
             {/if}
 
             {#if isReplaceMode}
-                <div class="flex gap-2 items-center">
+                <div class="flex items-center gap-2">
                     <Input
                         type="text"
                         bind:value={searchState.replaceText}
                         placeholder="Replace"
                         class="flex-1 text-[13px] leading-6"
                         oninput={onReplaceInput}
-                        spellcheck="false" />
+                        spellcheck="false"
+                    />
                 </div>
             {/if}
 
-            <div class="flex gap-4 flex-wrap">
-                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+            <div class="flex flex-wrap gap-4">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
                     <input
                         type="checkbox"
                         bind:checked={searchState.matchCase}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+                    />
                     <span>Match Case</span>
                 </label>
-                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
                     <input
                         type="checkbox"
                         bind:checked={searchState.matchWholeWord}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+                    />
                     <span>Whole Word</span>
                 </label>
-                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
                     <input
                         type="checkbox"
                         bind:checked={searchState.useRegex}
                         onchange={() => executeSearch(cmView!, false)}
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+                    />
                     <span>Regex</span>
                 </label>
             </div>
 
-            <div class="flex gap-4 flex-wrap">
-                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+            <div class="flex flex-wrap gap-4">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
                     <input
                         type="radio"
                         bind:group={searchScope}
                         value="current"
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+                    />
                     <span>Current Document</span>
                 </label>
-                <label class="flex items-center gap-1.5 text-[13px] text-fg-default cursor-pointer">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
                     <input
                         type="radio"
                         bind:group={searchScope}
                         value="all"
-                        class="w-3.5 h-3.5 cursor-pointer accent-accent-primary" />
+                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+                    />
                     <span>All Open Documents</span>
                 </label>
             </div>
 
-            <div class="flex gap-2 flex-wrap">
+            <div class="flex flex-wrap gap-2">
                 <button
                     type="button"
-                    class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
+                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                     onclick={onFindPrevious}
-                    disabled={searchScope === 'all' || !!searchState.regexError}>
+                    disabled={searchScope === 'all' || !!searchState.regexError}
+                >
                     <Search size={12} /> Previous
                 </button>
                 <button
                     type="button"
-                    class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
+                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                     onclick={onFindNext}
-                    disabled={searchScope === 'all' || !!searchState.regexError}>
+                    disabled={searchScope === 'all' || !!searchState.regexError}
+                >
                     <Search size={12} /> Next
                 </button>
                 {#if isReplaceMode}
                     <button
                         type="button"
-                        class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
+                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                         onclick={onReplace}
-                        disabled={searchScope === 'all' || !!searchState.regexError}>
+                        disabled={searchScope === 'all' || !!searchState.regexError}
+                    >
                         <Replace size={12} /> Replace
                     </button>
                     <button
                         type="button"
-                        class="p-1 px-2.5 rounded text-[13px] flex items-center gap-1.5 transition-all bg-bg-hover border border-border-light text-fg-default hover:bg-bg-active disabled:opacity-30 disabled:cursor-not-allowed"
+                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
                         onclick={onReplaceAll}
-                        disabled={!!searchState.regexError}>
+                        disabled={!!searchState.regexError}
+                    >
                         <Replace size={12} /> Replace All
                     </button>
                 {/if}
             </div>
 
             {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
-                <div class="flex flex-col gap-1 max-h-50 overflow-y-auto">
-                    <div class="text-[11px] font-semibold mb-1 text-fg-muted">Results:</div>
+                <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
+                    <div class="text-fg-muted mb-1 text-[11px] font-semibold">Results:</div>
                     {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}
                             <button
                                 type="button"
-                                class="flex items-center justify-between p-1.5 px-2 rounded cursor-pointer transition-colors bg-bg-hover hover:bg-bg-active border-none w-full text-left"
-                                onclick={() => navigateToTab(tabId)}>
+                                class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
+                                onclick={() => navigateToTab(tabId)}
+                            >
                                 <span
-                                    class="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap text-fg-default"
-                                    >{tab.title}</span>
-                                <span class="text-[11px] text-fg-muted bg-bg-panel px-2 py-0.5 rounded-xl"
-                                    >{count}</span>
+                                    class="text-fg-default overflow-hidden text-[13px] text-ellipsis whitespace-nowrap"
+                                    >{tab.title}</span
+                                >
+                                <span
+                                    class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-[11px]"
+                                    >{count}</span
+                                >
                             </button>
                         {/if}
                     {/each}

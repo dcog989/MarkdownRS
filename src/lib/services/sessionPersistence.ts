@@ -101,32 +101,40 @@ class SessionPersistenceManager {
             });
 
             // 2. Map Closed Tabs
-            const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map((entry, index) => {
-                // Closed tabs should only send content if it's loaded in memory.
-                // If loaded, we use standard dirty/persistence checks.
-                // If not loaded (lazy tab that was closed), we send null to trigger backend migration logic.
-                const needsContent = entry.tab.contentLoaded && (entry.tab.contentChanged || !entry.tab.isPersisted);
+            const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map(
+                (entry, index) => {
+                    // Closed tabs should only send content if it's loaded in memory.
+                    // If loaded, we use standard dirty/persistence checks.
+                    // If not loaded (lazy tab that was closed), we send null to trigger backend migration logic.
+                    const needsContent =
+                        entry.tab.contentLoaded &&
+                        (entry.tab.contentChanged || !entry.tab.isPersisted);
 
-                return {
-                    id: entry.tab.id,
-                    path: entry.tab.path,
-                    title: entry.tab.title,
-                    content: needsContent ? entry.tab.content : null,
-                    is_dirty: entry.tab.isDirty,
-                    scroll_percentage: entry.tab.scrollPercentage,
-                    created: entry.tab.created || null,
-                    modified: entry.tab.modified || null,
-                    is_pinned: entry.tab.isPinned || false,
-                    custom_title: entry.tab.customTitle || null,
-                    file_check_failed: entry.tab.fileCheckFailed || false,
-                    file_check_performed: entry.tab.fileCheckPerformed || false,
-                    mru_position: null,
-                    sort_index: index,
-                    original_index: entry.index,
-                };
-            });
+                    return {
+                        id: entry.tab.id,
+                        path: entry.tab.path,
+                        title: entry.tab.title,
+                        content: needsContent ? entry.tab.content : null,
+                        is_dirty: entry.tab.isDirty,
+                        scroll_percentage: entry.tab.scrollPercentage,
+                        created: entry.tab.created || null,
+                        modified: entry.tab.modified || null,
+                        is_pinned: entry.tab.isPinned || false,
+                        custom_title: entry.tab.customTitle || null,
+                        file_check_failed: entry.tab.fileCheckFailed || false,
+                        file_check_performed: entry.tab.fileCheckPerformed || false,
+                        mru_position: null,
+                        sort_index: index,
+                        original_index: entry.index,
+                    };
+                },
+            );
 
-            await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
+            await callBackend(
+                'save_session',
+                { activeTabs: activeRustTabs, closedTabs: closedTabs },
+                'Session:Save',
+            );
 
             const duration = (performance.now() - start).toFixed(2);
             const tabsWithContent = activeRustTabs.filter((t) => t.content !== null).length;
@@ -248,7 +256,11 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                 lastSavedContent = '';
             } else if (tab.isDirty) {
                 try {
-                    const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
+                    const fileData = await callBackend(
+                        'read_text_file',
+                        { path: tab.path },
+                        'File:Read',
+                    );
                     if (fileData && fileData.content) {
                         lastSavedContent = normalizeLineEndings(fileData.content);
                     }
@@ -323,7 +335,9 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     const widestColumn = Math.max(...lineArray.map((l) => l.length));
 
     const wordCount =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? countWords(content) : fastCountWords(content);
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(content)
+            : fastCountWords(content);
 
     const editorTab: EditorTab = {
         id: t.id,
@@ -344,7 +358,9 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         formattedTimestamp: formatTimestampForDisplay(timestamp),
         isPinned: t.is_pinned,
         customTitle: t.custom_title || undefined,
-        lineEnding: (t.content && t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF') as 'LF' | 'CRLF',
+        lineEnding: (t.content && t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF') as
+            | 'LF'
+            | 'CRLF',
         encoding: 'UTF-8',
         fileCheckFailed: t.file_check_failed || false,
         fileCheckPerformed: t.file_check_performed || false,
@@ -367,10 +383,11 @@ export async function loadSession(): Promise<void> {
         let closedRustTabs: RustTabState[] = [];
 
         if (Array.isArray(sessionData)) {
-            activeRustTabs = sessionData;
+            activeRustTabs = sessionData as RustTabState[];
         } else if (sessionData && typeof sessionData === 'object') {
-            activeRustTabs = sessionData.active_tabs || [];
-            closedRustTabs = sessionData.closed_tabs || [];
+            const sd = sessionData as { active_tabs?: unknown[]; closed_tabs?: unknown[] };
+            activeRustTabs = (sd.active_tabs || []) as RustTabState[];
+            closedRustTabs = (sd.closed_tabs || []) as RustTabState[];
         }
 
         if (activeRustTabs.length > 0) {
@@ -389,7 +406,8 @@ export async function loadSession(): Promise<void> {
                 .sort((a, b) => (a.mru_position || 0) - (b.mru_position || 0))
                 .map((t) => t.id);
 
-            appContext.editor.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map((t) => t.id);
+            appContext.editor.mruStack =
+                sortedMru.length > 0 ? sortedMru : convertedTabs.map((t) => t.id);
 
             // Initialize Active Tab Logic
 
@@ -399,7 +417,8 @@ export async function loadSession(): Promise<void> {
 
                     break;
                 case 'last-focused':
-                    appContext.app.activeTabId = appContext.editor.mruStack[0] || convertedTabs[0].id;
+                    appContext.app.activeTabId =
+                        appContext.editor.mruStack[0] || convertedTabs[0].id;
 
                     break;
                 case 'new':
@@ -408,7 +427,9 @@ export async function loadSession(): Promise<void> {
                     appContext.app.activeTabId = convertedTabs[0].id;
             }
 
-            const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+            const activeTab = appContext.editor.tabs.find(
+                (t) => t.id === appContext.app.activeTabId,
+            );
             if (activeTab) {
                 await initializeTabFileState(activeTab);
             }
@@ -437,7 +458,9 @@ export async function loadSession(): Promise<void> {
         }
 
         // Set sessionDirty if there are unsaved tabs with content
-        const hasUnsavedTabsWithContent = appContext.editor.tabs.some((t) => !t.path && t.content.length > 0);
+        const hasUnsavedTabsWithContent = appContext.editor.tabs.some(
+            (t) => !t.path && t.content.length > 0,
+        );
         appContext.editor.sessionDirty = hasUnsavedTabsWithContent;
 
         const duration = (performance.now() - start).toFixed(2);

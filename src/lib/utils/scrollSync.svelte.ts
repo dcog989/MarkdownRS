@@ -1,6 +1,6 @@
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
-import { EditorView } from '@codemirror/view';
+import { type EditorView } from '@codemirror/view';
 
 export class ScrollSyncManager {
     editor = $state<EditorView | null>(null);
@@ -70,7 +70,9 @@ export class ScrollSyncManager {
 
         // Query only elements with data-source-line attribute
         // We use a more specific query to avoid layout thrashing if possible, but map build is heavy anyway
-        const elements = Array.from(container.querySelectorAll('[data-source-line]')) as HTMLElement[];
+        const elements = Array.from(
+            container.querySelectorAll('[data-source-line]'),
+        ) as HTMLElement[];
 
         // 1. Build Raw Map: Line -> Pixel Y (absolute in scrollable area)
         const rawMap = elements
@@ -186,7 +188,10 @@ export class ScrollSyncManager {
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
             const targetTop = pct * (this.preview.scrollHeight - this.preview.clientHeight);
-            if (Math.abs(this.preview.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+            if (
+                Math.abs(this.preview.scrollTop - targetTop) >
+                CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+            ) {
                 this.preview.scrollTop = targetTop;
             }
             return;
@@ -199,7 +204,9 @@ export class ScrollSyncManager {
 
         const targetY = this.interpolate(currentLine, 'line', 'y');
 
-        if (Math.abs(this.preview.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+        if (
+            Math.abs(this.preview.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+        ) {
             this.preview.scrollTop = targetY;
         }
     }
@@ -219,7 +226,8 @@ export class ScrollSyncManager {
             return;
         }
         if (scrollTop >= maxScroll - 1) {
-            const targetBottom = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            const targetBottom =
+                this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
             if (Math.abs(this.editor.scrollDOM.scrollTop - targetBottom) > 2) {
                 this.editor.scrollDOM.scrollTop = targetBottom;
             }
@@ -228,9 +236,13 @@ export class ScrollSyncManager {
 
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
-            const editorMax = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            const editorMax =
+                this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
             const targetTop = pct * editorMax;
-            if (Math.abs(this.editor.scrollDOM.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+            if (
+                Math.abs(this.editor.scrollDOM.scrollTop - targetTop) >
+                CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+            ) {
                 this.editor.scrollDOM.scrollTop = targetTop;
             }
             return;
@@ -246,7 +258,10 @@ export class ScrollSyncManager {
         const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
         const targetY = lineInfo.top + lineInfo.height * lineFrac;
 
-        if (Math.abs(this.editor.scrollDOM.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+        if (
+            Math.abs(this.editor.scrollDOM.scrollTop - targetY) >
+            CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+        ) {
             this.editor.scrollDOM.scrollTop = targetY;
         }
     }

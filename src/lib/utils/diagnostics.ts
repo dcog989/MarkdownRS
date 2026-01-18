@@ -11,7 +11,11 @@ const logToBackend = throttle((message: string) => {
     info(message).catch(() => {});
 }, 100);
 
-export function logScroll(source: 'Editor' | 'Preview', action: string, data?: Record<string, any>) {
+export function logScroll(
+    source: 'Editor' | 'Preview',
+    action: string,
+    data?: Record<string, unknown>,
+) {
     // Immediate return in production - allows for dead code elimination/optimization
     if (!ENABLE_SCROLL_LOGGING) return;
 

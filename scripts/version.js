@@ -106,7 +106,9 @@ if (shouldGit) {
         // We use forward slashes for cross-platform compatibility in exec commands,
         // although path.join handles OS separators, git usually accepts forward slashes.
         // Using strict paths ensures we only add what we changed.
-        const files = [packageJsonPath, tauriConfPath, cargoTomlPath].map((p) => `"${p}"`).join(' ');
+        const files = [packageJsonPath, tauriConfPath, cargoTomlPath]
+            .map((p) => `"${p}"`)
+            .join(' ');
         execSync(`git add ${files}`, { stdio: 'inherit' });
 
         // Commit
@@ -119,7 +121,9 @@ if (shouldGit) {
 
         console.log(`✅ Git commit and tag '${tagName}' created successfully`);
     } catch (error) {
-        console.error('\n❌ Git operations failed. The files were updated, but git actions were skipped.');
+        console.error(
+            '\n❌ Git operations failed. The files were updated, but git actions were skipped.',
+        );
         console.error(error instanceof Error ? error.message : String(error));
         // We don't exit(1) here because the primary bump operation succeeded.
     }

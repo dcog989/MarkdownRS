@@ -15,7 +15,16 @@ export interface FileValidationResult {
 
 const DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-export const MARKDOWN_EXTENSIONS = ['md', 'markdown', 'mdown', 'mkdn', 'mkd', 'mdwn', 'mdtxt', 'mdtext'];
+export const MARKDOWN_EXTENSIONS = [
+    'md',
+    'markdown',
+    'mdown',
+    'mkdn',
+    'mkd',
+    'mdwn',
+    'mdtxt',
+    'mdtext',
+];
 
 export const SUPPORTED_TEXT_EXTENSIONS = [
     // Markdown & Text

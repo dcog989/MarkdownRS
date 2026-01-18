@@ -8,7 +8,10 @@
     import { callBackend } from '$lib/utils/backend';
     import { saveSettings } from '$lib/utils/settings';
     import { clearDictionaries } from '$lib/utils/spellcheck.svelte.ts';
-    import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
+    import {
+        invalidateSpellcheckCache,
+        triggerImmediateLint,
+    } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
     import { Keyboard, Search, Settings, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
@@ -75,7 +78,7 @@
             await callBackend('set_context_menu_item', { enable }, 'Settings:Save');
             isContextMenuEnabled = enable;
             showToast('info', enable ? 'Added to context menu' : 'Removed from context menu');
-        } catch (err) {
+        } catch (_err) {
             // Error handling usually taken care of by callBackend/AppError, but good to reset UI
             isContextMenuEnabled = !enable; // revert
         }
@@ -191,7 +194,8 @@
             defaultValue: 16,
             min: 0,
             max: 99,
-            tooltip: 'Highlight recent changes. Maximum 99. Set to 0 to disable count-based filtering.',
+            tooltip:
+                'Highlight recent changes. Maximum 99. Set to 0 to disable count-based filtering.',
         },
         {
             key: 'recentChangesTimespan',
@@ -293,7 +297,8 @@
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
-            tooltip: 'Automatically name unsaved tabs from first line of content (strips leading whitespace and #)',
+            tooltip:
+                'Automatically name unsaved tabs from first line of content (strips leading whitespace and #)',
         },
         {
             key: 'newTabPosition',
@@ -354,7 +359,8 @@
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,
-            tooltip: 'Suppress confirmation dialogs (unsaved changes will be discarded immediately when closing tabs).',
+            tooltip:
+                'Suppress confirmation dialogs (unsaved changes will be discarded immediately when closing tabs).',
         },
 
         {
@@ -418,17 +424,34 @@
                       type: 'custom-context-menu',
                       category: 'System',
                       defaultValue: false,
-                      tooltip: 'Include non-language dictionaries (coding, companies, medical, scientific, etc.).',
+                      tooltip:
+                          'Include non-language dictionaries (coding, companies, medical, scientific, etc.).',
                   },
               ]
             : []),
     ]);
 
+    type SettingDef = {
+        key: string;
+        label: string;
+        type: string;
+        category: string;
+        defaultValue: unknown;
+        options?: string[];
+        optionLabels?: string[];
+        min?: number;
+        max?: number;
+        step?: number;
+        tooltip?: string;
+        visibleWhen?: { key: string; value: unknown };
+        groupWith?: string;
+    };
+
     let sortedSettings = $derived(
-        settingsDefinitions
+        (settingsDefinitions as SettingDef[])
             .filter((s) => {
-                if ((s as any).visibleWhen) {
-                    const condition = (s as any).visibleWhen;
+                if (s.visibleWhen) {
+                    const condition = s.visibleWhen;
                     const dependentValue = getSettingValue(condition.key, null);
                     if (dependentValue !== condition.value) {
                         return false;
@@ -447,17 +470,22 @@
             }),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function getSettingValue(key: string, defaultValue: any): any {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (appContext.app as any)[key] ?? defaultValue;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function updateSetting(key: string, value: any, type: string) {
         if (type === 'number' || type === 'range') {
             value = Number(value);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const oldValue = (appContext.app as any)[key];
         if (oldValue !== value && JSON.stringify(oldValue) !== JSON.stringify(value)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (appContext.app as any)[key] = value;
             saveSettings();
 
@@ -473,6 +501,7 @@
 
                 appContext.spellcheck.init(true).then(() => {
                     showToast('success', 'Spellcheck settings updated');
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const activeView = (window as any)._activeEditorView;
                     if (activeView) triggerImmediateLint(activeView);
                 });
@@ -485,73 +514,91 @@
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Settings size={16} class="text-accent-secondary" />
-            <h2 class="text-ui font-semibold shrink-0 text-fg-default">Settings</h2>
+            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Settings</h2>
         </div>
 
-        <div class="flex-1 relative mx-4">
-            <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+        <div class="relative mx-4 flex-1">
+            <Search
+                size={12}
+                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50"
+            />
             <Input
                 bind:ref={searchInputEl}
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search..."
-                class="pl-8 pr-3" />
+                class="pr-3 pl-8"
+            />
         </div>
 
         <button
-            class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none text-fg-muted"
+            class="text-fg-muted shrink-0 rounded p-1 transition-colors outline-none hover:bg-white/10"
             onclick={() => toggleShortcuts()}
             title="Keyboard Shortcuts (F1)"
-            aria-label="Keyboard Shortcuts">
+            aria-label="Keyboard Shortcuts"
+        >
             <Keyboard size={16} />
         </button>
 
         <button
-            class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 outline-none text-fg-muted"
+            class="text-fg-muted shrink-0 rounded p-1 transition-colors outline-none hover:bg-white/10"
             onclick={onClose}
-            aria-label="Close Settings">
+            aria-label="Close Settings"
+        >
             <X size={16} />
         </button>
     {/snippet}
 
-    <div class="p-4 flex flex-col gap-4">
+    <div class="flex flex-col gap-4 p-4">
         {#if sortedSettings.length > 0}
             <div>
-                {#each sortedSettings as setting, index}
+                {#each sortedSettings as setting, index (setting.key)}
                     <div
                         class="py-3"
-                        style:border-top={index > 0 && !(setting as any).visibleWhen && !(setting as any).groupWith
+                        style:border-top={index > 0 && !setting.visibleWhen && !setting.groupWith
                             ? '1px solid var(--color-border-main)'
-                            : 'none'}>
+                            : 'none'}
+                    >
                         <div class="flex items-start justify-between gap-6">
                             <label
                                 for={setting.key}
-                                class="flex-1 flex items-center whitespace-nowrap overflow-hidden {setting.type.includes(
+                                class="flex flex-1 items-center overflow-hidden whitespace-nowrap {setting.type.includes(
                                     'multi-select',
                                 )
                                     ? 'pt-1.5'
-                                    : ''}">
-                                <span class="inline-block w-24 text-ui-sm opacity-60 shrink-0 mr-4 text-fg-muted">
-                                    {#if (setting as any).visibleWhen}
+                                    : ''}"
+                            >
+                                <span
+                                    class="text-ui-sm text-fg-muted mr-4 inline-block w-24 shrink-0 opacity-60"
+                                >
+                                    {#if setting.visibleWhen}
                                         <!-- Indented child -->
                                     {:else}
                                         {setting.category}:
                                     {/if}
                                 </span>
-                                <span class="font-medium text-ui truncate text-fg-default">
+                                <span class="text-ui text-fg-default truncate font-medium">
                                     {setting.label}
                                 </span>
                             </label>
                             <div
-                                class="{setting.type.includes('multi-select') ? 'flex-1 max-w-md' : 'w-56'} shrink-0"
-                                use:tooltip={(setting as any).tooltip || ''}>
+                                class="{setting.type.includes('multi-select')
+                                    ? 'max-w-md flex-1'
+                                    : 'w-56'} shrink-0"
+                                use:tooltip={setting.tooltip || ''}
+                            >
                                 {#if setting.type === 'text'}
                                     <Input
                                         id={setting.key}
                                         type="text"
                                         value={getSettingValue(setting.key, setting.defaultValue)}
                                         oninput={(e) =>
-                                            updateSetting(setting.key, e.currentTarget.value, setting.type)} />
+                                            updateSetting(
+                                                setting.key,
+                                                e.currentTarget.value,
+                                                setting.type,
+                                            )}
+                                    />
                                 {:else if setting.type === 'number'}
                                     <Input
                                         id={setting.key}
@@ -560,21 +607,39 @@
                                         min={setting.min}
                                         max={setting.max}
                                         oninput={(e) =>
-                                            updateSetting(setting.key, e.currentTarget.value, setting.type)} />
+                                            updateSetting(
+                                                setting.key,
+                                                e.currentTarget.value,
+                                                setting.type,
+                                            )}
+                                    />
                                 {:else if setting.type === 'range'}
                                     <div class="flex items-center gap-3">
                                         <input
                                             id={setting.key}
                                             type="range"
-                                            value={getSettingValue(setting.key, setting.defaultValue)}
+                                            value={getSettingValue(
+                                                setting.key,
+                                                setting.defaultValue,
+                                            )}
                                             min={setting.min}
                                             max={setting.max}
                                             step={setting.step}
                                             oninput={(e) =>
-                                                updateSetting(setting.key, e.currentTarget.value, setting.type)}
-                                            class="flex-1 cursor-pointer h-1.5 rounded-full appearance-none bg-border-main accent-accent-primary" />
-                                        <span class="text-ui-sm w-10 text-right font-mono opacity-80 text-fg-muted"
-                                            >{getSettingValue(setting.key, setting.defaultValue)}%</span>
+                                                updateSetting(
+                                                    setting.key,
+                                                    e.currentTarget.value,
+                                                    setting.type,
+                                                )}
+                                            class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full"
+                                        />
+                                        <span
+                                            class="text-ui-sm text-fg-muted w-10 text-right font-mono opacity-80"
+                                            >{getSettingValue(
+                                                setting.key,
+                                                setting.defaultValue,
+                                            )}%</span
+                                        >
                                     </div>
                                 {:else if setting.type === 'boolean'}
                                     <input
@@ -582,24 +647,38 @@
                                         type="checkbox"
                                         checked={getSettingValue(setting.key, setting.defaultValue)}
                                         onchange={(e) =>
-                                            updateSetting(setting.key, e.currentTarget.checked, setting.type)}
-                                        class="w-4 h-4 rounded cursor-pointer accent-accent-primary" />
+                                            updateSetting(
+                                                setting.key,
+                                                e.currentTarget.checked,
+                                                setting.type,
+                                            )}
+                                        class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
+                                    />
                                 {:else if setting.type === 'select'}
                                     <select
                                         id={setting.key}
                                         value={getSettingValue(setting.key, setting.defaultValue)}
                                         onchange={(e) =>
-                                            updateSetting(setting.key, e.currentTarget.value, setting.type)}
-                                        class="w-full px-2 py-1 rounded text-ui outline-none border cursor-pointer bg-bg-input text-fg-default border-border-main">
-                                        {#each setting.options as option, idx}
-                                            <option value={option}>{setting.optionLabels?.[idx] || option}</option>
+                                            updateSetting(
+                                                setting.key,
+                                                e.currentTarget.value,
+                                                setting.type,
+                                            )}
+                                        class="text-ui bg-bg-input text-fg-default border-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none"
+                                    >
+                                        {#each setting.options || [] as option, idx (option)}
+                                            <option value={option}
+                                                >{setting.optionLabels?.[idx] || option}</option
+                                            >
                                         {/each}
                                     </select>
                                 {:else if setting.type === 'dictionary-multi-select'}
                                     <div>
                                         <DictionarySelector
                                             selected={appContext.app.languageDictionaries}
-                                            onChange={(dicts) => updateSetting(setting.key, dicts, setting.type)} />
+                                            onChange={(dicts) =>
+                                                updateSetting(setting.key, dicts, setting.type)}
+                                        />
                                     </div>
                                 {:else if setting.type === 'custom-context-menu'}
                                     <input
@@ -607,8 +686,9 @@
                                         type="checkbox"
                                         checked={isContextMenuEnabled}
                                         onchange={(e) => toggleContextMenu(e.currentTarget.checked)}
-                                        class="w-4 h-4 rounded cursor-pointer accent-accent-primary"
-                                        disabled={isCheckingContextMenu} />
+                                        class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
+                                        disabled={isCheckingContextMenu}
+                                    />
                                 {/if}
                             </div>
                         </div>
@@ -616,7 +696,7 @@
                 {/each}
             </div>
         {:else}
-            <div class="px-4 py-8 text-center text-fg-muted">No settings match your search</div>
+            <div class="text-fg-muted px-4 py-8 text-center">No settings match your search</div>
         {/if}
     </div>
 </Modal>

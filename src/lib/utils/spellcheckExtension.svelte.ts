@@ -4,7 +4,7 @@ import { addToDictionary } from '$lib/utils/fileSystem';
 import { refreshCustomDictionary, spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import { syntaxTree } from '@codemirror/language';
 import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
-import { EditorView } from '@codemirror/view';
+import type { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
@@ -25,7 +25,7 @@ class TabSpellcheckCache {
         {
             content: string;
             diagnostics: Diagnostic[];
-            misspelledWords: Set<string>;
+            misspelledWords: SvelteSet<string>;
             lastCheckTime: number;
         }
     >();
@@ -38,7 +38,12 @@ class TabSpellcheckCache {
         return null;
     }
 
-    set(tabId: string, content: string, diagnostics: Diagnostic[], misspelledWords: Set<string>) {
+    set(
+        tabId: string,
+        content: string,
+        diagnostics: Diagnostic[],
+        misspelledWords: SvelteSet<string>,
+    ) {
         this.tabCaches.set(tabId, {
             content,
             diagnostics,
@@ -58,7 +63,9 @@ class TabSpellcheckCache {
     // Clean up old caches (keep only last 10 tabs)
     prune() {
         if (this.tabCaches.size > 10) {
-            const sorted = Array.from(this.tabCaches.entries()).sort((a, b) => b[1].lastCheckTime - a[1].lastCheckTime);
+            const sorted = Array.from(this.tabCaches.entries()).sort(
+                (a, b) => b[1].lastCheckTime - a[1].lastCheckTime,
+            );
             this.tabCaches = new SvelteMap(sorted.slice(0, 10));
         }
     }
@@ -147,8 +154,12 @@ export const createSpellCheckLinter = () => {
                             const globalTo = globalFrom + word.length;
 
                             // Heuristic: Skip if looks like path/url
-                            const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : '';
-                            const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : '';
+                            const charBefore =
+                                globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : '';
+                            const charAfter =
+                                globalTo < doc.length
+                                    ? doc.sliceString(globalTo, globalTo + 1)
+                                    : '';
                             if (/[\\/:@.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
 
                             // Heuristic: Skip mixed case/numbers
@@ -278,7 +289,10 @@ export const spellCheckKeymap = [
     {
         key: 'F8',
         run: (view: EditorView) => {
-            const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
+            const selection = view.state.sliceDoc(
+                view.state.selection.main.from,
+                view.state.selection.main.to,
+            );
             let words: string[] = [];
 
             if (selection && selection.trim().length > 0) {

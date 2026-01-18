@@ -6,10 +6,12 @@
 
 <Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog('cancel')} zIndex={100}>
     {#snippet header()}
-        <span class="text-sm font-semibold text-fg-default">{appContext.ui.dialog.options.title}</span>
+        <span class="text-fg-default text-sm font-semibold"
+            >{appContext.ui.dialog.options.title}</span
+        >
     {/snippet}
 
-    <div class="p-4 text-sm leading-relaxed text-fg-default">
+    <div class="text-fg-default p-4 text-sm leading-relaxed">
         {appContext.ui.dialog.options.message}
     </div>
 

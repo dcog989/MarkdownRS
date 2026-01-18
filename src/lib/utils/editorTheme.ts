@@ -1,6 +1,11 @@
 import { EditorView } from '@codemirror/view';
 
-export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean, insertMode: 'INS' | 'OVR') {
+export function generateDynamicTheme(
+    fontSize: number,
+    fontFamily: string,
+    isDark: boolean,
+    insertMode: 'INS' | 'OVR',
+) {
     const whitespaceColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)';
 
     return EditorView.theme({

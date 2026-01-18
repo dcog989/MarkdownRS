@@ -77,9 +77,14 @@ export type AppConfig = typeof DEFAULT_CONFIG;
 function validateConfig(overrides: Partial<AppConfig>): AppConfig {
     const merged = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validate = (target: any, source: any) => {
         for (const key in source) {
-            if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            if (
+                source[key] !== null &&
+                typeof source[key] === 'object' &&
+                !Array.isArray(source[key])
+            ) {
                 if (!target[key]) target[key] = {};
                 validate(target[key], source[key]);
             } else {
@@ -97,7 +102,10 @@ function validateConfig(overrides: Partial<AppConfig>): AppConfig {
     merged.SPLIT.MIN_PERCENTAGE = Math.max(0, Math.min(0.45, merged.SPLIT.MIN_PERCENTAGE));
     merged.SPLIT.MAX_PERCENTAGE = Math.max(0.55, Math.min(1, merged.SPLIT.MAX_PERCENTAGE));
 
-    merged.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS = Math.max(8, merged.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS);
+    merged.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS = Math.max(
+        8,
+        merged.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
+    );
 
     return merged;
 }

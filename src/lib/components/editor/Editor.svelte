@@ -34,7 +34,9 @@
 
     let { tabId } = $props<{ tabId: string }>();
 
-    let cmView = $state<CM6EditorView & { getHistoryState?: () => unknown; flushPendingContent?: () => void }>();
+    let cmView = $state<
+        CM6EditorView & { getHistoryState?: () => unknown; flushPendingContent?: () => void }
+    >();
     let findReplacePanel = $state<{
         setReplaceMode: (enable: boolean) => void;
         focusInput: () => void;
@@ -138,7 +140,9 @@
             from = 0,
             to = 0;
         if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
-            const range = view.state.wordAt(view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head);
+            const range = view.state.wordAt(
+                view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head,
+            );
             if (range) {
                 from = range.from;
                 to = range.to;
@@ -229,11 +233,19 @@
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} onScrollClick={handleScrollbarClick} />
     {/if}
-    <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
+    <FindReplacePanel
+        bind:this={findReplacePanel}
+        bind:isOpen={appContext.interface.showFind}
+        {cmView}
+    />
 
     {#if showEmptyState}
         <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <img src="/logo.svg" alt="MarkdownRS Logo" class="h-48 w-48 opacity-[0.08] select-none" />
+            <img
+                src="/logo.svg"
+                alt="MarkdownRS Logo"
+                class="h-48 w-48 opacity-[0.08] select-none"
+            />
         </div>
     {/if}
 </div>

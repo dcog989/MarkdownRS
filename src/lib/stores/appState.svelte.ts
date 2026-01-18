@@ -62,5 +62,6 @@ export function setTheme(newTheme: 'dark' | 'light') {
 }
 
 export function toggleOrientation() {
-    appState.splitOrientation = appState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
+    appState.splitOrientation =
+        appState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
 }

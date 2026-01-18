@@ -1,4 +1,8 @@
-import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
+import {
+    reloadTabContent,
+    setFileCheckStatus,
+    updateMetadata,
+} from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
@@ -119,7 +123,13 @@ export async function reloadFileContent(tabId: string): Promise<void> {
         const content = normalizeLineEndings(result.content);
         const sizeBytes = new TextEncoder().encode(result.content).length;
 
-        reloadTabContent(tabId, content, detectedLineEnding, result.encoding.toUpperCase(), sizeBytes);
+        reloadTabContent(
+            tabId,
+            content,
+            detectedLineEnding,
+            result.encoding.toUpperCase(),
+            sizeBytes,
+        );
 
         await refreshMetadata(tabId, sanitizedPath);
     } catch (err) {

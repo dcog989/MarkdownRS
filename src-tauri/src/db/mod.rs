@@ -160,8 +160,9 @@ impl Database {
             [],
         )?;
 
-        let current_version: i32 =
-            conn.query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap_or(0);
+        let current_version: i32 = conn
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap_or(0);
 
         for (i, migration) in MIGRATIONS.iter().enumerate() {
             let version = (i + 1) as i32;
@@ -192,8 +193,10 @@ impl Database {
             let placeholders = active_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
             let delete_query = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
             let mut delete_stmt = tx.prepare(&delete_query)?;
-            let params: Vec<&dyn rusqlite::ToSql> =
-                active_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+            let params: Vec<&dyn rusqlite::ToSql> = active_ids
+                .iter()
+                .map(|id| id as &dyn rusqlite::ToSql)
+                .collect();
             delete_stmt.execute(params.as_slice())?;
 
             let mut insert_stmt = tx.prepare_cached(
@@ -303,8 +306,10 @@ impl Database {
             let delete_query =
                 format!("DELETE FROM closed_tabs WHERE id NOT IN ({})", placeholders);
             let mut delete_stmt = tx.prepare(&delete_query)?;
-            let params: Vec<&dyn rusqlite::ToSql> =
-                closed_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+            let params: Vec<&dyn rusqlite::ToSql> = closed_ids
+                .iter()
+                .map(|id| id as &dyn rusqlite::ToSql)
+                .collect();
             delete_stmt.execute(params.as_slice())?;
 
             let mut insert_stmt = tx.prepare_cached(
@@ -493,7 +498,10 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(SessionData { active_tabs, closed_tabs })
+        Ok(SessionData {
+            active_tabs,
+            closed_tabs,
+        })
     }
 
     pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {

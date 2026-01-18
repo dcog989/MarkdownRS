@@ -8,7 +8,10 @@ export interface FormatterOptions {
     tableAlignment: boolean;
 }
 
-export async function formatMarkdown(content: string, options: Partial<FormatterOptions> = {}): Promise<string> {
+export async function formatMarkdown(
+    content: string,
+    options: Partial<FormatterOptions> = {},
+): Promise<string> {
     const defaults: FormatterOptions = {
         listIndent: appContext.app.defaultIndent,
         codeBlockFence: '```',

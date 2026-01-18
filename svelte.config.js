@@ -5,7 +5,10 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
     preprocess: vitePreprocess(),
     onwarn: (warning, handler) => {
-        if (warning.code === 'state_referenced_locally' && warning.filename?.includes('.svelte-kit')) {
+        if (
+            warning.code === 'state_referenced_locally' &&
+            warning.filename?.includes('.svelte-kit')
+        ) {
             return;
         }
         handler(warning);

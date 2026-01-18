@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { OPERATION_CATEGORIES, getOperationsByCategory } from '$lib/config/textOperationsRegistry';
+    import {
+        OPERATION_CATEGORIES,
+        getOperationsByCategory,
+    } from '$lib/config/textOperationsRegistry';
     import { exportService } from '$lib/services/exportService';
     import { setTheme, toggleSplitView } from '$lib/stores/appState.svelte';
     import { addTab, performTextTransform } from '$lib/stores/editorStore.svelte';
@@ -31,8 +34,12 @@
     import ShortcutsModal from './ShortcutsModal.svelte';
     import TextTransformModal from './TextTransformModal.svelte';
 
-    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
-    let isMarkdown = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
+    let activeTab = $derived(
+        appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId),
+    );
+    let isMarkdown = $derived(
+        activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
+    );
 
     function toggleSplit() {
         if (!isMarkdown) {
@@ -261,18 +268,26 @@
 <CommandPalette
     bind:isOpen={appContext.interface.showCommandPalette}
     {commands}
-    onClose={() => (appContext.interface.showCommandPalette = false)} />
+    onClose={() => (appContext.interface.showCommandPalette = false)}
+/>
 <SettingsModal
     bind:isOpen={appContext.interface.showSettings}
-    onClose={() => (appContext.interface.showSettings = false)} />
-<AboutModal bind:isOpen={appContext.interface.showAbout} onClose={() => (appContext.interface.showAbout = false)} />
+    onClose={() => (appContext.interface.showSettings = false)}
+/>
+<AboutModal
+    bind:isOpen={appContext.interface.showAbout}
+    onClose={() => (appContext.interface.showAbout = false)}
+/>
 <BookmarksModal
     bind:isOpen={appContext.interface.showBookmarks}
     onClose={() => (appContext.interface.showBookmarks = false)}
-    onOpenFile={(path) => openFileByPath(path)} />
+    onOpenFile={(path) => openFileByPath(path)}
+/>
 <TextTransformModal
     isOpen={appContext.interface.showTransform}
-    onClose={() => (appContext.interface.showTransform = false)} />
+    onClose={() => (appContext.interface.showTransform = false)}
+/>
 <ShortcutsModal
     bind:isOpen={appContext.interface.showShortcuts}
-    onClose={() => (appContext.interface.showShortcuts = false)} />
+    onClose={() => (appContext.interface.showShortcuts = false)}
+/>

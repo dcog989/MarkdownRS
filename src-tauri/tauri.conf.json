@@ -30,7 +30,13 @@
     "bundle": {
         "active": true,
         "targets": ["deb", "rpm", "dmg"],
-        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
         "resources": [],
         "copyright": "",
         "category": "Productivity",
@@ -59,7 +65,9 @@
             "open": true
         },
         "updater": {
-            "endpoints": ["https://github.com/dcog989/markdown-rs/releases/latest/download/latest.json"],
+            "endpoints": [
+                "https://github.com/dcog989/markdown-rs/releases/latest/download/latest.json"
+            ],
             "dialog": true,
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5dkJybEN1NTBvSFFoTU9LMU5UQWtQWCthUytoUGlDcGdSNk5LNmVONUZ2d0FBQkFBQUFBQUFBQUFBQUlBQUFBQWViWWwxL25NVVpEelRFaU1weXh6c1hLZ2wyaGt5WGNrT08yTHRhbERTR0xtdjVHSEhzU0VNSERiM1lYejBXODFGdE5MTTVzc2ZPOGhGMXQ2Z2JsNHYxVFZhWGlCcE1iL29ySGRmVFJsTHJHaHRGNGplRWM4RG1QS0NCdGlBWkRiWU9PcWg5eWs2QmM9Cg=="
         }

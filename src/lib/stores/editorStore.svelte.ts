@@ -189,7 +189,10 @@ export function closeTab(id: string) {
             (entry) => entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path),
         );
 
-        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(0, limit);
+        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(
+            0,
+            limit,
+        );
     }
 
     editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);
@@ -276,7 +279,9 @@ export function updateContent(id: string, content: string) {
     const widestColumn = Math.max(...lineArray.map((l) => l.length));
 
     const wordCount =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? countWords(content) : fastCountWords(content);
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(content)
+            : fastCountWords(content);
 
     const updatedTab = {
         ...oldTab,
@@ -404,7 +409,9 @@ export function reloadTabContent(
     const widestColumn = Math.max(...lineArray.map((l) => l.length));
 
     const wordCount =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? countWords(content) : fastCountWords(content);
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(content)
+            : fastCountWords(content);
 
     updateTab(id, () => ({
         content,
@@ -433,7 +440,12 @@ export function updateLineEnding(id: string, lineEnding: 'LF' | 'CRLF') {
     updateTab(id, () => ({ lineEnding }));
 }
 
-export function saveTabComplete(id: string, path: string, title: string, lineEnding: 'LF' | 'CRLF') {
+export function saveTabComplete(
+    id: string,
+    path: string,
+    title: string,
+    lineEnding: 'LF' | 'CRLF',
+) {
     updateTab(id, () => ({
         path,
         title,

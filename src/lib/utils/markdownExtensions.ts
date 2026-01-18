@@ -69,7 +69,11 @@ function getBlockquoteDecorations(view: EditorView) {
             const line = view.state.doc.lineAt(pos);
             const match = /^\s*> ?/.exec(line.text);
             if (match) {
-                builder.add(line.from + match.index, line.from + match.index + match[0].length, blockquoteBorderDeco);
+                builder.add(
+                    line.from + match.index,
+                    line.from + match.index + match[0].length,
+                    blockquoteBorderDeco,
+                );
                 builder.add(line.from, line.to, blockquoteBgDeco);
             }
             pos = line.to + 1;

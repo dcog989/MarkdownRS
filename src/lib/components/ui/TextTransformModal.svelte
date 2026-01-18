@@ -20,21 +20,26 @@
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Type size={20} class="text-accent-secondary" />
-            <h2 class="text-lg font-semibold text-fg-default">Text Transformations</h2>
+            <h2 class="text-fg-default text-lg font-semibold">Text Transformations</h2>
         </div>
-        <button type="button" class="p-1 rounded hover:bg-white/10" onclick={onClose} aria-label="Close">
+        <button
+            type="button"
+            class="rounded p-1 hover:bg-white/10"
+            onclick={onClose}
+            aria-label="Close"
+        >
             <X size={18} class="text-fg-muted" />
         </button>
     {/snippet}
 
-    <div class="p-4 space-y-6">
+    <div class="space-y-6 p-4">
         {#each OPERATION_CATEGORIES as category (category.id)}
             {@const CategoryIcon = category.icon}
             {@const operations = getOperationsByCategory(category.id)}
             <div>
-                <div class="flex items-center gap-2 mb-3">
+                <div class="mb-3 flex items-center gap-2">
                     <CategoryIcon size={16} class="text-accent-primary" />
-                    <h3 class="text-sm font-semibold uppercase tracking-wide text-fg-default">
+                    <h3 class="text-fg-default text-sm font-semibold tracking-wide uppercase">
                         {category.title}
                     </h3>
                 </div>
@@ -43,16 +48,17 @@
                         {@const OperationIcon = operation.icon}
                         <button
                             type="button"
-                            class="flex items-start gap-3 p-3 rounded text-left hover:bg-white/10 transition-colors border border-border-main"
-                            onclick={() => handleOperation(operation.id)}>
-                            <div class="shrink-0 mt-0.5">
+                            class="border-border-main flex items-start gap-3 rounded border p-3 text-left transition-colors hover:bg-white/10"
+                            onclick={() => handleOperation(operation.id)}
+                        >
+                            <div class="mt-0.5 shrink-0">
                                 <OperationIcon size={16} class="text-accent-secondary" />
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium whitespace-nowrap text-fg-default">
+                            <div class="min-w-0 flex-1">
+                                <div class="text-fg-default text-sm font-medium whitespace-nowrap">
                                     {operation.label}
                                 </div>
-                                <div class="text-xs mt-0.5 truncate text-fg-muted">
+                                <div class="text-fg-muted mt-0.5 truncate text-xs">
                                     {operation.description}
                                 </div>
                             </div>
@@ -64,11 +70,12 @@
     </div>
 
     {#snippet footer()}
-        <p class="text-xs mr-auto text-fg-muted">All operations support undo (Ctrl+Z)</p>
+        <p class="text-fg-muted mr-auto text-xs">All operations support undo (Ctrl+Z)</p>
         <button
             type="button"
-            class="px-4 py-2 rounded text-sm font-medium hover:opacity-80 bg-accent-primary text-fg-inverse"
-            onclick={onClose}>
+            class="bg-accent-primary text-fg-inverse rounded px-4 py-2 text-sm font-medium hover:opacity-80"
+            onclick={onClose}
+        >
             Close
         </button>
     {/snippet}

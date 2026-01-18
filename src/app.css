@@ -372,7 +372,9 @@ body {
     background-color: var(--color-bg-code);
     color: var(--color-fg-code);
     border-radius: 0.25rem;
-    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+    font-family:
+        ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono',
+        monospace;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
 }

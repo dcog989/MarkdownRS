@@ -100,19 +100,21 @@
 
 <div
     bind:this={containerEl}
-    class="relative submenu-container w-full"
+    class="submenu-container relative w-full"
     onmouseenter={handleMouseEnter}
     onmouseleave={handleMouseLeave}
-    role="none">
+    role="none"
+>
     {@render trigger()}
     {#if show}
         <!-- ! NOTE: position fixed is crucial here to escape the overflow:hidden/auto of the parent -->
         <div
             bind:this={submenuEl}
-            class="fixed flex flex-col w-max min-w-40 max-w-87.5 max-h-[50vh] overflow-y-auto custom-scrollbar rounded-md shadow-xl border py-1 z-250 whitespace-nowrap bg-bg-panel border-border-light"
+            class="custom-scrollbar bg-bg-panel border-border-light fixed z-250 flex max-h-[50vh] w-max max-w-87.5 min-w-40 flex-col overflow-y-auto rounded-md border py-1 whitespace-nowrap shadow-xl"
             style="left: {fixedX}px; top: {fixedY}px;"
             role="menu"
-            tabindex="-1">
+            tabindex="-1"
+        >
             {@render children()}
         </div>
     {/if}

@@ -1,4 +1,8 @@
-import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
+import {
+    checkAndReloadIfChanged,
+    reloadFileContent,
+    sanitizePath,
+} from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -158,11 +162,17 @@ class FileWatcherService {
 
             if (dirtyTabs.length > 0 && !signal?.aborted) {
                 const tabNames = dirtyTabs.map((t) => t.title).join(', ');
-                showToast('warning', `File changed on disk: ${tabNames}. You have unsaved changes.`, 5000);
+                showToast(
+                    'warning',
+                    `File changed on disk: ${tabNames}. You have unsaved changes.`,
+                    5000,
+                );
             }
 
             if (cleanTabs.length > 0 && !signal?.aborted) {
-                const firstTabStillExists = appContext.editor.tabs.some((t) => t.id === cleanTabs[0].id);
+                const firstTabStillExists = appContext.editor.tabs.some(
+                    (t) => t.id === cleanTabs[0].id,
+                );
                 if (!firstTabStillExists || signal?.aborted) {
                     this.pendingChecks.delete(path);
                     return;
@@ -171,12 +181,16 @@ class FileWatcherService {
                 await reloadFileContent(cleanTabs[0].id);
 
                 if (cleanTabs.length > 1 && !signal?.aborted) {
-                    const reloadedTab = appContext.editor.tabs.find((t) => t.id === cleanTabs[0].id);
+                    const reloadedTab = appContext.editor.tabs.find(
+                        (t) => t.id === cleanTabs[0].id,
+                    );
                     if (reloadedTab) {
                         for (let i = 1; i < cleanTabs.length; i++) {
                             if (signal?.aborted) break;
 
-                            const tabStillExists = appContext.editor.tabs.some((t) => t.id === cleanTabs[i].id);
+                            const tabStillExists = appContext.editor.tabs.some(
+                                (t) => t.id === cleanTabs[i].id,
+                            );
                             if (!tabStillExists) continue;
 
                             reloadTabContent(

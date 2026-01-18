@@ -25,7 +25,7 @@ export interface FileContent {
 
 export interface TabData {
     content: string | null;
-    history_state: any;
+    history_state: unknown;
 }
 
 // Format document is handled via format_markdown, not transform_text_content
@@ -35,12 +35,12 @@ export type TextTransformId = Exclude<OperationId, 'format-document'>;
 export interface BackendCommands {
     // Session
     save_session: {
-        args: { activeTabs: any[]; closedTabs: any[] };
+        args: { activeTabs: unknown[]; closedTabs: unknown[] };
         return: void;
     };
     restore_session: {
         args: Record<string, never>;
-        return: { active_tabs: any[]; closed_tabs: any[] } | any[];
+        return: { active_tabs: unknown[]; closed_tabs: unknown[] } | unknown[];
     };
     load_tab_content: {
         args: { tabId: string };
@@ -97,7 +97,11 @@ export interface BackendCommands {
         return: string[];
     };
     init_spellchecker: {
-        args: { dictionaries?: string[]; technicalDictionaries?: boolean; scienceDictionaries?: boolean };
+        args: {
+            dictionaries?: string[];
+            technicalDictionaries?: boolean;
+            scienceDictionaries?: boolean;
+        };
         return: void;
     };
     check_words: {
@@ -163,10 +167,10 @@ export interface BackendCommands {
     };
     load_settings: {
         args: Record<string, never>;
-        return: Record<string, any>;
+        return: Record<string, unknown>;
     };
     save_settings: {
-        args: { settings: any };
+        args: { settings: unknown };
         return: void;
     };
     set_context_menu_item: {

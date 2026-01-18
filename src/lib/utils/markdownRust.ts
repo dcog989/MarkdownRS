@@ -11,7 +11,9 @@ import { callBackend } from './backend';
 function resolvePath(baseDir: string, relativePath: string): string {
     const cleanBase = baseDir.replace(/\\/g, '/');
     const cleanRelative = relativePath.replace(/\\/g, '/');
-    const parts = [...cleanBase.split('/'), ...cleanRelative.split('/')].filter((p) => p && p !== '.');
+    const parts = [...cleanBase.split('/'), ...cleanRelative.split('/')].filter(
+        (p) => p && p !== '.',
+    );
 
     const resolved: string[] = [];
     for (const part of parts) {
@@ -94,7 +96,17 @@ export async function renderMarkdown(
 
         const cleanHtml = DOMPurify.sanitize(html, {
             USE_PROFILES: { html: true },
-            ADD_ATTR: ['target', 'class', 'data-source-line', 'align', 'start', 'type', 'disabled', 'checked', 'src'],
+            ADD_ATTR: [
+                'target',
+                'class',
+                'data-source-line',
+                'align',
+                'start',
+                'type',
+                'disabled',
+                'checked',
+                'src',
+            ],
             ALLOWED_URI_REGEXP:
                 /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
         });

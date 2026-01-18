@@ -1,6 +1,7 @@
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import type { ScrollManager } from '$lib/utils/cmScroll';
 import { transformText } from '$lib/utils/textTransforms';
+import type { TransactionSpec } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 
 export async function performTextOperation(
@@ -16,7 +17,9 @@ export async function performTextOperation(
 
         const selection = view.state.selection.main;
         const hasSelection = selection.from !== selection.to;
-        const targetText = hasSelection ? view.state.sliceDoc(selection.from, selection.to) : view.state.doc.toString();
+        const targetText = hasSelection
+            ? view.state.sliceDoc(selection.from, selection.to)
+            : view.state.doc.toString();
 
         // Capture scroll state before operation
         scrollManager.capture(view, `Op:${operationId}`);
@@ -29,7 +32,7 @@ export async function performTextOperation(
             // Determine event type: 'format' events are ignored by the recent changes tracker
             const userEvent = operationId === 'format-document' ? 'format' : 'input.complete';
 
-            const transaction: any = {
+            const transaction: TransactionSpec = {
                 changes: {
                     from: hasSelection ? selection.from : 0,
                     to: hasSelection ? selection.to : view.state.doc.length,

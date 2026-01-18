@@ -26,9 +26,13 @@ export function sortLines(text: string, mode: string): string {
         case 'desc':
             return lines.sort().reverse().join('\n');
         case 'case-insensitive-asc':
-            return lines.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).join('\n');
+            return lines
+                .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                .join('\n');
         case 'case-insensitive-desc':
-            return lines.sort((a, b) => b.localeCompare(a, undefined, { sensitivity: 'base' })).join('\n');
+            return lines
+                .sort((a, b) => b.localeCompare(a, undefined, { sensitivity: 'base' }))
+                .join('\n');
         case 'numeric-asc':
             return lines.sort((a, b) => extractNumber(a) - extractNumber(b)).join('\n');
         case 'numeric-desc':
@@ -296,7 +300,9 @@ export function wrapQuotes(text: string): string {
 export function addLineNumbers(text: string): string {
     const lines = text.split('\n');
     const pad = String(lines.length).length;
-    return lines.map((l, i) => (l.trim() ? `${String(i + 1).padStart(pad)}. ${l.trim()}` : l)).join('\n');
+    return lines
+        .map((l, i) => (l.trim() ? `${String(i + 1).padStart(pad)}. ${l.trim()}` : l))
+        .join('\n');
 }
 
 export function indentLines(text: string, width: number): string {

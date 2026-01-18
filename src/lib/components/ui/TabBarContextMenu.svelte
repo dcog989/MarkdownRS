@@ -61,24 +61,28 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-                onclick={handleNewTab}>
-                <FilePlus size={14} class="opacity-70" /><span>New Tab</span><span class="ml-auto text-ui-sm opacity-50"
-                    >Ctrl+N</span>
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={handleNewTab}
+            >
+                <FilePlus size={14} class="opacity-70" /><span>New Tab</span><span
+                    class="text-ui-sm ml-auto opacity-50">Ctrl+N</span
+                >
             </button>
 
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasUnsavedTabs}
-                onclick={handleSaveAll}>
-                <Save size={14} class="opacity-70" /><span>Save All</span><span class="ml-auto text-ui-sm opacity-50"
-                    >Ctrl+Shift+S</span>
+                onclick={handleSaveAll}
+            >
+                <Save size={14} class="opacity-70" /><span>Save All</span><span
+                    class="text-ui-sm ml-auto opacity-50">Ctrl+Shift+S</span
+                >
             </button>
 
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
         </div>
 
         <Submenu
@@ -87,9 +91,13 @@
             onOpen={() => (activeSubmenu = 'close')}
             onClose={() => {
                 if (activeSubmenu === 'close') activeSubmenu = null;
-            }}>
+            }}
+        >
             {#snippet trigger()}
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
+                <button
+                    type="button"
+                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10"
+                >
                     <Files size={14} class="mr-2 opacity-70" />
                     <span>Close Many</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -98,25 +106,29 @@
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasSavedTabs}
-                onclick={() => handleCloseMany('saved')}>Close Saved</button>
+                onclick={() => handleCloseMany('saved')}>Close Saved</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasUnsavedTabs}
-                onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
+                onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button
+            >
             {#if hasPinnedTabs}
                 <button
                     type="button"
-                    class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                    class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                     disabled={!hasUnpinnedTabs}
-                    onclick={() => handleCloseMany('unpinned')}>Close Unpinned</button>
+                    onclick={() => handleCloseMany('unpinned')}>Close Unpinned</button
+                >
             {/if}
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
-                onclick={() => handleCloseMany('all')}>Close All</button>
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={() => handleCloseMany('all')}>Close All</button
+            >
         </Submenu>
     {/snippet}
 </ContextMenu>

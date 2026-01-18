@@ -14,5 +14,6 @@
     bind:this={ref}
     bind:value
     {type}
-    class="w-full px-2 py-1 rounded text-ui outline-none border transition-colors bg-bg-input text-fg-default border-border-main focus:border-accent-primary disabled:opacity-50 placeholder:text-fg-muted/50 {className}"
-    {...rest} />
+    class="text-ui bg-bg-input text-fg-default border-border-main focus:border-accent-primary placeholder:text-fg-muted/50 w-full rounded border px-2 py-1 transition-colors outline-none disabled:opacity-50 {className}"
+    {...rest}
+/>

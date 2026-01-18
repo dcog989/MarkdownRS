@@ -8,7 +8,11 @@
  * @param delay Delay in milliseconds
  * @returns Debounced function
  */
-export function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: any[]) => any>(
+    fn: T,
+    delay: number,
+): (...args: Parameters<T>) => void {
     let timeout: number | null = null;
 
     return (...args: Parameters<T>) => {
@@ -29,7 +33,11 @@ export function debounce<T extends (...args: any[]) => any>(fn: T, delay: number
  * @param interval Minimum interval between calls in milliseconds
  * @returns Throttled function
  */
-export function throttle<T extends (...args: any[]) => any>(fn: T, interval: number): (...args: Parameters<T>) => void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<T extends (...args: any[]) => any>(
+    fn: T,
+    interval: number,
+): (...args: Parameters<T>) => void {
     let lastCall = 0;
     let timeout: number | null = null;
 

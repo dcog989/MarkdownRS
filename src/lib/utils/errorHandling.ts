@@ -78,7 +78,11 @@ export class AppError extends Error {
         }
     }
 
-    static from(context: ErrorContext, error: unknown, options: Omit<ErrorOptions, 'userMessage'> = {}): AppError {
+    static from(
+        context: ErrorContext,
+        error: unknown,
+        options: Omit<ErrorOptions, 'userMessage'> = {},
+    ): AppError {
         if (error instanceof AppError) {
             return error;
         }
@@ -96,7 +100,12 @@ export class AppError extends Error {
     }
 
     private process(options: ErrorOptions = {}): void {
-        const { showToast: shouldShowToast = true, userMessage, toastDuration, logToDisk = true } = options;
+        const {
+            showToast: shouldShowToast = true,
+            userMessage,
+            toastDuration,
+            logToDisk = true,
+        } = options;
 
         this.logError(logToDisk);
 
@@ -248,7 +257,11 @@ export class AppError extends Error {
         }
     }
 
-    static async warn(context: ErrorContext, message: string, options: ErrorOptions = {}): Promise<void> {
+    static async warn(
+        context: ErrorContext,
+        message: string,
+        options: ErrorOptions = {},
+    ): Promise<void> {
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] [${context}] ${message}`;
 
@@ -271,7 +284,11 @@ export class AppError extends Error {
         }
     }
 
-    static async info(context: ErrorContext, message: string, options: ErrorOptions = {}): Promise<void> {
+    static async info(
+        context: ErrorContext,
+        message: string,
+        options: ErrorOptions = {},
+    ): Promise<void> {
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] [${context}] ${message}`;
 

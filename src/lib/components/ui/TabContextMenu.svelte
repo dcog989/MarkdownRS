@@ -21,7 +21,11 @@
     import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { callBackend } from '$lib/utils/backend';
-    import { requestCloseTab, saveCurrentFile, triggerReopenClosedTab } from '$lib/utils/fileSystem';
+    import {
+        requestCloseTab,
+        saveCurrentFile,
+        triggerReopenClosedTab,
+    } from '$lib/utils/fileSystem';
     import { save } from '@tauri-apps/plugin-dialog';
     import {
         ArrowLeft,
@@ -65,7 +69,9 @@
     let hasCloseableTabsToLeft = $derived(
         tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned),
     );
-    let hasCloseableOtherTabs = $derived(appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned));
+    let hasCloseableOtherTabs = $derived(
+        appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned),
+    );
 
     async function handleSave() {
         const prevActive = appContext.app.activeTabId;
@@ -87,7 +93,11 @@
 
             if (savePath) {
                 const sanitizedPath = savePath.replace(/\0/g, '').replace(/\\/g, '/');
-                await callBackend('write_text_file', { path: sanitizedPath, content: tab.content }, 'File:Write');
+                await callBackend(
+                    'write_text_file',
+                    { path: sanitizedPath, content: tab.content },
+                    'File:Write',
+                );
                 const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
                 updateTabPath(tabId, sanitizedPath, fileName);
                 markAsSaved(tabId);
@@ -104,14 +114,18 @@
         onClose();
     }
 
-    async function handleCloseMany(mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') {
+    async function handleCloseMany(
+        mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all',
+    ) {
         let targets: typeof appContext.editor.tabs = [];
 
         if (mode === 'right') targets = appContext.editor.tabs.slice(tabIndex + 1);
         else if (mode === 'left') targets = appContext.editor.tabs.slice(0, tabIndex);
         else if (mode === 'others') targets = appContext.editor.tabs.filter((t) => t.id !== tabId);
-        else if (mode === 'saved') targets = appContext.editor.tabs.filter((t) => !t.isDirty && t.id !== tabId);
-        else if (mode === 'unsaved') targets = appContext.editor.tabs.filter((t) => t.isDirty && t.id !== tabId);
+        else if (mode === 'saved')
+            targets = appContext.editor.tabs.filter((t) => !t.isDirty && t.id !== tabId);
+        else if (mode === 'unsaved')
+            targets = appContext.editor.tabs.filter((t) => t.isDirty && t.id !== tabId);
         else if (mode === 'all') targets = appContext.editor.tabs;
 
         for (const t of targets.filter((t) => !t.isPinned)) {
@@ -145,7 +159,9 @@
         }
 
         const sanitizedName = newFileName.trim().replace(/[<>:"|?*]/g, '_');
-        const newPath = oldPath.replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`).replace(/\\/g, '/');
+        const newPath = oldPath
+            .replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`)
+            .replace(/\\/g, '/');
 
         try {
             // Import services dynamically to avoid circular dependencies
@@ -252,7 +268,11 @@
         }
     }
 
-    function getHistoryTooltip(tab: { content: string; title: string; path?: string | null }): string {
+    function getHistoryTooltip(tab: {
+        content: string;
+        title: string;
+        path?: string | null;
+    }): string {
         const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
         const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
 
@@ -277,23 +297,26 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-                onclick={handleSave}>
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={handleSave}
+            >
                 <Save size={14} class="opacity-70" /><span>Save</span>
             </button>
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-                onclick={handleSaveAs}>
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={handleSaveAs}
+            >
                 <FileDown size={14} class="opacity-70" /><span>Save As...</span>
             </button>
 
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-                onclick={handlePin}>
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={handlePin}
+            >
                 {#if isPinned}
                     <PinOff size={14} class="opacity-70" /><span>Unpin</span>
                 {:else}
@@ -303,9 +326,10 @@
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!tab?.path}
-                onclick={handleToggleBookmark}>
+                onclick={handleToggleBookmark}
+            >
                 {#if isBookmarked}
                     <BookmarkX size={14} class="opacity-70" /><span>Remove Bookmark</span>
                 {:else}
@@ -313,7 +337,7 @@
                 {/if}
             </button>
 
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
         </div>
 
         <Submenu
@@ -322,9 +346,13 @@
             onOpen={() => (activeSubmenu = 'export')}
             onClose={() => {
                 if (activeSubmenu === 'export') activeSubmenu = null;
-            }}>
+            }}
+        >
             {#snippet trigger()}
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
+                <button
+                    type="button"
+                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10"
+                >
                     <Download size={14} class="mr-2 opacity-70" />
                     <span>Export</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -333,44 +361,52 @@
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToHtml();
                     onClose();
-                }}>Export to HTML</button>
+                }}>Export to HTML</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToPdf();
                     onClose();
-                }}>Export to PDF</button>
+                }}>Export to PDF</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage('png');
                     onClose();
-                }}>Export to PNG</button>
+                }}>Export to PNG</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage('webp');
                     onClose();
-                }}>Export to WEBP</button>
+                }}>Export to WEBP</button
+            >
         </Submenu>
 
-        <div class="h-px my-1 bg-border-main" onmouseenter={() => (activeSubmenu = null)} role="none"></div>
+        <div
+            class="bg-border-main my-1 h-px"
+            onmouseenter={() => (activeSubmenu = null)}
+            role="none"
+        ></div>
 
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={tabIndex === 0}
                 onclick={async () => {
                     const newTabs = [...appContext.editor.tabs];
@@ -383,12 +419,13 @@
                     await tick();
                     triggerScrollToTab();
                     onClose();
-                }}>
+                }}
+            >
                 <ArrowLeft size={14} class="opacity-70" /><span>Move to Start</span>
             </button>
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={tabIndex === appContext.editor.tabs.length - 1}
                 onclick={async () => {
                     const newTabs = [...appContext.editor.tabs];
@@ -401,20 +438,22 @@
                     await tick();
                     triggerScrollToTab();
                     onClose();
-                }}>
+                }}
+            >
                 <ArrowRight size={14} class="opacity-70" /><span>Move to End</span>
             </button>
 
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={isPinned}
                 onclick={() => {
                     requestCloseTab(tabId);
                     onClose();
-                }}>
+                }}
+            >
                 <X size={14} class="opacity-70" /><span>Close</span>
             </button>
         </div>
@@ -425,9 +464,13 @@
             onOpen={() => (activeSubmenu = 'close')}
             onClose={() => {
                 if (activeSubmenu === 'close') activeSubmenu = null;
-            }}>
+            }}
+        >
             {#snippet trigger()}
-                <button type="button" class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center">
+                <button
+                    type="button"
+                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10"
+                >
                     <Files size={14} class="mr-2 opacity-70" />
                     <span>Close Many</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -436,33 +479,39 @@
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasCloseableTabsToRight}
-                onclick={() => handleCloseMany('right')}>Close to the Right</button>
+                onclick={() => handleCloseMany('right')}>Close to the Right</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasCloseableTabsToLeft}
-                onclick={() => handleCloseMany('left')}>Close to the Left</button>
+                onclick={() => handleCloseMany('left')}>Close to the Left</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasCloseableOtherTabs}
-                onclick={() => handleCloseMany('others')}>Close Others</button>
+                onclick={() => handleCloseMany('others')}>Close Others</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasSavedTabs}
-                onclick={() => handleCloseMany('saved')}>Close Saved</button>
+                onclick={() => handleCloseMany('saved')}>Close Saved</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!hasUnsavedTabs}
-                onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
+                onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button
+            >
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10"
-                onclick={() => handleCloseMany('all')}>Close All</button>
+                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={() => handleCloseMany('all')}>Close All</button
+            >
         </Submenu>
 
         <Submenu
@@ -471,14 +520,16 @@
             onOpen={() => (activeSubmenu = 'restore')}
             onClose={() => {
                 if (activeSubmenu === 'restore') activeSubmenu = null;
-            }}>
+            }}
+        >
             {#snippet trigger()}
                 <button
                     type="button"
-                    class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center {appContext.editor
-                        .closedTabsHistory.length === 0
+                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10 {appContext
+                        .editor.closedTabsHistory.length === 0
                         ? 'opacity-50'
-                        : ''}">
+                        : ''}"
+                >
                     <Undo2 size={14} class="mr-2 opacity-70" />
                     <span>Reopen Recent</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -486,62 +537,69 @@
             {/snippet}
 
             {#if appContext.editor.closedTabsHistory.length > 0}
-                <div class="px-3 py-1.5 text-xs opacity-50 font-semibold border-b border-border-main">
+                <div
+                    class="border-border-main border-b px-3 py-1.5 text-xs font-semibold opacity-50"
+                >
                     RECENTLY CLOSED
                 </div>
                 {#each appContext.editor.closedTabsHistory as item, i (item.tab.id)}
                     <button
                         type="button"
-                        class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center justify-between"
+                        class="text-ui flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-white/10"
                         use:tooltip={getHistoryTooltip(item.tab)}
                         onclick={() => {
                             triggerReopenClosedTab(i);
                             onClose();
-                        }}>
+                        }}
+                    >
                         <span>{formatTitle(item.tab.customTitle || item.tab.title)}</span>
                     </button>
                 {/each}
             {:else}
-                <div class="px-3 py-2 text-sm text-fg-muted">History empty</div>
+                <div class="text-fg-muted px-3 py-2 text-sm">History empty</div>
             {/if}
         </Submenu>
 
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
-                onclick={handleRename}>
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                onclick={handleRename}
+            >
                 <FilePen size={14} class="opacity-70" /><span>Rename</span>
             </button>
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 onclick={() => {
                     navigator.clipboard.writeText(tab!.title);
                     onClose();
-                }}>
+                }}
+            >
                 <Copy size={14} class="opacity-70" /><span>Copy File Name</span>
             </button>
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!tab?.path}
                 onclick={() => {
                     navigator.clipboard.writeText(tab!.path!);
                     onClose();
-                }}>
+                }}
+            >
                 <Copy size={14} class="opacity-70" /><span>Copy Full Path</span>
             </button>
 
-            <div class="h-px my-1 bg-border-main"></div>
+            <div class="bg-border-main my-1 h-px"></div>
 
             <button
                 type="button"
-                class="w-full text-left px-3 py-1.5 text-ui hover:bg-white/10 flex items-center gap-2 hover:text-danger-text"
+                class="text-ui hover:text-danger-text flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={!tab?.path || isPinned}
-                onclick={handleSendToRecycleBin}>
+                onclick={handleSendToRecycleBin}
+            >
                 <Trash2 size={14} class="opacity-70" /><span>Delete to Recycle Bin</span>
             </button>
         </div>

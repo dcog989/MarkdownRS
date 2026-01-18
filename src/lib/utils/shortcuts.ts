@@ -48,9 +48,14 @@ export class KeyboardShortcutManager {
 
         const pressedKey = this.getEventKey(e);
 
-        const isEditorKey = ['ctrl+backspace', 'ctrl+delete', 'backspace', 'delete', 'ctrl+s', 'ctrl+o'].includes(
-            pressedKey.toLowerCase(),
-        );
+        const isEditorKey = [
+            'ctrl+backspace',
+            'ctrl+delete',
+            'backspace',
+            'delete',
+            'ctrl+s',
+            'ctrl+o',
+        ].includes(pressedKey.toLowerCase());
 
         if (!isEditorKey && e.repeat) return false;
 

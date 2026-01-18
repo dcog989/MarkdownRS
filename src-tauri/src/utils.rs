@@ -61,10 +61,10 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
             fs::copy(&temp_path, path).await?;
             fs::remove_file(&temp_path).await?;
             Ok(())
-        }
+        },
         Err(e) => {
             let _ = fs::remove_file(&temp_path).await;
             Err(e)
-        }
+        },
     }
 }

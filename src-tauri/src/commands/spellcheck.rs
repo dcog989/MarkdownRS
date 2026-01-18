@@ -28,14 +28,14 @@ async fn ensure_file_downloaded(
                                 log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
                                 return Err(format!("Write error: {}", e));
                             }
-                        }
+                        },
                         Err(e) => return Err(format!("Text decode error: {}", e)),
                     }
                 } else {
                     log::warn!("Failed to download {}: Status {}", label, resp.status());
                     return Err(format!("HTTP Error: {}", resp.status()));
                 }
-            }
+            },
             Err(e) => return Err(format!("Network error: {}", e)),
         }
     } else {
@@ -334,7 +334,7 @@ pub async fn init_spellchecker(
                         unique_words.insert(t.to_string());
                     }
                 }
-            }
+            },
             Err(e) => log::warn!("{}", e),
         }
     }
@@ -353,7 +353,7 @@ pub async fn init_spellchecker(
                         }
                     }
                     log::info!("Loaded {}: {} words", code, count);
-                }
+                },
                 Err(e) => log::warn!("Failed to load {}: {}", code, e),
             }
         }
@@ -378,7 +378,7 @@ pub async fn init_spellchecker(
                 let mut speller = state.speller.lock().await;
                 *speller = Some(dict);
                 log::info!("Spellchecker ready: {} unique words", total_word_count);
-            }
+            },
             Err(e) => log::error!("Failed to create dictionary: {:?}", e),
         }
     } else {

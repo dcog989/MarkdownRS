@@ -97,14 +97,15 @@
 <div class="fixed inset-0 z-200" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
     <div
         bind:this={menuEl}
-        class="absolute min-w-50 max-w-75 max-h-[calc(100vh-64px)] overflow-y-auto rounded-md shadow-xl border py-1 z-200 bg-bg-panel border-border-light text-fg-default"
+        class="bg-bg-panel border-border-light text-fg-default absolute z-200 max-h-[calc(100vh-64px)] max-w-75 min-w-50 overflow-y-auto rounded-md border py-1 shadow-xl"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;
             opacity: {isVisible ? 1 : 0};
         "
         onclick={(e) => e.stopPropagation()}
-        oncontextmenu={(e) => e.preventDefault()}>
+        oncontextmenu={(e) => e.preventDefault()}
+    >
         {@render children({ submenuSide })}
     </div>
 </div>

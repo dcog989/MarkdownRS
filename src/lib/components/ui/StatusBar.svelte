@@ -9,7 +9,9 @@
     import { formatNumber } from '$lib/utils/textMetrics';
     import { ClipboardCopy, TextWrap } from 'lucide-svelte';
 
-    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
+    let activeTab = $derived(
+        appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId),
+    );
 
     // Reactive totals pulled directly from pre-calculated state in the tab
     let lineEnding = $derived(activeTab?.lineEnding || 'LF');
@@ -91,20 +93,23 @@
 </script>
 
 <footer
-    class="h-6 border-t flex items-center px-3 text-ui-sm select-none justify-between shrink-0 z-50 whitespace-nowrap overflow-hidden bg-bg-panel border-border-main pointer-events-auto transition-colors duration-200 hover:bg-bg-panel! group"
+    class="text-ui-sm bg-bg-panel border-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex h-6 shrink-0 items-center justify-between overflow-hidden border-t px-3 whitespace-nowrap transition-colors duration-200 select-none"
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
     "
-    oncontextmenu={handleContextMenu}>
+    oncontextmenu={handleContextMenu}
+>
     <div
-        class="flex gap-4 items-center shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
-        style="opacity: {textOpacity};">
+        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
+        style="opacity: {textOpacity};"
+    >
         {#if canToggleFileType}
             <button
-                class="min-w-17.5 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
+                class="hover:text-fg-default min-w-17.5 cursor-pointer rounded px-1 transition-colors hover:bg-white/10"
                 onclick={toggleFileType}
-                use:tooltip={'Toggle File Type (markdown/text)'}>
+                use:tooltip={'Toggle File Type (markdown/text)'}
+            >
                 {fileType}
             </button>
         {:else}
@@ -112,20 +117,24 @@
         {/if}
         <span class="opacity-40">|</span>
 
-        <div class="flex gap-1 items-center" use:tooltip={'Line Position'}>
+        <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
             <span class="opacity-70">Ln</span>
-            <span class="font-mono text-right inline-block min-w-[4ch]"
-                >{formatNumber(appContext.metrics.cursorLine)}</span>
+            <span class="inline-block min-w-[4ch] text-right font-mono"
+                >{formatNumber(appContext.metrics.cursorLine)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[4ch]">{formatNumber(totalLines)}</span>
+            <span class="inline-block min-w-[4ch] text-left font-mono"
+                >{formatNumber(totalLines)}</span
+            >
         </div>
 
-        <div class="flex gap-1 items-center" use:tooltip={'Column Position'}>
+        <div class="flex items-center gap-1" use:tooltip={'Column Position'}>
             <span class="opacity-70">Col</span>
-            <span class="font-mono text-right inline-block min-w-[3ch]"
-                >{formatNumber(appContext.metrics.cursorCol)}</span>
+            <span class="inline-block min-w-[3ch] text-right font-mono"
+                >{formatNumber(appContext.metrics.cursorCol)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[3ch]">
+            <span class="inline-block min-w-[3ch] text-left font-mono">
                 {formatNumber(
                     Math.max(
                         appContext.metrics.currentLineLength,
@@ -137,56 +146,66 @@
             </span>
         </div>
 
-        <div class="flex gap-1 items-center" use:tooltip={'Character Position'}>
+        <div class="flex items-center gap-1" use:tooltip={'Character Position'}>
             <span class="opacity-70">Char</span>
-            <span class="font-mono text-right inline-block min-w-[5ch]"
-                >{formatNumber(appContext.metrics.cursorOffset)}</span>
+            <span class="inline-block min-w-[5ch] text-right font-mono"
+                >{formatNumber(appContext.metrics.cursorOffset)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[5ch]">{formatNumber(totalChars)}</span>
+            <span class="inline-block min-w-[5ch] text-left font-mono"
+                >{formatNumber(totalChars)}</span
+            >
         </div>
 
-        <div class="flex gap-1 items-center" use:tooltip={'Word Position'}>
+        <div class="flex items-center gap-1" use:tooltip={'Word Position'}>
             <span class="opacity-70">Word</span>
-            <span class="font-mono text-right inline-block min-w-[4ch]"
-                >{formatNumber(appContext.metrics.currentWordIndex)}</span>
+            <span class="inline-block min-w-[4ch] text-right font-mono"
+                >{formatNumber(appContext.metrics.currentWordIndex)}</span
+            >
             <span class="opacity-30">/</span>
-            <span class="font-mono text-left inline-block min-w-[4ch]">{formatNumber(totalWords)}</span>
+            <span class="inline-block min-w-[4ch] text-left font-mono"
+                >{formatNumber(totalWords)}</span
+            >
         </div>
 
-        <div class="flex gap-1 items-center ml-2" use:tooltip={'File Size'}>
-            <span class="font-mono text-right inline-block min-w-[7ch]">{fileSizeDisplay}</span>
+        <div class="ml-2 flex items-center gap-1" use:tooltip={'File Size'}>
+            <span class="inline-block min-w-[7ch] text-right font-mono">{fileSizeDisplay}</span>
         </div>
     </div>
 
     <div
-        class="flex gap-4 items-center shrink-0 pointer-events-auto text-fg-muted transition-opacity duration-200 group-hover:opacity-100"
-        style="opacity: {textOpacity};">
+        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
+        style="opacity: {textOpacity};"
+    >
         <button
-            class="hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors"
+            class="hover:text-fg-default cursor-pointer rounded px-1 transition-colors hover:bg-white/10"
             onclick={toggleLineEnding}
-            use:tooltip={'Toggle Line Ending'}>
+            use:tooltip={'Toggle Line Ending'}
+        >
             {lineEnding}
         </button>
 
-        <span class="px-1 cursor-default opacity-70" use:tooltip={'File Encoding'}>
+        <span class="cursor-default px-1 opacity-70" use:tooltip={'File Encoding'}>
             {encoding}
         </span>
 
         <button
             onclick={toggleInsertMode}
-            class="font-bold w-8 text-center {appContext.metrics.insertMode === 'OVR'
+            class="w-8 text-center font-bold {appContext.metrics.insertMode === 'OVR'
                 ? 'text-danger'
-                : 'text-accent-secondary'}">
+                : 'text-accent-secondary'}"
+        >
             {appContext.metrics.insertMode}
         </button>
 
         <button
-            class="flex items-center gap-1 hover:text-fg-default hover:bg-white/10 px-1 rounded cursor-pointer transition-colors {appContext
+            class="hover:text-fg-default flex cursor-pointer items-center gap-1 rounded px-1 transition-colors hover:bg-white/10 {appContext
                 .app.editorWordWrap
                 ? 'text-accent-secondary'
                 : 'text-inherit'}"
             onclick={toggleWordWrap}
-            use:tooltip={'Toggle Word Wrap'}>
+            use:tooltip={'Toggle Word Wrap'}
+        >
             <TextWrap size={14} />
         </button>
     </div>
@@ -195,8 +214,9 @@
 {#if showMenu}
     <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
         <button
-            class="w-full text-left px-3 py-1.5 text-ui flex items-center gap-2 hover:bg-white/10"
-            onclick={copyAllStats}>
+            class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+            onclick={copyAllStats}
+        >
             <ClipboardCopy size={14} class="opacity-70" />
             <span>Copy all document stats</span>
         </button>

@@ -8,7 +8,11 @@ import {
     sanitizePath,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
-import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
+import {
+    loadSession,
+    persistSession,
+    persistSessionDebounced,
+} from '$lib/services/sessionPersistence';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import {
@@ -72,7 +76,11 @@ export async function openFile(path?: string): Promise<void> {
         }
 
         // Sanity check: Check file size metadata before attempting to read content
-        const metadata = await callBackend('get_file_metadata', { path: sanitizedPath }, 'File:Metadata');
+        const metadata = await callBackend(
+            'get_file_metadata',
+            { path: sanitizedPath },
+            'File:Metadata',
+        );
 
         const BYTES_PER_MB = 1024 * 1024;
         const maxBytes = CONFIG.EDITOR.MAX_FILE_SIZE_MB * BYTES_PER_MB;
@@ -125,7 +133,11 @@ export async function openFile(path?: string): Promise<void> {
 
         let initialWordCount = 0;
         if (result.content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
-            const metrics = await callBackend('compute_text_metrics', { content: result.content }, 'File:Read');
+            const metrics = await callBackend(
+                'compute_text_metrics',
+                { content: result.content },
+                'File:Read',
+            );
             if (metrics) initialWordCount = metrics[1];
         } else {
             initialWordCount = countWords(result.content);
@@ -308,9 +320,11 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 let finalTitle = fileName;
 
                 if (appContext.app.tabNameFromContent) {
-                    const firstLine = contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
+                    const firstLine =
+                        contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
                     let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
-                    if (smartTitle.length > 25) smartTitle = smartTitle.substring(0, 25).trim() + '...';
+                    if (smartTitle.length > 25)
+                        smartTitle = smartTitle.substring(0, 25).trim() + '...';
                     if (smartTitle.length > 0) finalTitle = smartTitle;
                 }
 
@@ -418,10 +432,16 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
         if (oldPath === newPath) return true;
 
-        await callBackend('rename_file', { oldPath: oldPath, newPath: newPath }, 'File:Write', undefined, {
-            report: true,
-            msg: 'Failed to rename file',
-        });
+        await callBackend(
+            'rename_file',
+            { oldPath: oldPath, newPath: newPath },
+            'File:Write',
+            undefined,
+            {
+                report: true,
+                msg: 'Failed to rename file',
+            },
+        );
 
         fileWatcher.unwatch(oldPath);
         await fileWatcher.watch(newPath);

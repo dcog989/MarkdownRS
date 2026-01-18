@@ -85,18 +85,26 @@ try {
             execSync(`tar -xf "${portableZip}" -C "${tempExtractDir}"`, { stdio: 'inherit' });
 
             // Add .portable marker file
-            fs.writeFileSync(path.join(tempExtractDir, '.portable'), 'This file indicates portable mode');
+            fs.writeFileSync(
+                path.join(tempExtractDir, '.portable'),
+                'This file indicates portable mode',
+            );
 
             // Re-create zip with marker
             fs.rmSync(portableZip);
-            execSync(`tar -a -c -f "${portableZip}" -C "${tempExtractDir}" .`, { stdio: 'inherit' });
+            execSync(`tar -a -c -f "${portableZip}" -C "${tempExtractDir}" .`, {
+                stdio: 'inherit',
+            });
 
             // Clean up temp directory
             fs.rmSync(tempExtractDir, { recursive: true, force: true });
 
             console.log('✅ Portable marker added successfully!');
         } catch (err) {
-            console.warn('⚠️  Failed to add portable marker:', err instanceof Error ? err.message : String(err));
+            console.warn(
+                '⚠️  Failed to add portable marker:',
+                err instanceof Error ? err.message : String(err),
+            );
         }
     }
 

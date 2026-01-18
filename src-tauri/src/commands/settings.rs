@@ -153,21 +153,21 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
                 log::warn!("UTF-16LE decoding encountered errors in settings file");
             }
             decoded.to_string()
-        }
+        },
         Bom::Utf16Be => {
             let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
             if had_errors {
                 log::warn!("UTF-16BE decoding encountered errors in settings file");
             }
             decoded.to_string()
-        }
+        },
         bom => {
             log::warn!(
                 "Exotic BOM type {:?} detected in settings file, falling back to UTF-8",
                 bom
             );
             String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
-        }
+        },
     };
 
     let toml_val: toml::Value = toml::from_str(&content).map_err(|e| {

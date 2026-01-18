@@ -89,7 +89,10 @@
                     if (!modalPanel) return;
                     // Re-query in case DOM changed
                     const currentFocusable = getFocusableElements(modalPanel);
-                    if (currentFocusable.length > 0 && !modalPanel.contains(document.activeElement)) {
+                    if (
+                        currentFocusable.length > 0 &&
+                        !modalPanel.contains(document.activeElement)
+                    ) {
                         currentFocusable[0].focus();
                     }
                 }, 50);
@@ -135,7 +138,8 @@
         class:items-start={position === 'top'}
         style="z-index: {zIndex}; pointer-events: auto;"
         onclick={handleBackdropClick}
-        onkeydown={handleTabKey}>
+        onkeydown={handleTabKey}
+    >
         <div
             bind:this={modalPanel}
             class="ui-panel shadow-2xl"
@@ -143,27 +147,29 @@
             'top'
                 ? 'calc(100vh - 5rem)'
                 : MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;"
-            onclick={(e) => e.stopPropagation()}>
+            onclick={(e) => e.stopPropagation()}
+        >
             <!-- Header Strategy: Snippet First, then Title+Close Default -->
             {#if header}
-                <div class="ui-header flex justify-between items-center">
+                <div class="ui-header flex items-center justify-between">
                     {@render header()}
                 </div>
             {:else if title}
-                <div class="ui-header flex justify-between items-center">
-                    <span class="text-sm font-semibold text-fg-default">{title}</span>
+                <div class="ui-header flex items-center justify-between">
+                    <span class="text-fg-default text-sm font-semibold">{title}</span>
                     <button
-                        class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted"
+                        class="text-fg-muted rounded p-1 transition-colors hover:bg-white/10"
                         onclick={onClose}
-                        aria-label="Close">
+                        aria-label="Close"
+                    >
                         <X size={18} />
                     </button>
                 </div>
             {/if}
 
             <!-- Body with Internal Scrollbar Logic -->
-            <div class="flex-1 relative min-h-0 overflow-hidden flex flex-col">
-                <div bind:this={viewport} class="flex-1 overflow-y-auto no-scrollbar">
+            <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto">
                     <div bind:this={content} style="display: flow-root;">
                         {@render children()}
                     </div>
@@ -175,7 +181,9 @@
 
             <!-- Footer -->
             {#if footer}
-                <div class="px-4 py-3 border-t flex justify-end gap-2 shrink-0 border-border-main bg-bg-panel">
+                <div
+                    class="border-border-main bg-bg-panel flex shrink-0 justify-end gap-2 border-t px-4 py-3"
+                >
                     {@render footer()}
                 </div>
             {/if}

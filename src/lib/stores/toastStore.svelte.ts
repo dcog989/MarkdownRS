@@ -15,7 +15,11 @@ export const toastStore = $state<{ toasts: Toast[] }>({
     toasts: [],
 });
 
-export function showToast(type: ToastType, message: string, duration: number = CONFIG.UI.TOAST_DURATION_MS) {
+export function showToast(
+    type: ToastType,
+    message: string,
+    duration: number = CONFIG.UI.TOAST_DURATION_MS,
+) {
     const id = `toast-${nextId++}`;
     const toast: Toast = { id, message, type, duration };
     toastStore.toasts.push(toast);

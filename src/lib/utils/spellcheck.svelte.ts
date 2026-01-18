@@ -1,20 +1,21 @@
 import { appState } from '$lib/stores/appState.svelte';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { callBackend } from './backend';
 
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
-    misspelledCache = $state(new Set<string>());
-    customDictionary = $state(new Set<string>());
-    suggestionCache = $state(new Map<string, string[]>());
+    misspelledCache = $state(new SvelteSet<string>());
+    customDictionary = $state(new SvelteSet<string>());
+    suggestionCache = $state(new SvelteMap<string, string[]>());
 
     private initPromise: Promise<void> | null = null;
-    private pendingFetches = new Set<string>();
+    private pendingFetches = new SvelteSet<string>();
 
     async loadCustomDictionary(): Promise<void> {
         const words = await callBackend('load_user_dictionary', {}, 'Dictionary:Add', undefined, {
             ignore: true,
         });
-        this.customDictionary = new Set((words || []).map((w) => w.toLowerCase()));
+        this.customDictionary = new SvelteSet((words || []).map((w) => w.toLowerCase()));
     }
 
     async init(force = false): Promise<void> {
@@ -39,7 +40,7 @@ export class SpellcheckManager {
                     },
                 );
                 this.dictionaryLoaded = true;
-            } catch (err) {
+            } catch (_err) {
                 this.initPromise = null;
                 this.dictionaryLoaded = false;
             }
@@ -95,9 +96,15 @@ export class SpellcheckManager {
             return this.suggestionCache.get(word)!;
         }
 
-        const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add', undefined, {
-            report: true,
-        });
+        const suggestions = await callBackend(
+            'get_spelling_suggestions',
+            { word },
+            'Dictionary:Add',
+            undefined,
+            {
+                report: true,
+            },
+        );
         if (suggestions) {
             this.suggestionCache.set(word, suggestions);
             return suggestions;
@@ -105,8 +112,8 @@ export class SpellcheckManager {
         return [];
     }
 
-    getCustomDictionarySet(): Set<string> {
-        return new Set(this.customDictionary);
+    getCustomDictionarySet(): SvelteSet<string> {
+        return new SvelteSet(this.customDictionary);
     }
 
     clear(): void {

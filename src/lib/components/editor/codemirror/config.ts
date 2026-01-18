@@ -1,7 +1,12 @@
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
-import { autocompletion, closeBracketsKeymap, completeAnyWord, completionKeymap } from '@codemirror/autocomplete';
+import {
+    autocompletion,
+    closeBracketsKeymap,
+    completeAnyWord,
+    completionKeymap,
+} from '@codemirror/autocomplete';
 import {
     defaultKeymap,
     deleteCharBackward,

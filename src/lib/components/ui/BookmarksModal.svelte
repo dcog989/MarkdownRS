@@ -11,7 +11,17 @@
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { callBackend } from '$lib/utils/backend';
     import { open } from '@tauri-apps/plugin-dialog';
-    import { ArrowDown, ArrowUp, Bookmark as BookmarkIcon, Pen, Plus, Search, Tag, Trash2, X } from 'lucide-svelte';
+    import {
+        ArrowDown,
+        ArrowUp,
+        Bookmark as BookmarkIcon,
+        Pen,
+        Plus,
+        Search,
+        Tag,
+        Trash2,
+        X,
+    } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
     interface Props {
@@ -72,21 +82,27 @@
                     sorted.sort((a, b) => {
                         const dateA = a.created || '';
                         const dateB = b.created || '';
-                        return sortDirection === 'desc' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+                        return sortDirection === 'desc'
+                            ? dateB.localeCompare(dateA)
+                            : dateA.localeCompare(dateB);
                     });
                     break;
                 case 'alphabetical':
                     sorted.sort((a, b) => {
                         const titleA = a.title.toLowerCase();
                         const titleB = b.title.toLowerCase();
-                        return sortDirection === 'desc' ? titleB.localeCompare(titleA) : titleA.localeCompare(titleB);
+                        return sortDirection === 'desc'
+                            ? titleB.localeCompare(titleA)
+                            : titleA.localeCompare(titleB);
                     });
                     break;
                 case 'last-updated':
                     sorted.sort((a, b) => {
                         const dateA = a.last_accessed || a.created || '';
                         const dateB = b.last_accessed || b.created || '';
-                        return sortDirection === 'desc' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+                        return sortDirection === 'desc'
+                            ? dateB.localeCompare(dateA)
+                            : dateA.localeCompare(dateB);
                     });
                     break;
             }
@@ -193,31 +209,37 @@
     {#snippet header()}
         <div class="flex items-center gap-2">
             <BookmarkIcon size={16} class="text-accent-secondary" />
-            <h2 class="text-ui font-semibold shrink-0 text-fg-default">Bookmarks</h2>
+            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Bookmarks</h2>
         </div>
 
-        <div class="flex-1 relative mx-4">
-            <Search size={12} class="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+        <div class="relative mx-4 flex-1">
+            <Search
+                size={12}
+                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50"
+            />
             <Input
                 bind:ref={searchInputEl}
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search bookmarks..."
-                class="pl-8 pr-3" />
+                class="pr-3 pl-8"
+            />
         </div>
 
-        <div class="flex items-center gap-1 shrink-0">
+        <div class="flex shrink-0 items-center gap-1">
             <select
                 bind:value={sortBy}
-                class="px-2 py-1 rounded text-ui outline-none cursor-pointer bg-bg-input text-fg-default border border-border-main">
+                class="text-ui bg-bg-input text-fg-default border-border-main cursor-pointer rounded border px-2 py-1 outline-none"
+            >
                 <option value="most-recent">Most Recent</option>
                 <option value="alphabetical">Alphabetical</option>
                 <option value="last-updated">Last Updated</option>
             </select>
             <button
                 onclick={toggleSortDirection}
-                class="p-1 rounded hover:bg-white/10 transition-colors text-fg-muted"
-                title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
+                class="text-fg-muted rounded p-1 transition-colors hover:bg-white/10"
+                title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}
+            >
                 {#if sortDirection === 'asc'}
                     <ArrowUp size={16} />
                 {:else}
@@ -227,40 +249,63 @@
         </div>
 
         <button
-            class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2 text-accent-primary"
+            class="text-accent-primary ml-2 shrink-0 rounded p-1 transition-colors hover:bg-white/10"
             onclick={startAdd}
-            title="Add Bookmark">
+            title="Add Bookmark"
+        >
             <Plus size={16} />
         </button>
 
-        <button class="p-1 rounded hover:bg-white/10 transition-colors shrink-0 ml-2 text-fg-muted" onclick={onClose}>
+        <button
+            class="text-fg-muted ml-2 shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            onclick={onClose}
+        >
             <X size={16} />
         </button>
     {/snippet}
 
     {#if showAddForm}
-        <div class="px-4 py-3 border-b bg-bg-input border-border-main">
+        <div class="bg-bg-input border-border-main border-b px-4 py-3">
             <div class="space-y-2">
                 <div class="flex gap-2">
-                    <Input bind:value={addPath} type="text" placeholder="File path..." class="flex-1 bg-bg-panel" />
+                    <Input
+                        bind:value={addPath}
+                        type="text"
+                        placeholder="File path..."
+                        class="bg-bg-panel flex-1"
+                    />
                     <button
                         onclick={handleBrowse}
-                        class="px-3 py-1 rounded text-ui font-medium transition-colors bg-bg-panel text-fg-default border border-border-main">
+                        class="text-ui bg-bg-panel text-fg-default border-border-main rounded border px-3 py-1 font-medium transition-colors"
+                    >
                         Browse...
                     </button>
                 </div>
-                <Input bind:value={addTitle} type="text" placeholder="Bookmark title..." class="bg-bg-panel" />
-                <Input bind:value={addTags} type="text" placeholder="Tags (comma-separated)..." class="bg-bg-panel" />
+                <Input
+                    bind:value={addTitle}
+                    type="text"
+                    placeholder="Bookmark title..."
+                    class="bg-bg-panel"
+                />
+                <Input
+                    bind:value={addTags}
+                    type="text"
+                    placeholder="Tags (comma-separated)..."
+                    class="bg-bg-panel"
+                />
                 {#if browseError}
                     <div class="text-ui-sm text-danger-text">{browseError}</div>
                 {/if}
-                <div class="flex gap-2 justify-end">
-                    <button onclick={() => (showAddForm = false)} class="px-3 py-1 rounded text-ui">Cancel</button>
+                <div class="flex justify-end gap-2">
+                    <button onclick={() => (showAddForm = false)} class="text-ui rounded px-3 py-1"
+                        >Cancel</button
+                    >
                     <button
                         onclick={handleAddBookmark}
                         disabled={!addPath || !addTitle}
-                        class="px-3 py-1 rounded text-ui font-medium disabled:opacity-50 bg-accent-primary text-fg-inverse"
-                        >Add</button>
+                        class="text-ui bg-accent-primary text-fg-inverse rounded px-3 py-1 font-medium disabled:opacity-50"
+                        >Add</button
+                    >
                 </div>
             </div>
         </div>
@@ -268,64 +313,76 @@
 
     <div class="text-ui">
         {#if sortedBookmarks.length > 0}
-            <div class="divide-y divide-border-main border-border-main">
+            <div class="divide-border-main border-border-main divide-y">
                 {#each sortedBookmarks as bookmark (bookmark.id)}
-                    <div class="px-4 py-2.5 hover:bg-white/5 transition-colors">
+                    <div class="px-4 py-2.5 transition-colors hover:bg-white/5">
                         {#if editingId === bookmark.id}
                             <div class="space-y-2">
                                 <Input bind:value={editTitle} type="text" />
-                                <Input bind:value={editTags} type="text" placeholder="Tags (comma-separated)" />
-                                <div class="flex gap-2 justify-end">
-                                    <button onclick={cancelEdit} class="px-2 py-1 rounded text-ui-sm">Cancel</button>
+                                <Input
+                                    bind:value={editTags}
+                                    type="text"
+                                    placeholder="Tags (comma-separated)"
+                                />
+                                <div class="flex justify-end gap-2">
+                                    <button
+                                        onclick={cancelEdit}
+                                        class="text-ui-sm rounded px-2 py-1">Cancel</button
+                                    >
                                     <button
                                         onclick={() => saveEdit(bookmark.id)}
-                                        class="px-2 py-1 rounded text-ui-sm bg-accent-primary text-fg-inverse"
-                                        >Save</button>
+                                        class="text-ui-sm bg-accent-primary text-fg-inverse rounded px-2 py-1"
+                                        >Save</button
+                                    >
                                 </div>
                             </div>
                         {:else}
                             <!-- svelte-ignore a11y_click_events_have_key_events -->
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div
-                                class="flex items-start gap-3 cursor-pointer"
-                                onclick={() => handleOpenBookmark(bookmark)}>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium truncate text-fg-default">
+                                class="flex cursor-pointer items-start gap-3"
+                                onclick={() => handleOpenBookmark(bookmark)}
+                            >
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-fg-default truncate font-medium">
                                         {bookmark.title}
                                     </div>
-                                    <div class="text-ui-sm opacity-60 truncate text-fg-muted">
+                                    <div class="text-ui-sm text-fg-muted truncate opacity-60">
                                         {bookmark.path}
                                     </div>
                                     {#if bookmark.tags.length > 0}
-                                        <div class="flex items-center gap-1 mt-1 flex-wrap">
+                                        <div class="mt-1 flex flex-wrap items-center gap-1">
                                             <Tag size={12} class="opacity-50" />
                                             {#each bookmark.tags as tag (tag)}
                                                 <span
-                                                    class="text-ui-sm px-1.5 py-0.5 rounded bg-bg-input text-fg-muted">
+                                                    class="text-ui-sm bg-bg-input text-fg-muted rounded px-1.5 py-0.5"
+                                                >
                                                     {tag}
                                                 </span>
                                             {/each}
                                         </div>
                                     {/if}
-                                    <div class="text-ui-sm opacity-50 mt-1 text-fg-muted">
+                                    <div class="text-ui-sm text-fg-muted mt-1 opacity-50">
                                         Added: {formatDate(bookmark.created)}
                                         {#if bookmark.last_accessed}
                                             • Accessed: {formatDate(bookmark.last_accessed)}
                                         {/if}
                                     </div>
                                 </div>
-                                <div class="flex gap-1 shrink-0">
+                                <div class="flex shrink-0 gap-1">
                                     <button
                                         onclick={(e) => {
                                             e.stopPropagation();
                                             startEdit(bookmark);
                                         }}
-                                        class="p-1.5 rounded hover:bg-white/10 text-fg-muted">
+                                        class="text-fg-muted rounded p-1.5 hover:bg-white/10"
+                                    >
                                         <Pen size={14} />
                                     </button>
                                     <button
                                         onclick={(e) => handleDelete(bookmark.id, e)}
-                                        class="p-1.5 rounded hover:bg-white/10 text-fg-muted hover:text-danger-text">
+                                        class="text-fg-muted hover:text-danger-text rounded p-1.5 hover:bg-white/10"
+                                    >
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
@@ -335,12 +392,14 @@
                 {/each}
             </div>
         {:else if searchQuery.length >= 2}
-            <div class="px-4 py-8 text-center text-fg-muted">No bookmarks match your search</div>
+            <div class="text-fg-muted px-4 py-8 text-center">No bookmarks match your search</div>
         {:else if appContext.bookmarks.bookmarks.length === 0}
-            <div class="px-4 py-8 text-center text-fg-muted">
+            <div class="text-fg-muted px-4 py-8 text-center">
                 <BookmarkIcon size={48} class="mx-auto mb-2 opacity-30" />
                 <div class="mb-1">No bookmarks yet</div>
-                <div class="text-ui-sm opacity-70">Click the + button above to add your first bookmark</div>
+                <div class="text-ui-sm opacity-70">
+                    Click the + button above to add your first bookmark
+                </div>
             </div>
         {/if}
     </div>

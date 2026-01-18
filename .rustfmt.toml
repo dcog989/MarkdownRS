@@ -1,37 +1,17 @@
 # Rustfmt Configuration for MarkdownRS
 edition = "2024"
-version = "Two"
 
 # Width settings
 max_width = 100
-hard_tabs = false
 tab_spaces = 4
+hard_tabs = false
 newline_style = "Unix"
 
 # Import/Use formatting
-use_small_heuristics = "Max"
+use_small_heuristics = "Default"
 merge_derives = false
 force_explicit_abi = false
-
-# Struct/Enum formatting
-struct_field_align_threshold = 0
-enum_discrim_align_threshold = 0
 
 # Control flow
 match_block_trailing_comma = true
 single_line_if_else_max_width = 50
-
-# Comments
-comment_width = 80
-wrap_comments = false
-normalize_comments = false
-
-# Strings/formatting
-string_lit_formatting = "Preserve"
-
-# Ignore patterns (build artifacts, generated code)
-ignore = [
-    "src-tauri/target",
-    "build",
-    "dist"
-]

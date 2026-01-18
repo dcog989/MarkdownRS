@@ -96,21 +96,32 @@
         if (debounceTimer) clearTimeout(debounceTimer);
         if (renderAbortController) renderAbortController.abort();
     });
+
+    function injectHtml(node: HTMLElement, content: string) {
+        node.innerHTML = content;
+        return {
+            update(newContent: string) {
+                node.innerHTML = newContent;
+            },
+        };
+    }
 </script>
 
 <!-- Added 'group/preview' to isolate hover state from child components like scrollbars -->
-<div class="relative w-full h-full border-l bg-bg-preview border-border-main group/preview">
+<div class="bg-bg-preview border-border-main group/preview relative h-full w-full border-l">
     <div class="absolute top-2 right-2 z-10">
         <!-- Uses 'group-hover/preview' to only react to the preview pane hover -->
         <button
             type="button"
-            class="p-2 rounded opacity-0 group-hover/preview:opacity-100 transition-opacity duration-200 bg-bg-panel border border-border-main hover:bg-white/20"
+            class="bg-bg-panel border-border-main rounded border p-2 opacity-0 transition-opacity duration-200 group-hover/preview:opacity-100 hover:bg-white/20"
             onclick={() => toggleOrientation()}
             use:tooltip={appContext.app.splitOrientation === 'vertical'
                 ? 'Switch to Horizontal Split'
-                : 'Switch to Vertical Split'}>
-            {#if appContext.app.splitOrientation === 'vertical'}<FlipVertical size={16} />{:else}<FlipHorizontal
-                    size={16} />{/if}
+                : 'Switch to Vertical Split'}
+        >
+            {#if appContext.app.splitOrientation === 'vertical'}<FlipVertical
+                    size={16}
+                />{:else}<FlipHorizontal size={16} />{/if}
         </button>
     </div>
 
@@ -125,24 +136,29 @@
             }
         }}
         role="none"
-        class="preview-container w-full h-full overflow-y-auto p-8 prose prose-invert prose-sm max-w-none relative z-0 bg-bg-preview text-fg-default"
-        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app.previewFontSize}px;"
-        spellcheck="false">
+        class="preview-container prose prose-invert prose-sm bg-bg-preview text-fg-default relative z-0 h-full w-full max-w-none overflow-y-auto p-8"
+        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
+            .previewFontSize}px;"
+        spellcheck="false"
+    >
         {#if !isMarkdown}
             <div
-                class="absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none pointer-events-none">
+                class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none"
+            >
                 <FileText size={64} class="mb-4" />
                 <p>Preview not available for this file type</p>
             </div>
         {:else if isRendering && !htmlContent}
-            <div class="absolute inset-0 flex items-center justify-center opacity-50">Rendering...</div>
+            <div class="absolute inset-0 flex items-center justify-center opacity-50">
+                Rendering...
+            </div>
         {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
-                <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-4 grayscale" />
+                <img src="/logo.svg" alt="Logo" class="mb-4 h-24 w-24 grayscale" />
                 <h1 class="text-3xl font-bold">MarkdownRS</h1>
             </div>
         {:else}
-            {@html htmlContent}
+            <div style="display: contents" use:injectHtml={htmlContent}></div>
         {/if}
     </div>
 

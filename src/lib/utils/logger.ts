@@ -41,7 +41,9 @@ class Logger {
 
     private log(level: LogLevel, namespace: string, action: string, metadata?: LogMetadata): void {
         const metadataStr = this.formatMetadata(metadata);
-        const message = metadataStr ? `[${namespace}] ${action} | ${metadataStr}` : `[${namespace}] ${action}`;
+        const message = metadataStr
+            ? `[${namespace}] ${action} | ${metadataStr}`
+            : `[${namespace}] ${action}`;
 
         // Standard Browser Console output
         switch (level) {
@@ -114,24 +116,36 @@ class Logger {
     }
 
     editor = {
-        debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Editor', action, metadata),
-        info: (action: string, metadata?: LogMetadata) => this.log('info', 'Editor', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Editor', action, metadata),
-        error: (action: string, metadata?: LogMetadata) => this.log('error', 'Editor', action, metadata),
+        debug: (action: string, metadata?: LogMetadata) =>
+            this.log('debug', 'Editor', action, metadata),
+        info: (action: string, metadata?: LogMetadata) =>
+            this.log('info', 'Editor', action, metadata),
+        warn: (action: string, metadata?: LogMetadata) =>
+            this.log('warn', 'Editor', action, metadata),
+        error: (action: string, metadata?: LogMetadata) =>
+            this.log('error', 'Editor', action, metadata),
     };
 
     session = {
-        debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Session', action, metadata),
-        info: (action: string, metadata?: LogMetadata) => this.log('info', 'Session', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Session', action, metadata),
-        error: (action: string, metadata?: LogMetadata) => this.log('error', 'Session', action, metadata),
+        debug: (action: string, metadata?: LogMetadata) =>
+            this.log('debug', 'Session', action, metadata),
+        info: (action: string, metadata?: LogMetadata) =>
+            this.log('info', 'Session', action, metadata),
+        warn: (action: string, metadata?: LogMetadata) =>
+            this.log('warn', 'Session', action, metadata),
+        error: (action: string, metadata?: LogMetadata) =>
+            this.log('error', 'Session', action, metadata),
     };
 
     file = {
-        debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'File', action, metadata),
-        info: (action: string, metadata?: LogMetadata) => this.log('info', 'File', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'File', action, metadata),
-        error: (action: string, metadata?: LogMetadata) => this.log('error', 'File', action, metadata),
+        debug: (action: string, metadata?: LogMetadata) =>
+            this.log('debug', 'File', action, metadata),
+        info: (action: string, metadata?: LogMetadata) =>
+            this.log('info', 'File', action, metadata),
+        warn: (action: string, metadata?: LogMetadata) =>
+            this.log('warn', 'File', action, metadata),
+        error: (action: string, metadata?: LogMetadata) =>
+            this.log('error', 'File', action, metadata),
     };
 
     startTimer(namespace: string, action: string): () => void {

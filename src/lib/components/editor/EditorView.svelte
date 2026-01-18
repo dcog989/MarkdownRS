@@ -5,7 +5,10 @@
         getAutocompletionConfig,
         getEditorKeymap,
     } from '$lib/components/editor/codemirror/config';
-    import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
+    import {
+        prefetchHoverHandler,
+        smartBacktickHandler,
+    } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
@@ -28,7 +31,10 @@
     import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
     import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
     import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-    import { applyImmediateSpellcheck, createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
+    import {
+        applyImmediateSpellcheck,
+        createSpellCheckLinter,
+    } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { calculateCursorMetrics, type CursorMetrics } from '$lib/utils/textMetrics';
     import { userThemeExtension } from '$lib/utils/themeMapper';
     import { throttle } from '$lib/utils/timing';
@@ -260,7 +266,9 @@
                 ),
             ),
             indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))),
-            whitespaceComp.of(appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : []),
+            whitespaceComp.of(
+                appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [],
+            ),
             languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
             spellComp.of(createSpellCheckLinter()),
@@ -300,11 +308,15 @@
                         const docString = state.doc.toString();
                         const line = state.doc.lineAt(state.selection.main.head);
 
-                        const metrics: CursorMetrics = calculateCursorMetrics(docString, state.selection.main.head, {
-                            number: line.number,
-                            from: line.from,
-                            text: line.text,
-                        });
+                        const metrics: CursorMetrics = calculateCursorMetrics(
+                            docString,
+                            state.selection.main.head,
+                            {
+                                number: line.number,
+                                from: line.from,
+                                text: line.text,
+                            },
+                        );
                         onMetricsChange(metrics);
                     }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                 }
@@ -415,7 +427,8 @@
                 const maxSuffix = minLen - commonPrefix;
                 while (
                     commonSuffix < maxSuffix &&
-                    currentDoc.charCodeAt(to - 1 - commonSuffix) === insert.charCodeAt(insert.length - 1 - commonSuffix)
+                    currentDoc.charCodeAt(to - 1 - commonSuffix) ===
+                        insert.charCodeAt(insert.length - 1 - commonSuffix)
                 ) {
                     commonSuffix++;
                 }

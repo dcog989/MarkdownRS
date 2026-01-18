@@ -68,7 +68,9 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
                     event.stopImmediatePropagation();
 
                     if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-                        const url = targetString.startsWith('www.') ? `https://${targetString}` : targetString;
+                        const url = targetString.startsWith('www.')
+                            ? `https://${targetString}`
+                            : targetString;
                         openPath(url).catch(() => {});
                     } else {
                         navigateToPath(targetString);
