@@ -10,6 +10,7 @@ Focus on using the most current and correct coding standards and patterns.
 
 - Adhere to KISS, Occam's razor, DRY, YAGNI.
 - Always consider performance, actual and perceived.
+- Code should be self-documenting via good naming standards for functions, variables, etc. Use comments only to document workarounds or complex logic or necessary notes.
 
 ## Tech Stack
 
