@@ -195,6 +195,9 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 }
 
 export async function saveCurrentFile(): Promise<boolean> {
+    // Clear tab switching flag to ensure format-on-save works
+    appContext.app.isTabSwitching = false;
+
     if (typeof window !== 'undefined') {
         const win = window as Window & { _editorFlushFunctions?: (() => void)[] };
         win._editorFlushFunctions?.forEach((fn) => fn());
@@ -203,6 +206,9 @@ export async function saveCurrentFile(): Promise<boolean> {
 }
 
 export async function saveCurrentFileAs(): Promise<boolean> {
+    // Clear tab switching flag to ensure format-on-save works
+    appContext.app.isTabSwitching = false;
+
     if (typeof window !== 'undefined') {
         const win = window as Window & { _editorFlushFunctions?: (() => void)[] };
         win._editorFlushFunctions?.forEach((fn) => fn());
