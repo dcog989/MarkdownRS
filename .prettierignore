@@ -1,17 +1,19 @@
 # --- General / Standard ---
-node_modules/
-dist/
-build/
-out/
-.vercel/
 .turbo/
+.vercel/
+build/
+bun.lock
+dist/
+node_modules/
+out/
 package-lock.json
-yarn.lock
 pnpm-lock.yaml
+yarn.lock
 
 # --- Rust ---
 # Exclude the target directory where compiled binaries and build cache live
-target/
+src-tauri/gen/
+src-tauri/target/
 **/*.rs
 
 # --- Python ---
@@ -43,7 +45,8 @@ Thumbs.db
 
 # --- Project Stuff ---
 .ai/
-.docs/
 .assets/
+.claude/
+.docs/
 .git/
-*.md
+.husky/

@@ -4,15 +4,13 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.detectIndentation": false,
+    "editor.tabSize": 4,
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },
     "files.associations": {
-        "*.css": "tailwindcss"
-    },
-    "[rust]": {
-        "editor.defaultFormatter": "rust-lang.rust-analyzer",
-        "editor.formatOnSave": true
+        "*.css": "tailwindcss",
+        "*.svelte": "svelte"
     },
     "eslint.validate": ["javascript", "typescript", "svelte"],
     "eslint.options": {
@@ -21,8 +19,20 @@
         }
     },
     "eslint.workingDirectories": [{ "mode": "auto" }],
-
-    "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.check.extraArgs": ["--all-features"],
-    "rust-analyzer.check.overrideCommand": null
+    "eslint.experimental.useFlatConfig": true,
+    "prettier.requireConfig": true,
+    "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@tauri-apps/**"],
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    },
+    "[json]": {
+        "editor.tabSize": 2
+    },
+    "[jsonc]": {
+        "editor.tabSize": 2
+    },
+    "[yaml]": {
+        "editor.tabSize": 2
+    }
 }

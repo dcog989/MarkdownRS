@@ -47,6 +47,8 @@ export const appState = $state({
     collapsePinnedTabs: false,
     customShortcuts: {} as Record<string, string>,
     neverPrompt: false,
+    // Tab switching flag to prevent auto-format during transitions
+    isTabSwitching: false,
 });
 
 // Logic functions

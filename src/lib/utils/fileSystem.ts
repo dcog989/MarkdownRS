@@ -155,8 +155,8 @@ export async function openFile(path?: string): Promise<void> {
             size: metadata.size,
             encoding: result.encoding,
         });
-    } catch (err) {
-        AppError.handle('File:Read', err, {
+    } catch (_err) {
+        AppError.handle('File:Read', _err, {
             showToast: true,
             additionalInfo: { path },
         });
@@ -189,21 +189,23 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
         }
 
         await openPath(resolvedPath);
-    } catch (err) {
+    } catch {
         // Silent failure
     }
 }
 
 export async function saveCurrentFile(): Promise<boolean> {
-    if (typeof window !== 'undefined' && (window as any)._editorFlushFunctions) {
-        (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
+    if (typeof window !== 'undefined') {
+        const win = window as Window & { _editorFlushFunctions?: (() => void)[] };
+        win._editorFlushFunctions?.forEach((fn) => fn());
     }
     return saveFile(false);
 }
 
 export async function saveCurrentFileAs(): Promise<boolean> {
-    if (typeof window !== 'undefined' && (window as any)._editorFlushFunctions) {
-        (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
+    if (typeof window !== 'undefined') {
+        const win = window as Window & { _editorFlushFunctions?: (() => void)[] };
+        win._editorFlushFunctions?.forEach((fn) => fn());
     }
     return saveFile(true);
 }
@@ -247,7 +249,11 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
             const sanitizedPath = sanitizePath(savePath);
             let contentToSave = tab.content;
 
-            if (appContext.app.formatOnSave && isMarkdownFile(sanitizedPath)) {
+            // Only format if NOT during tab switching
+            const shouldFormat =
+                appContext.app.formatOnSave && isMarkdownFile(sanitizedPath) && !appContext.app.isTabSwitching;
+
+            if (shouldFormat) {
                 const formatted = await formatMarkdown(contentToSave, {
                     listIndent: appContext.app.defaultIndent,
                     bulletChar: appContext.app.formatterBulletChar,
@@ -322,7 +328,7 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
             return true;
         }
         return false;
-    } catch (err) {
+    } catch {
         return false;
     }
 }
@@ -431,7 +437,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
         showToast('success', `Renamed to ${finalNewName}`);
         return true;
-    } catch (err) {
+    } catch {
         return false;
     }
 }

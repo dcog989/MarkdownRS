@@ -378,7 +378,10 @@
         const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
         const isFocused = view.hasFocus;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
-        const shouldSync = isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync;
+        // Skip sync during tab switching to prevent content corruption
+        const shouldSync =
+            (isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync) &&
+            !appContext.app.isTabSwitching;
 
         if (shouldSync) {
             untrack(() => {
@@ -535,7 +538,7 @@
 
 <div
     role="none"
-    class="relative h-full w-full overflow-hidden bg-bg-main"
+    class="bg-bg-main relative h-full w-full overflow-hidden"
     bind:this={editorContainer}
-    onclick={() => view?.focus()}>
-</div>
+    onclick={() => view?.focus()}
+></div>

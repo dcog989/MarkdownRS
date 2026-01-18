@@ -5,6 +5,19 @@ import globals from 'globals';
 import ts from 'typescript-eslint';
 
 export default ts.config(
+    {
+        ignores: [
+            'build/',
+            '.svelte-kit/',
+            'dist/',
+            'src-tauri/target/',
+            'eslint.config.js',
+            'vite.config.ts',
+            'svelte.config.js',
+            'postcss.config.cjs',
+            'scripts/**',
+        ],
+    },
     js.configs.recommended,
     ...ts.configs.recommended,
     ...svelte.configs['flat/recommended'],
@@ -25,6 +38,10 @@ export default ts.config(
                 parser: ts.parser,
             },
         },
+        rules: {
+            'svelte/no-at-html-tags': 'error',
+            'svelte/valid-compile': 'error',
+        },
     },
     {
         rules: {
@@ -36,9 +53,14 @@ export default ts.config(
                     caughtErrorsIgnorePattern: '^_',
                 },
             ],
+            '@typescript-eslint/no-explicit-any': 'error',
+            '@typescript-eslint/consistent-type-imports': [
+                'error',
+                {
+                    prefer: 'type-imports',
+                    fixStyle: 'inline-type-imports',
+                },
+            ],
         },
-    },
-    {
-        ignores: ['build/', '.svelte-kit/', 'dist/', 'src-tauri/target/'],
     },
 );

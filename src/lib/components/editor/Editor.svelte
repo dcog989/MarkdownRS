@@ -113,8 +113,16 @@
 
         untrack(() => {
             if (previousTabId && previousTabId !== currentTabId && currentView?.getHistoryState) {
+                // Set flag to prevent auto-format during tab switch
+                appContext.app.isTabSwitching = true;
+
                 // Save history of the outgoing tab BEFORE the props update propagates down to EditorView
                 updateHistoryState(previousTabId, currentView.getHistoryState());
+
+                // Clear the flag after a short delay to allow tab switch to complete
+                setTimeout(() => {
+                    appContext.app.isTabSwitching = false;
+                }, 200);
             }
             previousTabId = currentTabId;
         });
@@ -199,7 +207,7 @@
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
-<div class="relative h-full w-full overflow-hidden bg-bg-main">
+<div class="bg-bg-main relative h-full w-full overflow-hidden">
     <EditorViewComponent
         bind:cmView
         {tabId}
@@ -215,7 +223,8 @@
         onMetricsChange={handleMetricsChange}
         onScrollChange={handleScrollChange}
         onSelectionChange={handleSelectionChange}
-        onHistoryUpdate={handleHistoryUpdate} />
+        onHistoryUpdate={handleHistoryUpdate}
+    />
     {#if cmView}
         <CustomScrollbar viewport={cmView.scrollDOM} onScrollClick={handleScrollbarClick} />
     {/if}
@@ -223,7 +232,7 @@
 
     {#if showEmptyState}
         <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <img src="/logo.svg" alt="MarkdownRS Logo" class="h-48 w-48 select-none opacity-[0.08]" />
+            <img src="/logo.svg" alt="MarkdownRS Logo" class="h-48 w-48 opacity-[0.08] select-none" />
         </div>
     {/if}
 </div>
@@ -285,5 +294,6 @@
             setTimeout(() => {
                 if (cmView) refreshSpellcheck(cmView);
             }, CONFIG.SPELLCHECK.REFRESH_DELAY_MS);
-        }} />
+        }}
+    />
 {/if}
