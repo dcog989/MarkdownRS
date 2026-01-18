@@ -1,69 +1,68 @@
 # MarkdownRS Project Guidelines
 
-MarkdownRS is a text editor focused primarily on editing, formatting, and previewing Markdown. It focuses on: performance, actual and perceived; minimal use of system resources; a clean, minimal UI while still being fully featured for technical and general users.
+MarkdownRS is a Markdown editor focused on performance, minimal resource usage, and a clean UI for technical and general users.
 
 ## Tech Stack
 
-- Tauri (v2.9)
-- Rust (2024 / v1.92)
-- Svelte (v5.46)
-- Typescript (v5.9)
-- Tailwind (v4.1)
-- CodeMirror (v6.0)
-- SQLite (v3.51)
+- **Tauri** (v2.9) - Desktop framework wrapping the web frontend
+- **Rust** (2024 / v1.92) - Backend logic, Markdown processing, file I/O
+- **Svelte** (v5.46) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
+- **TypeScript** (v5.9) - Type-safe frontend code
+- **Tailwind** (v4.1) - Utility-first CSS
+- **CodeMirror** (v6.0) - Code editor component
+- **SQLite** (v3.51) - Local database for metadata/bookmarks
+
+## Entry Points
+
+### Frontend (SvelteKit)
+
+- **`src/routes/+page.svelte`** - Main application page
+- **`src/routes/+layout.svelte`** - Root layout wrapper
+- **`src/lib/stores/state.svelte.ts`** - Centralized state tree (`appContext`)
+- **`src/lib/components/editor/Editor.svelte`** - Main editor component
+- **`src/lib/components/preview/Preview.svelte`** - Markdown preview component
+
+### Backend (Tauri/Rust)
+
+- **`src-tauri/src/main.rs`** - Rust application entry point
+- **`src-tauri/src/commands/`** - Tauri command handlers (callable from frontend)
+- **`src-tauri/src/markdown/`** - Markdown processing logic
+- **`src-tauri/src/db/`** - SQLite database operations
+
+### Key Architecture
+
+- **State Management**: Svelte 5 runes in `$lib/stores/*.svelte.ts` files, accessed via `appContext`
+- **Editor**: CodeMirror 6 configured in `$lib/components/editor/codemirror/`
+- **Backend Communication**: Tauri commands in `src-tauri/src/commands/` invoked via `invoke()` from frontend
+- **File System**: Handled by Tauri plugins and Rust backend (`$lib/utils/backend.ts` for frontend interface)
 
 ## Coding Principles
 
-- Focus on using the most current and correct coding standards and patterns.
-- Adhere to KISS, Occam's razor, DRY, YAGNI.
-- Always consider performance, actual and perceived.
-- Code should be self-documenting via good naming standards for functions, variables, etc.
-- Use comments only to document workarounds, complex logic, etc..
-- Do not use magic numbers.
-- Do not create documentation (SUMMARY, README, *.md) files unless explicitly instructed.
+- Use current coding standards and patterns (Svelte 5 runes, modern TS/Rust)
+- KISS, Occam's razor, DRY, YAGNI
+- Optimize for actual and perceived performance
+- Self-documenting code via clear naming
+- Comments only for workarounds/complex logic
+- No magic numbers
+- No docs files unless explicitly requested
 
 ## File System Access
 
-Allowed:
+### Allowed Directories
 
-D:\Code\MarkdownRS\.claude
-D:\Code\MarkdownRS\.github
-D:\Code\MarkdownRS\.husky
-D:\Code\MarkdownRS\.svelte-kit
-D:\Code\MarkdownRS\.vscode
-D:\Code\MarkdownRS\scripts
-D:\Code\MarkdownRS\src
-D:\Code\MarkdownRS\src-tauri
-D:\Code\MarkdownRS\static
-D:\Code\MarkdownRS\.editorconfig
-D:\Code\MarkdownRS\LICENSE
-D:\Code\MarkdownRS\.gitignore
-D:\Code\MarkdownRS\postcss.config.cjs
-D:\Code\MarkdownRS\eslint.config.js
-D:\Code\MarkdownRS\svelte.config.js
-D:\Code\MarkdownRS\package.json
-D:\Code\MarkdownRS\tsconfig.json
-D:\Code\MarkdownRS\README.md
-D:\Code\MarkdownRS\.prettierignore
-D:\Code\MarkdownRS\.prettierrc
-D:\Code\MarkdownRS\.rustfmt.toml
-D:\Code\MarkdownRS\vite.config.ts
+- `.claude/`, `.github/`, `.husky/`, `.svelte-kit/`, `.vscode/`
+- `scripts/`, `src/`, `src-tauri/`, `static/`
+- Root config files: `.editorconfig`, `.gitignore`, `*.config.*`, `package.json`, `tsconfig.json`, etc.
 
-Disallowed:
+### Disallowed
 
-D:\Code\MarkdownRS\.ai
-D:\Code\MarkdownRS\.assets
-D:\Code\MarkdownRS\.docs
-D:\Code\MarkdownRS\.git
-D:\Code\MarkdownRS\node_modules
-D:\Code\MarkdownRS\repomix.config.json
-D:\Code\MarkdownRS\bun.lock
-D:\Code\MarkdownRS\AGENTS.md
-D:\Code\MarkdownRS\.repomixignore
-D:\Code\MarkdownRS\src-tauri\Cargo.lock
-D:\Code\MarkdownRS\src-tauri\target
-D:\Code\MarkdownRS\src-tauri\icons
+- `.ai/`, `.assets/`, `.docs/`, `.git/`, `node_modules/`
+- `repomix.config.json`, `bun.lock`, `AGENTS.md`, `.repomixignore`
+- `src-tauri/Cargo.lock`, `src-tauri/target/`, `src-tauri/icons/`
 
-## Important Notes
+## Common Patterns
 
-- ?
+- **Adding a feature**: Update relevant store in `$lib/stores/`, add UI in `$lib/components/`, connect via event handlers
+- **Backend call**: Create Rust command in `src-tauri/src/commands/`, expose in `main.rs`, call via `invoke()` in frontend
+- **Editor extension**: Add to `$lib/utils/*Extension.ts`, configure in `$lib/components/editor/codemirror/config.ts`
+- **State access**: Import `appContext` from `$lib/stores/state.svelte.ts`, access as `appContext.editor.content`, etc.
