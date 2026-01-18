@@ -101,7 +101,10 @@ class SessionPersistenceManager {
 
             // 2. Map Closed Tabs
             const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map((entry, index) => {
-                const needsContent = entry.tab.contentChanged || !entry.tab.isPersisted;
+                // Closed tabs should only send content if it's loaded in memory.
+                // If loaded, we use standard dirty/persistence checks.
+                // If not loaded (lazy tab that was closed), we send null to trigger backend migration logic.
+                const needsContent = entry.tab.contentLoaded && (entry.tab.contentChanged || !entry.tab.isPersisted);
 
                 return {
                     id: entry.tab.id,

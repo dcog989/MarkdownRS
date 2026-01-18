@@ -160,9 +160,8 @@ impl Database {
             [],
         )?;
 
-        let current_version: i32 = conn
-            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
-            .unwrap_or(0);
+        let current_version: i32 =
+            conn.query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap_or(0);
 
         for (i, migration) in MIGRATIONS.iter().enumerate() {
             let version = (i + 1) as i32;
@@ -185,6 +184,7 @@ impl Database {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
 
+        // 1. Process Active Tabs
         if active_tabs.is_empty() {
             tx.execute("DELETE FROM tabs", [])?;
         } else {
@@ -192,10 +192,8 @@ impl Database {
             let placeholders = active_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
             let delete_query = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
             let mut delete_stmt = tx.prepare(&delete_query)?;
-            let params: Vec<&dyn rusqlite::ToSql> = active_ids
-                .iter()
-                .map(|id| id as &dyn rusqlite::ToSql)
-                .collect();
+            let params: Vec<&dyn rusqlite::ToSql> =
+                active_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
             delete_stmt.execute(params.as_slice())?;
 
             let mut insert_stmt = tx.prepare_cached(
@@ -224,10 +222,23 @@ impl Database {
             )?;
 
             for tab in active_tabs {
+                let mut final_content = tab.content.clone();
+
+                // Content Migration: If payload is null, try to harvest content from the other table before it's deleted
+                if final_content.is_none() {
+                    if let Ok(existing) = tx.query_row(
+                        "SELECT content FROM closed_tabs WHERE id = ?1",
+                        params![&tab.id],
+                        |row| row.get::<_, Option<String>>(0),
+                    ) {
+                        final_content = existing;
+                    }
+                }
+
                 let insert_result = insert_stmt.execute(params![
                     &tab.id,
                     &tab.title,
-                    &tab.content,
+                    &final_content,
                     if tab.is_dirty { 1 } else { 0 },
                     &tab.path,
                     tab.scroll_percentage,
@@ -283,22 +294,62 @@ impl Database {
             }
         }
 
-        tx.execute("DELETE FROM closed_tabs", [])?;
+        // 2. Process Closed Tabs
+        if closed_tabs.is_empty() {
+            tx.execute("DELETE FROM closed_tabs", [])?;
+        } else {
+            let closed_ids: Vec<&str> = closed_tabs.iter().map(|t| t.id.as_str()).collect();
+            let placeholders = closed_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+            let delete_query =
+                format!("DELETE FROM closed_tabs WHERE id NOT IN ({})", placeholders);
+            let mut delete_stmt = tx.prepare(&delete_query)?;
+            let params: Vec<&dyn rusqlite::ToSql> =
+                closed_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+            delete_stmt.execute(params.as_slice())?;
 
-        if !closed_tabs.is_empty() {
-            let mut stmt = tx.prepare_cached(
-                "INSERT OR REPLACE INTO closed_tabs (
+            let mut insert_stmt = tx.prepare_cached(
+                "INSERT INTO closed_tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
                     file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+                ON CONFLICT(id) DO NOTHING",
+            )?;
+
+            let mut update_full_stmt = tx.prepare_cached(
+                "UPDATE closed_tabs SET
+                    title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
+                    created=?7, modified=?8, is_pinned=?9, custom_title=?10,
+                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, original_index=?15, history_state=?16
+                WHERE id=?1",
+            )?;
+
+            let mut update_metadata_stmt = tx.prepare_cached(
+                "UPDATE closed_tabs SET
+                    title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
+                    created=?6, modified=?7, is_pinned=?8, custom_title=?9,
+                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, original_index=?14, history_state=?15
+                WHERE id=?1",
             )?;
 
             for (i, tab) in closed_tabs.iter().enumerate() {
-                stmt.execute(params![
+                let mut final_content = tab.content.clone();
+
+                // Content Migration: If payload is null, harvest from active table before re-inserting
+                if final_content.is_none() {
+                    if let Ok(existing) = tx.query_row(
+                        "SELECT content FROM tabs WHERE id = ?1",
+                        params![&tab.id],
+                        |row| row.get::<_, Option<String>>(0),
+                    ) {
+                        final_content = existing;
+                    }
+                }
+
+                let insert_result = insert_stmt.execute(params![
                     &tab.id,
                     &tab.title,
-                    &tab.content,
+                    &final_content,
                     if tab.is_dirty { 1 } else { 0 },
                     &tab.path,
                     tab.scroll_percentage,
@@ -313,6 +364,47 @@ impl Database {
                     &tab.original_index,
                     &tab.history_state
                 ])?;
+
+                if insert_result == 0 {
+                    if tab.content.is_some() {
+                        update_full_stmt.execute(params![
+                            &tab.id,
+                            &tab.title,
+                            &tab.content,
+                            if tab.is_dirty { 1 } else { 0 },
+                            &tab.path,
+                            tab.scroll_percentage,
+                            &tab.created,
+                            &tab.modified,
+                            if tab.is_pinned { 1 } else { 0 },
+                            &tab.custom_title,
+                            if tab.file_check_failed { 1 } else { 0 },
+                            if tab.file_check_performed { 1 } else { 0 },
+                            &tab.mru_position,
+                            i as i32,
+                            &tab.original_index,
+                            &tab.history_state
+                        ])?;
+                    } else {
+                        update_metadata_stmt.execute(params![
+                            &tab.id,
+                            &tab.title,
+                            if tab.is_dirty { 1 } else { 0 },
+                            &tab.path,
+                            tab.scroll_percentage,
+                            &tab.created,
+                            &tab.modified,
+                            if tab.is_pinned { 1 } else { 0 },
+                            &tab.custom_title,
+                            if tab.file_check_failed { 1 } else { 0 },
+                            if tab.file_check_performed { 1 } else { 0 },
+                            &tab.mru_position,
+                            i as i32,
+                            &tab.original_index,
+                            &tab.history_state
+                        ])?;
+                    }
+                }
             }
         }
 
@@ -401,10 +493,7 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(SessionData {
-            active_tabs,
-            closed_tabs,
-        })
+        Ok(SessionData { active_tabs, closed_tabs })
     }
 
     pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {
