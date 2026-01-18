@@ -117,6 +117,7 @@
     let handlersComp = new Compartment();
     let doubleClickComp = new Compartment();
     let rulerComp = new Compartment();
+    let filePathComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
         metricsUpdateTimer: number | null = null;
@@ -148,7 +149,10 @@
     $effect(() => {
         if (view) {
             view.dispatch({
-                effects: [wrapComp.reconfigure(createWrapExtension()), rulerComp.reconfigure(rulerPlugin)],
+                effects: [
+                    languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
+                    filePathComp.reconfigure(isMarkdown ? [filePathPlugin, filePathTheme] : []),
+                ],
             });
         }
     });
@@ -245,8 +249,7 @@
             smartBacktickHandler,
             prefetchHoverHandler,
             EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
-            filePathPlugin,
-            filePathTheme,
+            filePathComp.of(isMarkdown ? [filePathPlugin, filePathTheme] : []),
             getEditorKeymap([...customKeymap]),
             themeComp.of(
                 generateDynamicTheme(
