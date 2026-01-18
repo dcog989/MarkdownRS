@@ -24,7 +24,7 @@ The only markdown editor you need? Many people are saying so.
 
 ## Code / Dev Stack
 
-The latest versions of:
+Developed using the latest versions of:
 
 - [Tauri](https://v2.tauri.app/)
 - [Rust](https://www.rust-lang.org/)
@@ -34,7 +34,7 @@ The latest versions of:
 - [CodeMirror](https://codemirror.net/)
 - [SQLite](https://sqlite.org/)
 
-Built on top of:
+And built with these tools:
 
 - [bun](https://bun.com/)
 - [Node.js](https://nodejs.org/)
@@ -87,6 +87,8 @@ bun run package
     │   └── tauri.conf.json      # Tauri configuration
     ├── static/                  # Static assets
     └── package.json             # Node dependencies & scripts
+
+## Roadmap
 
 - TBD
 

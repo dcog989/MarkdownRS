@@ -25,15 +25,15 @@ Focus on using the most current and correct coding standards and patterns.
 
 Allowed:
 
-D:\Code\MarkdownRS\.claude\
-D:\Code\MarkdownRS\.github\
-D:\Code\MarkdownRS\.husky\
-D:\Code\MarkdownRS\.svelte-kit\
-D:\Code\MarkdownRS\.vscode\
-D:\Code\MarkdownRS\scripts\
-D:\Code\MarkdownRS\src\
-D:\Code\MarkdownRS\src-tauri\
-D:\Code\MarkdownRS\static\
+D:\Code\MarkdownRS\.claude
+D:\Code\MarkdownRS\.github
+D:\Code\MarkdownRS\.husky
+D:\Code\MarkdownRS\.svelte-kit
+D:\Code\MarkdownRS\.vscode
+D:\Code\MarkdownRS\scripts
+D:\Code\MarkdownRS\src
+D:\Code\MarkdownRS\src-tauri
+D:\Code\MarkdownRS\static
 D:\Code\MarkdownRS\.editorconfig
 D:\Code\MarkdownRS\LICENSE
 D:\Code\MarkdownRS\.gitignore
@@ -50,18 +50,18 @@ D:\Code\MarkdownRS\vite.config.ts
 
 Disallowed:
 
-D:\Code\MarkdownRS\.ai\
-D:\Code\MarkdownRS\.assets\
-D:\Code\MarkdownRS\.docs\
-D:\Code\MarkdownRS\.git\
-D:\Code\MarkdownRS\node_modules\
+D:\Code\MarkdownRS\.ai
+D:\Code\MarkdownRS\.assets
+D:\Code\MarkdownRS\.docs
+D:\Code\MarkdownRS\.git
+D:\Code\MarkdownRS\node_modules
 D:\Code\MarkdownRS\repomix.config.json
 D:\Code\MarkdownRS\bun.lock
 D:\Code\MarkdownRS\AGENTS.md
 D:\Code\MarkdownRS\.repomixignore
 D:\Code\MarkdownRS\src-tauri\Cargo.lock
-D:\Code\MarkdownRS\src-tauri\target\
-D:\Code\MarkdownRS\src-tauri\icons\
+D:\Code\MarkdownRS\src-tauri\target
+D:\Code\MarkdownRS\src-tauri\icons
 
 ## Output / Editing Guidelines
 
