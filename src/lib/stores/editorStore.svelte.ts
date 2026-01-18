@@ -2,7 +2,7 @@ import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
-import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { clearRendererCache } from '$lib/utils/markdown';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
@@ -159,6 +159,7 @@ export function addTab(title: string = '', content: string = '') {
         contentChanged: true,
         isPersisted: false,
         contentLoaded: true,
+        lineChangeTracker: new LineChangeTracker(),
     };
 
     if (appState.newTabPosition === 'beginning') {

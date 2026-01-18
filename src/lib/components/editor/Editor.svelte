@@ -17,7 +17,7 @@
     import { CONFIG } from '$lib/utils/config';
     import { AppError } from '$lib/utils/errorHandling';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
-    import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+    import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
     import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
     import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
     import {
@@ -78,7 +78,8 @@
     $effect(() => {
         const tab = appContext.editor.tabs.find((t) => t.id === tabId);
         if (tab && !tab.lineChangeTracker) {
-            // Lazy initialization happens in EditorView as well, but we ensure structure here
+            // Ensure tracker exists for tabs that might have missed initialization
+            tab.lineChangeTracker = new LineChangeTracker();
         }
     });
 

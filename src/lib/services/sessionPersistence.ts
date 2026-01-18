@@ -4,6 +4,7 @@ import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
+import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { debounce } from '$lib/utils/timing';
@@ -350,6 +351,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         contentChanged: !t.path && content.length > 0,
         isPersisted: true,
         contentLoaded,
+        lineChangeTracker: new LineChangeTracker(),
     };
 
     return editorTab;
