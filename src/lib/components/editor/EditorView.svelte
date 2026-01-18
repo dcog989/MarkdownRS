@@ -380,51 +380,61 @@
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
         // Skip sync during tab switching to prevent content corruption
-        // But allow forced syncs (e.g. formatting) to proceed regardless of switching state
+        // But allow forced syncs (e.g. formatting) to proceed
         const shouldSync =
             (isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync) &&
             (!appContext.app.isTabSwitching || isForcedSync);
 
         if (shouldSync) {
             untrack(() => {
-                scrollManager.capture(view!, 'Sync');
+                // Calculate minimal diff to preserve unchanged line markers and selection state
+                let from = 0;
+                let to = currentDoc.length;
+                let insert = storeContent;
 
-                const state = view!.state;
-                const selection = state.selection.main;
-                const anchorLineObj = state.doc.lineAt(selection.anchor);
-                const headLineObj = state.doc.lineAt(selection.head);
+                const minLen = Math.min(to, insert.length);
 
-                const anchorInfo = { line: anchorLineObj.number, col: selection.anchor - anchorLineObj.from };
-                const headInfo = { line: headLineObj.number, col: selection.head - headLineObj.from };
+                // 1. Common Prefix
+                let commonPrefix = 0;
+                while (
+                    commonPrefix < minLen &&
+                    currentDoc.charCodeAt(commonPrefix) === insert.charCodeAt(commonPrefix)
+                ) {
+                    commonPrefix++;
+                }
 
-                view!.dispatch({
-                    changes: { from: 0, to: state.doc.length, insert: storeContent },
-                    userEvent: 'input.type.sync',
-                });
+                // 2. Common Suffix
+                let commonSuffix = 0;
+                // Max suffix can't overlap with prefix
+                const maxSuffix = minLen - commonPrefix;
+                while (
+                    commonSuffix < maxSuffix &&
+                    currentDoc.charCodeAt(to - 1 - commonSuffix) === insert.charCodeAt(insert.length - 1 - commonSuffix)
+                ) {
+                    commonSuffix++;
+                }
 
-                const newState = view!.state;
-                const newDoc = newState.doc;
+                if (commonPrefix > 0 || commonSuffix > 0) {
+                    from = commonPrefix;
+                    to = to - commonSuffix;
+                    insert = insert.slice(commonPrefix, insert.length - commonSuffix);
+                }
 
-                const safeAnchorLine = Math.min(anchorInfo.line, newDoc.lines);
-                const safeHeadLine = Math.min(headInfo.line, newDoc.lines);
+                if (from !== to || insert.length > 0) {
+                    scrollManager.capture(view!, 'Sync');
 
-                const newAnchorLineObj = newDoc.line(safeAnchorLine);
-                const newHeadLineObj = newDoc.line(safeHeadLine);
+                    view!.dispatch({
+                        changes: { from, to, insert },
+                        userEvent: 'input.type.sync',
+                    });
 
-                const newAnchor = Math.min(newAnchorLineObj.from + anchorInfo.col, newAnchorLineObj.to);
-                const newHead = Math.min(newHeadLineObj.from + headInfo.col, newHeadLineObj.to);
-
-                view!.dispatch({
-                    selection: { anchor: newAnchor, head: newHead },
-                    scrollIntoView: false,
-                });
-
-                requestAnimationFrame(() => {
-                    if (view && view._currentTabId === tId) {
-                        view.requestMeasure();
-                        scrollManager.restore(view, 'anchor');
-                    }
-                });
+                    requestAnimationFrame(() => {
+                        if (view && view._currentTabId === tId) {
+                            view.requestMeasure();
+                            scrollManager.restore(view, 'anchor');
+                        }
+                    });
+                }
 
                 if (isForcedSync) {
                     lastForceSyncCounter = forceSyncCounter;
