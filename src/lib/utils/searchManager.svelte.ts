@@ -1,7 +1,7 @@
 import { updateContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { SearchQuery, setSearchQuery } from '@codemirror/search';
-import { EditorView } from '@codemirror/view';
+import type { EditorView } from '@codemirror/view';
 import { SvelteMap } from 'svelte/reactivity';
 
 // State

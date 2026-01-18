@@ -93,7 +93,7 @@ export interface TextOperation {
     id: OperationId;
     label: string;
     description: string;
-    icon: any;
+    icon: typeof ArrowDownAZ;
     category: string;
     execution: 'client' | 'server';
     /**
@@ -108,7 +108,7 @@ export interface TextOperation {
 export interface OperationCategory {
     id: string;
     title: string;
-    icon: any;
+    icon: typeof ArrowDownAZ;
 }
 
 /**

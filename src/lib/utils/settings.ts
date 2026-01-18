@@ -66,7 +66,7 @@ export async function initSettings() {
             log(`Restoring app preferences from TOML...`);
             Object.keys(saved).forEach((key) => {
                 if (key in appState) {
-                    (appState as any)[key] = saved[key];
+                    (appState as Record<string, unknown>)[key] = saved[key];
                 }
             });
         }
