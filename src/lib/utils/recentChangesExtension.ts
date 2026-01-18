@@ -65,27 +65,20 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                         (tr) => tr.isUserEvent('undo') || tr.isUserEvent('redo'),
                     );
 
-                    if (isHistoryAction) {
-                        const affectedLines = new Set<number>();
-                        update.changes.iterChanges((_, __, fromB, toB) => {
-                            const doc = update.state.doc;
-                            const startLine = doc.lineAt(fromB).number;
-                            const endLine = doc.lineAt(Math.min(toB, doc.length)).number;
-                            for (let line = startLine; line <= endLine; line++) {
-                                affectedLines.add(line);
-                            }
-                        });
-                        tracker.removeLines(Array.from(affectedLines));
-                        return;
-                    }
+                    // 1. Map existing markers to their new positions
+                    // This handles shifting lines up/down for all operations (including undo/redo)
+                    tracker.mapLines((lineNo) => {
+                        try {
+                            const oldLine = update.startState.doc.line(lineNo);
+                            const newPos = update.changes.mapPos(oldLine.from);
+                            return update.state.doc.lineAt(newPos).number;
+                        } catch {
+                            return null;
+                        }
+                    });
 
-                    const isUserAction = update.transactions.some(
-                        (tr) => tr.isUserEvent('input') || tr.isUserEvent('delete') || tr.isUserEvent('move'),
-                    );
-
-                    if (!isUserAction) return;
-
-                    const changedLines = new Set<number>();
+                    // 2. Identify the lines affected by the current change
+                    const affectedLines = new Set<number>();
                     const deletions = new Set<number>();
 
                     update.changes.iterChanges((fromA, toA, fromB, toB) => {
@@ -95,6 +88,7 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                         const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
                         const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
 
+                        // Check for net deletion
                         if (linesA > linesB) {
                             const lineNo = docB.lineAt(fromB).number;
                             deletions.add(lineNo);
@@ -104,21 +98,35 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                         const endLine = docB.lineAt(Math.min(toB, docB.length)).number;
 
                         for (let line = startLine; line <= endLine; line++) {
-                            changedLines.add(line);
-                        }
-
-                        const lineDelta = linesB - linesA;
-                        if (lineDelta !== 0) {
-                            tracker.adjustLineNumbers(endLine + 1, lineDelta);
+                            affectedLines.add(line);
                         }
                     });
 
-                    if (changedLines.size > 0) {
-                        tracker.recordChanges(Array.from(changedLines));
-                    }
+                    // 3. Update the tracker based on action type
+                    if (isHistoryAction) {
+                        // For undo/redo, we assume the affected lines are reverting to a 'clean' state
+                        // relative to the action being undone, so we remove the modification marker.
+                        if (affectedLines.size > 0) {
+                            tracker.removeLines(Array.from(affectedLines));
+                        }
+                    } else {
+                        // Normal edits
+                        const isUserAction = update.transactions.some(
+                            (tr) =>
+                                tr.isUserEvent('input') ||
+                                tr.isUserEvent('delete') ||
+                                tr.isUserEvent('move') ||
+                                tr.isUserEvent('input.paste'),
+                        );
 
-                    if (deletions.size > 0) {
-                        deletions.forEach((line) => tracker.recordDeletion(line));
+                        if (isUserAction) {
+                            if (affectedLines.size > 0) {
+                                tracker.recordChanges(Array.from(affectedLines));
+                            }
+                            if (deletions.size > 0) {
+                                deletions.forEach((line) => tracker.recordDeletion(line));
+                            }
+                        }
                     }
                 }
             },

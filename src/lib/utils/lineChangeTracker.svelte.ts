@@ -1,4 +1,5 @@
 import { CONFIG } from '$lib/utils/config';
+import { SvelteSet } from 'svelte/reactivity';
 
 export type LineChange = {
     lineNumber: number;
@@ -23,7 +24,7 @@ export class LineChangeTracker {
      */
     recordChanges(lineNumbers: number[]): void {
         const timestamp = Date.now();
-        const lineSet = new Set(lineNumbers);
+        const lineSet = new SvelteSet(lineNumbers);
         this.changes = this.changes.filter((c) => !lineSet.has(c.lineNumber));
 
         for (const lineNumber of lineNumbers) {
@@ -109,7 +110,7 @@ export class LineChangeTracker {
      * Remove specific lines from tracking
      */
     removeLines(lineNumbers: number[]): void {
-        const lineSet = new Set(lineNumbers);
+        const lineSet = new SvelteSet(lineNumbers);
         this.changes = this.changes.filter((c) => !lineSet.has(c.lineNumber));
     }
 
@@ -134,5 +135,41 @@ export class LineChangeTracker {
         // Remove invalid line numbers
         this.changes = this.changes.filter((c) => c.lineNumber >= 1);
         this.deletions = this.deletions.filter((d) => d.lineNumber >= 0); // 0 is valid for top-of-file deletions
+    }
+
+    /**
+     * Map tracked lines using a custom mapping function.
+     * Useful for complex transformations where simple offset logic isn't enough.
+     */
+    mapLines(mapper: (line: number) => number | null): void {
+        const newChanges: LineChange[] = [];
+        const newDeletions: LineChange[] = [];
+        const seenChanges = new SvelteSet<number>();
+        const seenDeletions = new SvelteSet<number>();
+
+        for (const change of this.changes) {
+            const newLine = mapper(change.lineNumber);
+            if (newLine !== null && newLine > 0) {
+                if (!seenChanges.has(newLine)) {
+                    change.lineNumber = newLine;
+                    newChanges.push(change);
+                    seenChanges.add(newLine);
+                }
+            }
+        }
+
+        for (const del of this.deletions) {
+            const newLine = mapper(del.lineNumber);
+            if (newLine !== null && newLine >= 0) {
+                if (!seenDeletions.has(newLine)) {
+                    del.lineNumber = newLine;
+                    newDeletions.push(del);
+                    seenDeletions.add(newLine);
+                }
+            }
+        }
+
+        this.changes = newChanges;
+        this.deletions = newDeletions;
     }
 }
