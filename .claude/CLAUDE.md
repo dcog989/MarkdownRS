@@ -20,6 +20,7 @@ MarkdownRS is a text editor focused primarily on editing, formatting, and previe
 - Code should be self-documenting via good naming standards for functions, variables, etc.
 - Use comments only to document workarounds, complex logic, etc..
 - Do not use magic numbers.
+- Do not create documentation (SUMMARY, README, *.md) files unless explicitly instructed.
 
 ## File System Access
 
@@ -62,10 +63,6 @@ D:\Code\MarkdownRS\.repomixignore
 D:\Code\MarkdownRS\src-tauri\Cargo.lock
 D:\Code\MarkdownRS\src-tauri\target
 D:\Code\MarkdownRS\src-tauri\icons
-
-## Output / Editing Guidelines
-
-- Do NOT create or update any summary / test / readme / etc. documents.
 
 ## Important Notes
 

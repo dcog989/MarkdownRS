@@ -2,6 +2,8 @@
 
 MarkdownRS is a text editor primarily focused on editing, formatting, and previewing Markdown. It prioritises performance; minimal use of system resources; a clean, minimal UI while still being fully featured for technical and general users.
 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/username/repo.svg)](https://github.com/username/repo/issues) [![GitHub Stars](https://img.shields.io/github/stars/username/repo.svg)](https://github.com/username/repo/stargazers)
+
 [insert screenshot]
 
 The only markdown editor you need? Many people are saying so.
