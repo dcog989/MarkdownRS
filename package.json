@@ -1,7 +1,7 @@
 {
   "name": "markdown-rs",
   "description": "The only Markdown editor you need.",
-  "version": "0.1.134",
+  "version": "0.1.135",
   "private": true,
   "type": "module",
   "scripts": {

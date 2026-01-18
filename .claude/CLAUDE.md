@@ -2,25 +2,24 @@
 
 MarkdownRS is a text editor focused primarily on editing, formatting, and previewing Markdown. It focuses on: performance, actual and perceived; minimal use of system resources; a clean, minimal UI while still being fully featured for technical and general users.
 
-Dev stack = Rust 2024 / Tauri v2.9 / Svelte v5 (with Runes) / Tailwind v4.1. / Typescript v5.9 'bun' package manager, Velopack for build / distribution. We are focused on using current and correct coding standards and patterns for 2026.
+## Tech Stack
+
+- Tauri (v2.9)
+- Rust (2024 / v1.92)
+- Svelte (v5.46)
+- Typescript (v5.9)
+- Tailwind (v4.1)
+- CodeMirror (v6.0)
+- SQLite (v3.51)
 
 ## Coding Principles
 
-Focus on using the most current and correct coding standards and patterns.
-
+- Focus on using the most current and correct coding standards and patterns.
 - Adhere to KISS, Occam's razor, DRY, YAGNI.
 - Always consider performance, actual and perceived.
-- Code should be self-documenting via good naming standards for functions, variables, etc. Use comments only to document workarounds or complex logic or necessary notes.
-
-## Tech Stack
-
-- [Tauri](https://v2.tauri.app/) (v2.9)
-- [Rust](https://www.rust-lang.org/) (2024 / v1.92)
-- [Svelte](https://svelte.dev/) (v5.46)
-- [Typescript](https://www.typescriptlang.org/) (v5.9)
-- [Tailwind](https://tailwindcss.com/) (v4.1)
-- [CodeMirror](https://codemirror.net/)
-- [SQLite](https://sqlite.org/)
+- Code should be self-documenting via good naming standards for functions, variables, etc.
+- Use comments only to document workarounds, complex logic, etc..
+- Do not use magic numbers.
 
 ## File System Access
 
