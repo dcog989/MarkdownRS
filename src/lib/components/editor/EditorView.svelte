@@ -269,7 +269,9 @@
             ),
             indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))),
             whitespaceComp.of(
-                appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [],
+                appContext.app.showWhitespace
+                    ? [highlightWhitespace(), newlinePlugin]
+                    : [selectionWhitespacePlugin],
             ),
             languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
