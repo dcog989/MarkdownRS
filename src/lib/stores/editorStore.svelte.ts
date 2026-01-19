@@ -413,7 +413,7 @@ export function reloadTabContent(
             ? countWords(content)
             : fastCountWords(content);
 
-    updateTab(id, () => ({
+    updateTab(id, (tab) => ({
         content,
         lastSavedContent: content,
         isDirty: false,
@@ -425,6 +425,7 @@ export function reloadTabContent(
         widestColumn,
         fileCheckPerformed: false,
         contentChanged: true,
+        forceSync: (tab.forceSync ?? 0) + 1,
     }));
 }
 
