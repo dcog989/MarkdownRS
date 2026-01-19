@@ -4,6 +4,7 @@
         createWrapExtension,
         getAutocompletionConfig,
         getEditorKeymap,
+        smartCompleteAnyWord,
     } from '$lib/components/editor/codemirror/config';
     import {
         prefetchHoverHandler,
@@ -39,7 +40,7 @@
     import { calculateCursorMetrics, type CursorMetrics } from '$lib/utils/textMetrics';
     import { userThemeExtension } from '$lib/utils/themeMapper';
     import { throttle } from '$lib/utils/timing';
-    import { closeBrackets, completeAnyWord } from '@codemirror/autocomplete';
+    import { closeBrackets } from '@codemirror/autocomplete';
     import { history, historyField } from '@codemirror/commands';
     import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
     import { indentUnit } from '@codemirror/language';
@@ -249,7 +250,7 @@
             closeBrackets(),
             smartBacktickHandler,
             prefetchHoverHandler,
-            EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
+            EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
             filePathComp.of(isMarkdown ? [filePathPlugin, filePathTheme] : []),
             getEditorKeymap([...customKeymap]),
             themeComp.of(

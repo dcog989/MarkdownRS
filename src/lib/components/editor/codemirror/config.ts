@@ -6,6 +6,8 @@ import {
     closeBracketsKeymap,
     completeAnyWord,
     completionKeymap,
+    type CompletionContext,
+    type CompletionResult,
 } from '@codemirror/autocomplete';
 import {
     defaultKeymap,
@@ -15,8 +17,33 @@ import {
     deleteGroupForward,
     historyKeymap,
 } from '@codemirror/commands';
-import { EditorView, keymap } from '@codemirror/view';
-import type { KeyBinding } from '@codemirror/view';
+import { EditorView, keymap, type KeyBinding } from '@codemirror/view';
+
+/**
+ * Custom completion source that wraps completeAnyWord but filters out
+ * candidates that match the currently typed word exactly.
+ */
+export function smartCompleteAnyWord(context: CompletionContext): CompletionResult | null {
+    const result = completeAnyWord(context);
+    // completeAnyWord is synchronous in standard CM6 but return type allows promise.
+    // We assume synchronous for standard word completion.
+    if (!result || 'then' in result) return result as CompletionResult | null;
+
+    const before = context.matchBefore(/\w+/);
+    if (!before) return result;
+
+    const typed = before.text;
+
+    // Filter out exact matches
+    const filteredOptions = result.options.filter((opt) => opt.label !== typed);
+
+    if (filteredOptions.length === 0) return null;
+
+    return {
+        ...result,
+        options: filteredOptions,
+    };
+}
 
 export function getAutocompletionConfig() {
     if (!appContext.app.enableAutocomplete) return [];
@@ -27,7 +54,7 @@ export function getAutocompletionConfig() {
         defaultKeymap: true,
         aboveCursor: false,
         maxRenderedOptions: 100,
-        override: [completeAnyWord],
+        override: [smartCompleteAnyWord],
     });
 }
 
