@@ -5,10 +5,12 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 // Split into two main groups:
 // 1. Quoted paths: Anything starting with /, ./, ../, ~/, or Drive: inside quotes.
 // 2. Unquoted paths:
-//    a. High Confidence: Drive letters (C:\), Relative (./, ../), Home (~/)
+//    a. High Confidence (Windows/Relative/Home): Drive letters (C:\), Relative (./, ../), Home (~/).
+//       Allowed to contain spaces to support paths like "Program Files".
 //    b. Unix Absolute: Must start with / AND have a file extension to avoid false positives (like /either/or).
+//       Spaces are NOT allowed in unquoted Unix paths to prevent aggressive matching.
 export const FILE_PATH_REGEX =
-    /(?:(?:^|\s)(['"`])(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|\/)[^'"`\r\n]*?)\1)|(?:(?:^|\s)(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\])[a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+-]*|(?:\/[a-zA-Z0-9._-]+)+\.[a-zA-Z0-9]+))/g;
+    /(?:(?:^|\s)(['"`])(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|\/)[^'"`\r\n]*?)\1)|(?:(?:^|\s)(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\])[a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+ -]*|(?:\/[a-zA-Z0-9._-]+)+\.[a-zA-Z0-9]+))/g;
 
 /**
  * Extracts a file path from a line of text at a specific position.
