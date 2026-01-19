@@ -111,6 +111,8 @@
 
     let scrollManager = new ScrollManager();
     let lastForceSyncCounter = $state(0);
+    // Flag to prevent scroll updates from overwriting the store during tab switch/restore
+    let isRestoring = false;
 
     let wrapComp = new Compartment();
     let autoComp = new Compartment();
@@ -364,6 +366,9 @@
 
         if (isTabSwitch) {
             untrack(() => {
+                // Block scroll updates during restore to prevent zeroing out the store
+                isRestoring = true;
+
                 // Reset sync counter for the new tab to ensure future updates are caught
                 lastForceSyncCounter = forceSyncCounter;
 
@@ -392,7 +397,27 @@
                     read: () => {},
                     write: () => {
                         if (view && view._currentTabId === tId) {
-                            view.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                            // Prefer line-based restoration if available and valid to handle layout shifts
+                            if (storeTab.topLine && storeTab.topLine > 1) {
+                                try {
+                                    // Use CodeMirror's scrollIntoView to scroll the specific line to top
+                                    const safeLine = Math.max(
+                                        1,
+                                        Math.min(storeTab.topLine, newState.doc.lines),
+                                    );
+                                    const lineInfo = newState.doc.line(safeLine);
+                                    view!.dispatch({
+                                        effects: EditorView.scrollIntoView(lineInfo.from, {
+                                            y: 'start',
+                                        }),
+                                    });
+                                } catch {
+                                    // Fallback to pixel restoration
+                                    view!.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                                }
+                            } else {
+                                view!.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                            }
                         }
                     },
                 });
@@ -406,6 +431,11 @@
                 }
 
                 initializeTabFileState(storeTab).catch(() => {});
+
+                // Re-enable scroll tracking after stabilization
+                setTimeout(() => {
+                    isRestoring = false;
+                }, 100);
             });
             return;
         }
@@ -544,7 +574,13 @@
         window.addEventListener('blur', clearModifier);
 
         const throttleScroll = throttle(() => {
-            if (!view || !onScrollChange || view._currentTabId !== tabId) return;
+            if (
+                !view ||
+                !onScrollChange ||
+                view._currentTabId !== tabId ||
+                isRestoring // Block updates if restoring
+            )
+                return;
 
             const dom = view.scrollDOM;
             const max = dom.scrollHeight - dom.clientHeight;
