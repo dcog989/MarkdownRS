@@ -2,15 +2,18 @@ import { RangeSetBuilder, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 // Regex to match file paths
-// Split into two main groups:
-// 1. Quoted paths: Anything starting with /, ./, ../, ~/, or Drive: inside quotes.
+// Groups:
+// 1. Quoted paths: Allow spaces/anything inside quotes.
 // 2. Unquoted paths:
-//    a. High Confidence (Windows/Relative/Home): Drive letters (C:\), Relative (./, ../), Home (~/).
-//       Allowed to contain spaces to support paths like "Program Files".
-//    b. Unix Absolute: Must start with / AND have a file extension to avoid false positives (like /either/or).
-//       Spaces are NOT allowed in unquoted Unix paths to prevent aggressive matching.
+//    a. Windows/Relative/Home:
+//       - ALLOW spaces IF the path ends in a file extension (e.g. .md, .txt).
+//       - Otherwise, stop at the first whitespace.
+//    b. Unix Absolute:
+//       - Must start with /.
+//       - STRICTLY no spaces allowed (must be quoted for spaces).
+//       - This prevents identifying "/either/or" text as a path with spaces.
 export const FILE_PATH_REGEX =
-    /(?:(?:^|\s)(['"`])(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|\/)[^'"`\r\n]*?)\1)|(?:(?:^|\s)(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\])[a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+ -]*|(?:\/[a-zA-Z0-9._-]+)+\.[a-zA-Z0-9]+))/g;
+    /(?:(?:^|\s)(['"`])(?=[/\\~a-zA-Z.][^'"`\r\n]*?[/\\][^'"`\r\n]*?)\1)|(?:(?:^|\s)(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\])(?:[^"'\r\n]+?\.[a-zA-Z0-9]{1,10}(?=\s|$|[.,;:?!])|[^"'\s]+)|(?:\/[^"'\s]+)))/g;
 
 /**
  * Extracts a file path from a line of text at a specific position.
