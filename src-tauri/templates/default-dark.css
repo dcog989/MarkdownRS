@@ -1,4 +1,21 @@
-/* MarkdownRS Default Dark Theme */
+/* MarkdownRS Default Dark Theme Reference
+
+   This file defines the overrides used by the default dark theme.
+   You can copy this file to create your own custom theme.
+*/
+
+:root {
+    --preview-fg-body: #abb2bf;
+    --preview-fg-heading: #e06c75;
+    --preview-fg-link: #61afef;
+    --preview-fg-code: #89e57b;
+    --preview-bg-code: oklch(0.53 0.12 140 / 0.15);
+    --preview-fg-quote: #7f848e;
+    --preview-bg-quote: oklch(0.77 0.09 90 / 0.18);
+    --preview-border-quote: #ddce78;
+    --preview-bg-pre: #333333;
+    --preview-fg-pre: #89e57b;
+}
 
 /* Editor Colors */
 .cm-editor {
@@ -6,29 +23,11 @@
     color: var(--color-fg-default);
 }
 
-.cm-editor .cm-gutterElement {
-    color: #515151 !important;
-}
-
-.cm-editor .cm-activeLineGutter {
-    background-color: var(--color-bg-panel) !important;
-    color: var(--color-fg-muted) !important;
-    font-weight: bold;
-}
-
-.cm-editor .cm-activeLine {
-    background-color: oklch(1 0 0 / 0.08) !important;
-}
-
-/* Selection & Matching */
+/* Selection */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: oklch(0.44 0.12 305 / 0.35) !important;
-}
-
-.cm-editor .cm-selectionMatch {
-    background-color: oklch(0.66 0.22 305 / 0.66);
+    background-color: oklch(0.67 0.18 305 / 0.35) !important;
 }
 
 /* Syntax Highlighting */
@@ -41,22 +40,10 @@
     color: #e06c75;
     font-weight: bold;
 }
-.cm-h1 {
-    font-size: 1.3em;
-}
-.cm-h2 {
-    font-size: 1.2em;
-}
-.cm-h3 {
-    font-size: 1.1em;
-}
-
 .cm-keyword {
     color: #c678dd;
 }
-.cm-atom {
-    color: #d19a66;
-}
+.cm-atom,
 .cm-number {
     color: #d19a66;
 }
@@ -67,38 +54,7 @@
     color: #686868;
     font-style: italic;
 }
-.cm-emphasis {
-    font-style: italic;
-}
-.cm-strong {
-    font-weight: bold;
-}
 .cm-link {
     color: var(--color-accent-link);
     text-decoration: underline;
-}
-.cm-url {
-    color: var(--color-accent-url);
-    text-decoration: underline;
-}
-.cm-file-path {
-    color: var(--color-accent-filepath);
-    text-decoration: dotted;
-}
-
-/* Preview Colors */
-.prose {
-    --tw-prose-body: #abb2bf;
-    --tw-prose-headings: #e06c75;
-    --tw-prose-links: #61afef;
-    --tw-prose-code: #82e57b;
-    --tw-prose-quotes: #7f848e;
-}
-.prose blockquote {
-    border-left: 4px solid #ddce78;
-    background: oklch(0.77 0.09 90 / 0.18);
-}
-.prose pre {
-    background: #333;
-    color: #89e57b;
 }

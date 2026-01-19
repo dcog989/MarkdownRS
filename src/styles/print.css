@@ -1,0 +1,76 @@
+/* Export & Print Styles */
+
+#export-container {
+    position: fixed;
+    top: 0;
+    left: -9999px;
+    width: 210mm;
+    min-height: 100vh;
+    background-color: white;
+    padding: 20mm;
+    z-index: -1;
+    pointer-events: none;
+
+    /* Force light theme for PDF export */
+    --preview-fg-body: black;
+    --preview-fg-heading: black;
+    --preview-fg-link: #2563eb;
+    --preview-fg-code: black;
+    --preview-bg-code: #f5f5f5;
+    --preview-fg-quote: #555;
+    --preview-bg-quote: #f9f9f9;
+    --preview-border-quote: #7c5a73;
+    --preview-bg-pre: #f5f5f5;
+    --preview-fg-pre: black;
+    --color-border-main: #ccc;
+}
+
+@media print {
+    @page {
+        margin: 0;
+        size: auto;
+    }
+
+    :root {
+        color-scheme: light !important;
+    }
+
+    html,
+    body {
+        width: 100%;
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    body > *:not(#export-container) {
+        display: none !important;
+    }
+
+    #export-container {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 15mm 20mm !important;
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 9999;
+    }
+
+    #export-container h1,
+    #export-container h2,
+    #export-container h3 {
+        page-break-after: avoid;
+    }
+
+    #export-container pre,
+    #export-container blockquote {
+        page-break-inside: avoid;
+    }
+}

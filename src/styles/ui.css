@@ -1,0 +1,149 @@
+/* UI Components & Utilities */
+
+@utility text-ui {
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+@utility text-ui-sm {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+@utility btn-base {
+    @apply cursor-pointer rounded border px-3 py-1.5 text-xs transition-colors;
+}
+
+@utility btn-secondary {
+    @apply btn-base;
+    background-color: transparent;
+    border-color: var(--color-border-light);
+    color: var(--color-fg-default);
+
+    &:hover {
+        background-color: var(--color-bg-hover);
+    }
+}
+
+@utility btn-danger-outline {
+    @apply btn-base;
+    background-color: transparent;
+    border-color: var(--color-danger);
+    color: var(--color-danger-text);
+
+    &:hover {
+        background-color: var(--color-danger);
+        color: var(--color-fg-inverse);
+    }
+}
+
+@utility btn-success {
+    @apply btn-base border-transparent;
+    background-color: var(--color-success);
+    color: var(--color-fg-inverse);
+
+    &:hover {
+        background-color: var(--color-success-hover);
+    }
+}
+
+@utility ui-backdrop {
+    @apply fixed inset-0 z-100 flex items-center justify-center;
+    background-color: var(--color-bg-backdrop);
+}
+
+@utility ui-panel {
+    @apply flex max-h-100 w-125 flex-col overflow-hidden rounded-lg border shadow-2xl;
+    background-color: var(--color-bg-panel);
+    border-color: var(--color-border-light);
+}
+
+@utility ui-header {
+    @apply shrink-0 border-b px-4 py-3;
+    background-color: var(--color-bg-header);
+    border-color: var(--color-border-light);
+}
+
+/* MRU List Items */
+@utility mru-item {
+    @apply flex w-full shrink-0 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors;
+    background-color: transparent;
+    color: var(--color-fg-default);
+
+    &[data-selected='true'] {
+        background-color: var(--color-accent-primary);
+        color: var(--color-fg-inverse);
+
+        & .mru-badge {
+            background-color: var(--color-fg-inverse);
+            color: var(--color-accent-primary);
+        }
+
+        & .mru-path {
+            color: var(--color-fg-inverse);
+        }
+
+        & .mru-dot {
+            background-color: var(--color-fg-inverse);
+        }
+
+        & .mru-icon {
+            color: var(--color-fg-inverse) !important;
+        }
+    }
+}
+
+@utility mru-badge {
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded text-[0.625rem] font-bold;
+    background-color: var(--color-accent-secondary);
+    color: var(--color-accent-primary);
+}
+
+@utility mru-path {
+    @apply truncate text-[0.6875rem] opacity-70;
+    color: var(--color-fg-muted);
+}
+
+@utility mru-dot {
+    @apply h-2 w-2 shrink-0 rounded-full;
+    background-color: var(--color-accent-secondary);
+}
+
+@utility mru-icon {
+    color: var(--icon-color, var(--color-fg-muted));
+}
+
+/* Scrollbar Utility */
+@layer utilities {
+    .no-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Global Keyframes for Tooltips */
+@keyframes cm-tooltip-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.25rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Settings Modal Specifics */
+select:focus {
+    border-color: var(--color-accent-primary) !important;
+}
+
+option:checked {
+    background-color: var(--color-accent-primary) !important;
+    color: var(--color-fg-inverse) !important;
+    box-shadow: 0 0 0 6.25rem var(--color-accent-primary) inset;
+    -webkit-text-fill-color: var(--color-fg-inverse);
+}

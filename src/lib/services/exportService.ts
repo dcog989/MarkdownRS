@@ -3,7 +3,6 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
-import { getThemeCss } from '$lib/utils/themes';
 import { save } from '@tauri-apps/plugin-dialog';
 import * as htmlToImage from 'html-to-image';
 
@@ -91,7 +90,9 @@ export class ExportService {
                 tab.path,
             );
             const bodyContent = result.html;
-            const themeCss = await getThemeCss(appContext.app.activeTheme);
+
+            // Extract the native preview styles we added to app.css for the export container
+            // This ensures the exported HTML looks exactly like the preview
             const baseVars = this.getComputedCssVariables();
 
             const html = `<!DOCTYPE html>
@@ -102,15 +103,54 @@ export class ExportService {
     <title>${tab.title}</title>
     <style>
         ${baseVars}
-        ${themeCss}
-        body { margin: 0; padding: 2rem; background-color: var(--color-bg-main); color: var(--color-fg-default); font-family: ${appContext.app.previewFontFamily}; }
-        .prose { max-width: 800px; margin: 0 auto; line-height: 1.6; }
-        .prose h1 { border-bottom: 1px solid var(--color-border-main); padding-bottom: 0.3em; }
-        .prose pre { background-color: var(--color-bg-code); padding: 1em; border-radius: 4px; overflow: auto; }
-        .prose code { background-color: var(--color-bg-code); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; }
-        .prose blockquote { border-left: 4px solid var(--color-border-quote); background: var(--color-bg-quote); padding: 0.5em 1em; margin: 1em 0; }
-        .prose table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-        .prose th, .prose td { border: 1px solid var(--color-border-main); padding: 0.5em; text-align: left; }
+        body {
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--color-bg-main);
+            color: var(--preview-fg-body);
+            font-family: ${appContext.app.previewFontFamily};
+            line-height: 1.6;
+        }
+        .prose { max-width: 800px; margin: 0 auto; }
+
+        h1, h2, h3, h4, h5, h6 { color: var(--preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
+        h1 { font-size: 2em; border-bottom: 1px solid var(--color-border-main); padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid var(--color-border-main); padding-bottom: 0.3em; }
+
+        a { color: var(--preview-fg-link); text-decoration: underline; }
+
+        code {
+            color: var(--preview-fg-code);
+            background-color: var(--preview-bg-code);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        pre {
+            background-color: var(--preview-bg-pre);
+            color: var(--preview-fg-pre);
+            padding: 1em;
+            border-radius: 4px;
+            overflow: auto;
+            margin: 1em 0;
+        }
+
+        pre code { background: transparent; padding: 0; color: inherit; }
+
+        blockquote {
+            color: var(--preview-fg-quote);
+            background-color: var(--preview-bg-quote);
+            border-left: 4px solid var(--preview-border-quote);
+            padding: 0.5em 1em;
+            margin: 1em 0;
+            font-style: italic;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+        th, td { border: 1px solid var(--color-border-main); padding: 0.5em; text-align: left; }
+        img { max-width: 100%; height: auto; }
+        hr { border: 0; border-top: 1px solid var(--color-border-main); margin: 2em 0; }
     </style>
 </head>
 <body>

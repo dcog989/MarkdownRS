@@ -1,4 +1,21 @@
-/* MarkdownRS Default Light Theme */
+/* MarkdownRS Default Light Theme Reference
+
+   This file defines the overrides used by the default light theme.
+   You can copy this file to create your own custom theme.
+*/
+
+:root {
+    --preview-fg-body: #374151;
+    --preview-fg-heading: #d32f2f;
+    --preview-fg-link: #1976d2;
+    --preview-fg-code: #f9a825;
+    --preview-bg-code: oklch(0.76 0.14 70 / 0.15);
+    --preview-fg-quote: #757575;
+    --preview-bg-quote: oklch(0.47 0.14 310 / 0.05);
+    --preview-border-quote: #7b1fa2;
+    --preview-bg-pre: #f5f5f5;
+    --preview-fg-pre: #000000;
+}
 
 /* Editor Colors */
 .cm-editor {
@@ -6,29 +23,11 @@
     color: var(--color-fg-default);
 }
 
-.cm-editor .cm-gutterElement {
-    color: #9ca3af !important;
-}
-
-.cm-editor .cm-activeLineGutter {
-    background-color: var(--color-bg-panel) !important;
-    color: var(--color-fg-default) !important;
-    font-weight: bold;
-}
-
-.cm-editor .cm-activeLine {
-    background-color: oklch(0 0 0 / 0.03) !important;
-}
-
-/* Selection & Matching */
+/* Selection */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
     background-color: oklch(0.57 0.14 250 / 0.25) !important;
-}
-
-.cm-editor .cm-selectionMatch {
-    background-color: oklch(0.76 0.14 70 / 0.3);
 }
 
 /* Syntax Highlighting */
@@ -41,21 +40,10 @@
     color: #d32f2f;
     font-weight: bold;
 }
-.cm-h1 {
-    font-size: 1.5em;
-}
-.cm-h2 {
-    font-size: 1.3em;
-}
-.cm-h3 {
-    font-size: 1.1em;
-}
 .cm-keyword {
     color: #7b1fa2;
 }
-.cm-atom {
-    color: #f57c00;
-}
+.cm-atom,
 .cm-number {
     color: #f57c00;
 }
@@ -66,34 +54,7 @@
     color: #757575;
     font-style: italic;
 }
-.cm-emphasis {
-    font-style: italic;
-}
-.cm-strong {
-    font-weight: bold;
-}
 .cm-link {
     color: var(--color-accent-link);
     text-decoration: underline;
-}
-.cm-url {
-    color: var(--color-accent-url);
-    text-decoration: underline;
-}
-.cm-file-path {
-    color: var(--color-accent-filepath);
-    text-decoration: underline;
-}
-
-/* Preview Colors */
-.prose {
-    --tw-prose-body: #374151;
-    --tw-prose-headings: #d32f2f;
-    --tw-prose-links: #1976d2;
-    --tw-prose-code: #f9a825;
-    --tw-prose-quotes: #757575;
-}
-.prose blockquote {
-    border-left: 4px solid #7b1fa2;
-    background: oklch(0.47 0.14 310 / 0.05);
 }

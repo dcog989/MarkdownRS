@@ -122,12 +122,89 @@ fn main() {
 
             // Always overwrite default theme files to ensure updates are applied
             let dark_theme_path = themes_dir.join("default-dark.css");
-            // The path is relative to the Cargo.toml location (src-tauri/)
-            let dark_theme_content = include_str!("../templates/default-dark.css");
+            let dark_theme_content = r#"/* MarkdownRS Default Dark Theme Reference
+
+   This file defines the overrides used by the default dark theme.
+   You can copy this file to create your own custom theme.
+*/
+
+:root {
+    --preview-fg-body: #abb2bf;
+    --preview-fg-heading: var(--color-accent-secondary);
+    --preview-fg-link: #61afef;
+    --preview-fg-code: #89e57b;
+    --preview-bg-code: oklch(0.53 0.12 140 / 0.15);
+    --preview-fg-quote: #7f848e;
+    --preview-bg-quote: oklch(0.77 0.09 90 / 0.18);
+    --preview-border-quote: #ddce78;
+    --preview-bg-pre: #333333;
+    --preview-fg-pre: #89e57b;
+}
+
+/* Editor Colors */
+.cm-editor {
+    background-color: var(--color-bg-main);
+    color: var(--color-fg-default);
+}
+
+/* Selection */
+.cm-editor.cm-focused .cm-selectionBackground,
+.cm-editor .cm-selectionBackground,
+.cm-editor .cm-content ::selection {
+    background-color: oklch(0.67 0.18 305 / 0.35) !important;
+}
+
+/* Syntax Highlighting */
+.cm-h1, .cm-h2, .cm-h3, .cm-h4, .cm-h5, .cm-h6 { color: #e06c75; font-weight: bold; }
+.cm-keyword { color: #c678dd; }
+.cm-atom, .cm-number { color: #d19a66; }
+.cm-string { color: #98c379; }
+.cm-comment { color: #686868; font-style: italic; }
+.cm-link { color: var(--color-accent-link); text-decoration: underline; }
+"#;
             let _ = fs::write(&dark_theme_path, dark_theme_content);
 
             let light_theme_path = themes_dir.join("default-light.css");
-            let light_theme_content = include_str!("../templates/default-light.css");
+            let light_theme_content = r#"/* MarkdownRS Default Light Theme Reference
+
+   This file defines the overrides used by the default light theme.
+   You can copy this file to create your own custom theme.
+*/
+
+:root {
+    --preview-fg-body: #374151;
+    --preview-fg-heading: #d32f2f;
+    --preview-fg-link: #1976d2;
+    --preview-fg-code: #f9a825;
+    --preview-bg-code: oklch(0.76 0.14 70 / 0.15);
+    --preview-fg-quote: #757575;
+    --preview-bg-quote: oklch(0.47 0.14 310 / 0.05);
+    --preview-border-quote: #7b1fa2;
+    --preview-bg-pre: #f5f5f5;
+    --preview-fg-pre: #000000;
+}
+
+/* Editor Colors */
+.cm-editor {
+    background-color: var(--color-bg-main);
+    color: var(--color-fg-default);
+}
+
+/* Selection */
+.cm-editor.cm-focused .cm-selectionBackground,
+.cm-editor .cm-selectionBackground,
+.cm-editor .cm-content ::selection {
+    background-color: oklch(0.57 0.14 250 / 0.25) !important;
+}
+
+/* Syntax Highlighting */
+.cm-h1, .cm-h2, .cm-h3, .cm-h4, .cm-h5, .cm-h6 { color: #d32f2f; font-weight: bold; }
+.cm-keyword { color: #7b1fa2; }
+.cm-atom, .cm-number { color: #f57c00; }
+.cm-string { color: #388e3c; }
+.cm-comment { color: #757575; font-style: italic; }
+.cm-link { color: var(--color-accent-link); text-decoration: underline; }
+"#;
             let _ = fs::write(&light_theme_path, light_theme_content);
 
             // Robustly read settings from the TOML file
@@ -305,5 +382,6 @@ fn main() {
         .map_err(|e| {
             log::error!("Error while running tauri application: {}", e);
             e
-        }).expect("Error while running tauri application");
+        })
+        .expect("Error while running tauri application");
 }

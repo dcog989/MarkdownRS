@@ -1,0 +1,201 @@
+/* Native Preview Styles */
+
+#active-preview-container,
+#export-container {
+    color: var(--preview-fg-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 80ch;
+    margin: 0 auto;
+}
+
+/* Headings */
+#active-preview-container h1,
+#export-container h1,
+#active-preview-container h2,
+#export-container h2,
+#active-preview-container h3,
+#export-container h3,
+#active-preview-container h4,
+#export-container h4,
+#active-preview-container h5,
+#export-container h5,
+#active-preview-container h6,
+#export-container h6 {
+    color: var(--preview-fg-heading);
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-height: 1.2;
+}
+
+#active-preview-container h1,
+#export-container h1 {
+    font-size: 2.25em;
+    border-bottom: 1px solid var(--color-border-main);
+    padding-bottom: 0.3em;
+}
+
+#active-preview-container h2,
+#export-container h2 {
+    font-size: 1.75em;
+    border-bottom: 1px solid var(--color-border-main);
+    padding-bottom: 0.3em;
+}
+
+#active-preview-container h3,
+#export-container h3 {
+    font-size: 1.5em;
+}
+
+#active-preview-container h4,
+#export-container h4 {
+    font-size: 1.25em;
+}
+
+/* Links */
+#active-preview-container a,
+#export-container a {
+    color: var(--preview-fg-link);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Inline Elements */
+#active-preview-container strong,
+#export-container strong,
+#active-preview-container b,
+#export-container b {
+    font-weight: bold;
+}
+
+#active-preview-container em,
+#export-container em,
+#active-preview-container i,
+#export-container i {
+    font-style: italic;
+}
+
+#active-preview-container del,
+#export-container del,
+#active-preview-container s,
+#export-container s,
+#active-preview-container strike,
+#export-container strike {
+    text-decoration: line-through;
+    color: var(--color-fg-muted);
+}
+
+/* Code */
+#active-preview-container code,
+#export-container code {
+    color: var(--preview-fg-code);
+    background-color: var(--preview-bg-code);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+        monospace;
+    font-size: 0.875em;
+}
+
+#active-preview-container pre,
+#export-container pre {
+    background-color: var(--preview-bg-pre);
+    color: var(--preview-fg-pre);
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+#active-preview-container pre code,
+#export-container pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 1em;
+    white-space: pre;
+}
+
+/* Quotes */
+#active-preview-container blockquote,
+#export-container blockquote {
+    color: var(--preview-fg-quote);
+    background-color: var(--preview-bg-quote);
+    border-left: 4px solid var(--preview-border-quote);
+    padding: 0.5em 1em;
+    margin: 1em 0;
+    font-style: italic;
+}
+
+/* Lists */
+#active-preview-container ul,
+#export-container ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin: 1em 0;
+}
+
+#active-preview-container ol,
+#export-container ol {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+    margin: 1em 0;
+}
+
+#active-preview-container li,
+#export-container li {
+    margin: 0.25em 0;
+}
+
+#active-preview-container li > p,
+#export-container li > p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+/* Task Lists */
+#active-preview-container input[type='checkbox'],
+#export-container input[type='checkbox'] {
+    margin-right: 0.5em;
+    vertical-align: middle;
+}
+
+/* Tables */
+#active-preview-container table,
+#export-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+#active-preview-container th,
+#export-container th,
+#active-preview-container td,
+#export-container td {
+    border: 1px solid var(--color-border-main);
+    padding: 0.5em;
+    text-align: left;
+}
+
+#active-preview-container th,
+#export-container th {
+    font-weight: bold;
+    background-color: var(--color-bg-panel);
+}
+
+/* Media */
+#active-preview-container img,
+#export-container img {
+    max-width: 100%;
+    height: auto;
+    margin: 1em 0;
+}
+
+#active-preview-container hr,
+#export-container hr {
+    border: 0;
+    border-top: 1px solid var(--color-border-main);
+    margin: 2em 0;
+}

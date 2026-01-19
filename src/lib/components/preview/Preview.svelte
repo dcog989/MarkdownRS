@@ -134,7 +134,7 @@
             }
         }}
         role="none"
-        class="preview-container prose prose-invert prose-sm bg-bg-preview text-fg-default relative z-0 h-full w-full max-w-none overflow-y-auto p-8"
+        class="no-scrollbar bg-bg-preview relative z-0 h-full w-full max-w-none overflow-y-auto p-8 pb-40"
         style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
             .previewFontSize}px;"
         spellcheck="false">
@@ -162,24 +162,3 @@
         <CustomScrollbar viewport={container} />
     {/if}
 </div>
-
-<style>
-    .preview-container {
-        scrollbar-width: none;
-        padding-bottom: 40px !important;
-    }
-    .preview-container::-webkit-scrollbar {
-        display: none;
-    }
-    :global(.prose) {
-        color: var(--color-fg-default);
-    }
-    :global(.prose h1),
-    :global(.prose h2),
-    :global(.prose h3),
-    :global(.prose h4) {
-        color: var(--color-accent-secondary);
-        border-bottom: 1px solid var(--color-border-main);
-        padding-bottom: 0.3em;
-    }
-</style>
