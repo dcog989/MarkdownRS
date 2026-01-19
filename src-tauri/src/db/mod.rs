@@ -29,8 +29,6 @@ pub struct TabState {
     pub sort_index: Option<i32>,
     #[serde(default)]
     pub original_index: Option<i32>,
-    #[serde(default)]
-    pub history_state: Option<String>,
 }
 
 impl fmt::Debug for TabState {
@@ -94,8 +92,7 @@ const MIGRATIONS: &[&str] = &[
         file_check_failed INTEGER DEFAULT 0,
         file_check_performed INTEGER DEFAULT 0,
         mru_position INTEGER,
-        sort_index INTEGER DEFAULT 0,
-        history_state TEXT
+        sort_index INTEGER DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS closed_tabs (
         id TEXT PRIMARY KEY,
@@ -112,8 +109,7 @@ const MIGRATIONS: &[&str] = &[
         file_check_performed INTEGER DEFAULT 0,
         mru_position INTEGER,
         sort_index INTEGER DEFAULT 0,
-        original_index INTEGER,
-        history_state TEXT
+        original_index INTEGER
     );
     CREATE TABLE IF NOT EXISTS bookmarks (
         id TEXT PRIMARY KEY,
@@ -203,8 +199,8 @@ impl Database {
                 "INSERT INTO tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position, sort_index, history_state
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+                    file_check_failed, file_check_performed, mru_position, sort_index
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
                 ON CONFLICT(id) DO NOTHING",
             )?;
 
@@ -212,7 +208,7 @@ impl Database {
                 "UPDATE tabs SET
                     title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
                     created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, history_state=?15
+                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14
                 WHERE id=?1",
             )?;
 
@@ -220,7 +216,7 @@ impl Database {
                 "UPDATE tabs SET
                     title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
                     created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, history_state=?14
+                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13
                 WHERE id=?1",
             )?;
 
@@ -252,8 +248,7 @@ impl Database {
                     if tab.file_check_failed { 1 } else { 0 },
                     if tab.file_check_performed { 1 } else { 0 },
                     &tab.mru_position,
-                    &tab.sort_index,
-                    &tab.history_state
+                    &tab.sort_index
                 ])?;
 
                 if insert_result == 0 {
@@ -272,8 +267,7 @@ impl Database {
                             if tab.file_check_failed { 1 } else { 0 },
                             if tab.file_check_performed { 1 } else { 0 },
                             &tab.mru_position,
-                            &tab.sort_index,
-                            &tab.history_state
+                            &tab.sort_index
                         ])?;
                     } else {
                         update_metadata_stmt.execute(params![
@@ -289,8 +283,7 @@ impl Database {
                             if tab.file_check_failed { 1 } else { 0 },
                             if tab.file_check_performed { 1 } else { 0 },
                             &tab.mru_position,
-                            &tab.sort_index,
-                            &tab.history_state
+                            &tab.sort_index
                         ])?;
                     }
                 }
@@ -316,8 +309,8 @@ impl Database {
                 "INSERT INTO closed_tabs (
                     id, title, content, is_dirty, path, scroll_percentage,
                     created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+                    file_check_failed, file_check_performed, mru_position, sort_index, original_index
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
                 ON CONFLICT(id) DO NOTHING",
             )?;
 
@@ -325,7 +318,7 @@ impl Database {
                 "UPDATE closed_tabs SET
                     title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
                     created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, original_index=?15, history_state=?16
+                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, original_index=?15
                 WHERE id=?1",
             )?;
 
@@ -333,7 +326,7 @@ impl Database {
                 "UPDATE closed_tabs SET
                     title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
                     created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, original_index=?14, history_state=?15
+                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, original_index=?14
                 WHERE id=?1",
             )?;
 
@@ -366,8 +359,7 @@ impl Database {
                     if tab.file_check_performed { 1 } else { 0 },
                     &tab.mru_position,
                     i as i32,
-                    &tab.original_index,
-                    &tab.history_state
+                    &tab.original_index
                 ])?;
 
                 if insert_result == 0 {
@@ -387,8 +379,7 @@ impl Database {
                             if tab.file_check_performed { 1 } else { 0 },
                             &tab.mru_position,
                             i as i32,
-                            &tab.original_index,
-                            &tab.history_state
+                            &tab.original_index
                         ])?;
                     } else {
                         update_metadata_stmt.execute(params![
@@ -405,8 +396,7 @@ impl Database {
                             if tab.file_check_performed { 1 } else { 0 },
                             &tab.mru_position,
                             i as i32,
-                            &tab.original_index,
-                            &tab.history_state
+                            &tab.original_index
                         ])?;
                     }
                 }
@@ -425,10 +415,10 @@ impl Database {
         let conn = self.pool.get()?;
 
         let query = if include_content {
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, history_state
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
              FROM tabs ORDER BY sort_index ASC"
         } else {
-            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, history_state
+            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
              FROM tabs ORDER BY sort_index ASC"
         };
 
@@ -456,16 +446,15 @@ impl Database {
                     mru_position: row.get(12).ok(),
                     sort_index: row.get(13).ok(),
                     original_index: None,
-                    history_state: row.get(14).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
         let closed_query = if include_content {
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
+            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
              FROM closed_tabs ORDER BY sort_index ASC"
         } else {
-            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index, history_state
+            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
              FROM closed_tabs ORDER BY sort_index ASC"
         };
 
@@ -493,7 +482,6 @@ impl Database {
                     mru_position: row.get(12).ok(),
                     sort_index: row.get(13).ok(),
                     original_index: row.get(14).ok(),
-                    history_state: row.get(15).ok(),
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
