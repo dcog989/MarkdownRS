@@ -16,7 +16,11 @@
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { ScrollManager } from '$lib/utils/cmScroll';
     import { CONFIG } from '$lib/utils/config';
-    import { newlinePlugin, rulerPlugin } from '$lib/utils/editorPlugins';
+    import {
+        newlinePlugin,
+        rulerPlugin,
+        selectionWhitespacePlugin,
+    } from '$lib/utils/editorPlugins';
     import { generateDynamicTheme } from '$lib/utils/editorTheme';
     import { filePathPlugin, filePathTheme } from '$lib/utils/filePathExtension';
     import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
@@ -210,7 +214,9 @@
         if (view) {
             view.dispatch({
                 effects: whitespaceComp.reconfigure(
-                    appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [],
+                    appContext.app.showWhitespace
+                        ? [highlightWhitespace(), newlinePlugin]
+                        : [selectionWhitespacePlugin],
                 ),
             });
         }

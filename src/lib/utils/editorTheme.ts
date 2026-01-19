@@ -89,10 +89,11 @@ export function generateDynamicTheme(
             userSelect: 'none',
             pointerEvents: 'none',
             display: 'inline-block',
-            verticalAlign: 'middle',
+            verticalAlign: 'baseline',
             marginLeft: '2px',
             fontWeight: 'bold',
             transform: 'scale(1.2)',
+            lineHeight: '0', // Forces 0 height contribution to line layout
         },
     });
 }
