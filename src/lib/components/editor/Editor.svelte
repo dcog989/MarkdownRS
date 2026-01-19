@@ -7,6 +7,7 @@
     import { updateMetrics, type EditorMetrics } from '$lib/stores/editorMetrics.svelte';
     import {
         editorStore,
+        getHistoryState,
         updateContent,
         updateCursor,
         updateHistoryState,
@@ -207,7 +208,7 @@
         return isMarkdownFile(filename);
     });
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
-    let initialHistoryState = $derived(activeTab?.historyState || undefined);
+    let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
     let lineChangeTracker = $derived(activeTab?.lineChangeTracker as LineChangeTracker | undefined);
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>

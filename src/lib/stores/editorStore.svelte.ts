@@ -33,7 +33,6 @@ export type EditorTab = {
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
     lineChangeTracker?: LineChangeTracker;
-    historyState?: unknown;
     preferredExtension?: 'md' | 'txt';
     contentChanged?: boolean;
     isPersisted?: boolean;
@@ -44,7 +43,12 @@ export type EditorTab = {
 export type ClosedTab = {
     tab: EditorTab;
     index: number;
+    historyState?: unknown;
 };
+
+// Non-reactive storage for CodeMirror history states to avoid Proxy performance costs
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const historyStateCache = new Map<string, unknown>();
 
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
@@ -185,18 +189,24 @@ export function closeTab(id: string) {
     if (tab.path || (tab.content && tab.content.trim().length > 0)) {
         const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
 
+        // Preserve history state in the closed tab record
+        const historyState = historyStateCache.get(id);
+
         const filteredHistory = editorStore.closedTabsHistory.filter(
             (entry) => entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path),
         );
 
-        editorStore.closedTabsHistory = [{ tab: { ...tab }, index }, ...filteredHistory].slice(
-            0,
-            limit,
-        );
+        editorStore.closedTabsHistory = [
+            { tab: { ...tab }, index, historyState },
+            ...filteredHistory,
+        ].slice(0, limit);
     }
 
     editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);
     editorStore.mruStack = editorStore.mruStack.filter((tId) => tId !== id);
+
+    // Clean up history cache
+    historyStateCache.delete(id);
 
     editorStore.sessionDirty = true;
     clearRendererCache(id);
@@ -218,6 +228,11 @@ export function reopenClosedTab(historyIndex: number): string | null {
     entry.tab.isPersisted = false;
     if (entry.tab.contentLoaded === false) {
         entry.tab.contentLoaded = false;
+    }
+
+    // Restore history state
+    if (entry.historyState) {
+        historyStateCache.set(entry.tab.id, entry.historyState);
     }
 
     const insertIndex = Math.min(entry.index, editorStore.tabs.length);
@@ -352,7 +367,12 @@ export function updateMetadata(id: string, created?: string, modified?: string) 
 }
 
 export function updateHistoryState(id: string, state: unknown) {
-    updateTab(id, () => ({ historyState: state }), false);
+    // Store in Map to avoid Proxy performance overhead on large history objects
+    historyStateCache.set(id, state);
+}
+
+export function getHistoryState(id: string): unknown | undefined {
+    return historyStateCache.get(id);
 }
 
 export function markAsSaved(id: string) {

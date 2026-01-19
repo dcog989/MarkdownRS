@@ -11,6 +11,7 @@
     } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
+    import { updateContent } from '$lib/stores/editorStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { ScrollManager } from '$lib/utils/cmScroll';
     import { CONFIG } from '$lib/utils/config';
@@ -220,14 +221,6 @@
 
     $effect(() => {
         if (view) {
-            view.dispatch({
-                effects: languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
-            });
-        }
-    });
-
-    $effect(() => {
-        if (view) {
             view.dispatch({ effects: handlersComp.reconfigure(eventHandlers) });
         }
     });
@@ -289,9 +282,13 @@
                 if (update.docChanged) {
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = window.setTimeout(() => {
-                        onContentChange(update.state.doc.toString());
-                        if (onHistoryUpdate && view?.getHistoryState) {
-                            onHistoryUpdate(view.getHistoryState());
+                        // Prevent race condition: If tab changed in the meantime, do NOT use onContentChange prop
+                        // as it might be bound to the new tab ID. Check internal ID against prop ID.
+                        if (view?._currentTabId === tabId) {
+                            onContentChange(update.state.doc.toString());
+                            if (onHistoryUpdate && view?.getHistoryState) {
+                                onHistoryUpdate(view.getHistoryState());
+                            }
                         }
                     }, CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
                 }
@@ -334,6 +331,26 @@
 
         const isTabSwitch = untrack(() => {
             if (view && view._currentTabId !== tId) {
+                // If switching tabs, we must handle pending updates for the OLD tab
+                const oldTabId = view._currentTabId;
+
+                // 1. Cancel pending debounce timers to prevent overwrite race condition
+                if (contentUpdateTimer) {
+                    clearTimeout(contentUpdateTimer);
+                    contentUpdateTimer = null;
+
+                    // 2. Synchronously flush pending content to the OLD tab ID
+                    if (oldTabId) {
+                        const currentDoc = view.state.doc.toString();
+                        updateContent(oldTabId, currentDoc);
+                    }
+                }
+
+                if (metricsUpdateTimer) {
+                    clearTimeout(metricsUpdateTimer);
+                    metricsUpdateTimer = null;
+                }
+
                 view._currentTabId = tId;
                 return true;
             }
@@ -352,7 +369,7 @@
 
                 const newState = EditorState.create({
                     doc: storeContent,
-                    extensions: createExtensions(storeTab.historyState),
+                    extensions: createExtensions(initialHistoryState),
                     selection: {
                         anchor: Math.min(storeTab.cursor.anchor, storeContent.length),
                         head: Math.min(storeTab.cursor.head, storeContent.length),
@@ -486,7 +503,13 @@
         typedView.flushPendingContent = () => {
             if (contentUpdateTimer) {
                 clearTimeout(contentUpdateTimer);
-                onContentChange(typedView.state.doc.toString());
+                // Safe flush using internal ID
+                if (typedView._currentTabId) {
+                    updateContent(typedView._currentTabId, typedView.state.doc.toString());
+                } else {
+                    onContentChange(typedView.state.doc.toString());
+                }
+
                 if (onHistoryUpdate && typedView.getHistoryState) {
                     onHistoryUpdate(typedView.getHistoryState());
                 }
