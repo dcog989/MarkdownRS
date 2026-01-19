@@ -44,7 +44,7 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 - Self-documenting code via clear naming
 - Comments only for workarounds/complex logic
 - No magic numbers
-- No docs files unless explicitly requested
+- **Do NOT create docs files** (summary, reference, testing, etc.) unless explicitly requested
 
 ## File System Access
 
