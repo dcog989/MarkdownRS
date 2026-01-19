@@ -36,10 +36,10 @@ Developed using the latest versions of:
 - [CodeMirror](https://codemirror.net/)
 - [SQLite](https://sqlite.org/)
 
-And built with these tools:
+Along with these dev tools:
 
-- [bun](https://bun.com/)
 - [Node.js](https://nodejs.org/)
+- [bun](https://bun.com/)
 - [Vite](https://vite.dev/)
 - [Velopack](https://velopack.io/)
 

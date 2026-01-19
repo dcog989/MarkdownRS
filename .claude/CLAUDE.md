@@ -6,7 +6,7 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 
 - **Tauri** (v2.9) - Desktop framework wrapping the web frontend
 - **Rust** (2024 / v1.92) - Backend logic, Markdown processing, file I/O
-- **Svelte** (v5.46) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
+- **Svelte** (v5.47) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
 - **TypeScript** (v5.9) - Type-safe frontend code
 - **Tailwind** (v4.1) - Utility-first CSS
 - **CodeMirror** (v6.0) - Code editor component

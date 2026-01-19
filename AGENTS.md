@@ -1,3 +1,3 @@
 # AGENTS
 
-Instructions for AI / LLM: access @.claude\CLAUDE.md
+Instructions for AI / LLM: access "D:\Code\MarkdownRS\.claude\CLAUDE.md"
