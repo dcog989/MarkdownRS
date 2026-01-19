@@ -2,20 +2,25 @@
  * Debounce utility functions
  */
 
+export interface DebouncedFunction<T extends (...args: unknown[]) => unknown> {
+    (...args: Parameters<T>): void;
+    clear: () => void;
+}
+
 /**
  * Creates a debounced version of a function
  * @param fn Function to debounce
  * @param delay Delay in milliseconds
- * @returns Debounced function
+ * @returns Debounced function with a .clear() method
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
     fn: T,
     delay: number,
-): (...args: Parameters<T>) => void {
+): DebouncedFunction<T> {
     let timeout: number | null = null;
 
-    return (...args: Parameters<T>) => {
+    const debounced = (...args: Parameters<T>) => {
         if (timeout !== null) {
             clearTimeout(timeout);
         }
@@ -24,6 +29,15 @@ export function debounce<T extends (...args: any[]) => any>(
             timeout = null;
         }, delay);
     };
+
+    debounced.clear = () => {
+        if (timeout !== null) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+    };
+
+    return debounced;
 }
 
 /**

@@ -32,6 +32,7 @@
     let isDragging = $state(false);
     let dragStart = 0;
     let initialSplit = 0;
+    let isUnloading = false;
 
     const AUTO_SAVE_INTERVAL_MS = 5000; // 5 seconds for more frequent saves
 
@@ -264,6 +265,11 @@
         };
 
         const handleBeforeUnload = () => {
+            isUnloading = true;
+
+            // Cancel any pending debounced saves to prevent race conditions during unload
+            persistSessionDebounced.clear();
+
             // Flush all pending editor content updates
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if ((window as any)._editorFlushFunctions) {
@@ -293,8 +299,14 @@
             clearInterval(autoSaveInterval);
             autoSaveInterval = null;
         }
-        persistSession();
-        saveSettings();
+
+        // Only trigger cleanup saves if we are NOT in the process of unloading via browser event
+        // This prevents double-saving and race conditions during app exit
+        if (!isUnloading) {
+            persistSessionDebounced.clear();
+            persistSession();
+            saveSettings();
+        }
     });
 
     function startResize(e: MouseEvent) {
