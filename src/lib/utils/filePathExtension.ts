@@ -1,11 +1,14 @@
 import { RangeSetBuilder, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
-// Regex to match file paths: Windows paths (C:\...), Unix paths (/...), or relative paths (./... or ../....)
-// Unix absolute paths must have at least one slash after the initial slash (e.g., /home/user, not /hibernate)
-// Allows paths to be preceded by whitespace, quotes, backticks, or start of line
+// Regex to match file paths
+// Split into two main groups:
+// 1. Quoted paths: Anything starting with /, ./, ../, ~/, or Drive: inside quotes.
+// 2. Unquoted paths:
+//    a. High Confidence: Drive letters (C:\), Relative (./, ../), Home (~/)
+//    b. Unix Absolute: Must start with / AND have a file extension to avoid false positives (like /either/or).
 export const FILE_PATH_REGEX =
-    /(?:(?:^|\s|['"`])(?:[a-zA-Z]:[/\\]|\.\.\.?[/\\])[a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+ -]+)|(?:(?:^|\s|['"`])\/[a-zA-Z0-9._-]+[/\\][a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+ -]*)/g;
+    /(?:(?:^|\s)(['"`])(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|\/)[^'"`\r\n]*?)\1)|(?:(?:^|\s)(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\])[a-zA-Z0-9._/\\!@#$%^&()[\]{}~`+-]*|(?:\/[a-zA-Z0-9._-]+)+\.[a-zA-Z0-9]+))/g;
 
 /**
  * Extracts a file path from a line of text at a specific position.
@@ -56,12 +59,19 @@ function findFilePaths(view: EditorView) {
 
             let match: RegExpExecArray | null;
             while ((match = FILE_PATH_REGEX.exec(lineText)) !== null) {
-                const matchText = match[0].trim();
-                // Find the actual path start (skip quote/backtick if present)
-                const pathStart = matchText.match(/^['"`]/) ? 1 : 0;
-                const cleanPath = matchText.slice(pathStart);
+                const fullMatch = match[0];
+                const trimmedMatch = fullMatch.trim();
 
-                const startOffset = match.index + (match[0].length - matchText.length) + pathStart;
+                const leadingSpaceCount = fullMatch.length - fullMatch.trimStart().length;
+                const quoteStartOffset = trimmedMatch.match(/^['"`]/) ? 1 : 0;
+                const quoteEndOffset = trimmedMatch.match(/['"`]$/) ? 1 : 0;
+
+                const cleanPath = trimmedMatch.slice(
+                    quoteStartOffset,
+                    trimmedMatch.length - (quoteEndOffset && quoteStartOffset ? 1 : 0),
+                );
+
+                const startOffset = match.index + leadingSpaceCount + quoteStartOffset;
                 const matchFrom = line.from + startOffset;
                 const matchTo = matchFrom + cleanPath.length;
 
