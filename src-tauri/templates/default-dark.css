@@ -24,11 +24,11 @@
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: oklch(0.67 0.18 305 / 0.35) !important;
+    background-color: oklch(0.44 0.12 305 / 0.35) !important;
 }
 
 .cm-editor .cm-selectionMatch {
-    background-color: oklch(0.68 0.11 55 / 0.35);
+    background-color: oklch(0.66 0.22 305 / 0.66);
 }
 
 /* Syntax Highlighting */
@@ -50,6 +50,7 @@
 .cm-h3 {
     font-size: 1.1em;
 }
+
 .cm-keyword {
     color: #c678dd;
 }

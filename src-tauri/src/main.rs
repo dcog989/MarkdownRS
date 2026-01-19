@@ -122,6 +122,7 @@ fn main() {
 
             // Always overwrite default theme files to ensure updates are applied
             let dark_theme_path = themes_dir.join("default-dark.css");
+            // The path is relative to the Cargo.toml location (src-tauri/)
             let dark_theme_content = include_str!("../templates/default-dark.css");
             let _ = fs::write(&dark_theme_path, dark_theme_content);
 
