@@ -188,6 +188,7 @@ BenchmarkDotNet.Artifacts/
 bin/x64/
 bin/x86/
 bld/
+bun.lock
 BundleArtifacts/
 changelog*.md
 ClientBin/
@@ -222,6 +223,7 @@ obj/x64/
 obj/x86/
 OpenCover/
 orleans.codegen.cs
+package-lock.json
 Package.StoreAssociation.xml
 paket-files/
 project.fragment.lock.json
@@ -232,6 +234,7 @@ rcf/
 repomix.config.json
 ScaffoldingReadMe.txt
 ServiceFabricBackup/
+src-tauri/Cargo.lock
 StyleCopReport.xml
 target
 TestResult.xml
@@ -251,5 +254,3 @@ vite.config.ts.timestamp-*
 !.vscode/tasks.json
 !**/[Pp]ackages/build/
 !Directory.Build.rsp
-package-lock.json
-src-tauri/Cargo.lock
