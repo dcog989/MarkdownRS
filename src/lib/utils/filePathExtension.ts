@@ -4,28 +4,19 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 // --- REGEX DEFINITIONS ---
 
 // Matches URLs (http, https, www).
-// Excludes common delimiters to prevent capturing surrounding brackets/quotes.
 const URL_REGEX = /(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+/g;
 
 // Matches Quoted File Paths.
-// Group 1: Opening Quote
-// Group 2: Content
-// Logic:
-// - Must start with a quote.
-// - Content MUST NOT start with http/https/www (Negative Lookahead).
-// - Content must contain a slash OR end with an extension.
-// - Ends with matching quote.
 const QUOTED_PATH_REGEX =
     /(['"`])((?!(?:https?:\/\/|www\.))(?:[^'"`\r\n]*?[/\\][^'"`\r\n]*?|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1/g;
 
 // Matches Unquoted File Paths.
 // Logic:
-// - Start: Drive letter, relative (./, ../), home (~/), or root (/).
-// - Body:
-//   Option A: Path with extension (Allows spaces, stops at delimiter lookahead).
-//   Option B: Path without spaces (No delimiters).
+// - Start: Drive letter, relative (./, ../), home (~/).
+// - OR Root (/): MUST NOT be followed by a space. This prevents matching " / or " in sentences.
+// - Body: Allow spaces within the path (for "Recent Files Plus.md"), but handle delimiters.
 const UNQUOTED_PATH_REGEX =
-    /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\s(){}[\]<>]+)/g;
+    /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?![ \t\r\n])))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\r\n(){}[\]<>]+)/g;
 
 // --- HELPERS ---
 
@@ -35,7 +26,6 @@ function stripTrailingPunctuation(str: string): string {
 
 /**
  * Extracts a file path or URL from a line of text at a specific position.
- * Returns the cleaned string if the position is within a valid match, or null.
  */
 export function extractPathAtPos(text: string, pos: number): string | null {
     let match: RegExpExecArray | null;
@@ -63,6 +53,11 @@ export function extractPathAtPos(text: string, pos: number): string | null {
     // 3. Check Unquoted Paths
     UNQUOTED_PATH_REGEX.lastIndex = 0;
     while ((match = UNQUOTED_PATH_REGEX.exec(text)) !== null) {
+        // Validation: Ensure the path is not part of a surrounding word
+        if (match.index > 0 && /[\w-]/.test(text[match.index - 1])) {
+            continue;
+        }
+
         const cleanMatch = stripTrailingPunctuation(match[0]);
         const start = match.index;
         const end = start + cleanMatch.length;
@@ -113,6 +108,10 @@ function findLinks(view: EditorView) {
             // 3. Unquoted Paths
             UNQUOTED_PATH_REGEX.lastIndex = 0;
             while ((match = UNQUOTED_PATH_REGEX.exec(lineText)) !== null) {
+                if (match.index > 0 && /[\w-]/.test(lineText[match.index - 1])) {
+                    continue;
+                }
+
                 const clean = stripTrailingPunctuation(match[0]);
                 const start = line.from + match.index;
                 if (clean.length > 0) {
