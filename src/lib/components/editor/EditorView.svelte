@@ -22,7 +22,7 @@
         selectionWhitespacePlugin,
     } from '$lib/utils/editorPlugins';
     import { generateDynamicTheme } from '$lib/utils/editorTheme';
-    import { filePathPlugin, filePathTheme } from '$lib/utils/filePathExtension';
+    import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
     import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
     import {
         blockquotePlugin,
@@ -31,7 +31,6 @@
         highlightPlugin,
         horizontalRulePlugin,
         inlineCodePlugin,
-        urlPlugin,
     } from '$lib/utils/markdownExtensions';
     import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
     import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
@@ -146,7 +145,6 @@
         inlineCodePlugin,
         horizontalRulePlugin,
         bulletPointPlugin,
-        urlPlugin,
     ];
 
     $effect(() => {
@@ -165,7 +163,7 @@
             view.dispatch({
                 effects: [
                     languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
-                    filePathComp.reconfigure(isMarkdown ? [filePathPlugin, filePathTheme] : []),
+                    filePathComp.reconfigure(isMarkdown ? [linkPlugin, linkTheme] : []),
                 ],
             });
         }
@@ -257,7 +255,7 @@
             smartBacktickHandler,
             prefetchHoverHandler,
             EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
-            filePathComp.of(isMarkdown ? [filePathPlugin, filePathTheme] : []),
+            filePathComp.of(isMarkdown ? [linkPlugin, linkTheme] : []),
             getEditorKeymap([...customKeymap]),
             themeComp.of(
                 generateDynamicTheme(

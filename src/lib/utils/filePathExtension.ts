@@ -1,56 +1,82 @@
 import { RangeSetBuilder, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
-// Regex to match file paths
-// Groups:
-// 1. Quoted paths: Allow spaces/anything inside quotes.
-// 2. Unquoted paths:
-//    a. Windows/Relative/Home:
-//       - ALLOW spaces IF the path ends in a file extension (e.g. .md, .txt).
-//       - Otherwise, stop at the first whitespace.
-//    b. Unix Absolute:
-//       - Must start with /.
-//       - STRICTLY no spaces allowed (must be quoted for spaces).
-//       - This prevents identifying "/either/or" text as a path with spaces.
-export const FILE_PATH_REGEX =
-    /(?:(?:^|\s)(['"`])(?=[/\\~a-zA-Z.][^'"`\r\n]*?[/\\][^'"`\r\n]*?)\1)|(?:(?:^|\s)(?:(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\])(?:[^"'\r\n]+?\.[a-zA-Z0-9]{1,10}(?=\s|$|[.,;:?!])|[^"'\s]+)|(?:\/[^"'\s]+)))/g;
+// --- REGEX DEFINITIONS ---
+
+// Matches URLs (http, https, www).
+// Excludes common delimiters to prevent capturing surrounding brackets/quotes.
+const URL_REGEX = /(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+/g;
+
+// Matches Quoted File Paths.
+// Group 1: Opening Quote
+// Group 2: Content
+// Logic:
+// - Must start with a quote.
+// - Content MUST NOT start with http/https/www (Negative Lookahead).
+// - Content must contain a slash OR end with an extension.
+// - Ends with matching quote.
+const QUOTED_PATH_REGEX =
+    /(['"`])((?!(?:https?:\/\/|www\.))(?:[^'"`\r\n]*?[/\\][^'"`\r\n]*?|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1/g;
+
+// Matches Unquoted File Paths.
+// Logic:
+// - Start: Drive letter, relative (./, ../), home (~/), or root (/).
+// - Body: Any char except whitespace and delimiters.
+const UNQUOTED_PATH_REGEX = /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|\/)[^'"`\s(){}[\]<>]+/g;
+
+// --- HELPERS ---
+
+function stripTrailingPunctuation(str: string): string {
+    return str.replace(/[.,;:?!]+$/, '');
+}
 
 /**
- * Extracts a file path from a line of text at a specific position.
- * Returns the path string if the position is within a valid path, or null.
+ * Extracts a file path or URL from a line of text at a specific position.
+ * Returns the cleaned string if the position is within a valid match, or null.
  */
 export function extractPathAtPos(text: string, pos: number): string | null {
-    FILE_PATH_REGEX.lastIndex = 0;
     let match: RegExpExecArray | null;
-    while ((match = FILE_PATH_REGEX.exec(text)) !== null) {
-        const fullMatch = match[0];
-        const trimmedMatch = fullMatch.trim();
 
-        const leadingSpaceCount = fullMatch.length - fullMatch.trimStart().length;
-        const quoteStartOffset = trimmedMatch.match(/^['"`]/) ? 1 : 0;
-        const quoteEndOffset = trimmedMatch.match(/['"`]$/) ? 1 : 0;
+    // 1. Check URLs
+    URL_REGEX.lastIndex = 0;
+    while ((match = URL_REGEX.exec(text)) !== null) {
+        const cleanMatch = stripTrailingPunctuation(match[0]);
+        const start = match.index;
+        const end = start + cleanMatch.length;
 
-        const cleanPath = trimmedMatch.slice(
-            quoteStartOffset,
-            trimmedMatch.length - (quoteEndOffset && quoteStartOffset ? 1 : 0),
-        );
-
-        const start = match.index + leadingSpaceCount + quoteStartOffset;
-        const end = start + cleanPath.length;
-
-        if (pos >= start && pos <= end) {
-            return cleanPath;
-        }
+        if (pos >= start && pos < end) return cleanMatch;
     }
+
+    // 2. Check Quoted Paths
+    QUOTED_PATH_REGEX.lastIndex = 0;
+    while ((match = QUOTED_PATH_REGEX.exec(text)) !== null) {
+        const content = match[2]; // Group 2 is content
+        // match.index is the start of the quote
+        const start = match.index + 1; // Skip opening quote
+        const end = start + content.length;
+
+        if (pos >= start && pos < end) return content;
+    }
+
+    // 3. Check Unquoted Paths
+    UNQUOTED_PATH_REGEX.lastIndex = 0;
+    while ((match = UNQUOTED_PATH_REGEX.exec(text)) !== null) {
+        const cleanMatch = stripTrailingPunctuation(match[0]);
+        const start = match.index;
+        const end = start + cleanMatch.length;
+
+        if (pos >= start && pos < end) return cleanMatch;
+    }
+
     return null;
 }
 
-// Mark to apply to file paths
-const filePathMark = Decoration.mark({
-    class: 'cm-file-path',
-});
+// --- VIEW PLUGIN ---
 
-function findFilePaths(view: EditorView) {
+const filePathMark = Decoration.mark({ class: 'cm-file-path' });
+const urlMark = Decoration.mark({ class: 'cm-url' });
+
+function findLinks(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
     const doc = view.state.doc;
 
@@ -59,28 +85,51 @@ function findFilePaths(view: EditorView) {
             const line = doc.lineAt(pos);
             const lineText = line.text;
 
-            // Reset regex
-            FILE_PATH_REGEX.lastIndex = 0;
-
+            // Store matches to sort them later (though usually distinct, sorting is safer)
+            const found: { start: number; end: number; deco: Decoration }[] = [];
             let match: RegExpExecArray | null;
-            while ((match = FILE_PATH_REGEX.exec(lineText)) !== null) {
-                const fullMatch = match[0];
-                const trimmedMatch = fullMatch.trim();
 
-                const leadingSpaceCount = fullMatch.length - fullMatch.trimStart().length;
-                const quoteStartOffset = trimmedMatch.match(/^['"`]/) ? 1 : 0;
-                const quoteEndOffset = trimmedMatch.match(/['"`]$/) ? 1 : 0;
+            // 1. URLs
+            URL_REGEX.lastIndex = 0;
+            while ((match = URL_REGEX.exec(lineText)) !== null) {
+                const clean = stripTrailingPunctuation(match[0]);
+                const start = line.from + match.index;
+                if (clean.length > 0) {
+                    found.push({ start, end: start + clean.length, deco: urlMark });
+                }
+            }
 
-                const cleanPath = trimmedMatch.slice(
-                    quoteStartOffset,
-                    trimmedMatch.length - (quoteEndOffset && quoteStartOffset ? 1 : 0),
-                );
+            // 2. Quoted Paths
+            QUOTED_PATH_REGEX.lastIndex = 0;
+            while ((match = QUOTED_PATH_REGEX.exec(lineText)) !== null) {
+                const content = match[2];
+                // Offset by 1 to skip the opening quote
+                const start = line.from + match.index + 1;
+                if (content.length > 0) {
+                    found.push({ start, end: start + content.length, deco: filePathMark });
+                }
+            }
 
-                const startOffset = match.index + leadingSpaceCount + quoteStartOffset;
-                const matchFrom = line.from + startOffset;
-                const matchTo = matchFrom + cleanPath.length;
+            // 3. Unquoted Paths
+            UNQUOTED_PATH_REGEX.lastIndex = 0;
+            while ((match = UNQUOTED_PATH_REGEX.exec(lineText)) !== null) {
+                const clean = stripTrailingPunctuation(match[0]);
+                const start = line.from + match.index;
+                if (clean.length > 0) {
+                    found.push({ start, end: start + clean.length, deco: filePathMark });
+                }
+            }
 
-                builder.add(matchFrom, matchTo, filePathMark);
+            // Sort by position to ensure strict order for RangeSetBuilder
+            found.sort((a, b) => a.start - b.start);
+
+            let lastEnd = -1;
+            for (const f of found) {
+                // Prevent overlaps (First match wins)
+                if (f.start >= lastEnd) {
+                    builder.add(f.start, f.end, f.deco);
+                    lastEnd = f.end;
+                }
             }
 
             pos = line.to + 1;
@@ -90,17 +139,17 @@ function findFilePaths(view: EditorView) {
     return builder.finish();
 }
 
-export const filePathPlugin: Extension = ViewPlugin.fromClass(
+export const linkPlugin: Extension = ViewPlugin.fromClass(
     class {
         decorations;
 
         constructor(view: EditorView) {
-            this.decorations = findFilePaths(view);
+            this.decorations = findLinks(view);
         }
 
         update(update: ViewUpdate) {
             if (update.docChanged || update.viewportChanged) {
-                this.decorations = findFilePaths(update.view);
+                this.decorations = findLinks(update.view);
             }
         }
     },
@@ -109,9 +158,8 @@ export const filePathPlugin: Extension = ViewPlugin.fromClass(
     },
 );
 
-// Theme to style file paths
-export const filePathTheme = EditorView.baseTheme({
-    '.cm-file-path': {
+export const linkTheme = EditorView.baseTheme({
+    '.cm-file-path, .cm-url': {
         color: 'var(--color-accent-link)',
         textDecoration: 'underline',
         '&:hover': {
@@ -119,8 +167,7 @@ export const filePathTheme = EditorView.baseTheme({
             textDecoration: 'underline',
         },
     },
-    // Only show pointer cursor when the editor has the modifier-down class
-    '&.cm-modifier-down .cm-file-path': {
+    '&.cm-modifier-down .cm-file-path, &.cm-modifier-down .cm-url': {
         cursor: 'pointer',
     },
 });
