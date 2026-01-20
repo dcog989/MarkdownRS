@@ -217,3 +217,46 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
         format!("Failed to rename file: {}", e)
     })
 }
+
+#[tauri::command]
+pub async fn add_to_recent_files(
+    state: tauri::State<'_, crate::state::AppState>,
+    path: String,
+    last_opened: String,
+) -> Result<(), String> {
+    state.db.add_recent_file(&path, &last_opened).map_err(|e| {
+        log::error!("Failed to add to recent files '{}': {}", path, e);
+        format!("Failed to add to recent files: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn get_recent_files(
+    state: tauri::State<'_, crate::state::AppState>,
+) -> Result<Vec<String>, String> {
+    state.db.get_recent_files().map_err(|e| {
+        log::error!("Failed to get recent files: {}", e);
+        format!("Failed to get recent files: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn remove_from_recent_files(
+    state: tauri::State<'_, crate::state::AppState>,
+    path: String,
+) -> Result<(), String> {
+    state.db.remove_recent_file(&path).map_err(|e| {
+        log::error!("Failed to remove recent file '{}': {}", path, e);
+        format!("Failed to remove recent file: {}", e)
+    })
+}
+
+#[tauri::command]
+pub async fn clear_recent_files(
+    state: tauri::State<'_, crate::state::AppState>,
+) -> Result<(), String> {
+    state.db.clear_recent_files().map_err(|e| {
+        log::error!("Failed to clear recent files: {}", e);
+        format!("Failed to clear recent files: {}", e)
+    })
+}

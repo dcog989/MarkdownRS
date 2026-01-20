@@ -9,6 +9,7 @@ export const interfaceStore = $state({
     showShortcuts: false,
     showAbout: false,
     showBookmarks: false,
+    showRecentFiles: false,
     showCommandPalette: false,
     showTransform: false,
 
@@ -47,6 +48,9 @@ export function toggleShortcuts() {
 }
 export function toggleBookmarks() {
     interfaceStore.showBookmarks = !interfaceStore.showBookmarks;
+}
+export function toggleRecentFiles() {
+    interfaceStore.showRecentFiles = !interfaceStore.showRecentFiles;
 }
 export function toggleCommandPalette() {
     interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette;

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::Local;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
@@ -120,6 +121,12 @@ const MIGRATIONS: &[&str] = &[
         last_accessed TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path);",
+    // v2: Recent Files
+    "CREATE TABLE IF NOT EXISTS recent_files (
+        path TEXT PRIMARY KEY,
+        last_opened TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_recent_files_last_opened ON recent_files(last_opened DESC);",
 ];
 
 impl Database {
@@ -563,6 +570,82 @@ impl Database {
             "UPDATE bookmarks SET last_accessed = ?1 WHERE id = ?2",
             params![last_accessed, id],
         )?;
+        Ok(())
+    }
+
+    pub fn seed_recent_files_from_history(&self) -> Result<()> {
+        let conn = self.pool.get()?;
+        let now = Local::now().format("%Y%m%d / %H%M%S").to_string();
+
+        // 1. Backfill from active tabs
+        conn.execute(
+            "INSERT OR IGNORE INTO recent_files (path, last_opened)
+             SELECT path, COALESCE(modified, created, ?1)
+             FROM tabs
+             WHERE path IS NOT NULL AND path != ''",
+            params![&now],
+        )?;
+
+        // 2. Backfill from closed tabs history
+        // GROUP BY path ensures we only take the most recent entry if there are duplicates in closed_tabs
+        conn.execute(
+            "INSERT OR IGNORE INTO recent_files (path, last_opened)
+             SELECT path, MAX(COALESCE(modified, created, ?1))
+             FROM closed_tabs
+             WHERE path IS NOT NULL AND path != ''
+             GROUP BY path",
+            params![&now],
+        )?;
+
+        // 3. Prune logic to ensure we don't exceed limit immediately
+        conn.execute(
+            "DELETE FROM recent_files WHERE path NOT IN (
+                SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
+            )",
+            [],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn add_recent_file(&self, path: &str, last_opened: &str) -> Result<()> {
+        let conn = self.pool.get()?;
+
+        // Insert or Update the recent file
+        conn.execute(
+            "INSERT OR REPLACE INTO recent_files (path, last_opened) VALUES (?1, ?2)",
+            params![path, last_opened],
+        )?;
+
+        // Prune logic: Keep only recent 99 entries
+        conn.execute(
+            "DELETE FROM recent_files WHERE path NOT IN (
+                SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
+            )",
+            [],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn get_recent_files(&self) -> Result<Vec<String>> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare("SELECT path FROM recent_files ORDER BY last_opened DESC")?;
+        let files = stmt
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<Vec<String>, _>>()?;
+        Ok(files)
+    }
+
+    pub fn remove_recent_file(&self, path: &str) -> Result<()> {
+        let conn = self.pool.get()?;
+        conn.execute("DELETE FROM recent_files WHERE path = ?1", params![path])?;
+        Ok(())
+    }
+
+    pub fn clear_recent_files(&self) -> Result<()> {
+        let conn = self.pool.get()?;
+        conn.execute("DELETE FROM recent_files", [])?;
         Ok(())
     }
 

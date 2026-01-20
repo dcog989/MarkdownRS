@@ -10,6 +10,7 @@
         toggleAbout,
         toggleBookmarks,
         toggleCommandPalette,
+        toggleRecentFiles,
         toggleSettings,
         toggleShortcuts,
         toggleTransform,
@@ -30,6 +31,7 @@
     import AboutModal from './AboutModal.svelte';
     import BookmarksModal from './BookmarksModal.svelte';
     import CommandPalette, { type Command } from './CommandPalette.svelte';
+    import RecentFilesModal from './RecentFilesModal.svelte';
     import SettingsModal from './SettingsModal.svelte';
     import ShortcutsModal from './ShortcutsModal.svelte';
     import TextTransformModal from './TextTransformModal.svelte';
@@ -65,6 +67,11 @@
             action: async () => {
                 await openFile();
             },
+        },
+        {
+            id: 'recent-files',
+            label: 'File: Recent Files...',
+            action: () => toggleRecentFiles(),
         },
         {
             id: 'save',
@@ -225,6 +232,7 @@
             // Mapping IDs to VS Code style defaults
             if (id === 'new') defaultKey = 'ctrl+n';
             else if (id === 'open') defaultKey = 'ctrl+o';
+            else if (id === 'recent-files') defaultKey = 'ctrl+p';
             else if (id === 'save') defaultKey = 'ctrl+s';
             else if (id === 'save-as') defaultKey = 'ctrl+shift+s';
             else if (id === 'close') defaultKey = 'ctrl+w';
@@ -255,6 +263,20 @@
                 },
             });
         });
+
+        // Explicitly register Reopen Last Closed as it might not be in the palette list displayed above (but logically fits)
+        // We'll add it here for keyboard shortcut support
+        shortcutManager.register({
+            id: 'reopen-closed-tab',
+            command: 'reopen-closed-tab',
+            defaultKey: 'ctrl+shift+t',
+            category: 'File',
+            description: 'Reopen Last Closed Tab',
+            handler: async () => {
+                const { triggerReopenClosedTab } = await import('$lib/utils/fileSystem');
+                triggerReopenClosedTab(0);
+            },
+        });
     }
 
     onMount(() => {
@@ -269,6 +291,9 @@
     bind:isOpen={appContext.interface.showCommandPalette}
     {commands}
     onClose={() => (appContext.interface.showCommandPalette = false)} />
+<RecentFilesModal
+    bind:isOpen={appContext.interface.showRecentFiles}
+    onClose={() => (appContext.interface.showRecentFiles = false)} />
 <SettingsModal
     bind:isOpen={appContext.interface.showSettings}
     onClose={() => (appContext.interface.showSettings = false)} />

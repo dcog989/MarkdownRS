@@ -26,6 +26,7 @@ import {
     updateTabMetadataAndPath,
     updateTabTitle,
 } from '$lib/stores/editorStore.svelte';
+import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
@@ -68,6 +69,9 @@ export async function openFile(path?: string): Promise<void> {
 
         const sanitizedPath = sanitizePath(targetPath);
         const existingTab = appContext.editor.tabs.find((t) => t.path === sanitizedPath);
+
+        // Always update recent files, even if tab exists
+        addToRecentFiles(sanitizedPath);
 
         if (existingTab) {
             appContext.app.activeTabId = existingTab.id;
@@ -333,6 +337,9 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 invalidateMetadataCache(sanitizedPath);
                 await refreshMetadata(tabId, sanitizedPath);
 
+                // Add to Recent Files History on save
+                addToRecentFiles(sanitizedPath);
+
                 const duration = (performance.now() - start).toFixed(2);
                 logger.file.info('FileSaved', {
                     duration: `${duration}ms`,
@@ -374,6 +381,8 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     }
 
     if (tab.path) {
+        // Ensure the file is added to recent history before closing
+        addToRecentFiles(tab.path);
         fileWatcher.unwatch(tab.path);
     }
 
@@ -454,6 +463,9 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
         invalidateMetadataCache(newPath);
         await refreshMetadata(tabId, newPath);
+
+        // Update recent files entry
+        addToRecentFiles(newPath);
 
         const bookmark = getBookmarkByPath(oldPath);
         if (bookmark) {

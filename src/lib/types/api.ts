@@ -80,6 +80,22 @@ export interface BackendCommands {
         args: { oldPath: string; newPath: string };
         return: void;
     };
+    add_to_recent_files: {
+        args: { path: string; lastOpened: string };
+        return: void;
+    };
+    get_recent_files: {
+        args: Record<string, never>;
+        return: string[];
+    };
+    remove_from_recent_files: {
+        args: { path: string };
+        return: void;
+    };
+    clear_recent_files: {
+        args: Record<string, never>;
+        return: void;
+    };
 
     // App Info
     get_app_info: {

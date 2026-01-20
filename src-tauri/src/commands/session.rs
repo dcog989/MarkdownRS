@@ -60,6 +60,12 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
     let start = std::time::Instant::now();
 
     log::info!("[Rust] restore_session called");
+
+    // Seed recent files from existing session data (Backfill)
+    if let Err(e) = state.db.seed_recent_files_from_history() {
+        log::warn!("Failed to seed recent files: {}", e);
+    }
+
     let result = state.db.load_session().map_err(|e| {
         log::error!("Failed to restore session: {}", e);
         format!("Failed to restore session: {}", e)
