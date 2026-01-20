@@ -163,8 +163,13 @@ impl Database {
             [],
         )?;
 
+        // Use MAX to ensure we get the latest version if multiple rows exist due to previous INSERT usage
         let current_version: i32 = conn
-            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .query_row(
+                "SELECT COALESCE(MAX(version), 0) FROM schema_version",
+                [],
+                |row| row.get(0),
+            )
             .unwrap_or(0);
 
         for (i, migration) in MIGRATIONS.iter().enumerate() {
@@ -173,8 +178,11 @@ impl Database {
                 log::info!("Applying database migration v{}", version);
                 let tx = conn.transaction()?;
                 tx.execute_batch(migration)?;
+
+                // Clear old versions to keep table clean and singular
+                tx.execute("DELETE FROM schema_version", [])?;
                 tx.execute(
-                    "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
+                    "INSERT INTO schema_version (version) VALUES (?1)",
                     [version],
                 )?;
                 tx.commit()?;
