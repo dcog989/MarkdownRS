@@ -42,6 +42,7 @@
     let isMarkdown = $derived(
         activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
     );
+    let shortcutsRegistered = $state(false);
 
     function toggleSplit() {
         if (!isMarkdown) {
@@ -202,8 +203,11 @@
         })),
     );
 
-    const commands = $derived(
-        [...baseCommands, ...textOperationCommands]
+    const commands = $derived.by(() => {
+        // Dependency on shortcutsRegistered to force re-calculation after mount
+        void shortcutsRegistered;
+
+        return [...baseCommands, ...textOperationCommands]
             .map((cmd) => ({
                 ...cmd,
                 shortcut: shortcutManager.getShortcutDisplay(cmd.id),
@@ -215,8 +219,8 @@
                     return catA.localeCompare(catB);
                 }
                 return a.label.localeCompare(b.label);
-            }),
-    );
+            });
+    });
 
     function registerShortcuts() {
         // Load custom mappings from app state
@@ -277,6 +281,8 @@
                 triggerReopenClosedTab(0);
             },
         });
+
+        shortcutsRegistered = true;
     }
 
     onMount(() => {
