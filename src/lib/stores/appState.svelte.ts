@@ -46,7 +46,7 @@ export const appState = $state({
     doubleClickSelectsTrailingSpace: false,
     collapsePinnedTabs: false,
     customShortcuts: {} as Record<string, string>,
-    neverPrompt: false,
+    confirmationSuppressed: false,
     // Tab switching flag to prevent auto-format during transitions
     isTabSwitching: false,
 });

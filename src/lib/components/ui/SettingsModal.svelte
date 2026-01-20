@@ -354,8 +354,8 @@
             tooltip: 'The Find Panel will close on any click outside the Find Panel.',
         },
         {
-            key: 'neverPrompt',
-            label: 'Never Prompt',
+            key: 'confirmationSuppressed',
+            label: 'Confirmations Suppressed',
             type: 'boolean',
             category: 'Interface',
             defaultValue: false,

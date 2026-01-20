@@ -217,7 +217,7 @@
         // Close the menu immediately so it doesn't obscure the modal
         onClose();
 
-        if (!appContext.app.neverPrompt) {
+        if (!appContext.app.confirmationSuppressed) {
             const result = await confirmDialog({
                 title: 'Delete File',
                 message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,

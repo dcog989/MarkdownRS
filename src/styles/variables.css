@@ -10,6 +10,7 @@
 
     /* Backgrounds */
     --color-bg-main: oklch(0.24 0 0);
+    --color-bg-gutter: oklch(0.22 0 0);
     --color-bg-preview: oklch(0.26 0 0);
     --color-bg-panel: oklch(0.28 0 0);
     --color-bg-header: oklch(0.32 0 0);
@@ -26,7 +27,8 @@
 
     /* Text */
     --color-fg-default: oklch(0.85 0 0);
-    --color-fg-muted: oklch(0.7 0 0);
+    --color-fg-muted: oklch(0.6 0 0);
+    --color-fg-xmuted: oklch(0.4 0 0);
     --color-fg-inverse: oklch(1 0 0);
 
     /* Accents */
