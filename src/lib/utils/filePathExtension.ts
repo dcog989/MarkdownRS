@@ -21,8 +21,11 @@ const QUOTED_PATH_REGEX =
 // Matches Unquoted File Paths.
 // Logic:
 // - Start: Drive letter, relative (./, ../), home (~/), or root (/).
-// - Body: Any char except whitespace and delimiters.
-const UNQUOTED_PATH_REGEX = /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|\/)[^'"`\s(){}[\]<>]+/g;
+// - Body:
+//   Option A: Path with extension (Allows spaces, stops at delimiter lookahead).
+//   Option B: Path without spaces (No delimiters).
+const UNQUOTED_PATH_REGEX =
+    /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\s(){}[\]<>]+)/g;
 
 // --- HELPERS ---
 
@@ -50,8 +53,7 @@ export function extractPathAtPos(text: string, pos: number): string | null {
     // 2. Check Quoted Paths
     QUOTED_PATH_REGEX.lastIndex = 0;
     while ((match = QUOTED_PATH_REGEX.exec(text)) !== null) {
-        const content = match[2]; // Group 2 is content
-        // match.index is the start of the quote
+        const content = match[2];
         const start = match.index + 1; // Skip opening quote
         const end = start + content.length;
 
@@ -85,7 +87,6 @@ function findLinks(view: EditorView) {
             const line = doc.lineAt(pos);
             const lineText = line.text;
 
-            // Store matches to sort them later (though usually distinct, sorting is safer)
             const found: { start: number; end: number; deco: Decoration }[] = [];
             let match: RegExpExecArray | null;
 
@@ -103,7 +104,6 @@ function findLinks(view: EditorView) {
             QUOTED_PATH_REGEX.lastIndex = 0;
             while ((match = QUOTED_PATH_REGEX.exec(lineText)) !== null) {
                 const content = match[2];
-                // Offset by 1 to skip the opening quote
                 const start = line.from + match.index + 1;
                 if (content.length > 0) {
                     found.push({ start, end: start + content.length, deco: filePathMark });
@@ -120,12 +120,11 @@ function findLinks(view: EditorView) {
                 }
             }
 
-            // Sort by position to ensure strict order for RangeSetBuilder
+            // Sort by position
             found.sort((a, b) => a.start - b.start);
 
             let lastEnd = -1;
             for (const f of found) {
-                // Prevent overlaps (First match wins)
                 if (f.start >= lastEnd) {
                     builder.add(f.start, f.end, f.deco);
                     lastEnd = f.end;
