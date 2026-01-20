@@ -397,21 +397,6 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10 {appContext
-                    .editor.closedTabsHistory.length === 0
-                    ? 'opacity-50'
-                    : ''}"
-                disabled={appContext.editor.closedTabsHistory.length === 0}
-                onclick={() => {
-                    triggerReopenClosedTab(0);
-                    onClose();
-                }}>
-                <History size={14} class="opacity-70" /><span>Reopen Last Closed</span><span
-                    class="text-ui-sm ml-auto opacity-50">Ctrl+Shift+T</span>
-            </button>
-
-            <button
-                type="button"
                 class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
                 disabled={tabIndex === 0}
                 onclick={async () => {
@@ -508,6 +493,28 @@
                 class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
                 onclick={() => handleCloseMany('all')}>Close All</button>
         </Submenu>
+
+        <div
+            class="bg-border-main my-1 h-px"
+            onmouseenter={() => (activeSubmenu = null)}
+            role="none">
+        </div>
+
+        <div onmouseenter={() => (activeSubmenu = null)} role="none">
+            <button
+                type="button"
+                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10 {appContext
+                    .editor.closedTabsHistory.length === 0
+                    ? 'opacity-50'
+                    : ''}"
+                disabled={appContext.editor.closedTabsHistory.length === 0}
+                onclick={() => {
+                    triggerReopenClosedTab(0);
+                    onClose();
+                }}>
+                <History size={14} class="opacity-70" /><span>Reopen Last Closed</span>
+            </button>
+        </div>
 
         <Submenu
             show={activeSubmenu === 'restore'}
