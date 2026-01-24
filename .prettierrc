@@ -17,7 +17,7 @@
             }
         },
         {
-            "files": ["*.yml", "*.yaml", "package.json"],
+            "files": ["*.yml", "*.yaml", "*.json"],
             "options": {
                 "tabWidth": 2
             }
