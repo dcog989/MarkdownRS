@@ -17,6 +17,7 @@ import {
     deleteGroupForward,
     historyKeymap,
 } from '@codemirror/commands';
+import { indentUnit } from '@codemirror/language';
 import { EditorView, keymap, type KeyBinding } from '@codemirror/view';
 
 /**
@@ -114,21 +115,86 @@ const withSelectionCheck = (cmd: (view: EditorView) => boolean) => (view: Editor
     return cmd(view);
 };
 
-// Custom tab handler that inserts tab at cursor position
-const insertTabAtCursor = (view: EditorView) => {
-    const { from, to } = view.state.selection.main;
+// Custom tab handler that indents selection or inserts spaces at cursor
+const handleTabKey = (view: EditorView) => {
+    const { state } = view;
+    const { from, to } = state.selection.main;
+    const hasSelection = from !== to;
+
+    // Get indent string from the indentUnit facet
+    const indentStr = state.facet(indentUnit) || '    '; // Default to 4 spaces
+
+    if (hasSelection) {
+        // Indent selected lines
+        const startLine = state.doc.lineAt(from);
+        const endLine = state.doc.lineAt(to);
+
+        const changes = [];
+        for (let i = startLine.number; i <= endLine.number; i++) {
+            const line = state.doc.line(i);
+            changes.push({ from: line.from, insert: indentStr });
+        }
+
+        view.dispatch({
+            changes,
+            scrollIntoView: true,
+        });
+        return true;
+    }
+
+    // Insert spaces at cursor position
     view.dispatch({
-        changes: { from, to, insert: '\t' },
-        selection: { anchor: from + 1, head: from + 1 },
+        changes: { from, to, insert: indentStr },
+        selection: { anchor: from + indentStr.length },
         scrollIntoView: true,
     });
+    return true;
+};
+
+// Shift+Tab handler that unindents selected lines
+const handleShiftTab = (view: EditorView) => {
+    const { state } = view;
+    const { from, to } = state.selection.main;
+    const startLine = state.doc.lineAt(from);
+    const endLine = state.doc.lineAt(to);
+
+    // Get indent string from the indentUnit facet
+    const indentStr = state.facet(indentUnit) || '    '; // Default to 4 spaces
+    const indentLen = indentStr.length;
+
+    const changes = [];
+    for (let i = startLine.number; i <= endLine.number; i++) {
+        const line = state.doc.line(i);
+        const lineText = line.text;
+
+        // Check if line starts with the indent string
+        if (lineText.startsWith(indentStr)) {
+            changes.push({ from: line.from, to: line.from + indentLen, insert: '' });
+        } else {
+            // Remove as many leading spaces as possible (up to indentLen)
+            let removeCount = 0;
+            for (let j = 0; j < Math.min(indentLen, lineText.length); j++) {
+                if (lineText[j] === ' ') removeCount++;
+                else break;
+            }
+            if (removeCount > 0) {
+                changes.push({ from: line.from, to: line.from + removeCount, insert: '' });
+            }
+        }
+    }
+
+    if (changes.length > 0) {
+        view.dispatch({
+            changes,
+            scrollIntoView: true,
+        });
+    }
     return true;
 };
 
 export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     return keymap.of([
         ...customKeymap,
-        { key: 'Tab', run: insertTabAtCursor },
         {
             key: 'Insert',
             run: () => {
@@ -184,6 +250,8 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         ...completionKeymap,
         ...historyKeymap,
         ...closeBracketsKeymap,
-        ...defaultKeymap,
+        ...defaultKeymap.filter((binding) => binding.key !== 'Tab'),
+        // Our Tab handlers come last to override defaults
+        { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
     ]);
 }
