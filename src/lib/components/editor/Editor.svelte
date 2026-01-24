@@ -110,18 +110,17 @@
         }
     });
 
-    // Tab Switch State Saver and Sync
+    // Tab Switch Flag Manager
     $effect(() => {
         const currentTabId = tabId;
-        const currentView = cmView;
 
         untrack(() => {
-            if (previousTabId && previousTabId !== currentTabId && currentView?.getHistoryState) {
+            if (previousTabId && previousTabId !== currentTabId) {
                 // Set flag to prevent auto-format during tab switch
                 appContext.app.isTabSwitching = true;
 
-                // Save history of the outgoing tab BEFORE the props update propagates down to EditorView
-                updateHistoryState(previousTabId, currentView.getHistoryState());
+                // History state is saved by EditorView component during tab switch
+                // to ensure it happens at the correct point in the lifecycle
 
                 // Clear the flag after a short delay to allow tab switch to complete
                 setTimeout(() => {

@@ -12,7 +12,11 @@
     } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-    import { updateContent } from '$lib/stores/editorStore.svelte';
+    import {
+        getHistoryState,
+        updateContent,
+        updateHistoryState,
+    } from '$lib/stores/editorStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { ScrollManager } from '$lib/utils/cmScroll';
     import { CONFIG } from '$lib/utils/config';
@@ -360,6 +364,10 @@
                     metricsUpdateTimer = null;
                 }
 
+                if (oldTabId && view.getHistoryState) {
+                    updateHistoryState(oldTabId, view.getHistoryState());
+                }
+
                 view._currentTabId = tId;
                 return true;
             }
@@ -379,9 +387,12 @@
                 // Reset sync counter for the new tab to ensure future updates are caught
                 lastForceSyncCounter = forceSyncCounter;
 
+                // Get the history state for the NEW tab from the store
+                const restoredHistoryState = getHistoryState(tId);
+
                 const newState = EditorState.create({
                     doc: storeContent,
-                    extensions: createExtensions(initialHistoryState),
+                    extensions: createExtensions(restoredHistoryState),
                     selection: {
                         anchor: Math.min(storeTab.cursor.anchor, storeContent.length),
                         head: Math.min(storeTab.cursor.head, storeContent.length),
