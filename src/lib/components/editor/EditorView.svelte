@@ -9,6 +9,7 @@
     import {
         prefetchHoverHandler,
         smartBacktickHandler,
+        autoRenumberLists,
     } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
@@ -257,6 +258,7 @@
             recentComp.of(createRecentChangesHighlighter(lineChangeTracker)),
             closeBrackets(),
             smartBacktickHandler,
+            autoRenumberLists,
             prefetchHoverHandler,
             EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
             filePathComp.of(isMarkdown ? [linkPlugin, linkTheme] : []),
