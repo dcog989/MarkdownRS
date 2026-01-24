@@ -1,4 +1,4 @@
-# MarkdownRS Project Guidelines
+# Project Guidelines
 
 MarkdownRS is a Markdown editor focused on performance, minimal resource usage, and a clean UI for technical and general users.
 
@@ -44,6 +44,7 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 - Self-documenting code via clear naming
 - Comments only for workarounds/complex logic
 - No magic numbers
+- Split files over 400 lines in to separate distinct functions
 - **Do NOT create docs files** (summary, reference, testing, etc.) unless explicitly requested
 
 ## File System Access

@@ -21,7 +21,7 @@ _UpgradeReport_Files/
 .history/
 .NCrunch_*
 .ntvs_analysis.dat
-.repomixignore
+.repomixx/
 .sass-cache/
 .vs/
 .vshistory/
@@ -231,7 +231,8 @@ project.lock.json
 publish/
 PublishScripts/
 rcf/
-repomix.config.json
+repomix.*.json
+.repomixignore
 ScaffoldingReadMe.txt
 ServiceFabricBackup/
 src-tauri/Cargo.lock
@@ -242,7 +243,6 @@ UpgradeLog*.htm
 UpgradeLog*.XML
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-
 
 !?*.[Cc]ache/
 !.axoCover/settings.json
