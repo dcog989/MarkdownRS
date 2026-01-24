@@ -36,8 +36,6 @@
     "*.css": "tailwindcss",
     "*.svelte": "svelte"
   },
-  "prettier.bracketSameLine": true,
-  "prettier.requireConfig": true,
   "rust-analyzer.check.command": "clippy",
   "scss.lint.unknownAtRules": "ignore",
   "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@tauri-apps/**"]

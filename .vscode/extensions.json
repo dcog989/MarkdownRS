@@ -1,11 +1,11 @@
 {
-    "recommendations": [
-        "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
-        "svelte.svelte-vscode",
-        "bradlc.vscode-tailwindcss",
-        "tamasfe.even-better-toml",
-        "rust-lang.rust-analyzer",
-        "tauri-apps.tauri-vscode"
-    ]
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "svelte.svelte-vscode",
+    "bradlc.vscode-tailwindcss",
+    "tamasfe.even-better-toml",
+    "rust-lang.rust-analyzer",
+    "tauri-apps.tauri-vscode"
+  ]
 }

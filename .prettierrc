@@ -1,14 +1,14 @@
 {
-  "trailingComma": "all",
-  "bracketSameLine": true,
-  "tabWidth": 4,
-  "semi": true,
-  "singleQuote": true,
-  "printWidth": 100,
-  "useTabs": false,
   "arrowParens": "always",
+  "bracketSameLine": true,
   "endOfLine": "lf",
   "plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+  "printWidth": 100,
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 4,
+  "trailingComma": "all",
+  "useTabs": false,
   "overrides": [
     {
       "files": "*.svelte",
@@ -17,7 +17,7 @@
       }
     },
     {
-      "files": ["*.yml", "*.yaml", "*.json", ".prettierrc"],
+      "files": ["*.yml", "*.yaml", "*.toml", "*.json", ".prettierrc"],
       "options": {
         "tabWidth": 2
       }
