@@ -6,12 +6,12 @@ _ReSharper*/
 _TeamCity*
 _UpgradeReport_Files/
 .*crunch*.local.xml
-.ai/
 .archive/
 .assets/
 .aws-sam
 .axoCover/*
 .builds
+.context/
 .docs/
 .DS_Store
 .env
