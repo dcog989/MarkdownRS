@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && bun run lint",
     "clean": "bun scripts/clean.js",
     "crates": "cd src-tauri && cargo update --verbose",
     "dev": "tauri dev",
