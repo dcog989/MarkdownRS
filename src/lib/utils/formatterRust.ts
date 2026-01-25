@@ -5,6 +5,7 @@ export interface FormatterOptions {
     listIndent: number;
     codeBlockFence: '```' | '~~~';
     bulletChar: '-' | '*' | '+';
+    emphasisChar: '*' | '_';
     tableAlignment: boolean;
 }
 
@@ -14,9 +15,10 @@ export async function formatMarkdown(
 ): Promise<string> {
     const defaults: FormatterOptions = {
         listIndent: appContext.app.defaultIndent,
-        codeBlockFence: '```',
-        bulletChar: '-',
-        tableAlignment: true,
+        codeBlockFence: appContext.app.formatterCodeFence,
+        bulletChar: appContext.app.formatterBulletChar,
+        emphasisChar: appContext.app.formatterEmphasisChar,
+        tableAlignment: appContext.app.formatterTableAlignment,
     };
 
     const final = { ...defaults, ...options };
@@ -26,6 +28,7 @@ export async function formatMarkdown(
         listIndent: final.listIndent,
         bulletChar: final.bulletChar,
         codeBlockFence: final.codeBlockFence,
+        emphasisChar: final.emphasisChar,
         tableAlignment: final.tableAlignment,
     };
 

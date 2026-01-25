@@ -55,6 +55,7 @@ pub async fn format_markdown(
     list_indent: Option<usize>,
     bullet_char: Option<String>,
     code_block_fence: Option<String>,
+    emphasis_char: Option<String>,
     table_alignment: Option<bool>,
 ) -> Result<String, String> {
     let start = std::time::Instant::now();
@@ -69,6 +70,7 @@ pub async fn format_markdown(
         list_indent: list_indent.unwrap_or(2),
         bullet_char: bullet_char.unwrap_or_else(|| "-".to_string()),
         code_block_fence: code_block_fence.unwrap_or_else(|| "```".to_string()),
+        emphasis_char: emphasis_char.unwrap_or_else(|| "*".to_string()),
         table_alignment: table_alignment.unwrap_or(true),
         normalize_whitespace: true,
         max_blank_lines: 2,

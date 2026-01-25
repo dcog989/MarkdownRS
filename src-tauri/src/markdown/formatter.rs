@@ -31,6 +31,7 @@ pub struct FormatterOptions {
     pub list_indent: usize,
     pub code_block_fence: String,
     pub bullet_char: String,
+    pub emphasis_char: String,
     pub table_alignment: bool,
     pub normalize_whitespace: bool,
     pub max_blank_lines: usize,
@@ -43,6 +44,7 @@ impl Default for FormatterOptions {
             list_indent: 2,
             code_block_fence: "```".to_string(),
             bullet_char: "-".to_string(),
+            emphasis_char: "*".to_string(),
             table_alignment: true,
             normalize_whitespace: true,
             max_blank_lines: 1,
@@ -63,8 +65,18 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
 
     let mut builder = ConfigurationBuilder::new();
     builder.text_wrap(TextWrap::Maintain);
-    builder.emphasis_kind(EmphasisKind::Asterisks);
-    builder.strong_kind(StrongKind::Asterisks);
+
+    if let Some(char) = options.emphasis_char.chars().next() {
+        let (e_kind, s_kind) = match char {
+            '_' => (EmphasisKind::Underscores, StrongKind::Underscores),
+            _ => (EmphasisKind::Asterisks, StrongKind::Asterisks),
+        };
+        builder.emphasis_kind(e_kind);
+        builder.strong_kind(s_kind);
+    } else {
+        builder.emphasis_kind(EmphasisKind::Asterisks);
+        builder.strong_kind(StrongKind::Asterisks);
+    }
 
     if let Some(char) = options.bullet_char.chars().next() {
         let kind = match char {

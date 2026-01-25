@@ -278,6 +278,7 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 const formatted = await formatMarkdown(contentToSave, {
                     listIndent: appContext.app.defaultIndent,
                     bulletChar: appContext.app.formatterBulletChar,
+                    emphasisChar: appContext.app.formatterEmphasisChar,
                     codeBlockFence: appContext.app.formatterCodeFence,
                     tableAlignment: appContext.app.formatterTableAlignment,
                 });

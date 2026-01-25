@@ -241,6 +241,15 @@
             options: ['-', '*', '+'],
         },
         {
+            key: 'formatterEmphasisChar',
+            label: 'Emphasis Character',
+            type: 'select',
+            category: 'Formatter',
+            defaultValue: '*',
+            options: ['*', '_'],
+            optionLabels: ['*', '_'],
+        },
+        {
             key: 'formatterCodeFence',
             label: 'Code Fence Style',
             type: 'select',

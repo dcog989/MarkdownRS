@@ -141,6 +141,7 @@ export interface BackendCommands {
             listIndent?: number;
             bulletChar?: string;
             codeBlockFence?: string;
+            emphasisChar?: string;
             tableAlignment?: boolean;
         };
         return: string;

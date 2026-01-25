@@ -32,6 +32,7 @@ export const appState = $state({
     formatOnPaste: false,
     defaultIndent: 2,
     formatterBulletChar: '-' as '-' | '*' | '+',
+    formatterEmphasisChar: '*' as '*' | '_',
     formatterCodeFence: '```' as '```' | '~~~',
     formatterTableAlignment: true,
     lineEndingPreference: 'system' as 'system' | 'LF' | 'CRLF',

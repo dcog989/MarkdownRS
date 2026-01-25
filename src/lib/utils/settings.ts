@@ -39,6 +39,7 @@ function getSettingsObject() {
         formatOnPaste: appState.formatOnPaste,
         defaultIndent: appState.defaultIndent,
         formatterBulletChar: appState.formatterBulletChar,
+        formatterEmphasisChar: appState.formatterEmphasisChar,
         formatterCodeFence: appState.formatterCodeFence,
         formatterTableAlignment: appState.formatterTableAlignment,
         startupBehavior: appState.startupBehavior,
