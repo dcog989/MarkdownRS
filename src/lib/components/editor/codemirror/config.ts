@@ -10,14 +10,7 @@ import {
     type CompletionContext,
     type CompletionResult,
 } from '@codemirror/autocomplete';
-import {
-    defaultKeymap,
-    deleteCharBackward,
-    deleteCharForward,
-    deleteGroupBackward,
-    deleteGroupForward,
-    historyKeymap,
-} from '@codemirror/commands';
+import { defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { EditorView, keymap, type KeyBinding } from '@codemirror/view';
 
@@ -100,46 +93,6 @@ export function createDoubleClickHandler() {
         },
     });
 }
-
-// Helper wrapper to ensure selections are strictly deleted before any movement/group logic applies
-const withSelectionCheck = (cmd: (view: EditorView) => boolean) => (view: EditorView) => {
-    if (!view.state.selection.main.empty) {
-        view.dispatch(
-            view.state.update({
-                changes: { from: view.state.selection.main.from, to: view.state.selection.main.to },
-                userEvent: 'delete.selection',
-                scrollIntoView: true,
-            }),
-        );
-        return true;
-    }
-    return cmd(view);
-};
-
-// Robust Backspace handler that handles single character deletion at boundaries
-const handleBackspace = (view: EditorView) => {
-    // 1. Handle Selection via standard check
-    if (!view.state.selection.main.empty) {
-        return withSelectionCheck(deleteCharBackward)(view);
-    }
-
-    // 2. Try Standard Command
-    if (deleteCharBackward(view)) return true;
-
-    // 3. Fallback: If standard command failed but we have a cursor position > 0, force delete
-    // This fixes issues where plugins/widgets might block the standard deletion logic at document boundaries
-    const { head } = view.state.selection.main;
-    if (head > 0) {
-        view.dispatch({
-            changes: { from: head - 1, to: head, insert: '' },
-            scrollIntoView: true,
-            userEvent: 'delete.backward',
-        });
-        return true;
-    }
-
-    return false;
-};
 
 // Custom tab handler that indents selection or inserts spaces at cursor
 const handleTabKey = (view: EditorView) => {
@@ -230,13 +183,6 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         },
         // Custom comment toggle that respects text selection
         { key: 'Mod-/', run: toggleSelectionComment },
-
-        // Robust Deletion Handlers
-        { key: 'Backspace', run: handleBackspace },
-        { key: 'Delete', run: withSelectionCheck(deleteCharForward) },
-        { key: 'Ctrl-Backspace', run: withSelectionCheck(deleteGroupBackward) },
-        { key: 'Ctrl-Delete', run: withSelectionCheck(deleteGroupForward) },
-
         {
             key: 'Mod-Home',
             run: (v) => {
