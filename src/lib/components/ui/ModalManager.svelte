@@ -7,6 +7,8 @@
     import { setTheme, toggleSplitView } from '$lib/stores/appState.svelte';
     import { addTab, performTextTransform } from '$lib/stores/editorStore.svelte';
     import {
+        openFind,
+        openReplace,
         toggleAbout,
         toggleBookmarks,
         toggleCommandPalette,
@@ -14,8 +16,6 @@
         toggleSettings,
         toggleShortcuts,
         toggleTransform,
-        openFind,
-        openReplace,
     } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
@@ -25,6 +25,7 @@
         requestCloseTab,
         saveCurrentFile,
         saveCurrentFileAs,
+        triggerReopenClosedTab,
     } from '$lib/utils/fileSystem';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
@@ -223,7 +224,6 @@
             id: 'file.reopen_closed',
             label: 'File: Reopen Last Closed Tab',
             action: async () => {
-                const { triggerReopenClosedTab } = await import('$lib/utils/fileSystem');
                 triggerReopenClosedTab(0);
             },
         },
@@ -345,7 +345,6 @@
             category: 'File',
             description: 'Reopen Last Closed Tab',
             handler: async () => {
-                const { triggerReopenClosedTab } = await import('$lib/utils/fileSystem');
                 triggerReopenClosedTab(0);
             },
         });
