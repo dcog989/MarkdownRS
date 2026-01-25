@@ -14,6 +14,8 @@
         toggleSettings,
         toggleShortcuts,
         toggleTransform,
+        openFind,
+        openReplace,
     } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
@@ -193,6 +195,65 @@
                 }
             },
         },
+        {
+            id: 'editor.toggle_comment',
+            label: 'Editor: Toggle Line Comment',
+            action: () => {
+                // Trigger the keyboard shortcut for toggle comment
+                const event = new KeyboardEvent('keydown', {
+                    key: '/',
+                    ctrlKey: true,
+                    bubbles: true,
+                    cancelable: true,
+                });
+                document.activeElement?.dispatchEvent(event);
+            },
+        },
+        {
+            id: 'find.show',
+            label: 'Editor: Find',
+            action: () => openFind(),
+        },
+        {
+            id: 'find.show_replace',
+            label: 'Editor: Replace',
+            action: () => openReplace(),
+        },
+        {
+            id: 'file.reopen_closed',
+            label: 'File: Reopen Last Closed Tab',
+            action: async () => {
+                const { triggerReopenClosedTab } = await import('$lib/utils/fileSystem');
+                triggerReopenClosedTab(0);
+            },
+        },
+        {
+            id: 'editor.duplicate_line',
+            label: 'Editor: Duplicate Line/Selection',
+            action: () => {
+                const event = new KeyboardEvent('keydown', {
+                    key: 'd',
+                    ctrlKey: true,
+                    shiftKey: true,
+                    bubbles: true,
+                    cancelable: true,
+                });
+                document.activeElement?.dispatchEvent(event);
+            },
+        },
+        {
+            id: 'editor.goto_line',
+            label: 'Editor: Go to Line...',
+            action: () => {
+                const event = new KeyboardEvent('keydown', {
+                    key: 'g',
+                    ctrlKey: true,
+                    bubbles: true,
+                    cancelable: true,
+                });
+                document.activeElement?.dispatchEvent(event);
+            },
+        },
     ];
 
     const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category) =>
@@ -251,6 +312,13 @@
             else if (id === 'ops-italic') defaultKey = 'ctrl+i';
             else if (id === 'ops-insert-link') defaultKey = 'ctrl+k';
             else if (id === 'editor.bookmark_add') defaultKey = 'ctrl+d';
+            else if (id === 'editor.toggle_comment') defaultKey = 'ctrl+/';
+            else if (id === 'find.show') defaultKey = 'ctrl+f';
+            else if (id === 'find.show_replace') defaultKey = 'ctrl+h';
+            else if (id === 'file.reopen_closed') defaultKey = 'ctrl+shift+t';
+            else if (id === 'editor.duplicate_line') defaultKey = 'ctrl+shift+d';
+            else if (id === 'editor.goto_line') defaultKey = 'ctrl+g';
+            else if (id === 'ops-format-document') defaultKey = 'shift+alt+f';
 
             const parts = cmd.label.split(':');
             const category = parts[0].trim();
