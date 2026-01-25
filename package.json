@@ -22,6 +22,8 @@
     "repo:full": "repomix -c .repomix/repomix.full.json",
     "repo:skel": "repomix -c .repomix/repomix.skel.json",
     "repo:src": "repomix -c .repomix/repomix.src.json",
+    "repo:back": "repomix -c .repomix/repomix.src.back.json",
+    "repo:front": "repomix -c .repomix/repomix.src.front.json",
     "repo:tool": "repomix -c .repomix/repomix.tool.json",
     "tauri": "tauri",
     "ui:build": "bunx --bun vite build",

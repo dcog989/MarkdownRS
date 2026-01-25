@@ -5,8 +5,8 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 ## Tech Stack
 
 - **Tauri** (v2.9) - Desktop framework wrapping the web frontend
-- **Rust** (2024 / v1.92) - Backend logic, Markdown processing, file I/O
-- **Svelte** (v5.47) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
+- **Rust** (2024 / v1.93) - Backend logic, Markdown processing, file I/O
+- **Svelte** (v5.48) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
 - **TypeScript** (v5.9) - Type-safe frontend code
 - **Tailwind** (v4.1) - Utility-first CSS
 - **CodeMirror** (v6.0) - Code editor component
@@ -44,7 +44,7 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 - Self-documenting code via clear naming
 - Comments only for workarounds/complex logic
 - No magic numbers
-- Split files over 400 lines in to separate distinct functions
+- Split files of 400+ lines in to separate distinct functions
 - **Do NOT create docs files** (summary, reference, testing, etc.) unless explicitly requested
 
 ## File System Access
