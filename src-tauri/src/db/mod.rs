@@ -120,9 +120,8 @@ const MIGRATIONS: &[&str] = &[
         created TEXT NOT NULL,
         last_accessed TEXT
     );
-    CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path);",
-    // v2: Recent Files
-    "CREATE TABLE IF NOT EXISTS recent_files (
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path);
+    CREATE TABLE IF NOT EXISTS recent_files (
         path TEXT PRIMARY KEY,
         last_opened TEXT NOT NULL
     );
