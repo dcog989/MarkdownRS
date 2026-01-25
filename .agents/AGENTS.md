@@ -51,13 +51,13 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 
 ### Allowed Directories
 
-- `.claude/`, `.github/`, `.husky/`, `.svelte-kit/`, `.vscode/`
+- `.agents/`, `.github/`, `.husky/`, `.svelte-kit/`, `.vscode/`
 - `scripts/`, `src/`, `src-tauri/`, `static/`
 - Root config files: `.editorconfig`, `.gitignore`, `*.config.*`, `package.json`, `tsconfig.json`, etc.
 
 ### Disallowed
 
-- `.ai/`, `.assets/`, `.docs/`, `.git/`, `node_modules/`
+- `.ai/`, `.assets/`, `.docs/`, `.git/`, `node_modules/`, `.repomix/`
 - `repomix.config.json`, `bun.lock`, `AGENTS.md`, `.repomixignore`
 - `src-tauri/Cargo.lock`, `src-tauri/target/`, `src-tauri/icons/`
 
