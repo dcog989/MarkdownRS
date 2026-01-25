@@ -184,7 +184,7 @@
         },
         {
             id: 'editor.bookmark_add',
-            label: 'File: Add Current to Bookmarks',
+            label: 'File: Add to Bookmarks',
             action: async () => {
                 const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
                 if (tab?.path) {
