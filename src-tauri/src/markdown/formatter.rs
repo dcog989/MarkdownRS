@@ -1,5 +1,7 @@
 use crate::markdown::config::MarkdownFlavor;
-use dprint_plugin_markdown::configuration::{ConfigurationBuilder, TextWrap, UnorderedListKind};
+use dprint_plugin_markdown::configuration::{
+    ConfigurationBuilder, EmphasisKind, StrongKind, TextWrap, UnorderedListKind,
+};
 use dprint_plugin_markdown::format_text;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -61,6 +63,8 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
 
     let mut builder = ConfigurationBuilder::new();
     builder.text_wrap(TextWrap::Maintain);
+    builder.emphasis_kind(EmphasisKind::Asterisks);
+    builder.strong_kind(StrongKind::Asterisks);
 
     if let Some(char) = options.bullet_char.chars().next() {
         let kind = match char {
