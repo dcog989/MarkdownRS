@@ -7,9 +7,9 @@
         smartCompleteAnyWord,
     } from '$lib/components/editor/codemirror/config';
     import {
+        autoRenumberLists,
         prefetchHoverHandler,
         smartBacktickHandler,
-        autoRenumberLists,
     } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
@@ -460,12 +460,15 @@
             return;
         }
 
-        const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
         const isFocused = view.hasFocus;
+        // Fix: Prevent syncing empty state if the editor is focused (User deletes all text)
+        // If the editor is focused, we assume the user interaction is the source of truth
+        const isInitialPopulate =
+            isLoaded && currentDoc === '' && storeContent !== '' && !isFocused;
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
         // Skip sync during tab switching to prevent content corruption
-        // But allow forced syncs (e.g. formatting) to proceed
+        // But allow forced syncs (e.g. formatting or external file reload) to proceed
         const shouldSync =
             (isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync) &&
             (!appContext.app.isTabSwitching || isForcedSync);

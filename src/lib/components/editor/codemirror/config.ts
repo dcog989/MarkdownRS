@@ -116,6 +116,31 @@ const withSelectionCheck = (cmd: (view: EditorView) => boolean) => (view: Editor
     return cmd(view);
 };
 
+// Robust Backspace handler that handles single character deletion at boundaries
+const handleBackspace = (view: EditorView) => {
+    // 1. Handle Selection via standard check
+    if (!view.state.selection.main.empty) {
+        return withSelectionCheck(deleteCharBackward)(view);
+    }
+
+    // 2. Try Standard Command
+    if (deleteCharBackward(view)) return true;
+
+    // 3. Fallback: If standard command failed but we have a cursor position > 0, force delete
+    // This fixes issues where plugins/widgets might block the standard deletion logic at document boundaries
+    const { head } = view.state.selection.main;
+    if (head > 0) {
+        view.dispatch({
+            changes: { from: head - 1, to: head, insert: '' },
+            scrollIntoView: true,
+            userEvent: 'delete.backward',
+        });
+        return true;
+    }
+
+    return false;
+};
+
 // Custom tab handler that indents selection or inserts spaces at cursor
 const handleTabKey = (view: EditorView) => {
     const { state } = view;
@@ -205,13 +230,13 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         },
         // Custom comment toggle that respects text selection
         { key: 'Mod-/', run: toggleSelectionComment },
-        // ! IMPORTANT
-        // Explicitly bind Delete/Backspace operations to ensure selection handling works reliably
-        // This fixes edge cases where default keymap might falter on specific line/block boundaries
-        { key: 'Backspace', run: withSelectionCheck(deleteCharBackward) },
+
+        // Robust Deletion Handlers
+        { key: 'Backspace', run: handleBackspace },
         { key: 'Delete', run: withSelectionCheck(deleteCharForward) },
         { key: 'Ctrl-Backspace', run: withSelectionCheck(deleteGroupBackward) },
         { key: 'Ctrl-Delete', run: withSelectionCheck(deleteGroupForward) },
+
         {
             key: 'Mod-Home',
             run: (v) => {
