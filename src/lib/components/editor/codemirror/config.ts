@@ -1,5 +1,6 @@
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { toggleSelectionComment } from '$lib/utils/commentToggle';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 import {
     autocompletion,
@@ -202,6 +203,8 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
                 return true;
             },
         },
+        // Custom comment toggle that respects text selection
+        { key: 'Mod-/', run: toggleSelectionComment },
         // ! IMPORTANT
         // Explicitly bind Delete/Backspace operations to ensure selection handling works reliably
         // This fixes edge cases where default keymap might falter on specific line/block boundaries
