@@ -58,7 +58,7 @@
             <h2 class="text-ui text-fg-default shrink-0 font-semibold">Recent Files</h2>
         </div>
 
-        <div class="relative mx-4 flex-1">
+        <div class="relative mx-4 w-64">
             <Search
                 size={12}
                 class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
@@ -72,7 +72,7 @@
 
         {#if recentFilesStore.files.length > 0}
             <button
-                class="text-fg-muted hover:text-danger-text rounded p-1 transition-colors hover:bg-white/10"
+                class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
                 onclick={handleClearAll}
                 title="Clear History">
                 <Trash2 size={16} />
@@ -80,7 +80,7 @@
         {/if}
 
         <button
-            class="text-fg-muted ml-2 shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            class="text-fg-muted hover-surface hover:text-danger ml-2 shrink-0 rounded p-1 transition-colors"
             onclick={onClose}>
             <X size={16} />
         </button>
@@ -88,9 +88,9 @@
 
     <div class="text-ui">
         {#if filteredFiles.length > 0}
-            <div class="divide-border-main border-border-main divide-y">
+            <div class="bg-border-main divide-y">
                 {#each filteredFiles as path (path)}
-                    <div class="group px-4 py-2.5 transition-colors hover:bg-white/5">
+                    <div class="group hover-surface-light px-4 py-2.5 transition-colors">
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
@@ -106,7 +106,7 @@
                             </div>
                             <button
                                 onclick={(e) => handleRemove(path, e)}
-                                class="text-fg-muted hover:text-danger-text rounded p-1.5 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/10"
+                                class="text-fg-muted hover:text-danger-text hover-surface rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
                                 title="Remove from history">
                                 <X size={14} />
                             </button>

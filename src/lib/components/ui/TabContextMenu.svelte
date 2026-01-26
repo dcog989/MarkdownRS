@@ -298,13 +298,13 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleSave}>
                 <Save size={14} class="opacity-70" /><span>Save</span>
             </button>
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleSaveAs}>
                 <FileDown size={14} class="opacity-70" /><span>Save As...</span>
             </button>
@@ -313,7 +313,7 @@
 
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handlePin}>
                 {#if isPinned}
                     <PinOff size={14} class="opacity-70" /><span>Unpin</span>
@@ -324,7 +324,7 @@
 
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={!tab?.path}
                 onclick={handleToggleBookmark}>
                 {#if isBookmarked}
@@ -347,7 +347,7 @@
             {#snippet trigger()}
                 <button
                     type="button"
-                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10">
+                    class="text-ui hover-surface flex w-full items-center px-3 py-1.5 text-left">
                     <Download size={14} class="mr-2 opacity-70" />
                     <span>Export</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -356,7 +356,7 @@
 
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToHtml();
@@ -364,7 +364,7 @@
                 }}>Export to HTML</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToPdf();
@@ -372,7 +372,7 @@
                 }}>Export to PDF</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage('png');
@@ -380,7 +380,7 @@
                 }}>Export to PNG</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 onclick={async () => {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage('webp');
@@ -397,7 +397,7 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={tabIndex === 0}
                 onclick={async () => {
                     const newTabs = [...appContext.editor.tabs];
@@ -415,7 +415,7 @@
             </button>
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={tabIndex === appContext.editor.tabs.length - 1}
                 onclick={async () => {
                     const newTabs = [...appContext.editor.tabs];
@@ -436,7 +436,7 @@
 
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={isPinned}
                 onclick={() => {
                     requestCloseTab(tabId);
@@ -456,7 +456,7 @@
             {#snippet trigger()}
                 <button
                     type="button"
-                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10">
+                    class="text-ui hover-surface flex w-full items-center px-3 py-1.5 text-left">
                     <Files size={14} class="mr-2 opacity-70" />
                     <span>Close Many</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -465,32 +465,32 @@
 
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasCloseableTabsToRight}
                 onclick={() => handleCloseMany('right')}>Close to the Right</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasCloseableTabsToLeft}
                 onclick={() => handleCloseMany('left')}>Close to the Left</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasCloseableOtherTabs}
                 onclick={() => handleCloseMany('others')}>Close Others</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasSavedTabs}
                 onclick={() => handleCloseMany('saved')}>Close Saved</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
                 onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 onclick={() => handleCloseMany('all')}>Close All</button>
         </Submenu>
 
@@ -503,7 +503,7 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10 {appContext
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left {appContext
                     .editor.closedTabsHistory.length === 0
                     ? 'opacity-50'
                     : ''}"
@@ -526,7 +526,7 @@
             {#snippet trigger()}
                 <button
                     type="button"
-                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10 {appContext
+                    class="text-ui hover-surface flex w-full items-center px-3 py-1.5 text-left {appContext
                         .editor.closedTabsHistory.length === 0
                         ? 'opacity-50'
                         : ''}">
@@ -537,14 +537,13 @@
             {/snippet}
 
             {#if appContext.editor.closedTabsHistory.length > 0}
-                <div
-                    class="border-border-main border-b px-3 py-1.5 text-xs font-semibold opacity-50">
+                <div class="bg-border-main border-b px-3 py-1.5 text-xs font-semibold opacity-50">
                     RECENTLY CLOSED
                 </div>
                 {#each appContext.editor.closedTabsHistory as item, i (item.tab.id)}
                     <button
                         type="button"
-                        class="text-ui flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-white/10"
+                        class="text-ui hover-surface flex w-full items-center justify-between px-3 py-1.5 text-left"
                         use:tooltip={getHistoryTooltip(item.tab)}
                         onclick={() => {
                             triggerReopenClosedTab(i);
@@ -563,13 +562,13 @@
 
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleRename}>
                 <FilePen size={14} class="opacity-70" /><span>Rename</span>
             </button>
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => {
                     navigator.clipboard.writeText(tab!.title);
                     onClose();
@@ -578,7 +577,7 @@
             </button>
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={!tab?.path}
                 onclick={() => {
                     navigator.clipboard.writeText(tab!.path!);
@@ -591,7 +590,7 @@
 
             <button
                 type="button"
-                class="text-ui hover:text-danger-text flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover:text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={!tab?.path || isPinned}
                 onclick={handleSendToRecycleBin}>
                 <Trash2 size={14} class="opacity-70" /><span>Delete to Recycle Bin</span>

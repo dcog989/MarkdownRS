@@ -526,7 +526,7 @@
             <h2 class="text-ui text-fg-default shrink-0 font-semibold">Settings</h2>
         </div>
 
-        <div class="relative mx-4 flex-1">
+        <div class="relative mx-4 w-64">
             <Search
                 size={12}
                 class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
@@ -535,11 +535,11 @@
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search..."
-                class="pr-3 pl-8" />
+                class="px-3 pl-8" />
         </div>
 
         <button
-            class="text-fg-muted shrink-0 rounded p-1 transition-colors outline-none hover:bg-white/10"
+            class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
             onclick={() => toggleShortcuts()}
             title="Keyboard Shortcuts (F1)"
             aria-label="Keyboard Shortcuts">
@@ -547,7 +547,7 @@
         </button>
 
         <button
-            class="text-fg-muted shrink-0 rounded p-1 transition-colors outline-none hover:bg-white/10"
+            class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
             onclick={onClose}
             aria-label="Close Settings">
             <X size={16} />
@@ -563,13 +563,13 @@
                         style:border-top={index > 0 && !setting.visibleWhen && !setting.groupWith
                             ? '1px solid var(--color-border-main)'
                             : 'none'}>
-                        <div class="flex items-start justify-between gap-6">
+                        <div class="flex flex-col gap-2">
                             <label
                                 for={setting.key}
-                                class="flex flex-1 items-center overflow-hidden whitespace-nowrap {setting.type.includes(
+                                class="flex items-center gap-3 {setting.type.includes(
                                     'multi-select',
                                 )
-                                    ? 'pt-1.5'
+                                    ? ''
                                     : ''}">
                                 <span
                                     class="text-ui-sm text-fg-muted mr-4 inline-block w-24 shrink-0 opacity-60">
@@ -579,14 +579,12 @@
                                         {setting.category}:
                                     {/if}
                                 </span>
-                                <span class="text-ui text-fg-default truncate font-medium">
+                                <span class="text-ui text-fg-default font-medium">
                                     {setting.label}
                                 </span>
                             </label>
                             <div
-                                class="{setting.type.includes('multi-select')
-                                    ? 'max-w-md flex-1'
-                                    : 'w-56'} shrink-0"
+                                class={setting.type.includes('multi-select') ? 'w-full' : 'w-56'}
                                 use:tooltip={setting.tooltip || ''}>
                                 {#if setting.type === 'text'}
                                     <Input
@@ -660,7 +658,7 @@
                                                 e.currentTarget.value,
                                                 setting.type,
                                             )}
-                                        class="text-ui bg-bg-input text-fg-default border-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
+                                        class="text-ui bg-bg-input text-fg-default bg-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
                                         {#each setting.options || [] as option, idx (option)}
                                             <option value={option}
                                                 >{setting.optionLabels?.[idx] || option}</option>

@@ -181,12 +181,11 @@
     });
 </script>
 
-<div
-    class="bg-bg-panel border-border-main relative flex h-8 w-full shrink-0 items-stretch border-b">
-    <div class="border-border-main relative h-8 border-r">
+<div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch border-b">
+    <div class="relative h-8 border-r">
         <button
             type="button"
-            class="text-fg-muted flex h-full items-center gap-1 px-2 text-xs hover:bg-white/10"
+            class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
             onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
@@ -278,10 +277,10 @@
         {/if}
     </div>
 
-    <div class="border-border-main flex h-full items-stretch border-l">
+    <div class="flex h-full items-stretch border-l">
         <button
             type="button"
-            class="text-fg-muted flex h-8 w-8 shrink-0 items-center justify-center hover:bg-white/10"
+            class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
             onclick={() => {
                 const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;

@@ -358,22 +358,18 @@
         {/if}
     </div>
 {:else}
-    <div
-        class="bg-bg-main text-fg-default border-border-main flex h-screen w-screen flex-col overflow-hidden border">
+    <div class="bg-bg-main text-fg-default flex h-screen w-screen flex-col overflow-hidden">
         <Titlebar />
         <TabBar />
 
         <div
             class="relative z-0 flex flex-1 overflow-hidden outline-none"
-            bind:this={mainContainer}
-            style="position: relative;">
+            bind:this={mainContainer}>
             <!-- Removed #key block to allow Editor to reuse instance -->
             {#if appContext.app.activeTabId}
                 <div
-                    class="flex h-full w-full"
-                    style="flex-direction: {appContext.app.splitOrientation === 'vertical'
-                        ? 'row'
-                        : 'column'};">
+                    class="flex h-full w-full flex-row"
+                    class:flex-column={appContext.app.splitOrientation !== 'vertical'}>
                     <div
                         style="flex: {showPreview
                             ? `0 0 ${appContext.app.splitPercentage * 100}%`
@@ -384,12 +380,11 @@
                     {#if showPreview}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
-                            class="bg-bg-panel hover:bg-accent-primary z-20 transition-colors duration-150"
+                            class="resize-handle"
                             style="
                                 cursor: {appContext.app.splitOrientation === 'vertical'
                                 ? 'col-resize'
                                 : 'row-resize'};
-                                flex: 0 0 4px;
                             "
                             onmousedown={startResize}
                             ondblclick={resetSplit}>
@@ -397,7 +392,7 @@
                     {/if}
 
                     {#if showPreview}
-                        <div style="flex: 1; height: 100%; min-width: 0; min-height: 0;">
+                        <div class="flex-1-height-100 min-width-0 min-height-0">
                             <Preview tabId={appContext.app.activeTabId} />
                         </div>
                     {/if}
@@ -413,7 +408,7 @@
                 </div>
             {/if}
 
-            <div style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 100;">
+            <div class="position-absolute-bottom-0">
                 <StatusBar />
             </div>
         </div>

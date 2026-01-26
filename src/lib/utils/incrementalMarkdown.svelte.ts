@@ -126,7 +126,7 @@ export class IncrementalMarkdownRenderer {
             });
         } catch (e) {
             await error(`[Markdown] Render error: ${e}`);
-            return `<div style="color: #ff6b6b; padding: 1rem; border: 1px solid #ff6b6b;">
+            return `<div class="preview-error">
             <strong>Preview Error:</strong><br/>${String(e)}
         </div>`;
         }

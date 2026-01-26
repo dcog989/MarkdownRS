@@ -93,7 +93,7 @@
 </script>
 
 <footer
-    class="text-ui-sm bg-bg-panel border-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex h-6 shrink-0 items-center justify-between overflow-hidden border-t px-3 whitespace-nowrap transition-colors duration-200 select-none"
+    class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex h-6 shrink-0 items-center justify-between overflow-hidden border-t px-3 whitespace-nowrap transition-colors duration-200 select-none"
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
@@ -104,7 +104,7 @@
         style="opacity: {textOpacity};">
         {#if canToggleFileType}
             <button
-                class="hover:text-fg-default min-w-17.5 cursor-pointer rounded px-1 transition-colors hover:bg-white/10"
+                class="hover:text-fg-default hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
                 onclick={toggleFileType}
                 use:tooltip={'Toggle File Type (markdown/text)'}>
                 {fileType}
@@ -167,7 +167,7 @@
         class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
         <button
-            class="hover:text-fg-default cursor-pointer rounded px-1 transition-colors hover:bg-white/10"
+            class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
             onclick={toggleLineEnding}
             use:tooltip={'Toggle Line Ending'}>
             {lineEnding}
@@ -186,7 +186,7 @@
         </button>
 
         <button
-            class="hover:text-fg-default flex cursor-pointer items-center gap-1 rounded px-1 transition-colors hover:bg-white/10 {appContext
+            class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
                 .app.editorWordWrap
                 ? 'text-accent-secondary'
                 : 'text-inherit'}"
@@ -200,7 +200,7 @@
 {#if showMenu}
     <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
         <button
-            class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={copyAllStats}>
             <ClipboardCopy size={14} class="opacity-70" />
             <span>Copy all document stats</span>

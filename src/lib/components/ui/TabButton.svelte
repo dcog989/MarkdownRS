@@ -46,20 +46,22 @@
     tabindex="0"
     data-active={isActive}
     data-tab-id={tab.id}
-    class="group text-ui-sm border-border-main relative flex h-8 shrink-0 cursor-default items-center gap-2 overflow-hidden rounded-t-sm border-t-2 border-r text-left transition-colors duration-150 outline-none select-none"
+    class="group text-ui-sm relative flex h-8 shrink-0 cursor-default items-center gap-2 border-t-2 text-left transition-colors duration-150 outline-none select-none"
     class:bg-bg-main={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
     class:text-fg-default={isActive}
     class:text-fg-muted={!isActive}
-    class:border-t-accent-secondary={isActive}
+    class:border-t-accent-primary={isActive}
     class:border-t-transparent={!isActive}
+    class:border-r={!isActive}
     class:justify-center={isCollapsed}
     class:px-2={!isCollapsed}
     style="
         min-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMin}px`};
         max-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMax}px`};
         width: {isCollapsed ? '36px' : 'auto'};
+        {isActive ? 'border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem;' : ''}
     "
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
@@ -112,17 +114,16 @@
                 </div>
             {:else}
                 <div
-                    class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center bg-linear-to-r from-transparent via-40% opacity-0 transition-opacity group-hover:opacity-100"
-                    class:via-bg-main={isActive}
-                    class:to-bg-main={isActive}
-                    class:via-bg-panel={!isActive}
-                    class:to-bg-panel={!isActive}
-                    class:group-hover:via-bg-hover={!isActive}
-                    class:group-hover:to-bg-hover={!isActive}>
+                    class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+                    style="background: linear-gradient(to right, transparent 0%, {isActive
+                        ? 'var(--surface-1)'
+                        : 'var(--surface-2)'} 40%, {isActive
+                        ? 'var(--surface-1)'
+                        : 'var(--surface-2)'} 100%);">
                     <span
                         role="button"
                         tabindex="0"
-                        class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1 hover:bg-white/20"
+                        class="text-fg-muted hover:text-danger-text hover-surface flex cursor-pointer items-center justify-center rounded p-1"
                         onclick={(e) => {
                             e.stopPropagation();
                             if (onclose) onclose(e as unknown as MouseEvent, tab.id);

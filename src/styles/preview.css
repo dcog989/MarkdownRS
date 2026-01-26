@@ -1,8 +1,9 @@
 /* Native Preview Styles */
 
+.markdown-body,
 #active-preview-container,
 #export-container {
-    color: var(--preview-fg-body);
+    color: var(--text-primary);
     font-size: 1rem;
     line-height: 1.6;
     max-width: 80ch;
@@ -11,6 +12,7 @@
 }
 
 /* Paragraphs */
+.markdown-body p,
 #active-preview-container p,
 #export-container p {
     margin-top: 0;
@@ -18,88 +20,115 @@
 }
 
 /* Headings */
+.markdown-body h1,
 #active-preview-container h1,
 #export-container h1,
+.markdown-body h2,
 #active-preview-container h2,
 #export-container h2,
+.markdown-body h3,
 #active-preview-container h3,
 #export-container h3,
+.markdown-body h4,
 #active-preview-container h4,
 #export-container h4,
+.markdown-body h5,
 #active-preview-container h5,
 #export-container h5,
+.markdown-body h6,
 #active-preview-container h6,
 #export-container h6 {
-    color: var(--preview-fg-heading);
+    color: var(--accent-secondary);
     font-weight: bold;
     margin-top: 1.2em;
     margin-bottom: 0.4em;
     line-height: 1.2;
 }
 
+.markdown-body h1,
 #active-preview-container h1,
 #export-container h1 {
     font-size: 2.2em;
-    border-bottom: 1px solid var(--color-border-main);
+    border-bottom: 1px solid var(--border-primary);
     margin: 0 0 0.4em;
     padding: 0 0 0.4em;
 }
 
+.markdown-body h2,
 #active-preview-container h2,
 #export-container h2 {
     font-size: 1.8em;
-    border-bottom: 1px solid var(--color-border-main);
+    border-bottom: 1px solid var(--border-primary);
     padding-bottom: 0.4em;
 }
 
+.markdown-body h2,
+#active-preview-container h2,
+#export-container h2 {
+    font-size: 1.8em;
+    border-bottom: 1px solid var(--border-primary);
+    padding-bottom: 0.4em;
+}
+
+.markdown-body h3,
 #active-preview-container h3,
 #export-container h3 {
     font-size: 1.5em;
 }
 
+.markdown-body h4,
 #active-preview-container h4,
 #export-container h4 {
     font-size: 1.25em;
 }
 
 /* Links */
+.markdown-body a,
 #active-preview-container a,
 #export-container a {
-    color: var(--preview-fg-link);
+    color: var(--accent-link);
     text-decoration: underline;
     cursor: pointer;
 }
 
 /* Inline Elements */
+.markdown-body strong,
 #active-preview-container strong,
 #export-container strong,
+.markdown-body b,
 #active-preview-container b,
 #export-container b {
     font-weight: bold;
 }
 
+.markdown-body em,
 #active-preview-container em,
 #export-container em,
+.markdown-body i,
 #active-preview-container i,
 #export-container i {
     font-style: italic;
 }
 
+.markdown-body del,
 #active-preview-container del,
 #export-container del,
+.markdown-body s,
 #active-preview-container s,
 #export-container s,
+.markdown-body strike,
 #active-preview-container strike,
 #export-container strike {
     text-decoration: line-through;
-    color: var(--color-fg-muted);
+    color: var(--text-secondary);
 }
 
 /* Code */
+.markdown-body code,
 #active-preview-container code,
 #export-container code {
-    color: var(--preview-fg-code);
-    background-color: var(--preview-bg-code);
+    color: var(--code-fg);
+    background-color: var(--code-bg);
     padding: 0.2em 0.4em;
     border-radius: 4px;
     font-family:
@@ -108,16 +137,18 @@
     font-size: 0.875em;
 }
 
+.markdown-body pre,
 #active-preview-container pre,
 #export-container pre {
-    background-color: var(--preview-bg-pre);
-    color: var(--preview-fg-pre);
+    background-color: var(--pre-bg);
+    color: var(--pre-fg);
     padding: 1em;
     border-radius: 4px;
     overflow-x: auto;
     margin: 1em 0;
 }
 
+.markdown-body pre code,
 #active-preview-container pre code,
 #export-container pre code {
     background-color: transparent;
@@ -128,17 +159,19 @@
 }
 
 /* Quotes */
+.markdown-body blockquote,
 #active-preview-container blockquote,
 #export-container blockquote {
-    color: var(--preview-fg-quote);
-    background-color: var(--preview-bg-quote);
-    border-left: 4px solid var(--preview-border-quote);
+    color: var(--text-secondary);
+    background-color: var(--quote-bg);
+    border-left: 4px solid var(--quote-border);
     padding: 0.5em 1em;
     margin: 1em 0;
     font-style: italic;
 }
 
 /* Lists */
+.markdown-body ul,
 #active-preview-container ul,
 #export-container ul {
     list-style-type: disc;
@@ -146,6 +179,7 @@
     margin: 1em 0;
 }
 
+.markdown-body ol,
 #active-preview-container ol,
 #export-container ol {
     list-style-type: decimal;
@@ -153,11 +187,13 @@
     margin: 1em 0;
 }
 
+.markdown-body li,
 #active-preview-container li,
 #export-container li {
     margin: 0.25em 0;
 }
 
+.markdown-body li > p,
 #active-preview-container li > p,
 #export-container li > p {
     margin-top: 0.5em;
@@ -165,6 +201,7 @@
 }
 
 /* Task Lists */
+.markdown-body input[type='checkbox'],
 #active-preview-container input[type='checkbox'],
 #export-container input[type='checkbox'] {
     margin-right: 0.5em;
@@ -172,6 +209,7 @@
 }
 
 /* Tables */
+.markdown-body table,
 #active-preview-container table,
 #export-container table {
     width: 100%;
@@ -179,22 +217,26 @@
     margin: 1em 0;
 }
 
+.markdown-body th,
 #active-preview-container th,
 #export-container th,
+.markdown-body td,
 #active-preview-container td,
 #export-container td {
-    border: 1px solid var(--color-border-main);
+    border: 1px solid var(--border-primary);
     padding: 0.5em;
     text-align: left;
 }
 
+.markdown-body th,
 #active-preview-container th,
 #export-container th {
     font-weight: bold;
-    background-color: var(--color-bg-panel);
+    background-color: var(--surface-2);
 }
 
 /* Media */
+.markdown-body img,
 #active-preview-container img,
 #export-container img {
     max-width: 100%;
@@ -202,9 +244,10 @@
     margin: 1em 0;
 }
 
+.markdown-body hr,
 #active-preview-container hr,
 #export-container hr {
     border: 0;
-    border-top: 1px solid var(--color-border-main);
+    border-top: 1px solid var(--border-primary);
     margin: 2em 0;
 }

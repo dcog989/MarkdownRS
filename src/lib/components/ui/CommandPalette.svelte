@@ -96,7 +96,7 @@
         </div>
 
         <button
-            class="text-fg-muted shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors"
             onclick={close}>
             <X size={16} />
         </button>

@@ -77,7 +77,7 @@
             <h2 class="text-ui text-fg-default shrink-0 font-semibold">Keyboard Shortcuts</h2>
         </div>
         <button
-            class="text-fg-muted shrink-0 rounded p-1 transition-colors hover:bg-white/10"
+            class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors"
             onclick={onClose}>
             <X size={16} />
         </button>
@@ -88,7 +88,7 @@
             {#each categories as [category, defs] (category)}
                 <div>
                     <h3
-                        class="text-ui-sm text-accent-secondary border-border-main mb-2 border-b pb-1 font-bold tracking-widest uppercase">
+                        class="text-ui-sm text-accent-secondary bg-border-main mb-2 border-b pb-1 font-bold tracking-widest uppercase">
                         {category}
                     </h3>
                     <div class="divide-border-main/30 divide-y">
@@ -104,7 +104,7 @@
                                         class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
                                             {recordingCommandId === def.command
                                             ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
-                                            : 'bg-bg-input text-fg-default border-border-main hover:border-accent-secondary'}"
+                                            : 'bg-bg-input text-fg-default bg-border-main hover:border-accent-secondary'}"
                                         onclick={() => startRecording(def.command)}>
                                         {recordingCommandId === def.command
                                             ? 'Press keys...'

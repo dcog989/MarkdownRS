@@ -19,8 +19,8 @@
 
 /* Editor Colors */
 .cm-editor {
-    background-color: var(--color-bg-main);
-    color: var(--color-fg-default);
+    background-color: var(--surface-1);
+    color: var(--text-primary);
 }
 
 /* Selection */
@@ -30,7 +30,7 @@
     background-color: oklch(0.57 0.14 250 / 0.25) !important;
 }
 
-/* Syntax Highlighting */
+/* Syntax Highlighting - Colors Only */
 .cm-h1,
 .cm-h2,
 .cm-h3,
@@ -38,7 +38,6 @@
 .cm-h5,
 .cm-h6 {
     color: #d32f2f;
-    font-weight: bold;
 }
 .cm-keyword {
     color: #7b1fa2;
@@ -52,9 +51,7 @@
 }
 .cm-comment {
     color: #757575;
-    font-style: italic;
 }
 .cm-link {
     color: var(--color-accent-link);
-    text-decoration: underline;
 }

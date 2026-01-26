@@ -24,7 +24,7 @@
         </div>
         <button
             type="button"
-            class="rounded p-1 hover:bg-white/10"
+            class="hover-surface rounded p-1"
             onclick={onClose}
             aria-label="Close">
             <X size={18} class="text-fg-muted" />
@@ -47,7 +47,7 @@
                         {@const OperationIcon = operation.icon}
                         <button
                             type="button"
-                            class="border-border-main flex items-start gap-3 rounded border p-3 text-left transition-colors hover:bg-white/10"
+                            class="bg-border-main hover-surface flex items-start gap-3 rounded border p-3 text-left transition-colors"
                             onclick={() => handleOperation(operation.id)}>
                             <div class="mt-0.5 shrink-0">
                                 <OperationIcon size={16} class="text-accent-secondary" />

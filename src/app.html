@@ -7,7 +7,7 @@
             http-equiv="Content-Security-Policy"
             content="default-src 'self' ipc: https://tauri.localhost; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https: data: blob:; connect-src 'self' ipc: https://tauri.localhost http://ipc.localhost; font-src 'self' asset: data:;" />
 
-        <!-- Critical CSS: Prevents FOUC, matches default dark theme -->
+        <!-- ! Critical CSS: Prevents FOUC -->
         <style>
             html,
             body {
@@ -15,14 +15,11 @@
                 margin: 0;
                 overflow: hidden;
                 background-color: #1e1e1e;
-                /* Fallback */
             }
-
             @media (prefers-color-scheme: light) {
                 html,
                 body {
                     background-color: #f9fafb;
-                    /* Light theme fallback */
                 }
             }
         </style>
@@ -31,6 +28,6 @@
     </head>
 
     <body data-sveltekit-preload-data="hover">
-        <div style="display: contents">%sveltekit.body%</div>
+        <div>%sveltekit.body%</div>
     </body>
 </html>

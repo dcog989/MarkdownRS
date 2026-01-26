@@ -203,7 +203,7 @@
             {:else}
                 {#each suggestions as s, i (i)}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium hover:bg-white/10"
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium"
                         onclick={() => onReplaceWord?.(s)}>
                         <Sparkles size={14} class="text-accent-secondary" /><span>{s}</span>
                     </button>
@@ -215,7 +215,7 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             {#if selectedText}
                 <button
-                    class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                    class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={() => {
                         onCut?.();
                         closeMenuAndReset();
@@ -224,7 +224,7 @@
                         class="text-ui-sm ml-auto opacity-50">Ctrl+X</span>
                 </button>
                 <button
-                    class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                    class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={() => {
                         onCopy?.();
                         closeMenuAndReset();
@@ -234,7 +234,7 @@
                 </button>
             {/if}
             <button
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => {
                     onPaste?.();
                     closeMenuAndReset();
@@ -246,7 +246,7 @@
             {#if selectedText}
                 <div class="bg-border-main my-1 h-px"></div>
                 <button
-                    class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                    class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={handleSendToBrowser}>
                     <Search size={14} /><span>Send to browser</span>
                 </button>
@@ -255,7 +255,7 @@
             <div class="bg-border-main my-1 h-px"></div>
 
             <button
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => handleOp('format-document')}>
                 <WandSparkles size={14} /><span
                     >{selectedText ? 'Format Selection' : 'Format Document'}</span
@@ -275,14 +275,14 @@
                 }}>
                 {#snippet trigger()}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10">
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
                         <ArrowUpDown size={14} /><span>Sort Lines</span><span
                             class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each sortOps as op, i (i)}
                     <button
-                        class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                        class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                         onclick={() => handleOp(op.id)}>{op.label}</button>
                 {/each}
             </Submenu>
@@ -296,14 +296,14 @@
                 }}>
                 {#snippet trigger()}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10">
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
                         <CaseSensitive size={14} /><span>Change Case</span><span
                             class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each caseOps as op, i (i)}
                     <button
-                        class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                        class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                         onclick={() => handleOp(op.id)}>{op.label}</button>
                 {/each}
             </Submenu>
@@ -317,7 +317,7 @@
                 }}>
                 {#snippet trigger()}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10">
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
                         <TextAlignStart size={14} /><span>Format Lines</span><span
                             class="ml-auto opacity-50">›</span>
                     </button>
@@ -327,7 +327,7 @@
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
                         <button
-                            class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                            class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                             onclick={() => handleOp(op.id)}>{op.label}</button>
                     {/if}
                 {/each}
@@ -342,7 +342,7 @@
                 }}>
                 {#snippet trigger()}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10">
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
                         <Rotate3d size={14} /><span>Transform Lines</span><span
                             class="ml-auto opacity-50">›</span>
                     </button>
@@ -352,7 +352,7 @@
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
                         <button
-                            class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                            class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                             onclick={() => handleOp(op.id)}>{op.label}</button>
                     {/if}
                 {/each}
@@ -364,7 +364,7 @@
                 <div class="bg-border-main my-1 h-px"></div>
                 {#if canAddSingle}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                         onclick={async () => {
                             const newDict = new SvelteSet([
                                 ...spellcheckState.customDictionary,
@@ -385,7 +385,7 @@
                 {/if}
                 {#if selectedText && selectedText.split(/\s+/).length > 1}
                     <button
-                        class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                         onclick={handleAddAll}>
                         <BookText size={14} /><span>Add All Invalid to Dictionary</span>
                     </button>

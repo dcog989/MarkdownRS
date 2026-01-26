@@ -112,7 +112,7 @@
         </p>
 
         <div class="mt-4 w-full space-y-1">
-            <div class="border-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Version</span>
                 <span class="text-fg-default flex-1 text-left font-mono font-bold"
                     >{appInfo.version}</span>
@@ -129,43 +129,43 @@
                 </button>
             </div>
 
-            <div class="border-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Install</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.install_path}>{appInfo.install_path}</span>
                 <button
-                    class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
+                    class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
             </div>
 
-            <div class="border-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Data</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.data_path}>{appInfo.data_path}</span>
                 <button
-                    class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
+                    class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
             </div>
 
-            <div class="border-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Cache</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.cache_path}>{appInfo.cache_path}</span>
                 <button
-                    class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
+                    class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button>
             </div>
 
-            <div class="border-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-border-main flex items-center gap-3 border-b py-2">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Logs</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.logs_path}>{appInfo.logs_path}</span>
                 <button
-                    class="text-ui-sm text-accent-primary shrink-0 rounded px-2 py-0.5 hover:bg-white/10"
+                    class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button>
             </div>
         </div>

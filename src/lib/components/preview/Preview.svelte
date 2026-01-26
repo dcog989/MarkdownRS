@@ -108,12 +108,12 @@
 </script>
 
 <!-- Added 'group/preview' to isolate hover state from child components like scrollbars -->
-<div class="bg-bg-preview border-border-main group/preview relative h-full w-full border-l">
+<div class="bg-bg-preview group/preview relative h-full w-full border-l">
     <div class="absolute top-2 right-2 z-10">
         <!-- Uses 'group-hover/preview' to only react to the preview pane hover -->
         <button
             type="button"
-            class="bg-bg-panel border-border-main rounded border p-2 opacity-0 transition-opacity duration-200 group-hover/preview:opacity-100 hover:bg-white/20"
+            class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 group-hover/preview:opacity-100"
             onclick={() => toggleOrientation()}
             use:tooltip={appContext.app.splitOrientation === 'vertical'
                 ? 'Switch to Horizontal Split'
@@ -154,7 +154,7 @@
                 <h1 class="text-3xl font-bold">MarkdownRS</h1>
             </div>
         {:else}
-            <div style="display: contents" use:injectHtml={htmlContent}></div>
+            <div class="display-contents" use:injectHtml={htmlContent}></div>
         {/if}
     </div>
 

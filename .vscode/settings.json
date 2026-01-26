@@ -33,7 +33,7 @@
     }
   ],
   "files.associations": {
-    "*.css": "tailwindcss",
+    "*.css": "css",
     "*.svelte": "svelte"
   },
   "rust-analyzer.check.command": "clippy",

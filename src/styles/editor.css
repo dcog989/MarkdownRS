@@ -1,5 +1,19 @@
 /* CodeMirror Editor Styling */
 
+/* Base Editor Styling */
+.cm-editor {
+    background-color: var(--surface-1) !important;
+    color: var(--text-primary) !important;
+}
+
+.cm-content {
+    color: var(--text-primary) !important;
+}
+
+.cm-scroller {
+    color: var(--text-primary) !important;
+}
+
 /* Prevent line numbers and gutters from being selectable */
 .cm-gutters,
 .cm-lineNumbers,
@@ -13,8 +27,8 @@
 
 /* Layout */
 .cm-editor .cm-gutters {
-    background-color: var(--color-bg-gutter) !important;
-    border-right: 1px solid var(--color-border-main) !important;
+    background-color: var(--surface-gutter) !important;
+    border-right: 1px solid var(--border-primary) !important;
 }
 
 .cm-editor .cm-lineNumbers {
@@ -26,23 +40,23 @@
     align-items: center;
     justify-content: flex-end;
     padding: 0 8px !important;
-    color: var(--color-fg-xmuted) !important;
+    color: var(--text-tertiary) !important;
 }
 
 .cm-editor .cm-activeLineGutter {
-    background-color: var(--color-bg-panel) !important;
-    color: var(--color-fg-default) !important;
+    background-color: var(--surface-2) !important;
+    color: var(--text-primary) !important;
     font-weight: bold;
 }
 
 .cm-editor .cm-activeLine {
-    background-color: var(--color-bg-active-line) !important;
+    background-color: var(--active-line-bg) !important;
 }
 
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: var(--color-selection-bg) !important;
+    background-color: var(--selection-bg) !important;
 }
 
 /* Syntax Highlighting - Structure & Variables */
@@ -88,54 +102,56 @@
 
 /* Interactive Elements */
 .cm-link {
-    color: var(--color-accent-link);
+    color: var(--accent-link);
     text-decoration: underline;
 }
 
 .cm-url {
-    color: var(--color-accent-url);
+    color: var(--accent-url);
     text-decoration: underline;
 }
 .cm-url:hover {
-    color: var(--color-accent-url-hover);
+    color: var(--accent-url-hover);
 }
 
 .cm-file-path {
-    color: var(--color-accent-filepath);
+    color: var(--accent-filepath);
     text-decoration: underline;
 }
 .cm-file-path:hover {
-    color: var(--color-accent-filepath-hover);
+    color: var(--accent-filepath-hover);
 }
 
 /* Modifier Keys */
-.cm-editor.cm-modifier-down .cm-url,
-.cm-editor.cm-modifier-down .cm-link,
-.cm-editor.cm-modifier-down .cm-file-path,
-.cm-editor.cm-modifier-down .cm-formatting-link-string {
-    cursor: pointer !important;
-}
+.cm-editor.cm-modifier-down {
+    & .cm-url,
+    & .cm-link,
+    & .cm-file-path,
+    & .cm-formatting-link-string {
+        cursor: pointer !important;
+    }
 
-.cm-editor.cm-modifier-down .cm-url:hover,
-.cm-editor.cm-modifier-down .cm-link:hover,
-.cm-editor.cm-modifier-down .cm-file-path:hover {
-    background-color: oklch(from var(--color-accent-link) l c h / 0.1);
+    & .cm-url:hover,
+    & .cm-link:hover,
+    & .cm-file-path:hover {
+        background-color: oklch(from var(--accent-link) l c h / 0.1);
+    }
 }
 
 /* Markdown Elements */
 .cm-highlight {
-    background-color: var(--color-bg-highlight);
+    background-color: var(--highlight-bg);
     color: inherit;
 }
 
 .cm-strikethrough {
     text-decoration: line-through;
-    text-decoration-color: var(--color-fg-muted);
+    text-decoration-color: var(--text-secondary);
 }
 
 .cm-code {
-    background-color: var(--color-bg-code);
-    color: var(--color-fg-code);
+    background-color: var(--code-bg);
+    color: var(--code-fg);
     border-radius: 0.25rem;
     font-variant-ligatures: none;
     box-decoration-break: clone;
@@ -145,32 +161,54 @@
 .cm-formatting.cm-formatting-code,
 .cm-formatting-code-marker,
 .cm-meta.cm-code {
-    background-color: var(--color-bg-code) !important;
-    color: var(--color-fg-code) !important;
+    background-color: var(--code-bg) !important;
+    color: var(--code-fg) !important;
     border-radius: 0.25rem;
 }
 
 .cm-codeMark {
     background-color: transparent !important;
-    color: var(--color-fg-default) !important;
+    color: var(--text-primary) !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-family: inherit !important;
+}
+
+.cm-codeMark {
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
     padding: 0 !important;
     border-radius: 0 !important;
     font-family: inherit !important;
 }
 
 .cm-blockquote {
-    color: var(--color-fg-muted);
+    color: var(--text-secondary);
     font-style: italic;
 }
 
 .cm-blockquote-border {
-    border-left: 0.25rem solid var(--color-border-quote);
+    border-left: 0.25rem solid var(--quote-border);
     padding-left: 0.375rem;
     border-radius: 0.125rem 0 0 0.125rem;
 }
 
 .cm-blockquote-bg {
-    background-color: var(--color-bg-quote);
+    background-color: var(--quote-bg);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    padding-top: 0.0625rem;
+    padding-bottom: 0.0625rem;
+}
+
+.cm-blockquote-border {
+    border-left: 0.25rem solid var(--quote-border);
+    padding-left: 0.375rem;
+    border-radius: 0.125rem 0 0 0.125rem;
+}
+
+.cm-blockquote-bg {
+    background-color: var(--quote-bg);
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
     padding-top: 0.0625rem;
@@ -178,7 +216,7 @@
 }
 
 .cm-hr {
-    color: var(--color-hr-dashes);
+    color: var(--hr-color);
     font-weight: 900;
     display: block;
     text-align: center;
@@ -194,13 +232,13 @@
     right: 0;
     top: 50%;
     height: 2px;
-    background-color: var(--color-border-light);
+    background-color: var(--border-secondary);
     opacity: 0.6;
     z-index: -1;
 }
 
 .cm-bullet {
-    color: var(--color-accent-secondary);
+    color: var(--accent-secondary);
     font-weight: 900;
     font-size: 1.1em;
 }

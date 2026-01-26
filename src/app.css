@@ -1,4 +1,3 @@
-@import 'tailwindcss';
 @import './styles/variables.css';
 @import './styles/editor.css';
 @import './styles/preview.css';
@@ -11,6 +10,21 @@ body {
     overflow: hidden;
     background-color: var(--color-bg-main);
     color: var(--color-fg-default);
+    display: contents;
     height: 100%;
     width: 100%;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI Variable',
+        'Segoe UI',
+        'Roboto',
+        'Oxygen',
+        'Ubuntu',
+        'Droid Sans',
+        sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

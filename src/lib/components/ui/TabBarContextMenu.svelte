@@ -61,7 +61,7 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleNewTab}>
                 <FilePlus size={14} class="opacity-70" /><span>New Tab</span><span
                     class="text-ui-sm ml-auto opacity-50">Ctrl+N</span>
@@ -71,7 +71,7 @@
 
             <button
                 type="button"
-                class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
                 onclick={handleSaveAll}>
                 <Save size={14} class="opacity-70" /><span>Save All</span><span
@@ -91,7 +91,7 @@
             {#snippet trigger()}
                 <button
                     type="button"
-                    class="text-ui flex w-full items-center px-3 py-1.5 text-left hover:bg-white/10">
+                    class="text-ui hover-surface flex w-full items-center px-3 py-1.5 text-left">
                     <Files size={14} class="mr-2 opacity-70" />
                     <span>Close Many</span>
                     <span class="ml-auto opacity-60">›</span>
@@ -100,24 +100,24 @@
 
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasSavedTabs}
                 onclick={() => handleCloseMany('saved')}>Close Saved</button>
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
                 onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
             {#if hasPinnedTabs}
                 <button
                     type="button"
-                    class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                    class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                     disabled={!hasUnpinnedTabs}
                     onclick={() => handleCloseMany('unpinned')}>Close Unpinned</button>
             {/if}
             <button
                 type="button"
-                class="text-ui w-full px-3 py-1.5 text-left hover:bg-white/10"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
                 onclick={() => handleCloseMany('all')}>Close All</button>
         </Submenu>
     {/snippet}

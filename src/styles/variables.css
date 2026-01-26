@@ -1,6 +1,6 @@
-/* Global Color Palette & Variables */
+/* Global Color Palette & Variables - Three-Layer Architecture */
 
-@theme {
+:root {
     /* Brand Bases */
     --color-brand-accent: #7c5a73;
     --color-brand-file: #eac55f;
@@ -8,145 +8,190 @@
     --color-brand-url: #60a5fa;
     --color-brand-filepath: #84cc16;
 
-    /* Backgrounds */
-    --color-bg-main: oklch(0.24 0 0);
-    --color-bg-gutter: oklch(0.22 0 0);
-    --color-bg-preview: oklch(0.26 0 0);
-    --color-bg-panel: oklch(0.28 0 0);
-    --color-bg-header: oklch(0.32 0 0);
-    --color-bg-titlebar: oklch(0.2 0 0);
-    --color-bg-hover: oklch(0.35 0 0);
-    --color-bg-active: oklch(0.4 0 0);
-    --color-bg-input: oklch(0.3 0 0);
-    --color-bg-backdrop: oklch(0 0 0 / 0.6);
+    /* Surface System - Layer 1: Unified Background Variables */
+    --surface-1: oklch(0.24 0 0); /* Main content background */
+    --surface-2: oklch(0.28 0 0); /* Panels, dialogs, sidebars */
+    --surface-3: oklch(0.32 0 0); /* Headers, toolbars, titlebars */
+    --surface-gutter: oklch(0.22 0 0); /* Editor gutters */
+    --surface-preview: oklch(0.26 0 0); /* Preview pane */
+    --surface-input: oklch(0.3 0 0); /* Form inputs */
+    --surface-hover: oklch(0.35 0 0); /* Hover states */
+    --surface-active: oklch(0.4 0 0); /* Active/selected states */
+    --surface-backdrop: oklch(0 0 0 / 0.6); /* Modal overlays */
 
-    /* Borders */
-    --color-border-main: oklch(0.35 0 0);
-    --color-border-light: oklch(0.45 0 0);
-    --color-border-focus: oklch(0.6 0 0);
+    /* Semantic Background Mapping - Maintains backwards compatibility */
+    --color-bg-main: var(--surface-1);
+    --color-bg-gutter: var(--surface-gutter);
+    --color-bg-preview: var(--surface-preview);
+    --color-bg-panel: var(--surface-2);
+    --color-bg-header: var(--surface-3);
+    --color-bg-titlebar: var(--surface-3);
+    --color-bg-hover: var(--surface-hover);
+    --color-bg-active: var(--surface-active);
+    --color-bg-input: var(--surface-input);
+    --color-bg-backdrop: var(--surface-backdrop);
 
-    /* Text */
-    --color-fg-default: oklch(0.85 0 0);
-    --color-fg-muted: oklch(0.6 0 0);
-    --color-fg-xmuted: oklch(0.4 0 0);
-    --color-fg-inverse: oklch(1 0 0);
+    /* Text System - Layer 1: Unified Text Variables */
+    --text-primary: oklch(0.85 0 0); /* Main text content */
+    --text-secondary: oklch(0.6 0 0); /* Secondary/muted text */
+    --text-tertiary: oklch(0.4 0 0); /* Very muted text */
+    --text-inverse: oklch(1 0 0); /* Text on dark backgrounds */
 
-    /* Accents */
-    --color-accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
-    --color-accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
-    --color-accent-file: oklch(from var(--color-brand-file) 0.8 c h);
-    --color-accent-link: oklch(from var(--color-brand-link) 0.75 c h);
-    --color-accent-link-hover: oklch(from var(--color-brand-link) 0.85 c h);
-    --color-accent-url: oklch(from var(--color-brand-url) 0.75 c h);
-    --color-accent-url-hover: oklch(from var(--color-brand-url) 0.85 c h);
-    --color-accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
-    --color-accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
+    /* Semantic Text Mapping - Maintains backwards compatibility */
+    --color-fg-default: var(--text-primary);
+    --color-fg-muted: var(--text-secondary);
+    --color-fg-xmuted: var(--text-tertiary);
+    --color-fg-inverse: var(--text-inverse);
 
-    /* Functional */
-    --color-status-bar-bg: var(--color-accent-primary);
-    --color-status-bar-fg: var(--color-fg-inverse);
-    --color-danger: oklch(0.55 0.22 25);
-    --color-danger-hover: oklch(0.6 0.25 25);
-    --color-danger-text: oklch(0.8 0.15 25);
-    --color-success: oklch(0.5 0.15 150);
-    --color-success-hover: oklch(0.6 0.18 150);
-    --color-highlight-line: oklch(0.7 0.15 140);
-    --color-selection-bg: oklch(0.4 0.12 301 / 0.4);
-    --color-selection-match-bg: oklch(0.68 0.11 55 / 0.35);
-    --color-bg-active-line: oklch(1 0 0 / 0.08);
+    /* Border System - Layer 1: Unified Border Variables */
+    --border-primary: oklch(0.35 0 0); /* Main borders */
+    --border-secondary: oklch(0.45 0 0); /* Lighter borders */
+    --border-focus: oklch(0.6 0 0); /* Focus states */
+
+    /* Semantic Border Mapping - Maintains backwards compatibility */
+    --color-border-main: var(--border-primary);
+    --color-border-light: var(--border-secondary);
+    --color-border-focus: var(--border-focus);
+
+    /* Accent System - Layer 1: Dynamic Accents from Brand */
+    --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
+    --accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
+    --accent-file: oklch(from var(--color-brand-file) 0.8 c h);
+    --accent-link: oklch(from var(--color-brand-link) 0.75 c h);
+    --accent-link-hover: oklch(from var(--color-brand-link) 0.85 c h);
+    --accent-url: oklch(from var(--color-brand-url) 0.75 c h);
+    --accent-url-hover: oklch(from var(--color-brand-url) 0.85 c h);
+    --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
+    --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
+
+    /* Semantic Accent Mapping - Maintains backwards compatibility */
+    --color-accent-primary: var(--accent-primary);
+    --color-accent-secondary: var(--accent-secondary);
+    --color-accent-file: var(--accent-file);
+    --color-accent-link: var(--accent-link);
+    --color-accent-link-hover: var(--accent-link-hover);
+    --color-accent-url: var(--accent-url);
+    --color-accent-url-hover: var(--accent-url-hover);
+    --color-accent-filepath: var(--accent-filepath);
+    --color-accent-filepath-hover: var(--accent-filepath-hover);
+
+    /* Functional System - Layer 1: State and Interaction Colors */
+    --danger: oklch(0.55 0.22 25);
+    --danger-hover: oklch(0.6 0.25 25);
+    --danger-text: oklch(0.8 0.15 25);
+    --success: oklch(0.5 0.15 150);
+    --success-hover: oklch(0.6 0.18 150);
+    --highlight-line: oklch(0.7 0.15 140);
+    --selection-bg: oklch(0.4 0.12 301 / 0.4);
+    --selection-match-bg: oklch(0.68 0.11 55 / 0.35);
+    --active-line-bg: oklch(1 0 0 / 0.08);
+
+    /* Semantic Functional Mapping - Maintains backwards compatibility */
+    --color-danger: var(--danger);
+    --color-danger-hover: var(--danger-hover);
+    --color-danger-text: var(--danger-text);
+    --color-success: var(--success);
+    --color-success-hover: var(--success-hover);
+    --color-highlight-line: var(--highlight-line);
+    --color-selection-bg: var(--selection-bg);
+    --color-selection-match-bg: var(--selection-match-bg);
+    --color-bg-active-line: var(--active-line-bg);
+    --color-status-bar-bg: var(--accent-primary);
+    --color-status-bar-fg: var(--text-inverse);
 }
 
 :root {
-    /* Editor Colors */
-    --color-bg-code: oklch(0.53 0.12 140 / 0.15);
-    --color-fg-code: #89e57b;
-    --color-bg-quote: oklch(0.77 0.09 90 / 0.1);
-    --color-border-quote: #ddce78;
-    --color-bg-highlight: #787120;
-    --color-hr-dashes: oklch(0.55 0 0);
+    /* Editor & Content Colors - Layer 2: Content-specific variables */
+    --code-bg: oklch(0.53 0.12 140 / 0.15);
+    --code-fg: #89e57b;
+    --quote-bg: oklch(0.77 0.09 90 / 0.1);
+    --quote-border: #ddce78;
+    --highlight-bg: #787120;
+    --hr-color: oklch(0.55 0 0);
+    --pre-bg: #333333;
+    --pre-fg: #89e57b;
 
-    /* Syntax Highlighting */
+    /* Syntax Colors - Layer 2: Syntax highlighting (colors only, no typography) */
     --syntax-heading: #e06c75;
     --syntax-keyword: #c678dd;
     --syntax-atom: #d19a66;
     --syntax-string: #98c379;
     --syntax-comment: #686868;
 
-    /* Preview Colors - Mapped to Accents/Vars */
-    --preview-fg-body: var(--color-fg-default);
-    --preview-fg-heading: var(--color-accent-secondary);
-    --preview-fg-link: var(--color-accent-link);
-    --preview-fg-code: var(--color-fg-code);
-    --preview-bg-code: var(--color-bg-code);
-    --preview-fg-quote: var(--color-fg-muted);
-    --preview-bg-quote: var(--color-bg-quote);
-    --preview-border-quote: var(--color-border-quote);
-    --preview-bg-pre: #333333;
-    --preview-fg-pre: var(--color-fg-code);
+    /* Legacy Mapping - Maintains backwards compatibility */
+    --color-bg-code: var(--code-bg);
+    --color-fg-code: var(--code-fg);
+    --color-bg-quote: var(--quote-bg);
+    --color-border-quote: var(--quote-border);
+    --color-bg-highlight: var(--highlight-bg);
+    --color-hr-dashes: var(--hr-color);
+    --preview-fg-body: var(--text-primary);
+    --preview-fg-heading: var(--accent-secondary);
+    --preview-fg-link: var(--accent-link);
+    --preview-fg-code: var(--code-fg);
+    --preview-bg-code: var(--code-bg);
+    --preview-fg-quote: var(--text-secondary);
+    --preview-bg-quote: var(--quote-bg);
+    --preview-border-quote: var(--quote-border);
+    --preview-bg-pre: var(--pre-bg);
+    --preview-fg-pre: var(--pre-fg);
 }
 
+/* Light Theme - Layer 3: Theme-specific overrides */
 [data-theme='light'] {
-    /* Backgrounds */
-    --color-bg-main: oklch(0.98 0 0);
-    --color-bg-preview: oklch(1 0 0);
-    --color-bg-panel: oklch(0.95 0 0);
-    --color-bg-header: oklch(0.9 0 0);
-    --color-bg-titlebar: oklch(0.85 0 0);
-    --color-bg-hover: oklch(0.92 0 0);
-    --color-bg-active: oklch(0.88 0 0);
-    --color-bg-input: oklch(1 0 0);
-    --color-bg-backdrop: oklch(0 0 0 / 0.2);
+    /* Surface System - Light Theme */
+    --surface-1: oklch(0.98 0 0); /* Main content background */
+    --surface-2: oklch(0.95 0 0); /* Panels, dialogs, sidebars */
+    --surface-3: oklch(0.9 0 0); /* Headers, toolbars, titlebars */
+    --surface-gutter: oklch(0.94 0 0); /* Editor gutters */
+    --surface-preview: oklch(1 0 0); /* Preview pane */
+    --surface-input: oklch(1 0 0); /* Form inputs */
+    --surface-hover: oklch(0.92 0 0); /* Hover states */
+    --surface-active: oklch(0.88 0 0); /* Active/selected states */
+    --surface-backdrop: oklch(0 0 0 / 0.2); /* Modal overlays */
 
-    /* Borders */
-    --color-border-main: oklch(0.9 0 0);
-    --color-border-light: oklch(0.8 0 0);
+    /* Text System - Light Theme */
+    --text-primary: oklch(0.2 0 0); /* Main text content */
+    --text-secondary: oklch(0.4 0 0); /* Secondary/muted text */
+    --text-tertiary: oklch(0.5 0 0); /* Very muted text */
+    --text-inverse: oklch(1 0 0); /* Text on dark backgrounds */
 
-    /* Text */
-    --color-fg-default: oklch(0.2 0 0);
-    --color-fg-muted: oklch(0.4 0 0);
-    --color-fg-inverse: oklch(1 0 0);
+    /* Border System - Light Theme */
+    --border-primary: oklch(0.9 0 0); /* Main borders */
+    --border-secondary: oklch(0.8 0 0); /* Lighter borders */
 
-    /* Accents */
-    --color-accent-primary: oklch(from var(--color-brand-accent) 0.4 c h);
-    --color-accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
-    --color-accent-file: oklch(from var(--color-brand-file) 0.45 c h);
-    --color-accent-link: oklch(from var(--color-brand-link) 0.5 c h);
-    --color-accent-link-hover: oklch(from var(--color-brand-link) 0.4 c h);
-    --color-accent-url: oklch(from var(--color-brand-url) 0.5 c h);
-    --color-accent-url-hover: oklch(from var(--color-brand-url) 0.4 c h);
-    --color-accent-filepath: oklch(from var(--color-brand-filepath) 0.5 c h);
-    --color-accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.4 c h);
+    /* Accent System - Light Theme */
+    --accent-primary: oklch(from var(--color-brand-accent) 0.4 c h);
+    --accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
+    --accent-file: oklch(from var(--color-brand-file) 0.45 c h);
+    --accent-link: oklch(from var(--color-brand-link) 0.5 c h);
+    --accent-link-hover: oklch(from var(--color-brand-link) 0.4 c h);
+    --accent-url: oklch(from var(--color-brand-url) 0.5 c h);
+    --accent-url-hover: oklch(from var(--color-brand-url) 0.4 c h);
+    --accent-filepath: oklch(from var(--color-brand-filepath) 0.5 c h);
+    --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.4 c h);
 
-    --color-danger-text: oklch(0.5 0.2 25);
-    --color-highlight-line: oklch(0.4 0.15 140);
-    --color-selection-bg: oklch(57.762% 0.163 309.273 / 0.66);
-    --color-selection-match-bg: oklch(0.76 0.14 70 / 0.3);
-    --color-bg-active-line: oklch(0 0 0 / 0.05);
+    /* Functional System - Light Theme */
+    --danger-text: oklch(0.5 0.2 25);
+    --highlight-line: oklch(0.4 0.15 140);
+    --selection-bg: oklch(57.762% 0.163 309.273 / 0.66);
+    --selection-match-bg: oklch(0.76 0.14 70 / 0.3);
+    --active-line-bg: oklch(0 0 0 / 0.05);
 
-    /* Editor Colors */
-    --color-bg-code: oklch(0.76 0.14 70 / 0.15);
-    --color-fg-code: #f9a825;
-    --color-bg-quote: oklch(0.47 0.14 310 / 0.05);
-    --color-border-quote: #7b1fa2;
-    --color-bg-highlight: #ffe47c;
-    --color-hr-dashes: oklch(0.5 0 0);
+    /* Editor & Content Colors - Light Theme */
+    --code-bg: oklch(0.76 0.14 70 / 0.15);
+    --code-fg: #f9a825;
+    --quote-bg: oklch(0.47 0.14 310 / 0.05);
+    --quote-border: #7b1fa2;
+    --highlight-bg: #ffe47c;
+    --hr-color: oklch(0.5 0 0);
+    --pre-bg: #f5f5f5;
+    --pre-fg: #000000;
 
-    /* Syntax Highlighting */
+    /* Syntax Colors - Light Theme */
     --syntax-heading: #d32f2f;
     --syntax-keyword: #7b1fa2;
     --syntax-atom: #f57c00;
     --syntax-string: #388e3c;
     --syntax-comment: #757575;
-
-    /* Preview Colors - Mapped */
-    --preview-fg-body: var(--color-fg-default);
-    --preview-fg-heading: #d32f2f;
-    --preview-fg-link: var(--color-accent-link);
-    --preview-fg-code: var(--color-fg-code);
-    --preview-bg-code: var(--color-bg-code);
-    --preview-fg-quote: var(--color-fg-muted);
-    --preview-bg-quote: var(--color-bg-quote);
-    --preview-border-quote: var(--color-border-quote);
-    --preview-bg-pre: #f5f5f5;
-    --preview-fg-pre: #000000;
 }

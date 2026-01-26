@@ -56,19 +56,18 @@
 </script>
 
 <div
-    class="bg-bg-titlebar border-border-main flex h-9 w-full shrink-0 items-center border-b select-none"
-    style="transform: translateZ(0);"
+    class="bg-bg-titlebar gpu-accelerated flex h-9 w-full shrink-0 items-center border-b select-none"
     data-tauri-drag-region>
     <!-- Left Group: Logo, Settings, Commands, Bookmarks -->
     <div class="pointer-events-auto flex shrink-0 items-center gap-2 px-3">
         <button
-            class="pointer-events-auto rounded p-1 outline-none hover:bg-white/10"
+            class="hover-surface pointer-events-auto rounded p-1 outline-none"
             onclick={() => toggleAbout()}
             use:tooltip={'About MarkdownRS'}>
             <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
         <button
-            class="text-fg-muted pointer-events-auto rounded p-1 outline-none hover:bg-white/10"
+            class="text-fg-muted hover-surface pointer-events-auto rounded p-1 outline-none"
             onclick={() => toggleSettings()}
             use:tooltip={'Settings (Ctrl+,)'}>
             <Settings size={14} />
@@ -77,13 +76,13 @@
         <div class="mx-1 h-4 w-px bg-white/10"></div>
 
         <button
-            class="text-fg-muted flex items-center justify-center rounded border-none p-1 transition-colors outline-none hover:bg-white/10"
+            class="text-fg-muted hover-surface flex items-center justify-center rounded border-none p-1 transition-colors outline-none"
             onclick={() => toggleCommandPalette()}
             use:tooltip={'Commands (Ctrl+P)'}>
             <Zap size={14} />
         </button>
         <button
-            class="text-fg-muted flex items-center justify-center rounded border-none p-1 transition-colors outline-none hover:bg-white/10"
+            class="text-fg-muted hover-surface flex items-center justify-center rounded border-none p-1 transition-colors outline-none"
             onclick={() => toggleBookmarks()}
             use:tooltip={'Bookmarks (Ctrl+B)'}>
             <Bookmark size={14} />
@@ -104,7 +103,7 @@
     <!-- Right Group: Preview, Window Controls -->
     <div class="pointer-events-auto flex h-full shrink-0 items-center">
         <button
-            class="text-fg-muted flex h-full items-center justify-center px-3 transition-colors outline-none hover:bg-white/10 focus:outline-none"
+            class="text-fg-muted hover-surface flex h-full items-center justify-center px-3 transition-colors outline-none focus:outline-none"
             class:opacity-50={!isMarkdown}
             class:cursor-not-allowed={!isMarkdown}
             onclick={toggleSplit}
@@ -121,11 +120,11 @@
         <div class="mx-1 h-4 w-px bg-white/10"></div>
 
         <button
-            class="text-fg-muted flex h-full w-12 items-center justify-center outline-none hover:bg-white/10"
+            class="text-fg-muted hover-surface flex h-full w-12 items-center justify-center outline-none"
             onclick={() => appWindow.minimize()}
             use:tooltip={'Minimize'}><Minus size={16} /></button>
         <button
-            class="text-fg-muted flex h-full w-12 items-center justify-center hover:bg-white/10"
+            class="text-fg-muted hover-surface flex h-full w-12 items-center justify-center"
             onclick={() => appWindow.toggleMaximize()}
             use:tooltip={'Maximize / Restore'}>
             {#if isMaximized}<Copy size={14} class="rotate-180" />{:else}<Square size={14} />{/if}

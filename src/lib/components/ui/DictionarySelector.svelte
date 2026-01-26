@@ -143,7 +143,7 @@
         tabindex="0"
         onclick={toggleDropdown}
         onkeydown={handleKeydown}
-        class="text-ui bg-bg-input text-fg-default border-border-main focus:border-accent-primary flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none">
+        class="text-ui bg-bg-input text-fg-default bg-border-main focus:border-accent-primary flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none">
         <div class="flex flex-1 flex-wrap items-center gap-1.5">
             {#if selected.length === 0}
                 <span class="text-ui-sm opacity-50">Select dictionaries...</span>
@@ -172,7 +172,7 @@
 
     {#if isOpen}
         <div
-            class="bg-bg-panel border-border-main absolute z-50 w-full overflow-y-auto rounded border shadow-lg {dropdownPosition ===
+            class="bg-bg-panel bg-border-main absolute z-50 w-full overflow-y-auto rounded border shadow-lg {dropdownPosition ===
             'above'
                 ? 'bottom-full mb-1'
                 : 'top-full mt-1'}"
@@ -181,7 +181,7 @@
                 <button
                     type="button"
                     onclick={() => toggleDict(dict.code)}
-                    class="text-ui text-fg-default flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5">
+                    class="text-ui text-fg-default hover-surface-light flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors">
                     <span>{dict.name}</span>
                     {#if selected.includes(dict.code)}
                         <Check size={14} class="text-accent-primary" />

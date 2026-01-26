@@ -133,10 +133,8 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="ui-backdrop"
-        class:pt-16={position === 'top'}
-        class:items-start={position === 'top'}
-        style="z-index: {zIndex}; pointer-events: auto;"
+        class="ui-backdrop z-index-auto pointer-events-auto items-start pt-16"
+        style="z-index: {zIndex};"
         onclick={handleBackdropClick}
         onkeydown={handleTabKey}>
         <div
@@ -156,7 +154,7 @@
                 <div class="ui-header flex items-center justify-between">
                     <span class="text-fg-default text-sm font-semibold">{title}</span>
                     <button
-                        class="text-fg-muted rounded p-1 transition-colors hover:bg-white/10"
+                        class="text-fg-muted hover-surface rounded p-1 transition-colors"
                         onclick={onClose}
                         aria-label="Close">
                         <X size={18} />
@@ -167,7 +165,7 @@
             <!-- Body with Internal Scrollbar Logic -->
             <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
                 <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto">
-                    <div bind:this={content} style="display: flow-root;">
+                    <div bind:this={content} class="flex-flow-root">
                         {@render children()}
                     </div>
                 </div>
@@ -178,8 +176,7 @@
 
             <!-- Footer -->
             {#if footer}
-                <div
-                    class="border-border-main bg-bg-panel flex shrink-0 justify-end gap-2 border-t px-4 py-3">
+                <div class="bg-bg-panel flex shrink-0 justify-end gap-2 border-t px-4 py-3">
                     {@render footer()}
                 </div>
             {/if}
