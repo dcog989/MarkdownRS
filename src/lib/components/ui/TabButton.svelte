@@ -115,13 +115,13 @@
                     class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
                     style="background: linear-gradient(to right, transparent 0%, {isActive
                         ? 'var(--surface-1)'
-                        : 'var(--surface-2)'} 40%, {isActive
+                        : 'var(--surface-hover)'} 40%, {isActive
                         ? 'var(--surface-1)'
-                        : 'var(--surface-2)'} 100%);">
+                        : 'var(--surface-hover)'} 100%);">
                     <span
                         role="button"
                         tabindex="0"
-                        class="text-fg-muted hover:text-danger-text hover-surface flex cursor-pointer items-center justify-center rounded p-1"
+                        class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
                         onclick={(e) => {
                             e.stopPropagation();
                             if (onclose) onclose(e as unknown as MouseEvent, tab.id);
