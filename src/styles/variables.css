@@ -17,7 +17,7 @@
     --surface-input: oklch(0.3 0 0); /* Form inputs */
     --surface-hover: oklch(0.36 0 0); /* Hover states */
     --surface-active: oklch(0.4 0 0); /* Active/selected states */
-    --surface-backdrop: oklch(0 0 0 / 0.2); /* Modal overlays */
+    --surface-backdrop: oklch(0 0 0 / 0.3); /* Modal overlays */
 
     /* Semantic Background Mapping */
     --color-bg-main: var(--surface-1);
@@ -29,7 +29,7 @@
     --color-bg-hover: var(--surface-hover);
     --color-bg-active: var(--surface-active);
     --color-bg-input: var(--surface-input);
-    --color-bg-backdrop: var(--surface-backdrop);
+    --color-bg-backdrop: var(--surface-backdrop-dark);
 
     /* Text System - Layer 1: Unified Text Variables */
     --text-primary: oklch(0.85 0 0); /* Main text content */
@@ -149,7 +149,7 @@
     --surface-input: oklch(1 0 0); /* Form inputs */
     --surface-hover: oklch(0.92 0 0); /* Hover states */
     --surface-active: oklch(0.88 0 0); /* Active/selected states */
-    --surface-backdrop: oklch(0 0 0 / 0.2); /* Modal overlays */
+    --surface-backdrop: oklch(100% 0 270 / 0.4); /* Modal overlays */
 
     /* Text System - Light Theme */
     --text-primary: oklch(0.2 0 0); /* Main text content */

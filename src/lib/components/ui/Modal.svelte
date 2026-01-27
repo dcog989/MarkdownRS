@@ -42,17 +42,34 @@
         }
     }
 
-    function getFocusableElements(container: HTMLElement): HTMLElement[] {
-        const selector =
-            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-        return Array.from(container.querySelectorAll(selector));
+    const selector =
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    // Cache focusable elements to avoid repeated DOM queries
+    let cachedFocusableElements: HTMLElement[] = [];
+    let cacheValid = false;
+
+    function getFocusableElements(container: HTMLElement, forceUpdate = false): HTMLElement[] {
+        if (forceUpdate || !cacheValid || cachedFocusableElements.length === 0) {
+            cachedFocusableElements = Array.from(container.querySelectorAll(selector));
+            cacheValid = true;
+        }
+        return cachedFocusableElements;
+    }
+
+    function invalidateFocusCache() {
+        cachedFocusableElements = [];
+        cacheValid = false;
     }
 
     function handleTabKey(e: KeyboardEvent) {
         if (!isOpen || !modalPanel) return;
         if (e.key !== 'Tab') return;
 
-        const focusableElements = getFocusableElements(modalPanel);
+        // Use a simple query each time to avoid caching complexity
+        const focusableElements = Array.from(
+            modalPanel.querySelectorAll(selector),
+        ) as HTMLElement[];
         if (focusableElements.length === 0) return;
 
         const firstElement = focusableElements[0];
@@ -82,12 +99,13 @@
             previouslyFocusedElement = document.activeElement as HTMLElement;
 
             // Focus the first focusable element when modal opens
-            const focusableElements = getFocusableElements(modalPanel);
+            invalidateFocusCache(); // Clear cache when modal opens
+            const focusableElements = getFocusableElements(modalPanel, true);
             if (focusableElements.length > 0) {
-                // Delay to ensure DOM is ready and child components have initialized
+                // Reduced delay for better responsiveness
                 setTimeout(() => {
                     if (!modalPanel) return;
-                    // Re-query in case DOM changed
+                    // Use cached elements, no need to re-query
                     const currentFocusable = getFocusableElements(modalPanel);
                     if (
                         currentFocusable.length > 0 &&
@@ -95,7 +113,7 @@
                     ) {
                         currentFocusable[0].focus();
                     }
-                }, 50);
+                }, 16); // Reduced from 50ms to 16ms for better responsiveness
             }
 
             // Set up a focus monitor to catch focus escaping the modal
@@ -106,7 +124,7 @@
                 // If focus is moving outside the modal, bring it back
                 if (target && !modalPanel.contains(target)) {
                     e.preventDefault();
-                    const focusable = getFocusableElements(modalPanel);
+                    const focusable = getFocusableElements(modalPanel); // Use cached version
                     if (focusable.length > 0) {
                         focusable[0].focus();
                     }
@@ -115,8 +133,26 @@
 
             modalPanel.addEventListener('focusout', handleFocusOut);
 
+            // Set up a mutation observer to invalidate focus cache when DOM changes
+            const mutationObserver = new MutationObserver(() => {
+                invalidateFocusCache();
+            });
+            // Be more selective to avoid excessive re-renders
+            mutationObserver.observe(modalPanel, {
+                childList: true, // Only watch direct children changes
+                attributes: false, // Don't watch attribute changes to reduce frequency
+                subtree: false, // Don't watch deep subtree changes
+            });
+            mutationObserver.observe(modalPanel, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['disabled', 'tabindex'],
+            });
+
             return () => {
                 modalPanel?.removeEventListener('focusout', handleFocusOut);
+                mutationObserver?.disconnect();
 
                 // Blur the previously focused element to remove focus outline
                 if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {

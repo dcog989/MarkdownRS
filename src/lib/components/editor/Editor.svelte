@@ -144,9 +144,8 @@
             from = 0,
             to = 0;
         if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
-            const range = view.state.wordAt(
-                view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? selection.head,
-            );
+            const posResult = view.posAtCoords({ x: event.clientX, y: event.clientY });
+            const range = view.state.wordAt(posResult ?? selection.head);
             if (range) {
                 from = range.from;
                 to = range.to;

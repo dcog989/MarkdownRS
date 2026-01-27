@@ -63,10 +63,17 @@ export const prefetchHoverHandler = EditorView.domEventHandlers({
     mousemove: (event, view) => {
         const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
         if (pos === null) return;
-        const range = view.state.wordAt(pos);
-        if (range) {
-            const word = view.state.sliceDoc(range.from, range.to);
-            prefetchSuggestions(word);
+
+        // Add safety check for null position before using it
+        try {
+            const range = view.state.wordAt(pos);
+            if (range) {
+                const word = view.state.sliceDoc(range.from, range.to);
+                prefetchSuggestions(word);
+            }
+        } catch (_error) {
+            // Silently handle errors in word detection to prevent crashes
+            return false;
         }
         return false;
     },

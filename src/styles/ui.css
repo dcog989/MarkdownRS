@@ -1619,7 +1619,7 @@
 }
 
 .hover-surface-light:hover {
-    background-color: oklch(from var(--surface-hover) l c h / 0.5);
+    background-color: var(--surface-backdrop);
 }
 
 /* Group Hover States */
@@ -1803,9 +1803,17 @@ label {
     z-index: 100;
     display: flex;
     justify-content: center;
-    background-color: var(--surface-backdrop);
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
+    background-color: transparent; /* Changed from solid color */
+}
+
+.ui-backdrop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--surface-backdrop); /* Use theme-aware variable with opacity built-in */
+    filter: blur(8px); /* Reduced blur intensity for better performance and visual balance */
+    z-index: -1;
+    pointer-events: none; /* Won't interfere with interactions */
 }
 
 .ui-panel {
@@ -1842,9 +1850,9 @@ label {
     padding: 0.625rem 1rem;
     text-align: left;
     font-size: 0.875rem;
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-property: background-color; /* Reduced from 6 properties to 1 for performance */
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+    transition-duration: 100ms; /* Reduced from 150ms for snappier response */
     background-color: transparent;
     color: var(--text-primary);
 }
@@ -1869,6 +1877,12 @@ label {
 
 .mru-item[data-selected='true'] .mru-icon {
     color: var(--text-inverse) !important;
+}
+
+/* Optimized hover state for MRU items */
+.mru-item:hover {
+    background-color: var(--surface-hover);
+    cursor: pointer;
 }
 
 .mru-badge {

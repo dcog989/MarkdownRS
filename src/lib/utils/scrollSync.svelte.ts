@@ -11,6 +11,7 @@ export class ScrollSyncManager {
     private activeSource = $state<'editor' | 'preview' | null>(null);
     private clearSourceTimer: number | null = null;
     private resizeObserver: ResizeObserver | null = null;
+    private updateMapTimer: number | null = null;
 
     constructor() {
         // Automatically update map when preview changes size or content
@@ -19,17 +20,24 @@ export class ScrollSyncManager {
                 if (this.preview) {
                     this.resizeObserver?.disconnect();
                     this.resizeObserver = new ResizeObserver(() => {
-                        requestAnimationFrame(() => this.updateMap());
+                        // Debounce and batch resize updates to prevent excessive map rebuilding
+                        if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
+                        this.updateMapTimer = window.setTimeout(() => {
+                            this.updateMapTimer = null;
+                            requestAnimationFrame(() => this.updateMap());
+                        }, 50); // Reduced from 150ms to 50ms for more responsive updates during initialization
                     });
 
-                    // Observe container and children
+                    // Observe container only - children will trigger container resize if needed
+                    // This reduces observer overhead significantly
                     this.resizeObserver.observe(this.preview);
-                    Array.from(this.preview.children).forEach((child) => {
-                        this.resizeObserver?.observe(child);
-                    });
 
                     return () => {
                         this.resizeObserver?.disconnect();
+                        if (this.updateMapTimer) {
+                            clearTimeout(this.updateMapTimer);
+                            this.updateMapTimer = null;
+                        }
                     };
                 }
             });
@@ -62,25 +70,29 @@ export class ScrollSyncManager {
     }
 
     updateMap() {
-        if (!this.preview) return;
+        if (!this.preview || !this.editor) return; // Add editor check to prevent initialization issues
 
         const container = this.preview;
         const containerRect = container.getBoundingClientRect();
         const scrollTop = container.scrollTop;
 
         // Query only elements with data-source-line attribute
-        // We use a more specific query to avoid layout thrashing if possible, but map build is heavy anyway
         const elements = Array.from(
             container.querySelectorAll('[data-source-line]'),
         ) as HTMLElement[];
 
+        // Batch all getBoundingClientRect() calls to prevent layout thrashing
+        const elementRects = elements.map((el) => ({
+            element: el,
+            rect: el.getBoundingClientRect(),
+        }));
+
         // 1. Build Raw Map: Line -> Pixel Y (absolute in scrollable area)
-        const rawMap = elements
-            .map((el) => {
-                const rect = el.getBoundingClientRect();
+        const rawMap = elementRects
+            .map(({ element, rect }) => {
                 // Calculate Y relative to the top of the scrollable content
                 const y = rect.top - containerRect.top + scrollTop;
-                const line = parseInt(el.getAttribute('data-source-line') || '0', 10);
+                const line = parseInt(element.getAttribute('data-source-line') || '0', 10);
                 return { line, y };
             })
             .filter((item) => !isNaN(item.line));
