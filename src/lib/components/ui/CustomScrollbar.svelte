@@ -57,7 +57,6 @@
         if (!isVisible) return;
 
         // Cache track metrics
-        // Fallback calculation prevents layout read if trackRef is missing or 0
         if (trackRef) {
             metrics.trackHeight = trackRef.getBoundingClientRect().height;
         }
@@ -132,7 +131,7 @@
         }
 
         const progress = elapsed / duration;
-        const ease = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+        const ease = 1 - Math.pow(1 - progress, 3);
 
         const newPos = scrollStartPos + (scrollTarget - scrollStartPos) * ease;
         viewport.scrollTop = newPos;
@@ -145,15 +144,14 @@
         if (!viewport || !trackRef || (e.target as Element).closest('.scrollbar-thumb')) return;
         e.preventDefault();
 
-        measure(); // Ensure metrics are fresh
+        measure();
 
         const maxThumbTravel = metrics.trackHeight - thumbHeight;
         const maxScrollTravel = metrics.viewportScrollHeight - metrics.viewportHeight;
 
         if (maxThumbTravel <= 0) return;
 
-        const trackRect = trackRef.getBoundingClientRect();
-        const clickOffset = e.clientY - trackRect.top;
+        const clickOffset = e.clientY - trackRef.getBoundingClientRect().top;
         let targetThumbTop = clickOffset - thumbHeight / 2;
         targetThumbTop = Math.max(0, Math.min(maxThumbTravel, targetThumbTop));
 
@@ -173,7 +171,7 @@
         e.stopPropagation();
 
         isAnimating = false;
-        measure(); // Refresh cached metrics before drag starts
+        measure();
 
         startY = e.clientY;
         startThumbTop = currentThumbTop;
@@ -273,11 +271,14 @@
     <div
         bind:this={thumbRef}
         role="none"
-        class="scrollbar-thumb bg-border-light hover:bg-fg-muted active:bg-accent-primary absolute top-0 w-1 cursor-pointer rounded-full transition-[width,background-color,opacity] duration-150 group-hover:w-3 group-hover:opacity-100 hover:opacity-100 active:w-3 active:opacity-100"
-        class:w-3={isDragging}
-        class:!opacity-100={isDragging}
+        class="scrollbar-thumb absolute top-0 w-1 cursor-pointer rounded-full transition-all duration-150"
+        class:bg-fg-muted={!isDragging}
         class:bg-accent-primary={isDragging}
         class:opacity-30={!isDragging}
+        class:group-hover:opacity-70={!isDragging}
+        class:group-hover:w-3={!isDragging}
+        class:w-3={isDragging}
+        class:!opacity-100={isDragging}
         style="height: {thumbHeight}px; will-change: transform;"
         onmousedown={onThumbMouseDown}>
     </div>
