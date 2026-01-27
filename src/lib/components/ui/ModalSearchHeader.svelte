@@ -34,13 +34,13 @@
     <div class="relative flex-1 min-w-0">
         <Search
             size={14}
-            class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 opacity-50" />
+            class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
         <Input
             bind:ref={inputRef}
             bind:value={searchValue}
             type="text"
             placeholder={searchPlaceholder}
-            class="w-full pl-14 pr-3"
+            class="w-full pl-12 pr-3"
             onkeydown={onKeydown} />
     </div>
 

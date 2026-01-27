@@ -104,8 +104,12 @@
     // Reactive Command Listener
     $effect(() => {
         if (pendingTransform && pendingTransform.tabId === tabId && cmView) {
+            const currentOp = pendingTransform.op;
+            // Consume the command immediately so it doesn't re-run on tab switches or remounts
+            editorStore.pendingTransform = null;
+
             untrack(() => {
-                performTextOperation(cmView!, pendingTransform!.op, scrollManager);
+                performTextOperation(cmView!, currentOp, scrollManager);
             });
         }
     });
