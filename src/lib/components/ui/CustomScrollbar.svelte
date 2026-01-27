@@ -258,14 +258,14 @@
 <div
     bind:this={trackRef}
     role="none"
-    class="group absolute top-0.5 right-0 bottom-0.5 z-60 flex w-4 justify-center bg-transparent transition-opacity duration-200"
+    class="group absolute top-0.5 right-0 bottom-0.5 z-60 flex w-4 justify-center bg-transparent"
     class:opacity-0={!isVisible}
     class:pointer-events-none={!isVisible}
     onmousedown={onTrackMouseDown}>
     <div
         bind:this={thumbRef}
         role="none"
-        class="scrollbar-thumb absolute top-0 w-1 cursor-pointer rounded-full transition-all duration-150"
+        class="scrollbar-thumb absolute top-0 w-1 cursor-pointer rounded-full"
         class:bg-fg-muted={!isDragging}
         class:bg-accent-primary={isDragging}
         class:opacity-30={!isDragging}
@@ -273,7 +273,7 @@
         class:group-hover:w-3={!isDragging}
         class:w-3={isDragging}
         class:!opacity-100={isDragging}
-        style="height: {thumbHeight}px; will-change: transform;"
+        style="height: {thumbHeight}px;"
         onmousedown={onThumbMouseDown}>
     </div>
 </div>

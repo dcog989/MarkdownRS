@@ -153,7 +153,7 @@
                 <div class="ui-header flex items-center justify-between">
                     <span class="text-fg-default text-sm font-semibold">{title}</span>
                     <button
-                        class="text-fg-muted hover-surface rounded p-1 transition-colors"
+                        class="text-fg-muted hover-surface rounded p-1"
                         onclick={onClose}
                         aria-label="Close">
                         <X size={18} />
