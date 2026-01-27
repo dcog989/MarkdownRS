@@ -45,7 +45,7 @@
     }
 
     async function handleClearAll() {
-        if (confirm('Clear all recent file history?')) {
+        if (confirm('Clear file history?')) {
             await clearRecentFiles();
         }
     }
@@ -95,7 +95,7 @@
                                 onclick={(e) => handleRemove(path, e)}
                                 class="text-fg-muted hover:text-danger-text hover-surface rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
                                 title="Remove from history">
-                                <X size={14} />
+                                <X size={16} />
                             </button>
                         </div>
                     </div>
