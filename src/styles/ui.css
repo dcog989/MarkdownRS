@@ -932,6 +932,10 @@
     padding-right: 1rem;
 }
 
+.pr-5 {
+    padding-right: 1.2rem;
+}
+
 .mx-1 {
     margin-left: 0.25rem;
     margin-right: 0.25rem;
