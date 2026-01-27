@@ -28,19 +28,27 @@
     let scrollStartPos = 0;
     let isAnimating = false;
 
+    // Cache metrics to avoid layout thrashing during scroll/drag
+    let metrics = {
+        viewportHeight: 0,
+        viewportScrollHeight: 0,
+        trackHeight: 0,
+    };
+
     function measure() {
         if (!viewport) return;
 
+        // Cache viewport metrics
         const rect = viewport.getBoundingClientRect();
-        const clientHeight = rect.height;
-        const scrollHeight = viewport.scrollHeight;
+        metrics.viewportHeight = rect.height;
+        metrics.viewportScrollHeight = viewport.scrollHeight;
 
-        if (clientHeight === 0 || isNaN(clientHeight)) {
+        if (metrics.viewportHeight === 0 || isNaN(metrics.viewportHeight)) {
             isVisible = false;
             return;
         }
 
-        const shouldBeVisible = scrollHeight > clientHeight + 1;
+        const shouldBeVisible = metrics.viewportScrollHeight > metrics.viewportHeight + 1;
 
         if (isVisible !== shouldBeVisible) {
             isVisible = shouldBeVisible;
@@ -48,11 +56,17 @@
 
         if (!isVisible) return;
 
-        // Calculate dimensions
-        const trackH = trackRef ? trackRef.getBoundingClientRect().height : clientHeight - 4;
-        const heightRatio = clientHeight / scrollHeight;
+        // Cache track metrics
+        // Fallback calculation prevents layout read if trackRef is missing or 0
+        if (trackRef) {
+            metrics.trackHeight = trackRef.getBoundingClientRect().height;
+        }
+        if (!metrics.trackHeight) {
+            metrics.trackHeight = metrics.viewportHeight - 4;
+        }
 
-        thumbHeight = Math.max(20, trackH * heightRatio);
+        const heightRatio = metrics.viewportHeight / metrics.viewportScrollHeight;
+        thumbHeight = Math.max(20, metrics.trackHeight * heightRatio);
 
         syncPosition();
     }
@@ -61,12 +75,8 @@
         if (!viewport || !isVisible || !thumbRef || isDragging) return;
 
         const scrollTop = viewport.scrollTop;
-        const scrollHeight = viewport.scrollHeight;
-        const clientHeight = viewport.clientHeight;
-        const trackH = trackRef ? trackRef.getBoundingClientRect().height : clientHeight - 4;
-
-        const maxScroll = scrollHeight - clientHeight;
-        const maxThumb = trackH - thumbHeight;
+        const maxScroll = metrics.viewportScrollHeight - metrics.viewportHeight;
+        const maxThumb = metrics.trackHeight - thumbHeight;
 
         if (maxScroll > 0 && maxThumb > 0) {
             const scrollRatio = scrollTop / maxScroll;
@@ -80,9 +90,13 @@
 
     function onScroll() {
         if (!isDragging && !isAnimating) {
-            requestAnimationFrame(syncPosition);
+            if (!frameId) {
+                frameId = requestAnimationFrame(() => {
+                    frameId = null;
+                    syncPosition();
+                });
+            }
         } else if (isAnimating) {
-            // During animation, we still need to sync the thumb
             syncPosition();
         }
     }
@@ -90,7 +104,10 @@
     function smoothScrollTo(target: number) {
         if (!viewport) return;
 
-        scrollTarget = Math.max(0, Math.min(target, viewport.scrollHeight - viewport.clientHeight));
+        scrollTarget = Math.max(
+            0,
+            Math.min(target, metrics.viewportScrollHeight - metrics.viewportHeight),
+        );
         scrollStartPos = viewport.scrollTop;
 
         if (scrollStartPos === scrollTarget) return;
@@ -114,13 +131,12 @@
             return;
         }
 
-        // Ease out cubic
         const progress = elapsed / duration;
-        const ease = 1 - Math.pow(1 - progress, 3);
+        const ease = 1 - Math.pow(1 - progress, 3); // Ease out cubic
 
         const newPos = scrollStartPos + (scrollTarget - scrollStartPos) * ease;
         viewport.scrollTop = newPos;
-        syncPosition(); // Keep thumb synced during animation
+        syncPosition();
 
         requestAnimationFrame(animateScroll);
     }
@@ -129,20 +145,14 @@
         if (!viewport || !trackRef || (e.target as Element).closest('.scrollbar-thumb')) return;
         e.preventDefault();
 
-        measure();
+        measure(); // Ensure metrics are fresh
 
-        const trackRect = trackRef.getBoundingClientRect();
-        const scrollH = viewport.scrollHeight;
-        const clientH = viewport.clientHeight;
-        const trackH = trackRect.height;
-
-        if (scrollH <= clientH) return;
-
-        const maxThumbTravel = trackH - thumbHeight;
-        const maxScrollTravel = scrollH - clientH;
+        const maxThumbTravel = metrics.trackHeight - thumbHeight;
+        const maxScrollTravel = metrics.viewportScrollHeight - metrics.viewportHeight;
 
         if (maxThumbTravel <= 0) return;
 
+        const trackRect = trackRef.getBoundingClientRect();
         const clickOffset = e.clientY - trackRect.top;
         let targetThumbTop = clickOffset - thumbHeight / 2;
         targetThumbTop = Math.max(0, Math.min(maxThumbTravel, targetThumbTop));
@@ -162,8 +172,8 @@
         e.preventDefault();
         e.stopPropagation();
 
-        // Cancel any active animation
         isAnimating = false;
+        measure(); // Refresh cached metrics before drag starts
 
         startY = e.clientY;
         startThumbTop = currentThumbTop;
@@ -177,16 +187,11 @@
     }
 
     function onMouseMove(e: MouseEvent) {
-        if (!isDragging || !viewport || !thumbRef || !trackRef) return;
+        if (!isDragging || !viewport || !thumbRef) return;
         e.preventDefault();
 
-        const trackRect = trackRef.getBoundingClientRect();
-        const trackH = trackRect.height;
-        const scrollH = viewport.scrollHeight;
-        const clientH = viewport.clientHeight;
-
-        const maxThumb = trackH - thumbHeight;
-        const maxScroll = scrollH - clientH;
+        const maxThumb = metrics.trackHeight - thumbHeight;
+        const maxScroll = metrics.viewportScrollHeight - metrics.viewportHeight;
 
         if (maxThumb <= 0) return;
 
@@ -222,7 +227,10 @@
 
         const debouncedMeasure = () => {
             if (frameId) cancelAnimationFrame(frameId);
-            frameId = requestAnimationFrame(measure);
+            frameId = requestAnimationFrame(() => {
+                frameId = null;
+                measure();
+            });
         };
 
         resizeObserver = new ResizeObserver(debouncedMeasure);

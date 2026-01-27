@@ -163,7 +163,7 @@
 
             <!-- Body with Internal Scrollbar Logic -->
             <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto smooth-scroll">
+                <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto">
                     <div bind:this={content} class="flex-flow-root">
                         {@render children()}
                     </div>
