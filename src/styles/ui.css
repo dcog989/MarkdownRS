@@ -1803,17 +1803,7 @@ label {
     z-index: 100;
     display: flex;
     justify-content: center;
-    background-color: transparent; /* Changed from solid color */
-}
-
-.ui-backdrop::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: var(--surface-backdrop); /* Use theme-aware variable with opacity built-in */
-    filter: blur(8px); /* Reduced blur intensity for better performance and visual balance */
-    z-index: -1;
-    pointer-events: none; /* Won't interfere with interactions */
+    background-color: oklch(0 0 0 / 0.6);
 }
 
 .ui-panel {
