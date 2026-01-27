@@ -592,7 +592,7 @@
                                             e.currentTarget.value,
                                             setting.type,
                                         )}
-                                    class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full" />
+                                    class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full range-slider-accent" />
                                 <span
                                     class="text-ui-sm text-fg-muted w-10 text-right font-mono opacity-80"
                                     >{getSettingValue(setting.key, setting.defaultValue)}%</span>

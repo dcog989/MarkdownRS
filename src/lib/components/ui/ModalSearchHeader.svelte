@@ -36,7 +36,7 @@
             bind:ref={inputRef}
             bind:value={searchValue}
             type="text"
-            class="w-full px-2"
+            class="w-full px-2 h-7"
             onkeydown={onKeydown} />
 
         {#if !searchValue}
