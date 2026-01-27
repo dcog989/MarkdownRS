@@ -163,7 +163,7 @@
         },
         {
             key: 'doubleClickSelectsTrailingSpace',
-            label: 'Trailing Space Selected on Double-Click',
+            label: 'Trailing Space Select on Dbl Click',
             type: 'boolean',
             category: 'Editor',
             defaultValue: false,
@@ -430,12 +430,11 @@
             ? [
                   {
                       key: 'windowsContextMenu',
-                      label: 'Add to System Context Menu',
+                      label: 'Context Menu Enabled',
                       type: 'custom-context-menu',
                       category: 'System',
                       defaultValue: false,
-                      tooltip:
-                          'Include non-language dictionaries (coding, companies, medical, scientific, etc.).',
+                      tooltip: "Enable 'Open with MarkdownRS` in Windows Explorer context menu.",
                   },
               ]
             : []),
