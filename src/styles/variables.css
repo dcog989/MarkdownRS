@@ -19,7 +19,7 @@
     --surface-active: oklch(0.4 0 0); /* Active/selected states */
     --surface-backdrop: oklch(0 0 0 / 0.2); /* Modal overlays */
 
-    /* Semantic Background Mapping - Maintains backwards compatibility */
+    /* Semantic Background Mapping */
     --color-bg-main: var(--surface-1);
     --color-bg-gutter: var(--surface-gutter);
     --color-bg-preview: var(--surface-preview);
@@ -37,7 +37,7 @@
     --text-tertiary: oklch(0.4 0 0); /* Very muted text */
     --text-inverse: oklch(1 0 0); /* Text on dark backgrounds */
 
-    /* Semantic Text Mapping - Maintains backwards compatibility */
+    /* Semantic Text Mapping */
     --color-fg-default: var(--text-primary);
     --color-fg-muted: var(--text-secondary);
     --color-fg-xmuted: var(--text-tertiary);
@@ -48,7 +48,7 @@
     --border-secondary: oklch(0.45 0 0); /* Lighter borders */
     --border-focus: oklch(0.6 0 0); /* Focus states */
 
-    /* Semantic Border Mapping - Maintains backwards compatibility */
+    /* Semantic Border Mapping */
     --color-border-main: var(--border-primary);
     --color-border-light: var(--border-secondary);
     --color-border-focus: var(--border-focus);
@@ -64,7 +64,7 @@
     --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
     --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
 
-    /* Semantic Accent Mapping - Maintains backwards compatibility */
+    /* Semantic Accent Mapping */
     --color-accent-primary: var(--accent-primary);
     --color-accent-secondary: var(--accent-secondary);
     --color-accent-file: var(--accent-file);
@@ -87,7 +87,7 @@
     --active-line-bg: oklch(1 0 0 / 0.08);
     --dirty-indicator: #5deb47;
 
-    /* Semantic Functional Mapping - Maintains backwards compatibility */
+    /* Semantic Functional Mapping */
     --color-danger: var(--danger);
     --color-danger-hover: var(--danger-hover);
     --color-danger-text: var(--danger-text);
@@ -119,7 +119,7 @@
     --syntax-string: #98c379;
     --syntax-comment: #686868;
 
-    /* Legacy Mapping - Maintains backwards compatibility */
+    /* Legacy Mapping */
     --color-bg-code: var(--code-bg);
     --color-fg-code: var(--code-fg);
     --color-bg-quote: var(--quote-bg);

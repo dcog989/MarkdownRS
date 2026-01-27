@@ -1109,7 +1109,7 @@
 }
 
 .border-border-light {
-    border-color: var(--border-light);
+    border-color: var(--color-border-light);
 }
 
 .border-danger\/30 {
