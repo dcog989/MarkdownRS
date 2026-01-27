@@ -97,7 +97,7 @@
 <div class="fixed inset-0 z-200" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
     <div
         bind:this={menuEl}
-        class="bg-bg-panel border-border-light text-fg-default absolute z-200 max-h-[calc(100vh-64px)] max-w-75 min-w-50 overflow-y-auto rounded-md border py-1 shadow-xl"
+        class="bg-bg-panel border-border-light text-fg-default no-scrollbar absolute z-200 max-h-[calc(100vh-64px)] max-w-75 min-w-50 overflow-y-auto rounded-md border py-1 shadow-xl"
         style="
             left: {adjustedX}px;
             top: {adjustedY}px;

@@ -118,9 +118,9 @@
             return () => {
                 modalPanel?.removeEventListener('focusout', handleFocusOut);
 
-                // Restore focus to the previously focused element
+                // Blur the previously focused element to remove focus outline
                 if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
-                    previouslyFocusedElement.focus();
+                    (previouslyFocusedElement as HTMLElement).blur();
                 }
             };
         }
@@ -133,17 +133,16 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="ui-backdrop z-index-auto pointer-events-auto items-start pt-16"
+        class="ui-backdrop z-index-auto pointer-events-auto {position === 'center'
+            ? 'items-center'
+            : 'items-start pt-16'}"
         style="z-index: {zIndex};"
         onclick={handleBackdropClick}
         onkeydown={handleTabKey}>
         <div
             bind:this={modalPanel}
             class="ui-panel shadow-2xl"
-            style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: {position ===
-            'top'
-                ? 'calc(100vh - 5rem)'
-                : MODAL_CONSTRAINTS.MAX_HEIGHT}; width: fit-content; display: flex; flex-direction: column;"
+            style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: calc(100vh - 5rem); width: fit-content; display: flex; flex-direction: column;"
             onclick={(e) => e.stopPropagation()}>
             <!-- Header Strategy: Snippet First, then Title+Close Default -->
             {#if header}
@@ -164,7 +163,7 @@
 
             <!-- Body with Internal Scrollbar Logic -->
             <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto">
+                <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto smooth-scroll">
                     <div bind:this={content} class="flex-flow-root">
                         {@render children()}
                     </div>

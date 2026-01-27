@@ -113,7 +113,7 @@
         <!-- Uses 'group-hover/preview' to only react to the preview pane hover -->
         <button
             type="button"
-            class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 group-hover/preview:opacity-100"
+            class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
             onclick={() => toggleOrientation()}
             use:tooltip={appContext.app.splitOrientation === 'vertical'
                 ? 'Switch to Horizontal Split'

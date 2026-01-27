@@ -82,7 +82,7 @@
             <h2 class="text-ui text-fg-default shrink-0 font-semibold">Commands</h2>
         </div>
 
-        <div class="relative mx-4 flex-1">
+        <div class="relative mx-4 flex-1 min-w-0">
             <Search
                 size={12}
                 class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
@@ -91,7 +91,7 @@
                 bind:value={query}
                 type="text"
                 placeholder="Search..."
-                class="pr-3 pl-8"
+                class="w-full pr-3 pl-8"
                 onkeydown={handleKeydown} />
         </div>
 

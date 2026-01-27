@@ -260,16 +260,16 @@
     role="none"
     class="group absolute top-0.5 right-0 bottom-0.5 z-60 flex w-4 justify-center bg-transparent transition-opacity duration-200"
     class:opacity-0={!isVisible}
-    class:opacity-100={isVisible}
     class:pointer-events-none={!isVisible}
     onmousedown={onTrackMouseDown}>
     <div
         bind:this={thumbRef}
         role="none"
-        class="scrollbar-thumb bg-border-light hover:bg-fg-muted active:bg-accent-primary absolute top-0 w-1 cursor-pointer rounded-full opacity-50 transition-[width,background-color,opacity] duration-150 group-hover:w-3 hover:opacity-100 active:w-3 active:opacity-100"
+        class="scrollbar-thumb bg-border-light hover:bg-fg-muted active:bg-accent-primary absolute top-0 w-1 cursor-pointer rounded-full transition-[width,background-color,opacity] duration-150 group-hover:w-3 group-hover:opacity-100 hover:opacity-100 active:w-3 active:opacity-100"
         class:w-3={isDragging}
         class:!opacity-100={isDragging}
         class:bg-accent-primary={isDragging}
+        class:opacity-30={!isDragging}
         style="height: {thumbHeight}px; will-change: transform;"
         onmousedown={onThumbMouseDown}>
     </div>

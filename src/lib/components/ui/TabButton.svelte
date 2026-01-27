@@ -46,14 +46,12 @@
     tabindex="0"
     data-active={isActive}
     data-tab-id={tab.id}
-    class="group text-ui-sm relative flex h-8 shrink-0 cursor-default items-center gap-2 border-t-2 text-left transition-colors duration-150 outline-none select-none"
+    class="group text-ui-sm relative flex h-8 shrink-0 cursor-default items-center gap-2 text-left transition-colors duration-150 outline-none select-none"
     class:bg-bg-main={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
     class:text-fg-default={isActive}
     class:text-fg-muted={!isActive}
-    class:border-t-accent-primary={isActive}
-    class:border-t-transparent={!isActive}
     class:border-r={!isActive}
     class:justify-center={isCollapsed}
     class:px-2={!isCollapsed}
@@ -61,7 +59,9 @@
         min-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMin}px`};
         max-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMax}px`};
         width: {isCollapsed ? '36px' : 'auto'};
-        {isActive ? 'border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem;' : ''}
+        {isActive
+        ? 'border-top: 2px solid var(--accent-primary); border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem; border-bottom: 2px solid var(--color-bg-main);'
+        : ''}
     "
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
@@ -76,24 +76,22 @@
         {#if tab.content.length > 0}
             <PencilLine
                 size={14}
-                class="shrink-0"
-                style="color: {isActive && tab.isDirty
-                    ? '#5deb47'
+                class="shrink-0 {isActive && tab.isDirty
+                    ? 'text-dirty-active'
                     : isActive
-                      ? 'var(--color-fg-inverse)'
-                      : 'var(--color-fg-muted)'}" />
+                      ? 'text-fg-inverse'
+                      : 'text-fg-muted'}" />
         {:else}
             <Pencil size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
         {/if}
     {:else if tab.isDirty}
         <SquarePen
             size={14}
-            class="shrink-0"
-            style="color: {isActive && tab.isDirty
-                ? '#5deb47'
+            class="shrink-0 {isActive && tab.isDirty
+                ? 'text-dirty-active'
                 : isActive
-                  ? 'var(--color-fg-inverse)'
-                  : 'var(--color-accent-secondary)'}" />
+                  ? 'text-fg-inverse'
+                  : 'text-accent-secondary'}" />
     {:else}
         <FileText size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
     {/if}

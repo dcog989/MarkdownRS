@@ -9,9 +9,10 @@
     interface Props {
         isOpen: boolean;
         onClose: () => void;
+        position?: 'center' | 'top';
     }
 
-    let { isOpen = $bindable(false), onClose }: Props = $props();
+    let { isOpen = $bindable(false), onClose, position = 'top' }: Props = $props();
 
     interface AppInfo {
         name: string;
@@ -102,7 +103,7 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose} title="About">
+<Modal bind:isOpen {onClose} {position} title="About">
     <div class="text-ui flex flex-col items-center gap-4 p-6">
         <img src="/logo.svg" alt="MarkdownRS Logo" class="h-20 w-20" />
         <h1 class="text-fg-default text-2xl font-bold">{appInfo.name}</h1>
@@ -111,8 +112,8 @@
             "I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."
         </p>
 
-        <div class="mt-4 w-full space-y-1">
-            <div class="bg-border-main flex items-center gap-3 border-b py-2">
+        <div class="mt-4 w-full space-y-2">
+            <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Version</span>
                 <span class="text-fg-default flex-1 text-left font-mono font-bold"
                     >{appInfo.version}</span>
@@ -129,7 +130,7 @@
                 </button>
             </div>
 
-            <div class="bg-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Install</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
@@ -139,7 +140,7 @@
                     onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
             </div>
 
-            <div class="bg-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Data</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
@@ -149,7 +150,7 @@
                     onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
             </div>
 
-            <div class="bg-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Cache</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
@@ -159,7 +160,7 @@
                     onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button>
             </div>
 
-            <div class="bg-border-main flex items-center gap-3 border-b py-2">
+            <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Logs</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"

@@ -526,7 +526,7 @@
             <h2 class="text-ui text-fg-default shrink-0 font-semibold">Settings</h2>
         </div>
 
-        <div class="relative mx-4 w-64">
+        <div class="relative mx-4 w-48 shrink-0">
             <Search
                 size={12}
                 class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
@@ -535,7 +535,7 @@
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search..."
-                class="px-3 pl-8" />
+                class="w-full px-3 pl-8" />
         </div>
 
         <button
@@ -563,28 +563,26 @@
                         style:border-top={index > 0 && !setting.visibleWhen && !setting.groupWith
                             ? '1px solid var(--color-border-main)'
                             : 'none'}>
-                        <div class="flex flex-col gap-2">
-                            <label
-                                for={setting.key}
-                                class="flex items-center gap-3 {setting.type.includes(
-                                    'multi-select',
-                                )
-                                    ? ''
-                                    : ''}">
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
                                 <span
-                                    class="text-ui-sm text-fg-muted mr-4 inline-block w-24 shrink-0 opacity-60">
+                                    class="text-ui-sm text-fg-muted inline-block w-24 shrink-0 opacity-60">
                                     {#if setting.visibleWhen}
                                         <!-- Indented child -->
                                     {:else}
                                         {setting.category}:
                                     {/if}
                                 </span>
-                                <span class="text-ui text-fg-default font-medium">
+                                <label
+                                    for={setting.key}
+                                    class="text-ui text-fg-default font-medium min-w-0 flex-1">
                                     {setting.label}
-                                </span>
-                            </label>
+                                </label>
+                            </div>
                             <div
-                                class={setting.type.includes('multi-select') ? 'w-full' : 'w-56'}
+                                class="{setting.type.includes('multi-select')
+                                    ? 'flex-1'
+                                    : 'w-56'} shrink-0"
                                 use:tooltip={setting.tooltip || ''}>
                                 {#if setting.type === 'text'}
                                     <Input

@@ -166,11 +166,11 @@
                         use:scrollIntoView={isSelected}>
                         <button
                             type="button"
-                            class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none {isSelected
-                                ? 'text-fg-inverse'
+                            class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none transition-opacity {isSelected
+                                ? 'text-fg-inverse opacity-100'
                                 : isActive
-                                  ? 'text-accent-secondary'
-                                  : 'text-fg-default'}"
+                                  ? 'text-accent-secondary opacity-60 hover:opacity-100'
+                                  : 'text-fg-default opacity-50 hover:opacity-100'}"
                             onclick={() => handleSelect(tab.id)}
                             role="menuitem"
                             use:tooltip={getTooltipContent(tab)}>

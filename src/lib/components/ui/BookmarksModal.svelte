@@ -28,9 +28,10 @@
         isOpen: boolean;
         onClose: () => void;
         onOpenFile: (path: string) => void;
+        position?: 'center' | 'top';
     }
 
-    let { isOpen = $bindable(false), onClose, onOpenFile }: Props = $props();
+    let { isOpen = $bindable(false), onClose, onOpenFile, position = 'top' }: Props = $props();
 
     type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
     type SortDirection = 'asc' | 'desc';
@@ -205,14 +206,14 @@
     }
 </script>
 
-<Modal bind:isOpen {onClose}>
+<Modal bind:isOpen {onClose} {position}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <BookmarkIcon size={16} class="text-accent-secondary" />
             <h2 class="text-ui text-fg-default shrink-0 font-semibold">Bookmarks</h2>
         </div>
 
-        <div class="relative mx-4 w-64">
+        <div class="relative mx-4 flex-1 shrink">
             <Search
                 size={12}
                 class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
@@ -221,7 +222,7 @@
                 bind:value={searchQuery}
                 type="text"
                 placeholder="Search bookmarks..."
-                class="pr-3 pl-8" />
+                class="w-full pr-3 pl-8" />
         </div>
 
         <div class="flex shrink-0 items-center gap-1">

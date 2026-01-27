@@ -372,9 +372,11 @@
     onClose={() => (appContext.interface.showSettings = false)} />
 <AboutModal
     bind:isOpen={appContext.interface.showAbout}
+    position="top"
     onClose={() => (appContext.interface.showAbout = false)} />
 <BookmarksModal
     bind:isOpen={appContext.interface.showBookmarks}
+    position="top"
     onClose={() => (appContext.interface.showBookmarks = false)}
     onOpenFile={(path) => openFileByPath(path)} />
 <TextTransformModal
