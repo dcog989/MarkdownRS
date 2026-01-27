@@ -521,37 +521,41 @@
 
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
-        <div class="flex items-center gap-2">
-            <Settings size={16} class="text-accent-secondary" />
-            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Settings</h2>
+        <div class="flex w-full items-center gap-4">
+            <div class="flex shrink-0 items-center gap-2">
+                <Settings size={16} class="text-accent-secondary" />
+                <h2 class="text-ui text-fg-default font-semibold">Settings</h2>
+            </div>
+
+            <div class="relative flex-1 min-w-0">
+                <Search
+                    size={14}
+                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
+                <Input
+                    bind:ref={searchInputEl}
+                    bind:value={searchQuery}
+                    type="text"
+                    placeholder="Search..."
+                    class="w-full pl-9 pr-3" />
+            </div>
+
+            <div class="flex shrink-0 items-center gap-2">
+                <button
+                    class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
+                    onclick={() => toggleShortcuts()}
+                    title="Keyboard Shortcuts (F1)"
+                    aria-label="Keyboard Shortcuts">
+                    <Keyboard size={16} />
+                </button>
+
+                <button
+                    class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
+                    onclick={onClose}
+                    aria-label="Close Settings">
+                    <X size={16} />
+                </button>
+            </div>
         </div>
-
-        <div class="relative mx-4 w-48 shrink-0">
-            <Search
-                size={12}
-                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
-            <Input
-                bind:ref={searchInputEl}
-                bind:value={searchQuery}
-                type="text"
-                placeholder="Search..."
-                class="w-full px-3 pl-8" />
-        </div>
-
-        <button
-            class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
-            onclick={() => toggleShortcuts()}
-            title="Keyboard Shortcuts (F1)"
-            aria-label="Keyboard Shortcuts">
-            <Keyboard size={16} />
-        </button>
-
-        <button
-            class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
-            onclick={onClose}
-            aria-label="Close Settings">
-            <X size={16} />
-        </button>
     {/snippet}
 
     <div class="flex flex-col gap-4 p-4">

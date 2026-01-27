@@ -53,42 +53,46 @@
 
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
-        <div class="flex items-center gap-2">
-            <History size={16} class="text-accent-secondary" />
-            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Recent Files</h2>
+        <div class="flex w-full items-center gap-4">
+            <div class="flex shrink-0 items-center gap-2">
+                <History size={16} class="text-accent-secondary" />
+                <h2 class="text-ui text-fg-default font-semibold">Recent Files</h2>
+            </div>
+
+            <div class="relative flex-1 min-w-0">
+                <Search
+                    size={14}
+                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
+                <Input
+                    bind:ref={searchInputEl}
+                    bind:value={searchQuery}
+                    type="text"
+                    placeholder="Search history..."
+                    class="w-full pl-9 pr-3" />
+            </div>
+
+            <div class="flex shrink-0 items-center gap-2">
+                {#if recentFilesStore.files.length > 0}
+                    <button
+                        class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
+                        onclick={handleClearAll}
+                        title="Clear History">
+                        <Trash2 size={16} />
+                    </button>
+                {/if}
+
+                <button
+                    class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors"
+                    onclick={onClose}>
+                    <X size={16} />
+                </button>
+            </div>
         </div>
-
-        <div class="relative mx-4 flex-1 shrink">
-            <Search
-                size={12}
-                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
-            <Input
-                bind:ref={searchInputEl}
-                bind:value={searchQuery}
-                type="text"
-                placeholder="Search history..."
-                class="w-full pr-3 pl-8" />
-        </div>
-
-        {#if recentFilesStore.files.length > 0}
-            <button
-                class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
-                onclick={handleClearAll}
-                title="Clear History">
-                <Trash2 size={16} />
-            </button>
-        {/if}
-
-        <button
-            class="text-fg-muted hover-surface hover:text-danger ml-2 shrink-0 rounded p-1 transition-colors"
-            onclick={onClose}>
-            <X size={16} />
-        </button>
     {/snippet}
 
     <div class="text-ui">
         {#if filteredFiles.length > 0}
-            <div class="bg-border-main divide-y">
+            <div class="divide-y">
                 {#each filteredFiles as path (path)}
                     <div class="group hover-surface-light px-4 py-2.5 transition-colors">
                         <!-- svelte-ignore a11y_click_events_have_key_events -->

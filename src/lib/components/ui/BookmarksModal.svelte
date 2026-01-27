@@ -208,59 +208,63 @@
 
 <Modal bind:isOpen {onClose} {position}>
     {#snippet header()}
-        <div class="flex items-center gap-2">
-            <BookmarkIcon size={16} class="text-accent-secondary" />
-            <h2 class="text-ui text-fg-default shrink-0 font-semibold">Bookmarks</h2>
+        <div class="flex w-full items-center gap-4">
+            <div class="flex shrink-0 items-center gap-2">
+                <BookmarkIcon size={16} class="text-accent-secondary" />
+                <h2 class="text-ui text-fg-default font-semibold">Bookmarks</h2>
+            </div>
+
+            <div class="relative flex-1 min-w-0">
+                <Search
+                    size={14}
+                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
+                <Input
+                    bind:ref={searchInputEl}
+                    bind:value={searchQuery}
+                    type="text"
+                    placeholder="Search bookmarks..."
+                    class="w-full pl-9 pr-3" />
+            </div>
+
+            <div class="flex shrink-0 items-center gap-2">
+                <div class="flex shrink-0 items-center gap-1">
+                    <select
+                        bind:value={sortBy}
+                        class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border px-2 py-1 outline-none">
+                        <option value="most-recent">Most Recent</option>
+                        <option value="alphabetical">Alphabetical</option>
+                        <option value="last-updated">Last Updated</option>
+                    </select>
+                    <button
+                        onclick={toggleSortDirection}
+                        class="text-fg-muted hover-surface rounded p-1 transition-colors"
+                        title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
+                        {#if sortDirection === 'asc'}
+                            <ArrowUp size={16} />
+                        {:else}
+                            <ArrowDown size={16} />
+                        {/if}
+                    </button>
+                </div>
+
+                <button
+                    class="text-accent-primary hover-surface shrink-0 rounded p-1 transition-colors"
+                    onclick={startAdd}
+                    title="Add Bookmark">
+                    <Plus size={16} />
+                </button>
+
+                <button
+                    class="text-fg-muted hover-surface hover:text-danger shrink-0 rounded p-1 transition-colors"
+                    onclick={onClose}>
+                    <X size={16} />
+                </button>
+            </div>
         </div>
-
-        <div class="relative mx-4 flex-1 shrink">
-            <Search
-                size={12}
-                class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 opacity-50" />
-            <Input
-                bind:ref={searchInputEl}
-                bind:value={searchQuery}
-                type="text"
-                placeholder="Search bookmarks..."
-                class="w-full pr-3 pl-8" />
-        </div>
-
-        <div class="flex shrink-0 items-center gap-1">
-            <select
-                bind:value={sortBy}
-                class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border px-2 py-1 outline-none">
-                <option value="most-recent">Most Recent</option>
-                <option value="alphabetical">Alphabetical</option>
-                <option value="last-updated">Last Updated</option>
-            </select>
-            <button
-                onclick={toggleSortDirection}
-                class="text-fg-muted hover-surface rounded p-1 transition-colors"
-                title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
-                {#if sortDirection === 'asc'}
-                    <ArrowUp size={16} />
-                {:else}
-                    <ArrowDown size={16} />
-                {/if}
-            </button>
-        </div>
-
-        <button
-            class="text-accent-primary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
-            onclick={startAdd}
-            title="Add Bookmark">
-            <Plus size={16} />
-        </button>
-
-        <button
-            class="text-fg-muted hover-surface hover:text-danger ml-2 shrink-0 rounded p-1 transition-colors"
-            onclick={onClose}>
-            <X size={16} />
-        </button>
     {/snippet}
 
     {#if showAddForm}
-        <div class="bg-bg-input bg-border-main border-b px-4 py-3">
+        <div class="bg-bg-input border-b px-4 py-3">
             <div class="space-y-2">
                 <div class="flex gap-2">
                     <Input
@@ -302,7 +306,7 @@
 
     <div class="text-ui">
         {#if sortedBookmarks.length > 0}
-            <div class="divide-border-main bg-border-main divide-y">
+            <div class="divide-y">
                 {#each sortedBookmarks as bookmark (bookmark.id)}
                     <div class="hover-surface-light px-4 py-2.5 transition-colors">
                         {#if editingId === bookmark.id}
