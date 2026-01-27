@@ -19,7 +19,6 @@
     let currentThumbTop = 0;
 
     let resizeObserver: ResizeObserver;
-    let mutationObserver: MutationObserver;
     let frameId: number | null = null;
 
     // Smooth scroll state
@@ -221,7 +220,6 @@
         if (!viewport) return;
 
         resizeObserver?.disconnect();
-        mutationObserver?.disconnect();
 
         const debouncedMeasure = () => {
             if (frameId) cancelAnimationFrame(frameId);
@@ -240,9 +238,6 @@
             resizeObserver.observe(viewport.firstElementChild);
         }
 
-        mutationObserver = new MutationObserver(debouncedMeasure);
-        mutationObserver.observe(viewport, { childList: true, subtree: true, attributes: true });
-
         viewport.addEventListener('scroll', onScroll, { passive: true });
 
         measure();
@@ -255,7 +250,6 @@
                 if (frameId) cancelAnimationFrame(frameId);
                 viewport?.removeEventListener('scroll', onScroll);
                 resizeObserver?.disconnect();
-                mutationObserver?.disconnect();
             };
         }
     });

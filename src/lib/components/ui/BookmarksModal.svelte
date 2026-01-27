@@ -218,7 +218,7 @@
                 <div class="flex shrink-0 items-center gap-1">
                     <select
                         bind:value={sortBy}
-                        class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border px-2 py-1 outline-none">
+                        class="text-sm bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border px-2 py-1 outline-none">
                         <option value="most-recent">Most Recent</option>
                         <option value="alphabetical">Alphabetical</option>
                         <option value="last-updated">Last Updated</option>
