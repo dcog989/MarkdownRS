@@ -392,7 +392,7 @@
                     {/if}
 
                     {#if showPreview}
-                        <div class="flex-1-height-100 min-width-0 min-height-0">
+                        <div class="flex-1-height-100 min-w-0 min-h-0">
                             <Preview tabId={appContext.app.activeTabId} />
                         </div>
                     {/if}

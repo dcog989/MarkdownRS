@@ -32,16 +32,20 @@
     </div>
 
     <div class="relative flex-1 min-w-0">
-        <Search
-            size={14}
-            class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
         <Input
             bind:ref={inputRef}
             bind:value={searchValue}
             type="text"
-            placeholder={searchPlaceholder}
-            class="w-full pl-12 pr-3"
+            class="w-full px-2"
             onkeydown={onKeydown} />
+
+        {#if !searchValue}
+            <div
+                class="pointer-events-none absolute inset-0 flex items-center px-2 text-fg-muted opacity-50">
+                <Search size={16} class="mx-2 shrink-0" />
+                <span class="truncate text-sm">{searchPlaceholder}</span>
+            </div>
+        {/if}
     </div>
 
     <div class="flex shrink-0 items-center gap-2">
