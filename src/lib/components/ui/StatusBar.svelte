@@ -93,7 +93,7 @@
 </script>
 
 <footer
-    class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex h-6 shrink-0 items-center justify-between overflow-hidden border-t px-3 whitespace-nowrap transition-colors duration-200 select-none"
+    class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex h-6 shrink-0 items-center justify-between overflow-hidden border-t px-3 py-3 whitespace-nowrap transition-colors duration-200 select-none"
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
