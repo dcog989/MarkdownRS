@@ -2,6 +2,7 @@
     import { tooltip } from '$lib/actions/tooltip';
     import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
     import Input from '$lib/components/ui/Input.svelte';
+    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
     import { toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
@@ -13,7 +14,7 @@
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
-    import { Keyboard, Search, Settings, X } from 'lucide-svelte';
+    import { Keyboard, Settings } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
     interface Props {
@@ -521,25 +522,14 @@
 
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
-        <div class="flex w-full items-center gap-4">
-            <div class="flex shrink-0 items-center gap-2">
-                <Settings size={16} class="text-accent-secondary" />
-                <h2 class="text-ui text-fg-default font-semibold">Settings</h2>
-            </div>
-
-            <div class="relative flex-1 min-w-0">
-                <Search
-                    size={14}
-                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
-                <Input
-                    bind:ref={searchInputEl}
-                    bind:value={searchQuery}
-                    type="text"
-                    placeholder="Search..."
-                    class="w-full pl-9 pr-3" />
-            </div>
-
-            <div class="flex shrink-0 items-center gap-2">
+        <ModalSearchHeader
+            title="Settings"
+            icon={Settings}
+            bind:searchValue={searchQuery}
+            bind:inputRef={searchInputEl}
+            searchPlaceholder="Search..."
+            {onClose}>
+            {#snippet extraActions()}
                 <button
                     class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
                     onclick={() => toggleShortcuts()}
@@ -547,143 +537,107 @@
                     aria-label="Keyboard Shortcuts">
                     <Keyboard size={16} />
                 </button>
-
-                <button
-                    class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
-                    onclick={onClose}
-                    aria-label="Close Settings">
-                    <X size={16} />
-                </button>
-            </div>
-        </div>
+            {/snippet}
+        </ModalSearchHeader>
     {/snippet}
 
-    <div class="flex flex-col gap-4 p-4">
+    <div class="p-4">
         {#if sortedSettings.length > 0}
-            <div>
-                {#each sortedSettings as setting, index (setting.key)}
-                    <div
-                        class="py-3"
-                        style:border-top={index > 0 && !setting.visibleWhen && !setting.groupWith
-                            ? '1px solid var(--color-border-main)'
-                            : 'none'}>
-                        <div class="flex items-center gap-6">
-                            <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="settings-grid">
+                {#each sortedSettings as setting (setting.key)}
+                    <div class="text-ui-sm text-fg-muted opacity-60">
+                        {#if !setting.visibleWhen}
+                            {setting.category}
+                        {/if}
+                    </div>
+                    <label for={setting.key} class="text-ui text-fg-default font-medium">
+                        {setting.label}
+                    </label>
+                    <div class="w-full" use:tooltip={setting.tooltip || ''}>
+                        {#if setting.type === 'text'}
+                            <Input
+                                id={setting.key}
+                                type="text"
+                                value={getSettingValue(setting.key, setting.defaultValue)}
+                                oninput={(e) =>
+                                    updateSetting(
+                                        setting.key,
+                                        e.currentTarget.value,
+                                        setting.type,
+                                    )} />
+                        {:else if setting.type === 'number'}
+                            <Input
+                                id={setting.key}
+                                type="number"
+                                value={getSettingValue(setting.key, setting.defaultValue)}
+                                min={setting.min}
+                                max={setting.max}
+                                oninput={(e) =>
+                                    updateSetting(
+                                        setting.key,
+                                        e.currentTarget.value,
+                                        setting.type,
+                                    )} />
+                        {:else if setting.type === 'range'}
+                            <div class="flex items-center gap-3">
+                                <input
+                                    id={setting.key}
+                                    type="range"
+                                    value={getSettingValue(setting.key, setting.defaultValue)}
+                                    min={setting.min}
+                                    max={setting.max}
+                                    step={setting.step}
+                                    oninput={(e) =>
+                                        updateSetting(
+                                            setting.key,
+                                            e.currentTarget.value,
+                                            setting.type,
+                                        )}
+                                    class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full" />
                                 <span
-                                    class="text-ui-sm text-fg-muted inline-block w-24 shrink-0 opacity-60">
-                                    {#if setting.visibleWhen}
-                                        <!-- Indented child -->
-                                    {:else}
-                                        {setting.category}:
-                                    {/if}
-                                </span>
-                                <label
-                                    for={setting.key}
-                                    class="text-ui text-fg-default font-medium min-w-0 flex-1">
-                                    {setting.label}
-                                </label>
+                                    class="text-ui-sm text-fg-muted w-10 text-right font-mono opacity-80"
+                                    >{getSettingValue(setting.key, setting.defaultValue)}%</span>
                             </div>
-                            <div
-                                class="{setting.type.includes('multi-select')
-                                    ? 'flex-1'
-                                    : 'w-56'} shrink-0"
-                                use:tooltip={setting.tooltip || ''}>
-                                {#if setting.type === 'text'}
-                                    <Input
-                                        id={setting.key}
-                                        type="text"
-                                        value={getSettingValue(setting.key, setting.defaultValue)}
-                                        oninput={(e) =>
-                                            updateSetting(
-                                                setting.key,
-                                                e.currentTarget.value,
-                                                setting.type,
-                                            )} />
-                                {:else if setting.type === 'number'}
-                                    <Input
-                                        id={setting.key}
-                                        type="number"
-                                        value={getSettingValue(setting.key, setting.defaultValue)}
-                                        min={setting.min}
-                                        max={setting.max}
-                                        oninput={(e) =>
-                                            updateSetting(
-                                                setting.key,
-                                                e.currentTarget.value,
-                                                setting.type,
-                                            )} />
-                                {:else if setting.type === 'range'}
-                                    <div class="flex items-center gap-3">
-                                        <input
-                                            id={setting.key}
-                                            type="range"
-                                            value={getSettingValue(
-                                                setting.key,
-                                                setting.defaultValue,
-                                            )}
-                                            min={setting.min}
-                                            max={setting.max}
-                                            step={setting.step}
-                                            oninput={(e) =>
-                                                updateSetting(
-                                                    setting.key,
-                                                    e.currentTarget.value,
-                                                    setting.type,
-                                                )}
-                                            class="bg-border-main accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full" />
-                                        <span
-                                            class="text-ui-sm text-fg-muted w-10 text-right font-mono opacity-80"
-                                            >{getSettingValue(
-                                                setting.key,
-                                                setting.defaultValue,
-                                            )}%</span>
-                                    </div>
-                                {:else if setting.type === 'boolean'}
-                                    <input
-                                        id={setting.key}
-                                        type="checkbox"
-                                        checked={getSettingValue(setting.key, setting.defaultValue)}
-                                        onchange={(e) =>
-                                            updateSetting(
-                                                setting.key,
-                                                e.currentTarget.checked,
-                                                setting.type,
-                                            )}
-                                        class="accent-accent-primary h-4 w-4 cursor-pointer rounded" />
-                                {:else if setting.type === 'select'}
-                                    <select
-                                        id={setting.key}
-                                        value={getSettingValue(setting.key, setting.defaultValue)}
-                                        onchange={(e) =>
-                                            updateSetting(
-                                                setting.key,
-                                                e.currentTarget.value,
-                                                setting.type,
-                                            )}
-                                        class="text-ui bg-bg-input text-fg-default bg-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
-                                        {#each setting.options || [] as option, idx (option)}
-                                            <option value={option}
-                                                >{setting.optionLabels?.[idx] || option}</option>
-                                        {/each}
-                                    </select>
-                                {:else if setting.type === 'dictionary-multi-select'}
-                                    <div>
-                                        <DictionarySelector
-                                            selected={appContext.app.languageDictionaries}
-                                            onChange={(dicts) =>
-                                                updateSetting(setting.key, dicts, setting.type)} />
-                                    </div>
-                                {:else if setting.type === 'custom-context-menu'}
-                                    <input
-                                        id={setting.key}
-                                        type="checkbox"
-                                        checked={isContextMenuEnabled}
-                                        onchange={(e) => toggleContextMenu(e.currentTarget.checked)}
-                                        class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
-                                        disabled={isCheckingContextMenu} />
-                                {/if}
+                        {:else if setting.type === 'boolean'}
+                            <input
+                                id={setting.key}
+                                type="checkbox"
+                                checked={getSettingValue(setting.key, setting.defaultValue)}
+                                onchange={(e) =>
+                                    updateSetting(
+                                        setting.key,
+                                        e.currentTarget.checked,
+                                        setting.type,
+                                    )}
+                                class="accent-accent-primary h-4 w-4 cursor-pointer rounded" />
+                        {:else if setting.type === 'select'}
+                            <select
+                                id={setting.key}
+                                value={getSettingValue(setting.key, setting.defaultValue)}
+                                onchange={(e) =>
+                                    updateSetting(setting.key, e.currentTarget.value, setting.type)}
+                                class="text-ui bg-bg-input text-fg-default bg-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
+                                {#each setting.options || [] as option, idx (option)}
+                                    <option value={option}
+                                        >{setting.optionLabels?.[idx] || option}</option>
+                                {/each}
+                            </select>
+                        {:else if setting.type === 'dictionary-multi-select'}
+                            <div>
+                                <DictionarySelector
+                                    selected={appContext.app.languageDictionaries}
+                                    onChange={(dicts) =>
+                                        updateSetting(setting.key, dicts, setting.type)} />
                             </div>
-                        </div>
+                        {:else if setting.type === 'custom-context-menu'}
+                            <input
+                                id={setting.key}
+                                type="checkbox"
+                                checked={isContextMenuEnabled}
+                                onchange={(e) => toggleContextMenu(e.currentTarget.checked)}
+                                class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
+                                disabled={isCheckingContextMenu} />
+                        {/if}
                     </div>
                 {/each}
             </div>

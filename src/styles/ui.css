@@ -640,6 +640,14 @@
     left: 0.625rem;
 }
 
+.left-3 {
+    left: 0.75rem;
+}
+
+.left-4 {
+    left: 1rem;
+}
+
 .left-auto {
     left: auto;
 }
@@ -892,6 +900,18 @@
     padding-left: 2.5rem;
 }
 
+.pl-11 {
+    padding-left: 2.75rem;
+}
+
+.pl-12 {
+    padding-left: 3rem;
+}
+
+.pl-14 {
+    padding-left: 3.5rem;
+}
+
 .pr-3 {
     padding-right: 0.75rem;
 }
@@ -1141,6 +1161,15 @@
 
 .divide-border-main\/30 > :not([hidden]) ~ :not([hidden]) {
     border-color: oklch(from var(--border-primary) l c h / 0.3);
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: max-content 1fr 1fr;
+    column-gap: 2rem;
+    row-gap: 0.75rem;
+    align-items: center;
+    width: 100%;
 }
 
 /* Color Classes */
@@ -1760,7 +1789,6 @@ label {
     inset: 0;
     z-index: 100;
     display: flex;
-    align-items: center;
     background-color: var(--surface-backdrop);
     backdrop-filter: blur(2px);
 }

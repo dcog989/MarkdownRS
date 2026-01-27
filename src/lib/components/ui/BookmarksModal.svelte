@@ -1,5 +1,6 @@
 <script lang="ts">
     import Input from '$lib/components/ui/Input.svelte';
+    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
     import {
         addBookmark,
         deleteBookmark,
@@ -17,10 +18,8 @@
         Bookmark as BookmarkIcon,
         Pen,
         Plus,
-        Search,
         Tag,
         Trash2,
-        X,
     } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
@@ -208,25 +207,14 @@
 
 <Modal bind:isOpen {onClose} {position}>
     {#snippet header()}
-        <div class="flex w-full items-center gap-4">
-            <div class="flex shrink-0 items-center gap-2">
-                <BookmarkIcon size={16} class="text-accent-secondary" />
-                <h2 class="text-ui text-fg-default font-semibold">Bookmarks</h2>
-            </div>
-
-            <div class="relative flex-1 min-w-0">
-                <Search
-                    size={14}
-                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
-                <Input
-                    bind:ref={searchInputEl}
-                    bind:value={searchQuery}
-                    type="text"
-                    placeholder="Search bookmarks..."
-                    class="w-full pl-9 pr-3" />
-            </div>
-
-            <div class="flex shrink-0 items-center gap-2">
+        <ModalSearchHeader
+            title="Bookmarks"
+            icon={BookmarkIcon}
+            bind:searchValue={searchQuery}
+            bind:inputRef={searchInputEl}
+            searchPlaceholder="Search bookmarks..."
+            {onClose}>
+            {#snippet extraActions()}
                 <div class="flex shrink-0 items-center gap-1">
                     <select
                         bind:value={sortBy}
@@ -248,23 +236,17 @@
                 </div>
 
                 <button
-                    class="text-accent-primary hover-surface shrink-0 rounded p-1 transition-colors"
+                    class="text-accent-primary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
                     onclick={startAdd}
                     title="Add Bookmark">
                     <Plus size={16} />
                 </button>
-
-                <button
-                    class="text-fg-muted hover-surface hover:text-danger shrink-0 rounded p-1 transition-colors"
-                    onclick={onClose}>
-                    <X size={16} />
-                </button>
-            </div>
-        </div>
+            {/snippet}
+        </ModalSearchHeader>
     {/snippet}
 
     {#if showAddForm}
-        <div class="bg-bg-input border-b px-4 py-3">
+        <div class="bg-bg-input bg-border-main border-b px-4 py-3">
             <div class="space-y-2">
                 <div class="flex gap-2">
                     <Input
@@ -306,7 +288,7 @@
 
     <div class="text-ui">
         {#if sortedBookmarks.length > 0}
-            <div class="divide-y">
+            <div class="divide-border-main divide-y">
                 {#each sortedBookmarks as bookmark (bookmark.id)}
                     <div class="hover-surface-light px-4 py-2.5 transition-colors">
                         {#if editingId === bookmark.id}

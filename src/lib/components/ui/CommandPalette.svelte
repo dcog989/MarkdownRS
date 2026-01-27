@@ -1,6 +1,6 @@
 <script lang="ts">
-    import Input from '$lib/components/ui/Input.svelte';
-    import { Search, X, Zap } from 'lucide-svelte';
+    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+    import { Zap } from 'lucide-svelte';
     import { tick } from 'svelte';
     import Modal from './Modal.svelte';
 
@@ -77,31 +77,14 @@
 
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
-        <div class="flex w-full items-center gap-4">
-            <div class="flex shrink-0 items-center gap-2">
-                <Zap size={16} class="text-accent-secondary" />
-                <h2 class="text-ui text-fg-default font-semibold">Commands</h2>
-            </div>
-
-            <div class="relative flex-1 min-w-0">
-                <Search
-                    size={14}
-                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
-                <Input
-                    bind:ref={inputRef}
-                    bind:value={query}
-                    type="text"
-                    placeholder="Search..."
-                    class="w-full pl-9 pr-3"
-                    onkeydown={handleKeydown} />
-            </div>
-
-            <button
-                class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors"
-                onclick={close}>
-                <X size={16} />
-            </button>
-        </div>
+        <ModalSearchHeader
+            title="Commands"
+            icon={Zap}
+            bind:searchValue={query}
+            bind:inputRef
+            searchPlaceholder="Search..."
+            onClose={close}
+            onKeydown={handleKeydown} />
     {/snippet}
 
     <div class="py-1">

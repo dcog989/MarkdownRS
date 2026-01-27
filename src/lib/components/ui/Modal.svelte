@@ -133,7 +133,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="ui-backdrop z-index-auto pointer-events-auto {position === 'center'
+        class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === 'center'
             ? 'items-center'
             : 'items-start pt-16'}"
         style="z-index: {zIndex};"

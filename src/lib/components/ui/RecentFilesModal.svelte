@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Input from '$lib/components/ui/Input.svelte';
+    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
     import {
         clearRecentFiles,
         loadRecentFiles,
@@ -7,7 +7,7 @@
         removeFromRecentFiles,
     } from '$lib/stores/recentFilesStore.svelte';
     import { openFileByPath } from '$lib/utils/fileSystem';
-    import { Clock, History, Search, Trash2, X } from 'lucide-svelte';
+    import { Clock, History, Trash2, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
     interface Props {
@@ -53,25 +53,14 @@
 
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
-        <div class="flex w-full items-center gap-4">
-            <div class="flex shrink-0 items-center gap-2">
-                <History size={16} class="text-accent-secondary" />
-                <h2 class="text-ui text-fg-default font-semibold">Recent Files</h2>
-            </div>
-
-            <div class="relative flex-1 min-w-0">
-                <Search
-                    size={14}
-                    class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-50" />
-                <Input
-                    bind:ref={searchInputEl}
-                    bind:value={searchQuery}
-                    type="text"
-                    placeholder="Search history..."
-                    class="w-full pl-9 pr-3" />
-            </div>
-
-            <div class="flex shrink-0 items-center gap-2">
+        <ModalSearchHeader
+            title="Recent Files"
+            icon={History}
+            bind:searchValue={searchQuery}
+            bind:inputRef={searchInputEl}
+            searchPlaceholder="Search history..."
+            {onClose}>
+            {#snippet extraActions()}
                 {#if recentFilesStore.files.length > 0}
                     <button
                         class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
@@ -80,19 +69,13 @@
                         <Trash2 size={16} />
                     </button>
                 {/if}
-
-                <button
-                    class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors"
-                    onclick={onClose}>
-                    <X size={16} />
-                </button>
-            </div>
-        </div>
+            {/snippet}
+        </ModalSearchHeader>
     {/snippet}
 
     <div class="text-ui">
         {#if filteredFiles.length > 0}
-            <div class="divide-y">
+            <div class="divide-border-main divide-y">
                 {#each filteredFiles as path (path)}
                     <div class="group hover-surface-light px-4 py-2.5 transition-colors">
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
