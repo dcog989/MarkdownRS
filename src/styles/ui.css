@@ -1183,9 +1183,25 @@
     display: grid;
     grid-template-columns: max-content 1fr 1fr;
     column-gap: 2rem;
-    row-gap: 0.75rem;
     align-items: center;
     width: 100%;
+}
+
+.settings-row {
+    display: contents;
+}
+
+.settings-grid > .settings-row > div,
+.settings-grid > .settings-row > label {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* Alternating row backgrounds - apply to all cells in even rows */
+.settings-row.bg-row-even > div,
+.settings-row.bg-row-even > label {
+    background-color: var(--surface-row);
 }
 
 /* Color Classes */
