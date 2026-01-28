@@ -27,7 +27,7 @@ function getNewlineDecorations(view: EditorView): DecorationSet {
                 builder.add(
                     line.to,
                     line.to,
-                    Decoration.widget({ widget: new NewlineWidget(), side: 1 }),
+                    Decoration.widget({ widget: new NewlineWidget(), side: -1 }),
                 );
             }
             pos = line.to + 1;
@@ -81,12 +81,6 @@ function getSelectionWhitespaceDecorations(view: EditorView): DecorationSet {
                     const pos = start + k;
                     if (char === ' ') builder.add(pos, pos + 1, spaceDeco);
                     else if (char === '\t') builder.add(pos, pos + 1, tabDeco);
-                    else if (char === '\n')
-                        builder.add(
-                            pos,
-                            pos,
-                            Decoration.widget({ widget: new NewlineWidget(), side: 1 }),
-                        );
                 }
             }
         }

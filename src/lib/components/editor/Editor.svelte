@@ -28,7 +28,6 @@
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
     import type { EditorView as CM6EditorView } from '@codemirror/view';
-    import { EditorView } from '@codemirror/view';
     import { readText } from '@tauri-apps/plugin-clipboard-manager';
     import { onMount, tick, untrack } from 'svelte';
     import EditorViewComponent from './EditorView.svelte';
@@ -186,18 +185,6 @@
         }
     }
 
-    function handleScrollbarClick(ratio: number) {
-        if (!cmView) return;
-
-        const doc = cmView.state.doc;
-        const targetLineNumber = Math.max(1, Math.min(doc.lines, Math.round(doc.lines * ratio)));
-        const line = doc.line(targetLineNumber);
-
-        cmView.dispatch({
-            effects: EditorView.scrollIntoView(line.from, { y: 'start' }),
-        });
-    }
-
     let initialContent = $derived(activeTab?.content || '');
     let filename = $derived.by(() => {
         if (activeTab?.path) return activeTab.path;
@@ -233,7 +220,7 @@
         onSelectionChange={handleSelectionChange}
         onHistoryUpdate={handleHistoryUpdate} />
     {#if cmView}
-        <CustomScrollbar viewport={cmView.scrollDOM} onScrollClick={handleScrollbarClick} />
+        <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
     <FindReplacePanel
         bind:this={findReplacePanel}
