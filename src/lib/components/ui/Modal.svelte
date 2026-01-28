@@ -25,7 +25,6 @@
     }>();
 
     let viewport = $state<HTMLDivElement>();
-    let content = $state<HTMLDivElement>();
     let modalPanel = $state<HTMLDivElement>();
 
     function handleBackdropClick(e: MouseEvent) {
@@ -200,12 +199,12 @@
             <!-- Body with Internal Scrollbar Logic -->
             <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
                 <div bind:this={viewport} class="no-scrollbar flex-1 overflow-y-auto">
-                    <div bind:this={content} class="flex-flow-root">
+                    <div class="flex-flow-root">
                         {@render children()}
                     </div>
                 </div>
                 {#if viewport}
-                    <CustomScrollbar {viewport} {content} />
+                    <CustomScrollbar {viewport} />
                 {/if}
             </div>
 

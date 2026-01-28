@@ -59,6 +59,25 @@
     background-color: var(--selection-bg) !important;
 }
 
+/* Prevent layout shift from special characters showing on selection */
+.cm-selectionMatch {
+    background-color: var(--selection-match-bg) !important;
+}
+
+/* Hide newline characters completely to prevent layout shift */
+.cm-specialChar {
+    display: none !important;
+}
+
+/* Prevent newline widget from causing layout shift */
+.cm-newline {
+    position: absolute;
+    pointer-events: none;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    font-size: 0.8em;
+}
+
 /* Syntax Highlighting - Structure & Variables */
 .cm-h1,
 .cm-h2,

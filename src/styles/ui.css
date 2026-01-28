@@ -1652,6 +1652,19 @@
     background-color: var(--surface-row);
 }
 
+/* Custom Scrollbar */
+.scrollbar-thumb-custom {
+    transition:
+        width 150ms ease-in-out,
+        opacity 150ms ease-in-out;
+}
+
+.scrollbar-thumb-custom:hover,
+.scrollbar-track:hover .scrollbar-thumb-custom {
+    width: 12px !important;
+    opacity: 0.7 !important;
+}
+
 /* Group Hover States */
 .group:hover .group-hover\:opacity-100 {
     opacity: 1;

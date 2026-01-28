@@ -242,7 +242,7 @@
                 {/each}
             </div>
             {#if dropdownListRef}
-                <CustomScrollbar viewport={dropdownListRef} content={dropdownListRef} />
+                <CustomScrollbar viewport={dropdownListRef} />
             {/if}
         </div>
     </div>
