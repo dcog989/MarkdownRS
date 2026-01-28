@@ -92,11 +92,17 @@
             {#each filteredCommands as command, index (command.id)}
                 <button
                     type="button"
-                    class="command-item text-ui flex w-full items-center justify-between px-3 py-2 text-left outline-none"
+                    class="command-item text-ui flex w-full items-center justify-between px-3 py-2 text-left outline-none {index %
+                        2 ===
+                    1
+                        ? 'bg-row-even'
+                        : ''}"
                     style="
                         background-color: {index === selectedIndex
                         ? 'var(--color-accent-primary)'
-                        : 'transparent'};
+                        : index % 2 === 1
+                          ? 'var(--surface-row)'
+                          : 'transparent'};
                         color: {index === selectedIndex
                         ? 'var(--color-fg-inverse)'
                         : 'var(--color-fg-default)'};

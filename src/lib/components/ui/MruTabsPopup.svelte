@@ -54,7 +54,7 @@
                         {@const isSelected = tab.id === selectedId}
                         <button
                             type="button"
-                            class="mru-item"
+                            class="mru-item {index % 2 === 1 ? 'mru-item-even' : ''}"
                             data-selected={isSelected}
                             use:scrollIntoView={isSelected}
                             onclick={() => {

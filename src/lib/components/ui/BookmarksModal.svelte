@@ -289,8 +289,11 @@
     <div class="text-ui">
         {#if sortedBookmarks.length > 0}
             <div class="divide-border-main divide-y">
-                {#each sortedBookmarks as bookmark (bookmark.id)}
-                    <div class="hover-surface-light px-4 py-2.5 transition-colors">
+                {#each sortedBookmarks as bookmark, index (bookmark.id)}
+                    <div
+                        class="hover-surface-light px-4 py-2.5 transition-colors {index % 2 === 1
+                            ? 'bg-row-even'
+                            : ''}">
                         {#if editingId === bookmark.id}
                             <div class="space-y-2">
                                 <Input bind:value={editTitle} type="text" />

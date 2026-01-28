@@ -1631,6 +1631,11 @@
     accent-color: var(--accent-primary);
 }
 
+/* Alternating Row Backgrounds */
+.bg-row-even {
+    background-color: var(--surface-row);
+}
+
 /* Group Hover States */
 .group:hover .group-hover\:opacity-100 {
     opacity: 1;

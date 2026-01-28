@@ -161,7 +161,9 @@
                         role="none"
                         class="group flex w-full items-stretch {isSelected
                             ? 'bg-accent-primary'
-                            : 'bg-transparent'}"
+                            : index % 2 === 1
+                              ? 'bg-row-even'
+                              : 'bg-transparent'}"
                         onmousemove={(e) => handleHover(index, e)}
                         use:scrollIntoView={isSelected}>
                         <button

@@ -88,12 +88,15 @@
             {#each categories as [category, defs] (category)}
                 <div>
                     <h3
-                        class="text-ui-sm text-accent-secondary bg-border-main mb-2 border-b pb-1 font-bold tracking-widest uppercase">
+                        class="text-ui text-accent-secondary border-t-accent-secondary mb-2 border-b pb-1 font-bold tracking-widest uppercase">
                         {category}
                     </h3>
                     <div class="divide-border-main/30 divide-y">
-                        {#each defs as def (def.command)}
-                            <div class="group flex items-center justify-between py-2">
+                        {#each defs as def, index (def.command)}
+                            <div
+                                class="group flex items-center justify-between py-2 {index % 2 === 1
+                                    ? 'bg-row-even'
+                                    : ''}">
                                 <button
                                     class="text-fg-default hover:text-accent-secondary flex-1 cursor-pointer text-left transition-colors outline-none"
                                     onclick={() => startRecording(def.command)}>

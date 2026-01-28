@@ -76,8 +76,13 @@
     <div class="text-ui">
         {#if filteredFiles.length > 0}
             <div class="divide-border-main divide-y">
-                {#each filteredFiles as path (path)}
-                    <div class="group hover-surface-light px-4 py-2.5 transition-colors">
+                {#each filteredFiles as path, index (path)}
+                    <div
+                        class="group hover-surface-light px-4 py-2.5 transition-colors {index %
+                            2 ===
+                        1
+                            ? 'bg-row-even'
+                            : ''}">
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
