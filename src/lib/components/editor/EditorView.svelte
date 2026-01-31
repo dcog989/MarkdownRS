@@ -51,7 +51,7 @@
     import { closeBrackets } from '@codemirror/autocomplete';
     import { history, historyField } from '@codemirror/commands';
     import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-    import { indentUnit } from '@codemirror/language';
+    import { defaultHighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
     import { languages } from '@codemirror/language-data';
     import { highlightSelectionMatches, search } from '@codemirror/search';
     import { Compartment, EditorState, type Extension } from '@codemirror/state';
@@ -64,6 +64,10 @@
         type KeyBinding,
     } from '@codemirror/view';
     import { onDestroy, onMount, untrack } from 'svelte';
+
+    const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
+        fallback: true,
+    });
 
     /**
      * Internal interface for CodeMirror view with application-specific properties
@@ -277,8 +281,9 @@
                     ? [highlightWhitespace(), newlinePlugin]
                     : [selectionWhitespacePlugin],
             ),
-            languageComp.of(isMarkdown ? markdownExtensions : []),
             userThemeExtension,
+            defaultFallbackHighlighting,
+            languageComp.of(isMarkdown ? markdownExtensions : []),
             spellComp.of(createSpellCheckLinter()),
             doubleClickComp.of(createDoubleClickHandler()),
             rulerComp.of(rulerPlugin),

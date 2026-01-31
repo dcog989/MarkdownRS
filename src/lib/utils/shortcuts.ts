@@ -41,10 +41,32 @@ export class KeyboardShortcutManager {
     }
 
     /**
+     * Check if the event target is an input element where typing should not trigger shortcuts
+     */
+    private isInputElement(target: EventTarget | null): boolean {
+        if (!target || !(target instanceof HTMLElement)) return false;
+
+        const tagName = target.tagName.toLowerCase();
+        const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+        const isContentEditable = target.isContentEditable;
+        const hasInputRole =
+            target.getAttribute('role') === 'textbox' ||
+            target.getAttribute('role') === 'searchbox' ||
+            target.getAttribute('role') === 'combobox';
+
+        return isInput || isContentEditable || hasInputRole;
+    }
+
+    /**
      * Handle keyboard events by matching against current mappings
      */
     async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
         if (!this.enabled || e.repeat) return false;
+
+        // Ignore shortcuts when typing in input fields, unless it's an escape key
+        if (this.isInputElement(e.target) && e.key !== 'Escape') {
+            return false;
+        }
 
         const pressedKey = this.getEventKey(e);
 
@@ -64,7 +86,15 @@ export class KeyboardShortcutManager {
             if (pressedKey === mappedKey.toLowerCase() && def.handler) {
                 e.preventDefault();
                 e.stopPropagation();
-                await def.handler(e);
+
+                // Wrap handler in try-catch to prevent cascading failures
+                try {
+                    await def.handler(e);
+                } catch (err) {
+                    console.error(`[Shortcuts] Handler failed for command "${def.command}":`, err);
+                    // Re-throw to allow global error handling if needed
+                    throw err;
+                }
                 return true;
             }
         }

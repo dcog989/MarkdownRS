@@ -384,7 +384,11 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     if (tab.path) {
         // Ensure the file is added to recent history before closing
         addToRecentFiles(tab.path);
-        fileWatcher.unwatch(tab.path);
+        try {
+            fileWatcher.unwatch(tab.path);
+        } catch {
+            // Ignore errors when unwatching files that may not exist
+        }
     }
 
     // Tab is removed from store here

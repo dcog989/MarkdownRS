@@ -15,6 +15,7 @@ import {
     refreshMetadata,
     reloadFileContent,
 } from './fileMetadata';
+import { setFileCheckStatus } from '$lib/stores/editorStore.svelte';
 import { fileWatcher } from './fileWatcher';
 
 // Only import types if needed
@@ -170,6 +171,22 @@ const persistenceManager = new SessionPersistenceManager();
 
 export async function initializeTabFileState(tab: EditorTab): Promise<void> {
     if (!tab.path) {
+        return;
+    }
+
+    // First check if the file exists
+    let fileExists = false;
+    try {
+        await callBackend('get_file_metadata', { path: tab.path }, 'File:Metadata');
+        fileExists = true;
+    } catch {
+        // File doesn't exist, mark as such and skip further operations
+        setFileCheckStatus(tab.id, true, true);
+        return;
+    }
+
+    if (!fileExists) {
+        setFileCheckStatus(tab.id, true, true);
         return;
     }
 

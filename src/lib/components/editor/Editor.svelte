@@ -27,6 +27,7 @@
         spellCheckKeymap,
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
+    import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
     import type { EditorView as CM6EditorView } from '@codemirror/view';
     import { readText } from '@tauri-apps/plugin-clipboard-manager';
     import { onMount, tick, untrack } from 'svelte';
@@ -75,6 +76,20 @@
 
     onMount(() => {
         initSpellcheck();
+
+        return () => {
+            // Cleanup: unregister editor instance when component is destroyed
+            unregisterEditorInstance(tabId);
+        };
+    });
+
+    // Register/unregister editor instance when cmView changes
+    $effect(() => {
+        if (cmView) {
+            registerEditorInstance(tabId, cmView);
+        } else {
+            unregisterEditorInstance(tabId);
+        }
     });
 
     $effect(() => {

@@ -62,7 +62,7 @@
     const categories = $derived.by(() => {
         const defs = shortcutManager.getDefinitions();
         const map = new SvelteMap<string, ShortcutDefinition[]>();
-        defs.forEach((d) => {
+        defs.forEach((d: ShortcutDefinition) => {
             if (!map.has(d.category)) map.set(d.category, []);
             map.get(d.category)!.push(d);
         });
