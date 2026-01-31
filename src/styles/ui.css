@@ -1495,7 +1495,7 @@
     transition-property: opacity;
 }
 
-.transition-[width,background-color,opacity] {
+.transition-width-bg-opacity {
     transition-property: width, background-color, opacity;
 }
 
