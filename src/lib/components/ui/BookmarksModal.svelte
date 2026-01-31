@@ -37,6 +37,7 @@
 
     let searchQuery = $state('');
     let searchInputEl = $state<HTMLInputElement>();
+    let selectedIndex = $state(0);
     let editingId = $state<string | null>(null);
     let editTitle = $state('');
     let editTags = $state('');
@@ -54,6 +55,7 @@
         }
         if (!isOpen) {
             searchQuery = '';
+            selectedIndex = 0;
             editingId = null;
             showAddForm = false;
             browseError = '';
@@ -61,6 +63,14 @@
         if (isOpen) {
             setTimeout(() => searchInputEl?.focus(), 0);
         }
+    });
+
+    // Reset selection when search query or sort changes
+    $effect(() => {
+        void searchQuery;
+        void sortBy;
+        void sortDirection;
+        selectedIndex = 0;
     });
 
     let filteredBookmarks = $derived(
@@ -203,6 +213,37 @@
     function toggleSortDirection() {
         sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (sortedBookmarks.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % sortedBookmarks.length;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + sortedBookmarks.length) % sortedBookmarks.length;
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const bookmark = sortedBookmarks[selectedIndex];
+            if (bookmark && editingId !== bookmark.id) {
+                handleOpenBookmark(bookmark);
+            }
+        }
+    }
+
+    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
+        if (isSelected) {
+            node.scrollIntoView({ block: 'nearest' });
+        }
+        return {
+            update(newIsSelected: boolean) {
+                if (newIsSelected) {
+                    node.scrollIntoView({ block: 'nearest' });
+                }
+            },
+        };
+    }
 </script>
 
 <Modal bind:isOpen {onClose} {position}>
@@ -213,7 +254,8 @@
             bind:searchValue={searchQuery}
             bind:inputRef={searchInputEl}
             searchPlaceholder="Search bookmarks..."
-            {onClose}>
+            {onClose}
+            onKeydown={handleKeydown}>
             {#snippet extraActions()}
                 <div class="flex shrink-0 items-center gap-1">
                     <select
@@ -290,10 +332,16 @@
         {#if sortedBookmarks.length > 0}
             <div class="divide-border-main divide-y">
                 {#each sortedBookmarks as bookmark, index (bookmark.id)}
+                    {@const isSelected = index === selectedIndex}
                     <div
-                        class="hover-surface-light px-4 py-2.5 transition-colors {index % 2 === 1
-                            ? 'bg-row-even'
-                            : ''}">
+                        class="px-4 py-2.5 transition-colors"
+                        class:bg-row-even={index % 2 === 1 && !isSelected}
+                        style:background-color={isSelected
+                            ? 'var(--color-accent-primary)'
+                            : index % 2 === 1
+                              ? 'var(--surface-row)'
+                              : 'transparent'}
+                        use:scrollIntoView={isSelected}>
                         {#if editingId === bookmark.id}
                             <div class="space-y-2">
                                 <Input bind:value={editTitle} type="text" />
@@ -316,26 +364,56 @@
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div
                                 class="flex cursor-pointer items-start gap-3"
-                                onclick={() => handleOpenBookmark(bookmark)}>
+                                onclick={() => handleOpenBookmark(bookmark)}
+                                onmouseenter={() => (selectedIndex = index)}>
                                 <div class="min-w-0 flex-1">
-                                    <div class="text-fg-default truncate font-medium">
+                                    <div
+                                        class="truncate font-medium"
+                                        style:color={isSelected
+                                            ? 'var(--color-fg-inverse)'
+                                            : 'var(--color-fg-default)'}>
                                         {bookmark.title}
                                     </div>
-                                    <div class="text-ui-sm text-fg-muted truncate opacity-60">
+                                    <div
+                                        class="text-ui-sm truncate"
+                                        style:color={isSelected
+                                            ? 'var(--color-fg-inverse)'
+                                            : 'var(--color-fg-muted)'}
+                                        style:opacity={isSelected ? 0.8 : 0.6}>
                                         {bookmark.path}
                                     </div>
                                     {#if bookmark.tags.length > 0}
                                         <div class="mt-1 flex flex-wrap items-center gap-1">
-                                            <Tag size={12} class="opacity-50" />
+                                            <span
+                                                style:color={isSelected
+                                                    ? 'var(--color-fg-inverse)'
+                                                    : 'currentColor'}>
+                                                <Tag
+                                                    size={12}
+                                                    class={isSelected
+                                                        ? 'opacity-70'
+                                                        : 'opacity-50'} />
+                                            </span>
                                             {#each bookmark.tags as tag (tag)}
                                                 <span
-                                                    class="text-ui-sm bg-bg-input text-fg-muted rounded px-1.5 py-0.5">
+                                                    class="text-ui-sm rounded px-1.5 py-0.5"
+                                                    style:background-color={isSelected
+                                                        ? 'rgba(255,255,255,0.2)'
+                                                        : 'var(--surface-input)'}
+                                                    style:color={isSelected
+                                                        ? 'var(--color-fg-inverse)'
+                                                        : 'var(--color-fg-muted)'}>
                                                     {tag}
                                                 </span>
                                             {/each}
                                         </div>
                                     {/if}
-                                    <div class="text-ui-sm text-fg-muted mt-1 opacity-50">
+                                    <div
+                                        class="text-ui-sm mt-1"
+                                        style:color={isSelected
+                                            ? 'var(--color-fg-inverse)'
+                                            : 'var(--color-fg-muted)'}
+                                        style:opacity={isSelected ? 0.7 : 0.5}>
                                         Added: {formatDate(bookmark.created)}
                                         {#if bookmark.last_accessed}
                                             • Accessed: {formatDate(bookmark.last_accessed)}
@@ -348,12 +426,40 @@
                                             e.stopPropagation();
                                             startEdit(bookmark);
                                         }}
-                                        class="text-fg-muted hover-surface rounded p-1.5">
+                                        class="rounded p-1.5 transition-colors"
+                                        style:color={isSelected
+                                            ? 'var(--color-fg-inverse)'
+                                            : 'var(--color-fg-muted)'}
+                                        style:background-color={isSelected
+                                            ? 'rgba(255,255,255,0.15)'
+                                            : 'transparent'}
+                                        onmouseenter={(e) =>
+                                            (e.currentTarget.style.backgroundColor = isSelected
+                                                ? 'rgba(255,255,255,0.25)'
+                                                : 'var(--surface-hover)')}
+                                        onmouseleave={(e) =>
+                                            (e.currentTarget.style.backgroundColor = isSelected
+                                                ? 'rgba(255,255,255,0.15)'
+                                                : 'transparent')}>
                                         <Pen size={14} />
                                     </button>
                                     <button
                                         onclick={(e) => handleDelete(bookmark.id, e)}
-                                        class="text-fg-muted hover:text-danger-text hover-surface rounded p-1.5">
+                                        class="rounded p-1.5 transition-colors"
+                                        style:color={isSelected
+                                            ? 'var(--color-fg-inverse)'
+                                            : 'var(--color-danger-text)'}
+                                        style:background-color={isSelected
+                                            ? 'rgba(255,255,255,0.15)'
+                                            : 'transparent'}
+                                        onmouseenter={(e) =>
+                                            (e.currentTarget.style.backgroundColor = isSelected
+                                                ? 'rgba(255,255,255,0.25)'
+                                                : 'var(--surface-hover)')}
+                                        onmouseleave={(e) =>
+                                            (e.currentTarget.style.backgroundColor = isSelected
+                                                ? 'rgba(255,255,255,0.15)'
+                                                : 'transparent')}>
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
