@@ -11,6 +11,7 @@
     } from '$lib/stores/bookmarkStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { callBackend } from '$lib/utils/backend';
+    import { scrollIntoView } from '$lib/utils/modalUtils';
     import { open } from '@tauri-apps/plugin-dialog';
     import {
         ArrowDown,
@@ -230,19 +231,6 @@
                 handleOpenBookmark(bookmark);
             }
         }
-    }
-
-    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-        if (isSelected) {
-            node.scrollIntoView({ block: 'nearest' });
-        }
-        return {
-            update(newIsSelected: boolean) {
-                if (newIsSelected) {
-                    node.scrollIntoView({ block: 'nearest' });
-                }
-            },
-        };
     }
 </script>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
     import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+    import { scrollIntoView } from '$lib/utils/modalUtils';
     import { Zap } from 'lucide-svelte';
     import { tick } from 'svelte';
     import Modal from './Modal.svelte';
@@ -59,19 +60,6 @@
     function close() {
         isOpen = false;
         if (onClose) onClose();
-    }
-
-    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-        if (isSelected) {
-            node.scrollIntoView({ block: 'nearest' });
-        }
-        return {
-            update(newIsSelected: boolean) {
-                if (newIsSelected) {
-                    node.scrollIntoView({ block: 'nearest' });
-                }
-            },
-        };
     }
 </script>
 
