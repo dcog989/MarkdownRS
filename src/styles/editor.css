@@ -193,31 +193,9 @@
     font-family: inherit !important;
 }
 
-.cm-codeMark {
-    background-color: transparent !important;
-    color: var(--text-primary) !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    font-family: inherit !important;
-}
-
 .cm-blockquote {
     color: var(--text-secondary);
     font-style: italic;
-}
-
-.cm-blockquote-border {
-    border-left: 0.25rem solid var(--quote-border);
-    padding-left: 0.375rem;
-    border-radius: 0.125rem 0 0 0.125rem;
-}
-
-.cm-blockquote-bg {
-    background-color: var(--quote-bg);
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
-    padding-top: 0.0625rem;
-    padding-bottom: 0.0625rem;
 }
 
 .cm-blockquote-border {

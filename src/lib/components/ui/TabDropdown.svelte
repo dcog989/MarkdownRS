@@ -247,10 +247,3 @@
         </div>
     </div>
 {/if}
-
-<style>
-    input::placeholder {
-        color: var(--color-fg-muted);
-        opacity: 0.5;
-    }
-</style>

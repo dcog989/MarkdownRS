@@ -62,14 +62,6 @@
     padding-bottom: 0.4em;
 }
 
-.markdown-body h2,
-#active-preview-container h2,
-#export-container h2 {
-    font-size: 1.8em;
-    border-bottom: 1px solid var(--border-primary);
-    padding-bottom: 0.4em;
-}
-
 .markdown-body h3,
 #active-preview-container h3,
 #export-container h3 {

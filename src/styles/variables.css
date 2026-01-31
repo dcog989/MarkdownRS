@@ -30,13 +30,14 @@
     --color-bg-hover: var(--surface-hover);
     --color-bg-active: var(--surface-active);
     --color-bg-input: var(--surface-input);
-    --color-bg-backdrop: var(--surface-backdrop-dark);
+    --color-bg-backdrop: var(--surface-backdrop);
 
     /* Text System - Layer 1: Unified Text Variables */
     --text-primary: oklch(0.85 0 0); /* Main text content */
     --text-secondary: oklch(0.6 0 0); /* Secondary/muted text */
     --text-tertiary: oklch(0.4 0 0); /* Very muted text */
     --text-inverse: oklch(1 0 0); /* Text on dark backgrounds */
+    --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
     /* Semantic Text Mapping */
     --color-fg-default: var(--text-primary);
@@ -87,6 +88,11 @@
     --selection-match-bg: oklch(0.68 0.11 55 / 0.35);
     --active-line-bg: oklch(1 0 0 / 0.08);
     --dirty-indicator: #5deb47;
+
+    /* Animation & Transitions */
+    --transition-fast: 100ms;
+    --transition-normal: 150ms;
+    --transition-slow: 200ms;
 
     /* Semantic Functional Mapping */
     --color-danger: var(--danger);
@@ -158,6 +164,7 @@
     --text-secondary: oklch(0.4 0 0); /* Secondary/muted text */
     --text-tertiary: oklch(0.5 0 0); /* Very muted text */
     --text-inverse: oklch(1 0 0); /* Text on dark backgrounds */
+    --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
     /* Border System - Light Theme */
     --border-primary: oklch(0.9 0 0); /* Main borders */

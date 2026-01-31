@@ -122,11 +122,3 @@
         </Submenu>
     {/snippet}
 </ContextMenu>
-
-<style>
-    button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-</style>

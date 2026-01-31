@@ -202,6 +202,31 @@
     flex-shrink: 0;
 }
 
+/* Gap Utilities */
+.gap-0 {
+    gap: 0;
+}
+
+.gap-1 {
+    gap: 0.25rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.row-gap-0 {
+    row-gap: 0;
+}
+
+.column-gap-0 {
+    column-gap: 0;
+}
+
 /* Width Classes */
 .w-full {
     width: 100%;
@@ -1799,6 +1824,13 @@ button {
 
 .btn-base:hover {
     background-color: var(--surface-hover);
+}
+
+.btn-base:disabled,
+.btn-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn-secondary {
