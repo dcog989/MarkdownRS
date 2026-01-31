@@ -82,7 +82,7 @@
             icon={Zap}
             bind:searchValue={query}
             bind:inputRef
-            searchPlaceholder="Search..."
+            searchPlaceholder="Search Commands..."
             onClose={close}
             onKeydown={handleKeydown} />
     {/snippet}

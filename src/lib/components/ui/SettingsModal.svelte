@@ -526,7 +526,7 @@
             icon={Settings}
             bind:searchValue={searchQuery}
             bind:inputRef={searchInputEl}
-            searchPlaceholder="Search..."
+            searchPlaceholder="Search Settings..."
             {onClose}>
             {#snippet extraActions()}
                 <button
