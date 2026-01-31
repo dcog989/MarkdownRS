@@ -531,7 +531,10 @@
             {#snippet extraActions()}
                 <button
                     class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
-                    onclick={() => toggleShortcuts()}
+                    onclick={() => {
+                        onClose();
+                        toggleShortcuts();
+                    }}
                     title="Keyboard Shortcuts (F1)"
                     aria-label="Keyboard Shortcuts">
                     <Keyboard size={16} />

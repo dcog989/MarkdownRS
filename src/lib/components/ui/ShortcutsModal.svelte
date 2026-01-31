@@ -24,7 +24,8 @@
         if (isOpen) {
             searchQuery = '';
             selectedIndex = 0;
-            setTimeout(() => searchInputEl?.focus(), 0);
+            // Focus is handled automatically by the Modal component
+            // which focuses the first focusable element (the search input)
         }
     });
 
@@ -107,34 +108,25 @@
     const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
 
     function handleKeydown(e: KeyboardEvent) {
-        // Only handle navigation keys
+        // Only handle navigation keys - let all other keys (including typing) work normally
         if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
             return;
         }
 
         if (filteredShortcuts.length === 0) return;
 
-        // If the search input is focused and user presses Enter, don't prevent default
-        // to allow the input to handle it normally (unless we want to trigger recording)
-        const isInputFocused = document.activeElement === searchInputEl;
+        e.preventDefault();
 
         if (e.key === 'ArrowDown') {
-            e.preventDefault();
             selectedIndex = (selectedIndex + 1) % filteredShortcuts.length;
         } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
             selectedIndex =
                 (selectedIndex - 1 + filteredShortcuts.length) % filteredShortcuts.length;
         } else if (e.key === 'Enter') {
-            // Only trigger recording if input is not focused or if explicitly navigating
-            if (!isInputFocused) {
-                e.preventDefault();
-                const def = flatShortcuts[selectedIndex];
-                if (def) {
-                    startRecording(def.command);
-                }
+            const def = flatShortcuts[selectedIndex];
+            if (def) {
+                startRecording(def.command);
             }
-            // If input is focused, let Enter work normally (blur or submit)
         }
     }
 </script>
@@ -174,7 +166,6 @@
                                           ? 'var(--surface-row)'
                                           : 'transparent'}
                                     use:scrollIntoView={isSelected}
-                                    tabindex="-1"
                                     onmouseenter={() => (selectedIndex = currentIndex)}>
                                     <button
                                         class="flex-1 cursor-pointer text-left transition-colors outline-none"
