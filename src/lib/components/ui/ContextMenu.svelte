@@ -15,6 +15,11 @@
     let isVisible = $state(false);
     let resizeObserver: ResizeObserver | null = null;
 
+    // Keyboard navigation state
+    let focusedIndex = $state(-1);
+    let menuItems = $state<HTMLElement[]>([]);
+    let isKeyboardNav = $state(true); // Start with keyboard mode for initial focus
+
     function updatePosition() {
         if (!menuEl) return;
 
@@ -46,6 +51,112 @@
         isVisible = true;
     }
 
+    function updateMenuItems() {
+        if (!menuEl) return;
+        // Get all focusable elements: buttons
+        menuItems = Array.from(menuEl.querySelectorAll('button:not([disabled])')) as HTMLElement[];
+    }
+
+    function focusItem(index: number) {
+        if (index >= 0 && index < menuItems.length) {
+            menuItems[index]?.focus();
+            focusedIndex = index;
+            isKeyboardNav = true;
+        }
+    }
+
+    function handleMouseMove() {
+        // Mouse interaction switches to mouse mode
+        isKeyboardNav = false;
+    }
+
+    function handleKeydown(e: KeyboardEvent) {
+        updateMenuItems();
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (focusedIndex < menuItems.length - 1) {
+                    focusItem(focusedIndex + 1);
+                } else {
+                    focusItem(0);
+                }
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                if (focusedIndex > 0) {
+                    focusItem(focusedIndex - 1);
+                } else {
+                    focusItem(menuItems.length - 1);
+                }
+                break;
+
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                if (focusedIndex >= 0 && focusedIndex < menuItems.length) {
+                    menuItems[focusedIndex]?.click();
+                }
+                break;
+
+            case 'ArrowRight':
+                e.preventDefault();
+                if (focusedIndex >= 0 && focusedIndex < menuItems.length) {
+                    const item = menuItems[focusedIndex];
+                    const submenuContainer = item?.closest('.submenu-container');
+                    if (submenuContainer) {
+                        // Open submenu by triggering mouseenter
+                        const mouseEnterEvent = new MouseEvent('mouseenter', { bubbles: true });
+                        submenuContainer.dispatchEvent(mouseEnterEvent);
+                        // Focus first item in submenu
+                        setTimeout(() => {
+                            const submenuItems = submenuContainer.querySelectorAll(
+                                '[data-submenu="true"] button:not([disabled])',
+                            );
+                            if (submenuItems.length > 0) {
+                                (submenuItems[0] as HTMLElement).focus();
+                                updateMenuItems();
+                                focusedIndex = menuItems.indexOf(submenuItems[0] as HTMLElement);
+                            }
+                        }, 50);
+                    }
+                }
+                break;
+
+            case 'ArrowLeft': {
+                e.preventDefault();
+                // Check if we're inside a submenu
+                const submenuEl = menuItems[focusedIndex]?.closest('[data-submenu="true"]');
+                if (submenuEl) {
+                    // Close submenu and return to parent
+                    const parentContainer = submenuEl.closest('.submenu-container');
+                    if (parentContainer) {
+                        const mouseLeaveEvent = new MouseEvent('mouseleave', { bubbles: true });
+                        parentContainer.dispatchEvent(mouseLeaveEvent);
+                        const triggerBtn = parentContainer.querySelector('button');
+                        if (triggerBtn) {
+                            triggerBtn.focus();
+                            updateMenuItems();
+                            const idx = menuItems.indexOf(triggerBtn as HTMLElement);
+                            if (idx >= 0) focusedIndex = idx;
+                        }
+                    }
+                }
+                break;
+            }
+
+            case 'Escape':
+                e.preventDefault();
+                onClose();
+                break;
+
+            case 'Tab':
+                e.preventDefault();
+                break;
+        }
+    }
+
     $effect(() => {
         updatePosition();
     });
@@ -59,6 +170,14 @@
         }
 
         updatePosition();
+
+        // Focus first menu item after render
+        setTimeout(() => {
+            updateMenuItems();
+            if (menuItems.length > 0) {
+                focusItem(0);
+            }
+        }, 0);
 
         return () => {
             resizeObserver?.disconnect();
@@ -104,7 +223,23 @@
             opacity: {isVisible ? 1 : 0};
         "
         onclick={(e) => e.stopPropagation()}
-        oncontextmenu={(e) => e.preventDefault()}>
+        oncontextmenu={(e) => e.preventDefault()}
+        onkeydown={handleKeydown}
+        onmousemove={handleMouseMove}
+        onmouseenter={(e) => {
+            // When mouse enters a button, blur any focused element to clear keyboard selection
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'BUTTON' && !(target as HTMLButtonElement).disabled) {
+                isKeyboardNav = false;
+                if (
+                    document.activeElement &&
+                    menuItems.includes(document.activeElement as HTMLElement)
+                ) {
+                    (document.activeElement as HTMLElement).blur();
+                }
+            }
+        }}
+        data-keyboard-nav={isKeyboardNav}>
         {@render children({ submenuSide })}
     </div>
 </div>

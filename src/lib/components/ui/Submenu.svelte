@@ -112,7 +112,9 @@
             class="custom-scrollbar bg-bg-panel border-border-light fixed z-250 flex max-h-[50vh] w-max max-w-87.5 min-w-40 flex-col overflow-y-auto rounded-md border py-1 whitespace-nowrap shadow-xl"
             style="left: {fixedX}px; top: {fixedY}px;"
             role="menu"
-            tabindex="-1">
+            tabindex="-1"
+            data-submenu="true"
+            data-open={show ? 'true' : 'false'}>
             {@render children()}
         </div>
     {/if}

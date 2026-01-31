@@ -2070,6 +2070,28 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
+/* Context menu items - smart highlighting based on input method */
+.bg-bg-panel button:focus-visible {
+    outline: none;
+}
+
+/* Keyboard navigation: accent color highlight on focused item */
+.bg-bg-panel[data-keyboard-nav='true'] button:focus-visible {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+/* Mouse navigation: suppress focus-visible styles, rely on hover */
+.bg-bg-panel[data-keyboard-nav='false'] button:focus-visible {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Hover works the same in both modes */
+.bg-bg-panel button:hover {
+    background-color: var(--surface-hover);
+}
+
 /* Component Specific Classes */
 .command-item {
     display: flex;
