@@ -2070,9 +2070,28 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
-/* Context menu items - smart highlighting based on input method */
+/* Context menu items - smart highlighting */
 .bg-bg-panel button:focus-visible {
     outline: none;
+}
+
+/* Keyboard navigation: accent color highlight on focused item */
+.bg-bg-panel[data-keyboard-nav='true'] button:focus-visible {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+/* Mouse navigation: suppress focus-visible styles, rely on hover */
+.bg-bg-panel[data-keyboard-nav='false'] button:focus-visible {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Hover: accent color - must override both hover-surface and focus-visible styles */
+.bg-bg-panel button:hover,
+.bg-bg-panel button:hover:focus-visible {
+    background-color: var(--accent-primary) !important;
+    color: var(--text-inverse) !important;
 }
 
 /* Keyboard navigation: accent color highlight on focused item */
