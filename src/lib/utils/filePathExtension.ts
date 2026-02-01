@@ -7,16 +7,22 @@ import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror
 const URL_REGEX = /(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+/g;
 
 // Matches Quoted File Paths.
+// Logic:
+// - Content inside quotes that looks like a file path
+// - Must start with drive letter, relative indicator (./, ../), home (~), or root (/)
+// - Root paths (/...) must have at least one directory separator to avoid matching "/ text"
+// - OR have a valid file extension
+// - Does NOT match arbitrary text with slashes like "markdown / text"
 const QUOTED_PATH_REGEX =
-    /(['"`])((?!(?:https?:\/\/|www\.))(?:[^'"`\r\n]*?[/\\][^'"`\r\n]*?|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1/g;
+    /(['"`])((?!(?:https?:\/\/|www\.))(?:[a-zA-Z]:[/\\][^'"`\r\n]*|(?:\.\.?|~)[/\\][^'"`\r\n]*|\/(?:[^/\s'"`\r\n]+[/\\])+[^'"`\r\n]*|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1/g;
 
 // Matches Unquoted File Paths.
 // Logic:
-// - Start: Drive letter, relative (./, ../), home (~/).
-// - OR Root (/): MUST NOT be followed by a space. This prevents matching " / or " in sentences.
+// - Start: Drive letter, relative (./, ../), home (~/), or root (/).
+// - For root paths (/): Require at least one directory separator after root
 // - Body: Allow spaces within the path (for "Recent Files Plus.md"), but handle delimiters.
 const UNQUOTED_PATH_REGEX =
-    /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?![ \t\r\n])))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\r\n(){}[\]<>]+)/g;
+    /(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?:[^/\s"'\r\n(){}[\]<>]+[/\\])+))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\r\n(){}[\]<>]+)/g;
 
 // --- HELPERS ---
 

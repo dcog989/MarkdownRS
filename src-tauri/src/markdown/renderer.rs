@@ -53,12 +53,12 @@ fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
 // Lazy-compiled regex for file paths
 // Matches:
 // - Windows absolute paths: C:/ or C:\
-// - Unix absolute paths: /path/to/file
+// - Unix absolute paths: /path/to/file (requires at least one directory separator)
 // - Relative paths: ./ or ../
 // - Home directory: ~/
 static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/[^\s<>"'|?*`]+)"#,
+        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/(?:[^\/\s<>"'|?*`]+[/\\])+[^\/\s<>"'|?*`]+)"#,
     )
     .expect("Invalid PATH_REGEX pattern")
 });
@@ -107,24 +107,9 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 }
 
 fn linkify_file_paths(html: &str) -> String {
-    const SKIP_TAGS: &[&str] = &["<a", "<code", "<pre", "</"];
     let mut result = String::with_capacity(html.len() * 2);
 
     for line in html.lines() {
-        let should_skip = SKIP_TAGS
-            .iter()
-            .any(|tag| line.trim_start().starts_with(tag));
-
-        // Also skip lines that contain <code> tags anywhere in them to avoid
-        // linkifying paths inside inline code
-        let contains_code = line.contains("<code>") || line.contains("</code>");
-
-        if should_skip || contains_code {
-            result.push_str(line);
-            result.push('\n');
-            continue;
-        }
-
         let mut last_end = 0;
         for cap in PATH_REGEX.captures_iter(line) {
             let full_match = cap
