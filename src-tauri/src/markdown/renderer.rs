@@ -28,8 +28,10 @@ pub struct MarkdownOptions {
 pub struct RenderResult {
     pub html: String,
     pub line_map: HashMap<usize, usize>,
+    pub line_count: usize,
     pub word_count: usize,
     pub char_count: usize,
+    pub widest_column: usize,
 }
 
 /// Renders markdown to HTML with line number tracking and document metrics
@@ -47,15 +49,16 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     let html_with_links = linkify_file_paths(&html_with_lines);
     let line_map = build_line_map(content);
 
-    // Accurate O(N) metrics calculation using alphanumeric segmentation
-    let word_count = content.unicode_words().count();
-    let char_count = content.chars().count();
+    // Single-pass metrics calculation
+    let (line_count, word_count, char_count, widest_column) = calculate_text_metrics(content);
 
     Ok(RenderResult {
         html: html_with_links,
         line_map,
+        line_count,
         word_count,
         char_count,
+        widest_column,
     })
 }
 
@@ -233,4 +236,15 @@ fn build_line_map(content: &str) -> HashMap<usize, usize> {
     }
 
     line_map
+}
+
+/// Calculates text metrics in a single pass
+/// Returns: (line_count, word_count, char_count, widest_column)
+pub fn calculate_text_metrics(content: &str) -> (usize, usize, usize, usize) {
+    let lines: Vec<&str> = content.lines().collect();
+    let line_count = lines.len();
+    let word_count = content.unicode_words().count();
+    let char_count = content.chars().count();
+    let widest_column = lines.iter().map(|l| l.chars().count()).max().unwrap_or(0);
+    (line_count, word_count, char_count, widest_column)
 }
