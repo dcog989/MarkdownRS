@@ -1,9 +1,9 @@
 use encoding_rs::{UTF_16BE, UTF_16LE};
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fs;
 use std::sync::LazyLock;
 use tauri::Manager;
+use tokio::fs;
 use tokio::sync::Mutex;
 use unicode_bom::Bom;
 
@@ -75,19 +75,26 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
     let themes_dir = app_dir.join("Themes");
 
     let mut themes = Vec::new();
-    if let Ok(entries) = fs::read_dir(themes_dir) {
-        log::debug!("Scanning themes directory");
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if let Some(name) = path
-                .extension()
-                .filter(|&s| s == "css")
-                .and_then(|_| path.file_stem())
-                .and_then(|s| s.to_str())
-            {
-                themes.push(name.to_string());
+    match fs::read_dir(&themes_dir).await {
+        Ok(mut entries) => {
+            log::debug!("Scanning themes directory");
+            while let Some(entry) = entries.next_entry().await.transpose() {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if let Some(name) = path
+                        .extension()
+                        .filter(|&s| s == "css")
+                        .and_then(|_| path.file_stem())
+                        .and_then(|s| s.to_str())
+                    {
+                        themes.push(name.to_string());
+                    }
+                }
             }
-        }
+        },
+        Err(e) => {
+            log::debug!("Themes directory not accessible: {}", e);
+        },
     }
     Ok(themes)
 }
@@ -111,12 +118,15 @@ pub async fn get_theme_css(
     let themes_dir = app_dir.join("Themes");
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
-    if !theme_path.exists() {
-        log::warn!("Theme '{}' not found at path: {:?}", theme_name, theme_path);
-        return Err(format!("Custom theme '{}' not found", theme_name));
+    match fs::try_exists(&theme_path).await {
+        Ok(false) | Err(_) => {
+            log::warn!("Theme '{}' not found at path: {:?}", theme_name, theme_path);
+            return Err(format!("Custom theme '{}' not found", theme_name));
+        },
+        Ok(true) => {},
     }
 
-    let css = fs::read_to_string(theme_path).map_err(|e| {
+    let css = fs::read_to_string(&theme_path).await.map_err(|e| {
         log::error!("Failed to read theme '{}': {}", theme_name, e);
         format!("Failed to load theme: {}", e)
     })?;
@@ -135,11 +145,14 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     })?;
     let path = app_dir.join("settings.toml");
 
-    if !path.exists() {
-        return Ok(serde_json::json!({}));
+    match fs::try_exists(&path).await {
+        Ok(false) | Err(_) => {
+            return Ok(serde_json::json!({}));
+        },
+        Ok(true) => {},
     }
 
-    let raw_bytes = fs::read(&path).map_err(|e| {
+    let raw_bytes = fs::read(&path).await.map_err(|e| {
         log::error!("Failed to read settings file: {}", e);
         format!("Failed to read settings: {}", e)
     })?;
@@ -196,7 +209,7 @@ pub async fn save_settings(
         log::error!("Failed to serialize settings to TOML: {}", e);
         format!("Failed to save settings: {}", e)
     })?;
-    fs::write(path, toml_str).map_err(|e| {
+    fs::write(&path, toml_str).await.map_err(|e| {
         log::error!("Failed to write settings file: {}", e);
         format!("Failed to save settings: {}", e)
     })?;
