@@ -29,12 +29,11 @@ fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
     let current_hash = compute_content_hash(content);
 
     // Try to read from cache first
-    if let Ok(cache) = LINE_MAP_CACHE.read() {
-        if let Some(ref cached) = *cache {
-            if cached.content_hash == current_hash {
-                return cached.line_map.clone();
-            }
-        }
+    if let Ok(cache) = LINE_MAP_CACHE.read()
+        && let Some(ref cached) = *cache
+        && cached.content_hash == current_hash
+    {
+        return cached.line_map.clone();
     }
 
     // Build new line map
