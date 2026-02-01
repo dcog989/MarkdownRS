@@ -150,6 +150,11 @@ pub async fn resolve_path_relative(
     base_path: Option<String>,
     click_path: String,
 ) -> Result<String, String> {
+    // Get the base directory for path traversal protection
+    let base_dir = base_path
+        .as_ref()
+        .and_then(|base| PathBuf::from(base).parent().map(|p| p.to_path_buf()));
+
     let path_buf = if let Some(base) = base_path {
         let mut p = PathBuf::from(base);
         p.pop();
@@ -167,16 +172,32 @@ pub async fn resolve_path_relative(
         return Err("File does not exist".to_string());
     }
 
-    cleaned
-        .canonicalize()
-        .map(|p| {
-            log::debug!("Resolved path: {:?}", p);
-            p.to_string_lossy().to_string()
-        })
-        .map_err(|e| {
-            let path_str = cleaned.to_string_lossy();
-            handle_file_error(&path_str, "canonicalize path", e)
-        })
+    // Canonicalize the path to resolve any symlinks and get absolute path
+    let canonicalized = cleaned.canonicalize().map_err(|e| {
+        let path_str = cleaned.to_string_lossy();
+        handle_file_error(&path_str, "canonicalize path", e)
+    })?;
+
+    // Security check: Ensure the resolved path is within the base directory
+    // This prevents path traversal attacks like "../../../../etc/passwd"
+    if let Some(ref base) = base_dir {
+        let canonical_base = base.canonicalize().map_err(|e| {
+            let base_str = base.to_string_lossy();
+            handle_file_error(&base_str, "canonicalize base path", e)
+        })?;
+
+        if !canonicalized.starts_with(&canonical_base) {
+            log::warn!(
+                "Path traversal blocked: resolved path {:?} is outside base directory {:?}",
+                canonicalized,
+                canonical_base
+            );
+            return Err("Access denied: path escapes base directory".to_string());
+        }
+    }
+
+    log::debug!("Resolved path: {:?}", canonicalized);
+    Ok(canonicalized.to_string_lossy().to_string())
 }
 
 #[tauri::command]
