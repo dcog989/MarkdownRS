@@ -3,8 +3,53 @@ use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::LazyLock;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::sync::{LazyLock, RwLock};
 use unicode_segmentation::UnicodeSegmentation;
+
+/// Cache entry for line map to avoid rebuilding on every render
+struct LineMapCache {
+    content_hash: u64,
+    line_map: HashMap<usize, usize>,
+}
+
+/// Thread-safe cache for line maps with content-based invalidation
+static LINE_MAP_CACHE: LazyLock<RwLock<Option<LineMapCache>>> = LazyLock::new(|| RwLock::new(None));
+
+/// Computes a fast hash of content for cache invalidation
+fn compute_content_hash(content: &str) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    content.hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Gets or builds the line map, using cache if content hasn't changed
+fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
+    let current_hash = compute_content_hash(content);
+
+    // Try to read from cache first
+    if let Ok(cache) = LINE_MAP_CACHE.read() {
+        if let Some(ref cached) = *cache {
+            if cached.content_hash == current_hash {
+                return cached.line_map.clone();
+            }
+        }
+    }
+
+    // Build new line map
+    let line_map = build_line_map(content);
+
+    // Update cache
+    if let Ok(mut cache) = LINE_MAP_CACHE.write() {
+        *cache = Some(LineMapCache {
+            content_hash: current_hash,
+            line_map: line_map.clone(),
+        });
+    }
+
+    line_map
+}
 
 // Lazy-compiled regex for file paths
 // Matches:
@@ -47,7 +92,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 
     let html_with_lines = inject_line_numbers(&html, content);
     let html_with_links = linkify_file_paths(&html_with_lines);
-    let line_map = build_line_map(content);
+    let line_map = get_or_build_line_map(content);
 
     // Single-pass metrics calculation
     let (line_count, word_count, char_count, widest_column) = calculate_text_metrics(content);
