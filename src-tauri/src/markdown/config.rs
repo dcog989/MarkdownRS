@@ -23,6 +23,11 @@ impl MarkdownFlavor {
         }
     }
 
+    /// Parse flavor from an optional string, returning default if None or invalid
+    pub fn from_option_str(flavor: Option<String>) -> Self {
+        flavor.and_then(|f| Self::from_str(&f)).unwrap_or_default()
+    }
+
     /// Get central comrak options for this flavor
     pub fn to_comrak_options(self) -> Options<'static> {
         Options {

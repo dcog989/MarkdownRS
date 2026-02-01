@@ -15,12 +15,8 @@ pub async fn render_markdown(
     let start = std::time::Instant::now();
     let content_size = content.len();
 
-    let markdown_flavor = flavor
-        .and_then(|f| MarkdownFlavor::from_str(&f))
-        .unwrap_or_default();
-
     let options = MarkdownOptions {
-        flavor: markdown_flavor,
+        flavor: MarkdownFlavor::from_option_str(flavor),
     };
 
     let result = tokio::task::spawn_blocking(move || {
@@ -55,12 +51,8 @@ pub async fn format_markdown(
     let start = std::time::Instant::now();
     let content_size = content.len();
 
-    let markdown_flavor = flavor
-        .and_then(|f| MarkdownFlavor::from_str(&f))
-        .unwrap_or_default();
-
     let options = FormatterOptions {
-        flavor: markdown_flavor,
+        flavor: MarkdownFlavor::from_option_str(flavor),
         list_indent: list_indent.unwrap_or(2),
         bullet_char: bullet_char.unwrap_or_else(|| "-".to_string()),
         code_block_fence: code_block_fence.unwrap_or_else(|| "```".to_string()),
