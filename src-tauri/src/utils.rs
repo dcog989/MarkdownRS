@@ -3,6 +3,24 @@ use std::path::Path;
 use std::time::SystemTime;
 use tokio::fs;
 
+/// Standardized error handler for file operations
+pub fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> String {
+    log::error!("Failed to {} '{}': {}", operation, path, e);
+    format!("Failed to {}: {}", operation, e)
+}
+
+/// Standardized error handler for database operations
+pub fn handle_db_error(operation: &str, context: &str, e: impl std::fmt::Display) -> String {
+    log::error!("Failed to {} '{}': {}", operation, context, e);
+    format!("Failed to {}: {}", operation, e)
+}
+
+/// Standardized error handler for general I/O operations
+pub fn handle_io_error(operation: &str, e: impl std::fmt::Display) -> String {
+    log::error!("Failed to {}: {}", operation, e);
+    format!("Failed to {}: {}", operation, e)
+}
+
 pub fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     time.ok().map(|t| {
         let datetime: DateTime<Local> = t.into();

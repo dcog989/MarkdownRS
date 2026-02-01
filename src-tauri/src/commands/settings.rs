@@ -1,3 +1,4 @@
+use crate::utils::{handle_file_error, handle_io_error};
 use encoding_rs::{UTF_16BE, UTF_16LE};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -68,10 +69,10 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
 
 #[tauri::command]
 pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
-    let app_dir = app_handle.path().app_data_dir().map_err(|e| {
-        log::error!("Failed to get app data directory for themes: {}", e);
-        format!("Failed to access themes: {}", e)
-    })?;
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| handle_io_error("get app data directory for themes", e))?;
     let themes_dir = app_dir.join("Themes");
 
     let mut themes = Vec::new();
@@ -111,10 +112,10 @@ pub async fn get_theme_css(
         }
     }
 
-    let app_dir = app_handle.path().app_data_dir().map_err(|e| {
-        log::error!("Failed to get app data directory for theme CSS: {}", e);
-        format!("Failed to access theme: {}", e)
-    })?;
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| handle_io_error("get app data directory for theme CSS", e))?;
     let themes_dir = app_dir.join("Themes");
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
@@ -126,10 +127,9 @@ pub async fn get_theme_css(
         Ok(true) => {},
     }
 
-    let css = fs::read_to_string(&theme_path).await.map_err(|e| {
-        log::error!("Failed to read theme '{}': {}", theme_name, e);
-        format!("Failed to load theme: {}", e)
-    })?;
+    let css = fs::read_to_string(&theme_path)
+        .await
+        .map_err(|e| handle_file_error(&theme_path.to_string_lossy(), "read theme", e))?;
 
     let mut cache = THEME_CACHE.lock().await;
     cache.insert(theme_name, css.clone());
@@ -139,10 +139,10 @@ pub async fn get_theme_css(
 
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
-    let app_dir = app_handle.path().app_data_dir().map_err(|e| {
-        log::error!("Failed to get app data directory for load_settings: {}", e);
-        format!("Failed to access app data: {}", e)
-    })?;
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| handle_io_error("get app data directory for load_settings", e))?;
     let path = app_dir.join("settings.toml");
 
     match fs::try_exists(&path).await {
@@ -152,10 +152,9 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         Ok(true) => {},
     }
 
-    let raw_bytes = fs::read(&path).await.map_err(|e| {
-        log::error!("Failed to read settings file: {}", e);
-        format!("Failed to read settings: {}", e)
-    })?;
+    let raw_bytes = fs::read(&path)
+        .await
+        .map_err(|e| handle_file_error(&path.to_string_lossy(), "read settings file", e))?;
 
     let content = match Bom::from(raw_bytes.as_slice()) {
         Bom::Null => String::from_utf8_lossy(&raw_bytes).to_string(),
@@ -183,15 +182,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         },
     };
 
-    let toml_val: toml::Value = toml::from_str(&content).map_err(|e| {
-        log::error!("Failed to parse settings TOML: {}", e);
-        format!("Failed to parse settings: {}", e)
-    })?;
+    let toml_val: toml::Value =
+        toml::from_str(&content).map_err(|e| handle_io_error("parse settings TOML", e))?;
 
-    serde_json::to_value(toml_val).map_err(|e| {
-        log::error!("Failed to convert settings to JSON: {}", e);
-        format!("Failed to process settings: {}", e)
-    })
+    serde_json::to_value(toml_val).map_err(|e| handle_io_error("convert settings to JSON", e))
 }
 
 #[tauri::command]
@@ -199,20 +193,17 @@ pub async fn save_settings(
     app_handle: tauri::AppHandle,
     settings: serde_json::Value,
 ) -> Result<(), String> {
-    let app_dir = app_handle.path().app_data_dir().map_err(|e| {
-        log::error!("Failed to get app data directory for save_settings: {}", e);
-        format!("Failed to access app data: {}", e)
-    })?;
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| handle_io_error("get app data directory for save_settings", e))?;
     let path = app_dir.join("settings.toml");
 
-    let toml_str = toml::to_string_pretty(&settings).map_err(|e| {
-        log::error!("Failed to serialize settings to TOML: {}", e);
-        format!("Failed to save settings: {}", e)
-    })?;
-    fs::write(&path, toml_str).await.map_err(|e| {
-        log::error!("Failed to write settings file: {}", e);
-        format!("Failed to save settings: {}", e)
-    })?;
+    let toml_str = toml::to_string_pretty(&settings)
+        .map_err(|e| handle_io_error("serialize settings to TOML", e))?;
+    fs::write(&path, toml_str)
+        .await
+        .map_err(|e| handle_file_error(&path.to_string_lossy(), "write settings file", e))?;
     log::info!("Settings saved successfully");
     Ok(())
 }

@@ -1,4 +1,6 @@
-use crate::utils::{format_system_time, validate_path};
+use crate::utils::{
+    format_system_time, handle_db_error, handle_file_error, handle_io_error, validate_path,
+};
 use encoding_rs::{Encoding, UTF_8};
 use path_clean::PathClean;
 use serde::Serialize;
@@ -16,12 +18,6 @@ pub struct FileMetadata {
 pub struct FileContent {
     pub content: String,
     pub encoding: String,
-}
-
-/// Standardized error handler for file operations
-fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> String {
-    log::error!("Failed to {} '{}': {}", operation, path, e);
-    format!("Failed to {}: {}", operation, e)
 }
 
 #[tauri::command]
@@ -104,10 +100,7 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
 
     crate::utils::atomic_write(&path_buf, content.as_bytes())
         .await
-        .map_err(|e| {
-            log::error!("Failed to save file '{}': {}", path, e);
-            format!("Failed to save file: {}", e)
-        })?;
+        .map_err(|e| handle_file_error(&path, "save file", e))?;
 
     let duration = start.elapsed();
     log::info!(
@@ -123,10 +116,9 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
 #[tauri::command]
 pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
     validate_path(&path)?;
-    let metadata = fs::metadata(&path).await.map_err(|e| {
-        log::debug!("Failed to get metadata for '{}': {}", path, e);
-        format!("Failed to get file metadata: {}", e)
-    })?;
+    let metadata = fs::metadata(&path)
+        .await
+        .map_err(|e| handle_file_error(&path, "get metadata", e))?;
     Ok(FileMetadata {
         created: format_system_time(metadata.created()),
         modified: format_system_time(metadata.modified()),
@@ -228,15 +220,9 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
         return Err("A file with that name already exists".to_string());
     }
 
-    fs::rename(&old_path, &new_path).await.map_err(|e| {
-        log::error!(
-            "Failed to rename file from '{}' to '{}': {}",
-            old_path,
-            new_path,
-            e
-        );
-        format!("Failed to rename file: {}", e)
-    })
+    fs::rename(&old_path, &new_path)
+        .await
+        .map_err(|e| handle_file_error(&old_path, "rename file", e))
 }
 
 #[tauri::command]
@@ -245,20 +231,20 @@ pub async fn add_to_recent_files(
     path: String,
     last_opened: String,
 ) -> Result<(), String> {
-    state.db.add_recent_file(&path, &last_opened).map_err(|e| {
-        log::error!("Failed to add to recent files '{}': {}", path, e);
-        format!("Failed to add to recent files: {}", e)
-    })
+    state
+        .db
+        .add_recent_file(&path, &last_opened)
+        .map_err(|e| handle_db_error("add to recent files", &path, e))
 }
 
 #[tauri::command]
 pub async fn get_recent_files(
     state: tauri::State<'_, crate::state::AppState>,
 ) -> Result<Vec<String>, String> {
-    state.db.get_recent_files().map_err(|e| {
-        log::error!("Failed to get recent files: {}", e);
-        format!("Failed to get recent files: {}", e)
-    })
+    state
+        .db
+        .get_recent_files()
+        .map_err(|e| handle_io_error("get recent files", e))
 }
 
 #[tauri::command]
@@ -266,18 +252,18 @@ pub async fn remove_from_recent_files(
     state: tauri::State<'_, crate::state::AppState>,
     path: String,
 ) -> Result<(), String> {
-    state.db.remove_recent_file(&path).map_err(|e| {
-        log::error!("Failed to remove recent file '{}': {}", path, e);
-        format!("Failed to remove recent file: {}", e)
-    })
+    state
+        .db
+        .remove_recent_file(&path)
+        .map_err(|e| handle_db_error("remove recent file", &path, e))
 }
 
 #[tauri::command]
 pub async fn clear_recent_files(
     state: tauri::State<'_, crate::state::AppState>,
 ) -> Result<(), String> {
-    state.db.clear_recent_files().map_err(|e| {
-        log::error!("Failed to clear recent files: {}", e);
-        format!("Failed to clear recent files: {}", e)
-    })
+    state
+        .db
+        .clear_recent_files()
+        .map_err(|e| handle_io_error("clear recent files", e))
 }

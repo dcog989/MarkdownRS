@@ -1,5 +1,6 @@
 use crate::db::{SessionData, TabData, TabState};
 use crate::state::AppState;
+use crate::utils::handle_db_error;
 use tauri::State;
 
 #[tauri::command]
@@ -33,10 +34,7 @@ pub async fn save_session(
     let result = state
         .db
         .save_session(&active_tabs, &closed_tabs)
-        .map_err(|e| {
-            log::error!("Failed to save session: {}", e);
-            format!("Failed to save session: {}", e)
-        });
+        .map_err(|e| handle_db_error("save session", "active and closed tabs", e));
 
     let duration = start.elapsed();
     if result.is_ok() {
@@ -62,10 +60,10 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
         log::warn!("Failed to seed recent files: {}", e);
     }
 
-    let result = state.db.load_session().map_err(|e| {
-        log::error!("Failed to restore session: {}", e);
-        format!("Failed to restore session: {}", e)
-    });
+    let result = state
+        .db
+        .load_session()
+        .map_err(|e| handle_db_error("restore session", "session data", e));
 
     let duration = start.elapsed();
     if let Ok(ref session) = result {
@@ -93,10 +91,10 @@ pub async fn load_tab_content(
 ) -> Result<TabData, String> {
     let start = std::time::Instant::now();
 
-    let result = state.db.load_tab_data(&tab_id).map_err(|e| {
-        log::error!("Failed to load tab data for {}: {}", tab_id, e);
-        format!("Failed to load tab data: {}", e)
-    });
+    let result = state
+        .db
+        .load_tab_data(&tab_id)
+        .map_err(|e| handle_db_error("load tab data", &tab_id, e));
 
     let duration = start.elapsed();
     if let Ok(ref tab_data) = result {
@@ -113,20 +111,20 @@ pub async fn load_tab_content(
 
 #[tauri::command]
 pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    let freelist_count = state.db.get_freelist_count().map_err(|e| {
-        log::error!("Failed to get freelist count: {}", e);
-        format!("Failed to check database: {}", e)
-    })?;
+    let freelist_count = state
+        .db
+        .get_freelist_count()
+        .map_err(|e| handle_db_error("check database", "freelist count", e))?;
 
     if freelist_count > 0 {
         log::info!(
             "Vacuuming database: {} free pages to reclaim",
             freelist_count
         );
-        state.db.incremental_vacuum(100).map_err(|e| {
-            log::error!("Failed to vacuum database: {}", e);
-            format!("Failed to vacuum database: {}", e)
-        })?;
+        state
+            .db
+            .incremental_vacuum(100)
+            .map_err(|e| handle_db_error("vacuum database", "database", e))?;
     } else {
         log::debug!("No free pages to reclaim in database");
     }
