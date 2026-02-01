@@ -104,7 +104,7 @@
         style="opacity: {textOpacity};">
         {#if canToggleFileType}
             <button
-                class="hover:text-fg-default hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
+                class="text-accent-primary hover:text-accent-secondary hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
                 onclick={toggleFileType}
                 use:tooltip={'Toggle File Type (markdown/text)'}>
                 {fileType}
