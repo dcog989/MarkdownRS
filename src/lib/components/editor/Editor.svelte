@@ -8,6 +8,7 @@
     import {
         editorStore,
         getHistoryState,
+        getLineChangeTracker,
         updateContent,
         updateCursor,
         updateHistoryState,
@@ -16,9 +17,9 @@
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { ScrollManager } from '$lib/utils/cmScroll';
     import { CONFIG } from '$lib/utils/config';
+    import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
     import { AppError } from '$lib/utils/errorHandling';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
-    import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
     import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
     import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
     import {
@@ -27,7 +28,6 @@
         spellCheckKeymap,
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
-    import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
     import type { EditorView as CM6EditorView } from '@codemirror/view';
     import { readText } from '@tauri-apps/plugin-clipboard-manager';
     import { onMount, tick, untrack } from 'svelte';
@@ -89,14 +89,6 @@
             registerEditorInstance(tabId, cmView);
         } else {
             unregisterEditorInstance(tabId);
-        }
-    });
-
-    $effect(() => {
-        const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-        if (tab && !tab.lineChangeTracker) {
-            // Ensure tracker exists for tabs that might have missed initialization
-            tab.lineChangeTracker = new LineChangeTracker();
         }
     });
 
@@ -213,7 +205,7 @@
     });
     let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
     let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
-    let lineChangeTracker = $derived(activeTab?.lineChangeTracker as LineChangeTracker | undefined);
+    let lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
     let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 

@@ -32,7 +32,6 @@ export type EditorTab = {
     encoding: string;
     fileCheckFailed?: boolean;
     fileCheckPerformed?: boolean;
-    lineChangeTracker?: LineChangeTracker;
     preferredExtension?: 'md' | 'txt';
     contentChanged?: boolean;
     isPersisted?: boolean;
@@ -49,6 +48,11 @@ export type ClosedTab = {
 // Non-reactive storage for CodeMirror history states to avoid Proxy performance costs
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const historyStateCache = new Map<string, unknown>();
+
+// Non-reactive storage for LineChangeTracker to prevent deep reactive proxy chains
+// that cause "Maximum call stack size exceeded" errors with SvelteSet
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const lineChangeTrackerCache = new Map<string, LineChangeTracker>();
 
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
@@ -133,7 +137,8 @@ export function addTab(title: string = '', content: string = '') {
     if (normalizedContent.length > 0) {
         const lines = normalizedContent.split('\n');
         lineCount = lines.length;
-        widestColumn = Math.max(...lines.map((l) => l.length));
+        // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
+        widestColumn = lines.reduce((max, line) => Math.max(max, line.length), 0);
         wordCount =
             sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
                 ? countWords(normalizedContent)
@@ -163,8 +168,10 @@ export function addTab(title: string = '', content: string = '') {
         contentChanged: true,
         isPersisted: false,
         contentLoaded: true,
-        lineChangeTracker: new LineChangeTracker(),
     };
+
+    // Initialize LineChangeTracker in non-reactive cache
+    lineChangeTrackerCache.set(id, new LineChangeTracker());
 
     if (appState.newTabPosition === 'beginning') {
         editorStore.tabs.unshift(newTab);
@@ -178,6 +185,32 @@ export function addTab(title: string = '', content: string = '') {
     pushToMru(id);
     editorStore.sessionDirty = true;
     return id;
+}
+
+/**
+ * Get or create a LineChangeTracker for a tab (non-reactive to avoid proxy issues)
+ */
+export function getLineChangeTracker(id: string): LineChangeTracker {
+    let tracker = lineChangeTrackerCache.get(id);
+    if (!tracker) {
+        tracker = new LineChangeTracker();
+        lineChangeTrackerCache.set(id, tracker);
+    }
+    return tracker;
+}
+
+/**
+ * Set a LineChangeTracker for a tab (used when restoring from session)
+ */
+export function setLineChangeTracker(id: string, tracker: LineChangeTracker): void {
+    lineChangeTrackerCache.set(id, tracker);
+}
+
+/**
+ * Remove a LineChangeTracker from cache (called when closing tabs)
+ */
+function removeLineChangeTracker(id: string): void {
+    lineChangeTrackerCache.delete(id);
 }
 
 export function closeTab(id: string) {
@@ -205,8 +238,9 @@ export function closeTab(id: string) {
     editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);
     editorStore.mruStack = editorStore.mruStack.filter((tId) => tId !== id);
 
-    // Clean up history cache
     historyStateCache.delete(id);
+
+    removeLineChangeTracker(id);
 
     editorStore.sessionDirty = true;
     clearRendererCache(id);
@@ -291,7 +325,8 @@ export function updateContent(id: string, content: string) {
     // Performance optimization: Avoid repeated splits and heavy regex on keystroke
     const lineArray = content.split('\n');
     const lineCount = lineArray.length;
-    const widestColumn = Math.max(...lineArray.map((l) => l.length));
+    // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
+    const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
     const wordCount =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
@@ -426,7 +461,8 @@ export function reloadTabContent(
 ) {
     const lineArray = content.split('\n');
     const lineCount = lineArray.length;
-    const widestColumn = Math.max(...lineArray.map((l) => l.length));
+    // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
+    const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
     const wordCount =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES

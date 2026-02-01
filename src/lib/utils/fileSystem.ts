@@ -133,7 +133,8 @@ export async function openFile(path?: string): Promise<void> {
 
         const lineArray = result.content.split('\n');
         const lineCount = lineArray.length;
-        const widestColumn = Math.max(...lineArray.map((l) => l.length));
+        // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
+        const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
         let initialWordCount = 0;
         if (result.content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {

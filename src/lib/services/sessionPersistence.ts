@@ -1,4 +1,4 @@
-import { addTab, markTabPersisted } from '$lib/stores/editorStore.svelte';
+import { addTab, markTabPersisted, setLineChangeTracker } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -349,7 +349,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 
     const lineArray = content.split('\n');
     const lineCount = lineArray.length;
-    const widestColumn = Math.max(...lineArray.map((l) => l.length));
+    // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
+    const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
     const wordCount =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
@@ -384,8 +385,10 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         contentChanged: !t.path && content.length > 0,
         isPersisted: true,
         contentLoaded,
-        lineChangeTracker: new LineChangeTracker(),
     };
+
+    // Initialize LineChangeTracker in non-reactive cache
+    setLineChangeTracker(t.id, new LineChangeTracker());
 
     return editorTab;
 }
