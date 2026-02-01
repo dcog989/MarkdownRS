@@ -1,4 +1,4 @@
-use crate::markdown::config::MarkdownFlavor;
+use crate::markdown::config::{DEFAULT_LIST_INDENT, MarkdownFlavor};
 use dprint_plugin_markdown::configuration::{
     ConfigurationBuilder, EmphasisKind, StrongKind, TextWrap, UnorderedListKind,
 };
@@ -41,13 +41,13 @@ impl Default for FormatterOptions {
     fn default() -> Self {
         Self {
             flavor: MarkdownFlavor::default(),
-            list_indent: 2,
+            list_indent: DEFAULT_LIST_INDENT,
             code_block_fence: "```".to_string(),
             bullet_char: "-".to_string(),
             emphasis_char: "*".to_string(),
             table_alignment: true,
             normalize_whitespace: true,
-            max_blank_lines: 1,
+            max_blank_lines: crate::markdown::config::DEFAULT_MAX_BLANK_LINES,
         }
     }
 }
@@ -133,7 +133,7 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
     // Apply options that require line-by-line processing
     let convert_bullets = options.bullet_char == "+";
     let convert_fences = options.code_block_fence.starts_with('~');
-    let adjust_indent = options.list_indent != 2;
+    let adjust_indent = options.list_indent != DEFAULT_LIST_INDENT;
 
     if !convert_bullets && !convert_fences && !adjust_indent {
         // Fast path: just handle backslashes
@@ -190,7 +190,7 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
             let new_line = if let Some(caps) = UNORDERED_LIST_RE.captures(&processed_line) {
                 let current_indent = caps.get(1).map_or(0, |m| m.len());
                 (current_indent > 0).then(|| {
-                    let list_level = current_indent / 2;
+                    let list_level = current_indent / DEFAULT_LIST_INDENT;
                     let new_indent = list_level * options.list_indent;
                     let rest = &processed_line[current_indent..];
                     format!("{}{}", " ".repeat(new_indent), rest)
@@ -198,7 +198,7 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
             } else if let Some(caps) = ORDERED_LIST_RE.captures(&processed_line) {
                 let current_indent = caps.get(1).map_or(0, |m| m.len());
                 (current_indent > 0).then(|| {
-                    let list_level = current_indent / 2;
+                    let list_level = current_indent / DEFAULT_LIST_INDENT;
                     let new_indent = list_level * options.list_indent;
                     let rest = &processed_line[current_indent..];
                     format!("{}{}", " ".repeat(new_indent), rest)

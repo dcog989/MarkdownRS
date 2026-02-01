@@ -49,6 +49,7 @@ export const appState = $state({
     confirmationSuppressed: false,
     // Tab switching flag to prevent auto-format during transitions
     isTabSwitching: false,
+    maxFileSizeMB: 50,
 });
 
 // Logic functions

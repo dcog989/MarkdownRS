@@ -244,7 +244,7 @@ fn main() {
                     .level_for("tao", LevelFilter::Error)
                     .level_for("wry", LevelFilter::Error)
                     .level_for("markdown_rs", log_level) // Explicitly set crate level
-                    .max_file_size(10 * 1024 * 1024)
+                    .max_file_size(10 * 1024 * 1024) // Log file rotation: max 10MB
                     .rotation_strategy(RotationStrategy::KeepOne)
                     .targets([
                         Target::new(TargetKind::Stdout),

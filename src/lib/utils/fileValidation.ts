@@ -2,6 +2,8 @@
  * File validation utilities
  */
 
+import { CONFIG } from './config';
+
 export interface FileValidationOptions {
     maxSizeBytes?: number;
     allowedExtensions?: string[];
@@ -13,7 +15,8 @@ export interface FileValidationResult {
     error?: string;
 }
 
-const DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+/** Default max file size in bytes from centralized config (50 MB) */
+const DEFAULT_MAX_FILE_SIZE = CONFIG.EDITOR.MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export const MARKDOWN_EXTENSIONS = [
     'md',

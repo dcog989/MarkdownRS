@@ -35,10 +35,10 @@ pub struct TabState {
 impl TabState {
     /// Normalizes newlines in the tab content from `\r\n` to `\n`.
     pub fn normalize_newlines(&mut self) {
-        if let Some(content) = &mut self.content {
-            if content.contains("\r\n") {
-                *content = content.replace("\r\n", "\n");
-            }
+        if let Some(content) = &mut self.content
+            && content.contains("\r\n")
+        {
+            *content = content.replace("\r\n", "\n");
         }
     }
 }

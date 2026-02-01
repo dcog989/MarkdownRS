@@ -1,3 +1,4 @@
+use crate::commands::settings::get_max_file_size_bytes;
 use crate::utils::{
     format_system_time, handle_db_error, handle_file_error, handle_io_error, validate_path,
 };
@@ -21,7 +22,10 @@ pub struct FileContent {
 }
 
 #[tauri::command]
-pub async fn read_text_file(path: String) -> Result<FileContent, String> {
+pub async fn read_text_file(
+    path: String,
+    app_handle: tauri::AppHandle,
+) -> Result<FileContent, String> {
     let start = std::time::Instant::now();
 
     validate_path(&path)?;
@@ -34,8 +38,9 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
         return Err("Cannot read a directory as a text file".to_string());
     }
 
-    const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024;
-    if metadata.len() > MAX_FILE_SIZE {
+    let max_file_size = get_max_file_size_bytes(&app_handle).await;
+
+    if metadata.len() > max_file_size {
         log::warn!(
             "File too large to read: {} ({} MB)",
             path,
@@ -44,7 +49,7 @@ pub async fn read_text_file(path: String) -> Result<FileContent, String> {
         return Err(format!(
             "File too large: {} MB (max {} MB)",
             metadata.len() / 1024 / 1024,
-            MAX_FILE_SIZE / 1024 / 1024
+            max_file_size / 1024 / 1024
         ));
     }
 

@@ -28,6 +28,7 @@ import {
 } from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { appState } from '$lib/stores/appState.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
@@ -86,8 +87,10 @@ export async function openFile(path?: string): Promise<void> {
             'File:Metadata',
         );
 
+        // Get max file size from app state (loaded from settings.toml)
+        const maxFileSizeMB = appState.maxFileSizeMB;
         const BYTES_PER_MB = 1024 * 1024;
-        const maxBytes = CONFIG.EDITOR.MAX_FILE_SIZE_MB * BYTES_PER_MB;
+        const maxBytes = maxFileSizeMB * BYTES_PER_MB;
 
         if (!metadata) {
             throw new Error('Failed to retrieve file metadata');
@@ -95,7 +98,7 @@ export async function openFile(path?: string): Promise<void> {
 
         if (metadata.size > maxBytes) {
             throw new Error(
-                `File is too large (${(metadata.size / BYTES_PER_MB).toFixed(2)} MB). Maximum allowed is ${CONFIG.EDITOR.MAX_FILE_SIZE_MB} MB.`,
+                `File is too large (${(metadata.size / BYTES_PER_MB).toFixed(2)} MB). Maximum allowed is ${maxFileSizeMB} MB.`,
             );
         }
 

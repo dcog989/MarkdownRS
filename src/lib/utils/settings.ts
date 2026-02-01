@@ -56,6 +56,7 @@ function getSettingsObject() {
         collapsePinnedTabs: appState.collapsePinnedTabs,
         customShortcuts: appState.customShortcuts,
         confirmationSuppressed: appState.confirmationSuppressed,
+        maxFileSizeMB: appState.maxFileSizeMB,
     };
 }
 

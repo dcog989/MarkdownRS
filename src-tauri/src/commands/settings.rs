@@ -188,6 +188,66 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     serde_json::to_value(toml_val).map_err(|e| handle_io_error("convert settings to JSON", e))
 }
 
+/// Load raw TOML settings as toml::Value to extract specific fields without losing data
+async fn load_settings_toml(app_handle: &tauri::AppHandle) -> Result<toml::Value, String> {
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| handle_io_error("get app data directory for load_settings", e))?;
+    let path = app_dir.join("settings.toml");
+
+    if !fs::try_exists(&path).await.unwrap_or(false) {
+        return Ok(toml::Value::Table(toml::map::Map::new()));
+    }
+
+    let raw_bytes = fs::read(&path)
+        .await
+        .map_err(|e| handle_file_error(&path.to_string_lossy(), "read settings file", e))?;
+
+    let content = match Bom::from(raw_bytes.as_slice()) {
+        Bom::Null => String::from_utf8_lossy(&raw_bytes).to_string(),
+        Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
+        Bom::Utf16Le => {
+            let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);
+            if had_errors {
+                log::warn!("UTF-16LE decoding encountered errors in settings file");
+            }
+            decoded.to_string()
+        },
+        Bom::Utf16Be => {
+            let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
+            if had_errors {
+                log::warn!("UTF-16BE decoding encountered errors in settings file");
+            }
+            decoded.to_string()
+        },
+        bom => {
+            log::warn!(
+                "Exotic BOM type {:?} detected in settings file, falling back to UTF-8",
+                bom
+            );
+            String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
+        },
+    };
+
+    toml::from_str(&content).map_err(|e| handle_io_error("parse settings TOML", e))
+}
+
+/// Get the current max file size in bytes from settings
+/// Returns the configured value or default (50 MB)
+pub async fn get_max_file_size_bytes(app_handle: &tauri::AppHandle) -> u64 {
+    match load_settings_toml(app_handle).await {
+        Ok(toml_val) => {
+            let mb = toml_val
+                .get("maxFileSizeMB")
+                .and_then(|v| v.as_integer())
+                .unwrap_or(50);
+            (mb as u64).clamp(1, 500) * 1024 * 1024
+        },
+        Err(_) => 50 * 1024 * 1024,
+    }
+}
+
 #[tauri::command]
 pub async fn save_settings(
     app_handle: tauri::AppHandle,
@@ -199,12 +259,28 @@ pub async fn save_settings(
         .map_err(|e| handle_io_error("get app data directory for save_settings", e))?;
     let path = app_dir.join("settings.toml");
 
+    // Log what we received
+    let max_size_received = settings.get("maxFileSizeMB").cloned();
+    log::info!(
+        "save_settings called with maxFileSizeMB: {:?}",
+        max_size_received
+    );
+
+    // Validate maxFileSizeMB if present (clamp to 1-500)
+    let mut settings = settings;
+    if let Some(max_size) = settings.get("maxFileSizeMB")
+        && let Some(val) = max_size.as_u64()
+    {
+        let clamped = val.clamp(1, 500);
+        settings["maxFileSizeMB"] = serde_json::json!(clamped);
+    }
+
     let toml_str = toml::to_string_pretty(&settings)
         .map_err(|e| handle_io_error("serialize settings to TOML", e))?;
     fs::write(&path, toml_str)
         .await
         .map_err(|e| handle_file_error(&path.to_string_lossy(), "write settings file", e))?;
-    log::info!("Settings saved successfully");
+    log::info!("Settings saved successfully to {:?}", path);
     Ok(())
 }
 

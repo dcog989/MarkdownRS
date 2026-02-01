@@ -2,6 +2,9 @@ use comrak::Options;
 use comrak::options::{Extension, Parse, Render};
 use serde::{Deserialize, Serialize};
 
+pub const DEFAULT_LIST_INDENT: usize = 2;
+pub const DEFAULT_MAX_BLANK_LINES: usize = 2;
+
 /// Markdown flavor specification
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
