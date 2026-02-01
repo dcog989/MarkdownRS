@@ -9,12 +9,14 @@ use unicode_segmentation::UnicodeSegmentation;
 // Lazy-compiled regex for file paths
 // Matches:
 // - Windows absolute paths: C:/ or C:\
+// - Unix absolute paths: /path/to/file
 // - Relative paths: ./ or ../
 // - Home directory: ~/
-// Does NOT match Unix absolute paths starting with just /
 static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+)"#)
-        .expect("Invalid PATH_REGEX pattern")
+    Regex::new(
+        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/[^\s<>"'|?*`]+)"#,
+    )
+    .expect("Invalid PATH_REGEX pattern")
 });
 
 #[derive(Debug, Serialize, Deserialize, Default)]
