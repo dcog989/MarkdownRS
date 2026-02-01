@@ -7,9 +7,9 @@
         smartCompleteAnyWord,
     } from '$lib/components/editor/codemirror/config';
     import {
-        autoRenumberLists,
         prefetchHoverHandler,
         smartBacktickHandler,
+        smartCloseBrackets,
     } from '$lib/components/editor/codemirror/handlers';
     import { initializeTabFileState } from '$lib/services/sessionPersistence';
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
@@ -48,7 +48,6 @@
     import { calculateCursorMetrics, type CursorMetrics } from '$lib/utils/textMetrics';
     import { userThemeExtension } from '$lib/utils/themeMapper';
     import { throttle } from '$lib/utils/timing';
-    import { closeBrackets } from '@codemirror/autocomplete';
     import { history, historyField } from '@codemirror/commands';
     import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
     import { defaultHighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
@@ -260,9 +259,8 @@
             highlightSelectionMatches(),
             autoComp.of(autocompletionConfig),
             recentComp.of(createRecentChangesHighlighter(lineChangeTracker)),
-            closeBrackets(),
+            smartCloseBrackets,
             smartBacktickHandler,
-            autoRenumberLists,
             prefetchHoverHandler,
             EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
             filePathComp.of(isMarkdown ? [linkPlugin, linkTheme] : []),
