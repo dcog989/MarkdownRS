@@ -16,22 +16,18 @@ pub async fn save_session(
 
     let mut tabs_with_content = 0;
     for tab in &mut active_tabs {
-        if let Some(content) = &mut tab.content {
+        if let Some(content) = &tab.content {
             tabs_with_content += 1;
             log::debug!("  Tab '{}' has content: {} bytes", tab.title, content.len());
-            if content.contains("\r\n") {
-                *content = content.replace("\r\n", "\n");
-            }
         } else {
             log::debug!("  Tab '{}' has no content (metadata only)", tab.title);
         }
+        tab.normalize_newlines();
     }
     log::info!("  Tabs with content to save: {}", tabs_with_content);
 
     for tab in &mut closed_tabs {
-        if let Some(content) = tab.content.as_mut().filter(|c| c.contains("\r\n")) {
-            *content = content.replace("\r\n", "\n");
-        }
+        tab.normalize_newlines();
     }
 
     let result = state

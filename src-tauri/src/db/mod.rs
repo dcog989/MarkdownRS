@@ -32,6 +32,17 @@ pub struct TabState {
     pub original_index: Option<i32>,
 }
 
+impl TabState {
+    /// Normalizes newlines in the tab content from `\r\n` to `\n`.
+    pub fn normalize_newlines(&mut self) {
+        if let Some(content) = &mut self.content {
+            if content.contains("\r\n") {
+                *content = content.replace("\r\n", "\n");
+            }
+        }
+    }
+}
+
 impl fmt::Debug for TabState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TabState")
