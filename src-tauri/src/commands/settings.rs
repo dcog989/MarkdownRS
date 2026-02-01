@@ -303,27 +303,79 @@ mod windows_registry {
             .unwrap_or("markdown-rs.exe");
 
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let mut errors = Vec::new();
 
-        // Remove Classic
-        let _ = hkcu.delete_subkey_all(r"Software\Classes\*\shell\MarkdownRS");
+        // Helper closure to delete subkey with error tracking
+        let mut delete_with_tracking = |path: &str, description: &str| {
+            if let Err(e) = hkcu.delete_subkey_all(path) {
+                // Check if the key simply doesn't exist (not a real error)
+                let error_str = e.to_string();
+                if !error_str.contains("not found") && !error_str.contains("2") {
+                    log::warn!(
+                        "Failed to delete registry key '{}': {} - {}",
+                        path,
+                        description,
+                        e
+                    );
+                    errors.push(format!("{}: {}", description, e));
+                }
+            } else {
+                log::debug!(
+                    "Successfully deleted registry key: {} - {}",
+                    path,
+                    description
+                );
+            }
+        };
+
+        // Remove Classic Context Menu
+        delete_with_tracking(
+            r"Software\Classes\*\shell\MarkdownRS",
+            "Classic context menu",
+        );
 
         // Remove Application Registration
         let app_path = format!(r"Software\Classes\Applications\{}", exe_name);
-        let _ = hkcu.delete_subkey_all(&app_path);
+        delete_with_tracking(&app_path, "Application registration");
 
         // Remove OpenWithList Global
         let list_path = format!(r"Software\Classes\*\OpenWithList\{}", exe_name);
-        let _ = hkcu.delete_subkey_all(&list_path);
+        delete_with_tracking(&list_path, "Global OpenWithList");
 
         // Remove Ext specific associations and Edit verbs
         for ext in &[".md", ".markdown", ".txt"] {
-            let list_path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
-            let _ = hkcu.delete_subkey_all(&list_path);
+            let ext_list_path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
+            delete_with_tracking(&ext_list_path, &format!("OpenWithList for {}", ext));
 
             if *ext != ".txt" {
                 let edit_path = format!(r"Software\Classes\{}\shell\Edit", ext);
-                let _ = hkcu.delete_subkey_all(&edit_path);
+                delete_with_tracking(&edit_path, &format!("Edit verb for {}", ext));
             }
+        }
+
+        // Check if critical keys were removed
+        let critical_key = r"Software\Classes\*\shell\MarkdownRS";
+        let critical_removed = hkcu.open_subkey(critical_key).is_err();
+
+        if !errors.is_empty() {
+            log::warn!(
+                "Registry cleanup completed with {} error(s): {:?}",
+                errors.len(),
+                errors
+            );
+
+            // Return error only if critical key still exists
+            if !critical_removed {
+                return Err(format!(
+                    "Failed to remove critical context menu registry entries. Errors: {}",
+                    errors.join("; ")
+                ));
+            }
+
+            // Best effort: return success if critical key was removed
+            log::info!("Registry cleanup completed with non-critical errors (best effort mode)");
+        } else {
+            log::info!("Registry cleanup completed successfully");
         }
 
         Ok(())
