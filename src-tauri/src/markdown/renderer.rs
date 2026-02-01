@@ -226,12 +226,21 @@ fn find_source_line(source_lines: &[&str], html_line: usize) -> usize {
 
 fn build_line_map(content: &str) -> HashMap<usize, usize> {
     let mut line_map = HashMap::new();
+
+    if content.is_empty() {
+        line_map.insert(1, 0);
+        return line_map;
+    }
+
     let mut line_num = 1;
     let mut offset = 0;
 
-    for line in content.lines() {
+    // Handle both LF and CRLF line endings correctly
+    // Using split_inclusive to preserve line ending information
+    for line_with_ending in content.split_inclusive('\n') {
         line_map.insert(line_num, offset);
-        offset += line.len() + 1;
+        // Add the full length including the line ending character(s)
+        offset += line_with_ending.len();
         line_num += 1;
     }
 
