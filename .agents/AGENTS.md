@@ -6,7 +6,7 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 
 - **Tauri** (v2.9) - Desktop framework wrapping the web frontend
 - **Rust** (2024 / v1.93) - Backend logic, Markdown processing, file I/O
-- **Svelte** (v5.48) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
+- **Svelte** (v5.49) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
 - **TypeScript** (v5.9) - Type-safe frontend code
 - **Tailwind** (v4.1) - Utility-first CSS
 - **CodeMirror** (v6.0) - Code editor component
@@ -57,8 +57,8 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 
 ### Disallowed
 
-- `.ai/`, `.assets/`, `.docs/`, `.git/`, `node_modules/`, `.repomix/`
-- `repomix.config.json`, `bun.lock`, `AGENTS.md`, `.repomixignore`
+- `.context/`, `.assets/`, `.docs/`, `.git/`, `node_modules/`, `.repomix/`
+- `repomix.config.json`, `bun.lock`, `.repomixignore`
 - `src-tauri/Cargo.lock`, `src-tauri/target/`, `src-tauri/icons/`
 
 ## Common Patterns
