@@ -1,6 +1,7 @@
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
 import { type EditorView } from '@codemirror/view';
+import { SvelteSet } from 'svelte/reactivity';
 
 export class ScrollSyncManager {
     editor = $state<EditorView | null>(null);
@@ -13,6 +14,10 @@ export class ScrollSyncManager {
     private resizeObserver: ResizeObserver | null = null;
     private updateMapTimer: number | null = null;
     private mapDirty = $state(false);
+
+    // Cache for element visibility state to avoid calculating rects for off-screen elements
+    private visibleElements = new SvelteSet<HTMLElement>();
+    private elementVisibilityObserver: IntersectionObserver | null = null;
 
     constructor() {
         // Automatically update map when preview changes size or content
@@ -39,6 +44,8 @@ export class ScrollSyncManager {
 
                     return () => {
                         this.resizeObserver?.disconnect();
+                        this.elementVisibilityObserver?.disconnect();
+                        this.visibleElements.clear();
                         if (this.updateMapTimer) {
                             clearTimeout(this.updateMapTimer);
                             this.updateMapTimer = null;
@@ -71,11 +78,33 @@ export class ScrollSyncManager {
 
         if (this.preview) {
             this.preview.removeEventListener('scroll', this.onPreviewScroll);
+            this.elementVisibilityObserver?.disconnect();
+            this.visibleElements.clear();
         }
 
         this.preview = el;
         this.onPreviewScroll = this.onPreviewScroll.bind(this);
         el.addEventListener('scroll', this.onPreviewScroll, { passive: true });
+
+        // Set up IntersectionObserver to track visible elements
+        // This avoids expensive getBoundingClientRect calls for off-screen elements
+        this.elementVisibilityObserver = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    const el = entry.target as HTMLElement;
+                    if (entry.isIntersecting) {
+                        this.visibleElements.add(el);
+                    } else {
+                        this.visibleElements.delete(el);
+                    }
+                }
+            },
+            {
+                root: el,
+                rootMargin: '1000px', // Include elements 1000px above/below viewport
+                threshold: 0,
+            },
+        );
     }
 
     updateMap() {
@@ -90,21 +119,35 @@ export class ScrollSyncManager {
             container.querySelectorAll('[data-source-line]'),
         ) as HTMLElement[];
 
-        // Batch all getBoundingClientRect() calls to prevent layout thrashing
-        const elementRects = elements.map((el) => ({
-            element: el,
-            rect: el.getBoundingClientRect(),
-        }));
+        // Reset visibility tracking for new content
+        this.visibleElements.clear();
+        this.elementVisibilityObserver?.disconnect();
 
-        // 1. Build Raw Map: Line -> Pixel Y (absolute in scrollable area)
-        const rawMap = elementRects
-            .map(({ element, rect }) => {
-                // Calculate Y relative to the top of the scrollable content
-                const y = rect.top - containerRect.top + scrollTop;
-                const line = parseInt(element.getAttribute('data-source-line') || '0', 10);
-                return { line, y };
-            })
-            .filter((item) => !isNaN(item.line));
+        // Observe all elements for visibility changes
+        for (const el of elements) {
+            this.elementVisibilityObserver?.observe(el);
+        }
+
+        // Batch all getBoundingClientRect() calls to prevent layout thrashing
+        // Only calculate rects for visible elements - use offsetTop for hidden elements (cheaper)
+        const rawMap: { line: number; y: number }[] = [];
+        for (const el of elements) {
+            const lineAttr = el.getAttribute('data-source-line');
+            if (!lineAttr) continue;
+            const line = parseInt(lineAttr, 10);
+            if (isNaN(line)) continue;
+
+            // Use getBoundingClientRect for visible elements (more accurate)
+            // Use offsetTop for hidden elements (cheaper, no forced layout)
+            let y: number;
+            if (this.visibleElements.has(el)) {
+                const rect = el.getBoundingClientRect();
+                y = rect.top - containerRect.top + scrollTop;
+            } else {
+                y = el.offsetTop;
+            }
+            rawMap.push({ line, y });
+        }
 
         // 2. Sanitize Map
         if (rawMap.length > 0) {
