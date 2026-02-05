@@ -12,6 +12,7 @@ export class ScrollSyncManager {
     private clearSourceTimer: number | null = null;
     private resizeObserver: ResizeObserver | null = null;
     private updateMapTimer: number | null = null;
+    private mapDirty = $state(false);
 
     constructor() {
         // Automatically update map when preview changes size or content
@@ -21,11 +22,15 @@ export class ScrollSyncManager {
                     this.resizeObserver?.disconnect();
                     this.resizeObserver = new ResizeObserver(() => {
                         // Debounce and batch resize updates to prevent excessive map rebuilding
-                        if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
-                        this.updateMapTimer = window.setTimeout(() => {
-                            this.updateMapTimer = null;
-                            requestAnimationFrame(() => this.updateMap());
-                        }, 50); // Reduced from 150ms to 50ms for more responsive updates during initialization
+                        // Only rebuild if content actually changed (dirty flag), not just resized
+                        if (this.mapDirty) {
+                            if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
+                            this.updateMapTimer = window.setTimeout(() => {
+                                this.updateMapTimer = null;
+                                this.mapDirty = false;
+                                requestAnimationFrame(() => this.updateMap());
+                            }, CONFIG.PERFORMANCE.SCROLL_SYNC_RESIZE_DEBOUNCE_MS);
+                        }
                     });
 
                     // Observe container only - children will trigger container resize if needed
@@ -42,6 +47,10 @@ export class ScrollSyncManager {
                 }
             });
         });
+    }
+
+    markMapDirty() {
+        this.mapDirty = true;
     }
 
     registerEditor(view: EditorView) {

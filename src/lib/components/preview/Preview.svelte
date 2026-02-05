@@ -78,6 +78,7 @@
 
                 if (container) {
                     scrollSync.registerPreview(container);
+                    scrollSync.markMapDirty();
                     untrack(() => scrollSync.updateMap());
                 }
             } catch (err) {
