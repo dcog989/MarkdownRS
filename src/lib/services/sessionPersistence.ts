@@ -1,4 +1,9 @@
-import { addTab, markTabPersisted, setLineChangeTracker } from '$lib/stores/editorStore.svelte';
+import {
+    addTab,
+    markTabPersisted,
+    setFileCheckStatus,
+    setLineChangeTracker,
+} from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -15,7 +20,6 @@ import {
     refreshMetadata,
     reloadFileContent,
 } from './fileMetadata';
-import { setFileCheckStatus } from '$lib/stores/editorStore.svelte';
 import { fileWatcher } from './fileWatcher';
 
 // Only import types if needed
@@ -40,32 +44,20 @@ type RustTabState = {
 };
 
 class SessionPersistenceManager {
-    private isSaving = false;
-    private pendingSaveRequested = false;
+    private saveQueue = Promise.resolve();
+    private savePending = false;
 
     async requestSave(): Promise<void> {
         if (!appContext.editor.sessionDirty) {
             return;
         }
 
-        if (this.isSaving) {
-            this.pendingSaveRequested = true;
-
-            return;
-        }
-
-        this.isSaving = true;
-
-        try {
-            await this.executeSave();
-            while (this.pendingSaveRequested) {
-                this.pendingSaveRequested = false;
-                if (appContext.editor.sessionDirty) {
-                    await this.executeSave();
-                }
-            }
-        } finally {
-            this.isSaving = false;
+        if (!this.savePending) {
+            this.savePending = true;
+            this.saveQueue = this.saveQueue.then(async () => {
+                await this.executeSave();
+                this.savePending = false;
+            });
         }
     }
 
