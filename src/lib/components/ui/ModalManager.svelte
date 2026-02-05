@@ -45,7 +45,6 @@
     let isMarkdown = $derived(
         activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
     );
-    let shortcutsRegistered = $state(false);
 
     function toggleSplit() {
         if (!isMarkdown) {
@@ -264,23 +263,27 @@
         })),
     );
 
-    const commands = $derived.by(() => {
-        // Dependency on shortcutsRegistered to force re-calculation after mount
-        void shortcutsRegistered;
+    const allCommands = [...baseCommands, ...textOperationCommands];
 
-        return [...baseCommands, ...textOperationCommands]
-            .map((cmd) => ({
-                ...cmd,
-                shortcut: shortcutManager.getShortcutDisplay(cmd.id),
-            }))
-            .sort((a, b) => {
-                const catA = a.label.split(':')[0].trim();
-                const catB = b.label.split(':')[0].trim();
-                if (catA !== catB) {
-                    return catA.localeCompare(catB);
-                }
-                return a.label.localeCompare(b.label);
-            });
+    const sortedCommands = allCommands
+        .map((cmd) => ({
+            ...cmd,
+            shortcut: '',
+        }))
+        .sort((a, b) => {
+            const catA = a.label.split(':')[0].trim();
+            const catB = b.label.split(':')[0].trim();
+            if (catA !== catB) {
+                return catA.localeCompare(catB);
+            }
+            return a.label.localeCompare(b.label);
+        });
+
+    const commands = $derived.by(() => {
+        return sortedCommands.map((cmd) => ({
+            ...cmd,
+            shortcut: shortcutManager.getShortcutDisplay(cmd.id),
+        }));
     });
 
     function registerShortcuts() {
@@ -348,8 +351,6 @@
                 triggerReopenClosedTab(0);
             },
         });
-
-        shortcutsRegistered = true;
     }
 
     onMount(() => {
