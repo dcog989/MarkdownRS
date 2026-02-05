@@ -19,7 +19,6 @@
 /build
 /src-tauri/gen/
 /src-tauri/target/
-bun.lock
 node_modules/
 obj/x64/
 obj/x86/
@@ -30,3 +29,4 @@ repomix.*.json
 src-tauri/Cargo.lock
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+yarn-error.log

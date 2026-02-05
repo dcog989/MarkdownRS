@@ -15,7 +15,6 @@ export default ts.config(
             'vite.config.ts',
             'svelte.config.js',
             'postcss.config.cjs',
-            'scripts/**',
         ],
     },
     js.configs.recommended,
