@@ -32,7 +32,6 @@ Developed using the latest versions of:
 - [Rust](https://www.rust-lang.org/)
 - [Svelte](https://svelte.dev/)
 - [Typescript](https://www.typescriptlang.org/)
-- [Tailwind](https://tailwindcss.com/)
 - [CodeMirror](https://codemirror.net/)
 - [SQLite](https://sqlite.org/)
 
