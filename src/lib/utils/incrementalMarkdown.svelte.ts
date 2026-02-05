@@ -235,7 +235,9 @@ export class IncrementalMarkdownRenderer {
             }
         }
 
-        return template.innerHTML;
+        // Use XMLSerializer for more robust HTML serialization than innerHTML
+        const serializer = new XMLSerializer();
+        return serializer.serializeToString(template.content);
     }
 
     private hashString(str: string): string {
