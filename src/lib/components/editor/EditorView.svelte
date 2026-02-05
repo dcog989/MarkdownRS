@@ -299,10 +299,12 @@
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
+                    // Capture tabId in closure to prevent race condition during tab switches
+                    const currentTabId = view?._currentTabId;
                     contentUpdateTimer = window.setTimeout(() => {
-                        // Prevent race condition: If tab changed in the meantime, do NOT use onContentChange prop
-                        // as it might be bound to the new tab ID. Check internal ID against prop ID.
-                        if (view?._currentTabId === tabId) {
+                        // Only update if this timer still corresponds to the current tab
+                        // This prevents updates from stale timers firing after tab switches
+                        if (view?._currentTabId === currentTabId && currentTabId !== undefined) {
                             onContentChange(update.state.doc.toString());
                             if (onHistoryUpdate && view?.getHistoryState) {
                                 onHistoryUpdate(view.getHistoryState());
