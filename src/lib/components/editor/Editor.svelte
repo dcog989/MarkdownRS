@@ -61,12 +61,13 @@
     const eventHandlers = createEditorEventHandlers(onContextMenu);
 
     // Global flush function accessible from window for shutdown
+    let flushFn: (() => void) | null = null;
     if (typeof window !== 'undefined') {
         const win = window as unknown as { _editorFlushFunctions: (() => void)[] };
         if (!win._editorFlushFunctions) {
             win._editorFlushFunctions = [];
         }
-        const flushFn = () => {
+        flushFn = () => {
             if (cmView?.flushPendingContent) {
                 cmView.flushPendingContent();
             }
@@ -78,8 +79,15 @@
         initSpellcheck();
 
         return () => {
-            // Cleanup: unregister editor instance when component is destroyed
+            // Cleanup: unregister editor instance and remove flush function when component is destroyed
             unregisterEditorInstance(tabId);
+            if (flushFn) {
+                const win = window as unknown as { _editorFlushFunctions: (() => void)[] };
+                const index = win._editorFlushFunctions.indexOf(flushFn);
+                if (index > -1) {
+                    win._editorFlushFunctions.splice(index, 1);
+                }
+            }
         };
     });
 
