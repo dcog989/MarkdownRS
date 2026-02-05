@@ -69,13 +69,38 @@ class TabSpellcheckCache {
             this.tabCaches = new SvelteMap(sorted.slice(0, 10));
         }
     }
+
+    // Invalidate caches that contain a specific word
+    invalidateForWord(word: string) {
+        const wLower = word.toLowerCase();
+        for (const [tabId, cache] of this.tabCaches) {
+            if (cache.misspelledWords.has(wLower)) {
+                this.tabCaches.delete(tabId);
+            }
+        }
+    }
+
+    // Invalidate caches that contain any of the specified words
+    invalidateForWords(words: string[]) {
+        const wordsLower = new Set(words.map((w) => w.toLowerCase()));
+        for (const [tabId, cache] of this.tabCaches) {
+            for (const word of cache.misspelledWords) {
+                if (wordsLower.has(word)) {
+                    this.tabCaches.delete(tabId);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 const tabCache = new TabSpellcheckCache();
 
 // Export function to invalidate cache when dictionary changes
-export function invalidateSpellcheckCache(tabId?: string) {
-    if (tabId) {
+export function invalidateSpellcheckCache(tabId?: string, words?: string[]) {
+    if (words && words.length > 0) {
+        tabCache.invalidateForWords(words);
+    } else if (tabId) {
         tabCache.invalidate(tabId);
     } else {
         tabCache.invalidateAll();
@@ -318,8 +343,8 @@ export const spellCheckKeymap = [
                 // 2. Clear cache
                 words.forEach((w) => spellcheckState.misspelledCache.delete(w.toLowerCase()));
 
-                // 3. Invalidate tab caches since dictionary changed
-                tabCache.invalidateAll();
+                // 3. Invalidate tab caches containing these specific words
+                tabCache.invalidateForWords(words);
 
                 // 4. Background Persistence
                 Promise.all(words.map((w) => addToDictionary(w))).then(() => {
