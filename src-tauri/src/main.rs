@@ -70,7 +70,7 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
@@ -360,6 +360,8 @@ fn main() {
             commands::settings::save_settings,
             commands::settings::set_context_menu_item,
             commands::settings::check_context_menu_status,
+            commands::updater::check_for_updates,
+            commands::updater::download_and_install_update,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| {

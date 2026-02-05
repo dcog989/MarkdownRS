@@ -199,6 +199,15 @@ export interface BackendCommands {
         return: boolean;
     };
 
+    // Updater
+    check_for_updates: {
+        args: Record<string, never>;
+        return: { available: boolean; version: string | null; release_notes: string | null };
+    };
+    download_and_install_update: {
+        args: Record<string, never>;
+        return: void;
+    };
     // Window State (Plugin)
     'plugin:window-state|save_window_state': {
         args: Record<string, never>;

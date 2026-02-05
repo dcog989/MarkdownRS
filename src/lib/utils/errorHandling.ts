@@ -1,4 +1,4 @@
-import { showToast } from '$lib/stores/toastStore.svelte';
+﻿import { showToast } from '$lib/stores/toastStore.svelte';
 import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
 export type ErrorContext =
@@ -18,6 +18,8 @@ export type ErrorContext =
     | 'Dictionary:Add'
     | 'UI:DragDrop'
     | 'FileWatcher:Watch'
+    | 'Update:Check'
+    | 'Update:Install'
     | 'FileWatcher:Unwatch'
     | 'Export:PDF'
     | 'Export:HTML'

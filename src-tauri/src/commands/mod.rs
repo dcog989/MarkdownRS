@@ -4,3 +4,4 @@ pub mod markdown;
 pub mod session;
 pub mod settings;
 pub mod spellcheck;
+pub mod updater;

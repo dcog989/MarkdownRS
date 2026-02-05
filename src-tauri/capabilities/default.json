@@ -18,27 +18,45 @@
     "fs:allow-unwatch",
     {
       "identifier": "fs:allow-read-file",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
     },
     {
       "identifier": "fs:allow-watch",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
     },
     "shell:allow-open",
     "opener:default",
     {
       "identifier": "opener:allow-open-path",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
     },
     {
       "identifier": "opener:allow-open-url",
-      "allow": [{ "url": "http://**" }, { "url": "https://**" }]
+      "allow": [
+        {
+          "url": "http://**"
+        },
+        {
+          "url": "https://**"
+        }
+      ]
     },
     "dialog:default",
     "store:default",
     "window-state:default",
     "log:default",
-    "updater:default",
     "clipboard-manager:default"
   ]
 }

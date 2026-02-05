@@ -2,7 +2,6 @@
     import { callBackend } from '$lib/utils/backend';
     import { openPath } from '@tauri-apps/plugin-opener';
     import { relaunch } from '@tauri-apps/plugin-process';
-    import { check } from '@tauri-apps/plugin-updater';
     import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
@@ -37,7 +36,6 @@
     let isChecking = $state(false);
     let updateStatus = $state<string | null>(null);
 
-    // Replaces onMount for initial data fetch
     $effect(() => {
         callBackend('get_app_info', {}, 'File:Metadata')
             .then((info) => {
@@ -56,8 +54,7 @@
 
     async function openLogFile() {
         if (!appInfo.logs_path) return;
-        const separator = appInfo.os_platform === 'windows' ? '\\' : '/';
-        const logFile = `${appInfo.logs_path}${separator}markdown-rs.log`;
+        const logFile = `markdown-rs.log`;
         try {
             await openPath(logFile);
         } catch (e) {
@@ -72,15 +69,16 @@
         updateStatus = 'Checking for updates...';
 
         try {
-            const update = await check();
-            if (update) {
+            const updateInfo = await callBackend('check_for_updates', {}, 'Update:Check');
+
+            if (updateInfo && updateInfo.available) {
                 const confirmed = confirm(
-                    `Update available: ${update.version}\n\n${update.body || 'No release notes available.'}\n\nDo you want to install it now?`,
+                    `Update available: \n\n\n\nDo you want to install it now?`,
                 );
 
                 if (confirmed) {
                     updateStatus = 'Downloading and installing...';
-                    await update.downloadAndInstall();
+                    await callBackend('download_and_install_update', {}, 'Update:Install');
                     updateStatus = 'Restarting...';
                     await relaunch();
                 } else {
@@ -186,7 +184,7 @@
 
         <div class="mt-4 text-center text-xs">
             <p class="text-fg-muted">Giants' Shoulders = Node / Vite / Rust / Tauri / Svelte</p>
-            <p class="text-fg-muted mt-1">© MarkdownRS since 2025. All rights reserved.</p>
+            <p class="text-fg-muted mt-1">MarkdownRS © since 2025. All rights reserved.</p>
         </div>
     </div>
 </Modal>
