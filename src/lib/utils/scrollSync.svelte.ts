@@ -226,108 +226,72 @@ export class ScrollSyncManager {
         }, 150);
     }
 
-    private syncPreview() {
-        if (!this.editor || !this.preview) return;
-
-        const editorScroll = this.editor.scrollDOM;
-        const scrollTop = editorScroll.scrollTop;
-        const scrollHeight = editorScroll.scrollHeight;
-        const clientHeight = editorScroll.clientHeight;
+    private syncScrollPosition(
+        source: HTMLElement,
+        target: HTMLElement,
+        direction: 'editor-to-preview' | 'preview-to-editor',
+    ) {
+        const scrollTop = source.scrollTop;
+        const scrollHeight = source.scrollHeight;
+        const clientHeight = source.clientHeight;
         const maxScroll = scrollHeight - clientHeight;
 
         if (scrollTop <= 0) {
-            if (this.preview.scrollTop > 0) {
-                this.preview.scrollTop = 0;
+            if (target.scrollTop > 0) {
+                target.scrollTop = 0;
             }
             return;
         }
         if (scrollTop >= maxScroll - 1) {
-            const targetBottom = this.preview.scrollHeight - this.preview.clientHeight;
-            if (Math.abs(this.preview.scrollTop - targetBottom) > 2) {
-                this.preview.scrollTop = targetBottom;
+            const targetBottom = target.scrollHeight - target.clientHeight;
+            if (Math.abs(target.scrollTop - targetBottom) > 2) {
+                target.scrollTop = targetBottom;
             }
             return;
         }
 
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
-            const targetTop = pct * (this.preview.scrollHeight - this.preview.clientHeight);
+            const targetMax = target.scrollHeight - target.clientHeight;
+            const targetTop = pct * targetMax;
             if (
-                Math.abs(this.preview.scrollTop - targetTop) >
-                CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
+                Math.abs(target.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
             ) {
-                this.preview.scrollTop = targetTop;
+                target.scrollTop = targetTop;
             }
             return;
         }
 
-        const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
-        const docLine = this.editor.state.doc.lineAt(lineBlock.from);
-        const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-        const currentLine = docLine.number + fraction;
-
-        const targetY = this.interpolate(currentLine, 'line', 'y');
-
-        if (
-            Math.abs(this.preview.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
-        ) {
-            this.preview.scrollTop = targetY;
+        let targetY: number;
+        if (direction === 'editor-to-preview') {
+            const lineBlock = this.editor!.lineBlockAtHeight(scrollTop);
+            const docLine = this.editor!.state.doc.lineAt(lineBlock.from);
+            const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+            const currentLine = docLine.number + fraction;
+            targetY = this.interpolate(currentLine, 'line', 'y');
+        } else {
+            const targetLine = this.interpolate(scrollTop, 'y', 'line');
+            const docLines = this.editor!.state.doc.lines;
+            const safeLine = Math.max(1, Math.min(targetLine, docLines));
+            const lineInt = Math.floor(safeLine);
+            const lineFrac = safeLine - lineInt;
+            const lineInfo = this.editor!.lineBlockAt(this.editor!.state.doc.line(lineInt).from);
+            targetY = lineInfo.top + lineInfo.height * lineFrac;
         }
+
+        if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+            target.scrollTop = targetY;
+        }
+    }
+
+    private syncPreview() {
+        if (!this.editor || !this.preview) return;
+        this.syncScrollPosition(this.editor.scrollDOM, this.preview, 'editor-to-preview');
     }
 
     private syncEditor() {
         if (!this.editor || !this.preview) return;
-
-        const scrollTop = this.preview.scrollTop;
-        const scrollHeight = this.preview.scrollHeight;
-        const clientHeight = this.preview.clientHeight;
-        const maxScroll = scrollHeight - clientHeight;
-
-        if (scrollTop <= 0) {
-            if (this.editor.scrollDOM.scrollTop > 0) {
-                this.editor.scrollDOM.scrollTop = 0;
-            }
-            return;
-        }
-        if (scrollTop >= maxScroll - 1) {
-            const targetBottom =
-                this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
-            if (Math.abs(this.editor.scrollDOM.scrollTop - targetBottom) > 2) {
-                this.editor.scrollDOM.scrollTop = targetBottom;
-            }
-            return;
-        }
-
-        if (this.lineMap.length < 2) {
-            const pct = scrollTop / maxScroll;
-            const editorMax =
-                this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
-            const targetTop = pct * editorMax;
-            if (
-                Math.abs(this.editor.scrollDOM.scrollTop - targetTop) >
-                CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
-            ) {
-                this.editor.scrollDOM.scrollTop = targetTop;
-            }
-            return;
-        }
-
-        const targetLine = this.interpolate(scrollTop, 'y', 'line');
-        const docLines = this.editor.state.doc.lines;
-        const safeLine = Math.max(1, Math.min(targetLine, docLines));
-
-        const lineInt = Math.floor(safeLine);
-        const lineFrac = safeLine - lineInt;
-
-        const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
-        const targetY = lineInfo.top + lineInfo.height * lineFrac;
-
-        if (
-            Math.abs(this.editor.scrollDOM.scrollTop - targetY) >
-            CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
-        ) {
-            this.editor.scrollDOM.scrollTop = targetY;
-        }
+        this.syncScrollPosition(this.preview, this.editor.scrollDOM, 'preview-to-editor');
     }
 
     private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
