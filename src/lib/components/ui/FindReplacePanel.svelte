@@ -45,13 +45,26 @@
 
         if (currentlyOpen && !wasOpen) {
             wasOpen = true;
-            tick().then(focusInput);
 
+            // Prefill with selected text if available
             untrack(() => {
-                if (searchState.findText && cmView) {
+                if (cmView) {
+                    const selection = cmView.state.selection.main;
+                    if (selection.from !== selection.to) {
+                        // Text is selected, use it as the search term
+                        const selectedText = cmView.state.doc.sliceString(
+                            selection.from,
+                            selection.to,
+                        );
+                        if (selectedText) {
+                            searchState.findText = selectedText;
+                        }
+                    }
                     updateSearchEditor(cmView);
                 }
             });
+
+            tick().then(focusInput);
         } else if (!currentlyOpen && wasOpen) {
             wasOpen = false;
             clearSearch(cmView);

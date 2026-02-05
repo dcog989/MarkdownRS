@@ -7,7 +7,7 @@
     import Toast from '$lib/components/ui/Toast.svelte';
     import { loadTabContentLazy } from '$lib/services/sessionPersistence';
     import { toggleSplitView } from '$lib/stores/appState.svelte';
-    import { addTab, pushToMru } from '$lib/stores/editorStore.svelte';
+    import { addTab, pushToMru, reopenLastClosed } from '$lib/stores/editorStore.svelte';
     import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
     import { openFind, openReplace } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
@@ -98,6 +98,14 @@
         if (!isModifier) return;
 
         const key = e.key.toLowerCase();
+
+        // Handle Ctrl+Shift+T before the switch to ensure it works
+        if (e.ctrlKey && e.shiftKey && key === 't') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            reopenLastClosed();
+            return;
+        }
 
         switch (key) {
             case 's':

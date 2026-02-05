@@ -273,6 +273,10 @@ export function reopenClosedTab(historyIndex: number): string | null {
     editorStore.tabs.splice(insertIndex, 0, entry.tab);
 
     pushToMru(entry.tab.id);
+
+    // Focus the reopened tab
+    appState.activeTabId = entry.tab.id;
+
     editorStore.sessionDirty = true;
     return entry.tab.id;
 }

@@ -168,8 +168,15 @@ export class KeyboardShortcutManager {
         if (e.metaKey) parts.push('meta');
 
         let key = e.key.toLowerCase();
-        if (key === ' ') key = 'space';
 
+        // Handle special keys
+        if (key === ' ') {
+            key = 'space';
+        }
+
+        // Filter out modifier keys themselves from the key part
+        // When Shift+T is pressed, e.key is 'T' (uppercase), but we want 't' in lowercase
+        // The shift modifier is already in parts, so we don't need it in the key
         if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
             parts.push(key);
         }
