@@ -229,8 +229,50 @@ export async function persistSession(): Promise<void> {
     await persistenceManager.requestSave();
 }
 
+enum TabLoadState {
+    UNLOADED = 'UNLOADED',
+    LOADING = 'LOADING',
+    LOADED = 'LOADED',
+    ERROR = 'ERROR',
+}
+
+const tabLoadStates = new Map<string, TabLoadState>();
+
+export function initializeTabLoadState(tabId: string, contentLoaded: boolean = true): void {
+    tabLoadStates.set(tabId, contentLoaded ? TabLoadState.LOADED : TabLoadState.UNLOADED);
+}
+
+function validateTransition(currentState: TabLoadState, nextState: TabLoadState): boolean {
+    const validTransitions: Record<TabLoadState, TabLoadState[]> = {
+        [TabLoadState.UNLOADED]: [TabLoadState.LOADING],
+        [TabLoadState.LOADING]: [TabLoadState.LOADED, TabLoadState.ERROR],
+        [TabLoadState.LOADED]: [],
+        [TabLoadState.ERROR]: [TabLoadState.LOADING],
+    };
+
+    return validTransitions[currentState]?.includes(nextState) ?? false;
+}
+
+function setTabLoadState(tabId: string, state: TabLoadState): void {
+    const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
+    if (!validateTransition(currentState, state)) {
+        logger.session.warn('InvalidTabStateTransition', {
+            tabId,
+            from: currentState,
+            to: state,
+        });
+        return;
+    }
+
+    tabLoadStates.set(tabId, state);
+}
+
 /**
  * Lazy load content for a tab from the database
+ *
+ * State Machine Transitions:
+ * - UNLOADED → LOADING → LOADED (success path)
+ * - UNLOADED → LOADING → ERROR → LOADING → LOADED (retry path)
  */
 const loadingRequests = new Map<string, number>();
 
@@ -242,9 +284,17 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     }
 
     const tab = appContext.editor.tabs[index];
-    if (tab.contentLoaded) {
+    const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
+
+    if (currentState === TabLoadState.LOADED || tab.contentLoaded) {
         return;
     }
+
+    if (currentState === TabLoadState.LOADING) {
+        return;
+    }
+
+    setTabLoadState(tabId, TabLoadState.LOADING);
 
     const requestId = Date.now();
     loadingRequests.set(tabId, requestId);
@@ -256,10 +306,11 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             return;
         }
 
-        if (data && data.content !== null && data.content !== undefined) {
-            const normalizedContent = normalizeLineEndings(data.content);
+        let normalizedContent = '';
+        let lastSavedContent = '';
 
-            let lastSavedContent = '';
+        if (data && data.content !== null && data.content !== undefined) {
+            normalizedContent = normalizeLineEndings(data.content);
 
             if (!tab.path) {
                 lastSavedContent = '';
@@ -272,6 +323,8 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                     );
                     if (fileData && fileData.content) {
                         lastSavedContent = normalizeLineEndings(fileData.content);
+                    } else {
+                        lastSavedContent = normalizedContent;
                     }
                 } catch {
                     lastSavedContent = normalizedContent;
@@ -279,49 +332,53 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             } else {
                 lastSavedContent = normalizedContent;
             }
-
-            const sizeBytes = new TextEncoder().encode(normalizedContent).length;
-            const wordCount =
-                sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-                    ? countWords(normalizedContent)
-                    : fastCountWords(normalizedContent);
-
-            const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
-            if (currentIndex !== -1) {
-                const currentTab = appContext.editor.tabs[currentIndex];
-                appContext.editor.tabs[currentIndex] = {
-                    ...currentTab,
-                    content: normalizedContent,
-                    lastSavedContent,
-                    sizeBytes,
-                    wordCount,
-                    lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
-                    contentLoaded: true,
-                };
-            }
-
-            const duration = (performance.now() - start).toFixed(2);
-            logger.session.debug('TabContentLazyLoaded', {
-                duration: `${duration}ms`,
-                tabId,
-                size: sizeBytes,
-            });
         } else {
-            const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
-            if (currentIndex !== -1) {
-                appContext.editor.tabs[currentIndex].contentLoaded = true;
-            }
+            normalizedContent = '';
+            lastSavedContent = '';
         }
+
+        const sizeBytes = new TextEncoder().encode(normalizedContent).length;
+        const wordCount =
+            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+                ? countWords(normalizedContent)
+                : fastCountWords(normalizedContent);
+
+        const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+        if (currentIndex !== -1) {
+            const currentTab = appContext.editor.tabs[currentIndex];
+            appContext.editor.tabs[currentIndex] = {
+                ...currentTab,
+                content: normalizedContent,
+                lastSavedContent,
+                sizeBytes,
+                wordCount,
+                lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
+                contentLoaded: true,
+                isDirty: tab.isDirty && normalizedContent !== lastSavedContent,
+            };
+        }
+
+        setTabLoadState(tabId, TabLoadState.LOADED);
+
+        const duration = (performance.now() - start).toFixed(2);
+        logger.session.debug('TabContentLazyLoaded', {
+            duration: `${duration}ms`,
+            tabId,
+            size: sizeBytes,
+        });
     } catch (err) {
         if (loadingRequests.get(tabId) === requestId) {
+            setTabLoadState(tabId, TabLoadState.ERROR);
+
             AppError.handle('Session:Load', err, {
                 showToast: false,
                 severity: 'warning',
                 additionalInfo: { tabId },
             });
+
             const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
             if (currentIndex !== -1) {
-                appContext.editor.tabs[currentIndex].contentLoaded = true;
+                appContext.editor.tabs[currentIndex].contentLoaded = false;
             }
         }
     } finally {
@@ -374,7 +431,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         encoding: 'UTF-8',
         fileCheckFailed: t.file_check_failed || false,
         fileCheckPerformed: t.file_check_performed || false,
-        contentChanged: !t.path && content.length > 0,
+        contentChanged: t.is_dirty || (!t.path && content.length > 0),
         isPersisted: true,
         contentLoaded,
     };
@@ -412,6 +469,10 @@ export async function loadSession(): Promise<void> {
             });
 
             appContext.editor.tabs = convertedTabs;
+
+            convertedTabs.forEach((tab) => {
+                initializeTabLoadState(tab.id, tab.contentLoaded);
+            });
 
             const sortedMru = activeRustTabs
                 .filter((t) => t.mru_position !== null && t.mru_position !== undefined)
@@ -461,6 +522,7 @@ export async function loadSession(): Promise<void> {
 
             appContext.editor.closedTabsHistory = closedRustTabs.map((t) => {
                 const tab = convertRustTabToEditorTab(t, true);
+                initializeTabLoadState(tab.id, tab.contentLoaded);
 
                 return {
                     tab,

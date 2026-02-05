@@ -1,4 +1,5 @@
 import type { OperationId } from '$lib/config/textOperationsRegistry';
+import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
@@ -172,6 +173,8 @@ export function addTab(title: string = '', content: string = '') {
 
     // Initialize LineChangeTracker in non-reactive cache
     lineChangeTrackerCache.set(id, new LineChangeTracker());
+
+    initializeTabLoadState(id, true);
 
     if (appState.newTabPosition === 'beginning') {
         editorStore.tabs.unshift(newTab);
