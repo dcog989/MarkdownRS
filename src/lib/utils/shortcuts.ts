@@ -61,14 +61,37 @@ export class KeyboardShortcutManager {
      * Handle keyboard events by matching against current mappings
      */
     async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
-        if (!this.enabled || e.repeat) return false;
-
-        // Ignore shortcuts when typing in input fields, unless it's an escape key
-        if (this.isInputElement(e.target) && e.key !== 'Escape') {
+        if (!this.enabled || e.repeat) {
             return false;
         }
 
         const pressedKey = this.getEventKey(e);
+
+        // Global shortcuts that work even in input fields
+        const globalShortcuts = [
+            'ctrl+p', // Quick open / Recent files
+            'ctrl+shift+p', // Command palette
+            'ctrl+s', // Save
+            'ctrl+shift+s', // Save as
+            'ctrl+o', // Open file
+            'ctrl+n', // New file
+            'ctrl+w', // Close tab
+            'ctrl+shift+t', // Reopen closed tab
+            'ctrl+tab', // Next tab
+            'ctrl+shift+tab', // Previous tab
+            'ctrl+pagedown', // Next tab
+            'ctrl+pageup', // Previous tab
+            'ctrl+,', // Settings
+            'ctrl+shift+b', // Bookmarks
+            'f1', // Shortcuts
+            'escape', // Escape
+        ];
+
+        // Ignore shortcuts when typing in input fields, unless it's a global shortcut
+        const isInput = this.isInputElement(e.target);
+        if (isInput && !globalShortcuts.includes(pressedKey)) {
+            return false;
+        }
 
         const isEditorKey = [
             'ctrl+backspace',

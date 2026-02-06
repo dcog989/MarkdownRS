@@ -43,7 +43,16 @@
         registerAllShortcuts();
 
         const handleKeydown = (e: KeyboardEvent) => {
-            shortcutManager.handleKeyEvent(e);
+            const key = e.key.toLowerCase();
+            const isCtrl = e.ctrlKey || e.metaKey;
+
+            // Prevent default for browser shortcuts that conflict with app shortcuts
+            if (isCtrl && key === 'p') {
+                e.preventDefault();
+            }
+
+            // Let shortcut manager handle the event
+            void shortcutManager.handleKeyEvent(e);
         };
 
         // Prevent browser context menu globally
