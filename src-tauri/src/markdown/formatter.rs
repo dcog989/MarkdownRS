@@ -128,7 +128,9 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
 
 fn post_process_formatting(content: &str, options: &FormatterOptions) -> String {
     // Pre-allocate result buffer to avoid reallocations
-    let mut result = String::with_capacity(content.len() + 1024);
+    // Estimate ~5% expansion for formatting operations (bullet conversion, fence conversion, etc.)
+    let estimated_capacity = content.len() + (content.len() / 20).max(64);
+    let mut result = String::with_capacity(estimated_capacity);
 
     // Apply options that require line-by-line processing
     let convert_bullets = options.bullet_char == "+";
