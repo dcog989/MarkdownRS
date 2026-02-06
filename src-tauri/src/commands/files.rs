@@ -147,6 +147,18 @@ pub async fn resolve_path_relative(
     base_path: Option<String>,
     click_path: String,
 ) -> Result<String, String> {
+    // Security check: Validate input path BEFORE processing to prevent traversal
+    // Reject paths with more than 3 parent directory references
+    let parent_dir_count =
+        click_path.matches("../").count() + if click_path.ends_with("/..") { 1 } else { 0 };
+    if parent_dir_count > 3 {
+        log::warn!(
+            "Path traversal blocked: excessive parent directory references in input: {}",
+            click_path
+        );
+        return Err("Access denied: invalid path".to_string());
+    }
+
     // Get the base directory for path traversal protection
     let base_dir = base_path
         .as_ref()
