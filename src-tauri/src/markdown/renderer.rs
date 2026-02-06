@@ -1,23 +1,20 @@
 use crate::markdown::config::MarkdownFlavor;
 use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
+use dashmap::DashMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::sync::{LazyLock, RwLock};
+use std::sync::{Arc, LazyLock};
 use unicode_segmentation::UnicodeSegmentation;
 
-/// Cache entry for line map to avoid rebuilding on every render
-struct LineMapCache {
-    content_hash: u64,
-    line_map: HashMap<usize, usize>,
-}
+/// Thread-safe cache for line maps using content hash as key
+/// Arc<DashMap> provides lock-free reads for better concurrent performance
+static LINE_MAP_CACHE: LazyLock<Arc<DashMap<u64, HashMap<usize, usize>>>> =
+    LazyLock::new(|| Arc::new(DashMap::new()));
 
-/// Thread-safe cache for line maps with content-based invalidation
-static LINE_MAP_CACHE: LazyLock<RwLock<Option<LineMapCache>>> = LazyLock::new(|| RwLock::new(None));
-
-/// Computes a fast hash of content for cache invalidation
+/// Computes a fast hash of content for cache key
 fn compute_content_hash(content: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
     content.hash(&mut hasher);
@@ -28,24 +25,16 @@ fn compute_content_hash(content: &str) -> u64 {
 fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
     let current_hash = compute_content_hash(content);
 
-    // Try to read from cache first
-    if let Ok(cache) = LINE_MAP_CACHE.read()
-        && let Some(ref cached) = *cache
-        && cached.content_hash == current_hash
-    {
-        return cached.line_map.clone();
+    // Lock-free read from cache using DashMap
+    if let Some(cached) = LINE_MAP_CACHE.get(&current_hash) {
+        return cached.clone();
     }
 
     // Build new line map
     let line_map = build_line_map(content);
 
-    // Update cache
-    if let Ok(mut cache) = LINE_MAP_CACHE.write() {
-        *cache = Some(LineMapCache {
-            content_hash: current_hash,
-            line_map: line_map.clone(),
-        });
-    }
+    // Store in cache (lock-free write)
+    LINE_MAP_CACHE.insert(current_hash, line_map.clone());
 
     line_map
 }
