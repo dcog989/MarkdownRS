@@ -15,10 +15,12 @@
     let { tabId } = $props<{ tabId: string }>();
     let container = $state<HTMLDivElement>();
     let isRendering = $state(false);
+    let showSpinner = $state(false);
     let htmlContent = $state('');
     let lastRendered = $state('');
     let lastTabId = $state('');
     let debounceTimer: number | null = null;
+    let spinnerTimer: number | null = null;
     let renderAbortController: AbortController | null = null;
 
     let tabPath = $derived.by(() => {
@@ -50,16 +52,16 @@
         if (content === lastRendered && htmlContent) return;
 
         if (debounceTimer) clearTimeout(debounceTimer);
+        if (spinnerTimer) clearTimeout(spinnerTimer);
         if (renderAbortController) renderAbortController.abort();
 
-        let debounceMs = CONFIG.EDITOR.CONTENT_DEBOUNCE_MS;
-        if (content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES * 2) {
-            debounceMs = 500;
-        } else if (content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
-            debounceMs = 250;
-        }
-
         isRendering = true;
+        showSpinner = false;
+
+        // Start spinner after delay to avoid flashing for quick renders
+        spinnerTimer = window.setTimeout(() => {
+            showSpinner = true;
+        }, CONFIG.PERFORMANCE.PREVIEW_SPINNER_DELAY_MS);
         debounceTimer = window.setTimeout(async () => {
             renderAbortController = new AbortController();
             const currentController = renderAbortController;
@@ -84,17 +86,23 @@
             } catch (err) {
                 if (!currentController.signal.aborted) console.error('Preview render error:', err);
             } finally {
-                if (!currentController.signal.aborted) isRendering = false;
+                if (!currentController.signal.aborted) {
+                    isRendering = false;
+                    showSpinner = false;
+                    if (spinnerTimer) clearTimeout(spinnerTimer);
+                }
             }
-        }, debounceMs);
+        }, CONFIG.PERFORMANCE.PREVIEW_RENDER_DEBOUNCE_MS);
 
         return () => {
             if (debounceTimer) clearTimeout(debounceTimer);
+            if (spinnerTimer) clearTimeout(spinnerTimer);
         };
     });
 
     onDestroy(() => {
         if (debounceTimer) clearTimeout(debounceTimer);
+        if (spinnerTimer) clearTimeout(spinnerTimer);
         if (renderAbortController) renderAbortController.abort();
     });
 
@@ -145,9 +153,14 @@
                 <FileText size={64} class="mb-4" />
                 <p>Preview not available for this file type</p>
             </div>
-        {:else if isRendering && !htmlContent}
+        {:else if showSpinner || (isRendering && !htmlContent)}
             <div class="absolute inset-0 flex items-center justify-center opacity-50">
-                Rendering...
+                <div class="flex flex-col items-center gap-2">
+                    <div
+                        class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500">
+                    </div>
+                    <div class="text-sm">Rendering preview...</div>
+                </div>
             </div>
         {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
