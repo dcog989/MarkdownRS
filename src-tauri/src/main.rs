@@ -143,12 +143,13 @@ fn main() {
             println!("[INFO] Data Directory: {:?}", app_dir);
             println!("[INFO] Log Directory: {:?}", log_dir);
 
-            // Write reference theme files
+            // Write reference theme files in background to avoid blocking startup
             // These contain commented-out overrides so users know how to create custom themes.
             // They do NOT contain active CSS to avoid conflicting with the app's internal styles (src/styles/variables.css).
-
-            let dark_theme_path = themes_dir.join("default-dark.css");
-            let dark_theme_content = r#"/* MarkdownRS Default Dark Theme Reference
+            let themes_dir_clone = themes_dir.clone();
+            tauri::async_runtime::spawn(async move {
+                let dark_theme_path = themes_dir_clone.join("default-dark.css");
+                let dark_theme_content = r#"/* MarkdownRS Default Dark Theme Reference
 
    This file is a template. The actual default theme is built into the application.
    To create a custom theme:
@@ -176,10 +177,10 @@ fn main() {
 }
 */
 "#;
-            let _ = fs::write(&dark_theme_path, dark_theme_content);
+                let _ = tokio::fs::write(&dark_theme_path, dark_theme_content).await;
 
-            let light_theme_path = themes_dir.join("default-light.css");
-            let light_theme_content = r#"/* MarkdownRS Default Light Theme Reference
+                let light_theme_path = themes_dir_clone.join("default-light.css");
+                let light_theme_content = r#"/* MarkdownRS Default Light Theme Reference
 
    This file is a template. The actual default theme is built into the application.
    To create a custom theme:
@@ -207,7 +208,8 @@ fn main() {
 }
 */
 "#;
-            let _ = fs::write(&light_theme_path, light_theme_content);
+                let _ = tokio::fs::write(&light_theme_path, light_theme_content).await;
+            });
 
             // Robustly read settings from the TOML file
             let settings_level = if config_path.exists() {
