@@ -1,6 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { callBackend } from './backend';
+import { callBackend, callBackendSafe } from './backend';
 
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
@@ -23,24 +23,21 @@ export class SpellcheckManager {
         if (this.dictionaryLoaded && !force) return;
 
         this.initPromise = (async () => {
-            try {
-                await this.loadCustomDictionary();
+            await this.loadCustomDictionary();
 
-                const dictionaries = appState.languageDictionaries || ['en-US'];
-                const technicalDictionaries = appState.technicalDictionaries;
-                const scienceDictionaries = appState.scienceDictionaries;
+            const dictionaries = appState.languageDictionaries || ['en-US'];
+            const technicalDictionaries = appState.technicalDictionaries;
+            const scienceDictionaries = appState.scienceDictionaries;
 
-                await callBackend(
-                    'init_spellchecker',
-                    { dictionaries, technicalDictionaries, scienceDictionaries },
-                    'Spellcheck:Init',
-                    undefined,
-                    {
-                        report: true,
-                    },
-                );
+            const result = await callBackendSafe(
+                'init_spellchecker',
+                { dictionaries, technicalDictionaries, scienceDictionaries },
+                'Spellcheck:Init',
+            );
+
+            if (result !== null) {
                 this.dictionaryLoaded = true;
-            } catch (_err) {
+            } else {
                 this.initPromise = null;
                 this.dictionaryLoaded = false;
             }

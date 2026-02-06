@@ -4,8 +4,7 @@ import {
     updateMetadata,
 } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { callBackend } from '$lib/utils/backend';
-import { AppError } from '$lib/utils/errorHandling';
+import { callBackendSafe } from '$lib/utils/backend';
 
 export type FileContent = {
     content: string;
@@ -29,12 +28,14 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
         return cached.promise;
     }
 
-    const promise = callBackend('get_file_metadata', { path }, 'File:Metadata').then((result) => {
-        if (!result) {
-            throw new Error('Failed to get file metadata: null result');
-        }
-        return result;
-    });
+    const promise = callBackendSafe('get_file_metadata', { path }, 'File:Metadata').then(
+        (result) => {
+            if (!result) {
+                throw new Error('Failed to get file metadata: null result');
+            }
+            return result;
+        },
+    );
     metadataCache.set(path, { expires: now + CACHE_TTL_MS, promise });
 
     return promise;
@@ -65,16 +66,17 @@ export async function checkFileExists(tabId: string): Promise<void> {
     const tab = appContext.editor.tabs.find((t) => t.id === tabId);
     if (!tab || !tab.path) return;
 
-    try {
-        await getCachedFileMetadata(tab.path);
+    const result = await callBackendSafe('get_file_metadata', { path: tab.path }, 'File:Metadata', {
+        showToast: false,
+        severity: 'warning',
+        additionalInfo: { path: tab.path, tabId },
+        onError: () => {
+            setFileCheckStatus(tabId, true, true);
+        },
+    });
+
+    if (result) {
         setFileCheckStatus(tabId, true, false);
-    } catch (err) {
-        setFileCheckStatus(tabId, true, true);
-        AppError.handle('File:Metadata', err, {
-            showToast: false,
-            severity: 'warning',
-            additionalInfo: { path: tab.path, tabId },
-        });
     }
 }
 
@@ -84,59 +86,44 @@ export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
 
     if (tab.isDirty) return false;
 
-    try {
-        const meta = await getCachedFileMetadata(tab.path);
+    const meta = await callBackendSafe('get_file_metadata', { path: tab.path }, 'File:Metadata', {
+        showToast: false,
+        severity: 'warning',
+        additionalInfo: { path: tab.path, tabId },
+        onError: () => {
+            setFileCheckStatus(tabId, true, true);
+        },
+    });
 
-        if (meta.modified && tab.modified && meta.modified !== tab.modified) {
-            return true;
-        }
-        return false;
-    } catch (err) {
-        setFileCheckStatus(tabId, true, true);
+    if (!meta) return false;
 
-        AppError.handle('File:Metadata', err, {
-            showToast: false,
-            severity: 'warning',
-            additionalInfo: { path: tab.path, tabId },
-        });
-        return false;
+    if (meta.modified && tab.modified && meta.modified !== tab.modified) {
+        return true;
     }
+    return false;
 }
 
 export async function reloadFileContent(tabId: string): Promise<void> {
     const tab = appContext.editor.tabs.find((t) => t.id === tabId);
     if (!tab || !tab.path) return;
 
-    try {
-        const sanitizedPath = sanitizePath(tab.path);
-        const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
+    const sanitizedPath = sanitizePath(tab.path);
+    const result = await callBackendSafe('read_text_file', { path: sanitizedPath }, 'File:Read', {
+        userMessage: 'Failed to reload file',
+        additionalInfo: { path: tab.path, tabId },
+    });
 
-        if (!result) {
-            throw new Error('Failed to read file: null result');
-        }
+    if (!result) return;
 
-        const crlfCount = (result.content.match(/\r\n/g) || []).length;
-        const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-        const detectedLineEnding: 'LF' | 'CRLF' =
-            crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+    const crlfCount = (result.content.match(/\r\n/g) || []).length;
+    const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
+    const detectedLineEnding: 'LF' | 'CRLF' =
+        crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
 
-        const content = normalizeLineEndings(result.content);
-        const sizeBytes = new TextEncoder().encode(result.content).length;
+    const content = normalizeLineEndings(result.content);
+    const sizeBytes = new TextEncoder().encode(result.content).length;
 
-        reloadTabContent(
-            tabId,
-            content,
-            detectedLineEnding,
-            result.encoding.toUpperCase(),
-            sizeBytes,
-        );
+    reloadTabContent(tabId, content, detectedLineEnding, result.encoding.toUpperCase(), sizeBytes);
 
-        await refreshMetadata(tabId, sanitizedPath);
-    } catch (err) {
-        AppError.handle('File:Read', err, {
-            showToast: true,
-            userMessage: 'Failed to reload file',
-            additionalInfo: { path: tab.path, tabId },
-        });
-    }
+    await refreshMetadata(tabId, sanitizedPath);
 }

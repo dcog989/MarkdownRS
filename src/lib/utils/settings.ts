@@ -1,5 +1,5 @@
 import { appState } from '$lib/stores/appState.svelte';
-import { callBackend } from './backend';
+import { callBackendSafe } from './backend';
 import { debounce } from './timing';
 
 let lastSavedState: string = '';
@@ -61,38 +61,36 @@ function getSettingsObject() {
 }
 
 export async function initSettings() {
-    try {
-        const saved = await callBackend('load_settings', {}, 'Settings:Load');
+    const saved = await callBackendSafe('load_settings', {}, 'Settings:Load', {
+        showToast: false,
+        userMessage: 'Failed to load settings',
+    });
 
-        if (saved && Object.keys(saved).length > 0) {
-            log(`Restoring app preferences from TOML...`);
-            Object.keys(saved).forEach((key) => {
-                if (key in appState) {
-                    (appState as Record<string, unknown>)[key] = saved[key];
-                }
-            });
-        }
-
-        lastSavedState = JSON.stringify(getSettingsObject());
-    } catch (err) {
-        log(`Failed to load settings: ${err}`, 'error');
+    if (saved && Object.keys(saved).length > 0) {
+        log(`Restoring app preferences from TOML...`);
+        Object.keys(saved).forEach((key) => {
+            if (key in appState) {
+                (appState as Record<string, unknown>)[key] = saved[key];
+            }
+        });
     }
+
+    lastSavedState = JSON.stringify(getSettingsObject());
 }
 
 async function saveSettingsImmediate() {
-    try {
-        const settingsToSave = getSettingsObject();
-        const serialized = JSON.stringify(settingsToSave);
+    const settingsToSave = getSettingsObject();
+    const serialized = JSON.stringify(settingsToSave);
 
-        if (serialized === lastSavedState) {
-            return;
-        }
-
-        await callBackend('save_settings', { settings: settingsToSave }, 'Settings:Save');
-        lastSavedState = serialized;
-    } catch (err) {
-        log(`Failed to save settings: ${err}`, 'error');
+    if (serialized === lastSavedState) {
+        return;
     }
+
+    await callBackendSafe('save_settings', { settings: settingsToSave }, 'Settings:Save', {
+        showToast: false,
+        userMessage: 'Failed to save settings',
+    });
+    lastSavedState = serialized;
 }
 
 export const saveSettings = debounce(saveSettingsImmediate, 500);

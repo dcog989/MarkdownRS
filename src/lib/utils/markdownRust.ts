@@ -2,7 +2,7 @@ import type { RenderResult } from '$lib/types/markdown';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
-import { callBackend } from './backend';
+import { callBackendSafe } from './backend';
 
 /**
  * Resolves a relative path to a clean, absolute path with forward slashes.
@@ -50,75 +50,83 @@ export async function renderMarkdown(
     gfm: boolean = true,
     basePath: string | null = null,
 ): Promise<RenderResult> {
-    try {
-        const flavor = gfm ? 'gfm' : 'commonmark';
-        const result = await callBackend('render_markdown', { content, flavor }, 'Markdown:Render');
+    const flavor = gfm ? 'gfm' : 'commonmark';
+    const result = await callBackendSafe(
+        'render_markdown',
+        { content, flavor },
+        'Markdown:Render',
+        {
+            showToast: false,
+            onError: async (e) => {
+                await error(`[Markdown] Render error: ${e}`);
+            },
+        },
+    );
 
-        if (!result) throw new Error('Markdown rendering failed');
-
-        let html = result.html;
-
-        if (html.includes('<img')) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const images = doc.querySelectorAll('img');
-
-            if (images.length > 0) {
-                const directory = basePath ? basePath.replace(/[\\/][^\\/]+$/, '') : '';
-
-                images.forEach((img) => {
-                    let src = img.getAttribute('src');
-                    if (!src || /^(https?|data|blob|asset|tauri):/i.test(src)) return;
-
-                    // Standardize slashes before resolution to prevent encoding errors
-                    src = src.replace(/\\/g, '/');
-
-                    // Handle static assets specially
-                    if (isStaticAssetPath(src)) {
-                        img.setAttribute('src', resolveStaticAssetPath(src));
-                        return;
-                    }
-
-                    const absolutePath =
-                        src.startsWith('/') || /^[a-zA-Z]:/.test(src)
-                            ? resolvePath('', src)
-                            : directory
-                              ? resolvePath(directory, src)
-                              : '';
-
-                    if (absolutePath) {
-                        img.setAttribute('src', convertFileSrc(absolutePath));
-                    }
-                });
-                html = doc.body.innerHTML;
-            }
-        }
-
-        const cleanHtml = DOMPurify.sanitize(html, {
-            USE_PROFILES: { html: true },
-            ADD_ATTR: [
-                'target',
-                'class',
-                'data-source-line',
-                'align',
-                'start',
-                'type',
-                'disabled',
-                'checked',
-                'src',
-            ],
-            ALLOWED_URI_REGEXP:
-                /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
-        });
-
-        return { ...result, html: cleanHtml };
-    } catch (e) {
-        await error(`[Markdown] Render error: ${e}`);
+    if (!result) {
+        await error(`[Markdown] Render error: Rendering returned null`);
         return {
-            html: `<div class="p-4 border border-danger text-danger"><strong>Preview Error:</strong><br/>${String(e)}</div>`,
+            html: `<div class="p-4 border border-danger text-danger"><strong>Preview Error:</strong><br/>Rendering returned null</div>`,
             line_map: {},
             word_count: 0,
             char_count: 0,
         };
     }
+
+    let html = result.html;
+
+    if (html.includes('<img')) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const images = doc.querySelectorAll('img');
+
+        if (images.length > 0) {
+            const directory = basePath ? basePath.replace(/[\\/][^\\/]+$/, '') : '';
+
+            images.forEach((img) => {
+                let src = img.getAttribute('src');
+                if (!src || /^(https?|data|blob|asset|tauri):/i.test(src)) return;
+
+                // Standardize slashes before resolution to prevent encoding errors
+                src = src.replace(/\\/g, '/');
+
+                // Handle static assets specially
+                if (isStaticAssetPath(src)) {
+                    img.setAttribute('src', resolveStaticAssetPath(src));
+                    return;
+                }
+
+                const absolutePath =
+                    src.startsWith('/') || /^[a-zA-Z]:/.test(src)
+                        ? resolvePath('', src)
+                        : directory
+                          ? resolvePath(directory, src)
+                          : '';
+
+                if (absolutePath) {
+                    img.setAttribute('src', convertFileSrc(absolutePath));
+                }
+            });
+            html = doc.body.innerHTML;
+        }
+    }
+
+    const cleanHtml = DOMPurify.sanitize(html, {
+        USE_PROFILES: { html: true },
+        ADD_ATTR: [
+            'target',
+            'class',
+            'data-source-line',
+            'align',
+            'start',
+            'type',
+            'disabled',
+            'checked',
+            'src',
+        ],
+        ALLOWED_URI_REGEXP:
+            /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+    });
+
+    return { ...result, html: cleanHtml };
 }

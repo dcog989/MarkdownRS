@@ -1,5 +1,5 @@
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { callBackend } from '$lib/utils/backend';
+import { callBackendSafe } from '$lib/utils/backend';
 
 export interface FormatterOptions {
     listIndent: number;
@@ -32,21 +32,15 @@ export async function formatMarkdown(
         tableAlignment: final.tableAlignment,
     };
 
-    try {
-        const result = await callBackend(
-            'format_markdown',
-            {
-                content,
-                ...apiOptions,
-            },
-            'Markdown:Render',
-            undefined,
-            { report: true },
-        );
-        // Ensure consistent line endings (LF) to match CodeMirror's internal state
-        // This prevents the editor from detecting changes when only line endings differ
-        return result ? result.replace(/\r\n/g, '\n') : content;
-    } catch (_e) {
-        return content;
-    }
+    const result = await callBackendSafe(
+        'format_markdown',
+        {
+            content,
+            ...apiOptions,
+        },
+        'Markdown:Render',
+    );
+    // Ensure consistent line endings (LF) to match CodeMirror's internal state
+    // This prevents the editor from detecting changes when only line endings differ
+    return result ? result.replace(/\r\n/g, '\n') : content;
 }

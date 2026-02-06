@@ -1,12 +1,8 @@
-import { callBackend } from '$lib/utils/backend';
+import { callBackendSafe } from '$lib/utils/backend';
 
 export async function addToDictionary(word: string): Promise<boolean> {
-    try {
-        await callBackend('add_to_dictionary', { word }, 'Dictionary:Add', undefined, {
-            report: true,
-        });
-        return true;
-    } catch (_err) {
-        return false;
-    }
+    const result = await callBackendSafe('add_to_dictionary', { word }, 'Dictionary:Add', {
+        showToast: false,
+    });
+    return result !== null;
 }
