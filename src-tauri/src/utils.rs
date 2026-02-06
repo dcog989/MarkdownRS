@@ -1,7 +1,9 @@
 use chrono::{DateTime, Local};
+use encoding_rs::{UTF_16BE, UTF_16LE};
 use std::path::Path;
 use std::time::SystemTime;
 use tokio::fs;
+use unicode_bom::Bom;
 
 /// Standardized error handler for file operations
 pub fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> String {
@@ -83,6 +85,33 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         Err(e) => {
             let _ = fs::remove_file(&temp_path).await;
             Err(e)
+        },
+    }
+}
+
+/// Reads text file with automatic BOM (Byte Order Mark) detection and stripping.
+/// Handles UTF-8, UTF-16LE, and UTF-16BE encoded files.
+pub fn read_text_with_bom_detection(raw_bytes: &[u8]) -> String {
+    match Bom::from(raw_bytes) {
+        Bom::Null => String::from_utf8_lossy(raw_bytes).to_string(),
+        Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
+        Bom::Utf16Le => {
+            let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);
+            if had_errors {
+                log::warn!("UTF-16LE decoding encountered errors");
+            }
+            decoded.to_string()
+        },
+        Bom::Utf16Be => {
+            let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
+            if had_errors {
+                log::warn!("UTF-16BE decoding encountered errors");
+            }
+            decoded.to_string()
+        },
+        bom => {
+            log::warn!("Exotic BOM type {:?} detected, falling back to UTF-8", bom);
+            String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
         },
     }
 }

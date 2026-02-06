@@ -1,12 +1,10 @@
-use crate::utils::{handle_file_error, handle_io_error};
-use encoding_rs::{UTF_16BE, UTF_16LE};
+use crate::utils::{handle_file_error, handle_io_error, read_text_with_bom_detection};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tauri::Manager;
 use tokio::fs;
 use tokio::sync::Mutex;
-use unicode_bom::Bom;
 
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, String>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -156,31 +154,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         .await
         .map_err(|e| handle_file_error(&path.to_string_lossy(), "read settings file", e))?;
 
-    let content = match Bom::from(raw_bytes.as_slice()) {
-        Bom::Null => String::from_utf8_lossy(&raw_bytes).to_string(),
-        Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
-        Bom::Utf16Le => {
-            let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);
-            if had_errors {
-                log::warn!("UTF-16LE decoding encountered errors in settings file");
-            }
-            decoded.to_string()
-        },
-        Bom::Utf16Be => {
-            let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
-            if had_errors {
-                log::warn!("UTF-16BE decoding encountered errors in settings file");
-            }
-            decoded.to_string()
-        },
-        bom => {
-            log::warn!(
-                "Exotic BOM type {:?} detected in settings file, falling back to UTF-8",
-                bom
-            );
-            String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
-        },
-    };
+    let content = read_text_with_bom_detection(&raw_bytes);
 
     let toml_val: toml::Value =
         toml::from_str(&content).map_err(|e| handle_io_error("parse settings TOML", e))?;
@@ -204,31 +178,7 @@ async fn load_settings_toml(app_handle: &tauri::AppHandle) -> Result<toml::Value
         .await
         .map_err(|e| handle_file_error(&path.to_string_lossy(), "read settings file", e))?;
 
-    let content = match Bom::from(raw_bytes.as_slice()) {
-        Bom::Null => String::from_utf8_lossy(&raw_bytes).to_string(),
-        Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
-        Bom::Utf16Le => {
-            let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);
-            if had_errors {
-                log::warn!("UTF-16LE decoding encountered errors in settings file");
-            }
-            decoded.to_string()
-        },
-        Bom::Utf16Be => {
-            let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
-            if had_errors {
-                log::warn!("UTF-16BE decoding encountered errors in settings file");
-            }
-            decoded.to_string()
-        },
-        bom => {
-            log::warn!(
-                "Exotic BOM type {:?} detected in settings file, falling back to UTF-8",
-                bom
-            );
-            String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
-        },
-    };
+    let content = read_text_with_bom_detection(&raw_bytes);
 
     toml::from_str(&content).map_err(|e| handle_io_error("parse settings TOML", e))
 }
