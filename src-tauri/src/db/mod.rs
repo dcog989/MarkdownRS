@@ -206,19 +206,30 @@ impl Database {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
 
-        // 1. Process Active Tabs
+        // Create temp table once for mark-and-sweep pattern
+        tx.execute(
+            "CREATE TEMPORARY TABLE IF NOT EXISTS _sync_keep_ids (id TEXT PRIMARY KEY)",
+            [],
+        )?;
+
+        // Process Active Tabs
         if active_tabs.is_empty() {
             tx.execute("DELETE FROM tabs", [])?;
         } else {
-            let active_ids: Vec<&str> = active_tabs.iter().map(|t| t.id.as_str()).collect();
-            let placeholders = active_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-            let delete_query = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
-            let mut delete_stmt = tx.prepare(&delete_query)?;
-            let params: Vec<&dyn rusqlite::ToSql> = active_ids
-                .iter()
-                .map(|id| id as &dyn rusqlite::ToSql)
-                .collect();
-            delete_stmt.execute(params.as_slice())?;
+            // Clear and populate keep list
+            tx.execute("DELETE FROM _sync_keep_ids", [])?;
+            let mut keep_stmt =
+                tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
+            for tab in active_tabs {
+                keep_stmt.execute([&tab.id])?;
+            }
+            drop(keep_stmt);
+
+            // Delete rows not in keep list (static SQL - no format! allocation)
+            tx.execute(
+                "DELETE FROM tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
+                [],
+            )?;
 
             let mut insert_stmt = tx.prepare_cached(
                 "INSERT INTO tabs (
@@ -315,20 +326,24 @@ impl Database {
             }
         }
 
-        // 2. Process Closed Tabs
+        // Process Closed Tabs
         if closed_tabs.is_empty() {
             tx.execute("DELETE FROM closed_tabs", [])?;
         } else {
-            let closed_ids: Vec<&str> = closed_tabs.iter().map(|t| t.id.as_str()).collect();
-            let placeholders = closed_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-            let delete_query =
-                format!("DELETE FROM closed_tabs WHERE id NOT IN ({})", placeholders);
-            let mut delete_stmt = tx.prepare(&delete_query)?;
-            let params: Vec<&dyn rusqlite::ToSql> = closed_ids
-                .iter()
-                .map(|id| id as &dyn rusqlite::ToSql)
-                .collect();
-            delete_stmt.execute(params.as_slice())?;
+            // Clear and populate keep list
+            tx.execute("DELETE FROM _sync_keep_ids", [])?;
+            let mut keep_stmt =
+                tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
+            for tab in closed_tabs {
+                keep_stmt.execute([&tab.id])?;
+            }
+            drop(keep_stmt);
+
+            // Delete rows not in keep list (static SQL - no format! allocation)
+            tx.execute(
+                "DELETE FROM closed_tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
+                [],
+            )?;
 
             let mut insert_stmt = tx.prepare_cached(
                 "INSERT INTO closed_tabs (
