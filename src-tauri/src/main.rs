@@ -320,6 +320,7 @@ fn main() {
                 db,
                 speller: tokio::sync::Mutex::new(None),
                 custom_dict: tokio::sync::Mutex::new(std::collections::HashSet::new()),
+                spellcheck_status: tokio::sync::Mutex::new(state::SpellcheckStatus::Uninitialized),
             });
 
             // Check for command-line arguments on first launch
@@ -373,6 +374,7 @@ fn main() {
             commands::spellcheck::init_spellchecker,
             commands::spellcheck::check_words,
             commands::spellcheck::get_spelling_suggestions,
+            commands::spellcheck::get_spellcheck_status,
             commands::markdown::render_markdown,
             commands::markdown::format_markdown,
             commands::markdown::get_markdown_flavors,

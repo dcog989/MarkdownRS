@@ -246,155 +246,186 @@ pub async fn init_spellchecker(
     technical_dictionaries: Option<bool>,
     science_dictionaries: Option<bool>,
 ) -> Result<(), String> {
+    use crate::state::SpellcheckStatus;
+
+    // Check if already initializing or ready
+    {
+        let status = state.spellcheck_status.lock().await;
+        if *status == SpellcheckStatus::Loading || *status == SpellcheckStatus::Ready {
+            log::info!("Spellchecker already initializing or ready");
+            return Ok(());
+        }
+    }
+
+    // Mark as loading
+    {
+        let mut status = state.spellcheck_status.lock().await;
+        *status = SpellcheckStatus::Loading;
+    }
+
     let dict_codes = dictionaries.unwrap_or_else(|| vec!["en".to_string()]);
-    let mut spec_codes = Vec::new();
-
-    if technical_dictionaries.unwrap_or(true) {
-        spec_codes.extend(list_technical_ids());
-    }
-
-    if science_dictionaries.unwrap_or(false) {
-        spec_codes.extend(list_scientific_ids());
-    }
+    let enable_technical = technical_dictionaries.unwrap_or(true);
+    let enable_science = science_dictionaries.unwrap_or(false);
 
     log::info!(
-        "Initializing spellchecker. Langs: {:?}, Tech: {}, Sci: {}",
+        "Starting spellchecker initialization. Langs: {:?}, Tech: {}, Sci: {}",
         dict_codes,
-        technical_dictionaries.unwrap_or(true),
-        science_dictionaries.unwrap_or(false)
+        enable_technical,
+        enable_science
     );
 
+    // Clone necessary data for the background task
     let local_dir = app_handle
         .path()
         .app_local_data_dir()
         .map_err(|e| e.to_string())?;
-    let cache_dir = local_dir.join("spellcheck_cache");
-    let tech_cache_dir = cache_dir.join("technical");
-
     let app_dir = app_handle
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let custom_path = app_dir.join("custom-spelling.dic");
+    let app_handle_clone = app_handle.clone();
 
-    if !cache_dir.exists() {
+    // Spawn initialization in background to avoid blocking
+    tauri::async_runtime::spawn(async move {
+        let cache_dir = local_dir.join("spellcheck_cache");
+        let tech_cache_dir = cache_dir.join("technical");
+        let custom_path = app_dir.join("custom-spelling.dic");
+
         let _ = fs::create_dir_all(&cache_dir).await;
-    }
-    if !spec_codes.is_empty() && !tech_cache_dir.exists() {
-        let _ = fs::create_dir_all(&tech_cache_dir).await;
-    }
 
-    let client = reqwest::Client::builder()
-        .connect_timeout(std::time::Duration::from_secs(2))
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .unwrap_or_else(|_| reqwest::Client::new());
-
-    // Spawn download tasks
-    let mut dict_tasks = Vec::new();
-    for (i, code) in dict_codes.into_iter().enumerate() {
-        let c = client.clone();
-        let d = cache_dir.clone();
-        dict_tasks.push(tokio::spawn(async move {
-            (i, load_language_dictionary(c, d, code).await)
-        }));
-    }
-
-    let mut spec_tasks = Vec::new();
-    for code in spec_codes {
-        let c = client.clone();
-        let d = tech_cache_dir.clone();
-        spec_tasks.push(tokio::spawn(async move {
-            (code.clone(), load_technical_dictionary(c, d, code).await)
-        }));
-    }
-
-    // Process Language Dictionaries
-    let mut combined_aff = String::new();
-    let mut unique_words = HashSet::new();
-
-    // Sort to ensure primary dictionary preference for AFF
-    let mut dict_results = Vec::new();
-    for task in dict_tasks {
-        if let Ok((i, res)) = task.await {
-            dict_results.push((i, res));
+        let mut spec_codes = Vec::new();
+        if enable_technical {
+            spec_codes.extend(list_technical_ids());
         }
-    }
-    dict_results.sort_by_key(|k| k.0);
-
-    for (_, res) in dict_results {
-        match res {
-            Ok((aff, dic)) => {
-                if combined_aff.is_empty() {
-                    combined_aff = aff.trim_start_matches('\u{feff}').to_string();
-                }
-                for line in dic.trim_start_matches('\u{feff}').lines() {
-                    let t = line.trim();
-                    if !t.is_empty() && !t.chars().all(char::is_numeric) {
-                        unique_words.insert(t.to_string());
-                    }
-                }
-            },
-            Err(e) => log::warn!("{}", e),
+        if enable_science {
+            spec_codes.extend(list_scientific_ids());
         }
-    }
 
-    // Process Technical Dictionaries
-    for task in spec_tasks {
-        if let Ok((code, res)) = task.await {
+        if !spec_codes.is_empty() {
+            let _ = fs::create_dir_all(&tech_cache_dir).await;
+        }
+
+        let client = reqwest::Client::builder()
+            .connect_timeout(std::time::Duration::from_secs(2))
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
+
+        // Spawn download tasks
+        let mut dict_tasks = Vec::new();
+        for (i, code) in dict_codes.into_iter().enumerate() {
+            let c = client.clone();
+            let d = cache_dir.clone();
+            dict_tasks.push(tokio::spawn(async move {
+                (i, load_language_dictionary(c, d, code).await)
+            }));
+        }
+
+        let mut spec_tasks = Vec::new();
+        for code in spec_codes {
+            let c = client.clone();
+            let d = tech_cache_dir.clone();
+            spec_tasks.push(tokio::spawn(async move {
+                (code.clone(), load_technical_dictionary(c, d, code).await)
+            }));
+        }
+
+        // Process Language Dictionaries
+        let mut combined_aff = String::new();
+        let mut unique_words = HashSet::new();
+
+        // Sort to ensure primary dictionary preference for AFF
+        let mut dict_results = Vec::new();
+        for task in dict_tasks {
+            if let Ok((i, res)) = task.await {
+                dict_results.push((i, res));
+            }
+        }
+        dict_results.sort_by_key(|k| k.0);
+
+        for (_, res) in dict_results {
             match res {
-                Ok(content) => {
-                    let mut count = 0;
-                    for line in content.lines() {
+                Ok((aff, dic)) => {
+                    if combined_aff.is_empty() {
+                        combined_aff = aff.trim_start_matches('\u{feff}').to_string();
+                    }
+                    for line in dic.trim_start_matches('\u{feff}').lines() {
                         let t = line.trim();
-                        if !t.is_empty() && !t.starts_with('#') && !t.starts_with("//") {
+                        if !t.is_empty() && !t.chars().all(char::is_numeric) {
                             unique_words.insert(t.to_string());
-                            count += 1;
                         }
                     }
-                    log::info!("Loaded {}: {} words", code, count);
                 },
-                Err(e) => log::warn!("Failed to load {}: {}", code, e),
+                Err(e) => log::warn!("{}", e),
             }
         }
-    }
 
-    let total_word_count = unique_words.len();
+        // Process Technical Dictionaries
+        for task in spec_tasks {
+            if let Ok((code, res)) = task.await {
+                match res {
+                    Ok(content) => {
+                        let mut count = 0;
+                        for line in content.lines() {
+                            let t = line.trim();
+                            if !t.is_empty() && !t.starts_with('#') && !t.starts_with("//") {
+                                unique_words.insert(t.to_string());
+                                count += 1;
+                            }
+                        }
+                        log::info!("Loaded {}: {} words", code, count);
+                    },
+                    Err(e) => log::warn!("Failed to load {}: {}", code, e),
+                }
+            }
+        }
 
-    if !combined_aff.is_empty() && total_word_count > 0 {
-        let mut sorted_words: Vec<_> = unique_words.into_iter().collect();
-        sorted_words.sort_unstable();
+        let total_word_count = unique_words.len();
+        let state = app_handle_clone.state::<AppState>();
 
-        let mut combined_dic = String::with_capacity(total_word_count * 9 + 64);
-        combined_dic.push_str(&total_word_count.to_string());
-        combined_dic.push('\n');
-        for word in sorted_words {
-            combined_dic.push_str(&word);
+        if !combined_aff.is_empty() && total_word_count > 0 {
+            let mut sorted_words: Vec<_> = unique_words.into_iter().collect();
+            sorted_words.sort_unstable();
+
+            let mut combined_dic = String::with_capacity(total_word_count * 9 + 64);
+            combined_dic.push_str(&total_word_count.to_string());
             combined_dic.push('\n');
+            for word in sorted_words {
+                combined_dic.push_str(&word);
+                combined_dic.push('\n');
+            }
+
+            match Dictionary::new(&combined_aff, &combined_dic) {
+                Ok(dict) => {
+                    let mut speller = state.speller.lock().await;
+                    *speller = Some(dict);
+                    let mut status = state.spellcheck_status.lock().await;
+                    *status = SpellcheckStatus::Ready;
+                    log::info!("Spellchecker ready: {} unique words", total_word_count);
+                },
+                Err(e) => {
+                    log::error!("Failed to create dictionary: {:?}", e);
+                    let mut status = state.spellcheck_status.lock().await;
+                    *status = SpellcheckStatus::Failed;
+                },
+            }
+        } else {
+            log::warn!("No dictionary content available");
+            let mut status = state.spellcheck_status.lock().await;
+            *status = SpellcheckStatus::Failed;
         }
 
-        match Dictionary::new(&combined_aff, &combined_dic) {
-            Ok(dict) => {
-                let mut speller = state.speller.lock().await;
-                *speller = Some(dict);
-                log::info!("Spellchecker ready: {} unique words", total_word_count);
-            },
-            Err(e) => log::error!("Failed to create dictionary: {:?}", e),
-        }
-    } else {
-        log::warn!("No dictionary content available");
-    }
-
-    // Load custom user dictionary into State (for ignore logic)
-    if let Ok(text) = fs::read_to_string(&custom_path).await {
-        let mut custom = state.custom_dict.lock().await;
-        for line in text.lines() {
-            let w = line.trim();
-            if !w.is_empty() {
-                custom.insert(w.to_lowercase());
+        // Load custom user dictionary into State (for ignore logic)
+        if let Ok(text) = fs::read_to_string(&custom_path).await {
+            let mut custom = state.custom_dict.lock().await;
+            for line in text.lines() {
+                let w = line.trim();
+                if !w.is_empty() {
+                    custom.insert(w.to_lowercase());
+                }
             }
         }
-    }
+    });
 
     Ok(())
 }
@@ -465,4 +496,17 @@ pub async fn get_spelling_suggestions(
     let mut suggestions = Vec::new();
     speller.suggest(&word, &mut suggestions);
     Ok(suggestions.into_iter().take(5).collect())
+}
+
+#[tauri::command]
+pub async fn get_spellcheck_status(state: State<'_, AppState>) -> Result<String, String> {
+    use crate::state::SpellcheckStatus;
+    let status = state.spellcheck_status.lock().await;
+    let status_str = match *status {
+        SpellcheckStatus::Uninitialized => "uninitialized",
+        SpellcheckStatus::Loading => "loading",
+        SpellcheckStatus::Ready => "ready",
+        SpellcheckStatus::Failed => "failed",
+    };
+    Ok(status_str.to_string())
 }
