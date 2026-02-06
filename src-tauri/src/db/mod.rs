@@ -136,7 +136,15 @@ const MIGRATIONS: &[&str] = &[
         path TEXT PRIMARY KEY,
         last_opened TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_recent_files_last_opened ON recent_files(last_opened DESC);",
+    CREATE INDEX IF NOT EXISTS idx_recent_files_last_opened ON recent_files(last_opened DESC);
+    CREATE TRIGGER IF NOT EXISTS prune_recent_files
+    AFTER INSERT ON recent_files
+    WHEN (SELECT COUNT(*) FROM recent_files) > 99
+    BEGIN
+        DELETE FROM recent_files WHERE path NOT IN (
+            SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
+        );
+    END;",
 ];
 
 impl Database {
@@ -621,6 +629,7 @@ impl Database {
 
         // 2. Backfill from closed tabs history
         // GROUP BY path ensures we only take the most recent entry if there are duplicates in closed_tabs
+        // The prune_recent_files trigger automatically handles cleanup after each insert
         conn.execute(
             "INSERT OR IGNORE INTO recent_files (path, last_opened)
              SELECT path, MAX(COALESCE(modified, created, ?1))
@@ -630,14 +639,6 @@ impl Database {
             params![&now],
         )?;
 
-        // 3. Prune logic to ensure we don't exceed limit immediately
-        conn.execute(
-            "DELETE FROM recent_files WHERE path NOT IN (
-                SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
-            )",
-            [],
-        )?;
-
         Ok(())
     }
 
@@ -645,17 +646,10 @@ impl Database {
         let conn = self.pool.get()?;
 
         // Insert or Update the recent file
+        // The prune_recent_files trigger automatically handles cleanup
         conn.execute(
             "INSERT OR REPLACE INTO recent_files (path, last_opened) VALUES (?1, ?2)",
             params![path, last_opened],
-        )?;
-
-        // Prune logic: Keep only recent 99 entries
-        conn.execute(
-            "DELETE FROM recent_files WHERE path NOT IN (
-                SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
-            )",
-            [],
         )?;
 
         Ok(())
