@@ -89,6 +89,44 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
     }
 }
 
+/// Cleans up stale temporary files (.tmp) older than the specified duration.
+/// Used to recover from crashes during atomic_write operations.
+pub async fn cleanup_stale_temp_files(
+    dir: &Path,
+    max_age: std::time::Duration,
+) -> std::io::Result<()> {
+    let mut entries = fs::read_dir(dir).await?;
+    let now = std::time::SystemTime::now();
+
+    while let Some(entry) = entries.next_entry().await? {
+        let path = entry.path();
+        if path.extension().and_then(|ext| ext.to_str()) != Some("tmp") {
+            continue;
+        }
+
+        let Ok(metadata) = entry.metadata().await else {
+            continue;
+        };
+
+        let Ok(modified) = metadata.modified() else {
+            continue;
+        };
+
+        let Ok(age) = now.duration_since(modified) else {
+            continue;
+        };
+
+        if age > max_age {
+            if let Err(e) = fs::remove_file(&path).await {
+                log::warn!("Failed to remove stale temp file {:?}: {}", path, e);
+            } else {
+                log::info!("Cleaned up stale temp file: {:?}", path);
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Reads text file with automatic BOM (Byte Order Mark) detection and stripping.
 /// Handles UTF-8, UTF-16LE, and UTF-16BE encoded files.
 pub fn read_text_with_bom_detection(raw_bytes: &[u8]) -> String {

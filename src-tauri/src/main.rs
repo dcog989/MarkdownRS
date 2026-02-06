@@ -138,6 +138,20 @@ fn main() {
             let _ = fs::create_dir_all(&log_dir);
             let _ = fs::create_dir_all(&themes_dir);
 
+            // Cleanup stale temp files from previous crashes (older than 1 hour)
+            // Run in background to avoid blocking startup
+            let cleanup_app_dir = app_dir.clone();
+            let cleanup_local_dir = local_dir.clone();
+            tauri::async_runtime::spawn(async move {
+                let one_hour = std::time::Duration::from_secs(3600);
+                if let Err(e) = utils::cleanup_stale_temp_files(&cleanup_app_dir, one_hour).await {
+                    log::warn!("Failed to cleanup temp files in app dir: {}", e);
+                }
+                if let Err(e) = utils::cleanup_stale_temp_files(&cleanup_local_dir, one_hour).await {
+                    log::warn!("Failed to cleanup temp files in local dir: {}", e);
+                }
+            });
+
             println!("[INFO] Portable Mode: {}", is_portable);
             println!("[INFO] Data Directory: {:?}", app_dir);
             println!("[INFO] Log Directory: {:?}", log_dir);
