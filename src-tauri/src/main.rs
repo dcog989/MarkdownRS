@@ -19,12 +19,12 @@ fn default_log_level() -> String {
     "info".to_string()
 }
 
-fn main() {
-    // Velopack Hook: Handles install/update events and exits if necessary
-    VelopackApp::build().run();
+struct PortableConfig {
+    is_portable: bool,
+    data_dir: Option<std::path::PathBuf>,
+}
 
-    // Detect portable mode BEFORE initializing Tauri
-    // This allows plugins to use the correct paths
+fn detect_portable_mode() -> PortableConfig {
     let exe_path = std::env::current_exe().expect("Failed to get executable path");
     let exe_dir = exe_path
         .parent()
@@ -32,24 +32,47 @@ fn main() {
     let portable_marker = exe_dir.join(".portable");
 
     if portable_marker.exists() {
-        // Set custom environment variable to indicate portable mode
-        // Override Tauri's data directory paths for portable mode
-        // Tauri will append the app identifier, so we use the parent directory
         let portable_data_dir = exe_dir.join("Data");
+        PortableConfig {
+            is_portable: true,
+            data_dir: Some(portable_data_dir),
+        }
+    } else {
+        PortableConfig {
+            is_portable: false,
+            data_dir: None,
+        }
+    }
+}
 
+fn main() {
+    // Velopack Hook: Handles install/update events and exits if necessary
+    VelopackApp::build().run();
+
+    // Detect and configure portable mode BEFORE any threading
+    // This must happen before Tauri initialization to avoid race conditions
+    let portable_config = detect_portable_mode();
+
+    if portable_config.is_portable
+        && let Some(ref data_dir) = portable_config.data_dir
+    {
+        // Safe: Called before any threads are spawned
         unsafe {
             std::env::set_var("MARKDOWN_RS_PORTABLE", "1");
-            std::env::set_var("APPDATA", portable_data_dir.as_os_str());
-            std::env::set_var("LOCALAPPDATA", portable_data_dir.as_os_str());
+            std::env::set_var("APPDATA", data_dir.as_os_str());
+            std::env::set_var("LOCALAPPDATA", data_dir.as_os_str());
         }
     }
 
     #[cfg(target_os = "windows")]
-    unsafe {
-        std::env::set_var(
-            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-            "--disable-features=CalculateNativeWinOcclusion --disable-direct-composition",
-        );
+    {
+        // Safe: Called before any threads are spawned
+        unsafe {
+            std::env::set_var(
+                "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+                "--disable-features=CalculateNativeWinOcclusion --disable-direct-composition",
+            );
+        }
     }
 
     tauri::Builder::default()
