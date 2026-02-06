@@ -408,10 +408,14 @@ pub async fn check_words(
 
     // Chunking to prevent blocking the async runtime too long
     for chunk in words.chunks(50) {
-        let speller_guard = state.speller.lock().await;
-        let custom_guard = state.custom_dict.lock().await;
+        // Clone necessary data from mutex guards, then release locks immediately
+        let (speller_opt, custom_dict) = {
+            let speller_guard = state.speller.lock().await;
+            let custom_guard = state.custom_dict.lock().await;
+            (speller_guard.clone(), custom_guard.clone())
+        };
 
-        if let Some(speller) = speller_guard.as_ref() {
+        if let Some(speller) = speller_opt {
             for word in chunk {
                 let clean = word.trim();
                 if clean.is_empty() {
@@ -419,17 +423,17 @@ pub async fn check_words(
                 }
 
                 let lower = clean.to_lowercase();
-                if custom_guard.contains(&lower) {
+                if custom_dict.contains(&lower) {
                     continue;
                 }
 
                 // Handle possessives ('s and s')
                 if lower
                     .strip_suffix("'s")
-                    .is_some_and(|b| custom_guard.contains(b))
+                    .is_some_and(|b| custom_dict.contains(b))
                     || lower
                         .strip_suffix('\'')
-                        .is_some_and(|b| custom_guard.contains(b))
+                        .is_some_and(|b| custom_dict.contains(b))
                 {
                     continue;
                 }
