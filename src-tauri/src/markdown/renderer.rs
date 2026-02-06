@@ -265,12 +265,14 @@ fn build_line_map(content: &str) -> HashMap<usize, usize> {
     let mut offset = 0;
 
     // Handle both LF and CRLF line endings correctly
-    // Using split_inclusive to preserve line ending information
-    for line_with_ending in content.split_inclusive('\n') {
-        line_map.insert(line_num, offset);
-        // Add the full length including the line ending character(s)
-        offset += line_with_ending.len();
-        line_num += 1;
+    // Manually iterating to properly account for byte offsets
+    line_map.insert(line_num, offset);
+    for c in content.chars() {
+        if c == '\n' {
+            line_num += 1;
+            line_map.insert(line_num, offset + 1);
+        }
+        offset += c.len_utf8();
     }
 
     line_map
