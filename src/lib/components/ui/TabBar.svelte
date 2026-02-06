@@ -3,6 +3,7 @@
     import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
     import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
     import { appContext } from '$lib/stores/state.svelte.ts';
+    import { CONFIG } from '$lib/utils/config';
     import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
     import { ChevronDown, Plus } from 'lucide-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
@@ -91,7 +92,10 @@
                     isMruCycling = true;
                     mruSelectedIndex = appContext.editor.mruStack.length > 1 ? 1 : 0;
                     if (mruTimer) clearTimeout(mruTimer);
-                    mruTimer = window.setTimeout(() => (showMruPopup = true), 200);
+                    mruTimer = window.setTimeout(
+                        () => (showMruPopup = true),
+                        CONFIG.UI_TIMING.MRU_POPUP_DELAY_MS,
+                    );
                 } else {
                     mruSelectedIndex = (mruSelectedIndex + 1) % appContext.editor.mruStack.length;
                     showMruPopup = true;
@@ -150,7 +154,7 @@
         await tick();
         if (!scrollContainer || isDragging) return;
 
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, CONFIG.UI_TIMING.TAB_SCROLL_SETTLE_MS));
 
         const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
         if (!activeEl) return;

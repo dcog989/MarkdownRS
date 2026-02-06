@@ -143,7 +143,7 @@
                 // Clear the flag after a short delay to allow tab switch to complete
                 setTimeout(() => {
                     appContext.app.isTabSwitching = false;
-                }, 200);
+                }, CONFIG.UI_TIMING.MRU_POPUP_DELAY_MS);
             }
             previousTabId = currentTabId;
         });

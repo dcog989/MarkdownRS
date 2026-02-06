@@ -6,6 +6,7 @@
         recentFilesStore,
         removeFromRecentFiles,
     } from '$lib/stores/recentFilesStore.svelte';
+    import { CONFIG } from '$lib/utils/config';
     import { openFileByPath } from '$lib/utils/fileSystem';
     import { Clock, History, Trash2, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
@@ -24,7 +25,7 @@
         if (isOpen) {
             loadRecentFiles();
             searchQuery = '';
-            setTimeout(() => searchInputEl?.focus(), 0);
+            setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
         }
     });
 

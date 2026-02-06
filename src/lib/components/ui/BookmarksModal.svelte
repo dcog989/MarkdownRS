@@ -11,6 +11,7 @@
     } from '$lib/stores/bookmarkStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { callBackend } from '$lib/utils/backend';
+    import { CONFIG } from '$lib/utils/config';
     import { scrollIntoView } from '$lib/utils/modalUtils';
     import { open } from '@tauri-apps/plugin-dialog';
     import {
@@ -62,7 +63,7 @@
             browseError = '';
         }
         if (isOpen) {
-            setTimeout(() => searchInputEl?.focus(), 0);
+            setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
         }
     });
 

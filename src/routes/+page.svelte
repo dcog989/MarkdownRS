@@ -23,6 +23,7 @@
         saveCurrentFileAs,
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
+    import { CONFIG } from '$lib/utils/config';
     import { logger } from '$lib/utils/logger';
     import { initSettings, saveSettings } from '$lib/utils/settings';
     import { onDestroy, onMount } from 'svelte';
@@ -33,9 +34,6 @@
     let dragStart = 0;
     let initialSplit = 0;
     let isUnloading = false;
-
-    const AUTO_SAVE_INTERVAL_MS = 5000; // 5 seconds for more frequent saves
-
     let isInitialized = $state(false);
     let initError = $state<string | null>(null);
 
@@ -265,7 +263,7 @@
                 persistSession();
             }
             saveSettings();
-        }, AUTO_SAVE_INTERVAL_MS);
+        }, CONFIG.SESSION.AUTO_SAVE_INTERVAL_MS);
 
         const handleBlur = () => {
             persistSession();

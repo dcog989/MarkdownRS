@@ -1,6 +1,7 @@
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
+import { CONFIG } from '$lib/utils/config';
 import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { save } from '@tauri-apps/plugin-dialog';
@@ -49,7 +50,7 @@ export class ExportService {
             return null;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 150));
+        await new Promise((resolve) => setTimeout(resolve, CONFIG.UI_TIMING.EXPORT_RENDER_WAIT_MS));
 
         return container;
     }
@@ -183,7 +184,7 @@ export class ExportService {
                 userMessage: 'Failed to open print dialog',
             });
         } finally {
-            setTimeout(() => this.clearExportContent(), 500);
+            setTimeout(() => this.clearExportContent(), CONFIG.UI_TIMING.EXPORT_CLEANUP_DELAY_MS);
         }
     }
 

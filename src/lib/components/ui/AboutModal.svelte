@@ -1,5 +1,6 @@
 <script lang="ts">
     import { callBackend } from '$lib/utils/backend';
+    import { CONFIG } from '$lib/utils/config';
     import { openPath } from '@tauri-apps/plugin-opener';
     import { relaunch } from '@tauri-apps/plugin-process';
     import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
@@ -95,7 +96,7 @@
             if (updateStatus !== 'Restarting...') {
                 setTimeout(() => {
                     updateStatus = null;
-                }, 3000);
+                }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);
             }
         }
     }

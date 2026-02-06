@@ -40,7 +40,8 @@ const DEFAULT_CONFIG = {
 
     // Session & Auto-save
     SESSION: {
-        AUTO_SAVE_INTERVAL_MS: 30000,
+        AUTO_SAVE_INTERVAL_MS: 5000, // Main auto-save interval for session persistence
+        SETTINGS_SAVE_INTERVAL_MS: 5000, // Settings auto-save interval (same as session for consistency)
         SAVE_DEBOUNCE_MS: 500,
         SAVE_ON_BLUR: true,
     },
@@ -62,7 +63,45 @@ const DEFAULT_CONFIG = {
         INCREMENTAL_CACHE_LIMIT: 1000,
     },
 
-    // UI
+    // UI Timing - Delays and debounces for UI interactions
+    UI_TIMING: {
+        // Focus delays - Allow DOM updates before focusing elements
+        FOCUS_DELAY_MS: 50, // TabDropdown, BookmarksModal, RecentFilesModal, SettingsModal
+        FOCUS_IMMEDIATE_MS: 0, // Immediate focus (BookmarksModal, RecentFilesModal, SettingsModal)
+
+        // Keyboard navigation
+        MRU_POPUP_DELAY_MS: 200, // Delay before showing MRU popup during tab cycling (TabBar)
+        TAB_SWITCH_ANIMATION_MS: 50, // Animation delay for tab switching (Editor)
+
+        // Scroll behavior
+        TAB_SCROLL_SETTLE_MS: 300, // Wait for scroll to settle before centering active tab (TabBar)
+        MOUSE_MOVEMENT_IGNORE_MS: 50, // Ignore mouse movement after keyboard nav (TabDropdown)
+
+        // Export & Cleanup
+        EXPORT_RENDER_WAIT_MS: 150, // Wait for styles to apply before export (exportService)
+        EXPORT_CLEANUP_DELAY_MS: 500, // Delay before cleaning up export content (exportService)
+
+        // State restoration
+        RESTORE_STATE_DELAY_MS: 100, // Delay before marking restoration complete (EditorView)
+
+        // Spellcheck refresh
+        SPELLCHECK_REFRESH_DELAY_MS: 100, // Delay before refreshing spellcheck (Editor)
+
+        // Update status auto-hide
+        UPDATE_STATUS_HIDE_MS: 3000, // Auto-hide update status message (AboutModal)
+
+        // Context menu
+        CONTEXT_MENU_UPDATE_DELAY_MS: 0, // Delay before updating context menu items (ContextMenu)
+        SUBMENU_HOVER_CLOSE_DELAY_MS: 300, // Delay before closing submenu on hover out (Submenu)
+
+        // Modal focus
+        MODAL_FOCUS_DELAY_MS: 0, // Delay before focusing modal elements (Modal)
+
+        // Find/Replace panel
+        FIND_PANEL_FOCUS_CHECK_MS: 0, // Delay before checking if find panel should focus (FindReplacePanel)
+    },
+
+    // UI Appearance
     UI: {
         ANIMATION_DURATION_MS: 250,
         TOAST_DURATION_MS: 3000,

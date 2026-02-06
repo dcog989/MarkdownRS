@@ -7,6 +7,7 @@
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
     import { callBackend } from '$lib/utils/backend';
+    import { CONFIG } from '$lib/utils/config';
     import { saveSettings } from '$lib/utils/settings';
     import { clearDictionaries } from '$lib/utils/spellcheck.svelte.ts';
     import {
@@ -68,7 +69,7 @@
                     appContext.app.availableThemes = DEFAULT_THEME_NAMES;
                 });
 
-            setTimeout(() => searchInputEl?.focus(), 0);
+            setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
         } else {
             searchQuery = '';
         }

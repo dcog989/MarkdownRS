@@ -460,7 +460,7 @@
                 // Re-enable scroll tracking after stabilization
                 setTimeout(() => {
                     isRestoring = false;
-                }, 100);
+                }, CONFIG.UI_TIMING.RESTORE_STATE_DELAY_MS);
             });
             return;
         }

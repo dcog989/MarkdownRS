@@ -2,6 +2,7 @@
     import { tooltip } from '$lib/actions/tooltip';
     import type { EditorTab } from '$lib/stores/editorStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
+    import { CONFIG } from '$lib/utils/config';
     import { requestCloseTab } from '$lib/utils/fileSystem';
     import { formatFileSize } from '$lib/utils/fileValidation';
     import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
@@ -77,7 +78,7 @@
                 mouseMovementTimer = null;
             }, 100);
 
-            setTimeout(() => searchInputRef?.focus(), 50);
+            setTimeout(() => searchInputRef?.focus(), CONFIG.UI_TIMING.FOCUS_DELAY_MS);
         } else {
             if (mouseMovementTimer !== null) {
                 clearTimeout(mouseMovementTimer);
