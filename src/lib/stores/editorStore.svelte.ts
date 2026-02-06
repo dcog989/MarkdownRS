@@ -274,8 +274,11 @@ export function closeTab(id: string) {
             (entry) => entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path),
         );
 
+        const closedTab = { ...tab };
+        closedTab.isPersisted = false;
+
         editorStore.closedTabsHistory = [
-            { tab: { ...tab }, index, historyState },
+            { tab: closedTab, index, historyState },
             ...filteredHistory,
         ].slice(0, limit);
     }
