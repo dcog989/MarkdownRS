@@ -37,6 +37,8 @@ export type EditorTab = {
     contentChanged?: boolean;
     isPersisted?: boolean;
     contentLoaded?: boolean;
+    wordCountStrategy?: 'accurate' | 'fast';
+    wordCountPending?: boolean;
     forceSync?: number;
 };
 
@@ -95,6 +97,43 @@ function updateTab(
     return true;
 }
 
+// Debounced word count updates - avoid expensive calculations on every keystroke
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const wordCountDebounceMap = new Map<string, number>();
+
+function scheduleWordCountUpdate(tabId: string, content: string, sizeBytes: number) {
+    const existing = wordCountDebounceMap.get(tabId);
+    if (existing) clearTimeout(existing);
+
+    const timeout = setTimeout(() => {
+        const index = editorStore.tabs.findIndex((t) => t.id === tabId);
+        if (index === -1) {
+            wordCountDebounceMap.delete(tabId);
+            return;
+        }
+
+        const tab = editorStore.tabs[index];
+
+        // Cache strategy decision on first run or if size changed significantly
+        if (!tab.wordCountStrategy) {
+            tab.wordCountStrategy =
+                sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
+        }
+
+        const wordCount =
+            tab.wordCountStrategy === 'accurate' ? countWords(content) : fastCountWords(content);
+
+        editorStore.tabs[index] = {
+            ...tab,
+            wordCount,
+            wordCountPending: false,
+        };
+
+        wordCountDebounceMap.delete(tabId);
+    }, CONFIG.PERFORMANCE.WORD_COUNT_DEBOUNCE_MS);
+
+    wordCountDebounceMap.set(tabId, timeout as unknown as number);
+}
 export function performTextTransform(operationId: OperationId) {
     const activeId = appState.activeTabId;
 
@@ -169,6 +208,9 @@ export function addTab(title: string = '', content: string = '') {
         contentChanged: true,
         isPersisted: false,
         contentLoaded: true,
+        wordCountStrategy:
+            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast',
+        wordCountPending: false,
     };
 
     // Initialize LineChangeTracker in non-reactive cache
@@ -327,18 +369,13 @@ export function updateContent(id: string, content: string) {
     }
 
     const now = getCurrentTimestamp();
+
+    // FAST metrics - calculated instantly on every keystroke
     const sizeBytes = new TextEncoder().encode(content).length;
+    const lineCount = (content.match(/\n/g) || []).length + 1;
 
-    // Performance optimization: Avoid repeated splits and heavy regex on keystroke
-    const lineArray = content.split('\n');
-    const lineCount = lineArray.length;
-    // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
-    const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
-
-    const wordCount =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-            ? countWords(content)
-            : fastCountWords(content);
+    // DEBOUNCED metrics - expensive, calculated after 500ms delay
+    scheduleWordCountUpdate(id, content, sizeBytes);
 
     const updatedTab = {
         ...oldTab,
@@ -348,9 +385,9 @@ export function updateContent(id: string, content: string) {
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         sizeBytes,
-        wordCount,
         lineCount,
-        widestColumn,
+        // Keep old wordCount until debounced update completes
+        wordCountPending: true,
         contentChanged: true,
     };
 
@@ -471,10 +508,10 @@ export function reloadTabContent(
     // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
     const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
+    const wordCountStrategy: 'accurate' | 'fast' =
+        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
     const wordCount =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-            ? countWords(content)
-            : fastCountWords(content);
+        wordCountStrategy === 'accurate' ? countWords(content) : fastCountWords(content);
 
     updateTab(id, (tab) => ({
         content,
@@ -486,6 +523,8 @@ export function reloadTabContent(
         wordCount,
         lineCount,
         widestColumn,
+        wordCountStrategy,
+        wordCountPending: false,
         fileCheckPerformed: false,
         contentChanged: true,
         forceSync: (tab.forceSync ?? 0) + 1,

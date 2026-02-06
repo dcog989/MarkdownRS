@@ -18,6 +18,7 @@
     let encoding = $derived(activeTab?.encoding || 'UTF-8');
     let sizeBytes = $derived(activeTab?.sizeBytes || 0);
     let totalWords = $derived(activeTab?.wordCount || 0);
+    let wordCountPending = $derived(activeTab?.wordCountPending || false);
     let totalChars = $derived(activeTab?.content.length || 0);
     let totalLines = $derived(activeTab?.lineCount || 1);
     let widestColumn = $derived(activeTab?.widestColumn || 0);
@@ -154,8 +155,10 @@
             <span class="inline-block min-w-[4ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.currentWordIndex)}</span>
             <span class="opacity-30">/</span>
-            <span class="inline-block min-w-[4ch] text-left font-mono"
-                >{formatNumber(totalWords)}</span>
+            <span
+                class="inline-block min-w-[4ch] text-left font-mono {wordCountPending
+                    ? 'opacity-50'
+                    : ''}">{formatNumber(totalWords)}</span>
         </div>
 
         <div class="ml-2 flex items-center gap-1" use:tooltip={'File Size'}>
