@@ -128,6 +128,10 @@ export interface BackendCommands {
         args: { word: string };
         return: string[];
     };
+    get_spellcheck_status: {
+        args: Record<string, never>;
+        return: string;
+    };
 
     // Markdown / Text
     render_markdown: {

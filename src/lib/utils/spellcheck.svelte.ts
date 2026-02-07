@@ -1,6 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { callBackend, callBackendSafe } from './backend';
+import { callBackend } from './backend';
 
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
@@ -29,18 +29,51 @@ export class SpellcheckManager {
             const technicalDictionaries = appState.technicalDictionaries;
             const scienceDictionaries = appState.scienceDictionaries;
 
-            const result = await callBackendSafe(
-                'init_spellchecker',
-                { dictionaries, technicalDictionaries, scienceDictionaries },
-                'Spellcheck:Init',
-            );
-
-            if (result !== null) {
-                this.dictionaryLoaded = true;
-            } else {
+            try {
+                await callBackend(
+                    'init_spellchecker',
+                    { dictionaries, technicalDictionaries, scienceDictionaries },
+                    'Spellcheck:Init',
+                    undefined,
+                    { ignore: true },
+                );
+            } catch (error) {
+                console.error('[Spellcheck] Initialization failed:', error);
                 this.initPromise = null;
                 this.dictionaryLoaded = false;
+                return;
             }
+
+            const maxAttempts = 50; // 5 seconds max
+            const pollInterval = 100; // 100ms
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const status = await callBackend(
+                    'get_spellcheck_status',
+                    {},
+                    'Spellcheck:Init',
+                    undefined,
+                    { ignore: true },
+                );
+
+                if (status === 'ready') {
+                    this.dictionaryLoaded = true;
+                    return;
+                } else if (status === 'failed') {
+                    console.error('[Spellcheck] Backend initialization failed');
+                    this.initPromise = null;
+                    this.dictionaryLoaded = false;
+                    return;
+                }
+
+                // Still loading, wait and retry
+                await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            }
+
+            // Timeout
+            console.error('[Spellcheck] Initialization timeout - dictionary never became ready');
+            this.initPromise = null;
+            this.dictionaryLoaded = false;
         })();
 
         return this.initPromise;

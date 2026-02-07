@@ -2,6 +2,7 @@ import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { addToDictionary } from '$lib/utils/fileSystem';
 import { refreshCustomDictionary, spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { logger } from '$lib/utils/logger';
 import { syntaxTree } from '@codemirror/language';
 import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
 import type { EditorView } from '@codemirror/view';
@@ -115,7 +116,9 @@ export function applyImmediateSpellcheck(view: EditorView) {
 export const createSpellCheckLinter = () => {
     return linter(
         async (view) => {
-            if (!spellcheckState.dictionaryLoaded) return [];
+            if (!spellcheckState.dictionaryLoaded) {
+                return [];
+            }
 
             const { state } = view;
             const doc = state.doc;
@@ -222,10 +225,11 @@ export const createSpellCheckLinter = () => {
             }
 
             try {
+                const wordsArray = Array.from(wordsToVerify.keys());
                 const misspelled = await callBackend(
                     'check_words',
                     {
-                        words: Array.from(wordsToVerify.keys()),
+                        words: wordsArray,
                     },
                     'Editor:Init',
                 );
@@ -278,6 +282,11 @@ export const createSpellCheckLinter = () => {
                 // Update global cache
                 spellcheckState.misspelledCache = newCache;
 
+                logger.spellcheck.debug('Diagnostics created', {
+                    diagnosticsCount: diagnostics.length,
+                    newCacheSize: newCache.size,
+                });
+
                 // Cache result for this tab
                 if (tabId) {
                     tabCache.set(tabId, docContent, diagnostics, newCache);
@@ -285,7 +294,8 @@ export const createSpellCheckLinter = () => {
                 }
 
                 return diagnostics;
-            } catch {
+            } catch (error) {
+                logger.spellcheck.error('Linter error', { error: String(error) });
                 return [];
             }
         },

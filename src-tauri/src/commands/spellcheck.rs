@@ -247,12 +247,11 @@ pub async fn init_spellchecker(
     science_dictionaries: Option<bool>,
 ) -> Result<(), String> {
     use crate::state::SpellcheckStatus;
-
     // Check if already initializing or ready
     {
         let status = state.spellcheck_status.lock().await;
         if *status == SpellcheckStatus::Loading || *status == SpellcheckStatus::Ready {
-            log::info!("Spellchecker already initializing or ready");
+            log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready");
             return Ok(());
         }
     }
@@ -435,6 +434,8 @@ pub async fn check_words(
     state: State<'_, AppState>,
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
+    log::debug!("check_words called with {} words", words.len());
+    
     let mut misspelled = Vec::new();
 
     // Chunking to prevent blocking the async runtime too long
@@ -445,6 +446,10 @@ pub async fn check_words(
             let custom_guard = state.custom_dict.lock().await;
             (speller_guard.clone(), custom_guard.clone())
         };
+
+        if speller_opt.is_none() {
+            log::warn!("Speller is None in check_words!");
+        }
 
         if let Some(speller) = speller_opt {
             for word in chunk {
@@ -478,6 +483,11 @@ pub async fn check_words(
         tokio::task::yield_now().await;
     }
 
+    log::debug!("check_words returning {} misspelled words", misspelled.len());
+    if !misspelled.is_empty() {
+        log::debug!("Sample misspelled: {:?}", &misspelled[..misspelled.len().min(5)]);
+    }
+    
     Ok(misspelled)
 }
 

@@ -148,6 +148,17 @@ class Logger {
             this.log('error', 'File', action, metadata),
     };
 
+    spellcheck = {
+        debug: (action: string, metadata?: LogMetadata) =>
+            this.log('debug', 'Spellcheck', action, metadata),
+        info: (action: string, metadata?: LogMetadata) =>
+            this.log('info', 'Spellcheck', action, metadata),
+        warn: (action: string, metadata?: LogMetadata) =>
+            this.log('warn', 'Spellcheck', action, metadata),
+        error: (action: string, metadata?: LogMetadata) =>
+            this.log('error', 'Spellcheck', action, metadata),
+    };
+
     startTimer(namespace: string, action: string): () => void {
         const start = performance.now();
         return (metadata?: LogMetadata) => {
