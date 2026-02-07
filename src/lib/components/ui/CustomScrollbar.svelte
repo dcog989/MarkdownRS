@@ -13,11 +13,12 @@
     let isDragging = $state(false);
 
     function updateScrollbar() {
-        if (!viewport || !trackRef) return;
+        const viewportHeight = viewport?.clientHeight ?? 0;
+        const scrollHeight = viewport?.scrollHeight ?? 0;
+        const scrollTop = viewport?.scrollTop ?? 0;
+        const trackHeight = trackRef?.clientHeight ?? 0;
 
-        const viewportHeight = viewport.clientHeight;
-        const scrollHeight = viewport.scrollHeight;
-        const scrollTop = viewport.scrollTop;
+        if (!viewportHeight || !trackHeight) return;
 
         // Check if scrollbar should be visible
         const shouldShow = scrollHeight > viewportHeight;
@@ -27,7 +28,6 @@
         if (!isVisible) return;
 
         // Calculate thumb height (minimum 20px)
-        const trackHeight = trackRef.clientHeight;
         const ratio = viewportHeight / scrollHeight;
         thumbHeight = Math.max(20, trackHeight * ratio);
 
@@ -38,10 +38,12 @@
     }
 
     function onTrackClick(e: MouseEvent) {
-        if (!viewport || !trackRef || e.target !== trackRef) return;
+        if (e.target !== trackRef) return;
         e.preventDefault();
 
-        const trackRect = trackRef.getBoundingClientRect();
+        const trackRect = trackRef?.getBoundingClientRect();
+        if (!trackRect) return;
+
         const clickY = e.clientY - trackRect.top;
         const trackHeight = trackRect.height;
 
@@ -57,16 +59,17 @@
             clickRatio = 1; // Snap to bottom
         }
 
-        const maxScroll = viewport.scrollHeight - viewport.clientHeight;
-        viewport.scrollTop = clickRatio * maxScroll;
+        const maxScroll = (viewport?.scrollHeight ?? 0) - (viewport?.clientHeight ?? 0);
+        if (viewport) {
+            viewport.scrollTop = clickRatio * maxScroll;
+        }
     }
 
     function onThumbMouseDown(e: MouseEvent) {
-        if (!viewport || !trackRef || !thumbRef) return;
+        const thumbRect = thumbRef?.getBoundingClientRect();
+        if (!thumbRect || !trackRef) return;
         e.preventDefault();
         e.stopPropagation();
-
-        const thumbRect = thumbRef.getBoundingClientRect();
 
         // Store offset from top of thumb to mouse position
         const thumbOffset = e.clientY - thumbRect.top;
@@ -74,13 +77,13 @@
         isDragging = true;
 
         function onMouseMove(e: MouseEvent) {
-            if (!viewport || !trackRef) return;
+            const trackRect = trackRef?.getBoundingClientRect();
+            if (!trackRect) return;
             e.preventDefault();
 
-            const trackRect = trackRef.getBoundingClientRect();
             const trackHeight = trackRect.height;
             const maxThumbTravel = trackHeight - thumbHeight;
-            const maxScroll = viewport.scrollHeight - viewport.clientHeight;
+            const maxScroll = (viewport?.scrollHeight ?? 0) - (viewport?.clientHeight ?? 0);
 
             // Calculate where the top of the thumb should be (mouse position minus offset)
             let newThumbTop = e.clientY - trackRect.top - thumbOffset;
@@ -93,7 +96,9 @@
 
             // Update scroll position based on thumb position
             const scrollRatio = maxThumbTravel > 0 ? newThumbTop / maxThumbTravel : 0;
-            viewport.scrollTop = scrollRatio * maxScroll;
+            if (viewport) {
+                viewport.scrollTop = scrollRatio * maxScroll;
+            }
         }
 
         function onMouseUp() {
@@ -117,23 +122,23 @@
     }
 
     $effect(() => {
-        if (!viewport) return;
-
         const resizeObserver = new ResizeObserver(() => {
             requestAnimationFrame(updateScrollbar);
         });
 
-        resizeObserver.observe(viewport);
-        if (viewport.firstElementChild) {
-            resizeObserver.observe(viewport.firstElementChild);
-        }
+        if (viewport) {
+            resizeObserver.observe(viewport);
+            if (viewport.firstElementChild) {
+                resizeObserver.observe(viewport.firstElementChild);
+            }
 
-        viewport.addEventListener('scroll', onScroll, { passive: true });
-        updateScrollbar();
+            viewport.addEventListener('scroll', onScroll, { passive: true });
+            updateScrollbar();
+        }
 
         return () => {
             resizeObserver.disconnect();
-            viewport.removeEventListener('scroll', onScroll);
+            viewport?.removeEventListener('scroll', onScroll);
         };
     });
 </script>

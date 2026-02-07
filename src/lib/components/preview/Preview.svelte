@@ -88,6 +88,12 @@
                     scrollSync.markMapDirty();
                     untrack(() => scrollSync.updateMap());
                 }
+
+                if (!currentController.signal.aborted) {
+                    isRendering = false;
+                    showSpinner = false;
+                    if (spinnerTimer) clearTimeout(spinnerTimer);
+                }
             } catch (err) {
                 if (!currentController.signal.aborted) console.error('Preview render error:', err);
             } finally {

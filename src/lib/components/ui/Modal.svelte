@@ -62,14 +62,12 @@
     }
 
     function handleTabKey(e: KeyboardEvent) {
-        if (!isOpen || !modalPanel) return;
-        if (e.key !== 'Tab') return;
+        if (!isOpen) return;
 
-        // Use a simple query each time to avoid caching complexity
         const focusableElements = Array.from(
-            modalPanel.querySelectorAll(selector),
+            modalPanel?.querySelectorAll(selector) ?? [],
         ) as HTMLElement[];
-        if (focusableElements.length === 0) return;
+        if (focusableElements.length === 0 || e.key !== 'Tab') return;
 
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
@@ -93,72 +91,62 @@
     let previouslyFocusedElement = $state<HTMLElement | null>(null);
 
     $effect(() => {
-        if (isOpen && modalPanel) {
-            // Store the previously focused element
-            previouslyFocusedElement = document.activeElement as HTMLElement;
+        if (!isOpen) return;
 
-            // Focus the first focusable element when modal opens
-            invalidateFocusCache(); // Clear cache when modal opens
-            const focusableElements = getFocusableElements(modalPanel, true);
-            if (focusableElements.length > 0) {
-                // Reduced delay for better responsiveness
-                setTimeout(() => {
-                    if (!modalPanel) return;
-                    // Use cached elements, no need to re-query
-                    const currentFocusable = getFocusableElements(modalPanel);
-                    if (
-                        currentFocusable.length > 0 &&
-                        !modalPanel.contains(document.activeElement)
-                    ) {
-                        currentFocusable[0].focus();
-                    }
-                }, 16); // Reduced from 50ms to 16ms for better responsiveness
-            }
+        // Store the previously focused element
+        previouslyFocusedElement = document.activeElement as HTMLElement;
 
-            // Set up a focus monitor to catch focus escaping the modal
-            const handleFocusOut = (e: FocusEvent) => {
-                if (!modalPanel) return;
-                const target = e.relatedTarget as HTMLElement;
-
-                // If focus is moving outside the modal, bring it back
-                if (target && !modalPanel.contains(target)) {
-                    e.preventDefault();
-                    const focusable = getFocusableElements(modalPanel); // Use cached version
-                    if (focusable.length > 0) {
-                        focusable[0].focus();
-                    }
+        // Focus the first focusable element when modal opens
+        invalidateFocusCache();
+        const focusableElements = modalPanel ? getFocusableElements(modalPanel, true) : [];
+        if (focusableElements.length > 0) {
+            setTimeout(() => {
+                const currentFocusable = modalPanel ? getFocusableElements(modalPanel) : [];
+                if (currentFocusable.length > 0 && !modalPanel?.contains(document.activeElement)) {
+                    currentFocusable[0].focus();
                 }
-            };
+            }, 16);
+        }
 
-            modalPanel.addEventListener('focusout', handleFocusOut);
+        // Set up a focus monitor to catch focus escaping the modal
+        const handleFocusOut = (e: FocusEvent) => {
+            const target = e.relatedTarget as HTMLElement;
 
-            // Set up a mutation observer to invalidate focus cache when DOM changes
-            const mutationObserver = new MutationObserver(() => {
-                invalidateFocusCache();
-            });
-            // Be more selective to avoid excessive re-renders
-            mutationObserver.observe(modalPanel, {
-                childList: true, // Only watch direct children changes
-                attributes: false, // Don't watch attribute changes to reduce frequency
-                subtree: false, // Don't watch deep subtree changes
-            });
+            // If focus is moving outside the modal, bring it back
+            if (target && !modalPanel?.contains(target)) {
+                e.preventDefault();
+                const focusable = modalPanel ? getFocusableElements(modalPanel) : [];
+                if (focusable.length > 0) {
+                    focusable[0].focus();
+                }
+            }
+        };
+
+        modalPanel?.addEventListener('focusout', handleFocusOut);
+
+        // Set up a mutation observer to invalidate focus cache when DOM changes
+        const mutationObserver = new MutationObserver(() => {
+            invalidateFocusCache();
+        });
+
+        if (modalPanel) {
             mutationObserver.observe(modalPanel, {
                 childList: true,
                 subtree: true,
                 attributes: true,
                 attributeFilter: ['disabled', 'tabindex'],
             });
-
-            return () => {
-                modalPanel?.removeEventListener('focusout', handleFocusOut);
-                mutationObserver?.disconnect();
-
-                // Blur the previously focused element to remove focus outline
-                if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
-                    (previouslyFocusedElement as HTMLElement).blur();
-                }
-            };
         }
+
+        return () => {
+            modalPanel?.removeEventListener('focusout', handleFocusOut);
+            mutationObserver.disconnect();
+
+            // Blur the previously focused element to remove focus outline
+            if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
+                previouslyFocusedElement.blur();
+            }
+        };
     });
 </script>
 
