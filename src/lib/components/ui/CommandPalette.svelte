@@ -1,16 +1,10 @@
 <script lang="ts">
+    import type { Command } from '$lib/commands/paletteCommands';
     import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
     import { scrollIntoView } from '$lib/utils/modalUtils';
     import { Zap } from 'lucide-svelte';
     import { tick } from 'svelte';
     import Modal from './Modal.svelte';
-
-    export type Command = {
-        id: string;
-        label: string;
-        shortcut?: string;
-        action: () => void;
-    };
 
     let {
         isOpen = $bindable(false),
