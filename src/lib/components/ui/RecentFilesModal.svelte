@@ -79,7 +79,7 @@
             <div class="divide-border-main divide-y">
                 {#each filteredFiles as path, index (path)}
                     <div
-                        class="group hover-surface-light px-4 py-2.5 transition-colors {index %
+                        class="group hover:bg-accent-primary px-4 py-2.5 transition-colors {index %
                             2 ===
                         1
                             ? 'bg-row-even'

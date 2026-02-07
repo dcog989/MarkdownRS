@@ -181,7 +181,7 @@
                 <button
                     type="button"
                     onclick={() => toggleDict(dict.code)}
-                    class="text-ui text-fg-default hover-surface-light flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors">
+                    class="text-ui text-fg-default hover-surface flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors">
                     <span>{dict.name}</span>
                     {#if selected.includes(dict.code)}
                         <Check size={14} class="text-accent-primary" />
