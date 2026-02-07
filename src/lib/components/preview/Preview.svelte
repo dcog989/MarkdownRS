@@ -34,6 +34,7 @@
     let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
     let flavor = $derived(appContext.app.markdownFlavor);
 
+    // Effect for tab switches - clears cache and aborts pending renders
     $effect(() => {
         if (lastTabId !== tabId) {
             lastTabId = tabId;
@@ -44,7 +45,10 @@
                 renderAbortController = null;
             }
         }
+    });
 
+    // Effect for content changes - debounced render
+    $effect(() => {
         const content = tabContent;
         const currentFlavor = flavor;
 
@@ -62,6 +66,7 @@
         spinnerTimer = window.setTimeout(() => {
             showSpinner = true;
         }, CONFIG.PERFORMANCE.PREVIEW_SPINNER_DELAY_MS);
+
         debounceTimer = window.setTimeout(async () => {
             renderAbortController = new AbortController();
             const currentController = renderAbortController;
