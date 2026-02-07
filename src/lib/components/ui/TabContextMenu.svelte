@@ -324,7 +324,7 @@
 
             <button
                 type="button"
-                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!tab?.path}
                 onclick={handleToggleBookmark}>
                 {#if isBookmarked}
@@ -397,7 +397,7 @@
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
-                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={tabIndex === 0}
                 onclick={async () => {
                     const newTabs = [...appContext.editor.tabs];
@@ -415,7 +415,7 @@
             </button>
             <button
                 type="button"
-                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={tabIndex === appContext.editor.tabs.length - 1}
                 onclick={async () => {
                     const newTabs = [...appContext.editor.tabs];
@@ -436,7 +436,7 @@
 
             <button
                 type="button"
-                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isPinned}
                 onclick={() => {
                     requestCloseTab(tabId);
@@ -465,27 +465,27 @@
 
             <button
                 type="button"
-                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasCloseableTabsToRight}
                 onclick={() => handleCloseMany('right')}>Close to the Right</button>
             <button
                 type="button"
-                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasCloseableTabsToLeft}
                 onclick={() => handleCloseMany('left')}>Close to the Left</button>
             <button
                 type="button"
-                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasCloseableOtherTabs}
                 onclick={() => handleCloseMany('others')}>Close Others</button>
             <button
                 type="button"
-                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasSavedTabs}
                 onclick={() => handleCloseMany('saved')}>Close Saved</button>
             <button
                 type="button"
-                class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+                class="text-ui hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasUnsavedTabs}
                 onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
             <button
@@ -577,7 +577,7 @@
             </button>
             <button
                 type="button"
-                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!tab?.path}
                 onclick={() => {
                     navigator.clipboard.writeText(tab!.path!);
@@ -590,7 +590,7 @@
 
             <button
                 type="button"
-                class="text-ui hover:text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                class="text-ui hover:text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!tab?.path || isPinned}
                 onclick={handleSendToRecycleBin}>
                 <Trash2 size={14} class="opacity-70" /><span>Delete to Recycle Bin</span>
