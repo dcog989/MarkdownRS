@@ -1,12 +1,45 @@
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
 import { type EditorView } from '@codemirror/view';
-import { SvelteSet } from 'svelte/reactivity';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import ScrollSyncWorker from '$lib/workers/scrollSync.worker?worker';
+
+interface LineMapEntry {
+    line: number;
+    y: number;
+}
+
+interface SyncMessage {
+    type: 'sync';
+    direction: 'editor-to-preview' | 'preview-to-editor';
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+    totalLines: number;
+}
+
+interface UpdateMapMessage {
+    type: 'update-map';
+    lineMap: LineMapEntry[];
+}
+
+interface SyncResultMessage {
+    type: 'sync-result';
+    targetScrollTop: number;
+    direction: 'editor-to-preview' | 'preview-to-editor';
+}
 
 export class ScrollSyncManager {
     editor = $state<EditorView | null>(null);
     preview = $state<HTMLElement | null>(null);
-    private lineMap: { line: number; y: number }[] = [];
+    private lineMap: LineMapEntry[] = [];
+
+    // Web Worker for interpolation calculations
+    private worker: Worker | null = null;
+    private pendingSyncs = new SvelteMap<
+        string,
+        { target: HTMLElement; direction: 'editor-to-preview' | 'preview-to-editor' }
+    >();
 
     // State to prevent circular scroll loops
     private activeSource = $state<'editor' | 'preview' | null>(null);
@@ -20,6 +53,9 @@ export class ScrollSyncManager {
     private elementVisibilityObserver: IntersectionObserver | null = null;
 
     constructor() {
+        // Initialize Web Worker
+        this.initWorker();
+
         // Automatically update map when preview changes size or content
         $effect.root(() => {
             $effect(() => {
@@ -54,6 +90,68 @@ export class ScrollSyncManager {
                 }
             });
         });
+    }
+
+    private initWorker() {
+        try {
+            this.worker = new ScrollSyncWorker();
+            this.worker.onmessage = (event: MessageEvent<SyncResultMessage>) => {
+                this.handleWorkerResult(event.data);
+            };
+            this.worker.onerror = (err) => {
+                console.error('[ScrollSync] Worker error:', err);
+                this.fallbackToMainThread();
+            };
+        } catch (err) {
+            console.warn(
+                '[ScrollSync] Failed to initialize worker, falling back to main thread:',
+                err,
+            );
+            this.fallbackToMainThread();
+        }
+    }
+
+    private fallbackToMainThread() {
+        // If worker fails, we'll do calculations on main thread
+        this.worker = null;
+    }
+
+    private handleWorkerResult(data: SyncResultMessage) {
+        if (data.type !== 'sync-result') return;
+
+        const pending = this.pendingSyncs.get(data.direction);
+        if (!pending) return;
+
+        this.pendingSyncs.delete(data.direction);
+
+        const { target, direction } = pending;
+        let targetY = data.targetScrollTop;
+
+        // Handle special values and conversions
+        if (direction === 'editor-to-preview') {
+            if (targetY === -1) {
+                // Scroll to bottom
+                targetY = target.scrollHeight - target.clientHeight;
+            }
+        } else {
+            // preview-to-editor: targetY is a line number, convert to pixels
+            if (!this.editor) return;
+            if (targetY === -1) {
+                targetY = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+            } else {
+                const docLines = this.editor.state.doc.lines;
+                const safeLine = Math.max(1, Math.min(targetY, docLines));
+                const lineInt = Math.floor(safeLine);
+                const lineFrac = safeLine - lineInt;
+                const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
+                targetY = lineInfo.top + lineInfo.height * lineFrac;
+            }
+        }
+
+        // Apply scroll
+        if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+            target.scrollTop = targetY;
+        }
     }
 
     markMapDirty() {
@@ -130,7 +228,7 @@ export class ScrollSyncManager {
 
         // Batch all getBoundingClientRect() calls to prevent layout thrashing
         // Only calculate rects for visible elements - use offsetTop for hidden elements (cheaper)
-        const rawMap: { line: number; y: number }[] = [];
+        const rawMap: LineMapEntry[] = [];
         for (const el of elements) {
             const lineAttr = el.getAttribute('data-source-line');
             if (!lineAttr) continue;
@@ -181,6 +279,15 @@ export class ScrollSyncManager {
                 this.lineMap.push({ line: totalLines, y: scrollHeight });
             }
         }
+
+        // Send updated map to worker
+        if (this.worker) {
+            const message: UpdateMapMessage = {
+                type: 'update-map',
+                lineMap: this.lineMap,
+            };
+            this.worker.postMessage(message);
+        }
     }
 
     private syncPreviewThrottled = throttle(() => {
@@ -226,16 +333,19 @@ export class ScrollSyncManager {
         }, 150);
     }
 
-    private syncScrollPosition(
-        source: HTMLElement,
-        target: HTMLElement,
-        direction: 'editor-to-preview' | 'preview-to-editor',
-    ) {
+    private syncPreview() {
+        if (!this.editor || !this.preview) return;
+
+        const source = this.editor.scrollDOM;
+        const target = this.preview;
+        const direction = 'editor-to-preview';
+
         const scrollTop = source.scrollTop;
         const scrollHeight = source.scrollHeight;
         const clientHeight = source.clientHeight;
         const maxScroll = scrollHeight - clientHeight;
 
+        // Handle edge cases directly
         if (scrollTop <= 0) {
             if (target.scrollTop > 0) {
                 target.scrollTop = 0;
@@ -249,6 +359,91 @@ export class ScrollSyncManager {
             }
             return;
         }
+
+        // Fallback to main thread if no worker
+        if (!this.worker) {
+            this.syncScrollPositionFallback(source, target, direction);
+            return;
+        }
+
+        // Calculate current line position from editor
+        const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
+        const docLine = this.editor.state.doc.lineAt(lineBlock.from);
+        const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+        const currentLine = docLine.number + fraction;
+
+        // Store pending sync
+        this.pendingSyncs.set(direction, { target, direction });
+
+        // Send to worker
+        const message: SyncMessage = {
+            type: 'sync',
+            direction,
+            scrollTop: currentLine, // Send line number instead of pixel
+            scrollHeight,
+            clientHeight,
+            totalLines: this.editor.state.doc.lines,
+        };
+        this.worker.postMessage(message);
+    }
+
+    private syncEditor() {
+        if (!this.editor || !this.preview) return;
+
+        const source = this.preview;
+        const target = this.editor.scrollDOM;
+        const direction = 'preview-to-editor';
+
+        const scrollTop = source.scrollTop;
+        const scrollHeight = source.scrollHeight;
+        const clientHeight = source.clientHeight;
+        const maxScroll = scrollHeight - clientHeight;
+
+        // Handle edge cases directly
+        if (scrollTop <= 0) {
+            if (target.scrollTop > 0) {
+                target.scrollTop = 0;
+            }
+            return;
+        }
+        if (scrollTop >= maxScroll - 1) {
+            const targetBottom = target.scrollHeight - target.clientHeight;
+            if (Math.abs(target.scrollTop - targetBottom) > 2) {
+                target.scrollTop = targetBottom;
+            }
+            return;
+        }
+
+        // Fallback to main thread if no worker or no lineMap
+        if (!this.worker || this.lineMap.length < 2) {
+            this.syncScrollPositionFallback(source, target, direction);
+            return;
+        }
+
+        // Store pending sync
+        this.pendingSyncs.set(direction, { target, direction });
+
+        // Send to worker
+        const message: SyncMessage = {
+            type: 'sync',
+            direction,
+            scrollTop,
+            scrollHeight,
+            clientHeight,
+            totalLines: this.editor.state.doc.lines,
+        };
+        this.worker.postMessage(message);
+    }
+
+    private syncScrollPositionFallback(
+        source: HTMLElement,
+        target: HTMLElement,
+        direction: 'editor-to-preview' | 'preview-to-editor',
+    ) {
+        const scrollTop = source.scrollTop;
+        const scrollHeight = source.scrollHeight;
+        const clientHeight = source.clientHeight;
+        const maxScroll = scrollHeight - clientHeight;
 
         if (this.lineMap.length < 2) {
             const pct = scrollTop / maxScroll;
@@ -284,20 +479,10 @@ export class ScrollSyncManager {
         }
     }
 
-    private syncPreview() {
-        if (!this.editor || !this.preview) return;
-        this.syncScrollPosition(this.editor.scrollDOM, this.preview, 'editor-to-preview');
-    }
-
-    private syncEditor() {
-        if (!this.editor || !this.preview) return;
-        this.syncScrollPosition(this.preview, this.editor.scrollDOM, 'preview-to-editor');
-    }
-
     private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
         const map = this.lineMap;
-        let lo = 0,
-            hi = map.length - 1;
+        let lo = 0;
+        let hi = map.length - 1;
 
         while (lo <= hi) {
             const mid = (lo + hi) >> 1;
