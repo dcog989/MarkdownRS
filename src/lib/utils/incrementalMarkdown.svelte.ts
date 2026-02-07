@@ -141,7 +141,7 @@ export class IncrementalMarkdownRenderer {
         let currentStartLine = 0;
         let lineIndex = 0;
         let lastLinePos = 0;
-        let currentBlockContent = '';
+        let blockStartPos = 0;
         let lineCountInBlock = 0;
         let inFence = false;
 
@@ -180,20 +180,18 @@ export class IncrementalMarkdownRenderer {
             }
 
             if (shouldSplit) {
+                const blockContent = content.substring(blockStartPos, lastLinePos);
                 blocks.push({
                     startLine: currentStartLine,
                     endLine: lineIndex,
-                    content: currentBlockContent.endsWith('\n')
-                        ? currentBlockContent.slice(0, -1)
-                        : currentBlockContent,
-                    hash: this.hashString(currentBlockContent),
+                    content: blockContent.endsWith('\n') ? blockContent.slice(0, -1) : blockContent,
+                    hash: this.hashString(blockContent),
                 });
-                currentBlockContent = '';
+                blockStartPos = lastLinePos;
                 currentStartLine = lineIndex;
                 lineCountInBlock = 0;
             }
 
-            currentBlockContent += line + (nextLinePos === -1 ? '' : '\n');
             lineCountInBlock++;
             lineIndex++;
 
@@ -202,12 +200,13 @@ export class IncrementalMarkdownRenderer {
             nextLinePos = content.indexOf('\n', lastLinePos);
         }
 
-        if (currentBlockContent) {
+        // Add remaining content as final block (if any content was processed)
+        if (blocks.length === 0) {
             blocks.push({
                 startLine: currentStartLine,
                 endLine: lineIndex,
-                content: currentBlockContent,
-                hash: this.hashString(currentBlockContent),
+                content: content,
+                hash: this.hashString(content),
             });
         }
 
