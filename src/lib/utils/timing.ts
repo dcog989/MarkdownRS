@@ -40,40 +40,80 @@ export function debounce<T extends (...args: any[]) => any>(
     return debounced;
 }
 
+export interface ThrottleOptions {
+    leading?: boolean; // Fire on the leading edge (first call)
+    trailing?: boolean; // Fire on the trailing edge (last call after interval)
+}
+
 /**
  * Creates a throttled version of a function
  * Ensures function is called at most once per specified interval
  * @param fn Function to throttle
  * @param interval Minimum interval between calls in milliseconds
- * @returns Throttled function
+ * @param options Throttle behavior options (default: { leading: false, trailing: true })
+ * @returns Throttled function with .clear() method
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends (...args: any[]) => any>(
     fn: T,
     interval: number,
-): (...args: Parameters<T>) => void {
+    options: ThrottleOptions = {},
+): DebouncedFunction<T> {
+    const { leading = false, trailing = true } = options;
     let lastCall = 0;
     let timeout: number | null = null;
+    let lastArgs: Parameters<T> | null = null;
 
-    return (...args: Parameters<T>) => {
+    const invoke = (args: Parameters<T>) => {
+        lastCall = Date.now();
+        fn(...args);
+        lastArgs = null;
+    };
+
+    const throttled = (...args: Parameters<T>) => {
         const now = Date.now();
         const timeSinceLastCall = now - lastCall;
+        lastArgs = args;
+
+        // Clear any pending timeout
+        if (timeout !== null) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
 
         if (timeSinceLastCall >= interval) {
-            lastCall = now;
-            fn(...args);
-        } else {
-            // Schedule for the end of the interval
-            if (timeout !== null) {
-                clearTimeout(timeout);
+            // Interval has passed - can invoke now
+            if (leading) {
+                invoke(args);
+            } else if (trailing) {
+                // Schedule trailing call
+                timeout = window.setTimeout(() => {
+                    if (lastArgs) {
+                        invoke(lastArgs);
+                    }
+                    timeout = null;
+                }, interval);
             }
+        } else if (trailing) {
+            // Within interval - schedule trailing call
             timeout = window.setTimeout(() => {
-                lastCall = Date.now();
-                fn(...args);
+                if (lastArgs) {
+                    invoke(lastArgs);
+                }
                 timeout = null;
             }, interval - timeSinceLastCall);
         }
     };
+
+    throttled.clear = () => {
+        if (timeout !== null) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+        lastArgs = null;
+    };
+
+    return throttled;
 }
 
 /**
