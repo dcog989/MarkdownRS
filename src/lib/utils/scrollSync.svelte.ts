@@ -1,3 +1,26 @@
+/**
+ * Scroll Sync State Management
+ *
+ * This file uses a hybrid approach of reactive and non-reactive state:
+ *
+ * REACTIVE STATE ($state):
+ * - editor, preview: DOM elements that trigger effects when changed
+ * - activeSource: Prevents circular scroll loops (UI reacts to changes)
+ * - mapDirty: Triggers map rebuild when content changes
+ *
+ * NON-REACTIVE STATE (plain properties):
+ * - lineMap: Array of line->pixel mappings (rebuilt on content change, not reactive)
+ * - worker: Web Worker instance (no reactivity needed)
+ * - pendingSyncs: SvelteMap tracking pending sync operations (async coordination)
+ * - visibleElements: SvelteSet of visible preview elements (DOM optimization)
+ * - Various timers and observers (imperative cleanup required)
+ *
+ * Pattern Rationale:
+ * - Use $state for values that UI/effects need to react to
+ * - Use plain properties for data that's computed/rebuilt imperatively
+ * - Use SvelteMap/SvelteSet for collections that need reactivity but not Proxy overhead
+ */
+
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
 import { type EditorView } from '@codemirror/view';

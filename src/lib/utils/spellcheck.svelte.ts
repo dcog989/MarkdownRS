@@ -1,3 +1,21 @@
+/**
+ * Spellcheck State Management
+ *
+ * This file uses Svelte 5 runes for all spellcheck-related state.
+ * All properties are reactive and trigger UI updates when changed.
+ *
+ * Pattern: Class-based reactive state with $state()
+ * - dictionaryLoaded: Boolean for initialization status
+ * - misspelledCache: SvelteSet of currently misspelled words
+ * - customDictionary: SvelteSet of user-added words
+ * - suggestionCache: SvelteMap of word -> suggestions
+ *
+ * Why not non-reactive caches here?
+ * - All spellcheck state is displayed in the UI (underlines, suggestions, etc.)
+ * - SvelteSet/SvelteMap work well with $state for this use case
+ * - No deep proxy chains that would cause stack overflow
+ */
+
 import { appState } from '$lib/stores/appState.svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { callBackend } from './backend';

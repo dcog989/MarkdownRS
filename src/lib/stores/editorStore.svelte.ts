@@ -1,3 +1,36 @@
+/**
+ * Editor Store - State Management Architecture
+ *
+ * This file uses three distinct state management patterns based on reactivity needs:
+ *
+ * 1. REACTIVE STATE ($state):
+ *    - Use for: UI-related data that needs to trigger updates when changed
+ *    - Stored in: `editorStore` object (tabs, sessionDirty, mruStack, etc.)
+ *    - Pattern: Direct property access, Svelte automatically tracks dependencies
+ *
+ * 2. NON-REACTIVE CACHES (WeakMap/Map):
+ *    - Use for: Complex objects that don't need UI reactivity OR cause proxy issues
+ *    - Stored in: Module-level WeakMaps (indexed by tab ID strings)
+ *    - Pattern: Manual get/set/delete with tab ID keys
+ *    - Rationale: Prevents "Maximum call stack exceeded" errors from deep reactive proxies
+ *                 on objects containing SvelteSet/SvelteMap (e.g., LineChangeTracker)
+ *
+ * 3. DERIVED STATE ($derived):
+ *    - Use in: Components for computed values based on reactive state
+ *    - Pattern: $derived.by(() => { ... }) or $derived(expression)
+ *    - Not stored here, computed at component level
+ *
+ * WHY NOT WeakMap FOR ALL CACHES?
+ * - WeakMap requires object keys, but we use string tab IDs
+ * - We need explicit cleanup when tabs close (WeakMap auto-cleans only when key is GC'd)
+ * - Map gives us more control over lifecycle
+ *
+ * WHEN TO ADD NEW STATE:
+ * - UI needs updates? → Add to editorStore ($state)
+ * - Complex internal object with Svelte reactivity types? → Use non-reactive cache (Map)
+ * - Simple debouncing/timers? → Use local Map with cleanup
+ */
+
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
@@ -48,12 +81,29 @@ export type ClosedTab = {
     historyState?: unknown;
 };
 
-// Non-reactive storage for CodeMirror history states to avoid Proxy performance costs
+/**
+ * NON-REACTIVE CACHE: CodeMirror History States
+ *
+ * Why non-reactive?
+ * - CodeMirror history states are large, complex objects
+ * - Reactivity adds Proxy overhead with no benefit (history is accessed imperatively)
+ * - Prevents unnecessary deep observation of CodeMirror's internal structures
+ *
+ * Lifecycle: Cleared when tab closes via closeTab()
+ */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const historyStateCache = new Map<string, unknown>();
 
-// Non-reactive storage for LineChangeTracker to prevent deep reactive proxy chains
-// that cause "Maximum call stack size exceeded" errors with SvelteSet
+/**
+ * NON-REACTIVE CACHE: LineChangeTracker Instances
+ *
+ * Why non-reactive?
+ * - LineChangeTracker contains SvelteSet which causes "Maximum call stack exceeded"
+ *   when wrapped in Svelte 5's reactive Proxy
+ * - Used for internal tracking, no UI components need to react to changes
+ *
+ * Lifecycle: Created in addTab(), removed in closeTab() via removeLineChangeTracker()
+ */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const lineChangeTrackerCache = new Map<string, LineChangeTracker>();
 
@@ -61,14 +111,26 @@ function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
 
-// Replaced callback registry with reactive state pattern
+/**
+ * REACTIVE STATE: Main Editor State
+ *
+ * This is the primary reactive store for editor-related UI state.
+ * All properties here trigger Svelte 5 reactivity when modified.
+ *
+ * Properties:
+ * - tabs: Array of open editor tabs (reactive - UI updates when tabs change)
+ * - sessionDirty: Whether session has unsaved changes (reactive - UI shows indicators)
+ * - mruStack: Most Recently Used tab order (reactive - affects tab navigation)
+ * - closedTabsHistory: Recently closed tabs for reopening (reactive - affects UI menus)
+ * - lastScrollSource: Tracks scroll sync direction (reactive - prevents circular sync)
+ * - pendingTransform: Queued text operation (reactive - triggers editor transformations)
+ */
 export const editorStore = $state({
     tabs: [] as EditorTab[],
     sessionDirty: false,
     mruStack: [] as string[],
     closedTabsHistory: [] as ClosedTab[],
     lastScrollSource: null as 'editor' | 'preview' | null,
-    // New: Reactive command state
     pendingTransform: null as { tabId: string; op: OperationId; timestamp: number } | null,
 });
 
@@ -97,7 +159,16 @@ function updateTab(
     return true;
 }
 
-// Debounced word count updates - avoid expensive calculations on every keystroke
+/**
+ * NON-REACTIVE CACHE: Word Count Debounce Timeouts
+ *
+ * Why non-reactive?
+ * - Stores setTimeout IDs for debouncing expensive word count calculations
+ * - No UI needs to react to the timeout IDs themselves
+ * - Prevents memory leaks by allowing explicit cleanup
+ *
+ * Lifecycle: Entry deleted after timeout fires or tab closes
+ */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const wordCountDebounceMap = new Map<string, number>();
 
