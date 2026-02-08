@@ -176,19 +176,8 @@ impl Database {
     }
 
     fn setup_schema(conn: &mut Connection) -> Result<()> {
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY)",
-            [],
-        )?;
-
-        // Use MAX to ensure we get the latest version if multiple rows exist due to previous INSERT usage
-        let current_version: i32 = conn
-            .query_row(
-                "SELECT COALESCE(MAX(version), 0) FROM schema_version",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(0);
+        // Use PRAGMA user_version for atomic schema versioning
+        let current_version: i32 = conn.query_row("PRAGMA user_version", [], |row| row.get(0))?;
 
         for (i, migration) in MIGRATIONS.iter().enumerate() {
             let version = (i + 1) as i32;
@@ -196,13 +185,7 @@ impl Database {
                 log::info!("Applying database migration v{}", version);
                 let tx = conn.transaction()?;
                 tx.execute_batch(migration)?;
-
-                // Clear old versions to keep table clean and singular
-                tx.execute("DELETE FROM schema_version", [])?;
-                tx.execute(
-                    "INSERT INTO schema_version (version) VALUES (?1)",
-                    [version],
-                )?;
+                tx.execute(&format!("PRAGMA user_version = {}", version), [])?;
                 tx.commit()?;
             }
         }
