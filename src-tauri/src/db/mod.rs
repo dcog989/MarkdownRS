@@ -145,6 +145,8 @@ const MIGRATIONS: &[&str] = &[
             SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
         );
     END;",
+    // v2: Add index on tabs.sort_index for faster session restore
+    "CREATE INDEX IF NOT EXISTS idx_tabs_sort_index ON tabs(sort_index);",
 ];
 
 impl Database {
