@@ -1,10 +1,11 @@
+import { appState } from '$lib/stores/appState.svelte';
 import {
     addTab,
+    editorStore,
     markTabPersisted,
     setFileCheckStatus,
     setLineChangeTracker,
 } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay } from '$lib/utils/date';
@@ -48,7 +49,7 @@ class SessionPersistenceManager {
     private savePending = false;
 
     async requestSave(): Promise<void> {
-        if (!appContext.editor.sessionDirty) {
+        if (!editorStore.sessionDirty) {
             return;
         }
 
@@ -66,10 +67,10 @@ class SessionPersistenceManager {
 
         try {
             const mruPositionMap = new Map<string, number>();
-            appContext.editor.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
+            editorStore.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
 
             // 1. Map Active Tabs
-            const activeTabs = appContext.editor.tabs;
+            const activeTabs = editorStore.tabs;
             const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
                 // Only send content if it changed since last save or has never been persisted
                 const needsContent = t.contentChanged || !t.isPersisted;
@@ -94,34 +95,31 @@ class SessionPersistenceManager {
             });
 
             // 2. Map Closed Tabs
-            const closedTabs: RustTabState[] = appContext.editor.closedTabsHistory.map(
-                (entry, index) => {
-                    // Closed tabs should only send content if it's loaded in memory.
-                    // If loaded, we use standard dirty/persistence checks.
-                    // If not loaded (lazy tab that was closed), we send null to trigger backend migration logic.
-                    const needsContent =
-                        entry.tab.contentLoaded &&
-                        (entry.tab.contentChanged || !entry.tab.isPersisted);
+            const closedTabs: RustTabState[] = editorStore.closedTabsHistory.map((entry, index) => {
+                // Closed tabs should only send content if it's loaded in memory.
+                // If loaded, we use standard dirty/persistence checks.
+                // If not loaded (lazy tab that was closed), we send null to trigger backend migration logic.
+                const needsContent =
+                    entry.tab.contentLoaded && (entry.tab.contentChanged || !entry.tab.isPersisted);
 
-                    return {
-                        id: entry.tab.id,
-                        path: entry.tab.path,
-                        title: entry.tab.title,
-                        content: needsContent ? entry.tab.content : null,
-                        is_dirty: entry.tab.isDirty,
-                        scroll_percentage: entry.tab.scrollPercentage,
-                        created: entry.tab.created || null,
-                        modified: entry.tab.modified || null,
-                        is_pinned: entry.tab.isPinned || false,
-                        custom_title: entry.tab.customTitle || null,
-                        file_check_failed: entry.tab.fileCheckFailed || false,
-                        file_check_performed: entry.tab.fileCheckPerformed || false,
-                        mru_position: null,
-                        sort_index: index,
-                        original_index: entry.index,
-                    };
-                },
-            );
+                return {
+                    id: entry.tab.id,
+                    path: entry.tab.path,
+                    title: entry.tab.title,
+                    content: needsContent ? entry.tab.content : null,
+                    is_dirty: entry.tab.isDirty,
+                    scroll_percentage: entry.tab.scrollPercentage,
+                    created: entry.tab.created || null,
+                    modified: entry.tab.modified || null,
+                    is_pinned: entry.tab.isPinned || false,
+                    custom_title: entry.tab.customTitle || null,
+                    file_check_failed: entry.tab.fileCheckFailed || false,
+                    file_check_performed: entry.tab.fileCheckPerformed || false,
+                    mru_position: null,
+                    sort_index: index,
+                    original_index: entry.index,
+                };
+            });
 
             await callBackend(
                 'save_session',
@@ -139,18 +137,18 @@ class SessionPersistenceManager {
             });
 
             // 3. Update persistence state on success
-            appContext.editor.sessionDirty = false;
+            editorStore.sessionDirty = false;
 
             activeTabs.forEach((t) => {
                 markTabPersisted(t.id);
             });
 
-            appContext.editor.closedTabsHistory.forEach((entry) => {
+            editorStore.closedTabsHistory.forEach((entry) => {
                 entry.tab.contentChanged = false;
                 entry.tab.isPersisted = true;
             });
         } catch (err) {
-            appContext.editor.sessionDirty = true;
+            editorStore.sessionDirty = true;
             AppError.handle('Session:Save', err, {
                 showToast: false,
                 severity: 'warning',
@@ -197,7 +195,7 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
                 throw new Error('Failed to read file: null result');
             }
 
-            const storeTab = appContext.editor.tabs.find((x) => x.id === tab.id);
+            const storeTab = editorStore.tabs.find((x) => x.id === tab.id);
             if (storeTab) {
                 storeTab.lastSavedContent = normalizeLineEndings(res.content);
                 storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
@@ -278,12 +276,12 @@ const loadingRequests = new Map<string, number>();
 
 export async function loadTabContentLazy(tabId: string): Promise<void> {
     const start = performance.now();
-    const index = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+    const index = editorStore.tabs.findIndex((t) => t.id === tabId);
     if (index === -1) {
         return;
     }
 
-    const tab = appContext.editor.tabs[index];
+    const tab = editorStore.tabs[index];
     const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
 
     if (currentState === TabLoadState.LOADED || tab.contentLoaded) {
@@ -343,10 +341,10 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                 ? countWords(normalizedContent)
                 : fastCountWords(normalizedContent);
 
-        const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+        const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
         if (currentIndex !== -1) {
-            const currentTab = appContext.editor.tabs[currentIndex];
-            appContext.editor.tabs[currentIndex] = {
+            const currentTab = editorStore.tabs[currentIndex];
+            editorStore.tabs[currentIndex] = {
                 ...currentTab,
                 content: normalizedContent,
                 lastSavedContent,
@@ -376,9 +374,9 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                 additionalInfo: { tabId },
             });
 
-            const currentIndex = appContext.editor.tabs.findIndex((t) => t.id === tabId);
+            const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
             if (currentIndex !== -1) {
-                appContext.editor.tabs[currentIndex].contentLoaded = false;
+                editorStore.tabs[currentIndex].contentLoaded = false;
             }
         }
     } finally {
@@ -468,7 +466,7 @@ export async function loadSession(): Promise<void> {
                 return tab;
             });
 
-            appContext.editor.tabs = convertedTabs;
+            editorStore.tabs = convertedTabs;
 
             convertedTabs.forEach((tab) => {
                 initializeTabLoadState(tab.id, tab.contentLoaded);
@@ -479,48 +477,45 @@ export async function loadSession(): Promise<void> {
                 .sort((a, b) => (a.mru_position || 0) - (b.mru_position || 0))
                 .map((t) => t.id);
 
-            appContext.editor.mruStack =
+            editorStore.mruStack =
                 sortedMru.length > 0 ? sortedMru : convertedTabs.map((t) => t.id);
 
             // Initialize Active Tab Logic
 
-            switch (appContext.app.startupBehavior) {
+            switch (appState.startupBehavior) {
                 case 'first':
-                    appContext.app.activeTabId = convertedTabs[0].id;
+                    appState.activeTabId = convertedTabs[0].id;
 
                     break;
                 case 'last-focused':
-                    appContext.app.activeTabId =
-                        appContext.editor.mruStack[0] || convertedTabs[0].id;
+                    appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id;
 
                     break;
                 case 'new':
                     break;
                 default:
-                    appContext.app.activeTabId = convertedTabs[0].id;
+                    appState.activeTabId = convertedTabs[0].id;
             }
 
-            const activeTab = appContext.editor.tabs.find(
-                (t) => t.id === appContext.app.activeTabId,
-            );
+            const activeTab = editorStore.tabs.find((t) => t.id === appState.activeTabId);
             if (activeTab) {
                 await initializeTabFileState(activeTab);
             }
         }
 
         // Ensure there's always one tab if empty or requested "new"
-        if (appContext.editor.tabs.length === 0 || appContext.app.startupBehavior === 'new') {
-            if (appContext.app.startupBehavior === 'new' && activeRustTabs.length > 0) {
-                appContext.app.activeTabId = addTab();
-            } else if (appContext.editor.tabs.length === 0) {
-                appContext.app.activeTabId = addTab();
+        if (editorStore.tabs.length === 0 || appState.startupBehavior === 'new') {
+            if (appState.startupBehavior === 'new' && activeRustTabs.length > 0) {
+                appState.activeTabId = addTab();
+            } else if (editorStore.tabs.length === 0) {
+                appState.activeTabId = addTab();
             }
         }
 
         if (closedRustTabs.length > 0) {
             closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-            appContext.editor.closedTabsHistory = closedRustTabs.map((t) => {
+            editorStore.closedTabsHistory = closedRustTabs.map((t) => {
                 const tab = convertRustTabToEditorTab(t, true);
                 initializeTabLoadState(tab.id, tab.contentLoaded);
 
@@ -532,16 +527,16 @@ export async function loadSession(): Promise<void> {
         }
 
         // Set sessionDirty if there are unsaved tabs with content
-        const hasUnsavedTabsWithContent = appContext.editor.tabs.some(
+        const hasUnsavedTabsWithContent = editorStore.tabs.some(
             (t) => !t.path && t.content.length > 0,
         );
-        appContext.editor.sessionDirty = hasUnsavedTabsWithContent;
+        editorStore.sessionDirty = hasUnsavedTabsWithContent;
 
         const duration = (performance.now() - start).toFixed(2);
         logger.session.info('SessionLoaded', {
             duration: `${duration}ms`,
-            activeTabs: appContext.editor.tabs.length,
-            closedTabs: appContext.editor.closedTabsHistory.length,
+            activeTabs: editorStore.tabs.length,
+            closedTabs: editorStore.closedTabsHistory.length,
         });
     } catch (err) {
         AppError.handle('Session:Load', err, {
@@ -549,7 +544,7 @@ export async function loadSession(): Promise<void> {
             severity: 'warning',
         });
 
-        appContext.app.activeTabId = addTab();
+        appState.activeTabId = addTab();
     }
 }
 
