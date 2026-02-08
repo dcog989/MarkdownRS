@@ -214,244 +214,246 @@ impl Database {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
 
-        // Create temp table once for mark-and-sweep pattern
         tx.execute(
             "CREATE TEMPORARY TABLE IF NOT EXISTS _sync_keep_ids (id TEXT PRIMARY KEY)",
             [],
         )?;
 
-        // Process Active Tabs
-        if active_tabs.is_empty() {
-            tx.execute("DELETE FROM tabs", [])?;
-        } else {
-            // Clear and populate keep list
-            tx.execute("DELETE FROM _sync_keep_ids", [])?;
-            let mut keep_stmt =
-                tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
-            for tab in active_tabs {
-                keep_stmt.execute([&tab.id])?;
-            }
-            drop(keep_stmt);
-
-            // Delete rows not in keep list (static SQL - no format! allocation)
-            tx.execute(
-                "DELETE FROM tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
-                [],
-            )?;
-
-            let mut insert_stmt = tx.prepare_cached(
-                "INSERT INTO tabs (
-                    id, title, content, is_dirty, path, scroll_percentage,
-                    created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position, sort_index
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
-                ON CONFLICT(id) DO NOTHING",
-            )?;
-
-            let mut update_full_stmt = tx.prepare_cached(
-                "UPDATE tabs SET
-                    title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
-                    created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14
-                WHERE id=?1",
-            )?;
-
-            let mut update_metadata_stmt = tx.prepare_cached(
-                "UPDATE tabs SET
-                    title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
-                    created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13
-                WHERE id=?1",
-            )?;
-
-            for tab in active_tabs {
-                let mut final_content = tab.content.clone();
-
-                // Content Migration: If payload is null, try to harvest content from the other table before it's deleted
-                if final_content.is_none()
-                    && let Ok(existing) = tx.query_row(
-                        "SELECT content FROM closed_tabs WHERE id = ?1",
-                        params![&tab.id],
-                        |row| row.get::<_, Option<String>>(0),
-                    )
-                {
-                    final_content = existing;
-                }
-
-                let insert_result = insert_stmt.execute(params![
-                    &tab.id,
-                    &tab.title,
-                    &final_content,
-                    if tab.is_dirty { 1 } else { 0 },
-                    &tab.path,
-                    tab.scroll_percentage,
-                    &tab.created,
-                    &tab.modified,
-                    if tab.is_pinned { 1 } else { 0 },
-                    &tab.custom_title,
-                    if tab.file_check_failed { 1 } else { 0 },
-                    if tab.file_check_performed { 1 } else { 0 },
-                    &tab.mru_position,
-                    &tab.sort_index
-                ])?;
-
-                if insert_result == 0 {
-                    if tab.content.is_some() {
-                        update_full_stmt.execute(params![
-                            &tab.id,
-                            &tab.title,
-                            &tab.content,
-                            if tab.is_dirty { 1 } else { 0 },
-                            &tab.path,
-                            tab.scroll_percentage,
-                            &tab.created,
-                            &tab.modified,
-                            if tab.is_pinned { 1 } else { 0 },
-                            &tab.custom_title,
-                            if tab.file_check_failed { 1 } else { 0 },
-                            if tab.file_check_performed { 1 } else { 0 },
-                            &tab.mru_position,
-                            &tab.sort_index
-                        ])?;
-                    } else {
-                        update_metadata_stmt.execute(params![
-                            &tab.id,
-                            &tab.title,
-                            if tab.is_dirty { 1 } else { 0 },
-                            &tab.path,
-                            tab.scroll_percentage,
-                            &tab.created,
-                            &tab.modified,
-                            if tab.is_pinned { 1 } else { 0 },
-                            &tab.custom_title,
-                            if tab.file_check_failed { 1 } else { 0 },
-                            if tab.file_check_performed { 1 } else { 0 },
-                            &tab.mru_position,
-                            &tab.sort_index
-                        ])?;
-                    }
-                }
-            }
-        }
-
-        // Process Closed Tabs
-        if closed_tabs.is_empty() {
-            tx.execute("DELETE FROM closed_tabs", [])?;
-        } else {
-            // Clear and populate keep list
-            tx.execute("DELETE FROM _sync_keep_ids", [])?;
-            let mut keep_stmt =
-                tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
-            for tab in closed_tabs {
-                keep_stmt.execute([&tab.id])?;
-            }
-            drop(keep_stmt);
-
-            // Delete rows not in keep list (static SQL - no format! allocation)
-            tx.execute(
-                "DELETE FROM closed_tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
-                [],
-            )?;
-
-            let mut insert_stmt = tx.prepare_cached(
-                "INSERT INTO closed_tabs (
-                    id, title, content, is_dirty, path, scroll_percentage,
-                    created, modified, is_pinned, custom_title,
-                    file_check_failed, file_check_performed, mru_position, sort_index, original_index
-                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
-                ON CONFLICT(id) DO NOTHING",
-            )?;
-
-            let mut update_full_stmt = tx.prepare_cached(
-                "UPDATE closed_tabs SET
-                    title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
-                    created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                    file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, original_index=?15
-                WHERE id=?1",
-            )?;
-
-            let mut update_metadata_stmt = tx.prepare_cached(
-                "UPDATE closed_tabs SET
-                    title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
-                    created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                    file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, original_index=?14
-                WHERE id=?1",
-            )?;
-
-            for (i, tab) in closed_tabs.iter().enumerate() {
-                let mut final_content = tab.content.clone();
-
-                // Content Migration: If payload is null, harvest from active table before re-inserting
-                if final_content.is_none()
-                    && let Ok(existing) = tx.query_row(
-                        "SELECT content FROM tabs WHERE id = ?1",
-                        params![&tab.id],
-                        |row| row.get::<_, Option<String>>(0),
-                    )
-                {
-                    final_content = existing;
-                }
-
-                let insert_result = insert_stmt.execute(params![
-                    &tab.id,
-                    &tab.title,
-                    &final_content,
-                    if tab.is_dirty { 1 } else { 0 },
-                    &tab.path,
-                    tab.scroll_percentage,
-                    &tab.created,
-                    &tab.modified,
-                    if tab.is_pinned { 1 } else { 0 },
-                    &tab.custom_title,
-                    if tab.file_check_failed { 1 } else { 0 },
-                    if tab.file_check_performed { 1 } else { 0 },
-                    &tab.mru_position,
-                    i as i32,
-                    &tab.original_index
-                ])?;
-
-                if insert_result == 0 {
-                    if tab.content.is_some() {
-                        update_full_stmt.execute(params![
-                            &tab.id,
-                            &tab.title,
-                            &tab.content,
-                            if tab.is_dirty { 1 } else { 0 },
-                            &tab.path,
-                            tab.scroll_percentage,
-                            &tab.created,
-                            &tab.modified,
-                            if tab.is_pinned { 1 } else { 0 },
-                            &tab.custom_title,
-                            if tab.file_check_failed { 1 } else { 0 },
-                            if tab.file_check_performed { 1 } else { 0 },
-                            &tab.mru_position,
-                            i as i32,
-                            &tab.original_index
-                        ])?;
-                    } else {
-                        update_metadata_stmt.execute(params![
-                            &tab.id,
-                            &tab.title,
-                            if tab.is_dirty { 1 } else { 0 },
-                            &tab.path,
-                            tab.scroll_percentage,
-                            &tab.created,
-                            &tab.modified,
-                            if tab.is_pinned { 1 } else { 0 },
-                            &tab.custom_title,
-                            if tab.file_check_failed { 1 } else { 0 },
-                            if tab.file_check_performed { 1 } else { 0 },
-                            &tab.mru_position,
-                            i as i32,
-                            &tab.original_index
-                        ])?;
-                    }
-                }
-            }
-        }
+        self.save_active_tabs(&tx, active_tabs)?;
+        self.save_closed_tabs(&tx, closed_tabs)?;
 
         tx.commit()?;
+        Ok(())
+    }
+
+    fn save_active_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
+        if tabs.is_empty() {
+            tx.execute("DELETE FROM tabs", [])?;
+            return Ok(());
+        }
+
+        tx.execute("DELETE FROM _sync_keep_ids", [])?;
+        let mut keep_stmt = tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
+        for tab in tabs {
+            keep_stmt.execute([&tab.id])?;
+        }
+        drop(keep_stmt);
+
+        tx.execute(
+            "DELETE FROM tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
+            [],
+        )?;
+
+        let mut insert_stmt = tx.prepare_cached(
+            "INSERT INTO tabs (
+                id, title, content, is_dirty, path, scroll_percentage,
+                created, modified, is_pinned, custom_title,
+                file_check_failed, file_check_performed, mru_position, sort_index
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+            ON CONFLICT(id) DO NOTHING",
+        )?;
+
+        let mut update_full_stmt = tx.prepare_cached(
+            "UPDATE tabs SET
+                title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
+                created=?7, modified=?8, is_pinned=?9, custom_title=?10,
+                file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14
+            WHERE id=?1",
+        )?;
+
+        let mut update_metadata_stmt = tx.prepare_cached(
+            "UPDATE tabs SET
+                title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
+                created=?6, modified=?7, is_pinned=?8, custom_title=?9,
+                file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13
+            WHERE id=?1",
+        )?;
+
+        for tab in tabs {
+            let mut final_content = tab.content.clone();
+
+            if final_content.is_none()
+                && let Ok(existing) = tx.query_row(
+                    "SELECT content FROM closed_tabs WHERE id = ?1",
+                    params![&tab.id],
+                    |row| row.get::<_, Option<String>>(0),
+                )
+            {
+                final_content = existing;
+            }
+
+            let insert_result = insert_stmt.execute(params![
+                &tab.id,
+                &tab.title,
+                &final_content,
+                if tab.is_dirty { 1 } else { 0 },
+                &tab.path,
+                tab.scroll_percentage,
+                &tab.created,
+                &tab.modified,
+                if tab.is_pinned { 1 } else { 0 },
+                &tab.custom_title,
+                if tab.file_check_failed { 1 } else { 0 },
+                if tab.file_check_performed { 1 } else { 0 },
+                &tab.mru_position,
+                &tab.sort_index
+            ])?;
+
+            if insert_result == 0 {
+                if tab.content.is_some() {
+                    update_full_stmt.execute(params![
+                        &tab.id,
+                        &tab.title,
+                        &tab.content,
+                        if tab.is_dirty { 1 } else { 0 },
+                        &tab.path,
+                        tab.scroll_percentage,
+                        &tab.created,
+                        &tab.modified,
+                        if tab.is_pinned { 1 } else { 0 },
+                        &tab.custom_title,
+                        if tab.file_check_failed { 1 } else { 0 },
+                        if tab.file_check_performed { 1 } else { 0 },
+                        &tab.mru_position,
+                        &tab.sort_index
+                    ])?;
+                } else {
+                    update_metadata_stmt.execute(params![
+                        &tab.id,
+                        &tab.title,
+                        if tab.is_dirty { 1 } else { 0 },
+                        &tab.path,
+                        tab.scroll_percentage,
+                        &tab.created,
+                        &tab.modified,
+                        if tab.is_pinned { 1 } else { 0 },
+                        &tab.custom_title,
+                        if tab.file_check_failed { 1 } else { 0 },
+                        if tab.file_check_performed { 1 } else { 0 },
+                        &tab.mru_position,
+                        &tab.sort_index
+                    ])?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn save_closed_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
+        if tabs.is_empty() {
+            tx.execute("DELETE FROM closed_tabs", [])?;
+            return Ok(());
+        }
+
+        tx.execute("DELETE FROM _sync_keep_ids", [])?;
+        let mut keep_stmt = tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
+        for tab in tabs {
+            keep_stmt.execute([&tab.id])?;
+        }
+        drop(keep_stmt);
+
+        tx.execute(
+            "DELETE FROM closed_tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
+            [],
+        )?;
+
+        let mut insert_stmt = tx.prepare_cached(
+            "INSERT INTO closed_tabs (
+                id, title, content, is_dirty, path, scroll_percentage,
+                created, modified, is_pinned, custom_title,
+                file_check_failed, file_check_performed, mru_position, sort_index, original_index
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+            ON CONFLICT(id) DO NOTHING",
+        )?;
+
+        let mut update_full_stmt = tx.prepare_cached(
+            "UPDATE closed_tabs SET
+                title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
+                created=?7, modified=?8, is_pinned=?9, custom_title=?10,
+                file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, original_index=?15
+            WHERE id=?1",
+        )?;
+
+        let mut update_metadata_stmt = tx.prepare_cached(
+            "UPDATE closed_tabs SET
+                title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
+                created=?6, modified=?7, is_pinned=?8, custom_title=?9,
+                file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, original_index=?14
+            WHERE id=?1",
+        )?;
+
+        for (i, tab) in tabs.iter().enumerate() {
+            let mut final_content = tab.content.clone();
+
+            if final_content.is_none()
+                && let Ok(existing) = tx.query_row(
+                    "SELECT content FROM tabs WHERE id = ?1",
+                    params![&tab.id],
+                    |row| row.get::<_, Option<String>>(0),
+                )
+            {
+                final_content = existing;
+            }
+
+            let insert_result = insert_stmt.execute(params![
+                &tab.id,
+                &tab.title,
+                &final_content,
+                if tab.is_dirty { 1 } else { 0 },
+                &tab.path,
+                tab.scroll_percentage,
+                &tab.created,
+                &tab.modified,
+                if tab.is_pinned { 1 } else { 0 },
+                &tab.custom_title,
+                if tab.file_check_failed { 1 } else { 0 },
+                if tab.file_check_performed { 1 } else { 0 },
+                &tab.mru_position,
+                i as i32,
+                &tab.original_index
+            ])?;
+
+            if insert_result == 0 {
+                if tab.content.is_some() {
+                    update_full_stmt.execute(params![
+                        &tab.id,
+                        &tab.title,
+                        &tab.content,
+                        if tab.is_dirty { 1 } else { 0 },
+                        &tab.path,
+                        tab.scroll_percentage,
+                        &tab.created,
+                        &tab.modified,
+                        if tab.is_pinned { 1 } else { 0 },
+                        &tab.custom_title,
+                        if tab.file_check_failed { 1 } else { 0 },
+                        if tab.file_check_performed { 1 } else { 0 },
+                        &tab.mru_position,
+                        i as i32,
+                        &tab.original_index
+                    ])?;
+                } else {
+                    update_metadata_stmt.execute(params![
+                        &tab.id,
+                        &tab.title,
+                        if tab.is_dirty { 1 } else { 0 },
+                        &tab.path,
+                        tab.scroll_percentage,
+                        &tab.created,
+                        &tab.modified,
+                        if tab.is_pinned { 1 } else { 0 },
+                        &tab.custom_title,
+                        if tab.file_check_failed { 1 } else { 0 },
+                        if tab.file_check_performed { 1 } else { 0 },
+                        &tab.mru_position,
+                        i as i32,
+                        &tab.original_index
+                    ])?;
+                }
+            }
+        }
+
         Ok(())
     }
 
