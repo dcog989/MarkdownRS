@@ -2,9 +2,15 @@ use crate::state::AppState;
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::path::PathBuf;
+use std::time::Duration;
 use tauri::{Manager, State};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
+
+const SPELL_CHECK_CHUNK_SIZE: usize = 50;
+const SPELL_CHECK_TIMEOUT_CONNECT: Duration = Duration::from_secs(2);
+const SPELL_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
+const MAX_SUGGESTIONS: usize = 5;
 
 // --- Helper Functions ---
 
@@ -305,8 +311,8 @@ pub async fn init_spellchecker(
         }
 
         let client = reqwest::Client::builder()
-            .connect_timeout(std::time::Duration::from_secs(2))
-            .timeout(std::time::Duration::from_secs(5))
+            .connect_timeout(SPELL_CHECK_TIMEOUT_CONNECT)
+            .timeout(SPELL_CHECK_TIMEOUT)
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
 
@@ -435,11 +441,11 @@ pub async fn check_words(
     words: Vec<String>,
 ) -> Result<Vec<String>, String> {
     log::debug!("check_words called with {} words", words.len());
-    
+
     let mut misspelled = Vec::new();
 
     // Chunking to prevent blocking the async runtime too long
-    for chunk in words.chunks(50) {
+    for chunk in words.chunks(SPELL_CHECK_CHUNK_SIZE) {
         // Clone necessary data from mutex guards, then release locks immediately
         let (speller_opt, custom_dict) = {
             let speller_guard = state.speller.lock().await;
@@ -483,11 +489,17 @@ pub async fn check_words(
         tokio::task::yield_now().await;
     }
 
-    log::debug!("check_words returning {} misspelled words", misspelled.len());
+    log::debug!(
+        "check_words returning {} misspelled words",
+        misspelled.len()
+    );
     if !misspelled.is_empty() {
-        log::debug!("Sample misspelled: {:?}", &misspelled[..misspelled.len().min(5)]);
+        log::debug!(
+            "Sample misspelled: {:?}",
+            &misspelled[..misspelled.len().min(5)]
+        );
     }
-    
+
     Ok(misspelled)
 }
 
@@ -505,7 +517,7 @@ pub async fn get_spelling_suggestions(
 
     let mut suggestions = Vec::new();
     speller.suggest(&word, &mut suggestions);
-    Ok(suggestions.into_iter().take(5).collect())
+    Ok(suggestions.into_iter().take(MAX_SUGGESTIONS).collect())
 }
 
 #[tauri::command]
