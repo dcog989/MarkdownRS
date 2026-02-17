@@ -221,10 +221,10 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
                 return true;
             },
         },
-        ...completionKeymap,
-        ...historyKeymap,
-        ...closeBracketsKeymap,
-        ...defaultKeymap.filter((binding) => binding.key !== 'Tab'),
+        ...(completionKeymap as never),
+        ...(historyKeymap as never),
+        ...(closeBracketsKeymap as never),
+        ...(defaultKeymap.filter((binding) => binding.key !== 'Tab') as never),
         // Our Tab handlers come last to override defaults
         { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
     ]);

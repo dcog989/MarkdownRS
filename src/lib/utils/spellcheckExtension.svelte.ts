@@ -6,15 +6,9 @@ import { logger } from '$lib/utils/logger';
 import { syntaxTree } from '@codemirror/language';
 import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
 import type { EditorView } from '@codemirror/view';
+import type { AppEditorView } from '../../global';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-
-/**
- * Extension of EditorView to support internal application properties
- */
-interface AppEditorView extends EditorView {
-    _currentTabId?: string;
-}
 
 /**
  * Per-tab spellcheck cache
@@ -110,7 +104,7 @@ export function invalidateSpellcheckCache(tabId?: string, words?: string[]) {
 
 // Force immediate linting with cached results (for tab switches)
 export function applyImmediateSpellcheck(view: EditorView) {
-    forceLinting(view);
+    forceLinting(view as never);
 }
 
 export const createSpellCheckLinter = () => {
@@ -125,7 +119,7 @@ export const createSpellCheckLinter = () => {
             const docContent = doc.toString();
 
             // Get tab ID from the view if available
-            const tabId = (view as AppEditorView)._currentTabId;
+            const tabId = (view as unknown as AppEditorView)._currentTabId;
 
             // Check cache first
             if (tabId) {
@@ -306,7 +300,7 @@ export const createSpellCheckLinter = () => {
 };
 
 export function triggerImmediateLint(view: EditorView) {
-    forceLinting(view);
+    forceLinting(view as never);
 }
 
 export async function refreshSpellcheck(view: EditorView | undefined) {

@@ -94,7 +94,7 @@
                     ensureQuerySync(view);
                     updateSearchEditor(view);
                     if (searchState.currentMatches > 0) {
-                        findNext(view);
+                        findNext(view as never);
                         updateSearchEditor(view);
                     }
                 }

@@ -120,7 +120,8 @@ export const rulerPlugin = ViewPlugin.fromClass(
             this.ruler.style.display = 'none';
             this.ruler.style.zIndex = '0';
             view.scrollDOM.appendChild(this.ruler);
-            this.gutters = view.dom.querySelector('.cm-gutters') as HTMLElement;
+            const gutters = view.dom.querySelector('.cm-gutters');
+            this.gutters = gutters instanceof HTMLElement ? gutters : null;
             this.measure(view);
         }
         update(update: ViewUpdate) {

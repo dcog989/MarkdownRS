@@ -26,6 +26,7 @@ import { throttle } from '$lib/utils/timing';
 import { type EditorView } from '@codemirror/view';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import ScrollSyncWorker from '$lib/workers/scrollSync.worker?worker';
+import { asHTMLElement, queryHTMLElements } from './dom';
 
 interface LineMapEntry {
     line: number;
@@ -212,7 +213,8 @@ export class ScrollSyncManager {
         this.elementVisibilityObserver = new IntersectionObserver(
             (entries) => {
                 for (const entry of entries) {
-                    const el = entry.target as HTMLElement;
+                    const el = asHTMLElement(entry.target);
+                    if (!el) return;
                     if (entry.isIntersecting) {
                         this.visibleElements.add(el);
                     } else {
@@ -236,9 +238,7 @@ export class ScrollSyncManager {
         const scrollTop = container.scrollTop;
 
         // Query only elements with data-source-line attribute
-        const elements = Array.from(
-            container.querySelectorAll('[data-source-line]'),
-        ) as HTMLElement[];
+        const elements = queryHTMLElements(container, '[data-source-line]');
 
         // Reset visibility tracking for new content
         this.visibleElements.clear();

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { AppEditorView } from '../../../global';
     import {
         createDoubleClickHandler,
         createWrapExtension,
@@ -67,22 +68,6 @@
     const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
         fallback: true,
     });
-
-    /**
-     * Internal interface for CodeMirror view with application-specific properties
-     */
-    interface AppEditorView extends EditorView {
-        getHistoryState?: () => unknown;
-        flushPendingContent?: () => void;
-        _currentTabId?: string;
-    }
-
-    /**
-     * Interface for the global window object to avoid 'any' casts
-     */
-    interface AppWindow extends Window {
-        _activeEditorView: AppEditorView | null;
-    }
 
     let {
         tabId,
@@ -449,7 +434,7 @@
 
                 view!.focus();
 
-                (window as unknown as AppWindow)._activeEditorView = view!;
+                window._activeEditorView = view!;
 
                 if (spellcheckState.dictionaryLoaded) {
                     applyImmediateSpellcheck(view!);
@@ -575,7 +560,7 @@
         };
 
         view = typedView;
-        (window as unknown as AppWindow)._activeEditorView = view;
+        window._activeEditorView = view;
 
         scrollSync.registerEditor(viewInstance);
 
@@ -636,9 +621,9 @@
             window.removeEventListener('blur', clearModifier);
             view?.scrollDOM.removeEventListener('scroll', throttleScroll);
 
-            const appWin = window as unknown as AppWindow;
+            const appWin = window;
             if (appWin._activeEditorView === view) {
-                appWin._activeEditorView = null;
+                appWin._activeEditorView = undefined;
             }
 
             const v = view;

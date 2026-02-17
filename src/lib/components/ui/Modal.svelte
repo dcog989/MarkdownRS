@@ -1,5 +1,6 @@
 <script lang="ts">
     import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+    import { asHTMLElement, queryHTMLElements, getActiveHTMLElement } from '$lib/utils/dom';
     import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
     import { X } from 'lucide-svelte';
     import type { Snippet } from 'svelte';
@@ -64,9 +65,7 @@
     function handleTabKey(e: KeyboardEvent) {
         if (!isOpen) return;
 
-        const focusableElements = Array.from(
-            modalPanel?.querySelectorAll(selector) ?? [],
-        ) as HTMLElement[];
+        const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
         if (focusableElements.length === 0 || e.key !== 'Tab') return;
 
         const firstElement = focusableElements[0];
@@ -94,7 +93,7 @@
         if (!isOpen) return;
 
         // Store the previously focused element
-        previouslyFocusedElement = document.activeElement as HTMLElement;
+        previouslyFocusedElement = getActiveHTMLElement();
 
         // Focus the first focusable element when modal opens
         invalidateFocusCache();
@@ -110,7 +109,7 @@
 
         // Set up a focus monitor to catch focus escaping the modal
         const handleFocusOut = (e: FocusEvent) => {
-            const target = e.relatedTarget as HTMLElement;
+            const target = asHTMLElement(e.relatedTarget);
 
             // If focus is moving outside the modal, bring it back
             if (target && !modalPanel?.contains(target)) {

@@ -276,11 +276,8 @@
             // Cancel any pending debounced saves to prevent race conditions during unload
             persistSessionDebounced.clear();
 
-            // Flush all pending editor content updates
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((window as any)._editorFlushFunctions) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (window as any)._editorFlushFunctions.forEach((fn: () => void) => fn());
+            if (window._editorFlushFunctions) {
+                window._editorFlushFunctions.forEach((fn) => fn());
             }
             // Force immediate save before window closes
             persistSession();

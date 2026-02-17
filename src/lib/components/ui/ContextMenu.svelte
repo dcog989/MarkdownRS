@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, type Snippet } from 'svelte';
+    import { asHTMLElement, queryHTMLElements, getActiveHTMLElement } from '$lib/utils/dom';
 
     let { x, y, onClose, children } = $props<{
         x: number;
@@ -54,7 +55,7 @@
     function updateMenuItems() {
         if (!menuEl) return;
         // Get all focusable elements: buttons
-        menuItems = Array.from(menuEl.querySelectorAll('button:not([disabled])')) as HTMLElement[];
+        menuItems = queryHTMLElements(menuEl, 'button:not([disabled])');
     }
 
     function focusItem(index: number) {
@@ -115,9 +116,13 @@
                                 '[data-submenu="true"] button:not([disabled])',
                             );
                             if (submenuItems.length > 0) {
-                                (submenuItems[0] as HTMLElement).focus();
+                                const firstSubmenu = asHTMLElement(submenuItems[0]);
+                                if (firstSubmenu) firstSubmenu.focus();
                                 updateMenuItems();
-                                focusedIndex = menuItems.indexOf(submenuItems[0] as HTMLElement);
+                                const firstEl = submenuItems[0]
+                                    ? asHTMLElement(submenuItems[0])
+                                    : null;
+                                focusedIndex = firstEl ? menuItems.indexOf(firstEl) : -1;
                             }
                         }, 50);
                     }
@@ -138,7 +143,8 @@
                         if (triggerBtn) {
                             triggerBtn.focus();
                             updateMenuItems();
-                            const idx = menuItems.indexOf(triggerBtn as HTMLElement);
+                            const triggerElement = asHTMLElement(triggerBtn);
+                            const idx = triggerElement ? menuItems.indexOf(triggerElement) : -1;
                             if (idx >= 0) focusedIndex = idx;
                         }
                     }
@@ -186,7 +192,8 @@
 
     function handleBackdropContextMenu(e: MouseEvent) {
         e.preventDefault();
-        const backdrop = e.currentTarget as HTMLElement;
+        const backdrop = asHTMLElement(e.currentTarget);
+        if (!backdrop) return;
         const originalDisplay = backdrop.style.display;
         backdrop.style.display = 'none';
         const target = document.elementFromPoint(e.clientX, e.clientY);
@@ -228,14 +235,12 @@
         onmousemove={handleMouseMove}
         onmouseenter={(e) => {
             // When mouse enters a button, blur any focused element to clear keyboard selection
-            const target = e.target as HTMLElement;
+            const target = asHTMLElement(e.target);
+            if (!target) return;
             if (target.tagName === 'BUTTON' && !(target as HTMLButtonElement).disabled) {
                 isKeyboardNav = false;
-                if (
-                    document.activeElement &&
-                    menuItems.includes(document.activeElement as HTMLElement)
-                ) {
-                    (document.activeElement as HTMLElement).blur();
+                if (document.activeElement && menuItems.includes(getActiveHTMLElement()!)) {
+                    getActiveHTMLElement()?.blur();
                 }
             }
         }}

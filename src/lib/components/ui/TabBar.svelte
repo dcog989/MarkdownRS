@@ -7,6 +7,7 @@
     import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
     import { ChevronDown, Plus } from 'lucide-svelte';
     import { onDestroy, onMount, tick } from 'svelte';
+    import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
     import { flip } from 'svelte/animate';
     import { fade } from 'svelte/transition';
     import MruTabsPopup from './MruTabsPopup.svelte';
@@ -156,7 +157,8 @@
 
         await new Promise((resolve) => setTimeout(resolve, CONFIG.UI_TIMING.TAB_SCROLL_SETTLE_MS));
 
-        const activeEl = scrollContainer.querySelector('[data-active="true"]') as HTMLElement;
+        const activeEl = scrollContainer.querySelector('[data-active="true"]');
+        if (!(activeEl instanceof HTMLElement)) return;
         if (!activeEl) return;
 
         const containerRect = scrollContainer.getBoundingClientRect();
@@ -220,7 +222,8 @@
             onscroll={updateFadeIndicators}
             oncontextmenu={(e) => {
                 // Check if the right-click is on an empty area (not on a tab)
-                const target = e.target as HTMLElement;
+                const target = asHTMLElement(e.target);
+                if (!target) return;
                 if (
                     target.classList.contains('tab-scroll-container') ||
                     target.closest('section')?.classList.contains('tab-scroll-container')
@@ -243,7 +246,11 @@
                         ? '0.4'
                         : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};"
                     onpointerdown={(e) =>
-                        sortController.startDrag(e, tab.id, e.currentTarget as HTMLElement)}>
+                        sortController.startDrag(
+                            e,
+                            tab.id,
+                            assertHTMLElement(e.currentTarget, 'TabBar drag'),
+                        )}>
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}

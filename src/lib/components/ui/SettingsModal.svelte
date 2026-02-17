@@ -480,23 +480,19 @@
             }),
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function getSettingValue(key: string, defaultValue: any): any {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (appContext.app as any)[key] ?? defaultValue;
+    function getSettingValue(key: string, defaultValue: unknown): unknown {
+        return (appContext.app as Record<string, unknown>)[key] ?? defaultValue;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function updateSetting(key: string, value: any, type: string) {
+    function updateSetting(key: string, value: unknown, type: string) {
+        let finalValue = value;
         if (type === 'number' || type === 'range') {
-            value = Number(value);
+            finalValue = Number(value);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const oldValue = (appContext.app as any)[key];
-        if (oldValue !== value && JSON.stringify(oldValue) !== JSON.stringify(value)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (appContext.app as any)[key] = value;
+        const oldValue = (appContext.app as Record<string, unknown>)[key];
+        if (oldValue !== finalValue && JSON.stringify(oldValue) !== JSON.stringify(finalValue)) {
+            (appContext.app as Record<string, unknown>)[key] = finalValue;
             saveSettings();
 
             if (key === 'logLevel') {
@@ -511,8 +507,7 @@
 
                 appContext.spellcheck.init(true).then(() => {
                     showToast('success', 'Spellcheck settings updated');
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const activeView = (window as any)._activeEditorView;
+                    const activeView = window._activeEditorView;
                     if (activeView) triggerImmediateLint(activeView);
                 });
             }
@@ -617,7 +612,9 @@
                                 <input
                                     id={setting.key}
                                     type="checkbox"
-                                    checked={getSettingValue(setting.key, setting.defaultValue)}
+                                    checked={Boolean(
+                                        getSettingValue(setting.key, setting.defaultValue),
+                                    )}
                                     onchange={(e) =>
                                         updateSetting(
                                             setting.key,

@@ -33,7 +33,8 @@ export class SortableController<T> {
         if (e.button !== 0) return;
 
         // Ignore clicks on close buttons or interactive elements
-        const target = e.target as HTMLElement;
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
         if (target.closest('.close-btn-wrapper') || target.closest('button')) return;
 
         e.preventDefault();
