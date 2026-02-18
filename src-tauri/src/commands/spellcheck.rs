@@ -210,7 +210,9 @@ async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> 
     let dict_path = app_dir.join("custom-spelling.dic");
 
     if !app_dir.exists() {
-        let _ = fs::create_dir_all(&app_dir).await;
+        if let Err(e) = fs::create_dir_all(&app_dir).await {
+            log::warn!("Failed to create app directory: {}", e);
+        }
     }
 
     let word_exists = if dict_path.exists() {
@@ -331,7 +333,9 @@ pub async fn init_spellchecker(
         let tech_cache_dir = cache_dir.join("technical");
         let custom_path = app_dir.join("custom-spelling.dic");
 
-        let _ = fs::create_dir_all(&cache_dir).await;
+        if let Err(e) = fs::create_dir_all(&cache_dir).await {
+            log::warn!("Failed to create spellcheck cache directory: {}", e);
+        }
 
         let mut spec_codes = Vec::new();
         if enable_technical {
@@ -342,7 +346,12 @@ pub async fn init_spellchecker(
         }
 
         if !spec_codes.is_empty() {
-            let _ = fs::create_dir_all(&tech_cache_dir).await;
+            if let Err(e) = fs::create_dir_all(&tech_cache_dir).await {
+                log::warn!(
+                    "Failed to create technical dictionary cache directory: {}",
+                    e
+                );
+            }
         }
 
         let client = reqwest::Client::builder()

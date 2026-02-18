@@ -132,11 +132,11 @@ fn main() {
             let config_path = app_dir.join("settings.toml");
             let dict_path = app_dir.join("custom-spelling.dic");
 
-            let _ = fs::create_dir_all(&app_dir);
-            let _ = fs::create_dir_all(&local_dir);
-            let _ = fs::create_dir_all(&db_dir);
-            let _ = fs::create_dir_all(&log_dir);
-            let _ = fs::create_dir_all(&themes_dir);
+            for dir in [&app_dir, &local_dir, &db_dir, &log_dir, &themes_dir] {
+                if let Err(e) = fs::create_dir_all(dir) {
+                    log::warn!("Failed to create directory {:?}: {}", dir, e);
+                }
+            }
 
             // Cleanup stale temp files from previous crashes (older than 1 hour)
             // Run in background to avoid blocking startup
@@ -190,7 +190,9 @@ fn main() {
 }
 */
 "#;
-                let _ = tokio::fs::write(&dark_theme_path, dark_theme_content).await;
+                if let Err(e) = tokio::fs::write(&dark_theme_path, dark_theme_content).await {
+                    log::warn!("Failed to write dark theme reference: {}", e);
+                }
 
                 let light_theme_path = themes_dir_clone.join("default-light.css");
                 let light_theme_content = r#"/* MarkdownRS Default Light Theme Reference
@@ -221,7 +223,9 @@ fn main() {
 }
 */
 "#;
-                let _ = tokio::fs::write(&light_theme_path, light_theme_content).await;
+                if let Err(e) = tokio::fs::write(&light_theme_path, light_theme_content).await {
+                    log::warn!("Failed to write light theme reference: {}", e);
+                }
             });
 
             // Robustly read settings from the TOML file
@@ -285,7 +289,9 @@ fn main() {
             )?;
 
             if !dict_path.exists() {
-                let _ = fs::write(&dict_path, "");
+                if let Err(e) = fs::write(&dict_path, "") {
+                    log::warn!("Failed to create custom dictionary file: {}", e);
+                }
             }
 
             let db_path = db_dir.join("session.db");

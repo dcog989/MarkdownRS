@@ -336,16 +336,19 @@ mod windows_registry {
             let app_path = format!(r"Software\Classes\Applications\{}", exe_name);
             let (app_key, _) = hkcu.create_subkey(&app_path).map_err(|e| e.to_string())?;
 
-            // "FriendlyAppName" is what shows up in the Open With menu
-            app_key.set_value("FriendlyAppName", &"MarkdownRS").ok();
+            if let Err(e) = app_key.set_value("FriendlyAppName", &"MarkdownRS") {
+                log::warn!("Failed to set FriendlyAppName: {}", e);
+            }
 
             // "SupportedTypes" helps Windows know this app handles these files
             let (types_key, _) = app_key
                 .create_subkey("SupportedTypes")
                 .map_err(|e| e.to_string())?;
-            types_key.set_value(".md", &"").ok();
-            types_key.set_value(".markdown", &"").ok();
-            types_key.set_value(".txt", &"").ok();
+            for ext in &[".md", ".markdown", ".txt"] {
+                if let Err(e) = types_key.set_value(ext, &"") {
+                    log::warn!("Failed to set SupportedTypes for {}: {}", ext, e);
+                }
+            }
 
             // Command
             let (cmd_key, _) = app_key
@@ -360,14 +363,18 @@ mod windows_registry {
         // HKCU\Software\Classes\*\OpenWithList\markdown-rs.exe
         {
             let path = format!(r"Software\Classes\*\OpenWithList\{}", exe_name);
-            let _ = hkcu.create_subkey(path).map_err(|e| e.to_string())?;
+            if let Err(e) = hkcu.create_subkey(path) {
+                log::warn!("Failed to create OpenWithList entry: {}", e);
+            }
         }
 
         // 4. File-specific association hints
         {
             for ext in &[".md", ".markdown", ".txt"] {
                 let path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
-                let _ = hkcu.create_subkey(path).ok();
+                if let Err(e) = hkcu.create_subkey(path) {
+                    log::warn!("Failed to create OpenWithList for {}: {}", ext, e);
+                }
             }
         }
 
@@ -377,8 +384,12 @@ mod windows_registry {
                 let path = format!(r"Software\Classes\{}\shell\Edit", ext);
                 let (key, _) = hkcu.create_subkey(&path).map_err(|e| e.to_string())?;
 
-                key.set_value("", &"Edit with MarkdownRS").ok();
-                key.set_value("Icon", &exe_str).ok();
+                if let Err(e) = key.set_value("", &"Edit with MarkdownRS") {
+                    log::warn!("Failed to set Edit verb label for {}: {}", ext, e);
+                }
+                if let Err(e) = key.set_value("Icon", &exe_str) {
+                    log::warn!("Failed to set Edit verb icon for {}: {}", ext, e);
+                }
 
                 let (cmd_key, _) = key.create_subkey("command").map_err(|e| e.to_string())?;
                 cmd_key
