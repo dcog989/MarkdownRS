@@ -13,7 +13,7 @@ pub async fn export_to_pdf(
 
     let start = std::time::Instant::now();
 
-    let processed_content = content.replace('•', "- ").replace('●', "- ");
+    let processed_content = content.replace(['•', '●'], "- ");
 
     let parsed_elements = elements::parse_markdown(&processed_content);
 
