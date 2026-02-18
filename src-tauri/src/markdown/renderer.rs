@@ -8,11 +8,21 @@ use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, LazyLock};
+use std::time::{Duration, Instant};
 use unicode_segmentation::UnicodeSegmentation;
 
-/// Thread-safe cache for line maps using content hash as key
-/// Arc<DashMap> provides lock-free reads for better concurrent performance
-static LINE_MAP_CACHE: LazyLock<Arc<DashMap<u64, HashMap<usize, usize>>>> =
+const CACHE_MAX_ENTRIES: usize = 50;
+const CACHE_MAX_AGE: Duration = Duration::from_secs(60);
+
+struct CacheEntry {
+    line_map: HashMap<usize, usize>,
+    last_accessed: Instant,
+}
+
+/// Thread-safe LRU-style cache for line maps
+/// - Limits entries to prevent unbounded memory growth
+/// - Evicts entries older than CACHE_MAX_AGE
+static LINE_MAP_CACHE: LazyLock<Arc<DashMap<u64, CacheEntry>>> =
     LazyLock::new(|| Arc::new(DashMap::new()));
 
 /// Computes a fast hash of content for cache key
@@ -22,20 +32,64 @@ fn compute_content_hash(content: &str) -> u64 {
     hasher.finish()
 }
 
+/// Prunes old entries from cache if it exceeds size limit
+fn prune_cache_if_needed() {
+    if LINE_MAP_CACHE.len() <= CACHE_MAX_ENTRIES {
+        return;
+    }
+
+    // Collect keys to remove (entries older than max age or excess entries)
+    let now = Instant::now();
+    let mut to_remove: Vec<u64> = LINE_MAP_CACHE
+        .iter()
+        .filter(|entry| now.duration_since(entry.last_accessed) > CACHE_MAX_AGE)
+        .map(|entry| *entry.key())
+        .collect();
+
+    // If still over limit, remove oldest entries
+    if LINE_MAP_CACHE.len() - to_remove.len() > CACHE_MAX_ENTRIES {
+        let mut entries: Vec<_> = LINE_MAP_CACHE
+            .iter()
+            .map(|entry| (*entry.key(), entry.last_accessed))
+            .collect();
+        entries.sort_by_key(|(_, t)| *t);
+
+        let to_evict = entries.len().saturating_sub(CACHE_MAX_ENTRIES / 2);
+        for (key, _) in entries.into_iter().take(to_evict) {
+            to_remove.push(key);
+        }
+    }
+
+    for key in to_remove {
+        LINE_MAP_CACHE.remove(&key);
+    }
+}
+
 /// Gets or builds the line map, using cache if content hasn't changed
 fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
     let current_hash = compute_content_hash(content);
+    let now = Instant::now();
 
-    // Lock-free read from cache using DashMap
-    if let Some(cached) = LINE_MAP_CACHE.get(&current_hash) {
-        return cached.clone();
+    // Check cache and update access time if found
+    if let Some(mut entry) = LINE_MAP_CACHE.get_mut(&current_hash) {
+        entry.last_accessed = now;
+        return entry.line_map.clone();
     }
 
     // Build new line map
     let line_map = build_line_map(content);
 
-    // Store in cache (lock-free write)
-    LINE_MAP_CACHE.insert(current_hash, line_map.clone());
+    // Prune old entries before inserting
+    prune_cache_if_needed();
+
+    // Store in cache
+    LINE_MAP_CACHE.insert(
+        current_hash,
+        CacheEntry {
+            line_map: line_map.clone(),
+            last_accessed: now,
+        },
+    );
 
     line_map
 }

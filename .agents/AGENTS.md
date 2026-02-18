@@ -1,6 +1,6 @@
-# Project Guidelines
+# MarkdownRS Project Guidelines
 
-MarkdownRS is a Markdown editor focused on performance, minimal resource usage, and a clean UI for technical and general users.
+This is a Markdown editor focused on performance, minimal resource usage, and a clean UI for technical and general users.
 
 ## Tech Stack
 
@@ -50,9 +50,7 @@ MarkdownRS is a Markdown editor focused on performance, minimal resource usage, 
 
 ### Allowed Directories
 
-- `.agents/`, `.github/`, `.husky/`, `.svelte-kit/`, `.vscode/`
-- `scripts/`, `src/`, `src-tauri/`, `static/`
-- Root config files: `.editorconfig`, `.gitignore`, `*.config.*`, `package.json`, `tsconfig.json`, etc.
+- all root folders and files unless excluded below.
 
 ### Disallowed
 
