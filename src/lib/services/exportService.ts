@@ -205,10 +205,15 @@ export class ExportService {
 
             showToast('info', 'Generating image...');
 
+            const computedStyle = getComputedStyle(document.documentElement);
+            const bgColor = computedStyle.getPropertyValue('--color-bg-main').trim() || '#ffffff';
+
+            const targetWidth = 1200;
+            const scale = targetWidth / container.scrollWidth;
+
             const options = {
-                backgroundColor: 'white',
-                width: container.scrollWidth,
-                height: container.scrollHeight,
+                backgroundColor: bgColor,
+                scale,
                 style: {
                     position: 'static',
                     left: 'auto',
@@ -227,20 +232,30 @@ export class ExportService {
                 dataUrl = await domToSvg(container, options);
             }
 
-            const base64Data = dataUrl.split(',')[1];
-            const binaryString = atob(base64Data);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
+            if (format === 'svg') {
+                const svgContent = decodeURIComponent(dataUrl.split(',')[1]);
+                await callBackend(
+                    'write_text_file',
+                    { path, content: svgContent },
+                    'File:Write',
+                    { path: tab?.path },
+                    { report: true, msg: 'Failed to save SVG' },
+                );
+            } else {
+                const base64Data = dataUrl.split(',')[1];
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                await callBackend(
+                    'write_binary_file',
+                    { path, content: Array.from(bytes) },
+                    'File:Write',
+                    { path: tab?.path },
+                    { report: true, msg: `Failed to save ${format.toUpperCase()}` },
+                );
             }
-
-            await callBackend(
-                'write_binary_file',
-                { path, content: Array.from(bytes) },
-                'File:Write',
-                { path: tab?.path },
-                { report: true, msg: `Failed to save ${format.toUpperCase()}` },
-            );
             showToast('success', `Exported to ${path}`);
         } catch {
             // Error already reported
