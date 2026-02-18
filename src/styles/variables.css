@@ -113,7 +113,7 @@
     --code-bg: oklch(0.53 0.12 140 / 0.15);
     --code-fg: #89e57b;
     --quote-bg: oklch(0.77 0.09 90 / 0.1);
-    --quote-border: #ddce78;
+    --quote-fg: #ddce78;
     --highlight-bg: #787120;
     --hr-color: oklch(0.55 0 0);
     --pre-bg: #333333;
@@ -130,7 +130,7 @@
     --color-bg-code: var(--code-bg);
     --color-fg-code: var(--code-fg);
     --color-bg-quote: var(--quote-bg);
-    --color-border-quote: var(--quote-border);
+    --color-border-quote: var(--quote-fg);
     --color-bg-highlight: var(--highlight-bg);
     --color-hr-dashes: var(--hr-color);
     --preview-fg-body: var(--text-primary);
@@ -140,7 +140,7 @@
     --preview-bg-code: var(--code-bg);
     --preview-fg-quote: var(--text-secondary);
     --preview-bg-quote: var(--quote-bg);
-    --preview-border-quote: var(--quote-border);
+    --preview-border-quote: var(--quote-fg);
     --preview-bg-pre: var(--pre-bg);
     --preview-fg-pre: var(--pre-fg);
 }
@@ -192,7 +192,7 @@
     --code-bg: oklch(0.76 0.14 70 / 0.15);
     --code-fg: #f9a825;
     --quote-bg: oklch(0.47 0.14 310 / 0.05);
-    --quote-border: #7b1fa2;
+    --quote-fg: #7b1fa2;
     --highlight-bg: #ffe47c;
     --hr-color: oklch(0.5 0 0);
     --pre-bg: #f5f5f5;

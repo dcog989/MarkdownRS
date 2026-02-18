@@ -156,7 +156,7 @@
 #export-container blockquote {
     color: var(--text-secondary);
     background-color: var(--quote-bg);
-    border-left: 4px solid var(--quote-border);
+    border-left: 4px solid var(--quote-fg);
     padding: 0.5em 1em;
     margin: 1em 0;
     font-style: italic;
