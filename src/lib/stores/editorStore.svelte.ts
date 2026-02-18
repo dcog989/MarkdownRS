@@ -176,7 +176,7 @@ function scheduleWordCountUpdate(tabId: string, content: string, sizeBytes: numb
     const existing = wordCountDebounceMap.get(tabId);
     if (existing) clearTimeout(existing);
 
-    const timeout = setTimeout(() => {
+    const timeout = window.setTimeout(() => {
         const index = editorStore.tabs.findIndex((t) => t.id === tabId);
         if (index === -1) {
             wordCountDebounceMap.delete(tabId);
@@ -203,7 +203,7 @@ function scheduleWordCountUpdate(tabId: string, content: string, sizeBytes: numb
         wordCountDebounceMap.delete(tabId);
     }, CONFIG.PERFORMANCE.WORD_COUNT_DEBOUNCE_MS);
 
-    wordCountDebounceMap.set(tabId, timeout as unknown as number);
+    wordCountDebounceMap.set(tabId, timeout);
 }
 export function performTextTransform(operationId: OperationId) {
     const activeId = appState.activeTabId;

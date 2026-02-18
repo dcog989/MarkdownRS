@@ -9,7 +9,7 @@
         tab: EditorTab;
         isActive: boolean;
         onclick?: (id: string) => void;
-        onclose?: (e: MouseEvent, tabId: string) => void;
+        onclose?: (e: MouseEvent | KeyboardEvent, tabId: string) => void;
         oncontextmenu?: (e: MouseEvent, tabId: string) => void;
     }
 
@@ -124,10 +124,9 @@
                         class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
                         onclick={(e) => {
                             e.stopPropagation();
-                            if (onclose) onclose(e as unknown as MouseEvent, tab.id);
+                            onclose?.(e, tab.id);
                         }}
-                        onkeydown={(e) =>
-                            e.key === 'Enter' && onclose?.(e as unknown as MouseEvent, tab.id)}
+                        onkeydown={(e) => e.key === 'Enter' && onclose?.(e, tab.id)}
                         use:tooltip={`Close ${tab.title}`}>
                         <X size={14} class="transition-colors" />
                     </span>

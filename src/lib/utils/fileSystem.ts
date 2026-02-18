@@ -219,8 +219,7 @@ export async function saveCurrentFile(): Promise<boolean> {
     appContext.app.isTabSwitching = false;
 
     if (typeof window !== 'undefined') {
-        const win = window as Window & { _editorFlushFunctions?: (() => void)[] };
-        win._editorFlushFunctions?.forEach((fn) => fn());
+        window._editorFlushFunctions?.forEach((fn) => fn());
     }
     return saveFile(false);
 }
@@ -230,8 +229,7 @@ export async function saveCurrentFileAs(): Promise<boolean> {
     appContext.app.isTabSwitching = false;
 
     if (typeof window !== 'undefined') {
-        const win = window as Window & { _editorFlushFunctions?: (() => void)[] };
-        win._editorFlushFunctions?.forEach((fn) => fn());
+        window._editorFlushFunctions?.forEach((fn) => fn());
     }
     return saveFile(true);
 }

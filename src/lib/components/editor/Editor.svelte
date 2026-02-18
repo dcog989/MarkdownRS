@@ -63,16 +63,15 @@
     // Global flush function accessible from window for shutdown
     let flushFn: (() => void) | null = null;
     if (typeof window !== 'undefined') {
-        const win = window as unknown as { _editorFlushFunctions: (() => void)[] };
-        if (!win._editorFlushFunctions) {
-            win._editorFlushFunctions = [];
+        if (!window._editorFlushFunctions) {
+            window._editorFlushFunctions = [];
         }
         flushFn = () => {
             if (cmView?.flushPendingContent) {
                 cmView.flushPendingContent();
             }
         };
-        win._editorFlushFunctions.push(flushFn);
+        window._editorFlushFunctions.push(flushFn);
     }
 
     onMount(() => {
@@ -81,11 +80,10 @@
         return () => {
             // Cleanup: unregister editor instance and remove flush function when component is destroyed
             unregisterEditorInstance(tabId);
-            if (flushFn) {
-                const win = window as unknown as { _editorFlushFunctions: (() => void)[] };
-                const index = win._editorFlushFunctions.indexOf(flushFn);
+            if (flushFn && window._editorFlushFunctions) {
+                const index = window._editorFlushFunctions.indexOf(flushFn);
                 if (index > -1) {
-                    win._editorFlushFunctions.splice(index, 1);
+                    window._editorFlushFunctions.splice(index, 1);
                 }
             }
         };

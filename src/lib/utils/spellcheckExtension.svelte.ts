@@ -119,7 +119,7 @@ export const createSpellCheckLinter = () => {
             const docContent = doc.toString();
 
             // Get tab ID from the view if available
-            const tabId = (view as unknown as AppEditorView)._currentTabId;
+            const tabId = (view as AppEditorView)._currentTabId;
 
             // Check cache first
             if (tabId) {
