@@ -155,12 +155,35 @@ const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 
 function getHorizontalRuleDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
+    const foundHrs: { from: number; to: number }[] = [];
 
+    // Primary: decorate nodes recognized by the markdown parser
     iterateVisibleNodes(view, (node) => {
         if (node.name === 'HorizontalRule') {
             builder.add(node.from, node.to, horizontalRuleDeco);
+            foundHrs.push({ from: node.from, to: node.to });
         }
     });
+
+    // Fallback: CodeMirror's markdown parser misses some `---` lines in edge cases
+    // (e.g., after certain content patterns). Check for `---` lines directly.
+    const lines = view.state.doc.toString().split('\n');
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() === '---') {
+            const line = view.state.doc.line(i + 1);
+            const alreadyDecorated = foundHrs.some(
+                (hr) => hr.from <= line.from && hr.to >= line.to,
+            );
+            if (!alreadyDecorated) {
+                for (const { from, to } of view.visibleRanges) {
+                    if (line.from >= from && line.to <= to) {
+                        builder.add(line.from, line.to, horizontalRuleDeco);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     return builder.finish();
 }
