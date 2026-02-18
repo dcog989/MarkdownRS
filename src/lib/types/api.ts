@@ -212,6 +212,12 @@ export interface BackendCommands {
         args: Record<string, never>;
         return: void;
     };
+
+    // Export
+    export_to_pdf: {
+        args: { path: string; content: string; title: string; backgroundColor: string | null };
+        return: void;
+    };
     // Window State (Plugin)
     'plugin:window-state|save_window_state': {
         args: Record<string, never>;

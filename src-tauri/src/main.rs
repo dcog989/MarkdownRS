@@ -395,6 +395,7 @@ fn main() {
             commands::settings::check_context_menu_status,
             commands::updater::check_for_updates,
             commands::updater::download_and_install_update,
+            commands::export::export_to_pdf,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| {

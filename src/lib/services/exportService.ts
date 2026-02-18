@@ -173,18 +173,32 @@ export class ExportService {
     }
 
     async exportToPdf() {
-        const container = await this.prepareExportContent();
-        if (!container) return;
+        const tab = this.getActiveTab();
+        if (!tab) return;
 
         try {
-            window.print();
-        } catch (err) {
-            AppError.handle('Export:PDF', err, {
-                showToast: true,
-                userMessage: 'Failed to open print dialog',
+            const path = await save({
+                defaultPath: `${tab.title.replace(/\.[^/.]+$/, '')}.pdf`,
+                filters: [{ name: 'PDF', extensions: ['pdf'] }],
             });
-        } finally {
-            setTimeout(() => this.clearExportContent(), CONFIG.UI_TIMING.EXPORT_CLEANUP_DELAY_MS);
+
+            if (!path) return;
+
+            showToast('info', 'Generating PDF...');
+
+            const computedStyle = getComputedStyle(document.documentElement);
+            const bgColor = computedStyle.getPropertyValue('--color-bg-main').trim() || null;
+
+            await callBackend(
+                'export_to_pdf',
+                { path, content: tab.content, title: tab.title, backgroundColor: bgColor },
+                'Export:PDF',
+                { path: tab?.path },
+                { report: true, msg: 'Failed to generate PDF' },
+            );
+            showToast('success', `Exported to ${path}`);
+        } catch {
+            // Error already reported
         }
     }
 
