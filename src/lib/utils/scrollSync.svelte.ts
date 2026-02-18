@@ -62,7 +62,7 @@ export class ScrollSyncManager {
     private worker: Worker | null = null;
     private pendingSyncs = new SvelteMap<
         string,
-        { target: HTMLElement; direction: 'editor-to-preview' | 'preview-to-editor' }
+        { target: HTMLElement | Element; direction: 'editor-to-preview' | 'preview-to-editor' }
     >();
 
     // State to prevent circular scroll loops
@@ -71,6 +71,10 @@ export class ScrollSyncManager {
     private resizeObserver: ResizeObserver | null = null;
     private updateMapTimer: number | null = null;
     private mapDirty = $state(false);
+
+    // Smooth scroll animation state
+    private smoothScrollRAF: number | null = null;
+    private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
 
     constructor() {
         // Initialize Web Worker
@@ -164,7 +168,7 @@ export class ScrollSyncManager {
         }
 
         if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-            target.scrollTop = targetY;
+            this.smoothScrollTo(target, targetY);
         }
     }
 
@@ -299,7 +303,62 @@ export class ScrollSyncManager {
         if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
         this.clearSourceTimer = window.setTimeout(() => {
             this.activeSource = null;
-        }, 150);
+        }, 200);
+    }
+
+    private smoothScrollTo(element: HTMLElement | Element, targetY: number, instant = false) {
+        const currentY = element.scrollTop;
+        const diff = Math.abs(targetY - currentY);
+
+        if (diff < CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) return;
+
+        if (instant || diff < 50) {
+            element.scrollTop = targetY;
+            return;
+        }
+
+        if (
+            this.smoothScrollTarget &&
+            this.smoothScrollTarget.element === element &&
+            Math.abs(this.smoothScrollTarget.targetY - targetY) < 100
+        ) {
+            this.smoothScrollTarget.targetY = targetY;
+            return;
+        }
+
+        if (this.smoothScrollRAF) {
+            cancelAnimationFrame(this.smoothScrollRAF);
+        }
+
+        this.smoothScrollTarget = { element, targetY };
+
+        const startY = currentY;
+        const duration = Math.min(150, Math.max(50, diff / 10));
+        const startTime = performance.now();
+
+        const animate = (now: number) => {
+            if (!this.smoothScrollTarget || this.smoothScrollTarget.element !== element) {
+                return;
+            }
+
+            const elapsed = now - startTime;
+            const progress = Math.min(1, elapsed / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            const currentTargetY = this.smoothScrollTarget.targetY;
+            const y = startY + (currentTargetY - startY) * eased;
+
+            element.scrollTop = y;
+
+            if (progress < 1) {
+                this.smoothScrollRAF = requestAnimationFrame(animate);
+            } else {
+                this.smoothScrollRAF = null;
+                this.smoothScrollTarget = null;
+            }
+        };
+
+        this.smoothScrollRAF = requestAnimationFrame(animate);
     }
 
     private syncPreview() {
@@ -316,14 +375,14 @@ export class ScrollSyncManager {
 
         if (scrollTop <= 0) {
             if (target.scrollTop > 0) {
-                target.scrollTop = 0;
+                this.smoothScrollTo(target, 0, true);
             }
             return;
         }
         if (scrollTop >= maxScroll - 1) {
             const targetBottom = target.scrollHeight - target.clientHeight;
             if (Math.abs(target.scrollTop - targetBottom) > 2) {
-                target.scrollTop = targetBottom;
+                this.smoothScrollTo(target, targetBottom, true);
             }
             return;
         }
@@ -363,31 +422,27 @@ export class ScrollSyncManager {
         const clientHeight = source.clientHeight;
         const maxScroll = scrollHeight - clientHeight;
 
-        // Handle edge cases directly
         if (scrollTop <= 0) {
             if (target.scrollTop > 0) {
-                target.scrollTop = 0;
+                this.smoothScrollTo(target, 0, true);
             }
             return;
         }
         if (scrollTop >= maxScroll - 1) {
             const targetBottom = target.scrollHeight - target.clientHeight;
             if (Math.abs(target.scrollTop - targetBottom) > 2) {
-                target.scrollTop = targetBottom;
+                this.smoothScrollTo(target, targetBottom, true);
             }
             return;
         }
 
-        // Fallback to main thread if no worker or no lineMap
         if (!this.worker || this.lineMap.length < 2) {
             this.syncScrollPositionFallback(source, target, direction);
             return;
         }
 
-        // Store pending sync
         this.pendingSyncs.set(direction, { target, direction });
 
-        // Send to worker
         const message: SyncMessage = {
             type: 'sync',
             direction,
@@ -416,7 +471,7 @@ export class ScrollSyncManager {
             if (
                 Math.abs(target.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
             ) {
-                target.scrollTop = targetTop;
+                this.smoothScrollTo(target, targetTop);
             }
             return;
         }
@@ -439,7 +494,7 @@ export class ScrollSyncManager {
         }
 
         if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-            target.scrollTop = targetY;
+            this.smoothScrollTo(target, targetY);
         }
     }
 
