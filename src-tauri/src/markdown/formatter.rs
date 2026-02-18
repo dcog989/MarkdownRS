@@ -1,4 +1,5 @@
 use crate::markdown::config::{DEFAULT_LIST_INDENT, MarkdownFlavor};
+use anyhow::{Result, anyhow};
 use dprint_plugin_markdown::configuration::{
     ConfigurationBuilder, EmphasisKind, StrongKind, TextWrap, UnorderedListKind,
 };
@@ -52,7 +53,7 @@ impl Default for FormatterOptions {
     }
 }
 
-pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<String, String> {
+pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<String> {
     // Pre-scan for lines with box-drawing characters that should be preserved
     let lines: Vec<&str> = content.lines().collect();
     let mut protected_lines: Vec<(usize, String)> = Vec::new();
@@ -93,7 +94,7 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
         Ok(Some(file_text.to_string()))
     })
     .map(|result| result.unwrap_or_else(|| content.to_string()))
-    .map_err(|e| format!("Formatting failed: {}", e))?;
+    .map_err(|e| anyhow!("Formatting failed: {}", e))?;
 
     // Restore protected lines with their original whitespace
     let result = if !protected_lines.is_empty() {

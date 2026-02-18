@@ -1,4 +1,5 @@
 use crate::markdown::config::MarkdownFlavor;
+use anyhow::{Result, anyhow};
 use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
 use dashmap::DashMap;
 use regex::Regex;
@@ -68,7 +69,7 @@ pub struct RenderResult {
 }
 
 /// Renders markdown to HTML with line number tracking and document metrics
-pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult, String> {
+pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult> {
     let comrak_options = options.flavor.to_comrak_options();
 
     let arena = Arena::new();
@@ -76,7 +77,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 
     let mut html = String::new();
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
-        .map_err(|e| format!("Failed to render markdown: {}", e))?;
+        .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
     let html_with_lines = inject_line_numbers(&html, content);
     let html_with_links = linkify_file_paths(&html_with_lines);

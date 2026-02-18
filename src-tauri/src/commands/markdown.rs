@@ -1,6 +1,7 @@
 use crate::markdown::config::{DEFAULT_LIST_INDENT, DEFAULT_MAX_BLANK_LINES, MarkdownFlavor};
 use crate::markdown::formatter::{self, FormatterOptions};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
+use crate::utils::IntoTauriError;
 
 #[tauri::command]
 pub async fn compute_text_metrics(content: String) -> Result<(usize, usize, usize, usize), String> {
@@ -19,14 +20,10 @@ pub async fn render_markdown(
         flavor: MarkdownFlavor::from_option_str(flavor),
     };
 
-    let result = tokio::task::spawn_blocking(move || {
-        renderer::render_markdown(&content, options).map_err(|e| {
-            log::error!("Failed to render markdown: {}", e);
-            e
-        })
-    })
-    .await
-    .map_err(|e| format!("Render task failed: {}", e))?;
+    let result = tokio::task::spawn_blocking(move || renderer::render_markdown(&content, options))
+        .await
+        .map_err(|e| format!("Render task failed: {}", e))?
+        .to_tauri_result();
 
     let duration = start.elapsed();
     log::info!(
@@ -76,10 +73,7 @@ pub async fn format_markdown(
         .map_err(|e| format!("Failed to spawn formatter thread: {}", e))?;
 
     let result = match tokio::task::spawn_blocking(move || rx.recv()).await {
-        Ok(Ok(result)) => result.map_err(|e| {
-            log::error!("Failed to format markdown: {}", e);
-            e
-        }),
+        Ok(Ok(result)) => result.to_tauri_result(),
         Ok(Err(_)) => Err("Formatter thread panicked or disconnected".to_string()),
         Err(e) => Err(format!("Formatter task join error: {}", e)),
     };

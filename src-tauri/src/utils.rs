@@ -1,9 +1,24 @@
+use anyhow::Result;
 use chrono::{DateTime, Local};
 use encoding_rs::{UTF_16BE, UTF_16LE};
 use std::path::Path;
 use std::time::SystemTime;
 use tokio::fs;
 use unicode_bom::Bom;
+
+/// Trait to convert anyhow errors to String for Tauri IPC compatibility
+pub trait IntoTauriError<T> {
+    fn to_tauri_result(self) -> Result<T, String>;
+}
+
+impl<T> IntoTauriError<T> for anyhow::Result<T> {
+    fn to_tauri_result(self) -> Result<T, String> {
+        self.map_err(|e| {
+            log::error!("{}", e);
+            e.to_string()
+        })
+    }
+}
 
 /// Standardized error handler for file operations
 pub fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> String {

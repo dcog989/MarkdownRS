@@ -1,3 +1,4 @@
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 use velopack::*;
 
@@ -8,12 +9,11 @@ pub struct UpdateInfo {
     pub release_notes: Option<String>,
 }
 
-#[tauri::command]
-pub fn check_for_updates() -> Result<UpdateInfo, String> {
+fn check_for_updates_inner() -> Result<UpdateInfo> {
     let source = sources::HttpSource::new("https://github.com/dcog989/markdown-rs/releases/latest");
 
     let update_manager = UpdateManager::new(source, None, None)
-        .map_err(|e| format!("Failed to create update manager: {}", e))?;
+        .map_err(|e| anyhow!("Failed to create update manager: {}", e))?;
 
     match update_manager.check_for_updates() {
         Ok(update_check) => {
@@ -32,25 +32,24 @@ pub fn check_for_updates() -> Result<UpdateInfo, String> {
                 }),
             }
         },
-        Err(e) => Err(format!("Failed to check for updates: {}", e)),
+        Err(e) => Err(anyhow!("Failed to check for updates: {}", e)),
     }
 }
 
-#[tauri::command]
-pub fn download_and_install_update() -> Result<(), String> {
+fn download_and_install_update_inner() -> Result<()> {
     let source = sources::HttpSource::new("https://github.com/dcog989/markdown-rs/releases/latest");
 
     let update_manager = UpdateManager::new(source, None, None)
-        .map_err(|e| format!("Failed to create update manager: {}", e))?;
+        .map_err(|e| anyhow!("Failed to create update manager: {}", e))?;
 
     let update_check = update_manager
         .check_for_updates()
-        .map_err(|e| format!("Failed to check for updates: {}", e))?;
+        .map_err(|e| anyhow!("Failed to check for updates: {}", e))?;
 
     let update_info = match update_check {
         UpdateCheck::UpdateAvailable(info) => info,
         _ => {
-            return Err("No update available".to_string());
+            return Err(anyhow!("No update available"));
         },
     };
 
@@ -61,7 +60,7 @@ pub fn download_and_install_update() -> Result<(), String> {
 
     update_manager
         .download_updates(&update_info, None)
-        .map_err(|e| format!("Failed to download update: {}", e))?;
+        .map_err(|e| anyhow!("Failed to download update: {}", e))?;
 
     log::info!("Applying update...");
 
@@ -73,7 +72,23 @@ pub fn download_and_install_update() -> Result<(), String> {
             false,
             Vec::<String>::new(),
         )
-        .map_err(|e| format!("Failed to apply update: {}", e))?;
+        .map_err(|e| anyhow!("Failed to apply update: {}", e))?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn check_for_updates() -> Result<UpdateInfo, String> {
+    check_for_updates_inner().map_err(|e| {
+        log::error!("{}", e);
+        e.to_string()
+    })
+}
+
+#[tauri::command]
+pub fn download_and_install_update() -> Result<(), String> {
+    download_and_install_update_inner().map_err(|e| {
+        log::error!("{}", e);
+        e.to_string()
+    })
 }

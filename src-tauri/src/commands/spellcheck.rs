@@ -1,4 +1,6 @@
 use crate::state::AppState;
+use crate::utils::IntoTauriError;
+use anyhow::{Result, anyhow};
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -20,9 +22,9 @@ async fn ensure_file_downloaded(
     url: &str,
     cache_path: &PathBuf,
     label: &str,
-) -> Result<String, String> {
+) -> Result<String> {
     // Helper to read cache file, deleting it on failure
-    async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String, String> {
+    async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String> {
         match fs::read_to_string(path).await {
             Ok(content) => Ok(content),
             Err(e) => {
@@ -32,7 +34,7 @@ async fn ensure_file_downloaded(
                     path
                 );
                 let _ = fs::remove_file(path).await;
-                Err(format!("Read error: {}", e))
+                Err(anyhow!("Read error: {}", e))
             },
         }
     }
@@ -53,23 +55,23 @@ async fn ensure_file_downloaded(
                         {
                             log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
                             let _ = fs::remove_file(cache_path).await;
-                            return Err(format!("Write error: {}", e));
+                            return Err(anyhow!("Write error: {}", e));
                         }
                         read_cache_or_delete(cache_path, label).await
                     },
                     Err(e) => {
                         log::error!("Failed to decode {}: {}", label, e);
-                        Err(format!("Text decode error: {}", e))
+                        Err(anyhow!("Text decode error: {}", e))
                     },
                 }
             } else {
                 log::warn!("Failed to download {}: Status {}", label, resp.status());
-                Err(format!("HTTP Error: {}", resp.status()))
+                Err(anyhow!("HTTP Error: {}", resp.status()))
             }
         },
         Err(e) => {
             log::error!("Network error downloading {}: {}", label, e);
-            Err(format!("Network error: {}", e))
+            Err(anyhow!("Network error: {}", e))
         },
     }
 }
@@ -151,7 +153,7 @@ async fn load_language_dictionary(
     client: reqwest::Client,
     cache_dir: PathBuf,
     dict_code: String,
-) -> Result<(String, String), String> {
+) -> Result<(String, String)> {
     let aff_path = cache_dir.join(format!("{}.aff", dict_code));
     let dic_path = cache_dir.join(format!("{}.dic", dict_code));
 
@@ -183,7 +185,7 @@ async fn load_language_dictionary(
     if let (Ok(aff), Ok(dic)) = (aff_res, dic_res) {
         Ok((aff, dic))
     } else {
-        Err(format!("Failed to load language dictionary: {}", dict_code))
+        Err(anyhow!("Failed to load language dictionary: {}", dict_code))
     }
 }
 
@@ -191,8 +193,8 @@ async fn load_technical_dictionary(
     client: reqwest::Client,
     cache_dir: PathBuf,
     id: String,
-) -> Result<String, String> {
-    let url = resolve_technical_url(&id).ok_or_else(|| format!("Unknown technical ID: {}", id))?;
+) -> Result<String> {
+    let url = resolve_technical_url(&id).ok_or_else(|| anyhow!("Unknown technical ID: {}", id))?;
     let cache_path = cache_dir.join(format!("{}.txt", id));
 
     ensure_file_downloaded(&client, url, &cache_path, &id).await
@@ -200,12 +202,11 @@ async fn load_technical_dictionary(
 
 // --- Commands ---
 
-#[tauri::command]
-pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
+async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> Result<()> {
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
     let dict_path = app_dir.join("custom-spelling.dic");
 
     if !app_dir.exists() {
@@ -227,12 +228,12 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
             .append(true)
             .open(dict_path)
             .await
-            .map_err(|e| format!("Failed to open dictionary: {}", e))?;
+            .map_err(|e| anyhow!("Failed to open dictionary: {}", e))?;
 
         let line = format!("{}\n", word);
-        if let Err(e) = file.write_all(line.as_bytes()).await {
-            return Err(format!("Failed to write word: {}", e));
-        }
+        file.write_all(line.as_bytes())
+            .await
+            .map_err(|e| anyhow!("Failed to write word: {}", e))?;
     }
 
     let state = app_handle.state::<AppState>();
@@ -243,11 +244,17 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
 }
 
 #[tauri::command]
-pub async fn load_user_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
+    add_to_dictionary_inner(app_handle, word)
+        .await
+        .to_tauri_result()
+}
+
+async fn load_user_dictionary_inner(app_handle: tauri::AppHandle) -> Result<Vec<String>> {
     let app_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
     let dict_path = app_dir.join("custom-spelling.dic");
 
     if !dict_path.exists() {
@@ -256,13 +263,20 @@ pub async fn load_user_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<St
 
     let content = fs::read_to_string(&dict_path)
         .await
-        .map_err(|e| format!("Failed to read custom dictionary: {}", e))?;
+        .map_err(|e| anyhow!("Failed to read custom dictionary: {}", e))?;
 
     Ok(content
         .lines()
         .map(|l| l.trim().to_string())
         .filter(|l| !l.is_empty())
         .collect())
+}
+
+#[tauri::command]
+pub async fn load_user_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    load_user_dictionary_inner(app_handle)
+        .await
+        .to_tauri_result()
 }
 
 #[tauri::command]
