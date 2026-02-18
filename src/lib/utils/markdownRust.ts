@@ -116,7 +116,7 @@ export async function renderMarkdown(
         ADD_ATTR: [
             'target',
             'class',
-            'data-source-line',
+            'data-sourcepos',
             'align',
             'start',
             'type',

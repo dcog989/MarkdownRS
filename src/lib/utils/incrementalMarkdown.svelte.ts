@@ -56,7 +56,7 @@ export class IncrementalMarkdownRenderer {
                             ADD_ATTR: [
                                 'target',
                                 'class',
-                                'data-source-line',
+                                'data-sourcepos',
                                 'align',
                                 'start',
                                 'type',
@@ -116,7 +116,7 @@ export class IncrementalMarkdownRenderer {
                 ADD_ATTR: [
                     'target',
                     'class',
-                    'data-source-line',
+                    'data-sourcepos',
                     'align',
                     'start',
                     'type',
@@ -215,26 +215,28 @@ export class IncrementalMarkdownRenderer {
 
     /**
      * Offset line numbers in HTML to match document position
+     * data-sourcepos format: "startLine:startCol-endLine:endCol"
      */
     private adjustLineNumbers(html: string, offset: number): string {
         if (offset === 0) return html;
 
-        // Use a DOM parser to safely target attributes without affecting text content
-        // This avoids issues where code blocks might contain the string "data-source-line"
         const template = document.createElement('template');
         template.innerHTML = html;
 
-        const elements = template.content.querySelectorAll('[data-source-line]');
+        const elements = template.content.querySelectorAll('[data-sourcepos]');
 
         for (const el of elements) {
-            const val = el.getAttribute('data-source-line');
+            const val = el.getAttribute('data-sourcepos');
             if (val) {
-                const newLine = parseInt(val, 10) + offset;
-                el.setAttribute('data-source-line', newLine.toString());
+                const match = val.match(/^(\d+):(\d+)-(\d+):(\d+)$/);
+                if (match) {
+                    const [, startLine, startCol, endLine, endCol] = match;
+                    const newSourcepos = `${parseInt(startLine, 10) + offset}:${startCol}-${parseInt(endLine, 10) + offset}:${endCol}`;
+                    el.setAttribute('data-sourcepos', newSourcepos);
+                }
             }
         }
 
-        // Use XMLSerializer for more robust HTML serialization than innerHTML
         const serializer = new XMLSerializer();
         return serializer.serializeToString(template.content);
     }

@@ -133,8 +133,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
         .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
-    let html_with_lines = inject_line_numbers(&html, content);
-    let html_with_links = linkify_file_paths(&html_with_lines);
+    let html_with_links = linkify_file_paths(&html);
     let line_map = get_or_build_line_map(content);
 
     // Single-pass metrics calculation
@@ -184,117 +183,6 @@ fn linkify_file_paths(html: &str) -> String {
     }
 
     result
-}
-
-fn inject_line_numbers(html: &str, source: &str) -> String {
-    let mut result = String::with_capacity(html.len() * 2);
-    let mut current_line = 1;
-    let source_lines: Vec<&str> = source.lines().collect();
-
-    for line in html.lines() {
-        let trimmed = line.trim_start();
-
-        if let Some(tag_end_pos) = trimmed.find('>') {
-            let tag_part = &trimmed[..tag_end_pos];
-
-            if !tag_part.starts_with("</")
-                && !tag_part.ends_with('/')
-                && !tag_part.starts_with("<!--")
-            {
-                let tag_name = tag_part
-                    .trim_start_matches('<')
-                    .split_whitespace()
-                    .next()
-                    .unwrap_or("");
-
-                if is_block_element(tag_name) {
-                    let source_line = find_source_line(&source_lines, current_line);
-                    let indent = &line[..line.len() - trimmed.len()];
-                    let before_close = &trimmed[..tag_end_pos];
-                    let after_close = &trimmed[tag_end_pos..];
-
-                    result.push_str(indent);
-                    result.push_str(before_close);
-                    result.push_str(&format!(" data-source-line=\"{}\"", source_line));
-                    result.push_str(after_close);
-                    result.push('\n');
-                    continue;
-                }
-            }
-        }
-
-        result.push_str(line);
-        result.push('\n');
-
-        if should_increment_line(line) {
-            current_line += 1;
-        }
-    }
-
-    result
-}
-
-fn is_block_element(tag_name: &str) -> bool {
-    matches!(
-        tag_name,
-        "h1" | "h2"
-            | "h3"
-            | "h4"
-            | "h5"
-            | "h6"
-            | "p"
-            | "pre"
-            | "blockquote"
-            | "ul"
-            | "ol"
-            | "li"
-            | "table"
-            | "thead"
-            | "tbody"
-            | "tr"
-            | "th"
-            | "td"
-            | "div"
-            | "section"
-            | "article"
-            | "header"
-            | "footer"
-            | "hr"
-            | "dl"
-            | "dt"
-            | "dd"
-    )
-}
-
-fn should_increment_line(line: &str) -> bool {
-    let trimmed = line.trim();
-    if trimmed.is_empty() || trimmed.starts_with("</") {
-        return false;
-    }
-    for tag in &[
-        "<h1",
-        "<h2",
-        "<h3",
-        "<h4",
-        "<h5",
-        "<h6",
-        "<p",
-        "<li",
-        "<pre",
-        "<blockquote",
-        "<table",
-        "<tr",
-        "<hr",
-    ] {
-        if trimmed.starts_with(tag) {
-            return true;
-        }
-    }
-    false
-}
-
-fn find_source_line(source_lines: &[&str], html_line: usize) -> usize {
-    html_line.min(source_lines.len())
 }
 
 fn build_line_map(content: &str) -> HashMap<usize, usize> {

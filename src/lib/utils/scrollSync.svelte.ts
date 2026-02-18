@@ -24,9 +24,9 @@
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
 import { type EditorView } from '@codemirror/view';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { SvelteMap } from 'svelte/reactivity';
 import ScrollSyncWorker from '$lib/workers/scrollSync.worker?worker';
-import { asHTMLElement, queryHTMLElements } from './dom';
+import { queryHTMLElements } from './dom';
 
 interface LineMapEntry {
     line: number;
@@ -72,10 +72,6 @@ export class ScrollSyncManager {
     private updateMapTimer: number | null = null;
     private mapDirty = $state(false);
 
-    // Cache for element visibility state to avoid calculating rects for off-screen elements
-    private visibleElements = new SvelteSet<HTMLElement>();
-    private elementVisibilityObserver: IntersectionObserver | null = null;
-
     constructor() {
         // Initialize Web Worker
         this.initWorker();
@@ -104,8 +100,6 @@ export class ScrollSyncManager {
 
                     return () => {
                         this.resizeObserver?.disconnect();
-                        this.elementVisibilityObserver?.disconnect();
-                        this.visibleElements.clear();
                         if (this.updateMapTimer) {
                             clearTimeout(this.updateMapTimer);
                             this.updateMapTimer = null;
@@ -151,14 +145,11 @@ export class ScrollSyncManager {
         const { target, direction } = pending;
         let targetY = data.targetScrollTop;
 
-        // Handle special values and conversions
         if (direction === 'editor-to-preview') {
             if (targetY === -1) {
-                // Scroll to bottom
                 targetY = target.scrollHeight - target.clientHeight;
             }
         } else {
-            // preview-to-editor: targetY is a line number, convert to pixels
             if (!this.editor) return;
             if (targetY === -1) {
                 targetY = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
@@ -172,7 +163,6 @@ export class ScrollSyncManager {
             }
         }
 
-        // Apply scroll
         if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
             target.scrollTop = targetY;
         }
@@ -200,94 +190,51 @@ export class ScrollSyncManager {
 
         if (this.preview) {
             this.preview.removeEventListener('scroll', this.onPreviewScroll);
-            this.elementVisibilityObserver?.disconnect();
-            this.visibleElements.clear();
         }
 
         this.preview = el;
         this.onPreviewScroll = this.onPreviewScroll.bind(this);
         el.addEventListener('scroll', this.onPreviewScroll, { passive: true });
-
-        // Set up IntersectionObserver to track visible elements
-        // This avoids expensive getBoundingClientRect calls for off-screen elements
-        this.elementVisibilityObserver = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    const el = asHTMLElement(entry.target);
-                    if (!el) return;
-                    if (entry.isIntersecting) {
-                        this.visibleElements.add(el);
-                    } else {
-                        this.visibleElements.delete(el);
-                    }
-                }
-            },
-            {
-                root: el,
-                rootMargin: '1000px', // Include elements 1000px above/below viewport
-                threshold: 0,
-            },
-        );
     }
 
     updateMap() {
-        if (!this.preview || !this.editor) return; // Add editor check to prevent initialization issues
+        if (!this.preview || !this.editor) return;
 
         const container = this.preview;
         const containerRect = container.getBoundingClientRect();
         const scrollTop = container.scrollTop;
 
-        // Query only elements with data-source-line attribute
-        const elements = queryHTMLElements(container, '[data-source-line]');
+        const elements = queryHTMLElements(container, '[data-sourcepos]');
 
-        // Reset visibility tracking for new content
-        this.visibleElements.clear();
-        this.elementVisibilityObserver?.disconnect();
-
-        // Observe all elements for visibility changes
-        for (const el of elements) {
-            this.elementVisibilityObserver?.observe(el);
-        }
-
-        // Batch all getBoundingClientRect() calls to prevent layout thrashing
-        // Only calculate rects for visible elements - use offsetTop for hidden elements (cheaper)
         const rawMap: LineMapEntry[] = [];
         for (const el of elements) {
-            const lineAttr = el.getAttribute('data-source-line');
-            if (!lineAttr) continue;
-            const line = parseInt(lineAttr, 10);
+            const sourcepos = el.getAttribute('data-sourcepos');
+            if (!sourcepos) continue;
+            const match = sourcepos.match(/^(\d+):\d+-\d+:\d+$/);
+            if (!match) continue;
+            const line = parseInt(match[1], 10);
             if (isNaN(line)) continue;
 
-            // Use getBoundingClientRect for visible elements (more accurate)
-            // Use offsetTop for hidden elements (cheaper, no forced layout)
-            let y: number;
-            if (this.visibleElements.has(el)) {
-                const rect = el.getBoundingClientRect();
-                y = rect.top - containerRect.top + scrollTop;
-            } else {
-                y = el.offsetTop;
-            }
+            const rect = el.getBoundingClientRect();
+            const y = rect.top - containerRect.top + scrollTop;
             rawMap.push({ line, y });
         }
 
-        // 2. Sanitize Map
         if (rawMap.length > 0) {
             rawMap.sort((a, b) => a.line - b.line);
 
-            this.lineMap = [rawMap[0]];
-            for (let i = 1; i < rawMap.length; i++) {
-                const prev = this.lineMap[this.lineMap.length - 1];
-                const curr = rawMap[i];
-
-                if (curr.line > prev.line && curr.y >= prev.y) {
-                    this.lineMap.push(curr);
+            const seen: Record<number, boolean> = {};
+            this.lineMap = [];
+            for (const entry of rawMap) {
+                if (!seen[entry.line]) {
+                    seen[entry.line] = true;
+                    this.lineMap.push(entry);
                 }
             }
         } else {
             this.lineMap = [];
         }
 
-        // 3. Anchor Boundaries
         if (this.lineMap.length === 0 || this.lineMap[0].line > 1) {
             this.lineMap.unshift({ line: 1, y: 0 });
         } else {
@@ -303,7 +250,6 @@ export class ScrollSyncManager {
             }
         }
 
-        // Send updated map to worker
         if (this.worker) {
             const message: UpdateMapMessage = {
                 type: 'update-map',
@@ -368,7 +314,6 @@ export class ScrollSyncManager {
         const clientHeight = source.clientHeight;
         const maxScroll = scrollHeight - clientHeight;
 
-        // Handle edge cases directly
         if (scrollTop <= 0) {
             if (target.scrollTop > 0) {
                 target.scrollTop = 0;
@@ -383,26 +328,22 @@ export class ScrollSyncManager {
             return;
         }
 
-        // Fallback to main thread if no worker
         if (!this.worker) {
             this.syncScrollPositionFallback(source, target, direction);
             return;
         }
 
-        // Calculate current line position from editor
         const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
         const docLine = this.editor.state.doc.lineAt(lineBlock.from);
         const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
         const currentLine = docLine.number + fraction;
 
-        // Store pending sync
         this.pendingSyncs.set(direction, { target, direction });
 
-        // Send to worker
         const message: SyncMessage = {
             type: 'sync',
             direction,
-            scrollTop: currentLine, // Send line number instead of pixel
+            scrollTop: currentLine,
             scrollHeight,
             clientHeight,
             totalLines: this.editor.state.doc.lines,

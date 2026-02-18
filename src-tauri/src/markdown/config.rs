@@ -104,6 +104,7 @@ impl MarkdownFlavor {
             render: Render {
                 r#unsafe: false,
                 escape: false,
+                sourcepos: true,
                 ..Default::default()
             },
         }

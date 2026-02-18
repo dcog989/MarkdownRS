@@ -58,42 +58,31 @@ function calculateTargetScroll(
 ): number {
     const maxScroll = scrollHeight - clientHeight;
 
-    // Handle edge cases
     if (scrollTop <= 0) {
         return 0;
     }
     if (scrollTop >= maxScroll - 1) {
         if (direction === 'editor-to-preview') {
-            // Return -1 to indicate "scroll to bottom"
             return -1;
         } else {
-            // For preview-to-editor, we need to calculate based on lineMap
             if (lineMap.length < 2) {
                 return -1;
             }
             const lastEntry = lineMap[lineMap.length - 1];
-            return Math.max(0, lastEntry.y - clientHeight);
+            return lastEntry.line;
         }
     }
 
-    // If no line map, use percentage-based sync
     if (lineMap.length < 2) {
         const pct = scrollTop / maxScroll;
         return pct * maxScroll;
     }
 
     if (direction === 'editor-to-preview') {
-        // Editor to preview: need line number from editor
-        // The main thread sends us the line info calculated from editor state
-        // We just do the interpolation here
-        const currentLine = scrollTop; // scrollTop is actually the line number with fraction
+        const currentLine = scrollTop;
         return interpolate(currentLine, 'line', 'y');
     } else {
-        // Preview to editor: scrollTop is pixel position in preview
         const targetLine = interpolate(scrollTop, 'y', 'line');
-        // Convert line number back to editor scroll position
-        // This is simplified - main thread will do the final conversion
-        // We return the line number with fraction, main thread converts to pixels
         return targetLine;
     }
 }
