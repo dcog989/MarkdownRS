@@ -21,36 +21,57 @@ async fn ensure_file_downloaded(
     cache_path: &PathBuf,
     label: &str,
 ) -> Result<String, String> {
-    if !cache_path.exists() {
-        log::info!("Downloading {}: {}", label, url);
-        match client.get(url).send().await {
-            Ok(resp) => {
-                if resp.status().is_success() {
-                    match resp.text().await {
-                        Ok(text) => {
-                            if let Err(e) =
-                                crate::utils::atomic_write(cache_path, text.as_bytes()).await
-                            {
-                                log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
-                                return Err(format!("Write error: {}", e));
-                            }
-                        },
-                        Err(e) => return Err(format!("Text decode error: {}", e)),
-                    }
-                } else {
-                    log::warn!("Failed to download {}: Status {}", label, resp.status());
-                    return Err(format!("HTTP Error: {}", resp.status()));
-                }
+    // Helper to read cache file, deleting it on failure
+    async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String, String> {
+        match fs::read_to_string(path).await {
+            Ok(content) => Ok(content),
+            Err(e) => {
+                log::warn!(
+                    "Failed to read cached {}: {:?}, deleting corrupted cache",
+                    label,
+                    path
+                );
+                let _ = fs::remove_file(path).await;
+                Err(format!("Read error: {}", e))
             },
-            Err(e) => return Err(format!("Network error: {}", e)),
         }
-    } else {
-        log::debug!("Using cached {}: {:?}", label, cache_path);
     }
 
-    fs::read_to_string(cache_path)
-        .await
-        .map_err(|e| format!("Read error: {}", e))
+    if cache_path.exists() {
+        log::debug!("Using cached {}: {:?}", label, cache_path);
+        return read_cache_or_delete(cache_path, label).await;
+    }
+
+    log::info!("Downloading {}: {}", label, url);
+    match client.get(url).send().await {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                match resp.text().await {
+                    Ok(text) => {
+                        if let Err(e) =
+                            crate::utils::atomic_write(cache_path, text.as_bytes()).await
+                        {
+                            log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
+                            let _ = fs::remove_file(cache_path).await;
+                            return Err(format!("Write error: {}", e));
+                        }
+                        read_cache_or_delete(cache_path, label).await
+                    },
+                    Err(e) => {
+                        log::error!("Failed to decode {}: {}", label, e);
+                        Err(format!("Text decode error: {}", e))
+                    },
+                }
+            } else {
+                log::warn!("Failed to download {}: Status {}", label, resp.status());
+                Err(format!("HTTP Error: {}", resp.status()))
+            }
+        },
+        Err(e) => {
+            log::error!("Network error downloading {}: {}", label, e);
+            Err(format!("Network error: {}", e))
+        },
+    }
 }
 
 // --- ID Resolution ---
