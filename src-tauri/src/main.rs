@@ -288,10 +288,8 @@ fn main() {
                     .build(),
             )?;
 
-            if !dict_path.exists() {
-                if let Err(e) = fs::write(&dict_path, "") {
-                    log::warn!("Failed to create custom dictionary file: {}", e);
-                }
+            if !dict_path.exists() && let Err(e) = fs::write(&dict_path, "") {
+                log::warn!("Failed to create custom dictionary file: {}", e);
             }
 
             let db_path = db_dir.join("session.db");
