@@ -33,12 +33,12 @@ import {
 export type OperationId =
     // Sort & Order
     | 'sort-asc'
-    | 'sort-desc'
     | 'sort-case-insensitive-asc'
-    | 'sort-case-insensitive-desc'
     | 'sort-numeric-asc'
-    | 'sort-numeric-desc'
     | 'sort-length-asc'
+    | 'sort-desc'
+    | 'sort-case-insensitive-desc'
+    | 'sort-numeric-desc'
     | 'sort-length-desc'
     | 'reverse'
     | 'shuffle'
@@ -135,19 +135,35 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         category: 'sort',
         execution: 'client',
     },
-    'sort-desc': {
-        id: 'sort-desc',
-        label: 'Descending',
-        description: 'Sort lines alphabetically Z to A',
-        icon: ArrowDownZA,
-        category: 'sort',
-        execution: 'client',
-    },
     'sort-case-insensitive-asc': {
         id: 'sort-case-insensitive-asc',
         label: 'Ascending (Ignore Case)',
         description: 'Sort A to Z ignoring case',
         icon: ArrowDownAZ,
+        category: 'sort',
+        execution: 'client',
+    },
+    'sort-numeric-asc': {
+        id: 'sort-numeric-asc',
+        label: 'Ascending (Numeric)',
+        description: 'Sort lines numerically (0-9)',
+        icon: ArrowDown01,
+        category: 'sort',
+        execution: 'client',
+    },
+    'sort-length-asc': {
+        id: 'sort-length-asc',
+        label: 'Ascending (By Length)',
+        description: 'Sort by line length ascending',
+        icon: ArrowDownAZ,
+        category: 'sort',
+        execution: 'client',
+    },
+    'sort-desc': {
+        id: 'sort-desc',
+        label: 'Descending',
+        description: 'Sort lines alphabetically Z to A',
+        icon: ArrowDownZA,
         category: 'sort',
         execution: 'client',
     },
@@ -159,33 +175,17 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         category: 'sort',
         execution: 'client',
     },
-    'sort-numeric-asc': {
-        id: 'sort-numeric-asc',
-        label: 'Numeric Ascending',
-        description: 'Sort lines numerically (0-9)',
-        icon: ArrowDown01,
-        category: 'sort',
-        execution: 'client',
-    },
     'sort-numeric-desc': {
         id: 'sort-numeric-desc',
-        label: 'Numeric Descending',
+        label: 'Descending (Numeric)',
         description: 'Sort lines numerically (9-0)',
         icon: ArrowDown10,
         category: 'sort',
         execution: 'client',
     },
-    'sort-length-asc': {
-        id: 'sort-length-asc',
-        label: 'By Shortest',
-        description: 'Sort by line length ascending',
-        icon: ArrowDownAZ,
-        category: 'sort',
-        execution: 'client',
-    },
     'sort-length-desc': {
         id: 'sort-length-desc',
-        label: 'By Longest',
+        label: 'Descending (By Length)',
         description: 'Sort by line length descending',
         icon: ArrowDownZA,
         category: 'sort',
@@ -243,7 +243,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     },
     'remove-leading-spaces': {
         id: 'remove-leading-spaces',
-        label: 'Remove Leading Spaces',
+        label: 'Remove Leading Whitespace',
         description: 'Trim whitespace from line starts',
         icon: Eraser,
         category: 'filter',
@@ -251,7 +251,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     },
     'remove-all-spaces': {
         id: 'remove-all-spaces',
-        label: 'Remove All Spaces',
+        label: 'Remove All Whitespace',
         description: 'Remove all whitespace characters',
         icon: Eraser,
         category: 'filter',
@@ -262,7 +262,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     uppercase: {
         id: 'uppercase',
         label: 'UPPER CASE',
-        description: 'Convert all text to uppercase',
+        description: 'Convert all text to upper case',
         icon: Type,
         category: 'case',
         execution: 'client',
@@ -270,7 +270,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     lowercase: {
         id: 'lowercase',
         label: 'lower case',
-        description: 'Convert all text to lowercase',
+        description: 'Convert all text to lower case',
         icon: Type,
         category: 'case',
         execution: 'client',

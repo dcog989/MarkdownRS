@@ -1,7 +1,7 @@
 <script lang="ts">
     import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
     import Submenu from '$lib/components/ui/Submenu.svelte';
-    import { getOperationsByCategory, type OperationId } from '$lib/config/textOperationsRegistry';
+    import { type OperationId } from '$lib/config/textOperationsRegistry';
     import { addToDictionary } from '$lib/services/dictionaryService';
     import { performTextTransform } from '$lib/stores/editorStore.svelte';
     import {
@@ -56,14 +56,42 @@
     let suggestions = $state<string[]>([]);
     let isLoadingSuggestions = $state(false);
 
-    const sortOps = getOperationsByCategory('sort');
-    const caseOps = getOperationsByCategory('case');
-
     type MenuOption = {
         id?: OperationId;
         label?: string;
         divider?: boolean;
     };
+
+    const sortOps: MenuOption[] = [
+        { id: 'sort-asc', label: 'Ascending (A-Z)' },
+        { id: 'sort-case-insensitive-asc', label: 'Ascending (Ignore Case)' },
+        { id: 'sort-numeric-asc', label: 'Ascending (Numeric)' },
+        { id: 'sort-length-asc', label: 'Ascending (By Length)' },
+        { divider: true },
+        { id: 'sort-desc', label: 'Descending (Z-A)' },
+        { id: 'sort-case-insensitive-desc', label: 'Descending (Ignore Case)' },
+        { id: 'sort-numeric-desc', label: 'Descending (Numeric)' },
+        { id: 'sort-length-desc', label: 'Descending (By Length)' },
+        { divider: true },
+        { id: 'reverse', label: 'Reverse' },
+        { id: 'shuffle', label: 'Shuffle' },
+    ];
+
+    const caseOps: MenuOption[] = [
+        { id: 'uppercase', label: 'UPPERCASE' },
+        { id: 'lowercase', label: 'lowercase' },
+        { divider: true },
+        { id: 'title-case', label: 'Title Case' },
+        { id: 'sentence-case', label: 'Sentence case' },
+        { divider: true },
+        { id: 'camel-case', label: 'camelCase' },
+        { id: 'pascal-case', label: 'PascalCase' },
+        { id: 'snake-case', label: 'snake_case' },
+        { id: 'kebab-case', label: 'kebab-case' },
+        { id: 'constant-case', label: 'CONSTANT_CASE' },
+        { divider: true },
+        { id: 'invert-case', label: 'iNVERT cASE' },
+    ];
 
     const formatOps: MenuOption[] = [
         { id: 'indent-lines', label: 'Indent Lines' },
@@ -281,9 +309,13 @@
                     </button>
                 {/snippet}
                 {#each sortOps as op, i (i)}
-                    <button
-                        class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                        onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {#if op.divider}
+                        <div class="bg-border-main my-1 h-px"></div>
+                    {:else}
+                        <button
+                            class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
+                            onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {/if}
                 {/each}
             </Submenu>
 
@@ -302,9 +334,13 @@
                     </button>
                 {/snippet}
                 {#each caseOps as op, i (i)}
-                    <button
-                        class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                        onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {#if op.divider}
+                        <div class="bg-border-main my-1 h-px"></div>
+                    {:else}
+                        <button
+                            class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
+                            onclick={() => handleOp(op.id)}>{op.label}</button>
+                    {/if}
                 {/each}
             </Submenu>
 
