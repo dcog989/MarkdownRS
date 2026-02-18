@@ -61,35 +61,34 @@
     <!-- Left Group: Logo, Settings, Commands, Bookmarks -->
     <div class="pointer-events-auto flex shrink-0 items-center gap-2 px-3">
         <button
-            class="hover-surface pointer-events-auto rounded p-1 outline-none"
+            class="hover-surface rounded p-1 outline-none"
             onclick={() => toggleAbout()}
             use:tooltip={'About MarkdownRS'}>
-            <img src="/logo.svg" alt="Logo" class="h-4.5 w-4.5" />
+            <img src="/logo.svg" alt="Logo" class="h-4 w-4" />
         </button>
 
         <button
-            class="text-fg-muted hover-surface pointer-events-auto rounded p-1 outline-none"
+            class="text-fg-muted hover-surface rounded p-1 outline-none"
             onclick={() => toggleSettings()}
             use:tooltip={'Settings (Ctrl+,)'}>
             <Settings size={16} />
         </button>
 
-        <div class="mx-1 h-4.5 w-px bg-white/10"></div>
+        <div class="mx-2 h-4 w-px bg-white/10"></div>
 
         <button
-            class="text-fg-muted hover-surface flex items-center justify-center rounded border-none p-1 transition-colors outline-none"
+            class="text-fg-muted hover-surface rounded p-1 outline-none"
             onclick={() => toggleCommandPalette()}
             use:tooltip={'Commands (Ctrl+P)'}>
             <Zap size={16} />
         </button>
 
         <button
-            class="text-fg-muted hover-surface flex items-center justify-center rounded border-none p-1 transition-colors outline-none"
+            class="text-fg-muted hover-surface rounded p-1 outline-none"
             onclick={() => toggleBookmarks()}
             use:tooltip={'Bookmarks (Ctrl+B)'}>
             <Bookmark size={16} />
         </button>
-        <div class="mx-1 h-4.5 w-px bg-white/10"></div>
     </div>
 
     <!-- Center: File Path (Drag Region) -->
@@ -104,10 +103,8 @@
 
     <!-- Right Group: Preview, Window Controls -->
     <div class="pointer-events-auto flex h-full shrink-0 items-center">
-        <div class="mx-1 h-4.5 w-px bg-white/10"></div>
-
         <button
-            class="text-fg-muted hover-surface flex h-full items-center justify-center px-3 transition-colors outline-none focus:outline-none"
+            class="text-fg-muted hover-surface rounded p-1 outline-none"
             class:opacity-50={!isMarkdown}
             class:cursor-not-allowed={!isMarkdown}
             onclick={toggleSplit}
@@ -121,7 +118,7 @@
             {/if}
         </button>
 
-        <div class="mx-1 h-4.5 w-px bg-white/10"></div>
+        <div class="mx-2 h-4 w-px bg-white/10"></div>
 
         <button
             class="text-fg-muted hover-surface flex h-full w-12 items-center justify-center outline-none"
