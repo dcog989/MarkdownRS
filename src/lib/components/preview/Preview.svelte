@@ -119,6 +119,7 @@
 
     function injectHtml(node: HTMLElement, content: string) {
         node.innerHTML = content;
+
         return {
             update(newContent: string) {
                 node.innerHTML = newContent;
