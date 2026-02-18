@@ -5,7 +5,7 @@ import { CONFIG } from '$lib/utils/config';
 import { AppError } from '$lib/utils/errorHandling';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { save } from '@tauri-apps/plugin-dialog';
-import * as htmlToImage from 'html-to-image';
+import { domToPng, domToWebp, domToSvg } from 'modern-screenshot';
 
 export class ExportService {
     private getActiveTab() {
@@ -220,12 +220,11 @@ export class ExportService {
 
             let dataUrl = '';
             if (format === 'png') {
-                dataUrl = await htmlToImage.toPng(container, options);
+                dataUrl = await domToPng(container, options);
             } else if (format === 'webp') {
-                const canvas = await htmlToImage.toCanvas(container, options);
-                dataUrl = canvas.toDataURL('image/webp');
+                dataUrl = await domToWebp(container, options);
             } else if (format === 'svg') {
-                dataUrl = await htmlToImage.toSvg(container, options);
+                dataUrl = await domToSvg(container, options);
             }
 
             const base64Data = dataUrl.split(',')[1];

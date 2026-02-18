@@ -51,8 +51,8 @@
     "@tauri-apps/plugin-store": "^2.4.2",
     "@tauri-apps/plugin-window-state": "^2.4.1",
     "dompurify": "^3.3.1",
-    "html-to-image": "^1.11.13",
-    "lucide-svelte": "^0.574.0"
+    "lucide-svelte": "^0.574.0",
+    "modern-screenshot": "^4.6.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
