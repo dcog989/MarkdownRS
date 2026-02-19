@@ -1,5 +1,6 @@
 <script lang="ts">
     import Input from '$lib/components/ui/Input.svelte';
+    import { slide } from 'svelte/transition';
     import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
     import {
         addBookmark,
@@ -88,7 +89,7 @@
 
     let sortedBookmarks = $derived(
         (() => {
-            const sorted = [...filteredBookmarks];
+            const sorted = [...filteredBookmarks].filter((b) => !deletingIds.has(b.id));
             switch (sortBy) {
                 case 'most-recent':
                     sorted.sort((a, b) => {
@@ -151,9 +152,12 @@
         editTags = '';
     }
 
+    let deletingIds = $state(new Set<string>());
+
     async function handleDelete(id: string, e: MouseEvent) {
         e.stopPropagation();
-        await deleteBookmark(id);
+        deletingIds = new Set([...deletingIds, id]);
+        setTimeout(() => deleteBookmark(id), 210);
     }
 
     function startAdd() {
@@ -323,7 +327,8 @@
                 {#each sortedBookmarks as bookmark, index (bookmark.id)}
                     {@const isSelected = index === selectedIndex}
                     <div
-                        class="px-4 py-2.5 transition-colors"
+                        out:slide={{ duration: 200 }}
+                        class="px-4 py-2.5 transition-colors overflow-hidden"
                         class:bg-row-even={index % 2 === 1 && !isSelected}
                         style:background-color={isSelected
                             ? 'var(--color-accent-primary)'
