@@ -60,12 +60,14 @@
         'editor.goto_line': 'edit.gotoLine',
     };
 
-    const commands = $derived(
-        sortedCommands.map((cmd) => {
+    const commands = $derived.by(() => {
+        // Depend on palette visibility so shortcuts resolve after registerAllShortcuts() runs
+        void appContext.interface.showCommandPalette;
+        return sortedCommands.map((cmd) => {
             const shortcutId = PALETTE_TO_SHORTCUT_ID[cmd.id] ?? cmd.id;
             return { ...cmd, shortcut: shortcutManager.getShortcutDisplay(shortcutId) };
-        }),
-    );
+        });
+    });
 </script>
 
 <CommandPalette
