@@ -25,7 +25,14 @@ export async function loadBookmarks() {
     bookmarkStore.isLoaded = true;
 }
 
-export async function addBookmark(path: string, title: string, tags: string[] = []) {
+export async function addBookmark(
+    path: string,
+    title: string,
+    tags: string[] = [],
+): Promise<{ bookmark: Bookmark; isNew: boolean }> {
+    const existing = bookmarkStore.bookmarks.find((b) => b.path === path);
+    if (existing) return { bookmark: existing, isNew: false };
+
     const bookmark: Bookmark = {
         id: crypto.randomUUID(),
         path,
@@ -35,14 +42,14 @@ export async function addBookmark(path: string, title: string, tags: string[] = 
         last_accessed: null,
     };
 
-    await callBackend('add_bookmark', { bookmark }, 'Bookmark:Add', undefined, { report: true });
     bookmarkStore.bookmarks.unshift(bookmark);
-    return bookmark;
+    await callBackend('add_bookmark', { bookmark }, 'Bookmark:Add', undefined, { report: true });
+    return { bookmark, isNew: true };
 }
 
 export async function deleteBookmark(id: string) {
-    await callBackend('delete_bookmark', { id }, 'Bookmark:Remove', undefined, { report: true });
     bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => b.id !== id);
+    await callBackend('delete_bookmark', { id }, 'Bookmark:Remove', undefined, { report: true });
 }
 
 export async function updateBookmark(id: string, title: string, tags: string[], path?: string) {

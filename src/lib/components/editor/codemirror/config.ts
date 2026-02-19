@@ -59,9 +59,13 @@ const markdownKeymap: KeyBinding[] = [
         run: () => {
             const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
             if (tab?.path) {
-                addBookmark(tab.path, tab.title).then(() =>
-                    showToast('success', `Added "${tab.title}" to bookmarks`),
-                );
+                addBookmark(tab.path, tab.title).then(({ isNew }) => {
+                    if (isNew) {
+                        showToast('success', `Added "${tab.title}" to bookmarks`);
+                    } else {
+                        showToast('info', `"${tab.title}" is already bookmarked`);
+                    }
+                });
             } else {
                 showToast('warning', 'Save the file before bookmarking');
             }
