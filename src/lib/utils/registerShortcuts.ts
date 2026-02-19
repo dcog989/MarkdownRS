@@ -8,8 +8,12 @@ import { addTab, reopenLastClosed } from '$lib/stores/editorStore.svelte';
 import {
     openFind,
     openReplace,
+    toggleAbout,
+    toggleBookmarks,
+    toggleCommandPalette,
     toggleRecentFiles,
     toggleShortcuts,
+    toggleTransform,
 } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { dispatchRedo, dispatchUndo } from '$lib/utils/editorCommands';
@@ -300,6 +304,99 @@ export function registerAllShortcuts() {
                     appContext.app.activeTabId = tabs[tabs.length - 1].id;
                 }
             },
+        },
+
+        // Window / UI
+        {
+            id: 'window.commandPalette',
+            command: 'window.commandPalette',
+            defaultKey: 'ctrl+shift+p',
+            description: 'Command Palette',
+            category: 'Window',
+            handler: () => {
+                toggleCommandPalette();
+            },
+        },
+        {
+            id: 'window.bookmarks',
+            command: 'window.bookmarks',
+            defaultKey: 'ctrl+shift+b',
+            description: 'Bookmarks',
+            category: 'Window',
+            handler: () => {
+                toggleBookmarks();
+            },
+        },
+        {
+            id: 'window.transform',
+            command: 'window.transform',
+            defaultKey: 'ctrl+t',
+            description: 'Text Transformations',
+            category: 'Window',
+            handler: () => {
+                toggleTransform();
+            },
+        },
+        {
+            id: 'window.about',
+            command: 'window.about',
+            defaultKey: '',
+            description: 'About',
+            category: 'Window',
+            handler: () => {
+                toggleAbout();
+            },
+        },
+
+        // Markdown formatting (handled inside CodeMirror keymap, registered here for display)
+        {
+            id: 'markdown.bold',
+            command: 'markdown.bold',
+            defaultKey: 'ctrl+b',
+            description: 'Bold',
+            category: 'Markdown',
+        },
+        {
+            id: 'markdown.italic',
+            command: 'markdown.italic',
+            defaultKey: 'ctrl+i',
+            description: 'Italic',
+            category: 'Markdown',
+        },
+        {
+            id: 'markdown.link',
+            command: 'markdown.link',
+            defaultKey: 'ctrl+k',
+            description: 'Insert Link',
+            category: 'Markdown',
+        },
+        {
+            id: 'markdown.bookmark',
+            command: 'markdown.bookmark',
+            defaultKey: 'ctrl+d',
+            description: 'Add to Bookmarks',
+            category: 'Markdown',
+        },
+        {
+            id: 'markdown.comment',
+            command: 'markdown.comment',
+            defaultKey: 'ctrl+/',
+            description: 'Toggle Comment',
+            category: 'Markdown',
+        },
+        {
+            id: 'edit.duplicateLine',
+            command: 'edit.duplicateLine',
+            defaultKey: 'ctrl+shift+d',
+            description: 'Duplicate Line/Selection',
+            category: 'Edit',
+        },
+        {
+            id: 'edit.gotoLine',
+            command: 'edit.gotoLine',
+            defaultKey: 'ctrl+g',
+            description: 'Go to Line',
+            category: 'Edit',
         },
 
         // Help

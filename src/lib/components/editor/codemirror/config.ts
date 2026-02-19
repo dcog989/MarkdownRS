@@ -1,5 +1,8 @@
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
+import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { toggleSelectionComment } from '$lib/utils/commentToggle';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 import {
@@ -13,6 +16,60 @@ import {
 import { defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { EditorView, keymap, type KeyBinding } from '@codemirror/view';
+
+// Keys from defaultKeymap that our custom bindings must override
+const FILTERED_DEFAULT_KEYS = new Set([
+    'Ctrl-i',
+    'Ctrl-I',
+    'Mod-i',
+    'Mod-I',
+    'Ctrl-d',
+    'Mod-d',
+    'Ctrl-b',
+    'Mod-b',
+]);
+
+const markdownKeymap: KeyBinding[] = [
+    {
+        key: 'Mod-b',
+        run: () => {
+            performTextTransform('bold');
+            return true;
+        },
+        preventDefault: true,
+    },
+    {
+        key: 'Mod-i',
+        run: () => {
+            performTextTransform('italic');
+            return true;
+        },
+        preventDefault: true,
+    },
+    {
+        key: 'Mod-k',
+        run: () => {
+            performTextTransform('insert-link');
+            return true;
+        },
+        preventDefault: true,
+    },
+    {
+        key: 'Mod-d',
+        run: () => {
+            const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+            if (tab?.path) {
+                addBookmark(tab.path, tab.title).then(() =>
+                    showToast('success', `Added "${tab.title}" to bookmarks`),
+                );
+            } else {
+                showToast('warning', 'Save the file before bookmarking');
+            }
+            return true;
+        },
+        preventDefault: true,
+    },
+];
 
 /**
  * Custom completion source that wraps completeAnyWord but filters out
@@ -221,10 +278,13 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
                 return true;
             },
         },
+        ...markdownKeymap,
         ...(completionKeymap as never),
         ...(historyKeymap as never),
         ...(closeBracketsKeymap as never),
-        ...(defaultKeymap.filter((binding) => binding.key !== 'Tab') as never),
+        ...(defaultKeymap.filter(
+            (binding) => binding.key !== 'Tab' && !FILTERED_DEFAULT_KEYS.has(binding.key ?? ''),
+        ) as never),
         // Our Tab handlers come last to override defaults
         { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
     ]);

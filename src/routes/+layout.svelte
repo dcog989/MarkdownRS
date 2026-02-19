@@ -39,8 +39,9 @@
     });
 
     onMount(() => {
-        // Register all keyboard shortcuts
+        // Register all keyboard shortcuts and apply any user-customised mappings
         registerAllShortcuts();
+        shortcutManager.setCustomMappings(appContext.app.customShortcuts);
 
         const handleKeydown = (e: KeyboardEvent) => {
             const key = e.key.toLowerCase();
