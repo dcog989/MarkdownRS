@@ -590,7 +590,8 @@
 
             <button
                 type="button"
-                class="text-ui-sm hover:text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                style="color: var(--color-danger-text)"
                 disabled={!tab?.path || isPinned}
                 onclick={handleSendToRecycleBin}>
                 <Trash2 size={14} class="opacity-70" /><span>Delete to Recycle Bin</span>
