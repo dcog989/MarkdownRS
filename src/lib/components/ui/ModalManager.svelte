@@ -41,7 +41,10 @@
             return a.label.localeCompare(b.label);
         });
 
+    let shortcutsRegistered = $state(false);
+
     const commands = $derived.by(() => {
+        void shortcutsRegistered; // reactive dependency - triggers recompute after shortcuts registered
         return sortedCommands.map((cmd) => ({
             ...cmd,
             shortcut: shortcutManager.getShortcutDisplay(cmd.id),
@@ -117,6 +120,7 @@
 
     onMount(() => {
         registerShortcuts();
+        shortcutsRegistered = true;
         return () => {
             shortcutManager.clear();
         };
