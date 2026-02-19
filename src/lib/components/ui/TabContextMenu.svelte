@@ -20,6 +20,7 @@
     } from '$lib/stores/editorStore.svelte';
     import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
+    import { shortcutManager } from '$lib/utils/shortcuts';
     import { callBackend } from '$lib/utils/backend';
     import {
         requestCloseTab,
@@ -291,6 +292,10 @@
         }
         return title;
     }
+
+    function sc(commandId: string): string {
+        return shortcutManager.getShortcutDisplay(commandId);
+    }
 </script>
 
 <ContextMenu {x} {y} {onClose}>
@@ -300,13 +305,19 @@
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleSave}>
-                <Save size={14} class="opacity-70" /><span>Save</span>
+                <Save size={14} class="opacity-70" /><span class="flex-1">Save</span
+                >{#if sc('file.save')}<span class="ml-auto text-xs opacity-40"
+                        >{sc('file.save')}</span
+                    >{/if}
             </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleSaveAs}>
-                <FileDown size={14} class="opacity-70" /><span>Save As...</span>
+                <FileDown size={14} class="opacity-70" /><span class="flex-1">Save As...</span
+                >{#if sc('file.saveAs')}<span class="ml-auto text-xs opacity-40"
+                        >{sc('file.saveAs')}</span
+                    >{/if}
             </button>
 
             <div class="bg-border-main my-1 h-px"></div>
@@ -328,9 +339,13 @@
                 disabled={!tab?.path}
                 onclick={handleToggleBookmark}>
                 {#if isBookmarked}
-                    <BookmarkX size={14} class="opacity-70" /><span>Remove Bookmark</span>
+                    <BookmarkX size={14} class="opacity-70" /><span class="flex-1"
+                        >Remove Bookmark</span>
                 {:else}
-                    <Bookmark size={14} class="opacity-70" /><span>Add Bookmark</span>
+                    <Bookmark size={14} class="opacity-70" /><span class="flex-1">Add Bookmark</span
+                    >{#if sc('markdown.bookmark')}<span class="ml-auto text-xs opacity-40"
+                            >{sc('markdown.bookmark')}</span
+                        >{/if}
                 {/if}
             </button>
 
@@ -442,7 +457,10 @@
                     requestCloseTab(tabId);
                     onClose();
                 }}>
-                <X size={14} class="opacity-70" /><span>Close</span>
+                <X size={14} class="opacity-70" /><span class="flex-1">Close</span
+                >{#if sc('file.closeTab')}<span class="ml-auto text-xs opacity-40"
+                        >{sc('file.closeTab')}</span
+                    >{/if}
             </button>
         </div>
 
@@ -512,7 +530,11 @@
                     triggerReopenClosedTab(0);
                     onClose();
                 }}>
-                <History size={14} class="opacity-70" /><span>Reopen Last Closed</span>
+                <History size={14} class="opacity-70" /><span class="flex-1"
+                    >Reopen Last Closed</span
+                >{#if sc('edit.reopenClosedTab')}<span class="ml-auto text-xs opacity-40"
+                        >{sc('edit.reopenClosedTab')}</span
+                    >{/if}
             </button>
         </div>
 
