@@ -257,9 +257,16 @@ impl Database {
         for tab in tabs {
             let mut final_content = tab.content.clone();
 
+            // Treat empty string as None - preserve existing content in database
+            if let Some(ref content) = final_content
+                && content.is_empty()
+            {
+                final_content = None;
+            }
+
             if final_content.is_none()
                 && let Ok(existing) = tx.query_row(
-                    "SELECT content FROM closed_tabs WHERE id = ?1",
+                    "SELECT content FROM tabs WHERE id = ?1",
                     params![&tab.id],
                     |row| row.get::<_, Option<String>>(0),
                 )
@@ -285,11 +292,11 @@ impl Database {
             ])?;
 
             if insert_result == 0 {
-                if tab.content.is_some() {
+                if final_content.is_some() {
                     update_full_stmt.execute(params![
                         &tab.id,
                         &tab.title,
-                        &tab.content,
+                        &final_content,
                         if tab.is_dirty { 1 } else { 0 },
                         &tab.path,
                         tab.scroll_percentage,

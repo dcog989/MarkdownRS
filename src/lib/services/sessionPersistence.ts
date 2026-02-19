@@ -10,6 +10,7 @@ import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
+import { hashContent } from '$lib/utils/contentHash';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
@@ -197,8 +198,9 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 
             const storeTab = editorStore.tabs.find((x) => x.id === tab.id);
             if (storeTab) {
-                storeTab.lastSavedContent = normalizeLineEndings(res.content);
-                storeTab.isDirty = storeTab.content !== storeTab.lastSavedContent;
+                const normalizedContent = normalizeLineEndings(res.content);
+                storeTab.lastSavedHash = hashContent(normalizedContent);
+                storeTab.isDirty = hashContent(storeTab.content) !== storeTab.lastSavedHash;
             }
         } catch (err) {
             AppError.handle('File:Read', err, {
@@ -305,13 +307,18 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         }
 
         let normalizedContent = '';
-        let lastSavedContent = '';
+        let lastSavedHash = '';
 
-        if (data && data.content !== null && data.content !== undefined) {
+        if (data && data.content !== null && data.content !== undefined && data.content !== '') {
             normalizedContent = normalizeLineEndings(data.content);
+            logger.session.debug('ContentLoadedFromDb', {
+                tabId,
+                contentLength: normalizedContent.length,
+                path: tab.path,
+            });
 
             if (!tab.path) {
-                lastSavedContent = '';
+                lastSavedHash = '';
             } else if (tab.isDirty) {
                 try {
                     const fileData = await callBackend(
@@ -320,19 +327,26 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                         'File:Read',
                     );
                     if (fileData && fileData.content) {
-                        lastSavedContent = normalizeLineEndings(fileData.content);
+                        lastSavedHash = hashContent(normalizeLineEndings(fileData.content));
                     } else {
-                        lastSavedContent = normalizedContent;
+                        lastSavedHash = hashContent(normalizedContent);
                     }
                 } catch {
-                    lastSavedContent = normalizedContent;
+                    lastSavedHash = hashContent(normalizedContent);
                 }
             } else {
-                lastSavedContent = normalizedContent;
+                lastSavedHash = hashContent(normalizedContent);
             }
         } else {
+            // No content in database - this shouldn't happen for saved files
+            logger.session.warn('NoContentInDatabase', {
+                tabId,
+                path: tab.path,
+                hasData: !!data,
+                contentLength: data?.content?.length ?? 0,
+            });
             normalizedContent = '';
-            lastSavedContent = '';
+            lastSavedHash = '';
         }
 
         const sizeBytes = new TextEncoder().encode(normalizedContent).length;
@@ -347,13 +361,20 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             editorStore.tabs[currentIndex] = {
                 ...currentTab,
                 content: normalizedContent,
-                lastSavedContent,
+                lastSavedHash,
                 sizeBytes,
                 wordCount,
                 lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
                 contentLoaded: true,
-                isDirty: tab.isDirty && normalizedContent !== lastSavedContent,
+                isDirty: tab.isDirty && hashContent(normalizedContent) !== lastSavedHash,
             };
+
+            logger.session.info('TabContentLoaded', {
+                tabId,
+                sizeBytes,
+                wordCount,
+                path: tab.path,
+            });
         }
 
         setTabLoadState(tabId, TabLoadState.LOADED);
@@ -391,7 +412,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     const content = normalizeLineEndings(rawContent);
     const timestamp = t.modified || t.created || '';
 
-    const lastSavedContent = !t.path ? '' : content;
+    const lastSavedHash = !t.path ? '' : hashContent(content);
     const sizeBytes = new TextEncoder().encode(content).length;
 
     const lineArray = content.split('\n');
@@ -409,7 +430,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         title: t.title,
         originalTitle: t.title,
         content,
-        lastSavedContent,
+        lastSavedHash,
         isDirty: t.is_dirty,
         path: t.path,
         scrollPercentage: t.scroll_percentage,

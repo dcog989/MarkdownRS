@@ -38,6 +38,7 @@ import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date'
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { clearRendererCache } from '$lib/utils/markdown';
+import { hashContent, hasContentChanged } from '$lib/utils/contentHash';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 
@@ -45,7 +46,7 @@ export type EditorTab = {
     id: string;
     title: string;
     content: string;
-    lastSavedContent: string;
+    lastSavedHash: string;
     isDirty: boolean;
     path: string | null;
     scrollPercentage: number;
@@ -261,7 +262,7 @@ export function addTab(title: string = '', content: string = '') {
         title: finalTitle,
         originalTitle: finalTitle,
         content: normalizedContent,
-        lastSavedContent: normalizedContent,
+        lastSavedHash: hashContent(normalizedContent),
         isDirty: false,
         path: null,
         scrollPercentage: 0,
@@ -455,7 +456,7 @@ export function updateContent(id: string, content: string) {
         ...oldTab,
         title: newTitle,
         content,
-        isDirty: content !== oldTab.lastSavedContent,
+        isDirty: hasContentChanged(content, oldTab.lastSavedHash),
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         sizeBytes,
@@ -530,7 +531,7 @@ export function getHistoryState(id: string): unknown | undefined {
 
 export function markAsSaved(id: string) {
     updateTab(id, (tab) => ({
-        lastSavedContent: tab.content,
+        lastSavedHash: hashContent(tab.content),
         isDirty: false,
     }));
 }
@@ -589,7 +590,7 @@ export function reloadTabContent(
 
     updateTab(id, (tab) => ({
         content,
-        lastSavedContent: content,
+        lastSavedHash: hashContent(content),
         isDirty: false,
         lineEnding,
         encoding,

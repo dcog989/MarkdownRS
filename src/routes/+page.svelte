@@ -24,6 +24,7 @@
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { CONFIG } from '$lib/utils/config';
+    import { clearAllRendererCaches } from '$lib/utils/markdown';
     import { logger } from '$lib/utils/logger';
     import { initSettings, saveSettings } from '$lib/utils/settings';
     import { onDestroy, onMount } from 'svelte';
@@ -56,6 +57,12 @@
                 to: currentTabId,
                 title: tab?.title || 'unknown',
             });
+
+            // Clear renderer caches to prevent memory accumulation
+            // Only the active tab needs its renderer in memory
+            clearAllRendererCaches();
+            logger.editor.debug('RendererCachesCleared', { reason: 'tab_switch' });
+
             previousTabId = currentTabId;
         }
 

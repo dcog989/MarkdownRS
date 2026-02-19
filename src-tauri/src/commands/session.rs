@@ -17,11 +17,8 @@ pub async fn save_session(
 
     let mut tabs_with_content = 0;
     for tab in &mut active_tabs {
-        if let Some(content) = &tab.content {
+        if let Some(_content) = &tab.content {
             tabs_with_content += 1;
-            log::debug!("  Tab '{}' has content: {} bytes", tab.title, content.len());
-        } else {
-            log::debug!("  Tab '{}' has no content (metadata only)", tab.title);
         }
         tab.normalize_newlines();
     }
