@@ -1,7 +1,7 @@
 {
   "name": "markdown-rs",
   "description": "The only Markdown editor you need.",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,6 +28,7 @@
     "tauri": "tauri",
     "ui:build": "bunx --bun vite build",
     "ui:dev": "bunx --bun vite dev",
+    "update": "bun update && bun run crates",
     "version": "bun scripts/version.js"
   },
   "dependencies": {
