@@ -1,4 +1,4 @@
-# MarkdownRS Project Guidelines
+# MarkdownRS Guidelines
 
 This is a Markdown editor focused on performance, minimal resource usage, and a clean UI for technical and general users.
 
