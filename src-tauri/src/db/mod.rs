@@ -165,8 +165,8 @@ impl Database {
         });
 
         let pool = r2d2::Pool::builder()
-            .max_size(5)
-            .min_idle(Some(2))
+            .max_size(3)
+            .min_idle(Some(1))
             .connection_timeout(std::time::Duration::from_secs(5))
             .build(manager)?;
 
