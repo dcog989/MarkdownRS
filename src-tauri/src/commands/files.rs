@@ -175,12 +175,6 @@ pub async fn resolve_path_relative(
 
     let cleaned = path_buf.clean();
 
-    // Async exists check using metadata
-    if fs::metadata(&cleaned).await.is_err() {
-        log::debug!("Resolved path does not exist: {:?}", cleaned);
-        return Err("File does not exist".to_string());
-    }
-
     // Canonicalize the path to resolve any symlinks and get absolute path
     let canonicalized = cleaned.canonicalize().map_err(|e| {
         let path_str = cleaned.to_string_lossy();
