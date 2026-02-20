@@ -290,18 +290,12 @@ pub async fn init_spellchecker(
     science_dictionaries: Option<bool>,
 ) -> Result<(), String> {
     use crate::state::SpellcheckStatus;
-    // Check if already initializing or ready
     {
-        let status = state.spellcheck_status.lock().await;
+        let mut status = state.spellcheck_status.lock().await;
         if *status == SpellcheckStatus::Loading || *status == SpellcheckStatus::Ready {
             log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready");
             return Ok(());
         }
-    }
-
-    // Mark as loading
-    {
-        let mut status = state.spellcheck_status.lock().await;
         *status = SpellcheckStatus::Loading;
     }
 
