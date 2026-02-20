@@ -301,9 +301,9 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
 
             let diskContent = contentToSave;
             if (targetLineEnding === 'CRLF') {
-                diskContent = diskContent.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+                diskContent = contentToSave.replace(/\n/g, '\r\n');
             } else {
-                diskContent = diskContent.replace(/\r\n/g, '\n');
+                diskContent = contentToSave.replace(/\r\n/g, '\n');
             }
 
             fileWatcher.setWriteLock(sanitizedPath, true);
