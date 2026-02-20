@@ -492,7 +492,7 @@ export function updateContent(id: string, content: string) {
 
     // FAST metrics - calculated instantly on every keystroke
     const sizeBytes = new TextEncoder().encode(content).length;
-    const lineCount = (content.match(/\n/g) || []).length + 1;
+    const lineCount = content.split('\n').length;
 
     // DEBOUNCED metrics - expensive, calculated after 500ms delay
     scheduleWordCountUpdate(id, content, sizeBytes);
