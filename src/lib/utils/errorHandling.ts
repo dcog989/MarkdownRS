@@ -109,7 +109,7 @@ export class AppError extends Error {
             logToDisk = true,
         } = options;
 
-        this.logError(logToDisk);
+        this.logError(logToDisk).catch(console.error);
 
         if (shouldShowToast) {
             const message = userMessage || this.getUserFriendlyMessage();
