@@ -53,15 +53,11 @@ export function calculateCursorMetrics(
     cursorOffset: number,
     line: { number: number; from: number; text: string },
 ): CursorMetrics {
-    let currentWordIndex = 0;
-
-    if (content.length < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
-        const textUpToCursor = content.substring(0, cursorOffset);
-        currentWordIndex = countWords(textUpToCursor);
-    } else {
-        const textUpToCursor = content.substring(0, cursorOffset);
-        currentWordIndex = fastCountWords(textUpToCursor);
-    }
+    const textUpToCursor = content.substring(0, cursorOffset);
+    const currentWordIndex =
+        content.length < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            ? countWords(textUpToCursor)
+            : fastCountWords(textUpToCursor);
 
     return {
         cursorOffset,

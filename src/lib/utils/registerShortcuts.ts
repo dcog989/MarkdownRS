@@ -35,7 +35,8 @@ export function registerAllShortcuts() {
             description: 'New File',
             category: 'File',
             handler: () => {
-                addTab('', '');
+                const id = addTab('', '');
+                appContext.app.activeTabId = id;
             },
         },
         {

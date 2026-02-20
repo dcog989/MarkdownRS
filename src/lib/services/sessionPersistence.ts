@@ -166,17 +166,10 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
     }
 
     // First check if the file exists
-    let fileExists = false;
     try {
         await callBackend('get_file_metadata', { path: tab.path }, 'File:Metadata');
-        fileExists = true;
     } catch {
         // File doesn't exist, mark as such and skip further operations
-        setFileCheckStatus(tab.id, true, true);
-        return;
-    }
-
-    if (!fileExists) {
         setFileCheckStatus(tab.id, true, true);
         return;
     }

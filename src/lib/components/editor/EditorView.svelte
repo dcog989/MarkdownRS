@@ -84,6 +84,7 @@
         onHistoryUpdate,
         customKeymap = [],
         eventHandlers,
+        // eslint-disable-next-line no-useless-assignment
         cmView = $bindable(),
     } = $props<{
         tabId: string;
