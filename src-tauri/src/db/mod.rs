@@ -266,7 +266,7 @@ impl Database {
 
             if final_content.is_none()
                 && let Ok(existing) = tx.query_row(
-                    "SELECT content FROM tabs WHERE id = ?1",
+                    "SELECT content FROM closed_tabs WHERE id = ?1",
                     params![&tab.id],
                     |row| row.get::<_, Option<String>>(0),
                 )
@@ -380,7 +380,7 @@ impl Database {
 
             if final_content.is_none()
                 && let Ok(existing) = tx.query_row(
-                    "SELECT content FROM tabs WHERE id = ?1",
+                    "SELECT content FROM closed_tabs WHERE id = ?1",
                     params![&tab.id],
                     |row| row.get::<_, Option<String>>(0),
                 )
