@@ -191,10 +191,10 @@ pub async fn get_theme_css(
 
     {
         let cache = THEME_CACHE.lock().await;
-        if let Some(cached) = cache.get(&theme_name) {
-            if cached.mtime == file_mtime {
-                return Ok(cached.css.clone());
-            }
+        if let Some(cached) = cache.get(&theme_name)
+            && cached.mtime == file_mtime
+        {
+            return Ok(cached.css.clone());
         }
     }
 
