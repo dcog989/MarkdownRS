@@ -380,18 +380,20 @@ export function closeTab(id: string) {
     if (tab.path || (tab.content && tab.content.trim().length > 0)) {
         const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
 
-        // Preserve history state in the closed tab record
         const historyState = historyStateCache.get(id);
 
-        const filteredHistory = editorStore.closedTabsHistory.filter(
-            (entry) => entry.tab.id !== id && (tab.path === null || entry.tab.path !== tab.path),
+        const existingIndex = editorStore.closedTabsHistory.findIndex(
+            (entry) => entry.tab.id === tab.id,
         );
+        if (existingIndex !== -1) {
+            editorStore.closedTabsHistory.splice(existingIndex, 1);
+        }
 
         const closedTab = { ...tab };
 
         editorStore.closedTabsHistory = [
             { tab: closedTab, index, historyState },
-            ...filteredHistory,
+            ...editorStore.closedTabsHistory,
         ].slice(0, limit);
     }
 
