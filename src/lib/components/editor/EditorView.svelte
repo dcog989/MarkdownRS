@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { AppEditorView } from '../../../global';
     import {
         createDoubleClickHandler,
         createWrapExtension,
@@ -64,6 +63,7 @@
         type KeyBinding,
     } from '@codemirror/view';
     import { onDestroy, onMount, untrack } from 'svelte';
+    import type { AppEditorView } from '../../../global';
 
     const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
         fallback: true,
@@ -127,7 +127,8 @@
     let filePathComp = new Compartment();
 
     let contentUpdateTimer: number | null = null,
-        metricsUpdateTimer: number | null = null;
+        metricsUpdateTimer: number | null = null,
+        cursorUpdateTimer: number | null = null;
 
     let autocompletionConfig = $derived(getAutocompletionConfig());
 
@@ -300,8 +301,12 @@
                 }
                 if (update.selectionSet) {
                     if (onSelectionChange) {
-                        const sel = update.state.selection.main;
-                        onSelectionChange(sel.anchor, sel.head);
+                        if (cursorUpdateTimer) clearTimeout(cursorUpdateTimer);
+                        cursorUpdateTimer = window.setTimeout(() => {
+                            cursorUpdateTimer = null;
+                            const sel = update.view.state.selection.main;
+                            onSelectionChange(sel.anchor, sel.head);
+                        }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
                     }
                 }
                 if (update.docChanged || update.selectionSet) {
@@ -608,6 +613,53 @@
 
         viewInstance.scrollDOM.addEventListener('scroll', throttleScroll, { passive: true });
 
+        // CM's built-in selection-drag autoscroll runs at 50ms/8px � far too slow.
+        // Intercept mousemove with button held to drive faster scroll.
+        let selScrollRAF: number | null = null;
+        let selScrollVel = 0;
+
+        const handleSelMouseMove = (e: MouseEvent) => {
+            if (e.buttons !== 1) {
+                selScrollVel = 0;
+                return;
+            }
+            const scroller = viewInstance.scrollDOM;
+            const rect = scroller.getBoundingClientRect();
+            const ZONE = 60;
+            const MAX = 32;
+            const dy = e.clientY;
+            if (dy < rect.top + ZONE)
+                selScrollVel = -MAX * Math.pow((rect.top + ZONE - dy) / ZONE, 2);
+            else if (dy > rect.bottom - ZONE)
+                selScrollVel = MAX * Math.pow((dy - (rect.bottom - ZONE)) / ZONE, 2);
+            else selScrollVel = 0;
+
+            if (selScrollVel !== 0 && selScrollRAF === null) {
+                const tick = () => {
+                    if (selScrollVel !== 0) {
+                        viewInstance.scrollDOM.scrollTop += selScrollVel;
+                        selScrollRAF = requestAnimationFrame(tick);
+                    } else {
+                        selScrollRAF = null;
+                    }
+                };
+                selScrollRAF = requestAnimationFrame(tick);
+            } else if (selScrollVel === 0 && selScrollRAF !== null) {
+                cancelAnimationFrame(selScrollRAF);
+                selScrollRAF = null;
+            }
+        };
+        const stopSelScroll = () => {
+            selScrollVel = 0;
+            if (selScrollRAF !== null) {
+                cancelAnimationFrame(selScrollRAF);
+                selScrollRAF = null;
+            }
+        };
+
+        document.addEventListener('mousemove', handleSelMouseMove);
+        document.addEventListener('mouseup', stopSelScroll);
+
         if (searchState.findText) {
             updateSearchEditor(viewInstance);
         }
@@ -617,10 +669,14 @@
         return () => {
             if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
             if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
+            if (cursorUpdateTimer) clearTimeout(cursorUpdateTimer);
             window.removeEventListener('keydown', handleModifierKey);
             window.removeEventListener('keyup', handleModifierKey);
             window.removeEventListener('blur', clearModifier);
             view?.scrollDOM.removeEventListener('scroll', throttleScroll);
+            document.removeEventListener('mousemove', handleSelMouseMove);
+            document.removeEventListener('mouseup', stopSelScroll);
+            stopSelScroll();
 
             const appWin = window;
             if (appWin._activeEditorView === view) {

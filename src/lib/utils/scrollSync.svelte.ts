@@ -263,25 +263,31 @@ export class ScrollSyncManager {
         }
     }
 
-    private syncPreviewThrottled = throttle(() => {
-        // Use requestAnimationFrame to batch DOM writes
-        if (!this.syncPreviewRAF) {
-            this.syncPreviewRAF = requestAnimationFrame(() => {
-                this.syncPreviewRAF = null;
-                this.syncPreview();
-            });
-        }
-    }, CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS);
+    private syncPreviewThrottled = throttle(
+        () => {
+            if (!this.syncPreviewRAF) {
+                this.syncPreviewRAF = requestAnimationFrame(() => {
+                    this.syncPreviewRAF = null;
+                    this.syncPreview();
+                });
+            }
+        },
+        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
+        { leading: true, trailing: true },
+    );
 
-    private syncEditorThrottled = throttle(() => {
-        // Use requestAnimationFrame to batch DOM writes
-        if (!this.syncEditorRAF) {
-            this.syncEditorRAF = requestAnimationFrame(() => {
-                this.syncEditorRAF = null;
-                this.syncEditor();
-            });
-        }
-    }, CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS);
+    private syncEditorThrottled = throttle(
+        () => {
+            if (!this.syncEditorRAF) {
+                this.syncEditorRAF = requestAnimationFrame(() => {
+                    this.syncEditorRAF = null;
+                    this.syncEditor();
+                });
+            }
+        },
+        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
+        { leading: true, trailing: true },
+    );
 
     private syncPreviewRAF: number | null = null;
     private syncEditorRAF: number | null = null;
