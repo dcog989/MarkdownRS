@@ -189,8 +189,7 @@ pub async fn get_theme_css(
     Ok(css)
 }
 
-#[tauri::command]
-pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<String>, String> {
     let app_dir = app_handle
         .path()
         .app_data_dir()
@@ -198,9 +197,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     let path = app_dir.join("settings.toml");
 
     match fs::try_exists(&path).await {
-        Ok(false) | Err(_) => {
-            return Ok(serde_json::json!({}));
-        },
+        Ok(false) | Err(_) => return Ok(None),
         Ok(true) => {},
     }
 
@@ -208,7 +205,15 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         .await
         .map_err(|e| handle_file_error(&path.to_string_lossy(), "read settings file", e))?;
 
-    let content = read_text_with_bom_detection(&raw_bytes);
+    Ok(Some(read_text_with_bom_detection(&raw_bytes)))
+}
+
+#[tauri::command]
+pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let content = match read_settings_file(&app_handle).await? {
+        Some(c) => c,
+        None => return Ok(serde_json::json!({})),
+    };
 
     let toml_val: toml::Value =
         toml::from_str(&content).map_err(|e| handle_io_error("parse settings TOML", e))?;
@@ -218,21 +223,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
 
 /// Load raw TOML settings as toml::Value to extract specific fields without losing data
 async fn load_settings_toml(app_handle: &tauri::AppHandle) -> Result<toml::Value, String> {
-    let app_dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e| handle_io_error("get app data directory for load_settings", e))?;
-    let path = app_dir.join("settings.toml");
-
-    if !fs::try_exists(&path).await.unwrap_or(false) {
-        return Ok(toml::Value::Table(toml::map::Map::new()));
-    }
-
-    let raw_bytes = fs::read(&path)
-        .await
-        .map_err(|e| handle_file_error(&path.to_string_lossy(), "read settings file", e))?;
-
-    let content = read_text_with_bom_detection(&raw_bytes);
+    let content = match read_settings_file(app_handle).await? {
+        Some(c) => c,
+        None => return Ok(toml::Value::Table(toml::map::Map::new())),
+    };
 
     toml::from_str(&content).map_err(|e| handle_io_error("parse settings TOML", e))
 }
