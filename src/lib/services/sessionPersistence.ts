@@ -299,6 +299,12 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
             return;
         }
 
+        const currentActiveId = appState.activeTabId;
+        if (currentActiveId !== tabId) {
+            logger.session.debug('TabSwitchedDuringLoad', { tabId, currentActiveId });
+            return;
+        }
+
         let normalizedContent = '';
         let lastSavedHash = '';
 
