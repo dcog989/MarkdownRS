@@ -269,12 +269,14 @@
         document.addEventListener('keydown', handleDocumentKeydown, { capture: true });
         document.addEventListener('keydown', handleTabNavigation, { capture: true });
 
-        autoSaveInterval = window.setInterval(() => {
-            if (appContext.editor.sessionDirty) {
-                persistSession();
-            }
-            saveSettings();
-        }, CONFIG.SESSION.AUTO_SAVE_INTERVAL_MS);
+        if (!initError) {
+            autoSaveInterval = window.setInterval(() => {
+                if (appContext.editor.sessionDirty) {
+                    persistSession();
+                }
+                saveSettings();
+            }, CONFIG.SESSION.AUTO_SAVE_INTERVAL_MS);
+        }
 
         const handleBlur = () => {
             persistSession();
