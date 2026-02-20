@@ -82,6 +82,7 @@ class TextProcessor {
         this.strategies.set('unindent-lines', (t) =>
             ClientLogic.unindentLines(t, appContext.app.defaultIndent),
         );
+        this.strategies.set('smart-paragraphs', ClientLogic.smartParagraphs);
     }
 
     /**

@@ -84,7 +84,8 @@ export type OperationId =
     | 'wrap-quotes'
     | 'add-line-numbers'
     | 'indent-lines'
-    | 'unindent-lines';
+    | 'unindent-lines'
+    | 'smart-paragraphs';
 
 /**
  * Operation definition with metadata and backend mapping
@@ -524,6 +525,14 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
         id: 'unindent-lines',
         label: 'Unindent Lines',
         description: 'Unindent each line by default spacing',
+        icon: TextAlignStart,
+        category: 'text',
+        execution: 'client',
+    },
+    'smart-paragraphs': {
+        id: 'smart-paragraphs',
+        label: 'Smart Paragraphs',
+        description: 'Split large blocks into paragraphs',
         icon: TextAlignStart,
         category: 'text',
         execution: 'client',

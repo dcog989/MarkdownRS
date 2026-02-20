@@ -117,6 +117,7 @@
     const transformOps: MenuOption[] = [
         { id: 'join-lines', label: 'Join Lines' },
         { id: 'split-sentences', label: 'Sentences to New Lines' },
+        { id: 'smart-paragraphs', label: 'Smart Paragraphs' },
         { divider: true },
         { id: 'remove-duplicates', label: 'Remove Duplicates' },
         { id: 'remove-unique', label: 'Remove Unique' },
