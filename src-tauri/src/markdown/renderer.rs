@@ -22,12 +22,14 @@ struct CacheEntry {
 /// Thread-safe LRU-style cache for line maps
 /// - Limits entries to prevent unbounded memory growth
 /// - Evicts entries older than CACHE_MAX_AGE
-static LINE_MAP_CACHE: LazyLock<Arc<DashMap<u64, CacheEntry>>> =
+static LINE_MAP_CACHE: LazyLock<Arc<DashMap<(u64, MarkdownFlavor), CacheEntry>>> =
     LazyLock::new(|| Arc::new(DashMap::new()));
 
-/// Computes a fast hash of content for cache key
+/// Computes a collision-resistant hash of content for cache key.
+/// Includes content length to reduce collisions between short strings.
 fn compute_content_hash(content: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
+    content.len().hash(&mut hasher);
     content.hash(&mut hasher);
     hasher.finish()
 }
@@ -40,7 +42,7 @@ fn prune_cache_if_needed() {
 
     // Collect keys to remove (entries older than max age or excess entries)
     let now = Instant::now();
-    let mut to_remove: Vec<u64> = LINE_MAP_CACHE
+    let mut to_remove: Vec<(u64, MarkdownFlavor)> = LINE_MAP_CACHE
         .iter()
         .filter(|entry| now.duration_since(entry.last_accessed) > CACHE_MAX_AGE)
         .map(|entry| *entry.key())
@@ -65,13 +67,13 @@ fn prune_cache_if_needed() {
     }
 }
 
-/// Gets or builds the line map, using cache if content hasn't changed
-fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
-    let current_hash = compute_content_hash(content);
+/// Gets or builds the line map, using cache if content and flavor haven't changed
+fn get_or_build_line_map(content: &str, flavor: MarkdownFlavor) -> HashMap<usize, usize> {
+    let cache_key = (compute_content_hash(content), flavor);
     let now = Instant::now();
 
     // Check cache and update access time if found
-    if let Some(mut entry) = LINE_MAP_CACHE.get_mut(&current_hash) {
+    if let Some(mut entry) = LINE_MAP_CACHE.get_mut(&cache_key) {
         entry.last_accessed = now;
         return entry.line_map.clone();
     }
@@ -84,7 +86,7 @@ fn get_or_build_line_map(content: &str) -> HashMap<usize, usize> {
 
     // Store in cache
     LINE_MAP_CACHE.insert(
-        current_hash,
+        cache_key,
         CacheEntry {
             line_map: line_map.clone(),
             last_accessed: now,
@@ -134,7 +136,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
         .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
     let html_with_links = linkify_file_paths(&html);
-    let line_map = get_or_build_line_map(content);
+    let line_map = get_or_build_line_map(content, options.flavor);
 
     // Single-pass metrics calculation
     let (line_count, word_count, char_count, widest_column) = calculate_text_metrics(content);

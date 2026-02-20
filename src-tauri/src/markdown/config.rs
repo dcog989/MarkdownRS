@@ -6,7 +6,17 @@ pub const DEFAULT_LIST_INDENT: usize = 2;
 pub const DEFAULT_MAX_BLANK_LINES: usize = 2;
 
 /// Markdown flavor specification
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Default
+)]
 #[serde(rename_all = "lowercase")]
 pub enum MarkdownFlavor {
     /// Pure CommonMark (no extensions)
