@@ -375,7 +375,6 @@
         <div
             class="relative z-0 flex flex-1 overflow-hidden outline-none"
             bind:this={mainContainer}>
-            <!-- Removed #key block to allow Editor to reuse instance -->
             {#if appContext.app.activeTabId}
                 <div
                     class="flex h-full w-full flex-row"
@@ -384,7 +383,9 @@
                         style="flex: {showPreview
                             ? `0 0 ${appContext.app.splitPercentage * 100}%`
                             : '1 1 100%'}; height: 100%; overflow: hidden;">
-                        <Editor tabId={appContext.app.activeTabId} />
+                        {#key appContext.app.activeTabId}
+                            <Editor tabId={appContext.app.activeTabId} />
+                        {/key}
                     </div>
 
                     {#if showPreview}
