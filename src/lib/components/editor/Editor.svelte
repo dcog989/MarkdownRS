@@ -9,6 +9,7 @@
         editorStore,
         getHistoryState,
         getLineChangeTracker,
+        getTransientState,
         updateContent,
         updateCursor,
         updateHistoryState,
@@ -221,7 +222,7 @@
         {tabId}
         {initialContent}
         {isMarkdown}
-        initialScrollTop={activeTab?.scrollTop || 0}
+        initialScrollTop={activeTab ? (getTransientState(activeTab.id)?.scrollTop ?? 0) : 0}
         {initialSelection}
         {initialHistoryState}
         {lineChangeTracker}

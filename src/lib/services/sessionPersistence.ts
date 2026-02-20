@@ -2,9 +2,12 @@ import { appState } from '$lib/stores/appState.svelte';
 import {
     addTab,
     editorStore,
+    getTransientState,
+    initTransientState,
     markTabPersisted,
     setFileCheckStatus,
     setLineChangeTracker,
+    updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -73,8 +76,8 @@ class SessionPersistenceManager {
             // 1. Map Active Tabs
             const activeTabs = editorStore.tabs;
             const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
-                // Only send content if it changed since last save or has never been persisted
-                const needsContent = t.contentChanged || !t.isPersisted;
+                const ts = getTransientState(t.id);
+                const needsContent = ts ? ts.contentChanged || !ts.isPersisted : true;
 
                 return {
                     id: t.id,
@@ -82,13 +85,13 @@ class SessionPersistenceManager {
                     title: t.title,
                     content: needsContent ? t.content : null,
                     is_dirty: t.isDirty,
-                    scroll_percentage: t.scrollPercentage,
+                    scroll_percentage: ts?.scrollPercentage ?? 0,
                     created: t.created || null,
                     modified: t.modified || null,
                     is_pinned: t.isPinned || false,
                     custom_title: t.customTitle || null,
                     file_check_failed: t.fileCheckFailed || false,
-                    file_check_performed: t.fileCheckPerformed || false,
+                    file_check_performed: ts?.fileCheckPerformed ?? false,
                     mru_position: mruPositionMap.get(t.id) ?? null,
                     sort_index: index,
                     original_index: null,
@@ -97,11 +100,9 @@ class SessionPersistenceManager {
 
             // 2. Map Closed Tabs
             const closedTabs: RustTabState[] = editorStore.closedTabsHistory.map((entry, index) => {
-                // Closed tabs should only send content if it's loaded in memory.
-                // If loaded, we use standard dirty/persistence checks.
-                // If not loaded (lazy tab that was closed), we send null to trigger backend migration logic.
+                const ts = getTransientState(entry.tab.id);
                 const needsContent =
-                    entry.tab.contentLoaded && (entry.tab.contentChanged || !entry.tab.isPersisted);
+                    entry.tab.contentLoaded && (ts ? ts.contentChanged || !ts.isPersisted : true);
 
                 return {
                     id: entry.tab.id,
@@ -109,13 +110,13 @@ class SessionPersistenceManager {
                     title: entry.tab.title,
                     content: needsContent ? entry.tab.content : null,
                     is_dirty: entry.tab.isDirty,
-                    scroll_percentage: entry.tab.scrollPercentage,
+                    scroll_percentage: ts?.scrollPercentage ?? 0,
                     created: entry.tab.created || null,
                     modified: entry.tab.modified || null,
                     is_pinned: entry.tab.isPinned || false,
                     custom_title: entry.tab.customTitle || null,
                     file_check_failed: entry.tab.fileCheckFailed || false,
-                    file_check_performed: entry.tab.fileCheckPerformed || false,
+                    file_check_performed: ts?.fileCheckPerformed ?? false,
                     mru_position: null,
                     sort_index: index,
                     original_index: entry.index,
@@ -145,8 +146,7 @@ class SessionPersistenceManager {
             });
 
             editorStore.closedTabsHistory.forEach((entry) => {
-                entry.tab.contentChanged = false;
-                entry.tab.isPersisted = true;
+                updateTransientState(entry.tab.id, { contentChanged: false, isPersisted: true });
             });
         } catch (err) {
             editorStore.sessionDirty = true;
@@ -426,7 +426,6 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         lastSavedHash,
         isDirty: t.is_dirty,
         path: t.path,
-        scrollPercentage: t.scroll_percentage,
         sizeBytes,
         wordCount,
         lineCount,
@@ -442,14 +441,20 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
             | 'CRLF',
         encoding: 'UTF-8',
         fileCheckFailed: t.file_check_failed || false,
-        fileCheckPerformed: t.file_check_performed || false,
-        contentChanged: t.is_dirty || (!t.path && content.length > 0),
-        isPersisted: true,
         contentLoaded,
     };
 
-    // Initialize LineChangeTracker in non-reactive cache
     setLineChangeTracker(t.id, new LineChangeTracker());
+    initTransientState(
+        t.id,
+        {
+            scrollPercentage: t.scroll_percentage,
+            contentChanged: t.is_dirty || (!t.path && content.length > 0),
+            isPersisted: true,
+            fileCheckPerformed: t.file_check_performed || false,
+        },
+        sizeBytes,
+    );
 
     return editorTab;
 }

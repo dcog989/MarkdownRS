@@ -15,6 +15,7 @@
     import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
     import {
         getHistoryState,
+        getTransientState,
         updateContent,
         updateHistoryState,
     } from '$lib/stores/editorStore.svelte';
@@ -413,13 +414,16 @@
                     read: () => {},
                     write: () => {
                         if (view && view._currentTabId === tId) {
+                            const tabTs = getTransientState(tId);
+                            const savedTopLine = tabTs?.topLine ?? 0;
+                            const savedScrollTop = tabTs?.scrollTop ?? 0;
                             // Prefer line-based restoration if available and valid to handle layout shifts
-                            if (storeTab.topLine && storeTab.topLine > 1) {
+                            if (savedTopLine > 1) {
                                 try {
                                     // Use CodeMirror's scrollIntoView to scroll the specific line to top
                                     const safeLine = Math.max(
                                         1,
-                                        Math.min(storeTab.topLine, newState.doc.lines),
+                                        Math.min(savedTopLine, newState.doc.lines),
                                     );
                                     const lineInfo = newState.doc.line(safeLine);
                                     view!.dispatch({
@@ -429,10 +433,10 @@
                                     });
                                 } catch {
                                     // Fallback to pixel restoration
-                                    view!.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                                    view!.scrollDOM.scrollTop = savedScrollTop;
                                 }
                             } else {
-                                view!.scrollDOM.scrollTop = storeTab.scrollTop ?? 0;
+                                view!.scrollDOM.scrollTop = savedScrollTop;
                             }
                         }
                     },

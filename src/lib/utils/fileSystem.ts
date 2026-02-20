@@ -25,6 +25,7 @@ import {
     updateContentOnly,
     updateTabMetadataAndPath,
     updateTabTitle,
+    updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
@@ -151,12 +152,12 @@ export async function openFile(path?: string): Promise<void> {
             initialWordCount = countWords(result.content);
         }
 
+        updateTransientState(id, { fileCheckPerformed: false });
         updateTabMetadataAndPath(id, {
             path: sanitizedPath,
             isDirty: false,
             lineEnding: detectedLineEnding,
             encoding: result.encoding.toUpperCase(),
-            fileCheckPerformed: false,
             sizeBytes: new TextEncoder().encode(result.content).length,
             wordCount: initialWordCount,
             lineCount,

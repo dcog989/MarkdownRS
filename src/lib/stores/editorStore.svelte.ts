@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Editor Store - State Management Architecture
  *
  * This file uses three distinct state management patterns based on reactivity needs:
@@ -26,9 +26,9 @@
  * - Map gives us more control over lifecycle
  *
  * WHEN TO ADD NEW STATE:
- * - UI needs updates? → Add to editorStore ($state)
- * - Complex internal object with Svelte reactivity types? → Use non-reactive cache (Map)
- * - Simple debouncing/timers? → Use local Map with cleanup
+ * - UI needs updates? â†’ Add to editorStore ($state)
+ * - Complex internal object with Svelte reactivity types? â†’ Use non-reactive cache (Map)
+ * - Simple debouncing/timers? â†’ Use local Map with cleanup
  */
 
 import type { OperationId } from '$lib/config/textOperationsRegistry';
@@ -49,14 +49,11 @@ export type EditorTab = {
     lastSavedHash: string;
     isDirty: boolean;
     path: string | null;
-    scrollPercentage: number;
-    scrollTop?: number;
     sizeBytes: number;
     wordCount: number;
     lineCount: number;
     widestColumn: number;
     cursor: { anchor: number; head: number };
-    topLine?: number;
     created?: string;
     modified?: string;
     formattedTimestamp?: string;
@@ -66,14 +63,21 @@ export type EditorTab = {
     lineEnding: 'LF' | 'CRLF';
     encoding: string;
     fileCheckFailed?: boolean;
-    fileCheckPerformed?: boolean;
     preferredExtension?: 'md' | 'txt';
-    contentChanged?: boolean;
-    isPersisted?: boolean;
     contentLoaded?: boolean;
-    wordCountStrategy?: 'accurate' | 'fast';
     wordCountPending?: boolean;
     forceSync?: number;
+};
+
+/** Non-reactive transient state: scroll position, persistence flags, internal strategy. */
+export type TabTransientState = {
+    scrollPercentage: number;
+    scrollTop: number;
+    topLine: number;
+    contentChanged: boolean;
+    isPersisted: boolean;
+    wordCountStrategy: 'accurate' | 'fast';
+    fileCheckPerformed: boolean;
 };
 
 export type ClosedTab = {
@@ -108,6 +112,30 @@ const historyStateCache = new Map<string, unknown>();
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const lineChangeTrackerCache = new Map<string, LineChangeTracker>();
 
+/**
+ * NON-REACTIVE CACHE: Tab Transient State
+ *
+ * Holds scroll position, persistence flags and word-count strategy - fields that
+ * change on every keystroke or scroll event but don't drive template renders.
+ * Keeping them off the reactive tab object prevents spurious deep diffs.
+ *
+ * Lifecycle: Created in addTab() / initTransientState(), removed in closeTab()
+ */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const transientStateCache = new Map<string, TabTransientState>();
+
+function defaultTransientState(sizeBytes: number): TabTransientState {
+    return {
+        scrollPercentage: 0,
+        scrollTop: 0,
+        topLine: 1,
+        contentChanged: false,
+        isPersisted: false,
+        wordCountStrategy:
+            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast',
+        fileCheckPerformed: false,
+    };
+}
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
 }
@@ -185,15 +213,13 @@ function scheduleWordCountUpdate(tabId: string, content: string, sizeBytes: numb
         }
 
         const tab = editorStore.tabs[index];
+        const ts = transientStateCache.get(tabId);
+        const strategy =
+            ts?.wordCountStrategy ??
+            (sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast');
+        if (ts && !ts.wordCountStrategy) ts.wordCountStrategy = strategy;
 
-        // Cache strategy decision on first run or if size changed significantly
-        if (!tab.wordCountStrategy) {
-            tab.wordCountStrategy =
-                sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
-        }
-
-        const wordCount =
-            tab.wordCountStrategy === 'accurate' ? countWords(content) : fastCountWords(content);
+        const wordCount = strategy === 'accurate' ? countWords(content) : fastCountWords(content);
 
         editorStore.tabs[index] = {
             ...tab,
@@ -265,28 +291,26 @@ export function addTab(title: string = '', content: string = '') {
         lastSavedHash: hashContent(normalizedContent),
         isDirty: false,
         path: null,
-        scrollPercentage: 0,
         sizeBytes,
         wordCount,
         lineCount,
         widestColumn,
         cursor: { anchor: 0, head: 0 },
-        topLine: 1,
         created: now,
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         lineEnding: 'LF',
         encoding: 'UTF-8',
-        contentChanged: true,
-        isPersisted: false,
         contentLoaded: true,
-        wordCountStrategy:
-            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast',
         wordCountPending: false,
     };
 
-    // Initialize LineChangeTracker in non-reactive cache
+    // Initialize non-reactive caches
     lineChangeTrackerCache.set(id, new LineChangeTracker());
+    transientStateCache.set(id, {
+        ...defaultTransientState(sizeBytes),
+        contentChanged: true,
+    });
 
     initializeTabLoadState(id, true);
 
@@ -330,6 +354,23 @@ function removeLineChangeTracker(id: string): void {
     lineChangeTrackerCache.delete(id);
 }
 
+export function initTransientState(
+    id: string,
+    overrides?: Partial<TabTransientState>,
+    sizeBytes: number = 0,
+): void {
+    transientStateCache.set(id, { ...defaultTransientState(sizeBytes), ...overrides });
+}
+
+export function getTransientState(id: string): TabTransientState | undefined {
+    return transientStateCache.get(id);
+}
+
+export function updateTransientState(id: string, updates: Partial<TabTransientState>): void {
+    const existing = transientStateCache.get(id);
+    if (existing) Object.assign(existing, updates);
+}
+
 export function closeTab(id: string) {
     const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) return;
@@ -347,7 +388,6 @@ export function closeTab(id: string) {
         );
 
         const closedTab = { ...tab };
-        closedTab.isPersisted = false;
 
         editorStore.closedTabsHistory = [
             { tab: closedTab, index, historyState },
@@ -359,7 +399,7 @@ export function closeTab(id: string) {
     editorStore.mruStack = editorStore.mruStack.filter((tId) => tId !== id);
 
     historyStateCache.delete(id);
-
+    transientStateCache.delete(id);
     removeLineChangeTracker(id);
 
     editorStore.sessionDirty = true;
@@ -378,8 +418,11 @@ export function reopenClosedTab(historyIndex: number): string | null {
     const entry = editorStore.closedTabsHistory[historyIndex];
     editorStore.closedTabsHistory.splice(historyIndex, 1);
 
-    entry.tab.contentChanged = true;
-    entry.tab.isPersisted = false;
+    const restoredTs =
+        transientStateCache.get(entry.tab.id) ?? defaultTransientState(entry.tab.sizeBytes);
+    restoredTs.contentChanged = true;
+    restoredTs.isPersisted = false;
+    transientStateCache.set(entry.tab.id, restoredTs);
     if (entry.tab.contentLoaded === false) {
         entry.tab.contentLoaded = false;
     }
@@ -452,6 +495,9 @@ export function updateContent(id: string, content: string) {
     // DEBOUNCED metrics - expensive, calculated after 500ms delay
     scheduleWordCountUpdate(id, content, sizeBytes);
 
+    const ts = transientStateCache.get(id);
+    if (ts) ts.contentChanged = true;
+
     const updatedTab = {
         ...oldTab,
         title: newTitle,
@@ -463,7 +509,6 @@ export function updateContent(id: string, content: string) {
         lineCount,
         // Keep old wordCount until debounced update completes
         wordCountPending: true,
-        contentChanged: true,
     };
 
     editorStore.tabs[index] = updatedTab;
@@ -477,20 +522,19 @@ export function updateScroll(
     topLine: number | undefined,
     source: 'editor' | 'preview',
 ) {
-    const index = editorStore.tabs.findIndex((t) => t.id === id);
-    if (index === -1) return;
+    const ts = transientStateCache.get(id);
+    if (!ts) return;
 
-    const tab = editorStore.tabs[index];
     const isSignificant =
-        Math.abs(tab.scrollPercentage - percentage) > 0.001 ||
-        Math.abs((tab.scrollTop || 0) - scrollTop) > 0.5 ||
-        (topLine !== undefined && Math.abs((tab.topLine || 0) - topLine) > 0.01);
+        Math.abs(ts.scrollPercentage - percentage) > 0.001 ||
+        Math.abs(ts.scrollTop - scrollTop) > 0.5 ||
+        (topLine !== undefined && Math.abs(ts.topLine - topLine) > 0.01);
 
     if (isSignificant) {
         editorStore.lastScrollSource = source;
-        tab.scrollPercentage = percentage;
-        tab.scrollTop = scrollTop;
-        if (topLine !== undefined) tab.topLine = topLine;
+        ts.scrollPercentage = percentage;
+        ts.scrollTop = scrollTop;
+        if (topLine !== undefined) ts.topLine = topLine;
         editorStore.sessionDirty = true;
     }
 }
@@ -565,10 +609,9 @@ export function updateTabMetadataAndPath(id: string, updates: Partial<EditorTab>
 }
 
 export function setFileCheckStatus(id: string, performed: boolean, failed: boolean) {
-    updateTab(id, () => ({
-        fileCheckPerformed: performed,
-        fileCheckFailed: failed,
-    }));
+    const ts = transientStateCache.get(id);
+    if (ts) ts.fileCheckPerformed = performed;
+    updateTab(id, () => ({ fileCheckFailed: failed }));
 }
 
 export function reloadTabContent(
@@ -583,10 +626,16 @@ export function reloadTabContent(
     // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
     const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
-    const wordCountStrategy: 'accurate' | 'fast' =
+    const strategy: 'accurate' | 'fast' =
         sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
-    const wordCount =
-        wordCountStrategy === 'accurate' ? countWords(content) : fastCountWords(content);
+    const wordCount = strategy === 'accurate' ? countWords(content) : fastCountWords(content);
+
+    const ts = transientStateCache.get(id);
+    if (ts) {
+        ts.wordCountStrategy = strategy;
+        ts.fileCheckPerformed = false;
+        ts.contentChanged = true;
+    }
 
     updateTab(id, (tab) => ({
         content,
@@ -598,18 +647,16 @@ export function reloadTabContent(
         wordCount,
         lineCount,
         widestColumn,
-        wordCountStrategy,
         wordCountPending: false,
-        fileCheckPerformed: false,
-        contentChanged: true,
         forceSync: (tab.forceSync ?? 0) + 1,
     }));
 }
 
 export function updateContentOnly(id: string, content: string, forceSync: boolean = false) {
+    const ts = transientStateCache.get(id);
+    if (ts) ts.contentChanged = true;
     updateTab(id, (tab) => ({
         content,
-        contentChanged: true,
         forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync,
     }));
 }
@@ -624,13 +671,9 @@ export function saveTabComplete(
     title: string,
     lineEnding: 'LF' | 'CRLF',
 ) {
-    updateTab(id, () => ({
-        path,
-        title,
-        lineEnding,
-        fileCheckPerformed: false,
-        fileCheckFailed: false,
-    }));
+    const ts = transientStateCache.get(id);
+    if (ts) ts.fileCheckPerformed = false;
+    updateTab(id, () => ({ path, title, lineEnding, fileCheckFailed: false }));
 }
 
 export function togglePreferredExtension(id: string) {
@@ -648,12 +691,9 @@ export function togglePreferredExtension(id: string) {
 }
 
 export function markTabPersisted(id: string) {
-    updateTab(
-        id,
-        () => ({
-            contentChanged: false,
-            isPersisted: true,
-        }),
-        false,
-    );
+    const ts = transientStateCache.get(id);
+    if (ts) {
+        ts.contentChanged = false;
+        ts.isPersisted = true;
+    }
 }
