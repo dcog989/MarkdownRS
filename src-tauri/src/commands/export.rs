@@ -1,14 +1,9 @@
-use crate::utils::handle_file_error;
+use crate::utils::handle_error;
 use pdfrs::elements;
 use pdfrs::pdf_generator;
 
 #[tauri::command]
-pub async fn export_to_pdf(
-    path: String,
-    content: String,
-    title: String,
-    background_color: Option<String>,
-) -> Result<(), String> {
+pub async fn export_to_pdf(path: String, content: String, title: String) -> Result<(), String> {
     crate::utils::validate_path(&path)?;
 
     let start = std::time::Instant::now();
@@ -25,14 +20,13 @@ pub async fn export_to_pdf(
     let path_buf = std::path::PathBuf::from(&path);
     crate::utils::atomic_write(&path_buf, &pdf_bytes)
         .await
-        .map_err(|e| handle_file_error(&path, "write PDF file", e))?;
+        .map_err(|e| handle_error(Some(&path), "write PDF file", e))?;
 
     let duration = start.elapsed();
     log::info!(
-        "[Export] export_to_pdf | duration={:?} | size={} bytes | bg={:?} | title={} | path={}",
+        "[Export] export_to_pdf | duration={:?} | size={} bytes | title={} | path={}",
         duration,
         pdf_bytes.len(),
-        background_color,
         title,
         path
     );

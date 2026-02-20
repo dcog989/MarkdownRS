@@ -30,24 +30,6 @@ pub fn handle_error(context: Option<&str>, operation: &str, e: impl std::fmt::Di
     msg
 }
 
-/// Standardized error handler for file operations
-#[deprecated(since = "0.0.0", note = "Use handle_error instead")]
-pub fn handle_file_error(path: &str, operation: &str, e: impl std::fmt::Display) -> String {
-    handle_error(Some(path), operation, e)
-}
-
-/// Standardized error handler for database operations
-#[deprecated(since = "0.0.0", note = "Use handle_error instead")]
-pub fn handle_db_error(operation: &str, context: &str, e: impl std::fmt::Display) -> String {
-    handle_error(Some(context), operation, e)
-}
-
-/// Standardized error handler for general I/O operations
-#[deprecated(since = "0.0.0", note = "Use handle_error instead")]
-pub fn handle_io_error(operation: &str, e: impl std::fmt::Display) -> String {
-    handle_error(None, operation, e)
-}
-
 pub fn format_system_time(time: std::io::Result<SystemTime>) -> Option<String> {
     time.ok().map(|t| {
         let datetime: DateTime<Local> = t.into();
