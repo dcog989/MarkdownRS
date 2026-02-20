@@ -2,11 +2,17 @@ use crate::utils::{handle_error, read_text_with_bom_detection};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
+use std::time::SystemTime;
 use tauri::Manager;
 use tokio::fs;
 use tokio::sync::Mutex;
 
-static THEME_CACHE: LazyLock<Mutex<HashMap<String, String>>> =
+struct CachedTheme {
+    css: String,
+    mtime: SystemTime,
+}
+
+static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Serialize)]
@@ -157,13 +163,6 @@ pub async fn get_theme_css(
     app_handle: tauri::AppHandle,
     theme_name: String,
 ) -> Result<String, String> {
-    {
-        let cache = THEME_CACHE.lock().await;
-        if let Some(css) = cache.get(&theme_name) {
-            return Ok(css.clone());
-        }
-    }
-
     let app_dir = app_handle
         .path()
         .app_data_dir()
@@ -179,12 +178,38 @@ pub async fn get_theme_css(
         Ok(true) => {},
     }
 
+    let metadata = fs::metadata(&theme_path).await.map_err(|e| {
+        handle_error(
+            Some(&theme_path.to_string_lossy()),
+            "read theme metadata",
+            e,
+        )
+    })?;
+    let file_mtime = metadata
+        .modified()
+        .map_err(|e| handle_error(Some(&theme_path.to_string_lossy()), "get file mtime", e))?;
+
+    {
+        let cache = THEME_CACHE.lock().await;
+        if let Some(cached) = cache.get(&theme_name) {
+            if cached.mtime == file_mtime {
+                return Ok(cached.css.clone());
+            }
+        }
+    }
+
     let css = fs::read_to_string(&theme_path)
         .await
         .map_err(|e| handle_error(Some(&theme_path.to_string_lossy()), "read theme", e))?;
 
     let mut cache = THEME_CACHE.lock().await;
-    cache.insert(theme_name, css.clone());
+    cache.insert(
+        theme_name,
+        CachedTheme {
+            css: css.clone(),
+            mtime: file_mtime,
+        },
+    );
 
     Ok(css)
 }
