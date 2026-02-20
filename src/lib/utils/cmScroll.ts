@@ -58,7 +58,7 @@ export class ScrollManager {
                     }
 
                     let targetTop = target.scrollTop;
-                    let logDetail = '';
+                    let logDetail: string;
 
                     if (effectiveStrategy === 'anchor') {
                         try {
