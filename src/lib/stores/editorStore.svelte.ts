@@ -178,7 +178,7 @@ function updateTab(
     const updates = updater(tab);
 
     if (updates) {
-        editorStore.tabs[index] = { ...tab, ...updates };
+        Object.assign(editorStore.tabs[index], updates);
     }
 
     if (markDirty) {
