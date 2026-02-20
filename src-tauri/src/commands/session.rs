@@ -17,16 +17,12 @@ pub async fn save_session(
 
     let mut tabs_with_content = 0;
     for tab in &mut active_tabs {
-        if let Some(_content) = &tab.content {
-            tabs_with_content += 1;
-        }
         tab.normalize_newlines();
+        if tab.content.is_some() { tabs_with_content += 1; }
     }
     log::info!("  Tabs with content to save: {}", tabs_with_content);
 
-    for tab in &mut closed_tabs {
-        tab.normalize_newlines();
-    }
+    closed_tabs.iter_mut().for_each(|tab| tab.normalize_newlines());
 
     let result = state
         .db
