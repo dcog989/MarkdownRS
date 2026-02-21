@@ -38,7 +38,7 @@ import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date'
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { clearRendererCache } from '$lib/utils/markdown';
-import { hashContent, hasContentChanged } from '$lib/utils/contentHash';
+import { hashContent } from '$lib/utils/contentHash';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 
@@ -457,7 +457,7 @@ export function reorderTabs(newTabs: EditorTab[]) {
     editorStore.sessionDirty = true;
 }
 
-export function updateContent(id: string, content: string) {
+export function updateContent(id: string, content: string, lineCount: number) {
     const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) {
         console.warn('[EditorStore] updateContent: tab not found:', id);
@@ -471,8 +471,19 @@ export function updateContent(id: string, content: string) {
     if (appState.tabNameFromContent) {
         const trimmed = content.trim();
         if (trimmed.length > 0) {
-            const lines = content.split('\n');
-            const firstLine = lines.find((l) => l.trim().length > 0) || '';
+            // Scan for first non-empty line without split()
+            let lineStart = 0;
+            let firstLine = '';
+            for (let i = 0; i <= content.length; i++) {
+                if (i === content.length || content[i] === '\n') {
+                    const line = content.slice(lineStart, i).trim();
+                    if (line.length > 0) {
+                        firstLine = line;
+                        break;
+                    }
+                    lineStart = i + 1;
+                }
+            }
             let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
             const MAX_LEN = 25;
             if (smartTitle.length > MAX_LEN) {
@@ -490,11 +501,10 @@ export function updateContent(id: string, content: string) {
 
     const now = getCurrentTimestamp();
 
-    // FAST metrics - calculated instantly on every keystroke
-    const sizeBytes = new TextEncoder().encode(content).length;
-    const lineCount = content.split('\n').length;
+    // Fast approximation: char count ≈ byte count for typical Markdown (ASCII-heavy)
+    const sizeBytes = content.length;
 
-    // DEBOUNCED metrics - expensive, calculated after 500ms delay
+    // DEBOUNCED metrics - expensive, calculated after delay
     scheduleWordCountUpdate(id, content, sizeBytes);
 
     const ts = transientStateCache.get(id);
@@ -504,7 +514,7 @@ export function updateContent(id: string, content: string) {
         ...oldTab,
         title: newTitle,
         content,
-        isDirty: hasContentChanged(content, oldTab.lastSavedHash),
+        isDirty: true,
         modified: now,
         formattedTimestamp: formatTimestampForDisplay(now),
         sizeBytes,

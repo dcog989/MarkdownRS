@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
     import { performTextOperation } from '$lib/components/editor/logic/operations';
     import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
@@ -176,8 +176,8 @@
         });
     }
 
-    function handleContentChange(c: string) {
-        updateContent(tabId, c);
+    function handleContentChange(c: string, lineCount: number) {
+        updateContent(tabId, c, lineCount);
     }
     function handleMetricsChange(m: Partial<EditorMetrics>) {
         updateMetrics(m);

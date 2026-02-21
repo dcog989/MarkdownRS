@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     import {
         createDoubleClickHandler,
         createWrapExtension,
@@ -95,7 +95,7 @@
         initialSelection?: { anchor: number; head: number };
         initialHistoryState?: unknown;
         lineChangeTracker: LineChangeTracker | undefined;
-        onContentChange: (content: string) => void;
+        onContentChange: (content: string, lineCount: number) => void;
         onMetricsChange: (metrics: Partial<EditorMetrics>) => void;
         onScrollChange?: (percentage: number, scrollTop: number, topLine: number) => void;
         onSelectionChange?: (anchor: number, head: number) => void;
@@ -289,11 +289,12 @@
                     if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
                     // Capture tabId in closure to prevent race condition during tab switches
                     const currentTabId = view?._currentTabId;
+                    const docLines = update.state.doc.lines;
                     contentUpdateTimer = window.setTimeout(() => {
                         // Only update if this timer still corresponds to the current tab
                         // This prevents updates from stale timers firing after tab switches
                         if (view?._currentTabId === currentTabId && currentTabId !== undefined) {
-                            onContentChange(update.state.doc.toString());
+                            onContentChange(update.state.doc.toString(), docLines);
                             if (onHistoryUpdate && view?.getHistoryState) {
                                 onHistoryUpdate(view.getHistoryState());
                             }
@@ -354,7 +355,7 @@
                     // 2. Synchronously flush pending content to the OLD tab ID
                     if (oldTabId) {
                         const currentDoc = view.state.doc.toString();
-                        updateContent(oldTabId, currentDoc);
+                        updateContent(oldTabId, currentDoc, view.state.doc.lines);
                     }
                 }
 
@@ -558,9 +559,13 @@
                 clearTimeout(contentUpdateTimer);
                 // Safe flush using internal ID
                 if (typedView._currentTabId) {
-                    updateContent(typedView._currentTabId, typedView.state.doc.toString());
+                    updateContent(
+                        typedView._currentTabId,
+                        typedView.state.doc.toString(),
+                        typedView.state.doc.lines,
+                    );
                 } else {
-                    onContentChange(typedView.state.doc.toString());
+                    onContentChange(typedView.state.doc.toString(), typedView.state.doc.lines);
                 }
 
                 if (onHistoryUpdate && typedView.getHistoryState) {
