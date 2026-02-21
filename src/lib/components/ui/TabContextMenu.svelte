@@ -3,6 +3,7 @@
     import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
     import Submenu from '$lib/components/ui/Submenu.svelte';
     import { exportService } from '$lib/services/exportService';
+    import { sanitizePath } from '$lib/services/fileMetadata';
     import {
         addBookmark,
         deleteBookmark,
@@ -136,9 +137,7 @@
         }
 
         const sanitizedName = newFileName.trim().replace(/[<>:"|?*]/g, '_');
-        const newPath = oldPath
-            .replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`)
-            .replace(/\\/g, '/');
+        const newPath = sanitizePath(oldPath.replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`));
 
         try {
             // Import services dynamically to avoid circular dependencies
