@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     import Editor from '$lib/components/editor/Editor.svelte';
     import Preview from '$lib/components/preview/Preview.svelte';
     import StatusBar from '$lib/components/ui/StatusBar.svelte';
@@ -17,7 +17,6 @@
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { CONFIG } from '$lib/utils/config';
-    import { clearRendererCache } from '$lib/utils/markdown';
     import { logger } from '$lib/utils/logger';
     import { initSettings, saveSettings } from '$lib/utils/settings';
     import { onDestroy, onMount } from 'svelte';
@@ -50,15 +49,6 @@
                 to: currentTabId,
                 title: tab?.title || 'unknown',
             });
-
-            // Clear renderer caches for all tabs except the one we're switching to
-            // Only the active tab needs its renderer in memory
-            appContext.editor.tabs.forEach((t: EditorTab) => {
-                if (t.id !== currentTabId) {
-                    clearRendererCache(t.id);
-                }
-            });
-            logger.editor.debug('RendererCachesCleared', { reason: 'tab_switch' });
 
             previousTabId = currentTabId;
         }
