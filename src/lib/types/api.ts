@@ -9,6 +9,7 @@ export interface AppInfo {
     data_path: string;
     cache_path: string;
     logs_path: string;
+    log_file_path: string;
     os_platform: string;
 }
 

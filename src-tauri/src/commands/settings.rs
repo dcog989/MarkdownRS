@@ -23,6 +23,7 @@ pub struct AppInfo {
     pub data_path: String,
     pub cache_path: String,
     pub logs_path: String,
+    pub log_file_path: String,
     pub os_platform: String,
 }
 
@@ -104,6 +105,16 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         .app_local_data_dir()
         .map(|p| p.join("Logs").to_string_lossy().to_string())
         .unwrap_or_default();
+    let log_file_path = app_handle
+        .path()
+        .app_local_data_dir()
+        .map(|p| {
+            p.join("Logs")
+                .join("markdown-rs.log")
+                .to_string_lossy()
+                .to_string()
+        })
+        .unwrap_or_default();
 
     let os_platform = if cfg!(target_os = "windows") {
         "windows"
@@ -121,6 +132,7 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         data_path,
         cache_path,
         logs_path,
+        log_file_path,
         os_platform,
     })
 }

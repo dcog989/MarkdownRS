@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { AppInfo } from '$lib/types/api';
     import { callBackend } from '$lib/utils/backend';
     import { CONFIG } from '$lib/utils/config';
     import { openPath } from '@tauri-apps/plugin-opener';
@@ -14,16 +15,6 @@
 
     let { isOpen = $bindable(false), onClose, position = 'top' }: Props = $props();
 
-    interface AppInfo {
-        name: string;
-        version: string;
-        install_path: string;
-        data_path: string;
-        cache_path: string;
-        logs_path: string;
-        os_platform: string;
-    }
-
     let appInfo = $state<AppInfo>({
         name: 'MarkdownRS',
         version: '...',
@@ -31,6 +22,7 @@
         data_path: '',
         cache_path: '',
         logs_path: '',
+        log_file_path: '',
         os_platform: '',
     });
 
@@ -54,10 +46,9 @@
     }
 
     async function openLogFile() {
-        if (!appInfo.logs_path) return;
-        const logFile = `markdown-rs.log`;
+        if (!appInfo.log_file_path) return;
         try {
-            await openPath(logFile);
+            await openPath(appInfo.log_file_path);
         } catch (e) {
             console.error('Failed to open log file, opening directory instead:', e);
             await openPath(appInfo.logs_path);
@@ -74,7 +65,7 @@
 
             if (updateInfo && updateInfo.available) {
                 const confirmed = confirm(
-                    `Update available: \n\n\n\nDo you want to install it now?`,
+                    `Update available: ${updateInfo.version}\n\n${updateInfo.release_notes || ''}\n\nDo you want to install it now?`,
                 );
 
                 if (confirmed) {
