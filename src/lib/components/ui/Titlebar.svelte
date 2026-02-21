@@ -131,7 +131,7 @@
                 use:tooltip={'Writer Mode (F11)'}>
                 <Feather
                     size={16}
-                    class={appContext.app.writerMode ? 'text-fg-default' : 'opacity-50'} />
+                    class={appContext.app.writerMode ? 'text-fg-default' : 'text-fg-muted'} />
             </button>
 
             <button
@@ -147,7 +147,7 @@
                 {:else}
                     <Eye
                         size={16}
-                        class={appContext.app.splitView ? 'text-fg-default' : 'opacity-50'} />
+                        class={appContext.app.splitView ? 'text-fg-default' : 'text-fg-muted'} />
                 {/if}
             </button>
         </div>
