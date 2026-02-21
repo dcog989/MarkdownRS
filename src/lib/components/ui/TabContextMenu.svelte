@@ -11,7 +11,6 @@
     } from '$lib/stores/bookmarkStore.svelte';
     import { confirmDialog } from '$lib/stores/dialogStore.svelte';
     import {
-        markAsSaved,
         pushToMru,
         reorderTabs,
         togglePin,
@@ -25,9 +24,9 @@
     import {
         requestCloseTab,
         saveCurrentFile,
+        saveCurrentFileAs,
         triggerReopenClosedTab,
     } from '$lib/utils/fileSystem';
-    import { save } from '@tauri-apps/plugin-dialog';
     import {
         ArrowLeft,
         ArrowRight,
@@ -84,30 +83,11 @@
     }
 
     async function handleSaveAs() {
-        if (!tab) return;
         const prevActive = appContext.app.activeTabId;
         appContext.app.activeTabId = tabId;
-
-        try {
-            const savePath = await save({
-                filters: [{ name: 'Markdown', extensions: ['md'] }],
-            });
-
-            if (savePath) {
-                const sanitizedPath = savePath.replace(/\0/g, '').replace(/\\/g, '/');
-                await callBackend(
-                    'write_text_file',
-                    { path: sanitizedPath, content: tab.content },
-                    'File:Write',
-                );
-                const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-                updateTabPath(tabId, sanitizedPath, fileName);
-                markAsSaved(tabId);
-            }
-        } finally {
-            appContext.app.activeTabId = prevActive;
-            onClose();
-        }
+        await saveCurrentFileAs();
+        appContext.app.activeTabId = prevActive;
+        onClose();
     }
 
     function handlePin() {
