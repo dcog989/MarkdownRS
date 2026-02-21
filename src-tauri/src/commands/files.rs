@@ -1,4 +1,4 @@
-﻿use crate::commands::settings::get_max_file_size_bytes;
+use crate::commands::settings::get_max_file_size_bytes;
 use crate::utils::{format_system_time, handle_error, validate_path};
 use encoding_rs::{Encoding, UTF_8};
 use path_clean::PathClean;

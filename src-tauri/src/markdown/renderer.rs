@@ -1,4 +1,4 @@
-﻿use crate::markdown::config::MarkdownFlavor;
+use crate::markdown::config::MarkdownFlavor;
 use anyhow::{Result, anyhow};
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
@@ -96,8 +96,6 @@ fn get_or_build_line_map(content: &str, flavor: MarkdownFlavor) -> Vec<usize> {
     line_map
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
     pub flavor: MarkdownFlavor,
@@ -176,8 +174,7 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
     let text_nodes: Vec<&AstNode<'_>> = root
         .descendants()
         .filter(|node| {
-            matches!(node.data.borrow().value, NodeValue::Text(_))
-                && !is_in_code_or_link(node)
+            matches!(node.data.borrow().value, NodeValue::Text(_)) && !is_in_code_or_link(node)
         })
         .collect();
 
@@ -202,9 +199,9 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
             // Leading whitespace / non-path prefix before the captured group
             let before = &text[last_end..path_match.start()];
             if !before.is_empty() {
-                let n = arena.alloc(AstNode::from(NodeValue::Text(
-                    std::borrow::Cow::Owned(before.to_string()),
-                )));
+                let n = arena.alloc(AstNode::from(NodeValue::Text(std::borrow::Cow::Owned(
+                    before.to_string(),
+                ))));
                 new_nodes.push(n);
             }
 
@@ -221,9 +218,9 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
         // Trailing text after the last match
         if last_end < text.len() {
             let tail = &text[last_end..];
-            let n = arena.alloc(AstNode::from(NodeValue::Text(
-                std::borrow::Cow::Owned(tail.to_string()),
-            )));
+            let n = arena.alloc(AstNode::from(NodeValue::Text(std::borrow::Cow::Owned(
+                tail.to_string(),
+            ))));
             new_nodes.push(n);
         }
 

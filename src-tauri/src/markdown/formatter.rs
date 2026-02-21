@@ -99,7 +99,11 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
     let config = builder.build();
 
     // dprint formatting
-    let input = if protected_lines.is_empty() { content } else { &tokenised };
+    let input = if protected_lines.is_empty() {
+        content
+    } else {
+        &tokenised
+    };
     let formatted = format_text(input, &config, |_, file_text, _| {
         Ok(Some(file_text.to_string()))
     })

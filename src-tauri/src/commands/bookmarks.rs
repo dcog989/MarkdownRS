@@ -1,4 +1,4 @@
-﻿use crate::db::Bookmark;
+use crate::db::Bookmark;
 use crate::state::AppState;
 use crate::utils::handle_error;
 use tauri::State;

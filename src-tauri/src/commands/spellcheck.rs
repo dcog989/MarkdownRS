@@ -1,4 +1,4 @@
-﻿use crate::state::AppState;
+use crate::state::AppState;
 use crate::utils::IntoTauriError;
 use anyhow::{Result, anyhow};
 use spellbook::Dictionary;
@@ -523,7 +523,10 @@ pub async fn check_words(
         result
     });
 
-    log::debug!("check_words returning {} misspelled words", misspelled.len());
+    log::debug!(
+        "check_words returning {} misspelled words",
+        misspelled.len()
+    );
     if !misspelled.is_empty() {
         log::debug!(
             "Sample misspelled: {:?}",

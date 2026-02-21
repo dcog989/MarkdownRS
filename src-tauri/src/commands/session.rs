@@ -1,4 +1,4 @@
-﻿use crate::db::{SessionData, TabData, TabState};
+use crate::db::{SessionData, TabData, TabState};
 use crate::state::AppState;
 use crate::utils::handle_error;
 use tauri::State;
@@ -82,10 +82,7 @@ pub fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String
 }
 
 #[tauri::command]
-pub fn load_tab_content(
-    state: State<'_, AppState>,
-    tab_id: String,
-) -> Result<TabData, String> {
+pub fn load_tab_content(state: State<'_, AppState>, tab_id: String) -> Result<TabData, String> {
     let start = std::time::Instant::now();
 
     let result = state

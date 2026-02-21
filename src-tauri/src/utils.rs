@@ -1,4 +1,4 @@
-﻿use anyhow::Result;
+use anyhow::Result;
 use chrono::{DateTime, Local};
 use encoding_rs::{UTF_16BE, UTF_16LE};
 use std::path::Path;
