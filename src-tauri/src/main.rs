@@ -1,4 +1,4 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+﻿// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
@@ -45,9 +45,6 @@ fn detect_portable_mode() -> PortableConfig {
 }
 
 fn main() {
-    // Velopack Hook: Handles install/update events and exits if necessary
-    VelopackApp::build().run();
-
     // Detect and configure portable mode BEFORE any threading
     // This must happen before Tauri initialization to avoid race conditions
     let portable_config = detect_portable_mode();
@@ -62,6 +59,10 @@ fn main() {
             std::env::set_var("LOCALAPPDATA", data_dir.as_os_str());
         }
     }
+
+    // Velopack Hook: Handles install/update events and exits if necessary
+    // Must run after portable env vars are set so updates target the correct drive
+    VelopackApp::build().run();
 
     #[cfg(target_os = "windows")]
     {
