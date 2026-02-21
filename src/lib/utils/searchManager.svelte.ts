@@ -1,4 +1,4 @@
-import { updateContent } from '$lib/stores/editorStore.svelte';
+﻿import { updateContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { SearchQuery, setSearchQuery } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
@@ -214,7 +214,7 @@ export function replaceAllInTabs(): number {
         const matches = [...tab.content.matchAll(regex)];
         if (matches.length > 0) {
             const newContent = tab.content.replace(regex, searchState.replaceText);
-            updateContent(tab.id, newContent);
+            updateContent(tab.id, newContent, newContent.split('\n').length);
             total += matches.length;
         }
     });
