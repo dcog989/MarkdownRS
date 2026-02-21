@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 authors = ["dcog989"]
 description = "The only markdown editor you need."
 edition = "2024"
