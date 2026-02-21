@@ -338,21 +338,27 @@
 
     $effect(() => {
         const tId = tabId;
-        const storeTab = appContext.editor.tabs.find((t) => t.id === tId);
+        // Only track forceSync as a reactive signal for external/programmatic updates.
+        // storeTab.content is intentionally NOT tracked here - it changes on every
+        // keystroke and would re-run this effect constantly. Content sync is handled
+        // by the updateListener in CodeMirror; this effect only needs to react to
+        // tab switches (tId) and forced syncs (forceSync).
+        const forceSyncCounter = appContext.editor.tabs.find((t) => t.id === tId)?.forceSync ?? 0;
 
-        if (!view || !storeTab) return;
+        untrack(() => {
+            const storeTab = appContext.editor.tabs.find((t) => t.id === tId);
+            if (!view || !storeTab) return;
 
-        const isTabSwitch = untrack(() => {
-            if (view && view._currentTabId !== tId) {
-                // If switching tabs, we must handle pending updates for the OLD tab
+            const isTabSwitch = view._currentTabId !== tId;
+
+            if (isTabSwitch) {
+                // Flush pending content for the OLD tab before switching
                 const oldTabId = view._currentTabId;
 
-                // 1. Cancel pending debounce timers to prevent overwrite race condition
                 if (contentUpdateTimer) {
                     clearTimeout(contentUpdateTimer);
                     contentUpdateTimer = null;
 
-                    // 2. Synchronously flush pending content to the OLD tab ID
                     if (oldTabId) {
                         const currentDoc = view.state.doc.toString();
                         updateContent(oldTabId, currentDoc, view.state.doc.lines);
@@ -369,25 +375,14 @@
                 }
 
                 view._currentTabId = tId;
-                return true;
-            }
-            return false;
-        });
 
-        const currentDoc = view.state.doc.toString();
-        const storeContent = storeTab.content;
-        const isLoaded = storeTab.contentLoaded;
-        const forceSyncCounter = storeTab.forceSync ?? 0;
-
-        if (isTabSwitch) {
-            untrack(() => {
                 // Block scroll updates during restore to prevent zeroing out the store
                 isRestoring = true;
 
+                const storeContent = storeTab.content;
                 // Reset sync counter for the new tab to ensure future updates are caught
                 lastForceSyncCounter = forceSyncCounter;
 
-                // Get the history state for the NEW tab from the store
                 const restoredHistoryState = getHistoryState(tId);
 
                 const newState = EditorState.create({
@@ -457,25 +452,27 @@
                 setTimeout(() => {
                     isRestoring = false;
                 }, CONFIG.UI_TIMING.RESTORE_STATE_DELAY_MS);
-            });
-            return;
-        }
 
-        const isFocused = view.hasFocus;
-        // Fix: Prevent syncing empty state if the editor is focused (User deletes all text)
-        // If the editor is focused, we assume the user interaction is the source of truth
-        const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
-        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
+                return;
+            }
 
-        // Skip sync during tab switching to prevent content corruption
-        // But allow forced syncs (e.g. formatting or external file reload) to proceed
-        const shouldSync =
-            isInitialPopulate ||
-            isForcedSync ||
-            (!isFocused && currentDoc !== storeContent && !appContext.app.isTabSwitching);
+            // Non-tab-switch path: handle external/programmatic content updates only
+            const currentDoc = view.state.doc.toString();
+            const storeContent = storeTab.content;
+            const isLoaded = storeTab.contentLoaded;
 
-        if (shouldSync) {
-            untrack(() => {
+            const isFocused = view.hasFocus;
+            // Prevent syncing empty state if the editor is focused (user deleted all text)
+            const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
+            const isForcedSync = forceSyncCounter > lastForceSyncCounter;
+
+            // Only sync when unfocused (external change) or explicitly forced
+            const shouldSync =
+                isInitialPopulate ||
+                isForcedSync ||
+                (!isFocused && currentDoc !== storeContent && !appContext.app.isTabSwitching);
+
+            if (shouldSync) {
                 // Calculate minimal diff to preserve unchanged line markers and selection state
                 let from = 0;
                 let to = currentDoc.length;
@@ -529,8 +526,8 @@
                 if (isForcedSync) {
                     lastForceSyncCounter = forceSyncCounter;
                 }
-            });
-        }
+            }
+        });
     });
 
     onMount(() => {
