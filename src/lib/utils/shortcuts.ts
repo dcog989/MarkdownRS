@@ -83,6 +83,9 @@ export class KeyboardShortcutManager {
             'ctrl+pageup', // Previous tab
             'ctrl+,', // Settings
             'ctrl+shift+b', // Bookmarks
+            'ctrl+\\', // Toggle split view
+            'ctrl+f', // Find
+            'ctrl+h', // Replace
             'f1', // Shortcuts
             'f11', // Writer Mode
             'escape', // Escape

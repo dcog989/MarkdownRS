@@ -4,6 +4,7 @@
  */
 
 import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { addTab, reopenLastClosed } from '$lib/stores/editorStore.svelte';
 import {
     openFind,
@@ -113,8 +114,11 @@ export function registerAllShortcuts() {
             defaultKey: 'ctrl+f',
             description: 'Find',
             category: 'Edit',
-            handler: () => {
+            handler: (e: KeyboardEvent) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
                 openFind();
+                return true;
             },
         },
         {
@@ -123,8 +127,11 @@ export function registerAllShortcuts() {
             defaultKey: 'ctrl+h',
             description: 'Replace',
             category: 'Edit',
-            handler: () => {
+            handler: (e: KeyboardEvent) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
                 openReplace();
+                return true;
             },
         },
         {
@@ -145,8 +152,19 @@ export function registerAllShortcuts() {
             defaultKey: 'ctrl+\\',
             description: 'Toggle Split View',
             category: 'View',
-            handler: () => {
+            handler: (e: KeyboardEvent) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+                const isMarkdown = tab
+                    ? tab.path?.endsWith('.md') || tab.path?.endsWith('.markdown')
+                    : true;
+                if (!isMarkdown) {
+                    showToast('warning', 'Preview not available for this file type');
+                    return true;
+                }
                 toggleSplitView();
+                return true;
             },
         },
         {

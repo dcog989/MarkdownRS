@@ -6,19 +6,14 @@
     import Titlebar from '$lib/components/ui/Titlebar.svelte';
     import Toast from '$lib/components/ui/Toast.svelte';
     import { loadTabContentLazy } from '$lib/services/sessionPersistence';
-    import { toggleSplitView } from '$lib/stores/appState.svelte';
-    import { addTab, pushToMru, reopenLastClosed } from '$lib/stores/editorStore.svelte';
+    import { addTab, pushToMru } from '$lib/stores/editorStore.svelte';
     import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-    import { openFind, openReplace } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
-    import { showToast } from '$lib/stores/toastStore.svelte';
     import {
         loadSession,
-        openFile,
         openFileByPath,
         persistSession,
         persistSessionDebounced,
-        requestCloseTab,
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { CONFIG } from '$lib/utils/config';
@@ -98,67 +93,6 @@
     });
 
     let showPreview = $derived(appContext.app.splitView && isMarkdown);
-
-    function handleDocumentKeydown(e: KeyboardEvent) {
-        const isModifier = e.ctrlKey || e.metaKey;
-
-        if (!isModifier) return;
-
-        const key = e.key.toLowerCase();
-
-        // Handle Ctrl+Shift+T before the switch to ensure it works
-        if (e.ctrlKey && e.shiftKey && key === 't') {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            reopenLastClosed();
-            return;
-        }
-
-        switch (key) {
-            case 's':
-                // Ctrl+Shift+S = Save As (handled by shortcut manager)
-                // Ctrl+S = Normal save (handled by shortcut manager)
-                return;
-
-            case 'w':
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                if (appContext.app.activeTabId) {
-                    requestCloseTab(appContext.app.activeTabId);
-                }
-                return;
-
-            case 'o':
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openFile();
-                persistSessionDebounced();
-                return;
-
-            case '\\':
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                if (!isMarkdown) {
-                    showToast('warning', 'Preview not available for this file type');
-                    return;
-                }
-                toggleSplitView();
-                saveSettings();
-                return;
-
-            case 'f':
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openFind();
-                return;
-
-            case 'h':
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openReplace();
-                return;
-        }
-    }
 
     function handleTabNavigation(e: KeyboardEvent) {
         if (!e.ctrlKey) return;
@@ -247,7 +181,6 @@
             });
         });
 
-        document.addEventListener('keydown', handleDocumentKeydown, { capture: true });
         document.addEventListener('keydown', handleTabNavigation, { capture: true });
 
         if (!initError) {
@@ -282,7 +215,6 @@
         window.addEventListener('beforeunload', handleBeforeUnload);
 
         return () => {
-            document.removeEventListener('keydown', handleDocumentKeydown, { capture: true });
             document.removeEventListener('keydown', handleTabNavigation, { capture: true });
             window.removeEventListener('blur', handleBlur);
             window.removeEventListener('beforeunload', handleBeforeUnload);
