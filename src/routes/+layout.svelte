@@ -66,12 +66,21 @@
             e.preventDefault();
         };
 
+        // Sync writerMode with actual fullscreen state
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement && appContext.app.writerMode) {
+                appContext.app.writerMode = false;
+            }
+        };
+
         window.addEventListener('keydown', handleKeydown, { capture: true });
         document.addEventListener('contextmenu', handleContextMenu, { passive: false });
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
 
         return () => {
             window.removeEventListener('keydown', handleKeydown, { capture: true });
             document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
         };
     });
 </script>

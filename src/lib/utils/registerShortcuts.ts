@@ -423,6 +423,39 @@ export function registerAllShortcuts() {
                 appContext.interface.showSettings = true;
             },
         },
+
+        // Escape
+        {
+            id: 'escape',
+            command: 'escape',
+            defaultKey: 'escape',
+            description: 'Escape / Exit Writer Mode',
+            category: 'View',
+            handler: (): boolean => {
+                // Let modals handle ESC if any are open
+                const anyModalOpen =
+                    appContext.interface.showSettings ||
+                    appContext.interface.showShortcuts ||
+                    appContext.interface.showAbout ||
+                    appContext.interface.showBookmarks ||
+                    appContext.interface.showRecentFiles ||
+                    appContext.interface.showCommandPalette ||
+                    appContext.interface.showTransform ||
+                    appContext.interface.showData ||
+                    appContext.interface.showFind;
+
+                if (anyModalOpen) {
+                    return false;
+                }
+
+                if (appContext.app.writerMode) {
+                    toggleWriterMode();
+                    document.exitFullscreen().catch(() => {});
+                    return true;
+                }
+                return false;
+            },
+        },
     ];
 
     // Register all shortcuts
