@@ -1,4 +1,4 @@
-﻿import { execSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,7 +62,7 @@ if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
 try {
     packageJson.version = newVersion;
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-    console.log('âœ… Updated package.json');
+    console.log('Updated package.json');
 } catch (error) {
     console.error('Failed to update package.json:', error);
     process.exit(1);
@@ -73,7 +73,7 @@ try {
     const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
     content.version = newVersion;
     fs.writeFileSync(tauriConfPath, JSON.stringify(content, null, 2) + '\n');
-    console.log('âœ… Updated src-tauri/tauri.conf.json');
+    console.log('Updated src-tauri/tauri.conf.json');
 } catch (error) {
     console.error('Failed to update tauri.conf.json:', error);
     process.exit(1);
@@ -87,7 +87,7 @@ try {
     if (regex.test(content)) {
         content = content.replace(regex, `$1${newVersion}$3`);
         fs.writeFileSync(cargoTomlPath, content);
-        console.log('âœ… Updated src-tauri/Cargo.toml');
+        console.log('Updated src-tauri/Cargo.toml');
     } else {
         console.error('âŒ Could not find [package] version string in Cargo.toml');
         process.exit(1);
@@ -100,7 +100,7 @@ try {
 // 6. Git Integration
 if (shouldGit) {
     try {
-        console.log('\nðŸ“¦ Processing Git operations...');
+        console.log('\nProcessing Git operations...');
 
         // Stage the files
         // We use forward slashes for cross-platform compatibility in exec commands,
@@ -119,7 +119,7 @@ if (shouldGit) {
         const tagName = `v${newVersion}`;
         execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
 
-        console.log(`âœ… Git commit and tag '${tagName}' created successfully`);
+        console.log(`Git commit and tag '${tagName}' created successfully`);
     } catch (error) {
         console.error(
             '\nâŒ Git operations failed. The files were updated, but git actions were skipped.',
@@ -128,6 +128,6 @@ if (shouldGit) {
         // We don't exit(1) here because the primary bump operation succeeded.
     }
 } else {
-    console.log(`\nðŸŽ‰ Successfully updated version to v${newVersion}`);
+    console.log(`\nSuccessfully updated version to v${newVersion}`);
     console.log('   (Run with --git to automatically commit and tag)');
 }
