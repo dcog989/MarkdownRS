@@ -4,7 +4,6 @@ use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
 use dashmap::DashMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, LazyLock};
@@ -15,7 +14,7 @@ const CACHE_MAX_ENTRIES: usize = 50;
 const CACHE_MAX_AGE: Duration = Duration::from_secs(60);
 
 struct CacheEntry {
-    line_map: HashMap<usize, usize>,
+    line_map: Vec<usize>,
     last_accessed: Instant,
 }
 
@@ -68,7 +67,7 @@ fn prune_cache_if_needed() {
 }
 
 /// Gets or builds the line map, using cache if content and flavor haven't changed
-fn get_or_build_line_map(content: &str, flavor: MarkdownFlavor) -> HashMap<usize, usize> {
+fn get_or_build_line_map(content: &str, flavor: MarkdownFlavor) -> Vec<usize> {
     let cache_key = (compute_content_hash(content), flavor);
     let now = Instant::now();
 
@@ -117,7 +116,7 @@ pub struct MarkdownOptions {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RenderResult {
     pub html: String,
-    pub line_map: HashMap<usize, usize>,
+    pub line_map: Vec<usize>,
     pub line_count: usize,
     pub word_count: usize,
     pub char_count: usize,
@@ -187,24 +186,20 @@ fn linkify_file_paths(html: &str) -> String {
     result
 }
 
-fn build_line_map(content: &str) -> HashMap<usize, usize> {
-    let mut line_map = HashMap::new();
-
+fn build_line_map(content: &str) -> Vec<usize> {
     if content.is_empty() {
-        line_map.insert(1, 0);
-        return line_map;
+        return vec![0];
     }
 
-    let mut line_num = 1;
+    let mut line_map = Vec::new();
     let mut offset = 0;
 
+    // index 0 = line 1 byte offset
     // Handle both LF and CRLF line endings correctly
-    // Manually iterating to properly account for byte offsets
-    line_map.insert(line_num, offset);
+    line_map.push(offset);
     for c in content.chars() {
         if c == '\n' {
-            line_num += 1;
-            line_map.insert(line_num, offset + 1);
+            line_map.push(offset + 1);
         }
         offset += c.len_utf8();
     }
