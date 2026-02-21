@@ -215,6 +215,8 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
     }
 }
 
+const activeSaves = new Map<string, boolean>();
+
 export async function saveCurrentFile(): Promise<boolean> {
     // Clear tab switching flag to ensure format-on-save works
     appContext.app.isTabSwitching = false;
@@ -240,12 +242,21 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
     const tabId = appContext.app.activeTabId;
     if (!tabId) return false;
 
-    // Get a fresh reference to the tab to avoid closure staleness
     const getTab = () => appContext.editor.tabs.find((t) => t.id === tabId);
     let tab = getTab();
     if (!tab) return false;
 
     const oldPath = tab.path;
+
+    const pendingSavePath = !forceNewPath && tab.path ? tab.path : null;
+
+    if (pendingSavePath && activeSaves.get(pendingSavePath)) {
+        return false;
+    }
+
+    if (pendingSavePath) {
+        activeSaves.set(pendingSavePath, true);
+    }
 
     try {
         let savePath: string | null = null;
@@ -316,6 +327,7 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 );
             } catch (err) {
                 fileWatcher.setWriteLock(sanitizedPath, false);
+                if (pendingSavePath) activeSaves.delete(pendingSavePath);
                 showToast('error', `Failed to save file: ${err}`);
                 return false;
             }
@@ -354,10 +366,13 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                 saveAs: forceNewPath,
             });
 
+            if (pendingSavePath) activeSaves.delete(pendingSavePath);
             return true;
         }
+        if (pendingSavePath) activeSaves.delete(pendingSavePath);
         return false;
     } catch (_e) {
+        if (pendingSavePath) activeSaves.delete(pendingSavePath);
         return false;
     }
 }
