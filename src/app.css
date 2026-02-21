@@ -1,8 +1,17 @@
 @import './styles/variables.css';
 @import './styles/editor.css';
 @import './styles/preview.css';
-@import './styles/ui.css';
 @import './styles/print.css';
+@import './styles/typography.css';
+@import './styles/layout.css';
+@import './styles/sizing.css';
+@import './styles/spacing.css';
+@import './styles/borders.css';
+@import './styles/colors.css';
+@import './styles/effects.css';
+@import './styles/states.css';
+@import './styles/components.css';
+@import './styles/utilities.css';
 
 *,
 *::before,

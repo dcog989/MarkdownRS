@@ -1,0 +1,105 @@
+/* Color Classes - Background */
+.bg-bg-main {
+    background-color: var(--surface-1);
+}
+
+.bg-bg-input {
+    background-color: var(--surface-input);
+}
+
+.bg-fg-muted {
+    background-color: var(--text-secondary);
+}
+
+.bg-accent-primary {
+    background-color: var(--accent-primary);
+}
+
+.bg-bg-panel {
+    background-color: var(--surface-2);
+}
+
+.bg-bg-preview {
+    background-color: var(--surface-preview);
+}
+
+.bg-bg-titlebar {
+    background-color: var(--surface-3);
+}
+
+.bg-bg-header {
+    background-color: var(--surface-3);
+}
+
+.bg-bg-hover {
+    background-color: var(--surface-hover);
+}
+
+.bg-bg-active {
+    background-color: var(--surface-active, var(--surface-hover));
+}
+
+.bg-transparent {
+    background-color: transparent;
+}
+
+.bg-white\/10 {
+    background-color: oklch(1 0 0 / 0.1);
+}
+
+.bg-danger\/10 {
+    background-color: oklch(from var(--danger) l c h / 0.1);
+}
+
+.bg-accent-primary\/20 {
+    background-color: oklch(from var(--accent-primary) l c h / 0.2);
+}
+
+.bg-border-main {
+    background-color: var(--border-primary);
+}
+
+.bg-border-light {
+    background-color: var(--border-light);
+}
+
+/* Color Classes - Text */
+.text-fg-default {
+    color: var(--text-primary);
+}
+
+.text-fg-muted {
+    color: var(--text-secondary);
+}
+
+.text-fg-inverse {
+    color: var(--text-inverse);
+}
+
+.text-accent-primary {
+    color: var(--accent-primary);
+}
+
+.text-accent-secondary {
+    color: var(--accent-secondary);
+}
+
+.text-accent-link {
+    color: var(--accent-link);
+}
+
+.text-accent-link-hover {
+    color: var(--accent-link-hover, var(--accent-link));
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.text-danger-text {
+    color: var(--danger-text);
+}
+
+.text-dirty-active {
+    color: var(--dirty-indicator);
+}

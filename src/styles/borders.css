@@ -1,0 +1,138 @@
+/* Border Classes */
+.border {
+    border: 1px solid var(--border-primary);
+}
+
+.border-b {
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.border-l {
+    border-left: 1px solid var(--border-primary);
+}
+
+.border-r {
+    border-right: 1px solid var(--border-primary);
+}
+
+.border-t {
+    border-top: 1px solid var(--border-primary);
+}
+
+.border-0 {
+    border-width: 0;
+}
+
+.border-2 {
+    border-width: 2px;
+}
+
+.border-4 {
+    border-width: 4px;
+}
+
+.border-8 {
+    border-width: 8px;
+}
+
+.border-t-2 {
+    border-top-width: 2px;
+}
+
+.border-r-0 {
+    border-right-width: 0;
+}
+
+.border-t-0 {
+    border-top-width: 0;
+}
+
+.border-l-4 {
+    border-left-width: 4px;
+}
+
+.border-none {
+    border-style: none;
+}
+
+.border-transparent {
+    border-color: transparent;
+}
+
+.border-border-light {
+    border-color: var(--color-border-light);
+}
+
+.border-danger\/30 {
+    border-color: oklch(from var(--danger) l c h / 0.3);
+}
+
+.border-t-accent-secondary {
+    border-top-color: var(--accent-secondary);
+}
+
+.border-t-transparent {
+    border-top-color: transparent;
+}
+
+/* Border Radius Classes */
+.rounded {
+    border-radius: 0.25rem;
+}
+
+.rounded-sm {
+    border-radius: 0.125rem;
+}
+
+.rounded-md {
+    border-radius: 0.375rem;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.rounded-xl {
+    border-radius: 0.75rem;
+}
+
+.rounded-2xl {
+    border-radius: 1rem;
+}
+
+.rounded-3xl {
+    border-radius: 1.5rem;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}
+
+.rounded-t-sm {
+    border-top-left-radius: 0.125rem;
+    border-top-right-radius: 0.125rem;
+}
+
+/* Divide Classes */
+.divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-top-width: 1px;
+    border-color: var(--border-primary);
+}
+
+.divide-border-main > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-primary);
+}
+
+.divide-border-main\/30 > :not([hidden]) ~ :not([hidden]) {
+    border-color: oklch(from var(--border-primary) l c h / 0.3);
+}
+
+/* Alternating Row Backgrounds */
+.bg-row-even {
+    background-color: var(--surface-row);
+}
+
+/* Range Slider Accent */
+.range-slider-accent {
+    accent-color: var(--accent-primary);
+}

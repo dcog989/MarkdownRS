@@ -1,0 +1,205 @@
+/* Hover States */
+.hover\:bg-white\/5:hover {
+    background-color: oklch(1 0 0 / 0.05);
+}
+
+.hover\:bg-white\/10:hover {
+    background-color: oklch(1 0 0 / 0.1);
+}
+
+.hover\:bg-white\/20:hover {
+    background-color: oklch(1 0 0 / 0.2);
+}
+
+.hover\:bg-accent-primary:hover {
+    background-color: var(--accent-primary);
+}
+
+.hover\:bg-danger:hover {
+    background-color: var(--danger);
+}
+
+.hover\:bg-fg-muted:hover {
+    background-color: var(--text-secondary);
+}
+
+.hover\:bg-bg-hover:hover {
+    background-color: var(--surface-hover);
+}
+
+.hover\:bg-bg-active:hover {
+    background-color: var(--surface-active, var(--surface-hover));
+}
+
+.hover\:bg-bg-panel:hover {
+    background-color: var(--surface-2);
+}
+
+.hover\:text-accent-primary:hover {
+    color: var(--accent-primary);
+}
+
+.hover\:text-accent-secondary:hover {
+    color: var(--accent-secondary);
+}
+
+.hover\:text-accent-link-hover:hover {
+    color: var(--accent-link-hover, var(--accent-link));
+}
+
+.hover\:text-danger:hover {
+    color: var(--danger);
+}
+
+.hover\:text-danger-text:hover {
+    color: var(--danger-text);
+}
+
+.hover\:text-fg-default:hover {
+    color: var(--text-primary);
+}
+
+.hover\:text-white:hover {
+    color: white;
+}
+
+.hover\:opacity-80:hover {
+    opacity: 0.8;
+}
+
+.hover\:opacity-70:hover {
+    opacity: 0.7;
+}
+
+.hover\:opacity-100:hover {
+    opacity: 1;
+}
+
+.hover\:underline:hover {
+    text-decoration: underline;
+}
+
+/* Theme-aware hover states */
+.hover-surface {
+    transition-property: background-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.hover-surface:hover {
+    background-color: var(--surface-hover);
+}
+
+/* Group Hover States */
+.group:hover .group-hover\:opacity-100 {
+    opacity: 1;
+}
+
+.group:hover .group-hover\:opacity-70 {
+    opacity: 0.7;
+}
+
+.group:hover .group-hover\:w-3 {
+    width: 0.75rem;
+}
+
+.group\/preview:hover .group-hover\/preview\:opacity-100 {
+    opacity: 1;
+}
+
+/* Active States */
+.active\:bg-accent-primary:active {
+    background-color: var(--accent-primary);
+}
+
+.active\:opacity-100:active {
+    opacity: 1;
+}
+
+.active\:w-3:active {
+    width: 0.75rem;
+}
+
+/* Disabled States */
+.disabled\:cursor-not-allowed:disabled {
+    cursor: not-allowed;
+}
+
+.disabled\:opacity-30:disabled {
+    opacity: 0.3;
+}
+
+.disabled\:opacity-50:disabled {
+    opacity: 0.5;
+}
+
+/* Focus States */
+.focus\:border-accent-primary:focus {
+    border-color: var(--accent-primary);
+}
+
+.focus\:outline-none:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+/* Placeholder States */
+.placeholder\:text-fg-muted\/50::placeholder {
+    color: oklch(from var(--text-secondary) l c h / 0.5);
+}
+
+/* Focus Visible Styling */
+*:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Context menu items - smart highlighting */
+.bg-bg-panel button:focus-visible {
+    outline: none;
+}
+
+/* Keyboard navigation: accent color highlight on focused item */
+.bg-bg-panel[data-keyboard-nav='true'] button:focus-visible {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+/* Mouse navigation: suppress focus-visible styles, rely on hover */
+.bg-bg-panel[data-keyboard-nav='false'] button:focus-visible {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Hover: accent color - must override both hover-surface and focus-visible styles */
+.bg-bg-panel button:hover,
+.bg-bg-panel button:hover:focus-visible {
+    background-color: var(--accent-primary) !important;
+    color: var(--text-inverse) !important;
+}
+
+/* Keyboard navigation: accent color highlight on focused item */
+.bg-bg-panel[data-keyboard-nav='true'] button:focus-visible {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+/* Mouse navigation: suppress focus-visible styles, rely on hover */
+.bg-bg-panel[data-keyboard-nav='false'] button:focus-visible {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Hover works the same in both modes */
+.bg-bg-panel button:hover {
+    background-color: var(--surface-hover);
+}
