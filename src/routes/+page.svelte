@@ -19,8 +19,6 @@
         persistSession,
         persistSessionDebounced,
         requestCloseTab,
-        saveCurrentFile,
-        saveCurrentFileAs,
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { CONFIG } from '$lib/utils/config';
@@ -118,17 +116,8 @@
 
         switch (key) {
             case 's':
-                e.preventDefault();
-                e.stopImmediatePropagation();
-
-                // Ctrl+Shift+S = Save As (force new path)
-                if (e.shiftKey) {
-                    saveCurrentFileAs();
-                } else {
-                    // Ctrl+S = Normal save
-                    saveCurrentFile();
-                }
-                persistSessionDebounced();
+                // Ctrl+Shift+S = Save As (handled by shortcut manager)
+                // Ctrl+S = Normal save (handled by shortcut manager)
                 return;
 
             case 'w':

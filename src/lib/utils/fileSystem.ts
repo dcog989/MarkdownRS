@@ -313,52 +313,51 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     'write_text_file',
                     { path: sanitizedPath, content: diskContent },
                     'File:Write',
-                    undefined,
-                    { report: true, msg: 'Failed to save file' },
                 );
-
-                if (oldPath && oldPath !== sanitizedPath) {
-                    fileWatcher.unwatch(oldPath);
-                }
-                if (oldPath !== sanitizedPath) {
-                    await fileWatcher.watch(sanitizedPath);
-                }
-
-                const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
-                let finalTitle = fileName;
-
-                if (appContext.app.tabNameFromContent) {
-                    const firstLine =
-                        contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
-                    let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
-                    if (smartTitle.length > 25)
-                        smartTitle = smartTitle.substring(0, 25).trim() + '...';
-                    if (smartTitle.length > 0) finalTitle = smartTitle;
-                }
-
-                saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
-                markAsSaved(tabId);
-                invalidateMetadataCache(sanitizedPath);
-                await refreshMetadata(tabId, sanitizedPath);
-
-                // Add to Recent Files History on save
-                addToRecentFiles(sanitizedPath);
-
-                const duration = (performance.now() - start).toFixed(2);
-                logger.file.info('FileSaved', {
-                    duration: `${duration}ms`,
-                    path: sanitizedPath,
-                    size: new TextEncoder().encode(diskContent).length,
-                    saveAs: forceNewPath,
-                });
-            } finally {
+            } catch (err) {
                 fileWatcher.setWriteLock(sanitizedPath, false);
+                showToast('error', `Failed to save file: ${err}`);
+                return false;
             }
+
+            if (oldPath && oldPath !== sanitizedPath) {
+                fileWatcher.unwatch(oldPath);
+            }
+            if (oldPath !== sanitizedPath) {
+                await fileWatcher.watch(sanitizedPath);
+            }
+
+            const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
+            let finalTitle = fileName;
+
+            if (appContext.app.tabNameFromContent) {
+                const firstLine = contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
+                let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
+                if (smartTitle.length > 25) smartTitle = smartTitle.substring(0, 25).trim() + '...';
+                if (smartTitle.length > 0) finalTitle = smartTitle;
+            }
+
+            saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
+            markAsSaved(tabId);
+            invalidateMetadataCache(sanitizedPath);
+            await refreshMetadata(tabId, sanitizedPath);
+
+            addToRecentFiles(sanitizedPath);
+
+            fileWatcher.setWriteLock(sanitizedPath, false);
+
+            const duration = (performance.now() - start).toFixed(2);
+            logger.file.info('FileSaved', {
+                duration: `${duration}ms`,
+                path: sanitizedPath,
+                size: new TextEncoder().encode(diskContent).length,
+                saveAs: forceNewPath,
+            });
 
             return true;
         }
         return false;
-    } catch {
+    } catch (_e) {
         return false;
     }
 }
