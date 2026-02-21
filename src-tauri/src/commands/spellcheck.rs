@@ -1,4 +1,4 @@
-use crate::state::AppState;
+﻿use crate::state::AppState;
 use crate::utils::IntoTauriError;
 use anyhow::{Result, anyhow};
 use spellbook::Dictionary;
@@ -9,7 +9,6 @@ use tauri::{Manager, State};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 
-const SPELL_CHECK_CHUNK_SIZE: usize = 50;
 const SPELL_CHECK_TIMEOUT_CONNECT: Duration = Duration::from_secs(2);
 const SPELL_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
 const MAX_SUGGESTIONS: usize = 5;
@@ -480,57 +479,51 @@ pub async fn check_words(
 ) -> Result<Vec<String>, String> {
     log::debug!("check_words called with {} words", words.len());
 
-    let mut misspelled = Vec::new();
+    let speller_guard = state.speller.lock().await;
+    let custom_guard = state.custom_dict.lock().await;
 
-    // Chunking to prevent blocking the async runtime too long
-    for chunk in words.chunks(SPELL_CHECK_CHUNK_SIZE) {
-        // Clone necessary data from mutex guards, then release locks immediately
-        let (speller_opt, custom_dict) = {
-            let speller_guard = state.speller.lock().await;
-            let custom_guard = state.custom_dict.lock().await;
-            (speller_guard.clone(), custom_guard.clone())
-        };
-
-        if speller_opt.is_none() {
+    let speller = match speller_guard.as_ref() {
+        Some(s) => s,
+        None => {
             log::warn!("Speller is None in check_words!");
-        }
+            return Ok(Vec::new());
+        },
+    };
 
-        if let Some(speller) = speller_opt {
-            for word in chunk {
-                let clean = word.trim();
-                if clean.is_empty() {
-                    continue;
-                }
+    let custom_dict = custom_guard.clone();
 
-                let lower = clean.to_lowercase();
-                if custom_dict.contains(&lower) {
-                    continue;
-                }
+    let misspelled = tokio::task::block_in_place(|| {
+        let mut result = Vec::new();
+        for word in &words {
+            let clean = word.trim();
+            if clean.is_empty() {
+                continue;
+            }
 
-                // Handle possessives ('s and s')
-                if lower
-                    .strip_suffix("'s")
+            let lower = clean.to_lowercase();
+            if custom_dict.contains(&lower) {
+                continue;
+            }
+
+            // Handle possessives ('s and s')
+            if lower
+                .strip_suffix("'s")
+                .is_some_and(|b| custom_dict.contains(b))
+                || lower
+                    .strip_suffix('\'')
                     .is_some_and(|b| custom_dict.contains(b))
-                    || lower
-                        .strip_suffix('\'')
-                        .is_some_and(|b| custom_dict.contains(b))
-                {
-                    continue;
-                }
+            {
+                continue;
+            }
 
-                if !speller.check(clean) {
-                    misspelled.push(word.to_string());
-                }
+            if !speller.check(clean) {
+                result.push(word.to_string());
             }
         }
-        // Yield to allow other tasks to run
-        tokio::task::yield_now().await;
-    }
+        result
+    });
 
-    log::debug!(
-        "check_words returning {} misspelled words",
-        misspelled.len()
-    );
+    log::debug!("check_words returning {} misspelled words", misspelled.len());
     if !misspelled.is_empty() {
         log::debug!(
             "Sample misspelled: {:?}",
