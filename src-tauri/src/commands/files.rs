@@ -1,4 +1,4 @@
-use crate::commands::settings::get_max_file_size_bytes;
+﻿use crate::commands::settings::get_max_file_size_bytes;
 use crate::utils::{format_system_time, handle_error, validate_path};
 use encoding_rs::{Encoding, UTF_8};
 use path_clean::PathClean;
@@ -174,7 +174,7 @@ pub async fn resolve_path_relative(
     let cleaned = path_buf.clean();
 
     // Canonicalize the path to resolve any symlinks and get absolute path
-    let canonicalized = cleaned.canonicalize().map_err(|e| {
+    let canonicalized = dunce::canonicalize(&cleaned).map_err(|e| {
         let path_str = cleaned.to_string_lossy();
         handle_error(Some(&path_str), "canonicalize path", e)
     })?;
@@ -182,7 +182,7 @@ pub async fn resolve_path_relative(
     // Security check: Ensure the resolved path is within the base directory
     // This prevents path traversal attacks like "../../../../etc/passwd"
     if let Some(ref base) = base_dir {
-        let canonical_base = base.canonicalize().map_err(|e| {
+        let canonical_base = dunce::canonicalize(&base).map_err(|e| {
             let base_str = base.to_string_lossy();
             handle_error(Some(&base_str), "canonicalize base path", e)
         })?;

@@ -1,4 +1,4 @@
-[package]
+﻿[package]
 authors = ["dcog989"]
 description = "The only markdown editor you need."
 edition = "2024"
@@ -14,6 +14,7 @@ chardetng = "0.1"
 chrono = "0.4"
 comrak = "0.50"
 dashmap = "6.1"
+dunce = "1"
 dprint-plugin-markdown = "0.21"
 encoding_rs = "0.8"
 log = "0.4"
