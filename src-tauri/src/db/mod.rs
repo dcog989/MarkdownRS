@@ -589,8 +589,10 @@ impl Database {
             .collect::<Vec<_>>()
             .join(",");
         let sql = format!("DELETE FROM recent_files WHERE path IN ({})", placeholders);
-        let params: Vec<&dyn rusqlite::types::ToSql> =
-            dead.iter().map(|p| p as &dyn rusqlite::types::ToSql).collect();
+        let params: Vec<&dyn rusqlite::types::ToSql> = dead
+            .iter()
+            .map(|p| p as &dyn rusqlite::types::ToSql)
+            .collect();
         conn.execute(&sql, params.as_slice())?;
 
         Ok(dead.len())
