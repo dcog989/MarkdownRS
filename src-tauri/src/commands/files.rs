@@ -182,7 +182,7 @@ pub async fn resolve_path_relative(
     // Security check: Ensure the resolved path is within the base directory
     // This prevents path traversal attacks like "../../../../etc/passwd"
     if let Some(ref base) = base_dir {
-        let canonical_base = dunce::canonicalize(&base).map_err(|e| {
+        let canonical_base = dunce::canonicalize(base).map_err(|e| {
             let base_str = base.to_string_lossy();
             handle_error(Some(&base_str), "canonicalize base path", e)
         })?;
