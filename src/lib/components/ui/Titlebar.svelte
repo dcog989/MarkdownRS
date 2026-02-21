@@ -1,6 +1,6 @@
 <script lang="ts">
     import { tooltip } from '$lib/actions/tooltip';
-    import { toggleSplitView } from '$lib/stores/appState.svelte';
+    import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
     import {
         toggleAbout,
         toggleBookmarks,
@@ -12,7 +12,18 @@
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
     import { getCurrentWindow } from '@tauri-apps/api/window';
-    import { Bookmark, Copy, Eye, EyeOff, Minus, Settings, Square, X, Zap } from 'lucide-svelte';
+    import {
+        Bookmark,
+        Copy,
+        Eye,
+        EyeOff,
+        Feather,
+        Minus,
+        Settings,
+        Square,
+        X,
+        Zap,
+    } from 'lucide-svelte';
     import { onMount } from 'svelte';
 
     const appWindow = getCurrentWindow();
@@ -33,6 +44,16 @@
         }
         toggleSplitView();
         saveSettings();
+    }
+
+    function handleWriterMode() {
+        const wasWriterMode = appContext.app.writerMode;
+        toggleWriterMode();
+        if (wasWriterMode) {
+            document.exitFullscreen().catch(() => {});
+        } else {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
     }
 
     onMount(() => {
@@ -103,22 +124,35 @@
 
     <!-- Right Group: Preview, Window Controls -->
     <div class="pointer-events-auto flex h-full shrink-0 items-center">
-        <button
-            class="text-fg-muted hover-surface rounded p-1 outline-none"
-            class:opacity-50={!isMarkdown}
-            class:cursor-not-allowed={!isMarkdown}
-            onclick={toggleSplit}
-            use:tooltip={isMarkdown ? 'Toggle Split Preview (Ctrl+\\)' : 'Preview not available'}>
-            {#if !isMarkdown}
-                <EyeOff size={16} class="opacity-50" />
-            {:else}
-                <Eye
+        <div class="flex items-center gap-2 px-3">
+            <button
+                class="text-fg-muted hover-surface rounded p-1 outline-none"
+                onclick={handleWriterMode}
+                use:tooltip={'Writer Mode (F11)'}>
+                <Feather
                     size={16}
-                    class={appContext.app.splitView ? 'text-fg-default' : 'opacity-50'} />
-            {/if}
-        </button>
+                    class={appContext.app.writerMode ? 'text-fg-default' : 'opacity-50'} />
+            </button>
 
-        <div class="mx-2 h-4 w-px bg-white/10"></div>
+            <button
+                class="text-fg-muted hover-surface rounded p-1 outline-none"
+                class:opacity-50={!isMarkdown}
+                class:cursor-not-allowed={!isMarkdown}
+                onclick={toggleSplit}
+                use:tooltip={isMarkdown
+                    ? 'Toggle Split Preview (Ctrl+\\)'
+                    : 'Preview not available'}>
+                {#if !isMarkdown}
+                    <EyeOff size={16} class="opacity-50" />
+                {:else}
+                    <Eye
+                        size={16}
+                        class={appContext.app.splitView ? 'text-fg-default' : 'opacity-50'} />
+                {/if}
+            </button>
+        </div>
+
+        <div class="h-4 w-px bg-white/10"></div>
 
         <button
             class="text-fg-muted hover-surface flex h-full w-12 items-center justify-center outline-none"

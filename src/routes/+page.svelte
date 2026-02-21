@@ -375,17 +375,21 @@
     </div>
 {:else}
     <div class="bg-bg-main text-fg-default flex h-screen w-screen flex-col overflow-hidden">
-        <Titlebar />
-        <TabBar />
+        {#if !appContext.app.writerMode}
+            <Titlebar />
+            <TabBar />
+        {/if}
 
         <div
             class="relative z-0 flex flex-1 overflow-hidden outline-none"
+            class:writer-mode={appContext.app.writerMode}
             bind:this={mainContainer}>
             {#if appContext.app.activeTabId}
                 <div
                     class="flex h-full w-full flex-row"
                     class:flex-column={appContext.app.splitOrientation !== 'vertical'}>
                     <div
+                        class="writer-content"
                         style="flex: {showPreview
                             ? `0 0 ${appContext.app.splitPercentage * 100}%`
                             : '1 1 100%'}; height: 100%; overflow: hidden;">
@@ -425,9 +429,11 @@
                 </div>
             {/if}
 
-            <div class="position-absolute-bottom-0">
-                <StatusBar />
-            </div>
+            {#if !appContext.app.writerMode}
+                <div class="position-absolute-bottom-0">
+                    <StatusBar />
+                </div>
+            {/if}
         </div>
     </div>
 

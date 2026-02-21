@@ -2475,3 +2475,23 @@ option:checked {
         transform: translateY(0);
     }
 }
+
+/* Writer Mode */
+.writer-mode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.writer-mode .writer-content {
+    max-width: min(100ch, 100vw);
+    margin: 0 auto;
+}
+
+.writer-mode .cm-gutters {
+    display: none;
+}
+
+.writer-mode .cm-content {
+    padding-left: 0;
+}

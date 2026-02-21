@@ -52,6 +52,11 @@
                 e.preventDefault();
             }
 
+            // Prevent browser's native fullscreen on F11
+            if (key === 'f11') {
+                e.preventDefault();
+            }
+
             // Let shortcut manager handle the event
             void shortcutManager.handleKeyEvent(e);
         };

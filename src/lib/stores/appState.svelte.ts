@@ -50,6 +50,7 @@ export const appState = $state({
     // Tab switching flag to prevent auto-format during transitions
     isTabSwitching: false,
     maxFileSizeMB: 50,
+    writerMode: false,
 });
 
 // Logic functions
@@ -65,4 +66,8 @@ export function setTheme(newTheme: 'dark' | 'light') {
 export function toggleOrientation() {
     appState.splitOrientation =
         appState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
+}
+
+export function toggleWriterMode() {
+    appState.writerMode = !appState.writerMode;
 }

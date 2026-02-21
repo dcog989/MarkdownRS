@@ -84,6 +84,7 @@ export class KeyboardShortcutManager {
             'ctrl+,', // Settings
             'ctrl+shift+b', // Bookmarks
             'f1', // Shortcuts
+            'f11', // Writer Mode
             'escape', // Escape
         ];
 

@@ -3,7 +3,7 @@
  * Mimics VS Code shortcuts where applicable
  */
 
-import { toggleSplitView } from '$lib/stores/appState.svelte';
+import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
 import { addTab, reopenLastClosed } from '$lib/stores/editorStore.svelte';
 import {
     openFind,
@@ -150,16 +150,18 @@ export function registerAllShortcuts() {
             },
         },
         {
-            id: 'view.toggleFullscreen',
-            command: 'view.toggleFullscreen',
+            id: 'view.toggleWriterMode',
+            command: 'view.toggleWriterMode',
             defaultKey: 'f11',
-            description: 'Toggle Fullscreen',
+            description: 'Toggle Writer Mode',
             category: 'View',
             handler: () => {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
+                const wasWriterMode = appContext.app.writerMode;
+                toggleWriterMode();
+                if (wasWriterMode) {
+                    document.exitFullscreen().catch(() => {});
                 } else {
-                    document.documentElement.requestFullscreen();
+                    document.documentElement.requestFullscreen().catch(() => {});
                 }
             },
         },

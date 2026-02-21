@@ -6,7 +6,7 @@
  */
 
 import { exportService } from '$lib/services/exportService';
-import { setTheme, toggleSplitView } from '$lib/stores/appState.svelte';
+import { setTheme, toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
 import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { addTab } from '$lib/stores/editorStore.svelte';
 import {
@@ -184,6 +184,20 @@ export const viewCommands: Command[] = [
             }
             toggleSplitView();
             saveSettings();
+        },
+    },
+    {
+        id: 'toggle-writer-mode',
+        label: 'View: Toggle Writer Mode',
+        shortcut: 'F11',
+        action: () => {
+            const wasWriterMode = appContext.app.writerMode;
+            toggleWriterMode();
+            if (wasWriterMode) {
+                document.exitFullscreen().catch(() => {});
+            } else {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
         },
     },
     {
