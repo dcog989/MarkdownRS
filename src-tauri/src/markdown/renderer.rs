@@ -1,5 +1,6 @@
-use crate::markdown::config::MarkdownFlavor;
+﻿use crate::markdown::config::MarkdownFlavor;
 use anyhow::{Result, anyhow};
+use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
 use dashmap::DashMap;
 use regex::Regex;
@@ -95,18 +96,7 @@ fn get_or_build_line_map(content: &str, flavor: MarkdownFlavor) -> Vec<usize> {
     line_map
 }
 
-// Lazy-compiled regex for file paths
-// Matches:
-// - Windows absolute paths: C:/ or C:\
-// - Unix absolute paths: /path/to/file (requires at least one directory separator)
-// - Relative paths: ./ or ../
-// - Home directory: ~/
-static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/(?:[^\/\s<>"'|?*`]+[/\\])+[^\/\s<>"'|?*`]+)"#,
-    )
-    .expect("Invalid PATH_REGEX pattern")
-});
+
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
@@ -130,18 +120,19 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     let arena = Arena::new();
     let root = parse_document(&arena, content, &comrak_options);
 
+    linkify_file_paths_ast(&arena, root);
+
     let mut html = String::new();
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
         .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
-    let html_with_links = linkify_file_paths(&html);
     let line_map = get_or_build_line_map(content, options.flavor);
 
     // Single-pass metrics calculation
     let (line_count, word_count, char_count, widest_column) = calculate_text_metrics(content);
 
     Ok(RenderResult {
-        html: html_with_links,
+        html,
         line_map,
         line_count,
         word_count,
@@ -150,40 +141,102 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     })
 }
 
-fn linkify_file_paths(html: &str) -> String {
-    let mut result = String::with_capacity(html.len() * 2);
+// Matches file paths in plain text:
+// - Windows absolute: C:/ or C:\
+// - Unix absolute: /some/dir/file (requires at least one slash-separated segment)
+// - Relative: ./ or ../
+// - Home directory: ~/
+static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/(?:[^/\s<>"'|?*`]+/)+[^/\s<>"'|?*`]+)"#,
+    )
+    .expect("Invalid PATH_REGEX pattern")
+});
 
-    for line in html.lines() {
-        let mut last_end = 0;
-        for cap in PATH_REGEX.captures_iter(line) {
-            let full_match = cap
-                .get(0)
-                .expect("Regex capture should always have group 0");
-            let path = cap
-                .get(1)
-                .expect("Regex capture should always have group 1")
-                .as_str();
-            let start = full_match.start();
-            let end = full_match.end();
+/// Returns true if `node` is inside a code, pre, or link context where
+/// path linkification should be suppressed.
+fn is_in_code_or_link<'a>(node: &'a AstNode<'a>) -> bool {
+    node.ancestors().any(|ancestor| {
+        matches!(
+            ancestor.data.borrow().value,
+            NodeValue::Code(_)
+                | NodeValue::CodeBlock(_)
+                | NodeValue::HtmlBlock(_)
+                | NodeValue::HtmlInline(_)
+                | NodeValue::Link(_)
+                | NodeValue::Image(_)
+        )
+    })
+}
 
-            result.push_str(&line[last_end..start]);
+/// Walks the AST and replaces file-path text segments with HtmlInline link nodes,
+/// operating purely on text nodes so existing HTML attributes are never touched.
+fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
+    // Collect text nodes first to avoid mutating while iterating descendants
+    let text_nodes: Vec<&AstNode<'_>> = root
+        .descendants()
+        .filter(|node| {
+            matches!(node.data.borrow().value, NodeValue::Text(_))
+                && !is_in_code_or_link(node)
+        })
+        .collect();
 
-            let leading_space = &full_match.as_str()[..full_match.as_str().len() - path.len()];
-            result.push_str(leading_space);
+    for node in text_nodes {
+        let text = match &node.data.borrow().value {
+            NodeValue::Text(t) => t.clone().into_owned(),
+            _ => continue,
+        };
 
-            result.push_str(&format!(
-                r#"<a href="{}" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">{}</a>"#,
-                path, path
-            ));
-
-            last_end = end;
+        if !PATH_REGEX.is_match(&text) {
+            continue;
         }
 
-        result.push_str(&line[last_end..]);
-        result.push('\n');
-    }
+        // Build replacement sibling nodes: alternate Text / HtmlInline segments
+        let mut last_end = 0;
+        let mut new_nodes: Vec<&AstNode<'_>> = Vec::new();
 
-    result
+        for cap in PATH_REGEX.captures_iter(&text) {
+            let full = cap.get(0).expect("group 0");
+            let path_match = cap.get(1).expect("group 1");
+
+            // Leading whitespace / non-path prefix before the captured group
+            let before = &text[last_end..path_match.start()];
+            if !before.is_empty() {
+                let n = arena.alloc(AstNode::from(NodeValue::Text(
+                    std::borrow::Cow::Owned(before.to_string()),
+                )));
+                new_nodes.push(n);
+            }
+
+            let path = path_match.as_str();
+            let link_html = format!(
+                r#"<a href="{path}" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">{path}</a>"#
+            );
+            let n = arena.alloc(AstNode::from(NodeValue::HtmlInline(link_html)));
+            new_nodes.push(n);
+
+            last_end = full.end();
+        }
+
+        // Trailing text after the last match
+        if last_end < text.len() {
+            let tail = &text[last_end..];
+            let n = arena.alloc(AstNode::from(NodeValue::Text(
+                std::borrow::Cow::Owned(tail.to_string()),
+            )));
+            new_nodes.push(n);
+        }
+
+        if new_nodes.is_empty() {
+            continue;
+        }
+
+        // Insert new sibling nodes before the original, then detach it
+        for new_node in new_nodes {
+            node.insert_before(new_node);
+        }
+        node.detach();
+    }
 }
 
 fn build_line_map(content: &str) -> Vec<usize> {
