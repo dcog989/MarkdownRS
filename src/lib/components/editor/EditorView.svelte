@@ -133,6 +133,21 @@
 
     let autocompletionConfig = $derived(getAutocompletionConfig());
 
+    // Mount-state caches to prevent redundant CM reconfigurations on initial effect flush.
+    // untrack() is required for prop/derived reads to silence state_referenced_locally warnings
+    // and explicitly signal that we only want the snapshot value, not a reactive subscription.
+    let prevIsMarkdown = untrack(() => isMarkdown);
+    let prevAutocompletionConfig = untrack(() => autocompletionConfig);
+    let prevTheme = appContext.app.theme;
+    let prevFontSize = appContext.app.editorFontSize;
+    let prevFontFamily = appContext.app.editorFontFamily;
+    let prevInsertMode = appContext.metrics.insertMode;
+    let prevUndoDepth = appContext.app.undoDepth;
+    let prevIndent = appContext.app.defaultIndent;
+    let prevShowWhitespace = appContext.app.showWhitespace;
+    let prevEventHandlers = untrack(() => eventHandlers);
+    let prevLineChangeTracker = untrack(() => lineChangeTracker);
+
     const markdownExtensions = [
         markdown({ base: markdownLanguage, codeLanguages: languages }),
         highlightPlugin,
@@ -155,7 +170,8 @@
     });
 
     $effect(() => {
-        if (view) {
+        if (view && isMarkdown !== prevIsMarkdown) {
+            prevIsMarkdown = isMarkdown;
             view.dispatch({
                 effects: [
                     languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
@@ -166,29 +182,39 @@
     });
 
     $effect(() => {
-        if (view) {
+        if (view && autocompletionConfig !== prevAutocompletionConfig) {
+            prevAutocompletionConfig = autocompletionConfig;
             view.dispatch({ effects: autoComp.reconfigure(autocompletionConfig) });
         }
     });
 
     $effect(() => {
-        if (view) {
-            const isDark = appContext.app.theme === 'dark';
+        const _theme = appContext.app.theme;
+        const _fontSize = appContext.app.editorFontSize;
+        const _fontFamily = appContext.app.editorFontFamily;
+        const _insertMode = appContext.metrics.insertMode;
+        if (
+            view &&
+            (_theme !== prevTheme ||
+                _fontSize !== prevFontSize ||
+                _fontFamily !== prevFontFamily ||
+                _insertMode !== prevInsertMode)
+        ) {
+            prevTheme = _theme;
+            prevFontSize = _fontSize;
+            prevFontFamily = _fontFamily;
+            prevInsertMode = _insertMode;
             view.dispatch({
                 effects: themeComp.reconfigure(
-                    generateDynamicTheme(
-                        appContext.app.editorFontSize,
-                        appContext.app.editorFontFamily,
-                        isDark,
-                        appContext.metrics.insertMode,
-                    ),
+                    generateDynamicTheme(_fontSize, _fontFamily, _theme === 'dark', _insertMode),
                 ),
             });
         }
     });
 
     $effect(() => {
-        if (view) {
+        if (view && appContext.app.undoDepth !== prevUndoDepth) {
+            prevUndoDepth = appContext.app.undoDepth;
             view.dispatch({
                 effects: historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })),
             });
@@ -196,16 +222,19 @@
     });
 
     $effect(() => {
-        if (view) {
-            const _indent = appContext.app.defaultIndent;
+        if (view && appContext.app.defaultIndent !== prevIndent) {
+            prevIndent = appContext.app.defaultIndent;
             view.dispatch({
-                effects: indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, _indent)))),
+                effects: indentComp.reconfigure(
+                    indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent))),
+                ),
             });
         }
     });
 
     $effect(() => {
-        if (view) {
+        if (view && appContext.app.showWhitespace !== prevShowWhitespace) {
+            prevShowWhitespace = appContext.app.showWhitespace;
             view.dispatch({
                 effects: whitespaceComp.reconfigure(
                     appContext.app.showWhitespace
@@ -223,13 +252,15 @@
     });
 
     $effect(() => {
-        if (view) {
+        if (view && eventHandlers !== prevEventHandlers) {
+            prevEventHandlers = eventHandlers;
             view.dispatch({ effects: handlersComp.reconfigure(eventHandlers) });
         }
     });
 
     $effect(() => {
-        if (view) {
+        if (view && lineChangeTracker !== prevLineChangeTracker) {
+            prevLineChangeTracker = lineChangeTracker;
             view.dispatch({
                 effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
             });
