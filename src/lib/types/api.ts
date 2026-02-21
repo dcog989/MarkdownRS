@@ -218,6 +218,28 @@ export interface BackendCommands {
         args: { path: string; content: string; title: string; backgroundColor: string | null };
         return: void;
     };
+    // Data Management
+    export_bookmarks: {
+        args: Record<string, never>;
+        return: Bookmark[];
+    };
+    import_bookmarks: {
+        args: { bookmarks: Bookmark[] };
+        return: number;
+    };
+    export_recent_files: {
+        args: Record<string, never>;
+        return: string[];
+    };
+    import_recent_files: {
+        args: { paths: string[] };
+        return: number;
+    };
+    delete_orphan_files: {
+        args: Record<string, never>;
+        return: number;
+    };
+
     // Window State (Plugin)
     'plugin:window-state|save_window_state': {
         args: Record<string, never>;

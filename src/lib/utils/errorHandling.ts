@@ -1,4 +1,4 @@
-﻿import { showToast } from '$lib/stores/toastStore.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
 
 export type ErrorContext =
@@ -25,7 +25,12 @@ export type ErrorContext =
     | 'Export:HTML'
     | 'Spellcheck:Init'
     | 'Bookmark:Add'
-    | 'Bookmark:Remove';
+    | 'Bookmark:Remove'
+    | 'Data:ExportBookmarks'
+    | 'Data:ImportBookmarks'
+    | 'Data:ExportRecent'
+    | 'Data:ImportRecent'
+    | 'Data:DeleteOrphans';
 
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 

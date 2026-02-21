@@ -12,6 +12,7 @@ export const interfaceStore = $state({
     showRecentFiles: false,
     showCommandPalette: false,
     showTransform: false,
+    showData: false,
 
     // Editor Panels
     showFind: false,
@@ -60,4 +61,8 @@ export function toggleTransform() {
 }
 export function toggleAbout() {
     interfaceStore.showAbout = !interfaceStore.showAbout;
+}
+
+export function toggleData() {
+    interfaceStore.showData = !interfaceStore.showData;
 }

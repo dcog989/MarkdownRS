@@ -455,7 +455,9 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
         t.id,
         {
             scrollPercentage: t.scroll_percentage,
-            contentChanged: t.is_dirty || (!t.path && content.length > 0),
+            contentChanged: contentLoaded
+                ? t.is_dirty || (!t.path && content.length > 0)
+                : t.is_dirty,
             isPersisted: true,
             fileCheckPerformed: t.file_check_performed || false,
         },
@@ -485,16 +487,16 @@ export async function loadSession(): Promise<void> {
         if (activeRustTabs.length > 0) {
             activeRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-            // Convert tabs - all content is now loaded immediately
+            // Convert tabs without content - lazy loader fetches content on first activation
             const convertedTabs: EditorTab[] = activeRustTabs.map((t) => {
-                const tab = convertRustTabToEditorTab(t, true);
+                const tab = convertRustTabToEditorTab(t, false);
                 return tab;
             });
 
             editorStore.tabs = convertedTabs;
 
             convertedTabs.forEach((tab) => {
-                initializeTabLoadState(tab.id, tab.contentLoaded);
+                initializeTabLoadState(tab.id, false);
             });
 
             const sortedMru = activeRustTabs
@@ -524,6 +526,9 @@ export async function loadSession(): Promise<void> {
 
             const activeTab = editorStore.tabs.find((t) => t.id === appState.activeTabId);
             if (activeTab) {
+                // Load active tab content immediately - the lazy loader in +page.svelte misses
+                // the initial activation because isInitialized is still false at that point.
+                await loadTabContentLazy(activeTab.id);
                 await initializeTabFileState(activeTab);
             }
         }
@@ -541,8 +546,8 @@ export async function loadSession(): Promise<void> {
             closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
             editorStore.closedTabsHistory = closedRustTabs.map((t) => {
-                const tab = convertRustTabToEditorTab(t, true);
-                initializeTabLoadState(tab.id, tab.contentLoaded);
+                const tab = convertRustTabToEditorTab(t, false);
+                initializeTabLoadState(tab.id, false);
 
                 return {
                     tab,

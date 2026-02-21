@@ -463,15 +463,15 @@
         const isFocused = view.hasFocus;
         // Fix: Prevent syncing empty state if the editor is focused (User deletes all text)
         // If the editor is focused, we assume the user interaction is the source of truth
-        const isInitialPopulate =
-            isLoaded && currentDoc === '' && storeContent !== '' && !isFocused;
+        const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
         const isForcedSync = forceSyncCounter > lastForceSyncCounter;
 
         // Skip sync during tab switching to prevent content corruption
         // But allow forced syncs (e.g. formatting or external file reload) to proceed
         const shouldSync =
-            (isInitialPopulate || (!isFocused && currentDoc !== storeContent) || isForcedSync) &&
-            (!appContext.app.isTabSwitching || isForcedSync);
+            isInitialPopulate ||
+            isForcedSync ||
+            (!isFocused && currentDoc !== storeContent && !appContext.app.isTabSwitching);
 
         if (shouldSync) {
             untrack(() => {

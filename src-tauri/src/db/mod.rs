@@ -131,7 +131,6 @@ const MIGRATIONS: &[&str] = &[
         created TEXT NOT NULL,
         last_accessed TEXT
     );
-    CREATE INDEX IF NOT EXISTS idx_bookmarks_path ON bookmarks(path);
     CREATE TABLE IF NOT EXISTS recent_files (
         path TEXT PRIMARY KEY,
         last_opened TEXT NOT NULL
@@ -199,11 +198,6 @@ impl Database {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
 
-        tx.execute(
-            "CREATE TEMPORARY TABLE IF NOT EXISTS _sync_keep_ids (id TEXT PRIMARY KEY)",
-            [],
-        )?;
-
         self.save_active_tabs(&tx, active_tabs)?;
         self.save_closed_tabs(&tx, closed_tabs)?;
 
@@ -217,240 +211,135 @@ impl Database {
             return Ok(());
         }
 
-        tx.execute("DELETE FROM _sync_keep_ids", [])?;
-        let mut keep_stmt = tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
-        for tab in tabs {
-            keep_stmt.execute([&tab.id])?;
-        }
-        drop(keep_stmt);
+        // Remove tabs that are no longer open in a single DELETE
+        let placeholders = (1..=tabs.len())
+            .map(|i| format!("?{}", i))
+            .collect::<Vec<_>>()
+            .join(",");
+        let delete_sql = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
+        let mut delete_stmt = tx.prepare(&delete_sql)?;
+        let ids: Vec<&dyn rusqlite::types::ToSql> = tabs
+            .iter()
+            .map(|t| &t.id as &dyn rusqlite::types::ToSql)
+            .collect();
+        delete_stmt.execute(ids.as_slice())?;
 
-        tx.execute(
-            "DELETE FROM tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
-            [],
-        )?;
-
-        let mut insert_stmt = tx.prepare_cached(
+        // Upsert each tab; preserve existing DB content when the frontend sends no content update
+        let mut upsert_stmt = tx.prepare_cached(
             "INSERT INTO tabs (
                 id, title, content, is_dirty, path, scroll_percentage,
                 created, modified, is_pinned, custom_title,
                 file_check_failed, file_check_performed, mru_position, sort_index
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
-            ON CONFLICT(id) DO NOTHING",
-        )?;
-
-        let mut update_full_stmt = tx.prepare_cached(
-            "UPDATE tabs SET
-                title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
-                created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14
-            WHERE id=?1",
-        )?;
-
-        let mut update_metadata_stmt = tx.prepare_cached(
-            "UPDATE tabs SET
-                title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
-                created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13
-            WHERE id=?1",
+            ON CONFLICT(id) DO UPDATE SET
+                title              = excluded.title,
+                content            = CASE WHEN excluded.content IS NOT NULL
+                                          THEN excluded.content
+                                          ELSE tabs.content END,
+                is_dirty           = excluded.is_dirty,
+                path               = excluded.path,
+                scroll_percentage  = excluded.scroll_percentage,
+                created            = excluded.created,
+                modified           = excluded.modified,
+                is_pinned          = excluded.is_pinned,
+                custom_title       = excluded.custom_title,
+                file_check_failed  = excluded.file_check_failed,
+                file_check_performed = excluded.file_check_performed,
+                mru_position       = excluded.mru_position,
+                sort_index         = excluded.sort_index",
         )?;
 
         for tab in tabs {
-            let mut final_content = tab.content.clone();
-
-            // Treat empty string as None - preserve existing content in database
-            if let Some(ref content) = final_content
-                && content.is_empty()
-            {
-                final_content = None;
-            }
-
-            if final_content.is_none()
-                && let Ok(existing) = tx.query_row(
-                    "SELECT content FROM closed_tabs WHERE id = ?1",
-                    params![&tab.id],
-                    |row| row.get::<_, Option<String>>(0),
-                )
-            {
-                final_content = existing;
-            }
-
-            let insert_result = insert_stmt.execute(params![
+            // Treat empty string the same as no-update (preserve DB content)
+            let content = tab.content.as_deref().filter(|c| !c.is_empty());
+            upsert_stmt.execute(params![
                 &tab.id,
                 &tab.title,
-                &final_content,
-                if tab.is_dirty { 1 } else { 0 },
+                content,
+                tab.is_dirty as i32,
                 &tab.path,
                 tab.scroll_percentage,
                 &tab.created,
                 &tab.modified,
-                if tab.is_pinned { 1 } else { 0 },
+                tab.is_pinned as i32,
                 &tab.custom_title,
-                if tab.file_check_failed { 1 } else { 0 },
-                if tab.file_check_performed { 1 } else { 0 },
+                tab.file_check_failed as i32,
+                tab.file_check_performed as i32,
                 &tab.mru_position,
-                &tab.sort_index
+                &tab.sort_index,
             ])?;
-
-            if insert_result == 0 {
-                if final_content.is_some() {
-                    update_full_stmt.execute(params![
-                        &tab.id,
-                        &tab.title,
-                        &final_content,
-                        if tab.is_dirty { 1 } else { 0 },
-                        &tab.path,
-                        tab.scroll_percentage,
-                        &tab.created,
-                        &tab.modified,
-                        if tab.is_pinned { 1 } else { 0 },
-                        &tab.custom_title,
-                        if tab.file_check_failed { 1 } else { 0 },
-                        if tab.file_check_performed { 1 } else { 0 },
-                        &tab.mru_position,
-                        &tab.sort_index
-                    ])?;
-                } else {
-                    update_metadata_stmt.execute(params![
-                        &tab.id,
-                        &tab.title,
-                        if tab.is_dirty { 1 } else { 0 },
-                        &tab.path,
-                        tab.scroll_percentage,
-                        &tab.created,
-                        &tab.modified,
-                        if tab.is_pinned { 1 } else { 0 },
-                        &tab.custom_title,
-                        if tab.file_check_failed { 1 } else { 0 },
-                        if tab.file_check_performed { 1 } else { 0 },
-                        &tab.mru_position,
-                        &tab.sort_index
-                    ])?;
-                }
-            }
         }
 
         Ok(())
     }
-
     fn save_closed_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
         if tabs.is_empty() {
             tx.execute("DELETE FROM closed_tabs", [])?;
             return Ok(());
         }
 
-        tx.execute("DELETE FROM _sync_keep_ids", [])?;
-        let mut keep_stmt = tx.prepare("INSERT OR IGNORE INTO _sync_keep_ids (id) VALUES (?1)")?;
-        for tab in tabs {
-            keep_stmt.execute([&tab.id])?;
-        }
-        drop(keep_stmt);
+        let placeholders = (1..=tabs.len())
+            .map(|i| format!("?{}", i))
+            .collect::<Vec<_>>()
+            .join(",");
+        let delete_sql = format!("DELETE FROM closed_tabs WHERE id NOT IN ({})", placeholders);
+        let mut delete_stmt = tx.prepare(&delete_sql)?;
+        let ids: Vec<&dyn rusqlite::types::ToSql> = tabs
+            .iter()
+            .map(|t| &t.id as &dyn rusqlite::types::ToSql)
+            .collect();
+        delete_stmt.execute(ids.as_slice())?;
 
-        tx.execute(
-            "DELETE FROM closed_tabs WHERE id NOT IN (SELECT id FROM _sync_keep_ids)",
-            [],
-        )?;
-
-        let mut insert_stmt = tx.prepare_cached(
+        let mut upsert_stmt = tx.prepare_cached(
             "INSERT INTO closed_tabs (
                 id, title, content, is_dirty, path, scroll_percentage,
                 created, modified, is_pinned, custom_title,
                 file_check_failed, file_check_performed, mru_position, sort_index, original_index
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
-            ON CONFLICT(id) DO NOTHING",
-        )?;
-
-        let mut update_full_stmt = tx.prepare_cached(
-            "UPDATE closed_tabs SET
-                title=?2, content=?3, is_dirty=?4, path=?5, scroll_percentage=?6,
-                created=?7, modified=?8, is_pinned=?9, custom_title=?10,
-                file_check_failed=?11, file_check_performed=?12, mru_position=?13, sort_index=?14, original_index=?15
-            WHERE id=?1",
-        )?;
-
-        let mut update_metadata_stmt = tx.prepare_cached(
-            "UPDATE closed_tabs SET
-                title=?2, is_dirty=?3, path=?4, scroll_percentage=?5,
-                created=?6, modified=?7, is_pinned=?8, custom_title=?9,
-                file_check_failed=?10, file_check_performed=?11, mru_position=?12, sort_index=?13, original_index=?14
-            WHERE id=?1",
+            ON CONFLICT(id) DO UPDATE SET
+                title              = excluded.title,
+                content            = CASE WHEN excluded.content IS NOT NULL
+                                          THEN excluded.content
+                                          ELSE closed_tabs.content END,
+                is_dirty           = excluded.is_dirty,
+                path               = excluded.path,
+                scroll_percentage  = excluded.scroll_percentage,
+                created            = excluded.created,
+                modified           = excluded.modified,
+                is_pinned          = excluded.is_pinned,
+                custom_title       = excluded.custom_title,
+                file_check_failed  = excluded.file_check_failed,
+                file_check_performed = excluded.file_check_performed,
+                mru_position       = excluded.mru_position,
+                sort_index         = excluded.sort_index,
+                original_index     = excluded.original_index",
         )?;
 
         for (i, tab) in tabs.iter().enumerate() {
-            let mut final_content = tab.content.clone();
-
-            if final_content.is_none()
-                && let Ok(existing) = tx.query_row(
-                    "SELECT content FROM closed_tabs WHERE id = ?1",
-                    params![&tab.id],
-                    |row| row.get::<_, Option<String>>(0),
-                )
-            {
-                final_content = existing;
-            }
-
-            let insert_result = insert_stmt.execute(params![
+            let content = tab.content.as_deref().filter(|c| !c.is_empty());
+            upsert_stmt.execute(params![
                 &tab.id,
                 &tab.title,
-                &final_content,
-                if tab.is_dirty { 1 } else { 0 },
+                content,
+                tab.is_dirty as i32,
                 &tab.path,
                 tab.scroll_percentage,
                 &tab.created,
                 &tab.modified,
-                if tab.is_pinned { 1 } else { 0 },
+                tab.is_pinned as i32,
                 &tab.custom_title,
-                if tab.file_check_failed { 1 } else { 0 },
-                if tab.file_check_performed { 1 } else { 0 },
+                tab.file_check_failed as i32,
+                tab.file_check_performed as i32,
                 &tab.mru_position,
                 i as i32,
-                &tab.original_index
+                &tab.original_index,
             ])?;
-
-            if insert_result == 0 {
-                if tab.content.is_some() {
-                    update_full_stmt.execute(params![
-                        &tab.id,
-                        &tab.title,
-                        &tab.content,
-                        if tab.is_dirty { 1 } else { 0 },
-                        &tab.path,
-                        tab.scroll_percentage,
-                        &tab.created,
-                        &tab.modified,
-                        if tab.is_pinned { 1 } else { 0 },
-                        &tab.custom_title,
-                        if tab.file_check_failed { 1 } else { 0 },
-                        if tab.file_check_performed { 1 } else { 0 },
-                        &tab.mru_position,
-                        i as i32,
-                        &tab.original_index
-                    ])?;
-                } else {
-                    update_metadata_stmt.execute(params![
-                        &tab.id,
-                        &tab.title,
-                        if tab.is_dirty { 1 } else { 0 },
-                        &tab.path,
-                        tab.scroll_percentage,
-                        &tab.created,
-                        &tab.modified,
-                        if tab.is_pinned { 1 } else { 0 },
-                        &tab.custom_title,
-                        if tab.file_check_failed { 1 } else { 0 },
-                        if tab.file_check_performed { 1 } else { 0 },
-                        &tab.mru_position,
-                        i as i32,
-                        &tab.original_index
-                    ])?;
-                }
-            }
         }
 
         Ok(())
     }
-
     pub fn load_session(&self) -> Result<SessionData> {
-        self.load_session_with_content(true)
+        self.load_session_with_content(false)
     }
 
     pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
@@ -481,12 +370,12 @@ impl Database {
                     scroll_percentage: row.get(5)?,
                     created: row.get(6)?,
                     modified: row.get(7)?,
-                    is_pinned: row.get::<_, i32>(8).unwrap_or(0) != 0,
-                    custom_title: row.get(9).ok(),
-                    file_check_failed: row.get::<_, i32>(10).unwrap_or(0) != 0,
-                    file_check_performed: row.get::<_, i32>(11).unwrap_or(0) != 0,
-                    mru_position: row.get(12).ok(),
-                    sort_index: row.get(13).ok(),
+                    is_pinned: row.get::<_, i32>(8)? != 0,
+                    custom_title: row.get(9)?,
+                    file_check_failed: row.get::<_, i32>(10)? != 0,
+                    file_check_performed: row.get::<_, i32>(11)? != 0,
+                    mru_position: row.get(12)?,
+                    sort_index: row.get(13)?,
                     original_index: None,
                 })
             })?
@@ -517,13 +406,13 @@ impl Database {
                     scroll_percentage: row.get(5)?,
                     created: row.get(6)?,
                     modified: row.get(7)?,
-                    is_pinned: row.get::<_, i32>(8).unwrap_or(0) != 0,
-                    custom_title: row.get(9).ok(),
-                    file_check_failed: row.get::<_, i32>(10).unwrap_or(0) != 0,
-                    file_check_performed: row.get::<_, i32>(11).unwrap_or(0) != 0,
-                    mru_position: row.get(12).ok(),
-                    sort_index: row.get(13).ok(),
-                    original_index: row.get(14).ok(),
+                    is_pinned: row.get::<_, i32>(8)? != 0,
+                    custom_title: row.get(9)?,
+                    file_check_failed: row.get::<_, i32>(10)? != 0,
+                    file_check_performed: row.get::<_, i32>(11)? != 0,
+                    mru_position: row.get(12)?,
+                    sort_index: row.get(13)?,
+                    original_index: row.get(14)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
@@ -539,8 +428,9 @@ impl Database {
         let content = conn
             .query_row(
                 "SELECT content FROM tabs WHERE id = ?1
-             UNION ALL
-             SELECT content FROM closed_tabs WHERE id = ?1",
+                 UNION ALL
+                 SELECT content FROM closed_tabs WHERE id = ?1
+                 LIMIT 1",
                 params![tab_id],
                 |row| row.get::<_, Option<String>>(0),
             )
@@ -556,15 +446,21 @@ impl Database {
         let conn = self.pool.get()?;
         let tags_json = serde_json::to_string(&bookmark.tags)?;
         conn.execute(
-            "INSERT OR REPLACE INTO bookmarks (id, path, title, tags, created, last_accessed)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+             ON CONFLICT(id) DO UPDATE SET
+                path          = excluded.path,
+                title         = excluded.title,
+                tags          = excluded.tags,
+                created       = excluded.created,
+                last_accessed = excluded.last_accessed",
             params![
                 &bookmark.id,
                 &bookmark.path,
                 &bookmark.title,
                 &tags_json,
                 &bookmark.created,
-                &bookmark.last_accessed
+                &bookmark.last_accessed,
             ],
         )?;
         Ok(())
@@ -610,7 +506,7 @@ impl Database {
 
     pub fn seed_recent_files_from_history(&self) -> Result<()> {
         let conn = self.pool.get()?;
-        let now = Local::now().format("%Y%m%d / %H%M%S").to_string();
+        let now = Local::now().to_rfc3339();
 
         // 1. Backfill from active tabs
         conn.execute(
@@ -670,6 +566,119 @@ impl Database {
         Ok(())
     }
 
+    pub fn delete_orphan_recent_files(&self) -> Result<usize> {
+        let conn = self.pool.get()?;
+        let paths: Vec<String> = {
+            let mut stmt = conn.prepare("SELECT path FROM recent_files")?;
+            stmt.query_map([], |row| row.get(0))?
+                .collect::<rusqlite::Result<Vec<String>>>()?
+        };
+
+        let dead: Vec<&str> = paths
+            .iter()
+            .filter(|p| !std::path::Path::new(p.as_str()).exists())
+            .map(String::as_str)
+            .collect();
+
+        if dead.is_empty() {
+            return Ok(0);
+        }
+
+        let placeholders = (1..=dead.len())
+            .map(|i| format!("?{}", i))
+            .collect::<Vec<_>>()
+            .join(",");
+        let sql = format!("DELETE FROM recent_files WHERE path IN ({})", placeholders);
+        let params: Vec<&dyn rusqlite::types::ToSql> =
+            dead.iter().map(|p| p as &dyn rusqlite::types::ToSql).collect();
+        conn.execute(&sql, params.as_slice())?;
+
+        Ok(dead.len())
+    }
+
+    pub fn delete_orphan_bookmarks(&self) -> Result<usize> {
+        let conn = self.pool.get()?;
+        let entries: Vec<(String, String)> = {
+            let mut stmt = conn.prepare("SELECT id, path FROM bookmarks")?;
+            stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+                .collect::<rusqlite::Result<Vec<(String, String)>>>()?
+        };
+
+        let dead_ids: Vec<&str> = entries
+            .iter()
+            .filter(|(_, path)| !std::path::Path::new(path.as_str()).exists())
+            .map(|(id, _)| id.as_str())
+            .collect();
+
+        if dead_ids.is_empty() {
+            return Ok(0);
+        }
+
+        let placeholders = (1..=dead_ids.len())
+            .map(|i| format!("?{}", i))
+            .collect::<Vec<_>>()
+            .join(",");
+        let sql = format!("DELETE FROM bookmarks WHERE id IN ({})", placeholders);
+        let params: Vec<&dyn rusqlite::types::ToSql> = dead_ids
+            .iter()
+            .map(|id| id as &dyn rusqlite::types::ToSql)
+            .collect();
+        conn.execute(&sql, params.as_slice())?;
+
+        Ok(dead_ids.len())
+    }
+
+    pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<()> {
+        if bookmarks.is_empty() {
+            return Ok(());
+        }
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
+        {
+            let mut stmt = tx.prepare_cached(
+                "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                 ON CONFLICT(id) DO UPDATE SET
+                    path          = excluded.path,
+                    title         = excluded.title,
+                    tags          = excluded.tags,
+                    created       = excluded.created,
+                    last_accessed = excluded.last_accessed",
+            )?;
+            for bookmark in bookmarks {
+                let tags_json = serde_json::to_string(&bookmark.tags)?;
+                stmt.execute(params![
+                    &bookmark.id,
+                    &bookmark.path,
+                    &bookmark.title,
+                    tags_json,
+                    &bookmark.created,
+                    &bookmark.last_accessed,
+                ])?;
+            }
+        }
+        tx.commit()?;
+        Ok(())
+    }
+
+    pub fn import_recent_files(&self, paths: &[String]) -> Result<()> {
+        if paths.is_empty() {
+            return Ok(());
+        }
+        let now = Local::now().to_rfc3339();
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
+        {
+            let mut stmt = tx.prepare_cached(
+                "INSERT OR IGNORE INTO recent_files (path, last_opened) VALUES (?1, ?2)",
+            )?;
+            for path in paths {
+                stmt.execute(params![path, &now])?;
+            }
+        }
+        tx.commit()?;
+        Ok(())
+    }
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
         let conn = self.pool.get()?;
         if max_pages > 0 {

@@ -3,7 +3,7 @@
     import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
     import Input from '$lib/components/ui/Input.svelte';
     import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-    import { toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
+    import { toggleData, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
     import { appContext } from '$lib/stores/state.svelte.ts';
     import { showToast } from '$lib/stores/toastStore.svelte';
     import { callBackend } from '$lib/utils/backend';
@@ -15,7 +15,7 @@
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
-    import { Keyboard, Settings } from 'lucide-svelte';
+    import { Database, Keyboard, Settings } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
     interface Props {
@@ -534,6 +534,16 @@
                     title="Keyboard Shortcuts (F1)"
                     aria-label="Keyboard Shortcuts">
                     <Keyboard size={16} />
+                </button>
+                <button
+                    class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
+                    onclick={() => {
+                        onClose();
+                        toggleData();
+                    }}
+                    title="Data"
+                    aria-label="Data">
+                    <Database size={16} />
                 </button>
             {/snippet}
         </ModalSearchHeader>

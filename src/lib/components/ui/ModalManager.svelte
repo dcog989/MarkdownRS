@@ -12,6 +12,7 @@
     import CommandPalette from './CommandPalette.svelte';
     import RecentFilesModal from './RecentFilesModal.svelte';
     import SettingsModal from './SettingsModal.svelte';
+    import DataModal from './DataModal.svelte';
     import ShortcutsModal from './ShortcutsModal.svelte';
     import TextTransformModal from './TextTransformModal.svelte';
 
@@ -95,3 +96,7 @@
 <ShortcutsModal
     bind:isOpen={appContext.interface.showShortcuts}
     onClose={() => (appContext.interface.showShortcuts = false)} />
+
+<DataModal
+    bind:isOpen={appContext.interface.showData}
+    onClose={() => (appContext.interface.showData = false)} />

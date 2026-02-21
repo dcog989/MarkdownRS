@@ -396,6 +396,11 @@ fn main() {
             commands::updater::check_for_updates,
             commands::updater::download_and_install_update,
             commands::export::export_to_pdf,
+            commands::data::export_bookmarks,
+            commands::data::import_bookmarks,
+            commands::data::export_recent_files,
+            commands::data::import_recent_files,
+            commands::data::delete_orphan_files,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| {
