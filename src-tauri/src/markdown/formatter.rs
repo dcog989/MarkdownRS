@@ -54,14 +54,23 @@ impl Default for FormatterOptions {
 }
 
 pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<String> {
-    // Pre-scan for lines with box-drawing characters that should be preserved
-    let lines: Vec<&str> = content.lines().collect();
-    let mut protected_lines: Vec<(usize, String)> = Vec::new();
+    // Replace protected lines (box-drawing / ASCII art) with unique tokens before
+    // handing the text to dprint, so dprint line-count shifts cannot desync their positions.
+    let mut protected_lines: Vec<(String, String)> = Vec::new();
+    let mut tokenised = String::with_capacity(content.len());
 
-    for (idx, line) in lines.iter().enumerate() {
+    for (idx, line) in content.lines().enumerate() {
         if BOX_DRAWING_RE.is_match(line) {
-            protected_lines.push((idx, line.to_string()));
+            let token = format!("__PROTECTED_LINE_{}__", idx);
+            protected_lines.push((token.clone(), line.to_string()));
+            tokenised.push_str(&token);
+        } else {
+            tokenised.push_str(line);
         }
+        tokenised.push('\n');
+    }
+    if !content.ends_with('\n') {
+        tokenised.pop();
     }
 
     let mut builder = ConfigurationBuilder::new();
@@ -90,35 +99,20 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
     let config = builder.build();
 
     // dprint formatting
-    let formatted = format_text(content, &config, |_, file_text, _| {
+    let input = if protected_lines.is_empty() { content } else { &tokenised };
+    let formatted = format_text(input, &config, |_, file_text, _| {
         Ok(Some(file_text.to_string()))
     })
-    .map(|result| result.unwrap_or_else(|| content.to_string()))
+    .map(|result| result.unwrap_or_else(|| input.to_string()))
     .map_err(|e| anyhow!("Formatting failed: {}", e))?;
 
-    // Restore protected lines with their original whitespace
+    // Swap tokens back for their original protected lines
     let result = if !protected_lines.is_empty() {
-        let ends_with_newline = formatted.ends_with('\n');
-        let formatted_lines: Vec<&str> = formatted.lines().collect();
-        let mut restored_lines: Vec<String> = Vec::with_capacity(formatted_lines.len());
-
-        for (idx, line) in formatted_lines.iter().enumerate() {
-            // Check if this line should be restored
-            if let Some((_, original)) = protected_lines
-                .iter()
-                .find(|(orig_idx, _)| *orig_idx == idx)
-            {
-                restored_lines.push(original.clone());
-            } else {
-                restored_lines.push(line.to_string());
-            }
+        let mut restored = formatted;
+        for (token, original) in &protected_lines {
+            restored = restored.replace(token.as_str(), original.as_str());
         }
-
-        let mut result = restored_lines.join("\n");
-        if ends_with_newline {
-            result.push('\n');
-        }
-        result
+        restored
     } else {
         formatted
     };
