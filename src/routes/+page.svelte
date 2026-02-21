@@ -135,14 +135,6 @@
                 persistSessionDebounced();
                 return;
 
-            case 'n': {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                const id = addTab();
-                appContext.app.activeTabId = id;
-                return;
-            }
-
             case '\\':
                 e.preventDefault();
                 e.stopImmediatePropagation();
