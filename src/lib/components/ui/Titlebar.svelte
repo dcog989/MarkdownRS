@@ -11,6 +11,7 @@
     import { showToast } from '$lib/stores/toastStore.svelte';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
+    import { shortcutManager } from '$lib/utils/shortcuts';
     import { getCurrentWindow } from '@tauri-apps/api/window';
     import {
         Bookmark,
@@ -28,6 +29,14 @@
 
     const appWindow = getCurrentWindow();
     let isMaximized = $state(false);
+
+    let shortcuts = $derived({
+        settings: shortcutManager.getShortcutDisplay('help.settings'),
+        commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
+        bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
+        splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
+        writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
+    });
 
     let activeTab = $derived(
         appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId),
@@ -91,7 +100,7 @@
         <button
             class="text-fg-muted hover-surface rounded p-1 outline-none"
             onclick={() => toggleSettings()}
-            use:tooltip={'Settings (Ctrl+,)'}>
+            use:tooltip={`Settings (${shortcuts.settings})`}>
             <Settings size={16} />
         </button>
 
@@ -100,14 +109,14 @@
         <button
             class="text-fg-muted hover-surface rounded p-1 outline-none"
             onclick={() => toggleCommandPalette()}
-            use:tooltip={'Commands (Ctrl+P)'}>
+            use:tooltip={`Commands (${shortcuts.commands})`}>
             <Zap size={16} />
         </button>
 
         <button
             class="text-fg-muted hover-surface rounded p-1 outline-none"
             onclick={() => toggleBookmarks()}
-            use:tooltip={'Bookmarks (Ctrl+B)'}>
+            use:tooltip={`Bookmarks (${shortcuts.bookmarks})`}>
             <Bookmark size={16} />
         </button>
     </div>
@@ -128,7 +137,7 @@
             <button
                 class="text-fg-muted hover-surface rounded p-1 outline-none"
                 onclick={handleWriterMode}
-                use:tooltip={'Writer Mode (F11)'}>
+                use:tooltip={`Writer Mode (${shortcuts.writerMode})`}>
                 <Feather
                     size={16}
                     class={appContext.app.writerMode ? 'text-fg-default' : 'text-fg-muted'} />
@@ -140,7 +149,7 @@
                 class:cursor-not-allowed={!isMarkdown}
                 onclick={toggleSplit}
                 use:tooltip={isMarkdown
-                    ? 'Toggle Split Preview (Ctrl+\\)'
+                    ? `Toggle Split Preview (${shortcuts.splitView})`
                     : 'Preview not available'}>
                 {#if !isMarkdown}
                     <EyeOff size={16} class="opacity-50" />

@@ -5,10 +5,13 @@
         type OperationId,
     } from '$lib/config/textOperationsRegistry';
     import { performTextTransform } from '$lib/stores/editorStore.svelte';
+    import { shortcutManager } from '$lib/utils/shortcuts';
     import { Type, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
     let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
+
+    let undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
 
     function handleOperation(operationId: OperationId) {
         performTextTransform(operationId);
@@ -68,7 +71,7 @@
     </div>
 
     {#snippet footer()}
-        <p class="text-fg-muted mr-auto text-xs">All operations support undo (Ctrl+Z)</p>
+        <p class="text-fg-muted mr-auto text-xs">All operations support undo ({undoShortcut})</p>
         <button
             type="button"
             class="bg-accent-primary text-fg-inverse rounded px-4 py-2 text-sm font-medium hover:opacity-80"

@@ -15,6 +15,7 @@
         triggerImmediateLint,
     } from '$lib/utils/spellcheckExtension.svelte.ts';
     import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
+    import { shortcutManager } from '$lib/utils/shortcuts';
     import { Database, Keyboard, Settings } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
@@ -22,6 +23,8 @@
         isOpen: boolean;
         onClose: () => void;
     }
+
+    let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('help.shortcuts'));
 
     let { isOpen = $bindable(false), onClose }: Props = $props();
 
@@ -531,7 +534,7 @@
                         onClose();
                         toggleShortcuts();
                     }}
-                    title="Keyboard Shortcuts (F1)"
+                    title={`Keyboard Shortcuts (${shortcutsShortcut})`}
                     aria-label="Keyboard Shortcuts">
                     <Keyboard size={16} />
                 </button>
