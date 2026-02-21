@@ -1,4 +1,4 @@
-use anyhow::Result;
+﻿use anyhow::Result;
 use chrono::{DateTime, Local};
 use encoding_rs::{UTF_16BE, UTF_16LE};
 use std::path::Path;
@@ -78,7 +78,7 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         .file_name()
         .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid path"))?
         .to_string_lossy();
-    let temp_path = path.with_file_name(format!("{}.tmp", file_name));
+    let temp_path = path.with_file_name(format!("{}.{}.tmp", file_name, uuid::Uuid::new_v4()));
 
     fs::write(&temp_path, content).await?;
 
