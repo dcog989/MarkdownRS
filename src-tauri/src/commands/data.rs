@@ -1,10 +1,10 @@
-use crate::db::Bookmark;
+﻿use crate::db::Bookmark;
 use crate::state::AppState;
 use crate::utils::handle_error;
 use tauri::State;
 
 #[tauri::command]
-pub async fn export_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
+pub fn export_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
     state
         .db
         .get_all_bookmarks()
@@ -12,7 +12,7 @@ pub async fn export_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark
 }
 
 #[tauri::command]
-pub async fn import_bookmarks(
+pub fn import_bookmarks(
     state: State<'_, AppState>,
     bookmarks: Vec<Bookmark>,
 ) -> Result<usize, String> {
@@ -25,7 +25,7 @@ pub async fn import_bookmarks(
 }
 
 #[tauri::command]
-pub async fn export_recent_files(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+pub fn export_recent_files(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     state
         .db
         .get_recent_files()
@@ -33,7 +33,7 @@ pub async fn export_recent_files(state: State<'_, AppState>) -> Result<Vec<Strin
 }
 
 #[tauri::command]
-pub async fn import_recent_files(
+pub fn import_recent_files(
     state: State<'_, AppState>,
     paths: Vec<String>,
 ) -> Result<usize, String> {
@@ -46,7 +46,7 @@ pub async fn import_recent_files(
 }
 
 #[tauri::command]
-pub async fn delete_orphan_files(state: State<'_, AppState>) -> Result<usize, String> {
+pub fn delete_orphan_files(state: State<'_, AppState>) -> Result<usize, String> {
     let recent = state
         .db
         .delete_orphan_recent_files()

@@ -1,10 +1,10 @@
-use crate::db::Bookmark;
+﻿use crate::db::Bookmark;
 use crate::state::AppState;
 use crate::utils::handle_error;
 use tauri::State;
 
 #[tauri::command]
-pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
+pub fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
     state
         .db
         .add_bookmark(&bookmark)
@@ -12,7 +12,7 @@ pub async fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Res
 }
 
 #[tauri::command]
-pub async fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
+pub fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
     state
         .db
         .get_all_bookmarks()
@@ -20,7 +20,7 @@ pub async fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmar
 }
 
 #[tauri::command]
-pub async fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(), String> {
+pub fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(), String> {
     state
         .db
         .delete_bookmark(&id)
@@ -28,7 +28,7 @@ pub async fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(
 }
 
 #[tauri::command]
-pub async fn update_bookmark_access_time(
+pub fn update_bookmark_access_time(
     state: State<'_, AppState>,
     id: String,
     last_accessed: String,

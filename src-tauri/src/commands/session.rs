@@ -1,10 +1,10 @@
-use crate::db::{SessionData, TabData, TabState};
+﻿use crate::db::{SessionData, TabData, TabState};
 use crate::state::AppState;
 use crate::utils::handle_error;
 use tauri::State;
 
 #[tauri::command]
-pub async fn save_session(
+pub fn save_session(
     state: State<'_, AppState>,
     mut active_tabs: Vec<TabState>,
     mut closed_tabs: Vec<TabState>,
@@ -47,7 +47,7 @@ pub async fn save_session(
 }
 
 #[tauri::command]
-pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
+pub fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
     let start = std::time::Instant::now();
 
     log::info!("[Rust] restore_session called");
@@ -82,7 +82,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
 }
 
 #[tauri::command]
-pub async fn load_tab_content(
+pub fn load_tab_content(
     state: State<'_, AppState>,
     tab_id: String,
 ) -> Result<TabData, String> {
@@ -107,7 +107,7 @@ pub async fn load_tab_content(
 }
 
 #[tauri::command]
-pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
+pub fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
     let freelist_count = state
         .db
         .get_freelist_count()
