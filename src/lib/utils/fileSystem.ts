@@ -283,6 +283,10 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
 
         if (savePath) {
             const sanitizedPath = sanitizePath(savePath);
+
+            tab = getTab();
+            if (!tab) return false;
+
             let contentToSave = tab.content;
 
             // Allow formatting on explicit save actions regardless of tab switching state
