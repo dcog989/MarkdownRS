@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     import { CONFIG } from '$lib/utils/config';
     import type { Snippet } from 'svelte';
     import { fade } from 'svelte/transition';
@@ -45,7 +45,10 @@
             }
 
             if (newY + rect.height > winH) {
-                newY = y - rect.height - CONFIG.UI.TOOLTIP_FLIP_OFFSET;
+                newY = Math.max(
+                    CONFIG.UI.TOOLTIP_SCREEN_PADDING,
+                    y - rect.height - CONFIG.UI.TOOLTIP_FLIP_OFFSET,
+                );
             }
 
             adjustedX = newX;
