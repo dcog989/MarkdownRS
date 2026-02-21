@@ -2,7 +2,7 @@
     import { tooltip } from '$lib/actions/tooltip';
     import { showToast } from '$lib/stores/toastStore.svelte';
     import { callBackend } from '$lib/utils/backend';
-    import { save, open } from '@tauri-apps/plugin-dialog';
+    import { open, save } from '@tauri-apps/plugin-dialog';
     import { Database, X } from 'lucide-svelte';
     import Modal from './Modal.svelte';
 
@@ -22,7 +22,7 @@
             const bookmarks = await callBackend('export_bookmarks', {}, 'Data:ExportBookmarks');
             if (!bookmarks) return;
             const path = await save({
-                defaultPath: 'bookmarks.json',
+                defaultPath: 'markdownrs-bookmarks.json',
                 filters: [{ name: 'JSON', extensions: ['json'] }],
             });
             if (!path) return;
@@ -85,7 +85,7 @@
             const paths = await callBackend('export_recent_files', {}, 'Data:ExportRecent');
             if (!paths) return;
             const dest = await save({
-                defaultPath: 'recent-files.json',
+                defaultPath: 'markdownrs-recent-files.json',
                 filters: [{ name: 'JSON', extensions: ['json'] }],
             });
             if (!dest) return;
