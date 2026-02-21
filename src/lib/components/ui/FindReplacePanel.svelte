@@ -242,7 +242,7 @@
     <div
         bind:this={panelRef}
         class="bg-bg-panel bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-100 flex-col border border-t-0 border-r-0 shadow-lg transition-opacity duration-200"
-        class:opacity-15={appContext.app.findPanelTransparent && !isMouseOver}
+        class:opacity-[0.15]={appContext.app.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
         onfocusout={handleBlur}
         onmouseenter={() => (isMouseOver = true)}
