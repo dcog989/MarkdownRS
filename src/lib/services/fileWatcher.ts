@@ -204,7 +204,7 @@ class FileWatcherService {
                     }
                 }
 
-                if (!signal?.aborted) {
+                if (!signal?.aborted && !this.activeWriteLocks.has(path)) {
                     const now = Date.now();
                     const lastTime = this.lastToastTime.get(path) || 0;
                     const toastTimeLimit = 5000;

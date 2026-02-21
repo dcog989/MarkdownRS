@@ -576,9 +576,12 @@ export function getHistoryState(id: string): unknown | undefined {
 }
 
 export function markAsSaved(id: string) {
+    const now = getCurrentTimestamp();
     updateTab(id, (tab) => ({
         lastSavedHash: hashContent(tab.content),
         isDirty: false,
+        modified: now,
+        formattedTimestamp: formatTimestampForDisplay(now),
     }));
 }
 
