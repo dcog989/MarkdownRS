@@ -26,6 +26,7 @@
         saveCurrentFile,
         saveCurrentFileAs,
         triggerReopenClosedTab,
+        withActiveTab,
     } from '$lib/utils/fileSystem';
     import {
         ArrowLeft,
@@ -75,18 +76,12 @@
     );
 
     async function handleSave() {
-        const prevActive = appContext.app.activeTabId;
-        appContext.app.activeTabId = tabId;
-        await saveCurrentFile();
-        appContext.app.activeTabId = prevActive;
+        await withActiveTab(tabId, saveCurrentFile);
         onClose();
     }
 
     async function handleSaveAs() {
-        const prevActive = appContext.app.activeTabId;
-        appContext.app.activeTabId = tabId;
-        await saveCurrentFileAs();
-        appContext.app.activeTabId = prevActive;
+        await withActiveTab(tabId, saveCurrentFileAs);
         onClose();
     }
 

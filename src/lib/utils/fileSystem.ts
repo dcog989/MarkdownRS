@@ -51,6 +51,22 @@ export {
     reloadFileContent,
 };
 
+export async function withActiveTab<T>(
+    tabId: string,
+    operation: () => Promise<T>,
+): Promise<T | undefined> {
+    const prevActive = appContext.app.activeTabId;
+    if (prevActive === tabId) {
+        return operation();
+    }
+    appContext.app.activeTabId = tabId;
+    try {
+        return await operation();
+    } finally {
+        appContext.app.activeTabId = prevActive;
+    }
+}
+
 export async function openFile(path?: string): Promise<void> {
     const start = performance.now();
 
