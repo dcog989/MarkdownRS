@@ -6,6 +6,7 @@ import {
     refreshMetadata,
     reloadFileContent,
     sanitizePath,
+    normalizeLineEndings,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import {
@@ -333,11 +334,11 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     ? tab.lineEnding || 'LF'
                     : appContext.app.lineEndingPreference;
 
-            let diskContent = contentToSave;
+            let diskContent = normalizeLineEndings(contentToSave);
             if (targetLineEnding === 'CRLF') {
-                diskContent = contentToSave.replace(/\n/g, '\r\n');
+                diskContent = diskContent.replace(/\n/g, '\r\n');
             } else {
-                diskContent = contentToSave.replace(/\r\n/g, '\n');
+                diskContent = diskContent.replace(/\r\n/g, '\n');
             }
 
             fileWatcher.setWriteLock(sanitizedPath, true);
