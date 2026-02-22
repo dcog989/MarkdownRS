@@ -317,10 +317,13 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     tableAlignment: appContext.app.formatterTableAlignment,
                 });
 
-                if (formatted && formatted !== contentToSave) {
+                tab = getTab()!; // Refresh reference after await
+                if (tab && tab.content !== contentToSave) {
+                    // User typed during format � abort to prevent data loss
+                    contentToSave = tab.content;
+                } else if (formatted && formatted !== contentToSave) {
                     contentToSave = formatted;
                     updateContentOnly(tabId, contentToSave, true);
-                    // Refresh local reference after store update
                     tab = getTab()!;
                 }
             }
