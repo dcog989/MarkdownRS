@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
     import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
     import { performTextOperation } from '$lib/components/editor/logic/operations';
     import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
@@ -61,22 +61,19 @@
     // Initialize Helpers
     const eventHandlers = createEditorEventHandlers(onContextMenu);
 
-    // Global flush function accessible from window for shutdown
-    let flushFn: (() => void) | null = null;
-    if (typeof window !== 'undefined') {
+    onMount(() => {
+        initSpellcheck();
+
+        // Register flush function for shutdown � must be inside onMount to guarantee cleanup pairing
         if (!window._editorFlushFunctions) {
             window._editorFlushFunctions = [];
         }
-        flushFn = () => {
+        const flushFn = () => {
             if (cmView?.flushPendingContent) {
                 cmView.flushPendingContent();
             }
         };
         window._editorFlushFunctions.push(flushFn);
-    }
-
-    onMount(() => {
-        initSpellcheck();
 
         return () => {
             // Cleanup: unregister editor instance and remove flush function when component is destroyed
