@@ -9,6 +9,7 @@
     import { addTab, pushToMru } from '$lib/stores/editorStore.svelte';
     import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
     import { appContext } from '$lib/stores/state.svelte.ts';
+    import { CONFIG } from '$lib/utils/config';
     import {
         loadSession,
         openFileByPath,
@@ -16,7 +17,6 @@
         persistSessionDebounced,
     } from '$lib/utils/fileSystem.ts';
     import { isMarkdownFile } from '$lib/utils/fileValidation';
-    import { CONFIG } from '$lib/utils/config';
     import { logger } from '$lib/utils/logger';
     import { initSettings, saveSettings } from '$lib/utils/settings';
     import { onDestroy, onMount } from 'svelte';
@@ -218,6 +218,9 @@
             clearInterval(autoSaveInterval);
             autoSaveInterval = null;
         }
+
+        window.removeEventListener('mousemove', handleResize);
+        window.removeEventListener('mouseup', stopResize);
 
         // Only trigger cleanup saves if we are NOT in the process of unloading via browser event
         // This prevents double-saving and race conditions during app exit
