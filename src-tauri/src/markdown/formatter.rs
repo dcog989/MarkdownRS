@@ -119,10 +119,10 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
         for cap in PROTECTED_LINE_RE.captures_iter(&formatted) {
             let m = cap.get(0).unwrap();
             restored.push_str(&formatted[last_end..m.start()]);
-            if let Ok(idx) = cap[1].parse::<usize>() {
-                if let Some(original) = protected_lines.get(idx) {
-                    restored.push_str(original);
-                }
+            if let Ok(idx) = cap[1].parse::<usize>()
+                && let Some(original) = protected_lines.get(idx)
+            {
+                restored.push_str(original);
             }
             last_end = m.end();
         }
