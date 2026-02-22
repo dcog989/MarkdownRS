@@ -85,7 +85,7 @@
     --success-hover: oklch(0.6 0.18 150);
     --highlight-line: oklch(0.7 0.15 140);
     --selection-bg: oklch(0.4 0.12 301 / 0.4);
-    --selection-match-bg: oklch(0.68 0.11 55 / 0.35);
+    --selection-match-bg: oklch(0.7 0.18 55 / 0.45);
     --active-line-bg: oklch(1 0 0 / 0.08);
     --dirty-indicator: #5deb47;
 
@@ -185,7 +185,7 @@
     --danger-text: oklch(0.5 0.2 25);
     --highlight-line: oklch(0.4 0.15 140);
     --selection-bg: oklch(57.762% 0.163 309.273 / 0.66);
-    --selection-match-bg: oklch(0.76 0.14 70 / 0.3);
+    --selection-match-bg: oklch(0.72 0.18 55 / 0.5);
     --active-line-bg: oklch(0 0 0 / 0.05);
 
     /* Editor & Content Colors - Light Theme */

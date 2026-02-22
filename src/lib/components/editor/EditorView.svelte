@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
     import {
         createDoubleClickHandler,
         createWrapExtension,
@@ -650,7 +650,7 @@
 
         viewInstance.scrollDOM.addEventListener('scroll', throttleScroll, { passive: true });
 
-        // CM's built-in selection-drag autoscroll runs at 50ms/8px � far too slow.
+        // CM's built-in selection-drag autoscroll runs at 50ms/8px ? far too slow.
         // Intercept mousemove with button held to drive faster scroll.
         let selScrollRAF: number | null = null;
         let selScrollVel = 0;

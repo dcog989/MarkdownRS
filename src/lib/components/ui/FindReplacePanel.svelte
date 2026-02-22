@@ -12,7 +12,14 @@
         updateSearchEditor,
     } from '$lib/utils/searchManager.svelte.ts';
     import { debounce } from '$lib/utils/timing';
-    import { findNext, findPrevious, replaceAll, replaceNext } from '@codemirror/search';
+    import {
+        closeSearchPanel,
+        findNext,
+        findPrevious,
+        openSearchPanel,
+        replaceAll,
+        replaceNext,
+    } from '@codemirror/search';
     import type { EditorView } from '@codemirror/view';
     import { ChevronDown, ChevronRight, Replace, Search, X } from 'lucide-svelte';
     import { onMount, tick, untrack } from 'svelte';
@@ -44,6 +51,7 @@
         const currentlyOpen = isOpen;
 
         if (currentlyOpen && !wasOpen) {
+            if (cmView) openSearchPanel(cmView);
             wasOpen = true;
 
             // Prefill with selected text if available
@@ -66,6 +74,7 @@
 
             tick().then(focusInput);
         } else if (!currentlyOpen && wasOpen) {
+            if (cmView) closeSearchPanel(cmView);
             wasOpen = false;
             clearSearch(cmView);
         }
@@ -241,7 +250,8 @@
 {#if isOpen}
     <div
         bind:this={panelRef}
-        class="bg-bg-panel bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-100 flex-col border border-t-0 border-r-0 shadow-lg transition-opacity duration-200"
+        class="bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-100 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
+        style="background-color: color-mix(in srgb, var(--color-bg-panel) 82%, transparent);"
         class:opacity-[0.15]={appContext.app.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
         onfocusout={handleBlur}

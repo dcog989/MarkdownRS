@@ -24,14 +24,19 @@ export function generateDynamicTheme(
         },
         '.cm-selectionMatch': { backgroundColor: 'var(--color-selection-match-bg)' },
         '.cm-searchMatch': {
-            backgroundColor: isDark ? 'rgba(255, 255, 0, 0.2)' : 'rgba(255, 215, 0, 0.4)',
-            outline: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+            backgroundColor: isDark ? 'rgba(255, 140, 0, 0.85)' : 'rgba(230, 112, 0, 0.85)',
+            color: '#000 !important',
             borderRadius: '2px',
         },
+        '.cm-searchMatch *': {
+            color: '#000 !important',
+        },
         '.cm-searchMatch.cm-searchMatch-selected': {
-            backgroundColor: isDark ? '#d19a66 !important' : '#ff9900 !important',
-            color: isDark ? '#000 !important' : '#fff !important',
-            borderRadius: '2px',
+            backgroundColor: isDark ? '#ff8c00 !important' : '#e67000 !important',
+            color: isDark ? '#000 !important' : '#000 !important',
+            boxShadow: isDark ? '0 0 0 2px #ffcc77 !important' : '0 0 0 2px #cc5500 !important',
+            zIndex: '10',
+            position: 'relative',
         },
         '.cm-tooltip': {
             backgroundColor: 'var(--color-bg-panel)',

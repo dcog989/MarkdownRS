@@ -1,5 +1,12 @@
 /* CodeMirror Editor Styling */
 
+/* Hide CM built-in search panel — custom FindReplacePanel is used instead,
+   but openSearchPanel() must be called to enable .cm-searchMatch decoration rendering */
+.cm-editor .cm-panels,
+.cm-editor .cm-search {
+    display: none !important;
+}
+
 /* Base Editor Styling */
 .cm-editor {
     background-color: var(--surface-1) !important;

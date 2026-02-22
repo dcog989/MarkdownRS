@@ -1,4 +1,4 @@
-﻿import { updateContent } from '$lib/stores/editorStore.svelte';
+import { updateContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { SearchQuery, setSearchQuery } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
