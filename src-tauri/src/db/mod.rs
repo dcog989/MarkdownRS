@@ -458,8 +458,8 @@ impl Database {
         conn.execute(
             "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-             ON CONFLICT(id) DO UPDATE SET
-                path          = excluded.path,
+             ON CONFLICT(path) DO UPDATE SET
+                id            = excluded.id,
                 title         = excluded.title,
                 tags          = excluded.tags,
                 created       = excluded.created,
@@ -650,8 +650,8 @@ impl Database {
             let mut stmt = tx.prepare_cached(
                 "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-                 ON CONFLICT(id) DO UPDATE SET
-                    path          = excluded.path,
+                 ON CONFLICT(path) DO UPDATE SET
+                    id            = excluded.id,
                     title         = excluded.title,
                     tags          = excluded.tags,
                     created       = excluded.created,
