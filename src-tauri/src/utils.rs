@@ -4,6 +4,7 @@ use encoding_rs::{UTF_16BE, UTF_16LE};
 use std::path::Path;
 use std::time::SystemTime;
 use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use unicode_bom::Bom;
 
 /// Trait to convert anyhow errors to String for Tauri IPC compatibility
@@ -80,7 +81,11 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         .to_string_lossy();
     let temp_path = path.with_file_name(format!("{}.{}.tmp", file_name, uuid::Uuid::new_v4()));
 
-    fs::write(&temp_path, content).await?;
+    {
+        let mut file = tokio::fs::File::create(&temp_path).await?;
+        file.write_all(content).await?;
+        file.sync_all().await?;
+    }
 
     match fs::rename(&temp_path, path).await {
         Ok(_) => Ok(()),
