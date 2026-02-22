@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
     import Editor from '$lib/components/editor/Editor.svelte';
     import Preview from '$lib/components/preview/Preview.svelte';
     import StatusBar from '$lib/components/ui/StatusBar.svelte';
@@ -296,9 +296,7 @@
                         style="flex: {showPreview
                             ? `0 0 ${appContext.app.splitPercentage * 100}%`
                             : '1 1 100%'}; height: 100%; overflow: hidden;">
-                        {#key appContext.app.activeTabId}
-                            <Editor tabId={appContext.app.activeTabId} />
-                        {/key}
+                        <Editor tabId={appContext.app.activeTabId} />
                     </div>
 
                     {#if showPreview}
