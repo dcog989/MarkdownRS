@@ -25,6 +25,8 @@ static ORDERED_LIST_RE: LazyLock<Regex> =
 static BOX_DRAWING_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"[│┤┐└┴┬├─┼╔╗╚╝║═╠╣╦╩╬▀▄█▌▐░▒▓■□▪▫]").expect("Invalid BOX_DRAWING_RE")
 });
+static PROTECTED_LINE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"__PROTECTED_LINE_(\d+)__").expect("Invalid PROTECTED_LINE_RE"));
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FormatterOptions {
@@ -56,13 +58,13 @@ impl Default for FormatterOptions {
 pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<String> {
     // Replace protected lines (box-drawing / ASCII art) with unique tokens before
     // handing the text to dprint, so dprint line-count shifts cannot desync their positions.
-    let mut protected_lines: Vec<(String, String)> = Vec::new();
+    let mut protected_lines: Vec<String> = Vec::new();
     let mut tokenised = String::with_capacity(content.len());
 
-    for (idx, line) in content.lines().enumerate() {
+    for line in content.lines() {
         if BOX_DRAWING_RE.is_match(line) {
-            let token = format!("__PROTECTED_LINE_{}__", idx);
-            protected_lines.push((token.clone(), line.to_string()));
+            let token = format!("__PROTECTED_LINE_{}__", protected_lines.len());
+            protected_lines.push(line.to_string());
             tokenised.push_str(&token);
         } else {
             tokenised.push_str(line);
@@ -112,10 +114,19 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
 
     // Swap tokens back for their original protected lines
     let result = if !protected_lines.is_empty() {
-        let mut restored = formatted;
-        for (token, original) in &protected_lines {
-            restored = restored.replace(token.as_str(), original.as_str());
+        let mut restored = String::with_capacity(formatted.len());
+        let mut last_end = 0;
+        for cap in PROTECTED_LINE_RE.captures_iter(&formatted) {
+            let m = cap.get(0).unwrap();
+            restored.push_str(&formatted[last_end..m.start()]);
+            if let Ok(idx) = cap[1].parse::<usize>() {
+                if let Some(original) = protected_lines.get(idx) {
+                    restored.push_str(original);
+                }
+            }
+            last_end = m.end();
         }
+        restored.push_str(&formatted[last_end..]);
         restored
     } else {
         formatted
