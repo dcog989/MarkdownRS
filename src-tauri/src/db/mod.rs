@@ -146,6 +146,16 @@ const MIGRATIONS: &[&str] = &[
     END;",
     // v2: Add index on tabs.sort_index for faster session restore
     "CREATE INDEX IF NOT EXISTS idx_tabs_sort_index ON tabs(sort_index);",
+    // v3: Increase recent files retention from 99 to 999
+    "DROP TRIGGER IF EXISTS prune_recent_files;
+    CREATE TRIGGER IF NOT EXISTS prune_recent_files
+    AFTER INSERT ON recent_files
+    WHEN (SELECT COUNT(*) FROM recent_files) > 999
+    BEGIN
+        DELETE FROM recent_files WHERE path NOT IN (
+            SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 999
+        );
+    END;",
 ];
 
 impl Database {

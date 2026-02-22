@@ -25,7 +25,7 @@ export async function addToRecentFiles(path: string) {
     // Optimistic UI update
     recentFilesStore.files = [path, ...recentFilesStore.files.filter((f) => f !== path)].slice(
         0,
-        99,
+        999,
     );
 
     await callBackend(
