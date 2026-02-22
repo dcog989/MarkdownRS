@@ -2,99 +2,10 @@ use crate::markdown::config::MarkdownFlavor;
 use anyhow::{Result, anyhow};
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
-use dashmap::DashMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::sync::{Arc, LazyLock};
-use std::time::{Duration, Instant};
+use std::sync::LazyLock;
 use unicode_segmentation::UnicodeSegmentation;
-
-const CACHE_MAX_ENTRIES: usize = 50;
-const CACHE_MAX_AGE: Duration = Duration::from_secs(60);
-
-struct CacheEntry {
-    line_map: Vec<usize>,
-    last_accessed: Instant,
-}
-
-/// Thread-safe LRU-style cache for line maps
-/// - Limits entries to prevent unbounded memory growth
-/// - Evicts entries older than CACHE_MAX_AGE
-static LINE_MAP_CACHE: LazyLock<Arc<DashMap<(u64, MarkdownFlavor), CacheEntry>>> =
-    LazyLock::new(|| Arc::new(DashMap::new()));
-
-/// Computes a collision-resistant hash of content for cache key.
-/// Includes content length to reduce collisions between short strings.
-fn compute_content_hash(content: &str) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    content.len().hash(&mut hasher);
-    content.hash(&mut hasher);
-    hasher.finish()
-}
-
-/// Prunes old entries from cache if it exceeds size limit
-fn prune_cache_if_needed() {
-    if LINE_MAP_CACHE.len() <= CACHE_MAX_ENTRIES {
-        return;
-    }
-
-    // Collect keys to remove (entries older than max age or excess entries)
-    let now = Instant::now();
-    let mut to_remove: Vec<(u64, MarkdownFlavor)> = LINE_MAP_CACHE
-        .iter()
-        .filter(|entry| now.duration_since(entry.last_accessed) > CACHE_MAX_AGE)
-        .map(|entry| *entry.key())
-        .collect();
-
-    // If still over limit, remove oldest entries
-    if LINE_MAP_CACHE.len() - to_remove.len() > CACHE_MAX_ENTRIES {
-        let mut entries: Vec<_> = LINE_MAP_CACHE
-            .iter()
-            .map(|entry| (*entry.key(), entry.last_accessed))
-            .collect();
-        entries.sort_by_key(|(_, t)| *t);
-
-        let to_evict = entries.len().saturating_sub(CACHE_MAX_ENTRIES / 2);
-        for (key, _) in entries.into_iter().take(to_evict) {
-            to_remove.push(key);
-        }
-    }
-
-    for key in to_remove {
-        LINE_MAP_CACHE.remove(&key);
-    }
-}
-
-/// Gets or builds the line map, using cache if content and flavor haven't changed
-fn get_or_build_line_map(content: &str, flavor: MarkdownFlavor) -> Vec<usize> {
-    let cache_key = (compute_content_hash(content), flavor);
-    let now = Instant::now();
-
-    // Check cache and update access time if found
-    if let Some(mut entry) = LINE_MAP_CACHE.get_mut(&cache_key) {
-        entry.last_accessed = now;
-        return entry.line_map.clone();
-    }
-
-    // Build new line map
-    let line_map = build_line_map(content);
-
-    // Prune old entries before inserting
-    prune_cache_if_needed();
-
-    // Store in cache
-    LINE_MAP_CACHE.insert(
-        cache_key,
-        CacheEntry {
-            line_map: line_map.clone(),
-            last_accessed: now,
-        },
-    );
-
-    line_map
-}
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
@@ -124,10 +35,8 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
         .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
-    let line_map = get_or_build_line_map(content, options.flavor);
-
-    // Single-pass metrics calculation
-    let (line_count, word_count, char_count, widest_column) = calculate_text_metrics(content);
+    let (line_map, line_count, word_count, char_count, widest_column) =
+        build_line_map_and_metrics(content);
 
     Ok(RenderResult {
         html,
@@ -236,34 +145,44 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
     }
 }
 
-fn build_line_map(content: &str) -> Vec<usize> {
+fn build_line_map_and_metrics(content: &str) -> (Vec<usize>, usize, usize, usize, usize) {
     if content.is_empty() {
-        return vec![0];
+        return (vec![0], 0, 0, 0, 0);
     }
 
     let mut line_map = Vec::new();
     let mut offset = 0;
+    let mut char_count = 0;
+    let mut widest_column = 0;
+    let mut current_column = 0;
 
-    // index 0 = line 1 byte offset
-    // Handle both LF and CRLF line endings correctly
-    line_map.push(offset);
+    line_map.push(0);
     for c in content.chars() {
+        char_count += 1;
         if c == '\n' {
             line_map.push(offset + 1);
+            if current_column > widest_column {
+                widest_column = current_column;
+            }
+            current_column = 0;
+        } else {
+            current_column += 1;
         }
         offset += c.len_utf8();
     }
 
-    line_map
+    if current_column > widest_column {
+        widest_column = current_column;
+    }
+
+    let line_count = line_map.len();
+    let word_count = content.unicode_words().count();
+
+    (line_map, line_count, word_count, char_count, widest_column)
 }
 
-/// Calculates text metrics in a single pass
-/// Returns: (line_count, word_count, char_count, widest_column)
 pub fn calculate_text_metrics(content: &str) -> (usize, usize, usize, usize) {
-    let lines: Vec<&str> = content.lines().collect();
-    let line_count = lines.len();
-    let word_count = content.unicode_words().count();
-    let char_count = content.chars().count();
-    let widest_column = lines.iter().map(|l| l.chars().count()).max().unwrap_or(0);
+    let (_, line_count, word_count, char_count, widest_column) =
+        build_line_map_and_metrics(content);
     (line_count, word_count, char_count, widest_column)
 }
