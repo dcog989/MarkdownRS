@@ -526,7 +526,7 @@ mod windows_registry {
 }
 
 #[tauri::command]
-pub async fn set_context_menu_item(enable: bool) -> Result<(), String> {
+pub async fn set_context_menu_item(_enable: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         if enable {
@@ -550,5 +550,15 @@ pub async fn check_context_menu_status() -> Result<bool, String> {
     #[cfg(not(target_os = "windows"))]
     {
         Ok(false)
+    }
+}
+
+#[tauri::command]
+pub async fn toggle_devtools(#[allow(unused_variables)] window: tauri::WebviewWindow) {
+    #[cfg(debug_assertions)]
+    if window.is_devtools_open() {
+        window.close_devtools();
+    } else {
+        window.open_devtools();
     }
 }

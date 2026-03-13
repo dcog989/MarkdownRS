@@ -2,10 +2,20 @@
 
 This is a Markdown editor focused on performance, minimal resource usage, and a clean UI for technical and general users.
 
+## Build Environment
+
+User PC = Ryzen 5800X3D / 16GB RAM / Radeon 7900 XT / 1TB NVMe for OS+programs / 1 TB SATA SSD for data. Dell AW3225QF OLED 3840x2160 monitor.
+
+Environment = Linux CachyOS / Limine boot loader / KDE Plasma desktop / Wayland / Btrfs file system.
+
+Apps = Firefox, Kate text editor, Zed code editor, Ghostty terminal + Fresh terminal editor. pacman, paru, and bun package managers.
+
+All software is updated as of today's date.
+
 ## Tech Stack
 
 - **Tauri** (v2.9) - Desktop framework wrapping the web frontend
-- **Rust** (2024 / v1.93) - Backend logic, Markdown processing, file I/O
+- **Rust** (2024 / v1.94) - Backend logic, Markdown processing, file I/O
 - **Svelte** (v5.49) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
 - **TypeScript** (v5.9) - Type-safe frontend code
 - **CodeMirror** (v6.0) - Code editor component

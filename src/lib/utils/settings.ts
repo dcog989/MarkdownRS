@@ -61,10 +61,21 @@ function getSettingsObject() {
 }
 
 export async function initSettings() {
-    const saved = await callBackendSafe('load_settings', {}, 'Settings:Load', {
-        showToast: false,
-        userMessage: 'Failed to load settings',
-    });
+    const [saved, appInfo] = await Promise.all([
+        callBackendSafe('load_settings', {}, 'Settings:Load', {
+            showToast: false,
+            userMessage: 'Failed to load settings',
+        }),
+        callBackendSafe('get_app_info', {}, 'Settings:AppInfo', {
+            showToast: false,
+            userMessage: 'Failed to get app info',
+        }),
+    ]);
+
+    if (appInfo?.os_platform) {
+        appState.osPlatform = appInfo.os_platform as 'windows' | 'linux' | 'macos';
+        log(`OS platform: ${appState.osPlatform}`);
+    }
 
     if (saved && Object.keys(saved).length > 0) {
         log(`Restoring app preferences from TOML...`);

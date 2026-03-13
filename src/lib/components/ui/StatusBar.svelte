@@ -116,7 +116,7 @@
         <span class="opacity-40">|</span>
 
         <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
-            <span class="opacity-70">Ln</span>
+            <span class="font-mono opacity-70">Ln</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorLine)}</span>
             <span class="opacity-30">/</span>
@@ -125,7 +125,7 @@
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Column Position'}>
-            <span class="opacity-70">Col</span>
+            <span class="font-mono opacity-70">Col</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorCol)}</span>
             <span class="opacity-30">/</span>
@@ -142,7 +142,7 @@
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Character Position'}>
-            <span class="opacity-70">Char</span>
+            <span class="font-mono opacity-70">Char</span>
             <span class="inline-block min-w-[5ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorOffset)}</span>
             <span class="opacity-30">/</span>
@@ -151,7 +151,7 @@
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Word Position'}>
-            <span class="opacity-70">Word</span>
+            <span class="font-mono opacity-70">Word</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.currentWordIndex)}</span>
             <span class="opacity-30">/</span>

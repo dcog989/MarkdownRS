@@ -703,7 +703,17 @@
 
         viewInstance.focus();
 
+        // WebKitGTK (Linux) silently drops focus() calls made while the window is
+        // still hidden. Re-focus once the window becomes visible so keyboard input
+        // and paste work correctly from the first keystroke.
+        const onWindowFocus = () => {
+            viewInstance.focus();
+            window.removeEventListener('focus', onWindowFocus);
+        };
+        window.addEventListener('focus', onWindowFocus);
+
         return () => {
+            window.removeEventListener('focus', onWindowFocus);
             if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
             if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
             if (cursorUpdateTimer) clearTimeout(cursorUpdateTimer);
@@ -735,6 +745,7 @@
 
 <div
     role="none"
+    tabindex="-1"
     class="bg-bg-main relative h-full w-full overflow-hidden"
     bind:this={editorContainer}
     onclick={() => view?.focus()}>

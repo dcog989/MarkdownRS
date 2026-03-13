@@ -12,7 +12,6 @@ use std::fs;
 use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
-use velopack::VelopackApp;
 
 fn default_log_level() -> String {
     "info".to_string()
@@ -59,10 +58,6 @@ fn main() {
             std::env::set_var("LOCALAPPDATA", data_dir.as_os_str());
         }
     }
-
-    // Velopack Hook: Handles install/update events and exits if necessary
-    // Must run after portable env vars are set so updates target the correct drive
-    VelopackApp::build().run();
 
     #[cfg(target_os = "windows")]
     {
@@ -396,6 +391,7 @@ fn main() {
             commands::settings::check_context_menu_status,
             commands::updater::check_for_updates,
             commands::updater::download_and_install_update,
+            commands::settings::toggle_devtools,
             commands::export::export_to_pdf,
             commands::data::export_bookmarks,
             commands::data::import_bookmarks,

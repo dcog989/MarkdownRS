@@ -51,6 +51,7 @@ export const appState = $state({
     isTabSwitching: false,
     maxFileSizeMB: 50,
     writerMode: false,
+    osPlatform: 'windows' as 'windows' | 'linux' | 'macos',
 });
 
 // Logic functions

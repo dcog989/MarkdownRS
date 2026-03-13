@@ -73,6 +73,7 @@ impl MarkdownFlavor {
                     cjk_friendly_emphasis: false,
                     subtext: false,
                     highlight: false,
+                    insert: false,
                     phoenix_heex: false,
                 },
                 Self::Gfm => Extension {
@@ -103,6 +104,7 @@ impl MarkdownFlavor {
                     cjk_friendly_emphasis: false,
                     subtext: false,
                     highlight: false,
+                    insert: false,
                     phoenix_heex: false,
                 },
             },

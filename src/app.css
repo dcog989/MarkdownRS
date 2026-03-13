@@ -25,7 +25,6 @@ body {
     overflow: hidden;
     background-color: var(--color-bg-main);
     color: var(--color-fg-default);
-    display: contents;
     height: 100%;
     width: 100%;
     font-family:
