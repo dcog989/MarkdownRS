@@ -3,14 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Get the directory of the current script
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const packageJsonPath = path.join(rootDir, 'package.json');
 const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
 const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
 
-// Parse arguments
 const args = process.argv.slice(2);
 const shouldGit = args.includes('--git');
 const versionArg = args.find((arg) => !arg.startsWith('--'));
@@ -34,7 +32,6 @@ try {
 let newVersion = versionArg || '';
 
 if (!newVersion) {
-    // No argument provided: Auto-increment patch
     const parts = currentVersion.split('.').map((n) => parseInt(n, 10));
 
     if (parts.length !== 3 || parts.some(isNaN)) {
@@ -44,15 +41,13 @@ if (!newVersion) {
         process.exit(1);
     }
 
-    parts[2] += 1; // Increment patch
+    parts[2] += 1;
     newVersion = parts.join('.');
     console.log(`Auto-incrementing patch: ${currentVersion} -> ${newVersion}`);
 } else {
-    // Argument provided
     console.log(`Manual override: ${currentVersion} -> ${newVersion}`);
 }
 
-// Validate semver format
 if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
     console.error(`Error: New version '${newVersion}' must be in format x.y.z`);
     process.exit(1);
@@ -89,7 +84,7 @@ try {
         fs.writeFileSync(cargoTomlPath, content);
         console.log('Updated src-tauri/Cargo.toml');
     } else {
-        console.error('âŒ Could not find [package] version string in Cargo.toml');
+        console.error('❌ Could not find [package] version string in Cargo.toml');
         process.exit(1);
     }
 } catch (error) {
@@ -102,30 +97,23 @@ if (shouldGit) {
     try {
         console.log('\nProcessing Git operations...');
 
-        // Stage the files
-        // We use forward slashes for cross-platform compatibility in exec commands,
-        // although path.join handles OS separators, git usually accepts forward slashes.
-        // Using strict paths ensures we only add what we changed.
         const files = [packageJsonPath, tauriConfPath, cargoTomlPath]
             .map((p) => `"${p}"`)
             .join(' ');
         execSync(`git add ${files}`, { stdio: 'inherit' });
 
-        // Commit
         const commitMsg = `chore: release v${newVersion}`;
         execSync(`git commit -m "${commitMsg}"`, { stdio: 'inherit' });
 
-        // Tag
         const tagName = `v${newVersion}`;
         execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
 
         console.log(`Git commit and tag '${tagName}' created successfully`);
     } catch (error) {
         console.error(
-            '\nâŒ Git operations failed. The files were updated, but git actions were skipped.',
+            '\n❌ Git operations failed. The files were updated, but git actions were skipped.',
         );
         console.error(error instanceof Error ? error.message : String(error));
-        // We don't exit(1) here because the primary bump operation succeeded.
     }
 } else {
     console.log(`\nSuccessfully updated version to v${newVersion}`);

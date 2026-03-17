@@ -295,14 +295,14 @@
         <!-- Window border: inset box-shadow renders inside bounds, not clipped -->
         <div style="position:fixed;inset:0;box-shadow:inset 0 0 0 1px var(--color-border-main);border-radius:8px;pointer-events:none;z-index:10000;"></div>
         <!-- Linux undecorated window resize handles -->
-        <div style="position:fixed;top:0;left:4px;right:4px;height:4px;cursor:n-resize;z-index:9999;" onmousedown={() => startWindowResize('North')}></div>
-        <div style="position:fixed;bottom:0;left:4px;right:4px;height:4px;cursor:s-resize;z-index:9999;" onmousedown={() => startWindowResize('South')}></div>
-        <div style="position:fixed;top:4px;left:0;bottom:4px;width:4px;cursor:w-resize;z-index:9999;" onmousedown={() => startWindowResize('West')}></div>
-        <div style="position:fixed;top:4px;right:0;bottom:4px;width:4px;cursor:e-resize;z-index:9999;" onmousedown={() => startWindowResize('East')}></div>
-        <div style="position:fixed;top:0;left:0;width:8px;height:8px;cursor:nw-resize;z-index:9999;" onmousedown={() => startWindowResize('NorthWest')}></div>
-        <div style="position:fixed;top:0;right:0;width:8px;height:8px;cursor:ne-resize;z-index:9999;" onmousedown={() => startWindowResize('NorthEast')}></div>
-        <div style="position:fixed;bottom:0;left:0;width:8px;height:8px;cursor:sw-resize;z-index:9999;" onmousedown={() => startWindowResize('SouthWest')}></div>
-        <div style="position:fixed;bottom:0;right:0;width:8px;height:8px;cursor:se-resize;z-index:9999;" onmousedown={() => startWindowResize('SouthEast')}></div>
+        <div role="presentation" style="position:fixed;top:0;left:4px;right:4px;height:4px;cursor:n-resize;z-index:9999;" onmousedown={() => startWindowResize('North')}></div>
+        <div role="presentation" style="position:fixed;bottom:0;left:4px;right:4px;height:4px;cursor:s-resize;z-index:9999;" onmousedown={() => startWindowResize('South')}></div>
+        <div role="presentation" style="position:fixed;top:4px;left:0;bottom:4px;width:4px;cursor:w-resize;z-index:9999;" onmousedown={() => startWindowResize('West')}></div>
+        <div role="presentation" style="position:fixed;top:4px;right:0;bottom:4px;width:4px;cursor:e-resize;z-index:9999;" onmousedown={() => startWindowResize('East')}></div>
+        <div role="presentation" style="position:fixed;top:0;left:0;width:8px;height:8px;cursor:nw-resize;z-index:9999;" onmousedown={() => startWindowResize('NorthWest')}></div>
+        <div role="presentation" style="position:fixed;top:0;right:0;width:8px;height:8px;cursor:ne-resize;z-index:9999;" onmousedown={() => startWindowResize('NorthEast')}></div>
+        <div role="presentation" style="position:fixed;bottom:0;left:0;width:8px;height:8px;cursor:sw-resize;z-index:9999;" onmousedown={() => startWindowResize('SouthWest')}></div>
+        <div role="presentation" style="position:fixed;bottom:0;right:0;width:8px;height:8px;cursor:se-resize;z-index:9999;" onmousedown={() => startWindowResize('SouthEast')}></div>
         {#if !appContext.app.writerMode}
             <Titlebar />
             <TabBar />

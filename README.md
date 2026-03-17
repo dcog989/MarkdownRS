@@ -2,11 +2,11 @@
 
 MarkdownRS is a text editor primarily focused on editing, formatting, and previewing Markdown. It prioritises performance; minimal use of system resources; a clean, minimal UI while still being fully featured for technical and general users.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/username/repo.svg)](https://github.com/username/repo/issues) [![GitHub Stars](https://img.shields.io/github/stars/username/repo.svg)](https://github.com/username/repo/stargazers)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/GitHub/issues/username/repo.svg)](https://github.com/username/repo/issues) [![GitHub Stars](https://img.shields.io/GitHub/stars/username/repo.svg)](https://github.com/username/repo/stargazers)
 
 [insert screenshot]
 
-The only markdown editor you need? Many people are saying so.
+The only Markdown editor you need? Many people are saying so.
 
 ## Features
 
@@ -31,7 +31,7 @@ Developed using the latest versions of:
 - [Tauri](https://v2.tauri.app/)
 - [Rust](https://www.rust-lang.org/)
 - [Svelte](https://svelte.dev/)
-- [Typescript](https://www.typescriptlang.org/)
+- [TypeScript](https://www.typescriptlang.org/)
 - [CodeMirror](https://codemirror.net/)
 - [SQLite](https://sqlite.org/)
 
@@ -54,6 +54,8 @@ bun run dev
 # Build for production
 bun run package
 ```
+
+CachyOS build: `makepkg -sif`
 
 ### Available Scripts
 

@@ -28,3 +28,5 @@ project.lock.json
 publish/
 repomix.*.json
 src-tauri/Cargo.lock
+pkg/
+*.pkg.tar.zst

@@ -22,6 +22,32 @@ struct PortableConfig {
     data_dir: Option<std::path::PathBuf>,
 }
 
+/// One-time migration: move data from the old bare "MarkdownRS" identifier path
+/// to the new reverse-DNS "com.markdownrs.app" path used by Tauri on Linux.
+/// Safe to call repeatedly — does nothing if already migrated or not on Linux.
+#[cfg(target_os = "linux")]
+fn migrate_data_dir_if_needed() {
+    use std::path::PathBuf;
+    let Some(base) = dirs::data_dir() else { return };
+    let new_path: PathBuf = base.join("com.markdownrs.editor");
+    if new_path.exists() {
+        return;
+    }
+    for old_name in ["MarkdownRS", "com.markdownrs.app"] {
+        let old_path = base.join(old_name);
+        if old_path.exists() {
+            match fs::rename(&old_path, &new_path) {
+                Ok(_) => eprintln!("[INFO] Migrated app data: {:?} -> {:?}", old_path, new_path),
+                Err(e) => eprintln!("[WARN] Data migration failed: {}", e),
+            }
+            return;
+        }
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn migrate_data_dir_if_needed() {}
+
 fn detect_portable_mode() -> PortableConfig {
     let exe_path = std::env::current_exe().expect("Failed to get executable path");
     let exe_dir = exe_path
@@ -44,6 +70,8 @@ fn detect_portable_mode() -> PortableConfig {
 }
 
 fn main() {
+    migrate_data_dir_if_needed();
+
     // Detect and configure portable mode BEFORE any threading
     // This must happen before Tauri initialization to avoid race conditions
     let portable_config = detect_portable_mode();
@@ -101,6 +129,17 @@ fn main() {
             let app_handle = app.handle();
             let window = app.get_webview_window("main")
                 .ok_or("Failed to get main window")?;
+
+            #[cfg(target_os = "linux")]
+            {
+                const ICON_BYTES: &[u8] = include_bytes!("../icons/128x128@2x.png");
+                if let Ok(img) = image::load_from_memory(ICON_BYTES) {
+                    let rgba = img.into_rgba8();
+                    let (w, h) = rgba.dimensions();
+                    let icon = tauri::image::Image::new_owned(rgba.into_raw(), w, h);
+                    let _ = window.set_icon(icon);
+                }
+            }
 
             // Check if portable mode is enabled (set in main() before Tauri init)
             let is_portable = std::env::var("MARKDOWN_RS_PORTABLE").is_ok();

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=MarkdownRS
+Exec=/usr/bin/markdown-rs
+Icon=utilities-terminal
+Terminal=false
+Categories=Office

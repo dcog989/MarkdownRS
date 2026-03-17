@@ -11,6 +11,13 @@ const config = {
         ) {
             return;
         }
+        // False positive: Svelte's static analysis can't trace imports used only inside $effect
+        if (
+            warning.code === 'unused_import' &&
+            warning.filename?.includes('FindReplacePanel.svelte')
+        ) {
+            return;
+        }
         handler(warning);
     },
     kit: {
