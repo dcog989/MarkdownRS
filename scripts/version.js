@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const packageJsonPath = path.join(rootDir, 'package.json');
+const pkgbuildPath = path.join(rootDir, 'PKGBUILD');
 const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
 const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
 
@@ -92,12 +93,30 @@ try {
     process.exit(1);
 }
 
+// 5. Update PKGBUILD
+try {
+    let content = fs.readFileSync(pkgbuildPath, 'utf8');
+    const regex = /^(pkgver=).+$/m;
+
+    if (regex.test(content)) {
+        content = content.replace(regex, `$1${newVersion}`);
+        fs.writeFileSync(pkgbuildPath, content);
+        console.log('Updated PKGBUILD');
+    } else {
+        console.error('❌ Could not find pkgver in PKGBUILD');
+        process.exit(1);
+    }
+} catch (error) {
+    console.error('Failed to update PKGBUILD:', error);
+    process.exit(1);
+}
+
 // 6. Git Integration
 if (shouldGit) {
     try {
         console.log('\nProcessing Git operations...');
 
-        const files = [packageJsonPath, tauriConfPath, cargoTomlPath]
+        const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath]
             .map((p) => `"${p}"`)
             .join(' ');
         execSync(`git add ${files}`, { stdio: 'inherit' });
