@@ -64,7 +64,6 @@ CachyOS build: `makepkg -sif`
 - `bun run dev` - Start dev server / HRM
 - `bun run format` - Format code with Prettier + 'cargo fmt'
 - `bun run lint` - lint entire app
-- `bun run package` - Build and package install / portable for distribution
 - `bun run preview` - Preview the production build
 
 ## Project Structure
