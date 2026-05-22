@@ -12,13 +12,19 @@ import {
     triggerImmediateLint,
 } from '$lib/utils/spellcheckExtension.svelte.ts';
 import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import Input from '$lib/components/ui/Input.svelte';
+import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
+import { Settings, Keyboard, Database } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
+import { toggleShortcuts, toggleData } from '$lib/stores/interfaceStore.svelte';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
 }
 
-let _shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('help.shortcuts'));
+let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('help.shortcuts'));
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
@@ -26,8 +32,8 @@ let searchQuery = $state('');
 let searchInputEl = $state<HTMLInputElement>();
 
 // Windows Context Menu State
-let _isContextMenuEnabled = $state(false);
-let _isCheckingContextMenu = $state(false);
+let isContextMenuEnabled = $state(false);
+let isCheckingContextMenu = $state(false);
 let isWindows = $state(false);
 
 $effect(() => {
@@ -38,14 +44,14 @@ $effect(() => {
             isWindows = info.os_platform === 'windows';
 
             if (isWindows) {
-                _isCheckingContextMenu = true;
+                isCheckingContextMenu = true;
                 callBackend('check_context_menu_status', {}, 'Settings:Load')
                     .then((enabled) => {
-                        _isContextMenuEnabled = enabled ?? false;
+                        isContextMenuEnabled = enabled ?? false;
                     })
                     .catch(() => {})
                     .finally(() => {
-                        _isCheckingContextMenu = false;
+                        isCheckingContextMenu = false;
                     });
             }
         });
@@ -72,14 +78,14 @@ $effect(() => {
     }
 });
 
-async function _toggleContextMenu(enable: boolean) {
+async function toggleContextMenu(enable: boolean) {
     try {
         await callBackend('set_context_menu_item', { enable }, 'Settings:Save');
-        _isContextMenuEnabled = enable;
+        isContextMenuEnabled = enable;
         showToast('info', enable ? 'Added to context menu' : 'Removed from context menu');
     } catch (_err) {
         // Error handling usually taken care of by callBackend/AppError, but good to reset UI
-        _isContextMenuEnabled = !enable; // revert
+        isContextMenuEnabled = !enable; // revert
     }
 }
 
@@ -453,7 +459,7 @@ type SettingDef = {
     groupWith?: string;
 };
 
-let _sortedSettings = $derived(
+let sortedSettings = $derived(
     (settingsDefinitions as SettingDef[])
         .filter((s) => {
             if (s.visibleWhen) {
@@ -480,7 +486,7 @@ function getSettingValue(key: string, defaultValue: unknown): unknown {
     return (appContext.app as Record<string, unknown>)[key] ?? defaultValue;
 }
 
-function _updateSetting(key: string, value: unknown, type: string) {
+function updateSetting(key: string, value: unknown, type: string) {
     let finalValue = value;
     if (type === 'number' || type === 'range') {
         finalValue = Number(value);

@@ -12,6 +12,11 @@ import {
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import Input from '$lib/components/ui/Input.svelte';
+import { ArrowUp, ArrowDown, Plus, Tag, Pen, Trash2, Bookmark } from 'lucide-svelte';
+import { scrollIntoView } from '$lib/utils/modalUtils';
+import { slide } from 'svelte/transition';
 
 interface Props {
     isOpen: boolean;
@@ -31,11 +36,11 @@ let selectedIndex = $state(0);
 let editingId = $state<string | null>(null);
 let editTitle = $state('');
 let editTags = $state('');
-let _showAddForm = $state(false);
+let showAddForm = $state(false);
 let addPath = $state('');
 let addTitle = $state('');
 let addTags = $state('');
-let _browseError = $state('');
+let browseError = $state('');
 let sortBy = $state<SortOption>('most-recent');
 let sortDirection = $state<SortDirection>('desc');
 
@@ -47,8 +52,8 @@ $effect(() => {
         searchQuery = '';
         selectedIndex = 0;
         editingId = null;
-        _showAddForm = false;
-        _browseError = '';
+        showAddForm = false;
+        browseError = '';
     }
     if (isOpen) {
         setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
@@ -116,19 +121,19 @@ async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmar
     onClose();
 }
 
-function _startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
+function startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
     editingId = bookmark.id;
     editTitle = bookmark.title;
     editTags = bookmark.tags.join(', ');
 }
 
-function _cancelEdit() {
+function cancelEdit() {
     editingId = null;
     editTitle = '';
     editTags = '';
 }
 
-async function _saveEdit(id: string) {
+async function saveEdit(id: string) {
     const tags = editTags
         .split(',')
         .map((t) => t.trim())
@@ -141,21 +146,21 @@ async function _saveEdit(id: string) {
 
 let deletingIds = $state(new Set<string>());
 
-async function _handleDelete(id: string, e: MouseEvent) {
+async function handleDelete(id: string, e: MouseEvent) {
     e.stopPropagation();
     deletingIds = new Set([...deletingIds, id]);
     setTimeout(() => deleteBookmark(id), 210);
 }
 
-function _startAdd() {
-    _showAddForm = true;
+function startAdd() {
+    showAddForm = true;
     addPath = '';
     addTitle = '';
     addTags = '';
-    _browseError = '';
+    browseError = '';
 }
 
-async function _handleBrowse() {
+async function handleBrowse() {
     try {
         const selected = await open({
             multiple: false,
@@ -163,26 +168,26 @@ async function _handleBrowse() {
         });
         if (selected && typeof selected === 'string') {
             addPath = selected;
-            _browseError = '';
+            browseError = '';
             const filename = selected.split(/[\\/]/).pop() || '';
             const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
             if (!addTitle) addTitle = titleWithoutExt;
         }
     } catch (_error) {
-        _browseError = 'Failed to open file browser';
+        browseError = 'Failed to open file browser';
     }
 }
 
-async function _handleAddBookmark() {
+async function handleAddBookmark() {
     if (!addPath || !addTitle) return;
     try {
         await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
     } catch (_error) {
-        _browseError = 'File does not exist or cannot be accessed';
+        browseError = 'File does not exist or cannot be accessed';
         return;
     }
     if (isBookmarked(addPath)) {
-        _browseError = 'This file is already bookmarked';
+        browseError = 'This file is already bookmarked';
         return;
     }
     const tags = addTags
@@ -190,24 +195,24 @@ async function _handleAddBookmark() {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
     await addBookmark(addPath, addTitle, tags);
-    _showAddForm = false;
+    showAddForm = false;
     addPath = '';
     addTitle = '';
     addTags = '';
-    _browseError = '';
+    browseError = '';
 }
 
-function _formatDate(timestamp: string | null): string {
+function formatDate(timestamp: string | null): string {
     if (!timestamp) return 'Never';
     const [date] = timestamp.split(' / ');
     return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
 }
 
-function _toggleSortDirection() {
+function toggleSortDirection() {
     sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (sortedBookmarks.length === 0) return;
 
     if (e.key === 'ArrowDown') {
@@ -230,7 +235,7 @@ function _handleKeydown(e: KeyboardEvent) {
     {#snippet header()}
         <ModalSearchHeader
             title="Bookmarks"
-            icon={BookmarkIcon}
+            icon={Bookmark}
             bind:searchValue={searchQuery}
             bind:inputRef={searchInputEl}
             searchPlaceholder="Search bookmarks..."
@@ -453,7 +458,7 @@ function _handleKeydown(e: KeyboardEvent) {
             <div class="text-fg-muted px-4 py-8 text-center">No bookmarks match your search</div>
         {:else if appContext.bookmarks.bookmarks.length === 0}
             <div class="text-fg-muted px-4 py-8 text-center">
-                <BookmarkIcon size={48} class="mx-auto mb-2 opacity-30" />
+                <Bookmark size={48} class="mx-auto mb-2 opacity-30" />
                 <div class="mb-1">No bookmarks yet</div>
                 <div class="text-ui-sm opacity-70">
                     Click the + button above to add your first bookmark

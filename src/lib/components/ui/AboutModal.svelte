@@ -5,6 +5,7 @@ import { relaunch } from '@tauri-apps/plugin-process';
 import type { AppInfo } from '$lib/types/api';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
+import { LoaderCircle, RefreshCw, ExternalLink } from 'lucide-svelte';
 
 interface Props {
     isOpen: boolean;
@@ -40,11 +41,11 @@ $effect(() => {
         });
 });
 
-function _copyToClipboard(text: string) {
+function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
 }
 
-async function _openLogFile() {
+async function openLogFile() {
     if (!appInfo.log_file_path) return;
     try {
         await openPath(appInfo.log_file_path);
@@ -53,7 +54,7 @@ async function _openLogFile() {
     }
 }
 
-async function _checkForUpdates() {
+async function checkForUpdates() {
     if (isChecking) return;
     isChecking = true;
     updateStatus = 'Checking for updates...';

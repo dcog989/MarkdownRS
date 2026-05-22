@@ -1,4 +1,6 @@
 <script lang="ts">
+import { X, ChevronDown, Check } from 'lucide-svelte';
+
 interface Props {
     selected: string[];
     onChange: (selected: string[]) => void;
@@ -9,11 +11,11 @@ let { selected = $bindable([]), onChange }: Props = $props();
 let isOpen = $state(false);
 let dropdownEl = $state<HTMLDivElement>();
 let buttonEl = $state<HTMLDivElement>();
-let _dropdownPosition = $state<'below' | 'above'>('below');
+let dropdownPosition = $state<'below' | 'above'>('below');
 let dropdownMaxHeight = $state(256); // Default 256px (max-h-64)
 
 // Complete list from wooorm/dictionaries (filtered for distinct/major variants)
-const _availableDictionaries = [
+const availableDictionaries = [
     { code: 'af', name: 'Afrikaans' },
     { code: 'sq', name: 'Albanian' },
     { code: 'ar', name: 'Arabic' },
@@ -85,11 +87,11 @@ function toggleDropdown() {
         // Calculate max height based on available space
         if (spaceBelow < minDropdownHeight && spaceAbove > spaceBelow) {
             // Open above
-            _dropdownPosition = 'above';
+            dropdownPosition = 'above';
             dropdownMaxHeight = Math.min(spaceAbove - padding, 500); // Max 500px
         } else {
             // Open below
-            _dropdownPosition = 'below';
+            dropdownPosition = 'below';
             dropdownMaxHeight = Math.min(spaceBelow - padding, 500); // Max 500px
         }
 
@@ -99,7 +101,7 @@ function toggleDropdown() {
     isOpen = !isOpen;
 }
 
-function _toggleDict(code: string) {
+function toggleDict(code: string) {
     if (selected.includes(code)) {
         selected = selected.filter((d) => d !== code);
     } else {
@@ -108,7 +110,7 @@ function _toggleDict(code: string) {
     onChange(selected);
 }
 
-function _removeDict(code: string, event: Event) {
+function removeDict(code: string, event: Event) {
     event.stopPropagation();
     selected = selected.filter((d) => d !== code);
     onChange(selected);
@@ -127,7 +129,7 @@ $effect(() => {
     }
 });
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
         toggleDropdown();
     }

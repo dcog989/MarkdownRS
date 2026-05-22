@@ -8,7 +8,7 @@ let { viewport }: Props = $props();
 let trackRef = $state<HTMLDivElement>();
 let thumbRef = $state<HTMLDivElement>();
 let thumbHeight = $state(20);
-let _thumbTop = $state(0);
+let thumbTop = $state(0);
 let isVisible = $state(false);
 let isDragging = $state(false);
 
@@ -34,10 +34,10 @@ function updateScrollbar() {
     // Calculate thumb position
     const maxScroll = scrollHeight - viewportHeight;
     const maxThumbTravel = trackHeight - thumbHeight;
-    _thumbTop = maxScroll > 0 ? (scrollTop / maxScroll) * maxThumbTravel : 0;
+    thumbTop = maxScroll > 0 ? (scrollTop / maxScroll) * maxThumbTravel : 0;
 }
 
-function _onTrackClick(e: MouseEvent) {
+function onTrackClick(e: MouseEvent) {
     if (e.target !== trackRef) return;
     e.preventDefault();
 
@@ -65,7 +65,7 @@ function _onTrackClick(e: MouseEvent) {
     }
 }
 
-function _onThumbMouseDown(e: MouseEvent) {
+function onThumbMouseDown(e: MouseEvent) {
     const thumbRect = thumbRef?.getBoundingClientRect();
     if (!thumbRect || !trackRef) return;
     e.preventDefault();
@@ -92,7 +92,7 @@ function _onThumbMouseDown(e: MouseEvent) {
         newThumbTop = Math.max(0, Math.min(maxThumbTravel, newThumbTop));
 
         // Update thumb position directly during drag
-        _thumbTop = newThumbTop;
+        thumbTop = newThumbTop;
 
         // Update scroll position based on thumb position
         const scrollRatio = maxThumbTravel > 0 ? newThumbTop / maxThumbTravel : 0;

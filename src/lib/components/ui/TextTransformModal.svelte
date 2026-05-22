@@ -3,12 +3,14 @@ import Modal from '$lib/components/ui/Modal.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { shortcutManager } from '$lib/utils/shortcuts';
+import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
+import { Type, X } from 'lucide-svelte';
 
 let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
-let _undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
+let undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
 
-function _handleOperation(operationId: OperationId) {
+function handleOperation(operationId: OperationId) {
     performTextTransform(operationId);
     onClose();
 }

@@ -3,6 +3,22 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { untrack } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import Submenu from '$lib/components/ui/Submenu.svelte';
+import {
+    Sparkles,
+    Scissors,
+    ClipboardCopy,
+    ClipboardPaste,
+    Search,
+    WandSparkles,
+    ArrowUpDown,
+    CaseSensitive,
+    TextAlignStart,
+    Rotate3d,
+    BookPlus,
+    BookText,
+} from 'lucide-svelte';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import {
@@ -36,9 +52,9 @@ let {
     onReplaceWord?: (newWord: string) => void;
 }>();
 
-let _activeSubmenu = $state<'sort' | 'case' | 'format' | 'transform' | null>(null);
-let _suggestions = $state<string[]>([]);
-let _isLoadingSuggestions = $state(false);
+let activeSubmenu = $state<'sort' | 'case' | 'format' | 'transform' | null>(null);
+let suggestions = $state<string[]>([]);
+let isLoadingSuggestions = $state(false);
 
 type MenuOption = {
     id?: OperationId;
@@ -46,7 +62,7 @@ type MenuOption = {
     divider?: boolean;
 };
 
-const _sortOps: MenuOption[] = [
+const sortOps: MenuOption[] = [
     { id: 'sort-asc', label: 'Ascending (A-Z)' },
     { id: 'sort-case-insensitive-asc', label: 'Ascending (Ignore Case)' },
     { id: 'sort-numeric-asc', label: 'Ascending (Numeric)' },
@@ -61,7 +77,7 @@ const _sortOps: MenuOption[] = [
     { id: 'shuffle', label: 'Shuffle' },
 ];
 
-const _caseOps: MenuOption[] = [
+const caseOps: MenuOption[] = [
     { id: 'uppercase', label: 'UPPERCASE' },
     { id: 'lowercase', label: 'lowercase' },
     { divider: true },
@@ -77,7 +93,7 @@ const _caseOps: MenuOption[] = [
     { id: 'invert-case', label: 'iNVERT cASE' },
 ];
 
-const _formatOps: MenuOption[] = [
+const formatOps: MenuOption[] = [
     { id: 'indent-lines', label: 'Indent Lines' },
     { id: 'unindent-lines', label: 'Unindent Lines' },
     { id: 'trim-whitespace', label: 'Trim Whitespace' },
@@ -98,7 +114,7 @@ const _formatOps: MenuOption[] = [
     { id: 'wrap-quotes', label: 'Wrap in Quotes' },
 ];
 
-const _transformOps: MenuOption[] = [
+const transformOps: MenuOption[] = [
     { id: 'join-lines', label: 'Join Lines' },
     { id: 'split-sentences', label: 'Sentences to New Lines' },
     { id: 'smart-paragraphs', label: 'Smart Paragraphs' },
@@ -119,25 +135,25 @@ $effect(() => {
     if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
         const cached = getCachedSuggestions(word);
         if (cached) {
-            _suggestions = cached.slice(0, 5);
-            _isLoadingSuggestions = false;
+            suggestions = cached.slice(0, 5);
+            isLoadingSuggestions = false;
             return;
         }
 
-        _isLoadingSuggestions = true;
+        isLoadingSuggestions = true;
         getSuggestions(word)
             .then((res) => {
-                _suggestions = res.slice(0, 5);
+                suggestions = res.slice(0, 5);
             })
             .catch(() => {
-                _suggestions = [];
+                suggestions = [];
             })
             .finally(() => {
-                _isLoadingSuggestions = false;
+                isLoadingSuggestions = false;
             });
     } else {
-        _suggestions = [];
-        _isLoadingSuggestions = false;
+        suggestions = [];
+        isLoadingSuggestions = false;
     }
 });
 
@@ -146,11 +162,11 @@ const targetWord = $derived(
         .trim()
         .replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ''),
 );
-const _canAddSingle = $derived(
+const canAddSingle = $derived(
     targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !isWordValid(targetWord),
 );
 
-async function _handleAddAll() {
+async function handleAddAll() {
     const matches = (selectedText as string).match(/\b[a-zA-Z']+\b/g) || [];
     const uniqueWords: string[] = Array.from(new Set(matches));
     const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
@@ -170,14 +186,14 @@ async function _handleAddAll() {
     for (const word of invalidWords) await addToDictionary(word);
 }
 
-function _handleOp(type: OperationId | undefined) {
+function handleOp(type: OperationId | undefined) {
     if (type) {
         performTextTransform(type);
         onClose();
     }
 }
 
-async function _handleSendToBrowser() {
+async function handleSendToBrowser() {
     const text = selectedText.trim();
     if (!text) return;
 
@@ -192,12 +208,8 @@ async function _handleSendToBrowser() {
         await openUrl(searchUrl);
     }
     closeMenuAndReset();
-}
-
-function closeMenuAndReset() {
-    onClose();
-    _isLoadingSuggestions = false;
-    _suggestions = [];
+    isLoadingSuggestions = false;
+    suggestions = [];
 }
 </script>
 

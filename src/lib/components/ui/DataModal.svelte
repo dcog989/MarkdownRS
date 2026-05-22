@@ -3,6 +3,8 @@ import Modal from '$lib/components/ui/Modal.svelte';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
+import { Database, X } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
 
 interface Props {
     isOpen: boolean;
@@ -144,7 +146,7 @@ type Action = {
     danger?: boolean;
 };
 
-const _actions: Action[] = [
+const actions: Action[] = [
     {
         label: 'Export Bookmarks',
         description: 'Save all bookmarks to a JSON file.',

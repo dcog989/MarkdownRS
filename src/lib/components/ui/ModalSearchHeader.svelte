@@ -1,5 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import Input from '$lib/components/ui/Input.svelte';
+import { Search, X } from 'lucide-svelte';
 
 let {
     title,

@@ -21,12 +21,12 @@ let hoverTimer: number | null = null;
 let submenuEl = $state<HTMLDivElement>();
 let containerEl = $state<HTMLDivElement>();
 
-let _fixedX = $state(0);
-let _fixedY = $state(0);
+let fixedX = $state(0);
+let fixedY = $state(0);
 
 const HOVER_DELAY = 150;
 
-function _handleMouseEnter() {
+function handleMouseEnter() {
     if (hoverTimer) {
         clearTimeout(hoverTimer);
         hoverTimer = null;
@@ -36,7 +36,7 @@ function _handleMouseEnter() {
     }
 }
 
-function _handleMouseLeave() {
+function handleMouseLeave() {
     if (hoverTimer) clearTimeout(hoverTimer);
     hoverTimer = window.setTimeout(() => {
         onClose?.();
@@ -77,8 +77,8 @@ function adjustPosition() {
         y = 5;
     }
 
-    _fixedX = x;
-    _fixedY = y;
+    fixedX = x;
+    fixedY = y;
 }
 
 $effect(() => {

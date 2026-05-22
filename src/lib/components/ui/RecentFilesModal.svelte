@@ -8,6 +8,9 @@ import {
 } from '$lib/stores/recentFilesStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { openFileByPath } from '$lib/utils/fileSystem';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { History, Trash2, X, Clock } from 'lucide-svelte';
+import { scrollIntoView } from '$lib/utils/modalUtils';
 
 interface Props {
     isOpen: boolean;
@@ -43,18 +46,18 @@ function handleOpenFile(path: string) {
     onClose();
 }
 
-async function _handleRemove(path: string, e: MouseEvent) {
+async function handleRemove(path: string, e: MouseEvent) {
     e.stopPropagation();
     await removeFromRecentFiles(path);
 }
 
-async function _handleClearAll() {
+async function handleClearAll() {
     if (confirm('Clear file history?')) {
         await clearRecentFiles();
     }
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (filteredFiles.length === 0) return;
 
     if (e.key === 'ArrowDown') {

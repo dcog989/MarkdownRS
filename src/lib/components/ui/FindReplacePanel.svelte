@@ -21,6 +21,8 @@ import {
     updateSearchEditor,
 } from '$lib/utils/searchManager.svelte.ts';
 import { debounce } from '$lib/utils/timing';
+import { ChevronDown, ChevronRight, X, Search, Replace } from 'lucide-svelte';
+import Input from '$lib/components/ui/Input.svelte';
 
 let { isOpen = $bindable(false), cmView } = $props<{
     isOpen?: boolean;
@@ -119,12 +121,12 @@ const debouncedReplace = debounce((view: EditorView) => {
     updateSearchEditor(view);
 }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
 
-function _onInput() {
+function onInput() {
     if (!cmView) return;
     debouncedSearch(cmView);
 }
 
-function _onReplaceInput() {
+function onReplaceInput() {
     if (!cmView) return;
     debouncedReplace(cmView);
 }
@@ -149,7 +151,7 @@ function onFindPrevious() {
     }
 }
 
-function _onReplace() {
+function onReplace() {
     if (cmView && !searchState.regexError) {
         // Ensure query is synced before replace to respect case sensitivity
         ensureQuerySync(cmView);
@@ -176,7 +178,7 @@ function onReplaceAll() {
     }
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
         e.stopPropagation();
         close();
@@ -219,7 +221,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
     }
 }
 
-function _handleBlur() {
+function handleBlur() {
     if (!appContext.app.findPanelCloseOnBlur) return;
 
     setTimeout(() => {
@@ -230,7 +232,7 @@ function _handleBlur() {
     }, 0);
 }
 
-function _navigateToTab(tabId: string) {
+function navigateToTab(tabId: string) {
     appContext.app.activeTabId = tabId;
 }
 

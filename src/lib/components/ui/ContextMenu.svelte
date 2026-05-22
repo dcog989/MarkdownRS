@@ -11,15 +11,15 @@ let { x, y, onClose, children } = $props<{
 
 let menuEl = $state<HTMLDivElement>();
 let adjustedX = $state(0);
-let _adjustedY = $state(0);
-let _submenuSide = $state<'left' | 'right'>('right');
-let _isVisible = $state(false);
+let adjustedY = $state(0);
+let submenuSide = $state<'left' | 'right'>('right');
+let isVisible = $state(false);
 let resizeObserver: ResizeObserver | null = null;
 
 // Keyboard navigation state
 let focusedIndex = $state(-1);
 let menuItems = $state<HTMLElement[]>([]);
-let _isKeyboardNav = $state(true); // Start with keyboard mode for initial focus
+let isKeyboardNav = $state(true); // Start with keyboard mode for initial focus
 
 function updatePosition() {
     if (!menuEl) return;
@@ -47,9 +47,9 @@ function updatePosition() {
     }
 
     adjustedX = Math.max(5, newX);
-    _adjustedY = Math.max(5, newY);
-    _submenuSide = adjustedX + rect.width + 180 > winWidth ? 'left' : 'right';
-    _isVisible = true;
+    adjustedY = Math.max(5, newY);
+    submenuSide = adjustedX + rect.width + 180 > winWidth ? 'left' : 'right';
+    isVisible = true;
 }
 
 function updateMenuItems() {
@@ -62,16 +62,16 @@ function focusItem(index: number) {
     if (index >= 0 && index < menuItems.length) {
         menuItems[index]?.focus();
         focusedIndex = index;
-        _isKeyboardNav = true;
+        isKeyboardNav = true;
     }
 }
 
-function _handleMouseMove() {
+function handleMouseMove() {
     // Mouse interaction switches to mouse mode
-    _isKeyboardNav = false;
+    isKeyboardNav = false;
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     updateMenuItems();
 
     switch (e.key) {
@@ -188,7 +188,7 @@ onMount(() => {
     };
 });
 
-function _handleBackdropContextMenu(e: MouseEvent) {
+function handleBackdropContextMenu(e: MouseEvent) {
     e.preventDefault();
     const backdrop = asHTMLElement(e.currentTarget);
     if (!backdrop) return;

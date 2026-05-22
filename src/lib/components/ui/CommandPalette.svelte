@@ -1,7 +1,10 @@
 <script lang="ts">
 import Modal from '$lib/components/ui/Modal.svelte';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { tick } from 'svelte';
 import type { Command } from '$lib/commands/paletteCommands';
+import { Zap } from 'lucide-svelte';
+import { scrollIntoView } from '$lib/utils/modalUtils';
 
 let {
     isOpen = $bindable(false),
@@ -29,7 +32,7 @@ $effect(() => {
     }
 });
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedIndex = (selectedIndex + 1) % filteredCommands.length;

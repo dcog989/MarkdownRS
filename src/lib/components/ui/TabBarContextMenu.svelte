@@ -2,6 +2,9 @@
 import { addTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { requestCloseTab, saveCurrentFile } from '$lib/utils/fileSystem';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import Submenu from '$lib/components/ui/Submenu.svelte';
+import { FilePlus, Save, Files } from 'lucide-svelte';
 
 let { x, y, onClose } = $props<{
     x: number;
@@ -9,14 +12,14 @@ let { x, y, onClose } = $props<{
     onClose: () => void;
 }>();
 
-let _activeSubmenu = $state<'close' | null>(null);
+let activeSubmenu = $state<'close' | null>(null);
 
-let _hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
-let _hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
-let _hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
-let _hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
+let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
+let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
+let hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
+let hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
 
-async function _handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') {
+async function handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') {
     let targets: typeof appContext.editor.tabs = [];
 
     if (mode === 'saved') targets = appContext.editor.tabs.filter((t) => !t.isDirty);
@@ -30,7 +33,7 @@ async function _handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') 
     onClose();
 }
 
-async function _handleSaveAll() {
+async function handleSaveAll() {
     const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
     const previousActiveId = appContext.app.activeTabId;
 
@@ -46,7 +49,7 @@ async function _handleSaveAll() {
     onClose();
 }
 
-function _handleNewTab() {
+function handleNewTab() {
     const newTabId = addTab();
     appContext.app.activeTabId = newTabId;
     onClose();

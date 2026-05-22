@@ -1,5 +1,8 @@
 <script lang="ts">
 import { appContext } from '$lib/stores/state.svelte.ts';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import { CircleAlert, SquarePen, PencilLine, FileText } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
 
 interface Props {
     isOpen: boolean;
@@ -9,19 +12,19 @@ interface Props {
 }
 
 let { isOpen, onClose, onSelect, selectedId }: Props = $props();
-let _listContainerRef = $state<HTMLDivElement | null>(null);
+let listContainerRef = $state<HTMLDivElement | null>(null);
 
-let _mruTabs = $derived(
+let mruTabs = $derived(
     appContext.editor.mruStack
         .map((id) => appContext.editor.tabs.find((t) => t.id === id))
         .filter((t) => t !== undefined),
 );
 
-function _handleBackdropClick(e: MouseEvent) {
+function handleBackdropClick(e: MouseEvent) {
     if (e.target === e.currentTarget) onClose();
 }
 
-function _scrollIntoView(node: HTMLElement, isSelected: boolean) {
+function scrollIntoView(node: HTMLElement, isSelected: boolean) {
     if (isSelected) {
         node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
