@@ -7,7 +7,28 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
 import { fade } from 'svelte/transition';
 import { flip } from 'svelte/animate';
-import { ChevronDown, Plus } from 'lucide-svelte';
+import {
+    ChevronDown,
+    Plus,
+    Menu,
+    Settings,
+    Zap,
+    Bookmark,
+    Feather,
+    Eye,
+    EyeOff,
+} from 'lucide-svelte';
+import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
+import {
+    toggleAbout,
+    toggleSettings,
+    toggleCommandPalette,
+    toggleBookmarks,
+} from '$lib/stores/interfaceStore.svelte.ts';
+import { shortcutManager } from '$lib/utils/shortcuts';
+import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { saveSettings } from '$lib/utils/settings';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
 import TabButton from '$lib/components/ui/TabButton.svelte';
 import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
@@ -18,6 +39,43 @@ import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
 
 let scrollContainer = $state<HTMLElement>();
 let showDropdown = $state(false);
+let showMenu = $state(false);
+
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
+let isPreviewAvailable = $derived(
+    activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
+);
+
+let shortcuts = $derived({
+    settings: shortcutManager.getShortcutDisplay('help.settings'),
+    commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
+    bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
+    splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
+    writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
+});
+
+function toggleSplit() {
+    if (!isPreviewAvailable) {
+        showToast('warning', 'Preview not available for this file type');
+        return;
+    }
+    toggleSplitView();
+    saveSettings();
+}
+
+function handleWriterMode() {
+    const wasWriterMode = appContext.app.writerMode;
+    toggleWriterMode();
+    if (wasWriterMode) {
+        document.exitFullscreen().catch(() => {});
+    } else {
+        document.documentElement.requestFullscreen().catch(() => {});
+    }
+}
+
+function closeMenu() {
+    showMenu = false;
+}
 
 let isDragging = $state(false);
 let draggingId = $state<string | null>(null);
@@ -187,12 +245,15 @@ $effect(() => {
 });
 </script>
 
-<div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch border-b">
+<div
+    class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch border-b"
+>
     <div class="relative h-8 border-r">
         <button
             type="button"
             class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
-            onclick={() => (showDropdown = !showDropdown)}>
+            onclick={() => (showDropdown = !showDropdown)}
+        >
             <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
@@ -203,7 +264,8 @@ $effect(() => {
                 pushToMru(id);
                 showDropdown = false;
             }}
-            onClose={() => (showDropdown = false)} />
+            onClose={() => (showDropdown = false)}
+        />
     </div>
 
     <div class="relative h-full min-w-0 flex-1">
@@ -211,8 +273,8 @@ $effect(() => {
             <div
                 class="pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);">
-            </div>
+                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"
+            ></div>
         {/if}
 
         <section
@@ -225,18 +287,24 @@ $effect(() => {
                 const target = asHTMLElement(e.target);
                 if (!target) return;
                 if (
-                    target.classList.contains('tab-scroll-container') ||
-                    target.closest('section')?.classList.contains('tab-scroll-container')
+                    target.classList.contains("tab-scroll-container") ||
+                    target
+                        .closest("section")
+                        ?.classList.contains("tab-scroll-container")
                 ) {
                     // Only show context menu if we didn't click on a tab button
-                    if (!target.closest('[role="listitem"]') && !target.closest('button')) {
+                    if (
+                        !target.closest('[role="listitem"]') &&
+                        !target.closest("button")
+                    ) {
                         e.preventDefault();
                         showTabBarContextMenu = true;
                         tabBarContextMenuX = e.clientX;
                         tabBarContextMenuY = e.clientY;
                     }
                 }
-            }}>
+            }}
+        >
             {#each appContext.editor.tabs as tab (tab.id)}
                 <div
                     class="flex h-full shrink-0 touch-none items-stretch outline-none select-none"
@@ -244,13 +312,16 @@ $effect(() => {
                     role="listitem"
                     style="opacity: {isDragging && draggingId === tab.id
                         ? '0.4'
-                        : '1'}; z-index: {isDragging && draggingId === tab.id ? 100 : 0};"
+                        : '1'}; z-index: {isDragging && draggingId === tab.id
+                        ? 100
+                        : 0};"
                     onpointerdown={(e) =>
                         sortController.startDrag(
                             e,
                             tab.id,
-                            assertHTMLElement(e.currentTarget, 'TabBar drag'),
-                        )}>
+                            assertHTMLElement(e.currentTarget, "TabBar drag"),
+                        )}
+                >
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}
@@ -259,21 +330,26 @@ $effect(() => {
                             contextMenuTabId = id;
                             contextMenuX = e.clientX;
                             contextMenuY = e.clientY;
-                        }} />
+                        }}
+                    />
                 </div>
             {/each}
 
             {#if isDragging && draggingId}
-                {@const dragTab = appContext.editor.tabs.find((t) => t.id === draggingId)}
+                {@const dragTab = appContext.editor.tabs.find(
+                    (t) => t.id === draggingId,
+                )}
                 {#if dragTab}
                     <div
                         class="pointer-events-none fixed z-999"
                         style="left: {currentDragX -
-                            dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect().top ??
-                            0}px; opacity: 0.95;">
+                            dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect()
+                            .top ?? 0}px; opacity: 0.95;"
+                    >
                         <TabButton
                             tab={dragTab}
-                            isActive={appContext.app.activeTabId === dragTab.id} />
+                            isActive={appContext.app.activeTabId === dragTab.id}
+                        />
                     </div>
                 {/if}
             {/if}
@@ -283,8 +359,8 @@ $effect(() => {
             <div
                 class="pointer-events-none absolute top-0 right-0 bottom-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);">
-            </div>
+                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"
+            ></div>
         {/if}
     </div>
 
@@ -295,9 +371,127 @@ $effect(() => {
             onclick={() => {
                 const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;
-            }}>
+            }}
+        >
             <Plus size={16} />
         </button>
+        <div class="relative flex h-full items-stretch">
+            <button
+                type="button"
+                class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+                onclick={() => (showMenu = !showMenu)}
+            >
+                <Menu size={16} />
+            </button>
+            {#if showMenu}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div class="fixed inset-0 z-40" onclick={closeMenu}></div>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div
+                    class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-md border py-1 shadow-xl w-80"
+                    onclick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={() => {
+                            toggleAbout();
+                            closeMenu();
+                        }}
+                    >
+                        <img src="/logo.svg" alt="" class="h-4 w-4" /><span
+                            >About MarkdownRS</span
+                        >
+                    </button>
+
+                    <div class="bg-border-main my-1 h-px"></div>
+
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={() => {
+                            toggleSettings();
+                            closeMenu();
+                        }}
+                    >
+                        <Settings size={14} class="opacity-70" /><span
+                            class="flex-1">Settings</span
+                        ><span class="ml-auto text-xs opacity-40"
+                            >{shortcuts.settings}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={() => {
+                            toggleCommandPalette();
+                            closeMenu();
+                        }}
+                    >
+                        <Zap size={14} class="opacity-70" /><span class="flex-1"
+                            >Command Palette</span
+                        ><span class="ml-auto text-xs opacity-40"
+                            >{shortcuts.commands}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={() => {
+                            toggleBookmarks();
+                            closeMenu();
+                        }}
+                    >
+                        <Bookmark size={14} class="opacity-70" /><span
+                            class="flex-1">Bookmarks</span
+                        ><span class="ml-auto text-xs opacity-40"
+                            >{shortcuts.bookmarks}</span
+                        >
+                    </button>
+
+                    <div class="bg-border-main my-1 h-px"></div>
+
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={() => {
+                            handleWriterMode();
+                            closeMenu();
+                        }}
+                    >
+                        <Feather size={14} class="opacity-70" /><span
+                            class="flex-1">Writer Mode</span
+                        ><span class="ml-auto text-xs opacity-40"
+                            >{shortcuts.writerMode}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        class:opacity-50={!isPreviewAvailable}
+                        class:cursor-not-allowed={!isPreviewAvailable}
+                        onclick={() => {
+                            if (isPreviewAvailable) {
+                                toggleSplit();
+                                closeMenu();
+                            }
+                        }}
+                    >
+                        {#if isPreviewAvailable}
+                            <Eye size={14} class="opacity-70" />
+                        {:else}
+                            <EyeOff size={14} class="opacity-50" />
+                        {/if}
+                        <span class="flex-1">Toggle Split Preview</span><span
+                            class="ml-auto text-xs opacity-40"
+                            >{shortcuts.splitView}</span
+                        >
+                    </button>
+                </div>
+            {/if}
+        </div>
     </div>
 </div>
 
@@ -306,14 +500,16 @@ $effect(() => {
         tabId={contextMenuTabId}
         x={contextMenuX}
         y={contextMenuY}
-        onClose={() => (contextMenuTabId = null)} />
+        onClose={() => (contextMenuTabId = null)}
+    />
 {/if}
 
 {#if showTabBarContextMenu}
     <TabBarContextMenu
         x={tabBarContextMenuX}
         y={tabBarContextMenuY}
-        onClose={() => (showTabBarContextMenu = false)} />
+        onClose={() => (showTabBarContextMenu = false)}
+    />
 {/if}
 
 <MruTabsPopup
@@ -325,7 +521,8 @@ $effect(() => {
     }}
     selectedId={isMruCycling
         ? appContext.editor.mruStack[mruSelectedIndex]
-        : appContext.app.activeTabId} />
+        : appContext.app.activeTabId}
+/>
 
 <style>
     .tab-scroll-container {

@@ -7,6 +7,7 @@ mod markdown;
 mod state;
 mod utils;
 
+use gtk::prelude::GtkWindowExt;
 use log::LevelFilter;
 use std::fs;
 use tauri::Emitter;
@@ -138,6 +139,12 @@ fn main() {
                     let (w, h) = rgba.dimensions();
                     let icon = tauri::image::Image::new_owned(rgba.into_raw(), w, h);
                     let _ = window.set_icon(icon);
+                }
+
+                // Remove the GTK CSD titlebar so the window manager (KDE/GNOME)
+                // applies native server-side decorations instead.
+                if let Ok(gtk_window) = window.gtk_window() {
+                    gtk_window.set_titlebar(None::<&gtk::Widget>);
                 }
             }
 

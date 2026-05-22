@@ -16,6 +16,7 @@ comrak = "0.52"
 dashmap = "6.1"
 dirs = "6"
 dprint-plugin-markdown = "0.22"
+gtk = "0.18"
 dunce = "1"
 encoding_rs = "0.8"
 image = { version = "0.25", default-features = false, features = ["png"] }

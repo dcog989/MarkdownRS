@@ -23,10 +23,6 @@
     background-color: var(--surface-preview);
 }
 
-.bg-bg-titlebar {
-    background-color: var(--surface-3);
-}
-
 .bg-bg-header {
     background-color: var(--surface-3);
 }
