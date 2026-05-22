@@ -11,6 +11,7 @@ export type ErrorContext =
     | 'Markdown:Render'
     | 'Settings:Load'
     | 'Settings:Save'
+    | 'Settings:AppInfo'
     | 'Editor:Init'
     | 'Database:Init'
     | 'Database:Migration'

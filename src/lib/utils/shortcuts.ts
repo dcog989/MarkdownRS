@@ -82,6 +82,7 @@ export class KeyboardShortcutManager {
             'ctrl+pagedown', // Next tab
             'ctrl+pageup', // Previous tab
             'ctrl+,', // Settings
+            'ctrl+t', // Text Transformations
             'ctrl+shift+b', // Bookmarks
             'ctrl+\\', // Toggle split view
             'ctrl+f', // Find

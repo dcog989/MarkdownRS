@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Sync SvelteKit
+        run: bunx svelte-kit sync
+
+      - name: Type check (Svelte)
+        run: bunx svelte-check --tsconfig ./tsconfig.json
+
+      - name: Lint frontend
+        run: bunx eslint .
+
+      - name: Lint backend
+        run: cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Check formatting
+        run: bunx prettier . --check && cd src-tauri && cargo fmt -- --check
+
+      - name: Run tests
+        run: bun run test
+
+      - name: Build (Vite)
+        run: bunx --bun vite build

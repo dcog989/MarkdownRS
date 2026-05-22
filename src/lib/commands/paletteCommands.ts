@@ -233,11 +233,6 @@ export const windowCommands: Command[] = [
         action: toggleShortcuts,
     },
     {
-        id: 'transform',
-        label: 'Window: Text Transformations',
-        action: toggleTransform,
-    },
-    {
         id: 'about',
         label: 'Window: About',
         action: toggleAbout,
@@ -270,6 +265,11 @@ export const editorCommands: Command[] = [
         id: 'editor.goto_line',
         label: 'Editor: Go to Line...',
         action: () => dispatchKeyEvent('g', true, false),
+    },
+    {
+        id: 'transform',
+        label: 'Window: Text Transformations',
+        action: toggleTransform,
     },
 ];
 

@@ -354,8 +354,11 @@ export function registerAllShortcuts() {
             defaultKey: 'ctrl+t',
             description: 'Text Transformations',
             category: 'Window',
-            handler: () => {
+            handler: (e: KeyboardEvent) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
                 toggleTransform();
+                return true;
             },
         },
         {

@@ -76,17 +76,24 @@ export class ScrollSyncManager {
     private smoothScrollRAF: number | null = null;
     private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
 
-    constructor() {
-        // Initialize Web Worker
+    private effectInitialized = false;
+
+    constructor() {}
+
+    private initEffects() {
+        if (this.effectInitialized) return;
+        this.effectInitialized = true;
+
+        // Worker init deferred to here — needs browser context, not module evaluation time
         this.initWorker();
 
-        // Automatically update map when preview changes size or content
+        // $effect.root must run inside a mounted component context, not at module load time.
+        // Calling it during module evaluation (before mount) throws in production builds.
         $effect.root(() => {
             $effect(() => {
                 if (this.preview) {
                     this.resizeObserver?.disconnect();
                     this.resizeObserver = new ResizeObserver(() => {
-                        // Debounce and batch resize updates to prevent excessive map rebuilding
                         // Only rebuild if content actually changed (dirty flag), not just resized
                         if (this.mapDirty) {
                             if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
@@ -99,7 +106,6 @@ export class ScrollSyncManager {
                     });
 
                     // Observe container only - children will trigger container resize if needed
-                    // This reduces observer overhead significantly
                     this.resizeObserver.observe(this.preview);
 
                     return () => {
@@ -190,6 +196,9 @@ export class ScrollSyncManager {
     }
 
     registerPreview(el: HTMLElement) {
+        // Defer $effect.root and Worker init until first call from a mounted component
+        this.initEffects();
+
         if (this.preview === el) return;
 
         if (this.preview) {

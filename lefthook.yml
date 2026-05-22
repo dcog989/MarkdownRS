@@ -1,0 +1,20 @@
+# pre-commit: lint, format staged files, and check Rust formatting
+pre-commit:
+  commands:
+    lint-staged:
+      run: bunx lint-staged
+    rust-fmt:
+      glob: '*.rs'
+      run: cd src-tauri && cargo fmt -- --check
+
+# pre-push: full lint check
+pre-push:
+  commands:
+    lint:
+      run: bun run lint
+
+# commit-msg: enforce conventional commit format
+commit-msg:
+  commands:
+    conventional:
+      run: "grep -qE '^(feat|fix|chore|docs|refactor|test|perf|ci|style|revert)(\\(.+\\))?: .' {1}"

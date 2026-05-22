@@ -13,8 +13,10 @@ export default ts.config(
             'src-tauri/target/',
             'eslint.config.js',
             'vite.config.ts',
+            'vitest.config.ts',
             'svelte.config.js',
             'postcss.config.cjs',
+            'scripts/',
         ],
     },
     js.configs.recommended,
@@ -60,6 +62,7 @@ export default ts.config(
                     fixStyle: 'inline-type-imports',
                 },
             ],
+            'no-console': 'warn',
         },
     },
 );
