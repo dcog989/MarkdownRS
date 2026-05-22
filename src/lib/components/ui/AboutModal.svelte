@@ -1,4 +1,5 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
 import type { AppInfo } from '$lib/types/api';

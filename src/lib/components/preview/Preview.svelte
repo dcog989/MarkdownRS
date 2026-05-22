@@ -1,16 +1,21 @@
 <script lang="ts">
 import { onDestroy, untrack } from 'svelte';
+import { FlipVertical, FlipHorizontal, FileText } from 'lucide-svelte';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import { updateTabMetadataAndPath } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { toggleOrientation } from '$lib/stores/appState.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { navigateToPath } from '$lib/utils/fileSystem';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
+import { tooltip } from '$lib/actions/tooltip';
 
 let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();
-let _isRendering = $state(false);
-let _showSpinner = $state(false);
+let isRendering = $state(false);
+let showSpinner = $state(false);
 let htmlContent = $state('');
 let lastRendered = $state('');
 let lastTabId = $state('');
@@ -54,12 +59,12 @@ $effect(() => {
     if (spinnerTimer) clearTimeout(spinnerTimer);
     if (renderAbortController) renderAbortController.abort();
 
-    _isRendering = true;
-    _showSpinner = false;
+    isRendering = true;
+    showSpinner = false;
 
     // Start spinner after delay to avoid flashing for quick renders
     spinnerTimer = window.setTimeout(() => {
-        _showSpinner = true;
+        showSpinner = true;
     }, CONFIG.PERFORMANCE.PREVIEW_SPINNER_DELAY_MS);
 
     debounceTimer = window.setTimeout(async () => {
@@ -85,8 +90,8 @@ $effect(() => {
             }
 
             if (!currentController.signal.aborted) {
-                _isRendering = false;
-                _showSpinner = false;
+                isRendering = false;
+                showSpinner = false;
                 if (spinnerTimer) clearTimeout(spinnerTimer);
             }
         } catch (_err) {
@@ -95,8 +100,8 @@ $effect(() => {
             }
         } finally {
             if (!currentController.signal.aborted) {
-                _isRendering = false;
-                _showSpinner = false;
+                isRendering = false;
+                showSpinner = false;
                 if (spinnerTimer) clearTimeout(spinnerTimer);
             }
         }
@@ -114,7 +119,7 @@ onDestroy(() => {
     if (renderAbortController) renderAbortController.abort();
 });
 
-function _injectHtml(node: HTMLElement, content: string) {
+function injectHtml(node: HTMLElement, content: string) {
     node.innerHTML = content;
 
     return {

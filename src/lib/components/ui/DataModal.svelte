@@ -1,4 +1,5 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';

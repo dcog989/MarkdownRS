@@ -72,9 +72,9 @@ pub async fn read_text_file(
     }
 
     // Fallback detection (CPU bound, fine to run here or could use spawn_blocking if huge)
-    let mut detector = chardetng::EncodingDetector::new();
+    let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
     detector.feed(&bytes, true);
-    let detected_encoding = detector.guess(None, false);
+    let detected_encoding = detector.guess(None, chardetng::Utf8Detection::Deny);
     let (cow, _, _) = detected_encoding.decode(&bytes);
 
     let result = FileContent {

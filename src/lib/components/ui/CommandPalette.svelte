@@ -1,4 +1,5 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
 import { tick } from 'svelte';
 import type { Command } from '$lib/commands/paletteCommands';
 

@@ -456,10 +456,10 @@ $effect(() => {
                                 });
                             } catch {
                                 // Fallback to pixel restoration
-                                view?.scrollDOM.scrollTop = savedScrollTop;
+                                if (view) view.scrollDOM.scrollTop = savedScrollTop;
                             }
                         } else {
-                            view?.scrollDOM.scrollTop = savedScrollTop;
+                            if (view) view.scrollDOM.scrollTop = savedScrollTop;
                         }
                     }
                 },

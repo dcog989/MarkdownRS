@@ -1,5 +1,8 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { SvelteMap } from 'svelte/reactivity';
+import { Keyboard, RotateCcw } from 'lucide-svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { saveSettings } from '$lib/utils/settings';
 import { type ShortcutDefinition, shortcutManager } from '$lib/utils/shortcuts';
@@ -12,7 +15,7 @@ interface Props {
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
 let searchQuery = $state('');
-let _searchInputEl = $state<HTMLInputElement>();
+let searchInputEl = $state<HTMLInputElement>();
 let selectedIndex = $state(0);
 let recordingCommandId = $state<string | null>(null);
 
@@ -68,10 +71,23 @@ function stopRecording() {
     window.removeEventListener('keydown', handleRecordKey, { capture: true });
 }
 
-function _resetShortcut(commandId: string) {
+function resetShortcut(commandId: string) {
     delete appContext.app.customShortcuts[commandId];
     shortcutManager.setCustomMappings(appContext.app.customShortcuts);
     saveSettings();
+}
+
+function scrollIntoView(node: HTMLElement, isSelected: boolean) {
+    if (isSelected) {
+        node.scrollIntoView({ block: 'nearest' });
+    }
+    return {
+        update(newIsSelected: boolean) {
+            if (newIsSelected) {
+                node.scrollIntoView({ block: 'nearest' });
+            }
+        },
+    };
 }
 
 const allShortcuts = $derived(shortcutManager.getDefinitions());
@@ -103,7 +119,7 @@ const categories = $derived.by(() => {
 // Create a flat array for proper indexing with selectedIndex
 const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     // Only handle navigation keys - let all other keys (including typing) work normally
     if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
         return;

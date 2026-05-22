@@ -1,4 +1,5 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { shortcutManager } from '$lib/utils/shortcuts';

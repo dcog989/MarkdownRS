@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { formatFileSize } from '$lib/utils/fileValidation';
+import TooltipContainer from '$lib/components/ui/TooltipContainer.svelte';
 
 let {
     tab,
@@ -14,7 +15,7 @@ let {
     y: number;
 }>();
 
-let _tooltipContent = $derived.by(() => {
+let tooltipContent = $derived.by(() => {
     const parts: string[] = [];
 
     if (tab.path) {

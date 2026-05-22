@@ -1,26 +1,35 @@
 <script lang="ts">
 import { onDestroy, onMount, tick } from 'svelte';
 import { SortableController } from '$lib/actions/sortable.svelte.ts';
-import { pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
+import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
-import { persistSessionDebounced } from '$lib/utils/fileSystem';
+import { fade } from 'svelte/transition';
+import { flip } from 'svelte/animate';
+import { ChevronDown, Plus } from 'lucide-svelte';
+import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
+import TabButton from '$lib/components/ui/TabButton.svelte';
+import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
+import TabBarContextMenu from '$lib/components/ui/TabBarContextMenu.svelte';
+import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
+import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
+import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
 
 let scrollContainer = $state<HTMLElement>();
-let _showDropdown = $state(false);
+let showDropdown = $state(false);
 
 let isDragging = $state(false);
 let draggingId = $state<string | null>(null);
-let _dragOffsetX = $state(0);
-let _currentDragX = $state(0);
+let dragOffsetX = $state(0);
+let currentDragX = $state(0);
 
-let _contextMenuTabId: string | null = $state(null);
-let _contextMenuX = $state(0);
-let _contextMenuY = $state(0);
-let _showTabBarContextMenu = $state(false);
-let _tabBarContextMenuX = $state(0);
-let _tabBarContextMenuY = $state(0);
+let contextMenuTabId: string | null = $state(null);
+let contextMenuX = $state(0);
+let contextMenuY = $state(0);
+let showTabBarContextMenu = $state(false);
+let tabBarContextMenuX = $state(0);
+let tabBarContextMenuY = $state(0);
 let showMruPopup = $state(false);
 let mruSelectedIndex = $state(0);
 let isMruCycling = $state(false);
@@ -36,11 +45,11 @@ const sortController = new SortableController<EditorTab>({
     onDragStart: (id, _, offset) => {
         draggingId = id;
         isDragging = false;
-        _dragOffsetX = offset;
+        dragOffsetX = offset;
     },
     onDragMove: (x) => {
         isDragging = true;
-        _currentDragX = x;
+        currentDragX = x;
     },
     onDragEnd: () => {
         if (isDragging) {
@@ -132,14 +141,14 @@ onDestroy(() => {
     sortController.destroy();
 });
 
-let _showLeftFade = $state(false);
-let _showRightFade = $state(false);
+let showLeftFade = $state(false);
+let showRightFade = $state(false);
 
 function updateFadeIndicators() {
     if (!scrollContainer) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
-    _showLeftFade = scrollLeft > 5;
-    _showRightFade = scrollLeft < scrollWidth - clientWidth - 2;
+    showLeftFade = scrollLeft > 5;
+    showRightFade = scrollLeft < scrollWidth - clientWidth - 2;
 }
 
 async function scrollToActive() {

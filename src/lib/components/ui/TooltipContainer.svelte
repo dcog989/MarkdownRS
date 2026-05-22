@@ -1,5 +1,6 @@
 ﻿<script lang="ts">
 import type { Snippet } from 'svelte';
+import { fade } from 'svelte/transition';
 import { CONFIG } from '$lib/utils/config';
 
 let {
@@ -17,13 +18,13 @@ let {
 }>();
 
 let tooltipEl = $state<HTMLDivElement>();
-let _adjustedX = $state(0);
-let _adjustedY = $state(0);
+let adjustedX = $state(0);
+let adjustedY = $state(0);
 
 $effect(() => {
     if (!isVisible) {
-        _adjustedX = x;
-        _adjustedY = y + CONFIG.UI.TOOLTIP_OFFSET_Y;
+        adjustedX = x;
+        adjustedY = y + CONFIG.UI.TOOLTIP_OFFSET_Y;
         return;
     }
 
@@ -50,8 +51,8 @@ $effect(() => {
             );
         }
 
-        _adjustedX = newX;
-        _adjustedY = newY;
+        adjustedX = newX;
+        adjustedY = newY;
     }
 });
 </script>

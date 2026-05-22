@@ -1,4 +1,5 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
 import { open } from '@tauri-apps/plugin-dialog';
 import {
     addBookmark,

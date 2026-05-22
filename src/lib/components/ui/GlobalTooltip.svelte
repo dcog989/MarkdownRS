@@ -1,4 +1,6 @@
 <script lang="ts">
+import TooltipContainer from '$lib/components/ui/TooltipContainer.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
 </script>
 
 <TooltipContainer

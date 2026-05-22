@@ -15,6 +15,12 @@ import {
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { logger } from '$lib/utils/logger';
 import { initSettings, saveSettings } from '$lib/utils/settings';
+import Titlebar from '$lib/components/ui/Titlebar.svelte';
+import TabBar from '$lib/components/ui/TabBar.svelte';
+import Editor from '$lib/components/editor/Editor.svelte';
+import Preview from '$lib/components/preview/Preview.svelte';
+import StatusBar from '$lib/components/ui/StatusBar.svelte';
+import Toast from '$lib/components/ui/Toast.svelte';
 
 // Linux: resize handles for undecorated windows (wry doesn't provide edge
 // resize on GTK with decorations:false). Call startResizeDragging on mousedown
@@ -28,7 +34,7 @@ type ResizeDir =
     | 'NorthWest'
     | 'SouthEast'
     | 'SouthWest';
-async function _startWindowResize(dir: ResizeDir) {
+async function startWindowResize(dir: ResizeDir) {
     try {
         // startResizeDragging is an internal Tauri API with no exported type declaration.
         await (getCurrentWindow().startResizeDragging as (d: ResizeDir) => Promise<void>)(dir);
@@ -96,7 +102,7 @@ let isMarkdown = $derived.by(() => {
     return activeTab.preferredExtension !== 'txt';
 });
 
-let _showPreview = $derived(appContext.app.splitView && isMarkdown);
+let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
 function handleTabNavigation(e: KeyboardEvent) {
     if (!e.ctrlKey) return;
@@ -244,7 +250,7 @@ onDestroy(() => {
     }
 });
 
-function _startResize(e: MouseEvent) {
+function startResize(e: MouseEvent) {
     e.preventDefault();
     isDragging = true;
     dragStart = appContext.app.splitOrientation === 'vertical' ? e.clientX : e.clientY;
@@ -277,7 +283,7 @@ function stopResize() {
     saveSettings();
 }
 
-function _resetSplit() {
+function resetSplit() {
     appContext.app.splitPercentage = 0.5;
     saveSettings();
 }

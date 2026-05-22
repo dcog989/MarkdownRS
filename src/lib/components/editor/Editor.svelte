@@ -24,6 +24,14 @@ import {
     invalidateSpellcheckCache,
     triggerImmediateLint,
 } from '$lib/utils/spellcheckExtension.svelte.ts';
+import EditorViewComponent from '$lib/components/editor/EditorView.svelte';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
+import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
+import { getTransientState } from '$lib/stores/editorStore.svelte.ts';
+import { spellCheckKeymap, refreshSpellcheck } from '$lib/utils/spellcheckExtension.svelte.ts';
+import { AppError } from '$lib/utils/errorHandling';
+import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
 let { tabId } = $props<{ tabId: string }>();
 
@@ -34,13 +42,13 @@ let findReplacePanel = $state<{
     setReplaceMode: (enable: boolean) => void;
     focusInput: () => void;
 } | null>(null);
-let _showContextMenu = $state(false);
-let _contextMenuX = $state(0);
-let _contextMenuY = $state(0);
-let _contextSelectedText = $state('');
-let _contextWordUnderCursor = $state('');
-let _contextWordFrom = $state(0);
-let _contextWordTo = $state(0);
+let showContextMenu = $state(false);
+let contextMenuX = $state(0);
+let contextMenuY = $state(0);
+let contextSelectedText = $state('');
+let contextWordUnderCursor = $state('');
+let contextWordFrom = $state(0);
+let contextWordTo = $state(0);
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
 let pendingTransform = $derived(editorStore.pendingTransform);
@@ -50,7 +58,7 @@ let scrollManager = new ScrollManager();
 let previousTabId: string = '';
 
 // Initialize Helpers
-const _eventHandlers = createEditorEventHandlers(onContextMenu);
+const eventHandlers = createEditorEventHandlers(onContextMenu);
 
 onMount(() => {
     initSpellcheck();
@@ -138,7 +146,7 @@ $effect(() => {
 
 function onContextMenu(event: MouseEvent, view: CM6EditorView) {
     event.preventDefault();
-    _showContextMenu = false;
+    showContextMenu = false;
     const selection = view.state.selection.main;
     const selectedText = view.state.sliceDoc(selection.from, selection.to);
     let word = '',
@@ -153,55 +161,55 @@ function onContextMenu(event: MouseEvent, view: CM6EditorView) {
             word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, '');
         }
     }
-    _contextSelectedText = selectedText;
-    _contextWordUnderCursor = word;
-    _contextWordFrom = from;
-    _contextWordTo = to;
-    _contextMenuX = event.clientX;
-    _contextMenuY = event.clientY;
+    contextSelectedText = selectedText;
+    contextWordUnderCursor = word;
+    contextWordFrom = from;
+    contextWordTo = to;
+    contextMenuX = event.clientX;
+    contextMenuY = event.clientY;
     tick().then(() => {
-        _showContextMenu = true;
+        showContextMenu = true;
     });
 }
 
-function _handleContentChange(c: string, lineCount: number) {
+function handleContentChange(c: string, lineCount: number) {
     updateContent(tabId, c, lineCount);
 }
-function _handleMetricsChange(m: Partial<EditorMetrics>) {
+function handleMetricsChange(m: Partial<EditorMetrics>) {
     updateMetrics(m);
 }
-function _handleScrollChange(p: number, s: number, t: number) {
+function handleScrollChange(p: number, s: number, t: number) {
     updateScroll(tabId, p, s, t, 'editor');
 }
-function _handleSelectionChange(a: number, h: number) {
+function handleSelectionChange(a: number, h: number) {
     updateCursor(tabId, a, h);
 }
-function _handleHistoryUpdate(state: unknown) {
+function handleHistoryUpdate(state: unknown) {
     updateHistoryState(tabId, state);
 }
 
-function _handleDictionaryUpdate() {
+function handleDictionaryUpdate() {
     if (cmView) {
         invalidateSpellcheckCache();
         triggerImmediateLint(cmView);
     }
 }
 
-let _initialContent = $derived(activeTab?.content || '');
+let initialContent = $derived(activeTab?.content || '');
 let filename = $derived.by(() => {
     if (activeTab?.path) return activeTab.path;
     return activeTab?.preferredExtension === 'txt' ? 'unsaved.txt' : 'unsaved.md';
 });
-let _isMarkdown = $derived.by(() => {
+let isMarkdown = $derived.by(() => {
     if (activeTab?.preferredExtension) {
         return activeTab.preferredExtension === 'md';
     }
     return isMarkdownFile(filename);
 });
-let _initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
-let _initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
-let _lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
-let _showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
+let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
+let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
+let lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
+let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
 <div class="bg-bg-main relative h-full w-full overflow-hidden">

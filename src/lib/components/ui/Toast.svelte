@@ -1,13 +1,14 @@
 <script lang="ts">
-import { CircleAlert, CircleCheckBig, CircleX, Info } from 'lucide-svelte';
+import { CircleAlert, CircleCheckBig, CircleX, Info, X } from 'lucide-svelte';
 import { onMount } from 'svelte';
+import { fly } from 'svelte/transition';
 import { SvelteSet } from 'svelte/reactivity';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { dismissToast } from '$lib/stores/toastStore.svelte.ts';
 
 const activeTimers = new SvelteSet<string>();
 
-function _getIcon(type: string) {
+function getIcon(type: string) {
     switch (type) {
         case 'success':
             return CircleCheckBig;
@@ -20,7 +21,7 @@ function _getIcon(type: string) {
     }
 }
 
-function _getColorClass(type: string) {
+function getColorClass(type: string) {
     switch (type) {
         case 'success':
             return 'text-success border-l-success';
@@ -33,7 +34,7 @@ function _getColorClass(type: string) {
     }
 }
 
-function _getIconColorClass(type: string) {
+function getIconColorClass(type: string) {
     switch (type) {
         case 'success':
             return 'text-success';

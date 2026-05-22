@@ -4,15 +4,13 @@ This is a Markdown editor focused on performance, minimal resource usage, and a 
 
 ## Build Environment
 
-Linux CachyOS / Limine boot loader / KDE Plasma desktop / Wayland / Btrfs file system.
-
-Apps = Firefox, Kate text editor, Zed code editor, Ghostty terminal + Fresh terminal editor. paru and bun package managers.
+Linux CachyOS, Firefox, Zed code editor, Ghostty terminal + Fresh terminal editor. paru and bun package managers.
 
 All software is updated as of today's date.
 
 ## Tech Stack
 
-- **Tauri** (v2.9) - Desktop framework wrapping the web frontend
+- **Tauri** (v2.9) - Desktop framework wrapping the web frontend Schadenfreude sefwfwefweff
 - **Rust** (2024 / v1.94) - Backend logic, Markdown processing, file I/O
 - **Svelte** (v5.55) - Frontend framework with Svelte 5 runes (`.svelte.ts` files)
 - **TypeScript** (v6.0) - Type-safe frontend code

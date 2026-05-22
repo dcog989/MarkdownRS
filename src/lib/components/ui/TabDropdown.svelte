@@ -1,8 +1,12 @@
 <script lang="ts">
+import { CircleAlert, PencilLine, Pencil, SquarePen, FileText, Pin, X } from 'lucide-svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
 import { formatFileSize } from '$lib/utils/fileValidation';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import { requestCloseTab } from '$lib/utils/fileSystem';
+import { tooltip } from '$lib/actions/tooltip';
 
 let {
     isOpen = false,
@@ -17,7 +21,7 @@ let {
 let searchQuery = $state('');
 let selectedIndex = $state(0);
 let searchInputRef = $state<HTMLInputElement>();
-let _dropdownListRef = $state<HTMLDivElement>();
+let dropdownListRef = $state<HTMLDivElement>();
 let lastClientX = 0;
 let lastClientY = 0;
 let ignoreMouseMovement = $state(false);
@@ -37,11 +41,11 @@ let filteredTabs = $derived.by(() => {
     });
 });
 
-function _getDropdownTitle(tab: EditorTab): string {
+function getDropdownTitle(tab: EditorTab): string {
     return tab.customTitle || tab.title;
 }
 
-function _getTooltipContent(tab: EditorTab): string {
+function getTooltipContent(tab: EditorTab): string {
     const parts: string[] = [];
     const sizeStr = formatFileSize(tab.sizeBytes || 0);
     const formattedTime = tab.formattedTimestamp || '';
@@ -87,7 +91,7 @@ function handleSelect(id: string) {
     onSelect(id);
 }
 
-function _handleHover(index: number, e: MouseEvent) {
+function handleHover(index: number, e: MouseEvent) {
     if (ignoreMouseMovement) return;
 
     if (e.clientX === lastClientX && e.clientY === lastClientY) return;
@@ -97,7 +101,7 @@ function _handleHover(index: number, e: MouseEvent) {
     selectedIndex = index;
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (filteredTabs.length === 0) return;
 
     if (e.key === 'ArrowDown') {
@@ -117,7 +121,7 @@ function _handleKeydown(e: KeyboardEvent) {
     }
 }
 
-function _scrollIntoView(node: HTMLElement, isSelected: boolean) {
+function scrollIntoView(node: HTMLElement, isSelected: boolean) {
     if (isSelected) {
         node.scrollIntoView({ block: 'nearest' });
     }

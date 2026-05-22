@@ -1,9 +1,18 @@
 <script lang="ts">
+import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
+import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
+import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
+import AboutModal from '$lib/components/ui/AboutModal.svelte';
+import BookmarksModal from '$lib/components/ui/BookmarksModal.svelte';
+import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
+import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
+import DataModal from '$lib/components/ui/DataModal.svelte';
 import { baseCommands, type Command } from '$lib/commands/paletteCommands';
 import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { shortcutManager } from '$lib/utils/shortcuts';
+import { openFileByPath } from '$lib/utils/fileSystem';
 
 const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category) =>
     getOperationsByCategory(category.id).map((op) => ({
@@ -62,7 +71,7 @@ const _commands = $derived.by(() => {
 
 <CommandPalette
     bind:isOpen={appContext.interface.showCommandPalette}
-    {commands}
+    commands={_commands}
     onClose={() => (appContext.interface.showCommandPalette = false)} />
 <RecentFilesModal
     bind:isOpen={appContext.interface.showRecentFiles}

@@ -7,11 +7,30 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';
 import { shortcutManager } from '$lib/utils/shortcuts';
+import {
+    Settings,
+    Zap,
+    Bookmark,
+    Feather,
+    EyeOff,
+    Eye,
+    Minus,
+    Copy,
+    Square,
+    X,
+} from 'lucide-svelte';
+import {
+    toggleAbout,
+    toggleSettings,
+    toggleCommandPalette,
+    toggleBookmarks,
+} from '$lib/stores/interfaceStore.svelte.ts';
+import { tooltip } from '$lib/actions/tooltip';
 
 const appWindow = getCurrentWindow();
 let isMaximized = $state(false);
 
-let _shortcuts = $derived({
+let shortcuts = $derived({
     settings: shortcutManager.getShortcutDisplay('help.settings'),
     commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
     bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
@@ -23,9 +42,9 @@ let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.
 let isMarkdown = $derived(
     activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
 );
-let _displayPath = $derived(activeTab?.path || activeTab?.title || '');
+let displayPath = $derived(activeTab?.path || activeTab?.title || '');
 
-function _toggleSplit() {
+function toggleSplit() {
     if (!isMarkdown) {
         showToast('warning', 'Preview not available for this file type');
         return;
@@ -34,7 +53,7 @@ function _toggleSplit() {
     saveSettings();
 }
 
-function _handleWriterMode() {
+function handleWriterMode() {
     const wasWriterMode = appContext.app.writerMode;
     toggleWriterMode();
     if (wasWriterMode) {
@@ -59,7 +78,7 @@ onMount(() => {
     };
 });
 
-async function _closeApp() {
+async function closeApp() {
     await appWindow.close();
 }
 </script>

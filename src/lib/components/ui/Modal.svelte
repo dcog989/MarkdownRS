@@ -1,5 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { X } from 'lucide-svelte';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
 
 let {
@@ -22,16 +25,16 @@ let {
     children: Snippet;
 }>();
 
-let _viewport = $state<HTMLDivElement>();
+let viewport = $state<HTMLDivElement>();
 let modalPanel = $state<HTMLDivElement>();
 
-function _handleBackdropClick(e: MouseEvent) {
+function handleBackdropClick(e: MouseEvent) {
     if (e.target === e.currentTarget) {
         onClose();
     }
 }
 
-function _handleKeydown(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (isOpen && e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
@@ -59,7 +62,7 @@ function invalidateFocusCache() {
     cacheValid = false;
 }
 
-function _handleTabKey(e: KeyboardEvent) {
+function handleTabKey(e: KeyboardEvent) {
     if (!isOpen) return;
 
     const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];

@@ -1,4 +1,7 @@
 <script lang="ts">
+import Modal from '$lib/components/ui/Modal.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { resolveDialog } from '$lib/stores/dialogStore.svelte.ts';
 </script>
 
 <Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog('cancel')} zIndex={100}>

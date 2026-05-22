@@ -3,6 +3,11 @@ import { togglePreferredExtension, updateLineEnding } from '$lib/stores/editorSt
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';
+import { TextWrap, ClipboardCopy } from 'lucide-svelte';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte.ts';
+import { formatNumber } from '$lib/utils/textMetrics';
+import { tooltip } from '$lib/actions/tooltip';
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
 
@@ -11,7 +16,7 @@ let lineEnding = $derived(activeTab?.lineEnding || 'LF');
 let encoding = $derived(activeTab?.encoding || 'UTF-8');
 let sizeBytes = $derived(activeTab?.sizeBytes || 0);
 let totalWords = $derived(activeTab?.wordCount || 0);
-let _wordCountPending = $derived(activeTab?.wordCountPending || false);
+let wordCountPending = $derived(activeTab?.wordCountPending || false);
 let totalChars = $derived(activeTab?.content.length || 0);
 let totalLines = $derived(activeTab?.lineCount || 1);
 let widestColumn = $derived(activeTab?.widestColumn || 0);
@@ -20,47 +25,47 @@ let preferredExtension = $derived(activeTab?.preferredExtension);
 let path = $derived(activeTab?.path);
 let tabId = $derived(activeTab?.id);
 
-let _textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
-let _fileSizeDisplay = $derived(formatFileSize(sizeBytes));
+let textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
+let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
-let _fileType = $derived.by(() => {
+let fileType = $derived.by(() => {
     if (!tabId) return 'markdown';
     if (preferredExtension) return preferredExtension === 'txt' ? 'text' : 'markdown';
     if (path) return isMarkdownFile(path) ? 'markdown' : 'text';
     return 'markdown';
 });
 
-let _canToggleFileType = $derived(!!tabId);
+let canToggleFileType = $derived(!!tabId);
 
 // Context Menu State
-let _showMenu = $state(false);
-let _menuX = $state(0);
-let _menuY = $state(0);
+let showMenu = $state(false);
+let menuX = $state(0);
+let menuY = $state(0);
 
-function _toggleFileType() {
+function toggleFileType() {
     if (tabId) togglePreferredExtension(tabId);
 }
 
-function _toggleLineEnding() {
+function toggleLineEnding() {
     if (tabId) {
         const next = lineEnding === 'LF' ? 'CRLF' : 'LF';
         updateLineEnding(tabId, next);
     }
 }
 
-function _toggleWordWrap() {
+function toggleWordWrap() {
     appContext.app.editorWordWrap = !appContext.app.editorWordWrap;
     saveSettings();
 }
 
-function _handleContextMenu(e: MouseEvent) {
+function handleContextMenu(e: MouseEvent) {
     e.preventDefault();
-    _menuX = e.clientX;
-    _menuY = e.clientY;
-    _showMenu = true;
+    menuX = e.clientX;
+    menuY = e.clientY;
+    showMenu = true;
 }
 
-async function _copyAllStats() {
+async function copyAllStats() {
     if (!activeTab) return;
 
     const preciseSize =
@@ -82,7 +87,7 @@ async function _copyAllStats() {
     ].join('\n');
 
     await navigator.clipboard.writeText(stats);
-    _showMenu = false;
+    showMenu = false;
 }
 </script>
 

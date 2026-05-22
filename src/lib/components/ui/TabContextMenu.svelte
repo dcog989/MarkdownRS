@@ -1,4 +1,25 @@
 <script lang="ts">
+import { tick } from 'svelte';
+import {
+    Save,
+    FileDown,
+    PinOff,
+    Pin,
+    BookmarkX,
+    Bookmark,
+    Download,
+    ArrowLeft,
+    ArrowRight,
+    X,
+    Files,
+    History,
+    Undo2,
+    FilePen,
+    Copy,
+    Trash2,
+} from 'lucide-svelte';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import Submenu from '$lib/components/ui/Submenu.svelte';
 import { sanitizePath } from '$lib/services/fileMetadata';
 import {
     addBookmark,
@@ -7,8 +28,17 @@ import {
     isBookmarked as isBookmarkedSelector,
 } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-import { togglePin, updateTabPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
+import {
+    togglePin,
+    updateTabPath,
+    updateTabTitle,
+    reorderTabs,
+    pushToMru,
+} from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte.ts';
+import { exportService } from '$lib/services/exportService';
+import { tooltip } from '$lib/actions/tooltip';
 import { callBackend } from '$lib/utils/backend';
 import {
     requestCloseTab,
@@ -25,43 +55,43 @@ let { tabId, x, y, onClose } = $props<{
     onClose: () => void;
 }>();
 
-let _activeSubmenu = $state<'close' | 'export' | 'restore' | null>(null);
+let activeSubmenu = $state<'close' | 'export' | 'restore' | null>(null);
 
 let tab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
-let _isPinned = $derived(tab?.isPinned || false);
+let isPinned = $derived(tab?.isPinned || false);
 let isBookmarked = $derived(tab?.path ? isBookmarkedSelector(tab.path) : false);
 let tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === tabId));
 
-let _hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== tabId));
-let _hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== tabId));
-let _hasCloseableTabsToRight = $derived(
+let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== tabId));
+let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== tabId));
+let hasCloseableTabsToRight = $derived(
     tabIndex < appContext.editor.tabs.length - 1 &&
         appContext.editor.tabs.slice(tabIndex + 1).some((t) => !t.isPinned),
 );
-let _hasCloseableTabsToLeft = $derived(
+let hasCloseableTabsToLeft = $derived(
     tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned),
 );
-let _hasCloseableOtherTabs = $derived(
+let hasCloseableOtherTabs = $derived(
     appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned),
 );
 
-async function _handleSave() {
+async function handleSave() {
     await withActiveTab(tabId, saveCurrentFile);
     onClose();
 }
 
-async function _handleSaveAs() {
+async function handleSaveAs() {
     await withActiveTab(tabId, saveCurrentFileAs);
     onClose();
 }
 
-function _handlePin() {
+function handlePin() {
     if (!tab) return;
     togglePin(tabId);
     onClose();
 }
 
-async function _handleCloseMany(mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') {
+async function handleCloseMany(mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') {
     let targets: typeof appContext.editor.tabs = [];
 
     if (mode === 'right') targets = appContext.editor.tabs.slice(tabIndex + 1);
@@ -79,7 +109,7 @@ async function _handleCloseMany(mode: 'right' | 'left' | 'others' | 'saved' | 'u
     onClose();
 }
 
-async function _handleRename() {
+async function handleRename() {
     if (!tab) return;
 
     // If tab has no path, just rename the tab title
@@ -148,7 +178,7 @@ async function _handleRename() {
     }
 }
 
-async function _handleSendToRecycleBin() {
+async function handleSendToRecycleBin() {
     // Capture data while component is mounted
     const targetPath = tab?.path;
     const targetTitle = tab?.title;
@@ -195,7 +225,7 @@ async function _handleSendToRecycleBin() {
     }
 }
 
-async function _handleToggleBookmark() {
+async function handleToggleBookmark() {
     if (!tab?.path) return;
     try {
         if (isBookmarked) {
@@ -209,7 +239,7 @@ async function _handleToggleBookmark() {
     }
 }
 
-function _getHistoryTooltip(tab: { content: string; title: string; path?: string | null }): string {
+function getHistoryTooltip(tab: { content: string; title: string; path?: string | null }): string {
     const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
     const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
 
@@ -221,14 +251,14 @@ function _getHistoryTooltip(tab: { content: string; title: string; path?: string
     return `${title}\n\n-- Preview --\n${preview}`;
 }
 
-function _formatTitle(title: string): string {
+function formatTitle(title: string): string {
     if (title.length > 20) {
         return `${title.substring(0, 20)}...`;
     }
     return title;
 }
 
-function _sc(commandId: string): string {
+function sc(commandId: string): string {
     return shortcutManager.getShortcutDisplay(commandId);
 }
 </script>

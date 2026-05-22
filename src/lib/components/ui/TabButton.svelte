@@ -1,7 +1,9 @@
 <script lang="ts">
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { formatFileSize } from '$lib/utils/fileValidation';
+import { tooltip } from '$lib/actions/tooltip';
 
 interface Props {
     tab: EditorTab;
@@ -13,10 +15,10 @@ interface Props {
 
 let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
 
-let _isFileMissing = $derived(tab.fileCheckFailed === true);
+let isFileMissing = $derived(tab.fileCheckFailed === true);
 let isCollapsed = $derived(appContext.app.collapsePinnedTabs && tab.isPinned);
 
-let _tooltipContent = $derived.by(() => {
+let tooltipContent = $derived.by(() => {
     const parts: string[] = [];
     const sizeStr = formatFileSize(tab.sizeBytes || 0);
     const formattedTime = tab.formattedTimestamp || '';
