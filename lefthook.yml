@@ -1,8 +1,9 @@
-# pre-commit: lint, format staged files, and check Rust formatting
+# pre-commit: format staged files and check Rust formatting
 pre-commit:
   commands:
-    lint-staged:
-      run: bunx lint-staged
+    biome:
+      glob: '*.{js,ts,svelte,json,css}'
+      run: bunx biome format --write --no-errors-on-unmatched --staged && git add -u
     rust-fmt:
       glob: '*.rs'
       run: cd src-tauri && cargo fmt -- --check

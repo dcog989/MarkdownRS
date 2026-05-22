@@ -1,22 +1,16 @@
 <script lang="ts">
-    import {
-        OPERATION_CATEGORIES,
-        getOperationsByCategory,
-        type OperationId,
-    } from '$lib/config/textOperationsRegistry';
-    import { performTextTransform } from '$lib/stores/editorStore.svelte';
-    import { shortcutManager } from '$lib/utils/shortcuts';
-    import { Type, X } from 'lucide-svelte';
-    import Modal from './Modal.svelte';
+import type { OperationId } from '$lib/config/textOperationsRegistry';
+import { performTextTransform } from '$lib/stores/editorStore.svelte';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
-    let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
+let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 
-    let undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
+let _undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
 
-    function handleOperation(operationId: OperationId) {
-        performTextTransform(operationId);
-        onClose();
-    }
+function _handleOperation(operationId: OperationId) {
+    performTextTransform(operationId);
+    onClose();
+}
 </script>
 
 <Modal bind:isOpen {onClose}>

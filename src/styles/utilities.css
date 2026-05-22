@@ -134,6 +134,6 @@
 
 .scrollbar-thumb-custom:hover,
 .scrollbar-track:hover .scrollbar-thumb-custom {
-    width: 12px !important;
-    opacity: 0.7 !important;
+    width: 12px;
+    opacity: 0.7;
 }

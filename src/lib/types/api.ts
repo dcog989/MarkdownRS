@@ -37,7 +37,7 @@ export interface BackendCommands {
     // Session
     save_session: {
         args: { activeTabs: unknown[]; closedTabs: unknown[] };
-        return: void;
+        return: undefined;
     };
     restore_session: {
         args: Record<string, never>;
@@ -49,7 +49,7 @@ export interface BackendCommands {
     };
     vacuum_database: {
         args: Record<string, never>;
-        return: void;
+        return: undefined;
     };
 
     // File System
@@ -59,11 +59,11 @@ export interface BackendCommands {
     };
     write_text_file: {
         args: { path: string; content: string };
-        return: void;
+        return: undefined;
     };
     write_binary_file: {
         args: { path: string; content: number[] };
-        return: void;
+        return: undefined;
     };
     get_file_metadata: {
         args: { path: string };
@@ -75,15 +75,15 @@ export interface BackendCommands {
     };
     send_to_recycle_bin: {
         args: { path: string };
-        return: void;
+        return: undefined;
     };
     rename_file: {
         args: { oldPath: string; newPath: string };
-        return: void;
+        return: undefined;
     };
     add_to_recent_files: {
         args: { path: string; lastOpened: string };
-        return: void;
+        return: undefined;
     };
     get_recent_files: {
         args: Record<string, never>;
@@ -91,11 +91,11 @@ export interface BackendCommands {
     };
     remove_from_recent_files: {
         args: { path: string };
-        return: void;
+        return: undefined;
     };
     clear_recent_files: {
         args: Record<string, never>;
-        return: void;
+        return: undefined;
     };
 
     // App Info
@@ -107,7 +107,7 @@ export interface BackendCommands {
     // Dictionary / Spellcheck
     add_to_dictionary: {
         args: { word: string };
-        return: void;
+        return: undefined;
     };
     load_user_dictionary: {
         args: Record<string, never>;
@@ -119,7 +119,7 @@ export interface BackendCommands {
             technicalDictionaries?: boolean;
             scienceDictionaries?: boolean;
         };
-        return: void;
+        return: undefined;
     };
     check_words: {
         args: { words: string[] };
@@ -163,7 +163,7 @@ export interface BackendCommands {
     // Bookmarks
     add_bookmark: {
         args: { bookmark: Bookmark };
-        return: void;
+        return: undefined;
     };
     get_all_bookmarks: {
         args: Record<string, never>;
@@ -171,11 +171,11 @@ export interface BackendCommands {
     };
     delete_bookmark: {
         args: { id: string };
-        return: void;
+        return: undefined;
     };
     update_bookmark_access_time: {
         args: { id: string; lastAccessed: string };
-        return: void;
+        return: undefined;
     };
 
     // Settings / Themes
@@ -193,11 +193,11 @@ export interface BackendCommands {
     };
     save_settings: {
         args: { settings: unknown };
-        return: void;
+        return: undefined;
     };
     set_context_menu_item: {
         args: { enable: boolean };
-        return: void;
+        return: undefined;
     };
     check_context_menu_status: {
         args: Record<string, never>;
@@ -211,13 +211,13 @@ export interface BackendCommands {
     };
     download_and_install_update: {
         args: Record<string, never>;
-        return: void;
+        return: undefined;
     };
 
     // Export
     export_to_pdf: {
         args: { path: string; content: string; title: string; backgroundColor: string | null };
-        return: void;
+        return: undefined;
     };
     // Data Management
     export_bookmarks: {
@@ -244,7 +244,7 @@ export interface BackendCommands {
     // Window State (Plugin)
     'plugin:window-state|save_window_state': {
         args: Record<string, never>;
-        return: void;
+        return: undefined;
     };
 }
 

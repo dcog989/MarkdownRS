@@ -64,7 +64,7 @@ export async function refreshMetadata(tabId: string, path: string): Promise<void
 
 export async function checkFileExists(tabId: string): Promise<void> {
     const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-    if (!tab || !tab.path) return;
+    if (!tab?.path) return;
 
     const result = await callBackendSafe('get_file_metadata', { path: tab.path }, 'File:Metadata', {
         showToast: false,
@@ -82,7 +82,7 @@ export async function checkFileExists(tabId: string): Promise<void> {
 
 export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
     const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-    if (!tab || !tab.path) return false;
+    if (!tab?.path) return false;
 
     if (tab.isDirty) return false;
 
@@ -105,7 +105,7 @@ export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
 
 export async function reloadFileContent(tabId: string): Promise<void> {
     const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-    if (!tab || !tab.path) return;
+    if (!tab?.path) return;
 
     const sanitizedPath = sanitizePath(tab.path);
     const result = await callBackendSafe('read_text_file', { path: sanitizedPath }, 'File:Read', {

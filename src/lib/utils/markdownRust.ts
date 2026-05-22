@@ -1,7 +1,7 @@
-import type { RenderResult } from '$lib/types/markdown';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
+import type { RenderResult } from '$lib/types/markdown';
 import { callBackendSafe } from './backend';
 
 /**
@@ -25,7 +25,7 @@ function resolvePath(baseDir: string, relativePath: string): string {
     }
 
     const result = resolved.join('/');
-    return /^[a-zA-Z]:/.test(result) ? result : '/' + result;
+    return /^[a-zA-Z]:/.test(result) ? result : `/${result}`;
 }
 
 /**
@@ -42,7 +42,7 @@ function resolveStaticAssetPath(src: string): string {
     // Extract just the filename and serve from web root
     const cleanSrc = src.replace(/\\/g, '/');
     const filename = cleanSrc.split('/').pop();
-    return '/' + filename;
+    return `/${filename}`;
 }
 
 export async function renderMarkdown(

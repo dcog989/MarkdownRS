@@ -146,7 +146,7 @@
 }
 
 /* Light Theme - Layer 3: Theme-specific overrides */
-[data-theme='light'] {
+[data-theme="light"] {
     /* Surface System - Light Theme */
     --surface-1: oklch(0.98 0 0); /* Main content background */
     --surface-2: oklch(0.95 0 0); /* Panels, dialogs, sidebars */

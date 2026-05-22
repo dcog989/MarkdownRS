@@ -1,250 +1,245 @@
 <script lang="ts">
-    import Input from '$lib/components/ui/Input.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { CONFIG } from '$lib/utils/config';
-    import {
-        clearSearch,
-        ensureQuerySync,
-        replaceAllInTabs,
-        searchAllTabs,
-        searchState,
-        selectNearestMatch,
-        updateSearchEditor,
-    } from '$lib/utils/searchManager.svelte.ts';
-    import { debounce } from '$lib/utils/timing';
-    import {
-        closeSearchPanel,
-        findNext,
-        findPrevious,
-        openSearchPanel,
-        replaceAll,
-        replaceNext,
-    } from '@codemirror/search';
-    import type { EditorView } from '@codemirror/view';
-    import { ChevronDown, ChevronRight, Replace, Search, X } from 'lucide-svelte';
-    import { onMount, tick, untrack } from 'svelte';
+import {
+    closeSearchPanel,
+    findNext,
+    findPrevious,
+    openSearchPanel,
+    replaceAll,
+    replaceNext,
+} from '@codemirror/search';
+import type { EditorView } from '@codemirror/view';
+import { onMount, tick, untrack } from 'svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { CONFIG } from '$lib/utils/config';
+import {
+    clearSearch,
+    ensureQuerySync,
+    replaceAllInTabs,
+    searchAllTabs,
+    searchState,
+    selectNearestMatch,
+    updateSearchEditor,
+} from '$lib/utils/searchManager.svelte.ts';
+import { debounce } from '$lib/utils/timing';
 
-    let { isOpen = $bindable(false), cmView } = $props<{
-        isOpen?: boolean;
-        cmView: EditorView | undefined;
-    }>();
+let { isOpen = $bindable(false), cmView } = $props<{
+    isOpen?: boolean;
+    cmView: EditorView | undefined;
+}>();
 
-    let searchScope = $state<'current' | 'all'>('current');
-    let isReplaceMode = $state(false);
-    let searchInputRef = $state<HTMLInputElement>();
-    let panelRef = $state<HTMLDivElement>();
-    let wasOpen = false;
-    let isMouseOver = $state(false);
+let searchScope = $state<'current' | 'all'>('current');
+let isReplaceMode = $state(false);
+let searchInputRef = $state<HTMLInputElement>();
+let panelRef = $state<HTMLDivElement>();
+let wasOpen = false;
+let isMouseOver = $state(false);
 
-    export function focusInput() {
-        if (searchInputRef) {
-            searchInputRef.focus();
-            searchInputRef.select();
-        }
+export function focusInput() {
+    if (searchInputRef) {
+        searchInputRef.focus();
+        searchInputRef.select();
     }
+}
 
-    export function setReplaceMode(enable: boolean) {
-        isReplaceMode = enable;
-    }
+export function setReplaceMode(enable: boolean) {
+    isReplaceMode = enable;
+}
 
-    $effect(() => {
-        const currentlyOpen = isOpen;
+$effect(() => {
+    const currentlyOpen = isOpen;
 
-        if (currentlyOpen && !wasOpen) {
-            if (cmView) openSearchPanel(cmView);
-            wasOpen = true;
+    if (currentlyOpen && !wasOpen) {
+        if (cmView) openSearchPanel(cmView);
+        wasOpen = true;
 
-            // Prefill with selected text if available
-            untrack(() => {
-                if (cmView) {
-                    const selection = cmView.state.selection.main;
-                    if (selection.from !== selection.to) {
-                        // Text is selected, use it as the search term
-                        const selectedText = cmView.state.doc.sliceString(
-                            selection.from,
-                            selection.to,
-                        );
-                        if (selectedText) {
-                            searchState.findText = selectedText;
-                        }
-                    }
-                    updateSearchEditor(cmView);
-                }
-            });
-
-            tick().then(focusInput);
-        } else if (!currentlyOpen && wasOpen) {
-            if (cmView) closeSearchPanel(cmView);
-            wasOpen = false;
-            clearSearch(cmView);
-        }
-    });
-
-    $effect(() => {
-        const view = cmView;
-        if (isOpen && view) {
-            untrack(() => executeSearch(view, false));
-        }
-    });
-
-    function close() {
-        isOpen = false;
-        clearSearch(cmView);
-        cmView?.focus();
-    }
-
-    function executeSearch(view: EditorView, incremental: boolean) {
-        if (searchScope === 'current') {
-            if (searchState.findText) {
-                if (incremental) {
-                    selectNearestMatch(view);
-                } else {
-                    // Ensure query is synced before finding next to respect case sensitivity
-                    ensureQuerySync(view);
-                    updateSearchEditor(view);
-                    if (searchState.currentMatches > 0) {
-                        findNext(view as never);
-                        updateSearchEditor(view);
-                    }
-                }
-            } else {
-                updateSearchEditor(view);
-            }
-        } else {
-            clearSearch(view);
-            searchAllTabs();
-        }
-    }
-
-    const debouncedSearch = debounce((view: EditorView) => {
-        executeSearch(view, true);
-    }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
-
-    const debouncedReplace = debounce((view: EditorView) => {
-        updateSearchEditor(view);
-    }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
-
-    function onInput() {
-        if (!cmView) return;
-        debouncedSearch(cmView);
-    }
-
-    function onReplaceInput() {
-        if (!cmView) return;
-        debouncedReplace(cmView);
-    }
-
-    function onFindNext() {
-        if (cmView && !searchState.regexError) {
-            // Ensure query is synced before navigation to respect case sensitivity
-            ensureQuerySync(cmView);
-            findNext(cmView);
-            updateSearchEditor(cmView);
-            searchInputRef?.focus();
-        }
-    }
-
-    function onFindPrevious() {
-        if (cmView && !searchState.regexError) {
-            // Ensure query is synced before navigation to respect case sensitivity
-            ensureQuerySync(cmView);
-            findPrevious(cmView);
-            updateSearchEditor(cmView);
-            searchInputRef?.focus();
-        }
-    }
-
-    function onReplace() {
-        if (cmView && !searchState.regexError) {
-            // Ensure query is synced before replace to respect case sensitivity
-            ensureQuerySync(cmView);
-            replaceNext(cmView);
-            updateSearchEditor(cmView);
-        }
-    }
-
-    function onReplaceAll() {
-        if (searchState.regexError) return;
-
-        if (searchScope === 'current') {
+        // Prefill with selected text if available
+        untrack(() => {
             if (cmView) {
-                // Ensure query is synced before replace all to respect case sensitivity
-                ensureQuerySync(cmView);
-                replaceAll(cmView);
+                const selection = cmView.state.selection.main;
+                if (selection.from !== selection.to) {
+                    // Text is selected, use it as the search term
+                    const selectedText = cmView.state.doc.sliceString(selection.from, selection.to);
+                    if (selectedText) {
+                        searchState.findText = selectedText;
+                    }
+                }
                 updateSearchEditor(cmView);
             }
-        } else {
-            const count = replaceAllInTabs();
-            if (count > 0) {
-                alert(`Replaced ${count} occurrences across open tabs.`);
-            }
-        }
-    }
+        });
 
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === 'Escape') {
-            e.stopPropagation();
-            close();
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (e.shiftKey) {
-                onFindPrevious();
+        tick().then(focusInput);
+    } else if (!currentlyOpen && wasOpen) {
+        if (cmView) closeSearchPanel(cmView);
+        wasOpen = false;
+        clearSearch(cmView);
+    }
+});
+
+$effect(() => {
+    const view = cmView;
+    if (isOpen && view) {
+        untrack(() => executeSearch(view, false));
+    }
+});
+
+function close() {
+    isOpen = false;
+    clearSearch(cmView);
+    cmView?.focus();
+}
+
+function executeSearch(view: EditorView, incremental: boolean) {
+    if (searchScope === 'current') {
+        if (searchState.findText) {
+            if (incremental) {
+                selectNearestMatch(view);
             } else {
-                if (isReplaceMode && e.ctrlKey) {
-                    onReplaceAll();
-                } else {
-                    onFindNext();
+                // Ensure query is synced before finding next to respect case sensitivity
+                ensureQuerySync(view);
+                updateSearchEditor(view);
+                if (searchState.currentMatches > 0) {
+                    findNext(view as never);
+                    updateSearchEditor(view);
                 }
             }
-        } else if ((e.key === 'f' || e.key === 'h') && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (e.key === 'h') isReplaceMode = true;
-            focusInput();
+        } else {
+            updateSearchEditor(view);
+        }
+    } else {
+        clearSearch(view);
+        searchAllTabs();
+    }
+}
+
+const debouncedSearch = debounce((view: EditorView) => {
+    executeSearch(view, true);
+}, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
+
+const debouncedReplace = debounce((view: EditorView) => {
+    updateSearchEditor(view);
+}, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
+
+function _onInput() {
+    if (!cmView) return;
+    debouncedSearch(cmView);
+}
+
+function _onReplaceInput() {
+    if (!cmView) return;
+    debouncedReplace(cmView);
+}
+
+function onFindNext() {
+    if (cmView && !searchState.regexError) {
+        // Ensure query is synced before navigation to respect case sensitivity
+        ensureQuerySync(cmView);
+        findNext(cmView);
+        updateSearchEditor(cmView);
+        searchInputRef?.focus();
+    }
+}
+
+function onFindPrevious() {
+    if (cmView && !searchState.regexError) {
+        // Ensure query is synced before navigation to respect case sensitivity
+        ensureQuerySync(cmView);
+        findPrevious(cmView);
+        updateSearchEditor(cmView);
+        searchInputRef?.focus();
+    }
+}
+
+function _onReplace() {
+    if (cmView && !searchState.regexError) {
+        // Ensure query is synced before replace to respect case sensitivity
+        ensureQuerySync(cmView);
+        replaceNext(cmView);
+        updateSearchEditor(cmView);
+    }
+}
+
+function onReplaceAll() {
+    if (searchState.regexError) return;
+
+    if (searchScope === 'current') {
+        if (cmView) {
+            // Ensure query is synced before replace all to respect case sensitivity
+            ensureQuerySync(cmView);
+            replaceAll(cmView);
+            updateSearchEditor(cmView);
+        }
+    } else {
+        const count = replaceAllInTabs();
+        if (count > 0) {
+            alert(`Replaced ${count} occurrences across open tabs.`);
         }
     }
+}
 
-    function handleGlobalKeydown(e: KeyboardEvent) {
-        if (e.key === 'F3') {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (!searchState.findText && !isOpen) {
-                isOpen = true;
-                return;
-            }
-
-            if (!isOpen) isOpen = true;
-
-            if (e.shiftKey) {
-                onFindPrevious();
+function _handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+        e.stopPropagation();
+        close();
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) {
+            onFindPrevious();
+        } else {
+            if (isReplaceMode && e.ctrlKey) {
+                onReplaceAll();
             } else {
                 onFindNext();
             }
         }
+    } else if ((e.key === 'f' || e.key === 'h') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === 'h') isReplaceMode = true;
+        focusInput();
     }
+}
 
-    function handleBlur() {
-        if (!appContext.app.findPanelCloseOnBlur) return;
+function handleGlobalKeydown(e: KeyboardEvent) {
+    if (e.key === 'F3') {
+        e.preventDefault();
+        e.stopPropagation();
 
-        setTimeout(() => {
-            const activeElement = document.activeElement;
-            if (panelRef && !panelRef.contains(activeElement) && !isMouseOver) {
-                close();
-            }
-        }, 0);
+        if (!searchState.findText && !isOpen) {
+            isOpen = true;
+            return;
+        }
+
+        if (!isOpen) isOpen = true;
+
+        if (e.shiftKey) {
+            onFindPrevious();
+        } else {
+            onFindNext();
+        }
     }
+}
 
-    function navigateToTab(tabId: string) {
-        appContext.app.activeTabId = tabId;
-    }
+function _handleBlur() {
+    if (!appContext.app.findPanelCloseOnBlur) return;
 
-    onMount(() => {
-        window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
-        return () => {
-            window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
-        };
-    });
+    setTimeout(() => {
+        const activeElement = document.activeElement;
+        if (panelRef && !panelRef.contains(activeElement) && !isMouseOver) {
+            close();
+        }
+    }, 0);
+}
+
+function _navigateToTab(tabId: string) {
+    appContext.app.activeTabId = tabId;
+}
+
+onMount(() => {
+    window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
+    return () => {
+        window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
+    };
+});
 </script>
 
 {#if isOpen}

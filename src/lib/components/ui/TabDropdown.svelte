@@ -1,138 +1,134 @@
 <script lang="ts">
-    import { tooltip } from '$lib/actions/tooltip';
-    import type { EditorTab } from '$lib/stores/editorStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { CONFIG } from '$lib/utils/config';
-    import { requestCloseTab } from '$lib/utils/fileSystem';
-    import { formatFileSize } from '$lib/utils/fileValidation';
-    import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
-    import CustomScrollbar from './CustomScrollbar.svelte';
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { CONFIG } from '$lib/utils/config';
+import { formatFileSize } from '$lib/utils/fileValidation';
 
-    let {
-        isOpen = false,
-        onSelect,
-        onClose,
-    } = $props<{
-        isOpen: boolean;
-        onSelect: (id: string) => void;
-        onClose: () => void;
-    }>();
+let {
+    isOpen = false,
+    onSelect,
+    onClose,
+} = $props<{
+    isOpen: boolean;
+    onSelect: (id: string) => void;
+    onClose: () => void;
+}>();
 
-    let searchQuery = $state('');
-    let selectedIndex = $state(0);
-    let searchInputRef = $state<HTMLInputElement>();
-    let dropdownListRef = $state<HTMLDivElement>();
-    let lastClientX = 0;
-    let lastClientY = 0;
-    let ignoreMouseMovement = $state(false);
-    let mouseMovementTimer: number | null = null;
+let searchQuery = $state('');
+let selectedIndex = $state(0);
+let searchInputRef = $state<HTMLInputElement>();
+let _dropdownListRef = $state<HTMLDivElement>();
+let lastClientX = 0;
+let lastClientY = 0;
+let ignoreMouseMovement = $state(false);
+let mouseMovementTimer: number | null = null;
 
-    let filteredTabs = $derived.by(() => {
-        const tabs = appContext.editor.tabs;
-        if (searchQuery.trim() === '') {
-            return tabs;
-        }
-        const query = searchQuery.toLowerCase();
-        return tabs.filter((tab) => {
-            return (
-                (tab.customTitle || tab.title).toLowerCase().includes(query) ||
-                (tab.path || '').toLowerCase().includes(query)
-            );
-        });
+let filteredTabs = $derived.by(() => {
+    const tabs = appContext.editor.tabs;
+    if (searchQuery.trim() === '') {
+        return tabs;
+    }
+    const query = searchQuery.toLowerCase();
+    return tabs.filter((tab) => {
+        return (
+            (tab.customTitle || tab.title).toLowerCase().includes(query) ||
+            (tab.path || '').toLowerCase().includes(query)
+        );
     });
+});
 
-    function getDropdownTitle(tab: EditorTab): string {
-        return tab.customTitle || tab.title;
+function _getDropdownTitle(tab: EditorTab): string {
+    return tab.customTitle || tab.title;
+}
+
+function _getTooltipContent(tab: EditorTab): string {
+    const parts: string[] = [];
+    const sizeStr = formatFileSize(tab.sizeBytes || 0);
+    const formattedTime = tab.formattedTimestamp || '';
+    const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
+
+    if (tab.fileCheckFailed) {
+        parts.push('File missing from original location');
+        if (tab.path) parts.push(tab.path);
+    } else {
+        parts.push(tab.path || 'Unsaved content');
     }
+    parts.push(bottomLine);
+    return parts.join('\n');
+}
 
-    function getTooltipContent(tab: EditorTab): string {
-        const parts: string[] = [];
-        const sizeStr = formatFileSize(tab.sizeBytes || 0);
-        const formattedTime = tab.formattedTimestamp || '';
-        const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
+$effect(() => {
+    if (isOpen) {
+        lastClientX = 0;
+        lastClientY = 0;
+        searchQuery = '';
+        selectedIndex = 0;
+        ignoreMouseMovement = true;
 
-        if (tab.fileCheckFailed) {
-            parts.push('File missing from original location');
-            if (tab.path) parts.push(tab.path);
-        } else {
-            parts.push(tab.path || 'Unsaved content');
+        if (mouseMovementTimer !== null) {
+            clearTimeout(mouseMovementTimer);
         }
-        parts.push(bottomLine);
-        return parts.join('\n');
+
+        mouseMovementTimer = window.setTimeout(() => {
+            ignoreMouseMovement = false;
+            mouseMovementTimer = null;
+        }, 100);
+
+        setTimeout(() => searchInputRef?.focus(), CONFIG.UI_TIMING.FOCUS_DELAY_MS);
+    } else {
+        if (mouseMovementTimer !== null) {
+            clearTimeout(mouseMovementTimer);
+            mouseMovementTimer = null;
+        }
     }
+});
 
-    $effect(() => {
-        if (isOpen) {
-            lastClientX = 0;
-            lastClientY = 0;
-            searchQuery = '';
-            selectedIndex = 0;
-            ignoreMouseMovement = true;
+function handleSelect(id: string) {
+    onSelect(id);
+}
 
-            if (mouseMovementTimer !== null) {
-                clearTimeout(mouseMovementTimer);
+function _handleHover(index: number, e: MouseEvent) {
+    if (ignoreMouseMovement) return;
+
+    if (e.clientX === lastClientX && e.clientY === lastClientY) return;
+
+    lastClientX = e.clientX;
+    lastClientY = e.clientY;
+    selectedIndex = index;
+}
+
+function _handleKeydown(e: KeyboardEvent) {
+    if (filteredTabs.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % filteredTabs.length;
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + filteredTabs.length) % filteredTabs.length;
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredTabs[selectedIndex]) {
+            handleSelect(filteredTabs[selectedIndex].id);
+        }
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+    }
+}
+
+function _scrollIntoView(node: HTMLElement, isSelected: boolean) {
+    if (isSelected) {
+        node.scrollIntoView({ block: 'nearest' });
+    }
+    return {
+        update(newIsSelected: boolean) {
+            if (newIsSelected) {
+                node.scrollIntoView({ block: 'nearest' });
             }
-
-            mouseMovementTimer = window.setTimeout(() => {
-                ignoreMouseMovement = false;
-                mouseMovementTimer = null;
-            }, 100);
-
-            setTimeout(() => searchInputRef?.focus(), CONFIG.UI_TIMING.FOCUS_DELAY_MS);
-        } else {
-            if (mouseMovementTimer !== null) {
-                clearTimeout(mouseMovementTimer);
-                mouseMovementTimer = null;
-            }
-        }
-    });
-
-    function handleSelect(id: string) {
-        onSelect(id);
-    }
-
-    function handleHover(index: number, e: MouseEvent) {
-        if (ignoreMouseMovement) return;
-
-        if (e.clientX === lastClientX && e.clientY === lastClientY) return;
-
-        lastClientX = e.clientX;
-        lastClientY = e.clientY;
-        selectedIndex = index;
-    }
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (filteredTabs.length === 0) return;
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % filteredTabs.length;
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + filteredTabs.length) % filteredTabs.length;
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (filteredTabs[selectedIndex]) {
-                handleSelect(filteredTabs[selectedIndex].id);
-            }
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            onClose();
-        }
-    }
-
-    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-        if (isSelected) {
-            node.scrollIntoView({ block: 'nearest' });
-        }
-        return {
-            update(newIsSelected: boolean) {
-                if (newIsSelected) {
-                    node.scrollIntoView({ block: 'nearest' });
-                }
-            },
-        };
-    }
+        },
+    };
+}
 </script>
 
 {#if isOpen}

@@ -124,7 +124,7 @@
     padding: 0.2em 0.4em;
     border-radius: 4px;
     font-family:
-        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
         monospace;
     font-size: 0.875em;
 }
@@ -193,9 +193,9 @@
 }
 
 /* Task Lists */
-.markdown-body input[type='checkbox'],
-#active-preview-container input[type='checkbox'],
-#export-container input[type='checkbox'] {
+.markdown-body input[type="checkbox"],
+#active-preview-container input[type="checkbox"],
+#export-container input[type="checkbox"] {
     margin-right: 0.5em;
     vertical-align: middle;
 }

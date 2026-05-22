@@ -1,242 +1,228 @@
 <script lang="ts">
-    import Input from '$lib/components/ui/Input.svelte';
-    import { slide } from 'svelte/transition';
-    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-    import {
-        addBookmark,
-        deleteBookmark,
-        isBookmarked,
-        loadBookmarks,
-        updateAccessTime,
-        updateBookmark,
-    } from '$lib/stores/bookmarkStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { callBackend } from '$lib/utils/backend';
-    import { CONFIG } from '$lib/utils/config';
-    import { scrollIntoView } from '$lib/utils/modalUtils';
-    import { open } from '@tauri-apps/plugin-dialog';
-    import {
-        ArrowDown,
-        ArrowUp,
-        Bookmark as BookmarkIcon,
-        Pen,
-        Plus,
-        Tag,
-        Trash2,
-    } from 'lucide-svelte';
-    import Modal from './Modal.svelte';
+import { open } from '@tauri-apps/plugin-dialog';
+import {
+    addBookmark,
+    deleteBookmark,
+    isBookmarked,
+    loadBookmarks,
+    updateAccessTime,
+    updateBookmark,
+} from '$lib/stores/bookmarkStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { callBackend } from '$lib/utils/backend';
+import { CONFIG } from '$lib/utils/config';
 
-    interface Props {
-        isOpen: boolean;
-        onClose: () => void;
-        onOpenFile: (path: string) => void;
-        position?: 'center' | 'top';
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+    onOpenFile: (path: string) => void;
+    position?: 'center' | 'top';
+}
+
+let { isOpen = $bindable(false), onClose, onOpenFile, position = 'top' }: Props = $props();
+
+type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
+type SortDirection = 'asc' | 'desc';
+
+let searchQuery = $state('');
+let searchInputEl = $state<HTMLInputElement>();
+let selectedIndex = $state(0);
+let editingId = $state<string | null>(null);
+let editTitle = $state('');
+let editTags = $state('');
+let _showAddForm = $state(false);
+let addPath = $state('');
+let addTitle = $state('');
+let addTags = $state('');
+let _browseError = $state('');
+let sortBy = $state<SortOption>('most-recent');
+let sortDirection = $state<SortDirection>('desc');
+
+$effect(() => {
+    if (isOpen && !appContext.bookmarks.isLoaded) {
+        loadBookmarks();
     }
-
-    let { isOpen = $bindable(false), onClose, onOpenFile, position = 'top' }: Props = $props();
-
-    type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
-    type SortDirection = 'asc' | 'desc';
-
-    let searchQuery = $state('');
-    let searchInputEl = $state<HTMLInputElement>();
-    let selectedIndex = $state(0);
-    let editingId = $state<string | null>(null);
-    let editTitle = $state('');
-    let editTags = $state('');
-    let showAddForm = $state(false);
-    let addPath = $state('');
-    let addTitle = $state('');
-    let addTags = $state('');
-    let browseError = $state('');
-    let sortBy = $state<SortOption>('most-recent');
-    let sortDirection = $state<SortDirection>('desc');
-
-    $effect(() => {
-        if (isOpen && !appContext.bookmarks.isLoaded) {
-            loadBookmarks();
-        }
-        if (!isOpen) {
-            searchQuery = '';
-            selectedIndex = 0;
-            editingId = null;
-            showAddForm = false;
-            browseError = '';
-        }
-        if (isOpen) {
-            setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
-        }
-    });
-
-    // Reset selection when search query or sort changes
-    $effect(() => {
-        void searchQuery;
-        void sortBy;
-        void sortDirection;
+    if (!isOpen) {
+        searchQuery = '';
         selectedIndex = 0;
-    });
-
-    let filteredBookmarks = $derived(
-        appContext.bookmarks.bookmarks.filter((bookmark) => {
-            if (searchQuery.length < 2) return true;
-            const query = searchQuery.toLowerCase();
-            const titleMatch = bookmark.title.toLowerCase().includes(query);
-            const pathMatch = bookmark.path.toLowerCase().includes(query);
-            const tagsMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query));
-            return titleMatch || pathMatch || tagsMatch;
-        }),
-    );
-
-    let sortedBookmarks = $derived(
-        (() => {
-            const sorted = [...filteredBookmarks].filter((b) => !deletingIds.has(b.id));
-            switch (sortBy) {
-                case 'most-recent':
-                    sorted.sort((a, b) => {
-                        const dateA = a.created || '';
-                        const dateB = b.created || '';
-                        return sortDirection === 'desc'
-                            ? dateB.localeCompare(dateA)
-                            : dateA.localeCompare(dateB);
-                    });
-                    break;
-                case 'alphabetical':
-                    sorted.sort((a, b) => {
-                        const titleA = a.title.toLowerCase();
-                        const titleB = b.title.toLowerCase();
-                        return sortDirection === 'desc'
-                            ? titleB.localeCompare(titleA)
-                            : titleA.localeCompare(titleB);
-                    });
-                    break;
-                case 'last-updated':
-                    sorted.sort((a, b) => {
-                        const dateA = a.last_accessed || a.created || '';
-                        const dateB = b.last_accessed || b.created || '';
-                        return sortDirection === 'desc'
-                            ? dateB.localeCompare(dateA)
-                            : dateA.localeCompare(dateB);
-                    });
-                    break;
-            }
-            return sorted;
-        })(),
-    );
-
-    async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
-        await updateAccessTime(bookmark.id);
-        onOpenFile(bookmark.path);
-        onClose();
-    }
-
-    function startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
-        editingId = bookmark.id;
-        editTitle = bookmark.title;
-        editTags = bookmark.tags.join(', ');
-    }
-
-    function cancelEdit() {
         editingId = null;
-        editTitle = '';
-        editTags = '';
+        _showAddForm = false;
+        _browseError = '';
     }
-
-    async function saveEdit(id: string) {
-        const tags = editTags
-            .split(',')
-            .map((t) => t.trim())
-            .filter((t) => t.length > 0);
-        await updateBookmark(id, editTitle, tags);
-        editingId = null;
-        editTitle = '';
-        editTags = '';
+    if (isOpen) {
+        setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
     }
+});
 
-    let deletingIds = $state(new Set<string>());
+// Reset selection when search query or sort changes
+$effect(() => {
+    void searchQuery;
+    void sortBy;
+    void sortDirection;
+    selectedIndex = 0;
+});
 
-    async function handleDelete(id: string, e: MouseEvent) {
-        e.stopPropagation();
-        deletingIds = new Set([...deletingIds, id]);
-        setTimeout(() => deleteBookmark(id), 210);
+let filteredBookmarks = $derived(
+    appContext.bookmarks.bookmarks.filter((bookmark) => {
+        if (searchQuery.length < 2) return true;
+        const query = searchQuery.toLowerCase();
+        const titleMatch = bookmark.title.toLowerCase().includes(query);
+        const pathMatch = bookmark.path.toLowerCase().includes(query);
+        const tagsMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query));
+        return titleMatch || pathMatch || tagsMatch;
+    }),
+);
+
+let sortedBookmarks = $derived(
+    (() => {
+        const sorted = [...filteredBookmarks].filter((b) => !deletingIds.has(b.id));
+        switch (sortBy) {
+            case 'most-recent':
+                sorted.sort((a, b) => {
+                    const dateA = a.created || '';
+                    const dateB = b.created || '';
+                    return sortDirection === 'desc'
+                        ? dateB.localeCompare(dateA)
+                        : dateA.localeCompare(dateB);
+                });
+                break;
+            case 'alphabetical':
+                sorted.sort((a, b) => {
+                    const titleA = a.title.toLowerCase();
+                    const titleB = b.title.toLowerCase();
+                    return sortDirection === 'desc'
+                        ? titleB.localeCompare(titleA)
+                        : titleA.localeCompare(titleB);
+                });
+                break;
+            case 'last-updated':
+                sorted.sort((a, b) => {
+                    const dateA = a.last_accessed || a.created || '';
+                    const dateB = b.last_accessed || b.created || '';
+                    return sortDirection === 'desc'
+                        ? dateB.localeCompare(dateA)
+                        : dateA.localeCompare(dateB);
+                });
+                break;
+        }
+        return sorted;
+    })(),
+);
+
+async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
+    await updateAccessTime(bookmark.id);
+    onOpenFile(bookmark.path);
+    onClose();
+}
+
+function _startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
+    editingId = bookmark.id;
+    editTitle = bookmark.title;
+    editTags = bookmark.tags.join(', ');
+}
+
+function _cancelEdit() {
+    editingId = null;
+    editTitle = '';
+    editTags = '';
+}
+
+async function _saveEdit(id: string) {
+    const tags = editTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+    await updateBookmark(id, editTitle, tags);
+    editingId = null;
+    editTitle = '';
+    editTags = '';
+}
+
+let deletingIds = $state(new Set<string>());
+
+async function _handleDelete(id: string, e: MouseEvent) {
+    e.stopPropagation();
+    deletingIds = new Set([...deletingIds, id]);
+    setTimeout(() => deleteBookmark(id), 210);
+}
+
+function _startAdd() {
+    _showAddForm = true;
+    addPath = '';
+    addTitle = '';
+    addTags = '';
+    _browseError = '';
+}
+
+async function _handleBrowse() {
+    try {
+        const selected = await open({
+            multiple: false,
+            filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown', 'txt'] }],
+        });
+        if (selected && typeof selected === 'string') {
+            addPath = selected;
+            _browseError = '';
+            const filename = selected.split(/[\\/]/).pop() || '';
+            const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
+            if (!addTitle) addTitle = titleWithoutExt;
+        }
+    } catch (_error) {
+        _browseError = 'Failed to open file browser';
     }
+}
 
-    function startAdd() {
-        showAddForm = true;
-        addPath = '';
-        addTitle = '';
-        addTags = '';
-        browseError = '';
+async function _handleAddBookmark() {
+    if (!addPath || !addTitle) return;
+    try {
+        await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
+    } catch (_error) {
+        _browseError = 'File does not exist or cannot be accessed';
+        return;
     }
+    if (isBookmarked(addPath)) {
+        _browseError = 'This file is already bookmarked';
+        return;
+    }
+    const tags = addTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+    await addBookmark(addPath, addTitle, tags);
+    _showAddForm = false;
+    addPath = '';
+    addTitle = '';
+    addTags = '';
+    _browseError = '';
+}
 
-    async function handleBrowse() {
-        try {
-            const selected = await open({
-                multiple: false,
-                filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown', 'txt'] }],
-            });
-            if (selected && typeof selected === 'string') {
-                addPath = selected;
-                browseError = '';
-                const filename = selected.split(/[\\/]/).pop() || '';
-                const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
-                if (!addTitle) addTitle = titleWithoutExt;
-            }
-        } catch (_error) {
-            browseError = 'Failed to open file browser';
+function _formatDate(timestamp: string | null): string {
+    if (!timestamp) return 'Never';
+    const [date] = timestamp.split(' / ');
+    return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
+}
+
+function _toggleSortDirection() {
+    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+}
+
+function _handleKeydown(e: KeyboardEvent) {
+    if (sortedBookmarks.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % sortedBookmarks.length;
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + sortedBookmarks.length) % sortedBookmarks.length;
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const bookmark = sortedBookmarks[selectedIndex];
+        if (bookmark && editingId !== bookmark.id) {
+            handleOpenBookmark(bookmark);
         }
     }
-
-    async function handleAddBookmark() {
-        if (!addPath || !addTitle) return;
-        try {
-            await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
-        } catch (_error) {
-            browseError = 'File does not exist or cannot be accessed';
-            return;
-        }
-        if (isBookmarked(addPath)) {
-            browseError = 'This file is already bookmarked';
-            return;
-        }
-        const tags = addTags
-            .split(',')
-            .map((t) => t.trim())
-            .filter((t) => t.length > 0);
-        await addBookmark(addPath, addTitle, tags);
-        showAddForm = false;
-        addPath = '';
-        addTitle = '';
-        addTags = '';
-        browseError = '';
-    }
-
-    function formatDate(timestamp: string | null): string {
-        if (!timestamp) return 'Never';
-        const [date] = timestamp.split(' / ');
-        return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
-    }
-
-    function toggleSortDirection() {
-        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-    }
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (sortedBookmarks.length === 0) return;
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % sortedBookmarks.length;
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + sortedBookmarks.length) % sortedBookmarks.length;
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            const bookmark = sortedBookmarks[selectedIndex];
-            if (bookmark && editingId !== bookmark.id) {
-                handleOpenBookmark(bookmark);
-            }
-        }
-    }
+}
 </script>
 
 <Modal bind:isOpen {onClose} {position}>

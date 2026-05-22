@@ -1,60 +1,59 @@
 ﻿<script lang="ts">
-    import { CONFIG } from '$lib/utils/config';
-    import type { Snippet } from 'svelte';
-    import { fade } from 'svelte/transition';
+import type { Snippet } from 'svelte';
+import { CONFIG } from '$lib/utils/config';
 
-    let {
-        x,
-        y,
-        isVisible,
-        children,
-        className = 'break-words w-max',
-    } = $props<{
-        x: number;
-        y: number;
-        isVisible: boolean;
-        children: Snippet;
-        className?: string;
-    }>();
+let {
+    x,
+    y,
+    isVisible,
+    children,
+    className = 'break-words w-max',
+} = $props<{
+    x: number;
+    y: number;
+    isVisible: boolean;
+    children: Snippet;
+    className?: string;
+}>();
 
-    let tooltipEl = $state<HTMLDivElement>();
-    let adjustedX = $state(0);
-    let adjustedY = $state(0);
+let tooltipEl = $state<HTMLDivElement>();
+let _adjustedX = $state(0);
+let _adjustedY = $state(0);
 
-    $effect(() => {
-        if (!isVisible) {
-            adjustedX = x;
-            adjustedY = y + CONFIG.UI.TOOLTIP_OFFSET_Y;
-            return;
+$effect(() => {
+    if (!isVisible) {
+        _adjustedX = x;
+        _adjustedY = y + CONFIG.UI.TOOLTIP_OFFSET_Y;
+        return;
+    }
+
+    if (tooltipEl) {
+        const rect = tooltipEl.getBoundingClientRect();
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+
+        let newX = x;
+        let newY = y + CONFIG.UI.TOOLTIP_OFFSET_Y;
+
+        if (newX + rect.width > winW) {
+            newX = winW - rect.width - CONFIG.UI.TOOLTIP_SCREEN_PADDING;
         }
 
-        if (tooltipEl) {
-            const rect = tooltipEl.getBoundingClientRect();
-            const winW = window.innerWidth;
-            const winH = window.innerHeight;
-
-            let newX = x;
-            let newY = y + CONFIG.UI.TOOLTIP_OFFSET_Y;
-
-            if (newX + rect.width > winW) {
-                newX = winW - rect.width - CONFIG.UI.TOOLTIP_SCREEN_PADDING;
-            }
-
-            if (newX < CONFIG.UI.TOOLTIP_SCREEN_PADDING) {
-                newX = CONFIG.UI.TOOLTIP_SCREEN_PADDING;
-            }
-
-            if (newY + rect.height > winH) {
-                newY = Math.max(
-                    CONFIG.UI.TOOLTIP_SCREEN_PADDING,
-                    y - rect.height - CONFIG.UI.TOOLTIP_FLIP_OFFSET,
-                );
-            }
-
-            adjustedX = newX;
-            adjustedY = newY;
+        if (newX < CONFIG.UI.TOOLTIP_SCREEN_PADDING) {
+            newX = CONFIG.UI.TOOLTIP_SCREEN_PADDING;
         }
-    });
+
+        if (newY + rect.height > winH) {
+            newY = Math.max(
+                CONFIG.UI.TOOLTIP_SCREEN_PADDING,
+                y - rect.height - CONFIG.UI.TOOLTIP_FLIP_OFFSET,
+            );
+        }
+
+        _adjustedX = newX;
+        _adjustedY = newY;
+    }
+});
 </script>
 
 {#if isVisible}

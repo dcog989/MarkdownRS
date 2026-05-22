@@ -1,81 +1,75 @@
 <script lang="ts">
-    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-    import {
-        clearRecentFiles,
-        loadRecentFiles,
-        recentFilesStore,
-        removeFromRecentFiles,
-    } from '$lib/stores/recentFilesStore.svelte';
-    import { CONFIG } from '$lib/utils/config';
-    import { openFileByPath } from '$lib/utils/fileSystem';
-    import { scrollIntoView } from '$lib/utils/modalUtils';
-    import { Clock, History, Trash2, X } from 'lucide-svelte';
-    import Modal from './Modal.svelte';
+import {
+    clearRecentFiles,
+    loadRecentFiles,
+    recentFilesStore,
+    removeFromRecentFiles,
+} from '$lib/stores/recentFilesStore.svelte';
+import { CONFIG } from '$lib/utils/config';
+import { openFileByPath } from '$lib/utils/fileSystem';
 
-    interface Props {
-        isOpen: boolean;
-        onClose: () => void;
-    }
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+}
 
-    let { isOpen = $bindable(false), onClose }: Props = $props();
+let { isOpen = $bindable(false), onClose }: Props = $props();
 
-    let searchQuery = $state('');
-    let searchInputEl = $state<HTMLInputElement>();
-    let selectedIndex = $state(0);
+let searchQuery = $state('');
+let searchInputEl = $state<HTMLInputElement>();
+let selectedIndex = $state(0);
 
-    $effect(() => {
-        if (isOpen) {
-            loadRecentFiles();
-            searchQuery = '';
-            selectedIndex = 0;
-            setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
-        }
-    });
-
-    $effect(() => {
-        void searchQuery;
+$effect(() => {
+    if (isOpen) {
+        loadRecentFiles();
+        searchQuery = '';
         selectedIndex = 0;
-    });
-
-    let filteredFiles = $derived(
-        recentFilesStore.files.filter((path) =>
-            path.toLowerCase().includes(searchQuery.toLowerCase()),
-        ),
-    );
-
-    function handleOpenFile(path: string) {
-        openFileByPath(path);
-        onClose();
+        setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
     }
+});
 
-    async function handleRemove(path: string, e: MouseEvent) {
-        e.stopPropagation();
-        await removeFromRecentFiles(path);
+$effect(() => {
+    void searchQuery;
+    selectedIndex = 0;
+});
+
+let filteredFiles = $derived(
+    recentFilesStore.files.filter((path) => path.toLowerCase().includes(searchQuery.toLowerCase())),
+);
+
+function handleOpenFile(path: string) {
+    openFileByPath(path);
+    onClose();
+}
+
+async function _handleRemove(path: string, e: MouseEvent) {
+    e.stopPropagation();
+    await removeFromRecentFiles(path);
+}
+
+async function _handleClearAll() {
+    if (confirm('Clear file history?')) {
+        await clearRecentFiles();
     }
+}
 
-    async function handleClearAll() {
-        if (confirm('Clear file history?')) {
-            await clearRecentFiles();
+function _handleKeydown(e: KeyboardEvent) {
+    if (filteredFiles.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % filteredFiles.length;
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + filteredFiles.length) % filteredFiles.length;
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const path = filteredFiles[selectedIndex];
+        if (path) {
+            handleOpenFile(path);
         }
     }
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (filteredFiles.length === 0) return;
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % filteredFiles.length;
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + filteredFiles.length) % filteredFiles.length;
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            const path = filteredFiles[selectedIndex];
-            if (path) {
-                handleOpenFile(path);
-            }
-        }
-    }
+}
 </script>
 
 <Modal bind:isOpen {onClose}>

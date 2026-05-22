@@ -1,152 +1,149 @@
 <script lang="ts">
-    import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-    import { asHTMLElement, queryHTMLElements, getActiveHTMLElement } from '$lib/utils/dom';
-    import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-    import { X } from 'lucide-svelte';
-    import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
+import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
 
-    let {
-        isOpen = $bindable(false),
-        onClose,
-        title,
-        zIndex = 50,
-        position = 'top',
-        header,
-        footer,
-        children,
-    } = $props<{
-        isOpen: boolean;
-        onClose: () => void;
-        title?: string;
-        zIndex?: number;
-        position?: 'center' | 'top';
-        header?: Snippet;
-        footer?: Snippet;
-        children: Snippet;
-    }>();
+let {
+    isOpen = $bindable(false),
+    onClose,
+    title,
+    zIndex = 50,
+    position = 'top',
+    header,
+    footer,
+    children,
+} = $props<{
+    isOpen: boolean;
+    onClose: () => void;
+    title?: string;
+    zIndex?: number;
+    position?: 'center' | 'top';
+    header?: Snippet;
+    footer?: Snippet;
+    children: Snippet;
+}>();
 
-    let viewport = $state<HTMLDivElement>();
-    let modalPanel = $state<HTMLDivElement>();
+let _viewport = $state<HTMLDivElement>();
+let modalPanel = $state<HTMLDivElement>();
 
-    function handleBackdropClick(e: MouseEvent) {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
+function _handleBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) {
+        onClose();
     }
+}
 
-    function handleKeydown(e: KeyboardEvent) {
-        if (isOpen && e.key === 'Escape') {
+function _handleKeydown(e: KeyboardEvent) {
+    if (isOpen && e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+    }
+}
+
+const selector =
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Cache focusable elements to avoid repeated DOM queries
+let cachedFocusableElements: HTMLElement[] = [];
+let cacheValid = false;
+
+function getFocusableElements(container: HTMLElement, forceUpdate = false): HTMLElement[] {
+    if (forceUpdate || !cacheValid || cachedFocusableElements.length === 0) {
+        cachedFocusableElements = Array.from(container.querySelectorAll(selector));
+        cacheValid = true;
+    }
+    return cachedFocusableElements;
+}
+
+function invalidateFocusCache() {
+    cachedFocusableElements = [];
+    cacheValid = false;
+}
+
+function _handleTabKey(e: KeyboardEvent) {
+    if (!isOpen) return;
+
+    const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
+    if (focusableElements.length === 0 || e.key !== 'Tab') return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey) {
+        // Shift + Tab: moving backwards
+        if (document.activeElement === firstElement) {
             e.preventDefault();
-            e.stopPropagation();
-            onClose();
+            lastElement.focus();
+        }
+    } else {
+        // Tab: moving forwards
+        if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
         }
     }
+}
 
-    const selector =
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+// Store the previously focused element to restore focus when modal closes
+let previouslyFocusedElement = $state<HTMLElement | null>(null);
 
-    // Cache focusable elements to avoid repeated DOM queries
-    let cachedFocusableElements: HTMLElement[] = [];
-    let cacheValid = false;
+$effect(() => {
+    if (!isOpen) return;
 
-    function getFocusableElements(container: HTMLElement, forceUpdate = false): HTMLElement[] {
-        if (forceUpdate || !cacheValid || cachedFocusableElements.length === 0) {
-            cachedFocusableElements = Array.from(container.querySelectorAll(selector));
-            cacheValid = true;
-        }
-        return cachedFocusableElements;
-    }
+    // Store the previously focused element
+    previouslyFocusedElement = getActiveHTMLElement();
 
-    function invalidateFocusCache() {
-        cachedFocusableElements = [];
-        cacheValid = false;
-    }
-
-    function handleTabKey(e: KeyboardEvent) {
-        if (!isOpen) return;
-
-        const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
-        if (focusableElements.length === 0 || e.key !== 'Tab') return;
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey) {
-            // Shift + Tab: moving backwards
-            if (document.activeElement === firstElement) {
-                e.preventDefault();
-                lastElement.focus();
+    // Focus the first focusable element when modal opens
+    invalidateFocusCache();
+    const focusableElements = modalPanel ? getFocusableElements(modalPanel, true) : [];
+    if (focusableElements.length > 0) {
+        setTimeout(() => {
+            const currentFocusable = modalPanel ? getFocusableElements(modalPanel) : [];
+            if (currentFocusable.length > 0 && !modalPanel?.contains(document.activeElement)) {
+                currentFocusable[0].focus();
             }
-        } else {
-            // Tab: moving forwards
-            if (document.activeElement === lastElement) {
-                e.preventDefault();
-                firstElement.focus();
+        }, 16);
+    }
+
+    // Set up a focus monitor to catch focus escaping the modal
+    const handleFocusOut = (e: FocusEvent) => {
+        const target = asHTMLElement(e.relatedTarget);
+
+        // If focus is moving outside the modal, bring it back
+        if (target && !modalPanel?.contains(target)) {
+            e.preventDefault();
+            const focusable = modalPanel ? getFocusableElements(modalPanel) : [];
+            if (focusable.length > 0) {
+                focusable[0].focus();
             }
         }
-    }
+    };
 
-    // Store the previously focused element to restore focus when modal closes
-    let previouslyFocusedElement = $state<HTMLElement | null>(null);
+    modalPanel?.addEventListener('focusout', handleFocusOut);
 
-    $effect(() => {
-        if (!isOpen) return;
-
-        // Store the previously focused element
-        previouslyFocusedElement = getActiveHTMLElement();
-
-        // Focus the first focusable element when modal opens
+    // Set up a mutation observer to invalidate focus cache when DOM changes
+    const mutationObserver = new MutationObserver(() => {
         invalidateFocusCache();
-        const focusableElements = modalPanel ? getFocusableElements(modalPanel, true) : [];
-        if (focusableElements.length > 0) {
-            setTimeout(() => {
-                const currentFocusable = modalPanel ? getFocusableElements(modalPanel) : [];
-                if (currentFocusable.length > 0 && !modalPanel?.contains(document.activeElement)) {
-                    currentFocusable[0].focus();
-                }
-            }, 16);
-        }
-
-        // Set up a focus monitor to catch focus escaping the modal
-        const handleFocusOut = (e: FocusEvent) => {
-            const target = asHTMLElement(e.relatedTarget);
-
-            // If focus is moving outside the modal, bring it back
-            if (target && !modalPanel?.contains(target)) {
-                e.preventDefault();
-                const focusable = modalPanel ? getFocusableElements(modalPanel) : [];
-                if (focusable.length > 0) {
-                    focusable[0].focus();
-                }
-            }
-        };
-
-        modalPanel?.addEventListener('focusout', handleFocusOut);
-
-        // Set up a mutation observer to invalidate focus cache when DOM changes
-        const mutationObserver = new MutationObserver(() => {
-            invalidateFocusCache();
-        });
-
-        if (modalPanel) {
-            mutationObserver.observe(modalPanel, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['disabled', 'tabindex'],
-            });
-        }
-
-        return () => {
-            modalPanel?.removeEventListener('focusout', handleFocusOut);
-            mutationObserver.disconnect();
-
-            // Blur the previously focused element to remove focus outline
-            if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
-                previouslyFocusedElement.blur();
-            }
-        };
     });
+
+    if (modalPanel) {
+        mutationObserver.observe(modalPanel, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['disabled', 'tabindex'],
+        });
+    }
+
+    return () => {
+        modalPanel?.removeEventListener('focusout', handleFocusOut);
+        mutationObserver.disconnect();
+
+        // Blur the previously focused element to remove focus outline
+        if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
+            previouslyFocusedElement.blur();
+        }
+    };
+});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

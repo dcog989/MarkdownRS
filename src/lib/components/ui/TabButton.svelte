@@ -1,44 +1,42 @@
 <script lang="ts">
-    import { tooltip } from '$lib/actions/tooltip';
-    import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { formatFileSize } from '$lib/utils/fileValidation';
-    import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
+import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { formatFileSize } from '$lib/utils/fileValidation';
 
-    interface Props {
-        tab: EditorTab;
-        isActive: boolean;
-        onclick?: (id: string) => void;
-        onclose?: (e: MouseEvent | KeyboardEvent, tabId: string) => void;
-        oncontextmenu?: (e: MouseEvent, tabId: string) => void;
+interface Props {
+    tab: EditorTab;
+    isActive: boolean;
+    onclick?: (id: string) => void;
+    onclose?: (e: MouseEvent | KeyboardEvent, tabId: string) => void;
+    oncontextmenu?: (e: MouseEvent, tabId: string) => void;
+}
+
+let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
+
+let _isFileMissing = $derived(tab.fileCheckFailed === true);
+let isCollapsed = $derived(appContext.app.collapsePinnedTabs && tab.isPinned);
+
+let _tooltipContent = $derived.by(() => {
+    const parts: string[] = [];
+    const sizeStr = formatFileSize(tab.sizeBytes || 0);
+    const formattedTime = tab.formattedTimestamp || '';
+
+    const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
+
+    if (tab.fileCheckFailed) {
+        parts.push('File missing from original location');
+        if (tab.path) parts.push(tab.path);
+    } else {
+        parts.push(tab.path || 'Unsaved content');
+    }
+    parts.push(bottomLine);
+
+    if (isCollapsed) {
+        return `${tab.customTitle || tab.title}\n${parts.join('\n')}`;
     }
 
-    let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
-
-    let isFileMissing = $derived(tab.fileCheckFailed === true);
-    let isCollapsed = $derived(appContext.app.collapsePinnedTabs && tab.isPinned);
-
-    let tooltipContent = $derived.by(() => {
-        const parts: string[] = [];
-        const sizeStr = formatFileSize(tab.sizeBytes || 0);
-        const formattedTime = tab.formattedTimestamp || '';
-
-        const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
-
-        if (tab.fileCheckFailed) {
-            parts.push('File missing from original location');
-            if (tab.path) parts.push(tab.path);
-        } else {
-            parts.push(tab.path || 'Unsaved content');
-        }
-        parts.push(bottomLine);
-
-        if (isCollapsed) {
-            return `${tab.customTitle || tab.title}\n${parts.join('\n')}`;
-        }
-
-        return parts.join('\n');
-    });
+    return parts.join('\n');
+});
 </script>
 
 <div

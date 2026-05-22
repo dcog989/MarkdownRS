@@ -1,96 +1,92 @@
 <script lang="ts">
-    import type { AppInfo } from '$lib/types/api';
-    import { callBackend } from '$lib/utils/backend';
-    import { CONFIG } from '$lib/utils/config';
-    import { openPath } from '@tauri-apps/plugin-opener';
-    import { relaunch } from '@tauri-apps/plugin-process';
-    import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
-    import Modal from './Modal.svelte';
+import { openPath } from '@tauri-apps/plugin-opener';
+import { relaunch } from '@tauri-apps/plugin-process';
+import type { AppInfo } from '$lib/types/api';
+import { callBackend } from '$lib/utils/backend';
+import { CONFIG } from '$lib/utils/config';
 
-    interface Props {
-        isOpen: boolean;
-        onClose: () => void;
-        position?: 'center' | 'top';
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+    position?: 'center' | 'top';
+}
+
+let { isOpen = $bindable(false), onClose, position = 'top' }: Props = $props();
+
+let appInfo = $state<AppInfo>({
+    name: 'MarkdownRS',
+    version: '...',
+    install_path: '',
+    data_path: '',
+    cache_path: '',
+    logs_path: '',
+    log_file_path: '',
+    os_platform: '',
+});
+
+let isChecking = $state(false);
+let updateStatus = $state<string | null>(null);
+
+$effect(() => {
+    callBackend('get_app_info', {}, 'File:Metadata')
+        .then((info) => {
+            if (info) {
+                appInfo = info;
+            }
+        })
+        .catch(() => {
+            // Error handled by bridge
+        });
+});
+
+function _copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+}
+
+async function _openLogFile() {
+    if (!appInfo.log_file_path) return;
+    try {
+        await openPath(appInfo.log_file_path);
+    } catch (_e) {
+        await openPath(appInfo.logs_path);
     }
+}
 
-    let { isOpen = $bindable(false), onClose, position = 'top' }: Props = $props();
+async function _checkForUpdates() {
+    if (isChecking) return;
+    isChecking = true;
+    updateStatus = 'Checking for updates...';
 
-    let appInfo = $state<AppInfo>({
-        name: 'MarkdownRS',
-        version: '...',
-        install_path: '',
-        data_path: '',
-        cache_path: '',
-        logs_path: '',
-        log_file_path: '',
-        os_platform: '',
-    });
+    try {
+        const updateInfo = await callBackend('check_for_updates', {}, 'Update:Check');
 
-    let isChecking = $state(false);
-    let updateStatus = $state<string | null>(null);
+        if (updateInfo?.available) {
+            const confirmed = confirm(
+                `Update available: ${updateInfo.version}\n\n${updateInfo.release_notes || ''}\n\nDo you want to install it now?`,
+            );
 
-    $effect(() => {
-        callBackend('get_app_info', {}, 'File:Metadata')
-            .then((info) => {
-                if (info) {
-                    appInfo = info;
-                }
-            })
-            .catch(() => {
-                // Error handled by bridge
-            });
-    });
-
-    function copyToClipboard(text: string) {
-        navigator.clipboard.writeText(text);
-    }
-
-    async function openLogFile() {
-        if (!appInfo.log_file_path) return;
-        try {
-            await openPath(appInfo.log_file_path);
-        } catch (e) {
-            console.error('Failed to open log file, opening directory instead:', e);
-            await openPath(appInfo.logs_path);
-        }
-    }
-
-    async function checkForUpdates() {
-        if (isChecking) return;
-        isChecking = true;
-        updateStatus = 'Checking for updates...';
-
-        try {
-            const updateInfo = await callBackend('check_for_updates', {}, 'Update:Check');
-
-            if (updateInfo && updateInfo.available) {
-                const confirmed = confirm(
-                    `Update available: ${updateInfo.version}\n\n${updateInfo.release_notes || ''}\n\nDo you want to install it now?`,
-                );
-
-                if (confirmed) {
-                    updateStatus = 'Downloading and installing...';
-                    await callBackend('download_and_install_update', {}, 'Update:Install');
-                    updateStatus = 'Restarting...';
-                    await relaunch();
-                } else {
-                    updateStatus = 'Update cancelled.';
-                }
+            if (confirmed) {
+                updateStatus = 'Downloading and installing...';
+                await callBackend('download_and_install_update', {}, 'Update:Install');
+                updateStatus = 'Restarting...';
+                await relaunch();
             } else {
-                updateStatus = 'You are up to date.';
+                updateStatus = 'Update cancelled.';
             }
-        } catch (err) {
-            console.error('Update check failed:', err);
-            updateStatus = 'Failed to check for updates.';
-        } finally {
-            isChecking = false;
-            if (updateStatus !== 'Restarting...') {
-                setTimeout(() => {
-                    updateStatus = null;
-                }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);
-            }
+        } else {
+            updateStatus = 'You are up to date.';
+        }
+    } catch (_err) {
+        updateStatus = 'Failed to check for updates.';
+    } finally {
+        isChecking = false;
+        if (updateStatus !== 'Restarting...') {
+            setTimeout(() => {
+                updateStatus = null;
+            }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);
         }
     }
+}
 </script>
 
 <Modal bind:isOpen {onClose} {position} title="About">

@@ -1,59 +1,56 @@
 <script lang="ts">
-    import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-    import Submenu from '$lib/components/ui/Submenu.svelte';
-    import { addTab } from '$lib/stores/editorStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { requestCloseTab, saveCurrentFile } from '$lib/utils/fileSystem';
-    import { FilePlus, Files, Save } from 'lucide-svelte';
+import { addTab } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { requestCloseTab, saveCurrentFile } from '$lib/utils/fileSystem';
 
-    let { x, y, onClose } = $props<{
-        x: number;
-        y: number;
-        onClose: () => void;
-    }>();
+let { x, y, onClose } = $props<{
+    x: number;
+    y: number;
+    onClose: () => void;
+}>();
 
-    let activeSubmenu = $state<'close' | null>(null);
+let _activeSubmenu = $state<'close' | null>(null);
 
-    let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
-    let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
-    let hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
-    let hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
+let _hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
+let _hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
+let _hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
+let _hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
 
-    async function handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') {
-        let targets: typeof appContext.editor.tabs = [];
+async function _handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') {
+    let targets: typeof appContext.editor.tabs = [];
 
-        if (mode === 'saved') targets = appContext.editor.tabs.filter((t) => !t.isDirty);
-        else if (mode === 'unsaved') targets = appContext.editor.tabs.filter((t) => t.isDirty);
-        else if (mode === 'unpinned') targets = appContext.editor.tabs.filter((t) => !t.isPinned);
-        else if (mode === 'all') targets = appContext.editor.tabs;
+    if (mode === 'saved') targets = appContext.editor.tabs.filter((t) => !t.isDirty);
+    else if (mode === 'unsaved') targets = appContext.editor.tabs.filter((t) => t.isDirty);
+    else if (mode === 'unpinned') targets = appContext.editor.tabs.filter((t) => !t.isPinned);
+    else if (mode === 'all') targets = appContext.editor.tabs;
 
-        for (const t of targets.filter((t) => !t.isPinned || mode === 'all')) {
-            await requestCloseTab(t.id, mode === 'all');
-        }
-        onClose();
+    for (const t of targets.filter((t) => !t.isPinned || mode === 'all')) {
+        await requestCloseTab(t.id, mode === 'all');
+    }
+    onClose();
+}
+
+async function _handleSaveAll() {
+    const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
+    const previousActiveId = appContext.app.activeTabId;
+
+    for (const tab of dirtyTabs) {
+        appContext.app.activeTabId = tab.id;
+        await saveCurrentFile();
     }
 
-    async function handleSaveAll() {
-        const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
-        const previousActiveId = appContext.app.activeTabId;
-
-        for (const tab of dirtyTabs) {
-            appContext.app.activeTabId = tab.id;
-            await saveCurrentFile();
-        }
-
-        if (previousActiveId) {
-            appContext.app.activeTabId = previousActiveId;
-        }
-
-        onClose();
+    if (previousActiveId) {
+        appContext.app.activeTabId = previousActiveId;
     }
 
-    function handleNewTab() {
-        const newTabId = addTab();
-        appContext.app.activeTabId = newTabId;
-        onClose();
-    }
+    onClose();
+}
+
+function _handleNewTab() {
+    const newTabId = addTab();
+    appContext.app.activeTabId = newTabId;
+    onClose();
+}
 </script>
 
 <ContextMenu {x} {y} {onClose}>

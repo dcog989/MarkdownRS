@@ -48,16 +48,12 @@ class Logger {
         // Standard Browser Console output
         switch (level) {
             case 'debug':
-                console.debug(message);
                 break;
             case 'info':
-                console.info(message);
                 break;
             case 'warn':
-                console.warn(message);
                 break;
             case 'error':
-                console.error(message);
                 break;
         }
 
@@ -109,9 +105,7 @@ class Logger {
                         await error(combined);
                         break;
                 }
-            } catch (e) {
-                console.error('[Logger] Batch flush failed:', e);
-            }
+            } catch (_e) {}
         }
     }
 

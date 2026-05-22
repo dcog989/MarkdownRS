@@ -1,5 +1,5 @@
-import type { BackendCommands, CommandName } from '$lib/types/api';
 import { invoke } from '@tauri-apps/api/core';
+import type { BackendCommands, CommandName } from '$lib/types/api';
 import { AppError, type ErrorContext, type ErrorOptions } from './errorHandling';
 
 export interface BackendCallOptions {
@@ -53,15 +53,11 @@ export async function callBackend<K extends CommandName>(
         const duration = (performance.now() - start).toFixed(2);
 
         if (Number(duration) > 16) {
-            console.debug(
-                `[Bridge] ${command} | duration=${duration}ms | args=${JSON.stringify(args).substring(0, 100)}`,
-            );
         }
 
         return result;
     } catch (err) {
-        const duration = (performance.now() - start).toFixed(2);
-        console.error(`[Bridge] ${command} FAILED | duration=${duration}ms | err=${err}`);
+        const _duration = (performance.now() - start).toFixed(2);
 
         const errorOpts = {
             additionalInfo: {
@@ -71,7 +67,7 @@ export async function callBackend<K extends CommandName>(
             } as Record<string, unknown>,
             severity: 'error' as const,
             userMessage: options?.msg,
-            showToast: options?.report ? true : options?.ignore ? false : true,
+            showToast: options?.report ? true : !options?.ignore,
         };
 
         if (options?.report) {

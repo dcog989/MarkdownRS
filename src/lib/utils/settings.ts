@@ -4,12 +4,6 @@ import { debounce } from './timing';
 
 let lastSavedState: string = '';
 
-function log(msg: string, level: 'debug' | 'info' | 'error' = 'debug') {
-    const output = `[Settings] ${msg}`;
-    if (level === 'error') console.error(output);
-    else console.log(output);
-}
-
 function getSettingsObject() {
     return {
         splitPercentage: appState.splitPercentage,
@@ -74,11 +68,9 @@ export async function initSettings() {
 
     if (appInfo?.os_platform) {
         appState.osPlatform = appInfo.os_platform as 'windows' | 'linux' | 'macos';
-        log(`OS platform: ${appState.osPlatform}`);
     }
 
     if (saved && Object.keys(saved).length > 0) {
-        log(`Restoring app preferences from TOML...`);
         Object.keys(saved).forEach((key) => {
             if (Object.hasOwn(appState, key)) {
                 (appState as Record<string, unknown>)[key] = saved[key];

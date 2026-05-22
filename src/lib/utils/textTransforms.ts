@@ -1,4 +1,4 @@
-import { type OperationId } from '$lib/config/textOperationsRegistry';
+import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { textProcessor } from '$lib/services/textProcessor';
 
 /**

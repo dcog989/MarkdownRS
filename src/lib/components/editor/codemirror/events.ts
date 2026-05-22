@@ -1,8 +1,8 @@
-import { extractPathAtPos } from '$lib/utils/filePathExtension';
-import { navigateToPath } from '$lib/utils/fileSystem';
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { openPath } from '@tauri-apps/plugin-opener';
+import { extractPathAtPos } from '$lib/utils/filePathExtension';
+import { navigateToPath } from '$lib/utils/fileSystem';
 
 export type ContextMenuCallback = (event: MouseEvent, view: EditorView) => void;
 
@@ -18,7 +18,7 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
                 // 1. Check syntax tree for Link/URL nodes (CommonMark links)
                 let node = syntaxTree(view.state).resolveInner(pos, 1);
-                while (node && node.parent && !['URL', 'Link', 'LinkEmail'].includes(node.name)) {
+                while (node?.parent && !['URL', 'Link', 'LinkEmail'].includes(node.name)) {
                     node = node.parent;
                 }
 

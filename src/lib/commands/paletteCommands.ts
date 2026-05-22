@@ -20,8 +20,8 @@ import {
     toggleShortcuts,
     toggleTransform,
 } from '$lib/stores/interfaceStore.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import {
     openFile,
     openFileByPath,

@@ -3,7 +3,9 @@
  * Handles application-wide shortcuts with support for custom remapping.
  */
 
-export type ShortcutHandler = (e: KeyboardEvent) => boolean | void | Promise<boolean | void>;
+export type ShortcutHandler = (
+    e: KeyboardEvent,
+) => boolean | undefined | Promise<boolean | undefined>;
 
 export interface ShortcutDefinition {
     id: string; // Unique identifier for the command
@@ -112,21 +114,15 @@ export class KeyboardShortcutManager {
         for (const def of this.definitions.values()) {
             const mappedKey = this.customMappings[def.command] || def.defaultKey;
             if (pressedKey === mappedKey.toLowerCase() && def.handler) {
-                // Wrap handler in try-catch to prevent cascading failures
-                try {
-                    const result = await def.handler(e);
+                const result = await def.handler(e);
 
-                    // Only prevent default/stop propagation if handler returned true
-                    if (result === true) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return true;
-                    }
-                    return false;
-                } catch (err) {
-                    console.error(`[Shortcuts] Handler failed for command "${def.command}":`, err);
-                    throw err;
+                // Only prevent default/stop propagation if handler returned true
+                if (result === true) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return true;
                 }
+                return false;
             }
         }
 
@@ -142,7 +138,7 @@ export class KeyboardShortcutManager {
             if (!grouped.has(def.category)) {
                 grouped.set(def.category, []);
             }
-            grouped.get(def.category)!.push(def);
+            grouped.get(def.category)?.push(def);
         }
         return grouped;
     }

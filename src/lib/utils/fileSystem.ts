@@ -1,12 +1,14 @@
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { openPath } from '@tauri-apps/plugin-opener';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import {
     checkAndReloadIfChanged,
     checkFileExists,
     invalidateMetadataCache,
+    normalizeLineEndings,
     refreshMetadata,
     reloadFileContent,
     sanitizePath,
-    normalizeLineEndings,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import {
@@ -14,6 +16,7 @@ import {
     persistSession,
     persistSessionDebounced,
 } from '$lib/services/sessionPersistence';
+import { appState } from '$lib/stores/appState.svelte';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import {
@@ -30,12 +33,9 @@ import {
 } from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { appState } from '$lib/stores/appState.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { openPath } from '@tauri-apps/plugin-opener';
 import { callBackend } from './backend';
 import { CONFIG } from './config';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
@@ -142,7 +142,7 @@ export async function openFile(path?: string): Promise<void> {
                 let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
                 const MAX_LEN = 25;
                 if (smartTitle.length > MAX_LEN) {
-                    smartTitle = smartTitle.substring(0, MAX_LEN).trim() + '...';
+                    smartTitle = `${smartTitle.substring(0, MAX_LEN).trim()}...`;
                 }
                 if (smartTitle.length > 0) {
                     initialTitle = smartTitle;
@@ -369,7 +369,7 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
             if (appContext.app.tabNameFromContent) {
                 const firstLine = contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
                 let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
-                if (smartTitle.length > 25) smartTitle = smartTitle.substring(0, 25).trim() + '...';
+                if (smartTitle.length > 25) smartTitle = `${smartTitle.substring(0, 25).trim()}...`;
                 if (smartTitle.length > 0) finalTitle = smartTitle;
             }
 

@@ -1,14 +1,14 @@
+import { syntaxTree } from '@codemirror/language';
+import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
+import type { EditorView } from '@codemirror/view';
+import type { SyntaxNodeRef } from '@lezer/common';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { addToDictionary } from '$lib/utils/fileSystem';
-import { refreshCustomDictionary, spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import { logger } from '$lib/utils/logger';
-import { syntaxTree } from '@codemirror/language';
-import { forceLinting, linter, type Diagnostic } from '@codemirror/lint';
-import type { EditorView } from '@codemirror/view';
+import { refreshCustomDictionary, spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import type { AppEditorView } from '../../global';
-import type { SyntaxNodeRef } from '@lezer/common';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 /**
  * Per-tab spellcheck cache
@@ -151,7 +151,7 @@ export const createSpellCheckLinter = () => {
             const customDict = new SvelteSet(spellcheckState.customDictionary);
 
             syntaxTree(state).iterate({
-                enter: (node: SyntaxNodeRef): boolean | void => {
+                enter: (node: SyntaxNodeRef): boolean | undefined => {
                     if (
                         node.name.includes('Code') ||
                         node.name.includes('Link') ||

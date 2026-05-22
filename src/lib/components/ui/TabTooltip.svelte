@@ -1,40 +1,39 @@
 <script lang="ts">
-    import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-    import { formatFileSize } from '$lib/utils/fileValidation';
-    import TooltipContainer from './TooltipContainer.svelte';
+import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import { formatFileSize } from '$lib/utils/fileValidation';
 
-    let {
-        tab,
-        isVisible = false,
-        x = 0,
-        y = 0,
-    } = $props<{
-        tab: EditorTab;
-        isVisible: boolean;
-        x: number;
-        y: number;
-    }>();
+let {
+    tab,
+    isVisible = false,
+    x = 0,
+    y = 0,
+} = $props<{
+    tab: EditorTab;
+    isVisible: boolean;
+    x: number;
+    y: number;
+}>();
 
-    let tooltipContent = $derived.by(() => {
-        const parts: string[] = [];
+let _tooltipContent = $derived.by(() => {
+    const parts: string[] = [];
 
-        if (tab.path) {
-            parts.push(tab.path);
-        } else {
-            parts.push('Unsaved content');
-        }
+    if (tab.path) {
+        parts.push(tab.path);
+    } else {
+        parts.push('Unsaved content');
+    }
 
-        const sizeStr = formatFileSize(tab.sizeBytes || 0);
-        const formattedTime = tab.formattedTimestamp || '';
+    const sizeStr = formatFileSize(tab.sizeBytes || 0);
+    const formattedTime = tab.formattedTimestamp || '';
 
-        if (formattedTime) {
-            parts.push(`${formattedTime}, ${sizeStr}`);
-        } else {
-            parts.push(sizeStr);
-        }
+    if (formattedTime) {
+        parts.push(`${formattedTime}, ${sizeStr}`);
+    } else {
+        parts.push(sizeStr);
+    }
 
-        return parts.join('\n');
-    });
+    return parts.join('\n');
+});
 </script>
 
 <TooltipContainer {x} {y} {isVisible} className="break-all">

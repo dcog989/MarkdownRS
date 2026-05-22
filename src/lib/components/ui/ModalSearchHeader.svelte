@@ -1,28 +1,26 @@
 <script lang="ts">
-    import Input from '$lib/components/ui/Input.svelte';
-    import { Search, X } from 'lucide-svelte';
-    import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 
-    let {
-        title,
-        icon: Icon,
-        searchValue = $bindable(''),
-        searchPlaceholder = 'Search...',
-        inputRef = $bindable(),
-        onClose,
-        onKeydown,
-        extraActions,
-    } = $props<{
-        title: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        icon: any; // Lucide icon component
-        searchValue: string;
-        searchPlaceholder?: string;
-        inputRef?: HTMLInputElement;
-        onClose: () => void;
-        onKeydown?: (e: KeyboardEvent) => void;
-        extraActions?: Snippet;
-    }>();
+let {
+    title,
+    icon: Icon,
+    searchValue = $bindable(''),
+    searchPlaceholder = 'Search...',
+    inputRef = $bindable(),
+    onClose,
+    onKeydown,
+    extraActions,
+} = $props<{
+    title: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon: any; // Lucide icon component
+    searchValue: string;
+    searchPlaceholder?: string;
+    inputRef?: HTMLInputElement;
+    onClose: () => void;
+    onKeydown?: (e: KeyboardEvent) => void;
+    extraActions?: Snippet;
+}>();
 </script>
 
 <div class="flex w-full items-center gap-4">

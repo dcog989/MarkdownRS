@@ -1,41 +1,38 @@
 <script lang="ts">
-    import { tooltip } from '$lib/actions/tooltip';
-    import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { CircleAlert, FileText, PencilLine, SquarePen } from 'lucide-svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
 
-    interface Props {
-        isOpen: boolean;
-        onClose: () => void;
-        onSelect: (tabId: string) => void;
-        selectedId: string | null;
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+    onSelect: (tabId: string) => void;
+    selectedId: string | null;
+}
+
+let { isOpen, onClose, onSelect, selectedId }: Props = $props();
+let _listContainerRef = $state<HTMLDivElement | null>(null);
+
+let _mruTabs = $derived(
+    appContext.editor.mruStack
+        .map((id) => appContext.editor.tabs.find((t) => t.id === id))
+        .filter((t) => t !== undefined),
+);
+
+function _handleBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) onClose();
+}
+
+function _scrollIntoView(node: HTMLElement, isSelected: boolean) {
+    if (isSelected) {
+        node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
-
-    let { isOpen, onClose, onSelect, selectedId }: Props = $props();
-    let listContainerRef = $state<HTMLDivElement | null>(null);
-
-    let mruTabs = $derived(
-        appContext.editor.mruStack
-            .map((id) => appContext.editor.tabs.find((t) => t.id === id))
-            .filter((t) => t !== undefined),
-    );
-
-    function handleBackdropClick(e: MouseEvent) {
-        if (e.target === e.currentTarget) onClose();
-    }
-
-    function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-        if (isSelected) {
-            node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
-        return {
-            update(newIsSelected: boolean) {
-                if (newIsSelected) {
-                    node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                }
-            },
-        };
-    }
+    return {
+        update(newIsSelected: boolean) {
+            if (newIsSelected) {
+                node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        },
+    };
+}
 </script>
 
 {#if isOpen}

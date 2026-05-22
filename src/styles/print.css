@@ -32,34 +32,34 @@
     }
 
     :root {
-        color-scheme: light !important;
+        color-scheme: light;
     }
 
     html,
     body {
         width: 100%;
-        height: auto !important;
-        overflow: visible !important;
-        background: white !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        display: block !important;
+        height: auto;
+        overflow: visible;
+        background: white;
+        margin: 0;
+        padding: 0;
+        display: block;
     }
 
     body > *:not(#export-container) {
-        display: none !important;
+        display: none;
     }
 
     #export-container {
-        position: relative !important;
-        left: auto !important;
-        top: auto !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 15mm 20mm !important;
-        display: block !important;
-        opacity: 1 !important;
-        visibility: visible !important;
+        position: relative;
+        left: auto;
+        top: auto;
+        width: 100%;
+        margin: 0;
+        padding: 15mm 20mm;
+        display: block;
+        opacity: 1;
+        visibility: visible;
         z-index: 9999;
     }
 

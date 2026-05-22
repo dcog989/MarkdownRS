@@ -34,11 +34,11 @@
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
+import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { clearRendererCache } from '$lib/utils/markdown';
-import { hashContent } from '$lib/utils/contentHash';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 
@@ -168,7 +168,7 @@ export const editorStore = $state({
  */
 function updateTab(
     id: string,
-    updater: (tab: EditorTab) => Partial<EditorTab> | void,
+    updater: (tab: EditorTab) => Partial<EditorTab> | undefined,
     markDirty: boolean = true,
 ): boolean {
     const index = editorStore.tabs.findIndex((t) => t.id === id);
@@ -243,7 +243,6 @@ export function performTextTransform(operationId: OperationId) {
             timestamp: Date.now(),
         };
     } else {
-        console.error(`[EditorStore] No active tab ID`);
     }
 }
 
@@ -260,7 +259,7 @@ export function addTab(title: string = '', content: string = '') {
         for (const tab of editorStore.tabs) {
             const currentTitle = tab.customTitle || tab.title || '';
             const match = currentTitle.match(newTabPattern);
-            if (match) maxNewNumber = Math.max(maxNewNumber, parseInt(match[1]));
+            if (match) maxNewNumber = Math.max(maxNewNumber, parseInt(match[1], 10));
         }
         finalTitle = `New-${maxNewNumber + 1}`;
     }
@@ -460,7 +459,6 @@ export function reorderTabs(newTabs: EditorTab[]) {
 export function updateContent(id: string, content: string, lineCount: number) {
     const index = editorStore.tabs.findIndex((t) => t.id === id);
     if (index === -1) {
-        console.warn('[EditorStore] updateContent: tab not found:', id);
         return;
     }
 
@@ -487,7 +485,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
             let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
             const MAX_LEN = 25;
             if (smartTitle.length > MAX_LEN) {
-                smartTitle = smartTitle.substring(0, MAX_LEN).trim() + '...';
+                smartTitle = `${smartTitle.substring(0, MAX_LEN).trim()}...`;
             }
             if (smartTitle.length > 0) {
                 newTitle = smartTitle;

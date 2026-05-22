@@ -1,96 +1,89 @@
 <script lang="ts">
-    import { tooltip } from '$lib/actions/tooltip';
-    import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-    import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
-    import { togglePreferredExtension, updateLineEnding } from '$lib/stores/editorStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
-    import { saveSettings } from '$lib/utils/settings';
-    import { formatNumber } from '$lib/utils/textMetrics';
-    import { ClipboardCopy, TextWrap } from 'lucide-svelte';
+import { togglePreferredExtension, updateLineEnding } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
+import { saveSettings } from '$lib/utils/settings';
 
-    let activeTab = $derived(
-        appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId),
-    );
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
 
-    // Reactive totals pulled directly from pre-calculated state in the tab
-    let lineEnding = $derived(activeTab?.lineEnding || 'LF');
-    let encoding = $derived(activeTab?.encoding || 'UTF-8');
-    let sizeBytes = $derived(activeTab?.sizeBytes || 0);
-    let totalWords = $derived(activeTab?.wordCount || 0);
-    let wordCountPending = $derived(activeTab?.wordCountPending || false);
-    let totalChars = $derived(activeTab?.content.length || 0);
-    let totalLines = $derived(activeTab?.lineCount || 1);
-    let widestColumn = $derived(activeTab?.widestColumn || 0);
+// Reactive totals pulled directly from pre-calculated state in the tab
+let lineEnding = $derived(activeTab?.lineEnding || 'LF');
+let encoding = $derived(activeTab?.encoding || 'UTF-8');
+let sizeBytes = $derived(activeTab?.sizeBytes || 0);
+let totalWords = $derived(activeTab?.wordCount || 0);
+let _wordCountPending = $derived(activeTab?.wordCountPending || false);
+let totalChars = $derived(activeTab?.content.length || 0);
+let totalLines = $derived(activeTab?.lineCount || 1);
+let widestColumn = $derived(activeTab?.widestColumn || 0);
 
-    let preferredExtension = $derived(activeTab?.preferredExtension);
-    let path = $derived(activeTab?.path);
-    let tabId = $derived(activeTab?.id);
+let preferredExtension = $derived(activeTab?.preferredExtension);
+let path = $derived(activeTab?.path);
+let tabId = $derived(activeTab?.id);
 
-    let textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
-    let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
+let _textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
+let _fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
-    let fileType = $derived.by(() => {
-        if (!tabId) return 'markdown';
-        if (preferredExtension) return preferredExtension === 'txt' ? 'text' : 'markdown';
-        if (path) return isMarkdownFile(path) ? 'markdown' : 'text';
-        return 'markdown';
-    });
+let _fileType = $derived.by(() => {
+    if (!tabId) return 'markdown';
+    if (preferredExtension) return preferredExtension === 'txt' ? 'text' : 'markdown';
+    if (path) return isMarkdownFile(path) ? 'markdown' : 'text';
+    return 'markdown';
+});
 
-    let canToggleFileType = $derived(!!tabId);
+let _canToggleFileType = $derived(!!tabId);
 
-    // Context Menu State
-    let showMenu = $state(false);
-    let menuX = $state(0);
-    let menuY = $state(0);
+// Context Menu State
+let _showMenu = $state(false);
+let _menuX = $state(0);
+let _menuY = $state(0);
 
-    function toggleFileType() {
-        if (tabId) togglePreferredExtension(tabId);
+function _toggleFileType() {
+    if (tabId) togglePreferredExtension(tabId);
+}
+
+function _toggleLineEnding() {
+    if (tabId) {
+        const next = lineEnding === 'LF' ? 'CRLF' : 'LF';
+        updateLineEnding(tabId, next);
     }
+}
 
-    function toggleLineEnding() {
-        if (tabId) {
-            const next = lineEnding === 'LF' ? 'CRLF' : 'LF';
-            updateLineEnding(tabId, next);
-        }
-    }
+function _toggleWordWrap() {
+    appContext.app.editorWordWrap = !appContext.app.editorWordWrap;
+    saveSettings();
+}
 
-    function toggleWordWrap() {
-        appContext.app.editorWordWrap = !appContext.app.editorWordWrap;
-        saveSettings();
-    }
+function _handleContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    _menuX = e.clientX;
+    _menuY = e.clientY;
+    _showMenu = true;
+}
 
-    function handleContextMenu(e: MouseEvent) {
-        e.preventDefault();
-        menuX = e.clientX;
-        menuY = e.clientY;
-        showMenu = true;
-    }
+async function _copyAllStats() {
+    if (!activeTab) return;
 
-    async function copyAllStats() {
-        if (!activeTab) return;
+    const preciseSize =
+        sizeBytes < 1024
+            ? `${sizeBytes} B`
+            : sizeBytes < 1024 * 1024
+              ? `${(sizeBytes / 1024).toFixed(2)} KB`
+              : `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`;
 
-        const preciseSize =
-            sizeBytes < 1024
-                ? `${sizeBytes} B`
-                : sizeBytes < 1024 * 1024
-                  ? `${(sizeBytes / 1024).toFixed(2)} KB`
-                  : `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`;
+    const stats = [
+        `File Path: ${activeTab.path || 'Unsaved'}`,
+        `File Size: ${preciseSize} (${sizeBytes.toLocaleString()} bytes)`,
+        `Total Lines: ${totalLines.toLocaleString()}`,
+        `Widest Column: ${widestColumn.toLocaleString()}`,
+        `Total Characters: ${totalChars.toLocaleString()}`,
+        `Total Words: ${totalWords.toLocaleString()}`,
+        `Line Ending: ${lineEnding}`,
+        `Encoding: ${encoding}`,
+    ].join('\n');
 
-        const stats = [
-            `File Path: ${activeTab.path || 'Unsaved'}`,
-            `File Size: ${preciseSize} (${sizeBytes.toLocaleString()} bytes)`,
-            `Total Lines: ${totalLines.toLocaleString()}`,
-            `Widest Column: ${widestColumn.toLocaleString()}`,
-            `Total Characters: ${totalChars.toLocaleString()}`,
-            `Total Words: ${totalWords.toLocaleString()}`,
-            `Line Ending: ${lineEnding}`,
-            `Encoding: ${encoding}`,
-        ].join('\n');
-
-        await navigator.clipboard.writeText(stats);
-        showMenu = false;
-    }
+    await navigator.clipboard.writeText(stats);
+    _showMenu = false;
+}
 </script>
 
 <footer

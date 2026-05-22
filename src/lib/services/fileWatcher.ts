@@ -1,3 +1,4 @@
+import { watch } from '@tauri-apps/plugin-fs';
 import {
     checkAndReloadIfChanged,
     reloadFileContent,
@@ -9,7 +10,6 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { AppError } from '$lib/utils/errorHandling';
 import { debounce } from '$lib/utils/timing';
-import { watch } from '@tauri-apps/plugin-fs';
 
 type UnwatchFn = () => void;
 

@@ -1,101 +1,101 @@
 <script lang="ts">
-    import { onDestroy, type Snippet } from 'svelte';
+import { onDestroy, type Snippet } from 'svelte';
 
-    let {
-        show = false,
-        side = 'right',
-        trigger,
-        children,
-        onOpen,
-        onClose,
-    } = $props<{
-        show?: boolean;
-        side?: 'left' | 'right';
-        trigger: Snippet;
-        children: Snippet;
-        onOpen?: () => void;
-        onClose?: () => void;
-    }>();
+let {
+    show = false,
+    side = 'right',
+    trigger,
+    children,
+    onOpen,
+    onClose,
+} = $props<{
+    show?: boolean;
+    side?: 'left' | 'right';
+    trigger: Snippet;
+    children: Snippet;
+    onOpen?: () => void;
+    onClose?: () => void;
+}>();
 
-    let hoverTimer: number | null = null;
-    let submenuEl = $state<HTMLDivElement>();
-    let containerEl = $state<HTMLDivElement>();
+let hoverTimer: number | null = null;
+let submenuEl = $state<HTMLDivElement>();
+let containerEl = $state<HTMLDivElement>();
 
-    let fixedX = $state(0);
-    let fixedY = $state(0);
+let _fixedX = $state(0);
+let _fixedY = $state(0);
 
-    const HOVER_DELAY = 150;
+const HOVER_DELAY = 150;
 
-    function handleMouseEnter() {
+function _handleMouseEnter() {
+    if (hoverTimer) {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
+    }
+    if (!show) {
+        onOpen?.();
+    }
+}
+
+function _handleMouseLeave() {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    hoverTimer = window.setTimeout(() => {
+        onClose?.();
+        hoverTimer = null;
+    }, HOVER_DELAY);
+}
+
+function adjustPosition() {
+    if (!submenuEl || !containerEl) return;
+
+    const triggerRect = containerEl.getBoundingClientRect();
+    const submenuRect = submenuEl.getBoundingClientRect();
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+
+    let x = triggerRect.right;
+
+    if (side === 'left' || x + submenuRect.width > winWidth - 5) {
+        x = triggerRect.left - submenuRect.width;
+
+        if (x < 5) {
+            x = triggerRect.right;
+        }
+    }
+
+    let y = triggerRect.top - 4; // -4 for slight visual overlap/padding alignment
+
+    const statusBarHeight = 32;
+    const maxBottom = winHeight - statusBarHeight;
+
+    // If bottom extends past viewport limit, shift up
+    if (y + submenuRect.height > maxBottom) {
+        y = maxBottom - submenuRect.height - 5;
+    }
+
+    // Ensure we don't shift off the top
+    if (y < 5) {
+        y = 5;
+    }
+
+    _fixedX = x;
+    _fixedY = y;
+}
+
+$effect(() => {
+    if (show) {
+        // Using requestAnimationFrame ensures the DOM is rendered (so getBoundingClientRect works)
+        requestAnimationFrame(() => adjustPosition());
+    } else {
         if (hoverTimer) {
             clearTimeout(hoverTimer);
             hoverTimer = null;
         }
-        if (!show) {
-            onOpen?.();
-        }
     }
+});
 
-    function handleMouseLeave() {
-        if (hoverTimer) clearTimeout(hoverTimer);
-        hoverTimer = window.setTimeout(() => {
-            onClose?.();
-            hoverTimer = null;
-        }, HOVER_DELAY);
-    }
-
-    function adjustPosition() {
-        if (!submenuEl || !containerEl) return;
-
-        const triggerRect = containerEl.getBoundingClientRect();
-        const submenuRect = submenuEl.getBoundingClientRect();
-        const winWidth = window.innerWidth;
-        const winHeight = window.innerHeight;
-
-        let x = triggerRect.right;
-
-        if (side === 'left' || x + submenuRect.width > winWidth - 5) {
-            x = triggerRect.left - submenuRect.width;
-
-            if (x < 5) {
-                x = triggerRect.right;
-            }
-        }
-
-        let y = triggerRect.top - 4; // -4 for slight visual overlap/padding alignment
-
-        const statusBarHeight = 32;
-        const maxBottom = winHeight - statusBarHeight;
-
-        // If bottom extends past viewport limit, shift up
-        if (y + submenuRect.height > maxBottom) {
-            y = maxBottom - submenuRect.height - 5;
-        }
-
-        // Ensure we don't shift off the top
-        if (y < 5) {
-            y = 5;
-        }
-
-        fixedX = x;
-        fixedY = y;
-    }
-
-    $effect(() => {
-        if (show) {
-            // Using requestAnimationFrame ensures the DOM is rendered (so getBoundingClientRect works)
-            requestAnimationFrame(() => adjustPosition());
-        } else {
-            if (hoverTimer) {
-                clearTimeout(hoverTimer);
-                hoverTimer = null;
-            }
-        }
-    });
-
-    onDestroy(() => {
-        if (hoverTimer) clearTimeout(hoverTimer);
-    });
+onDestroy(() => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+});
 </script>
 
 <div

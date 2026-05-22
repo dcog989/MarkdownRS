@@ -71,9 +71,9 @@ label {
 }
 
 /* Form Elements - Base Styling */
-input[type='text'],
-input[type='number'],
-input[type='search'],
+input[type="text"],
+input[type="number"],
+input[type="search"],
 textarea,
 select {
     background-color: var(--surface-input);
@@ -85,9 +85,9 @@ select {
     transition: border-color 150ms;
 }
 
-input[type='text']:focus,
-input[type='number']:focus,
-input[type='search']:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
 textarea:focus,
 select:focus {
     outline: none;
@@ -101,7 +101,7 @@ textarea::placeholder {
 }
 
 select:focus {
-    border-color: var(--accent-primary) !important;
+    border-color: var(--accent-primary);
 }
 
 option {
@@ -110,14 +110,14 @@ option {
 }
 
 option:checked {
-    background-color: var(--accent-primary) !important;
-    color: var(--text-inverse) !important;
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
     box-shadow: 0 0 0 6.25rem var(--accent-primary) inset;
     -webkit-text-fill-color: var(--text-inverse);
 }
 
 /* Checkbox Styling */
-input[type='checkbox'] {
+input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
     border: 1px solid var(--border-primary);
@@ -129,13 +129,13 @@ input[type='checkbox'] {
     position: relative;
 }
 
-input[type='checkbox']:checked {
+input[type="checkbox"]:checked {
     background-color: var(--accent-primary);
     border-color: var(--accent-primary);
 }
 
-input[type='checkbox']:checked::before {
-    content: '';
+input[type="checkbox"]:checked::before {
+    content: "";
     position: absolute;
     left: 0.25rem;
     top: 0.0625rem;
@@ -146,13 +146,13 @@ input[type='checkbox']:checked::before {
     transform: rotate(45deg);
 }
 
-input[type='checkbox']:focus {
+input[type="checkbox"]:focus {
     outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
 }
 
 /* Radio Button Styling */
-input[type='radio'] {
+input[type="radio"] {
     width: 1rem;
     height: 1rem;
     border: 1px solid var(--border-primary);
@@ -164,12 +164,12 @@ input[type='radio'] {
     position: relative;
 }
 
-input[type='radio']:checked {
+input[type="radio"]:checked {
     border-color: var(--accent-primary);
 }
 
-input[type='radio']:checked::before {
-    content: '';
+input[type="radio"]:checked::before {
+    content: "";
     position: absolute;
     left: 50%;
     top: 50%;
@@ -243,26 +243,26 @@ select {
     color: var(--text-primary);
 }
 
-.mru-item[data-selected='true'] {
+.mru-item[data-selected="true"] {
     background-color: var(--accent-primary);
     color: var(--text-inverse);
 }
 
-.mru-item[data-selected='true'] .mru-badge {
+.mru-item[data-selected="true"] .mru-badge {
     background-color: var(--text-inverse);
     color: var(--accent-primary);
 }
 
-.mru-item[data-selected='true'] .mru-path {
+.mru-item[data-selected="true"] .mru-path {
     color: var(--text-inverse);
 }
 
-.mru-item[data-selected='true'] .mru-dot {
+.mru-item[data-selected="true"] .mru-dot {
     background-color: var(--text-inverse);
 }
 
-.mru-item[data-selected='true'] .mru-icon {
-    color: var(--text-inverse) !important;
+.mru-item[data-selected="true"] .mru-icon {
+    color: var(--text-inverse);
 }
 
 .mru-item:hover {
@@ -318,7 +318,7 @@ select {
     contain: layout style paint;
 }
 
-.command-item[data-selected='true'] {
+.command-item[data-selected="true"] {
     background-color: var(--accent-primary);
     color: var(--text-inverse);
 }
@@ -457,7 +457,7 @@ code {
     border-radius: 0.25rem;
     font-size: 0.875em;
     font-family:
-        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
         monospace;
 }
 

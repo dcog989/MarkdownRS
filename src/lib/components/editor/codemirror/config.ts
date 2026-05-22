@@ -1,21 +1,21 @@
-import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
+import {
+    autocompletion,
+    type CompletionContext,
+    type CompletionResult,
+    closeBracketsKeymap,
+    completeAnyWord,
+    completionKeymap,
+} from '@codemirror/autocomplete';
+import { defaultKeymap, historyKeymap } from '@codemirror/commands';
+import { indentUnit } from '@codemirror/language';
+import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
 import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { toggleSelectionComment } from '$lib/utils/commentToggle';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
-import {
-    autocompletion,
-    closeBracketsKeymap,
-    completeAnyWord,
-    completionKeymap,
-    type CompletionContext,
-    type CompletionResult,
-} from '@codemirror/autocomplete';
-import { defaultKeymap, historyKeymap } from '@codemirror/commands';
-import { indentUnit } from '@codemirror/language';
-import { EditorView, keymap, type KeyBinding } from '@codemirror/view';
 
 // Keys from defaultKeymap that our custom bindings must override
 const FILTERED_DEFAULT_KEYS = new Set([

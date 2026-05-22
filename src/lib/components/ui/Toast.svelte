@@ -1,85 +1,84 @@
 <script lang="ts">
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { dismissToast } from '$lib/stores/toastStore.svelte.ts';
-    import { CircleAlert, CircleCheckBig, CircleX, Info, X } from 'lucide-svelte';
-    import { onMount } from 'svelte';
-    import { SvelteSet } from 'svelte/reactivity';
-    import { fly } from 'svelte/transition';
+import { CircleAlert, CircleCheckBig, CircleX, Info } from 'lucide-svelte';
+import { onMount } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { dismissToast } from '$lib/stores/toastStore.svelte.ts';
 
-    const activeTimers = new SvelteSet<string>();
+const activeTimers = new SvelteSet<string>();
 
-    function getIcon(type: string) {
-        switch (type) {
-            case 'success':
-                return CircleCheckBig;
-            case 'error':
-                return CircleX;
-            case 'warning':
-                return CircleAlert;
-            default:
-                return Info;
+function _getIcon(type: string) {
+    switch (type) {
+        case 'success':
+            return CircleCheckBig;
+        case 'error':
+            return CircleX;
+        case 'warning':
+            return CircleAlert;
+        default:
+            return Info;
+    }
+}
+
+function _getColorClass(type: string) {
+    switch (type) {
+        case 'success':
+            return 'text-success border-l-success';
+        case 'error':
+            return 'text-danger border-l-danger';
+        case 'warning':
+            return 'text-accent-secondary border-l-accent-secondary'; // Using accent as warning color
+        default:
+            return 'text-accent-link border-l-accent-link';
+    }
+}
+
+function _getIconColorClass(type: string) {
+    switch (type) {
+        case 'success':
+            return 'text-success';
+        case 'error':
+            return 'text-danger';
+        case 'warning':
+            return 'text-accent-secondary';
+        default:
+            return 'text-accent-link';
+    }
+}
+
+function startDismissal(id: string, duration: number) {
+    if (activeTimers.has(id)) return;
+    activeTimers.add(id);
+
+    setTimeout(() => {
+        dismissToast(id);
+        activeTimers.delete(id);
+    }, duration);
+}
+
+function handleInteraction() {
+    if (appContext.ui.toast.toasts.length === 0) return;
+
+    for (const toast of appContext.ui.toast.toasts) {
+        if (!activeTimers.has(toast.id) && toast.duration > 0) {
+            startDismissal(toast.id, toast.duration);
         }
     }
+}
 
-    function getColorClass(type: string) {
-        switch (type) {
-            case 'success':
-                return 'text-success border-l-success';
-            case 'error':
-                return 'text-danger border-l-danger';
-            case 'warning':
-                return 'text-accent-secondary border-l-accent-secondary'; // Using accent as warning color
-            default:
-                return 'text-accent-link border-l-accent-link';
-        }
-    }
+onMount(() => {
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
 
-    function getIconColorClass(type: string) {
-        switch (type) {
-            case 'success':
-                return 'text-success';
-            case 'error':
-                return 'text-danger';
-            case 'warning':
-                return 'text-accent-secondary';
-            default:
-                return 'text-accent-link';
-        }
-    }
-
-    function startDismissal(id: string, duration: number) {
-        if (activeTimers.has(id)) return;
-        activeTimers.add(id);
-
-        setTimeout(() => {
-            dismissToast(id);
-            activeTimers.delete(id);
-        }, duration);
-    }
-
-    function handleInteraction() {
-        if (appContext.ui.toast.toasts.length === 0) return;
-
-        for (const toast of appContext.ui.toast.toasts) {
-            if (!activeTimers.has(toast.id) && toast.duration > 0) {
-                startDismissal(toast.id, toast.duration);
-            }
-        }
-    }
-
-    onMount(() => {
-        const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-
-        events.forEach((event) => {
-            window.addEventListener(event, handleInteraction, { capture: true, passive: true });
-        });
-
-        return () => {
-            events.forEach((event) => {
-                window.removeEventListener(event, handleInteraction, { capture: true });
-            });
-        };
+    events.forEach((event) => {
+        window.addEventListener(event, handleInteraction, { capture: true, passive: true });
     });
+
+    return () => {
+        events.forEach((event) => {
+            window.removeEventListener(event, handleInteraction, { capture: true });
+        });
+    };
+});
 </script>
 
 <div class="pointer-events-none fixed top-8 right-8 z-9999 flex flex-col gap-2">

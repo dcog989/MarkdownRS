@@ -2,9 +2,9 @@ import { syntaxTree } from '@codemirror/language';
 import { RangeSetBuilder } from '@codemirror/state';
 import {
     Decoration,
-    ViewPlugin,
     type DecorationSet,
     type EditorView,
+    ViewPlugin,
     type ViewUpdate,
 } from '@codemirror/view';
 
@@ -28,7 +28,7 @@ function iterateVisibleLines(
 
 function iterateVisibleNodes(
     view: EditorView,
-    callback: (node: { from: number; to: number; name: string }) => void | boolean,
+    callback: (node: { from: number; to: number; name: string }) => undefined | boolean,
 ) {
     const tree = syntaxTree(view.state);
     for (const { from, to } of view.visibleRanges) {

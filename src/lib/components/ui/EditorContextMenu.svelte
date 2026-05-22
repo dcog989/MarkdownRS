@@ -1,220 +1,204 @@
 <script lang="ts">
-    import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-    import Submenu from '$lib/components/ui/Submenu.svelte';
-    import { type OperationId } from '$lib/config/textOperationsRegistry';
-    import { addToDictionary } from '$lib/services/dictionaryService';
-    import { performTextTransform } from '$lib/stores/editorStore.svelte';
-    import {
-        getCachedSuggestions,
-        getSuggestions,
-        isWordValid,
-        spellcheckState,
-    } from '$lib/utils/spellcheck.svelte.ts';
-    import { openUrl } from '@tauri-apps/plugin-opener';
-    import {
-        ArrowUpDown,
-        BookPlus,
-        BookText,
-        CaseSensitive,
-        ClipboardCopy,
-        ClipboardPaste,
-        Rotate3d,
-        Scissors,
-        Search,
-        Sparkles,
-        TextAlignStart,
-        WandSparkles,
-    } from 'lucide-svelte';
-    import { untrack } from 'svelte';
-    import { SvelteSet } from 'svelte/reactivity';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { untrack } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import type { OperationId } from '$lib/config/textOperationsRegistry';
+import { addToDictionary } from '$lib/services/dictionaryService';
+import { performTextTransform } from '$lib/stores/editorStore.svelte';
+import {
+    getCachedSuggestions,
+    getSuggestions,
+    isWordValid,
+    spellcheckState,
+} from '$lib/utils/spellcheck.svelte.ts';
 
-    let {
-        x,
-        y,
-        selectedText = '',
-        wordUnderCursor = '',
-        onClose,
-        onDictionaryUpdate,
-        onCut,
-        onCopy,
-        onPaste,
-        onReplaceWord,
-    } = $props<{
-        x: number;
-        y: number;
-        selectedText?: string;
-        wordUnderCursor?: string;
-        onClose: () => void;
-        onDictionaryUpdate?: () => void;
-        onCut?: () => void;
-        onCopy?: () => void;
-        onPaste?: () => void;
-        onReplaceWord?: (newWord: string) => void;
-    }>();
+let {
+    x,
+    y,
+    selectedText = '',
+    wordUnderCursor = '',
+    onClose,
+    onDictionaryUpdate,
+    onCut,
+    onCopy,
+    onPaste,
+    onReplaceWord,
+} = $props<{
+    x: number;
+    y: number;
+    selectedText?: string;
+    wordUnderCursor?: string;
+    onClose: () => void;
+    onDictionaryUpdate?: () => void;
+    onCut?: () => void;
+    onCopy?: () => void;
+    onPaste?: () => void;
+    onReplaceWord?: (newWord: string) => void;
+}>();
 
-    let activeSubmenu = $state<'sort' | 'case' | 'format' | 'transform' | null>(null);
-    let suggestions = $state<string[]>([]);
-    let isLoadingSuggestions = $state(false);
+let _activeSubmenu = $state<'sort' | 'case' | 'format' | 'transform' | null>(null);
+let _suggestions = $state<string[]>([]);
+let _isLoadingSuggestions = $state(false);
 
-    type MenuOption = {
-        id?: OperationId;
-        label?: string;
-        divider?: boolean;
-    };
+type MenuOption = {
+    id?: OperationId;
+    label?: string;
+    divider?: boolean;
+};
 
-    const sortOps: MenuOption[] = [
-        { id: 'sort-asc', label: 'Ascending (A-Z)' },
-        { id: 'sort-case-insensitive-asc', label: 'Ascending (Ignore Case)' },
-        { id: 'sort-numeric-asc', label: 'Ascending (Numeric)' },
-        { id: 'sort-length-asc', label: 'Ascending (By Length)' },
-        { divider: true },
-        { id: 'sort-desc', label: 'Descending (Z-A)' },
-        { id: 'sort-case-insensitive-desc', label: 'Descending (Ignore Case)' },
-        { id: 'sort-numeric-desc', label: 'Descending (Numeric)' },
-        { id: 'sort-length-desc', label: 'Descending (By Length)' },
-        { divider: true },
-        { id: 'reverse', label: 'Reverse' },
-        { id: 'shuffle', label: 'Shuffle' },
-    ];
+const _sortOps: MenuOption[] = [
+    { id: 'sort-asc', label: 'Ascending (A-Z)' },
+    { id: 'sort-case-insensitive-asc', label: 'Ascending (Ignore Case)' },
+    { id: 'sort-numeric-asc', label: 'Ascending (Numeric)' },
+    { id: 'sort-length-asc', label: 'Ascending (By Length)' },
+    { divider: true },
+    { id: 'sort-desc', label: 'Descending (Z-A)' },
+    { id: 'sort-case-insensitive-desc', label: 'Descending (Ignore Case)' },
+    { id: 'sort-numeric-desc', label: 'Descending (Numeric)' },
+    { id: 'sort-length-desc', label: 'Descending (By Length)' },
+    { divider: true },
+    { id: 'reverse', label: 'Reverse' },
+    { id: 'shuffle', label: 'Shuffle' },
+];
 
-    const caseOps: MenuOption[] = [
-        { id: 'uppercase', label: 'UPPERCASE' },
-        { id: 'lowercase', label: 'lowercase' },
-        { divider: true },
-        { id: 'title-case', label: 'Title Case' },
-        { id: 'sentence-case', label: 'Sentence case' },
-        { divider: true },
-        { id: 'camel-case', label: 'camelCase' },
-        { id: 'pascal-case', label: 'PascalCase' },
-        { id: 'snake-case', label: 'snake_case' },
-        { id: 'kebab-case', label: 'kebab-case' },
-        { id: 'constant-case', label: 'CONSTANT_CASE' },
-        { divider: true },
-        { id: 'invert-case', label: 'iNVERT cASE' },
-    ];
+const _caseOps: MenuOption[] = [
+    { id: 'uppercase', label: 'UPPERCASE' },
+    { id: 'lowercase', label: 'lowercase' },
+    { divider: true },
+    { id: 'title-case', label: 'Title Case' },
+    { id: 'sentence-case', label: 'Sentence case' },
+    { divider: true },
+    { id: 'camel-case', label: 'camelCase' },
+    { id: 'pascal-case', label: 'PascalCase' },
+    { id: 'snake-case', label: 'snake_case' },
+    { id: 'kebab-case', label: 'kebab-case' },
+    { id: 'constant-case', label: 'CONSTANT_CASE' },
+    { divider: true },
+    { id: 'invert-case', label: 'iNVERT cASE' },
+];
 
-    const formatOps: MenuOption[] = [
-        { id: 'indent-lines', label: 'Indent Lines' },
-        { id: 'unindent-lines', label: 'Unindent Lines' },
-        { id: 'trim-whitespace', label: 'Trim Whitespace' },
-        { id: 'normalize-whitespace', label: 'Normalize Whitespace' },
-        { divider: true },
-        { id: 'add-bullets', label: 'Add Bullet Points' },
-        { id: 'add-numbers', label: 'Add Numbering' },
-        { id: 'add-checkboxes', label: 'Add Checkboxes' },
-        { id: 'remove-bullets', label: 'Remove List Markers' },
-        { divider: true },
-        { id: 'blockquote', label: 'Add Blockquote' },
-        { id: 'remove-blockquote', label: 'Remove Blockquote' },
-        { id: 'add-code-fence', label: 'Wrap in Code Block' },
-        { divider: true },
-        { id: 'increase-heading', label: 'Increase Heading Level' },
-        { id: 'decrease-heading', label: 'Decrease Heading Level' },
-        { divider: true },
-        { id: 'wrap-quotes', label: 'Wrap in Quotes' },
-    ];
+const _formatOps: MenuOption[] = [
+    { id: 'indent-lines', label: 'Indent Lines' },
+    { id: 'unindent-lines', label: 'Unindent Lines' },
+    { id: 'trim-whitespace', label: 'Trim Whitespace' },
+    { id: 'normalize-whitespace', label: 'Normalize Whitespace' },
+    { divider: true },
+    { id: 'add-bullets', label: 'Add Bullet Points' },
+    { id: 'add-numbers', label: 'Add Numbering' },
+    { id: 'add-checkboxes', label: 'Add Checkboxes' },
+    { id: 'remove-bullets', label: 'Remove List Markers' },
+    { divider: true },
+    { id: 'blockquote', label: 'Add Blockquote' },
+    { id: 'remove-blockquote', label: 'Remove Blockquote' },
+    { id: 'add-code-fence', label: 'Wrap in Code Block' },
+    { divider: true },
+    { id: 'increase-heading', label: 'Increase Heading Level' },
+    { id: 'decrease-heading', label: 'Decrease Heading Level' },
+    { divider: true },
+    { id: 'wrap-quotes', label: 'Wrap in Quotes' },
+];
 
-    const transformOps: MenuOption[] = [
-        { id: 'join-lines', label: 'Join Lines' },
-        { id: 'split-sentences', label: 'Sentences to New Lines' },
-        { id: 'smart-paragraphs', label: 'Smart Paragraphs' },
-        { divider: true },
-        { id: 'remove-duplicates', label: 'Remove Duplicates' },
-        { id: 'remove-unique', label: 'Remove Unique' },
-        { divider: true },
-        { id: 'remove-blank', label: 'Remove Blank Lines' },
-        { id: 'remove-all-spaces', label: 'Remove All Spaces' },
-        { divider: true },
-        { id: 'reverse', label: 'Reverse Lines' },
-        { id: 'shuffle', label: 'Shuffle Lines' },
-    ];
+const _transformOps: MenuOption[] = [
+    { id: 'join-lines', label: 'Join Lines' },
+    { id: 'split-sentences', label: 'Sentences to New Lines' },
+    { id: 'smart-paragraphs', label: 'Smart Paragraphs' },
+    { divider: true },
+    { id: 'remove-duplicates', label: 'Remove Duplicates' },
+    { id: 'remove-unique', label: 'Remove Unique' },
+    { divider: true },
+    { id: 'remove-blank', label: 'Remove Blank Lines' },
+    { id: 'remove-all-spaces', label: 'Remove All Spaces' },
+    { divider: true },
+    { id: 'reverse', label: 'Reverse Lines' },
+    { id: 'shuffle', label: 'Shuffle Lines' },
+];
 
-    $effect(() => {
-        const word = untrack(() => wordUnderCursor?.trim());
+$effect(() => {
+    const word = untrack(() => wordUnderCursor?.trim());
 
-        if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
-            const cached = getCachedSuggestions(word);
-            if (cached) {
-                suggestions = cached.slice(0, 5);
-                isLoadingSuggestions = false;
-                return;
-            }
-
-            isLoadingSuggestions = true;
-            getSuggestions(word)
-                .then((res) => {
-                    suggestions = res.slice(0, 5);
-                })
-                .catch(() => {
-                    suggestions = [];
-                })
-                .finally(() => {
-                    isLoadingSuggestions = false;
-                });
-        } else {
-            suggestions = [];
-            isLoadingSuggestions = false;
+    if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
+        const cached = getCachedSuggestions(word);
+        if (cached) {
+            _suggestions = cached.slice(0, 5);
+            _isLoadingSuggestions = false;
+            return;
         }
+
+        _isLoadingSuggestions = true;
+        getSuggestions(word)
+            .then((res) => {
+                _suggestions = res.slice(0, 5);
+            })
+            .catch(() => {
+                _suggestions = [];
+            })
+            .finally(() => {
+                _isLoadingSuggestions = false;
+            });
+    } else {
+        _suggestions = [];
+        _isLoadingSuggestions = false;
+    }
+});
+
+const targetWord = $derived(
+    (((selectedText || wordUnderCursor) as string) || '')
+        .trim()
+        .replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ''),
+);
+const _canAddSingle = $derived(
+    targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !isWordValid(targetWord),
+);
+
+async function _handleAddAll() {
+    const matches = (selectedText as string).match(/\b[a-zA-Z']+\b/g) || [];
+    const uniqueWords: string[] = Array.from(new Set(matches));
+    const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
+
+    const newDict = new SvelteSet([
+        ...spellcheckState.customDictionary,
+        ...invalidWords.map((w) => w.toLowerCase()),
+    ]);
+    invalidWords.forEach((w) => {
+        spellcheckState.misspelledCache.delete(w.toLowerCase());
     });
+    spellcheckState.customDictionary = newDict;
 
-    const targetWord = $derived(
-        (((selectedText || wordUnderCursor) as string) || '')
-            .trim()
-            .replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ''),
-    );
-    const canAddSingle = $derived(
-        targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !isWordValid(targetWord),
-    );
+    onDictionaryUpdate?.();
+    onClose();
 
-    async function handleAddAll() {
-        const matches = (selectedText as string).match(/\b[a-zA-Z']+\b/g) || [];
-        const uniqueWords: string[] = Array.from(new Set(matches));
-        const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
+    for (const word of invalidWords) await addToDictionary(word);
+}
 
-        const newDict = new SvelteSet([
-            ...spellcheckState.customDictionary,
-            ...invalidWords.map((w) => w.toLowerCase()),
-        ]);
-        invalidWords.forEach((w) => {
-            spellcheckState.misspelledCache.delete(w.toLowerCase());
-        });
-        spellcheckState.customDictionary = newDict;
-
-        onDictionaryUpdate?.();
+function _handleOp(type: OperationId | undefined) {
+    if (type) {
+        performTextTransform(type);
         onClose();
-
-        for (const word of invalidWords) await addToDictionary(word);
     }
+}
 
-    function handleOp(type: OperationId | undefined) {
-        if (type) {
-            performTextTransform(type);
-            onClose();
-        }
+async function _handleSendToBrowser() {
+    const text = selectedText.trim();
+    if (!text) return;
+
+    const urlPattern = /^(https?:\/\/|www\.)/i;
+    const isUrl = urlPattern.test(text);
+
+    if (isUrl) {
+        const url = text.startsWith('www.') ? `https://${text}` : text;
+        await openUrl(url);
+    } else {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+        await openUrl(searchUrl);
     }
+    closeMenuAndReset();
+}
 
-    async function handleSendToBrowser() {
-        const text = selectedText.trim();
-        if (!text) return;
-
-        const urlPattern = /^(https?:\/\/|www\.)/i;
-        const isUrl = urlPattern.test(text);
-
-        if (isUrl) {
-            const url = text.startsWith('www.') ? `https://${text}` : text;
-            await openUrl(url);
-        } else {
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
-            await openUrl(searchUrl);
-        }
-        closeMenuAndReset();
-    }
-
-    function closeMenuAndReset() {
-        onClose();
-        isLoadingSuggestions = false;
-        suggestions = [];
-    }
+function closeMenuAndReset() {
+    onClose();
+    _isLoadingSuggestions = false;
+    _suggestions = [];
+}
 </script>
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>

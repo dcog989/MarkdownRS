@@ -1,4 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
+// Only import types if needed
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import {
     addTab,
     editorStore,
@@ -11,9 +13,9 @@ import {
 } from '$lib/stores/editorStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
+import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
-import { hashContent } from '$lib/utils/contentHash';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
@@ -26,9 +28,6 @@ import {
     reloadFileContent,
 } from './fileMetadata';
 import { fileWatcher } from './fileWatcher';
-
-// Only import types if needed
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
 
 type RustTabState = {
     id: string;
@@ -325,7 +324,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
                         { path: tab.path },
                         'File:Read',
                     );
-                    if (fileData && fileData.content) {
+                    if (fileData?.content) {
                         lastSavedHash = hashContent(normalizeLineEndings(fileData.content));
                     } else {
                         lastSavedHash = hashContent(normalizedContent);

@@ -1,5 +1,5 @@
-import { prefetchSuggestions } from '$lib/utils/spellcheck.svelte.ts';
 import { EditorView } from '@codemirror/view';
+import { prefetchSuggestions } from '$lib/utils/spellcheck.svelte.ts';
 
 /**
  * Smart bracket/quote pairs that only auto-close when surrounded by whitespace.
@@ -82,7 +82,7 @@ export const smartBacktickHandler = EditorView.inputHandler.of((view, from, to, 
                     changes: {
                         from,
                         to,
-                        insert: '`\n' + indent + '\n' + indent + '```',
+                        insert: `\`\n${indent}\n${indent}\`\`\``,
                     },
                     selection: { anchor: from + 1 + indent.length + 1 },
                 });

@@ -21,10 +21,10 @@
  * - Use SvelteMap/SvelteSet for collections that need reactivity but not Proxy overhead
  */
 
+import type { EditorView } from '@codemirror/view';
+import { SvelteMap } from 'svelte/reactivity';
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
-import { type EditorView } from '@codemirror/view';
-import { SvelteMap } from 'svelte/reactivity';
 import ScrollSyncWorker from '$lib/workers/scrollSync.worker?worker';
 import { queryHTMLElements } from './dom';
 
@@ -78,8 +78,6 @@ export class ScrollSyncManager {
 
     private effectInitialized = false;
 
-    constructor() {}
-
     private initEffects() {
         if (this.effectInitialized) return;
         this.effectInitialized = true;
@@ -126,15 +124,10 @@ export class ScrollSyncManager {
             this.worker.onmessage = (event: MessageEvent<SyncResultMessage>) => {
                 this.handleWorkerResult(event.data);
             };
-            this.worker.onerror = (err) => {
-                console.error('[ScrollSync] Worker error:', err);
+            this.worker.onerror = (_err) => {
                 this.fallbackToMainThread();
             };
-        } catch (err) {
-            console.warn(
-                '[ScrollSync] Failed to initialize worker, falling back to main thread:',
-                err,
-            );
+        } catch (_err) {
             this.fallbackToMainThread();
         }
     }
@@ -226,7 +219,7 @@ export class ScrollSyncManager {
             const match = sourcepos.match(/^(\d+):\d+-\d+:\d+$/);
             if (!match) continue;
             const line = parseInt(match[1], 10);
-            if (isNaN(line)) continue;
+            if (Number.isNaN(line)) continue;
 
             const rect = el.getBoundingClientRect();
             const y = rect.top - containerRect.top + scrollTop;
@@ -358,7 +351,7 @@ export class ScrollSyncManager {
 
             const elapsed = now - startTime;
             const progress = Math.min(1, elapsed / duration);
-            const eased = 1 - Math.pow(1 - progress, 3);
+            const eased = 1 - (1 - progress) ** 3;
 
             const currentTargetY = this.smoothScrollTarget.targetY;
             const y = startY + (currentTargetY - startY) * eased;
@@ -493,18 +486,18 @@ export class ScrollSyncManager {
 
         let targetY: number;
         if (direction === 'editor-to-preview') {
-            const lineBlock = this.editor!.lineBlockAtHeight(scrollTop);
-            const docLine = this.editor!.state.doc.lineAt(lineBlock.from);
+            const lineBlock = this.editor?.lineBlockAtHeight(scrollTop);
+            const docLine = this.editor?.state.doc.lineAt(lineBlock.from);
             const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
             const currentLine = docLine.number + fraction;
             targetY = this.interpolate(currentLine, 'line', 'y');
         } else {
             const targetLine = this.interpolate(scrollTop, 'y', 'line');
-            const docLines = this.editor!.state.doc.lines;
+            const docLines = this.editor?.state.doc.lines;
             const safeLine = Math.max(1, Math.min(targetLine, docLines));
             const lineInt = Math.floor(safeLine);
             const lineFrac = safeLine - lineInt;
-            const lineInfo = this.editor!.lineBlockAt(this.editor!.state.doc.line(lineInt).from);
+            const lineInfo = this.editor?.lineBlockAt(this.editor?.state.doc.line(lineInt).from);
             targetY = lineInfo.top + lineInfo.height * lineFrac;
         }
 

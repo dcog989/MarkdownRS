@@ -1,139 +1,137 @@
 <script lang="ts">
-    import { Check, ChevronDown, X } from 'lucide-svelte';
+interface Props {
+    selected: string[];
+    onChange: (selected: string[]) => void;
+}
 
-    interface Props {
-        selected: string[];
-        onChange: (selected: string[]) => void;
-    }
+let { selected = $bindable([]), onChange }: Props = $props();
 
-    let { selected = $bindable([]), onChange }: Props = $props();
+let isOpen = $state(false);
+let dropdownEl = $state<HTMLDivElement>();
+let buttonEl = $state<HTMLDivElement>();
+let _dropdownPosition = $state<'below' | 'above'>('below');
+let dropdownMaxHeight = $state(256); // Default 256px (max-h-64)
 
-    let isOpen = $state(false);
-    let dropdownEl = $state<HTMLDivElement>();
-    let buttonEl = $state<HTMLDivElement>();
-    let dropdownPosition = $state<'below' | 'above'>('below');
-    let dropdownMaxHeight = $state(256); // Default 256px (max-h-64)
+// Complete list from wooorm/dictionaries (filtered for distinct/major variants)
+const _availableDictionaries = [
+    { code: 'af', name: 'Afrikaans' },
+    { code: 'sq', name: 'Albanian' },
+    { code: 'ar', name: 'Arabic' },
+    { code: 'hy', name: 'Armenian' },
+    { code: 'eu', name: 'Basque' },
+    { code: 'bg', name: 'Bulgarian' },
+    { code: 'ca', name: 'Catalan' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'hr', name: 'Croatian' },
+    { code: 'cs', name: 'Czech' },
+    { code: 'da', name: 'Danish' },
+    { code: 'nl', name: 'Dutch' },
+    { code: 'en-US', name: 'English (US)' },
+    { code: 'en-AU', name: 'English (Australia)' },
+    { code: 'en-CA', name: 'English (Canada)' },
+    { code: 'en-GB', name: 'English (UK)' },
+    { code: 'en-ZA', name: 'English (South Africa)' },
+    { code: 'eo', name: 'Esperanto' },
+    { code: 'et', name: 'Estonian' },
+    { code: 'fi', name: 'Finnish' },
+    { code: 'fr', name: 'French' },
+    { code: 'gl', name: 'Galician' },
+    { code: 'de', name: 'German' },
+    { code: 'de-AT', name: 'German (Austria)' },
+    { code: 'de-CH', name: 'German (Switzerland)' },
+    { code: 'el', name: 'Greek' },
+    { code: 'he', name: 'Hebrew' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'hu', name: 'Hungarian' },
+    { code: 'is', name: 'Icelandic' },
+    { code: 'id', name: 'Indonesian' },
+    { code: 'it', name: 'Italian' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'la', name: 'Latin' },
+    { code: 'lv', name: 'Latvian' },
+    { code: 'lt', name: 'Lithuanian' },
+    { code: 'mk', name: 'Macedonian' },
+    { code: 'mn', name: 'Mongolian' },
+    { code: 'nb', name: 'Norwegian (Bokmål)' },
+    { code: 'nn', name: 'Norwegian (Nynorsk)' },
+    { code: 'fa', name: 'Persian' },
+    { code: 'pl', name: 'Polish' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'pt-BR', name: 'Portuguese (Brazil)' },
+    { code: 'ro', name: 'Romanian' },
+    { code: 'ru', name: 'Russian' },
+    { code: 'gd', name: 'Scottish Gaelic' },
+    { code: 'sr', name: 'Serbian' },
+    { code: 'sk', name: 'Slovak' },
+    { code: 'sl', name: 'Slovenian' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'sv', name: 'Swedish' },
+    { code: 'tr', name: 'Turkish' },
+    { code: 'uk', name: 'Ukrainian' },
+    { code: 'vi', name: 'Vietnamese' },
+    { code: 'cy', name: 'Welsh' },
+];
 
-    // Complete list from wooorm/dictionaries (filtered for distinct/major variants)
-    const availableDictionaries = [
-        { code: 'af', name: 'Afrikaans' },
-        { code: 'sq', name: 'Albanian' },
-        { code: 'ar', name: 'Arabic' },
-        { code: 'hy', name: 'Armenian' },
-        { code: 'eu', name: 'Basque' },
-        { code: 'bg', name: 'Bulgarian' },
-        { code: 'ca', name: 'Catalan' },
-        { code: 'zh', name: 'Chinese' },
-        { code: 'hr', name: 'Croatian' },
-        { code: 'cs', name: 'Czech' },
-        { code: 'da', name: 'Danish' },
-        { code: 'nl', name: 'Dutch' },
-        { code: 'en-US', name: 'English (US)' },
-        { code: 'en-AU', name: 'English (Australia)' },
-        { code: 'en-CA', name: 'English (Canada)' },
-        { code: 'en-GB', name: 'English (UK)' },
-        { code: 'en-ZA', name: 'English (South Africa)' },
-        { code: 'eo', name: 'Esperanto' },
-        { code: 'et', name: 'Estonian' },
-        { code: 'fi', name: 'Finnish' },
-        { code: 'fr', name: 'French' },
-        { code: 'gl', name: 'Galician' },
-        { code: 'de', name: 'German' },
-        { code: 'de-AT', name: 'German (Austria)' },
-        { code: 'de-CH', name: 'German (Switzerland)' },
-        { code: 'el', name: 'Greek' },
-        { code: 'he', name: 'Hebrew' },
-        { code: 'hi', name: 'Hindi' },
-        { code: 'hu', name: 'Hungarian' },
-        { code: 'is', name: 'Icelandic' },
-        { code: 'id', name: 'Indonesian' },
-        { code: 'it', name: 'Italian' },
-        { code: 'ja', name: 'Japanese' },
-        { code: 'ko', name: 'Korean' },
-        { code: 'la', name: 'Latin' },
-        { code: 'lv', name: 'Latvian' },
-        { code: 'lt', name: 'Lithuanian' },
-        { code: 'mk', name: 'Macedonian' },
-        { code: 'mn', name: 'Mongolian' },
-        { code: 'nb', name: 'Norwegian (Bokmål)' },
-        { code: 'nn', name: 'Norwegian (Nynorsk)' },
-        { code: 'fa', name: 'Persian' },
-        { code: 'pl', name: 'Polish' },
-        { code: 'pt', name: 'Portuguese' },
-        { code: 'pt-BR', name: 'Portuguese (Brazil)' },
-        { code: 'ro', name: 'Romanian' },
-        { code: 'ru', name: 'Russian' },
-        { code: 'gd', name: 'Scottish Gaelic' },
-        { code: 'sr', name: 'Serbian' },
-        { code: 'sk', name: 'Slovak' },
-        { code: 'sl', name: 'Slovenian' },
-        { code: 'es', name: 'Spanish' },
-        { code: 'sv', name: 'Swedish' },
-        { code: 'tr', name: 'Turkish' },
-        { code: 'uk', name: 'Ukrainian' },
-        { code: 'vi', name: 'Vietnamese' },
-        { code: 'cy', name: 'Welsh' },
-    ];
+function toggleDropdown() {
+    if (!isOpen && buttonEl) {
+        // Calculate optimal position and max height before opening
+        const rect = buttonEl.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const minDropdownHeight = 200; // Minimum usable height
+        const padding = 16; // Leave some padding from viewport edges
 
-    function toggleDropdown() {
-        if (!isOpen && buttonEl) {
-            // Calculate optimal position and max height before opening
-            const rect = buttonEl.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            const spaceAbove = rect.top;
-            const minDropdownHeight = 200; // Minimum usable height
-            const padding = 16; // Leave some padding from viewport edges
-
-            // Calculate max height based on available space
-            if (spaceBelow < minDropdownHeight && spaceAbove > spaceBelow) {
-                // Open above
-                dropdownPosition = 'above';
-                dropdownMaxHeight = Math.min(spaceAbove - padding, 500); // Max 500px
-            } else {
-                // Open below
-                dropdownPosition = 'below';
-                dropdownMaxHeight = Math.min(spaceBelow - padding, 500); // Max 500px
-            }
-
-            // Ensure minimum height
-            dropdownMaxHeight = Math.max(dropdownMaxHeight, minDropdownHeight);
-        }
-        isOpen = !isOpen;
-    }
-
-    function toggleDict(code: string) {
-        if (selected.includes(code)) {
-            selected = selected.filter((d) => d !== code);
+        // Calculate max height based on available space
+        if (spaceBelow < minDropdownHeight && spaceAbove > spaceBelow) {
+            // Open above
+            _dropdownPosition = 'above';
+            dropdownMaxHeight = Math.min(spaceAbove - padding, 500); // Max 500px
         } else {
-            selected = [...selected, code];
+            // Open below
+            _dropdownPosition = 'below';
+            dropdownMaxHeight = Math.min(spaceBelow - padding, 500); // Max 500px
         }
-        onChange(selected);
-    }
 
-    function removeDict(code: string, event: Event) {
-        event.stopPropagation();
+        // Ensure minimum height
+        dropdownMaxHeight = Math.max(dropdownMaxHeight, minDropdownHeight);
+    }
+    isOpen = !isOpen;
+}
+
+function _toggleDict(code: string) {
+    if (selected.includes(code)) {
         selected = selected.filter((d) => d !== code);
-        onChange(selected);
+    } else {
+        selected = [...selected, code];
     }
+    onChange(selected);
+}
 
-    function handleClickOutside(event: MouseEvent) {
-        if (dropdownEl && !dropdownEl.contains(event.target as Node)) {
-            isOpen = false;
-        }
+function _removeDict(code: string, event: Event) {
+    event.stopPropagation();
+    selected = selected.filter((d) => d !== code);
+    onChange(selected);
+}
+
+function handleClickOutside(event: MouseEvent) {
+    if (dropdownEl && !dropdownEl.contains(event.target as Node)) {
+        isOpen = false;
     }
+}
 
-    $effect(() => {
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => document.removeEventListener('mousedown', handleClickOutside);
-        }
-    });
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            toggleDropdown();
-        }
+$effect(() => {
+    if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+});
+
+function _handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        toggleDropdown();
+    }
+}
 </script>
 
 <div class="relative w-full" bind:this={dropdownEl}>

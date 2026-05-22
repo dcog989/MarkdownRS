@@ -1,88 +1,67 @@
 <script lang="ts">
-    import { tooltip } from '$lib/actions/tooltip';
-    import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
-    import {
-        toggleAbout,
-        toggleBookmarks,
-        toggleCommandPalette,
-        toggleSettings,
-    } from '$lib/stores/interfaceStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { showToast } from '$lib/stores/toastStore.svelte';
-    import { isMarkdownFile } from '$lib/utils/fileValidation';
-    import { saveSettings } from '$lib/utils/settings';
-    import { shortcutManager } from '$lib/utils/shortcuts';
-    import { getCurrentWindow } from '@tauri-apps/api/window';
-    import {
-        Bookmark,
-        Copy,
-        Eye,
-        EyeOff,
-        Feather,
-        Minus,
-        Settings,
-        Square,
-        X,
-        Zap,
-    } from 'lucide-svelte';
-    import { onMount } from 'svelte';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { onMount } from 'svelte';
+import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { saveSettings } from '$lib/utils/settings';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
-    const appWindow = getCurrentWindow();
-    let isMaximized = $state(false);
+const appWindow = getCurrentWindow();
+let isMaximized = $state(false);
 
-    let shortcuts = $derived({
-        settings: shortcutManager.getShortcutDisplay('help.settings'),
-        commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
-        bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
-        splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
-        writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
-    });
+let _shortcuts = $derived({
+    settings: shortcutManager.getShortcutDisplay('help.settings'),
+    commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
+    bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
+    splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
+    writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
+});
 
-    let activeTab = $derived(
-        appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId),
-    );
-    let isMarkdown = $derived(
-        activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
-    );
-    let displayPath = $derived(activeTab?.path || activeTab?.title || '');
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
+let isMarkdown = $derived(
+    activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
+);
+let _displayPath = $derived(activeTab?.path || activeTab?.title || '');
 
-    function toggleSplit() {
-        if (!isMarkdown) {
-            showToast('warning', 'Preview not available for this file type');
-            return;
-        }
-        toggleSplitView();
-        saveSettings();
+function _toggleSplit() {
+    if (!isMarkdown) {
+        showToast('warning', 'Preview not available for this file type');
+        return;
     }
+    toggleSplitView();
+    saveSettings();
+}
 
-    function handleWriterMode() {
-        const wasWriterMode = appContext.app.writerMode;
-        toggleWriterMode();
-        if (wasWriterMode) {
-            document.exitFullscreen().catch(() => {});
-        } else {
-            document.documentElement.requestFullscreen().catch(() => {});
-        }
+function _handleWriterMode() {
+    const wasWriterMode = appContext.app.writerMode;
+    toggleWriterMode();
+    if (wasWriterMode) {
+        document.exitFullscreen().catch(() => {});
+    } else {
+        document.documentElement.requestFullscreen().catch(() => {});
     }
+}
 
-    onMount(() => {
-        let unlisten: (() => void) | undefined;
-        appWindow.isMaximized().then((m) => (isMaximized = m));
+onMount(() => {
+    let unlisten: (() => void) | undefined;
+    appWindow.isMaximized().then((m) => (isMaximized = m));
 
-        appWindow
-            .onResized(async () => {
-                isMaximized = await appWindow.isMaximized();
-            })
-            .then((u) => (unlisten = u));
+    appWindow
+        .onResized(async () => {
+            isMaximized = await appWindow.isMaximized();
+        })
+        .then((u) => (unlisten = u));
 
-        return () => {
-            if (unlisten) unlisten();
-        };
-    });
+    return () => {
+        if (unlisten) unlisten();
+    };
+});
 
-    async function closeApp() {
-        await appWindow.close();
-    }
+async function _closeApp() {
+    await appWindow.close();
+}
 </script>
 
 <div

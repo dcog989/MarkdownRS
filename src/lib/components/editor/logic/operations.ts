@@ -1,8 +1,8 @@
+import type { TransactionSpec } from '@codemirror/state';
+import type { EditorView } from '@codemirror/view';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import type { ScrollManager } from '$lib/utils/cmScroll';
 import { transformText } from '$lib/utils/textTransforms';
-import type { TransactionSpec } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
 
 export async function performTextOperation(
     view: EditorView,
@@ -72,8 +72,7 @@ export async function performTextOperation(
                 scrollManager.restore(view, strategy);
             }
         }
-    } catch (err) {
-        console.error(`[Editor] Transformation error:`, err);
+    } catch (_err) {
     } finally {
         // Small delay to allow UI to settle before re-enabling sync
         setTimeout(() => {

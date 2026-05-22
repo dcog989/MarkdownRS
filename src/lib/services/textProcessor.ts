@@ -100,7 +100,6 @@ class TextProcessor {
 
         const strategy = this.strategies.get(operationId);
         if (!strategy) {
-            console.warn(`[TextProcessor] No strategy found for operation: ${operationId}`);
             return text;
         }
 

@@ -1,6 +1,6 @@
+import { GutterMarker, gutter, lineNumbers, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { gutter, GutterMarker, lineNumbers, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 class LineNumberMarker extends GutterMarker {
     constructor(

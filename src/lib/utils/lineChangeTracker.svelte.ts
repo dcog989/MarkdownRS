@@ -1,5 +1,5 @@
-import { CONFIG } from '$lib/utils/config';
 import { SvelteSet } from 'svelte/reactivity';
+import { CONFIG } from '$lib/utils/config';
 
 export type LineChange = {
     lineNumber: number;

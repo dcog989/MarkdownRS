@@ -1,60 +1,56 @@
 <script lang="ts">
-    import type { Command } from '$lib/commands/paletteCommands';
-    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-    import { scrollIntoView } from '$lib/utils/modalUtils';
-    import { Zap } from 'lucide-svelte';
-    import { tick } from 'svelte';
-    import Modal from './Modal.svelte';
+import { tick } from 'svelte';
+import type { Command } from '$lib/commands/paletteCommands';
 
-    let {
-        isOpen = $bindable(false),
-        commands = [],
-        onClose,
-    } = $props<{
-        isOpen: boolean;
-        commands: Command[];
-        onClose?: () => void;
-    }>();
+let {
+    isOpen = $bindable(false),
+    commands = [],
+    onClose,
+} = $props<{
+    isOpen: boolean;
+    commands: Command[];
+    onClose?: () => void;
+}>();
 
-    let query = $state('');
-    let inputRef: HTMLInputElement | undefined = $state();
-    let selectedIndex = $state(0);
+let query = $state('');
+let inputRef: HTMLInputElement | undefined = $state();
+let selectedIndex = $state(0);
 
-    let filteredCommands = $derived(
-        commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())),
-    );
+let filteredCommands = $derived(
+    commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())),
+);
 
-    $effect(() => {
-        if (isOpen) {
-            query = '';
-            selectedIndex = 0;
-            tick().then(() => inputRef?.focus());
-        }
-    });
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % filteredCommands.length;
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            execute(filteredCommands[selectedIndex]);
-        }
+$effect(() => {
+    if (isOpen) {
+        query = '';
+        selectedIndex = 0;
+        tick().then(() => inputRef?.focus());
     }
+});
 
-    function execute(command: Command) {
-        if (!command) return;
-        command.action();
-        close();
+function _handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % filteredCommands.length;
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        execute(filteredCommands[selectedIndex]);
     }
+}
 
-    function close() {
-        isOpen = false;
-        if (onClose) onClose();
-    }
+function execute(command: Command) {
+    if (!command) return;
+    command.action();
+    close();
+}
+
+function close() {
+    isOpen = false;
+    if (onClose) onClose();
+}
 </script>
 
 <Modal bind:isOpen {onClose}>

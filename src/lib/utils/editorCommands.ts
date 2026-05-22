@@ -3,8 +3,8 @@
  * Provides global access to dispatch commands to the active editor
  */
 
+import { redo, undo } from '@codemirror/commands';
 import type { EditorView } from '@codemirror/view';
-import { undo, redo } from '@codemirror/commands';
 
 // Store active editor references by tab ID
 const editorInstances = new Map<string, EditorView>();

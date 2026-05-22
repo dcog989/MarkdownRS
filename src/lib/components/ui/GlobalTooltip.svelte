@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import TooltipContainer from './TooltipContainer.svelte';
 </script>
 
 <TooltipContainer

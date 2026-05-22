@@ -1,5 +1,5 @@
-import { showToast } from '$lib/stores/toastStore.svelte';
 import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
+import { showToast } from '$lib/stores/toastStore.svelte';
 
 export type ErrorContext =
     | 'Session:Save'
@@ -49,7 +49,7 @@ function safeStringify(obj: unknown): string {
     try {
         return JSON.stringify(obj, (_, value: unknown) => {
             if (typeof value === 'string' && value.length > 500) {
-                return value.substring(0, 500) + '... [truncated]';
+                return `${value.substring(0, 500)}... [truncated]`;
             }
             if (Array.isArray(value) && value.length > 20) {
                 return [...value.slice(0, 20), `... (${value.length - 20} more items)`];
@@ -138,39 +138,31 @@ export class AppError extends Error {
 
     private async logError(toDisk: boolean): Promise<void> {
         const timestamp = this.timestamp.toISOString();
-        const logMessage = `[${timestamp}] [${this.context}] ${this.message}`;
+        const _logMessage = `[${timestamp}] [${this.context}] ${this.message}`;
 
         switch (this.severity) {
             case 'critical':
             case 'error':
-                console.error(logMessage);
                 break;
             case 'warning':
-                console.warn(logMessage);
                 break;
             case 'info':
-                console.info(logMessage);
                 break;
         }
 
         if (this.additionalInfo) {
-            console.log('Additional Info:', safeStringify(this.additionalInfo));
         }
 
         if (this.stack) {
-            console.error('Stack:', this.stack);
         }
         if (this.originalError?.stack) {
-            console.error('Original Stack:', this.originalError.stack);
         }
 
         if (toDisk) {
             try {
                 const diskMessage = this.formatForDiskLog();
                 await logError(diskMessage);
-            } catch (e) {
-                console.error('Failed to write to disk log:', e);
-            }
+            } catch (_e) {}
         }
     }
 
@@ -271,20 +263,15 @@ export class AppError extends Error {
         options: ErrorOptions = {},
     ): Promise<void> {
         const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] [${context}] ${message}`;
-
-        console.warn(logMessage);
+        const _logMessage = `[${timestamp}] [${context}] ${message}`;
 
         if (options.additionalInfo) {
-            console.warn('Additional Info:', safeStringify(options.additionalInfo));
         }
 
         if (options.logToDisk !== false) {
             try {
                 await logWarn(`[${context}] ${message}`);
-            } catch (e) {
-                console.error('Failed to write warning to disk log:', e);
-            }
+            } catch (_e) {}
         }
 
         if (options.showToast) {
@@ -298,20 +285,15 @@ export class AppError extends Error {
         options: ErrorOptions = {},
     ): Promise<void> {
         const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] [${context}] ${message}`;
-
-        console.info(logMessage);
+        const _logMessage = `[${timestamp}] [${context}] ${message}`;
 
         if (options.additionalInfo) {
-            console.info('Additional Info:', safeStringify(options.additionalInfo));
         }
 
         if (options.logToDisk !== false) {
             try {
                 await logInfo(`[${context}] ${message}`);
-            } catch (e) {
-                console.error('Failed to write info to disk log:', e);
-            }
+            } catch (_e) {}
         }
 
         if (options.showToast) {

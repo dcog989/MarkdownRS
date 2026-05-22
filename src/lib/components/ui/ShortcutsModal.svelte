@@ -1,134 +1,129 @@
 <script lang="ts">
-    import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { saveSettings } from '$lib/utils/settings';
-    import { shortcutManager, type ShortcutDefinition } from '$lib/utils/shortcuts';
-    import { scrollIntoView } from '$lib/utils/modalUtils';
-    import { Keyboard, RotateCcw } from 'lucide-svelte';
-    import { SvelteMap } from 'svelte/reactivity';
-    import Modal from './Modal.svelte';
+import { SvelteMap } from 'svelte/reactivity';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { saveSettings } from '$lib/utils/settings';
+import { type ShortcutDefinition, shortcutManager } from '$lib/utils/shortcuts';
 
-    interface Props {
-        isOpen: boolean;
-        onClose: () => void;
-    }
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+}
 
-    let { isOpen = $bindable(false), onClose }: Props = $props();
+let { isOpen = $bindable(false), onClose }: Props = $props();
 
-    let searchQuery = $state('');
-    let searchInputEl = $state<HTMLInputElement>();
-    let selectedIndex = $state(0);
-    let recordingCommandId = $state<string | null>(null);
+let searchQuery = $state('');
+let _searchInputEl = $state<HTMLInputElement>();
+let selectedIndex = $state(0);
+let recordingCommandId = $state<string | null>(null);
 
-    $effect(() => {
-        if (isOpen) {
-            searchQuery = '';
-            selectedIndex = 0;
-            // Focus is handled automatically by the Modal component
-            // which focuses the first focusable element (the search input)
-        }
-    });
-
-    $effect(() => {
-        void searchQuery;
+$effect(() => {
+    if (isOpen) {
+        searchQuery = '';
         selectedIndex = 0;
-    });
-
-    function startRecording(commandId: string) {
-        recordingCommandId = commandId;
-        window.addEventListener('keydown', handleRecordKey, { capture: true });
+        // Focus is handled automatically by the Modal component
+        // which focuses the first focusable element (the search input)
     }
+});
 
-    function handleRecordKey(e: KeyboardEvent) {
-        if (!recordingCommandId) return;
-        e.preventDefault();
-        e.stopPropagation();
+$effect(() => {
+    void searchQuery;
+    selectedIndex = 0;
+});
 
-        if (e.key === 'Escape') {
-            stopRecording();
-            return;
-        }
+function startRecording(commandId: string) {
+    recordingCommandId = commandId;
+    window.addEventListener('keydown', handleRecordKey, { capture: true });
+}
 
-        // Don't record if only modifiers are pressed
-        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+function handleRecordKey(e: KeyboardEvent) {
+    if (!recordingCommandId) return;
+    e.preventDefault();
+    e.stopPropagation();
 
-        const parts: string[] = [];
-        if (e.ctrlKey) parts.push('ctrl');
-        if (e.altKey) parts.push('alt');
-        if (e.shiftKey) parts.push('shift');
-        if (e.metaKey) parts.push('meta');
-        parts.push(e.key.toLowerCase());
-
-        const keyStr = parts.join('+');
-
-        appContext.app.customShortcuts[recordingCommandId] = keyStr;
-        shortcutManager.setCustomMappings(appContext.app.customShortcuts);
-        saveSettings();
+    if (e.key === 'Escape') {
         stopRecording();
+        return;
     }
 
-    function stopRecording() {
-        recordingCommandId = null;
-        window.removeEventListener('keydown', handleRecordKey, { capture: true });
-    }
+    // Don't record if only modifiers are pressed
+    if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
 
-    function resetShortcut(commandId: string) {
-        delete appContext.app.customShortcuts[commandId];
-        shortcutManager.setCustomMappings(appContext.app.customShortcuts);
-        saveSettings();
-    }
+    const parts: string[] = [];
+    if (e.ctrlKey) parts.push('ctrl');
+    if (e.altKey) parts.push('alt');
+    if (e.shiftKey) parts.push('shift');
+    if (e.metaKey) parts.push('meta');
+    parts.push(e.key.toLowerCase());
 
-    const allShortcuts = $derived(shortcutManager.getDefinitions());
+    const keyStr = parts.join('+');
 
-    const filteredShortcuts = $derived(
-        allShortcuts.filter((def) => {
-            if (searchQuery.length < 1) return true;
-            const query = searchQuery.toLowerCase();
-            const descriptionMatch = def.description.toLowerCase().includes(query);
-            const categoryMatch = def.category.toLowerCase().includes(query);
-            const commandMatch = def.command.toLowerCase().includes(query);
-            const shortcutMatch = shortcutManager
-                .getShortcutDisplay(def.command)
-                .toLowerCase()
-                .includes(query);
-            return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
-        }),
-    );
+    appContext.app.customShortcuts[recordingCommandId] = keyStr;
+    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
+    saveSettings();
+    stopRecording();
+}
 
-    const categories = $derived.by(() => {
-        const map = new SvelteMap<string, ShortcutDefinition[]>();
-        filteredShortcuts.forEach((def) => {
-            if (!map.has(def.category)) map.set(def.category, []);
-            map.get(def.category)!.push(def);
-        });
-        return Array.from(map.entries());
+function stopRecording() {
+    recordingCommandId = null;
+    window.removeEventListener('keydown', handleRecordKey, { capture: true });
+}
+
+function _resetShortcut(commandId: string) {
+    delete appContext.app.customShortcuts[commandId];
+    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
+    saveSettings();
+}
+
+const allShortcuts = $derived(shortcutManager.getDefinitions());
+
+const filteredShortcuts = $derived(
+    allShortcuts.filter((def) => {
+        if (searchQuery.length < 1) return true;
+        const query = searchQuery.toLowerCase();
+        const descriptionMatch = def.description.toLowerCase().includes(query);
+        const categoryMatch = def.category.toLowerCase().includes(query);
+        const commandMatch = def.command.toLowerCase().includes(query);
+        const shortcutMatch = shortcutManager
+            .getShortcutDisplay(def.command)
+            .toLowerCase()
+            .includes(query);
+        return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
+    }),
+);
+
+const categories = $derived.by(() => {
+    const map = new SvelteMap<string, ShortcutDefinition[]>();
+    filteredShortcuts.forEach((def) => {
+        if (!map.has(def.category)) map.set(def.category, []);
+        map.get(def.category)?.push(def);
     });
+    return Array.from(map.entries());
+});
 
-    // Create a flat array for proper indexing with selectedIndex
-    const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
+// Create a flat array for proper indexing with selectedIndex
+const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
 
-    function handleKeydown(e: KeyboardEvent) {
-        // Only handle navigation keys - let all other keys (including typing) work normally
-        if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
-            return;
-        }
+function _handleKeydown(e: KeyboardEvent) {
+    // Only handle navigation keys - let all other keys (including typing) work normally
+    if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
+        return;
+    }
 
-        if (filteredShortcuts.length === 0) return;
+    if (filteredShortcuts.length === 0) return;
 
-        e.preventDefault();
+    e.preventDefault();
 
-        if (e.key === 'ArrowDown') {
-            selectedIndex = (selectedIndex + 1) % filteredShortcuts.length;
-        } else if (e.key === 'ArrowUp') {
-            selectedIndex =
-                (selectedIndex - 1 + filteredShortcuts.length) % filteredShortcuts.length;
-        } else if (e.key === 'Enter') {
-            const def = flatShortcuts[selectedIndex];
-            if (def) {
-                startRecording(def.command);
-            }
+    if (e.key === 'ArrowDown') {
+        selectedIndex = (selectedIndex + 1) % filteredShortcuts.length;
+    } else if (e.key === 'ArrowUp') {
+        selectedIndex = (selectedIndex - 1 + filteredShortcuts.length) % filteredShortcuts.length;
+    } else if (e.key === 'Enter') {
+        const def = flatShortcuts[selectedIndex];
+        if (def) {
+            startRecording(def.command);
         }
     }
+}
 </script>
 
 <Modal bind:isOpen {onClose}>

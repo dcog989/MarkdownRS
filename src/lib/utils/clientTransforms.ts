@@ -623,7 +623,7 @@ export function smartParagraphs(text: string): string {
 
     if (paragraphs.length === 1) {
         const mid = Math.ceil(sentences.length / 2);
-        return sentences.slice(0, mid).join(' ') + '\n\n' + sentences.slice(mid).join(' ');
+        return `${sentences.slice(0, mid).join(' ')}\n\n${sentences.slice(mid).join(' ')}`;
     }
 
     return paragraphs.map((p) => p.join(' ')).join('\n\n');

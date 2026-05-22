@@ -4,7 +4,6 @@
  */
 
 import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
 import { addTab, reopenLastClosed } from '$lib/stores/editorStore.svelte';
 import {
     openFind,
@@ -17,6 +16,7 @@ import {
     toggleTransform,
 } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { dispatchRedo, dispatchUndo } from '$lib/utils/editorCommands';
 import {
     openFile,
@@ -24,7 +24,7 @@ import {
     saveCurrentFile,
     saveCurrentFileAs,
 } from '$lib/utils/fileSystem';
-import { shortcutManager, type ShortcutDefinition } from '$lib/utils/shortcuts';
+import { type ShortcutDefinition, shortcutManager } from '$lib/utils/shortcuts';
 
 export function registerAllShortcuts() {
     const shortcuts: ShortcutDefinition[] = [

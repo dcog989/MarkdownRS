@@ -1,13 +1,13 @@
-import { appContext } from '$lib/stores/state.svelte.ts';
 import { RangeSetBuilder } from '@codemirror/state';
 import {
     Decoration,
-    ViewPlugin,
-    WidgetType,
     type DecorationSet,
     type EditorView,
+    ViewPlugin,
     type ViewUpdate,
+    WidgetType,
 } from '@codemirror/view';
+import { appContext } from '$lib/stores/state.svelte.ts';
 
 export class NewlineWidget extends WidgetType {
     toDOM() {

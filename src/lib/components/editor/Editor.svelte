@@ -1,216 +1,207 @@
 <script lang="ts">
-    import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
-    import { performTextOperation } from '$lib/components/editor/logic/operations';
-    import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-    import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
-    import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
-    import { updateMetrics, type EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-    import {
-        editorStore,
-        getHistoryState,
-        getLineChangeTracker,
-        getTransientState,
-        updateContent,
-        updateCursor,
-        updateHistoryState,
-        updateScroll,
-    } from '$lib/stores/editorStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { ScrollManager } from '$lib/utils/cmScroll';
-    import { CONFIG } from '$lib/utils/config';
-    import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
-    import { AppError } from '$lib/utils/errorHandling';
-    import { isMarkdownFile } from '$lib/utils/fileValidation';
-    import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
-    import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
-    import {
-        invalidateSpellcheckCache,
-        refreshSpellcheck,
-        spellCheckKeymap,
-        triggerImmediateLint,
-    } from '$lib/utils/spellcheckExtension.svelte.ts';
-    import type { EditorView as CM6EditorView } from '@codemirror/view';
-    import { readText } from '@tauri-apps/plugin-clipboard-manager';
-    import { onMount, tick, untrack } from 'svelte';
-    import EditorViewComponent from './EditorView.svelte';
+import type { EditorView as CM6EditorView } from '@codemirror/view';
+import { onMount, tick, untrack } from 'svelte';
+import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
+import { performTextOperation } from '$lib/components/editor/logic/operations';
+import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
+import {
+    editorStore,
+    getHistoryState,
+    getLineChangeTracker,
+    updateContent,
+    updateCursor,
+    updateHistoryState,
+    updateScroll,
+} from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { ScrollManager } from '$lib/utils/cmScroll';
+import { CONFIG } from '$lib/utils/config';
+import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
+import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
+import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
+import {
+    invalidateSpellcheckCache,
+    triggerImmediateLint,
+} from '$lib/utils/spellcheckExtension.svelte.ts';
 
-    let { tabId } = $props<{ tabId: string }>();
+let { tabId } = $props<{ tabId: string }>();
 
-    let cmView = $state<
-        CM6EditorView & { getHistoryState?: () => unknown; flushPendingContent?: () => void }
-    >();
-    let findReplacePanel = $state<{
-        setReplaceMode: (enable: boolean) => void;
-        focusInput: () => void;
-    } | null>(null);
-    let showContextMenu = $state(false);
-    let contextMenuX = $state(0);
-    let contextMenuY = $state(0);
-    let contextSelectedText = $state('');
-    let contextWordUnderCursor = $state('');
-    let contextWordFrom = $state(0);
-    let contextWordTo = $state(0);
+let cmView = $state<
+    CM6EditorView & { getHistoryState?: () => unknown; flushPendingContent?: () => void }
+>();
+let findReplacePanel = $state<{
+    setReplaceMode: (enable: boolean) => void;
+    focusInput: () => void;
+} | null>(null);
+let _showContextMenu = $state(false);
+let _contextMenuX = $state(0);
+let _contextMenuY = $state(0);
+let _contextSelectedText = $state('');
+let _contextWordUnderCursor = $state('');
+let _contextWordFrom = $state(0);
+let _contextWordTo = $state(0);
 
-    let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
-    let pendingTransform = $derived(editorStore.pendingTransform);
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
+let pendingTransform = $derived(editorStore.pendingTransform);
 
-    // Logic State
-    let scrollManager = new ScrollManager();
-    let previousTabId: string = '';
+// Logic State
+let scrollManager = new ScrollManager();
+let previousTabId: string = '';
 
-    // Initialize Helpers
-    const eventHandlers = createEditorEventHandlers(onContextMenu);
+// Initialize Helpers
+const _eventHandlers = createEditorEventHandlers(onContextMenu);
 
-    onMount(() => {
-        initSpellcheck();
+onMount(() => {
+    initSpellcheck();
 
-        // Register flush function for shutdown � must be inside onMount to guarantee cleanup pairing
-        if (!window._editorFlushFunctions) {
-            window._editorFlushFunctions = [];
+    // Register flush function for shutdown � must be inside onMount to guarantee cleanup pairing
+    if (!window._editorFlushFunctions) {
+        window._editorFlushFunctions = [];
+    }
+    const flushFn = () => {
+        if (cmView?.flushPendingContent) {
+            cmView.flushPendingContent();
         }
-        const flushFn = () => {
-            if (cmView?.flushPendingContent) {
-                cmView.flushPendingContent();
+    };
+    window._editorFlushFunctions.push(flushFn);
+
+    return () => {
+        // Cleanup: unregister editor instance and remove flush function when component is destroyed
+        unregisterEditorInstance(tabId);
+        if (flushFn && window._editorFlushFunctions) {
+            const index = window._editorFlushFunctions.indexOf(flushFn);
+            if (index > -1) {
+                window._editorFlushFunctions.splice(index, 1);
             }
-        };
-        window._editorFlushFunctions.push(flushFn);
-
-        return () => {
-            // Cleanup: unregister editor instance and remove flush function when component is destroyed
-            unregisterEditorInstance(tabId);
-            if (flushFn && window._editorFlushFunctions) {
-                const index = window._editorFlushFunctions.indexOf(flushFn);
-                if (index > -1) {
-                    window._editorFlushFunctions.splice(index, 1);
-                }
-            }
-        };
-    });
-
-    // Register/unregister editor instance when cmView changes
-    $effect(() => {
-        if (cmView) {
-            registerEditorInstance(tabId, cmView);
-        } else {
-            unregisterEditorInstance(tabId);
         }
-    });
+    };
+});
 
-    $effect(() => {
-        if (appContext.interface.showFind) {
-            tick().then(() => {
-                findReplacePanel?.setReplaceMode(appContext.interface.isReplaceMode);
-                findReplacePanel?.focusInput();
-            });
-        }
-    });
+// Register/unregister editor instance when cmView changes
+$effect(() => {
+    if (cmView) {
+        registerEditorInstance(tabId, cmView);
+    } else {
+        unregisterEditorInstance(tabId);
+    }
+});
 
-    $effect(() => {
-        if (cmView && searchState.findText) {
-            updateSearchEditor(cmView);
-        }
-    });
+$effect(() => {
+    if (appContext.interface.showFind) {
+        tick().then(() => {
+            findReplacePanel?.setReplaceMode(appContext.interface.isReplaceMode);
+            findReplacePanel?.focusInput();
+        });
+    }
+});
 
-    // Reactive Command Listener
-    $effect(() => {
-        if (pendingTransform && pendingTransform.tabId === tabId && cmView) {
-            const currentOp = pendingTransform.op;
-            // Consume the command immediately so it doesn't re-run on tab switches or remounts
-            editorStore.pendingTransform = null;
+$effect(() => {
+    if (cmView && searchState.findText) {
+        updateSearchEditor(cmView);
+    }
+});
 
-            untrack(() => {
-                performTextOperation(cmView!, currentOp, scrollManager);
-            });
-        }
-    });
-
-    // Tab Switch Flag Manager
-    $effect(() => {
-        const currentTabId = tabId;
+// Reactive Command Listener
+$effect(() => {
+    if (pendingTransform && pendingTransform.tabId === tabId && cmView) {
+        const currentOp = pendingTransform.op;
+        // Consume the command immediately so it doesn't re-run on tab switches or remounts
+        editorStore.pendingTransform = null;
 
         untrack(() => {
-            if (previousTabId && previousTabId !== currentTabId) {
-                // Set flag to prevent auto-format during tab switch
-                appContext.app.isTabSwitching = true;
-
-                // History state is saved by EditorView component during tab switch
-                // to ensure it happens at the correct point in the lifecycle
-
-                // Clear the flag after a short delay to allow tab switch to complete
-                setTimeout(() => {
-                    appContext.app.isTabSwitching = false;
-                }, CONFIG.UI_TIMING.MRU_POPUP_DELAY_MS);
-            }
-            previousTabId = currentTabId;
-        });
-    });
-
-    function onContextMenu(event: MouseEvent, view: CM6EditorView) {
-        event.preventDefault();
-        showContextMenu = false;
-        const selection = view.state.selection.main;
-        const selectedText = view.state.sliceDoc(selection.from, selection.to);
-        let word = '',
-            from = 0,
-            to = 0;
-        if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
-            const posResult = view.posAtCoords({ x: event.clientX, y: event.clientY });
-            const range = view.state.wordAt(posResult ?? selection.head);
-            if (range) {
-                from = range.from;
-                to = range.to;
-                word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, '');
-            }
-        }
-        contextSelectedText = selectedText;
-        contextWordUnderCursor = word;
-        contextWordFrom = from;
-        contextWordTo = to;
-        contextMenuX = event.clientX;
-        contextMenuY = event.clientY;
-        tick().then(() => {
-            showContextMenu = true;
+            performTextOperation(cmView!, currentOp, scrollManager);
         });
     }
+});
 
-    function handleContentChange(c: string, lineCount: number) {
-        updateContent(tabId, c, lineCount);
-    }
-    function handleMetricsChange(m: Partial<EditorMetrics>) {
-        updateMetrics(m);
-    }
-    function handleScrollChange(p: number, s: number, t: number) {
-        updateScroll(tabId, p, s, t, 'editor');
-    }
-    function handleSelectionChange(a: number, h: number) {
-        updateCursor(tabId, a, h);
-    }
-    function handleHistoryUpdate(state: unknown) {
-        updateHistoryState(tabId, state);
-    }
+// Tab Switch Flag Manager
+$effect(() => {
+    const currentTabId = tabId;
 
-    function handleDictionaryUpdate() {
-        if (cmView) {
-            invalidateSpellcheckCache();
-            triggerImmediateLint(cmView);
+    untrack(() => {
+        if (previousTabId && previousTabId !== currentTabId) {
+            // Set flag to prevent auto-format during tab switch
+            appContext.app.isTabSwitching = true;
+
+            // History state is saved by EditorView component during tab switch
+            // to ensure it happens at the correct point in the lifecycle
+
+            // Clear the flag after a short delay to allow tab switch to complete
+            setTimeout(() => {
+                appContext.app.isTabSwitching = false;
+            }, CONFIG.UI_TIMING.MRU_POPUP_DELAY_MS);
+        }
+        previousTabId = currentTabId;
+    });
+});
+
+function onContextMenu(event: MouseEvent, view: CM6EditorView) {
+    event.preventDefault();
+    _showContextMenu = false;
+    const selection = view.state.selection.main;
+    const selectedText = view.state.sliceDoc(selection.from, selection.to);
+    let word = '',
+        from = 0,
+        to = 0;
+    if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
+        const posResult = view.posAtCoords({ x: event.clientX, y: event.clientY });
+        const range = view.state.wordAt(posResult ?? selection.head);
+        if (range) {
+            from = range.from;
+            to = range.to;
+            word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, '');
         }
     }
+    _contextSelectedText = selectedText;
+    _contextWordUnderCursor = word;
+    _contextWordFrom = from;
+    _contextWordTo = to;
+    _contextMenuX = event.clientX;
+    _contextMenuY = event.clientY;
+    tick().then(() => {
+        _showContextMenu = true;
+    });
+}
 
-    let initialContent = $derived(activeTab?.content || '');
-    let filename = $derived.by(() => {
-        if (activeTab?.path) return activeTab.path;
-        return activeTab?.preferredExtension === 'txt' ? 'unsaved.txt' : 'unsaved.md';
-    });
-    let isMarkdown = $derived.by(() => {
-        if (activeTab?.preferredExtension) {
-            return activeTab.preferredExtension === 'md';
-        }
-        return isMarkdownFile(filename);
-    });
-    let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
-    let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
-    let lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
-    let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
+function _handleContentChange(c: string, lineCount: number) {
+    updateContent(tabId, c, lineCount);
+}
+function _handleMetricsChange(m: Partial<EditorMetrics>) {
+    updateMetrics(m);
+}
+function _handleScrollChange(p: number, s: number, t: number) {
+    updateScroll(tabId, p, s, t, 'editor');
+}
+function _handleSelectionChange(a: number, h: number) {
+    updateCursor(tabId, a, h);
+}
+function _handleHistoryUpdate(state: unknown) {
+    updateHistoryState(tabId, state);
+}
+
+function _handleDictionaryUpdate() {
+    if (cmView) {
+        invalidateSpellcheckCache();
+        triggerImmediateLint(cmView);
+    }
+}
+
+let _initialContent = $derived(activeTab?.content || '');
+let filename = $derived.by(() => {
+    if (activeTab?.path) return activeTab.path;
+    return activeTab?.preferredExtension === 'txt' ? 'unsaved.txt' : 'unsaved.md';
+});
+let _isMarkdown = $derived.by(() => {
+    if (activeTab?.preferredExtension) {
+        return activeTab.preferredExtension === 'md';
+    }
+    return isMarkdownFile(filename);
+});
+let _initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
+let _initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
+let _lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
+let _showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
 <div class="bg-bg-main relative h-full w-full overflow-hidden">

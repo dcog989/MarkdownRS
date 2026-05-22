@@ -16,8 +16,8 @@
  * - No deep proxy chains that would cause stack overflow
  */
 
-import { appState } from '$lib/stores/appState.svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { appState } from '$lib/stores/appState.svelte';
 import { callBackend } from './backend';
 
 export class SpellcheckManager {
@@ -55,8 +55,7 @@ export class SpellcheckManager {
                     undefined,
                     { ignore: true },
                 );
-            } catch (error) {
-                console.error('[Spellcheck] Initialization failed:', error);
+            } catch (_error) {
                 this.initPromise = null;
                 this.dictionaryLoaded = false;
                 return;
@@ -78,7 +77,6 @@ export class SpellcheckManager {
                     this.dictionaryLoaded = true;
                     return;
                 } else if (status === 'failed') {
-                    console.error('[Spellcheck] Backend initialization failed');
                     this.initPromise = null;
                     this.dictionaryLoaded = false;
                     return;
@@ -87,9 +85,6 @@ export class SpellcheckManager {
                 // Still loading, wait and retry
                 await new Promise((resolve) => setTimeout(resolve, pollInterval));
             }
-
-            // Timeout
-            console.error('[Spellcheck] Initialization timeout - dictionary never became ready');
             this.initPromise = null;
             this.dictionaryLoaded = false;
         })();

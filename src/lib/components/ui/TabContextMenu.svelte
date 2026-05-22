@@ -1,275 +1,236 @@
 <script lang="ts">
-    import { tooltip } from '$lib/actions/tooltip';
-    import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-    import Submenu from '$lib/components/ui/Submenu.svelte';
-    import { exportService } from '$lib/services/exportService';
-    import { sanitizePath } from '$lib/services/fileMetadata';
-    import {
-        addBookmark,
-        deleteBookmark,
-        getBookmarkByPath,
-        isBookmarked as isBookmarkedSelector,
-    } from '$lib/stores/bookmarkStore.svelte';
-    import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-    import {
-        pushToMru,
-        reorderTabs,
-        togglePin,
-        updateTabPath,
-        updateTabTitle,
-    } from '$lib/stores/editorStore.svelte';
-    import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte';
-    import { appContext } from '$lib/stores/state.svelte.ts';
-    import { shortcutManager } from '$lib/utils/shortcuts';
-    import { callBackend } from '$lib/utils/backend';
-    import {
-        requestCloseTab,
-        saveCurrentFile,
-        saveCurrentFileAs,
-        triggerReopenClosedTab,
-        withActiveTab,
-    } from '$lib/utils/fileSystem';
-    import {
-        ArrowLeft,
-        ArrowRight,
-        Bookmark,
-        BookmarkX,
-        Copy,
-        Download,
-        FileDown,
-        FilePen,
-        Files,
-        History,
-        Pin,
-        PinOff,
-        Save,
-        Trash2,
-        Undo2,
-        X,
-    } from 'lucide-svelte';
-    import { tick } from 'svelte';
+import { sanitizePath } from '$lib/services/fileMetadata';
+import {
+    addBookmark,
+    deleteBookmark,
+    getBookmarkByPath,
+    isBookmarked as isBookmarkedSelector,
+} from '$lib/stores/bookmarkStore.svelte';
+import { confirmDialog } from '$lib/stores/dialogStore.svelte';
+import { togglePin, updateTabPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { callBackend } from '$lib/utils/backend';
+import {
+    requestCloseTab,
+    saveCurrentFile,
+    saveCurrentFileAs,
+    withActiveTab,
+} from '$lib/utils/fileSystem';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
-    let { tabId, x, y, onClose } = $props<{
-        tabId: string;
-        x: number;
-        y: number;
-        onClose: () => void;
-    }>();
+let { tabId, x, y, onClose } = $props<{
+    tabId: string;
+    x: number;
+    y: number;
+    onClose: () => void;
+}>();
 
-    let activeSubmenu = $state<'close' | 'export' | 'restore' | null>(null);
+let _activeSubmenu = $state<'close' | 'export' | 'restore' | null>(null);
 
-    let tab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
-    let isPinned = $derived(tab?.isPinned || false);
-    let isBookmarked = $derived(tab?.path ? isBookmarkedSelector(tab.path) : false);
-    let tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === tabId));
+let tab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
+let _isPinned = $derived(tab?.isPinned || false);
+let isBookmarked = $derived(tab?.path ? isBookmarkedSelector(tab.path) : false);
+let tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === tabId));
 
-    let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== tabId));
-    let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== tabId));
-    let hasCloseableTabsToRight = $derived(
-        tabIndex < appContext.editor.tabs.length - 1 &&
-            appContext.editor.tabs.slice(tabIndex + 1).some((t) => !t.isPinned),
-    );
-    let hasCloseableTabsToLeft = $derived(
-        tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned),
-    );
-    let hasCloseableOtherTabs = $derived(
-        appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned),
-    );
+let _hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== tabId));
+let _hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== tabId));
+let _hasCloseableTabsToRight = $derived(
+    tabIndex < appContext.editor.tabs.length - 1 &&
+        appContext.editor.tabs.slice(tabIndex + 1).some((t) => !t.isPinned),
+);
+let _hasCloseableTabsToLeft = $derived(
+    tabIndex > 0 && appContext.editor.tabs.slice(0, tabIndex).some((t) => !t.isPinned),
+);
+let _hasCloseableOtherTabs = $derived(
+    appContext.editor.tabs.some((t) => t.id !== tabId && !t.isPinned),
+);
 
-    async function handleSave() {
-        await withActiveTab(tabId, saveCurrentFile);
-        onClose();
+async function _handleSave() {
+    await withActiveTab(tabId, saveCurrentFile);
+    onClose();
+}
+
+async function _handleSaveAs() {
+    await withActiveTab(tabId, saveCurrentFileAs);
+    onClose();
+}
+
+function _handlePin() {
+    if (!tab) return;
+    togglePin(tabId);
+    onClose();
+}
+
+async function _handleCloseMany(mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') {
+    let targets: typeof appContext.editor.tabs = [];
+
+    if (mode === 'right') targets = appContext.editor.tabs.slice(tabIndex + 1);
+    else if (mode === 'left') targets = appContext.editor.tabs.slice(0, tabIndex);
+    else if (mode === 'others') targets = appContext.editor.tabs.filter((t) => t.id !== tabId);
+    else if (mode === 'saved')
+        targets = appContext.editor.tabs.filter((t) => !t.isDirty && t.id !== tabId);
+    else if (mode === 'unsaved')
+        targets = appContext.editor.tabs.filter((t) => t.isDirty && t.id !== tabId);
+    else if (mode === 'all') targets = appContext.editor.tabs;
+
+    for (const t of targets.filter((t) => !t.isPinned)) {
+        await requestCloseTab(t.id);
     }
+    onClose();
+}
 
-    async function handleSaveAs() {
-        await withActiveTab(tabId, saveCurrentFileAs);
-        onClose();
-    }
+async function _handleRename() {
+    if (!tab) return;
 
-    function handlePin() {
-        if (!tab) return;
-        togglePin(tabId);
-        onClose();
-    }
-
-    async function handleCloseMany(
-        mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all',
-    ) {
-        let targets: typeof appContext.editor.tabs = [];
-
-        if (mode === 'right') targets = appContext.editor.tabs.slice(tabIndex + 1);
-        else if (mode === 'left') targets = appContext.editor.tabs.slice(0, tabIndex);
-        else if (mode === 'others') targets = appContext.editor.tabs.filter((t) => t.id !== tabId);
-        else if (mode === 'saved')
-            targets = appContext.editor.tabs.filter((t) => !t.isDirty && t.id !== tabId);
-        else if (mode === 'unsaved')
-            targets = appContext.editor.tabs.filter((t) => t.isDirty && t.id !== tabId);
-        else if (mode === 'all') targets = appContext.editor.tabs;
-
-        for (const t of targets.filter((t) => !t.isPinned)) {
-            await requestCloseTab(t.id);
+    // If tab has no path, just rename the tab title
+    if (!tab.path) {
+        const newTitle = prompt('Enter new title:', tab.customTitle || tab.title);
+        if (newTitle?.trim()) {
+            updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
         }
         onClose();
+        return;
     }
 
-    async function handleRename() {
-        if (!tab) return;
+    // If tab has a path, rename the actual file
+    const oldPath = tab.path; // Save the old path before any changes
+    const currentFileName = oldPath.split(/[\\/]/).pop() || '';
+    const currentBaseName = currentFileName.replace(/\.md$/, '');
+    const newFileName = prompt('Enter new file name (without .md):', currentBaseName);
 
-        // If tab has no path, just rename the tab title
-        if (!tab.path) {
-            const newTitle = prompt('Enter new title:', tab.customTitle || tab.title);
-            if (newTitle && newTitle.trim()) {
-                updateTabTitle(tabId, newTitle.trim(), newTitle.trim());
+    if (!newFileName?.trim() || newFileName.trim() === currentBaseName) {
+        onClose();
+        return;
+    }
+
+    const sanitizedName = newFileName.trim().replace(/[<>:"|?*]/g, '_');
+    const newPath = sanitizePath(oldPath.replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`));
+
+    try {
+        // Import services dynamically to avoid circular dependencies
+        const { fileWatcher } = await import('$lib/services/fileWatcher');
+        const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
+
+        // Unwatch the old path
+        fileWatcher.unwatch(oldPath);
+
+        // Rename the file on disk
+        await callBackend('rename_file', { oldPath, newPath }, 'File:Write');
+
+        // Invalidate metadata cache for both old and new paths
+        invalidateMetadataCache(oldPath);
+        invalidateMetadataCache(newPath);
+
+        // Update the tab with the new path and title
+        updateTabPath(tabId, newPath, `${sanitizedName}.md`);
+
+        // Watch the new path
+        await fileWatcher.watch(newPath);
+
+        // Update all other tabs with the same old path
+        for (const t of appContext.editor.tabs) {
+            if (t.id !== tabId && t.path === oldPath) {
+                updateTabPath(t.id, newPath, `${sanitizedName}.md`);
             }
-            onClose();
+        }
+
+        // If bookmarked, update the bookmark path
+        if (isBookmarked) {
+            const bookmark = getBookmarkByPath(oldPath);
+            if (bookmark) {
+                await deleteBookmark(bookmark.id);
+                await addBookmark(newPath, `${sanitizedName}.md`, bookmark.tags);
+            }
+        }
+    } catch (_err) {
+    } finally {
+        onClose();
+    }
+}
+
+async function _handleSendToRecycleBin() {
+    // Capture data while component is mounted
+    const targetPath = tab?.path;
+    const targetTitle = tab?.title;
+    const targetId = tabId;
+
+    if (!targetPath) return;
+
+    // Close the menu immediately so it doesn't obscure the modal
+    onClose();
+
+    if (!appContext.app.confirmationSuppressed) {
+        const result = await confirmDialog({
+            title: 'Delete File',
+            message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,
+            discardLabel: 'Delete',
+            saveLabel: undefined,
+        });
+
+        if (result !== 'discard') {
             return;
         }
-
-        // If tab has a path, rename the actual file
-        const oldPath = tab.path; // Save the old path before any changes
-        const currentFileName = oldPath.split(/[\\/]/).pop() || '';
-        const currentBaseName = currentFileName.replace(/\.md$/, '');
-        const newFileName = prompt('Enter new file name (without .md):', currentBaseName);
-
-        if (!newFileName || !newFileName.trim() || newFileName.trim() === currentBaseName) {
-            onClose();
-            return;
-        }
-
-        const sanitizedName = newFileName.trim().replace(/[<>:"|?*]/g, '_');
-        const newPath = sanitizePath(oldPath.replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`));
-
-        try {
-            // Import services dynamically to avoid circular dependencies
-            const { fileWatcher } = await import('$lib/services/fileWatcher');
-            const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
-
-            // Unwatch the old path
-            fileWatcher.unwatch(oldPath);
-
-            // Rename the file on disk
-            await callBackend('rename_file', { oldPath, newPath }, 'File:Write');
-
-            // Invalidate metadata cache for both old and new paths
-            invalidateMetadataCache(oldPath);
-            invalidateMetadataCache(newPath);
-
-            // Update the tab with the new path and title
-            updateTabPath(tabId, newPath, `${sanitizedName}.md`);
-
-            // Watch the new path
-            await fileWatcher.watch(newPath);
-
-            // Update all other tabs with the same old path
-            for (const t of appContext.editor.tabs) {
-                if (t.id !== tabId && t.path === oldPath) {
-                    updateTabPath(t.id, newPath, `${sanitizedName}.md`);
-                }
-            }
-
-            // If bookmarked, update the bookmark path
-            if (isBookmarked) {
-                const bookmark = getBookmarkByPath(oldPath);
-                if (bookmark) {
-                    await deleteBookmark(bookmark.id);
-                    await addBookmark(newPath, `${sanitizedName}.md`, bookmark.tags);
-                }
-            }
-        } catch (err) {
-            console.error('Failed to rename file:', err);
-        } finally {
-            onClose();
-        }
     }
 
-    async function handleSendToRecycleBin() {
-        // Capture data while component is mounted
-        const targetPath = tab?.path;
-        const targetTitle = tab?.title;
-        const targetId = tabId;
+    try {
+        // Import services
+        const { fileWatcher } = await import('$lib/services/fileWatcher');
+        const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
 
-        if (!targetPath) return;
+        // Unwatch the file before deleting
+        fileWatcher.unwatch(targetPath);
 
-        // Close the menu immediately so it doesn't obscure the modal
+        // Delete the file
+        await callBackend('send_to_recycle_bin', { path: targetPath }, 'File:Write');
+
+        // Invalidate the metadata cache
+        invalidateMetadataCache(targetPath);
+
+        // Close the tab (force close to bypass pinned check)
+        await requestCloseTab(targetId, true);
+    } catch (_err) {
+        // If deletion failed, re-watch the file
+        const { fileWatcher } = await import('$lib/services/fileWatcher');
+        await fileWatcher.watch(targetPath);
+    }
+}
+
+async function _handleToggleBookmark() {
+    if (!tab?.path) return;
+    try {
+        if (isBookmarked) {
+            const bookmark = getBookmarkByPath(tab.path);
+            if (bookmark) await deleteBookmark(bookmark.id);
+        } else {
+            await addBookmark(tab.path, tab.title, []);
+        }
+    } finally {
         onClose();
+    }
+}
 
-        if (!appContext.app.confirmationSuppressed) {
-            const result = await confirmDialog({
-                title: 'Delete File',
-                message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,
-                discardLabel: 'Delete',
-                saveLabel: undefined,
-            });
+function _getHistoryTooltip(tab: { content: string; title: string; path?: string | null }): string {
+    const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
+    const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
 
-            if (result !== 'discard') {
-                return;
-            }
-        }
-
-        try {
-            // Import services
-            const { fileWatcher } = await import('$lib/services/fileWatcher');
-            const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
-
-            // Unwatch the file before deleting
-            fileWatcher.unwatch(targetPath);
-
-            // Delete the file
-            await callBackend('send_to_recycle_bin', { path: targetPath }, 'File:Write');
-
-            // Invalidate the metadata cache
-            invalidateMetadataCache(targetPath);
-
-            // Close the tab (force close to bypass pinned check)
-            await requestCloseTab(targetId, true);
-        } catch (err) {
-            console.error('Failed to delete file:', err);
-            // If deletion failed, re-watch the file
-            const { fileWatcher } = await import('$lib/services/fileWatcher');
-            await fileWatcher.watch(targetPath);
-        }
+    let title = tab.title;
+    if (tab.path) {
+        title += `\n${tab.path}`;
     }
 
-    async function handleToggleBookmark() {
-        if (!tab || !tab.path) return;
-        try {
-            if (isBookmarked) {
-                const bookmark = getBookmarkByPath(tab.path);
-                if (bookmark) await deleteBookmark(bookmark.id);
-            } else {
-                await addBookmark(tab.path, tab.title, []);
-            }
-        } finally {
-            onClose();
-        }
+    return `${title}\n\n-- Preview --\n${preview}`;
+}
+
+function _formatTitle(title: string): string {
+    if (title.length > 20) {
+        return `${title.substring(0, 20)}...`;
     }
+    return title;
+}
 
-    function getHistoryTooltip(tab: {
-        content: string;
-        title: string;
-        path?: string | null;
-    }): string {
-        const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
-        const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
-
-        let title = tab.title;
-        if (tab.path) {
-            title += `\n${tab.path}`;
-        }
-
-        return `${title}\n\n-- Preview --\n${preview}`;
-    }
-
-    function formatTitle(title: string): string {
-        if (title.length > 20) {
-            return title.substring(0, 20) + '...';
-        }
-        return title;
-    }
-
-    function sc(commandId: string): string {
-        return shortcutManager.getShortcutDisplay(commandId);
-    }
+function _sc(commandId: string): string {
+    return shortcutManager.getShortcutDisplay(commandId);
+}
 </script>
 
 <ContextMenu {x} {y} {onClose}>

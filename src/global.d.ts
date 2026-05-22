@@ -1,5 +1,5 @@
-import type { EditorView } from '@codemirror/view';
 import type { HistoryState } from '@codemirror/commands';
+import type { EditorView } from '@codemirror/view';
 
 export interface AppEditorView extends EditorView {
     _currentTabId?: string;

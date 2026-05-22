@@ -23,8 +23,7 @@ let packageJson;
 try {
     packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     currentVersion = packageJson.version;
-} catch (error) {
-    console.error('Failed to read package.json:', error);
+} catch (_error) {
     process.exit(1);
 }
 
@@ -35,32 +34,24 @@ let newVersion = versionArg || '';
 if (!newVersion) {
     const parts = currentVersion.split('.').map((n) => parseInt(n, 10));
 
-    if (parts.length !== 3 || parts.some(isNaN)) {
-        console.error(
-            `Error: Current version '${currentVersion}' is not in semver format (x.y.z). Cannot auto-increment.`,
-        );
+    if (parts.length !== 3 || parts.some(Number.isNaN)) {
         process.exit(1);
     }
 
     parts[2] += 1;
     newVersion = parts.join('.');
-    console.log(`Auto-incrementing patch: ${currentVersion} -> ${newVersion}`);
 } else {
-    console.log(`Manual override: ${currentVersion} -> ${newVersion}`);
 }
 
 if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
-    console.error(`Error: New version '${newVersion}' must be in format x.y.z`);
     process.exit(1);
 }
 
 // 3. Update package.json
 try {
     packageJson.version = newVersion;
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-    console.log('Updated package.json');
-} catch (error) {
-    console.error('Failed to update package.json:', error);
+    fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+} catch (_error) {
     process.exit(1);
 }
 
@@ -68,10 +59,8 @@ try {
 try {
     const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
     content.version = newVersion;
-    fs.writeFileSync(tauriConfPath, JSON.stringify(content, null, 2) + '\n');
-    console.log('Updated src-tauri/tauri.conf.json');
-} catch (error) {
-    console.error('Failed to update tauri.conf.json:', error);
+    fs.writeFileSync(tauriConfPath, `${JSON.stringify(content, null, 2)}\n`);
+} catch (_error) {
     process.exit(1);
 }
 
@@ -83,13 +72,10 @@ try {
     if (regex.test(content)) {
         content = content.replace(regex, `$1${newVersion}$3`);
         fs.writeFileSync(cargoTomlPath, content);
-        console.log('Updated src-tauri/Cargo.toml');
     } else {
-        console.error('❌ Could not find [package] version string in Cargo.toml');
         process.exit(1);
     }
-} catch (error) {
-    console.error('Failed to update Cargo.toml:', error);
+} catch (_error) {
     process.exit(1);
 }
 
@@ -101,21 +87,16 @@ try {
     if (regex.test(content)) {
         content = content.replace(regex, `$1${newVersion}`);
         fs.writeFileSync(pkgbuildPath, content);
-        console.log('Updated PKGBUILD');
     } else {
-        console.error('❌ Could not find pkgver in PKGBUILD');
         process.exit(1);
     }
-} catch (error) {
-    console.error('Failed to update PKGBUILD:', error);
+} catch (_error) {
     process.exit(1);
 }
 
 // 6. Git Integration
 if (shouldGit) {
     try {
-        console.log('\nProcessing Git operations...');
-
         const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath]
             .map((p) => `"${p}"`)
             .join(' ');
@@ -126,15 +107,6 @@ if (shouldGit) {
 
         const tagName = `v${newVersion}`;
         execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
-
-        console.log(`Git commit and tag '${tagName}' created successfully`);
-    } catch (error) {
-        console.error(
-            '\n❌ Git operations failed. The files were updated, but git actions were skipped.',
-        );
-        console.error(error instanceof Error ? error.message : String(error));
-    }
+    } catch (_error) {}
 } else {
-    console.log(`\nSuccessfully updated version to v${newVersion}`);
-    console.log('   (Run with --git to automatically commit and tag)');
 }
