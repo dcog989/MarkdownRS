@@ -8,7 +8,7 @@
     "build": "APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true tauri build",
     "check": "svelte-kit sync ; bun run lint:types ; bun run lint:frontend ; bun run lint:backend",
     "clean": "rm -rf build pkg .context .svelte-kit node_modules bun.lock dist releases src-tauri/gen src-tauri/target src-tauri/Cargo.lock",
-    "crates": "cd src-tauri && cargo update --verbose",
+    "crates": "cd src-tauri && cargo upgrade --verbose",
     "dev": "tauri dev",
     "format": "bunx biome format --write . && cd src-tauri && cargo fmt",
     "format:check": "bunx biome format . && cd src-tauri && cargo fmt -- --check",
@@ -60,7 +60,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.60.1",
+    "@sveltejs/kit": "^2.61.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tauri-apps/cli": "^2.11.2",
     "@testing-library/svelte": "^5.3.1",
