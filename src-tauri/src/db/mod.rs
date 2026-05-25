@@ -349,32 +349,19 @@ impl Database {
         Ok(())
     }
     pub fn load_session(&self) -> Result<SessionData> {
-        self.load_session_with_content(false)
-    }
-
-    pub fn load_session_with_content(&self, include_content: bool) -> Result<SessionData> {
         let conn = self.pool.get()?;
 
-        let query = if include_content {
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
-             FROM tabs ORDER BY sort_index ASC"
-        } else {
+        let mut active_stmt = conn.prepare(
             "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
-             FROM tabs ORDER BY sort_index ASC"
-        };
-
-        let mut active_stmt = conn.prepare(query)?;
+             FROM tabs ORDER BY sort_index ASC",
+        )?;
 
         let active_tabs = active_stmt
             .query_map([], |row| {
                 Ok(TabState {
                     id: row.get(0)?,
                     title: row.get(1)?,
-                    content: if include_content {
-                        Some(row.get::<_, Option<String>>(2)?.unwrap_or_default())
-                    } else {
-                        None
-                    },
+                    content: None,
                     is_dirty: row.get::<_, i32>(3)? != 0,
                     path: row.get(4)?,
                     scroll_percentage: row.get(5)?,
@@ -391,26 +378,17 @@ impl Database {
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        let closed_query = if include_content {
-            "SELECT id, title, content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
-             FROM closed_tabs ORDER BY sort_index ASC"
-        } else {
+        let mut closed_stmt = conn.prepare(
             "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
-             FROM closed_tabs ORDER BY sort_index ASC"
-        };
-
-        let mut closed_stmt = conn.prepare(closed_query)?;
+             FROM closed_tabs ORDER BY sort_index ASC",
+        )?;
 
         let closed_tabs = closed_stmt
             .query_map([], |row| {
                 Ok(TabState {
                     id: row.get(0)?,
                     title: row.get(1)?,
-                    content: if include_content {
-                        Some(row.get::<_, Option<String>>(2)?.unwrap_or_default())
-                    } else {
-                        None
-                    },
+                    content: None,
                     is_dirty: row.get::<_, i32>(3)? != 0,
                     path: row.get(4)?,
                     scroll_percentage: row.get(5)?,

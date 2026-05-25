@@ -38,7 +38,7 @@ import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { clearRendererCache } from '$lib/utils/markdown';
+import { clearRendererCache } from '$lib/utils/markdownRust';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 
@@ -404,7 +404,6 @@ export function closeTab(id: string) {
     removeLineChangeTracker(id);
 
     editorStore.sessionDirty = true;
-    clearRendererCache(id);
 }
 
 export function reopenLastClosed() {

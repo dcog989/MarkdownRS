@@ -45,6 +45,8 @@ function resolveStaticAssetPath(src: string): string {
     return `/${filename}`;
 }
 
+export function clearRendererCache(_documentId: string): void {}
+
 export async function renderMarkdown(
     content: string,
     gfm: boolean = true,

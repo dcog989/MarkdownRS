@@ -152,14 +152,6 @@ class Logger {
         error: (action: string, metadata?: LogMetadata) =>
             this.log('error', 'Spellcheck', action, metadata),
     };
-
-    startTimer(namespace: string, action: string): () => void {
-        const start = performance.now();
-        return (metadata?: LogMetadata) => {
-            const duration = (performance.now() - start).toFixed(2);
-            this.log('info', namespace, action, { ...metadata, duration: `${duration}ms` });
-        };
-    }
 }
 
 export const logger = new Logger();

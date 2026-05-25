@@ -1,4 +1,4 @@
-import { error as logError, info as logInfo, warn as logWarn } from '@tauri-apps/plugin-log';
+import { error as logError } from '@tauri-apps/plugin-log';
 import { showToast } from '$lib/stores/toastStore.svelte';
 
 export type ErrorContext =
@@ -257,50 +257,6 @@ export class AppError extends Error {
         }
     }
 
-    static async warn(
-        context: ErrorContext,
-        message: string,
-        options: ErrorOptions = {},
-    ): Promise<void> {
-        const timestamp = new Date().toISOString();
-        const _logMessage = `[${timestamp}] [${context}] ${message}`;
-
-        if (options.additionalInfo) {
-        }
-
-        if (options.logToDisk !== false) {
-            try {
-                await logWarn(`[${context}] ${message}`);
-            } catch (_e) {}
-        }
-
-        if (options.showToast) {
-            showToast('warning', options.userMessage || message, options.toastDuration || 3000);
-        }
-    }
-
-    static async info(
-        context: ErrorContext,
-        message: string,
-        options: ErrorOptions = {},
-    ): Promise<void> {
-        const timestamp = new Date().toISOString();
-        const _logMessage = `[${timestamp}] [${context}] ${message}`;
-
-        if (options.additionalInfo) {
-        }
-
-        if (options.logToDisk !== false) {
-            try {
-                await logInfo(`[${context}] ${message}`);
-            } catch (_e) {}
-        }
-
-        if (options.showToast) {
-            showToast('info', options.userMessage || message, options.toastDuration || 2000);
-        }
-    }
-
     static toUserMessage(error: unknown): string {
         if (error instanceof AppError) {
             return error.getUserFriendlyMessage();
@@ -310,41 +266,4 @@ export class AppError extends Error {
         }
         return String(error);
     }
-}
-
-export function withErrorBoundary<T extends unknown[], R>(
-    fn: (...args: T) => Promise<R>,
-    context: ErrorContext,
-    options: ErrorOptions = {},
-): (...args: T) => Promise<R | null> {
-    return async (...args: T): Promise<R | null> => {
-        try {
-            return await fn(...args);
-        } catch (error) {
-            AppError.handle(context, error, options);
-            return null;
-        }
-    };
-}
-
-export function withErrorBoundarySync<T extends unknown[], R>(
-    fn: (...args: T) => R,
-    context: ErrorContext,
-    options: ErrorOptions = {},
-): (...args: T) => R | null {
-    return (...args: T): R | null => {
-        try {
-            return fn(...args);
-        } catch (error) {
-            AppError.handle(context, error, options);
-            return null;
-        }
-    };
-}
-
-export function handleFileSystemError(err: unknown, path?: string): void {
-    AppError.handle('File:Read', err, {
-        showToast: true,
-        additionalInfo: path ? { path } : undefined,
-    });
 }
