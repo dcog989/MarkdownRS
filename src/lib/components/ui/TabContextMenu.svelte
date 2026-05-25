@@ -44,6 +44,7 @@ import {
     requestCloseTab,
     saveCurrentFile,
     saveCurrentFileAs,
+    triggerReopenClosedTab,
     withActiveTab,
 } from '$lib/utils/fileSystem';
 import { shortcutManager } from '$lib/utils/shortcuts';

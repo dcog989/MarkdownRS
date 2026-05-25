@@ -193,6 +193,11 @@ function handleOp(type: OperationId | undefined) {
     }
 }
 
+function closeMenuAndReset() {
+    activeSubmenu = null;
+    onClose();
+}
+
 async function handleSendToBrowser() {
     const text = selectedText.trim();
     if (!text) return;
@@ -208,8 +213,6 @@ async function handleSendToBrowser() {
         await openUrl(searchUrl);
     }
     closeMenuAndReset();
-    isLoadingSuggestions = false;
-    suggestions = [];
 }
 </script>
 
