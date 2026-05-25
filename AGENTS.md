@@ -7,7 +7,7 @@ Tauri + Svelte 5 + Rust desktop Markdown editor focused on performance and clean
 - **Tauri** (v2) — Desktop framework
 - **Rust** (edition 2024) — Backend logic, Markdown processing, file I/O
 - **Svelte 5** (runes, `.svelte.ts`) — Frontend
-- **TypeScript** — Type-safe frontend code
+- **TypeScript 6** — Type-safe frontend code
 - **CodeMirror 6** — Code editor
 - **rusqlite** (SQLite) — Metadata/bookmarks
 

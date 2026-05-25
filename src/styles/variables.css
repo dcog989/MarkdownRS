@@ -142,6 +142,8 @@
     --preview-border-quote: var(--quote-fg);
     --preview-bg-pre: var(--pre-bg);
     --preview-fg-pre: var(--pre-fg);
+    --preview-border-primary: var(--border-primary);
+    --preview-surface-2: var(--surface-2);
 }
 
 /* Light Theme - Layer 3: Theme-specific overrides */
@@ -153,21 +155,22 @@
     --surface-gutter: oklch(0.94 0 0); /* Editor gutters */
     --surface-preview: oklch(1 0 0); /* Preview pane */
     --surface-input: oklch(1 0 0); /* Form inputs */
-    --surface-hover: oklch(0.92 0 0); /* Hover states */
-    --surface-active: oklch(0.88 0 0); /* Active/selected states */
-    --surface-backdrop: oklch(100% 0 270 / 0.4); /* Modal overlays */
+    --surface-hover: oklch(0.88 0 0); /* Hover states */
+    --surface-active: oklch(0.84 0 0); /* Active/selected states */
+    --surface-backdrop: oklch(0 0 0 / 0.3); /* Modal overlays */
     --surface-row: oklch(0.97 0 0); /* Alternating row background */
 
     /* Text System - Light Theme */
-    --text-primary: oklch(0.2 0 0); /* Main text content */
-    --text-secondary: oklch(0.4 0 0); /* Secondary/muted text */
-    --text-tertiary: oklch(0.5 0 0); /* Very muted text */
+    --text-primary: oklch(0.15 0 0); /* Main text content */
+    --text-secondary: oklch(0.38 0 0); /* Secondary/muted text */
+    --text-tertiary: oklch(0.55 0 0); /* Very muted text */
     --text-inverse: oklch(1 0 0); /* Text on dark backgrounds */
     --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
     /* Border System - Light Theme */
-    --border-primary: oklch(0.9 0 0); /* Main borders */
-    --border-secondary: oklch(0.8 0 0); /* Lighter borders */
+    --border-primary: oklch(0.82 0 0); /* Main borders */
+    --border-secondary: oklch(0.72 0 0); /* Lighter borders */
+    --border-focus: oklch(0.45 0 0); /* Focus states */
 
     /* Accent System - Light Theme */
     --accent-primary: oklch(from var(--color-brand-accent) 0.4 c h);
@@ -177,30 +180,68 @@
     --accent-link-hover: oklch(from var(--color-brand-link) 0.4 c h);
     --accent-url: oklch(from var(--color-brand-url) 0.5 c h);
     --accent-url-hover: oklch(from var(--color-brand-url) 0.4 c h);
-    --accent-filepath: oklch(from var(--color-brand-filepath) 0.5 c h);
-    --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.4 c h);
+    --accent-filepath: oklch(from var(--color-brand-filepath) 0.45 c h);
+    --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.38 c h);
 
     /* Functional System - Light Theme */
-    --danger-text: oklch(0.5 0.2 25);
+    --danger: oklch(0.5 0.22 25);
+    --danger-hover: oklch(0.44 0.25 25);
+    --danger-text: oklch(0.45 0.2 25);
+    --success: oklch(0.45 0.15 150);
+    --success-hover: oklch(0.4 0.18 150);
     --highlight-line: oklch(0.4 0.15 140);
-    --selection-bg: oklch(57.762% 0.163 309.273 / 0.66);
-    --selection-match-bg: oklch(0.72 0.18 55 / 0.5);
-    --active-line-bg: oklch(0 0 0 / 0.05);
+    --selection-bg: oklch(57.762% 0.163 309.273 / 0.35);
+    --selection-match-bg: oklch(0.72 0.18 55 / 0.45);
+    --active-line-bg: oklch(0 0 0 / 0.04);
+    --dirty-indicator: #2e7d32;
+    --color-status-bar-bg: var(--accent-primary);
+    --color-status-bar-fg: var(--text-inverse);
 
     /* Editor & Content Colors - Light Theme */
     --code-bg: oklch(0.76 0.14 70 / 0.15);
-    --code-fg: #f9a825;
+    --code-fg: #b45309;
     --quote-bg: oklch(0.47 0.14 310 / 0.05);
     --quote-fg: #7b1fa2;
     --highlight-bg: #ffe47c;
     --hr-color: oklch(0.5 0 0);
-    --pre-bg: #f5f5f5;
-    --pre-fg: #000000;
+    --pre-bg: #f0f0f0;
+    --pre-fg: #1a1a1a;
 
     /* Syntax Colors - Light Theme */
-    --syntax-heading: #d32f2f;
-    --syntax-keyword: #7b1fa2;
-    --syntax-atom: #f57c00;
-    --syntax-string: #388e3c;
-    --syntax-comment: #757575;
+    --syntax-heading: #c62828;
+    --syntax-keyword: #6a1b9a;
+    --syntax-atom: #e65100;
+    --syntax-string: #2e7d32;
+    --syntax-comment: #6b7280;
+
+    /* Preview - Light Theme (mirrors default-light content theme) */
+    --preview-fg-body: #1f2937;
+    --preview-fg-heading: #c62828;
+    --preview-fg-link: #1565c0;
+    --preview-fg-code: #b45309;
+    --preview-bg-code: oklch(0.76 0.14 70 / 0.15);
+    --preview-fg-quote: #6b7280;
+    --preview-bg-quote: oklch(0.47 0.14 310 / 0.05);
+    --preview-border-quote: #7b1fa2;
+    --preview-bg-pre: #f0f0f0;
+    --preview-fg-pre: #1a1a1a;
+    --preview-border-primary: oklch(0.82 0 0);
+    --preview-surface-2: oklch(0.95 0 0);
+}
+
+/* Content Theme - Layer 4: Overrides for light content theme (independent of app theme) */
+[data-content-theme="default-light"] {
+    --surface-preview: oklch(1 0 0);
+    --preview-fg-body: #374151;
+    --preview-fg-heading: #d32f2f;
+    --preview-fg-link: #1976d2;
+    --preview-fg-code: #f9a825;
+    --preview-bg-code: oklch(0.76 0.14 70 / 0.15);
+    --preview-fg-quote: #757575;
+    --preview-bg-quote: oklch(0.47 0.14 310 / 0.05);
+    --preview-border-quote: #7b1fa2;
+    --preview-bg-pre: #f5f5f5;
+    --preview-fg-pre: #000000;
+    --preview-border-primary: oklch(0.9 0 0);
+    --preview-surface-2: oklch(0.95 0 0);
 }

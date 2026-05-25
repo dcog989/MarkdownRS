@@ -229,9 +229,8 @@ onDestroy(() => {
     window.removeEventListener('mousemove', handleResize);
     window.removeEventListener('mouseup', stopResize);
 
-    // Only trigger cleanup saves if we are NOT in the process of unloading via browser event
-    // This prevents double-saving and race conditions during app exit
-    if (!isUnloading) {
+    // Only trigger cleanup saves if initialization succeeded and we are NOT unloading
+    if (isInitialized && !initError && !isUnloading) {
         persistSessionDebounced.clear();
         persistSession();
         saveSettings();

@@ -13,7 +13,7 @@ import {
     highlightWhitespace,
     type KeyBinding,
 } from '@codemirror/view';
-import { onDestroy, onMount, untrack } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import {
     createDoubleClickHandler,
     createWrapExtension,
@@ -143,6 +143,7 @@ let prevIndent = appContext.app.defaultIndent;
 let prevShowWhitespace = appContext.app.showWhitespace;
 let prevEventHandlers = untrack(() => eventHandlers);
 let prevLineChangeTracker = untrack(() => lineChangeTracker);
+let prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
 
 const markdownExtensions = [
     markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -242,7 +243,11 @@ $effect(() => {
 });
 
 $effect(() => {
-    if (view) {
+    if (
+        view &&
+        appContext.app.doubleClickSelectsTrailingSpace !== prevDoubleClickSelectsTrailingSpace
+    ) {
+        prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
         view.dispatch({ effects: doubleClickComp.reconfigure(createDoubleClickHandler()) });
     }
 });
@@ -731,10 +736,6 @@ onMount(() => {
         }
         if (v) v.destroy();
     };
-});
-
-onDestroy(() => {
-    if (view) view.destroy();
 });
 </script>
 

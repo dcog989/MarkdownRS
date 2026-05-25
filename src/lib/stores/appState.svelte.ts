@@ -64,6 +64,10 @@ export function setTheme(newTheme: 'dark' | 'light') {
     appState.activeTheme = newTheme === 'dark' ? 'default-dark' : 'default-light';
 }
 
+export function syncThemeFromActiveTheme() {
+    appState.theme = appState.activeTheme.includes('light') ? 'light' : 'dark';
+}
+
 export function toggleOrientation() {
     appState.splitOrientation =
         appState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';

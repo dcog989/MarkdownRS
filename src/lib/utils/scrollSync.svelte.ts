@@ -76,6 +76,14 @@ export class ScrollSyncManager {
     private smoothScrollRAF: number | null = null;
     private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
 
+    private boundOnEditorScroll: (() => void) | null = null;
+    private boundOnPreviewScroll: (() => void) | null = null;
+
+    constructor() {
+        this.boundOnEditorScroll = this.onEditorScroll.bind(this);
+        this.boundOnPreviewScroll = this.onPreviewScroll.bind(this);
+    }
+
     private effectInitialized = false;
 
     private initEffects() {
@@ -179,13 +187,11 @@ export class ScrollSyncManager {
         if (this.editor === view) return;
 
         if (this.editor) {
-            this.editor.scrollDOM.removeEventListener('scroll', this.onEditorScroll);
+            this.editor.scrollDOM.removeEventListener('scroll', this.boundOnEditorScroll!);
         }
 
         this.editor = view;
-        // Bind to class instance
-        this.onEditorScroll = this.onEditorScroll.bind(this);
-        view.scrollDOM.addEventListener('scroll', this.onEditorScroll, { passive: true });
+        view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll!, { passive: true });
     }
 
     registerPreview(el: HTMLElement) {
@@ -195,12 +201,11 @@ export class ScrollSyncManager {
         if (this.preview === el) return;
 
         if (this.preview) {
-            this.preview.removeEventListener('scroll', this.onPreviewScroll);
+            this.preview.removeEventListener('scroll', this.boundOnPreviewScroll!);
         }
 
         this.preview = el;
-        this.onPreviewScroll = this.onPreviewScroll.bind(this);
-        el.addEventListener('scroll', this.onPreviewScroll, { passive: true });
+        el.addEventListener('scroll', this.boundOnPreviewScroll!, { passive: true });
     }
 
     updateMap() {

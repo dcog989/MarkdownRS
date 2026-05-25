@@ -18,6 +18,7 @@ import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
 import { Settings, Keyboard, Database } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import { toggleShortcuts, toggleData } from '$lib/stores/interfaceStore.svelte';
+import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
 
 interface Props {
     isOpen: boolean;
@@ -499,6 +500,8 @@ function updateSetting(key: string, value: unknown, type: string) {
 
         if (key === 'logLevel') {
             showToast('info', 'Restart required to apply log level changes');
+        } else if (key === 'activeTheme') {
+            syncThemeFromActiveTheme();
         } else if (
             key === 'languageDictionaries' ||
             key === 'technicalDictionaries' ||

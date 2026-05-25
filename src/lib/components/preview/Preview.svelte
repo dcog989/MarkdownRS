@@ -96,7 +96,7 @@ $effect(() => {
             }
         } catch (_err) {
             if (!currentController.signal.aborted) {
-                // Controller was aborted; no cleanup needed
+                console.error('Preview render error:', _err);
             }
         } finally {
             if (!currentController.signal.aborted) {

@@ -198,74 +198,17 @@ fn main() {
             println!("[INFO] Data Directory: {:?}", app_dir);
             println!("[INFO] Log Directory: {:?}", log_dir);
 
-            // Write reference theme files in background to avoid blocking startup
-            // These contain commented-out overrides so users know how to create custom themes.
-            // They do NOT contain active CSS to avoid conflicting with the app's internal styles (src/styles/variables.css).
+            // Write reference theme files in background to avoid blocking startup.
+            // These serve as templates users can copy to create custom themes.
             let themes_dir_clone = themes_dir.clone();
             tauri::async_runtime::spawn(async move {
                 let dark_theme_path = themes_dir_clone.join("default-dark.css");
-                let dark_theme_content = r#"/* MarkdownRS Default Dark Theme Reference
-
-   This file is a template. The actual default theme is built into the application.
-   To create a custom theme:
-   1. Copy this file to a new name (e.g. 'my-theme.css')
-   2. Uncomment the variables below and adjust values
-   3. Restart the app or select the new theme in Settings
-*/
-
-/*
-:root {
-    --color-bg-main: oklch(0.24 0 0);
-    --color-fg-default: oklch(0.85 0 0);
-
-    --color-selection-bg: oklch(0.67 0.18 305 / 0.35);
-
-    --syntax-heading: #e06c75;
-    --syntax-keyword: #c678dd;
-    --syntax-atom: #d19a66;
-    --syntax-string: #98c379;
-    --syntax-comment: #686868;
-
-    --preview-fg-body: #abb2bf;
-    --preview-fg-heading: #e06c75;
-    --preview-fg-link: #61afef;
-}
-*/
-"#;
-                if let Err(e) = tokio::fs::write(&dark_theme_path, dark_theme_content).await {
+                if let Err(e) = tokio::fs::write(&dark_theme_path, include_str!("../templates/default-dark.css")).await {
                     log::warn!("Failed to write dark theme reference: {}", e);
                 }
 
                 let light_theme_path = themes_dir_clone.join("default-light.css");
-                let light_theme_content = r#"/* MarkdownRS Default Light Theme Reference
-
-   This file is a template. The actual default theme is built into the application.
-   To create a custom theme:
-   1. Copy this file to a new name (e.g. 'my-theme.css')
-   2. Uncomment the variables below and adjust values
-   3. Restart the app or select the new theme in Settings
-*/
-
-/*
-:root {
-    --color-bg-main: oklch(0.98 0 0);
-    --color-fg-default: oklch(0.2 0 0);
-
-    --color-selection-bg: oklch(0.57 0.14 250 / 0.25);
-
-    --syntax-heading: #d32f2f;
-    --syntax-keyword: #7b1fa2;
-    --syntax-atom: #f57c00;
-    --syntax-string: #388e3c;
-    --syntax-comment: #757575;
-
-    --preview-fg-body: #374151;
-    --preview-fg-heading: #d32f2f;
-    --preview-fg-link: #1976d2;
-}
-*/
-"#;
-                if let Err(e) = tokio::fs::write(&light_theme_path, light_theme_content).await {
+                if let Err(e) = tokio::fs::write(&light_theme_path, include_str!("../templates/default-light.css")).await {
                     log::warn!("Failed to write light theme reference: {}", e);
                 }
             });
@@ -377,21 +320,21 @@ fn main() {
                 let window_clone = window.clone();
 
                 tauri::async_runtime::spawn(async move {
-                    std::thread::sleep(std::time::Duration::from_millis(150));
+                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                     let _ = window_clone.show();
-                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
                     let _ = window_clone.set_focus();
 
                     // Give the frontend time to initialize before sending the file path
-                    std::thread::sleep(std::time::Duration::from_millis(200));
+                    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
                     log::info!("Opening file from initial launch: {}", file_path);
                     let _ = window_clone.emit("open-file-from-args", &file_path);
                 });
             } else {
                 tauri::async_runtime::spawn(async move {
-                    std::thread::sleep(std::time::Duration::from_millis(150));
+                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                     let _ = window.show();
-                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
                     let _ = window.set_focus();
                 });
             }

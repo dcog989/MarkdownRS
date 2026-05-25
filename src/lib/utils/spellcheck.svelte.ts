@@ -20,6 +20,9 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { appState } from '$lib/stores/appState.svelte';
 import { callBackend } from './backend';
 
+const MAX_SUGGESTION_CACHE_SIZE = 200;
+const MAX_MISSPELLED_CACHE_SIZE = 200;
+
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
     misspelledCache = $state(new SvelteSet<string>());
@@ -103,6 +106,18 @@ export class SpellcheckManager {
         return !this.misspelledCache.has(w);
     }
 
+    private evictSuggestionCache() {
+        if (this.suggestionCache.size > MAX_SUGGESTION_CACHE_SIZE) {
+            this.suggestionCache.clear();
+        }
+    }
+
+    private evictMisspelledCache() {
+        if (this.misspelledCache.size > MAX_MISSPELLED_CACHE_SIZE) {
+            this.misspelledCache.clear();
+        }
+    }
+
     async prefetchSuggestions(word: string): Promise<void> {
         const w = word.trim();
         if (!w || !this.dictionaryLoaded) return;
@@ -122,7 +137,10 @@ export class SpellcheckManager {
                 undefined,
                 { ignore: true },
             );
-            if (suggestions) this.suggestionCache.set(w, suggestions);
+            if (suggestions) {
+                this.suggestionCache.set(w, suggestions);
+                this.evictSuggestionCache();
+            }
         } finally {
             this.pendingFetches.delete(w);
         }
@@ -150,6 +168,7 @@ export class SpellcheckManager {
         );
         if (suggestions) {
             this.suggestionCache.set(word, suggestions);
+            this.evictSuggestionCache();
             return suggestions;
         }
         return [];

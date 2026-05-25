@@ -397,6 +397,10 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
         return false;
     } catch (_e) {
         if (pendingSavePath) activeSaves.delete(pendingSavePath);
+        AppError.handle('File:Write', _e, {
+            showToast: true,
+            additionalInfo: { path: tab?.path },
+        });
         return false;
     }
 }

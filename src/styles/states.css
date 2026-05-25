@@ -1,14 +1,14 @@
 /* Hover States */
 .hover\:bg-white\/5:hover {
-    background-color: oklch(1 0 0 / 0.05);
+    background-color: oklch(from var(--text-primary) l c h / 0.05);
 }
 
 .hover\:bg-white\/10:hover {
-    background-color: oklch(1 0 0 / 0.1);
+    background-color: oklch(from var(--text-primary) l c h / 0.08);
 }
 
 .hover\:bg-white\/20:hover {
-    background-color: oklch(1 0 0 / 0.2);
+    background-color: oklch(from var(--text-primary) l c h / 0.12);
 }
 
 .hover\:bg-accent-primary:hover {

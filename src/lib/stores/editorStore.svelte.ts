@@ -498,8 +498,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
 
     const now = getCurrentTimestamp();
 
-    // Fast approximation: char count ≈ byte count for typical Markdown (ASCII-heavy)
-    const sizeBytes = content.length;
+    const sizeBytes = new TextEncoder().encode(content).length;
 
     // DEBOUNCED metrics - expensive, calculated after delay
     scheduleWordCountUpdate(id, content, sizeBytes);

@@ -5,6 +5,7 @@
 */
 
 :root {
+    --surface-preview: oklch(1 0 0);
     --preview-fg-body: #374151;
     --preview-fg-heading: #d32f2f;
     --preview-fg-link: #1976d2;
@@ -15,6 +16,8 @@
     --preview-border-quote: #7b1fa2;
     --preview-bg-pre: #f5f5f5;
     --preview-fg-pre: #000000;
+    --preview-border-primary: oklch(0.9 0 0);
+    --preview-surface-2: oklch(0.95 0 0);
 }
 
 /* Editor Colors */

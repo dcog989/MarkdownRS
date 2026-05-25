@@ -78,6 +78,9 @@ export async function initSettings() {
         });
     }
 
+    // Keep theme in sync with activeTheme from saved settings
+    appState.theme = appState.activeTheme.includes('light') ? 'light' : 'dark';
+
     lastSavedState = JSON.stringify(getSettingsObject());
 }
 

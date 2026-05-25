@@ -3,7 +3,7 @@
 .markdown-body,
 #active-preview-container,
 #export-container {
-    color: var(--text-primary);
+    color: var(--preview-fg-body);
     font-size: 1rem;
     line-height: 1.6;
     max-width: 80ch;
@@ -38,7 +38,7 @@
 .markdown-body h6,
 #active-preview-container h6,
 #export-container h6 {
-    color: var(--accent-secondary);
+    color: var(--preview-fg-heading);
     font-weight: bold;
     margin-top: 1.2em;
     margin-bottom: 0.4em;
@@ -49,7 +49,7 @@
 #active-preview-container h1,
 #export-container h1 {
     font-size: 2.2em;
-    border-bottom: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--preview-border-primary);
     margin: 0 0 0.4em;
     padding: 0 0 0.4em;
 }
@@ -58,7 +58,7 @@
 #active-preview-container h2,
 #export-container h2 {
     font-size: 1.8em;
-    border-bottom: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--preview-border-primary);
     padding-bottom: 0.4em;
 }
 
@@ -78,7 +78,7 @@
 .markdown-body a,
 #active-preview-container a,
 #export-container a {
-    color: var(--accent-link);
+    color: var(--preview-fg-link);
     text-decoration: underline;
     cursor: pointer;
 }
@@ -112,15 +112,15 @@
 #active-preview-container strike,
 #export-container strike {
     text-decoration: line-through;
-    color: var(--text-secondary);
+    color: var(--preview-fg-quote);
 }
 
 /* Code */
 .markdown-body code,
 #active-preview-container code,
 #export-container code {
-    color: var(--code-fg);
-    background-color: var(--code-bg);
+    color: var(--preview-fg-code);
+    background-color: var(--preview-bg-code);
     padding: 0.2em 0.4em;
     border-radius: 4px;
     font-family:
@@ -132,8 +132,8 @@
 .markdown-body pre,
 #active-preview-container pre,
 #export-container pre {
-    background-color: var(--pre-bg);
-    color: var(--pre-fg);
+    background-color: var(--preview-bg-pre);
+    color: var(--preview-fg-pre);
     padding: 1em;
     border-radius: 4px;
     overflow-x: auto;
@@ -154,9 +154,9 @@
 .markdown-body blockquote,
 #active-preview-container blockquote,
 #export-container blockquote {
-    color: var(--text-secondary);
-    background-color: var(--quote-bg);
-    border-left: 4px solid var(--quote-fg);
+    color: var(--preview-fg-quote);
+    background-color: var(--preview-bg-quote);
+    border-left: 4px solid var(--preview-border-quote);
     padding: 0.5em 1em;
     margin: 1em 0;
     font-style: italic;
@@ -215,7 +215,7 @@
 .markdown-body td,
 #active-preview-container td,
 #export-container td {
-    border: 1px solid var(--border-primary);
+    border: 1px solid var(--preview-border-primary);
     padding: 0.5em;
     text-align: left;
 }
@@ -224,7 +224,7 @@
 #active-preview-container th,
 #export-container th {
     font-weight: bold;
-    background-color: var(--surface-2);
+    background-color: var(--preview-surface-2);
 }
 
 /* Media */
@@ -240,6 +240,6 @@
 #active-preview-container hr,
 #export-container hr {
     border: 0;
-    border-top: 1px solid var(--border-primary);
+    border-top: 1px solid var(--preview-border-primary);
     margin: 2em 0;
 }
