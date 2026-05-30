@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount, type Snippet } from 'svelte';
-import { asHTMLElement, queryHTMLElements } from '$lib/utils/dom';
+import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
 
 let { x, y, onClose, children } = $props<{
     x: number;
@@ -237,8 +237,9 @@ function handleBackdropContextMenu(e: MouseEvent) {
             if (!target) return;
             if (target.tagName === 'BUTTON' && !(target as HTMLButtonElement).disabled) {
                 isKeyboardNav = false;
-                if (document.activeElement && menuItems.includes(getActiveHTMLElement()!)) {
-                    getActiveHTMLElement()?.blur();
+                const activeEl = getActiveHTMLElement();
+                if (document.activeElement && activeEl && menuItems.includes(activeEl)) {
+                    activeEl.blur();
                 }
             }
         }}

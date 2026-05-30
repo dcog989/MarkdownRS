@@ -21,7 +21,6 @@ import { appState } from '$lib/stores/appState.svelte';
 import { callBackend } from './backend';
 
 const MAX_SUGGESTION_CACHE_SIZE = 200;
-const MAX_MISSPELLED_CACHE_SIZE = 200;
 
 export class SpellcheckManager {
     dictionaryLoaded = $state(false);
@@ -112,12 +111,6 @@ export class SpellcheckManager {
         }
     }
 
-    private evictMisspelledCache() {
-        if (this.misspelledCache.size > MAX_MISSPELLED_CACHE_SIZE) {
-            this.misspelledCache.clear();
-        }
-    }
-
     async prefetchSuggestions(word: string): Promise<void> {
         const w = word.trim();
         if (!w || !this.dictionaryLoaded) return;
@@ -154,7 +147,7 @@ export class SpellcheckManager {
         if (!this.dictionaryLoaded || !word) return [];
 
         if (this.suggestionCache.has(word)) {
-            return this.suggestionCache.get(word)!;
+            return this.suggestionCache.get(word) ?? [];
         }
 
         const suggestions = await callBackend(

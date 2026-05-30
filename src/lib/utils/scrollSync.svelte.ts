@@ -76,8 +76,8 @@ export class ScrollSyncManager {
     private smoothScrollRAF: number | null = null;
     private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
 
-    private boundOnEditorScroll: (() => void) | null = null;
-    private boundOnPreviewScroll: (() => void) | null = null;
+    private boundOnEditorScroll: () => void;
+    private boundOnPreviewScroll: () => void;
 
     constructor() {
         this.boundOnEditorScroll = this.onEditorScroll.bind(this);
@@ -187,11 +187,11 @@ export class ScrollSyncManager {
         if (this.editor === view) return;
 
         if (this.editor) {
-            this.editor.scrollDOM.removeEventListener('scroll', this.boundOnEditorScroll!);
+            this.editor.scrollDOM.removeEventListener('scroll', this.boundOnEditorScroll);
         }
 
         this.editor = view;
-        view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll!, { passive: true });
+        view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll, { passive: true });
     }
 
     registerPreview(el: HTMLElement) {
@@ -201,11 +201,11 @@ export class ScrollSyncManager {
         if (this.preview === el) return;
 
         if (this.preview) {
-            this.preview.removeEventListener('scroll', this.boundOnPreviewScroll!);
+            this.preview.removeEventListener('scroll', this.boundOnPreviewScroll);
         }
 
         this.preview = el;
-        el.addEventListener('scroll', this.boundOnPreviewScroll!, { passive: true });
+        el.addEventListener('scroll', this.boundOnPreviewScroll, { passive: true });
     }
 
     updateMap() {
@@ -472,6 +472,8 @@ export class ScrollSyncManager {
         target: HTMLElement,
         direction: 'editor-to-preview' | 'preview-to-editor',
     ) {
+        const editor = this.editor;
+        if (!editor) return;
         const scrollTop = source.scrollTop;
         const scrollHeight = source.scrollHeight;
         const clientHeight = source.clientHeight;
@@ -491,18 +493,18 @@ export class ScrollSyncManager {
 
         let targetY: number;
         if (direction === 'editor-to-preview') {
-            const lineBlock = this.editor?.lineBlockAtHeight(scrollTop);
-            const docLine = this.editor?.state.doc.lineAt(lineBlock.from);
+            const lineBlock = editor.lineBlockAtHeight(scrollTop);
+            const docLine = editor.state.doc.lineAt(lineBlock.from);
             const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
             const currentLine = docLine.number + fraction;
             targetY = this.interpolate(currentLine, 'line', 'y');
         } else {
             const targetLine = this.interpolate(scrollTop, 'y', 'line');
-            const docLines = this.editor?.state.doc.lines;
+            const docLines = editor.state.doc.lines;
             const safeLine = Math.max(1, Math.min(targetLine, docLines));
             const lineInt = Math.floor(safeLine);
             const lineFrac = safeLine - lineInt;
-            const lineInfo = this.editor?.lineBlockAt(this.editor?.state.doc.line(lineInt).from);
+            const lineInfo = editor.lineBlockAt(editor.state.doc.line(lineInt).from);
             targetY = lineInfo.top + lineInfo.height * lineFrac;
         }
 

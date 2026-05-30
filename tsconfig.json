@@ -15,5 +15,6 @@
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
-  }
+  },
+  "exclude": ["scripts", "src-tauri", "node_modules", "build", ".svelte-kit"]
 }

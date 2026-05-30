@@ -115,7 +115,7 @@ export class AppError extends Error {
             logToDisk = true,
         } = options;
 
-        this.logError(logToDisk).catch(console.error);
+        this.logError(logToDisk).catch((_err) => {});
 
         if (shouldShowToast) {
             const message = userMessage || this.getUserFriendlyMessage();
@@ -137,19 +137,6 @@ export class AppError extends Error {
     }
 
     private async logError(toDisk: boolean): Promise<void> {
-        const timestamp = this.timestamp.toISOString();
-        const _logMessage = `[${timestamp}] [${this.context}] ${this.message}`;
-
-        switch (this.severity) {
-            case 'critical':
-            case 'error':
-                break;
-            case 'warning':
-                break;
-            case 'info':
-                break;
-        }
-
         if (this.additionalInfo) {
         }
 

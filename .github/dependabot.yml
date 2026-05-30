@@ -16,13 +16,9 @@ updates:
         patterns:
           - 'svelte'
           - '@sveltejs/*'
-      eslint:
+      biome:
         patterns:
-          - 'eslint'
-          - '@eslint/*'
-          - 'typescript-eslint'
-          - 'eslint-plugin-*'
-          - 'eslint-config-*'
+          - '@biomejs/*'
 
   - package-ecosystem: 'cargo'
     directory: '/src-tauri'

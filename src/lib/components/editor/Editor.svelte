@@ -1,8 +1,13 @@
 <script lang="ts">
 import type { EditorView as CM6EditorView } from '@codemirror/view';
+import { readText } from '@tauri-apps/plugin-clipboard-manager';
 import { onMount, tick, untrack } from 'svelte';
 import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
+import EditorViewComponent from '$lib/components/editor/EditorView.svelte';
 import { performTextOperation } from '$lib/components/editor/logic/operations';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
+import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
 import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
 import {
     editorStore,
@@ -13,25 +18,21 @@ import {
     updateHistoryState,
     updateScroll,
 } from '$lib/stores/editorStore.svelte';
+import { getTransientState } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { ScrollManager } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
 import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
+import { AppError } from '$lib/utils/errorHandling';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
 import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
 import {
     invalidateSpellcheckCache,
+    refreshSpellcheck,
+    spellCheckKeymap,
     triggerImmediateLint,
 } from '$lib/utils/spellcheckExtension.svelte.ts';
-import EditorViewComponent from '$lib/components/editor/EditorView.svelte';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
-import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
-import { getTransientState } from '$lib/stores/editorStore.svelte.ts';
-import { spellCheckKeymap, refreshSpellcheck } from '$lib/utils/spellcheckExtension.svelte.ts';
-import { AppError } from '$lib/utils/errorHandling';
-import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
 let { tabId } = $props<{ tabId: string }>();
 
@@ -118,7 +119,8 @@ $effect(() => {
         editorStore.pendingTransform = null;
 
         untrack(() => {
-            performTextOperation(cmView!, currentOp, scrollManager);
+            if (!cmView) return;
+            performTextOperation(cmView, currentOp, scrollManager);
         });
     }
 });
@@ -284,9 +286,10 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
                         scrollIntoView: true,
                     });
                 } else if (text === null) {
-                    AppError.info('UI:DragDrop', 'Clipboard content is not text', {
+                    AppError.handle('UI:DragDrop', 'Clipboard content is not text', {
                         showToast: true,
                         userMessage: 'Clipboard does not contain valid text',
+                        severity: 'info',
                     });
                 }
             } catch (err) {

@@ -12,32 +12,46 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - run: bun install --frozen-lockfile
 
       - name: Sync SvelteKit
         run: bunx svelte-kit sync
 
-      - name: Type check (Svelte)
+      - name: Type check
         run: bunx svelte-check --tsconfig ./tsconfig.json
 
       - name: Lint frontend
-        run: bunx eslint .
+        run: bunx biome check .
+
+      - name: Check formatting
+        run: bunx biome format . && cd src-tauri && cargo fmt -- --check
 
       - name: Lint backend
         run: cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Check formatting
-        run: bunx prettier . --check && cd src-tauri && cargo fmt -- --check
 
       - name: Run tests
         run: bun run test

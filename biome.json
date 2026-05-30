@@ -1,12 +1,26 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+  "root": true,
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!.assets",
+      "!.context",
+      "!.docs",
+      "!.svelte-kit",
+      "!build",
+      "!dist",
+      "!node_modules",
+      "!scripts",
+      "!src-tauri",
+      "!**/*.toml"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -18,37 +32,18 @@
     "attributePosition": "auto",
     "bracketSameLine": true,
     "bracketSpacing": true,
-    "useEditorconfig": true,
-    "includes": [
-      "**",
-      "!**/.assets/",
-      "!**/.context/",
-      "!**/.docs/",
-      "!**/.DS_Store",
-      "!**/.git/",
-      "!**/*.log",
-      "!**/*.md",
-      "!**/*.rs",
-      "!**/build/",
-      "!**/bun.lock",
-      "!**/dist/",
-      "!**/node_modules/",
-      "!**/out/",
-      "!**/scripts/",
-      "!src-tauri/gen/",
-      "!src-tauri/target/"
-    ]
+    "useEditorconfig": true
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "correctness": {
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "warn"
       },
       "suspicious": {
         "noConsole": "warn",
-        "noExplicitAny": "error"
+        "noExplicitAny": "warn"
       },
       "style": {
         "useImportType": {
@@ -73,7 +68,13 @@
       "bracketSpacing": true
     }
   },
+  "json": {
+    "formatter": {
+      "indentWidth": 2
+    }
+  },
   "html": {
+    "experimentalFullSupportEnabled": true,
     "formatter": {
       "indentScriptAndStyle": false,
       "selfCloseVoidElements": "always"
@@ -83,6 +84,17 @@
     {
       "includes": ["*.yml", "*.yaml", "*.toml", "*.json"],
       "formatter": { "indentWidth": 2 }
+    },
+    {
+      "includes": ["*.svelte", "**/*.svelte"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {

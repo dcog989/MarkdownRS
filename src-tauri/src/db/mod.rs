@@ -1,10 +1,10 @@
 use anyhow::Result;
 use chrono::Local;
-use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TabState {
@@ -81,11 +81,9 @@ pub struct TabData {
     pub content: Option<String>,
 }
 
-pub type DbPool = r2d2::Pool<SqliteConnectionManager>;
-
 #[derive(Clone)]
 pub struct Database {
-    pool: DbPool,
+    conn: Arc<Mutex<Connection>>,
 }
 
 const MIGRATIONS: &[&str] = &[
@@ -162,28 +160,20 @@ impl Database {
     pub fn new(db_path: PathBuf) -> Result<Self> {
         log::info!("Initializing database at {:?}", db_path);
 
-        let manager = SqliteConnectionManager::file(&db_path).with_init(|conn| {
-            conn.execute_batch(
-                "PRAGMA journal_mode = WAL;
-                 PRAGMA synchronous = NORMAL;
-                 PRAGMA auto_vacuum = INCREMENTAL;
-                 PRAGMA foreign_keys = ON;
-                 PRAGMA busy_timeout = 5000;",
-            )?;
-            Ok(())
-        });
+        let mut conn = Connection::open(&db_path)?;
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = NORMAL;
+             PRAGMA auto_vacuum = INCREMENTAL;
+             PRAGMA foreign_keys = ON;
+             PRAGMA busy_timeout = 5000;",
+        )?;
 
-        let pool = r2d2::Pool::builder()
-            .max_size(3)
-            .min_idle(Some(1))
-            .connection_timeout(std::time::Duration::from_secs(5))
-            .build(manager)?;
-
-        let mut conn = pool.get()?;
         Self::setup_schema(&mut conn)?;
-        drop(conn);
 
-        Ok(Self { pool })
+        Ok(Self {
+            conn: Arc::new(Mutex::new(conn)),
+        })
     }
 
     fn setup_schema(conn: &mut Connection) -> Result<()> {
@@ -205,7 +195,7 @@ impl Database {
     }
 
     pub fn save_session(&self, active_tabs: &[TabState], closed_tabs: &[TabState]) -> Result<()> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.conn.lock().unwrap();
         let tx = conn.transaction()?;
 
         self.save_active_tabs(&tx, active_tabs)?;
@@ -349,7 +339,7 @@ impl Database {
         Ok(())
     }
     pub fn load_session(&self) -> Result<SessionData> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
 
         let mut active_stmt = conn.prepare(
             "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
@@ -412,7 +402,7 @@ impl Database {
     }
 
     pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let content = conn
             .query_row(
                 "SELECT content FROM tabs WHERE id = ?1
@@ -431,7 +421,7 @@ impl Database {
     }
 
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let tags_json = serde_json::to_string(&bookmark.tags)?;
         conn.execute(
             "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
@@ -455,7 +445,7 @@ impl Database {
     }
 
     pub fn get_all_bookmarks(&self) -> Result<Vec<Bookmark>> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC"
         )?;
@@ -478,13 +468,13 @@ impl Database {
     }
 
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
         Ok(())
     }
 
     pub fn update_bookmark_access_time(&self, id: &str, last_accessed: &str) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         conn.execute(
             "UPDATE bookmarks SET last_accessed = ?1 WHERE id = ?2",
             params![last_accessed, id],
@@ -493,7 +483,7 @@ impl Database {
     }
 
     pub fn seed_recent_files_from_history(&self) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let now = Local::now().to_rfc3339();
 
         // 1. Backfill from active tabs
@@ -521,7 +511,7 @@ impl Database {
     }
 
     pub fn add_recent_file(&self, path: &str, last_opened: &str) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
 
         // Insert or Update the recent file
         // The prune_recent_files trigger automatically handles cleanup
@@ -534,7 +524,7 @@ impl Database {
     }
 
     pub fn get_recent_files(&self) -> Result<Vec<String>> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT path FROM recent_files ORDER BY last_opened DESC")?;
         let files = stmt
             .query_map([], |row| row.get(0))?
@@ -543,19 +533,19 @@ impl Database {
     }
 
     pub fn remove_recent_file(&self, path: &str) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM recent_files WHERE path = ?1", params![path])?;
         Ok(())
     }
 
     pub fn clear_recent_files(&self) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM recent_files", [])?;
         Ok(())
     }
 
     pub fn delete_orphan_recent_files(&self) -> Result<usize> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let paths: Vec<String> = {
             let mut stmt = conn.prepare("SELECT path FROM recent_files")?;
             stmt.query_map([], |row| row.get(0))?
@@ -587,7 +577,7 @@ impl Database {
     }
 
     pub fn delete_orphan_bookmarks(&self) -> Result<usize> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let entries: Vec<(String, String)> = {
             let mut stmt = conn.prepare("SELECT id, path FROM bookmarks")?;
             stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
@@ -622,7 +612,7 @@ impl Database {
         if bookmarks.is_empty() {
             return Ok(());
         }
-        let mut conn = self.pool.get()?;
+        let mut conn = self.conn.lock().unwrap();
         let tx = conn.transaction()?;
         {
             let mut stmt = tx.prepare_cached(
@@ -656,7 +646,7 @@ impl Database {
             return Ok(());
         }
         let now = Local::now().to_rfc3339();
-        let mut conn = self.pool.get()?;
+        let mut conn = self.conn.lock().unwrap();
         let tx = conn.transaction()?;
         {
             let mut stmt = tx.prepare_cached(
@@ -670,7 +660,7 @@ impl Database {
         Ok(())
     }
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         if max_pages > 0 {
             conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
         } else {
@@ -680,7 +670,7 @@ impl Database {
     }
 
     pub fn get_freelist_count(&self) -> Result<i32> {
-        let conn = self.pool.get()?;
+        let conn = self.conn.lock().unwrap();
         let count: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
         Ok(count)
     }

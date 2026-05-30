@@ -57,8 +57,6 @@ export async function callBackend<K extends CommandName>(
 
         return result;
     } catch (err) {
-        const _duration = (performance.now() - start).toFixed(2);
-
         const errorOpts = {
             additionalInfo: {
                 command,
