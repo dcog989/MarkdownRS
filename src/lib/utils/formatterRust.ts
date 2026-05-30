@@ -6,7 +6,6 @@ export interface FormatterOptions {
     codeBlockFence: '```' | '~~~';
     bulletChar: '-' | '*' | '+';
     emphasisChar: '*' | '_';
-    tableAlignment: boolean;
 }
 
 export async function formatMarkdown(
@@ -18,7 +17,6 @@ export async function formatMarkdown(
         codeBlockFence: appContext.app.formatterCodeFence,
         bulletChar: appContext.app.formatterBulletChar,
         emphasisChar: appContext.app.formatterEmphasisChar,
-        tableAlignment: appContext.app.formatterTableAlignment,
     };
 
     const final = { ...defaults, ...options };
@@ -29,7 +27,6 @@ export async function formatMarkdown(
         bulletChar: final.bulletChar,
         codeBlockFence: final.codeBlockFence,
         emphasisChar: final.emphasisChar,
-        tableAlignment: final.tableAlignment,
     };
 
     const result = await callBackendSafe(

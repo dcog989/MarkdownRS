@@ -147,7 +147,6 @@ export interface BackendCommands {
             bulletChar?: string;
             codeBlockFence?: string;
             emphasisChar?: string;
-            tableAlignment?: boolean;
         };
         return: string;
     };
@@ -216,7 +215,7 @@ export interface BackendCommands {
 
     // Export
     export_to_pdf: {
-        args: { path: string; content: string; title: string; backgroundColor: string | null };
+        args: { path: string; content: string; backgroundColor: string | null };
         return: undefined;
     };
     // Data Management

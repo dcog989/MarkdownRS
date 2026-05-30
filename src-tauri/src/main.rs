@@ -7,6 +7,7 @@ mod markdown;
 mod state;
 mod utils;
 
+#[cfg(target_os = "linux")]
 use gtk::prelude::GtkWindowExt;
 use log::LevelFilter;
 use std::fs;

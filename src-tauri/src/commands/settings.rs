@@ -1,5 +1,5 @@
 use crate::utils::{handle_error, read_text_with_bom_detection};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use std::time::SystemTime;
@@ -25,62 +25,6 @@ pub struct AppInfo {
     pub logs_path: String,
     pub log_file_path: String,
     pub os_platform: String,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct Settings {
-    pub active_tab_id: Option<String>,
-    pub split_view: bool,
-    pub theme: String,
-    pub active_theme: String,
-    pub available_themes: Vec<String>,
-    pub split_percentage: f64,
-    pub split_orientation: String,
-    pub tab_cycling: String,
-    pub tab_width_min: u32,
-    pub tab_width_max: u32,
-    pub status_bar_transparency: u32,
-    pub new_tab_position: String,
-    pub startup_behavior: String,
-    pub editor_font_family: String,
-    pub editor_font_size: u32,
-    pub editor_word_wrap: bool,
-    pub show_whitespace: bool,
-    pub enable_autocomplete: bool,
-    pub autocomplete_delay: u32,
-    pub recent_changes_timespan: u32,
-    pub recent_changes_count: u32,
-    pub undo_depth: u32,
-    pub preview_font_family: String,
-    pub preview_font_size: u32,
-    pub gfm_enabled: bool,
-    pub markdown_flavor: String,
-    pub log_level: String,
-    pub format_on_save: bool,
-    pub format_on_paste: bool,
-    pub default_indent: u32,
-    pub formatter_bullet_char: String,
-    pub formatter_emphasis_char: String,
-    pub formatter_code_fence: String,
-    pub formatter_table_alignment: bool,
-    pub line_ending_preference: String,
-    pub tooltip_delay: u32,
-    pub find_panel_transparent: bool,
-    pub find_panel_close_on_blur: bool,
-    pub language_dictionaries: Vec<String>,
-    pub technical_dictionaries: bool,
-    pub science_dictionaries: bool,
-    pub tab_name_from_content: bool,
-    pub wrap_guide_column: u32,
-    pub double_click_selects_trailing_space: bool,
-    pub collapse_pinned_tabs: bool,
-    pub custom_shortcuts: HashMap<String, String>,
-    pub confirmation_suppressed: bool,
-    pub max_file_size_mb: u64,
-    pub auto_save_enabled: bool,
-    pub auto_save_interval: u32,
 }
 
 #[tauri::command]

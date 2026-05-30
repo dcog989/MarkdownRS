@@ -191,7 +191,7 @@ export class ExportService {
 
             await callBackend(
                 'export_to_pdf',
-                { path, content: tab.content, title: tab.title, backgroundColor: bgColor },
+                { path, content: tab.content, backgroundColor: bgColor },
                 'Export:PDF',
                 { path: tab?.path },
                 { report: true, msg: 'Failed to generate PDF' },

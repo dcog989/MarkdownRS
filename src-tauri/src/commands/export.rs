@@ -3,7 +3,7 @@ use pdfrs::elements;
 use pdfrs::pdf_generator;
 
 #[tauri::command]
-pub async fn export_to_pdf(path: String, content: String, title: String) -> Result<(), String> {
+pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> {
     crate::utils::validate_path(&path)?;
 
     let start = std::time::Instant::now();
@@ -24,10 +24,9 @@ pub async fn export_to_pdf(path: String, content: String, title: String) -> Resu
 
     let duration = start.elapsed();
     log::info!(
-        "[Export] export_to_pdf | duration={:?} | size={} bytes | title={} | path={}",
+        "[Export] export_to_pdf | duration={:?} | size={} bytes | path={}",
         duration,
         pdf_bytes.len(),
-        title,
         path
     );
 

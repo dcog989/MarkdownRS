@@ -1,7 +1,6 @@
 use crate::commands::settings::get_max_file_size_bytes;
 use crate::utils::{format_system_time, handle_error, validate_path};
 use encoding_rs::{Encoding, UTF_8};
-use path_clean::PathClean;
 use serde::Serialize;
 use std::path::PathBuf;
 use tokio::fs;
@@ -171,11 +170,9 @@ pub async fn resolve_path_relative(
         PathBuf::from(click_path)
     };
 
-    let cleaned = path_buf.clean();
-
     // Canonicalize the path to resolve any symlinks and get absolute path
-    let canonicalized = dunce::canonicalize(&cleaned).map_err(|e| {
-        let path_str = cleaned.to_string_lossy();
+    let canonicalized = dunce::canonicalize(&path_buf).map_err(|e| {
+        let path_str = path_buf.to_string_lossy();
         handle_error(Some(&path_str), "canonicalize path", e)
     })?;
 

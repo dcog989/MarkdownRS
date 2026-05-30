@@ -1,4 +1,4 @@
-use crate::markdown::config::{DEFAULT_LIST_INDENT, DEFAULT_MAX_BLANK_LINES, MarkdownFlavor};
+use crate::markdown::config::{DEFAULT_LIST_INDENT, MarkdownFlavor};
 use crate::markdown::formatter::{self, FormatterOptions};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use crate::utils::IntoTauriError;
@@ -36,7 +36,6 @@ pub async fn render_markdown(
 }
 
 #[tauri::command]
-#[allow(clippy::too_many_arguments)]
 pub async fn format_markdown(
     content: String,
     flavor: Option<String>,
@@ -44,8 +43,6 @@ pub async fn format_markdown(
     bullet_char: Option<String>,
     code_block_fence: Option<String>,
     emphasis_char: Option<String>,
-    table_alignment: Option<bool>,
-    max_blank_lines: Option<usize>,
 ) -> Result<String, String> {
     let start = std::time::Instant::now();
     let content_size = content.len();
@@ -56,9 +53,6 @@ pub async fn format_markdown(
         bullet_char: bullet_char.unwrap_or_else(|| "-".to_string()),
         code_block_fence: code_block_fence.unwrap_or_else(|| "```".to_string()),
         emphasis_char: emphasis_char.unwrap_or_else(|| "*".to_string()),
-        table_alignment: table_alignment.unwrap_or(true),
-        normalize_whitespace: true,
-        max_blank_lines: max_blank_lines.unwrap_or(DEFAULT_MAX_BLANK_LINES),
     };
 
     let (tx, rx) = std::sync::mpsc::channel();

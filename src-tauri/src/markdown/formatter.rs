@@ -35,9 +35,6 @@ pub struct FormatterOptions {
     pub code_block_fence: String,
     pub bullet_char: String,
     pub emphasis_char: String,
-    pub table_alignment: bool,
-    pub normalize_whitespace: bool,
-    pub max_blank_lines: usize,
 }
 
 impl Default for FormatterOptions {
@@ -48,9 +45,6 @@ impl Default for FormatterOptions {
             code_block_fence: "```".to_string(),
             bullet_char: "-".to_string(),
             emphasis_char: "*".to_string(),
-            table_alignment: true,
-            normalize_whitespace: true,
-            max_blank_lines: crate::markdown::config::DEFAULT_MAX_BLANK_LINES,
         }
     }
 }

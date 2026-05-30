@@ -329,7 +329,6 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
                     bulletChar: appContext.app.formatterBulletChar,
                     emphasisChar: appContext.app.formatterEmphasisChar,
                     codeBlockFence: appContext.app.formatterCodeFence,
-                    tableAlignment: appContext.app.formatterTableAlignment,
                 });
 
                 tab = getTab();
