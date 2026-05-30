@@ -245,8 +245,8 @@ $effect(() => {
 });
 </script>
 
-<div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch border-b">
-    <div class="relative h-8 border-r">
+<div class="bg-bg-panel relative flex h-9 w-full shrink-0 items-stretch border-b">
+    <div class="relative h-9 border-r">
         <button
             type="button"
             class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
@@ -356,7 +356,7 @@ $effect(() => {
     <div class="flex h-full items-stretch border-l">
         <button
             type="button"
-            class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+            class="text-fg-muted hover-surface flex h-9 w-9 shrink-0 items-center justify-center"
             onclick={() => {
                 const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;
@@ -366,7 +366,7 @@ $effect(() => {
         <div class="relative flex h-full items-stretch">
             <button
                 type="button"
-                class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+                class="text-fg-muted hover-surface flex h-9 w-9 shrink-0 items-center justify-center"
                 onclick={() => (showMenu = !showMenu)}>
                 <Menu size={16} />
             </button>

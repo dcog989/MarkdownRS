@@ -46,7 +46,7 @@ let tooltipContent = $derived.by(() => {
     tabindex="0"
     data-active={isActive}
     data-tab-id={tab.id}
-    class="group text-ui-sm relative flex h-8 shrink-0 cursor-default items-center gap-2 text-left transition-colors duration-150 outline-none select-none"
+    class="group text-ui-sm relative flex h-9 shrink-0 cursor-default items-center gap-2 text-left transition-colors duration-150 outline-none select-none"
     class:bg-bg-main={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
@@ -54,7 +54,7 @@ let tooltipContent = $derived.by(() => {
     class:text-fg-muted={!isActive}
     class:border-r={!isActive}
     class:justify-center={isCollapsed}
-    class:px-2={!isCollapsed}
+    class:px-3={!isCollapsed}
     style="
         min-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMin}px`};
         max-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMax}px`};
