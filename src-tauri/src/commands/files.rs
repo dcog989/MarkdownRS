@@ -216,19 +216,22 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
     validate_path(&old_path)?;
     validate_path(&new_path)?;
 
-    if fs::metadata(&old_path).await.is_err() {
-        log::warn!("Attempted to rename non-existent file: {}", old_path);
-        return Err("Source file does not exist".to_string());
-    }
-
-    if fs::metadata(&new_path).await.is_ok() {
-        log::warn!("Attempted to rename to existing file: {}", new_path);
-        return Err("A file with that name already exists".to_string());
-    }
-
+    // Attempt the rename directly instead of doing separate existence probes
+    // (TOCTOU: the filesystem can change between probe and operation).
+    // Map the resulting error kinds to user-friendly messages.
     fs::rename(&old_path, &new_path)
         .await
-        .map_err(|e| handle_error(Some(&old_path), "rename file", e))
+        .map_err(|e| match e.kind() {
+            std::io::ErrorKind::NotFound => {
+                handle_error(Some(&old_path), "rename file", "source file does not exist")
+            },
+            std::io::ErrorKind::AlreadyExists => handle_error(
+                Some(&new_path),
+                "rename file",
+                "a file with that name already exists",
+            ),
+            _ => handle_error(Some(&old_path), "rename file", e),
+        })
 }
 
 #[tauri::command]

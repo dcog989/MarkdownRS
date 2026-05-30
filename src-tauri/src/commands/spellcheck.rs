@@ -320,8 +320,9 @@ pub async fn init_spellchecker(
         .map_err(|e| e.to_string())?;
     let app_handle_clone = app_handle.clone();
 
-    // Spawn initialization in background to avoid blocking
-    tauri::async_runtime::spawn(async move {
+    // Spawn initialization in background; keep the handle so we can detect
+    // a task panic and flip the status to Failed instead of hanging at Loading.
+    let handle = tauri::async_runtime::spawn(async move {
         let cache_dir = local_dir.join("spellcheck_cache");
         let tech_cache_dir = cache_dir.join("technical");
         let custom_path = config_dir.join("custom-spelling.dic");
@@ -437,16 +438,27 @@ pub async fn init_spellchecker(
                 combined_dic.push('\n');
             }
 
-            match Dictionary::new(&combined_aff, &combined_dic) {
-                Ok(dict) => {
+            // Dictionary::new is CPU-intensive (parses hunspell affix tables);
+            // run it on the blocking thread pool so we don't stall the async runtime.
+            let dict_result =
+                tokio::task::spawn_blocking(move || Dictionary::new(&combined_aff, &combined_dic))
+                    .await;
+
+            match dict_result {
+                Ok(Ok(dict)) => {
                     let mut speller = state.speller.lock().await;
                     *speller = Some(dict);
                     let mut status = state.spellcheck_status.lock().await;
                     *status = SpellcheckStatus::Ready;
                     log::info!("Spellchecker ready: {} unique words", total_word_count);
                 },
-                Err(e) => {
+                Ok(Err(e)) => {
                     log::error!("Failed to create dictionary: {:?}", e);
+                    let mut status = state.spellcheck_status.lock().await;
+                    *status = SpellcheckStatus::Failed;
+                },
+                Err(e) => {
+                    log::error!("Dictionary construction task panicked: {:?}", e);
                     let mut status = state.spellcheck_status.lock().await;
                     *status = SpellcheckStatus::Failed;
                 },
@@ -469,6 +481,21 @@ pub async fn init_spellchecker(
         }
     });
 
+    // If the task panicked (e.g. OOM inside Dictionary::new) make sure the
+    // status is set to Failed rather than staying at Loading forever.
+    let app_handle_recovery = app_handle.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = handle.await {
+            log::error!("Spellchecker init task panicked: {:?}", e);
+            use crate::state::SpellcheckStatus;
+            let state = app_handle_recovery.state::<AppState>();
+            let mut status = state.spellcheck_status.lock().await;
+            if *status == SpellcheckStatus::Loading {
+                *status = SpellcheckStatus::Failed;
+            }
+        }
+    });
+
     Ok(())
 }
 
@@ -479,18 +506,34 @@ pub async fn check_words(
 ) -> Result<Vec<String>, String> {
     log::debug!("check_words called with {} words", words.len());
 
-    let speller_guard = state.speller.lock().await;
-    let custom_guard = state.custom_dict.lock().await;
-
-    let speller = match speller_guard.as_ref() {
-        Some(s) => s,
-        None => {
-            log::warn!("Speller is None in check_words!");
-            return Ok(Vec::new());
-        },
+    // Collect what we need from the locked state, then release both guards
+    // before entering block_in_place so we don't hold Mutex guards across a
+    // potential thread switch and avoid cloning the whole HashSet.
+    let (speller_present, custom_snapshot) = {
+        let speller_guard = state.speller.lock().await;
+        let custom_guard = state.custom_dict.lock().await;
+        let present = speller_guard.is_some();
+        // Clone only if there is actually a speller worth using.
+        let snapshot = if present {
+            custom_guard.clone()
+        } else {
+            HashSet::new()
+        };
+        (present, snapshot)
     };
 
-    let custom_dict = custom_guard.clone();
+    if !speller_present {
+        log::warn!("Speller is None in check_words!");
+        return Ok(Vec::new());
+    }
+
+    // Re-acquire speller guard for the blocking work; custom dict is already
+    // captured in `custom_snapshot` so no second lock is needed.
+    let speller_guard = state.speller.lock().await;
+    let speller = match speller_guard.as_ref() {
+        Some(s) => s,
+        None => return Ok(Vec::new()),
+    };
 
     let misspelled = tokio::task::block_in_place(|| {
         let mut result = Vec::new();
@@ -501,17 +544,17 @@ pub async fn check_words(
             }
 
             let lower = clean.to_lowercase();
-            if custom_dict.contains(&lower) {
+            if custom_snapshot.contains(&lower) {
                 continue;
             }
 
             // Handle possessives ('s and s')
             if lower
                 .strip_suffix("'s")
-                .is_some_and(|b| custom_dict.contains(b))
+                .is_some_and(|b| custom_snapshot.contains(b))
                 || lower
                     .strip_suffix('\'')
-                    .is_some_and(|b| custom_dict.contains(b))
+                    .is_some_and(|b| custom_snapshot.contains(b))
             {
                 continue;
             }

@@ -6,6 +6,15 @@ use std::fmt;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
+/// Acquire the database connection lock, converting a poison error into an
+/// `anyhow` error instead of panicking. This keeps future callers alive even
+/// if a previous holder panicked while the lock was held.
+macro_rules! lock_conn {
+    ($self:expr) => {
+        $self.conn.lock().unwrap_or_else(|e| e.into_inner())
+    };
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TabState {
     pub id: String,
@@ -194,7 +203,7 @@ impl Database {
     }
 
     pub fn save_session(&self, active_tabs: &[TabState], closed_tabs: &[TabState]) -> Result<()> {
-        let mut conn = self.conn.lock().unwrap();
+        let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
 
         self.save_active_tabs(&tx, active_tabs)?;
@@ -338,7 +347,7 @@ impl Database {
         Ok(())
     }
     pub fn load_session(&self) -> Result<SessionData> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
 
         let mut active_stmt = conn.prepare(
             "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index
@@ -401,7 +410,7 @@ impl Database {
     }
 
     pub fn load_tab_data(&self, tab_id: &str) -> Result<TabData> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let content = conn
             .query_row(
                 "SELECT content FROM tabs WHERE id = ?1
@@ -420,7 +429,7 @@ impl Database {
     }
 
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let tags_json = serde_json::to_string(&bookmark.tags)?;
         conn.execute(
             "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
@@ -443,7 +452,7 @@ impl Database {
     }
 
     pub fn get_all_bookmarks(&self) -> Result<Vec<Bookmark>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let mut stmt = conn.prepare(
             "SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC"
         )?;
@@ -466,13 +475,13 @@ impl Database {
     }
 
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         conn.execute("DELETE FROM bookmarks WHERE id = ?1", params![id])?;
         Ok(())
     }
 
     pub fn update_bookmark_access_time(&self, id: &str, last_accessed: &str) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         conn.execute(
             "UPDATE bookmarks SET last_accessed = ?1 WHERE id = ?2",
             params![last_accessed, id],
@@ -481,7 +490,7 @@ impl Database {
     }
 
     pub fn seed_recent_files_from_history(&self) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let now = Local::now().to_rfc3339();
 
         // 1. Backfill from active tabs
@@ -509,7 +518,7 @@ impl Database {
     }
 
     pub fn add_recent_file(&self, path: &str, last_opened: &str) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
 
         // Insert or Update the recent file
         // The prune_recent_files trigger automatically handles cleanup
@@ -522,7 +531,7 @@ impl Database {
     }
 
     pub fn get_recent_files(&self) -> Result<Vec<String>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let mut stmt = conn.prepare("SELECT path FROM recent_files ORDER BY last_opened DESC")?;
         let files = stmt
             .query_map([], |row| row.get(0))?
@@ -531,19 +540,19 @@ impl Database {
     }
 
     pub fn remove_recent_file(&self, path: &str) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         conn.execute("DELETE FROM recent_files WHERE path = ?1", params![path])?;
         Ok(())
     }
 
     pub fn clear_recent_files(&self) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         conn.execute("DELETE FROM recent_files", [])?;
         Ok(())
     }
 
     pub fn delete_orphan_recent_files(&self) -> Result<usize> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let paths: Vec<String> = {
             let mut stmt = conn.prepare("SELECT path FROM recent_files")?;
             stmt.query_map([], |row| row.get(0))?
@@ -575,7 +584,7 @@ impl Database {
     }
 
     pub fn delete_orphan_bookmarks(&self) -> Result<usize> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let entries: Vec<(String, String)> = {
             let mut stmt = conn.prepare("SELECT id, path FROM bookmarks")?;
             stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
@@ -610,7 +619,7 @@ impl Database {
         if bookmarks.is_empty() {
             return Ok(());
         }
-        let mut conn = self.conn.lock().unwrap();
+        let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
         {
             let mut stmt = tx.prepare_cached(
@@ -644,7 +653,7 @@ impl Database {
             return Ok(());
         }
         let now = Local::now().to_rfc3339();
-        let mut conn = self.conn.lock().unwrap();
+        let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
         // Drop the prune trigger for the duration of the bulk insert to avoid
         // O(N²) overhead (the trigger runs COUNT(*) + conditional DELETE on
@@ -679,17 +688,18 @@ impl Database {
         Ok(())
     }
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
-        if max_pages > 0 {
-            conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
-        } else {
-            conn.execute("PRAGMA incremental_vacuum", [])?;
+        // A max_pages of 0 with no argument vacuums the *entire* freelist, which
+        // is not what a caller passing 0 expects.  Return early instead.
+        if max_pages <= 0 {
+            return Ok(());
         }
+        let conn = lock_conn!(self);
+        conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
         Ok(())
     }
 
     pub fn get_freelist_count(&self) -> Result<i32> {
-        let conn = self.conn.lock().unwrap();
+        let conn = lock_conn!(self);
         let count: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
         Ok(count)
     }

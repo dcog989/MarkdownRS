@@ -15,6 +15,8 @@ use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
+use std::sync::OnceLock;
+
 fn default_log_level() -> String {
     "info".to_string()
 }
@@ -22,6 +24,21 @@ fn default_log_level() -> String {
 struct PortableConfig {
     is_portable: bool,
     data_dir: Option<std::path::PathBuf>,
+}
+
+/// Populated once in `main()` before Tauri (or any other thread) starts.
+/// Everything that needs portable-mode info reads from here instead of the
+/// environment, so we never need to call `set_var` after threads exist.
+static PORTABLE_CONFIG: OnceLock<PortableConfig> = OnceLock::new();
+
+/// Returns `true` if the app is running in portable mode.
+pub fn is_portable_mode() -> bool {
+    PORTABLE_CONFIG.get().is_some_and(|c| c.is_portable)
+}
+
+/// Returns the portable data directory, if any.
+pub fn portable_data_dir() -> Option<&'static std::path::PathBuf> {
+    PORTABLE_CONFIG.get().and_then(|c| c.data_dir.as_ref())
 }
 
 /// One-time migration: move data from the old bare "MarkdownRS" identifier path
@@ -93,16 +110,21 @@ fn detect_portable_mode() -> PortableConfig {
 fn main() {
     migrate_data_dir_if_needed();
 
-    // Detect and configure portable mode BEFORE any threading
-    // This must happen before Tauri initialization to avoid race conditions
+    // Detect and configure portable mode BEFORE any threading.
+    // Store in a static so setup() can read it without touching the environment.
     let portable_config = detect_portable_mode();
+    let is_portable = portable_config.is_portable;
+    let portable_data_dir_path = portable_config.data_dir.clone();
+    // Ignore the error — if it's already set we just use what's there.
+    let _ = PORTABLE_CONFIG.set(portable_config);
 
-    if portable_config.is_portable
-        && let Some(ref data_dir) = portable_config.data_dir
-    {
-        // Safe: Called before any threads are spawned
+    // The APPDATA/LOCALAPPDATA overrides must still go into the environment
+    // because Tauri's path resolver reads them via `dirs` before our setup
+    // closure runs.  These are the only remaining `set_var` calls, and they
+    // happen here — before Tauri (or any plugin) spawns threads.
+    if is_portable && let Some(ref data_dir) = portable_data_dir_path {
+        // SAFETY: no other threads exist at this point in main().
         unsafe {
-            std::env::set_var("MARKDOWN_RS_PORTABLE", "1");
             std::env::set_var("APPDATA", data_dir.as_os_str());
             std::env::set_var("LOCALAPPDATA", data_dir.as_os_str());
         }
@@ -168,8 +190,8 @@ fn main() {
                 }
             }
 
-            // Check if portable mode is enabled (set in main() before Tauri init)
-            let is_portable = std::env::var("MARKDOWN_RS_PORTABLE").is_ok();
+            // Check if portable mode is enabled via the static config.
+            let is_portable = is_portable_mode();
 
             // Get app directories - these will use the overridden APPDATA if in portable mode
             let local_dir = app_handle

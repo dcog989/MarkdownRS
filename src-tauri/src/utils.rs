@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Local};
 use encoding_rs::{UTF_16BE, UTF_16LE};
-use std::path::Path;
+use std::path::{Component, Path};
 use std::time::SystemTime;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
@@ -43,19 +43,19 @@ pub fn validate_path(path: &str) -> Result<(), String> {
         return Err("Invalid path: contains null bytes".to_string());
     }
 
-    // Check for problematic directory traversal patterns
-    // Normalize path and count parent directory references
-    let normalized = path.replace('\\', "/");
-    let parent_dir_count = normalized.matches("../").count();
-
-    // Block excessive parent directory traversal (more than 3 levels up)
-    if parent_dir_count > 3 {
-        return Err("Invalid path: excessive directory traversal".to_string());
-    }
-
-    // Block patterns that try to escape using various encodings
+    // Block percent-encoded traversal sequences before any further processing.
     if path.contains("..%2e") || path.contains("%2e%2e") || path.contains("%252e") {
         return Err("Invalid path: contains encoded directory traversal".to_string());
+    }
+
+    // Count real parent-directory components using the stdlib path parser so
+    // that filenames like `docs/foo../bar.txt` are not falsely rejected.
+    let parent_components = Path::new(path)
+        .components()
+        .filter(|c| *c == Component::ParentDir)
+        .count();
+    if parent_components > 3 {
+        return Err("Invalid path: excessive directory traversal".to_string());
     }
 
     if let Some(stem) = Path::new(path).file_stem().and_then(|s| s.to_str()) {
@@ -90,8 +90,18 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
     match fs::rename(&temp_path, path).await {
         Ok(_) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
+            // Cross-device: copy then clean up the temp file.
             fs::copy(&temp_path, path).await?;
-            fs::remove_file(&temp_path).await?;
+            if let Err(rm_err) = fs::remove_file(&temp_path).await {
+                // The data reached the destination successfully; log the leak
+                // but still return Ok so the caller isn't misled into thinking
+                // the write itself failed.
+                log::warn!(
+                    "atomic_write: temp file {:?} could not be removed after cross-device copy: {}",
+                    temp_path,
+                    rm_err
+                );
+            }
             Ok(())
         },
         Err(e) => {
