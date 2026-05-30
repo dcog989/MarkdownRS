@@ -353,7 +353,7 @@ export function registerAllShortcuts() {
             command: 'window.transform',
             defaultKey: 'ctrl+t',
             description: 'Text Transformations',
-            category: 'Window',
+            category: 'Edit',
             handler: (e: KeyboardEvent) => {
                 e.preventDefault();
                 e.stopImmediatePropagation();
