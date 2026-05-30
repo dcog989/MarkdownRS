@@ -76,6 +76,40 @@ fn is_in_code_or_link<'a>(node: &'a AstNode<'a>) -> bool {
     })
 }
 
+/// Percent-encodes a file path for use in an HTML `href` attribute.
+/// Keeps unreserved characters and `/` intact; encodes everything else.
+fn percent_encode_path(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' | '/' => out.push(c),
+            _ => {
+                let mut buf = [0; 4];
+                let encoded = c.encode_utf8(&mut buf);
+                for b in encoded.as_bytes() {
+                    out.push_str(&format!("%{:02X}", b));
+                }
+            },
+        }
+    }
+    out
+}
+
+/// Escapes characters with special meaning in HTML text / attributes.
+fn html_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 /// Walks the AST and replaces file-path text segments with HtmlInline link nodes,
 /// operating purely on text nodes so existing HTML attributes are never touched.
 fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
@@ -116,7 +150,9 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
 
             let path = path_match.as_str();
             let link_html = format!(
-                r#"<a href="{path}" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">{path}</a>"#
+                r#"<a href="{}" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">{}</a>"#,
+                percent_encode_path(path),
+                html_escape(path)
             );
             let n = arena.alloc(AstNode::from(NodeValue::HtmlInline(link_html)));
             new_nodes.push(n);
