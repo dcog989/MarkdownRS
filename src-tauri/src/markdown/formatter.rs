@@ -153,21 +153,11 @@ fn post_process_formatting(content: &str, options: &FormatterOptions) -> String 
 
         // Handle code blocks
         if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
-            // Check for fence conversion
-            if convert_fences {
-                if let Some(rest) = trimmed.strip_prefix("```") {
-                    let indent = line.len() - trimmed.len();
-                    result.push_str(&" ".repeat(indent));
-                    result.push_str("~~~");
-                    result.push_str(rest);
-                } else if trimmed.starts_with("~~~") && in_code_block {
-                    // Closing fence
-                    let indent = line.len() - trimmed.len();
-                    result.push_str(&" ".repeat(indent));
-                    result.push_str("```");
-                } else {
-                    result.push_str(line);
-                }
+            if convert_fences && trimmed.starts_with("```") {
+                let indent = line.len() - trimmed.len();
+                result.push_str(&" ".repeat(indent));
+                result.push_str("~~~");
+                result.push_str(&trimmed[3..]);
             } else {
                 result.push_str(line);
             }
