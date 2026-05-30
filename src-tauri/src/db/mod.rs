@@ -646,6 +646,10 @@ impl Database {
         let now = Local::now().to_rfc3339();
         let mut conn = self.conn.lock().unwrap();
         let tx = conn.transaction()?;
+        // Drop the prune trigger for the duration of the bulk insert to avoid
+        // O(N²) overhead (the trigger runs COUNT(*) + conditional DELETE on
+        // every single row).  A single cleanup at the end is equivalent.
+        tx.execute_batch("DROP TRIGGER IF EXISTS prune_recent_files")?;
         {
             let mut stmt = tx.prepare_cached(
                 "INSERT OR IGNORE INTO recent_files (path, last_opened) VALUES (?1, ?2)",
@@ -654,6 +658,23 @@ impl Database {
                 stmt.execute(params![path, &now])?;
             }
         }
+        // One-shot prune: keep only the 999 most-recently-opened entries.
+        tx.execute_batch(
+            "DELETE FROM recent_files WHERE path NOT IN (
+                SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 999
+            );",
+        )?;
+        // Recreate the trigger so future single-row inserts are still pruned.
+        tx.execute_batch(
+            "CREATE TRIGGER IF NOT EXISTS prune_recent_files
+            AFTER INSERT ON recent_files
+            WHEN (SELECT COUNT(*) FROM recent_files) > 999
+            BEGIN
+                DELETE FROM recent_files WHERE path NOT IN (
+                    SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 999
+                );
+            END;",
+        )?;
         tx.commit()?;
         Ok(())
     }

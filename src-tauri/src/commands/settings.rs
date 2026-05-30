@@ -1,3 +1,4 @@
+use crate::state::{AppState, MAX_FILE_SIZE_UNSET};
 use crate::utils::{handle_error, read_text_with_bom_detection};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -222,12 +223,37 @@ async fn load_settings_toml(app_handle: &tauri::AppHandle) -> Result<toml::Value
     toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))
 }
 
-/// Get the current max file size in bytes from settings
-/// Returns the configured value or default (50 MB)
+const DEFAULT_MAX_FILE_SIZE_BYTES: u64 = 50 * 1024 * 1024;
+
+/// Get the current max file size in bytes.
+///
+/// Reads from the `AppState` atomic cache; if it has never been populated
+/// (sentinel value), falls back to parsing `settings.toml` once and stores
+/// the result so subsequent calls are free.
 pub async fn get_max_file_size_bytes(app_handle: &tauri::AppHandle) -> u64 {
+    use tauri::Manager;
+    if let Some(state) = app_handle.try_state::<AppState>() {
+        let cached = state
+            .max_file_size_bytes
+            .load(std::sync::atomic::Ordering::Relaxed);
+        if cached != MAX_FILE_SIZE_UNSET {
+            return cached;
+        }
+        // Cache miss — parse the file once, then store.
+        let value = load_max_file_size_from_disk(app_handle).await;
+        state
+            .max_file_size_bytes
+            .store(value, std::sync::atomic::Ordering::Relaxed);
+        value
+    } else {
+        // AppState not yet registered (very early startup) — parse directly.
+        load_max_file_size_from_disk(app_handle).await
+    }
+}
+
+async fn load_max_file_size_from_disk(app_handle: &tauri::AppHandle) -> u64 {
     match load_settings_toml(app_handle).await {
         Ok(toml_val) => {
-            // Support both camelCase (from frontend) and snake_case (Rust convention)
             let mb = toml_val
                 .get("maxFileSizeMB")
                 .or_else(|| toml_val.get("max_file_size_mb"))
@@ -235,7 +261,7 @@ pub async fn get_max_file_size_bytes(app_handle: &tauri::AppHandle) -> u64 {
                 .unwrap_or(50);
             (mb as u64).clamp(1, 500) * 1024 * 1024
         },
-        Err(_) => 50 * 1024 * 1024,
+        Err(_) => DEFAULT_MAX_FILE_SIZE_BYTES,
     }
 }
 
@@ -281,6 +307,15 @@ pub async fn save_settings(
         .await
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "write settings file", e))?;
     log::info!("Settings saved successfully to {:?}", path);
+
+    // Invalidate the cached max-file-size so the next read re-parses from disk.
+    use tauri::Manager;
+    if let Some(state) = app_handle.try_state::<AppState>() {
+        state
+            .max_file_size_bytes
+            .store(MAX_FILE_SIZE_UNSET, std::sync::atomic::Ordering::Relaxed);
+    }
+
     Ok(())
 }
 
@@ -400,8 +435,7 @@ mod windows_registry {
         let mut delete_with_tracking = |path: &str, description: &str| {
             if let Err(e) = hkcu.delete_subkey_all(path) {
                 // Check if the key simply doesn't exist (not a real error)
-                let error_str = e.to_string();
-                if !error_str.contains("not found") && !error_str.contains("2") {
+                if e.kind() != std::io::ErrorKind::NotFound && e.raw_os_error() != Some(2) {
                     log::warn!(
                         "Failed to delete registry key '{}': {} - {}",
                         path,

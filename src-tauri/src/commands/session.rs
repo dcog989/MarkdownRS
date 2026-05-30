@@ -4,7 +4,7 @@ use crate::utils::handle_error;
 use tauri::State;
 
 #[tauri::command]
-pub fn save_session(
+pub async fn save_session(
     state: State<'_, AppState>,
     mut active_tabs: Vec<TabState>,
     mut closed_tabs: Vec<TabState>,
@@ -28,18 +28,23 @@ pub fn save_session(
         .iter_mut()
         .for_each(|tab| tab.normalize_newlines());
 
-    let result = state
-        .db
-        .save_session(&active_tabs, &closed_tabs)
-        .map_err(|e| handle_error(Some("active and closed tabs"), "save session", e));
+    let active_len = active_tabs.len();
+    let closed_len = closed_tabs.len();
+    let db = state.db.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        db.save_session(&active_tabs, &closed_tabs)
+            .map_err(|e| handle_error(Some("active and closed tabs"), "save session", e))
+    })
+    .await
+    .map_err(|e| format!("save_session task join error: {}", e))?;
 
     let duration = start.elapsed();
     if result.is_ok() {
         log::info!(
             "[Storage] save_session | duration={:?} | active_tabs={} | closed_tabs={}",
             duration,
-            active_tabs.len(),
-            closed_tabs.len()
+            active_len,
+            closed_len,
         );
     }
 
@@ -47,7 +52,7 @@ pub fn save_session(
 }
 
 #[tauri::command]
-pub fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
+pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
     let start = std::time::Instant::now();
 
     log::info!("[Rust] restore_session called");
@@ -57,10 +62,13 @@ pub fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String
         log::warn!("Failed to seed recent files: {}", e);
     }
 
-    let result = state
-        .db
-        .load_session()
-        .map_err(|e| handle_error(Some("session data"), "restore session", e));
+    let db = state.db.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        db.load_session()
+            .map_err(|e| handle_error(Some("session data"), "restore session", e))
+    })
+    .await
+    .map_err(|e| format!("restore_session task join error: {}", e))?;
 
     let duration = start.elapsed();
     if let Ok(ref session) = result {
@@ -82,13 +90,20 @@ pub fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String
 }
 
 #[tauri::command]
-pub fn load_tab_content(state: State<'_, AppState>, tab_id: String) -> Result<TabData, String> {
+pub async fn load_tab_content(
+    state: State<'_, AppState>,
+    tab_id: String,
+) -> Result<TabData, String> {
     let start = std::time::Instant::now();
 
-    let result = state
-        .db
-        .load_tab_data(&tab_id)
-        .map_err(|e| handle_error(Some(&tab_id), "load tab data", e));
+    let db = state.db.clone();
+    let tab_id_clone = tab_id.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        db.load_tab_data(&tab_id_clone)
+            .map_err(|e| handle_error(Some(&tab_id_clone), "load tab data", e))
+    })
+    .await
+    .map_err(|e| format!("load_tab_content task join error: {}", e))?;
 
     let duration = start.elapsed();
     if let Ok(ref tab_data) = result {
@@ -104,21 +119,27 @@ pub fn load_tab_content(state: State<'_, AppState>, tab_id: String) -> Result<Ta
 }
 
 #[tauri::command]
-pub fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    let freelist_count = state
-        .db
-        .get_freelist_count()
-        .map_err(|e| handle_error(Some("freelist count"), "check database", e))?;
+pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
+    let db = state.db.clone();
+    let freelist_count = tokio::task::spawn_blocking(move || {
+        db.get_freelist_count()
+            .map_err(|e| handle_error(Some("freelist count"), "check database", e))
+    })
+    .await
+    .map_err(|e| format!("vacuum_database task join error: {}", e))??;
 
     if freelist_count > 0 {
         log::info!(
             "Vacuuming database: {} free pages to reclaim",
             freelist_count
         );
-        state
-            .db
-            .incremental_vacuum(100)
-            .map_err(|e| handle_error(Some("database"), "vacuum database", e))?;
+        let db2 = state.db.clone();
+        tokio::task::spawn_blocking(move || {
+            db2.incremental_vacuum(100)
+                .map_err(|e| handle_error(Some("database"), "vacuum database", e))
+        })
+        .await
+        .map_err(|e| format!("vacuum task join error: {}", e))??;
     } else {
         log::debug!("No free pages to reclaim in database");
     }

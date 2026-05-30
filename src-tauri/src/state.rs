@@ -1,6 +1,7 @@
 use crate::db::Database;
 use spellbook::Dictionary;
 use std::collections::HashSet;
+use std::sync::atomic::AtomicU64;
 use tokio::sync::Mutex;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -11,9 +12,16 @@ pub enum SpellcheckStatus {
     Failed,
 }
 
+/// Sentinel value meaning "not yet loaded from settings".
+pub const MAX_FILE_SIZE_UNSET: u64 = u64::MAX;
+
 pub struct AppState {
     pub db: Database,
     pub speller: Mutex<Option<Dictionary>>,
     pub custom_dict: Mutex<HashSet<String>>,
     pub spellcheck_status: Mutex<SpellcheckStatus>,
+    /// Cached value of the `maxFileSizeMB` setting converted to bytes.
+    /// Initialised to `MAX_FILE_SIZE_UNSET`; written once at startup and on
+    /// every `save_settings` call, so reads never need a lock.
+    pub max_file_size_bytes: AtomicU64,
 }

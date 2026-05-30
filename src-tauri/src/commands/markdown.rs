@@ -55,22 +55,13 @@ pub async fn format_markdown(
         emphasis_char: emphasis_char.unwrap_or_else(|| "*".to_string()),
     };
 
-    let (tx, rx) = std::sync::mpsc::channel();
-
-    std::thread::Builder::new()
-        .name("markdown-formatter".into())
-        .stack_size(16 * 1024 * 1024)
-        .spawn(move || {
-            let result = formatter::format_markdown(&content, &options);
-            let _ = tx.send(result);
-        })
-        .map_err(|e| format!("Failed to spawn formatter thread: {}", e))?;
-
-    let result = match tokio::task::spawn_blocking(move || rx.recv()).await {
-        Ok(Ok(result)) => result.to_tauri_result(),
-        Ok(Err(_)) => Err("Formatter thread panicked or disconnected".to_string()),
-        Err(e) => Err(format!("Formatter task join error: {}", e)),
-    };
+    // The formatter is CPU-bound and may use significant stack space; run it on
+    // the blocking thread pool so it cannot stall async tasks.
+    let result =
+        tokio::task::spawn_blocking(move || formatter::format_markdown(&content, &options))
+            .await
+            .map_err(|e| format!("Formatter task failed: {}", e))?
+            .to_tauri_result();
 
     let duration = start.elapsed();
     log::info!(

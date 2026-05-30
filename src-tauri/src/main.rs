@@ -51,10 +51,29 @@ fn migrate_data_dir_if_needed() {
 fn migrate_data_dir_if_needed() {}
 
 fn detect_portable_mode() -> PortableConfig {
-    let exe_path = std::env::current_exe().expect("Failed to get executable path");
-    let exe_dir = exe_path
-        .parent()
-        .expect("Failed to get executable directory");
+    let exe_path = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!(
+                "[WARN] Could not determine executable path: {} — portable mode disabled",
+                e
+            );
+            return PortableConfig {
+                is_portable: false,
+                data_dir: None,
+            };
+        },
+    };
+    let exe_dir = match exe_path.parent() {
+        Some(d) => d,
+        None => {
+            eprintln!("[WARN] Executable has no parent directory — portable mode disabled");
+            return PortableConfig {
+                is_portable: false,
+                data_dir: None,
+            };
+        },
+    };
     let portable_marker = exe_dir.join(".portable");
 
     if portable_marker.exists() {
@@ -323,13 +342,18 @@ fn main() {
                 speller: tokio::sync::Mutex::new(None),
                 custom_dict: tokio::sync::Mutex::new(std::collections::HashSet::new()),
                 spellcheck_status: tokio::sync::Mutex::new(state::SpellcheckStatus::Uninitialized),
+                max_file_size_bytes: std::sync::atomic::AtomicU64::new(state::MAX_FILE_SIZE_UNSET),
             });
 
-            // Check for command-line arguments on first launch
-            let args: Vec<String> = std::env::args().collect();
-            if args.len() > 1 {
-                // args[0] is the executable path, args[1] is the file path
-                let file_path = args[1].clone();
+            // Check for command-line arguments on first launch.
+            // Use args_os() to avoid panics on invalid Unicode (Windows), convert
+            // lossily, and skip any flag-style arguments (e.g. --help).
+            let args: Vec<String> = std::env::args_os()
+                .skip(1)
+                .filter(|a| !a.to_string_lossy().starts_with('-'))
+                .map(|a| a.to_string_lossy().into_owned())
+                .collect();
+            if let Some(file_path) = args.into_iter().next() {
                 let window_clone = window.clone();
 
                 tauri::async_runtime::spawn(async move {
