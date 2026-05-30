@@ -1,6 +1,11 @@
 <script lang="ts">
-import { onDestroy, onMount } from 'svelte';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { onDestroy, onMount } from 'svelte';
+import Editor from '$lib/components/editor/Editor.svelte';
+import Preview from '$lib/components/preview/Preview.svelte';
+import StatusBar from '$lib/components/ui/StatusBar.svelte';
+import TabBar from '$lib/components/ui/TabBar.svelte';
+import Toast from '$lib/components/ui/Toast.svelte';
 import { loadTabContentLazy } from '$lib/services/sessionPersistence';
 import { addTab, pushToMru } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
@@ -15,11 +20,6 @@ import {
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { logger } from '$lib/utils/logger';
 import { initSettings, saveSettings } from '$lib/utils/settings';
-import TabBar from '$lib/components/ui/TabBar.svelte';
-import Editor from '$lib/components/editor/Editor.svelte';
-import Preview from '$lib/components/preview/Preview.svelte';
-import StatusBar from '$lib/components/ui/StatusBar.svelte';
-import Toast from '$lib/components/ui/Toast.svelte';
 
 let autoSaveInterval: number | null = null;
 let mainContainer = $state<HTMLDivElement>();
@@ -108,7 +108,7 @@ function handleTabNavigation(e: KeyboardEvent) {
         );
         if (currentIndex === -1) return;
 
-        let newIndex;
+        let newIndex: number;
         if (e.key === 'PageUp') {
             newIndex = currentIndex - 1;
             if (newIndex < 0) newIndex = appContext.editor.tabs.length - 1;
@@ -201,7 +201,7 @@ onMount(() => {
         persistSessionDebounced.clear();
 
         if (window._editorFlushFunctions) {
-            window._editorFlushFunctions.forEach((fn) => fn());
+            for (const fn of window._editorFlushFunctions) fn();
         }
         // Force immediate save before window closes
         persistSession();
@@ -319,8 +319,7 @@ function resetSplit() {
                                 : 'row-resize'};
                             "
                             onmousedown={startResize}
-                            ondblclick={resetSplit}>
-                        </div>
+                            ondblclick={resetSplit}></div>
                     {/if}
 
                     {#if showPreview}

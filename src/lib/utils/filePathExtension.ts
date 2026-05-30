@@ -38,7 +38,9 @@ export function extractPathAtPos(text: string, pos: number): string | null {
 
     // 1. Check URLs
     URL_REGEX.lastIndex = 0;
-    while ((match = URL_REGEX.exec(text)) !== null) {
+    while (true) {
+        match = URL_REGEX.exec(text);
+        if (match === null) break;
         const cleanMatch = stripTrailingPunctuation(match[0]);
         const start = match.index;
         const end = start + cleanMatch.length;
@@ -48,7 +50,9 @@ export function extractPathAtPos(text: string, pos: number): string | null {
 
     // 2. Check Quoted Paths
     QUOTED_PATH_REGEX.lastIndex = 0;
-    while ((match = QUOTED_PATH_REGEX.exec(text)) !== null) {
+    while (true) {
+        match = QUOTED_PATH_REGEX.exec(text);
+        if (match === null) break;
         const content = match[2];
         const start = match.index + 1; // Skip opening quote
         const end = start + content.length;
@@ -58,7 +62,9 @@ export function extractPathAtPos(text: string, pos: number): string | null {
 
     // 3. Check Unquoted Paths
     UNQUOTED_PATH_REGEX.lastIndex = 0;
-    while ((match = UNQUOTED_PATH_REGEX.exec(text)) !== null) {
+    while (true) {
+        match = UNQUOTED_PATH_REGEX.exec(text);
+        if (match === null) break;
         // Validation: Ensure the path is not part of a surrounding word
         if (match.index > 0 && /[\w-]/.test(text[match.index - 1])) {
             continue;
@@ -93,7 +99,9 @@ function findLinks(view: EditorView) {
 
             // 1. URLs
             URL_REGEX.lastIndex = 0;
-            while ((match = URL_REGEX.exec(lineText)) !== null) {
+            while (true) {
+                match = URL_REGEX.exec(lineText);
+                if (match === null) break;
                 const clean = stripTrailingPunctuation(match[0]);
                 const start = line.from + match.index;
                 if (clean.length > 0) {
@@ -103,7 +111,9 @@ function findLinks(view: EditorView) {
 
             // 2. Quoted Paths
             QUOTED_PATH_REGEX.lastIndex = 0;
-            while ((match = QUOTED_PATH_REGEX.exec(lineText)) !== null) {
+            while (true) {
+                match = QUOTED_PATH_REGEX.exec(lineText);
+                if (match === null) break;
                 const content = match[2];
                 const start = line.from + match.index + 1;
                 if (content.length > 0) {
@@ -113,7 +123,9 @@ function findLinks(view: EditorView) {
 
             // 3. Unquoted Paths
             UNQUOTED_PATH_REGEX.lastIndex = 0;
-            while ((match = UNQUOTED_PATH_REGEX.exec(lineText)) !== null) {
+            while (true) {
+                match = UNQUOTED_PATH_REGEX.exec(lineText);
+                if (match === null) break;
                 if (match.index > 0 && /[\w-]/.test(lineText[match.index - 1])) {
                     continue;
                 }

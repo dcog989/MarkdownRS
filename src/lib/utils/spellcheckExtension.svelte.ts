@@ -166,9 +166,11 @@ export const createSpellCheckLinter = () => {
                         const nodeText = doc.sliceString(node.from, node.to);
                         // Include apostrophes in word matching
                         const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
-                        let match;
+                        let match: RegExpExecArray | null;
 
-                        while ((match = wordRegex.exec(nodeText)) !== null) {
+                        while (true) {
+                            match = wordRegex.exec(nodeText);
+                            if (match === null) break;
                             const word = match[0];
                             if (word.length <= 1) continue;
 
@@ -337,15 +339,17 @@ export const spellCheckKeymap = [
                 // 1. Synchronous Optimistic Update
                 // Update via re-assignment to trigger Svelte 5 signals
                 const newDict = new SvelteSet(spellcheckState.customDictionary);
-                words.forEach((w) => {
+                for (const w of words) {
                     if (w && w.length > 1) {
                         newDict.add(w.toLowerCase());
                     }
-                });
+                }
                 spellcheckState.customDictionary = newDict;
 
                 // 2. Clear cache
-                words.forEach((w) => spellcheckState.misspelledCache.delete(w.toLowerCase()));
+                for (const w of words) {
+                    spellcheckState.misspelledCache.delete(w.toLowerCase());
+                }
 
                 // 3. Invalidate tab caches containing these specific words
                 tabCache.invalidateForWords(words);

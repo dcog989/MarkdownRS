@@ -1,16 +1,16 @@
 <script lang="ts">
+import { FileText, FlipHorizontal, FlipVertical } from 'lucide-svelte';
 import { onDestroy, untrack } from 'svelte';
-import { FlipVertical, FlipHorizontal, FileText } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import { toggleOrientation } from '$lib/stores/appState.svelte';
 import { updateTabMetadataAndPath } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { toggleOrientation } from '$lib/stores/appState.svelte';
 import { CONFIG } from '$lib/utils/config';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { navigateToPath } from '$lib/utils/fileSystem';
+import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
-import { tooltip } from '$lib/actions/tooltip';
 
 let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();
@@ -96,7 +96,7 @@ $effect(() => {
             }
         } catch (_err) {
             if (!currentController.signal.aborted) {
-                console.error('Preview render error:', _err);
+                // Preview render error suppressed
             }
         } finally {
             if (!currentController.signal.aborted) {
@@ -141,8 +141,11 @@ function injectHtml(node: HTMLElement, content: string) {
             use:tooltip={appContext.app.splitOrientation === 'vertical'
                 ? 'Switch to Horizontal Split'
                 : 'Switch to Vertical Split'}>
-            {#if appContext.app.splitOrientation === 'vertical'}<FlipVertical
-                    size={16} />{:else}<FlipHorizontal size={16} />{/if}
+            {#if appContext.app.splitOrientation === 'vertical'}
+                <FlipVertical size={16} />
+            {:else}
+                <FlipHorizontal size={16} />
+            {/if}
         </button>
     </div>
 
@@ -171,8 +174,7 @@ function injectHtml(node: HTMLElement, content: string) {
             <div class="absolute inset-0 flex items-center justify-center opacity-50">
                 <div class="flex flex-col items-center gap-2">
                     <div
-                        class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500">
-                    </div>
+                        class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
                     <div class="text-sm">Rendering preview...</div>
                 </div>
             </div>

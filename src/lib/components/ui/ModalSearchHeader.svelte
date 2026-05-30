@@ -1,7 +1,7 @@
 <script lang="ts">
+import { Search, X } from 'lucide-svelte';
 import type { Snippet } from 'svelte';
 import Input from '$lib/components/ui/Input.svelte';
-import { Search, X } from 'lucide-svelte';
 
 let {
     title,
@@ -14,8 +14,7 @@ let {
     extraActions,
 } = $props<{
     title: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    icon: any; // Lucide icon component
+    icon: typeof import('lucide-svelte').X;
     searchValue: string;
     searchPlaceholder?: string;
     inputRef?: HTMLInputElement;
@@ -54,6 +53,7 @@ let {
         {/if}
 
         <button
+            type="button"
             class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
             onclick={onClose}
             aria-label="Close">

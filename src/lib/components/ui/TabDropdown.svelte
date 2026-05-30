@@ -1,12 +1,12 @@
 <script lang="ts">
-import { CircleAlert, PencilLine, Pencil, SquarePen, FileText, Pin, X } from 'lucide-svelte';
+import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
-import { formatFileSize } from '$lib/utils/fileValidation';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import { requestCloseTab } from '$lib/utils/fileSystem';
-import { tooltip } from '$lib/actions/tooltip';
+import { formatFileSize } from '$lib/utils/fileValidation';
 
 let {
     isOpen = false,

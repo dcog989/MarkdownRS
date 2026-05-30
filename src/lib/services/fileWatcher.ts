@@ -28,7 +28,7 @@ class FileWatcherService {
         const path = sanitizePath(rawPath);
 
         if (this.watchers.has(path)) {
-            const entry = this.watchers.get(path)!;
+            const entry = this.watchers.get(path) as { unwatch: UnwatchFn; refCount: number };
             entry.refCount++;
             return;
         }
@@ -36,7 +36,7 @@ class FileWatcherService {
         if (this.pendingWatchers.has(path)) {
             await this.pendingWatchers.get(path);
             if (this.watchers.has(path)) {
-                this.watchers.get(path)!.refCount++;
+                (this.watchers.get(path) as { unwatch: UnwatchFn; refCount: number }).refCount++;
             }
             return;
         }
@@ -99,7 +99,7 @@ class FileWatcherService {
 
         if (!path || !this.watchers.has(path)) return;
 
-        const entry = this.watchers.get(path)!;
+        const entry = this.watchers.get(path) as { unwatch: UnwatchFn; refCount: number };
         entry.refCount--;
 
         if (entry.refCount <= 0) {

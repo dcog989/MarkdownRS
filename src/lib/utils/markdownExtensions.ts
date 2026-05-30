@@ -67,9 +67,11 @@ function getHighlightDecorations(view: EditorView) {
 
     iterateVisibleLines(view, (line) => {
         const regex = /==([^=]+)==/g;
-        let match;
+        let match: RegExpExecArray | null;
 
-        while ((match = regex.exec(line.text)) !== null) {
+        while (true) {
+            match = regex.exec(line.text);
+            if (match === null) break;
             const start = line.from + match.index;
             const end = start + match[0].length;
 

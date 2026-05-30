@@ -239,7 +239,9 @@ export async function saveCurrentFile(): Promise<boolean> {
     appContext.app.isTabSwitching = false;
 
     if (typeof window !== 'undefined') {
-        window._editorFlushFunctions?.forEach((fn) => fn());
+        window._editorFlushFunctions?.forEach((fn) => {
+            fn();
+        });
     }
     return saveFile(false);
 }
@@ -249,7 +251,9 @@ export async function saveCurrentFileAs(): Promise<boolean> {
     appContext.app.isTabSwitching = false;
 
     if (typeof window !== 'undefined') {
-        window._editorFlushFunctions?.forEach((fn) => fn());
+        window._editorFlushFunctions?.forEach((fn) => {
+            fn();
+        });
     }
     return saveFile(true);
 }
@@ -303,6 +307,7 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
 
             tab = getTab();
             if (!tab) return false;
+            if (!tab.content) tab.content = '';
 
             let contentToSave = tab.content;
 
@@ -318,14 +323,16 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
                     tableAlignment: appContext.app.formatterTableAlignment,
                 });
 
-                tab = getTab()!; // Refresh reference after await
+                tab = getTab();
+                if (!tab) return false;
                 if (tab && tab.content !== contentToSave) {
                     // User typed during format � abort to prevent data loss
                     contentToSave = tab.content;
                 } else if (formatted && formatted !== contentToSave) {
                     contentToSave = formatted;
                     updateContentOnly(tabId, contentToSave, true);
-                    tab = getTab()!;
+                    tab = getTab();
+                    if (!tab) return false;
                 }
             }
 

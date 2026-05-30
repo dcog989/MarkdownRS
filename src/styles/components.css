@@ -247,33 +247,6 @@ select {
     color: var(--text-primary);
 }
 
-.mru-item[data-selected="true"] {
-    background-color: var(--accent-primary);
-    color: var(--text-inverse);
-}
-
-.mru-item[data-selected="true"] .mru-badge {
-    background-color: var(--text-inverse);
-    color: var(--accent-primary);
-}
-
-.mru-item[data-selected="true"] .mru-path {
-    color: var(--text-inverse);
-}
-
-.mru-item[data-selected="true"] .mru-dot {
-    background-color: var(--text-inverse);
-}
-
-.mru-item[data-selected="true"] .mru-icon {
-    color: var(--text-inverse);
-}
-
-.mru-item:hover {
-    background-color: var(--surface-hover);
-    cursor: pointer;
-}
-
 .mru-badge {
     display: flex;
     height: 1.5rem;
@@ -307,6 +280,33 @@ select {
 
 .mru-icon {
     color: var(--icon-color, var(--text-secondary));
+}
+
+.mru-item[data-selected="true"] {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+.mru-item[data-selected="true"] .mru-badge {
+    background-color: var(--text-inverse);
+    color: var(--accent-primary);
+}
+
+.mru-item[data-selected="true"] .mru-path {
+    color: var(--text-inverse);
+}
+
+.mru-item[data-selected="true"] .mru-dot {
+    background-color: var(--text-inverse);
+}
+
+.mru-item[data-selected="true"] .mru-icon {
+    color: var(--text-inverse);
+}
+
+.mru-item:hover {
+    background-color: var(--surface-hover);
+    cursor: pointer;
 }
 
 /* Component Specific Classes */

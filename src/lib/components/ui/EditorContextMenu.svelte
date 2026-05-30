@@ -1,24 +1,24 @@
 <script lang="ts">
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { untrack } from 'svelte';
-import { SvelteSet } from 'svelte/reactivity';
-import type { OperationId } from '$lib/config/textOperationsRegistry';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import Submenu from '$lib/components/ui/Submenu.svelte';
 import {
-    Sparkles,
-    Scissors,
-    ClipboardCopy,
-    ClipboardPaste,
-    Search,
-    WandSparkles,
     ArrowUpDown,
-    CaseSensitive,
-    TextAlignStart,
-    Rotate3d,
     BookPlus,
     BookText,
+    CaseSensitive,
+    ClipboardCopy,
+    ClipboardPaste,
+    Rotate3d,
+    Scissors,
+    Search,
+    Sparkles,
+    TextAlignStart,
+    WandSparkles,
 } from 'lucide-svelte';
+import { untrack } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import Submenu from '$lib/components/ui/Submenu.svelte';
+import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import {
@@ -217,7 +217,7 @@ async function handleSendToBrowser() {
 </script>
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
-    {#snippet children({ submenuSide })}
+    {#snippet children({ submenuSide: _submenuSide })}
         {#if suggestions.length > 0 || isLoadingSuggestions}
             <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
                 Suggestions
@@ -225,12 +225,13 @@ async function handleSendToBrowser() {
             {#if isLoadingSuggestions}
                 <div
                     class="text-ui-sm flex w-full items-center gap-2 px-3 py-1.5 text-left opacity-70">
-                    <Sparkles size={14} class="text-accent-secondary animate-spin" /><span
-                        >Loading suggestions...</span>
+                    <Sparkles size={14} class="text-accent-secondary animate-spin" />
+                    <span>Loading suggestions...</span>
                 </div>
             {:else}
                 {#each suggestions as s, i (i)}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium"
                         onclick={() => onReplaceWord?.(s)}>
                         <Sparkles size={14} class="text-accent-secondary" /><span>{s}</span>
@@ -243,50 +244,56 @@ async function handleSendToBrowser() {
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             {#if selectedText}
                 <button
+                    type="button"
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={() => {
                         onCut?.();
                         closeMenuAndReset();
                     }}>
-                    <Scissors size={14} /><span>Cut</span><span
-                        class="text-ui-sm ml-auto opacity-50">Ctrl+X</span>
+                    <Scissors size={14} /><span>Cut</span
+                    ><span class="text-ui-sm ml-auto opacity-50">Ctrl+X</span>
                 </button>
                 <button
+                    type="button"
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={() => {
                         onCopy?.();
                         closeMenuAndReset();
                     }}>
-                    <ClipboardCopy size={14} /><span>Copy</span><span
-                        class="text-ui-sm ml-auto opacity-50">Ctrl+C</span>
+                    <ClipboardCopy size={14} /><span>Copy</span
+                    ><span class="text-ui-sm ml-auto opacity-50">Ctrl+C</span>
                 </button>
             {/if}
             <button
+                type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => {
                     onPaste?.();
                     closeMenuAndReset();
                 }}>
-                <ClipboardPaste size={14} /><span>Paste</span><span
-                    class="text-ui-sm ml-auto opacity-50">Ctrl+V</span>
+                <ClipboardPaste size={14} /><span>Paste</span
+                ><span class="text-ui-sm ml-auto opacity-50">Ctrl+V</span>
             </button>
 
             {#if selectedText}
                 <div class="bg-border-main my-1 h-px"></div>
                 <button
+                    type="button"
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={handleSendToBrowser}>
-                    <Search size={14} /><span>Send to browser</span>
+                    <Search size={14} />
+                    <span>Send to browser</span>
                 </button>
             {/if}
 
             <div class="bg-border-main my-1 h-px"></div>
 
             <button
+                type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => handleOp('format-document')}>
-                <WandSparkles size={14} /><span
-                    >{selectedText ? 'Format Selection' : 'Format Document'}</span
+                <WandSparkles size={14} />
+                <span>{selectedText ? 'Format Selection' : 'Format Document'}</span
                 ><span class="text-ui-sm ml-auto opacity-50">Alt+Shift+F</span>
             </button>
         </div>
@@ -296,16 +303,17 @@ async function handleSendToBrowser() {
 
             <Submenu
                 show={activeSubmenu === 'sort'}
-                side={submenuSide}
+                side={_submenuSide}
                 onOpen={() => (activeSubmenu = 'sort')}
                 onClose={() => {
                     if (activeSubmenu === 'sort') activeSubmenu = null;
                 }}>
                 {#snippet trigger()}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <ArrowUpDown size={14} /><span>Sort Lines</span><span
-                            class="ml-auto opacity-50">›</span>
+                        <ArrowUpDown size={14} /><span>Sort Lines</span
+                        ><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each sortOps as op, i (i)}
@@ -313,24 +321,28 @@ async function handleSendToBrowser() {
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
                         <button
+                            type="button"
                             class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>{op.label}</button>
+                            onclick={() => handleOp(op.id)}>
+                            {op.label}
+                        </button>
                     {/if}
                 {/each}
             </Submenu>
 
             <Submenu
                 show={activeSubmenu === 'case'}
-                side={submenuSide}
+                side={_submenuSide}
                 onOpen={() => (activeSubmenu = 'case')}
                 onClose={() => {
                     if (activeSubmenu === 'case') activeSubmenu = null;
                 }}>
                 {#snippet trigger()}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <CaseSensitive size={14} /><span>Change Case</span><span
-                            class="ml-auto opacity-50">›</span>
+                        <CaseSensitive size={14} /><span>Change Case</span
+                        ><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each caseOps as op, i (i)}
@@ -338,24 +350,28 @@ async function handleSendToBrowser() {
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
                         <button
+                            type="button"
                             class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>{op.label}</button>
+                            onclick={() => handleOp(op.id)}>
+                            {op.label}
+                        </button>
                     {/if}
                 {/each}
             </Submenu>
 
             <Submenu
                 show={activeSubmenu === 'format'}
-                side={submenuSide}
+                side={_submenuSide}
                 onOpen={() => (activeSubmenu = 'format')}
                 onClose={() => {
                     if (activeSubmenu === 'format') activeSubmenu = null;
                 }}>
                 {#snippet trigger()}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <TextAlignStart size={14} /><span>Format Lines</span><span
-                            class="ml-auto opacity-50">›</span>
+                        <TextAlignStart size={14} /><span>Format Lines</span
+                        ><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each formatOps as op, i (i)}
@@ -363,24 +379,28 @@ async function handleSendToBrowser() {
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
                         <button
+                            type="button"
                             class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>{op.label}</button>
+                            onclick={() => handleOp(op.id)}>
+                            {op.label}
+                        </button>
                     {/if}
                 {/each}
             </Submenu>
 
             <Submenu
                 show={activeSubmenu === 'transform'}
-                side={submenuSide}
+                side={_submenuSide}
                 onOpen={() => (activeSubmenu = 'transform')}
                 onClose={() => {
                     if (activeSubmenu === 'transform') activeSubmenu = null;
                 }}>
                 {#snippet trigger()}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <Rotate3d size={14} /><span>Transform Lines</span><span
-                            class="ml-auto opacity-50">›</span>
+                        <Rotate3d size={14} /><span>Transform Lines</span
+                        ><span class="ml-auto opacity-50">›</span>
                     </button>
                 {/snippet}
                 {#each transformOps as op, i (i)}
@@ -388,8 +408,11 @@ async function handleSendToBrowser() {
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
                         <button
+                            type="button"
                             class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>{op.label}</button>
+                            onclick={() => handleOp(op.id)}>
+                            {op.label}
+                        </button>
                     {/if}
                 {/each}
             </Submenu>
@@ -400,6 +423,7 @@ async function handleSendToBrowser() {
                 <div class="bg-border-main my-1 h-px"></div>
                 {#if canAddSingle}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                         onclick={async () => {
                             const newDict = new SvelteSet([
@@ -414,13 +438,14 @@ async function handleSendToBrowser() {
                             closeMenuAndReset();
                             await addToDictionary(targetWord);
                         }}>
-                        <BookPlus size={14} /><span class="truncate"
-                            >Add "{targetWord}" to Dictionary</span
+                        <BookPlus size={14} />
+                        <span class="truncate">Add "{targetWord}" to Dictionary</span
                         ><span class="text-ui-sm ml-auto opacity-50">F8</span>
                     </button>
                 {/if}
                 {#if selectedText && selectedText.split(/\s+/).length > 1}
                     <button
+                        type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                         onclick={handleAddAll}>
                         <BookText size={14} /><span>Add All Invalid to Dictionary</span>

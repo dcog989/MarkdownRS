@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { Snippet } from 'svelte';
 import { X } from 'lucide-svelte';
+import type { Snippet } from 'svelte';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
@@ -175,6 +175,7 @@ $effect(() => {
                 <div class="ui-header flex items-center justify-between">
                     <span class="text-fg-default text-sm font-semibold">{title}</span>
                     <button
+                        type="button"
                         class="text-fg-muted hover-surface rounded p-1"
                         onclick={onClose}
                         aria-label="Close">

@@ -1,9 +1,9 @@
 <script lang="ts">
-import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
+import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { formatFileSize } from '$lib/utils/fileValidation';
-import { tooltip } from '$lib/actions/tooltip';
 
 interface Props {
     tab: EditorTab;

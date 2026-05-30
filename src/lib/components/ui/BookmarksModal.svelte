@@ -1,6 +1,10 @@
 <script lang="ts">
-import Modal from '$lib/components/ui/Modal.svelte';
 import { open } from '@tauri-apps/plugin-dialog';
+import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Tag, Trash2 } from 'lucide-svelte';
+import { slide } from 'svelte/transition';
+import Input from '$lib/components/ui/Input.svelte';
+import Modal from '$lib/components/ui/Modal.svelte';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import {
     addBookmark,
     deleteBookmark,
@@ -12,11 +16,7 @@ import {
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import Input from '$lib/components/ui/Input.svelte';
-import { ArrowUp, ArrowDown, Plus, Tag, Pen, Trash2, Bookmark } from 'lucide-svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
-import { slide } from 'svelte/transition';
 
 interface Props {
     isOpen: boolean;
@@ -251,6 +251,7 @@ function handleKeydown(e: KeyboardEvent) {
                         <option value="last-updated">Last Updated</option>
                     </select>
                     <button
+                        type="button"
                         onclick={toggleSortDirection}
                         class="text-fg-muted hover-surface rounded p-1 transition-colors"
                         title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
@@ -263,6 +264,7 @@ function handleKeydown(e: KeyboardEvent) {
                 </div>
 
                 <button
+                    type="button"
                     class="text-accent-primary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
                     onclick={startAdd}
                     title="Add Bookmark">
@@ -282,6 +284,7 @@ function handleKeydown(e: KeyboardEvent) {
                         placeholder="File path..."
                         class="bg-bg-panel flex-1" />
                     <button
+                        type="button"
                         onclick={handleBrowse}
                         class="text-ui bg-bg-panel text-fg-default bg-border-main rounded border px-3 py-1 font-medium transition-colors">
                         Browse...
@@ -301,13 +304,19 @@ function handleKeydown(e: KeyboardEvent) {
                     <div class="text-ui-sm text-danger-text">{browseError}</div>
                 {/if}
                 <div class="flex justify-end gap-2">
-                    <button onclick={() => (showAddForm = false)} class="text-ui rounded px-3 py-1"
-                        >Cancel</button>
                     <button
+                        type="button"
+                        onclick={() => (showAddForm = false)}
+                        class="text-ui rounded px-3 py-1">
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
                         onclick={handleAddBookmark}
                         disabled={!addPath || !addTitle}
-                        class="text-ui bg-accent-primary text-fg-inverse rounded px-3 py-1 font-medium disabled:opacity-50"
-                        >Add</button>
+                        class="text-ui bg-accent-primary text-fg-inverse rounded px-3 py-1 font-medium disabled:opacity-50">
+                        Add
+                    </button>
                 </div>
             </div>
         </div>
@@ -337,12 +346,17 @@ function handleKeydown(e: KeyboardEvent) {
                                     placeholder="Tags (comma-separated)" />
                                 <div class="flex justify-end gap-2">
                                     <button
+                                        type="button"
                                         onclick={cancelEdit}
-                                        class="text-ui-sm rounded px-2 py-1">Cancel</button>
+                                        class="text-ui-sm rounded px-2 py-1">
+                                        Cancel
+                                    </button>
                                     <button
+                                        type="button"
                                         onclick={() => saveEdit(bookmark.id)}
-                                        class="text-ui-sm bg-accent-primary text-fg-inverse rounded px-2 py-1"
-                                        >Save</button>
+                                        class="text-ui-sm bg-accent-primary text-fg-inverse rounded px-2 py-1">
+                                        Save
+                                    </button>
                                 </div>
                             </div>
                         {:else}
@@ -408,6 +422,7 @@ function handleKeydown(e: KeyboardEvent) {
                                 </div>
                                 <div class="flex shrink-0 gap-1">
                                     <button
+                                        type="button"
                                         onclick={(e) => {
                                             e.stopPropagation();
                                             startEdit(bookmark);
@@ -430,6 +445,7 @@ function handleKeydown(e: KeyboardEvent) {
                                         <Pen size={14} />
                                     </button>
                                     <button
+                                        type="button"
                                         onclick={(e) => handleDelete(bookmark.id, e)}
                                         class="rounded p-1.5 transition-colors"
                                         style:color={isSelected

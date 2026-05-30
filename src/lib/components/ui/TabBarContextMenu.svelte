@@ -1,10 +1,10 @@
 <script lang="ts">
+import { FilePlus, Files, Save } from 'lucide-svelte';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import Submenu from '$lib/components/ui/Submenu.svelte';
 import { addTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { requestCloseTab, saveCurrentFile } from '$lib/utils/fileSystem';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import Submenu from '$lib/components/ui/Submenu.svelte';
-import { FilePlus, Save, Files } from 'lucide-svelte';
 
 let { x, y, onClose } = $props<{
     x: number;
@@ -57,14 +57,14 @@ function handleNewTab() {
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-    {#snippet children({ submenuSide })}
+    {#snippet children({ submenuSide: _submenuSide })}
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleNewTab}>
-                <FilePlus size={14} class="opacity-70" /><span>New Tab</span><span
-                    class="text-ui-sm ml-auto opacity-50">Ctrl+N</span>
+                <FilePlus size={14} class="opacity-70" /><span>New Tab</span
+                ><span class="text-ui-sm ml-auto opacity-50">Ctrl+N</span>
             </button>
 
             <div class="bg-border-main my-1 h-px"></div>
@@ -74,8 +74,8 @@ function handleNewTab() {
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
                 onclick={handleSaveAll}>
-                <Save size={14} class="opacity-70" /><span>Save All</span><span
-                    class="text-ui-sm ml-auto opacity-50">Ctrl+Shift+S</span>
+                <Save size={14} class="opacity-70" /><span>Save All</span
+                ><span class="text-ui-sm ml-auto opacity-50">Ctrl+Shift+S</span>
             </button>
 
             <div class="bg-border-main my-1 h-px"></div>
@@ -83,7 +83,7 @@ function handleNewTab() {
 
         <Submenu
             show={activeSubmenu === 'close'}
-            side={submenuSide}
+            side={_submenuSide}
             onOpen={() => (activeSubmenu = 'close')}
             onClose={() => {
                 if (activeSubmenu === 'close') activeSubmenu = null;
@@ -102,23 +102,31 @@ function handleNewTab() {
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasSavedTabs}
-                onclick={() => handleCloseMany('saved')}>Close Saved</button>
+                onclick={() => handleCloseMany('saved')}>
+                Close Saved
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
-                onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
+                onclick={() => handleCloseMany('unsaved')}>
+                Close Not Saved
+            </button>
             {#if hasPinnedTabs}
                 <button
                     type="button"
                     class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                     disabled={!hasUnpinnedTabs}
-                    onclick={() => handleCloseMany('unpinned')}>Close Unpinned</button>
+                    onclick={() => handleCloseMany('unpinned')}>
+                    Close Unpinned
+                </button>
             {/if}
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                onclick={() => handleCloseMany('all')}>Close All</button>
+                onclick={() => handleCloseMany('all')}>
+                Close All
+            </button>
         </Submenu>
     {/snippet}
 </ContextMenu>

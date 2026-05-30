@@ -1,5 +1,12 @@
 <script lang="ts">
+import { Database, Keyboard, Settings } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
+import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
+import Input from '$lib/components/ui/Input.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
+import { toggleData, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
@@ -12,13 +19,6 @@ import {
     triggerImmediateLint,
 } from '$lib/utils/spellcheckExtension.svelte.ts';
 import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import Input from '$lib/components/ui/Input.svelte';
-import DictionarySelector from '$lib/components/ui/DictionarySelector.svelte';
-import { Settings, Keyboard, Database } from 'lucide-svelte';
-import { tooltip } from '$lib/actions/tooltip';
-import { toggleShortcuts, toggleData } from '$lib/stores/interfaceStore.svelte';
-import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
 
 interface Props {
     isOpen: boolean;
@@ -531,6 +531,7 @@ function updateSetting(key: string, value: unknown, type: string) {
             {onClose}>
             {#snippet extraActions()}
                 <button
+                    type="button"
                     class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
                     onclick={() => {
                         onClose();
@@ -541,6 +542,7 @@ function updateSetting(key: string, value: unknown, type: string) {
                     <Keyboard size={16} />
                 </button>
                 <button
+                    type="button"
                     class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
                     onclick={() => {
                         onClose();
@@ -621,7 +623,8 @@ function updateSetting(key: string, value: unknown, type: string) {
                                         >{getSettingValue(
                                             setting.key,
                                             setting.defaultValue,
-                                        )}%</span>
+                                        )}%</span
+                                    >
                                 </div>
                             {:else if setting.type === 'boolean'}
                                 <input
@@ -649,8 +652,9 @@ function updateSetting(key: string, value: unknown, type: string) {
                                         )}
                                     class="text-ui bg-bg-input text-fg-default bg-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
                                     {#each setting.options || [] as option, idx (option)}
-                                        <option value={option}
-                                            >{setting.optionLabels?.[idx] || option}</option>
+                                        <option value={option}>
+                                            {setting.optionLabels?.[idx] || option}
+                                        </option>
                                     {/each}
                                 </select>
                             {:else if setting.type === 'dictionary-multi-select'}

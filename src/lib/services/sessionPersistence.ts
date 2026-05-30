@@ -70,7 +70,9 @@ class SessionPersistenceManager {
 
         try {
             const mruPositionMap = new Map<string, number>();
-            editorStore.mruStack.forEach((tabId, index) => mruPositionMap.set(tabId, index));
+            for (const [index, tabId] of editorStore.mruStack.entries()) {
+                mruPositionMap.set(tabId, index);
+            }
 
             // 1. Map Active Tabs
             const activeTabs = editorStore.tabs;

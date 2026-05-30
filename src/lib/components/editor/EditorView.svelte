@@ -472,10 +472,10 @@ $effect(() => {
 
             view?.focus();
 
-            window._activeEditorView = view!;
+            window._activeEditorView = view;
 
             if (spellcheckState.dictionaryLoaded) {
-                applyImmediateSpellcheck(view!);
+                applyImmediateSpellcheck(view);
             }
 
             initializeTabFileState(storeTab).catch(() => {});
@@ -540,7 +540,7 @@ $effect(() => {
             }
 
             if (from !== to || insert.length > 0) {
-                scrollManager.capture(view!, 'Sync');
+                scrollManager.capture(view, 'Sync');
 
                 view?.dispatch({
                     changes: { from, to, insert },
@@ -744,5 +744,4 @@ onMount(() => {
     tabindex="-1"
     class="bg-bg-main relative h-full w-full overflow-hidden"
     bind:this={editorContainer}
-    onclick={() => view?.focus()}>
-</div>
+    onclick={() => view?.focus()}></div>

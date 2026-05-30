@@ -1,13 +1,13 @@
 <script lang="ts">
+import { ClipboardCopy, TextWrap } from 'lucide-svelte';
+import { tooltip } from '$lib/actions/tooltip';
+import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte.ts';
 import { togglePreferredExtension, updateLineEnding } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';
-import { TextWrap, ClipboardCopy } from 'lucide-svelte';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte.ts';
 import { formatNumber } from '$lib/utils/textMetrics';
-import { tooltip } from '$lib/actions/tooltip';
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
 
@@ -103,6 +103,7 @@ async function copyAllStats() {
         style="opacity: {textOpacity};">
         {#if canToggleFileType}
             <button
+                type="button"
                 class="text-accent-primary hover:text-accent-secondary hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
                 onclick={toggleFileType}
                 use:tooltip={'Toggle File Type (markdown/text)'}>
@@ -116,16 +117,19 @@ async function copyAllStats() {
         <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
             <span class="font-mono opacity-70">Ln</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.cursorLine)}</span>
+                >{formatNumber(appContext.metrics.cursorLine)}</span
+            >
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[4ch] text-left font-mono"
-                >{formatNumber(totalLines)}</span>
+                >{formatNumber(totalLines)}</span
+            >
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Column Position'}>
             <span class="font-mono opacity-70">Col</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.cursorCol)}</span>
+                >{formatNumber(appContext.metrics.cursorCol)}</span
+            >
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[3ch] text-left font-mono">
                 {formatNumber(
@@ -142,21 +146,26 @@ async function copyAllStats() {
         <div class="flex items-center gap-1" use:tooltip={'Character Position'}>
             <span class="font-mono opacity-70">Char</span>
             <span class="inline-block min-w-[5ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.cursorOffset)}</span>
+                >{formatNumber(appContext.metrics.cursorOffset)}</span
+            >
             <span class="opacity-30">/</span>
             <span class="inline-block min-w-[5ch] text-left font-mono"
-                >{formatNumber(totalChars)}</span>
+                >{formatNumber(totalChars)}</span
+            >
         </div>
 
         <div class="flex items-center gap-1" use:tooltip={'Word Position'}>
             <span class="font-mono opacity-70">Word</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
-                >{formatNumber(appContext.metrics.currentWordIndex)}</span>
+                >{formatNumber(appContext.metrics.currentWordIndex)}</span
+            >
             <span class="opacity-30">/</span>
             <span
                 class="inline-block min-w-[4ch] text-left font-mono {wordCountPending
                     ? 'opacity-50'
-                    : ''}">{formatNumber(totalWords)}</span>
+                    : ''}"
+                >{formatNumber(totalWords)}</span
+            >
         </div>
 
         <div class="ml-2 flex items-center gap-1" use:tooltip={'File Size'}>
@@ -168,6 +177,7 @@ async function copyAllStats() {
         class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
         <button
+            type="button"
             class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
             onclick={toggleLineEnding}
             use:tooltip={'Toggle Line Ending'}>
@@ -179,6 +189,7 @@ async function copyAllStats() {
         </span>
 
         <button
+            type="button"
             onclick={toggleInsertMode}
             class="w-8 text-center font-bold {appContext.metrics.insertMode === 'OVR'
                 ? 'text-danger'
@@ -187,6 +198,7 @@ async function copyAllStats() {
         </button>
 
         <button
+            type="button"
             class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
                 .app.editorWordWrap
                 ? 'text-accent-secondary'
@@ -201,6 +213,7 @@ async function copyAllStats() {
 {#if showMenu}
     <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
         <button
+            type="button"
             class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={copyAllStats}>
             <ClipboardCopy size={14} class="opacity-70" />

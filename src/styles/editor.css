@@ -4,21 +4,21 @@
    but openSearchPanel() must be called to enable .cm-searchMatch decoration rendering */
 .cm-editor .cm-panels,
 .cm-editor .cm-search {
-    display: none !important;
+    display: none;
 }
 
 /* Base Editor Styling */
 .cm-editor {
-    background-color: var(--surface-1) !important;
-    color: var(--text-primary) !important;
+    background-color: var(--surface-1);
+    color: var(--text-primary);
 }
 
 .cm-content {
-    color: var(--text-primary) !important;
+    color: var(--text-primary);
 }
 
 .cm-scroller {
-    color: var(--text-primary) !important;
+    color: var(--text-primary);
 }
 
 /* Prevent line numbers and gutters from being selectable */
@@ -26,54 +26,54 @@
 .cm-lineNumbers,
 .cm-gutter,
 .cm-gutterElement {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Layout */
 .cm-editor .cm-gutters {
-    background-color: var(--surface-gutter) !important;
-    border-right: 1px solid var(--border-primary) !important;
+    background-color: var(--surface-gutter);
+    border-right: 1px solid var(--border-primary);
 }
 
 .cm-editor .cm-lineNumbers {
-    min-width: 5ch !important;
+    min-width: 5ch;
 }
 
 .cm-editor .cm-gutterElement {
-    display: flex !important;
+    display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 8px !important;
-    color: var(--text-tertiary) !important;
+    padding: 0 8px;
+    color: var(--text-tertiary);
 }
 
 .cm-editor .cm-activeLineGutter {
-    background-color: var(--surface-2) !important;
-    color: var(--text-primary) !important;
+    background-color: var(--surface-2);
+    color: var(--text-primary);
     font-weight: bold;
 }
 
 .cm-editor .cm-activeLine {
-    background-color: var(--active-line-bg) !important;
+    background-color: var(--active-line-bg);
 }
 
-.cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: var(--selection-bg) !important;
+    background-color: var(--selection-bg);
 }
 
 /* Prevent layout shift from special characters showing on selection */
 .cm-selectionMatch {
-    background-color: var(--selection-match-bg) !important;
+    background-color: var(--selection-match-bg);
 }
 
 /* Hide newline characters completely to prevent layout shift */
 .cm-specialChar {
-    display: none !important;
+    display: none;
 }
 
 /* Prevent newline widget from causing layout shift */
@@ -153,7 +153,7 @@
     & .cm-link,
     & .cm-file-path,
     & .cm-formatting-link-string {
-        cursor: pointer !important;
+        cursor: pointer;
     }
 
     & .cm-url:hover,
@@ -186,17 +186,17 @@
 .cm-formatting.cm-formatting-code,
 .cm-formatting-code-marker,
 .cm-meta.cm-code {
-    background-color: var(--code-bg) !important;
-    color: var(--code-fg) !important;
+    background-color: var(--code-bg);
+    color: var(--code-fg);
     border-radius: 0.25rem;
 }
 
 .cm-codeMark {
-    background-color: transparent !important;
-    color: var(--text-primary) !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    font-family: inherit !important;
+    background-color: transparent;
+    color: var(--text-primary);
+    padding: 0;
+    border-radius: 0;
+    font-family: inherit;
 }
 
 .cm-blockquote {

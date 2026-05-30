@@ -70,8 +70,10 @@ export function removeDuplicates(text: string): string {
 export function removeUnique(text: string): string {
     const lines = text.split('\n');
     const counts = new Map<string, number>();
-    lines.forEach((l) => counts.set(l, (counts.get(l) || 0) + 1));
-    return lines.filter((l) => counts.get(l)! > 1).join('\n');
+    for (const l of lines) {
+        counts.set(l, (counts.get(l) || 0) + 1);
+    }
+    return lines.filter((l) => (counts.get(l) ?? 0) > 1).join('\n');
 }
 
 export function removeBlankLines(text: string): string {

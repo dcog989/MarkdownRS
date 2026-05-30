@@ -1,41 +1,41 @@
 <script lang="ts">
-import { onDestroy, onMount, tick } from 'svelte';
-import { SortableController } from '$lib/actions/sortable.svelte.ts';
-import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
-import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
-import { CONFIG } from '$lib/utils/config';
-import { fade } from 'svelte/transition';
-import { flip } from 'svelte/animate';
 import {
-    ChevronDown,
-    Plus,
-    Menu,
-    Settings,
-    Zap,
     Bookmark,
-    Feather,
+    ChevronDown,
     Eye,
     EyeOff,
+    Feather,
+    Menu,
+    Plus,
+    Settings,
+    Zap,
 } from 'lucide-svelte';
-import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
-import {
-    toggleAbout,
-    toggleSettings,
-    toggleCommandPalette,
-    toggleBookmarks,
-} from '$lib/stores/interfaceStore.svelte.ts';
-import { shortcutManager } from '$lib/utils/shortcuts';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { saveSettings } from '$lib/utils/settings';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
+import { onDestroy, onMount, tick } from 'svelte';
+import { flip } from 'svelte/animate';
+import { fade } from 'svelte/transition';
+import { SortableController } from '$lib/actions/sortable.svelte.ts';
+import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
+import TabBarContextMenu from '$lib/components/ui/TabBarContextMenu.svelte';
 import TabButton from '$lib/components/ui/TabButton.svelte';
 import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
-import TabBarContextMenu from '$lib/components/ui/TabBarContextMenu.svelte';
-import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
-import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
+import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
+import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
+import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
+import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
+import {
+    toggleAbout,
+    toggleBookmarks,
+    toggleCommandPalette,
+    toggleSettings,
+} from '$lib/stores/interfaceStore.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { CONFIG } from '$lib/utils/config';
 import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
+import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
+import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { saveSettings } from '$lib/utils/settings';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
 let scrollContainer = $state<HTMLElement>();
 let showDropdown = $state(false);
@@ -245,15 +245,12 @@ $effect(() => {
 });
 </script>
 
-<div
-    class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch border-b"
->
+<div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch border-b">
     <div class="relative h-8 border-r">
         <button
             type="button"
             class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
-            onclick={() => (showDropdown = !showDropdown)}
-        >
+            onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
         </button>
@@ -264,8 +261,7 @@ $effect(() => {
                 pushToMru(id);
                 showDropdown = false;
             }}
-            onClose={() => (showDropdown = false)}
-        />
+            onClose={() => (showDropdown = false)} />
     </div>
 
     <div class="relative h-full min-w-0 flex-1">
@@ -273,8 +269,7 @@ $effect(() => {
             <div
                 class="pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"
-            ></div>
+                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
         {/if}
 
         <section
@@ -303,8 +298,7 @@ $effect(() => {
                         tabBarContextMenuY = e.clientY;
                     }
                 }
-            }}
-        >
+            }}>
             {#each appContext.editor.tabs as tab (tab.id)}
                 <div
                     class="flex h-full shrink-0 touch-none items-stretch outline-none select-none"
@@ -320,8 +314,7 @@ $effect(() => {
                             e,
                             tab.id,
                             assertHTMLElement(e.currentTarget, "TabBar drag"),
-                        )}
-                >
+                        )}>
                     <TabButton
                         {tab}
                         isActive={appContext.app.activeTabId === tab.id}
@@ -330,8 +323,7 @@ $effect(() => {
                             contextMenuTabId = id;
                             contextMenuX = e.clientX;
                             contextMenuY = e.clientY;
-                        }}
-                    />
+                        }} />
                 </div>
             {/each}
 
@@ -344,12 +336,10 @@ $effect(() => {
                         class="pointer-events-none fixed z-999"
                         style="left: {currentDragX -
                             dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect()
-                            .top ?? 0}px; opacity: 0.95;"
-                    >
+                            .top ?? 0}px; opacity: 0.95;">
                         <TabButton
                             tab={dragTab}
-                            isActive={appContext.app.activeTabId === dragTab.id}
-                        />
+                            isActive={appContext.app.activeTabId === dragTab.id} />
                     </div>
                 {/if}
             {/if}
@@ -359,8 +349,7 @@ $effect(() => {
             <div
                 class="pointer-events-none absolute top-0 right-0 bottom-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"
-            ></div>
+                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"></div>
         {/if}
     </div>
 
@@ -371,16 +360,14 @@ $effect(() => {
             onclick={() => {
                 const newTabId = addTab();
                 appContext.app.activeTabId = newTabId;
-            }}
-        >
+            }}>
             <Plus size={16} />
         </button>
         <div class="relative flex h-full items-stretch">
             <button
                 type="button"
                 class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
-                onclick={() => (showMenu = !showMenu)}
-            >
+                onclick={() => (showMenu = !showMenu)}>
                 <Menu size={16} />
             </button>
             {#if showMenu}
@@ -391,19 +378,15 @@ $effect(() => {
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
                     class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-md border py-1 shadow-xl w-80"
-                    onclick={(e) => e.stopPropagation()}
-                >
+                    onclick={(e) => e.stopPropagation()}>
                     <button
                         type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                         onclick={() => {
                             toggleAbout();
                             closeMenu();
-                        }}
-                    >
-                        <img src="/logo.svg" alt="" class="h-4 w-4" /><span
-                            >About MarkdownRS</span
-                        >
+                        }}>
+                        <img src="/logo.svg" alt="" class="h-4 w-4" /><span>About MarkdownRS</span>
                     </button>
 
                     <div class="bg-border-main my-1 h-px"></div>
@@ -414,13 +397,9 @@ $effect(() => {
                         onclick={() => {
                             toggleSettings();
                             closeMenu();
-                        }}
-                    >
-                        <Settings size={14} class="opacity-70" /><span
-                            class="flex-1">Settings</span
-                        ><span class="ml-auto text-xs opacity-40"
-                            >{shortcuts.settings}</span
-                        >
+                        }}>
+                        <Settings size={14} class="opacity-70" /><span class="flex-1">Settings</span
+                        ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
                     </button>
                     <button
                         type="button"
@@ -428,13 +407,10 @@ $effect(() => {
                         onclick={() => {
                             toggleCommandPalette();
                             closeMenu();
-                        }}
-                    >
-                        <Zap size={14} class="opacity-70" /><span class="flex-1"
-                            >Command Palette</span
-                        ><span class="ml-auto text-xs opacity-40"
-                            >{shortcuts.commands}</span
-                        >
+                        }}>
+                        <Zap size={14} class="opacity-70" />
+                        <span class="flex-1">Command Palette</span
+                        ><span class="ml-auto text-xs opacity-40">{shortcuts.commands}</span>
                     </button>
                     <button
                         type="button"
@@ -442,13 +418,10 @@ $effect(() => {
                         onclick={() => {
                             toggleBookmarks();
                             closeMenu();
-                        }}
-                    >
-                        <Bookmark size={14} class="opacity-70" /><span
-                            class="flex-1">Bookmarks</span
-                        ><span class="ml-auto text-xs opacity-40"
-                            >{shortcuts.bookmarks}</span
-                        >
+                        }}>
+                        <Bookmark size={14} class="opacity-70" />
+                        <span class="flex-1">Bookmarks</span
+                        ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
                     </button>
 
                     <div class="bg-border-main my-1 h-px"></div>
@@ -459,13 +432,10 @@ $effect(() => {
                         onclick={() => {
                             handleWriterMode();
                             closeMenu();
-                        }}
-                    >
-                        <Feather size={14} class="opacity-70" /><span
-                            class="flex-1">Writer Mode</span
-                        ><span class="ml-auto text-xs opacity-40"
-                            >{shortcuts.writerMode}</span
-                        >
+                        }}>
+                        <Feather size={14} class="opacity-70" />
+                        <span class="flex-1">Writer Mode</span
+                        ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
                     </button>
                     <button
                         type="button"
@@ -477,17 +447,14 @@ $effect(() => {
                                 toggleSplit();
                                 closeMenu();
                             }
-                        }}
-                    >
+                        }}>
                         {#if isPreviewAvailable}
                             <Eye size={14} class="opacity-70" />
                         {:else}
                             <EyeOff size={14} class="opacity-50" />
                         {/if}
-                        <span class="flex-1">Toggle Split Preview</span><span
-                            class="ml-auto text-xs opacity-40"
-                            >{shortcuts.splitView}</span
-                        >
+                        <span class="flex-1">Toggle Split Preview</span
+                        ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
                     </button>
                 </div>
             {/if}
@@ -500,16 +467,14 @@ $effect(() => {
         tabId={contextMenuTabId}
         x={contextMenuX}
         y={contextMenuY}
-        onClose={() => (contextMenuTabId = null)}
-    />
+        onClose={() => (contextMenuTabId = null)} />
 {/if}
 
 {#if showTabBarContextMenu}
     <TabBarContextMenu
         x={tabBarContextMenuX}
         y={tabBarContextMenuY}
-        onClose={() => (showTabBarContextMenu = false)}
-    />
+        onClose={() => (showTabBarContextMenu = false)} />
 {/if}
 
 <MruTabsPopup
@@ -521,11 +486,10 @@ $effect(() => {
     }}
     selectedId={isMruCycling
         ? appContext.editor.mruStack[mruSelectedIndex]
-        : appContext.app.activeTabId}
-/>
+        : appContext.app.activeTabId} />
 
 <style>
-    .tab-scroll-container {
-        pointer-events: auto;
-    }
+.tab-scroll-container {
+    pointer-events: auto;
+}
 </style>

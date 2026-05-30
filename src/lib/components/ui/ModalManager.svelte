@@ -1,18 +1,18 @@
 <script lang="ts">
-import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
-import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
-import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
+import { baseCommands, type Command } from '$lib/commands/paletteCommands';
 import AboutModal from '$lib/components/ui/AboutModal.svelte';
 import BookmarksModal from '$lib/components/ui/BookmarksModal.svelte';
-import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
-import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
+import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
 import DataModal from '$lib/components/ui/DataModal.svelte';
-import { baseCommands, type Command } from '$lib/commands/paletteCommands';
+import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
+import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
+import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
+import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
 import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { shortcutManager } from '$lib/utils/shortcuts';
 import { openFileByPath } from '$lib/utils/fileSystem';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
 const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category) =>
     getOperationsByCategory(category.id).map((op) => ({

@@ -1,8 +1,8 @@
 <script lang="ts">
+import { Keyboard, RotateCcw } from 'lucide-svelte';
+import { SvelteMap } from 'svelte/reactivity';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { SvelteMap } from 'svelte/reactivity';
-import { Keyboard, RotateCcw } from 'lucide-svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { saveSettings } from '$lib/utils/settings';
 import { type ShortcutDefinition, shortcutManager } from '$lib/utils/shortcuts';
@@ -158,7 +158,7 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="space-y-6">
             {#if filteredShortcuts.length > 0}
                 {@const globalIndex = { value: -1 }}
-                {#each categories as [category, defs] (category)}
+                {#each categories as [ category, defs ] (category)}
                     <div>
                         <h3
                             class="text-ui text-accent-secondary border-t-accent-secondary mb-2 border-b pb-1 font-bold tracking-widest uppercase">
@@ -179,6 +179,7 @@ function handleKeydown(e: KeyboardEvent) {
                                     use:scrollIntoView={isSelected}
                                     onmouseenter={() => (selectedIndex = currentIndex)}>
                                     <button
+                                        type="button"
                                         class="flex-1 cursor-pointer text-left transition-colors outline-none"
                                         style:color={isSelected
                                             ? 'var(--color-fg-inverse)'
@@ -188,6 +189,7 @@ function handleKeydown(e: KeyboardEvent) {
                                     </button>
                                     <div class="flex items-center gap-2">
                                         <button
+                                            type="button"
                                             class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
 												{recordingCommandId === def.command
                                                 ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
@@ -201,6 +203,7 @@ function handleKeydown(e: KeyboardEvent) {
                                         </button>
                                         {#if appContext.app.customShortcuts[def.command]}
                                             <button
+                                                type="button"
                                                 class="p-1 transition-all opacity-0 group-hover:opacity-100"
                                                 style:color={isSelected
                                                     ? 'var(--color-fg-inverse)'

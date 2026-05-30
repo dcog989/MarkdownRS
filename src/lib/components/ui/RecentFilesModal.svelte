@@ -1,5 +1,7 @@
 <script lang="ts">
+import { Clock, History, Trash2, X } from 'lucide-svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import {
     clearRecentFiles,
     loadRecentFiles,
@@ -8,8 +10,6 @@ import {
 } from '$lib/stores/recentFilesStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { openFileByPath } from '$lib/utils/fileSystem';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { History, Trash2, X, Clock } from 'lucide-svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 interface Props {
@@ -89,6 +89,7 @@ function handleKeydown(e: KeyboardEvent) {
             {#snippet extraActions()}
                 {#if recentFilesStore.files.length > 0}
                     <button
+                        type="button"
                         class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
                         onclick={handleClearAll}
                         title="Clear History">
@@ -137,6 +138,7 @@ function handleKeydown(e: KeyboardEvent) {
                                 </div>
                             </div>
                             <button
+                                type="button"
                                 onclick={(e) => handleRemove(path, e)}
                                 class="rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
                                 style:color={isSelected

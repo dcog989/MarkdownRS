@@ -1,25 +1,27 @@
 <script lang="ts">
-import { tick } from 'svelte';
 import {
-    Save,
-    FileDown,
-    PinOff,
-    Pin,
-    BookmarkX,
-    Bookmark,
-    Download,
     ArrowLeft,
     ArrowRight,
-    X,
+    Bookmark,
+    BookmarkX,
+    Copy,
+    Download,
+    FileDown,
+    FilePen,
     Files,
     History,
-    Undo2,
-    FilePen,
-    Copy,
+    Pin,
+    PinOff,
+    Save,
     Trash2,
+    Undo2,
+    X,
 } from 'lucide-svelte';
+import { tick } from 'svelte';
+import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import Submenu from '$lib/components/ui/Submenu.svelte';
+import { exportService } from '$lib/services/exportService';
 import { sanitizePath } from '$lib/services/fileMetadata';
 import {
     addBookmark,
@@ -29,16 +31,14 @@ import {
 } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import {
+    pushToMru,
+    reorderTabs,
     togglePin,
     updateTabPath,
     updateTabTitle,
-    reorderTabs,
-    pushToMru,
 } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
 import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte.ts';
-import { exportService } from '$lib/services/exportService';
-import { tooltip } from '$lib/actions/tooltip';
+import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import {
     requestCloseTab,
@@ -265,25 +265,27 @@ function sc(commandId: string): string {
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-    {#snippet children({ submenuSide })}
+    {#snippet children({ submenuSide: _submenuSide })}
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleSave}>
-                <Save size={14} class="opacity-70" /><span class="flex-1">Save</span
-                >{#if sc('file.save')}<span class="ml-auto text-xs opacity-40"
-                        >{sc('file.save')}</span
-                    >{/if}
+                <Save size={14} class="opacity-70" />
+                <span class="flex-1">Save</span>
+                {#if sc('file.save')}
+                    <span class="ml-auto text-xs opacity-40">{sc('file.save')}</span>
+                {/if}
             </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleSaveAs}>
-                <FileDown size={14} class="opacity-70" /><span class="flex-1">Save As...</span
-                >{#if sc('file.saveAs')}<span class="ml-auto text-xs opacity-40"
-                        >{sc('file.saveAs')}</span
-                    >{/if}
+                <FileDown size={14} class="opacity-70" />
+                <span class="flex-1">Save As...</span>
+                {#if sc('file.saveAs')}
+                    <span class="ml-auto text-xs opacity-40">{sc('file.saveAs')}</span>
+                {/if}
             </button>
 
             <div class="bg-border-main my-1 h-px"></div>
@@ -305,13 +307,14 @@ function sc(commandId: string): string {
                 disabled={!tab?.path}
                 onclick={handleToggleBookmark}>
                 {#if isBookmarked}
-                    <BookmarkX size={14} class="opacity-70" /><span class="flex-1"
-                        >Remove Bookmark</span>
+                    <BookmarkX size={14} class="opacity-70" />
+                    <span class="flex-1">Remove Bookmark</span>
                 {:else}
-                    <Bookmark size={14} class="opacity-70" /><span class="flex-1">Add Bookmark</span
-                    >{#if sc('markdown.bookmark')}<span class="ml-auto text-xs opacity-40"
-                            >{sc('markdown.bookmark')}</span
-                        >{/if}
+                    <Bookmark size={14} class="opacity-70" />
+                    <span class="flex-1">Add Bookmark</span>
+                    {#if sc('markdown.bookmark')}
+                        <span class="ml-auto text-xs opacity-40">{sc('markdown.bookmark')}</span>
+                    {/if}
                 {/if}
             </button>
 
@@ -320,7 +323,7 @@ function sc(commandId: string): string {
 
         <Submenu
             show={activeSubmenu === 'export'}
-            side={submenuSide}
+            side={_submenuSide}
             onOpen={() => (activeSubmenu = 'export')}
             onClose={() => {
                 if (activeSubmenu === 'export') activeSubmenu = null;
@@ -342,7 +345,9 @@ function sc(commandId: string): string {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToHtml();
                     onClose();
-                }}>Export to HTML</button>
+                }}>
+                Export to HTML
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
@@ -350,7 +355,9 @@ function sc(commandId: string): string {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToPdf();
                     onClose();
-                }}>Export to PDF</button>
+                }}>
+                Export to PDF
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
@@ -358,7 +365,9 @@ function sc(commandId: string): string {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage('png');
                     onClose();
-                }}>Export to PNG</button>
+                }}>
+                Export to PNG
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
@@ -366,14 +375,15 @@ function sc(commandId: string): string {
                     if (appContext.app.activeTabId !== tabId) appContext.app.activeTabId = tabId;
                     await exportService.exportToImage('webp');
                     onClose();
-                }}>Export to WEBP</button>
+                }}>
+                Export to WEBP
+            </button>
         </Submenu>
 
         <div
             class="bg-border-main my-1 h-px"
             onmouseenter={() => (activeSubmenu = null)}
-            role="none">
-        </div>
+            role="none"></div>
 
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
@@ -423,16 +433,17 @@ function sc(commandId: string): string {
                     requestCloseTab(tabId);
                     onClose();
                 }}>
-                <X size={14} class="opacity-70" /><span class="flex-1">Close</span
-                >{#if sc('file.closeTab')}<span class="ml-auto text-xs opacity-40"
-                        >{sc('file.closeTab')}</span
-                    >{/if}
+                <X size={14} class="opacity-70" />
+                <span class="flex-1">Close</span>
+                {#if sc('file.closeTab')}
+                    <span class="ml-auto text-xs opacity-40">{sc('file.closeTab')}</span>
+                {/if}
             </button>
         </div>
 
         <Submenu
             show={activeSubmenu === 'close'}
-            side={submenuSide}
+            side={_submenuSide}
             onOpen={() => (activeSubmenu = 'close')}
             onClose={() => {
                 if (activeSubmenu === 'close') activeSubmenu = null;
@@ -451,38 +462,49 @@ function sc(commandId: string): string {
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasCloseableTabsToRight}
-                onclick={() => handleCloseMany('right')}>Close to the Right</button>
+                onclick={() => handleCloseMany('right')}>
+                Close to the Right
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasCloseableTabsToLeft}
-                onclick={() => handleCloseMany('left')}>Close to the Left</button>
+                onclick={() => handleCloseMany('left')}>
+                Close to the Left
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasCloseableOtherTabs}
-                onclick={() => handleCloseMany('others')}>Close Others</button>
+                onclick={() => handleCloseMany('others')}>
+                Close Others
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasSavedTabs}
-                onclick={() => handleCloseMany('saved')}>Close Saved</button>
+                onclick={() => handleCloseMany('saved')}>
+                Close Saved
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!hasUnsavedTabs}
-                onclick={() => handleCloseMany('unsaved')}>Close Not Saved</button>
+                onclick={() => handleCloseMany('unsaved')}>
+                Close Not Saved
+            </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                onclick={() => handleCloseMany('all')}>Close All</button>
+                onclick={() => handleCloseMany('all')}>
+                Close All
+            </button>
         </Submenu>
 
         <div
             class="bg-border-main my-1 h-px"
             onmouseenter={() => (activeSubmenu = null)}
-            role="none">
-        </div>
+            role="none"></div>
 
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
             <button
@@ -496,17 +518,17 @@ function sc(commandId: string): string {
                     triggerReopenClosedTab(0);
                     onClose();
                 }}>
-                <History size={14} class="opacity-70" /><span class="flex-1"
-                    >Reopen Last Closed</span
-                >{#if sc('edit.reopenClosedTab')}<span class="ml-auto text-xs opacity-40"
-                        >{sc('edit.reopenClosedTab')}</span
-                    >{/if}
+                <History size={14} class="opacity-70" />
+                <span class="flex-1">Reopen Last Closed</span>
+                {#if sc('edit.reopenClosedTab')}
+                    <span class="ml-auto text-xs opacity-40">{sc('edit.reopenClosedTab')}</span>
+                {/if}
             </button>
         </div>
 
         <Submenu
             show={activeSubmenu === 'restore'}
-            side={submenuSide}
+            side={_submenuSide}
             onOpen={() => (activeSubmenu = 'restore')}
             onClose={() => {
                 if (activeSubmenu === 'restore') activeSubmenu = null;
@@ -558,7 +580,7 @@ function sc(commandId: string): string {
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => {
-                    navigator.clipboard.writeText(tab!.title);
+                    if (tab) navigator.clipboard.writeText(tab.title);
                     onClose();
                 }}>
                 <Copy size={14} class="opacity-70" /><span>Copy File Name</span>
@@ -568,7 +590,7 @@ function sc(commandId: string): string {
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!tab?.path}
                 onclick={() => {
-                    navigator.clipboard.writeText(tab!.path!);
+                    if (tab?.path) navigator.clipboard.writeText(tab.path);
                     onClose();
                 }}>
                 <Copy size={14} class="opacity-70" /><span>Copy Full Path</span>

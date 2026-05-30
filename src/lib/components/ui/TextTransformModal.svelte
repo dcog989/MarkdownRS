@@ -1,10 +1,10 @@
 <script lang="ts">
+import { Type, X } from 'lucide-svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
+import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { shortcutManager } from '$lib/utils/shortcuts';
-import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
-import { Type, X } from 'lucide-svelte';
 
 let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void }>();
 

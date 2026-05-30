@@ -1,11 +1,11 @@
 <script lang="ts">
-import Modal from '$lib/components/ui/Modal.svelte';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
+import Modal from '$lib/components/ui/Modal.svelte';
 import type { AppInfo } from '$lib/types/api';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
-import { LoaderCircle, RefreshCw, ExternalLink } from 'lucide-svelte';
 
 interface Props {
     isOpen: boolean;
@@ -97,15 +97,18 @@ async function checkForUpdates() {
         <h1 class="text-fg-default text-2xl font-bold">{appInfo.name}</h1>
         <p class="text-fg-muted">The only markdown editor you need.</p>
         <p class="text-accent-secondary text-center italic">
-            "I didn't get where I am today...<br /> without knowing a damned fine editor when I see one."
+            "I didn't get where I am today...<br />
+            without knowing a damned fine editor when I see one."
         </p>
 
         <div class="mt-4 w-full space-y-2">
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Version</span>
                 <span class="text-fg-default flex-1 text-left font-mono font-bold"
-                    >{appInfo.version}</span>
+                    >{appInfo.version}</span
+                >
                 <button
+                    type="button"
                     class="text-ui-sm bg-bg-input text-fg-default border-border-light flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
                     onclick={checkForUpdates}
                     disabled={isChecking}>
@@ -122,44 +125,65 @@ async function checkForUpdates() {
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Install</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.install_path}>{appInfo.install_path}</span>
+                    title={appInfo.install_path}
+                    >{appInfo.install_path}</span
+                >
                 <button
+                    type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
-                    onclick={() => copyToClipboard(appInfo.install_path)}>Copy</button>
+                    onclick={() => copyToClipboard(appInfo.install_path)}>
+                    Copy
+                </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Data</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.data_path}>{appInfo.data_path}</span>
+                    title={appInfo.data_path}
+                    >{appInfo.data_path}</span
+                >
                 <button
+                    type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
-                    onclick={() => copyToClipboard(appInfo.data_path)}>Copy</button>
+                    onclick={() => copyToClipboard(appInfo.data_path)}>
+                    Copy
+                </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Cache</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.cache_path}>{appInfo.cache_path}</span>
+                    title={appInfo.cache_path}
+                    >{appInfo.cache_path}</span
+                >
                 <button
+                    type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
-                    onclick={() => copyToClipboard(appInfo.cache_path)}>Copy</button>
+                    onclick={() => copyToClipboard(appInfo.cache_path)}>
+                    Copy
+                </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
                 <span class="text-fg-muted w-16 shrink-0 font-medium">Logs</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
-                    title={appInfo.logs_path}>{appInfo.logs_path}</span>
+                    title={appInfo.logs_path}
+                    >{appInfo.logs_path}</span
+                >
                 <button
+                    type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
-                    onclick={() => copyToClipboard(appInfo.logs_path)}>Copy</button>
+                    onclick={() => copyToClipboard(appInfo.logs_path)}>
+                    Copy
+                </button>
             </div>
         </div>
 
         <button
+            type="button"
             class="text-ui-sm text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
             onclick={openLogFile}>
             <span>Open Current Log File</span>

@@ -1,10 +1,10 @@
 <script lang="ts">
-import Modal from '$lib/components/ui/Modal.svelte';
 import { open, save } from '@tauri-apps/plugin-dialog';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
 import { Database, X } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
+import Modal from '$lib/components/ui/Modal.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { callBackend } from '$lib/utils/backend';
 
 interface Props {
     isOpen: boolean;
@@ -183,6 +183,7 @@ const actions: Action[] = [
             <h2 class="text-fg-default text-sm font-semibold">Data</h2>
         </div>
         <button
+            type="button"
             class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
             onclick={onClose}
             aria-label="Close">
@@ -194,6 +195,7 @@ const actions: Action[] = [
         {#each actions as action (action.label)}
             <div class="flex flex-col gap-2 items-start">
                 <button
+                    type="button"
                     class="text-ui bg-bg-input text-fg-default border border-border-main rounded px-4 py-2 text-left outline-none transition-colors hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-40 w-fit"
                     class:text-danger-text={action.danger}
                     onclick={action.handler}

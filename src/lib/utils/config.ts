@@ -120,8 +120,7 @@ export type AppConfig = typeof DEFAULT_CONFIG;
 function validateConfig(overrides: Partial<AppConfig>): AppConfig {
     const merged = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const validate = (target: any, source: any) => {
+    const validate = (target: Record<string, unknown>, source: Record<string, unknown>) => {
         for (const key in source) {
             if (
                 source[key] !== null &&
@@ -129,7 +128,10 @@ function validateConfig(overrides: Partial<AppConfig>): AppConfig {
                 !Array.isArray(source[key])
             ) {
                 if (!target[key]) target[key] = {};
-                validate(target[key], source[key]);
+                validate(
+                    target[key] as Record<string, unknown>,
+                    source[key] as Record<string, unknown>,
+                );
             } else {
                 target[key] = source[key];
             }

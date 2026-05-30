@@ -1,9 +1,9 @@
 <script lang="ts">
-import Modal from '$lib/components/ui/Modal.svelte';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { Zap } from 'lucide-svelte';
 import { tick } from 'svelte';
 import type { Command } from '$lib/commands/paletteCommands';
-import { Zap } from 'lucide-svelte';
+import Modal from '$lib/components/ui/Modal.svelte';
+import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 let {

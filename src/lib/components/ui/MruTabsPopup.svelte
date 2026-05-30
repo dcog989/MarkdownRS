@@ -1,8 +1,8 @@
 <script lang="ts">
-import { appContext } from '$lib/stores/state.svelte.ts';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import { CircleAlert, SquarePen, PencilLine, FileText } from 'lucide-svelte';
+import { CircleAlert, FileText, PencilLine, SquarePen } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
+import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
 
 interface Props {
     isOpen: boolean;

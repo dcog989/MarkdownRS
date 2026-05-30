@@ -480,5 +480,7 @@ export function registerAllShortcuts() {
     ];
 
     // Register all shortcuts
-    shortcuts.forEach((shortcut) => shortcutManager.register(shortcut));
+    for (const shortcut of shortcuts) {
+        shortcutManager.register(shortcut);
+    }
 }

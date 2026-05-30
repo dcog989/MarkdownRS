@@ -127,7 +127,9 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
                                 tracker.recordChanges(Array.from(affectedLines));
                             }
                             if (deletions.size > 0) {
-                                deletions.forEach((line) => tracker.recordDeletion(line));
+                                for (const line of deletions) {
+                                    tracker.recordDeletion(line);
+                                }
                             }
                         }
                     }

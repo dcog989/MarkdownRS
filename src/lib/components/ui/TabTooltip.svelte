@@ -1,7 +1,7 @@
 <script lang="ts">
+import TooltipContainer from '$lib/components/ui/TooltipContainer.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { formatFileSize } from '$lib/utils/fileValidation';
-import TooltipContainer from '$lib/components/ui/TooltipContainer.svelte';
 
 let {
     tab,

@@ -12,7 +12,7 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
         const y = e.clientY;
 
         timer = window.setTimeout(() => {
-            showTooltip(content!, x, y);
+            showTooltip(content as string, x, y);
         }, delay);
     }
 

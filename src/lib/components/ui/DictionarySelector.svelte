@@ -1,5 +1,5 @@
 <script lang="ts">
-import { X, ChevronDown, Check } from 'lucide-svelte';
+import { Check, ChevronDown, X } from 'lucide-svelte';
 
 interface Props {
     selected: string[];

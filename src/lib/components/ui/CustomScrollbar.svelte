@@ -158,6 +158,5 @@ $effect(() => {
         class:!opacity-100={isDragging}
         class:!w-3={isDragging}
         style="height: {thumbHeight}px; transform: translateY({thumbTop}px);"
-        onmousedown={onThumbMouseDown}>
-    </div>
+        onmousedown={onThumbMouseDown}></div>
 </div>

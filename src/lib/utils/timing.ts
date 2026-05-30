@@ -13,7 +13,7 @@ export interface DebouncedFunction<T extends (...args: unknown[]) => unknown> {
  * @param delay Delay in milliseconds
  * @returns Debounced function with a .clear() method
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: needed for generic function parameter flexibility
 export function debounce<T extends (...args: any[]) => any>(
     fn: T,
     delay: number,
@@ -53,7 +53,7 @@ export interface ThrottleOptions {
  * @param options Throttle behavior options (default: { leading: false, trailing: true })
  * @returns Throttled function with .clear() method
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: needed for generic function parameter flexibility
 export function throttle<T extends (...args: any[]) => any>(
     fn: T,
     interval: number,
