@@ -12,6 +12,7 @@ import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
 import {
+    autoSaveCurrentFile,
     loadSession,
     openFileByPath,
     persistSession,
@@ -90,6 +91,31 @@ $effect(() => {
     const fullTitle = `${prefix}MarkdownRS`;
     document.title = fullTitle;
     getCurrentWindow().setTitle(fullTitle);
+});
+
+// Auto-save timer
+$effect(() => {
+    const enabled = appContext.app.autoSaveEnabled;
+    const interval = appContext.app.autoSaveInterval;
+
+    if (!enabled) return;
+
+    const intervalMs = Math.max(5000, interval * 1000);
+    const timerId = window.setInterval(() => {
+        const tabId = appContext.app.activeTabId;
+        if (!tabId) return;
+        const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+        if (!tab?.isDirty || !tab.path) return;
+        autoSaveCurrentFile().then((saved) => {
+            if (saved) {
+                logger.file.info('AutoSaved', { path: tab.path });
+            }
+        });
+    }, intervalMs);
+
+    return () => {
+        clearInterval(timerId);
+    };
 });
 
 function handleTabNavigation(e: KeyboardEvent) {

@@ -83,12 +83,16 @@ export const fileCommands: Command[] = [
     {
         id: 'save',
         label: 'File: Save',
-        action: saveCurrentFile,
+        action: async () => {
+            await saveCurrentFile();
+        },
     },
     {
         id: 'save-as',
         label: 'File: Save As...',
-        action: saveCurrentFileAs,
+        action: async () => {
+            await saveCurrentFileAs();
+        },
     },
     {
         id: 'close',

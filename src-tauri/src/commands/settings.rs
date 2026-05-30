@@ -79,6 +79,8 @@ pub struct Settings {
     pub custom_shortcuts: HashMap<String, String>,
     pub confirmation_suppressed: bool,
     pub max_file_size_mb: u64,
+    pub auto_save_enabled: bool,
+    pub auto_save_interval: u32,
 }
 
 #[tauri::command]

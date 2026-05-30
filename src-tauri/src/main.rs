@@ -181,10 +181,8 @@ fn main() {
                 (local_dir.join("Database"), &db_dir),
                 (local_dir.join("Themes"), &themes_dir),
             ] {
-                if old.exists() && !new.exists() {
-                    if let Err(e) = fs::rename(&old, &new) {
-                        log::warn!("Failed to migrate {:?} to {:?}: {}", old, new, e);
-                    }
+                if old.exists() && !new.exists() && let Err(e) = fs::rename(&old, new) {
+                    log::warn!("Failed to migrate {:?} to {:?}: {}", old, new, e);
                 }
             }
 

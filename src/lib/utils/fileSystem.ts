@@ -234,7 +234,7 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 
 const activeSaves = new Map<string, boolean>();
 
-export async function saveCurrentFile(): Promise<boolean> {
+export async function saveCurrentFile(skipFormat = false): Promise<boolean> {
     // Clear tab switching flag to ensure format-on-save works
     appContext.app.isTabSwitching = false;
 
@@ -243,7 +243,7 @@ export async function saveCurrentFile(): Promise<boolean> {
             fn();
         });
     }
-    return saveFile(false);
+    return saveFile(false, skipFormat);
 }
 
 export async function saveCurrentFileAs(): Promise<boolean> {
@@ -255,10 +255,18 @@ export async function saveCurrentFileAs(): Promise<boolean> {
             fn();
         });
     }
-    return saveFile(true);
+    return saveFile(true, false);
 }
 
-async function saveFile(forceNewPath: boolean): Promise<boolean> {
+export async function autoSaveCurrentFile(): Promise<boolean> {
+    const tabId = appContext.app.activeTabId;
+    if (!tabId) return false;
+    const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+    if (!tab?.isDirty || !tab.path) return false;
+    return saveCurrentFile(true);
+}
+
+async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<boolean> {
     const start = performance.now();
     const tabId = appContext.app.activeTabId;
     if (!tabId) return false;
@@ -312,7 +320,8 @@ async function saveFile(forceNewPath: boolean): Promise<boolean> {
             let contentToSave = tab.content;
 
             // Allow formatting on explicit save actions regardless of tab switching state
-            const shouldFormat = appContext.app.formatOnSave && isMarkdownFile(sanitizedPath);
+            const shouldFormat =
+                !skipFormat && appContext.app.formatOnSave && isMarkdownFile(sanitizedPath);
 
             if (shouldFormat) {
                 const formatted = await formatMarkdown(contentToSave, {

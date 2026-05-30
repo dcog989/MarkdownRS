@@ -52,6 +52,8 @@ export const appState = $state({
     maxFileSizeMB: 50,
     writerMode: false,
     osPlatform: 'windows' as 'windows' | 'linux' | 'macos',
+    autoSaveEnabled: false,
+    autoSaveInterval: 60,
 });
 
 // Logic functions

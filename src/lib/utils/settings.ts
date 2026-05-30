@@ -51,6 +51,8 @@ function getSettingsObject() {
         customShortcuts: appState.customShortcuts,
         confirmationSuppressed: appState.confirmationSuppressed,
         maxFileSizeMB: appState.maxFileSizeMB,
+        autoSaveEnabled: appState.autoSaveEnabled,
+        autoSaveInterval: appState.autoSaveInterval,
     };
 }
 
