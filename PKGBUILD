@@ -8,6 +8,10 @@ depends=('webkit2gtk-4.1' 'openssl' 'libnm')
 
 # We skip the source array since the binary is already built locally
 package() {
+  echo "DEBUG: startdir=$startdir"
+  echo "DEBUG: source_binary=$startdir/../src-tauri/target/release/markdown-rs"
+  echo "DEBUG: source_exists=$(test -f "$startdir/../src-tauri/target/release/markdown-rs" && echo yes || echo no)"
+  echo "DEBUG: source_md5=$(md5sum "$startdir/../src-tauri/target/release/markdown-rs" 2>/dev/null | awk '{print $1}')"
   # Install binary
   install -Dm755 "$startdir/../src-tauri/target/release/markdown-rs" "$pkgdir/usr/bin/markdown-rs"
 
