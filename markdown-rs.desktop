@@ -2,6 +2,6 @@
 Type=Application
 Name=MarkdownRS
 Exec=/usr/bin/markdown-rs
-Icon=utilities-terminal
+Icon=markdown-rs
 Terminal=false
 Categories=Office

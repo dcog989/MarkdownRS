@@ -92,7 +92,7 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
         .unwrap_or_default();
     let data_path = app_handle
         .path()
-        .app_data_dir()
+        .app_config_dir()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
     let cache_path = app_handle
@@ -139,11 +139,11 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
 
 #[tauri::command]
 pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
-        .map_err(|e| handle_error(None, "get app data directory for themes", e))?;
-    let themes_dir = app_dir.join("Themes");
+        .app_config_dir()
+        .map_err(|e| handle_error(None, "get app config directory for themes", e))?;
+    let themes_dir = config_dir.join("Themes");
 
     let mut themes = Vec::new();
     match fs::read_dir(&themes_dir).await {
@@ -183,11 +183,11 @@ pub async fn get_theme_css(
         "default-light" => return Ok(DEFAULT_LIGHT_CSS.to_string()),
         _ => {},
     }
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
-        .map_err(|e| handle_error(None, "get app data directory for theme CSS", e))?;
-    let themes_dir = app_dir.join("Themes");
+        .app_config_dir()
+        .map_err(|e| handle_error(None, "get app config directory for theme CSS", e))?;
+    let themes_dir = config_dir.join("Themes");
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
     match fs::try_exists(&theme_path).await {
@@ -235,11 +235,11 @@ pub async fn get_theme_css(
 }
 
 async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<String>, String> {
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
-        .map_err(|e| handle_error(None, "get app data directory for load_settings", e))?;
-    let path = app_dir.join("settings.toml");
+        .app_config_dir()
+        .map_err(|e| handle_error(None, "get app config directory for load_settings", e))?;
+    let path = config_dir.join("settings.toml");
 
     match fs::try_exists(&path).await {
         Ok(false) | Err(_) => return Ok(None),
@@ -298,11 +298,11 @@ pub async fn save_settings(
     app_handle: tauri::AppHandle,
     settings: serde_json::Value,
 ) -> Result<(), String> {
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
-        .map_err(|e| handle_error(None, "get app data directory for save_settings", e))?;
-    let path = app_dir.join("settings.toml");
+        .app_config_dir()
+        .map_err(|e| handle_error(None, "get app config directory for save_settings", e))?;
+    let path = config_dir.join("settings.toml");
 
     // Log what we received
     let max_size_received = settings

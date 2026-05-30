@@ -202,14 +202,14 @@ async fn load_technical_dictionary(
 // --- Commands ---
 
 async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> Result<()> {
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
-        .map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
-    let dict_path = app_dir.join("custom-spelling.dic");
+        .app_config_dir()
+        .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?;
+    let dict_path = config_dir.join("custom-spelling.dic");
 
-    if !app_dir.exists()
-        && let Err(e) = fs::create_dir_all(&app_dir).await
+    if !config_dir.exists()
+        && let Err(e) = fs::create_dir_all(&config_dir).await
     {
         log::warn!("Failed to create app directory: {}", e);
     }
@@ -252,11 +252,11 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
 }
 
 async fn load_user_dictionary_inner(app_handle: tauri::AppHandle) -> Result<Vec<String>> {
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
-        .map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
-    let dict_path = app_dir.join("custom-spelling.dic");
+        .app_config_dir()
+        .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?;
+    let dict_path = config_dir.join("custom-spelling.dic");
 
     if !dict_path.exists() {
         return Ok(Vec::new());
@@ -314,9 +314,9 @@ pub async fn init_spellchecker(
         .path()
         .app_local_data_dir()
         .map_err(|e| e.to_string())?;
-    let app_dir = app_handle
+    let config_dir = app_handle
         .path()
-        .app_data_dir()
+        .app_config_dir()
         .map_err(|e| e.to_string())?;
     let app_handle_clone = app_handle.clone();
 
@@ -324,7 +324,7 @@ pub async fn init_spellchecker(
     tauri::async_runtime::spawn(async move {
         let cache_dir = local_dir.join("spellcheck_cache");
         let tech_cache_dir = cache_dir.join("technical");
-        let custom_path = app_dir.join("custom-spelling.dic");
+        let custom_path = config_dir.join("custom-spelling.dic");
 
         if let Err(e) = fs::create_dir_all(&cache_dir).await {
             log::warn!("Failed to create spellcheck cache directory: {}", e);

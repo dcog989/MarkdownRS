@@ -152,14 +152,6 @@ fn main() {
             let is_portable = std::env::var("MARKDOWN_RS_PORTABLE").is_ok();
 
             // Get app directories - these will use the overridden APPDATA if in portable mode
-            let app_dir = app_handle
-                .path()
-                .app_data_dir()
-                .map_err(|e| {
-                    log::error!("Failed to get app data dir: {}", e);
-                    format!("Failed to get app data dir: {}", e)
-                })?;
-
             let local_dir = app_handle
                 .path()
                 .app_local_data_dir()
@@ -168,13 +160,35 @@ fn main() {
                     format!("Failed to get local data dir: {}", e)
                 })?;
 
-            let db_dir = app_dir.join("Database");
-            let log_dir = local_dir.join("Logs");
-            let themes_dir = app_dir.join("Themes");
-            let config_path = app_dir.join("settings.toml");
-            let dict_path = app_dir.join("custom-spelling.dic");
+            let config_dir = app_handle
+                .path()
+                .app_config_dir()
+                .map_err(|e| {
+                    log::error!("Failed to get app config dir: {}", e);
+                    format!("Failed to get app config dir: {}", e)
+                })?;
 
-            for dir in [&app_dir, &local_dir, &db_dir, &log_dir, &themes_dir] {
+            let db_dir = config_dir.join("Database");
+            let log_dir = local_dir.join("Logs");
+            let themes_dir = config_dir.join("Themes");
+            let config_path = config_dir.join("settings.toml");
+            let dict_path = config_dir.join("custom-spelling.dic");
+
+            // One-time migration: move persistent data from old .local/share to .config
+            for (old, new) in [
+                (local_dir.join("settings.toml"), &config_path),
+                (local_dir.join("custom-spelling.dic"), &dict_path),
+                (local_dir.join("Database"), &db_dir),
+                (local_dir.join("Themes"), &themes_dir),
+            ] {
+                if old.exists() && !new.exists() {
+                    if let Err(e) = fs::rename(&old, &new) {
+                        log::warn!("Failed to migrate {:?} to {:?}: {}", old, new, e);
+                    }
+                }
+            }
+
+            for dir in [&local_dir, &config_dir, &db_dir, &log_dir, &themes_dir] {
                 if let Err(e) = fs::create_dir_all(dir) {
                     log::warn!("Failed to create directory {:?}: {}", dir, e);
                 }
@@ -182,21 +196,21 @@ fn main() {
 
             // Cleanup stale temp files from previous crashes (older than 1 hour)
             // Run in background to avoid blocking startup
-            let cleanup_app_dir = app_dir.clone();
             let cleanup_local_dir = local_dir.clone();
+            let cleanup_config_dir = config_dir.clone();
             tauri::async_runtime::spawn(async move {
                 let one_hour = std::time::Duration::from_secs(3600);
-                if let Err(e) = utils::cleanup_stale_temp_files(&cleanup_app_dir, one_hour).await {
-                    log::warn!("Failed to cleanup temp files in app dir: {}", e);
-                }
                 if let Err(e) = utils::cleanup_stale_temp_files(&cleanup_local_dir, one_hour).await {
                     log::warn!("Failed to cleanup temp files in local dir: {}", e);
+                }
+                if let Err(e) = utils::cleanup_stale_temp_files(&cleanup_config_dir, one_hour).await {
+                    log::warn!("Failed to cleanup temp files in config dir: {}", e);
                 }
             });
 
             println!("[INFO] Portable Mode: {}", is_portable);
-            println!("[INFO] Data Directory: {:?}", app_dir);
-            println!("[INFO] Log Directory: {:?}", log_dir);
+            println!("[INFO] Config Directory: {:?}", config_dir);
+            println!("[INFO] Cache Directory: {:?}", local_dir);
 
             // Write reference theme files in background to avoid blocking startup.
             // These serve as templates users can copy to create custom themes.
