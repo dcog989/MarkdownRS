@@ -429,7 +429,6 @@ impl Database {
                 id            = excluded.id,
                 title         = excluded.title,
                 tags          = excluded.tags,
-                created       = excluded.created,
                 last_accessed = excluded.last_accessed",
             params![
                 &bookmark.id,
