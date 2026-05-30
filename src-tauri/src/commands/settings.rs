@@ -480,7 +480,7 @@ mod windows_registry {
 }
 
 #[tauri::command]
-pub async fn set_context_menu_item(_enable: bool) -> Result<(), String> {
+pub async fn set_context_menu_item(#[allow(unused_variables)] enable: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         if enable {
