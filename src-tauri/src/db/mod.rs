@@ -314,7 +314,7 @@ impl Database {
                 original_index     = excluded.original_index",
         )?;
 
-        for (i, tab) in tabs.iter().enumerate() {
+        for tab in tabs.iter() {
             let content = tab.content.as_deref().filter(|c| !c.is_empty());
             upsert_stmt.execute(params![
                 &tab.id,
@@ -330,7 +330,7 @@ impl Database {
                 tab.file_check_failed as i32,
                 tab.file_check_performed as i32,
                 &tab.mru_position,
-                i as i32,
+                &tab.sort_index,
                 &tab.original_index,
             ])?;
         }
