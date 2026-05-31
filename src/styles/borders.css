@@ -47,6 +47,14 @@
     border-top-width: 0;
 }
 
+.border-l-2 {
+    border-left-width: 2px;
+}
+
+.border-l-3 {
+    border-left-width: 3px;
+}
+
 .border-l-4 {
     border-left-width: 4px;
 }

@@ -94,7 +94,7 @@ onMount(() => {
             role="alert"
             aria-live="polite">
             <div
-                class="bg-border-main bg-bg-panel text-fg-default flex items-center gap-3 rounded-lg border border-l-[3px] px-4 py-3 shadow-lg {colorClass.split(
+                class="bg-border-main bg-bg-panel text-fg-default flex items-center gap-3 rounded-lg border border-l-3 px-4 py-3 shadow-lg {colorClass.split(
                     ' ',
                 )[1]}">
                 <Icon size={16} class="shrink-0 {iconColorClass}" />
