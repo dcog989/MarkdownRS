@@ -1,22 +1,6 @@
 import { EditorView } from '@codemirror/view';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 
-/**
- * Smart bracket/quote pairs that only auto-close when surrounded by whitespace.
- * Only triggers if there's whitespace or document boundary before AND after cursor.
- */
-const SMART_PAIRS: Record<string, string> = {
-    '(': ')',
-    '[': ']',
-    '{': '}',
-    '"': '"',
-    "'": "'",
-};
-
-/**
- * Check if position is surrounded by whitespace or document boundaries.
- * Returns { isBefore: boolean, isAfter: boolean } for before/after state.
- */
 function getWhitespaceState(
     state: EditorView['state'],
     pos: number,
@@ -29,30 +13,6 @@ function getWhitespaceState(
 
     return { isBefore: isWhitespaceBefore, isAfter: isWhitespaceAfter };
 }
-
-export const smartCloseBrackets = EditorView.inputHandler.of((view, from, to, text) => {
-    // Only handle single character insertions (not selections or multi-char)
-    if (text.length !== 1 || from !== to) return false;
-
-    const openChar = text;
-    const closeChar = SMART_PAIRS[openChar];
-    if (!closeChar) return false;
-
-    const state = view.state;
-
-    const { isBefore, isAfter } = getWhitespaceState(state, from);
-
-    // Only auto-close if whitespace on both sides
-    if (isBefore && isAfter) {
-        view.dispatch({
-            changes: { from, to, insert: openChar + closeChar },
-            selection: { anchor: from + 1 },
-        });
-        return true;
-    }
-
-    return false;
-});
 
 /**
  * Handles smart backtick insertion for code blocks.

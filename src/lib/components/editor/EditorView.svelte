@@ -1,4 +1,5 @@
 <script lang="ts">
+import { closeBrackets } from '@codemirror/autocomplete';
 import { history, historyField } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { defaultHighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
@@ -21,11 +22,7 @@ import {
     getEditorKeymap,
     smartCompleteAnyWord,
 } from '$lib/components/editor/codemirror/config';
-import {
-    prefetchHoverHandler,
-    smartBacktickHandler,
-    smartCloseBrackets,
-} from '$lib/components/editor/codemirror/handlers';
+import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
 import { initializeTabFileState } from '$lib/services/sessionPersistence';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
 import {
@@ -303,7 +300,7 @@ function createExtensions(currentHistoryState: unknown): Extension[] {
         highlightSelectionMatches(),
         autoComp.of(autocompletionConfig),
         recentComp.of(createRecentChangesHighlighter(lineChangeTracker)),
-        smartCloseBrackets,
+        closeBrackets(),
         smartBacktickHandler,
         prefetchHoverHandler,
         EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
