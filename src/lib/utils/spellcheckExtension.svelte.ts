@@ -16,12 +16,12 @@ import type { AppEditorView } from '../../global';
  * Stores the last checked state to avoid redundant checks on tab switches
  */
 class TabSpellcheckCache {
-    private tabCaches = new SvelteMap<
+    private tabCaches = new Map<
         string,
         {
             fingerprint: string;
             diagnostics: Diagnostic[];
-            misspelledWords: SvelteSet<string>;
+            misspelledWords: Set<string>;
             lastCheckTime: number;
         }
     >();
@@ -38,7 +38,7 @@ class TabSpellcheckCache {
         tabId: string,
         fingerprint: string,
         diagnostics: Diagnostic[],
-        misspelledWords: SvelteSet<string>,
+        misspelledWords: Set<string>,
     ) {
         this.tabCaches.set(tabId, {
             fingerprint,
@@ -56,17 +56,15 @@ class TabSpellcheckCache {
         this.tabCaches.clear();
     }
 
-    // Clean up old caches (keep only last 10 tabs)
     prune() {
         if (this.tabCaches.size > 10) {
             const sorted = Array.from(this.tabCaches.entries()).sort(
                 (a, b) => b[1].lastCheckTime - a[1].lastCheckTime,
             );
-            this.tabCaches = new SvelteMap(sorted.slice(0, 10));
+            this.tabCaches = new Map(sorted.slice(0, 10));
         }
     }
 
-    // Invalidate caches that contain any of the specified words
     invalidateForWords(words: string[]) {
         const wordsLower = new Set(words.map((w) => w.toLowerCase()));
         for (const [tabId, cache] of this.tabCaches) {
@@ -136,7 +134,7 @@ export const createSpellCheckLinter = () => {
                 const cached = tabCache.get(tabId, docFp);
                 if (cached) {
                     // Update global misspelled cache from tab-specific cache
-                    spellcheckState.misspelledCache = cached.misspelledWords;
+                    spellcheckState.misspelledCache = new SvelteSet(cached.misspelledWords);
                     return cached.diagnostics;
                 }
             }
