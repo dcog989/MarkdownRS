@@ -91,37 +91,27 @@ function calculateSearchStats(view: EditorView, query: SearchQuery) {
 
     let count = 0;
     let idx = 0;
+    let found = false;
 
-    // Use query.getCursor to ensure case sensitivity is respected
     const cursor = query.getCursor(view.state);
     const selection = view.state.selection.main;
 
     let item = cursor.next();
     while (!item.done) {
+        if (!found) {
+            if (item.value.from === selection.from && item.value.to === selection.to) {
+                idx = count;
+                found = true;
+            } else if (selection.head < item.value.from) {
+                idx = count;
+                found = true;
+            }
+        }
         count++;
         item = cursor.next();
     }
 
-    // Reset cursor to find current position
-    const cursorReset = query.getCursor(view.state);
-    let matchIndex = 0;
-    item = cursorReset.next();
-
-    while (!item.done) {
-        if (item.value.from === selection.from && item.value.to === selection.to) {
-            idx = matchIndex;
-            break;
-        }
-        if (selection.head < item.value.from) {
-            idx = matchIndex;
-            break;
-        }
-
-        matchIndex++;
-        item = cursorReset.next();
-    }
-
-    if (matchIndex >= count && count > 0) {
+    if (!found && count > 0) {
         idx = 0;
     }
 
