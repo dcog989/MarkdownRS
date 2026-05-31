@@ -236,22 +236,6 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         // Custom comment toggle that respects text selection
         { key: 'Mod-/', run: toggleSelectionComment },
         {
-            key: 'Mod-Home',
-            run: (v) => {
-                v.dispatch({ selection: { anchor: 0 } });
-                scrollSync.handleFastScroll(v, 0);
-                return true;
-            },
-        },
-        {
-            key: 'Mod-End',
-            run: (v) => {
-                v.dispatch({ selection: { anchor: v.state.doc.length } });
-                scrollSync.handleFastScroll(v, v.scrollDOM.scrollHeight);
-                return true;
-            },
-        },
-        {
             key: 'PageDown',
             run: (v) => {
                 const newScrollTop = v.scrollDOM.scrollTop + v.scrollDOM.clientHeight;
