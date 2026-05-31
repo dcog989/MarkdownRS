@@ -134,20 +134,26 @@ let autocompletionConfig = $derived(getAutocompletionConfig());
 // and explicitly signal that we only want the snapshot value, not a reactive subscription.
 let prevIsMarkdown = untrack(() => isMarkdown);
 let prevAutocompletionConfig = untrack(() => autocompletionConfig);
-let prevTheme = appContext.app.theme;
-let prevFontSize = appContext.app.editorFontSize;
-let prevFontFamily = appContext.app.editorFontFamily;
-let prevInsertMode = appContext.metrics.insertMode;
+let prevThemeConfig = untrack(() => ({
+    theme: appContext.app.theme,
+    fontSize: appContext.app.editorFontSize,
+    fontFamily: appContext.app.editorFontFamily,
+    insertMode: appContext.metrics.insertMode,
+}));
 let prevUndoDepth = appContext.app.undoDepth;
 let prevIndent = appContext.app.defaultIndent;
 let prevShowWhitespace = appContext.app.showWhitespace;
 let prevEventHandlers = untrack(() => eventHandlers);
-let prevLineChangeTracker = untrack(() => lineChangeTracker);
 let prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
-let prevWordWrap = appContext.app.editorWordWrap;
-let prevWrapGuideColumn = appContext.app.wrapGuideColumn;
-let prevRecentChangesCount = appContext.app.recentChangesCount;
-let prevRecentChangesTimespan = appContext.app.recentChangesTimespan;
+let prevWrapConfig = untrack(() => ({
+    wordWrap: appContext.app.editorWordWrap,
+    wrapGuideColumn: appContext.app.wrapGuideColumn,
+}));
+let prevRecentChangesConfig = untrack(() => ({
+    lineChangeTracker: lineChangeTracker,
+    recentChangesCount: appContext.app.recentChangesCount,
+    recentChangesTimespan: appContext.app.recentChangesTimespan,
+}));
 
 const markdownExtensions = [
     markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -196,15 +202,12 @@ $effect(() => {
     const _insertMode = appContext.metrics.insertMode;
     if (
         view &&
-        (_theme !== prevTheme ||
-            _fontSize !== prevFontSize ||
-            _fontFamily !== prevFontFamily ||
-            _insertMode !== prevInsertMode)
+        (_theme !== prevThemeConfig.theme ||
+            _fontSize !== prevThemeConfig.fontSize ||
+            _fontFamily !== prevThemeConfig.fontFamily ||
+            _insertMode !== prevThemeConfig.insertMode)
     ) {
-        prevTheme = _theme;
-        prevFontSize = _fontSize;
-        prevFontFamily = _fontFamily;
-        prevInsertMode = _insertMode;
+        prevThemeConfig = { theme: _theme, fontSize: _fontSize, fontFamily: _fontFamily, insertMode: _insertMode };
         view.dispatch({
             effects: themeComp.reconfigure(
                 generateDynamicTheme(_fontSize, _fontFamily, _theme === 'dark', _insertMode),
@@ -259,9 +262,8 @@ $effect(() => {
 $effect(() => {
     const _wordWrap = appContext.app.editorWordWrap;
     const _wrapGuideColumn = appContext.app.wrapGuideColumn;
-    if (view && (_wordWrap !== prevWordWrap || _wrapGuideColumn !== prevWrapGuideColumn)) {
-        prevWordWrap = _wordWrap;
-        prevWrapGuideColumn = _wrapGuideColumn;
+    if (view && (_wordWrap !== prevWrapConfig.wordWrap || _wrapGuideColumn !== prevWrapConfig.wrapGuideColumn)) {
+        prevWrapConfig = { wordWrap: _wordWrap, wrapGuideColumn: _wrapGuideColumn };
         view.dispatch({ effects: wrapComp.reconfigure(createWrapExtension()) });
     }
 });
@@ -279,13 +281,11 @@ $effect(() => {
     const _recentChangesTimespan = appContext.app.recentChangesTimespan;
     if (
         view &&
-        (_lineChangeTracker !== prevLineChangeTracker ||
-            _recentChangesCount !== prevRecentChangesCount ||
-            _recentChangesTimespan !== prevRecentChangesTimespan)
+        (_lineChangeTracker !== prevRecentChangesConfig.lineChangeTracker ||
+            _recentChangesCount !== prevRecentChangesConfig.recentChangesCount ||
+            _recentChangesTimespan !== prevRecentChangesConfig.recentChangesTimespan)
     ) {
-        prevLineChangeTracker = _lineChangeTracker;
-        prevRecentChangesCount = _recentChangesCount;
-        prevRecentChangesTimespan = _recentChangesTimespan;
+        prevRecentChangesConfig = { lineChangeTracker: _lineChangeTracker, recentChangesCount: _recentChangesCount, recentChangesTimespan: _recentChangesTimespan };
         view.dispatch({
             effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
         });
@@ -679,36 +679,42 @@ onMount(() => {
     // Intercept mousemove with button held to drive faster scroll.
     let selScrollRAF: number | null = null;
     let selScrollVel = 0;
+    let selMouseMovePending = false;
 
     const handleSelMouseMove = (e: MouseEvent) => {
-        if (e.buttons !== 1) {
-            selScrollVel = 0;
-            return;
-        }
-        const scroller = viewInstance.scrollDOM;
-        const rect = scroller.getBoundingClientRect();
-        const ZONE = 60;
-        const MAX = 32;
-        const dy = e.clientY;
-        if (dy < rect.top + ZONE) selScrollVel = -MAX * ((rect.top + ZONE - dy) / ZONE) ** 2;
-        else if (dy > rect.bottom - ZONE)
-            selScrollVel = MAX * ((dy - (rect.bottom - ZONE)) / ZONE) ** 2;
-        else selScrollVel = 0;
+        if (selMouseMovePending) return;
+        selMouseMovePending = true;
+        requestAnimationFrame(() => {
+            selMouseMovePending = false;
+            if (e.buttons !== 1) {
+                selScrollVel = 0;
+                return;
+            }
+            const scroller = viewInstance.scrollDOM;
+            const rect = scroller.getBoundingClientRect();
+            const ZONE = 60;
+            const MAX = 32;
+            const dy = e.clientY;
+            if (dy < rect.top + ZONE) selScrollVel = -MAX * ((rect.top + ZONE - dy) / ZONE) ** 2;
+            else if (dy > rect.bottom - ZONE)
+                selScrollVel = MAX * ((dy - (rect.bottom - ZONE)) / ZONE) ** 2;
+            else selScrollVel = 0;
 
-        if (selScrollVel !== 0 && selScrollRAF === null) {
-            const tick = () => {
-                if (selScrollVel !== 0) {
-                    viewInstance.scrollDOM.scrollTop += selScrollVel;
-                    selScrollRAF = requestAnimationFrame(tick);
-                } else {
-                    selScrollRAF = null;
-                }
-            };
-            selScrollRAF = requestAnimationFrame(tick);
-        } else if (selScrollVel === 0 && selScrollRAF !== null) {
-            cancelAnimationFrame(selScrollRAF);
-            selScrollRAF = null;
-        }
+            if (selScrollVel !== 0 && selScrollRAF === null) {
+                const tick = () => {
+                    if (selScrollVel !== 0) {
+                        viewInstance.scrollDOM.scrollTop += selScrollVel;
+                        selScrollRAF = requestAnimationFrame(tick);
+                    } else {
+                        selScrollRAF = null;
+                    }
+                };
+                selScrollRAF = requestAnimationFrame(tick);
+            } else if (selScrollVel === 0 && selScrollRAF !== null) {
+                cancelAnimationFrame(selScrollRAF);
+                selScrollRAF = null;
+            }
+        });
     };
     const stopSelScroll = () => {
         selScrollVel = 0;

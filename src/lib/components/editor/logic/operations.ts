@@ -39,7 +39,7 @@ export async function performTextOperation(
                     insert: newText,
                 },
                 userEvent: userEvent,
-                scrollIntoView: true,
+                scrollIntoView: hasSelection,
             };
 
             // Restore selection logic
