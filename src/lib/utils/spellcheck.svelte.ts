@@ -29,7 +29,7 @@ export class SpellcheckManager {
     suggestionCache = $state(new SvelteMap<string, string[]>());
 
     private initPromise: Promise<void> | null = null;
-    private pendingFetches = new SvelteSet<string>();
+    private pendingFetches = new Set<string>();
 
     async loadCustomDictionary(): Promise<void> {
         const words = await callBackend('load_user_dictionary', {}, 'Dictionary:Add', undefined, {
