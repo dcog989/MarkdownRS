@@ -1,7 +1,7 @@
 pkgname=MarkdownRS
-pkgver=0.18.0
+pkgver=0.20.0
 pkgrel=1
-pkgdesc="The only markdown editor you need."
+pkgdesc="The only Markdown editor you need."
 arch=('x86_64')
 license=('MIT')
 depends=('webkit2gtk-4.1' 'openssl' 'libnm')
