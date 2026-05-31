@@ -91,13 +91,12 @@ export class ScrollManager {
                         domReady: scrollHeight > clientHeight,
                     };
                 },
-                write: ({ targetTop }) => {
+                write: ({ targetTop, domReady }) => {
                     view.scrollDOM.scrollTop = targetTop;
 
-                    // Verify
-                    if (targetTop > 0 && view.scrollDOM.scrollTop === 0) {
+                    if (targetTop > 0 && view.scrollDOM.scrollTop === 0 && domReady) {
                         requestAnimationFrame(() => {
-                            if (view.scrollDOM) {
+                            if (view.scrollDOM?.scrollHeight > view.scrollDOM.clientHeight) {
                                 view.scrollDOM.scrollTop = targetTop;
                             }
                         });
