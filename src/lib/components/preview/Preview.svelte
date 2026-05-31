@@ -5,7 +5,7 @@ import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
 import { toggleOrientation } from '$lib/stores/appState.svelte';
-import { updateTabMetadataAndPath } from '$lib/stores/editorStore.svelte';
+import { updateTabFields } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
 import { navigateToPath } from '$lib/utils/fileSystem';
@@ -77,7 +77,7 @@ $effect(() => {
 
             if (currentController.signal.aborted || !result) return;
 
-            updateTabMetadataAndPath(tabId, {
+            updateTabFields(tabId, {
                 wordCount: result.word_count,
             });
 

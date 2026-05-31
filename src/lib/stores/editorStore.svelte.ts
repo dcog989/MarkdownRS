@@ -614,7 +614,7 @@ export function updateTabPath(id: string, path: string, title?: string) {
     });
 }
 
-export function updateTabMetadataAndPath(id: string, updates: Partial<EditorTab>) {
+export function updateTabFields(id: string, updates: Partial<EditorTab>) {
     updateTab(id, () => updates);
 }
 

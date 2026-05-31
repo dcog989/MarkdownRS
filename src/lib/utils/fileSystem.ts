@@ -27,7 +27,7 @@ import {
     reopenClosedTab,
     saveTabComplete,
     updateContentOnly,
-    updateTabMetadataAndPath,
+    updateTabFields,
     updateTabTitle,
     updateTransientState,
 } from '$lib/stores/editorStore.svelte';
@@ -170,7 +170,7 @@ export async function openFile(path?: string): Promise<void> {
         }
 
         updateTransientState(id, { fileCheckPerformed: false });
-        updateTabMetadataAndPath(id, {
+        updateTabFields(id, {
             path: sanitizedPath,
             isDirty: false,
             lineEnding: detectedLineEnding,
@@ -520,7 +520,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
         fileWatcher.unwatch(oldPath);
         await fileWatcher.watch(newPath);
 
-        updateTabMetadataAndPath(tabId, {
+        updateTabFields(tabId, {
             path: newPath,
             title: finalNewName,
             customTitle: finalNewName,
