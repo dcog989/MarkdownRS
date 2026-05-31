@@ -292,12 +292,12 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
             key: 'Mod-Shift-d',
             run: copyLineDown,
         },
-        ...(completionKeymap as never),
-        ...(historyKeymap as never),
-        ...(closeBracketsKeymap as never),
+        ...(completionKeymap as KeyBinding[]),
+        ...(historyKeymap as KeyBinding[]),
+        ...(closeBracketsKeymap as KeyBinding[]),
         ...(defaultKeymap.filter(
             (binding) => binding.key !== 'Tab' && !FILTERED_DEFAULT_KEYS.has(binding.key ?? ''),
-        ) as never),
+        ) as KeyBinding[]),
         // Our Tab handlers come last to override defaults
         { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
     ]);
