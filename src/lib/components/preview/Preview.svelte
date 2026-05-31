@@ -3,6 +3,7 @@ import { FileText, FlipHorizontal, FlipVertical } from 'lucide-svelte';
 import { onDestroy, untrack } from 'svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
+import Logo from '$lib/components/ui/Logo.svelte';
 import { toggleOrientation } from '$lib/stores/appState.svelte';
 import { updateTabMetadataAndPath } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
@@ -180,7 +181,7 @@ function injectHtml(node: HTMLElement, content: string) {
             </div>
         {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
-                <img src="/logo.svg" alt="Logo" class="mb-4 h-24 w-24 grayscale" />
+                <Logo class="mb-4 h-24 w-24 grayscale" />
                 <h1 class="text-3xl font-bold">MarkdownRS</h1>
             </div>
         {:else}

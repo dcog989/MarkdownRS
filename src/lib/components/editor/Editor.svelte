@@ -8,6 +8,7 @@ import { performTextOperation } from '$lib/components/editor/logic/operations';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
 import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
+import Logo from '$lib/components/ui/Logo.svelte';
 import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
 import {
     editorStore,
@@ -241,10 +242,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 
     {#if showEmptyState}
         <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <img
-                src="/logo.svg"
-                alt="MarkdownRS Logo"
-                class="h-48 w-48 opacity-[0.08] select-none" />
+            <Logo class="h-48 w-48 opacity-[0.08] select-none" />
         </div>
     {/if}
 </div>

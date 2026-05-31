@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { onDestroy, onMount } from 'svelte';
 import Editor from '$lib/components/editor/Editor.svelte';
 import Preview from '$lib/components/preview/Preview.svelte';
+import Logo from '$lib/components/ui/Logo.svelte';
 import StatusBar from '$lib/components/ui/StatusBar.svelte';
 import TabBar from '$lib/components/ui/TabBar.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
@@ -307,7 +308,7 @@ function resetSplit() {
 {#if !isInitialized}
     <div
         class="bg-bg-main text-fg-default flex h-screen w-screen flex-col items-center justify-center">
-        <img src="/logo.svg" alt="App Logo" class="mb-4 h-16 w-16 animate-pulse opacity-50" />
+        <Logo class="mb-4 h-16 w-16 animate-pulse opacity-50" />
         <p class="text-fg-muted text-sm">Loading MarkdownRS...</p>
         {#if initError}
             <p class="text-danger-text mt-2 text-xs">{initError}</p>
@@ -359,10 +360,7 @@ function resetSplit() {
             {:else}
                 <div
                     class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none">
-                    <img
-                        src="/logo.svg"
-                        alt="App Logo"
-                        class="mb-4 h-16 w-16 opacity-50 grayscale" />
+                    <Logo class="mb-4 h-16 w-16 opacity-50 grayscale" />
                     <p class="text-sm">Ctrl+N to create a new file</p>
                 </div>
             {/if}
