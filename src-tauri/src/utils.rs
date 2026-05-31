@@ -151,9 +151,15 @@ pub async fn cleanup_stale_temp_files(
 
 /// Reads text file with automatic BOM (Byte Order Mark) detection and stripping.
 /// Handles UTF-8, UTF-16LE, and UTF-16BE encoded files.
-pub fn read_text_with_bom_detection(raw_bytes: &[u8]) -> String {
-    match Bom::from(raw_bytes) {
-        Bom::Null => String::from_utf8_lossy(raw_bytes).to_string(),
+/// Takes ownership of the byte buffer to allow zero-copy conversion for
+/// valid UTF-8 (the common case via `String::from_utf8`).
+pub fn read_text_with_bom_detection(raw_bytes: Vec<u8>) -> String {
+    match Bom::from(&raw_bytes[..]) {
+        Bom::Null => {
+            // Zero-copy for valid UTF-8 (the 99% case).
+            String::from_utf8(raw_bytes)
+                .unwrap_or_else(|e| String::from_utf8_lossy(e.as_bytes()).into_owned())
+        },
         Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
         Bom::Utf16Le => {
             let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);

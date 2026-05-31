@@ -238,7 +238,7 @@ async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> 
     }
 
     let state = app_handle.state::<AppState>();
-    let mut custom_dict = state.custom_dict.lock().await;
+    let mut custom_dict = state.custom_dict.lock().unwrap_or_else(|e| e.into_inner());
     custom_dict.insert(word.to_lowercase());
 
     Ok(())
@@ -290,7 +290,10 @@ pub async fn init_spellchecker(
 ) -> Result<(), String> {
     use crate::state::SpellcheckStatus;
     {
-        let mut status = state.spellcheck_status.lock().await;
+        let mut status = state
+            .spellcheck_status
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if *status == SpellcheckStatus::Loading || *status == SpellcheckStatus::Ready {
             log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready");
             return Ok(());
@@ -446,32 +449,44 @@ pub async fn init_spellchecker(
 
             match dict_result {
                 Ok(Ok(dict)) => {
-                    let mut speller = state.speller.lock().await;
+                    let mut speller = state.speller.lock().unwrap_or_else(|e| e.into_inner());
                     *speller = Some(dict);
-                    let mut status = state.spellcheck_status.lock().await;
+                    let mut status = state
+                        .spellcheck_status
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
                     *status = SpellcheckStatus::Ready;
                     log::info!("Spellchecker ready: {} unique words", total_word_count);
                 },
                 Ok(Err(e)) => {
                     log::error!("Failed to create dictionary: {:?}", e);
-                    let mut status = state.spellcheck_status.lock().await;
+                    let mut status = state
+                        .spellcheck_status
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
                     *status = SpellcheckStatus::Failed;
                 },
                 Err(e) => {
                     log::error!("Dictionary construction task panicked: {:?}", e);
-                    let mut status = state.spellcheck_status.lock().await;
+                    let mut status = state
+                        .spellcheck_status
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
                     *status = SpellcheckStatus::Failed;
                 },
             }
         } else {
             log::warn!("No dictionary content available");
-            let mut status = state.spellcheck_status.lock().await;
+            let mut status = state
+                .spellcheck_status
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             *status = SpellcheckStatus::Failed;
         }
 
         // Load custom user dictionary into State (for ignore logic)
         if let Ok(text) = fs::read_to_string(&custom_path).await {
-            let mut custom = state.custom_dict.lock().await;
+            let mut custom = state.custom_dict.lock().unwrap_or_else(|e| e.into_inner());
             for line in text.lines() {
                 let w = line.trim();
                 if !w.is_empty() {
@@ -489,7 +504,10 @@ pub async fn init_spellchecker(
             log::error!("Spellchecker init task panicked: {:?}", e);
             use crate::state::SpellcheckStatus;
             let state = app_handle_recovery.state::<AppState>();
-            let mut status = state.spellcheck_status.lock().await;
+            let mut status = state
+                .spellcheck_status
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             if *status == SpellcheckStatus::Loading {
                 *status = SpellcheckStatus::Failed;
             }
@@ -510,8 +528,8 @@ pub async fn check_words(
     // before entering block_in_place so we don't hold Mutex guards across a
     // potential thread switch and avoid cloning the whole HashSet.
     let (speller_present, custom_snapshot) = {
-        let speller_guard = state.speller.lock().await;
-        let custom_guard = state.custom_dict.lock().await;
+        let speller_guard = state.speller.lock().unwrap_or_else(|e| e.into_inner());
+        let custom_guard = state.custom_dict.lock().unwrap_or_else(|e| e.into_inner());
         let present = speller_guard.is_some();
         // Clone only if there is actually a speller worth using.
         let snapshot = if present {
@@ -529,7 +547,7 @@ pub async fn check_words(
 
     // Re-acquire speller guard for the blocking work; custom dict is already
     // captured in `custom_snapshot` so no second lock is needed.
-    let speller_guard = state.speller.lock().await;
+    let speller_guard = state.speller.lock().unwrap_or_else(|e| e.into_inner());
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
         None => return Ok(Vec::new()),
@@ -585,7 +603,7 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock().await;
+    let speller_guard = state.speller.lock().unwrap_or_else(|e| e.into_inner());
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
@@ -600,7 +618,10 @@ pub async fn get_spelling_suggestions(
 #[tauri::command]
 pub async fn get_spellcheck_status(state: State<'_, AppState>) -> Result<String, String> {
     use crate::state::SpellcheckStatus;
-    let status = state.spellcheck_status.lock().await;
+    let status = state
+        .spellcheck_status
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let status_str = match *status {
         SpellcheckStatus::Uninitialized => "uninitialized",
         SpellcheckStatus::Loading => "loading",

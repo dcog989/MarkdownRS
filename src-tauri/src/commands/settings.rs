@@ -197,11 +197,22 @@ async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<Stri
         .await
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "read settings file", e))?;
 
-    Ok(Some(read_text_with_bom_detection(&raw_bytes)))
+    Ok(Some(read_text_with_bom_detection(raw_bytes)))
 }
 
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    // Check the in-memory cache first to avoid re-reading settings.toml on every open.
+    if let Some(state) = app_handle.try_state::<crate::state::AppState>() {
+        let cache = state
+            .settings_cache
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        if let Some(ref cached) = *cache {
+            return Ok(cached.clone());
+        }
+    }
+
     let content = match read_settings_file(&app_handle).await? {
         Some(c) => c,
         None => return Ok(serde_json::json!({})),
@@ -210,7 +221,19 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
     let toml_val: toml::Value =
         toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))?;
 
-    serde_json::to_value(toml_val).map_err(|e| handle_error(None, "convert settings to JSON", e))
+    let json_val = serde_json::to_value(toml_val)
+        .map_err(|e| handle_error(None, "convert settings to JSON", e))?;
+
+    // Populate the cache for subsequent calls.
+    if let Some(state) = app_handle.try_state::<crate::state::AppState>() {
+        let mut cache = state
+            .settings_cache
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        *cache = Some(json_val.clone());
+    }
+
+    Ok(json_val)
 }
 
 /// Load raw TOML settings as toml::Value to extract specific fields without losing data
@@ -308,12 +331,17 @@ pub async fn save_settings(
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "write settings file", e))?;
     log::info!("Settings saved successfully to {:?}", path);
 
-    // Invalidate the cached max-file-size so the next read re-parses from disk.
+    // Invalidate caches so the next read re-parses from disk.
     use tauri::Manager;
     if let Some(state) = app_handle.try_state::<AppState>() {
         state
             .max_file_size_bytes
             .store(MAX_FILE_SIZE_UNSET, std::sync::atomic::Ordering::Relaxed);
+        let mut cache = state
+            .settings_cache
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        *cache = None;
     }
 
     Ok(())

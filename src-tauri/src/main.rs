@@ -271,7 +271,7 @@ fn main() {
             let settings_level = if config_path.exists() {
                 match fs::read(&config_path) {
                     Ok(raw_bytes) => {
-                        let content = utils::read_text_with_bom_detection(&raw_bytes);
+                        let content = utils::read_text_with_bom_detection(raw_bytes);
 
                         match toml::from_str::<toml::Value>(&content) {
                             Ok(toml_val) => toml_val
@@ -294,12 +294,12 @@ fn main() {
                 default_log_level()
             };
 
-            let log_level = match settings_level.to_lowercase().as_str() {
-                "error" => LevelFilter::Error,
-                "warn" | "warning" => LevelFilter::Warn,
-                "info" => LevelFilter::Info,
-                "trace" => LevelFilter::Trace,
-                "off" => LevelFilter::Off,
+            let log_level = match settings_level.as_str() {
+                s if s.eq_ignore_ascii_case("error") => LevelFilter::Error,
+                s if s.eq_ignore_ascii_case("warn") || s.eq_ignore_ascii_case("warning") => LevelFilter::Warn,
+                s if s.eq_ignore_ascii_case("info") => LevelFilter::Info,
+                s if s.eq_ignore_ascii_case("trace") => LevelFilter::Trace,
+                s if s.eq_ignore_ascii_case("off") => LevelFilter::Off,
                 _ => LevelFilter::Debug,
             };
 
@@ -361,10 +361,11 @@ fn main() {
 
             app.manage(state::AppState {
                 db,
-                speller: tokio::sync::Mutex::new(None),
-                custom_dict: tokio::sync::Mutex::new(std::collections::HashSet::new()),
-                spellcheck_status: tokio::sync::Mutex::new(state::SpellcheckStatus::Uninitialized),
+                speller: std::sync::Mutex::new(None),
+                custom_dict: std::sync::Mutex::new(std::collections::HashSet::new()),
+                spellcheck_status: std::sync::Mutex::new(state::SpellcheckStatus::Uninitialized),
                 max_file_size_bytes: std::sync::atomic::AtomicU64::new(state::MAX_FILE_SIZE_UNSET),
+                settings_cache: std::sync::Mutex::new(None),
             });
 
             // Check for command-line arguments on first launch.

@@ -122,12 +122,13 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
         .collect();
 
     for node in text_nodes {
-        let text = match &node.data.borrow().value {
-            NodeValue::Text(t) => t.clone().into_owned(),
+        let node_data = node.data.borrow();
+        let text = match &node_data.value {
+            NodeValue::Text(t) => t.as_ref(),
             _ => continue,
         };
 
-        if !PATH_REGEX.is_match(&text) {
+        if !PATH_REGEX.is_match(text) {
             continue;
         }
 
@@ -135,7 +136,7 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
         let mut last_end = 0;
         let mut new_nodes: Vec<&AstNode<'_>> = Vec::new();
 
-        for cap in PATH_REGEX.captures_iter(&text) {
+        for cap in PATH_REGEX.captures_iter(text) {
             let full = cap.get(0).expect("group 0");
             let path_match = cap.get(1).expect("group 1");
 
