@@ -2,7 +2,7 @@ import { RangeSetBuilder } from '@codemirror/state';
 import {
     Decoration,
     type DecorationSet,
-    type EditorView,
+    EditorView,
     ViewPlugin,
     type ViewUpdate,
     WidgetType,
@@ -103,23 +103,10 @@ export const selectionWhitespacePlugin = ViewPlugin.fromClass(
     { decorations: (v) => v.decorations },
 );
 
-export const rulerPlugin = ViewPlugin.fromClass(
+const rulerMeasure = ViewPlugin.fromClass(
     class {
-        ruler: HTMLElement;
         gutters: HTMLElement | null;
         constructor(view: EditorView) {
-            this.ruler = document.createElement('div');
-            this.ruler.className = 'cm-ruler-line';
-            this.ruler.style.position = 'absolute';
-            this.ruler.style.top = '0';
-            this.ruler.style.bottom = '0';
-            this.ruler.style.width = '1px';
-            this.ruler.style.backgroundColor = 'var(--color-border-light)';
-            this.ruler.style.opacity = '0.3';
-            this.ruler.style.pointerEvents = 'none';
-            this.ruler.style.display = 'none';
-            this.ruler.style.zIndex = '0';
-            view.scrollDOM.appendChild(this.ruler);
             const gutters = view.dom.querySelector('.cm-gutters');
             this.gutters = gutters instanceof HTMLElement ? gutters : null;
             this.measure(view);
@@ -131,20 +118,36 @@ export const rulerPlugin = ViewPlugin.fromClass(
         }
         measure(view: EditorView) {
             const column = appContext.app.wrapGuideColumn;
+            const dom = view.scrollDOM;
             if (column > 0) {
                 const charWidth = view.defaultCharacterWidth;
                 const gutterWidth = this.gutters?.offsetWidth || 0;
                 const style = window.getComputedStyle(view.contentDOM);
                 const paddingLeft = parseFloat(style.paddingLeft) || 0;
                 const left = gutterWidth + paddingLeft + column * charWidth;
-                this.ruler.style.left = `${left}px`;
-                this.ruler.style.display = 'block';
+                dom.style.setProperty('--ruler-left', `${left}px`);
+                dom.style.setProperty('--ruler-display', '');
             } else {
-                this.ruler.style.display = 'none';
+                dom.style.setProperty('--ruler-display', 'none');
             }
-        }
-        destroy() {
-            this.ruler.remove();
         }
     },
 );
+
+const rulerTheme = EditorView.theme({
+    '.cm-scroller::after': {
+        content: '""',
+        position: 'absolute',
+        top: '0',
+        bottom: '0',
+        width: '1px',
+        backgroundColor: 'var(--color-border-light)',
+        opacity: '0.3',
+        pointerEvents: 'none',
+        zIndex: '0',
+        left: 'var(--ruler-left, 0px)',
+        display: 'var(--ruler-display, none)',
+    },
+});
+
+export const rulerPlugin = [rulerMeasure, rulerTheme];
