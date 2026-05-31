@@ -130,13 +130,16 @@ function defaultTransientState(sizeBytes: number): TabTransientState {
         topLine: 1,
         contentChanged: false,
         isPersisted: false,
-        wordCountStrategy:
-            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast',
+        wordCountStrategy: pickWordCountStrategy(sizeBytes),
         fileCheckPerformed: false,
     };
 }
 function normalizeLineEndings(text: string): string {
     return text.replace(/\r\n/g, '\n');
+}
+
+function pickWordCountStrategy(sizeBytes: number): 'accurate' | 'fast' {
+    return sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
 }
 
 /**
@@ -213,9 +216,7 @@ function scheduleWordCountUpdate(tabId: string, content: string, sizeBytes: numb
 
         const tab = editorStore.tabs[index];
         const ts = transientStateCache.get(tabId);
-        const strategy =
-            ts?.wordCountStrategy ??
-            (sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast');
+        const strategy = ts?.wordCountStrategy ?? pickWordCountStrategy(sizeBytes);
         if (ts && !ts.wordCountStrategy) ts.wordCountStrategy = strategy;
 
         const wordCount = strategy === 'accurate' ? countWords(content) : fastCountWords(content);
@@ -276,7 +277,7 @@ export function addTab(title: string = '', content: string = '') {
         // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
         widestColumn = lines.reduce((max, line) => Math.max(max, line.length), 0);
         wordCount =
-            sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+            pickWordCountStrategy(sizeBytes) === 'accurate'
                 ? countWords(normalizedContent)
                 : fastCountWords(normalizedContent);
     }
@@ -636,8 +637,7 @@ export function reloadTabContent(
     // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
     const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
-    const strategy: 'accurate' | 'fast' =
-        sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
+    const strategy = pickWordCountStrategy(sizeBytes);
     const wordCount = strategy === 'accurate' ? countWords(content) : fastCountWords(content);
 
     const ts = transientStateCache.get(id);
