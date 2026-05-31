@@ -42,11 +42,12 @@ export interface Command {
 }
 
 // Helper to dispatch keyboard events
-function dispatchKeyEvent(key: string, ctrlKey = true, shiftKey = false): void {
+function dispatchKeyEvent(key: string, ctrlKey = true, shiftKey = false, altKey = false): void {
     const event = new KeyboardEvent('keydown', {
         key,
         ctrlKey,
         shiftKey,
+        altKey,
         bubbles: true,
         cancelable: true,
     });
@@ -269,6 +270,51 @@ export const editorCommands: Command[] = [
         id: 'editor.delete_line',
         label: 'Editor: Delete Line',
         action: () => dispatchKeyEvent('k', true, true),
+    },
+    {
+        id: 'editor.move_line_up',
+        label: 'Editor: Move Line Up',
+        action: () => dispatchKeyEvent('ArrowUp', false, false, true),
+    },
+    {
+        id: 'editor.move_line_down',
+        label: 'Editor: Move Line Down',
+        action: () => dispatchKeyEvent('ArrowDown', false, false, true),
+    },
+    {
+        id: 'editor.copy_line_up',
+        label: 'Editor: Copy Line Up',
+        action: () => dispatchKeyEvent('ArrowUp', false, true, true),
+    },
+    {
+        id: 'editor.add_cursor_above',
+        label: 'Editor: Add Cursor Above',
+        action: () => dispatchKeyEvent('ArrowUp', true, false, true),
+    },
+    {
+        id: 'editor.add_cursor_below',
+        label: 'Editor: Add Cursor Below',
+        action: () => dispatchKeyEvent('ArrowDown', true, false, true),
+    },
+    {
+        id: 'editor.select_line',
+        label: 'Editor: Select Line',
+        action: () => dispatchKeyEvent('l', true, false),
+    },
+    {
+        id: 'editor.goto_matching_bracket',
+        label: 'Editor: Go to Matching Bracket',
+        action: () => dispatchKeyEvent('\\', true, true),
+    },
+    {
+        id: 'editor.indent_more',
+        label: 'Editor: Indent',
+        action: () => dispatchKeyEvent(']', true, false),
+    },
+    {
+        id: 'editor.indent_less',
+        label: 'Editor: Outdent',
+        action: () => dispatchKeyEvent('[', true, false),
     },
     {
         id: 'editor.goto_line',

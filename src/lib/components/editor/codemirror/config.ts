@@ -6,7 +6,7 @@ import {
     completeAnyWord,
     completionKeymap,
 } from '@codemirror/autocomplete';
-import { defaultKeymap, historyKeymap } from '@codemirror/commands';
+import { copyLineDown, defaultKeymap, historyKeymap, selectLine } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
 import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
@@ -27,6 +27,7 @@ const FILTERED_DEFAULT_KEYS = new Set([
     'Mod-d',
     'Ctrl-b',
     'Mod-b',
+    'Alt-l',
 ]);
 
 const markdownKeymap: KeyBinding[] = [
@@ -283,6 +284,14 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
             },
         },
         ...markdownKeymap,
+        {
+            key: 'Mod-l',
+            run: selectLine,
+        },
+        {
+            key: 'Mod-Shift-d',
+            run: copyLineDown,
+        },
         ...(completionKeymap as never),
         ...(historyKeymap as never),
         ...(closeBracketsKeymap as never),

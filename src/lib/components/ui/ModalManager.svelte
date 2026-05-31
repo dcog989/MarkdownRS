@@ -17,7 +17,7 @@ import { shortcutManager } from '$lib/utils/shortcuts';
 const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category) =>
     getOperationsByCategory(category.id).map((op) => ({
         id: `ops-${op.id}`,
-        label: `${category.title}: ${op.label}`,
+        label: `${category.title === 'Text' ? 'Editor' : category.title}: ${op.label}`,
         action: () => performTextTransform(op.id),
     })),
 );
@@ -57,6 +57,15 @@ const PALETTE_TO_SHORTCUT_ID: Record<string, string> = {
     'editor.toggle_comment': 'markdown.comment',
     'editor.duplicate_line': 'edit.duplicateLine',
     'editor.delete_line': 'edit.deleteLine',
+    'editor.move_line_up': 'edit.moveLineUp',
+    'editor.move_line_down': 'edit.moveLineDown',
+    'editor.copy_line_up': 'edit.copyLineUp',
+    'editor.add_cursor_above': 'edit.addCursorAbove',
+    'editor.add_cursor_below': 'edit.addCursorBelow',
+    'editor.select_line': 'edit.selectLine',
+    'editor.goto_matching_bracket': 'edit.gotoMatchingBracket',
+    'editor.indent_more': 'edit.indentMore',
+    'editor.indent_less': 'edit.indentLess',
     'editor.goto_line': 'edit.gotoLine',
 };
 
