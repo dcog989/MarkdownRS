@@ -342,6 +342,10 @@ select {
     scrollbar-color: var(--border-primary) transparent;
 }
 
+.scrollbar-track {
+    /* Positioning anchor for CustomScrollbar.svelte's overlay track+thumb. */
+}
+
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
