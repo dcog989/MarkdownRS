@@ -146,6 +146,8 @@ let prevLineChangeTracker = untrack(() => lineChangeTracker);
 let prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
 let prevWordWrap = appContext.app.editorWordWrap;
 let prevWrapGuideColumn = appContext.app.wrapGuideColumn;
+let prevRecentChangesCount = appContext.app.recentChangesCount;
+let prevRecentChangesTimespan = appContext.app.recentChangesTimespan;
 
 const markdownExtensions = [
     markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -272,8 +274,18 @@ $effect(() => {
 });
 
 $effect(() => {
-    if (view && lineChangeTracker !== prevLineChangeTracker) {
-        prevLineChangeTracker = lineChangeTracker;
+    const _lineChangeTracker = lineChangeTracker;
+    const _recentChangesCount = appContext.app.recentChangesCount;
+    const _recentChangesTimespan = appContext.app.recentChangesTimespan;
+    if (
+        view &&
+        (_lineChangeTracker !== prevLineChangeTracker ||
+            _recentChangesCount !== prevRecentChangesCount ||
+            _recentChangesTimespan !== prevRecentChangesTimespan)
+    ) {
+        prevLineChangeTracker = _lineChangeTracker;
+        prevRecentChangesCount = _recentChangesCount;
+        prevRecentChangesTimespan = _recentChangesTimespan;
         view.dispatch({
             effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
         });
