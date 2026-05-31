@@ -56,7 +56,7 @@
 }
 
 .bg-border-light {
-    background-color: var(--border-light);
+    background-color: var(--border-secondary);
 }
 
 /* Color Classes - Text */
@@ -98,4 +98,25 @@
 
 .text-dirty-active {
     color: var(--dirty-indicator);
+}
+
+.text-success {
+    color: var(--success);
+}
+
+/* Border-left color classes */
+.border-l-success {
+    border-left-color: var(--success);
+}
+
+.border-l-danger {
+    border-left-color: var(--danger);
+}
+
+.border-l-accent-secondary {
+    border-left-color: var(--accent-secondary);
+}
+
+.border-l-accent-link {
+    border-left-color: var(--accent-link);
 }

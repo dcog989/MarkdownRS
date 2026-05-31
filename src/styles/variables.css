@@ -29,7 +29,6 @@
     --color-bg-hover: var(--surface-hover);
     --color-bg-active: var(--surface-active);
     --color-bg-input: var(--surface-input);
-    --color-bg-backdrop: var(--surface-backdrop);
 
     /* Text System - Layer 1: Unified Text Variables */
     --text-primary: oklch(0.85 0 0); /* Main text content */
@@ -52,7 +51,6 @@
     /* Semantic Border Mapping */
     --color-border-main: var(--border-primary);
     --color-border-light: var(--border-secondary);
-    --color-border-focus: var(--border-focus);
 
     /* Accent System - Layer 1: Dynamic Accents from Brand */
     --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
@@ -68,13 +66,6 @@
     /* Semantic Accent Mapping */
     --color-accent-primary: var(--accent-primary);
     --color-accent-secondary: var(--accent-secondary);
-    --color-accent-file: var(--accent-file);
-    --color-accent-link: var(--accent-link);
-    --color-accent-link-hover: var(--accent-link-hover);
-    --color-accent-url: var(--accent-url);
-    --color-accent-url-hover: var(--accent-url-hover);
-    --color-accent-filepath: var(--accent-filepath);
-    --color-accent-filepath-hover: var(--accent-filepath-hover);
 
     /* Functional System - Layer 1: State and Interaction Colors */
     --danger: oklch(0.55 0.22 25);
@@ -103,8 +94,6 @@
     --color-selection-bg: var(--selection-bg);
     --color-selection-match-bg: var(--selection-match-bg);
     --color-bg-active-line: var(--active-line-bg);
-    --color-status-bar-bg: var(--accent-primary);
-    --color-status-bar-fg: var(--text-inverse);
 }
 
 :root {
@@ -126,12 +115,6 @@
     --syntax-comment: #686868;
 
     /* Legacy Mapping */
-    --color-bg-code: var(--code-bg);
-    --color-fg-code: var(--code-fg);
-    --color-bg-quote: var(--quote-bg);
-    --color-border-quote: var(--quote-fg);
-    --color-bg-highlight: var(--highlight-bg);
-    --color-hr-dashes: var(--hr-color);
     --preview-fg-body: var(--text-primary);
     --preview-fg-heading: var(--accent-secondary);
     --preview-fg-link: var(--accent-link);
@@ -194,8 +177,6 @@
     --selection-match-bg: oklch(0.72 0.18 55 / 0.45);
     --active-line-bg: oklch(0 0 0 / 0.04);
     --dirty-indicator: #2e7d32;
-    --color-status-bar-bg: var(--accent-primary);
-    --color-status-bar-fg: var(--text-inverse);
 
     /* Editor & Content Colors - Light Theme */
     --code-bg: oklch(0.76 0.14 70 / 0.15);

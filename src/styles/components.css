@@ -314,6 +314,10 @@ select {
     cursor: pointer;
 }
 
+.mru-item-even {
+    background-color: var(--surface-row);
+}
+
 /* Component Specific Classes */
 .command-item {
     display: flex;
@@ -354,24 +358,6 @@ select {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: var(--border-secondary);
-}
-
-.scrollbar-thumb {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-primary) transparent;
-}
-
-.scrollbar-thumb::-webkit-scrollbar {
-    width: 6px;
-}
-
-.scrollbar-thumb::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.scrollbar-thumb::-webkit-scrollbar-thumb {
-    background-color: var(--border-primary);
-    border-radius: 3px;
 }
 
 /* Context Menu Styling */
@@ -449,6 +435,11 @@ select {
         0 2px 4px -2px oklch(0 0 0 / 0.1);
     border: 1px solid var(--border-primary);
     animation: tooltip-fade-in 150ms ease-out;
+}
+
+/* Accent-color utility */
+.accent-accent-primary {
+    accent-color: var(--accent-primary);
 }
 
 /* HR Styling */

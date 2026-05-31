@@ -39,12 +39,6 @@
     white-space: nowrap;
 }
 
-.text-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 /* Utility Classes - User Select */
 .select-none {
     user-select: none;

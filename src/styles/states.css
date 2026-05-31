@@ -1,14 +1,6 @@
 /* Hover States */
-.hover\:bg-white\/5:hover {
-    background-color: oklch(from var(--text-primary) l c h / 0.05);
-}
-
 .hover\:bg-white\/10:hover {
     background-color: oklch(from var(--text-primary) l c h / 0.08);
-}
-
-.hover\:bg-white\/20:hover {
-    background-color: oklch(from var(--text-primary) l c h / 0.12);
 }
 
 .hover\:bg-accent-primary:hover {
@@ -17,10 +9,6 @@
 
 .hover\:bg-danger:hover {
     background-color: var(--danger);
-}
-
-.hover\:bg-fg-muted:hover {
-    background-color: var(--text-secondary);
 }
 
 .hover\:bg-bg-hover:hover {
@@ -95,10 +83,6 @@
     opacity: 1;
 }
 
-.group:hover .group-hover\:opacity-70 {
-    opacity: 0.7;
-}
-
 .group:hover .group-hover\:w-3 {
     width: 0.75rem;
 }
@@ -114,14 +98,6 @@
 /* Active States */
 .active\:bg-accent-primary:active {
     background-color: var(--accent-primary);
-}
-
-.active\:opacity-100:active {
-    opacity: 1;
-}
-
-.active\:w-3:active {
-    width: 0.75rem;
 }
 
 /* Disabled States */
@@ -189,18 +165,6 @@ textarea:focus-visible {
 .bg-bg-panel button:hover:focus-visible {
     background-color: var(--accent-primary);
     color: var(--text-inverse);
-}
-
-/* Keyboard navigation: accent color highlight on focused item */
-.bg-bg-panel[data-keyboard-nav="true"] button:focus-visible {
-    background-color: var(--accent-primary);
-    color: var(--text-inverse);
-}
-
-/* Mouse navigation: suppress focus-visible styles, rely on hover */
-.bg-bg-panel[data-keyboard-nav="false"] button:focus-visible {
-    background-color: transparent;
-    color: inherit;
 }
 
 /* Hover works the same in both modes */

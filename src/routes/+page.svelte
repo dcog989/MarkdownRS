@@ -330,7 +330,7 @@ function resetSplit() {
             {#if appContext.app.activeTabId}
                 <div
                     class="flex h-full w-full flex-row"
-                    class:flex-column={appContext.app.splitOrientation !== 'vertical'}>
+                    class:flex-col={appContext.app.splitOrientation !== 'vertical'}>
                     <div
                         class="writer-content"
                         style="flex: {showPreview

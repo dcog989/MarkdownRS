@@ -486,8 +486,3 @@ $effect(() => {
         ? appContext.editor.mruStack[mruSelectedIndex]
         : appContext.app.activeTabId} />
 
-<style>
-.tab-scroll-container {
-    pointer-events: auto;
-}
-</style>
