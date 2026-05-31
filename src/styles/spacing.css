@@ -240,6 +240,10 @@
     padding-left: 3.5rem;
 }
 
+.pr-2 {
+    padding-right: 0.5rem;
+}
+
 .pr-3 {
     padding-right: 0.75rem;
 }

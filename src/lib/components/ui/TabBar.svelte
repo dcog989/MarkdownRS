@@ -353,7 +353,7 @@ $effect(() => {
         {/if}
     </div>
 
-    <div class="flex h-full items-stretch border-l pr-4">
+    <div class="flex h-full items-stretch border-l pr-2">
         <button
             type="button"
             class="text-fg-muted hover-surface flex h-9 w-9 shrink-0 items-center justify-center"
