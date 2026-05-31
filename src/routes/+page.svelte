@@ -83,12 +83,16 @@ let isMarkdown = $derived.by(() => {
 
 let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
-// Update native titlebar with current document name
+// Update native titlebar with current document name and path
+// Does not work on Wayland: https://github.com/tauri-apps/tauri/issues/13749 - workaround in the comments
 $effect(() => {
     const tab = activeTab;
     const title = tab?.title || '';
-    const prefix = title ? `${title} - ` : '';
-    const fullTitle = `${prefix}MarkdownRS`;
+    const path = tab?.path || '';
+    const dirtyMarker = tab?.isDirty ? '*' : '';
+    const filePart = title ? `${dirtyMarker}${title}` : '';
+    const pathPart = path ? ` - ${path}` : '';
+    const fullTitle = filePart ? `${filePart}${pathPart} - MarkdownRS` : 'MarkdownRS';
     document.title = fullTitle;
     getCurrentWindow().setTitle(fullTitle);
 });
