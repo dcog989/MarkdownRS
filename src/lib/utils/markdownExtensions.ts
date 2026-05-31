@@ -157,35 +157,27 @@ const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 
 function getHorizontalRuleDecorations(view: EditorView) {
     const builder = new RangeSetBuilder<Decoration>();
-    const foundHrs: { from: number; to: number }[] = [];
 
-    // Primary: decorate nodes recognized by the markdown parser
+    // Collect parser-recognised HorizontalRule nodes in the visible range.
+    const parserHrs = new Set<number>();
     iterateVisibleNodes(view, (node) => {
         if (node.name === 'HorizontalRule') {
-            builder.add(node.from, node.to, horizontalRuleDeco);
-            foundHrs.push({ from: node.from, to: node.to });
+            parserHrs.add(node.from);
         }
     });
 
-    // Fallback: CodeMirror's markdown parser misses some `---` lines in edge cases
-    // (e.g., after certain content patterns). Check for `---` lines directly.
-    const lines = view.state.doc.toString().split('\n');
-    for (let i = 0; i < lines.length; i++) {
-        if (lines[i].trim() === '---') {
-            const line = view.state.doc.line(i + 1);
-            const alreadyDecorated = foundHrs.some(
-                (hr) => hr.from <= line.from && hr.to >= line.to,
-            );
-            if (!alreadyDecorated) {
-                for (const { from, to } of view.visibleRanges) {
-                    if (line.from >= from && line.to <= to) {
-                        builder.add(line.from, line.to, horizontalRuleDeco);
-                        break;
-                    }
-                }
-            }
+    // Single pass over visible lines: emit parser hits and `---` fallbacks
+    // together.  iterateVisibleLines visits lines in ascending position order
+    // so the RangeSetBuilder invariant is always satisfied.
+    iterateVisibleLines(view, (line) => {
+        if (parserHrs.has(line.from)) {
+            // Parser confirmed this is a HorizontalRule.
+            builder.add(line.from, line.to, horizontalRuleDeco);
+        } else if (line.text.trim() === '---') {
+            // Fallback: `---` the markdown parser did not tag (edge-case gaps).
+            builder.add(line.from, line.to, horizontalRuleDeco);
         }
-    }
+    });
 
     return builder.finish();
 }
