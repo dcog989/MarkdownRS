@@ -56,6 +56,7 @@ const PALETTE_TO_SHORTCUT_ID: Record<string, string> = {
     'editor.bookmark_add': 'markdown.bookmark',
     'editor.toggle_comment': 'markdown.comment',
     'editor.duplicate_line': 'edit.duplicateLine',
+    'editor.delete_line': 'edit.deleteLine',
     'editor.goto_line': 'edit.gotoLine',
 };
 

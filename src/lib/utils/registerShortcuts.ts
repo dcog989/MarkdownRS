@@ -416,6 +416,13 @@ export function registerAllShortcuts() {
             category: 'Edit',
         },
         {
+            id: 'edit.deleteLine',
+            command: 'edit.deleteLine',
+            defaultKey: 'ctrl+shift+k',
+            description: 'Delete Line',
+            category: 'Edit',
+        },
+        {
             id: 'edit.gotoLine',
             command: 'edit.gotoLine',
             defaultKey: 'ctrl+g',

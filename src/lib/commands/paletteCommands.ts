@@ -266,6 +266,11 @@ export const editorCommands: Command[] = [
         action: () => dispatchKeyEvent('d', true, true),
     },
     {
+        id: 'editor.delete_line',
+        label: 'Editor: Delete Line',
+        action: () => dispatchKeyEvent('k', true, true),
+    },
+    {
         id: 'editor.goto_line',
         label: 'Editor: Go to Line...',
         action: () => dispatchKeyEvent('g', true, false),
