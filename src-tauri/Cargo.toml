@@ -1,6 +1,6 @@
 [package]
 authors = ["dcog989"]
-description = "The only markdown editor you need."
+description = "The only Markdown editor you need."
 edition = "2024"
 name = "markdown-rs"
 version = "0.18.0"
