@@ -68,16 +68,9 @@ function handleContextMenu(e: MouseEvent) {
 async function copyAllStats() {
     if (!activeTab) return;
 
-    const preciseSize =
-        sizeBytes < 1024
-            ? `${sizeBytes} B`
-            : sizeBytes < 1024 * 1024
-              ? `${(sizeBytes / 1024).toFixed(2)} KB`
-              : `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`;
-
     const stats = [
         `File Path: ${activeTab.path || 'Unsaved'}`,
-        `File Size: ${preciseSize} (${sizeBytes.toLocaleString()} bytes)`,
+        `File Size: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} bytes)`,
         `Total Lines: ${totalLines.toLocaleString()}`,
         `Widest Column: ${widestColumn.toLocaleString()}`,
         `Total Characters: ${totalChars.toLocaleString()}`,
