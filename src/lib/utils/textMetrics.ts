@@ -1,11 +1,5 @@
 import { CONFIG } from './config';
 
-export interface TextMetrics {
-    lineCount: number;
-    wordCount: number;
-    charCount: number;
-}
-
 export interface CursorMetrics {
     cursorOffset: number;
     cursorLine: number;

@@ -167,10 +167,6 @@ export class SpellcheckManager {
         return [];
     }
 
-    getCustomDictionarySet(): SvelteSet<string> {
-        return new SvelteSet(this.customDictionary);
-    }
-
     clear(): void {
         this.customDictionary.clear();
         this.misspelledCache.clear();
@@ -189,5 +185,4 @@ export const isWordValid = (w: string) => spellcheckState.isWordValid(w);
 export const prefetchSuggestions = (w: string) => spellcheckState.prefetchSuggestions(w);
 export const getCachedSuggestions = (w: string) => spellcheckState.getCachedSuggestions(w);
 export const getSuggestions = (w: string) => spellcheckState.getSuggestions(w);
-export const getCustomDictionary = () => spellcheckState.getCustomDictionarySet();
 export const clearDictionaries = () => spellcheckState.clear();

@@ -66,16 +66,6 @@ class TabSpellcheckCache {
         }
     }
 
-    // Invalidate caches that contain a specific word
-    invalidateForWord(word: string) {
-        const wLower = word.toLowerCase();
-        for (const [tabId, cache] of this.tabCaches) {
-            if (cache.misspelledWords.has(wLower)) {
-                this.tabCaches.delete(tabId);
-            }
-        }
-    }
-
     // Invalidate caches that contain any of the specified words
     invalidateForWords(words: string[]) {
         const wordsLower = new Set(words.map((w) => w.toLowerCase()));
