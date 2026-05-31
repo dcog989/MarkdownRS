@@ -261,7 +261,7 @@ onMount(() => {
             <div class="flex flex-1 items-center gap-2">
                 <button
                     type="button"
-                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all"
+                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
                     onclick={() => (isReplaceMode = !isReplaceMode)}
                     title="Toggle Replace Mode">
                     {#if isReplaceMode}
@@ -274,7 +274,7 @@ onMount(() => {
             </div>
             <button
                 type="button"
-                class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all"
+                class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
                 onclick={close}
                 title="Close (Esc)">
                 <X size={14} />
@@ -288,12 +288,12 @@ onMount(() => {
                     type="text"
                     bind:value={searchState.findText}
                     placeholder="Find"
-                    class="flex-1 text-[13px] leading-6 {searchState.regexError
+                    class="flex-1 text-ui-sm leading-6 {searchState.regexError
                         ? 'border-danger'
                         : ''}"
                     oninput={onInput}
                     spellcheck="false" />
-                <div class="text-fg-muted min-w-20 text-right text-[11px]">
+                <div class="text-fg-muted min-w-20 text-right text-2xs">
                     {#if searchScope === 'current'}
                         {#if searchState.currentMatches > 0}
                             {searchState.currentIndex + 1}
@@ -314,7 +314,7 @@ onMount(() => {
 
             {#if searchState.regexError}
                 <div
-                    class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-[11px]">
+                    class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-2xs">
                     {searchState.regexError}
                 </div>
             {/if}
@@ -325,14 +325,14 @@ onMount(() => {
                         type="text"
                         bind:value={searchState.replaceText}
                         placeholder="Replace"
-                        class="flex-1 text-[13px] leading-6"
+                        class="flex-1 text-ui-sm leading-6"
                         oninput={onReplaceInput}
                         spellcheck="false" />
                 </div>
             {/if}
 
             <div class="flex flex-wrap gap-4">
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
                         type="checkbox"
                         bind:checked={searchState.matchCase}
@@ -340,7 +340,7 @@ onMount(() => {
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Match Case</span>
                 </label>
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
                         type="checkbox"
                         bind:checked={searchState.matchWholeWord}
@@ -348,7 +348,7 @@ onMount(() => {
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Whole Word</span>
                 </label>
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
                         type="checkbox"
                         bind:checked={searchState.useRegex}
@@ -359,7 +359,7 @@ onMount(() => {
             </div>
 
             <div class="flex flex-wrap gap-4">
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
                         type="radio"
                         bind:group={searchScope}
@@ -367,7 +367,7 @@ onMount(() => {
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>Current Document</span>
                 </label>
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-[13px]">
+                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
                         type="radio"
                         bind:group={searchScope}
@@ -380,7 +380,7 @@ onMount(() => {
             <div class="flex flex-wrap gap-2">
                 <button
                     type="button"
-                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
+                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
                     onclick={onFindPrevious}
                     disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} />
@@ -388,7 +388,7 @@ onMount(() => {
                 </button>
                 <button
                     type="button"
-                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
+                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
                     onclick={onFindNext}
                     disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} />
@@ -397,7 +397,7 @@ onMount(() => {
                 {#if isReplaceMode}
                     <button
                         type="button"
-                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
+                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
                         onclick={onReplace}
                         disabled={searchScope === 'all' || !!searchState.regexError}>
                         <Replace size={12} />
@@ -405,7 +405,7 @@ onMount(() => {
                     </button>
                     <button
                         type="button"
-                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-[13px] transition-all disabled:cursor-not-allowed disabled:opacity-30"
+                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
                         onclick={onReplaceAll}
                         disabled={!!searchState.regexError}>
                         <Replace size={12} />
@@ -416,7 +416,7 @@ onMount(() => {
 
             {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
                 <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-                    <div class="text-fg-muted mb-1 text-[11px] font-semibold">Results:</div>
+                    <div class="text-fg-muted mb-1 text-2xs font-semibold">Results:</div>
                     {#each [...searchState.allTabsResults.entries()] as [ tabId, count ] (tabId)}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}
@@ -425,11 +425,11 @@ onMount(() => {
                                 class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
                                 onclick={() => navigateToTab(tabId)}>
                                 <span
-                                    class="text-fg-default overflow-hidden text-[13px] text-ellipsis whitespace-nowrap"
+                                    class="text-fg-default overflow-hidden text-ui-sm text-ellipsis whitespace-nowrap"
                                     >{tab.title}</span
                                 >
                                 <span
-                                    class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-[11px]"
+                                    class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-2xs"
                                     >{count}</span
                                 >
                             </button>

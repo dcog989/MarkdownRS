@@ -98,7 +98,7 @@ onMount(() => {
                     ' ',
                 )[1]}">
                 <Icon size={16} class="shrink-0 {iconColorClass}" />
-                <span class="flex-1 text-[13px] leading-snug">{toast.message}</span>
+                <span class="flex-1 text-ui-sm leading-snug">{toast.message}</span>
                 <button
                     type="button"
                     class="text-fg-muted hover:bg-bg-hover hover:text-fg-default flex shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent p-1 transition-all"
