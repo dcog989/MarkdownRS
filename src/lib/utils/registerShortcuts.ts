@@ -4,7 +4,7 @@
  */
 
 import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
-import { addTab, reopenLastClosed } from '$lib/stores/editorStore.svelte';
+import { addTab, pushToMru, reopenLastClosed } from '$lib/stores/editorStore.svelte';
 import {
     openFind,
     openReplace,
@@ -239,7 +239,9 @@ export function registerAllShortcuts() {
                 const currentIndex = tabs.findIndex((t) => t.id === appContext.app.activeTabId);
                 if (currentIndex >= 0) {
                     const nextIndex = (currentIndex + 1) % tabs.length;
-                    appContext.app.activeTabId = tabs[nextIndex].id;
+                    const id = tabs[nextIndex].id;
+                    appContext.app.activeTabId = id;
+                    pushToMru(id);
                 }
             },
         },
@@ -254,7 +256,9 @@ export function registerAllShortcuts() {
                 const currentIndex = tabs.findIndex((t) => t.id === appContext.app.activeTabId);
                 if (currentIndex >= 0) {
                     const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-                    appContext.app.activeTabId = tabs[prevIndex].id;
+                    const id = tabs[prevIndex].id;
+                    appContext.app.activeTabId = id;
+                    pushToMru(id);
                 }
             },
         },

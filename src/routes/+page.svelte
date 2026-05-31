@@ -8,7 +8,7 @@ import StatusBar from '$lib/components/ui/StatusBar.svelte';
 import TabBar from '$lib/components/ui/TabBar.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
 import { loadTabContentLazy } from '$lib/services/sessionPersistence';
-import { addTab, pushToMru } from '$lib/stores/editorStore.svelte';
+import { addTab } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
@@ -126,39 +126,6 @@ $effect(() => {
     };
 });
 
-function handleTabNavigation(e: KeyboardEvent) {
-    if (!e.ctrlKey) return;
-
-    if (e.key === 'Tab') {
-        return;
-    }
-
-    if (e.key === 'PageUp' || e.key === 'PageDown') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-        const currentIndex = appContext.editor.tabs.findIndex(
-            (t: EditorTab) => t.id === appContext.app.activeTabId,
-        );
-        if (currentIndex === -1) return;
-
-        let newIndex: number;
-        if (e.key === 'PageUp') {
-            newIndex = currentIndex - 1;
-            if (newIndex < 0) newIndex = appContext.editor.tabs.length - 1;
-        } else {
-            newIndex = currentIndex + 1;
-            if (newIndex >= appContext.editor.tabs.length) newIndex = 0;
-        }
-
-        const newTab = appContext.editor.tabs[newIndex];
-        if (newTab) {
-            appContext.app.activeTabId = newTab.id;
-            pushToMru(newTab.id);
-        }
-    }
-}
-
 onMount(() => {
     const appStartTime = performance.now();
 
@@ -212,8 +179,6 @@ onMount(() => {
         });
     });
 
-    document.addEventListener('keydown', handleTabNavigation, { capture: true });
-
     if (!initError) {
         autoSaveInterval = window.setInterval(() => {
             if (appContext.editor.sessionDirty) {
@@ -246,7 +211,6 @@ onMount(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-        document.removeEventListener('keydown', handleTabNavigation, { capture: true });
         window.removeEventListener('blur', handleBlur);
         window.removeEventListener('beforeunload', handleBeforeUnload);
         if (unlistenFileOpen) unlistenFileOpen();
