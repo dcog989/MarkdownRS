@@ -17,20 +17,20 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 
     {#snippet footer()}
         {#if appContext.ui.dialog.options.cancelLabel}
-            <button type="button" class="btn-base btn-secondary" onclick={() => resolveDialog('cancel')}>
+            <button type="button" class="btn-base btn-sm btn-secondary" onclick={() => resolveDialog('cancel')}>
                 {appContext.ui.dialog.options.cancelLabel}
             </button>
         {/if}
         {#if appContext.ui.dialog.options.discardLabel}
             <button
                 type="button"
-                class="btn-base btn-danger-outline"
+                class="btn-base btn-sm btn-danger-outline"
                 onclick={() => resolveDialog('discard')}>
                 {appContext.ui.dialog.options.discardLabel}
             </button>
         {/if}
         {#if appContext.ui.dialog.options.saveLabel}
-            <button type="button" class="btn-base btn-success" onclick={() => resolveDialog('save')}>
+            <button type="button" class="btn-base btn-sm btn-success" onclick={() => resolveDialog('save')}>
                 {appContext.ui.dialog.options.saveLabel}
             </button>
         {/if}

@@ -25,6 +25,11 @@ button {
     background-color: var(--surface-hover);
 }
 
+.btn-sm {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.8125rem;
+}
+
 .btn-base:disabled,
 .btn-disabled {
     opacity: 0.4;

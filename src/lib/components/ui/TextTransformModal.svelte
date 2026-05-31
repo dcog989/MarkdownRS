@@ -71,7 +71,7 @@ function handleOperation(operationId: OperationId) {
         <p class="text-fg-muted mr-auto text-xs">All operations support undo ({undoShortcut})</p>
         <button
             type="button"
-            class="bg-accent-primary text-fg-inverse rounded px-4 py-2 text-sm font-medium hover:opacity-80"
+            class="btn-base bg-accent-primary text-fg-inverse border-transparent font-medium hover:opacity-80"
             onclick={onClose}>
             Close
         </button>
