@@ -18,17 +18,7 @@ import { toggleSelectionComment } from '$lib/utils/commentToggle';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 
 // Keys from defaultKeymap that our custom bindings must override
-const FILTERED_DEFAULT_KEYS = new Set([
-    'Ctrl-i',
-    'Ctrl-I',
-    'Mod-i',
-    'Mod-I',
-    'Ctrl-d',
-    'Mod-d',
-    'Ctrl-b',
-    'Mod-b',
-    'Alt-l',
-]);
+const FILTERED_DEFAULT_KEYS = new Set(['Mod-i', 'Mod-I', 'Mod-d', 'Mod-b', 'Alt-l']);
 
 const markdownKeymap: KeyBinding[] = [
     {
