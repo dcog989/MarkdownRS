@@ -103,6 +103,10 @@
     width: 0.75rem;
 }
 
+.group:hover .group-hover\:bg-bg-hover {
+    background-color: var(--surface-hover);
+}
+
 .group\/preview:hover .group-hover\/preview\:opacity-100 {
     opacity: 1;
 }
