@@ -25,4 +25,3 @@ export const themeHighlightStyle = HighlightStyle.define([
 ]);
 
 export const userThemeExtension = syntaxHighlighting(themeHighlightStyle);
-export const defaultThemeHighlighting = syntaxHighlighting(themeHighlightStyle);
