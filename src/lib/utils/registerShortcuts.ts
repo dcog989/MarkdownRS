@@ -6,8 +6,6 @@
 import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
 import { addTab, pushToMru, reopenLastClosed } from '$lib/stores/editorStore.svelte';
 import {
-    openFind,
-    openReplace,
     toggleAbout,
     toggleBookmarks,
     toggleCommandPalette,
@@ -106,32 +104,6 @@ export function registerAllShortcuts() {
                 if (appContext.app.activeTabId) {
                     dispatchRedo(appContext.app.activeTabId);
                 }
-            },
-        },
-        {
-            id: 'edit.find',
-            command: 'edit.find',
-            defaultKey: 'ctrl+f',
-            description: 'Find',
-            category: 'Edit',
-            handler: (e: KeyboardEvent) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openFind();
-                return true;
-            },
-        },
-        {
-            id: 'edit.replace',
-            command: 'edit.replace',
-            defaultKey: 'ctrl+h',
-            description: 'Replace',
-            category: 'Edit',
-            handler: (e: KeyboardEvent) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openReplace();
-                return true;
             },
         },
         {

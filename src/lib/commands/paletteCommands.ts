@@ -317,11 +317,6 @@ export const editorCommands: Command[] = [
         action: () => dispatchKeyEvent('[', true, false),
     },
     {
-        id: 'editor.goto_line',
-        label: 'Editor: Go to Line...',
-        action: () => dispatchKeyEvent('g', true, false),
-    },
-    {
         id: 'transform',
         label: 'Window: Text Transformations',
         action: toggleTransform,

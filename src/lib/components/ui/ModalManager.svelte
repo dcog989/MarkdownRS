@@ -58,7 +58,6 @@ const PALETTE_TO_SHORTCUT_ID: Record<string, string> = {
     'editor.goto_matching_bracket': 'edit.gotoMatchingBracket',
     'editor.indent_more': 'edit.indentMore',
     'editor.indent_less': 'edit.indentLess',
-    'editor.goto_line': 'edit.gotoLine',
 };
 
 const _commands = $derived.by(() => {

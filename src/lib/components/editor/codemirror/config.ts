@@ -232,9 +232,7 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
                 return true;
             },
         },
-        // Custom comment toggle that respects text selection
         { key: 'Mod-/', run: toggleSelectionComment },
-
         ...markdownKeymap,
         {
             key: 'Mod-l',
@@ -250,7 +248,6 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         ...(defaultKeymap.filter(
             (binding) => binding.key !== 'Tab' && !FILTERED_DEFAULT_KEYS.has(binding.key ?? ''),
         ) as KeyBinding[]),
-        // Our Tab handlers come last to override defaults
         { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
     ]);
 }
