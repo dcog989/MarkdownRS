@@ -353,7 +353,7 @@ $effect(() => {
         {/if}
     </div>
 
-    <div class="flex h-full items-stretch border-l">
+    <div class="flex h-full items-stretch border-l pr-4">
         <button
             type="button"
             class="text-fg-muted hover-surface flex h-9 w-9 shrink-0 items-center justify-center"
@@ -363,102 +363,100 @@ $effect(() => {
             }}>
             <Plus size={16} />
         </button>
-        <div class="relative flex h-full items-stretch">
-            <button
-                type="button"
-                class="text-fg-muted hover-surface flex h-9 w-9 shrink-0 items-center justify-center"
-                onclick={() => (showMenu = !showMenu)}>
-                <Menu size={16} />
-            </button>
-            {#if showMenu}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="fixed inset-0 z-40" onclick={closeMenu}></div>
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                    class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-md border py-1 shadow-xl w-80"
-                    onclick={(e) => e.stopPropagation()}>
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={() => {
-                            toggleAbout();
-                            closeMenu();
-                        }}>
-                        <img src="/logo.svg" alt="" class="h-4 w-4" /><span>About MarkdownRS</span>
-                    </button>
+        <button
+            type="button"
+            class="relative text-fg-muted hover-surface flex h-9 w-9 shrink-0 items-center justify-center"
+            onclick={() => (showMenu = !showMenu)}>
+            <Menu size={16} />
+        </button>
+        {#if showMenu}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="fixed inset-0 z-40" onclick={closeMenu}></div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-md border py-1 shadow-xl w-80"
+                onclick={(e) => e.stopPropagation()}>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        toggleAbout();
+                        closeMenu();
+                    }}>
+                    <img src="/logo.svg" alt="" class="h-4 w-4" /><span>About MarkdownRS</span>
+                </button>
 
-                    <div class="bg-border-main my-1 h-px"></div>
+                <div class="bg-border-main my-1 h-px"></div>
 
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={() => {
-                            toggleSettings();
-                            closeMenu();
-                        }}>
-                        <Settings size={14} class="opacity-70" /><span class="flex-1">Settings</span
-                        ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={() => {
-                            toggleCommandPalette();
-                            closeMenu();
-                        }}>
-                        <Zap size={14} class="opacity-70" />
-                        <span class="flex-1">Command Palette</span
-                        ><span class="ml-auto text-xs opacity-40">{shortcuts.commands}</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={() => {
-                            toggleBookmarks();
-                            closeMenu();
-                        }}>
-                        <Bookmark size={14} class="opacity-70" />
-                        <span class="flex-1">Bookmarks</span
-                        ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
-                    </button>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        toggleSettings();
+                        closeMenu();
+                    }}>
+                    <Settings size={14} class="opacity-70" /><span class="flex-1">Settings</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
+                </button>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        toggleCommandPalette();
+                        closeMenu();
+                    }}>
+                    <Zap size={14} class="opacity-70" />
+                    <span class="flex-1">Command Palette</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.commands}</span>
+                </button>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        toggleBookmarks();
+                        closeMenu();
+                    }}>
+                    <Bookmark size={14} class="opacity-70" />
+                    <span class="flex-1">Bookmarks</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
+                </button>
 
-                    <div class="bg-border-main my-1 h-px"></div>
+                <div class="bg-border-main my-1 h-px"></div>
 
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={() => {
-                            handleWriterMode();
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        handleWriterMode();
+                        closeMenu();
+                    }}>
+                    <Feather size={14} class="opacity-70" />
+                    <span class="flex-1">Writer Mode</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
+                </button>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    class:opacity-50={!isPreviewAvailable}
+                    class:cursor-not-allowed={!isPreviewAvailable}
+                    onclick={() => {
+                        if (isPreviewAvailable) {
+                            toggleSplit();
                             closeMenu();
-                        }}>
-                        <Feather size={14} class="opacity-70" />
-                        <span class="flex-1">Writer Mode</span
-                        ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        class:opacity-50={!isPreviewAvailable}
-                        class:cursor-not-allowed={!isPreviewAvailable}
-                        onclick={() => {
-                            if (isPreviewAvailable) {
-                                toggleSplit();
-                                closeMenu();
-                            }
-                        }}>
-                        {#if isPreviewAvailable}
-                            <Eye size={14} class="opacity-70" />
-                        {:else}
-                            <EyeOff size={14} class="opacity-50" />
-                        {/if}
-                        <span class="flex-1">Toggle Split Preview</span
-                        ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
-                    </button>
-                </div>
-            {/if}
-        </div>
+                        }
+                    }}>
+                    {#if isPreviewAvailable}
+                        <Eye size={14} class="opacity-70" />
+                    {:else}
+                        <EyeOff size={14} class="opacity-50" />
+                    {/if}
+                    <span class="flex-1">Toggle Split Preview</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
+                </button>
+            </div>
+        {/if}
     </div>
 </div>
 
