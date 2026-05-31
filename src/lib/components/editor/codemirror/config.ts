@@ -15,7 +15,6 @@ import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { toggleSelectionComment } from '$lib/utils/commentToggle';
-import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 
 // Keys from defaultKeymap that our custom bindings must override
 const FILTERED_DEFAULT_KEYS = new Set(['Mod-i', 'Mod-I', 'Mod-d', 'Mod-b', 'Alt-l']);
@@ -235,28 +234,7 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         },
         // Custom comment toggle that respects text selection
         { key: 'Mod-/', run: toggleSelectionComment },
-        {
-            key: 'PageDown',
-            run: (v) => {
-                const newScrollTop = v.scrollDOM.scrollTop + v.scrollDOM.clientHeight;
-                v.scrollDOM.scrollTop = newScrollTop;
-                const lineBlock = v.lineBlockAtHeight(newScrollTop);
-                v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
-                scrollSync.handleFastScroll(v, newScrollTop);
-                return true;
-            },
-        },
-        {
-            key: 'PageUp',
-            run: (v) => {
-                const newScrollTop = Math.max(0, v.scrollDOM.scrollTop - v.scrollDOM.clientHeight);
-                v.scrollDOM.scrollTop = newScrollTop;
-                const lineBlock = v.lineBlockAtHeight(newScrollTop);
-                v.dispatch({ selection: { anchor: lineBlock.from, head: lineBlock.from } });
-                scrollSync.handleFastScroll(v, newScrollTop);
-                return true;
-            },
-        },
+
         ...markdownKeymap,
         {
             key: 'Mod-l',
