@@ -32,6 +32,11 @@ let isUnloading = false;
 let isInitialized = $state(false);
 let initError = $state<string | null>(null);
 
+let isVertical = $derived(appContext.app.splitOrientation === 'vertical');
+let resizeCursor = $derived(isVertical ? 'col-resize' : 'row-resize');
+let clientAxis = $derived.by(() => (isVertical ? 'clientX' : 'clientY') as 'clientX' | 'clientY');
+let sizeAxis = $derived.by(() => (isVertical ? 'width' : 'height') as 'width' | 'height');
+
 let activeTab = $derived(
     appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId),
 );
@@ -269,19 +274,18 @@ onDestroy(() => {
 function startResize(e: MouseEvent) {
     e.preventDefault();
     isDragging = true;
-    dragStart = appContext.app.splitOrientation === 'vertical' ? e.clientX : e.clientY;
+    dragStart = e[clientAxis];
     initialSplit = appContext.app.splitPercentage;
     window.addEventListener('mousemove', handleResize);
     window.addEventListener('mouseup', stopResize);
-    document.body.style.cursor =
-        appContext.app.splitOrientation === 'vertical' ? 'col-resize' : 'row-resize';
+    document.body.style.cursor = resizeCursor;
 }
 
 function handleResize(e: MouseEvent) {
     if (!isDragging || !mainContainer) return;
     const rect = mainContainer.getBoundingClientRect();
-    const totalSize = appContext.app.splitOrientation === 'vertical' ? rect.width : rect.height;
-    const currentPos = appContext.app.splitOrientation === 'vertical' ? e.clientX : e.clientY;
+    const totalSize = rect[sizeAxis];
+    const currentPos = e[clientAxis];
     const deltaPixels = currentPos - dragStart;
     const deltaPercent = deltaPixels / totalSize;
     let newSplit = initialSplit + deltaPercent;
@@ -329,7 +333,7 @@ function resetSplit() {
             {#if appContext.app.activeTabId}
                 <div
                     class="flex h-full w-full flex-row"
-                    class:flex-col={appContext.app.splitOrientation !== 'vertical'}>
+                    class:flex-col={!isVertical}>
                     <div
                         class="writer-content"
                         style="flex: {showPreview
@@ -342,11 +346,7 @@ function resetSplit() {
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
                             class="resize-handle"
-                            style="
-                                cursor: {appContext.app.splitOrientation === 'vertical'
-                                ? 'col-resize'
-                                : 'row-resize'};
-                            "
+                            style="cursor: {resizeCursor};"
                             onmousedown={startResize}
                             ondblclick={resetSplit}></div>
                     {/if}
