@@ -1,4 +1,5 @@
 pub mod bookmarks;
+pub mod data;
 pub mod export;
 pub mod files;
 pub mod markdown;
@@ -6,5 +7,4 @@ pub mod session;
 pub mod settings;
 pub mod spellcheck;
 pub mod updater;
-
-pub mod data;
+pub mod window;

@@ -240,6 +240,12 @@ export interface BackendCommands {
         return: number;
     };
 
+    // Window
+    set_window_title: {
+        args: { title: string };
+        return: undefined;
+    };
+
     // Window State (Plugin)
     'plugin:window-state|save_window_state': {
         args: Record<string, never>;

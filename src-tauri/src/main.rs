@@ -447,6 +447,7 @@ fn main() {
             commands::data::export_recent_files,
             commands::data::import_recent_files,
             commands::data::delete_orphan_files,
+            commands::window::set_window_title,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| {

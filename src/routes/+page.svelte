@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
 import { onDestroy, onMount } from 'svelte';
 import Editor from '$lib/components/editor/Editor.svelte';
 import Preview from '$lib/components/preview/Preview.svelte';
@@ -84,17 +84,15 @@ let isMarkdown = $derived.by(() => {
 let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
 // Update native titlebar with current document name and path
-// Does not work on Wayland: https://github.com/tauri-apps/tauri/issues/13749 - workaround in the comments
+// Uses Rust command to work around Wayland title not updating:
+// https://github.com/tauri-apps/tauri/issues/13749
 $effect(() => {
     const tab = activeTab;
-    const title = tab?.title || '';
     const path = tab?.path || '';
     const dirtyMarker = tab?.isDirty ? '*' : '';
-    const filePart = title ? `${dirtyMarker}${title}` : '';
-    const pathPart = path ? ` - ${path}` : '';
-    const fullTitle = filePart ? `${filePart}${pathPart} - MarkdownRS` : 'MarkdownRS';
+    const fullTitle = path ? `${dirtyMarker}${path} - MarkdownRS` : 'MarkdownRS';
     document.title = fullTitle;
-    getCurrentWindow().setTitle(fullTitle);
+    invoke('set_window_title', { title: fullTitle });
 });
 
 // Auto-save timer
