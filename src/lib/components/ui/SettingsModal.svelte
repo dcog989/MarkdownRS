@@ -13,7 +13,7 @@ import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { saveSettings } from '$lib/utils/settings';
 import { shortcutManager } from '$lib/utils/shortcuts';
-import { clearDictionaries } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import {
     invalidateSpellcheckCache,
     triggerImmediateLint,
@@ -526,7 +526,7 @@ function updateSetting(key: string, value: unknown, type: string) {
             key === 'technicalDictionaries' ||
             key === 'scienceDictionaries'
         ) {
-            clearDictionaries();
+            spellcheckState.clear();
             invalidateSpellcheckCache();
 
             appContext.spellcheck.init(true).then(() => {

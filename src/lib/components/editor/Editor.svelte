@@ -27,7 +27,7 @@ import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/edi
 import { AppError } from '$lib/utils/errorHandling';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
-import { initSpellcheck } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import {
     invalidateSpellcheckCache,
     refreshSpellcheck,
@@ -63,7 +63,7 @@ let previousTabId: string = '';
 const eventHandlers = createEditorEventHandlers(onContextMenu);
 
 onMount(() => {
-    initSpellcheck();
+    spellcheckState.init();
 
     // Register flush function for shutdown � must be inside onMount to guarantee cleanup pairing
     if (!window._editorFlushFunctions) {

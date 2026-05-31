@@ -1,5 +1,5 @@
 import { EditorView } from '@codemirror/view';
-import { prefetchSuggestions } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 
 /**
  * Smart bracket/quote pairs that only auto-close when surrounded by whitespace.
@@ -111,7 +111,7 @@ export const prefetchHoverHandler = EditorView.domEventHandlers({
         const range = view.state.wordAt(pos);
         if (range) {
             const word = view.state.sliceDoc(range.from, range.to);
-            prefetchSuggestions(word);
+            spellcheckState.prefetchSuggestions(word);
         }
         return false;
     },

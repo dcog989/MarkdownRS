@@ -21,12 +21,7 @@ import Submenu from '$lib/components/ui/Submenu.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
-import {
-    getCachedSuggestions,
-    getSuggestions,
-    isWordValid,
-    spellcheckState,
-} from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 
 let {
     x,
@@ -132,8 +127,8 @@ const transformOps: MenuOption[] = [
 $effect(() => {
     const word = untrack(() => wordUnderCursor?.trim());
 
-    if (spellcheckState.dictionaryLoaded && word && !selectedText && !isWordValid(word)) {
-        const cached = getCachedSuggestions(word);
+    if (spellcheckState.dictionaryLoaded && word && !selectedText && !spellcheckState.isWordValid(word)) {
+        const cached = spellcheckState.getCachedSuggestions(word);
         if (cached) {
             suggestions = cached.slice(0, 5);
             isLoadingSuggestions = false;
@@ -141,7 +136,7 @@ $effect(() => {
         }
 
         isLoadingSuggestions = true;
-        getSuggestions(word)
+        spellcheckState.getSuggestions(word)
             .then((res) => {
                 suggestions = res.slice(0, 5);
             })
@@ -163,13 +158,13 @@ const targetWord = $derived(
         .replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ''),
 );
 const canAddSingle = $derived(
-    targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !isWordValid(targetWord),
+    targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !spellcheckState.isWordValid(targetWord),
 );
 
 async function handleAddAll() {
     const matches = (selectedText as string).match(/\b[a-zA-Z']+\b/g) || [];
     const uniqueWords: string[] = Array.from(new Set(matches));
-    const invalidWords = uniqueWords.filter((w: string) => !isWordValid(w));
+    const invalidWords = uniqueWords.filter((w: string) => !spellcheckState.isWordValid(w));
 
     const newDict = new SvelteSet([
         ...spellcheckState.customDictionary,

@@ -177,12 +177,3 @@ export class SpellcheckManager {
 }
 
 export const spellcheckState = new SpellcheckManager();
-
-// Backward compatibility exports
-export const initSpellcheck = () => spellcheckState.init();
-export const refreshCustomDictionary = () => spellcheckState.refreshCustomDictionary();
-export const isWordValid = (w: string) => spellcheckState.isWordValid(w);
-export const prefetchSuggestions = (w: string) => spellcheckState.prefetchSuggestions(w);
-export const getCachedSuggestions = (w: string) => spellcheckState.getCachedSuggestions(w);
-export const getSuggestions = (w: string) => spellcheckState.getSuggestions(w);
-export const clearDictionaries = () => spellcheckState.clear();

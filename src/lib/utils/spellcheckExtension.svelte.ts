@@ -8,7 +8,7 @@ import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { addToDictionary } from '$lib/utils/fileSystem';
 import { logger } from '$lib/utils/logger';
-import { refreshCustomDictionary, spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import type { AppEditorView } from '../../global';
 
 /**
@@ -321,7 +321,7 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
     // Invalidate all tab caches since dictionary changed
     tabCache.invalidateAll();
 
-    await refreshCustomDictionary();
+    await spellcheckState.refreshCustomDictionary();
     spellcheckState.misspelledCache = new SvelteSet<string>();
     triggerImmediateLint(view);
 }
@@ -367,7 +367,7 @@ export const spellCheckKeymap = [
                 // 4. Background Persistence
                 Promise.all(words.map((w) => addToDictionary(w))).then(() => {
                     // Optional: Resync to ensure consistency with backend file
-                    refreshCustomDictionary();
+                    spellcheckState.refreshCustomDictionary();
                 });
             }
             return true;
