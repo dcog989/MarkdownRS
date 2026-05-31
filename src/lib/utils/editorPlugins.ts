@@ -112,7 +112,7 @@ const rulerMeasure = ViewPlugin.fromClass(
             this.measure(view);
         }
         update(update: ViewUpdate) {
-            if (update.geometryChanged || update.viewportChanged) {
+            if (update.geometryChanged) {
                 this.measure(update.view);
             }
         }
