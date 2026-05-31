@@ -80,11 +80,11 @@ const markdownKeymap: KeyBinding[] = [
  * Custom completion source that wraps completeAnyWord but filters out
  * candidates that match the currently typed word exactly.
  */
-export function smartCompleteAnyWord(context: CompletionContext): CompletionResult | null {
-    const result = completeAnyWord(context);
-    // completeAnyWord is synchronous in standard CM6 but return type allows promise.
-    // We assume synchronous for standard word completion.
-    if (!result || 'then' in result) return result as CompletionResult | null;
+export async function smartCompleteAnyWord(
+    context: CompletionContext,
+): Promise<CompletionResult | null> {
+    const result = await completeAnyWord(context);
+    if (!result) return null;
 
     const before = context.matchBefore(/\w+/);
     if (!before) return result;
