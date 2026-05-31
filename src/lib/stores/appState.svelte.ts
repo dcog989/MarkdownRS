@@ -54,6 +54,9 @@ export const appState = $state({
     osPlatform: 'windows' as 'windows' | 'linux' | 'macos',
     autoSaveEnabled: false,
     autoSaveInterval: 60,
+    commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
+    commandUsage: {} as Record<string, number>,
+    commandUsageCounts: {} as Record<string, number>,
 });
 
 // Logic functions

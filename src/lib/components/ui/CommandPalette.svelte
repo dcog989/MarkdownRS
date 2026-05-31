@@ -4,6 +4,7 @@ import { tick } from 'svelte';
 import type { Command } from '$lib/commands/paletteCommands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { appState } from '$lib/stores/appState.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 let {
@@ -47,6 +48,10 @@ function handleKeydown(e: KeyboardEvent) {
 
 function execute(command: Command) {
     if (!command) return;
+    appState.commandUsage[command.id] = Date.now();
+    appState.commandUsage = { ...appState.commandUsage };
+    appState.commandUsageCounts[command.id] = (appState.commandUsageCounts[command.id] ?? 0) + 1;
+    appState.commandUsageCounts = { ...appState.commandUsageCounts };
     command.action();
     close();
 }
@@ -54,6 +59,18 @@ function execute(command: Command) {
 function close() {
     isOpen = false;
     if (onClose) onClose();
+}
+
+const SORT_LABELS: Record<string, string> = {
+    alphabetical: 'A-Z',
+    recent: 'Recent',
+    'most-used': 'Most Used',
+};
+
+function cycleSortMode() {
+    const modes: Array<'alphabetical' | 'recent' | 'most-used'> = ['alphabetical', 'recent', 'most-used'];
+    const idx = modes.indexOf(appState.commandPaletteSort);
+    appState.commandPaletteSort = modes[(idx + 1) % modes.length];
 }
 </script>
 
@@ -66,7 +83,17 @@ function close() {
             bind:inputRef
             searchPlaceholder="Search Commands..."
             onClose={close}
-            onKeydown={handleKeydown} />
+            onKeydown={handleKeydown}>
+            {#snippet extraActions()}
+                <button
+                    type="button"
+                    class="text-ui-sm text-fg-muted hover-surface shrink-0 rounded px-2 py-1 transition-colors outline-none"
+                    title={appState.commandPaletteSort}
+                    onclick={cycleSortMode}>
+                    {SORT_LABELS[appState.commandPaletteSort]}
+                </button>
+            {/snippet}
+        </ModalSearchHeader>
     {/snippet}
 
     <div class="py-1">
