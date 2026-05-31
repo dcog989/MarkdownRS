@@ -144,6 +144,8 @@ let prevShowWhitespace = appContext.app.showWhitespace;
 let prevEventHandlers = untrack(() => eventHandlers);
 let prevLineChangeTracker = untrack(() => lineChangeTracker);
 let prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
+let prevWordWrap = appContext.app.editorWordWrap;
+let prevWrapGuideColumn = appContext.app.wrapGuideColumn;
 
 const markdownExtensions = [
     markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -249,6 +251,16 @@ $effect(() => {
     ) {
         prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
         view.dispatch({ effects: doubleClickComp.reconfigure(createDoubleClickHandler()) });
+    }
+});
+
+$effect(() => {
+    const _wordWrap = appContext.app.editorWordWrap;
+    const _wrapGuideColumn = appContext.app.wrapGuideColumn;
+    if (view && (_wordWrap !== prevWordWrap || _wrapGuideColumn !== prevWrapGuideColumn)) {
+        prevWordWrap = _wordWrap;
+        prevWrapGuideColumn = _wrapGuideColumn;
+        view.dispatch({ effects: wrapComp.reconfigure(createWrapExtension()) });
     }
 });
 
