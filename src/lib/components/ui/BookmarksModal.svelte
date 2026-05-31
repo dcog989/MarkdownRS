@@ -245,7 +245,7 @@ function handleKeydown(e: KeyboardEvent) {
                 <div class="flex shrink-0 items-center gap-1">
                     <select
                         bind:value={sortBy}
-                        class="text-xs bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border pl-1 pr-5 py-1 outline-none w-auto">
+                        class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border pl-1 pr-5 py-1 outline-none w-auto">
                         <option value="most-recent">Most Recent</option>
                         <option value="alphabetical">Alphabetical</option>
                         <option value="last-updated">Last Updated</option>
@@ -286,7 +286,7 @@ function handleKeydown(e: KeyboardEvent) {
                     <button
                         type="button"
                         onclick={handleBrowse}
-                        class="text-ui bg-bg-panel text-fg-default bg-border-main rounded border px-3 py-1 font-medium transition-colors">
+                        class="btn-base btn-sm bg-bg-panel text-fg-default border-border-main font-medium transition-colors">
                         Browse...
                     </button>
                 </div>
@@ -307,14 +307,14 @@ function handleKeydown(e: KeyboardEvent) {
                     <button
                         type="button"
                         onclick={() => (showAddForm = false)}
-                        class="text-ui rounded px-3 py-1">
+                        class="btn-base btn-sm btn-secondary">
                         Cancel
                     </button>
                     <button
                         type="button"
                         onclick={handleAddBookmark}
                         disabled={!addPath || !addTitle}
-                        class="text-ui bg-accent-primary text-fg-inverse rounded px-3 py-1 font-medium disabled:opacity-50">
+                        class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium disabled:opacity-50">
                         Add
                     </button>
                 </div>
@@ -348,13 +348,13 @@ function handleKeydown(e: KeyboardEvent) {
                                     <button
                                         type="button"
                                         onclick={cancelEdit}
-                                        class="text-ui-sm rounded px-2 py-1">
+                                        class="btn-base btn-sm btn-secondary">
                                         Cancel
                                     </button>
                                     <button
                                         type="button"
                                         onclick={() => saveEdit(bookmark.id)}
-                                        class="text-ui-sm bg-accent-primary text-fg-inverse rounded px-2 py-1">
+                                        class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent">
                                         Save
                                     </button>
                                 </div>
