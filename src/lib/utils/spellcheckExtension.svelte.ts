@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
 import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
+import type { Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -18,16 +19,16 @@ class TabSpellcheckCache {
     private tabCaches = new SvelteMap<
         string,
         {
-            content: string;
+            fingerprint: string;
             diagnostics: Diagnostic[];
             misspelledWords: SvelteSet<string>;
             lastCheckTime: number;
         }
     >();
 
-    get(tabId: string, currentContent: string) {
+    get(tabId: string, fingerprint: string) {
         const cached = this.tabCaches.get(tabId);
-        if (cached && cached.content === currentContent) {
+        if (cached && cached.fingerprint === fingerprint) {
             return cached;
         }
         return null;
@@ -35,12 +36,12 @@ class TabSpellcheckCache {
 
     set(
         tabId: string,
-        content: string,
+        fingerprint: string,
         diagnostics: Diagnostic[],
         misspelledWords: SvelteSet<string>,
     ) {
         this.tabCaches.set(tabId, {
-            content,
+            fingerprint,
             diagnostics,
             misspelledWords,
             lastCheckTime: Date.now(),
@@ -91,6 +92,25 @@ class TabSpellcheckCache {
 
 const tabCache = new TabSpellcheckCache();
 
+/**
+ * Cheap O(1) document fingerprint for cache invalidation.
+ * Combines length with three fixed-position samples (start, mid, end)
+ * to detect same-length substitutions without stringifying the whole doc.
+ */
+function docFingerprint(doc: Text): string {
+    const len = doc.length;
+    if (len === 0) return '0:';
+    const mid = Math.floor(len / 2);
+    const sampleLen = 32;
+    const start = doc.sliceString(0, Math.min(sampleLen, len));
+    const middle = doc.sliceString(
+        Math.max(0, mid - sampleLen / 2),
+        Math.min(len, mid + sampleLen / 2),
+    );
+    const end = doc.sliceString(Math.max(0, len - sampleLen), len);
+    return `${len}:${start}|${middle}|${end}`;
+}
+
 // Export function to invalidate cache when dictionary changes
 export function invalidateSpellcheckCache(tabId?: string, words?: string[]) {
     if (words && words.length > 0) {
@@ -116,14 +136,14 @@ export const createSpellCheckLinter = () => {
 
             const { state } = view;
             const doc = state.doc;
-            const docContent = doc.toString();
+            const docFp = docFingerprint(doc);
 
             // Get tab ID from the view if available
             const tabId = (view as AppEditorView)._currentTabId;
 
             // Check cache first
             if (tabId) {
-                const cached = tabCache.get(tabId, docContent);
+                const cached = tabCache.get(tabId, docFp);
                 if (cached) {
                     // Update global misspelled cache from tab-specific cache
                     spellcheckState.misspelledCache = cached.misspelledWords;
@@ -214,7 +234,7 @@ export const createSpellCheckLinter = () => {
             if (wordsToVerify.size === 0) {
                 // Cache empty result
                 if (tabId) {
-                    tabCache.set(tabId, docContent, [], new SvelteSet());
+                    tabCache.set(tabId, docFp, [], new SvelteSet());
                     tabCache.prune();
                 }
                 return [];
@@ -232,7 +252,7 @@ export const createSpellCheckLinter = () => {
 
                 if (!misspelled) {
                     if (tabId) {
-                        tabCache.set(tabId, docContent, [], new SvelteSet());
+                        tabCache.set(tabId, docFp, [], new SvelteSet());
                         tabCache.prune();
                     }
                     return [];
@@ -285,7 +305,7 @@ export const createSpellCheckLinter = () => {
 
                 // Cache result for this tab
                 if (tabId) {
-                    tabCache.set(tabId, docContent, diagnostics, newCache);
+                    tabCache.set(tabId, docFp, diagnostics, newCache);
                     tabCache.prune();
                 }
 
