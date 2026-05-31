@@ -1,8 +1,8 @@
 import type { TransactionSpec } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
+import { textProcessor } from '$lib/services/textProcessor';
 import type { ScrollManager } from '$lib/utils/cmScroll';
-import { transformText } from '$lib/utils/textTransforms';
 
 export async function performTextOperation(
     view: EditorView,
@@ -24,7 +24,7 @@ export async function performTextOperation(
         // Capture scroll state before operation
         scrollManager.capture(view, `Op:${operationId}`);
 
-        const newText = await transformText(targetText, operationId);
+        const newText = await textProcessor.process(operationId, targetText);
 
         if (newText !== targetText) {
             view.focus();
