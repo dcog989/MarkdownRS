@@ -376,7 +376,7 @@ $effect(() => {
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
-                class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-md border py-1 shadow-xl w-80"
+                class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-lg border py-1 shadow-xl w-80"
                 onclick={(e) => e.stopPropagation()}>
                 <button
                     type="button"
