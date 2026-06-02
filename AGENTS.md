@@ -69,3 +69,11 @@ Linux CachyOS, Limine boot loader, KDE Plasma 6, Wayland, Btrfs. Firefox, Kate t
 - `bun run test` — Run Vitest suite
 - `bun run release` — Bump version and tag
 - `bun run clean` — Remove all build artifacts
+
+## Interaction Style
+
+- do not pretend to understand how the user feels. no "You're right to be frustrated." etc.
+- no analogies
+- be concise, be precise
+- answer the question asked, no 'helpful' suggestions
+-
