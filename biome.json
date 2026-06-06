@@ -1,92 +1,24 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
-  "root": true,
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "ignoreUnknown": false,
-    "includes": [
-      "**",
-      "!.assets",
-      "!.context",
-      "!.docs",
-      "!.svelte-kit",
-      "!build",
-      "!dist",
-      "!node_modules",
-      "!scripts",
-      "!src-tauri",
-      "!**/*.toml"
-    ]
+    "includes": ["**", "!.assets", "!.context", "!.docs", "!.svelte-kit", "!node_modules", "!src-tauri"]
   },
   "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
     "indentStyle": "space",
-    "indentWidth": 4,
-    "lineEnding": "lf",
-    "lineWidth": 100,
-    "attributePosition": "auto",
-    "bracketSameLine": true,
-    "bracketSpacing": true,
-    "useEditorconfig": true
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "correctness": {
-        "noUnusedVariables": "warn"
-      },
-      "suspicious": {
-        "noConsole": "warn",
-        "noExplicitAny": "warn"
-      },
-      "style": {
-        "useImportType": {
-          "level": "error",
-          "options": {
-            "style": "auto"
-          }
-        }
-      }
-    }
+    "lineWidth": 120
   },
   "javascript": {
     "formatter": {
-      "jsxQuoteStyle": "double",
-      "quoteProperties": "asNeeded",
-      "trailingCommas": "all",
-      "semicolons": "always",
-      "arrowParentheses": "always",
-      "bracketSameLine": true,
-      "quoteStyle": "single",
-      "attributePosition": "auto",
-      "bracketSpacing": true
-    }
-  },
-  "json": {
-    "formatter": {
-      "indentWidth": 2
+      "quoteStyle": "single"
     }
   },
   "html": {
-    "experimentalFullSupportEnabled": true,
-    "formatter": {
-      "indentScriptAndStyle": false,
-      "selfCloseVoidElements": "always"
-    }
+    "experimentalFullSupportEnabled": true
   },
   "overrides": [
     {
-      "includes": ["*.yml", "*.yaml", "*.toml", "*.json"],
-      "formatter": { "indentWidth": 2 }
-    },
-    {
-      "includes": ["*.svelte", "**/*.svelte"],
+      "includes": ["**/*.svelte"],
       "linter": {
         "rules": {
           "correctness": {
@@ -96,13 +28,5 @@
         }
       }
     }
-  ],
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  }
+  ]
 }
