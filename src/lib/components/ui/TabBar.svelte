@@ -382,28 +382,6 @@ $effect(() => {
                     type="button"
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={() => {
-                        toggleAbout();
-                        closeMenu();
-                    }}>
-                    <img src="/logo.svg" alt="" class="h-4 w-4" /><span>About MarkdownRS</span>
-                </button>
-
-                <div class="bg-border-main my-1 h-px"></div>
-
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        toggleSettings();
-                        closeMenu();
-                    }}>
-                    <Settings size={14} class="opacity-70" /><span class="flex-1">Settings</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
-                </button>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
                         toggleCommandPalette();
                         closeMenu();
                     }}>
@@ -428,17 +406,6 @@ $effect(() => {
                 <button
                     type="button"
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        handleWriterMode();
-                        closeMenu();
-                    }}>
-                    <Feather size={14} class="opacity-70" />
-                    <span class="flex-1">Writer Mode</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
-                </button>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     class:opacity-50={!isPreviewAvailable}
                     class:cursor-not-allowed={!isPreviewAvailable}
                     onclick={() => {
@@ -454,6 +421,39 @@ $effect(() => {
                     {/if}
                     <span class="flex-1">Toggle Split Preview</span
                     ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
+                </button>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        handleWriterMode();
+                        closeMenu();
+                    }}>
+                    <Feather size={14} class="opacity-70" />
+                    <span class="flex-1">Writer Mode</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
+                </button>
+
+                <div class="bg-border-main my-1 h-px"></div>
+
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        toggleSettings();
+                        closeMenu();
+                    }}>
+                    <Settings size={14} class="opacity-70" /><span class="flex-1">Settings</span
+                    ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
+                </button>
+                <button
+                    type="button"
+                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                    onclick={() => {
+                        toggleAbout();
+                        closeMenu();
+                    }}>
+                    <img src="/logo.svg" alt="" class="h-4 w-4" /><span>About MarkdownRS</span>
                 </button>
             </div>
         {/if}
