@@ -52,7 +52,7 @@ let tooltipContent = $derived.by(() => {
     class:hover:bg-bg-hover={!isActive}
     class:text-fg-default={isActive}
     class:text-fg-muted={!isActive}
-    class:border-r={!isActive}
+    class:border-r={true}
     class:justify-center={isCollapsed}
     class:px-3={!isCollapsed}
     style="
@@ -115,7 +115,7 @@ let tooltipContent = $derived.by(() => {
             {:else}
                 <div
                     class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
-                    style="background: linear-gradient(to right, transparent 0%, {isActive
+                    style="top: {isActive ? '2px' : '0'}; background: linear-gradient(to right, transparent 0%, {isActive
                         ? 'var(--surface-1)'
                         : 'var(--surface-hover)'} 40%, {isActive
                         ? 'var(--surface-1)'
