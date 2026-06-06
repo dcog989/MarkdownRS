@@ -58,42 +58,27 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     },
     '.cm-highlightSpace': {
       backgroundImage: 'none !important',
-      position: 'relative',
       '&:before': {
         content: "'·'",
         color: whitespaceColor,
-        position: 'absolute',
-        top: '0',
-        left: '0',
         pointerEvents: 'none',
         fontWeight: 'bold',
-        transform: 'scale(1.2)',
       },
     },
     '.cm-highlightTab': {
       backgroundImage: 'none !important',
-      position: 'relative',
       '&:before': {
         content: "'→'",
         color: whitespaceColor,
-        position: 'absolute',
-        top: '0',
-        left: '0',
         pointerEvents: 'none',
         fontWeight: 'bold',
-        transform: 'scale(1.2)',
       },
     },
     '.cm-newline': {
       color: whitespaceColor,
       userSelect: 'none',
       pointerEvents: 'none',
-      display: 'inline-block',
-      verticalAlign: 'baseline',
-      marginLeft: '2px',
-      fontWeight: 'bold',
-      transform: 'scale(1.2)',
-      lineHeight: '0', // Forces 0 height contribution to line layout
+      display: 'inline',
     },
   });
 }
