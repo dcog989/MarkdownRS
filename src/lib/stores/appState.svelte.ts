@@ -3,8 +3,8 @@ export const appState = $state({
   activeTabId: null as string | null,
   splitView: true,
   theme: 'dark' as 'dark' | 'light',
-  activeTheme: 'default-dark',
-  availableThemes: ['default-dark', 'default-light'] as string[],
+  activeTheme: 'System',
+  availableThemes: ['System', 'RS-Dark', 'RS-Light'] as string[],
   splitPercentage: 0.5,
   splitOrientation: 'vertical' as 'vertical' | 'horizontal',
   tabCycling: 'mru' as 'mru' | 'sequential',
@@ -63,11 +63,17 @@ export function toggleSplitView() {
 
 export function setTheme(newTheme: 'dark' | 'light') {
   appState.theme = newTheme;
-  appState.activeTheme = newTheme === 'dark' ? 'default-dark' : 'default-light';
+  appState.activeTheme = newTheme === 'dark' ? 'RS-Dark' : 'RS-Light';
 }
 
 export function syncThemeFromActiveTheme() {
-  appState.theme = appState.activeTheme.includes('light') ? 'light' : 'dark';
+  if (appState.activeTheme === 'System') {
+    if (typeof window !== 'undefined') {
+      appState.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return;
+  }
+  appState.theme = appState.activeTheme.toLowerCase().includes('light') ? 'light' : 'dark';
 }
 
 export function toggleOrientation() {

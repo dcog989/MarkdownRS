@@ -81,7 +81,14 @@ export async function initSettings() {
   }
 
   // Keep theme in sync with activeTheme from saved settings
-  appState.theme = appState.activeTheme.includes('light') ? 'light' : 'dark';
+  appState.theme =
+    appState.activeTheme === 'System'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      : appState.activeTheme.toLowerCase().includes('light')
+        ? 'light'
+        : 'dark';
 
   lastSavedState = JSON.stringify(getSettingsObject());
 }

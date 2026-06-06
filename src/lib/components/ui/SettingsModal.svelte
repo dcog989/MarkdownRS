@@ -18,7 +18,7 @@ import {
     invalidateSpellcheckCache,
     triggerImmediateLint,
 } from '$lib/utils/spellcheckExtension.svelte.ts';
-import { DEFAULT_THEME_NAMES } from '$lib/utils/themes';
+import { DEFAULT_THEME_NAMES, LEGACY_THEME_NAMES } from '$lib/utils/themes';
 
 interface Props {
     isOpen: boolean;
@@ -61,11 +61,11 @@ $effect(() => {
             .then((customThemes) => {
                 if (!customThemes) return;
                 const defaults = DEFAULT_THEME_NAMES;
-                const customs = customThemes.filter((t) => !defaults.includes(t));
-                appContext.app.availableThemes = [...defaults, ...customs];
+                const customs = customThemes.filter((t) => !defaults.includes(t) && !LEGACY_THEME_NAMES.includes(t));
+                appContext.app.availableThemes = ['System', ...defaults, ...customs];
 
                 if (!appContext.app.availableThemes.includes(appContext.app.activeTheme)) {
-                    appContext.app.activeTheme = 'default-dark';
+                    appContext.app.activeTheme = 'System';
                     saveSettings();
                 }
             })
@@ -102,10 +102,10 @@ const settingsDefinitions = $derived([
 
     {
         key: 'activeTheme',
-        label: 'Content Theme',
+        label: 'Theme',
         type: 'select',
         category: 'Appearance',
-        defaultValue: 'default-dark',
+        defaultValue: 'System',
         options: appContext.app.availableThemes,
     },
 

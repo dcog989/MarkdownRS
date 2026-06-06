@@ -1,6 +1,7 @@
 import { callBackendSafe } from './backend';
 
-export const DEFAULT_THEME_NAMES = ['default-dark', 'default-light'];
+export const DEFAULT_THEME_NAMES = ['RS-Dark', 'RS-Light'];
+export const LEGACY_THEME_NAMES = ['default-dark', 'default-light'];
 
 export async function getThemeCss(themeName: string): Promise<string> {
   const result = await callBackendSafe('get_theme_css', { themeName }, 'Settings:Load', {

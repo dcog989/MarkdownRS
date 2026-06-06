@@ -126,8 +126,8 @@ pub async fn get_theme_css(
     theme_name: String,
 ) -> Result<String, String> {
     match theme_name.as_str() {
-        "default-dark" => return Ok(DEFAULT_DARK_CSS.to_string()),
-        "default-light" => return Ok(DEFAULT_LIGHT_CSS.to_string()),
+        "RS-Dark" | "default-dark" => return Ok(DEFAULT_DARK_CSS.to_string()),
+        "RS-Light" | "default-light" => return Ok(DEFAULT_LIGHT_CSS.to_string()),
         _ => {},
     }
     let config_dir = app_handle

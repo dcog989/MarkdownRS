@@ -4,6 +4,7 @@ import { commands } from '$lib/commands/commands';
 import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
 import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
+import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { shortcutManager } from '$lib/utils/shortcuts';
 import { getThemeCss } from '$lib/utils/themes';
@@ -20,7 +21,7 @@ $effect(() => {
 
 $effect(() => {
     const themeName = appContext.app.activeTheme;
-    if (!themeName) return;
+    if (!themeName || themeName === 'System') return;
 
     async function loadTheme() {
         const css = await getThemeCss(themeName);
@@ -74,11 +75,20 @@ onMount(() => {
         }
     };
 
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleOSThemeChange = () => {
+        if (appContext.app.activeTheme === 'System') {
+            syncThemeFromActiveTheme();
+        }
+    };
+    mq.addEventListener('change', handleOSThemeChange);
+
     window.addEventListener('keydown', handleKeydown, { capture: true });
     document.addEventListener('contextmenu', handleContextMenu, { passive: false });
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
+        mq.removeEventListener('change', handleOSThemeChange);
         window.removeEventListener('keydown', handleKeydown, { capture: true });
         document.removeEventListener('contextmenu', handleContextMenu);
         document.removeEventListener('fullscreenchange', handleFullscreenChange);

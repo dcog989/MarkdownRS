@@ -256,12 +256,12 @@ fn main() {
             // These serve as templates users can copy to create custom themes.
             let themes_dir_clone = themes_dir.clone();
             tauri::async_runtime::spawn(async move {
-                let dark_theme_path = themes_dir_clone.join("default-dark.css");
+                let dark_theme_path = themes_dir_clone.join("RS-Dark.css");
                 if let Err(e) = tokio::fs::write(&dark_theme_path, include_str!("../templates/default-dark.css")).await {
                     log::warn!("Failed to write dark theme reference: {}", e);
                 }
 
-                let light_theme_path = themes_dir_clone.join("default-light.css");
+                let light_theme_path = themes_dir_clone.join("RS-Light.css");
                 if let Err(e) = tokio::fs::write(&light_theme_path, include_str!("../templates/default-light.css")).await {
                     log::warn!("Failed to write light theme reference: {}", e);
                 }
