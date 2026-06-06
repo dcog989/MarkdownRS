@@ -25,43 +25,6 @@ const textOperationCommands: Command[] = OPERATION_CATEGORIES.flatMap((category)
 
 const allCommands = [...baseCommands, ...textOperationCommands];
 
-// Palette command shortcut IDs that map to registerAllShortcuts command IDs
-const PALETTE_TO_SHORTCUT_ID: Record<string, string> = {
-    new: 'file.new',
-    open: 'file.open',
-    'recent-files': 'nav.quickOpen',
-    save: 'file.save',
-    'save-as': 'file.saveAs',
-    close: 'file.closeTab',
-    'file.reopen_closed': 'edit.reopenClosedTab',
-    'find.show': 'edit.find',
-    'find.show_replace': 'edit.replace',
-    'toggle-split': 'view.toggleSplitView',
-    'toggle-writer-mode': 'view.toggleWriterMode',
-    'toggle-whitespace': 'view.toggleWhitespace',
-    bookmarks: 'window.bookmarks',
-    'command-palette': 'window.commandPalette',
-    settings: 'help.settings',
-    shortcuts: 'help.shortcuts',
-    transform: 'window.transform',
-    'ops-bold': 'markdown.bold',
-    'ops-italic': 'markdown.italic',
-    'ops-insert-link': 'markdown.link',
-    'editor.bookmark_add': 'markdown.bookmark',
-    'editor.toggle_comment': 'markdown.comment',
-    'editor.duplicate_line': 'edit.duplicateLine',
-    'editor.delete_line': 'edit.deleteLine',
-    'editor.move_line_up': 'edit.moveLineUp',
-    'editor.move_line_down': 'edit.moveLineDown',
-    'editor.copy_line_up': 'edit.copyLineUp',
-    'editor.add_cursor_above': 'edit.addCursorAbove',
-    'editor.add_cursor_below': 'edit.addCursorBelow',
-    'editor.select_line': 'edit.selectLine',
-    'editor.goto_matching_bracket': 'edit.gotoMatchingBracket',
-    'editor.indent_more': 'edit.indentMore',
-    'editor.indent_less': 'edit.indentLess',
-};
-
 const _commands = $derived.by(() => {
     // Depend on palette visibility so shortcuts resolve after registerAllShortcuts() runs
     void appContext.interface.showCommandPalette;
@@ -70,8 +33,8 @@ const _commands = $derived.by(() => {
     void appState.commandUsageCounts;
 
     const commandsWithShortcuts = allCommands.map((cmd) => {
-        const shortcutId = PALETTE_TO_SHORTCUT_ID[cmd.id] ?? cmd.id;
-        return { ...cmd, shortcut: shortcutManager.getShortcutDisplay(shortcutId) };
+        const shortcut = shortcutManager.getShortcutByPaletteId(cmd.id);
+        return { ...cmd, shortcut };
     });
 
     if (appState.commandPaletteSort === 'recent') {

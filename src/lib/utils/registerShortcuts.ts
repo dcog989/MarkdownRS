@@ -28,6 +28,7 @@ export function registerAllShortcuts() {
     {
       id: 'file.new',
       command: 'file.new',
+      paletteId: 'new',
       defaultKey: 'ctrl+n',
       description: 'New File',
       category: 'File',
@@ -39,6 +40,7 @@ export function registerAllShortcuts() {
     {
       id: 'file.open',
       command: 'file.open',
+      paletteId: 'open',
       defaultKey: 'ctrl+o',
       description: 'Open File',
       category: 'File',
@@ -49,6 +51,7 @@ export function registerAllShortcuts() {
     {
       id: 'file.save',
       command: 'file.save',
+      paletteId: 'save',
       defaultKey: 'ctrl+s',
       description: 'Save File',
       category: 'File',
@@ -59,6 +62,7 @@ export function registerAllShortcuts() {
     {
       id: 'file.saveAs',
       command: 'file.saveAs',
+      paletteId: 'save-as',
       defaultKey: 'ctrl+shift+s',
       description: 'Save File As',
       category: 'File',
@@ -69,6 +73,7 @@ export function registerAllShortcuts() {
     {
       id: 'file.closeTab',
       command: 'file.closeTab',
+      paletteId: 'close',
       defaultKey: 'ctrl+w',
       description: 'Close Tab',
       category: 'File',
@@ -107,6 +112,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.find',
       command: 'edit.find',
+      paletteId: 'find.show',
       defaultKey: 'ctrl+f',
       description: 'Find',
       category: 'Edit',
@@ -117,6 +123,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.replace',
       command: 'edit.replace',
+      paletteId: 'find.show_replace',
       defaultKey: 'ctrl+h',
       description: 'Replace',
       category: 'Edit',
@@ -127,6 +134,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.reopenClosedTab',
       command: 'edit.reopenClosedTab',
+      paletteId: 'file.reopen_closed',
       defaultKey: 'ctrl+shift+t',
       description: 'Reopen Closed Tab',
       category: 'Edit',
@@ -139,6 +147,7 @@ export function registerAllShortcuts() {
     {
       id: 'view.toggleSplitView',
       command: 'view.toggleSplitView',
+      paletteId: 'toggle-split',
       defaultKey: 'ctrl+\\',
       description: 'Toggle Split View',
       category: 'View',
@@ -158,6 +167,7 @@ export function registerAllShortcuts() {
     {
       id: 'view.toggleWriterMode',
       command: 'view.toggleWriterMode',
+      paletteId: 'toggle-writer-mode',
       defaultKey: 'f11',
       description: 'Toggle Writer Mode',
       category: 'View',
@@ -207,6 +217,7 @@ export function registerAllShortcuts() {
     {
       id: 'view.toggleWhitespace',
       command: 'view.toggleWhitespace',
+      paletteId: 'toggle-whitespace',
       defaultKey: 'ctrl+shift+8',
       description: 'Toggle Whitespace Display',
       category: 'View',
@@ -222,6 +233,7 @@ export function registerAllShortcuts() {
     {
       id: 'nav.quickOpen',
       command: 'nav.quickOpen',
+      paletteId: 'recent-files',
       defaultKey: 'ctrl+p',
       description: 'Quick Open (Recent Files)',
       category: 'Navigation',
@@ -336,6 +348,7 @@ export function registerAllShortcuts() {
     {
       id: 'window.commandPalette',
       command: 'window.commandPalette',
+      paletteId: 'command-palette',
       defaultKey: 'ctrl+shift+p',
       description: 'Command Palette',
       category: 'Window',
@@ -346,6 +359,7 @@ export function registerAllShortcuts() {
     {
       id: 'window.bookmarks',
       command: 'window.bookmarks',
+      paletteId: 'bookmarks',
       defaultKey: 'ctrl+shift+b',
       description: 'Bookmarks',
       category: 'Window',
@@ -356,6 +370,7 @@ export function registerAllShortcuts() {
     {
       id: 'window.transform',
       command: 'window.transform',
+      paletteId: 'transform',
       defaultKey: 'ctrl+t',
       description: 'Text Transformations',
       category: 'Edit',
@@ -369,6 +384,7 @@ export function registerAllShortcuts() {
     {
       id: 'window.about',
       command: 'window.about',
+      paletteId: 'about',
       defaultKey: '',
       description: 'About',
       category: 'Window',
@@ -381,6 +397,7 @@ export function registerAllShortcuts() {
     {
       id: 'markdown.bold',
       command: 'markdown.bold',
+      paletteId: 'ops-bold',
       defaultKey: 'ctrl+b',
       description: 'Bold',
       category: 'Markdown',
@@ -388,6 +405,7 @@ export function registerAllShortcuts() {
     {
       id: 'markdown.italic',
       command: 'markdown.italic',
+      paletteId: 'ops-italic',
       defaultKey: 'ctrl+i',
       description: 'Italic',
       category: 'Markdown',
@@ -395,6 +413,7 @@ export function registerAllShortcuts() {
     {
       id: 'markdown.link',
       command: 'markdown.link',
+      paletteId: 'ops-insert-link',
       defaultKey: 'ctrl+k',
       description: 'Insert Link',
       category: 'Markdown',
@@ -402,6 +421,7 @@ export function registerAllShortcuts() {
     {
       id: 'markdown.bookmark',
       command: 'markdown.bookmark',
+      paletteId: 'editor.bookmark_add',
       defaultKey: 'ctrl+d',
       description: 'Add to Bookmarks',
       category: 'Markdown',
@@ -409,6 +429,7 @@ export function registerAllShortcuts() {
     {
       id: 'markdown.comment',
       command: 'markdown.comment',
+      paletteId: 'editor.toggle_comment',
       defaultKey: 'ctrl+/',
       description: 'Toggle Comment',
       category: 'Markdown',
@@ -416,6 +437,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.duplicateLine',
       command: 'edit.duplicateLine',
+      paletteId: 'editor.duplicate_line',
       defaultKey: 'ctrl+shift+d',
       description: 'Duplicate Line/Selection',
       category: 'Edit',
@@ -423,6 +445,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.deleteLine',
       command: 'edit.deleteLine',
+      paletteId: 'editor.delete_line',
       defaultKey: 'ctrl+shift+k',
       description: 'Delete Line',
       category: 'Edit',
@@ -430,6 +453,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.moveLineUp',
       command: 'edit.moveLineUp',
+      paletteId: 'editor.move_line_up',
       defaultKey: 'alt+arrowup',
       description: 'Move Line Up',
       category: 'Edit',
@@ -437,6 +461,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.moveLineDown',
       command: 'edit.moveLineDown',
+      paletteId: 'editor.move_line_down',
       defaultKey: 'alt+arrowdown',
       description: 'Move Line Down',
       category: 'Edit',
@@ -444,6 +469,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.copyLineUp',
       command: 'edit.copyLineUp',
+      paletteId: 'editor.copy_line_up',
       defaultKey: 'shift+alt+arrowup',
       description: 'Copy Line Up',
       category: 'Edit',
@@ -451,6 +477,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.addCursorAbove',
       command: 'edit.addCursorAbove',
+      paletteId: 'editor.add_cursor_above',
       defaultKey: 'ctrl+alt+arrowup',
       description: 'Add Cursor Above',
       category: 'Edit',
@@ -458,6 +485,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.addCursorBelow',
       command: 'edit.addCursorBelow',
+      paletteId: 'editor.add_cursor_below',
       defaultKey: 'ctrl+alt+arrowdown',
       description: 'Add Cursor Below',
       category: 'Edit',
@@ -465,6 +493,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.selectLine',
       command: 'edit.selectLine',
+      paletteId: 'editor.select_line',
       defaultKey: 'ctrl+l',
       description: 'Select Line',
       category: 'Edit',
@@ -472,6 +501,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.gotoMatchingBracket',
       command: 'edit.gotoMatchingBracket',
+      paletteId: 'editor.goto_matching_bracket',
       defaultKey: 'ctrl+shift+\\',
       description: 'Go to Matching Bracket',
       category: 'Edit',
@@ -479,6 +509,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.indentMore',
       command: 'edit.indentMore',
+      paletteId: 'editor.indent_more',
       defaultKey: 'ctrl+]',
       description: 'Indent',
       category: 'Edit',
@@ -486,6 +517,7 @@ export function registerAllShortcuts() {
     {
       id: 'edit.indentLess',
       command: 'edit.indentLess',
+      paletteId: 'editor.indent_less',
       defaultKey: 'ctrl+[',
       description: 'Outdent',
       category: 'Edit',
@@ -502,6 +534,7 @@ export function registerAllShortcuts() {
     {
       id: 'help.shortcuts',
       command: 'help.shortcuts',
+      paletteId: 'shortcuts',
       defaultKey: 'f1',
       description: 'Show Keyboard Shortcuts',
       category: 'Help',
@@ -512,6 +545,7 @@ export function registerAllShortcuts() {
     {
       id: 'help.settings',
       command: 'help.settings',
+      paletteId: 'settings',
       defaultKey: 'ctrl+,',
       description: 'Open Settings',
       category: 'Help',

@@ -12,10 +12,12 @@ export interface ShortcutDefinition {
   description: string;
   category: string;
   handler?: ShortcutHandler;
+  paletteId?: string; // Command palette command ID this shortcut maps to (enables automatic shortcut display)
 }
 
 export class KeyboardShortcutManager {
   private definitions: Map<string, ShortcutDefinition> = new Map();
+  private paletteToCommand: Map<string, string> = new Map();
   private customMappings: Record<string, string> = {};
   private enabled: boolean = true;
 
@@ -24,6 +26,18 @@ export class KeyboardShortcutManager {
    */
   register(definition: ShortcutDefinition): void {
     this.definitions.set(definition.command, definition);
+    if (definition.paletteId) {
+      this.paletteToCommand.set(definition.paletteId, definition.command);
+    }
+  }
+
+  /**
+   * Get shortcut display string for a command palette command ID
+   */
+  getShortcutByPaletteId(paletteId: string): string {
+    const commandId = this.paletteToCommand.get(paletteId);
+    if (!commandId) return '';
+    return this.getShortcutDisplay(commandId);
   }
 
   /**
