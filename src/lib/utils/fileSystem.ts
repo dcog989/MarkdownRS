@@ -127,7 +127,11 @@ export async function openFile(path?: string): Promise<void> {
       const trimmed = result.content.trim();
       if (trimmed.length > 0) {
         const lines = result.content.split('\n');
-        const firstLine = lines.find((l) => l.trim().length > 0) || '';
+        const firstLine =
+          lines.find((l) => {
+            const t = l.trim();
+            return t.length > 0 && /[a-zA-Z0-9]/.test(t.replace(/^#+\s*/, ''));
+          }) || '';
         let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
         const MAX_LEN = 25;
         if (smartTitle.length > MAX_LEN) {
@@ -360,7 +364,11 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       let finalTitle = fileName;
 
       if (appContext.app.tabNameFromContent) {
-        const firstLine = contentToSave.split('\n').find((l) => l.trim().length > 0) || '';
+        const firstLine =
+          contentToSave.split('\n').find((l) => {
+            const t = l.trim();
+            return t.length > 0 && /[a-zA-Z0-9]/.test(t.replace(/^#+\s*/, ''));
+          }) || '';
         let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
         if (smartTitle.length > 25) smartTitle = `${smartTitle.substring(0, 25).trim()}...`;
         if (smartTitle.length > 0) finalTitle = smartTitle;

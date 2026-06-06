@@ -460,13 +460,13 @@ export function updateContent(id: string, content: string, lineCount: number) {
   if (appState.tabNameFromContent) {
     const trimmed = content.trim();
     if (trimmed.length > 0) {
-      // Scan for first non-empty line without split()
+      // Scan for first meaningful line without split()
       let lineStart = 0;
       let firstLine = '';
       for (let i = 0; i <= content.length; i++) {
         if (i === content.length || content[i] === '\n') {
           const line = content.slice(lineStart, i).trim();
-          if (line.length > 0) {
+          if (line.length > 0 && /[a-zA-Z0-9]/.test(line.replace(/^#+\s*/, ''))) {
             firstLine = line;
             break;
           }

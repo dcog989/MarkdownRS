@@ -331,7 +331,7 @@ const settingsDefinitions = $derived([
         category: 'Interface',
         defaultValue: false,
         tooltip:
-            'Automatically name unsaved tabs from first line of content (strips leading whitespace and #)',
+            'Automatically name unsaved tabs from first meaningful line of content (skips structural-only lines like brackets, strips leading #)',
     },
     {
         key: 'newTabPosition',
