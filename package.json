@@ -36,7 +36,7 @@
     "version": "bun scripts/version.js"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.20.2",
+    "@codemirror/autocomplete": "^6.20.3",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.3",
@@ -55,23 +55,23 @@
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-store": "^2.4.3",
     "@tauri-apps/plugin-window-state": "^2.4.1",
-    "dompurify": "^3.4.7",
+    "dompurify": "^3.4.8",
     "lucide-svelte": "^1.0.1",
     "modern-screenshot": "^4.7.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.61.1",
+    "@sveltejs/kit": "^2.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tauri-apps/cli": "^2.11.2",
     "@testing-library/svelte": "^5.3.1",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.2",
     "autoprefixer": "^10.5.0",
     "jsdom": "^29.1.1",
     "lefthook": "^2.1.9",
-    "svelte": "^5.56.1",
-    "svelte-check": "^4.5.0",
+    "svelte": "^5.56.2",
+    "svelte-check": "^4.6.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.16",
     "vitest": "^4.1.8"
