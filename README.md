@@ -66,30 +66,6 @@ CachyOS build: `makepkg -sif`
 - `bun run lint` - lint entire app
 - `bun run preview` - Preview the production build
 
-## Project Structure
-
-    MarkdownRS/
-    ├── src/                      # Frontend source
-    ├── src/                      # Frontend source
-    │   ├── lib/
-    ├── src/                      # Frontend source
-    ├── src/                      # Frontend source
-    │   ├── lib/
-    ├── src/                      # Frontend source
-    │   ├── lib/
-    │   │   ├── components/      # Svelte components
-    │   │   ├── stores/          # State management
-    │   │   └── utils/           # Utility functions
-    │   └── routes/              # SvelteKit routes
-    ├── src-tauri/               # Rust backend
-    │   ├── src/
-    │   │   ├── commands/        # Tauri commands
-    │   │   ├── db/              # Database logic
-    │   │   └── main.rs          # Entry point
-    │   └── tauri.conf.json      # Tauri configuration
-    ├── static/                  # Static assets
-    └── package.json             # Node dependencies & scripts
-
 ## Roadmap
 
 - TBD
@@ -101,3 +77,7 @@ CachyOS build: `makepkg -sif`
 ## License
 
 [MIT](url).
+
+```text
+
+```
