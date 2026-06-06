@@ -58,20 +58,32 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     },
     '.cm-highlightSpace': {
       backgroundImage: 'none !important',
+      position: 'relative',
       '&:before': {
         content: "'·'",
         color: whitespaceColor,
         pointerEvents: 'none',
         fontWeight: 'bold',
+        position: 'absolute',
+        left: '0',
+        top: '0',
+        width: '100%',
+        textAlign: 'center',
       },
     },
     '.cm-highlightTab': {
       backgroundImage: 'none !important',
+      position: 'relative',
       '&:before': {
         content: "'→'",
         color: whitespaceColor,
         pointerEvents: 'none',
         fontWeight: 'bold',
+        position: 'absolute',
+        left: '0',
+        top: '0',
+        width: '100%',
+        textAlign: 'center',
       },
     },
     '.cm-newline': {
