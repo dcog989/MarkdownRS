@@ -107,7 +107,8 @@ let tooltipContent = $derived.by(() => {
             {#if tab.isPinned}
                 <div
                     class={'absolute inset-0 flex items-center justify-center ' +
-                        (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}>
+                        (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}
+                    style="top: {isActive ? '2px' : '0'}">
                     <Pin
                         size={12}
                         class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
