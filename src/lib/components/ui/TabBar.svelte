@@ -47,7 +47,7 @@ let isPreviewAvailable = $derived(
 );
 
 let shortcuts = $derived({
-    settings: shortcutManager.getShortcutDisplay('help.settings'),
+    settings: shortcutManager.getShortcutDisplay('window.settings'),
     commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
     bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
     splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),

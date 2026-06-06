@@ -1,10 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { commands } from '$lib/commands/commands';
 import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
 import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { registerAllShortcuts } from '$lib/utils/registerShortcuts';
 import { shortcutManager } from '$lib/utils/shortcuts';
 import { getThemeCss } from '$lib/utils/themes';
 import '../app.css';
@@ -39,8 +39,9 @@ $effect(() => {
 });
 
 onMount(() => {
-    // Register all keyboard shortcuts and apply any user-customised mappings
-    registerAllShortcuts();
+    for (const cmd of commands) {
+        shortcutManager.register(cmd);
+    }
     shortcutManager.setCustomMappings(appContext.app.customShortcuts);
 
     const handleKeydown = (e: KeyboardEvent) => {

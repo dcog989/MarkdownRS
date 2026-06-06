@@ -1,129 +1,96 @@
-/**
- * Centralized Keyboard Shortcut Manager
- * Handles application-wide shortcuts with support for custom remapping.
- */
-
-export type ShortcutHandler = (e: KeyboardEvent) => boolean | undefined | Promise<boolean | undefined>;
-
-export interface ShortcutDefinition {
-  id: string; // Unique identifier for the command
-  command: string; // Command identifier for remapping logic
-  defaultKey: string; // e.g., 'ctrl+s'
-  description: string;
-  category: string;
-  handler?: ShortcutHandler;
-  paletteId?: string; // Command palette command ID this shortcut maps to (enables automatic shortcut display)
-}
+import type { Command } from '$lib/commands/commands';
 
 export class KeyboardShortcutManager {
-  private definitions: Map<string, ShortcutDefinition> = new Map();
-  private paletteToCommand: Map<string, string> = new Map();
+  private commands: Map<string, Command> = new Map();
   private customMappings: Record<string, string> = {};
   private enabled: boolean = true;
 
-  /**
-   * Register a shortcut definition
-   */
-  register(definition: ShortcutDefinition): void {
-    this.definitions.set(definition.command, definition);
-    if (definition.paletteId) {
-      this.paletteToCommand.set(definition.paletteId, definition.command);
-    }
+  register(command: Command): void {
+    this.commands.set(command.id, command);
   }
 
-  /**
-   * Get shortcut display string for a command palette command ID
-   */
-  getShortcutByPaletteId(paletteId: string): string {
-    const commandId = this.paletteToCommand.get(paletteId);
-    if (!commandId) return '';
-    return this.getShortcutDisplay(commandId);
+  unregister(id: string): void {
+    this.commands.delete(id);
   }
 
-  /**
-   * Set user-defined shortcut mappings
-   */
   setCustomMappings(mappings: Record<string, string>): void {
     this.customMappings = mappings;
   }
 
-  /**
-   * Unregister a command
-   */
-  unregister(commandId: string): void {
-    this.definitions.delete(commandId);
+  getShortcutDisplay(id: string): string {
+    const cmd = this.commands.get(id);
+    if (!cmd?.defaultKey) return '';
+    const key = this.customMappings[id] || cmd.defaultKey;
+    return key
+      .split('+')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('+');
   }
 
-  /**
-   * Check if the event target is an input element where typing should not trigger shortcuts
-   */
-  private isInputElement(target: EventTarget | null): boolean {
-    if (!target || !(target instanceof HTMLElement)) return false;
-
-    const tagName = target.tagName.toLowerCase();
-    const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
-    const isContentEditable = target.isContentEditable;
-    const hasInputRole =
-      target.getAttribute('role') === 'textbox' ||
-      target.getAttribute('role') === 'searchbox' ||
-      target.getAttribute('role') === 'combobox';
-
-    return isInput || isContentEditable || hasInputRole;
+  getDefinitions(): Command[] {
+    return Array.from(this.commands.values());
   }
 
-  /**
-   * Handle keyboard events by matching against current mappings
-   */
-  async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
-    if (!this.enabled || e.repeat) {
-      return false;
+  getShortcutsByCategory(): Map<string, Command[]> {
+    const grouped = new Map<string, Command[]>();
+    for (const cmd of this.commands.values()) {
+      if (!grouped.has(cmd.category)) {
+        grouped.set(cmd.category, []);
+      }
+      grouped.get(cmd.category)?.push(cmd);
     }
+    return grouped;
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+  }
+
+  clear(): void {
+    this.commands.clear();
+  }
+
+  isRegistered(id: string): boolean {
+    return this.commands.has(id);
+  }
+
+  async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
+    if (!this.enabled || e.repeat) return false;
 
     const pressedKey = this.getEventKey(e);
 
-    // Global shortcuts that work even in input fields
     const globalShortcuts = [
-      'ctrl+p', // Quick open / Recent files
-      'ctrl+shift+p', // Command palette
-      'ctrl+s', // Save
-      'ctrl+shift+s', // Save as
-      'ctrl+o', // Open file
-      'ctrl+n', // New file
-      'ctrl+w', // Close tab
-      'ctrl+shift+t', // Reopen closed tab
-      'ctrl+tab', // Next tab
-      'ctrl+shift+tab', // Previous tab
-      'ctrl+pagedown', // Next tab
-      'ctrl+pageup', // Previous tab
-      'ctrl+,', // Settings
-      'ctrl+t', // Text Transformations
-      'ctrl+shift+b', // Bookmarks
-      'ctrl+\\', // Toggle split view
-      'ctrl+f', // Find
-      'ctrl+h', // Replace
-      'f1', // Shortcuts
-      'f11', // Writer Mode
-      'escape', // Escape
+      'ctrl+p',
+      'ctrl+shift+p',
+      'ctrl+s',
+      'ctrl+shift+s',
+      'ctrl+o',
+      'ctrl+n',
+      'ctrl+w',
+      'ctrl+shift+t',
+      'ctrl+tab',
+      'ctrl+shift+tab',
+      'ctrl+pagedown',
+      'ctrl+pageup',
+      'ctrl+,',
+      'ctrl+t',
+      'ctrl+shift+b',
+      'ctrl+\\',
+      'ctrl+f',
+      'ctrl+h',
+      'f1',
+      'f11',
+      'escape',
     ];
 
-    // Ignore shortcuts when typing in input fields, unless it's a global shortcut
     const isInput = this.isInputElement(e.target);
-    if (isInput && !globalShortcuts.includes(pressedKey)) {
-      return false;
-    }
+    if (isInput && !globalShortcuts.includes(pressedKey)) return false;
 
-    const isEditorKey = ['ctrl+backspace', 'ctrl+delete', 'backspace', 'delete', 'ctrl+s', 'ctrl+o'].includes(
-      pressedKey.toLowerCase(),
-    );
-
-    if (!isEditorKey && e.repeat) return false;
-
-    for (const def of this.definitions.values()) {
-      const mappedKey = this.customMappings[def.command] || def.defaultKey;
-      if (pressedKey === mappedKey.toLowerCase() && def.handler) {
-        const result = await def.handler(e);
-
-        // Only prevent default/stop propagation if handler returned true
+    for (const cmd of this.commands.values()) {
+      const mappedKey = this.customMappings[cmd.id] || cmd.defaultKey;
+      if (!mappedKey || !cmd.handler) continue;
+      if (pressedKey === mappedKey.toLowerCase()) {
+        const result = await cmd.handler(e);
         if (result === true) {
           e.preventDefault();
           e.stopPropagation();
@@ -136,88 +103,31 @@ export class KeyboardShortcutManager {
     return false;
   }
 
-  /**
-   * Get all definitions grouped by category for the UI
-   */
-  getShortcutsByCategory(): Map<string, ShortcutDefinition[]> {
-    const grouped = new Map<string, ShortcutDefinition[]>();
-    for (const def of this.definitions.values()) {
-      if (!grouped.has(def.category)) {
-        grouped.set(def.category, []);
-      }
-      grouped.get(def.category)?.push(def);
-    }
-    return grouped;
+  private isInputElement(target: EventTarget | null): boolean {
+    if (!target || !(target instanceof HTMLElement)) return false;
+    const tagName = target.tagName.toLowerCase();
+    const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+    const isContentEditable = target.isContentEditable;
+    const hasInputRole =
+      target.getAttribute('role') === 'textbox' ||
+      target.getAttribute('role') === 'searchbox' ||
+      target.getAttribute('role') === 'combobox';
+    return isInput || isContentEditable || hasInputRole;
   }
 
-  /**
-   * Get a human-readable display string for a command's current shortcut
-   */
-  getShortcutDisplay(commandId: string): string {
-    const def = this.definitions.get(commandId);
-    if (!def) return '';
-    const key = this.customMappings[commandId] || def.defaultKey;
-    return key
-      .split('+')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('+');
-  }
-
-  /**
-   * Check if a command ID is registered
-   */
-  isRegistered(commandId: string): boolean {
-    return this.definitions.has(commandId);
-  }
-
-  /**
-   * Enable or disable the manager
-   */
-  setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-  }
-
-  /**
-   * Clear all registered shortcuts
-   */
-  clear(): void {
-    this.definitions.clear();
-  }
-
-  /**
-   * Get all registered definitions
-   */
-  getDefinitions(): ShortcutDefinition[] {
-    return Array.from(this.definitions.values());
-  }
-
-  /**
-   * Helper to generate a normalized key string from a keyboard event
-   */
   private getEventKey(e: KeyboardEvent): string {
     const parts: string[] = [];
     if (e.ctrlKey) parts.push('ctrl');
     if (e.altKey) parts.push('alt');
     if (e.shiftKey) parts.push('shift');
     if (e.metaKey) parts.push('meta');
-
     let key = e.key.toLowerCase();
-
-    // Handle special keys
-    if (key === ' ') {
-      key = 'space';
-    }
-
-    // Filter out modifier keys themselves from the key part
-    // When Shift+T is pressed, e.key is 'T' (uppercase), but we want 't' in lowercase
-    // The shift modifier is already in parts, so we don't need it in the key
+    if (key === ' ') key = 'space';
     if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
       parts.push(key);
     }
-
     return parts.join('+');
   }
 }
 
-// Global instance
 export const shortcutManager = new KeyboardShortcutManager();

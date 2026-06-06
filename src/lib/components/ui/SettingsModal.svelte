@@ -25,7 +25,7 @@ interface Props {
     onClose: () => void;
 }
 
-let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('help.shortcuts'));
+let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('window.shortcuts'));
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
 

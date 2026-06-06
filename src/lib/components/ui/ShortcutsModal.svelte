@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Keyboard, RotateCcw } from 'lucide-svelte';
 import { SvelteMap } from 'svelte/reactivity';
+import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { saveSettings } from '$lib/utils/settings';
-import { type ShortcutDefinition, shortcutManager } from '$lib/utils/shortcuts';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
 interface Props {
     isOpen: boolean;
@@ -96,11 +97,11 @@ const filteredShortcuts = $derived(
     allShortcuts.filter((def) => {
         if (searchQuery.length < 1) return true;
         const query = searchQuery.toLowerCase();
-        const descriptionMatch = def.description.toLowerCase().includes(query);
+        const descriptionMatch = def.label.toLowerCase().includes(query);
         const categoryMatch = def.category.toLowerCase().includes(query);
-        const commandMatch = def.command.toLowerCase().includes(query);
+        const commandMatch = def.id.toLowerCase().includes(query);
         const shortcutMatch = shortcutManager
-            .getShortcutDisplay(def.command)
+            .getShortcutDisplay(def.id)
             .toLowerCase()
             .includes(query);
         return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
@@ -108,7 +109,7 @@ const filteredShortcuts = $derived(
 );
 
 const categories = $derived.by(() => {
-    const map = new SvelteMap<string, ShortcutDefinition[]>();
+    const map = new SvelteMap<string, Command[]>();
     filteredShortcuts.forEach((def) => {
         if (!map.has(def.category)) map.set(def.category, []);
         map.get(def.category)?.push(def);
@@ -136,7 +137,7 @@ function handleKeydown(e: KeyboardEvent) {
     } else if (e.key === 'Enter') {
         const def = flatShortcuts[selectedIndex];
         if (def) {
-            startRecording(def.command);
+            startRecording(def.id);
         }
     }
 }
@@ -165,7 +166,7 @@ function handleKeydown(e: KeyboardEvent) {
                             {category}
                         </h3>
                         <div class="divide-border-main/30 divide-y">
-                            {#each defs as def (def.command)}
+                            {#each defs as def (def.id)}
                                 {@const currentIndex = ++globalIndex.value}
                                 {@const isSelected = currentIndex === selectedIndex}
                                 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -184,31 +185,31 @@ function handleKeydown(e: KeyboardEvent) {
                                         style:color={isSelected
                                             ? 'var(--color-fg-inverse)'
                                             : 'var(--color-fg-default)'}
-                                        onclick={() => startRecording(def.command)}>
-                                        {def.description}
+                                        onclick={() => startRecording(def.id)}>
+                                        {def.label}
                                     </button>
                                     <div class="flex items-center gap-2">
                                         <button
                                             type="button"
                                             class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
-												{recordingCommandId === def.command
+												{recordingCommandId === def.id
                                                 ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
                                                 : isSelected
                                                   ? 'bg-fg-inverse/20 border-fg-inverse/30 text-fg-inverse'
                                                   : 'bg-bg-input text-fg-default bg-border-main hover:border-accent-secondary'}"
-                                            onclick={() => startRecording(def.command)}>
-                                            {recordingCommandId === def.command
+                                            onclick={() => startRecording(def.id)}>
+                                            {recordingCommandId === def.id
                                                 ? 'Press keys...'
-                                                : shortcutManager.getShortcutDisplay(def.command)}
+                                                : shortcutManager.getShortcutDisplay(def.id)}
                                         </button>
-                                        {#if appContext.app.customShortcuts[def.command]}
+                                        {#if appContext.app.customShortcuts[def.id]}
                                             <button
                                                 type="button"
                                                 class="p-1 transition-all opacity-0 group-hover:opacity-100"
                                                 style:color={isSelected
                                                     ? 'var(--color-fg-inverse)'
                                                     : 'var(--color-accent-primary)'}
-                                                onclick={() => resetShortcut(def.command)}
+                                                onclick={() => resetShortcut(def.id)}
                                                 title="Reset to default">
                                                 <RotateCcw size={14} />
                                             </button>
