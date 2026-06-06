@@ -59,8 +59,10 @@ let tooltipContent = $derived.by(() => {
         min-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMin}px`};
         max-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMax}px`};
         width: {isCollapsed ? '36px' : 'auto'};
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
         {isActive
-        ? 'border-top: 2px solid var(--accent-primary); border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem; border-bottom: 2px solid var(--color-bg-main);'
+        ? 'border-top: 2px solid var(--accent-primary); border-bottom: 1px solid transparent;'
         : ''}
     "
     onclick={() => onclick?.(tab.id)}

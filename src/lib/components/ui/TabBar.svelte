@@ -245,7 +245,7 @@ $effect(() => {
 });
 </script>
 
-<div class="bg-bg-panel relative flex h-9 w-full shrink-0 items-stretch border-b">
+    <div class="bg-bg-panel relative flex h-9 w-full shrink-0 items-stretch">
     <div class="relative h-9 border-r">
         <button
             type="button"
@@ -263,9 +263,9 @@ $effect(() => {
             }}
             onClose={() => (showDropdown = false)} />
     </div>
-
     <div class="relative h-full min-w-0 flex-1">
-        {#if showLeftFade}
+
+    {#if showLeftFade}
             <div
                 class="pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
