@@ -10,148 +10,130 @@ import { debug, error, info, warn } from '@tauri-apps/plugin-log';
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogMetadata {
-    [key: string]: string | number | boolean | undefined | null;
+  [key: string]: string | number | boolean | undefined | null;
 }
 
 class Logger {
-    private buffer: { level: LogLevel; message: string }[] = [];
-    private flushTimer: number | null = null;
-    private readonly MAX_BUFFER_SIZE = 50;
-    private readonly FLUSH_INTERVAL_MS = 500;
+  private buffer: { level: LogLevel; message: string }[] = [];
+  private flushTimer: number | null = null;
+  private readonly MAX_BUFFER_SIZE = 50;
+  private readonly FLUSH_INTERVAL_MS = 500;
 
-    constructor() {
-        if (typeof window !== 'undefined') {
-            window.addEventListener('beforeunload', () => this.flush());
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => this.flush());
+    }
+  }
+
+  private formatMetadata(metadata?: LogMetadata): string {
+    if (!metadata) return '';
+
+    return Object.entries(metadata)
+      .filter(([, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => {
+        if (typeof value === 'string' && value.length > 100) {
+          return `${key}=${value.substring(0, 100)}...`;
         }
+        return `${key}=${value}`;
+      })
+      .join(' | ');
+  }
+
+  private log(level: LogLevel, namespace: string, action: string, metadata?: LogMetadata): void {
+    const metadataStr = this.formatMetadata(metadata);
+    const message = metadataStr ? `[${namespace}] ${action} | ${metadataStr}` : `[${namespace}] ${action}`;
+
+    // Standard Browser Console output
+    switch (level) {
+      case 'debug':
+        break;
+      case 'info':
+        break;
+      case 'warn':
+        break;
+      case 'error':
+        break;
     }
 
-    private formatMetadata(metadata?: LogMetadata): string {
-        if (!metadata) return '';
+    // Buffer for Backend Logger
+    this.buffer.push({ level, message });
 
-        return Object.entries(metadata)
-            .filter(([, value]) => value !== undefined && value !== null)
-            .map(([key, value]) => {
-                if (typeof value === 'string' && value.length > 100) {
-                    return `${key}=${value.substring(0, 100)}...`;
-                }
-                return `${key}=${value}`;
-            })
-            .join(' | ');
+    if (this.buffer.length >= this.MAX_BUFFER_SIZE) {
+      this.flush();
+    } else if (!this.flushTimer) {
+      this.flushTimer = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL_MS);
+    }
+  }
+
+  private async flush(): Promise<void> {
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
     }
 
-    private log(level: LogLevel, namespace: string, action: string, metadata?: LogMetadata): void {
-        const metadataStr = this.formatMetadata(metadata);
-        const message = metadataStr
-            ? `[${namespace}] ${action} | ${metadataStr}`
-            : `[${namespace}] ${action}`;
+    if (this.buffer.length === 0) return;
 
-        // Standard Browser Console output
-        switch (level) {
-            case 'debug':
-                break;
-            case 'info':
-                break;
-            case 'warn':
-                break;
-            case 'error':
-                break;
+    const currentBuffer = [...this.buffer];
+    this.buffer = [];
+
+    // Group by level to send combined messages per level
+    const grouped = currentBuffer.reduce(
+      (acc, { level, message }) => {
+        if (!acc[level]) acc[level] = [];
+        acc[level].push(message);
+        return acc;
+      },
+      {} as Record<LogLevel, string[]>,
+    );
+
+    for (const [level, messages] of Object.entries(grouped)) {
+      const combined = messages.join('\n');
+      try {
+        switch (level as LogLevel) {
+          case 'debug':
+            await debug(combined);
+            break;
+          case 'info':
+            await info(combined);
+            break;
+          case 'warn':
+            await warn(combined);
+            break;
+          case 'error':
+            await error(combined);
+            break;
         }
-
-        // Buffer for Backend Logger
-        this.buffer.push({ level, message });
-
-        if (this.buffer.length >= this.MAX_BUFFER_SIZE) {
-            this.flush();
-        } else if (!this.flushTimer) {
-            this.flushTimer = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL_MS);
-        }
+      } catch (_e) {}
     }
+  }
 
-    private async flush(): Promise<void> {
-        if (this.flushTimer) {
-            clearTimeout(this.flushTimer);
-            this.flushTimer = null;
-        }
+  editor = {
+    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Editor', action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log('info', 'Editor', action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Editor', action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log('error', 'Editor', action, metadata),
+  };
 
-        if (this.buffer.length === 0) return;
+  session = {
+    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Session', action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log('info', 'Session', action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Session', action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log('error', 'Session', action, metadata),
+  };
 
-        const currentBuffer = [...this.buffer];
-        this.buffer = [];
+  file = {
+    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'File', action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log('info', 'File', action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'File', action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log('error', 'File', action, metadata),
+  };
 
-        // Group by level to send combined messages per level
-        const grouped = currentBuffer.reduce(
-            (acc, { level, message }) => {
-                if (!acc[level]) acc[level] = [];
-                acc[level].push(message);
-                return acc;
-            },
-            {} as Record<LogLevel, string[]>,
-        );
-
-        for (const [level, messages] of Object.entries(grouped)) {
-            const combined = messages.join('\n');
-            try {
-                switch (level as LogLevel) {
-                    case 'debug':
-                        await debug(combined);
-                        break;
-                    case 'info':
-                        await info(combined);
-                        break;
-                    case 'warn':
-                        await warn(combined);
-                        break;
-                    case 'error':
-                        await error(combined);
-                        break;
-                }
-            } catch (_e) {}
-        }
-    }
-
-    editor = {
-        debug: (action: string, metadata?: LogMetadata) =>
-            this.log('debug', 'Editor', action, metadata),
-        info: (action: string, metadata?: LogMetadata) =>
-            this.log('info', 'Editor', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) =>
-            this.log('warn', 'Editor', action, metadata),
-        error: (action: string, metadata?: LogMetadata) =>
-            this.log('error', 'Editor', action, metadata),
-    };
-
-    session = {
-        debug: (action: string, metadata?: LogMetadata) =>
-            this.log('debug', 'Session', action, metadata),
-        info: (action: string, metadata?: LogMetadata) =>
-            this.log('info', 'Session', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) =>
-            this.log('warn', 'Session', action, metadata),
-        error: (action: string, metadata?: LogMetadata) =>
-            this.log('error', 'Session', action, metadata),
-    };
-
-    file = {
-        debug: (action: string, metadata?: LogMetadata) =>
-            this.log('debug', 'File', action, metadata),
-        info: (action: string, metadata?: LogMetadata) =>
-            this.log('info', 'File', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) =>
-            this.log('warn', 'File', action, metadata),
-        error: (action: string, metadata?: LogMetadata) =>
-            this.log('error', 'File', action, metadata),
-    };
-
-    spellcheck = {
-        debug: (action: string, metadata?: LogMetadata) =>
-            this.log('debug', 'Spellcheck', action, metadata),
-        info: (action: string, metadata?: LogMetadata) =>
-            this.log('info', 'Spellcheck', action, metadata),
-        warn: (action: string, metadata?: LogMetadata) =>
-            this.log('warn', 'Spellcheck', action, metadata),
-        error: (action: string, metadata?: LogMetadata) =>
-            this.log('error', 'Spellcheck', action, metadata),
-    };
+  spellcheck = {
+    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Spellcheck', action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log('info', 'Spellcheck', action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Spellcheck', action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log('error', 'Spellcheck', action, metadata),
+  };
 }
 
 export const logger = new Logger();

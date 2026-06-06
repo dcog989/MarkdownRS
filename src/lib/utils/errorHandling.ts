@@ -2,255 +2,246 @@ import { error as logError } from '@tauri-apps/plugin-log';
 import { showToast } from '$lib/stores/toastStore.svelte';
 
 export type ErrorContext =
-    | 'Session:Save'
-    | 'Session:Load'
-    | 'Session:Vacuum'
-    | 'File:Read'
-    | 'File:Write'
-    | 'File:Metadata'
-    | 'Markdown:Render'
-    | 'Settings:Load'
-    | 'Settings:Save'
-    | 'Settings:AppInfo'
-    | 'Editor:Init'
-    | 'Database:Init'
-    | 'Database:Migration'
-    | 'Transform:Text'
-    | 'Dictionary:Add'
-    | 'UI:DragDrop'
-    | 'FileWatcher:Watch'
-    | 'Update:Check'
-    | 'Update:Install'
-    | 'FileWatcher:Unwatch'
-    | 'Export:PDF'
-    | 'Export:HTML'
-    | 'Spellcheck:Init'
-    | 'Bookmark:Add'
-    | 'Bookmark:Remove'
-    | 'Data:ExportBookmarks'
-    | 'Data:ImportBookmarks'
-    | 'Data:ExportRecent'
-    | 'Data:ImportRecent'
-    | 'Data:DeleteOrphans';
+  | 'Session:Save'
+  | 'Session:Load'
+  | 'Session:Vacuum'
+  | 'File:Read'
+  | 'File:Write'
+  | 'File:Metadata'
+  | 'Markdown:Render'
+  | 'Settings:Load'
+  | 'Settings:Save'
+  | 'Settings:AppInfo'
+  | 'Editor:Init'
+  | 'Database:Init'
+  | 'Database:Migration'
+  | 'Transform:Text'
+  | 'Dictionary:Add'
+  | 'UI:DragDrop'
+  | 'FileWatcher:Watch'
+  | 'Update:Check'
+  | 'Update:Install'
+  | 'FileWatcher:Unwatch'
+  | 'Export:PDF'
+  | 'Export:HTML'
+  | 'Spellcheck:Init'
+  | 'Bookmark:Add'
+  | 'Bookmark:Remove'
+  | 'Data:ExportBookmarks'
+  | 'Data:ImportBookmarks'
+  | 'Data:ExportRecent'
+  | 'Data:ImportRecent'
+  | 'Data:DeleteOrphans';
 
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 
 export interface ErrorOptions {
-    showToast?: boolean;
-    userMessage?: string;
-    toastDuration?: number;
-    additionalInfo?: Record<string, unknown>;
-    severity?: ErrorSeverity;
-    logToDisk?: boolean;
+  showToast?: boolean;
+  userMessage?: string;
+  toastDuration?: number;
+  additionalInfo?: Record<string, unknown>;
+  severity?: ErrorSeverity;
+  logToDisk?: boolean;
 }
 
 // Helper to truncate long strings in error logs
 function safeStringify(obj: unknown): string {
-    try {
-        return JSON.stringify(obj, (_, value: unknown) => {
-            if (typeof value === 'string' && value.length > 500) {
-                return `${value.substring(0, 500)}... [truncated]`;
-            }
-            if (Array.isArray(value) && value.length > 20) {
-                return [...value.slice(0, 20), `... (${value.length - 20} more items)`];
-            }
-            return value;
-        });
-    } catch {
-        return '[Circular or Non-Serializable Data]';
-    }
+  try {
+    return JSON.stringify(obj, (_, value: unknown) => {
+      if (typeof value === 'string' && value.length > 500) {
+        return `${value.substring(0, 500)}... [truncated]`;
+      }
+      if (Array.isArray(value) && value.length > 20) {
+        return [...value.slice(0, 20), `... (${value.length - 20} more items)`];
+      }
+      return value;
+    });
+  } catch {
+    return '[Circular or Non-Serializable Data]';
+  }
 }
 
 export class AppError extends Error {
-    public readonly context: ErrorContext;
-    public readonly timestamp: Date;
-    public readonly severity: ErrorSeverity;
-    public readonly additionalInfo?: Record<string, unknown>;
-    public readonly originalError?: Error;
+  public readonly context: ErrorContext;
+  public readonly timestamp: Date;
+  public readonly severity: ErrorSeverity;
+  public readonly additionalInfo?: Record<string, unknown>;
+  public readonly originalError?: Error;
 
-    constructor(
-        context: ErrorContext,
-        message: string,
-        options: Omit<ErrorOptions, 'userMessage'> & { originalError?: Error } = {},
+  constructor(
+    context: ErrorContext,
+    message: string,
+    options: Omit<ErrorOptions, 'userMessage'> & { originalError?: Error } = {},
+  ) {
+    super(message);
+    this.name = 'AppError';
+    this.context = context;
+    this.timestamp = new Date();
+    this.severity = options.severity || 'error';
+    this.additionalInfo = options.additionalInfo;
+    this.originalError = options.originalError;
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, AppError);
+    }
+  }
+
+  static from(context: ErrorContext, error: unknown, options: Omit<ErrorOptions, 'userMessage'> = {}): AppError {
+    if (error instanceof AppError) {
+      return error;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    const originalError = error instanceof Error ? error : undefined;
+
+    return new AppError(context, message, { ...options, originalError });
+  }
+
+  static handle(context: ErrorContext, error: unknown, options: ErrorOptions = {}): AppError {
+    const appError = AppError.from(context, error, options);
+    appError.process(options);
+    return appError;
+  }
+
+  private process(options: ErrorOptions = {}): void {
+    const { showToast: shouldShowToast = true, userMessage, toastDuration, logToDisk = true } = options;
+
+    this.logError(logToDisk).catch((_err) => {});
+
+    if (shouldShowToast) {
+      const message = userMessage || this.getUserFriendlyMessage();
+      const duration = toastDuration || this.getDefaultToastDuration();
+
+      switch (this.severity) {
+        case 'critical':
+        case 'error':
+          showToast('error', message, duration);
+          break;
+        case 'warning':
+          showToast('warning', message, duration);
+          break;
+        case 'info':
+          showToast('info', message, duration);
+          break;
+      }
+    }
+  }
+
+  private async logError(toDisk: boolean): Promise<void> {
+    if (this.additionalInfo) {
+    }
+
+    if (this.stack) {
+    }
+    if (this.originalError?.stack) {
+    }
+
+    if (toDisk) {
+      try {
+        const diskMessage = this.formatForDiskLog();
+        await logError(diskMessage);
+      } catch (_e) {}
+    }
+  }
+
+  private formatForDiskLog(): string {
+    const parts = [`[${this.context}] ${this.message}`];
+
+    if (this.additionalInfo) {
+      parts.push(`Additional Info: ${safeStringify(this.additionalInfo)}`);
+    }
+
+    if (this.originalError) {
+      parts.push(`Original Error: ${this.originalError.message}`);
+    }
+
+    return parts.join(' | ');
+  }
+
+  private getUserFriendlyMessage(): string {
+    if (
+      this.message.includes('No such file') ||
+      this.message.includes('does not exist') ||
+      this.message.includes('not found')
     ) {
-        super(message);
-        this.name = 'AppError';
-        this.context = context;
-        this.timestamp = new Date();
-        this.severity = options.severity || 'error';
-        this.additionalInfo = options.additionalInfo;
-        this.originalError = options.originalError;
-
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, AppError);
-        }
+      return this.getFileNotFoundMessage();
     }
 
-    static from(
-        context: ErrorContext,
-        error: unknown,
-        options: Omit<ErrorOptions, 'userMessage'> = {},
-    ): AppError {
-        if (error instanceof AppError) {
-            return error;
-        }
-
-        const message = error instanceof Error ? error.message : String(error);
-        const originalError = error instanceof Error ? error : undefined;
-
-        return new AppError(context, message, { ...options, originalError });
+    if (this.message.includes('Permission denied') || this.message.includes('Access denied')) {
+      return this.getPermissionDeniedMessage();
     }
 
-    static handle(context: ErrorContext, error: unknown, options: ErrorOptions = {}): AppError {
-        const appError = AppError.from(context, error, options);
-        appError.process(options);
-        return appError;
+    switch (this.context) {
+      case 'File:Read':
+        return 'Failed to read file';
+      case 'File:Write':
+        return 'Failed to save file';
+      case 'File:Metadata':
+        return 'Failed to read file metadata';
+      case 'Session:Save':
+        return 'Failed to save session';
+      case 'Session:Load':
+        return 'Failed to load previous session';
+      case 'Markdown:Render':
+        return 'Failed to render markdown';
+      case 'Settings:Save':
+        return 'Failed to save settings';
+      case 'Settings:Load':
+        return 'Failed to load settings';
+      case 'Transform:Text':
+        return 'Failed to transform text';
+      case 'Dictionary:Add':
+        return 'Failed to add word to dictionary';
+      case 'Export:PDF':
+      case 'Export:HTML':
+        return 'Export failed';
+      case 'Bookmark:Add':
+        return 'Failed to add bookmark';
+      case 'Bookmark:Remove':
+        return 'Failed to remove bookmark';
+      default:
+        return this.message || 'An error occurred';
     }
+  }
 
-    private process(options: ErrorOptions = {}): void {
-        const {
-            showToast: shouldShowToast = true,
-            userMessage,
-            toastDuration,
-            logToDisk = true,
-        } = options;
+  private getFileNotFoundMessage(): string {
+    const fileName = this.extractFileName();
+    return fileName ? `File not found: ${fileName}` : 'File not found';
+  }
 
-        this.logError(logToDisk).catch((_err) => {});
+  private getPermissionDeniedMessage(): string {
+    const fileName = this.extractFileName();
+    return fileName ? `Cannot access file: ${fileName}` : 'Permission denied';
+  }
 
-        if (shouldShowToast) {
-            const message = userMessage || this.getUserFriendlyMessage();
-            const duration = toastDuration || this.getDefaultToastDuration();
-
-            switch (this.severity) {
-                case 'critical':
-                case 'error':
-                    showToast('error', message, duration);
-                    break;
-                case 'warning':
-                    showToast('warning', message, duration);
-                    break;
-                case 'info':
-                    showToast('info', message, duration);
-                    break;
-            }
-        }
+  private extractFileName(): string | null {
+    if (this.additionalInfo?.path) {
+      const path = String(this.additionalInfo.path);
+      return path.split(/[\\/]/).pop() || null;
     }
+    return null;
+  }
 
-    private async logError(toDisk: boolean): Promise<void> {
-        if (this.additionalInfo) {
-        }
-
-        if (this.stack) {
-        }
-        if (this.originalError?.stack) {
-        }
-
-        if (toDisk) {
-            try {
-                const diskMessage = this.formatForDiskLog();
-                await logError(diskMessage);
-            } catch (_e) {}
-        }
+  private getDefaultToastDuration(): number {
+    switch (this.severity) {
+      case 'critical':
+        return 6000;
+      case 'error':
+        return 4000;
+      case 'warning':
+        return 3000;
+      case 'info':
+        return 2000;
     }
+  }
 
-    private formatForDiskLog(): string {
-        const parts = [`[${this.context}] ${this.message}`];
-
-        if (this.additionalInfo) {
-            parts.push(`Additional Info: ${safeStringify(this.additionalInfo)}`);
-        }
-
-        if (this.originalError) {
-            parts.push(`Original Error: ${this.originalError.message}`);
-        }
-
-        return parts.join(' | ');
+  static toUserMessage(error: unknown): string {
+    if (error instanceof AppError) {
+      return error.getUserFriendlyMessage();
     }
-
-    private getUserFriendlyMessage(): string {
-        if (
-            this.message.includes('No such file') ||
-            this.message.includes('does not exist') ||
-            this.message.includes('not found')
-        ) {
-            return this.getFileNotFoundMessage();
-        }
-
-        if (this.message.includes('Permission denied') || this.message.includes('Access denied')) {
-            return this.getPermissionDeniedMessage();
-        }
-
-        switch (this.context) {
-            case 'File:Read':
-                return 'Failed to read file';
-            case 'File:Write':
-                return 'Failed to save file';
-            case 'File:Metadata':
-                return 'Failed to read file metadata';
-            case 'Session:Save':
-                return 'Failed to save session';
-            case 'Session:Load':
-                return 'Failed to load previous session';
-            case 'Markdown:Render':
-                return 'Failed to render markdown';
-            case 'Settings:Save':
-                return 'Failed to save settings';
-            case 'Settings:Load':
-                return 'Failed to load settings';
-            case 'Transform:Text':
-                return 'Failed to transform text';
-            case 'Dictionary:Add':
-                return 'Failed to add word to dictionary';
-            case 'Export:PDF':
-            case 'Export:HTML':
-                return 'Export failed';
-            case 'Bookmark:Add':
-                return 'Failed to add bookmark';
-            case 'Bookmark:Remove':
-                return 'Failed to remove bookmark';
-            default:
-                return this.message || 'An error occurred';
-        }
+    if (error instanceof Error) {
+      return error.message;
     }
-
-    private getFileNotFoundMessage(): string {
-        const fileName = this.extractFileName();
-        return fileName ? `File not found: ${fileName}` : 'File not found';
-    }
-
-    private getPermissionDeniedMessage(): string {
-        const fileName = this.extractFileName();
-        return fileName ? `Cannot access file: ${fileName}` : 'Permission denied';
-    }
-
-    private extractFileName(): string | null {
-        if (this.additionalInfo?.path) {
-            const path = String(this.additionalInfo.path);
-            return path.split(/[\\/]/).pop() || null;
-        }
-        return null;
-    }
-
-    private getDefaultToastDuration(): number {
-        switch (this.severity) {
-            case 'critical':
-                return 6000;
-            case 'error':
-                return 4000;
-            case 'warning':
-                return 3000;
-            case 'info':
-                return 2000;
-        }
-    }
-
-    static toUserMessage(error: unknown): string {
-        if (error instanceof AppError) {
-            return error.getUserFriendlyMessage();
-        }
-        if (error instanceof Error) {
-            return error.message;
-        }
-        return String(error);
-    }
+    return String(error);
+  }
 }

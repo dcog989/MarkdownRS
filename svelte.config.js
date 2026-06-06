@@ -6,38 +6,32 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-    preprocess: vitePreprocess(),
-    onwarn: (warning, handler) => {
-        if (
-            warning.code === 'state_referenced_locally' &&
-            warning.filename?.includes('.svelte-kit')
-        ) {
-            return;
-        }
-        // False positive: Svelte's static analysis can't trace imports used only inside $effect
-        if (
-            warning.code === 'unused_import' &&
-            warning.filename?.includes('FindReplacePanel.svelte')
-        ) {
-            return;
-        }
-        handler(warning);
+  preprocess: vitePreprocess(),
+  onwarn: (warning, handler) => {
+    if (warning.code === 'state_referenced_locally' && warning.filename?.includes('.svelte-kit')) {
+      return;
+    }
+    // False positive: Svelte's static analysis can't trace imports used only inside $effect
+    if (warning.code === 'unused_import' && warning.filename?.includes('FindReplacePanel.svelte')) {
+      return;
+    }
+    handler(warning);
+  },
+  kit: {
+    version: {
+      name: pkg.version,
     },
-    kit: {
-        version: {
-            name: pkg.version,
-        },
-        adapter: adapter({
-            pages: 'build',
-            assets: 'build',
-            fallback: '404.html',
-            precompress: false,
-            strict: true,
-        }),
-        alias: {
-            $lib: './src/lib',
-        },
+    adapter: adapter({
+      pages: 'build',
+      assets: 'build',
+      fallback: '404.html',
+      precompress: false,
+      strict: true,
+    }),
+    alias: {
+      $lib: './src/lib',
     },
+  },
 };
 
 export default config;

@@ -23,157 +23,141 @@ import { callBackend } from './backend';
 const MAX_SUGGESTION_CACHE_SIZE = 200;
 
 export class SpellcheckManager {
-    dictionaryLoaded = $state(false);
-    misspelledCache = $state(new SvelteSet<string>());
-    customDictionary = $state(new SvelteSet<string>());
-    suggestionCache = $state(new SvelteMap<string, string[]>());
+  dictionaryLoaded = $state(false);
+  misspelledCache = $state(new SvelteSet<string>());
+  customDictionary = $state(new SvelteSet<string>());
+  suggestionCache = $state(new SvelteMap<string, string[]>());
 
-    private initPromise: Promise<void> | null = null;
-    private pendingFetches = new Set<string>();
+  private initPromise: Promise<void> | null = null;
+  private pendingFetches = new Set<string>();
 
-    async loadCustomDictionary(): Promise<void> {
-        const words = await callBackend('load_user_dictionary', {}, 'Dictionary:Add', undefined, {
-            ignore: true,
-        });
-        this.customDictionary = new SvelteSet((words || []).map((w) => w.toLowerCase()));
-    }
+  async loadCustomDictionary(): Promise<void> {
+    const words = await callBackend('load_user_dictionary', {}, 'Dictionary:Add', undefined, {
+      ignore: true,
+    });
+    this.customDictionary = new SvelteSet((words || []).map((w) => w.toLowerCase()));
+  }
 
-    async init(force = false): Promise<void> {
-        if (this.initPromise && !force) return this.initPromise;
-        if (this.dictionaryLoaded && !force) return;
+  async init(force = false): Promise<void> {
+    if (this.initPromise && !force) return this.initPromise;
+    if (this.dictionaryLoaded && !force) return;
 
-        this.initPromise = (async () => {
-            await this.loadCustomDictionary();
+    this.initPromise = (async () => {
+      await this.loadCustomDictionary();
 
-            const dictionaries = appState.languageDictionaries || ['en-US'];
-            const technicalDictionaries = appState.technicalDictionaries;
-            const scienceDictionaries = appState.scienceDictionaries;
+      const dictionaries = appState.languageDictionaries || ['en-US'];
+      const technicalDictionaries = appState.technicalDictionaries;
+      const scienceDictionaries = appState.scienceDictionaries;
 
-            try {
-                await callBackend(
-                    'init_spellchecker',
-                    { dictionaries, technicalDictionaries, scienceDictionaries },
-                    'Spellcheck:Init',
-                    undefined,
-                    { ignore: true },
-                );
-            } catch (_error) {
-                this.initPromise = null;
-                this.dictionaryLoaded = false;
-                return;
-            }
-
-            const maxAttempts = 50; // 5 seconds max
-            const pollInterval = 100; // 100ms
-
-            for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                const status = await callBackend(
-                    'get_spellcheck_status',
-                    {},
-                    'Spellcheck:Init',
-                    undefined,
-                    { ignore: true },
-                );
-
-                if (status === 'ready') {
-                    this.dictionaryLoaded = true;
-                    return;
-                } else if (status === 'failed') {
-                    this.initPromise = null;
-                    this.dictionaryLoaded = false;
-                    return;
-                }
-
-                // Still loading, wait and retry
-                await new Promise((resolve) => setTimeout(resolve, pollInterval));
-            }
-            this.initPromise = null;
-            this.dictionaryLoaded = false;
-        })();
-
-        return this.initPromise;
-    }
-
-    async refreshCustomDictionary(): Promise<void> {
-        await this.loadCustomDictionary();
-    }
-
-    isWordValid(word: string): boolean {
-        if (!this.dictionaryLoaded) return true;
-        const w = word.toLowerCase();
-        if (this.customDictionary.has(w)) return true;
-        return !this.misspelledCache.has(w);
-    }
-
-    private evictSuggestionCache() {
-        if (this.suggestionCache.size > MAX_SUGGESTION_CACHE_SIZE) {
-            this.suggestionCache.clear();
-        }
-    }
-
-    async prefetchSuggestions(word: string): Promise<void> {
-        const w = word.trim();
-        if (!w || !this.dictionaryLoaded) return;
-
-        // Only fetch if linter has marked it as misspelled
-        if (!this.misspelledCache.has(w.toLowerCase())) return;
-
-        if (this.suggestionCache.has(w) || this.pendingFetches.has(w)) return;
-
-        this.pendingFetches.add(w);
-
-        try {
-            const suggestions = await callBackend(
-                'get_spelling_suggestions',
-                { word: w },
-                'Dictionary:Add',
-                undefined,
-                { ignore: true },
-            );
-            if (suggestions) {
-                this.suggestionCache.set(w, suggestions);
-                this.evictSuggestionCache();
-            }
-        } finally {
-            this.pendingFetches.delete(w);
-        }
-    }
-
-    getCachedSuggestions(word: string): string[] | undefined {
-        return this.suggestionCache.get(word);
-    }
-
-    async getSuggestions(word: string): Promise<string[]> {
-        if (!this.dictionaryLoaded || !word) return [];
-
-        if (this.suggestionCache.has(word)) {
-            return this.suggestionCache.get(word) ?? [];
-        }
-
-        const suggestions = await callBackend(
-            'get_spelling_suggestions',
-            { word },
-            'Dictionary:Add',
-            undefined,
-            {
-                report: true,
-            },
+      try {
+        await callBackend(
+          'init_spellchecker',
+          { dictionaries, technicalDictionaries, scienceDictionaries },
+          'Spellcheck:Init',
+          undefined,
+          { ignore: true },
         );
-        if (suggestions) {
-            this.suggestionCache.set(word, suggestions);
-            this.evictSuggestionCache();
-            return suggestions;
+      } catch (_error) {
+        this.initPromise = null;
+        this.dictionaryLoaded = false;
+        return;
+      }
+
+      const maxAttempts = 50; // 5 seconds max
+      const pollInterval = 100; // 100ms
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const status = await callBackend('get_spellcheck_status', {}, 'Spellcheck:Init', undefined, { ignore: true });
+
+        if (status === 'ready') {
+          this.dictionaryLoaded = true;
+          return;
+        } else if (status === 'failed') {
+          this.initPromise = null;
+          this.dictionaryLoaded = false;
+          return;
         }
-        return [];
+
+        // Still loading, wait and retry
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      }
+      this.initPromise = null;
+      this.dictionaryLoaded = false;
+    })();
+
+    return this.initPromise;
+  }
+
+  async refreshCustomDictionary(): Promise<void> {
+    await this.loadCustomDictionary();
+  }
+
+  isWordValid(word: string): boolean {
+    if (!this.dictionaryLoaded) return true;
+    const w = word.toLowerCase();
+    if (this.customDictionary.has(w)) return true;
+    return !this.misspelledCache.has(w);
+  }
+
+  private evictSuggestionCache() {
+    if (this.suggestionCache.size > MAX_SUGGESTION_CACHE_SIZE) {
+      this.suggestionCache.clear();
+    }
+  }
+
+  async prefetchSuggestions(word: string): Promise<void> {
+    const w = word.trim();
+    if (!w || !this.dictionaryLoaded) return;
+
+    // Only fetch if linter has marked it as misspelled
+    if (!this.misspelledCache.has(w.toLowerCase())) return;
+
+    if (this.suggestionCache.has(w) || this.pendingFetches.has(w)) return;
+
+    this.pendingFetches.add(w);
+
+    try {
+      const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Dictionary:Add', undefined, {
+        ignore: true,
+      });
+      if (suggestions) {
+        this.suggestionCache.set(w, suggestions);
+        this.evictSuggestionCache();
+      }
+    } finally {
+      this.pendingFetches.delete(w);
+    }
+  }
+
+  getCachedSuggestions(word: string): string[] | undefined {
+    return this.suggestionCache.get(word);
+  }
+
+  async getSuggestions(word: string): Promise<string[]> {
+    if (!this.dictionaryLoaded || !word) return [];
+
+    if (this.suggestionCache.has(word)) {
+      return this.suggestionCache.get(word) ?? [];
     }
 
-    clear(): void {
-        this.customDictionary.clear();
-        this.misspelledCache.clear();
-        this.suggestionCache.clear();
-        this.dictionaryLoaded = false;
-        this.initPromise = null;
+    const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add', undefined, {
+      report: true,
+    });
+    if (suggestions) {
+      this.suggestionCache.set(word, suggestions);
+      this.evictSuggestionCache();
+      return suggestions;
     }
+    return [];
+  }
+
+  clear(): void {
+    this.customDictionary.clear();
+    this.misspelledCache.clear();
+    this.suggestionCache.clear();
+    this.dictionaryLoaded = false;
+    this.initPromise = null;
+  }
 }
 
 export const spellcheckState = new SpellcheckManager();

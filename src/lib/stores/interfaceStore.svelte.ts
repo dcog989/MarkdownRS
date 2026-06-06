@@ -4,65 +4,65 @@
  */
 
 export const interfaceStore = $state({
-    // Global Modals
-    showSettings: false,
-    showShortcuts: false,
-    showAbout: false,
-    showBookmarks: false,
-    showRecentFiles: false,
-    showCommandPalette: false,
-    showTransform: false,
-    showData: false,
+  // Global Modals
+  showSettings: false,
+  showShortcuts: false,
+  showAbout: false,
+  showBookmarks: false,
+  showRecentFiles: false,
+  showCommandPalette: false,
+  showTransform: false,
+  showData: false,
 
-    // Editor Panels
-    showFind: false,
-    isReplaceMode: false,
+  // Editor Panels
+  showFind: false,
+  isReplaceMode: false,
 
-    // Signals
-    scrollToTabSignal: 0,
+  // Signals
+  scrollToTabSignal: 0,
 });
 
 // Actions
 export function triggerScrollToTab() {
-    interfaceStore.scrollToTabSignal++;
+  interfaceStore.scrollToTabSignal++;
 }
 
 export function openFind() {
-    interfaceStore.isReplaceMode = false;
-    interfaceStore.showFind = true;
+  interfaceStore.isReplaceMode = false;
+  interfaceStore.showFind = true;
 }
 
 export function openReplace() {
-    interfaceStore.isReplaceMode = true;
-    interfaceStore.showFind = true;
+  interfaceStore.isReplaceMode = true;
+  interfaceStore.showFind = true;
 }
 
 export function closeFind() {
-    interfaceStore.showFind = false;
+  interfaceStore.showFind = false;
 }
 
 export function toggleSettings() {
-    interfaceStore.showSettings = !interfaceStore.showSettings;
+  interfaceStore.showSettings = !interfaceStore.showSettings;
 }
 export function toggleShortcuts() {
-    interfaceStore.showShortcuts = !interfaceStore.showShortcuts;
+  interfaceStore.showShortcuts = !interfaceStore.showShortcuts;
 }
 export function toggleBookmarks() {
-    interfaceStore.showBookmarks = !interfaceStore.showBookmarks;
+  interfaceStore.showBookmarks = !interfaceStore.showBookmarks;
 }
 export function toggleRecentFiles() {
-    interfaceStore.showRecentFiles = !interfaceStore.showRecentFiles;
+  interfaceStore.showRecentFiles = !interfaceStore.showRecentFiles;
 }
 export function toggleCommandPalette() {
-    interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette;
+  interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette;
 }
 export function toggleTransform() {
-    interfaceStore.showTransform = !interfaceStore.showTransform;
+  interfaceStore.showTransform = !interfaceStore.showTransform;
 }
 export function toggleAbout() {
-    interfaceStore.showAbout = !interfaceStore.showAbout;
+  interfaceStore.showAbout = !interfaceStore.showAbout;
 }
 
 export function toggleData() {
-    interfaceStore.showData = !interfaceStore.showData;
+  interfaceStore.showData = !interfaceStore.showData;
 }

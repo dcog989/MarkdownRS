@@ -5,103 +5,103 @@ import { debounce } from './timing';
 let lastSavedState: string = '';
 
 function getSettingsObject() {
-    return {
-        splitPercentage: appState.splitPercentage,
-        splitOrientation: appState.splitOrientation,
-        splitView: appState.splitView,
-        activeTheme: appState.activeTheme,
-        theme: appState.theme,
-        tabCycling: appState.tabCycling,
-        tabWidthMin: appState.tabWidthMin,
-        tabWidthMax: appState.tabWidthMax,
-        editorFontFamily: appState.editorFontFamily,
-        editorFontSize: appState.editorFontSize,
-        editorWordWrap: appState.editorWordWrap,
-        showWhitespace: appState.showWhitespace,
-        enableAutocomplete: appState.enableAutocomplete,
-        autocompleteDelay: appState.autocompleteDelay,
-        recentChangesTimespan: appState.recentChangesTimespan,
-        recentChangesCount: appState.recentChangesCount,
-        undoDepth: appState.undoDepth,
-        previewFontFamily: appState.previewFontFamily,
-        previewFontSize: appState.previewFontSize,
-        markdownFlavor: appState.markdownFlavor,
-        logLevel: appState.logLevel,
-        statusBarTransparency: appState.statusBarTransparency,
-        newTabPosition: appState.newTabPosition,
-        formatOnSave: appState.formatOnSave,
-        formatOnPaste: appState.formatOnPaste,
-        defaultIndent: appState.defaultIndent,
-        formatterBulletChar: appState.formatterBulletChar,
-        formatterEmphasisChar: appState.formatterEmphasisChar,
-        formatterCodeFence: appState.formatterCodeFence,
-        formatterTableAlignment: appState.formatterTableAlignment,
-        startupBehavior: appState.startupBehavior,
-        lineEndingPreference: appState.lineEndingPreference,
-        tooltipDelay: appState.tooltipDelay,
-        findPanelTransparent: appState.findPanelTransparent,
-        findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
-        languageDictionaries: appState.languageDictionaries,
-        technicalDictionaries: appState.technicalDictionaries,
-        scienceDictionaries: appState.scienceDictionaries,
-        tabNameFromContent: appState.tabNameFromContent,
-        wrapGuideColumn: appState.wrapGuideColumn,
-        doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
-        collapsePinnedTabs: appState.collapsePinnedTabs,
-        customShortcuts: appState.customShortcuts,
-        confirmationSuppressed: appState.confirmationSuppressed,
-        maxFileSizeMB: appState.maxFileSizeMB,
-        autoSaveEnabled: appState.autoSaveEnabled,
-        autoSaveInterval: appState.autoSaveInterval,
-        commandPaletteSort: appState.commandPaletteSort,
-        commandUsage: appState.commandUsage,
-        commandUsageCounts: appState.commandUsageCounts,
-    };
+  return {
+    splitPercentage: appState.splitPercentage,
+    splitOrientation: appState.splitOrientation,
+    splitView: appState.splitView,
+    activeTheme: appState.activeTheme,
+    theme: appState.theme,
+    tabCycling: appState.tabCycling,
+    tabWidthMin: appState.tabWidthMin,
+    tabWidthMax: appState.tabWidthMax,
+    editorFontFamily: appState.editorFontFamily,
+    editorFontSize: appState.editorFontSize,
+    editorWordWrap: appState.editorWordWrap,
+    showWhitespace: appState.showWhitespace,
+    enableAutocomplete: appState.enableAutocomplete,
+    autocompleteDelay: appState.autocompleteDelay,
+    recentChangesTimespan: appState.recentChangesTimespan,
+    recentChangesCount: appState.recentChangesCount,
+    undoDepth: appState.undoDepth,
+    previewFontFamily: appState.previewFontFamily,
+    previewFontSize: appState.previewFontSize,
+    markdownFlavor: appState.markdownFlavor,
+    logLevel: appState.logLevel,
+    statusBarTransparency: appState.statusBarTransparency,
+    newTabPosition: appState.newTabPosition,
+    formatOnSave: appState.formatOnSave,
+    formatOnPaste: appState.formatOnPaste,
+    defaultIndent: appState.defaultIndent,
+    formatterBulletChar: appState.formatterBulletChar,
+    formatterEmphasisChar: appState.formatterEmphasisChar,
+    formatterCodeFence: appState.formatterCodeFence,
+    formatterTableAlignment: appState.formatterTableAlignment,
+    startupBehavior: appState.startupBehavior,
+    lineEndingPreference: appState.lineEndingPreference,
+    tooltipDelay: appState.tooltipDelay,
+    findPanelTransparent: appState.findPanelTransparent,
+    findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
+    languageDictionaries: appState.languageDictionaries,
+    technicalDictionaries: appState.technicalDictionaries,
+    scienceDictionaries: appState.scienceDictionaries,
+    tabNameFromContent: appState.tabNameFromContent,
+    wrapGuideColumn: appState.wrapGuideColumn,
+    doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
+    collapsePinnedTabs: appState.collapsePinnedTabs,
+    customShortcuts: appState.customShortcuts,
+    confirmationSuppressed: appState.confirmationSuppressed,
+    maxFileSizeMB: appState.maxFileSizeMB,
+    autoSaveEnabled: appState.autoSaveEnabled,
+    autoSaveInterval: appState.autoSaveInterval,
+    commandPaletteSort: appState.commandPaletteSort,
+    commandUsage: appState.commandUsage,
+    commandUsageCounts: appState.commandUsageCounts,
+  };
 }
 
 export async function initSettings() {
-    const [saved, appInfo] = await Promise.all([
-        callBackendSafe('load_settings', {}, 'Settings:Load', {
-            showToast: false,
-            userMessage: 'Failed to load settings',
-        }),
-        callBackendSafe('get_app_info', {}, 'Settings:AppInfo', {
-            showToast: false,
-            userMessage: 'Failed to get app info',
-        }),
-    ]);
+  const [saved, appInfo] = await Promise.all([
+    callBackendSafe('load_settings', {}, 'Settings:Load', {
+      showToast: false,
+      userMessage: 'Failed to load settings',
+    }),
+    callBackendSafe('get_app_info', {}, 'Settings:AppInfo', {
+      showToast: false,
+      userMessage: 'Failed to get app info',
+    }),
+  ]);
 
-    if (appInfo?.os_platform) {
-        appState.osPlatform = appInfo.os_platform as 'windows' | 'linux' | 'macos';
-    }
+  if (appInfo?.os_platform) {
+    appState.osPlatform = appInfo.os_platform as 'windows' | 'linux' | 'macos';
+  }
 
-    if (saved && Object.keys(saved).length > 0) {
-        Object.keys(saved).forEach((key) => {
-            if (Object.hasOwn(appState, key)) {
-                (appState as Record<string, unknown>)[key] = saved[key];
-            }
-        });
-    }
+  if (saved && Object.keys(saved).length > 0) {
+    Object.keys(saved).forEach((key) => {
+      if (Object.hasOwn(appState, key)) {
+        (appState as Record<string, unknown>)[key] = saved[key];
+      }
+    });
+  }
 
-    // Keep theme in sync with activeTheme from saved settings
-    appState.theme = appState.activeTheme.includes('light') ? 'light' : 'dark';
+  // Keep theme in sync with activeTheme from saved settings
+  appState.theme = appState.activeTheme.includes('light') ? 'light' : 'dark';
 
-    lastSavedState = JSON.stringify(getSettingsObject());
+  lastSavedState = JSON.stringify(getSettingsObject());
 }
 
 async function saveSettingsImmediate() {
-    const settingsToSave = getSettingsObject();
-    const serialized = JSON.stringify(settingsToSave);
+  const settingsToSave = getSettingsObject();
+  const serialized = JSON.stringify(settingsToSave);
 
-    if (serialized === lastSavedState) {
-        return;
-    }
+  if (serialized === lastSavedState) {
+    return;
+  }
 
-    await callBackendSafe('save_settings', { settings: settingsToSave }, 'Settings:Save', {
-        showToast: false,
-        userMessage: 'Failed to save settings',
-    });
-    lastSavedState = serialized;
+  await callBackendSafe('save_settings', { settings: settingsToSave }, 'Settings:Save', {
+    showToast: false,
+    userMessage: 'Failed to save settings',
+  });
+  lastSavedState = serialized;
 }
 
 export const saveSettings = debounce(saveSettingsImmediate, 500);

@@ -21,10 +21,10 @@ let currentVersion;
 let packageJson;
 
 try {
-    packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    currentVersion = packageJson.version;
+  packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  currentVersion = packageJson.version;
 } catch (_error) {
-    process.exit(1);
+  process.exit(1);
 }
 
 // 2. Determine new version
@@ -32,81 +32,79 @@ try {
 let newVersion = versionArg || '';
 
 if (!newVersion) {
-    const parts = currentVersion.split('.').map((n) => parseInt(n, 10));
+  const parts = currentVersion.split('.').map((n) => parseInt(n, 10));
 
-    if (parts.length !== 3 || parts.some(Number.isNaN)) {
-        process.exit(1);
-    }
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
+    process.exit(1);
+  }
 
-    parts[2] += 1;
-    newVersion = parts.join('.');
+  parts[2] += 1;
+  newVersion = parts.join('.');
 } else {
 }
 
 if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
-    process.exit(1);
+  process.exit(1);
 }
 
 // 3. Update package.json
 try {
-    packageJson.version = newVersion;
-    fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  packageJson.version = newVersion;
+  fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 } catch (_error) {
-    process.exit(1);
+  process.exit(1);
 }
 
 // 4. Update tauri.conf.json
 try {
-    const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
-    content.version = newVersion;
-    fs.writeFileSync(tauriConfPath, `${JSON.stringify(content, null, 2)}\n`);
+  const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
+  content.version = newVersion;
+  fs.writeFileSync(tauriConfPath, `${JSON.stringify(content, null, 2)}\n`);
 } catch (_error) {
-    process.exit(1);
+  process.exit(1);
 }
 
 // 5. Update Cargo.toml
 try {
-    let content = fs.readFileSync(cargoTomlPath, 'utf8');
-    const regex = /(\[package\][\s\S]*?^version = ")([^"]+)(")/m;
+  let content = fs.readFileSync(cargoTomlPath, 'utf8');
+  const regex = /(\[package\][\s\S]*?^version = ")([^"]+)(")/m;
 
-    if (regex.test(content)) {
-        content = content.replace(regex, `$1${newVersion}$3`);
-        fs.writeFileSync(cargoTomlPath, content);
-    } else {
-        process.exit(1);
-    }
-} catch (_error) {
+  if (regex.test(content)) {
+    content = content.replace(regex, `$1${newVersion}$3`);
+    fs.writeFileSync(cargoTomlPath, content);
+  } else {
     process.exit(1);
+  }
+} catch (_error) {
+  process.exit(1);
 }
 
 // 5. Update PKGBUILD
 try {
-    let content = fs.readFileSync(pkgbuildPath, 'utf8');
-    const regex = /^(pkgver=).+$/m;
+  let content = fs.readFileSync(pkgbuildPath, 'utf8');
+  const regex = /^(pkgver=).+$/m;
 
-    if (regex.test(content)) {
-        content = content.replace(regex, `$1${newVersion}`);
-        fs.writeFileSync(pkgbuildPath, content);
-    } else {
-        process.exit(1);
-    }
-} catch (_error) {
+  if (regex.test(content)) {
+    content = content.replace(regex, `$1${newVersion}`);
+    fs.writeFileSync(pkgbuildPath, content);
+  } else {
     process.exit(1);
+  }
+} catch (_error) {
+  process.exit(1);
 }
 
 // 6. Git Integration
 if (shouldGit) {
-    try {
-        const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath]
-            .map((p) => `"${p}"`)
-            .join(' ');
-        execSync(`git add ${files}`, { stdio: 'inherit' });
+  try {
+    const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath].map((p) => `"${p}"`).join(' ');
+    execSync(`git add ${files}`, { stdio: 'inherit' });
 
-        const commitMsg = `chore: release v${newVersion}`;
-        execSync(`git commit -m "${commitMsg}"`, { stdio: 'inherit' });
+    const commitMsg = `chore: release v${newVersion}`;
+    execSync(`git commit -m "${commitMsg}"`, { stdio: 'inherit' });
 
-        const tagName = `v${newVersion}`;
-        execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
-    } catch (_error) {}
+    const tagName = `v${newVersion}`;
+    execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
+  } catch (_error) {}
 } else {
 }

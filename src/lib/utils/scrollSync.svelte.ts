@@ -29,529 +29,527 @@ import ScrollSyncWorker from '$lib/workers/scrollSync.worker?worker';
 import { queryHTMLElements } from './dom';
 
 interface LineMapEntry {
-    line: number;
-    y: number;
+  line: number;
+  y: number;
 }
 
 interface SyncMessage {
-    type: 'sync';
-    direction: 'editor-to-preview' | 'preview-to-editor';
-    scrollTop: number;
-    scrollHeight: number;
-    clientHeight: number;
-    totalLines: number;
+  type: 'sync';
+  direction: 'editor-to-preview' | 'preview-to-editor';
+  scrollTop: number;
+  scrollHeight: number;
+  clientHeight: number;
+  totalLines: number;
 }
 
 interface UpdateMapMessage {
-    type: 'update-map';
-    lineMap: LineMapEntry[];
+  type: 'update-map';
+  lineMap: LineMapEntry[];
 }
 
 interface SyncResultMessage {
-    type: 'sync-result';
-    targetScrollTop: number;
-    direction: 'editor-to-preview' | 'preview-to-editor';
+  type: 'sync-result';
+  targetScrollTop: number;
+  direction: 'editor-to-preview' | 'preview-to-editor';
 }
 
 export class ScrollSyncManager {
-    editor = $state<EditorView | null>(null);
-    preview = $state<HTMLElement | null>(null);
-    private lineMap: LineMapEntry[] = [];
+  editor = $state<EditorView | null>(null);
+  preview = $state<HTMLElement | null>(null);
+  private lineMap: LineMapEntry[] = [];
 
-    // Web Worker for interpolation calculations
-    private worker: Worker | null = null;
-    private pendingSyncs = new SvelteMap<
-        string,
-        { target: HTMLElement | Element; direction: 'editor-to-preview' | 'preview-to-editor' }
-    >();
+  // Web Worker for interpolation calculations
+  private worker: Worker | null = null;
+  private pendingSyncs = new SvelteMap<
+    string,
+    { target: HTMLElement | Element; direction: 'editor-to-preview' | 'preview-to-editor' }
+  >();
 
-    // State to prevent circular scroll loops
-    private activeSource = $state<'editor' | 'preview' | null>(null);
-    private clearSourceTimer: number | null = null;
-    private resizeObserver: ResizeObserver | null = null;
-    private updateMapTimer: number | null = null;
-    private mapDirty = $state(false);
+  // State to prevent circular scroll loops
+  private activeSource = $state<'editor' | 'preview' | null>(null);
+  private clearSourceTimer: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private updateMapTimer: number | null = null;
+  private mapDirty = $state(false);
 
-    // Smooth scroll animation state
-    private smoothScrollRAF: number | null = null;
-    private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
+  // Smooth scroll animation state
+  private smoothScrollRAF: number | null = null;
+  private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
 
-    private boundOnEditorScroll: () => void;
-    private boundOnPreviewScroll: () => void;
+  private boundOnEditorScroll: () => void;
+  private boundOnPreviewScroll: () => void;
 
-    constructor() {
-        this.boundOnEditorScroll = this.onEditorScroll.bind(this);
-        this.boundOnPreviewScroll = this.onPreviewScroll.bind(this);
-    }
+  constructor() {
+    this.boundOnEditorScroll = this.onEditorScroll.bind(this);
+    this.boundOnPreviewScroll = this.onPreviewScroll.bind(this);
+  }
 
-    private effectInitialized = false;
+  private effectInitialized = false;
 
-    private initEffects() {
-        if (this.effectInitialized) return;
-        this.effectInitialized = true;
+  private initEffects() {
+    if (this.effectInitialized) return;
+    this.effectInitialized = true;
 
-        // Worker init deferred to here — needs browser context, not module evaluation time
-        this.initWorker();
+    // Worker init deferred to here — needs browser context, not module evaluation time
+    this.initWorker();
 
-        // $effect.root must run inside a mounted component context, not at module load time.
-        // Calling it during module evaluation (before mount) throws in production builds.
-        $effect.root(() => {
-            $effect(() => {
-                if (this.preview) {
-                    this.resizeObserver?.disconnect();
-                    this.resizeObserver = new ResizeObserver(() => {
-                        // Only rebuild if content actually changed (dirty flag), not just resized
-                        if (this.mapDirty) {
-                            if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
-                            this.updateMapTimer = window.setTimeout(() => {
-                                this.updateMapTimer = null;
-                                this.mapDirty = false;
-                                requestAnimationFrame(() => this.updateMap());
-                            }, CONFIG.PERFORMANCE.SCROLL_SYNC_RESIZE_DEBOUNCE_MS);
-                        }
-                    });
-
-                    // Observe container only - children will trigger container resize if needed
-                    this.resizeObserver.observe(this.preview);
-
-                    return () => {
-                        this.resizeObserver?.disconnect();
-                        if (this.updateMapTimer) {
-                            clearTimeout(this.updateMapTimer);
-                            this.updateMapTimer = null;
-                        }
-                    };
-                }
-            });
-        });
-    }
-
-    private initWorker() {
-        try {
-            this.worker = new ScrollSyncWorker();
-            this.worker.onmessage = (event: MessageEvent<SyncResultMessage>) => {
-                this.handleWorkerResult(event.data);
-            };
-            this.worker.onerror = (_err) => {
-                this.fallbackToMainThread();
-            };
-        } catch (_err) {
-            this.fallbackToMainThread();
-        }
-    }
-
-    private fallbackToMainThread() {
-        // If worker fails, we'll do calculations on main thread
-        this.worker = null;
-    }
-
-    private handleWorkerResult(data: SyncResultMessage) {
-        if (data.type !== 'sync-result') return;
-
-        const pending = this.pendingSyncs.get(data.direction);
-        if (!pending) return;
-
-        this.pendingSyncs.delete(data.direction);
-
-        const { target, direction } = pending;
-        let targetY = data.targetScrollTop;
-
-        if (direction === 'editor-to-preview') {
-            if (targetY === -1) {
-                targetY = target.scrollHeight - target.clientHeight;
-            }
-        } else {
-            if (!this.editor) return;
-            if (targetY === -1) {
-                targetY = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
-            } else {
-                const docLines = this.editor.state.doc.lines;
-                const safeLine = Math.max(1, Math.min(targetY, docLines));
-                const lineInt = Math.floor(safeLine);
-                const lineFrac = safeLine - lineInt;
-                const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
-                targetY = lineInfo.top + lineInfo.height * lineFrac;
-            }
-        }
-
-        if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-            this.smoothScrollTo(target, targetY);
-        }
-    }
-
-    markMapDirty() {
-        this.mapDirty = true;
-    }
-
-    registerEditor(view: EditorView) {
-        if (this.editor === view) return;
-
-        if (this.editor) {
-            this.editor.scrollDOM.removeEventListener('scroll', this.boundOnEditorScroll);
-        }
-
-        this.editor = view;
-        view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll, { passive: true });
-    }
-
-    registerPreview(el: HTMLElement) {
-        // Defer $effect.root and Worker init until first call from a mounted component
-        this.initEffects();
-
-        if (this.preview === el) return;
-
+    // $effect.root must run inside a mounted component context, not at module load time.
+    // Calling it during module evaluation (before mount) throws in production builds.
+    $effect.root(() => {
+      $effect(() => {
         if (this.preview) {
-            this.preview.removeEventListener('scroll', this.boundOnPreviewScroll);
-        }
+          this.resizeObserver?.disconnect();
+          this.resizeObserver = new ResizeObserver(() => {
+            // Only rebuild if content actually changed (dirty flag), not just resized
+            if (this.mapDirty) {
+              if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
+              this.updateMapTimer = window.setTimeout(() => {
+                this.updateMapTimer = null;
+                this.mapDirty = false;
+                requestAnimationFrame(() => this.updateMap());
+              }, CONFIG.PERFORMANCE.SCROLL_SYNC_RESIZE_DEBOUNCE_MS);
+            }
+          });
 
-        this.preview = el;
-        el.addEventListener('scroll', this.boundOnPreviewScroll, { passive: true });
+          // Observe container only - children will trigger container resize if needed
+          this.resizeObserver.observe(this.preview);
+
+          return () => {
+            this.resizeObserver?.disconnect();
+            if (this.updateMapTimer) {
+              clearTimeout(this.updateMapTimer);
+              this.updateMapTimer = null;
+            }
+          };
+        }
+      });
+    });
+  }
+
+  private initWorker() {
+    try {
+      this.worker = new ScrollSyncWorker();
+      this.worker.onmessage = (event: MessageEvent<SyncResultMessage>) => {
+        this.handleWorkerResult(event.data);
+      };
+      this.worker.onerror = (_err) => {
+        this.fallbackToMainThread();
+      };
+    } catch (_err) {
+      this.fallbackToMainThread();
+    }
+  }
+
+  private fallbackToMainThread() {
+    // If worker fails, we'll do calculations on main thread
+    this.worker = null;
+  }
+
+  private handleWorkerResult(data: SyncResultMessage) {
+    if (data.type !== 'sync-result') return;
+
+    const pending = this.pendingSyncs.get(data.direction);
+    if (!pending) return;
+
+    this.pendingSyncs.delete(data.direction);
+
+    const { target, direction } = pending;
+    let targetY = data.targetScrollTop;
+
+    if (direction === 'editor-to-preview') {
+      if (targetY === -1) {
+        targetY = target.scrollHeight - target.clientHeight;
+      }
+    } else {
+      if (!this.editor) return;
+      if (targetY === -1) {
+        targetY = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
+      } else {
+        const docLines = this.editor.state.doc.lines;
+        const safeLine = Math.max(1, Math.min(targetY, docLines));
+        const lineInt = Math.floor(safeLine);
+        const lineFrac = safeLine - lineInt;
+        const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
+        targetY = lineInfo.top + lineInfo.height * lineFrac;
+      }
     }
 
-    updateMap() {
-        if (!this.preview || !this.editor) return;
+    if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+      this.smoothScrollTo(target, targetY);
+    }
+  }
 
-        const container = this.preview;
-        const containerRect = container.getBoundingClientRect();
-        const scrollTop = container.scrollTop;
+  markMapDirty() {
+    this.mapDirty = true;
+  }
 
-        const elements = queryHTMLElements(container, '[data-sourcepos]');
+  registerEditor(view: EditorView) {
+    if (this.editor === view) return;
 
-        const rawMap: LineMapEntry[] = [];
-        for (const el of elements) {
-            const sourcepos = el.getAttribute('data-sourcepos');
-            if (!sourcepos) continue;
-            const match = sourcepos.match(/^(\d+):\d+-\d+:\d+$/);
-            if (!match) continue;
-            const line = parseInt(match[1], 10);
-            if (Number.isNaN(line)) continue;
-
-            const rect = el.getBoundingClientRect();
-            const y = rect.top - containerRect.top + scrollTop;
-            rawMap.push({ line, y });
-        }
-
-        if (rawMap.length > 0) {
-            rawMap.sort((a, b) => a.line - b.line);
-
-            const seen: Record<number, boolean> = {};
-            this.lineMap = [];
-            for (const entry of rawMap) {
-                if (!seen[entry.line]) {
-                    seen[entry.line] = true;
-                    this.lineMap.push(entry);
-                }
-            }
-        } else {
-            this.lineMap = [];
-        }
-
-        if (this.lineMap.length === 0 || this.lineMap[0].line > 1) {
-            this.lineMap.unshift({ line: 1, y: 0 });
-        } else {
-            this.lineMap[0].y = 0;
-        }
-
-        if (this.editor) {
-            const totalLines = this.editor.state.doc.lines;
-            const scrollHeight = container.scrollHeight;
-            const last = this.lineMap[this.lineMap.length - 1];
-            if (last.line < totalLines) {
-                this.lineMap.push({ line: totalLines, y: scrollHeight });
-            }
-        }
-
-        if (this.worker) {
-            const message: UpdateMapMessage = {
-                type: 'update-map',
-                lineMap: this.lineMap,
-            };
-            this.worker.postMessage(message);
-        }
+    if (this.editor) {
+      this.editor.scrollDOM.removeEventListener('scroll', this.boundOnEditorScroll);
     }
 
-    private syncPreviewThrottled = throttle(
-        () => {
-            if (!this.syncPreviewRAF) {
-                this.syncPreviewRAF = requestAnimationFrame(() => {
-                    this.syncPreviewRAF = null;
-                    this.syncPreview();
-                });
-            }
-        },
-        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
-        { leading: true, trailing: true },
-    );
+    this.editor = view;
+    view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll, { passive: true });
+  }
 
-    private syncEditorThrottled = throttle(
-        () => {
-            if (!this.syncEditorRAF) {
-                this.syncEditorRAF = requestAnimationFrame(() => {
-                    this.syncEditorRAF = null;
-                    this.syncEditor();
-                });
-            }
-        },
-        CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
-        { leading: true, trailing: true },
-    );
+  registerPreview(el: HTMLElement) {
+    // Defer $effect.root and Worker init until first call from a mounted component
+    this.initEffects();
 
-    private syncPreviewRAF: number | null = null;
-    private syncEditorRAF: number | null = null;
+    if (this.preview === el) return;
 
-    private onEditorScroll() {
-        if (this.activeSource === 'preview') return;
-        this.setActiveSource('editor');
-        this.syncPreviewThrottled();
+    if (this.preview) {
+      this.preview.removeEventListener('scroll', this.boundOnPreviewScroll);
     }
 
-    private onPreviewScroll() {
-        if (this.activeSource === 'editor') return;
-        this.setActiveSource('preview');
-        this.syncEditorThrottled();
+    this.preview = el;
+    el.addEventListener('scroll', this.boundOnPreviewScroll, { passive: true });
+  }
+
+  updateMap() {
+    if (!this.preview || !this.editor) return;
+
+    const container = this.preview;
+    const containerRect = container.getBoundingClientRect();
+    const scrollTop = container.scrollTop;
+
+    const elements = queryHTMLElements(container, '[data-sourcepos]');
+
+    const rawMap: LineMapEntry[] = [];
+    for (const el of elements) {
+      const sourcepos = el.getAttribute('data-sourcepos');
+      if (!sourcepos) continue;
+      const match = sourcepos.match(/^(\d+):\d+-\d+:\d+$/);
+      if (!match) continue;
+      const line = parseInt(match[1], 10);
+      if (Number.isNaN(line)) continue;
+
+      const rect = el.getBoundingClientRect();
+      const y = rect.top - containerRect.top + scrollTop;
+      rawMap.push({ line, y });
     }
 
-    private setActiveSource(source: 'editor' | 'preview') {
-        this.activeSource = source;
-        if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
-        this.clearSourceTimer = window.setTimeout(() => {
-            this.activeSource = null;
-        }, 200);
+    if (rawMap.length > 0) {
+      rawMap.sort((a, b) => a.line - b.line);
+
+      const seen: Record<number, boolean> = {};
+      this.lineMap = [];
+      for (const entry of rawMap) {
+        if (!seen[entry.line]) {
+          seen[entry.line] = true;
+          this.lineMap.push(entry);
+        }
+      }
+    } else {
+      this.lineMap = [];
     }
 
-    private smoothScrollTo(element: HTMLElement | Element, targetY: number, instant = false) {
-        const currentY = element.scrollTop;
-        const diff = Math.abs(targetY - currentY);
-
-        if (diff < CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) return;
-
-        if (instant || diff < 50) {
-            element.scrollTop = targetY;
-            return;
-        }
-
-        if (
-            this.smoothScrollTarget &&
-            this.smoothScrollTarget.element === element &&
-            Math.abs(this.smoothScrollTarget.targetY - targetY) < 100
-        ) {
-            this.smoothScrollTarget.targetY = targetY;
-            return;
-        }
-
-        if (this.smoothScrollRAF) {
-            cancelAnimationFrame(this.smoothScrollRAF);
-        }
-
-        this.smoothScrollTarget = { element, targetY };
-
-        const startY = currentY;
-        const duration = Math.min(150, Math.max(50, diff / 10));
-        const startTime = performance.now();
-
-        const animate = (now: number) => {
-            if (!this.smoothScrollTarget || this.smoothScrollTarget.element !== element) {
-                return;
-            }
-
-            const elapsed = now - startTime;
-            const progress = Math.min(1, elapsed / duration);
-            const eased = 1 - (1 - progress) ** 3;
-
-            const currentTargetY = this.smoothScrollTarget.targetY;
-            const y = startY + (currentTargetY - startY) * eased;
-
-            element.scrollTop = y;
-
-            if (progress < 1) {
-                this.smoothScrollRAF = requestAnimationFrame(animate);
-            } else {
-                this.smoothScrollRAF = null;
-                this.smoothScrollTarget = null;
-            }
-        };
-
-        this.smoothScrollRAF = requestAnimationFrame(animate);
+    if (this.lineMap.length === 0 || this.lineMap[0].line > 1) {
+      this.lineMap.unshift({ line: 1, y: 0 });
+    } else {
+      this.lineMap[0].y = 0;
     }
 
-    private syncPreview() {
-        if (!this.editor || !this.preview) return;
-
-        const source = this.editor.scrollDOM;
-        const target = this.preview;
-        const direction = 'editor-to-preview';
-
-        const scrollTop = source.scrollTop;
-        const scrollHeight = source.scrollHeight;
-        const clientHeight = source.clientHeight;
-        const maxScroll = scrollHeight - clientHeight;
-
-        if (scrollTop <= 0) {
-            if (target.scrollTop > 0) {
-                this.smoothScrollTo(target, 0, true);
-            }
-            return;
-        }
-        if (scrollTop >= maxScroll - 1) {
-            const targetBottom = target.scrollHeight - target.clientHeight;
-            if (Math.abs(target.scrollTop - targetBottom) > 2) {
-                this.smoothScrollTo(target, targetBottom, true);
-            }
-            return;
-        }
-
-        if (!this.worker) {
-            this.syncScrollPositionFallback(source, target, direction);
-            return;
-        }
-
-        const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
-        const docLine = this.editor.state.doc.lineAt(lineBlock.from);
-        const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-        const currentLine = docLine.number + fraction;
-
-        this.pendingSyncs.set(direction, { target, direction });
-
-        const message: SyncMessage = {
-            type: 'sync',
-            direction,
-            scrollTop: currentLine,
-            scrollHeight,
-            clientHeight,
-            totalLines: this.editor.state.doc.lines,
-        };
-        this.worker.postMessage(message);
+    if (this.editor) {
+      const totalLines = this.editor.state.doc.lines;
+      const scrollHeight = container.scrollHeight;
+      const last = this.lineMap[this.lineMap.length - 1];
+      if (last.line < totalLines) {
+        this.lineMap.push({ line: totalLines, y: scrollHeight });
+      }
     }
 
-    private syncEditor() {
-        if (!this.editor || !this.preview) return;
+    if (this.worker) {
+      const message: UpdateMapMessage = {
+        type: 'update-map',
+        lineMap: this.lineMap,
+      };
+      this.worker.postMessage(message);
+    }
+  }
 
-        const source = this.preview;
-        const target = this.editor.scrollDOM;
-        const direction = 'preview-to-editor';
+  private syncPreviewThrottled = throttle(
+    () => {
+      if (!this.syncPreviewRAF) {
+        this.syncPreviewRAF = requestAnimationFrame(() => {
+          this.syncPreviewRAF = null;
+          this.syncPreview();
+        });
+      }
+    },
+    CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
+    { leading: true, trailing: true },
+  );
 
-        const scrollTop = source.scrollTop;
-        const scrollHeight = source.scrollHeight;
-        const clientHeight = source.clientHeight;
-        const maxScroll = scrollHeight - clientHeight;
+  private syncEditorThrottled = throttle(
+    () => {
+      if (!this.syncEditorRAF) {
+        this.syncEditorRAF = requestAnimationFrame(() => {
+          this.syncEditorRAF = null;
+          this.syncEditor();
+        });
+      }
+    },
+    CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
+    { leading: true, trailing: true },
+  );
 
-        if (scrollTop <= 0) {
-            if (target.scrollTop > 0) {
-                this.smoothScrollTo(target, 0, true);
-            }
-            return;
-        }
-        if (scrollTop >= maxScroll - 1) {
-            const targetBottom = target.scrollHeight - target.clientHeight;
-            if (Math.abs(target.scrollTop - targetBottom) > 2) {
-                this.smoothScrollTo(target, targetBottom, true);
-            }
-            return;
-        }
+  private syncPreviewRAF: number | null = null;
+  private syncEditorRAF: number | null = null;
 
-        if (!this.worker || this.lineMap.length < 2) {
-            this.syncScrollPositionFallback(source, target, direction);
-            return;
-        }
+  private onEditorScroll() {
+    if (this.activeSource === 'preview') return;
+    this.setActiveSource('editor');
+    this.syncPreviewThrottled();
+  }
 
-        this.pendingSyncs.set(direction, { target, direction });
+  private onPreviewScroll() {
+    if (this.activeSource === 'editor') return;
+    this.setActiveSource('preview');
+    this.syncEditorThrottled();
+  }
 
-        const message: SyncMessage = {
-            type: 'sync',
-            direction,
-            scrollTop,
-            scrollHeight,
-            clientHeight,
-            totalLines: this.editor.state.doc.lines,
-        };
-        this.worker.postMessage(message);
+  private setActiveSource(source: 'editor' | 'preview') {
+    this.activeSource = source;
+    if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
+    this.clearSourceTimer = window.setTimeout(() => {
+      this.activeSource = null;
+    }, 200);
+  }
+
+  private smoothScrollTo(element: HTMLElement | Element, targetY: number, instant = false) {
+    const currentY = element.scrollTop;
+    const diff = Math.abs(targetY - currentY);
+
+    if (diff < CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) return;
+
+    if (instant || diff < 50) {
+      element.scrollTop = targetY;
+      return;
     }
 
-    private syncScrollPositionFallback(
-        source: HTMLElement,
-        target: HTMLElement,
-        direction: 'editor-to-preview' | 'preview-to-editor',
+    if (
+      this.smoothScrollTarget &&
+      this.smoothScrollTarget.element === element &&
+      Math.abs(this.smoothScrollTarget.targetY - targetY) < 100
     ) {
-        const editor = this.editor;
-        if (!editor) return;
-        const scrollTop = source.scrollTop;
-        const scrollHeight = source.scrollHeight;
-        const clientHeight = source.clientHeight;
-        const maxScroll = scrollHeight - clientHeight;
-
-        if (this.lineMap.length < 2) {
-            const pct = scrollTop / maxScroll;
-            const targetMax = target.scrollHeight - target.clientHeight;
-            const targetTop = pct * targetMax;
-            if (
-                Math.abs(target.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX
-            ) {
-                this.smoothScrollTo(target, targetTop);
-            }
-            return;
-        }
-
-        let targetY: number;
-        if (direction === 'editor-to-preview') {
-            const lineBlock = editor.lineBlockAtHeight(scrollTop);
-            const docLine = editor.state.doc.lineAt(lineBlock.from);
-            const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-            const currentLine = docLine.number + fraction;
-            targetY = this.interpolate(currentLine, 'line', 'y');
-        } else {
-            const targetLine = this.interpolate(scrollTop, 'y', 'line');
-            const docLines = editor.state.doc.lines;
-            const safeLine = Math.max(1, Math.min(targetLine, docLines));
-            const lineInt = Math.floor(safeLine);
-            const lineFrac = safeLine - lineInt;
-            const lineInfo = editor.lineBlockAt(editor.state.doc.line(lineInt).from);
-            targetY = lineInfo.top + lineInfo.height * lineFrac;
-        }
-
-        if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-            this.smoothScrollTo(target, targetY);
-        }
+      this.smoothScrollTarget.targetY = targetY;
+      return;
     }
 
-    private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
-        const map = this.lineMap;
-        let lo = 0;
-        let hi = map.length - 1;
-
-        while (lo <= hi) {
-            const mid = (lo + hi) >> 1;
-            if (map[mid][inputKey] < val) {
-                lo = mid + 1;
-            } else {
-                hi = mid - 1;
-            }
-        }
-
-        const idx = Math.max(0, Math.min(lo - 1, map.length - 2));
-        const p1 = map[idx];
-        const p2 = map[idx + 1];
-
-        if (!p2) return p1 ? p1[outputKey] : 0;
-
-        const inputSpan = p2[inputKey] - p1[inputKey];
-        const outputSpan = p2[outputKey] - p1[outputKey];
-
-        if (inputSpan === 0) return p1[outputKey];
-
-        const ratio = (val - p1[inputKey]) / inputSpan;
-        return p1[outputKey] + ratio * outputSpan;
+    if (this.smoothScrollRAF) {
+      cancelAnimationFrame(this.smoothScrollRAF);
     }
 
-    handleFastScroll(v: EditorView, targetY: number) {
-        this.setActiveSource('editor');
-        if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
-        this.clearSourceTimer = window.setTimeout(() => {
-            this.activeSource = null;
-        }, 300);
+    this.smoothScrollTarget = { element, targetY };
 
-        v.scrollDOM.scrollTop = targetY;
-        this.syncPreview();
+    const startY = currentY;
+    const duration = Math.min(150, Math.max(50, diff / 10));
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      if (!this.smoothScrollTarget || this.smoothScrollTarget.element !== element) {
+        return;
+      }
+
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = 1 - (1 - progress) ** 3;
+
+      const currentTargetY = this.smoothScrollTarget.targetY;
+      const y = startY + (currentTargetY - startY) * eased;
+
+      element.scrollTop = y;
+
+      if (progress < 1) {
+        this.smoothScrollRAF = requestAnimationFrame(animate);
+      } else {
+        this.smoothScrollRAF = null;
+        this.smoothScrollTarget = null;
+      }
+    };
+
+    this.smoothScrollRAF = requestAnimationFrame(animate);
+  }
+
+  private syncPreview() {
+    if (!this.editor || !this.preview) return;
+
+    const source = this.editor.scrollDOM;
+    const target = this.preview;
+    const direction = 'editor-to-preview';
+
+    const scrollTop = source.scrollTop;
+    const scrollHeight = source.scrollHeight;
+    const clientHeight = source.clientHeight;
+    const maxScroll = scrollHeight - clientHeight;
+
+    if (scrollTop <= 0) {
+      if (target.scrollTop > 0) {
+        this.smoothScrollTo(target, 0, true);
+      }
+      return;
     }
+    if (scrollTop >= maxScroll - 1) {
+      const targetBottom = target.scrollHeight - target.clientHeight;
+      if (Math.abs(target.scrollTop - targetBottom) > 2) {
+        this.smoothScrollTo(target, targetBottom, true);
+      }
+      return;
+    }
+
+    if (!this.worker) {
+      this.syncScrollPositionFallback(source, target, direction);
+      return;
+    }
+
+    const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
+    const docLine = this.editor.state.doc.lineAt(lineBlock.from);
+    const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+    const currentLine = docLine.number + fraction;
+
+    this.pendingSyncs.set(direction, { target, direction });
+
+    const message: SyncMessage = {
+      type: 'sync',
+      direction,
+      scrollTop: currentLine,
+      scrollHeight,
+      clientHeight,
+      totalLines: this.editor.state.doc.lines,
+    };
+    this.worker.postMessage(message);
+  }
+
+  private syncEditor() {
+    if (!this.editor || !this.preview) return;
+
+    const source = this.preview;
+    const target = this.editor.scrollDOM;
+    const direction = 'preview-to-editor';
+
+    const scrollTop = source.scrollTop;
+    const scrollHeight = source.scrollHeight;
+    const clientHeight = source.clientHeight;
+    const maxScroll = scrollHeight - clientHeight;
+
+    if (scrollTop <= 0) {
+      if (target.scrollTop > 0) {
+        this.smoothScrollTo(target, 0, true);
+      }
+      return;
+    }
+    if (scrollTop >= maxScroll - 1) {
+      const targetBottom = target.scrollHeight - target.clientHeight;
+      if (Math.abs(target.scrollTop - targetBottom) > 2) {
+        this.smoothScrollTo(target, targetBottom, true);
+      }
+      return;
+    }
+
+    if (!this.worker || this.lineMap.length < 2) {
+      this.syncScrollPositionFallback(source, target, direction);
+      return;
+    }
+
+    this.pendingSyncs.set(direction, { target, direction });
+
+    const message: SyncMessage = {
+      type: 'sync',
+      direction,
+      scrollTop,
+      scrollHeight,
+      clientHeight,
+      totalLines: this.editor.state.doc.lines,
+    };
+    this.worker.postMessage(message);
+  }
+
+  private syncScrollPositionFallback(
+    source: HTMLElement,
+    target: HTMLElement,
+    direction: 'editor-to-preview' | 'preview-to-editor',
+  ) {
+    const editor = this.editor;
+    if (!editor) return;
+    const scrollTop = source.scrollTop;
+    const scrollHeight = source.scrollHeight;
+    const clientHeight = source.clientHeight;
+    const maxScroll = scrollHeight - clientHeight;
+
+    if (this.lineMap.length < 2) {
+      const pct = scrollTop / maxScroll;
+      const targetMax = target.scrollHeight - target.clientHeight;
+      const targetTop = pct * targetMax;
+      if (Math.abs(target.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+        this.smoothScrollTo(target, targetTop);
+      }
+      return;
+    }
+
+    let targetY: number;
+    if (direction === 'editor-to-preview') {
+      const lineBlock = editor.lineBlockAtHeight(scrollTop);
+      const docLine = editor.state.doc.lineAt(lineBlock.from);
+      const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
+      const currentLine = docLine.number + fraction;
+      targetY = this.interpolate(currentLine, 'line', 'y');
+    } else {
+      const targetLine = this.interpolate(scrollTop, 'y', 'line');
+      const docLines = editor.state.doc.lines;
+      const safeLine = Math.max(1, Math.min(targetLine, docLines));
+      const lineInt = Math.floor(safeLine);
+      const lineFrac = safeLine - lineInt;
+      const lineInfo = editor.lineBlockAt(editor.state.doc.line(lineInt).from);
+      targetY = lineInfo.top + lineInfo.height * lineFrac;
+    }
+
+    if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
+      this.smoothScrollTo(target, targetY);
+    }
+  }
+
+  private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
+    const map = this.lineMap;
+    let lo = 0;
+    let hi = map.length - 1;
+
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (map[mid][inputKey] < val) {
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    const idx = Math.max(0, Math.min(lo - 1, map.length - 2));
+    const p1 = map[idx];
+    const p2 = map[idx + 1];
+
+    if (!p2) return p1 ? p1[outputKey] : 0;
+
+    const inputSpan = p2[inputKey] - p1[inputKey];
+    const outputSpan = p2[outputKey] - p1[outputKey];
+
+    if (inputSpan === 0) return p1[outputKey];
+
+    const ratio = (val - p1[inputKey]) / inputSpan;
+    return p1[outputKey] + ratio * outputSpan;
+  }
+
+  handleFastScroll(v: EditorView, targetY: number) {
+    this.setActiveSource('editor');
+    if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
+    this.clearSourceTimer = window.setTimeout(() => {
+      this.activeSource = null;
+    }, 300);
+
+    v.scrollDOM.scrollTop = targetY;
+    this.syncPreview();
+  }
 }
 
 export const scrollSync = new ScrollSyncManager();

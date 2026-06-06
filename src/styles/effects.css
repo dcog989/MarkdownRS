@@ -1,165 +1,165 @@
 /* Effects Classes - Transform */
 .-translate-y-1\/2 {
-    transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 
 .rotate-180 {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
 /* Effects Classes - Grayscale */
 .grayscale {
-    filter: grayscale(100%);
+  filter: grayscale(100%);
 }
 
 /* Shadow Classes */
 .shadow-lg {
-    box-shadow:
-        0 10px 15px -3px oklch(0 0 0 / 0.1),
-        0 4px 6px -2px oklch(0 0 0 / 0.05);
+  box-shadow:
+    0 10px 15px -3px oklch(0 0 0 / 0.1),
+    0 4px 6px -2px oklch(0 0 0 / 0.05);
 }
 
 .shadow-xl {
-    box-shadow:
-        0 20px 25px -5px oklch(0 0 0 / 0.1),
-        0 10px 10px -5px oklch(0 0 0 / 0.04);
+  box-shadow:
+    0 20px 25px -5px oklch(0 0 0 / 0.1),
+    0 10px 10px -5px oklch(0 0 0 / 0.04);
 }
 
 .shadow-2xl {
-    box-shadow: 0 25px 50px -12px oklch(0 0 0 / 0.25);
+  box-shadow: 0 25px 50px -12px oklch(0 0 0 / 0.25);
 }
 
 /* Animation & Transition Classes */
 .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .animate-spin {
-    animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 .transition-colors {
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 .transition-all {
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 .duration-150 {
-    transition-duration: 150ms;
+  transition-duration: 150ms;
 }
 
 .duration-200 {
-    transition-duration: 200ms;
+  transition-duration: 200ms;
 }
 
 /* Opacity Classes */
 .opacity-0 {
-    opacity: 0;
+  opacity: 0;
 }
 
 .opacity-20 {
-    opacity: 0.2;
+  opacity: 0.2;
 }
 
 .opacity-30 {
-    opacity: 0.3;
+  opacity: 0.3;
 }
 
 .opacity-40 {
-    opacity: 0.4;
+  opacity: 0.4;
 }
 
 .opacity-50 {
-    opacity: 0.5;
+  opacity: 0.5;
 }
 
 .opacity-60 {
-    opacity: 0.6;
+  opacity: 0.6;
 }
 
 .opacity-70 {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 .opacity-80 {
-    opacity: 0.8;
+  opacity: 0.8;
 }
 
 .opacity-100 {
-    opacity: 1;
+  opacity: 1;
 }
 
 .opacity-\[0\.08\] {
-    opacity: 0.08;
+  opacity: 0.08;
 }
 
 .opacity-\[0\.15\] {
-    opacity: 0.15;
+  opacity: 0.15;
 }
 
 .opacity-\[0\.05\] {
-    opacity: 0.05;
+  opacity: 0.05;
 }
 
 /* Animation keyframes */
 @keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes tooltip-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(0.25rem);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Backdrop Filter */
 .backdrop-blur-sm {
-    backdrop-filter: blur(0.125rem);
+  backdrop-filter: blur(0.125rem);
 }
 
 /* Scroll Behavior */
 /* Writer Mode */
 .writer-mode {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .writer-mode .writer-content {
-    max-width: min(100ch, 100vw);
-    margin: 0 auto;
+  max-width: min(100ch, 100vw);
+  margin: 0 auto;
 }
 
 .writer-mode .cm-gutters {
-    display: none;
+  display: none;
 }
 
 .writer-mode .cm-content {
-    padding-left: 0;
+  padding-left: 0;
 }

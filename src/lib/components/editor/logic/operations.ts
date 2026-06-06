@@ -5,78 +5,76 @@ import { textProcessor } from '$lib/services/textProcessor';
 import type { ScrollManager } from '$lib/utils/cmScroll';
 
 export async function performTextOperation(
-    view: EditorView,
-    operationId: OperationId,
-    scrollManager: ScrollManager,
-    onStateChange?: (isTransforming: boolean) => void,
+  view: EditorView,
+  operationId: OperationId,
+  scrollManager: ScrollManager,
+  onStateChange?: (isTransforming: boolean) => void,
 ) {
-    if (!view) return;
+  if (!view) return;
 
-    try {
-        onStateChange?.(true);
+  try {
+    onStateChange?.(true);
 
-        const selection = view.state.selection.main;
-        const hasSelection = selection.from !== selection.to;
-        const targetText = hasSelection
-            ? view.state.sliceDoc(selection.from, selection.to)
-            : view.state.doc.toString();
+    const selection = view.state.selection.main;
+    const hasSelection = selection.from !== selection.to;
+    const targetText = hasSelection ? view.state.sliceDoc(selection.from, selection.to) : view.state.doc.toString();
 
-        // Capture scroll state before operation
-        scrollManager.capture(view, `Op:${operationId}`);
+    // Capture scroll state before operation
+    scrollManager.capture(view, `Op:${operationId}`);
 
-        const newText = await textProcessor.process(operationId, targetText);
+    const newText = await textProcessor.process(operationId, targetText);
 
-        if (newText !== targetText) {
-            view.focus();
+    if (newText !== targetText) {
+      view.focus();
 
-            // Determine event type: 'format' events are ignored by the recent changes tracker
-            const userEvent = operationId === 'format-document' ? 'format' : 'input.complete';
+      // Determine event type: 'format' events are ignored by the recent changes tracker
+      const userEvent = operationId === 'format-document' ? 'format' : 'input.complete';
 
-            const transaction: TransactionSpec = {
-                changes: {
-                    from: hasSelection ? selection.from : 0,
-                    to: hasSelection ? selection.to : view.state.doc.length,
-                    insert: newText,
-                },
-                userEvent: userEvent,
-                scrollIntoView: hasSelection,
-            };
+      const transaction: TransactionSpec = {
+        changes: {
+          from: hasSelection ? selection.from : 0,
+          to: hasSelection ? selection.to : view.state.doc.length,
+          insert: newText,
+        },
+        userEvent: userEvent,
+        scrollIntoView: hasSelection,
+      };
 
-            // Restore selection logic
-            if (hasSelection) {
-                transaction.selection = {
-                    anchor: selection.from,
-                    head: selection.from + newText.length,
-                };
-            } else {
-                const newLen = newText.length;
-                transaction.selection = {
-                    anchor: Math.min(selection.anchor, newLen),
-                    head: Math.min(selection.head, newLen),
-                };
-            }
+      // Restore selection logic
+      if (hasSelection) {
+        transaction.selection = {
+          anchor: selection.from,
+          head: selection.from + newText.length,
+        };
+      } else {
+        const newLen = newText.length;
+        transaction.selection = {
+          anchor: Math.min(selection.anchor, newLen),
+          head: Math.min(selection.head, newLen),
+        };
+      }
 
-            view.dispatch(transaction);
+      view.dispatch(transaction);
 
-            // Restore scroll position for full-document transforms
-            if (!hasSelection) {
-                const snapshot = scrollManager.getSnapshot();
-                const currentLines = view.state.doc.lines;
-                let strategy: 'anchor' | 'pixel' = 'pixel';
+      // Restore scroll position for full-document transforms
+      if (!hasSelection) {
+        const snapshot = scrollManager.getSnapshot();
+        const currentLines = view.state.doc.lines;
+        let strategy: 'anchor' | 'pixel' = 'pixel';
 
-                if (operationId === 'format-document') {
-                    strategy = 'anchor';
-                } else if (snapshot && Math.abs(currentLines - snapshot.totalLines) > 0) {
-                    strategy = 'anchor';
-                }
-                scrollManager.restore(view, strategy);
-            }
+        if (operationId === 'format-document') {
+          strategy = 'anchor';
+        } else if (snapshot && Math.abs(currentLines - snapshot.totalLines) > 0) {
+          strategy = 'anchor';
         }
-    } catch (_err) {
-    } finally {
-        // Small delay to allow UI to settle before re-enabling sync
-        setTimeout(() => {
-            onStateChange?.(false);
-        }, 100);
+        scrollManager.restore(view, strategy);
+      }
     }
+  } catch (_err) {
+  } finally {
+    // Small delay to allow UI to settle before re-enabling sync
+    setTimeout(() => {
+      onStateChange?.(false);
+    }, 100);
+  }
 }

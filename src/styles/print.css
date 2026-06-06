@@ -1,76 +1,76 @@
 /* Export & Print Styles */
 
 #export-container {
-    position: fixed;
-    top: 0;
-    left: -9999px;
-    width: 210mm;
-    min-height: 100vh;
-    background-color: white;
-    padding: 20mm;
-    z-index: -1;
-    pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: -9999px;
+  width: 210mm;
+  min-height: 100vh;
+  background-color: white;
+  padding: 20mm;
+  z-index: -1;
+  pointer-events: none;
 
-    /* Force light theme for PDF export */
-    --preview-fg-body: black;
-    --preview-fg-heading: black;
-    --preview-fg-link: #2563eb;
-    --preview-fg-code: black;
-    --preview-bg-code: #f5f5f5;
-    --preview-fg-quote: #555;
-    --preview-bg-quote: #f9f9f9;
-    --preview-border-quote: #7c5a73;
-    --preview-bg-pre: #f5f5f5;
-    --preview-fg-pre: black;
-    --color-border-main: #ccc;
+  /* Force light theme for PDF export */
+  --preview-fg-body: black;
+  --preview-fg-heading: black;
+  --preview-fg-link: #2563eb;
+  --preview-fg-code: black;
+  --preview-bg-code: #f5f5f5;
+  --preview-fg-quote: #555;
+  --preview-bg-quote: #f9f9f9;
+  --preview-border-quote: #7c5a73;
+  --preview-bg-pre: #f5f5f5;
+  --preview-fg-pre: black;
+  --color-border-main: #ccc;
 }
 
 @media print {
-    @page {
-        margin: 0;
-        size: auto;
-    }
+  @page {
+    margin: 0;
+    size: auto;
+  }
 
-    :root {
-        color-scheme: light;
-    }
+  :root {
+    color-scheme: light;
+  }
 
-    html,
-    body {
-        width: 100%;
-        height: auto;
-        overflow: visible;
-        background: white;
-        margin: 0;
-        padding: 0;
-        display: block;
-    }
+  html,
+  body {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    background: white;
+    margin: 0;
+    padding: 0;
+    display: block;
+  }
 
-    body > *:not(#export-container) {
-        display: none;
-    }
+  body > *:not(#export-container) {
+    display: none;
+  }
 
-    #export-container {
-        position: relative;
-        left: auto;
-        top: auto;
-        width: 100%;
-        margin: 0;
-        padding: 15mm 20mm;
-        display: block;
-        opacity: 1;
-        visibility: visible;
-        z-index: 9999;
-    }
+  #export-container {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    margin: 0;
+    padding: 15mm 20mm;
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    z-index: 9999;
+  }
 
-    #export-container h1,
-    #export-container h2,
-    #export-container h3 {
-        page-break-after: avoid;
-    }
+  #export-container h1,
+  #export-container h2,
+  #export-container h3 {
+    page-break-after: avoid;
+  }
 
-    #export-container pre,
-    #export-container blockquote {
-        page-break-inside: avoid;
-    }
+  #export-container pre,
+  #export-container blockquote {
+    page-break-inside: avoid;
+  }
 }

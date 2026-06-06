@@ -15,16 +15,16 @@ import { tooltipStore } from './tooltipStore.svelte';
  * Logic is handled by functions exported from individual store files.
  */
 export const appContext = {
-    app: appState,
-    editor: editorStore,
-    metrics: editorMetrics,
-    bookmarks: bookmarkStore,
-    interface: interfaceStore,
-    scrollSync: scrollSync,
-    spellcheck: spellcheckState,
-    ui: {
-        tooltip: tooltipStore,
-        toast: toastStore,
-        dialog: dialogStore,
-    },
+  app: appState,
+  editor: editorStore,
+  metrics: editorMetrics,
+  bookmarks: bookmarkStore,
+  interface: interfaceStore,
+  scrollSync: scrollSync,
+  spellcheck: spellcheckState,
+  ui: {
+    tooltip: tooltipStore,
+    toast: toastStore,
+    dialog: dialogStore,
+  },
 };
