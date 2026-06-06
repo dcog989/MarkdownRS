@@ -19,6 +19,7 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { dispatchRedo, dispatchUndo } from '$lib/utils/editorCommands';
 import { openFile, requestCloseTab, saveCurrentFile, saveCurrentFileAs } from '$lib/utils/fileSystem';
+import { saveSettings } from '$lib/utils/settings';
 import { type ShortcutDefinition, shortcutManager } from '$lib/utils/shortcuts';
 
 export function registerAllShortcuts() {
@@ -201,6 +202,19 @@ export function registerAllShortcuts() {
       handler: (e: KeyboardEvent) => {
         e.preventDefault();
         appContext.app.editorFontSize = 14;
+      },
+    },
+    {
+      id: 'view.toggleWhitespace',
+      command: 'view.toggleWhitespace',
+      defaultKey: 'ctrl+shift+8',
+      description: 'Toggle Whitespace Display',
+      category: 'View',
+      handler: (e: KeyboardEvent) => {
+        e.preventDefault();
+        appContext.app.showWhitespace = !appContext.app.showWhitespace;
+        saveSettings();
+        return true;
       },
     },
 
