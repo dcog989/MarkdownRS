@@ -37,6 +37,8 @@ const PALETTE_TO_SHORTCUT_ID: Record<string, string> = {
     'find.show': 'edit.find',
     'find.show_replace': 'edit.replace',
     'toggle-split': 'view.toggleSplitView',
+    'toggle-writer-mode': 'view.toggleWriterMode',
+    'toggle-whitespace': 'view.toggleWhitespace',
     bookmarks: 'window.bookmarks',
     'command-palette': 'window.commandPalette',
     settings: 'help.settings',
