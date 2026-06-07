@@ -140,7 +140,4 @@ export const linkTheme = EditorView.baseTheme({
   '&.cm-modifier-down .cm-file-path, &.cm-modifier-down .cm-url': {
     cursor: 'pointer',
   },
-  '&.cm-modifier-down .cm-file-path:hover, &.cm-modifier-down .cm-url:hover': {
-    textDecoration: 'underline',
-  },
 });
