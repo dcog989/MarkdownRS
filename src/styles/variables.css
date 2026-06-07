@@ -4,9 +4,9 @@
   /* Brand Bases */
   --color-brand-accent: #7c5a73;
   --color-brand-file: #eac55f;
-  --color-brand-link: #3794ff;
-  --color-brand-url: #60a5fa;
-  --color-brand-filepath: #84cc16;
+  --color-brand-link: #009cc0;
+  --color-brand-url: #5182c1;
+  --color-brand-filepath: #84ae5b;
 
   /* Surface System - Layer 1: Unified Background Variables */
   --surface-1: oklch(0.24 0 0); /* Main content background */

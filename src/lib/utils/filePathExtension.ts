@@ -125,11 +125,19 @@ export const linkPlugin: Extension = ViewPlugin.fromClass(
 );
 
 export const linkTheme = EditorView.baseTheme({
-  '.cm-file-path, .cm-url': {
+  '.cm-file-path': {
     color: 'var(--accent-link)',
     textDecoration: 'underline',
     '&:hover': {
       color: 'var(--accent-link-hover)',
+      textDecoration: 'underline',
+    },
+  },
+  '.cm-url': {
+    color: 'var(--accent-url)',
+    textDecoration: 'underline',
+    '&:hover': {
+      color: 'var(--accent-url-hover)',
       textDecoration: 'underline',
     },
   },
