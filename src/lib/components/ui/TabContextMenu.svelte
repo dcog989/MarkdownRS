@@ -604,7 +604,7 @@ function sc(commandId: string): string {
                 style="color: var(--color-danger-text)"
                 disabled={!tab?.path || isPinned}
                 onclick={handleSendToRecycleBin}>
-                <Trash2 size={14} class="opacity-70" /><span>Delete to Recycle Bin</span>
+                <Trash2 size={14} class="opacity-70" /><span>Delete to Wastebin</span>
             </button>
         </div>
     {/snippet}
