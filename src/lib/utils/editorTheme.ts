@@ -7,6 +7,7 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     '&': { height: '100%', fontSize: `${fontSize}px` },
     '.cm-cursor': {
       borderLeftColor: insertMode === 'OVR' ? 'transparent' : 'var(--color-fg-default)',
+      borderLeftWidth: '2px',
       borderBottom: insertMode === 'OVR' ? '2px solid var(--color-accent-secondary)' : 'none',
     },
     '.cm-scroller': { fontFamily, overflow: 'auto', overflowAnchor: 'none' },
