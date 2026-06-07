@@ -105,7 +105,7 @@ const codeBlockMarkDeco = Decoration.mark({
   class: 'cm-code',
 });
 
-const codeBlockLineDeco = Decoration.mark({
+const codeBlockLineDeco = Decoration.line({
   class: 'cm-code-block',
 });
 
@@ -114,7 +114,12 @@ function getCodeBlockDecorations(view: EditorView) {
 
   iterateVisibleNodes(view, (node) => {
     if (node.name === 'FencedCode') {
-      builder.add(node.from, node.to, codeBlockLineDeco);
+      const fromLine = view.state.doc.lineAt(node.from);
+      const toLine = view.state.doc.lineAt(node.to);
+      for (let i = fromLine.number; i <= toLine.number; i++) {
+        const line = view.state.doc.line(i);
+        builder.add(line.from, line.from, codeBlockLineDeco);
+      }
     }
   });
 
