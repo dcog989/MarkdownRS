@@ -3,7 +3,7 @@ import { ClipboardCopy, TextWrap } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte.ts';
-import { togglePreferredExtension, updateLineEnding } from '$lib/stores/editorStore.svelte';
+import { togglePreferredExtension, updateTabFields } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';
@@ -49,7 +49,7 @@ function toggleFileType() {
 function toggleLineEnding() {
     if (tabId) {
         const next = lineEnding === 'LF' ? 'CRLF' : 'LF';
-        updateLineEnding(tabId, next);
+        updateTabFields(tabId, { lineEnding: next });
     }
 }
 
