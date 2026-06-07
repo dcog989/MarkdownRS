@@ -8,7 +8,7 @@
     "build": "tauri build --no-bundle",
     "build:frontend": "bunx --bun vite build",
     "check": "svelte-kit sync ; bun run lint:types ; bun run lint:frontend ; bun run lint:backend",
-    "clean": "rm -rf build .context .svelte-kit node_modules bun.lock releases src-tauri/gen src-tauri/target src-tauri/Cargo.lock .pkg/src .pkg/pkg .pkg/*.pkg.tar.zst .pkg/*.gz",
+    "clean": "rm -rf .context .svelte-kit node_modules bun.lock releases src-tauri/gen src-tauri/target src-tauri/Cargo.lock .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
     "crates": "cd src-tauri && cargo upgrade --verbose",
     "dev": "tauri dev",
     "format": "bunx biome format --write . && cd src-tauri && cargo fmt",

@@ -72,11 +72,11 @@ CachyOS build: `makepkg -sif`
 
 ## Contributing
 
-[Pull Requests](url) and [bug reports / feature requests](url) are welcomed.
+ [Pull Requests](https://github.com/dcog989/MarkdownRS/pulls) and [bug reports / feature requests](https://github.com/dcog989/MarkdownRS/issues) are welcomed.
 
 ## License
 
-[MIT](url).
+[MIT License](https://github.com/dcog989/MarkdownRS/blob/main/LICENSE).
 
 ```text
 
