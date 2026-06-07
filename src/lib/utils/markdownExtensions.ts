@@ -105,22 +105,16 @@ const codeBlockMarkDeco = Decoration.mark({
   class: 'cm-code',
 });
 
+const codeBlockLineDeco = Decoration.mark({
+  class: 'cm-code-block',
+});
+
 function getCodeBlockDecorations(view: EditorView) {
   const builder = new RangeSetBuilder<Decoration>();
-  let lastPos = -1;
 
   iterateVisibleNodes(view, (node) => {
     if (node.name === 'FencedCode') {
-      const startLine = view.state.doc.lineAt(node.from);
-      const endLine = view.state.doc.lineAt(node.to);
-
-      for (let i = startLine.number; i <= endLine.number; i++) {
-        const line = view.state.doc.line(i);
-        if (line.from > lastPos) {
-          builder.add(line.from, line.to, codeBlockMarkDeco);
-          lastPos = line.from;
-        }
-      }
+      builder.add(node.from, node.to, codeBlockLineDeco);
     }
   });
 

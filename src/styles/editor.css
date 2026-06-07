@@ -127,23 +127,34 @@
 /* Interactive Elements */
 .cm-link {
   color: var(--accent-link);
-  text-decoration: underline;
 }
 
 .cm-url {
   color: var(--accent-url);
-  text-decoration: underline;
-}
-.cm-url:hover {
-  color: var(--accent-url-hover);
 }
 
 .cm-file-path {
   color: var(--accent-filepath);
-  text-decoration: underline;
 }
-.cm-file-path:hover {
-  color: var(--accent-filepath-hover);
+
+/* Hide link decoration inside code blocks by default */
+.cm-editor .cm-code .cm-link,
+.cm-editor .cm-code .cm-url,
+.cm-editor .cm-code .cm-file-path,
+.cm-editor .cm-code-block .cm-link,
+.cm-editor .cm-code-block .cm-url,
+.cm-editor .cm-code-block .cm-file-path {
+  text-decoration: none;
+}
+
+/* Show link decoration on hover when Ctrl is held -- indicates clickability */
+.cm-editor.cm-modifier-down .cm-code .cm-link:hover,
+.cm-editor.cm-modifier-down .cm-code .cm-url:hover,
+.cm-editor.cm-modifier-down .cm-code .cm-file-path:hover,
+.cm-editor.cm-modifier-down .cm-code-block .cm-link:hover,
+.cm-editor.cm-modifier-down .cm-code-block .cm-url:hover,
+.cm-editor.cm-modifier-down .cm-code-block .cm-file-path:hover {
+  text-decoration: underline;
 }
 
 /* Modifier Keys */
@@ -158,6 +169,7 @@
   & .cm-url:hover,
   & .cm-link:hover,
   & .cm-file-path:hover {
+    text-decoration: underline;
     background-color: oklch(from var(--accent-link) l c h / 0.1);
   }
 }
@@ -171,6 +183,12 @@
 .cm-strikethrough {
   text-decoration: line-through;
   text-decoration-color: var(--text-secondary);
+}
+
+.cm-code-block {
+  background-color: var(--code-bg);
+  color: var(--code-fg);
+  font-variant-ligatures: none;
 }
 
 .cm-code {
