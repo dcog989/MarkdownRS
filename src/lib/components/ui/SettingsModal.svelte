@@ -242,26 +242,6 @@ const settingsDefinitions = $derived([
         optionLabels: ['System Default', 'LF (Unix)', 'CRLF (Windows)'],
     },
     {
-        key: 'minimapEnabled',
-        label: 'Show Document Minimap',
-        type: 'boolean',
-        category: 'Editor',
-        defaultValue: false,
-        tooltip: 'Show a colored-block minimap of the document alongside the scrollbar.',
-    },
-    {
-        key: 'minimapWidth',
-        label: 'Minimap Width (px)',
-        type: 'number',
-        category: 'Editor',
-        defaultValue: 50,
-        min: 20,
-        max: 120,
-        visibleWhen: { key: 'minimapEnabled', value: true },
-        tooltip: 'Width of the minimap in pixels.',
-    },
-
-    {
         key: 'formatOnSave',
         label: 'Format on Save',
         type: 'boolean',

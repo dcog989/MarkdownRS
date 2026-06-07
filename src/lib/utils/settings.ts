@@ -56,8 +56,6 @@ function getSettingsObject() {
     commandPaletteSort: appState.commandPaletteSort,
     commandUsage: appState.commandUsage,
     commandUsageCounts: appState.commandUsageCounts,
-    minimapEnabled: appState.minimapEnabled,
-    minimapWidth: appState.minimapWidth,
   };
 }
 

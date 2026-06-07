@@ -9,7 +9,6 @@ import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
 import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
-import MinimapCanvas from '$lib/components/ui/MinimapCanvas.svelte';
 import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
 import {
     editorStore,
@@ -234,7 +233,6 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         onSelectionChange={handleSelectionChange}
         onHistoryUpdate={handleHistoryUpdate} />
     {#if cmView}
-        <MinimapCanvas viewport={cmView.scrollDOM} editorView={cmView} />
         <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
     <FindReplacePanel

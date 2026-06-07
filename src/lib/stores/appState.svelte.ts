@@ -57,8 +57,6 @@ export const appState = $state({
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
-  minimapEnabled: false,
-  minimapWidth: 50,
 });
 
 // Logic functions
