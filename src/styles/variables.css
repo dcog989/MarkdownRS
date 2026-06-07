@@ -74,7 +74,7 @@
   --success: oklch(0.5 0.15 150);
   --success-hover: oklch(0.6 0.18 150);
   --highlight-line: oklch(0.7 0.15 140);
-  --selection-bg: oklch(0.42 0.16 280 / 0.55);
+  --selection-bg: oklch(from var(--color-brand-accent) 0.42 0.16 h / 0.55);
   --selection-match-bg: oklch(0.7 0.18 55 / 0.45);
   --active-line-bg: oklch(1 0 0 / 0.08);
   --dirty-indicator: #5deb47;
@@ -173,7 +173,7 @@
   --success: oklch(0.45 0.15 150);
   --success-hover: oklch(0.4 0.18 150);
   --highlight-line: oklch(0.4 0.15 140);
-  --selection-bg: oklch(60% 0.18 270 / 0.45);
+  --selection-bg: oklch(from var(--color-brand-accent) 0.6 0.18 h / 0.45);
   --selection-match-bg: oklch(0.72 0.18 55 / 0.45);
   --active-line-bg: oklch(0 0 0 / 0.04);
   --dirty-indicator: #2e7d32;
