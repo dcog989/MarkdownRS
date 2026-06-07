@@ -16,7 +16,8 @@ export const themeHighlightStyle = HighlightStyle.define([
   // Deactivated: Lezer URL range conflicts with view-plugin decoration, causing split spans.
   // View-plugin urlMark provides the url class instead.
   // { tag: t.url, class: 'cm-url' },
-  { tag: t.link, class: 'cm-link' },
+  // is this needed...?
+  // { tag: t.link, class: 'cm-link' },
   { tag: t.emphasis, class: 'cm-emphasis' },
   { tag: t.strong, class: 'cm-strong' },
   { tag: t.list, class: 'cm-list' },
