@@ -9,7 +9,7 @@ let {
     isOpen = $bindable(false),
     onClose,
     title,
-    zIndex = 50,
+    zIndex = 100,
     position = 'top',
     header,
     footer,
