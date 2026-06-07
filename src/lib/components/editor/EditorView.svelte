@@ -1,67 +1,29 @@
 <script lang="ts">
-import { closeBrackets } from '@codemirror/autocomplete';
 import { history, historyField } from '@codemirror/commands';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { defaultHighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
-import { languages } from '@codemirror/language-data';
-import { highlightSelectionMatches, search } from '@codemirror/search';
+import { indentUnit } from '@codemirror/language';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
-import {
-    drawSelection,
-    EditorView,
-    highlightActiveLine,
-    highlightActiveLineGutter,
-    highlightWhitespace,
-    type KeyBinding,
-} from '@codemirror/view';
+import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/view';
 import { onMount, untrack } from 'svelte';
-import {
-    createDoubleClickHandler,
-    createWrapExtension,
-    getAutocompletionConfig,
-    getEditorKeymap,
-    smartCompleteAnyWord,
-} from '$lib/components/editor/codemirror/config';
-import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
-import { initializeTabFileState } from '$lib/services/sessionPersistence';
+import { createDoubleClickHandler, createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
+import { type Compartments, createBaseExtensions, markdownExtensions } from '$lib/components/editor/logic/extensions';
+import { setupModifierKeyHandler } from '$lib/components/editor/logic/modifierKeys';
+import { setupScrollSync } from '$lib/components/editor/logic/scrollSync';
+import { setupSelectionDragScroll } from '$lib/components/editor/logic/selectionScroll';
+import { TabSyncManager } from '$lib/components/editor/logic/tabSync';
+import { createUpdateListener } from '$lib/components/editor/logic/updateListener';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-import {
-    getHistoryState,
-    getTransientState,
-    updateContent,
-    updateHistoryState,
-} from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { ScrollManager } from '$lib/utils/cmScroll';
-import { CONFIG } from '$lib/utils/config';
-import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
+import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import {
-    blockquotePlugin,
-    bulletPointPlugin,
-    codeBlockPlugin,
-    highlightPlugin,
-    horizontalRulePlugin,
-    inlineCodePlugin,
-} from '$lib/utils/markdownExtensions';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import {
-    applyImmediateSpellcheck,
-    createSpellCheckLinter,
-} from '$lib/utils/spellcheckExtension.svelte.ts';
-import { type CursorMetrics, calculateCursorMetrics } from '$lib/utils/textMetrics';
-import { userThemeExtension } from '$lib/utils/themeMapper';
-import { throttle } from '$lib/utils/timing';
+import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
 import type { AppEditorView } from '../../../global';
-
-const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
-    fallback: true,
-});
 
 let {
     tabId,
@@ -78,7 +40,6 @@ let {
     onHistoryUpdate,
     customKeymap = [],
     eventHandlers,
-    // eslint-disable-next-line no-useless-assignment
     cmView = $bindable(),
 } = $props<{
     tabId: string;
@@ -102,484 +63,142 @@ let editorContainer = $state<HTMLDivElement>();
 let view = $state<AppEditorView>();
 
 let scrollManager = new ScrollManager();
-let lastForceSyncCounter = $state(0);
-// Flag to prevent scroll updates from overwriting the store during tab switch/restore
-let isRestoring = false;
+let tabSync = new TabSyncManager(scrollManager);
 
-let wrapComp = new Compartment();
-let autoComp = new Compartment();
-let recentComp = new Compartment();
-let historyComp = new Compartment();
-let themeComp = new Compartment();
-let indentComp = new Compartment();
-let spellComp = new Compartment();
-let whitespaceComp = new Compartment();
-let languageComp = new Compartment();
-let handlersComp = new Compartment();
-let doubleClickComp = new Compartment();
-let rulerComp = new Compartment();
-let filePathComp = new Compartment();
-
-let contentUpdateTimer: number | null = null,
-    metricsUpdateTimer: number | null = null,
-    cursorUpdateTimer: number | null = null;
+let comps: Compartments = {
+    wrapComp: new Compartment(), autoComp: new Compartment(),
+    recentComp: new Compartment(), historyComp: new Compartment(),
+    themeComp: new Compartment(), indentComp: new Compartment(),
+    spellComp: new Compartment(), whitespaceComp: new Compartment(),
+    languageComp: new Compartment(), handlersComp: new Compartment(),
+    doubleClickComp: new Compartment(), rulerComp: new Compartment(),
+    filePathComp: new Compartment(),
+};
 
 let autocompletionConfig = $derived(getAutocompletionConfig());
 
-// Mount-state caches to prevent redundant CM reconfigurations on initial effect flush.
-// untrack() is required for prop/derived reads to silence state_referenced_locally warnings
-// and explicitly signal that we only want the snapshot value, not a reactive subscription.
-let prevIsMarkdown = untrack(() => isMarkdown);
-let prevAutocompletionConfig = untrack(() => autocompletionConfig);
-let prevThemeConfig = untrack(() => ({
-    theme: appContext.app.theme,
-    fontSize: appContext.app.editorFontSize,
-    fontFamily: appContext.app.editorFontFamily,
-    insertMode: appContext.metrics.insertMode,
-}));
-let prevUndoDepth = appContext.app.undoDepth;
-let prevIndent = appContext.app.defaultIndent;
-let prevShowWhitespace = appContext.app.showWhitespace;
-let prevEventHandlers = untrack(() => eventHandlers);
-let prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
-let prevWrapConfig = untrack(() => ({
-    wordWrap: appContext.app.editorWordWrap,
-    wrapGuideColumn: appContext.app.wrapGuideColumn,
-}));
-let prevRecentChangesConfig = untrack(() => ({
-    lineChangeTracker: lineChangeTracker,
-    recentChangesCount: appContext.app.recentChangesCount,
-    recentChangesTimespan: appContext.app.recentChangesTimespan,
-}));
-
-const markdownExtensions = [
-    markdown({ base: markdownLanguage, codeLanguages: languages }),
-    highlightPlugin,
-    blockquotePlugin,
-    codeBlockPlugin,
-    inlineCodePlugin,
-    horizontalRulePlugin,
-    bulletPointPlugin,
-];
-
-$effect(() => {
-    cmView = view;
-});
+$effect(() => { cmView = view; });
 
 $effect(() => {
     void spellcheckState.customDictionary;
     if (view && spellcheckState.dictionaryLoaded) {
-        view.dispatch({ effects: spellComp.reconfigure(createSpellCheckLinter()) });
+        view.dispatch({ effects: comps.spellComp.reconfigure(createSpellCheckLinter()) });
     }
 });
 
+let prevIsMd = untrack(() => isMarkdown);
 $effect(() => {
-    if (view && isMarkdown !== prevIsMarkdown) {
-        prevIsMarkdown = isMarkdown;
+    if (view && isMarkdown !== prevIsMd) {
+        prevIsMd = isMarkdown;
         view.dispatch({
             effects: [
-                languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
-                filePathComp.reconfigure(isMarkdown ? [linkPlugin, linkTheme] : []),
+                comps.languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
+                comps.filePathComp.reconfigure(isMarkdown ? [linkPlugin, linkTheme] : []),
             ],
         });
     }
 });
 
+let prevAuto = untrack(() => autocompletionConfig);
 $effect(() => {
-    if (view && autocompletionConfig !== prevAutocompletionConfig) {
-        prevAutocompletionConfig = autocompletionConfig;
-        view.dispatch({ effects: autoComp.reconfigure(autocompletionConfig) });
+    if (view && autocompletionConfig !== prevAuto) {
+        prevAuto = autocompletionConfig;
+        view.dispatch({ effects: comps.autoComp.reconfigure(autocompletionConfig) });
     }
 });
 
+let prevThemeCfg = untrack(() => ({
+    theme: appContext.app.theme, fontSize: appContext.app.editorFontSize,
+    fontFamily: appContext.app.editorFontFamily, insertMode: appContext.metrics.insertMode,
+}));
 $effect(() => {
-    const _theme = appContext.app.theme;
-    const _fontSize = appContext.app.editorFontSize;
-    const _fontFamily = appContext.app.editorFontFamily;
-    const _insertMode = appContext.metrics.insertMode;
-    if (
-        view &&
-        (_theme !== prevThemeConfig.theme ||
-            _fontSize !== prevThemeConfig.fontSize ||
-            _fontFamily !== prevThemeConfig.fontFamily ||
-            _insertMode !== prevThemeConfig.insertMode)
-    ) {
-        prevThemeConfig = { theme: _theme, fontSize: _fontSize, fontFamily: _fontFamily, insertMode: _insertMode };
-        view.dispatch({
-            effects: themeComp.reconfigure(
-                generateDynamicTheme(_fontSize, _fontFamily, _theme === 'dark', _insertMode),
-            ),
-        });
+    const t = appContext.app.theme, fs = appContext.app.editorFontSize;
+    const ff = appContext.app.editorFontFamily, im = appContext.metrics.insertMode;
+    if (view && (t !== prevThemeCfg.theme || fs !== prevThemeCfg.fontSize || ff !== prevThemeCfg.fontFamily || im !== prevThemeCfg.insertMode)) {
+        prevThemeCfg = { theme: t, fontSize: fs, fontFamily: ff, insertMode: im };
+        view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fs, ff, t === 'dark', im)) });
     }
 });
 
+let prevUndo = appContext.app.undoDepth;
 $effect(() => {
-    if (view && appContext.app.undoDepth !== prevUndoDepth) {
-        prevUndoDepth = appContext.app.undoDepth;
-        view.dispatch({
-            effects: historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })),
-        });
+    if (view && appContext.app.undoDepth !== prevUndo) {
+        prevUndo = appContext.app.undoDepth;
+        view.dispatch({ effects: comps.historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })) });
     }
 });
 
+let prevIndent = appContext.app.defaultIndent;
 $effect(() => {
     if (view && appContext.app.defaultIndent !== prevIndent) {
         prevIndent = appContext.app.defaultIndent;
+        view.dispatch({ effects: comps.indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))) });
+    }
+});
+
+let prevWs = appContext.app.showWhitespace;
+$effect(() => {
+    if (view && appContext.app.showWhitespace !== prevWs) {
+        prevWs = appContext.app.showWhitespace;
         view.dispatch({
-            effects: indentComp.reconfigure(
-                indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent))),
+            effects: comps.whitespaceComp.reconfigure(
+                appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin],
             ),
         });
     }
 });
 
+let prevDc = appContext.app.doubleClickSelectsTrailingSpace;
 $effect(() => {
-    if (view && appContext.app.showWhitespace !== prevShowWhitespace) {
-        prevShowWhitespace = appContext.app.showWhitespace;
-        view.dispatch({
-            effects: whitespaceComp.reconfigure(
-                appContext.app.showWhitespace
-                    ? [highlightWhitespace(), newlinePlugin]
-                    : [selectionWhitespacePlugin],
-            ),
-        });
+    if (view && appContext.app.doubleClickSelectsTrailingSpace !== prevDc) {
+        prevDc = appContext.app.doubleClickSelectsTrailingSpace;
+        view.dispatch({ effects: comps.doubleClickComp.reconfigure(createDoubleClickHandler()) });
     }
 });
 
+let prevWw = untrack(() => ({ ww: appContext.app.editorWordWrap, wg: appContext.app.wrapGuideColumn }));
 $effect(() => {
-    if (
-        view &&
-        appContext.app.doubleClickSelectsTrailingSpace !== prevDoubleClickSelectsTrailingSpace
-    ) {
-        prevDoubleClickSelectsTrailingSpace = appContext.app.doubleClickSelectsTrailingSpace;
-        view.dispatch({ effects: doubleClickComp.reconfigure(createDoubleClickHandler()) });
+    const ww = appContext.app.editorWordWrap, wg = appContext.app.wrapGuideColumn;
+    if (view && (ww !== prevWw.ww || wg !== prevWw.wg)) {
+        prevWw = { ww, wg };
+        view.dispatch({ effects: comps.wrapComp.reconfigure(createWrapExtension()) });
     }
 });
 
+let prevHandlers = untrack(() => eventHandlers);
 $effect(() => {
-    const _wordWrap = appContext.app.editorWordWrap;
-    const _wrapGuideColumn = appContext.app.wrapGuideColumn;
-    if (view && (_wordWrap !== prevWrapConfig.wordWrap || _wrapGuideColumn !== prevWrapConfig.wrapGuideColumn)) {
-        prevWrapConfig = { wordWrap: _wordWrap, wrapGuideColumn: _wrapGuideColumn };
-        view.dispatch({ effects: wrapComp.reconfigure(createWrapExtension()) });
+    if (view && eventHandlers !== prevHandlers) {
+        prevHandlers = eventHandlers;
+        view.dispatch({ effects: comps.handlersComp.reconfigure(eventHandlers) });
     }
 });
 
+let prevRecent = untrack(() => ({ lct: lineChangeTracker, rcc: appContext.app.recentChangesCount, rcts: appContext.app.recentChangesTimespan }));
 $effect(() => {
-    if (view && eventHandlers !== prevEventHandlers) {
-        prevEventHandlers = eventHandlers;
-        view.dispatch({ effects: handlersComp.reconfigure(eventHandlers) });
-    }
-});
-
-$effect(() => {
-    const _lineChangeTracker = lineChangeTracker;
-    const _recentChangesCount = appContext.app.recentChangesCount;
-    const _recentChangesTimespan = appContext.app.recentChangesTimespan;
-    if (
-        view &&
-        (_lineChangeTracker !== prevRecentChangesConfig.lineChangeTracker ||
-            _recentChangesCount !== prevRecentChangesConfig.recentChangesCount ||
-            _recentChangesTimespan !== prevRecentChangesConfig.recentChangesTimespan)
-    ) {
-        prevRecentChangesConfig = { lineChangeTracker: _lineChangeTracker, recentChangesCount: _recentChangesCount, recentChangesTimespan: _recentChangesTimespan };
-        view.dispatch({
-            effects: recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)),
-        });
+    const lct = lineChangeTracker, rcc = appContext.app.recentChangesCount, rcts = appContext.app.recentChangesTimespan;
+    if (view && (lct !== prevRecent.lct || rcc !== prevRecent.rcc || rcts !== prevRecent.rcts)) {
+        prevRecent = { lct, rcc, rcts };
+        view.dispatch({ effects: comps.recentComp.reconfigure(createRecentChangesHighlighter(lct)) });
     }
 });
 
 function createExtensions(currentHistoryState: unknown): Extension[] {
-    const isDark = appContext.app.theme === 'dark';
-    const extensions = [
-        highlightActiveLineGutter(),
-        highlightActiveLine(),
-        drawSelection(),
-        historyComp.of(history({ minDepth: appContext.app.undoDepth })),
-        search({ top: true }),
-        highlightSelectionMatches(),
-        autoComp.of(autocompletionConfig),
-        recentComp.of(createRecentChangesHighlighter(lineChangeTracker)),
-        closeBrackets(),
-        smartBacktickHandler,
-        prefetchHoverHandler,
-        EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
-        filePathComp.of(isMarkdown ? [linkPlugin, linkTheme] : []),
-        getEditorKeymap([...customKeymap]),
-        themeComp.of(
-            generateDynamicTheme(
-                appContext.app.editorFontSize,
-                appContext.app.editorFontFamily,
-                isDark,
-                appContext.metrics.insertMode,
-            ),
-        ),
-        indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))),
-        whitespaceComp.of(
-            appContext.app.showWhitespace
-                ? [highlightWhitespace(), newlinePlugin]
-                : [selectionWhitespacePlugin],
-        ),
-        userThemeExtension,
-        defaultFallbackHighlighting,
-        languageComp.of(isMarkdown ? markdownExtensions : []),
-        spellComp.of(createSpellCheckLinter()),
-        doubleClickComp.of(createDoubleClickHandler()),
-        rulerComp.of(rulerPlugin),
-        wrapComp.of(createWrapExtension()),
-        EditorView.contentAttributes.of({ spellcheck: 'false' }),
-        EditorView.scrollMargins.of(() => ({ bottom: 30 })),
-        handlersComp.of(eventHandlers),
-    ];
-
-    if (currentHistoryState) {
-        extensions.push(historyField.init(() => currentHistoryState));
-    }
-
-    extensions.push(
-        EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-                if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
-                // Capture tabId in closure to prevent race condition during tab switches
-                const currentTabId = view?._currentTabId;
-                const docLines = update.state.doc.lines;
-                contentUpdateTimer = window.setTimeout(() => {
-                    // Only update if this timer still corresponds to the current tab
-                    // This prevents updates from stale timers firing after tab switches
-                    if (view?._currentTabId === currentTabId && currentTabId !== undefined) {
-                        onContentChange(update.state.doc.toString(), docLines);
-                        if (onHistoryUpdate && view?.getHistoryState) {
-                            onHistoryUpdate(view.getHistoryState());
-                        }
-                    }
-                }, CONFIG.EDITOR.CONTENT_DEBOUNCE_MS);
-            }
-            if (update.selectionSet) {
-                if (onSelectionChange) {
-                    if (cursorUpdateTimer) clearTimeout(cursorUpdateTimer);
-                    cursorUpdateTimer = window.setTimeout(() => {
-                        cursorUpdateTimer = null;
-                        const sel = update.view.state.selection.main;
-                        onSelectionChange(sel.anchor, sel.head);
-                    }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
-                }
-            }
-            if (update.docChanged || update.selectionSet) {
-                if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
-                metricsUpdateTimer = window.setTimeout(() => {
-                    const state = update.view.state;
-                    const docString = state.doc.toString();
-                    const line = state.doc.lineAt(state.selection.main.head);
-
-                    const metrics: CursorMetrics = calculateCursorMetrics(
-                        docString,
-                        state.selection.main.head,
-                        {
-                            number: line.number,
-                            from: line.from,
-                            text: line.text,
-                        },
-                    );
-                    onMetricsChange(metrics);
-                }, CONFIG.EDITOR.METRICS_DEBOUNCE_MS);
-            }
-        }),
-    );
-
+    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker, autocompletionConfig, isMarkdown, customKeymap, eventHandlers, compartments: comps });
+    extensions.push(createUpdateListener(
+        () => view?._currentTabId,
+        onContentChange, onMetricsChange, tabSync.timerRefs,
+        onSelectionChange, onHistoryUpdate,
+        () => view?.getHistoryState?.(),
+    ));
     return extensions;
 }
 
 $effect(() => {
     const tId = tabId;
-    // Only track forceSync as a reactive signal for external/programmatic updates.
-    // storeTab.content is intentionally NOT tracked here - it changes on every
-    // keystroke and would re-run this effect constantly. Content sync is handled
-    // by the updateListener in CodeMirror; this effect only needs to react to
-    // tab switches (tId) and forced syncs (forceSync).
     const forceSyncCounter = appContext.editor.tabs.find((t) => t.id === tId)?.forceSync ?? 0;
-
     untrack(() => {
-        const storeTab = appContext.editor.tabs.find((t) => t.id === tId);
-        if (!view || !storeTab) return;
-
-        const isTabSwitch = view._currentTabId !== tId;
-
-        if (isTabSwitch) {
-            // Flush pending content for the OLD tab before switching
-            const oldTabId = view._currentTabId;
-
-            if (contentUpdateTimer) {
-                clearTimeout(contentUpdateTimer);
-                contentUpdateTimer = null;
-
-                if (oldTabId) {
-                    const currentDoc = view.state.doc.toString();
-                    updateContent(oldTabId, currentDoc, view.state.doc.lines);
-                }
-            }
-
-            if (metricsUpdateTimer) {
-                clearTimeout(metricsUpdateTimer);
-                metricsUpdateTimer = null;
-            }
-
-            if (oldTabId && view.getHistoryState) {
-                updateHistoryState(oldTabId, view.getHistoryState());
-            }
-
-            view._currentTabId = tId;
-
-            // Block scroll updates during restore to prevent zeroing out the store
-            isRestoring = true;
-
-            const storeContent = storeTab.content;
-            // Reset sync counter for the new tab to ensure future updates are caught
-            lastForceSyncCounter = forceSyncCounter;
-
-            const restoredHistoryState = getHistoryState(tId);
-
-            const newState = EditorState.create({
-                doc: storeContent,
-                extensions: createExtensions(restoredHistoryState),
-                selection: {
-                    anchor: Math.min(storeTab.cursor.anchor, storeContent.length),
-                    head: Math.min(storeTab.cursor.head, storeContent.length),
-                },
-            });
-
-            view?.setState(newState);
-
-            const cursorPos = Math.min(storeTab.cursor.head, storeContent.length);
-            const line = newState.doc.lineAt(cursorPos);
-            onMetricsChange(
-                calculateCursorMetrics(storeContent, cursorPos, {
-                    number: line.number,
-                    from: line.from,
-                    text: line.text,
-                }),
-            );
-
-            view?.requestMeasure({
-                read: () => {},
-                write: () => {
-                    if (view && view._currentTabId === tId) {
-                        const tabTs = getTransientState(tId);
-                        const savedTopLine = tabTs?.topLine ?? 0;
-                        const savedScrollTop = tabTs?.scrollTop ?? 0;
-                        // Prefer line-based restoration if available and valid to handle layout shifts
-                        if (savedTopLine > 1) {
-                            try {
-                                // Use CodeMirror's scrollIntoView to scroll the specific line to top
-                                const safeLine = Math.max(
-                                    1,
-                                    Math.min(savedTopLine, newState.doc.lines),
-                                );
-                                const lineInfo = newState.doc.line(safeLine);
-                                view?.dispatch({
-                                    effects: EditorView.scrollIntoView(lineInfo.from, {
-                                        y: 'start',
-                                    }),
-                                });
-                            } catch {
-                                // Fallback to pixel restoration
-                                if (view) view.scrollDOM.scrollTop = savedScrollTop;
-                            }
-                        } else {
-                            if (view) view.scrollDOM.scrollTop = savedScrollTop;
-                        }
-                    }
-                },
-            });
-
-            view?.focus();
-
-            window._activeEditorView = view;
-
-            if (spellcheckState.dictionaryLoaded) {
-                applyImmediateSpellcheck(view);
-            }
-
-            initializeTabFileState(storeTab).catch(() => {});
-
-            // Re-enable scroll tracking after stabilization
-            setTimeout(() => {
-                isRestoring = false;
-            }, CONFIG.UI_TIMING.RESTORE_STATE_DELAY_MS);
-
-            return;
-        }
-
-        // Non-tab-switch path: handle external/programmatic content updates only
-        const currentDoc = view.state.doc.toString();
-        const storeContent = storeTab.content;
-        const isLoaded = storeTab.contentLoaded;
-
-        const isFocused = view.hasFocus;
-        // Prevent syncing empty state if the editor is focused (user deleted all text)
-        const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
-        const isForcedSync = forceSyncCounter > lastForceSyncCounter;
-
-        // Only sync when unfocused (external change) or explicitly forced
-        const shouldSync =
-            isInitialPopulate ||
-            isForcedSync ||
-            (!isFocused && currentDoc !== storeContent && !appContext.app.isTabSwitching);
-
-        if (shouldSync) {
-            // Calculate minimal diff to preserve unchanged line markers and selection state
-            let from = 0;
-            let to = currentDoc.length;
-            let insert = storeContent;
-
-            const minLen = Math.min(to, insert.length);
-
-            // 1. Common Prefix
-            let commonPrefix = 0;
-            while (
-                commonPrefix < minLen &&
-                currentDoc.charCodeAt(commonPrefix) === insert.charCodeAt(commonPrefix)
-            ) {
-                commonPrefix++;
-            }
-
-            // 2. Common Suffix
-            let commonSuffix = 0;
-            // Max suffix can't overlap with prefix
-            const maxSuffix = minLen - commonPrefix;
-            while (
-                commonSuffix < maxSuffix &&
-                currentDoc.charCodeAt(to - 1 - commonSuffix) ===
-                    insert.charCodeAt(insert.length - 1 - commonSuffix)
-            ) {
-                commonSuffix++;
-            }
-
-            if (commonPrefix > 0 || commonSuffix > 0) {
-                from = commonPrefix;
-                to = to - commonSuffix;
-                insert = insert.slice(commonPrefix, insert.length - commonSuffix);
-            }
-
-            if (from !== to || insert.length > 0) {
-                scrollManager.capture(view, 'Sync');
-
-                view?.dispatch({
-                    changes: { from, to, insert },
-                    userEvent: 'input.type.sync',
-                });
-
-                requestAnimationFrame(() => {
-                    if (view && view._currentTabId === tId) {
-                        view.requestMeasure();
-                        scrollManager.restore(view, 'anchor');
-                    }
-                });
-            }
-
-            if (isForcedSync) {
-                lastForceSyncCounter = forceSyncCounter;
-            }
-        }
+        if (!view) return;
+        tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
     });
 });
 
@@ -592,37 +211,14 @@ onMount(() => {
     };
 
     const viewInstance = new EditorView({
-        state: EditorState.create({
-            doc: initialContent,
-            extensions: createExtensions(initialHistoryState),
-            selection: safeSelection,
-        }),
+        state: EditorState.create({ doc: initialContent, extensions: createExtensions(initialHistoryState), selection: safeSelection }),
         parent: editorContainer,
     });
 
     const typedView = viewInstance as AppEditorView;
     typedView.getHistoryState = () => typedView.state.field(historyField, false);
     typedView._currentTabId = tabId;
-
-    typedView.flushPendingContent = () => {
-        if (contentUpdateTimer) {
-            clearTimeout(contentUpdateTimer);
-            // Safe flush using internal ID
-            if (typedView._currentTabId) {
-                updateContent(
-                    typedView._currentTabId,
-                    typedView.state.doc.toString(),
-                    typedView.state.doc.lines,
-                );
-            } else {
-                onContentChange(typedView.state.doc.toString(), typedView.state.doc.lines);
-            }
-
-            if (onHistoryUpdate && typedView.getHistoryState) {
-                onHistoryUpdate(typedView.getHistoryState());
-            }
-        }
-    };
+    typedView.flushPendingContent = () => tabSync.flushPending(typedView, onContentChange, onHistoryUpdate);
 
     view = typedView;
     window._activeEditorView = view;
@@ -631,136 +227,29 @@ onMount(() => {
 
     viewInstance.requestMeasure({
         read: () => {},
-        write: () => {
-            viewInstance.scrollDOM.scrollTop = initialScrollTop;
-        },
+        write: () => { viewInstance.scrollDOM.scrollTop = initialScrollTop; },
     });
 
-    const handleModifierKey = (e: KeyboardEvent) => {
-        if (e.key === 'Control' || e.key === 'Meta') {
-            if (e.type === 'keydown') {
-                view?.dom.classList.add('cm-modifier-down');
-            } else {
-                view?.dom.classList.remove('cm-modifier-down');
-            }
-        }
-    };
-    const clearModifier = () => view?.dom.classList.remove('cm-modifier-down');
+    const cleanupModifier = setupModifierKeyHandler(viewInstance);
+    const cleanupScroll = setupScrollSync(viewInstance, tabId, () => tabSync.isRestoring, onScrollChange);
+    const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
 
-    window.addEventListener('keydown', handleModifierKey);
-    window.addEventListener('keyup', handleModifierKey);
-    window.addEventListener('blur', clearModifier);
-
-    const throttleScroll = throttle(() => {
-        if (
-            !view ||
-            !onScrollChange ||
-            view._currentTabId !== tabId ||
-            isRestoring // Block updates if restoring
-        )
-            return;
-
-        const dom = view.scrollDOM;
-        const max = dom.scrollHeight - dom.clientHeight;
-        const percentage = max > 0 ? dom.scrollTop / max : 0;
-        const scrollTop = dom.scrollTop;
-
-        const lineBlock = view.lineBlockAtHeight(scrollTop);
-        const docLine = view.state.doc.lineAt(lineBlock.from);
-        onScrollChange(percentage, scrollTop, docLine.number);
-    }, 50);
-
-    viewInstance.scrollDOM.addEventListener('scroll', throttleScroll, { passive: true });
-
-    // CM's built-in selection-drag autoscroll runs at 50ms/8px ? far too slow.
-    // Intercept mousemove with button held to drive faster scroll.
-    let selScrollRAF: number | null = null;
-    let selScrollVel = 0;
-    let selMouseMovePending = false;
-
-    const handleSelMouseMove = (e: MouseEvent) => {
-        if (selMouseMovePending) return;
-        selMouseMovePending = true;
-        requestAnimationFrame(() => {
-            selMouseMovePending = false;
-            if (e.buttons !== 1) {
-                selScrollVel = 0;
-                return;
-            }
-            const scroller = viewInstance.scrollDOM;
-            const rect = scroller.getBoundingClientRect();
-            const ZONE = 60;
-            const MAX = 32;
-            const dy = e.clientY;
-            if (dy < rect.top + ZONE) selScrollVel = -MAX * ((rect.top + ZONE - dy) / ZONE) ** 2;
-            else if (dy > rect.bottom - ZONE)
-                selScrollVel = MAX * ((dy - (rect.bottom - ZONE)) / ZONE) ** 2;
-            else selScrollVel = 0;
-
-            if (selScrollVel !== 0 && selScrollRAF === null) {
-                const tick = () => {
-                    if (selScrollVel !== 0) {
-                        viewInstance.scrollDOM.scrollTop += selScrollVel;
-                        selScrollRAF = requestAnimationFrame(tick);
-                    } else {
-                        selScrollRAF = null;
-                    }
-                };
-                selScrollRAF = requestAnimationFrame(tick);
-            } else if (selScrollVel === 0 && selScrollRAF !== null) {
-                cancelAnimationFrame(selScrollRAF);
-                selScrollRAF = null;
-            }
-        });
-    };
-    const stopSelScroll = () => {
-        selScrollVel = 0;
-        if (selScrollRAF !== null) {
-            cancelAnimationFrame(selScrollRAF);
-            selScrollRAF = null;
-        }
-    };
-
-    document.addEventListener('mousemove', handleSelMouseMove);
-    document.addEventListener('mouseup', stopSelScroll);
-
-    if (searchState.findText) {
-        updateSearchEditor(viewInstance);
-    }
+    if (searchState.findText) updateSearchEditor(viewInstance);
 
     viewInstance.focus();
 
-    // WebKitGTK (Linux) silently drops focus() calls made while the window is
-    // still hidden. Re-focus once the window becomes visible so keyboard input
-    // and paste work correctly from the first keystroke.
-    const onWindowFocus = () => {
-        viewInstance.focus();
-        window.removeEventListener('focus', onWindowFocus);
-    };
+    const onWindowFocus = () => { viewInstance.focus(); window.removeEventListener('focus', onWindowFocus); };
     window.addEventListener('focus', onWindowFocus);
 
     return () => {
         window.removeEventListener('focus', onWindowFocus);
-        if (contentUpdateTimer) clearTimeout(contentUpdateTimer);
-        if (metricsUpdateTimer) clearTimeout(metricsUpdateTimer);
-        if (cursorUpdateTimer) clearTimeout(cursorUpdateTimer);
-        window.removeEventListener('keydown', handleModifierKey);
-        window.removeEventListener('keyup', handleModifierKey);
-        window.removeEventListener('blur', clearModifier);
-        view?.scrollDOM.removeEventListener('scroll', throttleScroll);
-        document.removeEventListener('mousemove', handleSelMouseMove);
-        document.removeEventListener('mouseup', stopSelScroll);
-        stopSelScroll();
-
-        const appWin = window;
-        if (appWin._activeEditorView === view) {
-            appWin._activeEditorView = undefined;
-        }
-
+        tabSync.cleanup();
+        cleanupModifier();
+        cleanupScroll();
+        cleanupSelScroll();
+        if (window._activeEditorView === view) window._activeEditorView = undefined;
         const v = view;
-        if (onHistoryUpdate && v?.getHistoryState) {
-            onHistoryUpdate(v.getHistoryState());
-        }
+        if (onHistoryUpdate && v?.getHistoryState) onHistoryUpdate(v.getHistoryState());
         if (v) v.destroy();
     };
 });
