@@ -1,9 +1,10 @@
 <script lang="ts">
-import { Zap } from 'lucide-svelte';
+import { ArrowUpDown, Zap } from 'lucide-svelte';
 import { tick } from 'svelte';
 import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { appState } from '$lib/stores/appState.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 let {
@@ -48,7 +49,21 @@ function handleKeydown(e: KeyboardEvent) {
 function execute(command: Command) {
     if (!command) return;
     command.handler?.();
+    appState.commandUsage[command.id] = Date.now();
+    appState.commandUsageCounts[command.id] = (appState.commandUsageCounts[command.id] ?? 0) + 1;
     close();
+}
+
+const SORT_LABELS: Record<string, string> = {
+    alphabetical: 'A-Z',
+    recent: 'Recent',
+    'most-used': 'Most Used',
+};
+
+function cycleSortMode() {
+    const modes: Array<'alphabetical' | 'recent' | 'most-used'> = ['alphabetical', 'recent', 'most-used'];
+    const idx = modes.indexOf(appState.commandPaletteSort);
+    appState.commandPaletteSort = modes[(idx + 1) % modes.length];
 }
 
 function formatKey(key: string): string {
@@ -73,7 +88,18 @@ function close() {
             bind:inputRef
             searchPlaceholder="Search Commands..."
             onClose={close}
-            onKeydown={handleKeydown} />
+            onKeydown={handleKeydown}>
+            {#snippet extraActions()}
+                <button
+                    type="button"
+                    class="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-fg-muted transition-colors outline-none hover-surface"
+                    title={appState.commandPaletteSort}
+                    onclick={cycleSortMode}>
+                    <ArrowUpDown size={14} />
+                    {SORT_LABELS[appState.commandPaletteSort]}
+                </button>
+            {/snippet}
+        </ModalSearchHeader>
     {/snippet}
 
     <div class="py-1">

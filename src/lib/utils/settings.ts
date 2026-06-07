@@ -53,6 +53,9 @@ function getSettingsObject() {
     maxFileSizeMB: appState.maxFileSizeMB,
     autoSaveEnabled: appState.autoSaveEnabled,
     autoSaveInterval: appState.autoSaveInterval,
+    commandPaletteSort: appState.commandPaletteSort,
+    commandUsage: appState.commandUsage,
+    commandUsageCounts: appState.commandUsageCounts,
   };
 }
 

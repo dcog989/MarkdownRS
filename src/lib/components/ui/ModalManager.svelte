@@ -9,13 +9,14 @@ import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
 import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
 import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
+import { appState } from '$lib/stores/appState.svelte';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { openFileByPath } from '$lib/utils/fileSystem';
 
 const textOpsWithCommands = new Set(['bold', 'italic', 'insert-link', 'strike', 'inline-code']);
 
-const paletteCommands: Command[] = [
+const basePaletteCommands: Command[] = [
     ...commands.filter((c) => c.showInPalette !== false),
     ...OPERATION_CATEGORIES.flatMap((category) =>
         getOperationsByCategory(category.id)
@@ -28,6 +29,39 @@ const paletteCommands: Command[] = [
             })),
     ),
 ];
+
+const paletteCommands = $derived.by(() => {
+    void appState.commandPaletteSort;
+    void appState.commandUsage;
+    void appState.commandUsageCounts;
+
+    const sorted = [...basePaletteCommands];
+
+    if (appState.commandPaletteSort === 'alphabetical') {
+        sorted.sort((a, b) => {
+            const catA = a.category;
+            const catB = b.category;
+            if (catA !== catB) return catA.localeCompare(catB);
+            return a.label.localeCompare(b.label);
+        });
+    } else if (appState.commandPaletteSort === 'recent') {
+        sorted.sort((a, b) => {
+            const timeA = appState.commandUsage[a.id] ?? 0;
+            const timeB = appState.commandUsage[b.id] ?? 0;
+            if (timeB !== timeA) return timeB - timeA;
+            return a.label.localeCompare(b.label);
+        });
+    } else if (appState.commandPaletteSort === 'most-used') {
+        sorted.sort((a, b) => {
+            const countA = appState.commandUsageCounts[a.id] ?? 0;
+            const countB = appState.commandUsageCounts[b.id] ?? 0;
+            if (countB !== countA) return countB - countA;
+            return a.label.localeCompare(b.label);
+        });
+    }
+
+    return sorted;
+});
 </script>
 
 <CommandPalette
