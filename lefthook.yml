@@ -8,7 +8,7 @@ pre-commit:
 
     - name: rust-fmt
       glob: "*.rs"
-      run: cd src-tauri && cargo fmt -- --check {staged_files}
+      run: cd src-tauri && cargo fmt --check
 
 commit-msg:
   jobs:
