@@ -64,6 +64,7 @@ export type OperationId =
   | 'add-bullets'
   | 'add-numbers'
   | 'add-checkboxes'
+  | 'generate-toc'
   | 'format-document'
   | 'remove-bullets'
   | 'blockquote'
@@ -365,6 +366,15 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: List,
     category: 'markdown',
     execution: 'client',
+  },
+  'generate-toc': {
+    id: 'generate-toc',
+    label: 'Generate Table of Contents',
+    description: 'Insert/update table of contents from document headings',
+    icon: List,
+    category: 'markdown',
+    execution: 'server',
+    backendCommand: 'generate_document_toc',
   },
   'format-document': {
     id: 'format-document',

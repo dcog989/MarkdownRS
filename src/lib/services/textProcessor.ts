@@ -2,6 +2,7 @@ import { getOperation, type OperationId } from '$lib/config/textOperationsRegist
 import { appContext } from '$lib/stores/state.svelte.ts';
 import * as ClientLogic from '$lib/utils/clientTransforms';
 import { formatMarkdown } from '$lib/utils/formatterRust';
+import { generateDocumentToc } from '$lib/utils/tocRust';
 
 export type TransformStrategy = (text: string, options?: unknown) => string | Promise<string>;
 
@@ -86,8 +87,13 @@ class TextProcessor {
     if (!op) return text;
 
     // Special case: Server-side formatting
-    if (op.execution === 'server' && operationId === 'format-document') {
-      return formatMarkdown(text);
+    if (op.execution === 'server') {
+      if (operationId === 'format-document') {
+        return formatMarkdown(text);
+      }
+      if (operationId === 'generate-toc') {
+        return generateDocumentToc(text);
+      }
     }
 
     const strategy = this.strategies.get(operationId);

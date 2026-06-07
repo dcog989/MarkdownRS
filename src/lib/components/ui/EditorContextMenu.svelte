@@ -7,6 +7,7 @@ import {
     CaseSensitive,
     ClipboardCopy,
     ClipboardPaste,
+    List,
     Rotate3d,
     Scissors,
     Search,
@@ -290,6 +291,13 @@ async function handleSendToBrowser() {
                 <WandSparkles size={14} />
                 <span>{selectedText ? 'Format Selection' : 'Format Document'}</span
                 ><span class="text-ui-sm ml-auto opacity-50">Alt+Shift+F</span>
+            </button>
+            <button
+                type="button"
+                class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                onclick={() => handleOp('generate-toc')}>
+                <List size={14} />
+                <span>Generate Table of Contents</span>
             </button>
         </div>
 

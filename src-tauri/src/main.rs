@@ -426,6 +426,7 @@ fn main() {
             commands::spellcheck::get_spellcheck_status,
             commands::markdown::render_markdown,
             commands::markdown::format_markdown,
+            commands::markdown::generate_document_toc,
             commands::markdown::get_markdown_flavors,
             commands::markdown::compute_text_metrics,
             commands::bookmarks::add_bookmark,

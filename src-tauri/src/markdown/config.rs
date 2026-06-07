@@ -42,7 +42,7 @@ impl MarkdownFlavor {
 
     /// Get central comrak options for this flavor
     pub fn to_comrak_options(self) -> Options<'static> {
-        Options {
+        let mut options = Options {
             extension: match self {
                 Self::CommonMark => Extension::default(),
                 Self::Gfm => Extension {
@@ -66,6 +66,8 @@ impl MarkdownFlavor {
                 sourcepos: true,
                 ..Default::default()
             },
-        }
+        };
+        options.extension.header_id_prefix = Some(String::new());
+        options
     }
 }

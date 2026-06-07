@@ -29,8 +29,8 @@ export interface TabData {
   history_state: unknown;
 }
 
-// Format document is handled via format_markdown, not transform_text_content
-export type TextTransformId = Exclude<OperationId, 'format-document'>;
+// Server-side operations are handled via dedicated backend commands, not client-side transform
+export type TextTransformId = Exclude<OperationId, 'format-document' | 'generate-toc'>;
 
 // Maps Rust command names to their Argument and Return types
 export interface BackendCommands {
@@ -138,6 +138,10 @@ export interface BackendCommands {
   render_markdown: {
     args: { content: string; flavor?: string };
     return: RenderResult;
+  };
+  generate_document_toc: {
+    args: { content: string };
+    return: string;
   };
   format_markdown: {
     args: {

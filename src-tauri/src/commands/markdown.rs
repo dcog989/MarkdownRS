@@ -1,6 +1,7 @@
 use crate::markdown::config::{DEFAULT_LIST_INDENT, MarkdownFlavor};
 use crate::markdown::formatter::{self, FormatterOptions};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
+use crate::markdown::toc;
 use crate::utils::IntoTauriError;
 
 #[tauri::command]
@@ -33,6 +34,25 @@ pub async fn render_markdown(
     );
 
     result
+}
+
+#[tauri::command]
+pub async fn generate_document_toc(content: String) -> Result<String, String> {
+    let start = std::time::Instant::now();
+    let content_size = content.len();
+
+    let result = tokio::task::spawn_blocking(move || toc::generate_document_toc(&content))
+        .await
+        .map_err(|e| format!("TOC generation task failed: {}", e))?;
+
+    let duration = start.elapsed();
+    log::info!(
+        "[Markdown] generate_document_toc | duration={:?} | size={} bytes",
+        duration,
+        content_size
+    );
+
+    Ok(result)
 }
 
 #[tauri::command]

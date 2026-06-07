@@ -65,6 +65,7 @@ export async function renderMarkdown(
       line_map: {},
       word_count: 0,
       char_count: 0,
+      headings: [],
     };
   }
 

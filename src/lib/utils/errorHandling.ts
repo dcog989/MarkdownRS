@@ -31,7 +31,8 @@ export type ErrorContext =
   | 'Data:ImportBookmarks'
   | 'Data:ExportRecent'
   | 'Data:ImportRecent'
-  | 'Data:DeleteOrphans';
+  | 'Data:DeleteOrphans'
+  | 'Markdown:TOC';
 
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 
