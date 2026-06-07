@@ -102,8 +102,7 @@ fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
                 },
                 None => {
                     let before = &content[..start_match.end()];
-                    let after = &content[start_match.end()..]
-                        .trim_start_matches(|c| c == '\n' || c == '\r');
+                    let after = &content[start_match.end()..].trim_start_matches(['\n', '\r']);
                     format!(
                         "{}\n\n{}\n\n<!-- tocstop -->\n\n{}",
                         before, toc_markdown, after
@@ -114,7 +113,7 @@ fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
         None => {
             let insert_at = find_after_first_h1(content);
             let (before, after) = content.split_at(insert_at);
-            let before = before.trim_end_matches(|c| c == '\n' || c == '\r');
+            let before = before.trim_end_matches(['\n', '\r']);
             format!(
                 "{}\n\n<!-- toc -->\n\n{}\n\n<!-- tocstop -->\n\n{}",
                 before, toc_markdown, after
