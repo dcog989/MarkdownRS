@@ -133,9 +133,6 @@ export const linkTheme = EditorView.baseTheme({
   },
   '.cm-url': {
     color: 'var(--accent-url)',
-    '&:hover': {
-      color: 'var(--accent-url-hover)',
-    },
   },
   '&.cm-modifier-down .cm-file-path, &.cm-modifier-down .cm-url': {
     cursor: 'pointer',

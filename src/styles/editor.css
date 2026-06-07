@@ -172,12 +172,15 @@
   }
 }
 
-/* Apply all hover effects to ALL .cm-url spans in a line when any one is hovered
-   (bypasses CM splitting the URL into multiple <span> elements) */
-.cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover) .cm-url {
+/* Hover color for .cm-url — always active, applies to all spans in the line */
+.cm-editor .cm-line:has(.cm-url:hover) .cm-url {
   color: var(--accent-url-hover);
+}
+
+/* Ctrl+hover effects for .cm-url */
+.cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover) .cm-url {
   background-color: oklch(from var(--accent-link) l c h / 0.1);
-  box-shadow: 0 2px 0 0 currentColor;
+  box-shadow: 0 1px 0 0 currentColor;
 }
 
 /* Markdown Elements */
