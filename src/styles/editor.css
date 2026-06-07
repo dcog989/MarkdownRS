@@ -143,15 +143,6 @@
   text-decoration: none;
 }
 
-/* Show link decoration on hover when Ctrl is held -- indicates clickability */
-/* .cm-url omitted — :has() box-shadow handles URL underline across all spans */
-.cm-editor.cm-modifier-down .cm-code .cm-link:hover,
-.cm-editor.cm-modifier-down .cm-code .cm-file-path:hover,
-.cm-editor.cm-modifier-down .cm-code-block .cm-link:hover,
-.cm-editor.cm-modifier-down .cm-code-block .cm-file-path:hover {
-  text-decoration: underline;
-}
-
 /* Modifier Keys */
 .cm-editor.cm-modifier-down {
   & .cm-url,
@@ -165,6 +156,15 @@
   & .cm-file-path:hover {
     background-color: oklch(from var(--accent-link) l c h / 0.1);
   }
+}
+
+/* Show link decoration on hover when Ctrl is held -- indicates clickability */
+/* .cm-url omitted — :has() box-shadow handles URL underline across all spans */
+.cm-editor.cm-modifier-down .cm-code .cm-link:hover,
+.cm-editor.cm-modifier-down .cm-code .cm-file-path:hover,
+.cm-editor.cm-modifier-down .cm-code-block .cm-link:hover,
+.cm-editor.cm-modifier-down .cm-code-block .cm-file-path:hover {
+  text-decoration: underline;
 }
 
 /* Hover color for .cm-url — always active, applies to all spans in the line */

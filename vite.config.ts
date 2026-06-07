@@ -6,7 +6,6 @@ const unsafeHosts = new Set(['0.0.0.0', '::', '::0', '']);
 const host = rawHost && !unsafeHosts.has(rawHost) ? rawHost : false;
 
 if (rawHost && !host) {
-  // biome-ignore lint/suspicious/noConsole: intentional build-time security warning
   console.warn(`[Security] TAURI_DEV_HOST="${rawHost}" is unsafe or empty. Dev server bound to localhost only.`);
 }
 
