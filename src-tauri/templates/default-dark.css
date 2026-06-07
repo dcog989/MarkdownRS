@@ -30,7 +30,7 @@
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: oklch(0.35 0.35 305 / 0.35);
+    background-color: oklch(0.42 0.16 280 / 0.55);
 }
 
 /* Syntax Highlighting - Colors Only */

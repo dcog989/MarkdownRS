@@ -56,10 +56,10 @@
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
   --accent-file: oklch(from var(--color-brand-file) 0.8 c h);
-  --accent-link: oklch(from var(--color-brand-link) 0.75 c h);
-  --accent-link-hover: oklch(from var(--color-brand-link) 0.85 c h);
-  --accent-url: oklch(from var(--color-brand-url) 0.75 c h);
-  --accent-url-hover: oklch(from var(--color-brand-url) 0.85 c h);
+  --accent-link: oklch(from var(--color-brand-link) 0.65 c h);
+  --accent-link-hover: oklch(from var(--color-brand-link) 0.75 c h);
+  --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
+  --accent-url-hover: oklch(from var(--color-brand-url) 0.75 c h);
   --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
   --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
 
@@ -74,7 +74,7 @@
   --success: oklch(0.5 0.15 150);
   --success-hover: oklch(0.6 0.18 150);
   --highlight-line: oklch(0.7 0.15 140);
-  --selection-bg: oklch(0.4 0.12 301 / 0.4);
+  --selection-bg: oklch(0.42 0.16 280 / 0.55);
   --selection-match-bg: oklch(0.7 0.18 55 / 0.45);
   --active-line-bg: oklch(1 0 0 / 0.08);
   --dirty-indicator: #5deb47;
@@ -173,7 +173,7 @@
   --success: oklch(0.45 0.15 150);
   --success-hover: oklch(0.4 0.18 150);
   --highlight-line: oklch(0.4 0.15 140);
-  --selection-bg: oklch(57.762% 0.163 309.273 / 0.35);
+  --selection-bg: oklch(60% 0.18 270 / 0.45);
   --selection-match-bg: oklch(0.72 0.18 55 / 0.45);
   --active-line-bg: oklch(0 0 0 / 0.04);
   --dirty-indicator: #2e7d32;
