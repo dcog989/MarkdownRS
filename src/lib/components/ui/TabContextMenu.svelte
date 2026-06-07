@@ -547,9 +547,6 @@ function sc(commandId: string): string {
             {/snippet}
 
             {#if appContext.editor.closedTabsHistory.length > 0}
-                <div class="bg-border-main border-b px-3 py-1.5 text-xs font-semibold opacity-50">
-                    RECENTLY CLOSED
-                </div>
                 {#each appContext.editor.closedTabsHistory as item, i (item.tab.id)}
                     <button
                         type="button"
