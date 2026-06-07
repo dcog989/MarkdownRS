@@ -10,12 +10,17 @@ pre-commit:
       glob: "*.rs"
       run: cd src-tauri && cargo fmt -- --check {staged_files}
 
+commit-msg:
+  jobs:
+    - name: conventional-commit
+      run: |
+        grep -Eq '^(feat|fix|refactor|chore|docs|style|perf|test|build|ci|revert)(\(.+\))?: .+|^Merge |^Revert ' "{1}" && exit 0
+        echo "✗ Commit message must follow Conventional Commits:"
+        echo "  feat|fix|refactor|chore|docs|style|perf|test|build|ci|revert(<scope>): <description>"
+        exit 1
+      fail_text: "Commit message rejected."
+
 pre-push:
   commands:
     full-check:
       run: bun run check
-
-commit-msg:
-  commands:
-    conventional:
-      run: "grep -qE '^(feat|fix|chore|docs|refactor|test|perf|ci|style|revert)(\\(.+\\))?: .' {1}"
