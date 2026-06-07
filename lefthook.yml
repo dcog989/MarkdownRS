@@ -1,22 +1,20 @@
-# pre-commit: type check, then format + lint staged files
 pre-commit:
+  parallel: true
   jobs:
-    - name: types
-      run: bun run lint:types
-      fail_text: "Type check failed. Commit aborted."
-
     - name: biome
       glob: "*.{js,ts,svelte,json,css}"
       run: bunx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
       stage_fixed: true
-      fail_text: "Biome check failed. Commit aborted."
 
     - name: rust-fmt
       glob: "*.rs"
-      run: cd src-tauri && cargo fmt -- --check
-      fail_text: "Rust formatting check failed. Run: cargo fmt"
+      run: cd src-tauri && cargo fmt -- --check {staged_files}
 
-# commit-msg: enforce conventional commit format
+pre-push:
+  commands:
+    full-check:
+      run: bun run check
+
 commit-msg:
   commands:
     conventional:
