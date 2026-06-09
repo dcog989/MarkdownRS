@@ -15,6 +15,7 @@ import { loadSession, persistSession, persistSessionDebounced } from '$lib/servi
 import { appState } from '$lib/stores/appState.svelte';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
+import { computeWordCount } from '$lib/stores/editorCache';
 import {
   addTab,
   closeTab,
@@ -34,10 +35,8 @@ import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { callBackend } from './backend';
-import { CONFIG } from './config';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
-import { countWords } from './textMetrics';
 
 export {
   addToDictionary,
@@ -136,13 +135,8 @@ export async function openFile(path?: string): Promise<void> {
     // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
     const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
-    let initialWordCount = 0;
-    if (result.content.length > CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES) {
-      const metrics = await callBackend('compute_text_metrics', { content: result.content }, 'File:Read');
-      if (metrics) initialWordCount = metrics[1];
-    } else {
-      initialWordCount = countWords(result.content);
-    }
+    const sizeBytes = new TextEncoder().encode(result.content).length;
+    const initialWordCount = computeWordCount(result.content, sizeBytes);
 
     updateTransientState(id, { fileCheckPerformed: false });
     updateTabFields(id, {
@@ -150,7 +144,7 @@ export async function openFile(path?: string): Promise<void> {
       isDirty: false,
       lineEnding: detectedLineEnding,
       encoding: result.encoding.toUpperCase(),
-      sizeBytes: new TextEncoder().encode(result.content).length,
+      sizeBytes,
       wordCount: initialWordCount,
       lineCount,
       widestColumn,

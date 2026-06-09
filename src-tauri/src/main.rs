@@ -428,7 +428,6 @@ fn main() {
             commands::markdown::format_markdown,
             commands::markdown::generate_document_toc,
             commands::markdown::get_markdown_flavors,
-            commands::markdown::compute_text_metrics,
             commands::bookmarks::add_bookmark,
             commands::bookmarks::get_all_bookmarks,
             commands::bookmarks::delete_bookmark,

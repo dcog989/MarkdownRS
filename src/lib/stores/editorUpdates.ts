@@ -2,9 +2,8 @@ import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
-import { getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
+import { computeWordCount, getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, updateTab } from './editorStoreCore.svelte';
 import type { EditorTab } from './editorTypes';
 
@@ -151,12 +150,11 @@ export function reloadTabContent(
   const lineCount = lineArray.length;
   const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
-  const strategy = pickWordCountStrategy(sizeBytes);
-  const wordCount = strategy === 'accurate' ? countWords(content) : fastCountWords(content);
+  const wordCount = computeWordCount(content, sizeBytes);
 
   const ts = getTransientState(id);
   if (ts) {
-    ts.wordCountStrategy = strategy;
+    ts.wordCountStrategy = pickWordCountStrategy(sizeBytes);
     ts.fileCheckPerformed = false;
     ts.contentChanged = true;
   }

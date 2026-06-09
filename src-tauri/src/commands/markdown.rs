@@ -5,11 +5,6 @@ use crate::markdown::toc;
 use crate::utils::IntoTauriError;
 
 #[tauri::command]
-pub async fn compute_text_metrics(content: String) -> Result<(usize, usize, usize, usize), String> {
-    Ok(renderer::calculate_text_metrics(&content))
-}
-
-#[tauri::command]
 pub async fn render_markdown(
     content: String,
     flavor: Option<String>,

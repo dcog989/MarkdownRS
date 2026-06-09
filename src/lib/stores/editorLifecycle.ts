@@ -2,16 +2,15 @@ import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
 import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
-import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import {
   clearTabCaches,
+  computeWordCount,
   defaultTransientState,
   getHistoryState,
   getTransientState,
   initTabCaches,
   initTransientState,
-  pickWordCountStrategy,
   updateHistoryState,
 } from './editorCache';
 import { editorStore } from './editorStoreCore.svelte';
@@ -46,10 +45,7 @@ export function addTab(title: string = '', content: string = '') {
     const lines = normalizedContent.split('\n');
     lineCount = lines.length;
     widestColumn = lines.reduce((max, line) => Math.max(max, line.length), 0);
-    wordCount =
-      pickWordCountStrategy(sizeBytes) === 'accurate'
-        ? countWords(normalizedContent)
-        : fastCountWords(normalizedContent);
+    wordCount = computeWordCount(normalizedContent, sizeBytes);
   }
 
   const newTab: EditorTab = {

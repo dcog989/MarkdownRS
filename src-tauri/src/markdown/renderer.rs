@@ -259,9 +259,3 @@ fn build_line_map_and_metrics(content: &str) -> (Vec<usize>, usize, usize, usize
 
     (line_map, line_count, word_count, char_count, widest_column)
 }
-
-pub fn calculate_text_metrics(content: &str) -> (usize, usize, usize, usize) {
-    let (_, line_count, word_count, char_count, widest_column) =
-        build_line_map_and_metrics(content);
-    (line_count, word_count, char_count, widest_column)
-}

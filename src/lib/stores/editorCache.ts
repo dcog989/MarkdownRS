@@ -17,6 +17,10 @@ export function pickWordCountStrategy(sizeBytes: number): 'accurate' | 'fast' {
   return sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
 }
 
+export function computeWordCount(content: string, sizeBytes: number): number {
+  return pickWordCountStrategy(sizeBytes) === 'accurate' ? countWords(content) : fastCountWords(content);
+}
+
 export function defaultTransientState(sizeBytes: number): TabTransientState {
   return {
     scrollPercentage: 0,
@@ -93,7 +97,7 @@ export function scheduleWordCountUpdate(tabId: string, content: string, sizeByte
     const strategy = ts?.wordCountStrategy ?? pickWordCountStrategy(sizeBytes);
     if (ts && !ts.wordCountStrategy) ts.wordCountStrategy = strategy;
 
-    const wordCount = strategy === 'accurate' ? countWords(content) : fastCountWords(content);
+    const wordCount = computeWordCount(content, sizeBytes);
 
     editorStore.tabs[index] = {
       ...tab,

@@ -1,4 +1,5 @@
 import { appState } from '$lib/stores/appState.svelte';
+import { computeWordCount } from '$lib/stores/editorCache';
 // Only import types if needed
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import {
@@ -18,7 +19,6 @@ import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
-import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { debounce } from '$lib/utils/timing';
 import {
   checkAndReloadIfChanged,
@@ -341,10 +341,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     }
 
     const sizeBytes = new TextEncoder().encode(normalizedContent).length;
-    const wordCount =
-      sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-        ? countWords(normalizedContent)
-        : fastCountWords(normalizedContent);
+    const wordCount = computeWordCount(normalizedContent, sizeBytes);
 
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
     if (currentIndex !== -1) {
@@ -411,8 +408,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
   // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
   const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
 
-  const wordCount =
-    sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? countWords(content) : fastCountWords(content);
+  const wordCount = computeWordCount(content, sizeBytes);
 
   const editorTab: EditorTab = {
     id: t.id,
