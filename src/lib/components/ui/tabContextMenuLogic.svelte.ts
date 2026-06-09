@@ -1,19 +1,19 @@
 import { tick } from 'svelte';
 import { exportService } from '$lib/services/exportService';
-import { sanitizePath } from '$lib/services/fileMetadata';
 import {
   addBookmark,
   deleteBookmark,
   getBookmarkByPath,
   isBookmarked as isBookmarkedSelector,
 } from '$lib/stores/bookmarkStore.svelte';
-import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-import { pushToMru, reorderTabs, togglePin, updateTabPath, updateTabTitle } from '$lib/stores/editorStore.svelte';
+import { confirmDialog, promptDialog } from '$lib/stores/dialogStore.svelte';
+import { pushToMru, reorderTabs, togglePin, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorTypes';
 import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import {
+  renameFile,
   requestCloseTab,
   saveCurrentFile,
   saveCurrentFileAs,
@@ -71,29 +71,39 @@ export class TabContextMenuLogic {
     { mode: 'all' as const, label: 'Close All', disabled: false },
   ]);
 
-  private async doExport(exportFn: () => Promise<void>) {
+  private doExport = async (exportFn: () => Promise<void>) => {
     if (appContext.app.activeTabId !== this.tabId) appContext.app.activeTabId = this.tabId;
     await exportFn();
     this.onClose();
-  }
+  };
 
-  async handleSave() {
-    await withActiveTab(this.tabId, saveCurrentFile);
-    this.onClose();
-  }
+  handleSave = async () => {
+    try {
+      await withActiveTab(this.tabId, saveCurrentFile);
+    } catch {
+      // save failed
+    } finally {
+      this.onClose();
+    }
+  };
 
-  async handleSaveAs() {
-    await withActiveTab(this.tabId, saveCurrentFileAs);
-    this.onClose();
-  }
+  handleSaveAs = async () => {
+    try {
+      await withActiveTab(this.tabId, saveCurrentFileAs);
+    } catch {
+      // save as failed
+    } finally {
+      this.onClose();
+    }
+  };
 
-  handlePin() {
+  handlePin = () => {
     if (!this.tab) return;
     togglePin(this.tabId);
     this.onClose();
-  }
+  };
 
-  async handleCloseMany(mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') {
+  handleCloseMany = async (mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') => {
     let targets: typeof appContext.editor.tabs = [];
 
     if (mode === 'right') targets = appContext.editor.tabs.slice(this.tabIndex + 1);
@@ -107,9 +117,9 @@ export class TabContextMenuLogic {
       await requestCloseTab(t.id);
     }
     this.onClose();
-  }
+  };
 
-  async handleMoveTab(to: 'start' | 'end') {
+  handleMoveTab = async (to: 'start' | 'end') => {
     const newTabs = [...appContext.editor.tabs];
     const [tab] = newTabs.splice(this.tabIndex, 1);
     if (to === 'start') newTabs.unshift(tab);
@@ -121,84 +131,64 @@ export class TabContextMenuLogic {
     await tick();
     triggerScrollToTab();
     this.onClose();
-  }
+  };
 
-  async handleRename() {
-    if (!this.tab) return;
+  handleRename = async () => {
+    const tab = appContext.editor.tabs.find((t) => t.id === this.tabId);
+    if (!tab) {
+      this.onClose();
+      return;
+    }
 
-    if (!this.tab.path) {
-      const newTitle = prompt('Enter new title:', this.tab.customTitle || this.tab.title);
+    this.onClose();
+
+    if (!tab.path) {
+      const newTitle = await promptDialog({
+        title: 'Rename',
+        message: 'Enter new tab name:',
+        value: tab.customTitle || tab.title,
+      });
       if (newTitle?.trim()) {
         updateTabTitle(this.tabId, newTitle.trim(), newTitle.trim());
       }
-      this.onClose();
       return;
     }
 
-    const oldPath = this.tab.path;
-    const currentFileName = oldPath.split(/[\\/]/).pop() || '';
-    const currentBaseName = currentFileName.replace(/\.md$/, '');
-    const newFileName = prompt('Enter new file name (without .md):', currentBaseName);
+    const currentFileName = tab.path.split(/[\\/]/).pop() || '';
+    const raw = await promptDialog({
+      title: 'Rename',
+      message: 'Enter new file name:',
+      value: currentFileName,
+    });
+    if (!raw?.trim()) return;
 
-    if (!newFileName?.trim() || newFileName.trim() === currentBaseName) {
-      this.onClose();
-      return;
-    }
+    await renameFile(this.tabId, raw.trim());
+  };
 
-    const sanitizedName = newFileName.trim().replace(/[<>:"|?*]/g, '_');
-    const newPath = sanitizePath(oldPath.replace(/[\\/][^\\/]+$/, `/${sanitizedName}.md`));
-
-    try {
-      const { fileWatcher } = await import('$lib/services/fileWatcher');
-      const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
-
-      fileWatcher.unwatch(oldPath);
-      await callBackend('rename_file', { oldPath, newPath }, 'File:Write');
-      invalidateMetadataCache(oldPath);
-      invalidateMetadataCache(newPath);
-      updateTabPath(this.tabId, newPath, `${sanitizedName}.md`);
-      await fileWatcher.watch(newPath);
-
-      for (const t of appContext.editor.tabs) {
-        if (t.id !== this.tabId && t.path === oldPath) {
-          updateTabPath(t.id, newPath, `${sanitizedName}.md`);
-        }
-      }
-
-      if (this.isBookmarked) {
-        const bookmark = getBookmarkByPath(oldPath);
-        if (bookmark) {
-          await deleteBookmark(bookmark.id);
-          await addBookmark(newPath, `${sanitizedName}.md`, bookmark.tags);
-        }
-      }
-    } catch (_err) {
-    } finally {
-      this.onClose();
-    }
-  }
-
-  async handleSendToRecycleBin() {
+  handleSendToRecycleBin = async () => {
     const targetPath = this.tab?.path;
     const targetTitle = this.tab?.title;
     const targetId = this.tabId;
 
-    if (!targetPath) return;
+    if (!targetPath) {
+      this.onClose();
+      return;
+    }
 
     this.onClose();
 
-    if (!appContext.app.confirmationSuppressed) {
-      const result = await confirmDialog({
-        title: 'Delete File',
-        message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,
-        discardLabel: 'Delete',
-        saveLabel: undefined,
-      });
-
-      if (result !== 'discard') return;
-    }
-
     try {
+      if (!appContext.app.confirmationSuppressed) {
+        const result = await confirmDialog({
+          title: 'Delete File',
+          message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,
+          discardLabel: 'Delete',
+          saveLabel: undefined,
+        });
+
+        if (result !== 'discard') return;
+      }
+
       const { fileWatcher } = await import('$lib/services/fileWatcher');
       const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
 
@@ -210,9 +200,9 @@ export class TabContextMenuLogic {
       const { fileWatcher } = await import('$lib/services/fileWatcher');
       await fileWatcher.watch(targetPath);
     }
-  }
+  };
 
-  async handleToggleBookmark() {
+  handleToggleBookmark = async () => {
     if (!this.tab?.path) return;
     try {
       if (this.isBookmarked) {
@@ -224,29 +214,41 @@ export class TabContextMenuLogic {
     } finally {
       this.onClose();
     }
-  }
+  };
 
-  async handleReopenClosed(index: number) {
+  handleReopenClosed = async (index: number) => {
     triggerReopenClosedTab(index);
     this.onClose();
-  }
+  };
 
-  handleCopyTitle() {
-    if (this.tab) navigator.clipboard.writeText(this.tab.title);
-    this.onClose();
-  }
+  handleCopyTitle = async () => {
+    const tab = appContext.editor.tabs.find((t) => t.id === this.tabId);
+    try {
+      if (tab) navigator.clipboard.writeText(tab.title);
+    } catch {
+      // clipboard write failed
+    } finally {
+      this.onClose();
+    }
+  };
 
-  handleCopyPath() {
-    if (this.tab?.path) navigator.clipboard.writeText(this.tab.path);
-    this.onClose();
-  }
+  handleCopyPath = async () => {
+    const tab = appContext.editor.tabs.find((t) => t.id === this.tabId);
+    try {
+      if (tab?.path) navigator.clipboard.writeText(tab.path);
+    } catch {
+      // clipboard write failed
+    } finally {
+      this.onClose();
+    }
+  };
 
-  handleClose() {
+  handleClose = () => {
     requestCloseTab(this.tabId);
     this.onClose();
-  }
+  };
 
-  getHistoryTooltip(tab: EditorTab): string {
+  getHistoryTooltip = (tab: EditorTab): string => {
     const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
     const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
 
@@ -254,14 +256,14 @@ export class TabContextMenuLogic {
     if (tab.path) title += `\n${tab.path}`;
 
     return `${title}\n\n-- Preview --\n${preview}`;
-  }
+  };
 
-  formatTitle(title: string): string {
+  formatTitle = (title: string): string => {
     if (title.length > 20) return `${title.substring(0, 20)}...`;
     return title;
-  }
+  };
 
-  sc(commandId: string): string {
+  sc = (commandId: string): string => {
     return shortcutManager.getShortcutDisplay(commandId);
-  }
+  };
 }

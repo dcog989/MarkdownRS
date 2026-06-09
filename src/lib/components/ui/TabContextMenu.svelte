@@ -243,7 +243,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={ctx.handleRename}>
-        <FilePen size={14} class="opacity-70" /><span>Rename</span>
+        <FilePen size={14} class="opacity-70" /><span>Rename...</span>
       </button>
       <button
         type="button"

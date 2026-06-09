@@ -4,6 +4,7 @@ import AboutModal from '$lib/components/ui/AboutModal.svelte';
 import BookmarksModal from '$lib/components/ui/BookmarksModal.svelte';
 import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
 import DataModal from '$lib/components/ui/DataModal.svelte';
+import PromptModal from '$lib/components/ui/PromptModal.svelte';
 import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
 import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
@@ -93,3 +94,4 @@ const paletteCommands = $derived.by(() => {
 <DataModal
     bind:isOpen={appContext.interface.showData}
     onClose={() => (appContext.interface.showData = false)} />
+<PromptModal />

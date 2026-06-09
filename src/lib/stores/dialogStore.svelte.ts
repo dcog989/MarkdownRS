@@ -8,6 +8,12 @@ export type DialogOptions = {
   cancelLabel?: string;
 };
 
+export type PromptOptions = {
+  title: string;
+  message?: string;
+  value?: string;
+};
+
 type DialogRequest = {
   id: string;
   options: DialogOptions;
@@ -22,6 +28,9 @@ let idCounter = 0;
 export const dialogStore = $state({
   isOpen: false,
   options: { title: '', message: '' } as DialogOptions,
+  promptIsOpen: false,
+  promptOptions: { title: '', value: '' } as PromptOptions,
+  promptResolve: null as ((value: string | null) => void) | null,
 });
 
 function showNext() {
@@ -66,4 +75,18 @@ export function resolveDialog(result: DialogResult) {
   }
 
   showNext();
+}
+
+export function promptDialog(options: PromptOptions): Promise<string | null> {
+  return new Promise((resolve) => {
+    dialogStore.promptOptions = { value: '', ...options };
+    dialogStore.promptResolve = resolve;
+    dialogStore.promptIsOpen = true;
+  });
+}
+
+export function resolvePrompt(value: string | null) {
+  dialogStore.promptResolve?.(value);
+  dialogStore.promptResolve = null;
+  dialogStore.promptIsOpen = false;
 }
