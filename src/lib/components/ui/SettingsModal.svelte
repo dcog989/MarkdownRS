@@ -6,6 +6,7 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
+import { getActiveEditorView } from '$lib/utils/editorCommands';
 import { saveSettings } from '$lib/utils/settings';
 import { getSettingDefinitions, type SettingDef } from '$lib/utils/settingsDefinitions';
 import { shortcutManager } from '$lib/utils/shortcuts';
@@ -140,7 +141,7 @@ function updateSetting(key: string, value: unknown, type: string) {
 
             appContext.spellcheck.init(true).then(() => {
                 showToast('success', 'Spellcheck settings updated');
-                const activeView = window._activeEditorView;
+                const activeView = getActiveEditorView();
                 if (activeView) triggerImmediateLint(activeView);
             });
         }

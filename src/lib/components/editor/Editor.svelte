@@ -23,7 +23,7 @@ import { getTransientState } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { ScrollManager } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
-import { registerEditorInstance, unregisterEditorInstance } from '$lib/utils/editorCommands';
+import { registerEditorInstance, registerFlushFn, unregisterEditorInstance, unregisterFlushFn } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
@@ -66,25 +66,16 @@ onMount(() => {
     spellcheckState.init();
 
     // Register flush function for shutdown � must be inside onMount to guarantee cleanup pairing
-    if (!window._editorFlushFunctions) {
-        window._editorFlushFunctions = [];
-    }
     const flushFn = () => {
         if (cmView?.flushPendingContent) {
             cmView.flushPendingContent();
         }
     };
-    window._editorFlushFunctions.push(flushFn);
+    registerFlushFn(flushFn);
 
     return () => {
-        // Cleanup: unregister editor instance and remove flush function when component is destroyed
         unregisterEditorInstance(tabId);
-        if (flushFn && window._editorFlushFunctions) {
-            const index = window._editorFlushFunctions.indexOf(flushFn);
-            if (index > -1) {
-                window._editorFlushFunctions.splice(index, 1);
-            }
-        }
+        unregisterFlushFn(flushFn);
     };
 });
 

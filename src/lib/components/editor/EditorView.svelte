@@ -14,6 +14,7 @@ import { createUpdateListener } from '$lib/components/editor/logic/updateListene
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { ScrollManager } from '$lib/utils/cmScroll';
+import { getActiveEditorView, setActiveEditorView } from '$lib/utils/editorCommands';
 import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
@@ -193,7 +194,7 @@ onMount(() => {
     typedView.flushPendingContent = () => tabSync.flushPending(typedView, onContentChange, onHistoryUpdate);
 
     view = typedView;
-    window._activeEditorView = view;
+    setActiveEditorView(view);
 
     scrollSync.registerEditor(viewInstance);
 
@@ -219,7 +220,7 @@ onMount(() => {
         cleanupModifier();
         cleanupScroll();
         cleanupSelScroll();
-        if (window._activeEditorView === view) window._activeEditorView = undefined;
+        if (getActiveEditorView() === view) setActiveEditorView(undefined);
         const v = view;
         if (onHistoryUpdate && v?.getHistoryState) onHistoryUpdate(v.getHistoryState());
         if (v) v.destroy();

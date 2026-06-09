@@ -31,6 +31,7 @@ import {
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
@@ -205,11 +206,7 @@ export async function saveCurrentFile(skipFormat = false): Promise<boolean> {
   // Clear tab switching flag to ensure format-on-save works
   appContext.app.isTabSwitching = false;
 
-  if (typeof window !== 'undefined') {
-    window._editorFlushFunctions?.forEach((fn) => {
-      fn();
-    });
-  }
+  runFlushFunctions();
   return saveFile(false, skipFormat);
 }
 
@@ -217,11 +214,7 @@ export async function saveCurrentFileAs(): Promise<boolean> {
   // Clear tab switching flag to ensure format-on-save works
   appContext.app.isTabSwitching = false;
 
-  if (typeof window !== 'undefined') {
-    window._editorFlushFunctions?.forEach((fn) => {
-      fn();
-    });
-  }
+  runFlushFunctions();
   return saveFile(true, false);
 }
 

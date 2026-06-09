@@ -8,6 +8,7 @@ import { getHistoryState, getTransientState, updateContent, updateHistoryState }
 import { appContext } from '$lib/stores/state.svelte.ts';
 import type { ScrollManager } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
+import { setActiveEditorView } from '$lib/utils/editorCommands';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import { applyImmediateSpellcheck } from '$lib/utils/spellcheckExtension.svelte.ts';
 import { calculateCursorMetrics } from '$lib/utils/textMetrics';
@@ -132,7 +133,7 @@ export class TabSyncManager {
     });
 
     view.focus();
-    window._activeEditorView = view;
+    setActiveEditorView(view);
 
     if (spellcheckState.dictionaryLoaded) {
       applyImmediateSpellcheck(view);

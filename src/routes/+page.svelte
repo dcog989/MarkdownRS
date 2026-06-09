@@ -12,6 +12,7 @@ import { addTab } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
+import { runFlushFunctions } from '$lib/utils/editorCommands';
 import {
     autoSaveCurrentFile,
     loadSession,
@@ -199,9 +200,7 @@ onMount(() => {
         // Cancel any pending debounced saves to prevent race conditions during unload
         persistSessionDebounced.clear();
 
-        if (window._editorFlushFunctions) {
-            for (const fn of window._editorFlushFunctions) fn();
-        }
+        runFlushFunctions();
         // Force immediate save before window closes
         persistSession();
         saveSettings();

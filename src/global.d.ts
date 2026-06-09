@@ -6,10 +6,3 @@ export interface AppEditorView extends EditorView {
   getHistoryState?: () => HistoryState | undefined;
   flushPendingContent?: () => void;
 }
-
-declare global {
-  interface Window {
-    _editorFlushFunctions?: Array<() => void>;
-    _activeEditorView?: AppEditorView;
-  }
-}
