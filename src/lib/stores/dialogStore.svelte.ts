@@ -51,7 +51,7 @@ export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
       id,
       options: {
         saveLabel: 'Save',
-        discardLabel: "Don't Save",
+        discardLabel: 'Discard',
         cancelLabel: 'Cancel',
         ...options,
       },
