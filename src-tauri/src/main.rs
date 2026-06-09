@@ -252,9 +252,9 @@ fn main() {
                 }
             });
 
-            println!("[INFO] Portable Mode: {}", is_portable);
-            println!("[INFO] Config Directory: {:?}", config_dir);
-            println!("[INFO] Cache Directory: {:?}", local_dir);
+            log::info!("Portable Mode: {}", is_portable);
+            log::info!("Config Directory: {:?}", config_dir);
+            log::info!("Cache Directory: {:?}", local_dir);
 
             // Write reference theme files in background to avoid blocking startup.
             // These serve as templates users can copy to create custom themes.
