@@ -1,7 +1,7 @@
 <script lang="ts">
 import { history, historyField } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
-import { Compartment, EditorState, type Extension } from '@codemirror/state';
+import { Compartment, EditorState, type Extension, type StateEffect } from '@codemirror/state';
 import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/view';
 import { onMount, untrack } from 'svelte';
 import { createDoubleClickHandler, createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
@@ -79,106 +79,78 @@ let autocompletionConfig = $derived(getAutocompletionConfig());
 
 $effect(() => { cmView = view; });
 
+let prevSnap: Record<string, unknown> | undefined;
 $effect(() => {
-    void spellcheckState.customDictionary;
-    if (view && spellcheckState.dictionaryLoaded) {
-        view.dispatch({ effects: comps.spellComp.reconfigure(createSpellCheckLinter()) });
-    }
-});
+    if (!view) return;
 
-let prevIsMd = untrack(() => isMarkdown);
-$effect(() => {
-    if (view && isMarkdown !== prevIsMd) {
-        prevIsMd = isMarkdown;
-        view.dispatch({
-            effects: [
-                comps.languageComp.reconfigure(isMarkdown ? markdownExtensions : []),
-                comps.filePathComp.reconfigure(isMarkdown ? [linkPlugin, linkTheme] : []),
-            ],
-        });
-    }
-});
-
-let prevAuto = untrack(() => autocompletionConfig);
-$effect(() => {
-    if (view && autocompletionConfig !== prevAuto) {
-        prevAuto = autocompletionConfig;
-        view.dispatch({ effects: comps.autoComp.reconfigure(autocompletionConfig) });
-    }
-});
-
-let prevThemeCfg = untrack(() => ({
-    theme: appContext.app.theme, fontSize: appContext.app.editorFontSize,
-    fontFamily: appContext.app.editorFontFamily, insertMode: appContext.metrics.insertMode,
-}));
-$effect(() => {
-    const t = appContext.app.theme, fs = appContext.app.editorFontSize;
-    const ff = appContext.app.editorFontFamily, im = appContext.metrics.insertMode;
-    if (view && (t !== prevThemeCfg.theme || fs !== prevThemeCfg.fontSize || ff !== prevThemeCfg.fontFamily || im !== prevThemeCfg.insertMode)) {
-        prevThemeCfg = { theme: t, fontSize: fs, fontFamily: ff, insertMode: im };
-        view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fs, ff, t === 'dark', im)) });
-    }
-});
-
-let prevUndo = appContext.app.undoDepth;
-$effect(() => {
-    if (view && appContext.app.undoDepth !== prevUndo) {
-        prevUndo = appContext.app.undoDepth;
-        view.dispatch({ effects: comps.historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })) });
-    }
-});
-
-let prevIndent = appContext.app.defaultIndent;
-$effect(() => {
-    if (view && appContext.app.defaultIndent !== prevIndent) {
-        prevIndent = appContext.app.defaultIndent;
-        view.dispatch({ effects: comps.indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))) });
-    }
-});
-
-let prevWs = appContext.app.showWhitespace;
-$effect(() => {
-    if (view && appContext.app.showWhitespace !== prevWs) {
-        prevWs = appContext.app.showWhitespace;
-        view.dispatch({
-            effects: comps.whitespaceComp.reconfigure(
-                appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin],
-            ),
-        });
-    }
-});
-
-let prevDc = appContext.app.doubleClickSelectsTrailingSpace;
-$effect(() => {
-    if (view && appContext.app.doubleClickSelectsTrailingSpace !== prevDc) {
-        prevDc = appContext.app.doubleClickSelectsTrailingSpace;
-        view.dispatch({ effects: comps.doubleClickComp.reconfigure(createDoubleClickHandler()) });
-    }
-});
-
-let prevWw = untrack(() => ({ ww: appContext.app.editorWordWrap, wg: appContext.app.wrapGuideColumn }));
-$effect(() => {
+    const theme = appContext.app.theme, fontSize = appContext.app.editorFontSize;
+    const fontFamily = appContext.app.editorFontFamily, insertMode = appContext.metrics.insertMode;
+    const undoDepth = appContext.app.undoDepth, indent = appContext.app.defaultIndent;
+    const showWs = appContext.app.showWhitespace, dc = appContext.app.doubleClickSelectsTrailingSpace;
     const ww = appContext.app.editorWordWrap, wg = appContext.app.wrapGuideColumn;
-    if (view && (ww !== prevWw.ww || wg !== prevWw.wg)) {
-        prevWw = { ww, wg };
-        view.dispatch({ effects: comps.wrapComp.reconfigure(createWrapExtension()) });
-    }
-});
+    const rcc = appContext.app.recentChangesCount, rcts = appContext.app.recentChangesTimespan;
+    const lct = lineChangeTracker;
+    const customDict = spellcheckState.customDictionary, dictSize = customDict.size;
+    const dictLoaded = spellcheckState.dictionaryLoaded;
+    const autoCfg = autocompletionConfig, md = isMarkdown, handlers = eventHandlers;
 
-let prevHandlers = untrack(() => eventHandlers);
-$effect(() => {
-    if (view && eventHandlers !== prevHandlers) {
-        prevHandlers = eventHandlers;
-        view.dispatch({ effects: comps.handlersComp.reconfigure(eventHandlers) });
-    }
-});
+    const prev = untrack(() => prevSnap);
+    if (prev
+        && prev.theme === theme && prev.fontSize === fontSize
+        && prev.fontFamily === fontFamily && prev.insertMode === insertMode
+        && prev.undoDepth === undoDepth && prev.indent === indent
+        && prev.showWs === showWs && prev.dc === dc
+        && prev.ww === ww && prev.wg === wg
+        && prev.rcc === rcc && prev.rcts === rcts && prev.lct === lct
+        && prev.dictLoaded === dictLoaded && prev.customDict === customDict && prev.dictSize === dictSize
+        && prev.autoCfg === autoCfg && prev.md === md && prev.handlers === handlers
+    ) return;
 
-let prevRecent = untrack(() => ({ lct: lineChangeTracker, rcc: appContext.app.recentChangesCount, rcts: appContext.app.recentChangesTimespan }));
-$effect(() => {
-    const lct = lineChangeTracker, rcc = appContext.app.recentChangesCount, rcts = appContext.app.recentChangesTimespan;
-    if (view && (lct !== prevRecent.lct || rcc !== prevRecent.rcc || rcts !== prevRecent.rcts)) {
-        prevRecent = { lct, rcc, rcts };
-        view.dispatch({ effects: comps.recentComp.reconfigure(createRecentChangesHighlighter(lct)) });
+    prevSnap = {
+        theme, fontSize, fontFamily, insertMode, undoDepth, indent,
+        showWs, dc, ww, wg, rcc, rcts, lct, dictLoaded, customDict, dictSize,
+        autoCfg, md, handlers,
+    };
+
+    const effects: StateEffect<unknown>[] = [];
+
+    if (!prev || theme !== prev.theme || fontSize !== prev.fontSize || fontFamily !== prev.fontFamily || insertMode !== prev.insertMode) {
+        effects.push(comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === 'dark', insertMode)));
+    }
+    if (!prev || undoDepth !== prev.undoDepth) {
+        effects.push(comps.historyComp.reconfigure(history({ minDepth: undoDepth })));
+    }
+    if (!prev || indent !== prev.indent) {
+        effects.push(comps.indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, indent)))));
+    }
+    if (!prev || showWs !== prev.showWs) {
+        effects.push(comps.whitespaceComp.reconfigure(showWs ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin]));
+    }
+    if (!prev || dc !== prev.dc) {
+        effects.push(comps.doubleClickComp.reconfigure(createDoubleClickHandler()));
+    }
+    if (!prev || ww !== prev.ww || wg !== prev.wg) {
+        effects.push(comps.wrapComp.reconfigure(createWrapExtension()));
+    }
+    if (!prev || rcc !== prev.rcc || rcts !== prev.rcts || lct !== prev.lct) {
+        effects.push(comps.recentComp.reconfigure(createRecentChangesHighlighter(lct)));
+    }
+    if (dictLoaded && (!prev?.dictLoaded || customDict !== prev.customDict || dictSize !== prev.dictSize)) {
+        effects.push(comps.spellComp.reconfigure(createSpellCheckLinter()));
+    }
+    if (!prev || md !== prev.md) {
+        effects.push(comps.languageComp.reconfigure(md ? markdownExtensions : []));
+        effects.push(comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []));
+    }
+    if (!prev || autoCfg !== prev.autoCfg) {
+        effects.push(comps.autoComp.reconfigure(autoCfg));
+    }
+    if (!prev || handlers !== prev.handlers) {
+        effects.push(comps.handlersComp.reconfigure(handlers));
+    }
+
+    if (effects.length > 0) {
+        view.dispatch({ effects });
     }
 });
 
