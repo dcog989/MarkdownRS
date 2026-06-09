@@ -4,6 +4,7 @@ use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Anchorizer, Arena, format_html_with_plugins, options::Plugins, parse_document};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::sync::LazyLock;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -87,10 +88,9 @@ fn is_in_code_or_link<'a>(node: &'a AstNode<'a>) -> bool {
     })
 }
 
-/// Percent-encodes a file path for use in an HTML `href` attribute.
-/// Keeps unreserved characters and `/` intact; encodes everything else.
-fn percent_encode_path(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
+/// Percent-encodes a file path into `out`, keeping unreserved characters and `/` intact.
+fn percent_encode_into(out: &mut String, s: &str) {
+    out.reserve(s.len());
     for c in s.chars() {
         match c {
             'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' | '/' => out.push(c),
@@ -103,12 +103,11 @@ fn percent_encode_path(s: &str) -> String {
             },
         }
     }
-    out
 }
 
-/// Escapes characters with special meaning in HTML text / attributes.
-fn html_escape(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
+/// Escapes characters with special meaning in HTML text / attributes into `out`.
+fn html_escape_into(out: &mut String, s: &str) {
+    out.reserve(s.len());
     for c in s.chars() {
         match c {
             '&' => out.push_str("&amp;"),
@@ -118,19 +117,19 @@ fn html_escape(s: &str) -> String {
             _ => out.push(c),
         }
     }
-    out
 }
 
 /// Walks the AST and replaces file-path text segments with HtmlInline link nodes,
 /// operating purely on text nodes so existing HTML attributes are never touched.
 fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
-    // Collect text nodes first to avoid mutating while iterating descendants
     let text_nodes: Vec<&AstNode<'_>> = root
         .descendants()
         .filter(|node| {
             matches!(node.data.borrow().value, NodeValue::Text(_)) && !is_in_code_or_link(node)
         })
         .collect();
+
+    let mut link_buf = String::new();
 
     for node in text_nodes {
         let node_data = node.data.borrow();
@@ -143,7 +142,6 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
             continue;
         }
 
-        // Build replacement sibling nodes: alternate Text / HtmlInline segments
         let mut last_end = 0;
         let mut new_nodes: Vec<&AstNode<'_>> = Vec::new();
 
@@ -151,33 +149,31 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
             let full = cap.get(0).expect("group 0");
             let path_match = cap.get(1).expect("group 1");
 
-            // Leading whitespace / non-path prefix before the captured group
             let before = &text[last_end..path_match.start()];
             if !before.is_empty() {
-                let n = arena.alloc(AstNode::from(NodeValue::Text(std::borrow::Cow::Owned(
+                let n = arena.alloc(AstNode::from(NodeValue::Text(Cow::Owned(
                     before.to_string(),
                 ))));
                 new_nodes.push(n);
             }
 
             let path = path_match.as_str();
-            let link_html = format!(
-                r#"<a href="{}" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">{}</a>"#,
-                percent_encode_path(path),
-                html_escape(path)
-            );
-            let n = arena.alloc(AstNode::from(NodeValue::HtmlInline(link_html)));
+            link_buf.push_str(r#"<a href=""#);
+            percent_encode_into(&mut link_buf, path);
+            link_buf.push_str(r#"" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">"#);
+            html_escape_into(&mut link_buf, path);
+            link_buf.push_str("</a>");
+            let n = arena.alloc(AstNode::from(NodeValue::HtmlInline(std::mem::take(
+                &mut link_buf,
+            ))));
             new_nodes.push(n);
 
             last_end = full.end();
         }
 
-        // Trailing text after the last match
         if last_end < text.len() {
             let tail = &text[last_end..];
-            let n = arena.alloc(AstNode::from(NodeValue::Text(std::borrow::Cow::Owned(
-                tail.to_string(),
-            ))));
+            let n = arena.alloc(AstNode::from(NodeValue::Text(Cow::Owned(tail.to_string()))));
             new_nodes.push(n);
         }
 
@@ -185,7 +181,6 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
             continue;
         }
 
-        // Insert new sibling nodes before the original, then detach it
         for new_node in new_nodes {
             node.insert_before(new_node);
         }
