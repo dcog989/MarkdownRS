@@ -56,14 +56,14 @@ function handleKeydown(e: KeyboardEvent) {
   </div>
 
   {#snippet footer()}
+    <button type="button" class="btn-base btn-sm" onclick={handleConfirm}>
+      OK
+    </button>
     <button
       type="button"
       class="btn-base btn-sm btn-secondary"
       onclick={() => resolvePrompt(null)}>
       Cancel
-    </button>
-    <button type="button" class="btn-base btn-sm" onclick={handleConfirm}>
-      OK
     </button>
   {/snippet}
 </Modal>

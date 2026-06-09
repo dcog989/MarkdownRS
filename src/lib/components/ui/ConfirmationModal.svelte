@@ -3,9 +3,14 @@ import Modal from '$lib/components/ui/Modal.svelte';
 import { resolveDialog } from '$lib/stores/dialogStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 
-function autofocus(node: HTMLButtonElement) {
-  node.focus();
-}
+const buttons = $derived.by(() => {
+  const opts = appContext.ui.dialog.options;
+  const result: { action: 'save' | 'discard' | 'cancel'; label: string }[] = [];
+  if (opts.saveLabel) result.push({ action: 'save', label: opts.saveLabel });
+  if (opts.discardLabel) result.push({ action: 'discard', label: opts.discardLabel });
+  if (opts.cancelLabel) result.push({ action: 'cancel', label: opts.cancelLabel });
+  return result;
+});
 </script>
 
 <Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog('cancel')} zIndex={100}>
@@ -20,20 +25,14 @@ function autofocus(node: HTMLButtonElement) {
     </div>
 
     {#snippet footer()}
-        {#if appContext.ui.dialog.options.saveLabel}
-            <button type="button" class="btn-base btn-sm btn-secondary" onclick={() => resolveDialog('save')}>
-                {appContext.ui.dialog.options.saveLabel}
+        {#each buttons as { action, label }, i (action)}
+            <button
+                type="button"
+                class="btn-base btn-sm"
+                class:btn-secondary={i > 0}
+                onclick={() => resolveDialog(action)}>
+                {label}
             </button>
-        {/if}
-        {#if appContext.ui.dialog.options.discardLabel}
-            <button type="button" class="btn-base btn-sm btn-secondary" onclick={() => resolveDialog('discard')}>
-                {appContext.ui.dialog.options.discardLabel}
-            </button>
-        {/if}
-        {#if appContext.ui.dialog.options.cancelLabel}
-            <button type="button" class="btn-base btn-sm" use:autofocus onclick={() => resolveDialog('cancel')}>
-                {appContext.ui.dialog.options.cancelLabel}
-            </button>
-        {/if}
+        {/each}
     {/snippet}
 </Modal>
