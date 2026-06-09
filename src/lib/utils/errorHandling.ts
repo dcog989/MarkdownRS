@@ -129,14 +129,6 @@ export class AppError extends Error {
   }
 
   private async logError(toDisk: boolean): Promise<void> {
-    if (this.additionalInfo) {
-    }
-
-    if (this.stack) {
-    }
-    if (this.originalError?.stack) {
-    }
-
     if (toDisk) {
       try {
         const diskMessage = this.formatForDiskLog();
