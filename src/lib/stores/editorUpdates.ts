@@ -37,7 +37,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
     ...oldTab,
     title: newTitle,
     content,
-    isDirty: true,
+    isDirty: hashContent(content) !== oldTab.lastSavedHash,
     modified: now,
     formattedTimestamp: formatTimestampForDisplay(now),
     sizeBytes,
