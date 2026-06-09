@@ -1,8 +1,8 @@
 use crate::db::Database;
 use spellbook::Dictionary;
 use std::collections::HashSet;
-use std::sync::Mutex;
 use std::sync::atomic::AtomicU64;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SpellcheckStatus {
@@ -17,7 +17,7 @@ pub const MAX_FILE_SIZE_UNSET: u64 = u64::MAX;
 
 pub struct AppState {
     pub db: Database,
-    pub speller: Mutex<Option<Dictionary>>,
+    pub speller: Arc<Mutex<Option<Dictionary>>>,
     pub custom_dict: Mutex<HashSet<String>>,
     pub spellcheck_status: Mutex<SpellcheckStatus>,
     /// Cached value of the `maxFileSizeMB` setting converted to bytes.

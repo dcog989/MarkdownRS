@@ -4,7 +4,7 @@ pub mod user_dict;
 
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
-use crate::utils::IntoTauriError;
+use crate::utils::{IntoTauriError, handle_error};
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -262,30 +262,20 @@ pub async fn check_words(
 ) -> Result<Vec<String>, String> {
     log::debug!("check_words called with {} words", words.len());
 
-    let (speller_present, custom_snapshot) = {
-        let speller_guard = state.speller.lock().unwrap_or_else(|e| e.into_inner());
-        let custom_guard = state.custom_dict.lock().unwrap_or_else(|e| e.into_inner());
-        let present = speller_guard.is_some();
-        let snapshot = if present {
-            custom_guard.clone()
-        } else {
-            HashSet::new()
+    let custom_snapshot = {
+        let guard = state.custom_dict.lock().unwrap_or_else(|e| e.into_inner());
+        guard.clone()
+    };
+
+    let speller = state.speller.clone();
+
+    let misspelled = tokio::task::spawn_blocking(move || {
+        let guard = speller.lock().unwrap_or_else(|e| e.into_inner());
+        let dict = match guard.as_ref() {
+            Some(d) => d,
+            None => return Vec::new(),
         };
-        (present, snapshot)
-    };
 
-    if !speller_present {
-        log::warn!("Speller is None in check_words!");
-        return Ok(Vec::new());
-    }
-
-    let speller_guard = state.speller.lock().unwrap_or_else(|e| e.into_inner());
-    let speller = match speller_guard.as_ref() {
-        Some(s) => s,
-        None => return Ok(Vec::new()),
-    };
-
-    let misspelled = tokio::task::block_in_place(|| {
         let mut result = Vec::new();
         for word in &words {
             let clean = word.trim();
@@ -308,12 +298,14 @@ pub async fn check_words(
                 continue;
             }
 
-            if !speller.check(clean) {
+            if !dict.check(clean) {
                 result.push(word.to_string());
             }
         }
         result
-    });
+    })
+    .await
+    .map_err(|e| handle_error(None, "check spelling", e))?;
 
     log::debug!(
         "check_words returning {} misspelled words",
