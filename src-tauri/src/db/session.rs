@@ -82,135 +82,11 @@ impl Database {
     }
 
     fn save_active_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
-        if tabs.is_empty() {
-            tx.execute("DELETE FROM tabs", [])?;
-            return Ok(());
-        }
-
-        let placeholders = (1..=tabs.len())
-            .map(|i| format!("?{}", i))
-            .collect::<Vec<_>>()
-            .join(",");
-        let delete_sql = format!("DELETE FROM tabs WHERE id NOT IN ({})", placeholders);
-        let mut delete_stmt = tx.prepare(&delete_sql)?;
-        let ids: Vec<&dyn rusqlite::types::ToSql> = tabs
-            .iter()
-            .map(|t| &t.id as &dyn rusqlite::types::ToSql)
-            .collect();
-        delete_stmt.execute(ids.as_slice())?;
-
-        let mut upsert_stmt = tx.prepare_cached(
-            "INSERT INTO tabs (
-                id, title, content, is_dirty, path, scroll_percentage,
-                created, modified, is_pinned, custom_title,
-                file_check_failed, file_check_performed, mru_position, sort_index
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
-            ON CONFLICT(id) DO UPDATE SET
-                title              = excluded.title,
-                content            = CASE WHEN excluded.content IS NOT NULL
-                                          THEN excluded.content
-                                          ELSE tabs.content END,
-                is_dirty           = excluded.is_dirty,
-                path               = excluded.path,
-                scroll_percentage  = excluded.scroll_percentage,
-                created            = excluded.created,
-                modified           = excluded.modified,
-                is_pinned          = excluded.is_pinned,
-                custom_title       = excluded.custom_title,
-                file_check_failed  = excluded.file_check_failed,
-                file_check_performed = excluded.file_check_performed,
-                mru_position       = excluded.mru_position,
-                sort_index         = excluded.sort_index",
-        )?;
-
-        for tab in tabs {
-            let content = tab.content.as_deref().filter(|c| !c.is_empty());
-            upsert_stmt.execute(params![
-                &tab.id,
-                &tab.title,
-                content,
-                tab.is_dirty as i32,
-                &tab.path,
-                tab.scroll_percentage,
-                &tab.created,
-                &tab.modified,
-                tab.is_pinned as i32,
-                &tab.custom_title,
-                tab.file_check_failed as i32,
-                tab.file_check_performed as i32,
-                &tab.mru_position,
-                &tab.sort_index,
-            ])?;
-        }
-
-        Ok(())
+        save_tabs(tx, tabs, "tabs", false)
     }
 
     fn save_closed_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
-        if tabs.is_empty() {
-            tx.execute("DELETE FROM closed_tabs", [])?;
-            return Ok(());
-        }
-
-        let placeholders = (1..=tabs.len())
-            .map(|i| format!("?{}", i))
-            .collect::<Vec<_>>()
-            .join(",");
-        let delete_sql = format!("DELETE FROM closed_tabs WHERE id NOT IN ({})", placeholders);
-        let mut delete_stmt = tx.prepare(&delete_sql)?;
-        let ids: Vec<&dyn rusqlite::types::ToSql> = tabs
-            .iter()
-            .map(|t| &t.id as &dyn rusqlite::types::ToSql)
-            .collect();
-        delete_stmt.execute(ids.as_slice())?;
-
-        let mut upsert_stmt = tx.prepare_cached(
-            "INSERT INTO closed_tabs (
-                id, title, content, is_dirty, path, scroll_percentage,
-                created, modified, is_pinned, custom_title,
-                file_check_failed, file_check_performed, mru_position, sort_index, original_index
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
-            ON CONFLICT(id) DO UPDATE SET
-                title              = excluded.title,
-                content            = CASE WHEN excluded.content IS NOT NULL
-                                          THEN excluded.content
-                                          ELSE closed_tabs.content END,
-                is_dirty           = excluded.is_dirty,
-                path               = excluded.path,
-                scroll_percentage  = excluded.scroll_percentage,
-                created            = excluded.created,
-                modified           = excluded.modified,
-                is_pinned          = excluded.is_pinned,
-                custom_title       = excluded.custom_title,
-                file_check_failed  = excluded.file_check_failed,
-                file_check_performed = excluded.file_check_performed,
-                mru_position       = excluded.mru_position,
-                sort_index         = excluded.sort_index,
-                original_index     = excluded.original_index",
-        )?;
-
-        for tab in tabs.iter() {
-            let content = tab.content.as_deref().filter(|c| !c.is_empty());
-            upsert_stmt.execute(params![
-                &tab.id,
-                &tab.title,
-                content,
-                tab.is_dirty as i32,
-                &tab.path,
-                tab.scroll_percentage,
-                &tab.created,
-                &tab.modified,
-                tab.is_pinned as i32,
-                &tab.custom_title,
-                tab.file_check_failed as i32,
-                tab.file_check_performed as i32,
-                &tab.mru_position,
-                &tab.sort_index,
-                &tab.original_index,
-            ])?;
-        }
-
-        Ok(())
+        save_tabs(tx, tabs, "closed_tabs", true)
     }
 
     pub fn load_session(&self) -> Result<SessionData> {
@@ -294,4 +170,136 @@ impl Database {
 
         Ok(TabData { content })
     }
+}
+
+fn save_tabs(
+    tx: &rusqlite::Transaction,
+    tabs: &[TabState],
+    table_name: &str,
+    include_original_index: bool,
+) -> Result<()> {
+    if tabs.is_empty() {
+        let sql = format!("DELETE FROM {}", table_name);
+        tx.execute(&sql, [])?;
+        return Ok(());
+    }
+
+    let placeholders = (1..=tabs.len())
+        .map(|i| format!("?{}", i))
+        .collect::<Vec<_>>()
+        .join(",");
+    let delete_sql = format!(
+        "DELETE FROM {} WHERE id NOT IN ({})",
+        table_name, placeholders
+    );
+    let mut delete_stmt = tx.prepare(&delete_sql)?;
+    let ids: Vec<&dyn rusqlite::types::ToSql> = tabs
+        .iter()
+        .map(|t| &t.id as &dyn rusqlite::types::ToSql)
+        .collect();
+    delete_stmt.execute(ids.as_slice())?;
+
+    let (columns, placeholders_str, update_set) = if include_original_index {
+        (
+            "id, title, content, is_dirty, path, scroll_percentage,
+             created, modified, is_pinned, custom_title,
+             file_check_failed, file_check_performed, mru_position, sort_index, original_index",
+            "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15",
+            format!(
+                "title              = excluded.title,
+                content            = CASE WHEN excluded.content IS NOT NULL
+                                          THEN excluded.content
+                                          ELSE {0}.content END,
+                is_dirty           = excluded.is_dirty,
+                path               = excluded.path,
+                scroll_percentage  = excluded.scroll_percentage,
+                created            = excluded.created,
+                modified           = excluded.modified,
+                is_pinned          = excluded.is_pinned,
+                custom_title       = excluded.custom_title,
+                file_check_failed  = excluded.file_check_failed,
+                file_check_performed = excluded.file_check_performed,
+                mru_position       = excluded.mru_position,
+                sort_index         = excluded.sort_index,
+                original_index     = excluded.original_index",
+                table_name
+            ),
+        )
+    } else {
+        (
+            "id, title, content, is_dirty, path, scroll_percentage,
+             created, modified, is_pinned, custom_title,
+             file_check_failed, file_check_performed, mru_position, sort_index",
+            "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14",
+            format!(
+                "title              = excluded.title,
+                content            = CASE WHEN excluded.content IS NOT NULL
+                                          THEN excluded.content
+                                          ELSE {0}.content END,
+                is_dirty           = excluded.is_dirty,
+                path               = excluded.path,
+                scroll_percentage  = excluded.scroll_percentage,
+                created            = excluded.created,
+                modified           = excluded.modified,
+                is_pinned          = excluded.is_pinned,
+                custom_title       = excluded.custom_title,
+                file_check_failed  = excluded.file_check_failed,
+                file_check_performed = excluded.file_check_performed,
+                mru_position       = excluded.mru_position,
+                sort_index         = excluded.sort_index",
+                table_name
+            ),
+        )
+    };
+
+    let upsert_sql = format!(
+        "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT(id) DO UPDATE SET {}",
+        table_name, columns, placeholders_str, update_set
+    );
+    let mut upsert_stmt = tx.prepare_cached(&upsert_sql)?;
+
+    if include_original_index {
+        for tab in tabs {
+            let content = tab.content.as_deref().filter(|c| !c.is_empty());
+            upsert_stmt.execute(params![
+                &tab.id,
+                &tab.title,
+                content,
+                tab.is_dirty as i32,
+                &tab.path,
+                tab.scroll_percentage,
+                &tab.created,
+                &tab.modified,
+                tab.is_pinned as i32,
+                &tab.custom_title,
+                tab.file_check_failed as i32,
+                tab.file_check_performed as i32,
+                &tab.mru_position,
+                &tab.sort_index,
+                &tab.original_index,
+            ])?;
+        }
+    } else {
+        for tab in tabs {
+            let content = tab.content.as_deref().filter(|c| !c.is_empty());
+            upsert_stmt.execute(params![
+                &tab.id,
+                &tab.title,
+                content,
+                tab.is_dirty as i32,
+                &tab.path,
+                tab.scroll_percentage,
+                &tab.created,
+                &tab.modified,
+                tab.is_pinned as i32,
+                &tab.custom_title,
+                tab.file_check_failed as i32,
+                tab.file_check_performed as i32,
+                &tab.mru_position,
+                &tab.sort_index,
+            ])?;
+        }
+    }
+
+    Ok(())
 }
