@@ -65,34 +65,7 @@ impl Database {
 
     pub fn delete_orphan_recent_files(&self) -> Result<usize> {
         let conn = lock_conn!(self);
-        let paths: Vec<String> = {
-            let mut stmt = conn.prepare("SELECT path FROM recent_files")?;
-            stmt.query_map([], |row| row.get(0))?
-                .collect::<rusqlite::Result<Vec<String>>>()?
-        };
-
-        let dead: Vec<&str> = paths
-            .iter()
-            .filter(|p| !std::path::Path::new(p.as_str()).exists())
-            .map(String::as_str)
-            .collect();
-
-        if dead.is_empty() {
-            return Ok(0);
-        }
-
-        let placeholders = (1..=dead.len())
-            .map(|i| format!("?{}", i))
-            .collect::<Vec<_>>()
-            .join(",");
-        let sql = format!("DELETE FROM recent_files WHERE path IN ({})", placeholders);
-        let params: Vec<&dyn rusqlite::types::ToSql> = dead
-            .iter()
-            .map(|p| p as &dyn rusqlite::types::ToSql)
-            .collect();
-        conn.execute(&sql, params.as_slice())?;
-
-        Ok(dead.len())
+        Ok(crate::db::delete_orphans(&conn, "recent_files", "path")?)
     }
 
     pub fn import_recent_files(&self, paths: &[String]) -> Result<()> {

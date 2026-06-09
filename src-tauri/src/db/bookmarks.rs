@@ -78,34 +78,7 @@ impl Database {
 
     pub fn delete_orphan_bookmarks(&self) -> Result<usize> {
         let conn = lock_conn!(self);
-        let entries: Vec<(String, String)> = {
-            let mut stmt = conn.prepare("SELECT id, path FROM bookmarks")?;
-            stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
-                .collect::<rusqlite::Result<Vec<(String, String)>>>()?
-        };
-
-        let dead_ids: Vec<&str> = entries
-            .iter()
-            .filter(|(_, path)| !std::path::Path::new(path.as_str()).exists())
-            .map(|(id, _)| id.as_str())
-            .collect();
-
-        if dead_ids.is_empty() {
-            return Ok(0);
-        }
-
-        let placeholders = (1..=dead_ids.len())
-            .map(|i| format!("?{}", i))
-            .collect::<Vec<_>>()
-            .join(",");
-        let sql = format!("DELETE FROM bookmarks WHERE id IN ({})", placeholders);
-        let params: Vec<&dyn rusqlite::types::ToSql> = dead_ids
-            .iter()
-            .map(|id| id as &dyn rusqlite::types::ToSql)
-            .collect();
-        conn.execute(&sql, params.as_slice())?;
-
-        Ok(dead_ids.len())
+        Ok(crate::db::delete_orphans(&conn, "bookmarks", "id")?)
     }
 
     pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<()> {
