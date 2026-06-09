@@ -43,18 +43,6 @@ class Logger {
     const metadataStr = this.formatMetadata(metadata);
     const message = metadataStr ? `[${namespace}] ${action} | ${metadataStr}` : `[${namespace}] ${action}`;
 
-    // Standard Browser Console output
-    switch (level) {
-      case 'debug':
-        break;
-      case 'info':
-        break;
-      case 'warn':
-        break;
-      case 'error':
-        break;
-    }
-
     // Buffer for Backend Logger
     this.buffer.push({ level, message });
 
