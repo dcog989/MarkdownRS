@@ -4,7 +4,6 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 export type ErrorContext =
   | 'Session:Save'
   | 'Session:Load'
-  | 'Session:Vacuum'
   | 'File:Read'
   | 'File:Write'
   | 'File:Metadata'
@@ -14,25 +13,24 @@ export type ErrorContext =
   | 'Settings:AppInfo'
   | 'Editor:Init'
   | 'Database:Init'
-  | 'Database:Migration'
   | 'Transform:Text'
   | 'Dictionary:Add'
   | 'UI:DragDrop'
   | 'FileWatcher:Watch'
-  | 'Update:Check'
-  | 'Update:Install'
   | 'FileWatcher:Unwatch'
   | 'Export:PDF'
   | 'Export:HTML'
   | 'Spellcheck:Init'
   | 'Bookmark:Add'
   | 'Bookmark:Remove'
+  | 'Markdown:TOC'
+  | 'Update:Check'
+  | 'Update:Install'
   | 'Data:ExportBookmarks'
   | 'Data:ImportBookmarks'
   | 'Data:ExportRecent'
   | 'Data:ImportRecent'
-  | 'Data:DeleteOrphans'
-  | 'Markdown:TOC';
+  | 'Data:DeleteOrphans';
 
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
 
