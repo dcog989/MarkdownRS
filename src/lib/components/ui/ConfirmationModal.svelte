@@ -20,7 +20,7 @@ const buttons = $derived.by(() => {
         >
     {/snippet}
 
-    <div class="text-fg-default p-4 text-sm leading-relaxed">
+    <div class="text-fg-default p-4 text-sm leading-relaxed" style="white-space: pre-line">
         {appContext.ui.dialog.options.message}
     </div>
 

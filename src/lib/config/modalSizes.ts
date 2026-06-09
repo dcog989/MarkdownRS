@@ -5,7 +5,7 @@
 
 export const MODAL_CONSTRAINTS = {
   /** Minimum width for all modals */
-  MIN_WIDTH: '440px',
+  MIN_WIDTH: '320px',
   /** Maximum width for all modals */
   MAX_WIDTH: '640px',
   /** Maximum height for modal content */

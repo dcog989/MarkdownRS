@@ -412,8 +412,8 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
   if (!appContext.app.confirmationSuppressed && tab.isDirty && tab.content.trim().length > 0) {
     const result = await confirmDialog({
-      title: 'Unsaved Changes',
-      message: `Do you want to save changes to ${tab.title}?`,
+      title: 'Close Document',
+      message: `"${tab.title}" has been modified.\nSave or Discard changes?`,
     });
 
     if (result === 'cancel') return;
