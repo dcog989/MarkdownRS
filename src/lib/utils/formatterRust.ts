@@ -9,21 +9,12 @@ export interface FormatterOptions {
 }
 
 export async function formatMarkdown(content: string, options: Partial<FormatterOptions> = {}): Promise<string> {
-  const defaults: FormatterOptions = {
-    listIndent: appContext.app.defaultIndent,
-    codeBlockFence: appContext.app.formatterCodeFence,
-    bulletChar: appContext.app.formatterBulletChar,
-    emphasisChar: appContext.app.formatterEmphasisChar,
-  };
-
-  const final = { ...defaults, ...options };
-
   const apiOptions = {
     flavor: appContext.app.markdownFlavor,
-    listIndent: final.listIndent,
-    bulletChar: final.bulletChar,
-    codeBlockFence: final.codeBlockFence,
-    emphasisChar: final.emphasisChar,
+    listIndent: options.listIndent ?? appContext.app.defaultIndent,
+    bulletChar: options.bulletChar ?? appContext.app.formatterBulletChar,
+    codeBlockFence: options.codeBlockFence ?? appContext.app.formatterCodeFence,
+    emphasisChar: options.emphasisChar ?? appContext.app.formatterEmphasisChar,
   };
 
   const result = await callBackendSafe(
