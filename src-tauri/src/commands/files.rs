@@ -2,7 +2,7 @@ use crate::commands::settings::get_max_file_size_bytes;
 use crate::utils::{format_system_time, handle_error, validate_path};
 use encoding_rs::{Encoding, UTF_8};
 use serde::Serialize;
-use std::path::PathBuf;
+use std::path::{Component, Path, PathBuf};
 use tokio::fs;
 
 #[derive(Serialize)]
@@ -146,8 +146,10 @@ pub async fn resolve_path_relative(
 ) -> Result<String, String> {
     // Security check: Validate input path BEFORE processing to prevent traversal
     // Reject paths with more than 3 parent directory references
-    let parent_dir_count =
-        click_path.matches("../").count() + if click_path.ends_with("/..") { 1 } else { 0 };
+    let parent_dir_count = Path::new(&click_path)
+        .components()
+        .filter(|c| *c == Component::ParentDir)
+        .count();
     if parent_dir_count > 3 {
         log::warn!(
             "Path traversal blocked: excessive parent directory references in input: {}",
