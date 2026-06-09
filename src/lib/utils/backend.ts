@@ -10,7 +10,6 @@ export interface BackendCallOptions {
 
 export interface SafeCallOptions extends ErrorOptions {
   onError?: (err: unknown) => void | Promise<void>;
-  rethrow?: boolean;
 }
 
 /**
@@ -88,20 +87,6 @@ export async function callBackendSafe<K extends CommandName>(
   command: K,
   args: BackendCommands[K]['args'],
   context: ErrorContext,
-  options?: SafeCallOptions & { rethrow?: true },
-): Promise<BackendCommands[K]['return']>;
-
-export async function callBackendSafe<K extends CommandName>(
-  command: K,
-  args: BackendCommands[K]['args'],
-  context: ErrorContext,
-  options?: SafeCallOptions & { rethrow?: false },
-): Promise<BackendCommands[K]['return'] | null>;
-
-export async function callBackendSafe<K extends CommandName>(
-  command: K,
-  args: BackendCommands[K]['args'],
-  context: ErrorContext,
   options: SafeCallOptions = {},
 ): Promise<BackendCommands[K]['return'] | null> {
   try {
@@ -121,11 +106,6 @@ export async function callBackendSafe<K extends CommandName>(
       severity: options.severity,
       logToDisk: options.logToDisk,
     });
-
-    // Re-throw if requested
-    if (options.rethrow) {
-      throw err;
-    }
 
     return null;
   }
