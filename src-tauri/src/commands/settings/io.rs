@@ -7,10 +7,7 @@ use tokio::fs;
 const DEFAULT_MAX_FILE_SIZE_BYTES: u64 = 50 * 1024 * 1024;
 
 pub async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<String>, String> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| handle_error(None, "get app config directory for load_settings", e))?;
+    let config_dir = super::app_config_path(app_handle)?;
     let path = config_dir.join("settings.toml");
 
     match fs::try_exists(&path).await {

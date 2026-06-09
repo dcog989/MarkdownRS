@@ -2,7 +2,6 @@ use crate::utils::handle_error;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use std::time::SystemTime;
-use tauri::Manager;
 use tokio::fs;
 use tokio::sync::Mutex;
 
@@ -26,10 +25,7 @@ pub fn default_css(theme: &str) -> Option<&'static str> {
 }
 
 pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, String> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| handle_error(None, "get app config directory for themes", e))?;
+    let config_dir = super::app_config_path(app_handle)?;
     let themes_dir = config_dir.join("Themes");
 
     let mut themes = Vec::new();
@@ -58,10 +54,7 @@ pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, St
 }
 
 pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result<String, String> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| handle_error(None, "get app config directory for theme CSS", e))?;
+    let config_dir = super::app_config_path(app_handle)?;
     let themes_dir = config_dir.join("Themes");
     let theme_path = themes_dir.join(format!("{}.css", theme_name));
 

@@ -7,8 +7,15 @@ pub use io::get_max_file_size_bytes;
 
 use crate::state::{AppState, MAX_FILE_SIZE_UNSET};
 use crate::utils::handle_error;
+use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use tauri::Manager;
+
+pub(super) fn app_config_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_config_dir()
+        .map_err(|e| handle_error(None, "get app config directory", e))
+}
 
 #[cfg(target_os = "windows")]
 mod registry;
@@ -73,10 +80,7 @@ pub async fn save_settings(
     app_handle: tauri::AppHandle,
     settings: serde_json::Value,
 ) -> Result<(), String> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| handle_error(None, "get app config directory for save_settings", e))?;
+    let config_dir = app_config_path(&app_handle)?;
     let path = config_dir.join("settings.toml");
 
     let max_size_received = settings
