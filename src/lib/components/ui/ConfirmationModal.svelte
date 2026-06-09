@@ -13,7 +13,7 @@ const buttons = $derived.by(() => {
 });
 </script>
 
-<Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog('cancel')} zIndex={100}>
+<Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog('cancel')} zIndex={100} position="center">
     {#snippet header()}
         <span class="text-fg-default text-sm font-semibold"
             >{appContext.ui.dialog.options.title}</span
