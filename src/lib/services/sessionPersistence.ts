@@ -19,6 +19,7 @@ import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
+import { computeLineStats } from '$lib/utils/textMetrics';
 import { debounce } from '$lib/utils/timing';
 import {
   checkAndReloadIfChanged,
@@ -403,10 +404,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
   const lastSavedHash = !t.path ? '' : hashContent(content);
   const sizeBytes = new TextEncoder().encode(content).length;
 
-  const lineArray = content.split('\n');
-  const lineCount = lineArray.length;
-  // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
-  const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
+  const { lineCount, widestColumn } = computeLineStats(content);
 
   const wordCount = computeWordCount(content, sizeBytes);
 

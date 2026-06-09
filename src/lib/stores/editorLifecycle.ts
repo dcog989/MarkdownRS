@@ -2,6 +2,7 @@ import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
 import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
+import { computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import {
   clearTabCaches,
@@ -42,9 +43,9 @@ export function addTab(title: string = '', content: string = '') {
   let widestColumn = 0;
 
   if (normalizedContent.length > 0) {
-    const lines = normalizedContent.split('\n');
-    lineCount = lines.length;
-    widestColumn = lines.reduce((max, line) => Math.max(max, line.length), 0);
+    const stats = computeLineStats(normalizedContent);
+    lineCount = stats.lineCount;
+    widestColumn = stats.widestColumn;
     wordCount = computeWordCount(normalizedContent, sizeBytes);
   }
 

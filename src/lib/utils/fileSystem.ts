@@ -34,6 +34,7 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
+import { computeLineStats } from '$lib/utils/textMetrics';
 import { callBackend } from './backend';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
@@ -130,10 +131,7 @@ export async function openFile(path?: string): Promise<void> {
 
     const id = addTab(initialTitle, result.content);
 
-    const lineArray = result.content.split('\n');
-    const lineCount = lineArray.length;
-    // Use reduce instead of Math.max(...spread) to avoid stack overflow with large files
-    const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
+    const { lineCount, widestColumn } = computeLineStats(result.content);
 
     const sizeBytes = new TextEncoder().encode(result.content).length;
     const initialWordCount = computeWordCount(result.content, sizeBytes);

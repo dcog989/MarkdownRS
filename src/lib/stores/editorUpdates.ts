@@ -2,6 +2,7 @@ import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
+import { computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import { computeWordCount, getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, updateTab } from './editorStoreCore.svelte';
@@ -146,9 +147,7 @@ export function reloadTabContent(
   encoding: string,
   sizeBytes: number,
 ) {
-  const lineArray = content.split('\n');
-  const lineCount = lineArray.length;
-  const widestColumn = lineArray.reduce((max, line) => Math.max(max, line.length), 0);
+  const { lineCount, widestColumn } = computeLineStats(content);
 
   const wordCount = computeWordCount(content, sizeBytes);
 

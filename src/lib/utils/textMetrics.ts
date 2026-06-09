@@ -59,6 +59,13 @@ export function calculateCursorMetrics(
   };
 }
 
+export function computeLineStats(content: string): { lineCount: number; widestColumn: number } {
+  const lines = content.split('\n');
+  const lineCount = lines.length;
+  const widestColumn = lines.reduce((max, line) => Math.max(max, line.length), 0);
+  return { lineCount, widestColumn };
+}
+
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat().format(num);
 }
