@@ -322,7 +322,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         undefined,
         { ignore: true },
       );
-      if (saveResult === null) {
+      if (!saveResult) {
         fileWatcher.setWriteLock(sanitizedPath, false);
         if (pendingSavePath) activeSaves.delete(pendingSavePath);
         showToast('error', 'Failed to save file');

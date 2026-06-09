@@ -59,7 +59,7 @@ export interface BackendCommands {
   };
   write_text_file: {
     args: { path: string; content: string };
-    return: undefined;
+    return: boolean;
   };
   write_binary_file: {
     args: { path: string; content: number[] };

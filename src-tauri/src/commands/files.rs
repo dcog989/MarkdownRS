@@ -93,7 +93,7 @@ pub async fn read_text_file(
 }
 
 #[tauri::command]
-pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
+pub async fn write_text_file(path: String, content: String) -> Result<bool, String> {
     let start = std::time::Instant::now();
     let content_size = content.len();
 
@@ -112,7 +112,7 @@ pub async fn write_text_file(path: String, content: String) -> Result<(), String
         path
     );
 
-    Ok(())
+    Ok(true)
 }
 
 #[tauri::command]
