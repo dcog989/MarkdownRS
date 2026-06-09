@@ -1,4 +1,4 @@
-use crate::markdown::config::MarkdownFlavor;
+use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
 use anyhow::{Result, anyhow};
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Anchorizer, Arena, format_html_with_plugins, options::Plugins, parse_document};
@@ -11,13 +11,6 @@ use unicode_segmentation::UnicodeSegmentation;
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
     pub flavor: MarkdownFlavor,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HeadingEntry {
-    pub level: u8,
-    pub text: String,
-    pub anchor_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,7 +33,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 
     linkify_file_paths_ast(&arena, root);
 
-    let headings = extract_headings(root);
+    let headings = extract_headings_from_ast(root, &mut Anchorizer::new());
 
     let mut html = String::new();
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
@@ -186,37 +179,6 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
         }
         node.detach();
     }
-}
-
-fn extract_headings<'a>(root: &'a AstNode<'a>) -> Vec<HeadingEntry> {
-    let mut anchorizer = Anchorizer::new();
-    root.descendants()
-        .filter_map(|node| {
-            if let NodeValue::Heading(heading) = &node.data.borrow().value {
-                let text = collect_heading_text(node);
-                let anchor_id = anchorizer.anchorize(&text);
-                Some(HeadingEntry {
-                    level: heading.level,
-                    text,
-                    anchor_id,
-                })
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn collect_heading_text<'a>(node: &'a AstNode<'a>) -> String {
-    let mut text = String::new();
-    for child in node.children() {
-        match &child.data.borrow().value {
-            NodeValue::Text(t) => text.push_str(t.as_ref()),
-            NodeValue::Code(c) => text.push_str(&c.literal),
-            _ => text.push_str(&collect_heading_text(child)),
-        }
-    }
-    text
 }
 
 fn build_line_map_and_metrics(content: &str) -> (Vec<usize>, usize, usize, usize, usize) {

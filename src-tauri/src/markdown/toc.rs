@@ -1,9 +1,8 @@
-use comrak::nodes::{AstNode, NodeValue};
-use comrak::{Anchorizer, Arena, parse_document};
+use comrak::{Arena, parse_document};
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::markdown::config::MarkdownFlavor;
+use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
 
 static TOC_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<!--\s*toc\s*-->").expect("Invalid TOC_START_RE"));
@@ -12,49 +11,14 @@ static TOC_END_RE: LazyLock<Regex> =
 static H1_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^#[\t ].*$").expect("Invalid H1_RE"));
 
-#[derive(Debug)]
-struct TocEntry {
-    level: u8,
-    text: String,
-    anchor_id: String,
-}
-
-fn extract_headings(content: &str) -> Vec<TocEntry> {
+fn extract_headings(content: &str) -> Vec<HeadingEntry> {
     let flavor = MarkdownFlavor::default().to_comrak_options();
     let arena = Arena::new();
     let root = parse_document(&arena, content, &flavor);
-
-    let mut anchorizer = Anchorizer::new();
-    root.descendants()
-        .filter_map(|node| {
-            if let NodeValue::Heading(heading) = &node.data.borrow().value {
-                let text = collect_text(node);
-                let anchor_id = anchorizer.anchorize(&text);
-                Some(TocEntry {
-                    level: heading.level,
-                    text,
-                    anchor_id,
-                })
-            } else {
-                None
-            }
-        })
-        .collect()
+    extract_headings_from_ast(root, &mut comrak::Anchorizer::new())
 }
 
-fn collect_text<'a>(node: &'a AstNode<'a>) -> String {
-    let mut text = String::new();
-    for child in node.children() {
-        match &child.data.borrow().value {
-            NodeValue::Text(t) => text.push_str(t.as_ref()),
-            NodeValue::Code(c) => text.push_str(&c.literal),
-            _ => text.push_str(&collect_text(child)),
-        }
-    }
-    text
-}
-
-fn generate_toc_markdown(entries: &[TocEntry]) -> String {
+fn generate_toc_markdown(entries: &[HeadingEntry]) -> String {
     if entries.is_empty() {
         return String::new();
     }
