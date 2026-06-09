@@ -29,7 +29,7 @@ impl MarkdownFlavor {
     /// Convert string to MarkdownFlavor
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
-            "commonmark" | "common-mark" | "cm" => Some(Self::CommonMark),
+            "commonmark" => Some(Self::CommonMark),
             "gfm" | "github" => Some(Self::Gfm),
             _ => None,
         }
