@@ -56,8 +56,8 @@ function safeStringify(obj: unknown): string {
       }
       return value;
     });
-  } catch {
-    return '[Circular or Non-Serializable Data]';
+  } catch (e) {
+    return `[safeStringify Error: ${(e as Error).message}]`;
   }
 }
 

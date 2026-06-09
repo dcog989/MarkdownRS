@@ -4,6 +4,7 @@ import type { Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { addToDictionary } from '$lib/utils/fileSystem';
@@ -286,6 +287,10 @@ export const createSpellCheckLinter = () => {
         return diagnostics;
       } catch (error) {
         logger.spellcheck.error('Linter error', { error: String(error) });
+        if (!spellcheckState.linterFailedNotified) {
+          spellcheckState.linterFailedNotified = true;
+          showToast('warning', 'Spellcheck encountered an error — results may be incomplete');
+        }
         return [];
       }
     },

@@ -315,7 +315,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
 
       if (!tab.path) {
         lastSavedHash = '';
-      } else if (tab.isDirty) {
+      } else {
         try {
           const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
           if (fileData?.content) {
@@ -326,8 +326,6 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         } catch {
           lastSavedHash = hashContent(normalizedContent);
         }
-      } else {
-        lastSavedHash = hashContent(normalizedContent);
       }
     } else {
       // No content in database - this shouldn't happen for saved files
@@ -355,7 +353,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         wordCount,
         lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
         contentLoaded: true,
-        isDirty: tab.isDirty && hashContent(normalizedContent) !== lastSavedHash,
+        isDirty: hashContent(normalizedContent) !== lastSavedHash,
       };
 
       logger.session.info('TabContentLoaded', {

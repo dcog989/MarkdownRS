@@ -43,6 +43,19 @@ class Logger {
     const metadataStr = this.formatMetadata(metadata);
     const message = metadataStr ? `[${namespace}] ${action} | ${metadataStr}` : `[${namespace}] ${action}`;
 
+    // In development, log to console immediately for real-time visibility
+    if (import.meta.env.DEV) {
+      const fn =
+        level === 'debug'
+          ? console.debug
+          : level === 'info'
+            ? console.info
+            : level === 'warn'
+              ? console.warn
+              : console.error;
+      fn(`[Logger/${level.toUpperCase()}] ${message}`);
+    }
+
     // Buffer for Backend Logger
     this.buffer.push({ level, message });
 

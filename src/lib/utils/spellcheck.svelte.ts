@@ -27,6 +27,7 @@ export class SpellcheckManager {
   misspelledCache = $state(new SvelteSet<string>());
   customDictionary = $state(new SvelteSet<string>());
   suggestionCache = $state(new SvelteMap<string, string[]>());
+  linterFailedNotified = false;
 
   private initPromise: Promise<void> | null = null;
   private pendingFetches = new Set<string>();
@@ -156,6 +157,7 @@ export class SpellcheckManager {
     this.misspelledCache.clear();
     this.suggestionCache.clear();
     this.dictionaryLoaded = false;
+    this.linterFailedNotified = false;
     this.initPromise = null;
   }
 }
