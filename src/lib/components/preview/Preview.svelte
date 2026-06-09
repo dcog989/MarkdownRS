@@ -20,6 +20,7 @@ let showSpinner = $state(false);
 let htmlContent = $state('');
 let lastRendered = $state('');
 let lastTabId = $state('');
+let renderError = $state('');
 let debounceTimer: number | null = null;
 let spinnerTimer: number | null = null;
 let renderAbortController: AbortController | null = null;
@@ -41,6 +42,7 @@ $effect(() => {
         lastTabId = tabId;
         lastRendered = '';
         htmlContent = '';
+        renderError = '';
         if (renderAbortController) {
             renderAbortController.abort();
             renderAbortController = null;
@@ -60,6 +62,7 @@ $effect(() => {
     if (spinnerTimer) clearTimeout(spinnerTimer);
     if (renderAbortController) renderAbortController.abort();
 
+    renderError = '';
     isRendering = true;
     showSpinner = false;
 
@@ -95,9 +98,10 @@ $effect(() => {
                 showSpinner = false;
                 if (spinnerTimer) clearTimeout(spinnerTimer);
             }
-        } catch (_err) {
+        } catch (err) {
             if (!currentController.signal.aborted) {
-                // Preview render error suppressed
+                lastRendered = content;
+                renderError = err instanceof Error ? err.message : 'Preview render failed';
             }
         } finally {
             if (!currentController.signal.aborted) {
@@ -178,6 +182,10 @@ function injectHtml(node: HTMLElement, content: string) {
                         class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
                     <div class="text-sm">Rendering preview...</div>
                 </div>
+            </div>
+        {:else if renderError}
+            <div class="absolute inset-0 flex flex-col items-center justify-center px-8 opacity-60">
+                <div class="text-danger-text text-center text-sm">{renderError}</div>
             </div>
         {:else if !htmlContent}
             <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
