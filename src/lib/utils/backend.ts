@@ -47,14 +47,8 @@ export async function callBackend<K extends CommandName>(
   additionalInfo?: Record<string, unknown>,
   options?: BackendCallOptions,
 ): Promise<BackendCommands[K]['return'] | null> {
-  const start = performance.now();
   try {
     const result = await invoke<BackendCommands[K]['return']>(command, args);
-    const duration = (performance.now() - start).toFixed(2);
-
-    if (Number(duration) > 16) {
-    }
-
     return result;
   } catch (err) {
     const errorOpts = {
