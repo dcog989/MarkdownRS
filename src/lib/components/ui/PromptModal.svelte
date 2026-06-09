@@ -62,7 +62,7 @@ function handleKeydown(e: KeyboardEvent) {
       onclick={() => resolvePrompt(null)}>
       Cancel
     </button>
-    <button type="button" class="btn-base btn-sm btn-success" onclick={handleConfirm}>
+    <button type="button" class="btn-base btn-sm" onclick={handleConfirm}>
       OK
     </button>
   {/snippet}

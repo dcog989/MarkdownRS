@@ -47,27 +47,6 @@ button {
   background-color: var(--surface-hover);
 }
 
-.btn-danger-outline {
-  background-color: transparent;
-  border-color: var(--danger);
-  color: var(--danger-text);
-}
-
-.btn-danger-outline:hover {
-  background-color: var(--danger);
-  color: var(--text-inverse);
-}
-
-.btn-success {
-  background-color: var(--success);
-  color: var(--text-inverse);
-  border-color: transparent;
-}
-
-.btn-success:hover {
-  background-color: var(--success-hover);
-}
-
 /* Form Labels */
 label {
   color: var(--text-primary);
