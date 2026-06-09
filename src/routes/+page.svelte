@@ -328,12 +328,11 @@ function resetSplit() {
                 </div>
             {/if}
 
-            {#if !appContext.app.writerMode}
-                <div class="position-absolute-bottom-0">
-                    <StatusBar />
-                </div>
-            {/if}
         </div>
+
+        {#if !appContext.app.writerMode}
+            <StatusBar />
+        {/if}
     </div>
 
     <Toast />

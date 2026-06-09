@@ -11,8 +11,11 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
       borderBottom: insertMode === 'OVR' ? '2px solid var(--color-accent-secondary)' : 'none',
     },
     '.cm-scroller': { fontFamily, overflow: 'auto', overflowAnchor: 'none' },
-    '.cm-content': { fontFamily, paddingBottom: '40px !important' },
-    '.cm-scroller::-webkit-scrollbar': { display: 'none' },
+    '.cm-content': { fontFamily },
+    '.cm-scroller::-webkit-scrollbar': { width: '0', height: '8px' },
+    '.cm-scroller::-webkit-scrollbar-track': { background: 'transparent' },
+    '.cm-scroller::-webkit-scrollbar-thumb': { background: 'var(--color-fg-muted)', borderRadius: '4px' },
+    '.cm-scroller::-webkit-scrollbar-thumb:hover': { background: 'var(--color-fg-default)' },
     '.cm-gutters': { border: 'none', backgroundColor: 'transparent' },
     '.cm-gutterElement': { alignItems: 'flex-start !important' },
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
