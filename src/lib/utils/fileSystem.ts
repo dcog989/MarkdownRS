@@ -32,6 +32,7 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
+import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { callBackend } from './backend';
 import { CONFIG } from './config';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
@@ -124,23 +125,8 @@ export async function openFile(path?: string): Promise<void> {
 
     let initialTitle = fileName;
     if (appContext.app.tabNameFromContent) {
-      const trimmed = result.content.trim();
-      if (trimmed.length > 0) {
-        const lines = result.content.split('\n');
-        const firstLine =
-          lines.find((l) => {
-            const t = l.trim();
-            return t.length > 0 && /[a-zA-Z0-9]/.test(t.replace(/^#+\s*/, ''));
-          }) || '';
-        let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
-        const MAX_LEN = 25;
-        if (smartTitle.length > MAX_LEN) {
-          smartTitle = `${smartTitle.substring(0, MAX_LEN).trim()}...`;
-        }
-        if (smartTitle.length > 0) {
-          initialTitle = smartTitle;
-        }
-      }
+      const smartTitle = extractSmartTitle(result.content);
+      if (smartTitle) initialTitle = smartTitle;
     }
 
     const id = addTab(initialTitle, result.content);
@@ -364,14 +350,8 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       let finalTitle = fileName;
 
       if (appContext.app.tabNameFromContent) {
-        const firstLine =
-          contentToSave.split('\n').find((l) => {
-            const t = l.trim();
-            return t.length > 0 && /[a-zA-Z0-9]/.test(t.replace(/^#+\s*/, ''));
-          }) || '';
-        let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
-        if (smartTitle.length > 25) smartTitle = `${smartTitle.substring(0, 25).trim()}...`;
-        if (smartTitle.length > 0) finalTitle = smartTitle;
+        const smartTitle = extractSmartTitle(contentToSave);
+        if (smartTitle) finalTitle = smartTitle;
       }
 
       saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);

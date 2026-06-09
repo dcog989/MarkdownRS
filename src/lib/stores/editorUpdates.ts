@@ -1,6 +1,7 @@
 import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { countWords, fastCountWords } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import { getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
@@ -16,30 +17,9 @@ export function updateContent(id: string, content: string, lineCount: number) {
 
   let newTitle = oldTab.title;
   if (appState.tabNameFromContent) {
-    const trimmed = content.trim();
-    if (trimmed.length > 0) {
-      let lineStart = 0;
-      let firstLine = '';
-      for (let i = 0; i <= content.length; i++) {
-        if (i === content.length || content[i] === '\n') {
-          const line = content.slice(lineStart, i).trim();
-          if (line.length > 0 && /[a-zA-Z0-9]/.test(line.replace(/^#+\s*/, ''))) {
-            firstLine = line;
-            break;
-          }
-          lineStart = i + 1;
-        }
-      }
-      let smartTitle = firstLine.replace(/^#+\s*/, '').trim();
-      const MAX_LEN = 25;
-      if (smartTitle.length > MAX_LEN) {
-        smartTitle = `${smartTitle.substring(0, MAX_LEN).trim()}...`;
-      }
-      if (smartTitle.length > 0) {
-        newTitle = smartTitle;
-      } else if (oldTab.originalTitle) {
-        newTitle = oldTab.originalTitle;
-      }
+    const smartTitle = extractSmartTitle(content);
+    if (smartTitle) {
+      newTitle = smartTitle;
     } else if (oldTab.originalTitle) {
       newTitle = oldTab.originalTitle;
     }
