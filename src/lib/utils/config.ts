@@ -113,25 +113,8 @@ const DEFAULT_CONFIG = {
 
 export type AppConfig = typeof DEFAULT_CONFIG;
 
-/**
- * Validates and merges configuration overrides.
- * Ensures types are correct and numeric values are within safe runtime ranges.
- */
-function validateConfig(overrides: Partial<AppConfig>): AppConfig {
-  const merged = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig;
-
-  const validate = (target: Record<string, unknown>, source: Record<string, unknown>) => {
-    for (const key in source) {
-      if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-        if (!target[key]) target[key] = {};
-        validate(target[key] as Record<string, unknown>, source[key] as Record<string, unknown>);
-      } else {
-        target[key] = source[key];
-      }
-    }
-  };
-
-  validate(merged, overrides);
+function validateConfig(): AppConfig {
+  const merged = structuredClone(DEFAULT_CONFIG);
 
   // Runtime Range Validation
   merged.EDITOR.MAX_FILE_SIZE_MB = Math.max(1, Math.min(500, merged.EDITOR.MAX_FILE_SIZE_MB));
@@ -146,4 +129,4 @@ function validateConfig(overrides: Partial<AppConfig>): AppConfig {
 }
 
 // Global immutable configuration instance
-export const CONFIG: AppConfig = Object.freeze(validateConfig(DEFAULT_CONFIG));
+export const CONFIG: AppConfig = Object.freeze(validateConfig());
