@@ -315,12 +315,17 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       fileWatcher.setWriteLock(sanitizedPath, true);
 
-      try {
-        await callBackend('write_text_file', { path: sanitizedPath, content: diskContent }, 'File:Write');
-      } catch (err) {
+      const saveResult = await callBackend(
+        'write_text_file',
+        { path: sanitizedPath, content: diskContent },
+        'File:Write',
+        undefined,
+        { ignore: true },
+      );
+      if (saveResult === null) {
         fileWatcher.setWriteLock(sanitizedPath, false);
         if (pendingSavePath) activeSaves.delete(pendingSavePath);
-        showToast('error', `Failed to save file: ${err}`);
+        showToast('error', 'Failed to save file');
         return false;
       }
 

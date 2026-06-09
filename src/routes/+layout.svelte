@@ -40,6 +40,12 @@ $effect(() => {
 });
 
 onMount(() => {
+    // Log unhandled promise rejections that aren't caught elsewhere
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+        console.warn('[App] Unhandled rejection:', event.reason);
+    };
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+
     for (const cmd of commands) {
         shortcutManager.register(cmd);
     }
@@ -88,6 +94,7 @@ onMount(() => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
+        window.removeEventListener('unhandledrejection', onUnhandledRejection);
         mq.removeEventListener('change', handleOSThemeChange);
         window.removeEventListener('keydown', handleKeydown, { capture: true });
         document.removeEventListener('contextmenu', handleContextMenu);

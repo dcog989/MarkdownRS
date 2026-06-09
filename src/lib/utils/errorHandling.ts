@@ -1,5 +1,6 @@
 import { error as logError } from '@tauri-apps/plugin-log';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { logger } from './logger';
 
 export type ErrorContext =
   | 'Session:Save'
@@ -104,6 +105,8 @@ export class AppError extends Error {
 
   private process(options: ErrorOptions = {}): void {
     const { showToast: shouldShowToast = true, userMessage, toastDuration, logToDisk = true } = options;
+
+    logger.editor.error(this.formatForDiskLog());
 
     this.logError(logToDisk).catch((err) => {
       console.warn('[AppError] Disk log failed:', err);

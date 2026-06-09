@@ -10,12 +10,20 @@ export type Toast = {
 };
 
 let nextId = 0;
+const TOAST_THROTTLE_MS = 3000;
+const lastToastTimestamps = new Map<string, number>();
 
 export const toastStore = $state<{ toasts: Toast[] }>({
   toasts: [],
 });
 
 export function showToast(type: ToastType, message: string, duration: number = CONFIG.UI.TOAST_DURATION_MS) {
+  const key = `${type}:${message}`;
+  const now = Date.now();
+  const lastTime = lastToastTimestamps.get(key) || 0;
+  if (now - lastTime < TOAST_THROTTLE_MS) return;
+  lastToastTimestamps.set(key, now);
+
   const id = `toast-${nextId++}`;
   const toast: Toast = { id, message, type, duration };
   toastStore.toasts.push(toast);
