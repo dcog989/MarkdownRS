@@ -139,7 +139,9 @@ export class TabSyncManager {
       applyImmediateSpellcheck(view);
     }
 
-    initializeTabFileState(storeTab).catch(() => {});
+    initializeTabFileState(storeTab).catch((err) => {
+      console.warn('[TabSync] Failed to initialize tab file state:', err);
+    });
 
     setTimeout(() => {
       this.isRestoring = false;

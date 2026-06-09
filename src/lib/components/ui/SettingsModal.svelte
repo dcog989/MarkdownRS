@@ -48,7 +48,7 @@ $effect(() => {
                     .then((enabled) => {
                         isContextMenuEnabled = enabled ?? false;
                     })
-                    .catch(() => {})
+                    .catch((err) => console.warn('[Settings] Failed to check context menu status:', err))
                     .finally(() => {
                         isCheckingContextMenu = false;
                     });

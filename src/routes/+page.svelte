@@ -71,7 +71,7 @@ $effect(() => {
                     duration: `${duration}ms`,
                 });
             })
-            .catch((_err) => {});
+            .catch((err) => logger.editor.warn('TabContentLoadFailed', { tabId: tab.id, error: String(err) }));
     }
 });
 

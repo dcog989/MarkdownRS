@@ -159,8 +159,8 @@ export class ExportService {
         { report: true, msg: 'Failed to save HTML file' },
       );
       showToast('success', `Exported to ${path}`);
-    } catch {
-      // Error already reported by backend
+    } catch (err) {
+      console.warn('[Export] HTML export failed (already reported):', err);
     }
   }
 
@@ -189,8 +189,8 @@ export class ExportService {
         { report: true, msg: 'Failed to generate PDF' },
       );
       showToast('success', `Exported to ${path}`);
-    } catch {
-      // Error already reported
+    } catch (err) {
+      console.warn('[Export] PDF export failed (already reported):', err);
     }
   }
 
@@ -263,8 +263,8 @@ export class ExportService {
         );
       }
       showToast('success', `Exported to ${path}`);
-    } catch {
-      // Error already reported
+    } catch (err) {
+      console.warn('[Export] Image export failed (already reported):', err);
     } finally {
       this.clearExportContent();
     }

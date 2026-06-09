@@ -195,8 +195,8 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
     }
 
     await openPath(resolvedPath);
-  } catch {
-    // Silent failure
+  } catch (err) {
+    console.warn('[FileSystem] Navigation failed:', err);
   }
 }
 
@@ -484,7 +484,8 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
     showToast('success', `Renamed to ${finalNewName}`);
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('[FileSystem] Rename failed:', err);
     return false;
   }
 }

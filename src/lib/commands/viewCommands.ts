@@ -49,9 +49,11 @@ export const viewCommands: Command[] = [
       const wasWriterMode = appContext.app.writerMode;
       toggleWriterMode();
       if (wasWriterMode) {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch((err) => console.debug('[View] exitFullscreen failed:', err));
       } else {
-        document.documentElement.requestFullscreen().catch(() => {});
+        document.documentElement
+          .requestFullscreen()
+          .catch((err) => console.debug('[View] requestFullscreen failed:', err));
       }
     },
   },
@@ -120,7 +122,7 @@ export const viewCommands: Command[] = [
 
       if (appContext.app.writerMode) {
         toggleWriterMode();
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch((err) => console.debug('[View] exitFullscreen failed:', err));
         return true;
       }
       return false;

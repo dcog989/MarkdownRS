@@ -105,7 +105,9 @@ export class AppError extends Error {
   private process(options: ErrorOptions = {}): void {
     const { showToast: shouldShowToast = true, userMessage, toastDuration, logToDisk = true } = options;
 
-    this.logError(logToDisk).catch((_err) => {});
+    this.logError(logToDisk).catch((err) => {
+      console.warn('[AppError] Disk log failed:', err);
+    });
 
     if (shouldShowToast) {
       const message = userMessage || this.getUserFriendlyMessage();

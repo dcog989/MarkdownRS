@@ -91,7 +91,9 @@ class Logger {
             await error(combined);
             break;
         }
-      } catch (_e) {}
+      } catch (e) {
+        console.error('[Logger] Flush failed:', e);
+      }
     }
   }
 

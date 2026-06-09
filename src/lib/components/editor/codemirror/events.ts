@@ -69,7 +69,7 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
           if (/^(https?:\/\/|www\.)/i.test(targetString)) {
             const url = targetString.startsWith('www.') ? `https://${targetString}` : targetString;
-            openPath(url).catch(() => {});
+            openPath(url).catch((err) => console.warn('[Events] Failed to open URL:', err));
           } else {
             navigateToPath(targetString);
           }
