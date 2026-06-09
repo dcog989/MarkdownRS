@@ -87,9 +87,16 @@ class FileWatcherService {
     }
 
     if (this.pendingWatchers.has(path)) {
-      this.pendingWatchers.get(path)?.then(() => {
-        this.unwatch(path);
-      });
+      const PENDING_WATCH_TIMEOUT = 5000;
+      const watcherPromise = this.pendingWatchers.get(path) as Promise<void>;
+      const timeout = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('Pending watch setup timed out')), PENDING_WATCH_TIMEOUT),
+      );
+      Promise.race([watcherPromise, timeout])
+        .then(() => this.unwatch(path))
+        .catch(() => {
+          this.pendingWatchers.delete(path);
+        });
       return;
     }
 
