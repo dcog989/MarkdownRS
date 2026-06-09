@@ -78,7 +78,7 @@ impl Database {
 
     pub fn delete_orphan_bookmarks(&self) -> Result<usize> {
         let conn = lock_conn!(self);
-        Ok(crate::db::delete_orphans(&conn, "bookmarks", "id")?)
+        crate::db::delete_orphans(&conn, "bookmarks", "id")
     }
 
     pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<()> {

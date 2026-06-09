@@ -202,16 +202,6 @@ export interface BackendCommands {
     return: boolean;
   };
 
-  // Updater
-  check_for_updates: {
-    args: Record<string, never>;
-    return: { available: boolean; version: string | null; release_notes: string | null };
-  };
-  download_and_install_update: {
-    args: Record<string, never>;
-    return: undefined;
-  };
-
   // Export
   export_to_pdf: {
     args: { path: string; content: string; backgroundColor: string | null };

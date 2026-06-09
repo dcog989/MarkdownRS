@@ -65,7 +65,7 @@ impl Database {
 
     pub fn delete_orphan_recent_files(&self) -> Result<usize> {
         let conn = lock_conn!(self);
-        Ok(crate::db::delete_orphans(&conn, "recent_files", "path")?)
+        crate::db::delete_orphans(&conn, "recent_files", "path")
     }
 
     pub fn import_recent_files(&self, paths: &[String]) -> Result<()> {

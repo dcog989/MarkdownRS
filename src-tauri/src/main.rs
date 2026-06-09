@@ -162,6 +162,7 @@ fn main() {
 
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(tauri_plugin_window_state::StateFlags::all())
@@ -438,8 +439,6 @@ fn main() {
             commands::settings::save_settings,
             commands::settings::set_context_menu_item,
             commands::settings::check_context_menu_status,
-            commands::updater::check_for_updates,
-            commands::updater::download_and_install_update,
             commands::settings::toggle_devtools,
             commands::export::export_to_pdf,
             commands::data::export_bookmarks,

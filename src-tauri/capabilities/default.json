@@ -57,6 +57,7 @@
     "store:default",
     "window-state:default",
     "log:default",
-    "clipboard-manager:default"
+    "clipboard-manager:default",
+    "updater:default"
   ]
 }

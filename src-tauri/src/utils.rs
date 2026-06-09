@@ -92,7 +92,7 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
             // Cross-device: copy then clean up the temp file.
             fs::copy(&temp_path, path).await.inspect_err(|_| {
-                let _ = fs::remove_file(&temp_path);
+                let _ = std::fs::remove_file(&temp_path);
             })?;
             if let Err(rm_err) = fs::remove_file(&temp_path).await {
                 // The data reached the destination successfully; log the leak

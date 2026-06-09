@@ -1,6 +1,7 @@
 <script lang="ts">
 import { openPath } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { check } from '@tauri-apps/plugin-updater';
 import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import type { AppInfo } from '$lib/types/api';
@@ -15,6 +16,9 @@ interface Props {
 
 let { isOpen = $bindable(false), onClose, position = 'top' }: Props = $props();
 
+let isChecking = $state(false);
+let updateStatus = $state<string | null>(null);
+
 let appInfo = $state<AppInfo>({
     name: 'MarkdownRS',
     version: '...',
@@ -25,9 +29,6 @@ let appInfo = $state<AppInfo>({
     log_file_path: '',
     os_platform: '',
 });
-
-let isChecking = $state(false);
-let updateStatus = $state<string | null>(null);
 
 $effect(() => {
     callBackend('get_app_info', {}, 'File:Metadata')
@@ -60,21 +61,13 @@ async function checkForUpdates() {
     updateStatus = 'Checking for updates...';
 
     try {
-        const updateInfo = await callBackend('check_for_updates', {}, 'Update:Check');
+        const update = await check();
 
-        if (updateInfo?.available) {
-            const confirmed = confirm(
-                `Update available: ${updateInfo.version}\n\n${updateInfo.release_notes || ''}\n\nDo you want to install it now?`,
-            );
-
-            if (confirmed) {
-                updateStatus = 'Downloading and installing...';
-                await callBackend('download_and_install_update', {}, 'Update:Install');
-                updateStatus = 'Restarting...';
-                await relaunch();
-            } else {
-                updateStatus = 'Update cancelled.';
-            }
+        if (update) {
+            updateStatus = `Downloading ${update.version}...`;
+            await update.downloadAndInstall();
+            updateStatus = 'Restarting...';
+            await relaunch();
         } else {
             updateStatus = 'You are up to date.';
         }
