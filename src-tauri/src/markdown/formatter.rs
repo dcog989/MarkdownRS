@@ -111,7 +111,7 @@ pub fn format_markdown(content: &str, options: &FormatterOptions) -> Result<Stri
         let mut restored = String::with_capacity(formatted.len());
         let mut last_end = 0;
         for cap in PROTECTED_LINE_RE.captures_iter(&formatted) {
-            let m = cap.get(0).unwrap();
+            let m = cap.get(0).expect("Capture group 0 must exist");
             restored.push_str(&formatted[last_end..m.start()]);
             if let Ok(idx) = cap[1].parse::<usize>()
                 && let Some(original) = protected_lines.get(idx)

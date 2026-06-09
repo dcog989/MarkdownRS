@@ -63,3 +63,49 @@ pub fn list_scientific_ids() -> Vec<String> {
         "scientific-terms-us".to_string(),
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn is_valid_url(s: &str) -> bool {
+        s.starts_with("https://") && s.contains('.') && s.len() > 20
+    }
+
+    #[test]
+    fn all_technical_urls_are_valid() {
+        for id in list_technical_ids() {
+            let url = resolve_technical_url(&id);
+            assert!(url.is_some(), "Technical dictionary '{}' has no URL", id);
+            assert!(
+                is_valid_url(url.unwrap()),
+                "Technical URL for '{}' is invalid",
+                id
+            );
+        }
+    }
+
+    #[test]
+    fn all_scientific_urls_are_valid() {
+        for id in list_scientific_ids() {
+            let url = resolve_technical_url(&id);
+            assert!(url.is_some(), "Scientific dictionary '{}' has no URL", id);
+            assert!(
+                is_valid_url(url.unwrap()),
+                "Scientific URL for '{}' is invalid",
+                id
+            );
+        }
+    }
+
+    #[test]
+    fn all_language_urls_are_valid() {
+        for code in &["en-US", "en-AU", "en-CA", "en-GB", "en-ZA"] {
+            let urls = resolve_language_urls(code);
+            assert!(urls.is_some(), "Language '{}' has no URLs", code);
+            let (aff_url, dic_url) = urls.unwrap();
+            assert!(is_valid_url(aff_url), "Language {} aff URL invalid", code);
+            assert!(is_valid_url(dic_url), "Language {} dic URL invalid", code);
+        }
+    }
+}

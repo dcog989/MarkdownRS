@@ -21,6 +21,7 @@ fn default_log_level() -> String {
     "info".to_string()
 }
 
+#[derive(Debug)]
 struct PortableConfig {
     is_portable: bool,
     data_dir: Option<std::path::PathBuf>,
@@ -116,7 +117,9 @@ fn main() {
     let is_portable = portable_config.is_portable;
     let portable_data_dir_path = portable_config.data_dir.clone();
     // Ignore the error — if it's already set we just use what's there.
-    let _ = PORTABLE_CONFIG.set(portable_config);
+    PORTABLE_CONFIG
+        .set(portable_config)
+        .expect("PORTABLE_CONFIG set called more than once");
 
     // The APPDATA/LOCALAPPDATA overrides must still go into the environment
     // because Tauri's path resolver reads them via `dirs` before our setup
@@ -449,9 +452,10 @@ fn main() {
             commands::window::set_window_title,
         ])
         .run(tauri::generate_context!())
-        .map_err(|e| {
-            log::error!("Error while running tauri application: {}", e);
-            e
-        })
-        .expect("Error while running tauri application");
+        .unwrap_or_else(|e| {
+            let msg = format!("Error while running tauri application: {}", e);
+            log::error!("{}", msg);
+            eprintln!("{}", msg);
+            std::process::exit(1);
+        });
 }

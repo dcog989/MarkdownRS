@@ -44,10 +44,10 @@ pub async fn get_theme_css(
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
     if let Some(state) = app_handle.try_state::<AppState>() {
-        let cache = state
-            .settings_cache
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let cache = state.settings_cache.lock().unwrap_or_else(|e| {
+            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        });
         if let Some(ref cached) = *cache {
             return Ok(cached.clone());
         }
@@ -65,10 +65,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         .map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
-        let mut cache = state
-            .settings_cache
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let mut cache = state.settings_cache.lock().unwrap_or_else(|e| {
+            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        });
         *cache = Some(json_val.clone());
     }
 
@@ -111,10 +111,10 @@ pub async fn save_settings(
         state
             .max_file_size_bytes
             .store(MAX_FILE_SIZE_UNSET, Ordering::Relaxed);
-        let mut cache = state
-            .settings_cache
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let mut cache = state.settings_cache.lock().unwrap_or_else(|e| {
+            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        });
         *cache = None;
     }
 
@@ -122,7 +122,7 @@ pub async fn save_settings(
 }
 
 #[tauri::command]
-pub async fn set_context_menu_item(enable: bool) -> Result<(), String> {
+pub async fn set_context_menu_item(_enable: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         if enable {
@@ -133,7 +133,6 @@ pub async fn set_context_menu_item(enable: bool) -> Result<(), String> {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        let _ = enable;
         Err("Context menu integration is only supported on Windows".to_string())
     }
 }

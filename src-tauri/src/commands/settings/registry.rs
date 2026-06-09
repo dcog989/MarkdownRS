@@ -7,7 +7,13 @@ pub fn set_context_menu() -> Result<(), String> {
     let exe_name = exe_path
         .file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("markdown-rs.exe");
+        .unwrap_or_else(|| {
+            log::warn!(
+                "Could not determine exe filename from {:?}, using fallback",
+                exe_path
+            );
+            "markdown-rs.exe"
+        });
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
@@ -93,7 +99,13 @@ pub fn remove_context_menu() -> Result<(), String> {
     let exe_name = exe_path
         .file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("markdown-rs.exe");
+        .unwrap_or_else(|| {
+            log::warn!(
+                "Could not determine exe filename from {:?}, using fallback",
+                exe_path
+            );
+            "markdown-rs.exe"
+        });
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let mut errors = Vec::new();
