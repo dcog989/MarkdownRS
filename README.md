@@ -63,7 +63,6 @@ CachyOS build: `makepkg -sif`
 - `bun run clean` - Remove everything (build, target, and node_modules)
 - `bun run dev` - Start dev server / HRM
 - `bun run format` - Format code with Prettier + 'cargo fmt'
-- `bun run lint` - lint entire app
 - `bun run preview` - Preview the production build
 
 ## Roadmap
