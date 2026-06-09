@@ -92,31 +92,19 @@ async function copyAllStats() {
     "
     oncontextmenu={handleContextMenu}>
     <div
-        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
+        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
-        {#if canToggleFileType}
-            <button
-                type="button"
-                class="text-accent-primary hover:text-accent-secondary hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
-                onclick={toggleFileType}
-                use:tooltip={'Toggle File Type (markdown/text)'}>
-                {fileType}
-            </button>
-        {:else}
-            <span class="min-w-17.5 cursor-default" use:tooltip={'File Type'}>{fileType}</span>
-        {/if}
-        <span class="opacity-40">|</span>
-
         <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
             <span class="font-mono opacity-70">Ln</span>
-            <span class="inline-block min-w-[4ch] text-right font-mono"
+            <span class="inline-block min-w-[3ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorLine)}</span
             >
             <span class="opacity-30">/</span>
-            <span class="inline-block min-w-[4ch] text-left font-mono"
+            <span class="inline-block min-w-[3ch] text-left font-mono"
                 >{formatNumber(totalLines)}</span
             >
         </div>
+        <span class="opacity-40">|</span>
 
         <div class="flex items-center gap-1" use:tooltip={'Column Position'}>
             <span class="font-mono opacity-70">Col</span>
@@ -135,40 +123,46 @@ async function copyAllStats() {
                 )}
             </span>
         </div>
+        <span class="opacity-40">|</span>
 
         <div class="flex items-center gap-1" use:tooltip={'Character Position'}>
             <span class="font-mono opacity-70">Char</span>
-            <span class="inline-block min-w-[5ch] text-right font-mono"
+            <span class="inline-block min-w-[4ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorOffset)}</span
             >
             <span class="opacity-30">/</span>
-            <span class="inline-block min-w-[5ch] text-left font-mono"
+            <span class="inline-block min-w-[4ch] text-left font-mono"
                 >{formatNumber(totalChars)}</span
             >
         </div>
+        <span class="opacity-40">|</span>
 
         <div class="flex items-center gap-1" use:tooltip={'Word Position'}>
             <span class="font-mono opacity-70">Word</span>
-            <span class="inline-block min-w-[4ch] text-right font-mono"
+            <span class="inline-block min-w-[3ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.currentWordIndex)}</span
             >
             <span class="opacity-30">/</span>
             <span
-                class="inline-block min-w-[4ch] text-left font-mono {wordCountPending
+                class="inline-block min-w-[3ch] text-left font-mono {wordCountPending
                     ? 'opacity-50'
                     : ''}"
                 >{formatNumber(totalWords)}</span
             >
         </div>
 
-        <div class="ml-2 flex items-center gap-1" use:tooltip={'File Size'}>
+        <span class="opacity-40">|</span>
+
+        <div class="flex items-center gap-1" use:tooltip={'File Size'}>
             <span class="inline-block min-w-[7ch] text-right font-mono">{fileSizeDisplay}</span>
         </div>
     </div>
 
     <div
-        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-4 transition-opacity duration-200 group-hover:opacity-100"
+        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
+        <span class="opacity-40">|</span>
+
         <button
             type="button"
             class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
@@ -177,9 +171,10 @@ async function copyAllStats() {
             {lineEnding}
         </button>
 
-        <span class="cursor-default px-1 opacity-70" use:tooltip={'File Encoding'}>
+        <span class="cursor-default opacity-70" use:tooltip={'File Encoding'}>
             {encoding}
         </span>
+        <span class="opacity-40">|</span>
 
         <button
             type="button"
@@ -200,6 +195,18 @@ async function copyAllStats() {
             use:tooltip={'Toggle Word Wrap'}>
             <TextWrap size={14} />
         </button>
+
+        {#if canToggleFileType}
+            <button
+                type="button"
+                class="text-accent-primary hover:text-accent-secondary hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
+                onclick={toggleFileType}
+                use:tooltip={'Toggle File Type (markdown/text)'}>
+                {fileType}
+            </button>
+        {:else}
+            <span class="min-w-17.5 cursor-default" use:tooltip={'File Type'}>{fileType}</span>
+        {/if}
     </div>
 </footer>
 
