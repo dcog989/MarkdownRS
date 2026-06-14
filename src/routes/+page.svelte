@@ -306,12 +306,15 @@ function resetSplit() {
                     </div>
 
                     {#if showPreview}
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
+                            role="button"
+                            tabindex="0"
+                            aria-label="Resize split view"
                             class="resize-handle"
                             style="cursor: {resizeCursor};"
                             onmousedown={startResize}
-                            ondblclick={resetSplit}></div>
+                            ondblclick={resetSplit}
+                            onkeydown={() => {}}></div>
                     {/if}
 
                     {#if showPreview}

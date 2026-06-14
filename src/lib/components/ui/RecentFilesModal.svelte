@@ -114,11 +114,12 @@ function handleKeydown(e: KeyboardEvent) {
                               ? 'var(--surface-row)'
                               : 'transparent'}
                         use:scrollIntoView={isSelected}>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
+                            role="button"
+                            tabindex="0"
                             class="flex cursor-pointer items-center justify-between gap-3"
                             onclick={() => handleOpenFile(path)}
+                            onkeydown={(e) => { if (e.key === 'Enter') handleOpenFile(path); }}
                             onmouseenter={() => (selectedIndex = index)}>
                             <div class="min-w-0 flex-1">
                                 <div

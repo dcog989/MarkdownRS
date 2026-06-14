@@ -40,19 +40,22 @@ function handleKeydown(e: KeyboardEvent) {
   {/snippet}
 
   <div class="flex flex-col gap-3 px-4 py-4">
-    {#if dialogStore.promptOptions.message}
-      <label for="prompt-input" class="text-fg-default text-sm leading-relaxed"
-        >{dialogStore.promptOptions.message}</label
-      >
-    {/if}
-    <input
-      bind:this={inputEl}
-      id="prompt-input"
-      type="text"
-      bind:value={inputValue}
-      onkeydown={handleKeydown}
-      class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
-    />
+    <div class="flex flex-col gap-1">
+      {#if dialogStore.promptOptions.message}
+        <label for="prompt-input" class="text-fg-default text-sm leading-relaxed"
+          >{dialogStore.promptOptions.message}</label
+        >
+      {/if}
+      <input
+        bind:this={inputEl}
+        id="prompt-input"
+        type="text"
+        bind:value={inputValue}
+        onkeydown={handleKeydown}
+        aria-label={dialogStore.promptOptions.message || 'Prompt input'}
+        class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+      />
+    </div>
   </div>
 
   {#snippet footer()}

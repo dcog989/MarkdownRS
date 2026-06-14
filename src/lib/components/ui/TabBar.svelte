@@ -272,9 +272,10 @@ $effect(() => {
                 style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
         {/if}
 
-        <section
+        <div
             bind:this={scrollContainer}
-            role="list"
+            role="tablist"
+            tabindex="-1"
             class="no-scrollbar tab-scroll-container flex h-full w-full items-stretch overflow-x-auto"
             onscroll={updateFadeIndicators}
             oncontextmenu={(e) => {
@@ -283,13 +284,11 @@ $effect(() => {
                 if (!target) return;
                 if (
                     target.classList.contains("tab-scroll-container") ||
-                    target
-                        .closest("section")
-                        ?.classList.contains("tab-scroll-container")
+                    target.closest(".tab-scroll-container")
                 ) {
                     // Only show context menu if we didn't click on a tab button
                     if (
-                        !target.closest('[role="listitem"]') &&
+                        !target.closest('[data-tab-item="true"]') &&
                         !target.closest("button")
                     ) {
                         e.preventDefault();
@@ -301,9 +300,11 @@ $effect(() => {
             }}>
             {#each appContext.editor.tabs as tab (tab.id)}
                 <div
+                    role="tab"
+                    tabindex="-1"
                     class="flex h-full shrink-0 touch-none items-stretch outline-none select-none"
+                    data-tab-item="true"
                     animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
-                    role="listitem"
                     style="opacity: {isDragging && draggingId === tab.id
                         ? '0.4'
                         : '1'}; z-index: {isDragging && draggingId === tab.id
@@ -343,7 +344,7 @@ $effect(() => {
                     </div>
                 {/if}
             {/if}
-        </section>
+        </div>
 
         {#if showRightFade}
             <div
@@ -370,14 +371,19 @@ $effect(() => {
             <Menu size={16} />
         </button>
         {#if showMenu}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="fixed inset-0 z-40" onclick={closeMenu}></div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
+                role="button"
+                tabindex="0"
+                aria-label="Close menu"
+                class="fixed inset-0 z-40"
+                onclick={closeMenu}
+                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeMenu(); }}></div>
+            <div
+                role="dialog"
+                tabindex="-1"
                 class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-lg border py-1 shadow-xl w-80"
-                onclick={(e) => e.stopPropagation()}>
+                onclick={(e) => e.stopPropagation()}
+                onkeydown={() => {}}>
                 <button
                     type="button"
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"

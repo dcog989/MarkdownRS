@@ -89,11 +89,17 @@ async function copyAllStats() {
     style="
         background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
         .statusBarTransparency}%);
-    "
-    oncontextmenu={handleContextMenu}>
+    ">
     <div
-        class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
-        style="opacity: {textOpacity};">
+        role="button"
+        tabindex="0"
+        aria-label="Status bar options"
+        class="flex w-full items-center justify-between"
+        oncontextmenu={handleContextMenu}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }}>
+        <div
+            class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
+            style="opacity: {textOpacity};">
         <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
             <span class="font-mono opacity-70">Ln</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
@@ -207,6 +213,7 @@ async function copyAllStats() {
         {:else}
             <span class="min-w-17.5 cursor-default" use:tooltip={'File Type'}>{fileType}</span>
         {/if}
+        </div>
     </div>
 </footer>
 

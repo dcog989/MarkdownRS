@@ -216,11 +216,18 @@ function handleBackdropContextMenu(e: MouseEvent) {
 }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="fixed inset-0 z-200" onclick={onClose} oncontextmenu={handleBackdropContextMenu}>
+<div
+    role="button"
+    tabindex="0"
+    aria-label="Close context menu"
+    class="fixed inset-0 z-200"
+    onclick={onClose}
+    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+    oncontextmenu={handleBackdropContextMenu}>
     <div
         bind:this={menuEl}
+        role="menu"
+        tabindex="-1"
         class="bg-bg-panel border-border-light text-fg-default no-scrollbar absolute z-200 max-h-[calc(100vh-64px)] max-w-80 min-w-60 overflow-y-auto rounded-lg border py-1 shadow-xl"
         style="
             left: {adjustedX}px;

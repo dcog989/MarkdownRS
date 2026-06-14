@@ -121,9 +121,9 @@ let tooltipContent = $derived.by(() => {
                         : 'var(--surface-hover)'} 40%, {isActive
                         ? 'var(--surface-1)'
                         : 'var(--surface-hover)'} 100%);">
-                    <span
-                        role="button"
-                        tabindex="0"
+                    <button
+                        type="button"
+                        aria-label={`Close ${tab.title}`}
                         class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
                         onclick={(e) => {
                             e.stopPropagation();
@@ -132,7 +132,7 @@ let tooltipContent = $derived.by(() => {
                         onkeydown={(e) => e.key === 'Enter' && onclose?.(e, tab.id)}
                         use:tooltip={`Close ${tab.title}`}>
                         <X size={14} class="transition-colors" />
-                    </span>
+                    </button>
                 </div>
             {/if}
         </div>

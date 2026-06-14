@@ -136,7 +136,13 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
 </script>
 
 {#if isOpen}
-    <div class="fixed inset-0 z-40" role="presentation" onclick={onClose}></div>
+    <div
+        role="button"
+        tabindex="0"
+        aria-label="Close"
+        class="fixed inset-0 z-40"
+        onclick={onClose}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}></div>
     <div
         class="bg-bg-panel border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
         role="menu">

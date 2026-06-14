@@ -39,9 +39,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
 </script>
 
 {#if isOpen}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="ui-backdrop" onclick={handleBackdropClick}>
+    <div role="button" tabindex="0" aria-label="Close" class="ui-backdrop" onclick={handleBackdropClick} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); if (e.key === 'Escape') onClose(); }}>
         <div class="ui-panel">
             <div class="ui-header">
                 <h3 class="text-fg-default text-sm font-semibold">Recent Tabs</h3>

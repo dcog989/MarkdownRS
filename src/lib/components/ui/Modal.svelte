@@ -34,14 +34,6 @@ function handleBackdropClick(e: MouseEvent) {
     }
 }
 
-function handleKeydown(e: KeyboardEvent) {
-    if (isOpen && e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-    }
-}
-
 const selector =
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -62,23 +54,30 @@ function invalidateFocusCache() {
     cacheValid = false;
 }
 
-function handleTabKey(e: KeyboardEvent) {
+function handleKeydown(e: KeyboardEvent) {
     if (!isOpen) return;
 
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+        return;
+    }
+
+    if (e.key !== 'Tab') return;
+
     const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
-    if (focusableElements.length === 0 || e.key !== 'Tab') return;
+    if (focusableElements.length === 0) return;
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
     if (e.shiftKey) {
-        // Shift + Tab: moving backwards
         if (document.activeElement === firstElement) {
             e.preventDefault();
             lastElement.focus();
         }
     } else {
-        // Tab: moving forwards
         if (document.activeElement === lastElement) {
             e.preventDefault();
             firstElement.focus();
@@ -149,23 +148,26 @@ $effect(() => {
 });
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
 {#if isOpen}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
+        role="button"
+        tabindex="0"
+        aria-label="Close modal"
         class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === 'center'
             ? 'items-center'
             : 'items-start pt-16'}"
         style="z-index: {zIndex};"
         onclick={handleBackdropClick}
-        onkeydown={handleTabKey}>
+        onkeydown={handleKeydown}>
         <div
             bind:this={modalPanel}
+            role="dialog"
+            aria-modal="true"
+            tabindex="-1"
             class="ui-panel shadow-2xl"
             style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: calc(100vh - 5rem); width: fit-content; display: flex; flex-direction: column;"
-            onclick={(e) => e.stopPropagation()}>
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={() => {}}>
             <!-- Header Strategy: Snippet First, then Title+Close Default -->
             {#if header}
                 <div class="ui-header flex items-center justify-between">
