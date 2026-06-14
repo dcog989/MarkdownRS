@@ -158,6 +158,9 @@ pub async fn resolve_path_relative(
         return Err("Access denied: invalid path".to_string());
     }
 
+    // Determine if the click path is absolute before moving it.
+    let click_is_absolute = Path::new(&click_path).is_absolute();
+
     // Get the base directory for path traversal protection
     let base_dir = base_path
         .as_ref()
@@ -178,9 +181,9 @@ pub async fn resolve_path_relative(
         handle_error(Some(&path_str), "canonicalize path", e)
     })?;
 
-    // Security check: Ensure the resolved path is within the base directory
-    // This prevents path traversal attacks like "../../../../etc/passwd"
-    if let Some(ref base) = base_dir {
+    // For absolute paths (user explicitly navigated), skip base dir containment check.
+    // The security check only applies to relative paths to prevent traversal attacks.
+    if !click_is_absolute && let Some(ref base) = base_dir {
         let canonical_base = dunce::canonicalize(base).map_err(|e| {
             let base_str = base.to_string_lossy();
             handle_error(Some(&base_str), "canonicalize base path", e)

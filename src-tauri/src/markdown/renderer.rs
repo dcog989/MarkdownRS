@@ -60,7 +60,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 // - Home directory: ~/
 static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/(?:[^/\s<>"'|?*`]+/)+[^/\s<>"'|?*`]+)"#,
+        r#"(?:^|\s)([A-Za-z]:[/\\][^\s<>"'|?*`]*|(?:\./|\.\./|~/)[^\s<>"'|?*`]+|/(?:[^/\s<>"'|?*`]+/)+(?:[^/\s<>"'|?*`]+)?)"#,
     )
     .expect("Invalid PATH_REGEX pattern")
 });
