@@ -20,6 +20,7 @@ let searchInputEl = $state<HTMLInputElement>();
 let selectedIndex = $state(0);
 let recordingCommandId = $state<string | null>(null);
 let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
+let shortcutVersion = $state(0);
 
 $effect(() => {
     if (isOpen) {
@@ -50,18 +51,11 @@ function handleRecordKey(e: KeyboardEvent) {
         stopRecording();
         return;
     }
-
-    // Don't record if only modifiers are pressed
     if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
 
-    const parts: string[] = [];
-    if (e.ctrlKey) parts.push('ctrl');
-    if (e.altKey) parts.push('alt');
-    if (e.shiftKey) parts.push('shift');
-    if (e.metaKey) parts.push('meta');
-    parts.push(e.key.toLowerCase());
+    const keyStr = shortcutManager.getEventKey(e);
 
-    const keyStr = parts.join('+');
+    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
 
     const conflict = shortcutManager.findCommandByShortcut(keyStr, recordingCommandId);
     if (conflict) {
@@ -78,6 +72,7 @@ function assignShortcut(commandId: string, key: string) {
   shortcutManager.setCustomMappings(appContext.app.customShortcuts);
   saveSettings();
   stopRecording();
+  shortcutVersion++;
 }
 
 function handleReassign() {
@@ -101,6 +96,7 @@ function resetShortcut(commandId: string) {
     delete appContext.app.customShortcuts[commandId];
     shortcutManager.setCustomMappings(appContext.app.customShortcuts);
     saveSettings();
+    shortcutVersion++;
 }
 
 function scrollIntoView(node: HTMLElement, isSelected: boolean) {
@@ -116,7 +112,10 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
     };
 }
 
-const allShortcuts = $derived(shortcutManager.getDefinitions());
+const allShortcuts = $derived.by(() => {
+    shortcutVersion;
+    return shortcutManager.getDefinitions().map((def) => ({ ...def }));
+});
 
 const filteredShortcuts = $derived(
     allShortcuts.filter((def) => {
@@ -183,35 +182,43 @@ function handleKeydown(e: KeyboardEvent) {
     <div class="text-ui min-w-125 p-4 relative">
         {#if conflictCommand}
             {@const conflict = conflictCommand}
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                class="absolute inset-0 z-50 flex items-center justify-center bg-black/40"
-                onclick={handleCancelConflict}>
+            <!-- fixed positioning so the overlay is always in the viewport,
+                 regardless of scroll position within the shortcuts list -->
+            <div class="fixed inset-0 z-50">
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- biome-ignore lint/a11y/noStaticElementInteractions: backdrop click to close -->
+                <!-- biome-ignore lint/a11y/useKeyWithClickEvents: Escape key handled elsewhere -->
                 <div
-                    class="bg-bg-panel border-border-main mx-4 w-80 rounded-lg border p-5 shadow-xl"
-                    onclick={(e) => e.stopPropagation()}>
-                    <h3 class="text-fg-default mb-2 text-sm font-semibold">Shortcut Conflict</h3>
-                    <p class="text-fg-muted mb-4 text-sm leading-relaxed">
-                        <span class="text-fg-default font-mono text-xs">{conflict.key}</span>
-                        is already assigned to <strong>{conflict.command.label}</strong>.
-                        Reassign it to <strong>{shortcutManager.getDefinitions().find((c) => c.id === conflict.targetId)?.label}</strong>?
-                    </p>
-                    <div class="flex justify-end gap-2">
-                        <button
-                            type="button"
-                            class="btn-base btn-sm btn-secondary"
-                            onclick={handleCancelConflict}>Cancel</button>
-                        <button
-                            type="button"
-                            class="btn-base btn-sm"
-                            onclick={handleReassign}>Reassign</button>
+                    class="absolute inset-0 bg-black/40"
+                    onclick={handleCancelConflict}></div>
+                <div
+                    class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div
+                        class="bg-bg-panel border-border-main pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
+                        <h3 class="text-fg-default mb-4 text-base font-semibold">Shortcut Conflict</h3>
+                        <p class="text-fg-muted mb-3 text-sm leading-relaxed">
+                            <span class="text-fg-default font-mono text-sm">{conflict.key}</span>
+                            is already assigned to <strong>{conflict.command.label}</strong>.
+                        </p>
+                        <p class="text-fg-muted mb-5 text-sm leading-relaxed">
+                            Reassign it to <strong>{shortcutManager.getDefinitions().find((c) => c.id === conflict.targetId)?.label}</strong>?
+                        </p>
+                        <div class="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                class="btn-base btn-secondary px-4 py-2"
+                                onclick={handleCancelConflict}>Cancel</button>
+                            <button
+                                type="button"
+                                class="btn-base px-4 py-2"
+                                onclick={handleReassign}>Reassign</button>
+                        </div>
                     </div>
                 </div>
             </div>
         {/if}
+        {#key shortcutVersion}
         <div class="space-y-6">
             {#if filteredShortcuts.length > 0}
                 {@const globalIndex = { value: -1 }}
@@ -226,6 +233,7 @@ function handleKeydown(e: KeyboardEvent) {
                                 {@const currentIndex = ++globalIndex.value}
                                 {@const isSelected = currentIndex === selectedIndex}
                                 <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <!-- biome-ignore lint/a11y/noStaticElementInteractions: interactive row for keyboard navigation -->
                                 <div
                                     class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
                                     style:background-color={isSelected
@@ -287,5 +295,6 @@ function handleKeydown(e: KeyboardEvent) {
                 </div>
             {/if}
         </div>
+        {/key}
     </div>
 </Modal>

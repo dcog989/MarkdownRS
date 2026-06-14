@@ -14,7 +14,7 @@ export class KeyboardShortcutManager {
   }
 
   setCustomMappings(mappings: Record<string, string>): void {
-    this.customMappings = mappings;
+    this.customMappings = { ...mappings };
   }
 
   getShortcutDisplay(id: string): string {
@@ -129,7 +129,7 @@ export class KeyboardShortcutManager {
     return isInput || isContentEditable || hasInputRole;
   }
 
-  private getEventKey(e: KeyboardEvent): string {
+  getEventKey(e: KeyboardEvent): string {
     const parts: string[] = [];
     if (e.ctrlKey) parts.push('ctrl');
     if (e.altKey) parts.push('alt');
