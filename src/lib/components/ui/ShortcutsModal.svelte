@@ -19,6 +19,7 @@ let searchQuery = $state('');
 let searchInputEl = $state<HTMLInputElement>();
 let selectedIndex = $state(0);
 let recordingCommandId = $state<string | null>(null);
+let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
 
 $effect(() => {
     if (isOpen) {
@@ -36,6 +37,7 @@ $effect(() => {
 
 function startRecording(commandId: string) {
     recordingCommandId = commandId;
+    shortcutManager.setEnabled(false);
     window.addEventListener('keydown', handleRecordKey, { capture: true });
 }
 
@@ -61,15 +63,38 @@ function handleRecordKey(e: KeyboardEvent) {
 
     const keyStr = parts.join('+');
 
-    appContext.app.customShortcuts[recordingCommandId] = keyStr;
-    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
-    saveSettings();
-    stopRecording();
+    const conflict = shortcutManager.findCommandByShortcut(keyStr, recordingCommandId);
+    if (conflict) {
+      conflictCommand = { command: conflict, key: keyStr, targetId: recordingCommandId };
+      stopRecording();
+      return;
+    }
+
+    assignShortcut(recordingCommandId, keyStr);
+}
+
+function assignShortcut(commandId: string, key: string) {
+  appContext.app.customShortcuts[commandId] = key;
+  shortcutManager.setCustomMappings(appContext.app.customShortcuts);
+  saveSettings();
+  stopRecording();
+}
+
+function handleReassign() {
+  if (!conflictCommand) return;
+  delete appContext.app.customShortcuts[conflictCommand.command.id];
+  assignShortcut(conflictCommand.targetId, conflictCommand.key);
+  conflictCommand = null;
+}
+
+function handleCancelConflict() {
+  conflictCommand = null;
 }
 
 function stopRecording() {
     recordingCommandId = null;
     window.removeEventListener('keydown', handleRecordKey, { capture: true });
+    shortcutManager.setEnabled(true);
 }
 
 function resetShortcut(commandId: string) {
@@ -155,7 +180,38 @@ function handleKeydown(e: KeyboardEvent) {
             onKeydown={handleKeydown} />
     {/snippet}
 
-    <div class="text-ui min-w-125 p-4">
+    <div class="text-ui min-w-125 p-4 relative">
+        {#if conflictCommand}
+            {@const conflict = conflictCommand}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                class="absolute inset-0 z-50 flex items-center justify-center bg-black/40"
+                onclick={handleCancelConflict}>
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <div
+                    class="bg-bg-panel border-border-main mx-4 w-80 rounded-lg border p-5 shadow-xl"
+                    onclick={(e) => e.stopPropagation()}>
+                    <h3 class="text-fg-default mb-2 text-sm font-semibold">Shortcut Conflict</h3>
+                    <p class="text-fg-muted mb-4 text-sm leading-relaxed">
+                        <span class="text-fg-default font-mono text-xs">{conflict.key}</span>
+                        is already assigned to <strong>{conflict.command.label}</strong>.
+                        Reassign it to <strong>{shortcutManager.getDefinitions().find((c) => c.id === conflict.targetId)?.label}</strong>?
+                    </p>
+                    <div class="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            class="btn-base btn-sm btn-secondary"
+                            onclick={handleCancelConflict}>Cancel</button>
+                        <button
+                            type="button"
+                            class="btn-base btn-sm"
+                            onclick={handleReassign}>Reassign</button>
+                    </div>
+                </div>
+            </div>
+        {/if}
         <div class="space-y-6">
             {#if filteredShortcuts.length > 0}
                 {@const globalIndex = { value: -1 }}

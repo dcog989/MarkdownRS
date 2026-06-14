@@ -6,6 +6,7 @@ import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { appState } from '$lib/stores/appState.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
 let {
     isOpen = $bindable(false),
@@ -66,13 +67,6 @@ function cycleSortMode() {
     appState.commandPaletteSort = modes[(idx + 1) % modes.length];
 }
 
-function formatKey(key: string): string {
-    return key
-        .split('+')
-        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-        .join('+');
-}
-
 function close() {
     isOpen = false;
     if (onClose) onClose();
@@ -126,8 +120,8 @@ function close() {
                     onmouseenter={() => (selectedIndex = index)}
                     onclick={() => execute(command)}>
                     <span>{command.label}</span>
-                    {#if command.defaultKey}
-                        <span class="text-ui-sm opacity-60">{formatKey(command.defaultKey)}</span>
+                    {#if shortcutManager.getShortcutDisplay(command.id)}
+                        <span class="text-ui-sm opacity-60">{shortcutManager.getShortcutDisplay(command.id)}</span>
                     {/if}
                 </button>
             {/each}

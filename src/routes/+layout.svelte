@@ -20,6 +20,10 @@ $effect(() => {
 });
 
 $effect(() => {
+    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
+});
+
+$effect(() => {
     const themeName = appContext.app.activeTheme;
     if (!themeName || themeName === 'System') return;
 
@@ -49,7 +53,6 @@ onMount(() => {
     for (const cmd of commands) {
         shortcutManager.register(cmd);
     }
-    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
 
     const handleKeydown = (e: KeyboardEvent) => {
         const key = e.key.toLowerCase();

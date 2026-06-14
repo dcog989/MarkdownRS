@@ -9,27 +9,11 @@ import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
 import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
 import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
-import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
 import { appState } from '$lib/stores/appState.svelte';
-import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { openFileByPath } from '$lib/utils/fileSystem';
 
-const textOpsWithCommands = new Set(['bold', 'italic', 'insert-link', 'strike', 'inline-code']);
-
-const basePaletteCommands: Command[] = [
-    ...commands.filter((c) => c.showInPalette !== false),
-    ...OPERATION_CATEGORIES.flatMap((category) =>
-        getOperationsByCategory(category.id)
-            .filter((op) => !textOpsWithCommands.has(op.id))
-            .map((op) => ({
-                id: `ops-${op.id}`,
-                label: `${category.title === 'Text' ? 'Editor' : category.title}: ${op.label}`,
-                category: category.title === 'Text' ? 'Editor' : category.title,
-                handler: () => performTextTransform(op.id),
-            })),
-    ),
-];
+const basePaletteCommands: Command[] = commands.filter((c) => c.showInPalette !== false);
 
 const paletteCommands = $derived.by(() => {
     void appState.commandPaletteSort;

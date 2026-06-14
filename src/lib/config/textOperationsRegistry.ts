@@ -102,6 +102,10 @@ export interface TextOperation {
    * Backend command name - only needed if execution is 'server'.
    */
   backendCommand?: string;
+  /**
+   * Default keyboard shortcut for this operation.
+   */
+  defaultKey?: string;
 }
 
 /**
@@ -440,6 +444,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: Bold,
     category: 'markdown',
     execution: 'client',
+    defaultKey: 'ctrl+b',
   },
   italic: {
     id: 'italic',
@@ -448,6 +453,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: Italic,
     category: 'markdown',
     execution: 'client',
+    defaultKey: 'ctrl+i',
   },
   'insert-link': {
     id: 'insert-link',
@@ -456,6 +462,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: Link,
     category: 'markdown',
     execution: 'client',
+    defaultKey: 'ctrl+k',
   },
   strike: {
     id: 'strike',

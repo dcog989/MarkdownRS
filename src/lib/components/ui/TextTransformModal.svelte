@@ -18,15 +18,7 @@ let selectedIndex = $state(0);
 let undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
 
 function getOpShortcut(opId: string): string {
-  const commandMap: Record<string, string> = {
-    bold: 'markdown.bold',
-    italic: 'markdown.italic',
-    'insert-link': 'markdown.link',
-    strike: 'markdown.strikethrough',
-    'inline-code': 'markdown.inlineCode',
-  };
-  const cmdId = commandMap[opId];
-  return cmdId ? shortcutManager.getShortcutDisplay(cmdId) : '';
+  return shortcutManager.getShortcutDisplay(`textop.${opId}`);
 }
 
 let filteredCategories = $derived(

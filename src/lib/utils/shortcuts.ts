@@ -19,8 +19,8 @@ export class KeyboardShortcutManager {
 
   getShortcutDisplay(id: string): string {
     const cmd = this.commands.get(id);
-    if (!cmd?.defaultKey) return '';
-    const key = this.customMappings[id] || cmd.defaultKey;
+    const key = this.customMappings[id] || cmd?.defaultKey;
+    if (!key) return '';
     return key
       .split('+')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -29,6 +29,18 @@ export class KeyboardShortcutManager {
 
   getDefinitions(): Command[] {
     return Array.from(this.commands.values());
+  }
+
+  findCommandByShortcut(key: string, excludeId?: string): Command | undefined {
+    const normalizedKey = key.toLowerCase();
+    for (const cmd of this.commands.values()) {
+      if (cmd.id === excludeId) continue;
+      const mappedKey = this.customMappings[cmd.id] || cmd.defaultKey;
+      if (mappedKey && mappedKey.toLowerCase() === normalizedKey) {
+        return cmd;
+      }
+    }
+    return undefined;
   }
 
   getShortcutsByCategory(): Map<string, Command[]> {
@@ -84,12 +96,14 @@ export class KeyboardShortcutManager {
     ];
 
     const isInput = this.isInputElement(e.target);
-    if (isInput && !globalShortcuts.includes(pressedKey)) return false;
 
     for (const cmd of this.commands.values()) {
       const mappedKey = this.customMappings[cmd.id] || cmd.defaultKey;
       if (!mappedKey || !cmd.handler) continue;
       if (pressedKey === mappedKey.toLowerCase()) {
+        if (isInput && !(cmd.id in this.customMappings) && !globalShortcuts.includes(pressedKey)) {
+          continue;
+        }
         const result = await cmd.handler(e);
         if (result === true) {
           e.preventDefault();

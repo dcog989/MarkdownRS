@@ -1,4 +1,3 @@
-import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { openFind, openReplace } from '$lib/stores/interfaceStore.svelte';
 import { dispatchKeyEvent } from './helpers';
 import type { Command } from './types';
@@ -101,40 +100,5 @@ export const editorCommands: Command[] = [
     category: 'Editor',
     defaultKey: 'ctrl+[',
     handler: () => dispatchKeyEvent('[', true),
-  },
-  {
-    id: 'markdown.bold',
-    label: 'Markdown: Bold',
-    category: 'Markdown',
-    defaultKey: 'ctrl+b',
-    handler: () => performTextTransform('bold'),
-  },
-  {
-    id: 'markdown.italic',
-    label: 'Markdown: Italic',
-    category: 'Markdown',
-    defaultKey: 'ctrl+i',
-    handler: () => performTextTransform('italic'),
-  },
-  {
-    id: 'markdown.link',
-    label: 'Markdown: Insert Link',
-    category: 'Markdown',
-    defaultKey: 'ctrl+k',
-    handler: () => performTextTransform('insert-link'),
-  },
-  {
-    id: 'markdown.strikethrough',
-    label: 'Markdown: Strikethrough',
-    category: 'Markdown',
-    defaultKey: '',
-    handler: () => performTextTransform('strike'),
-  },
-  {
-    id: 'markdown.inlineCode',
-    label: 'Markdown: Inline Code',
-    category: 'Markdown',
-    defaultKey: '',
-    handler: () => performTextTransform('inline-code'),
   },
 ];
