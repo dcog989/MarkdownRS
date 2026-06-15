@@ -55,10 +55,10 @@ function onResizeMouseDown(e: MouseEvent) {
                         class:flex-row={splitResize.isVertical}
                         class:flex-col={!splitResize.isVertical}>
                     <div
-                        class="writer-content"
-                        style="flex: {showPreview
+                        class="writer-content h-full overflow-hidden"
+                        style:flex={showPreview
                             ? `0 0 ${appContext.settings.splitPercentage * 100}%`
-                            : '1 1 100%'}; height: 100%; overflow: hidden;">
+                            : '1 1 100%'}>
                         <Editor tabId={appContext.app.activeTabId} />
                     </div>
 
@@ -68,7 +68,7 @@ function onResizeMouseDown(e: MouseEvent) {
                             tabindex="0"
                             aria-label="Resize split view"
                             class="resize-handle"
-                            style="cursor: {splitResize.resizeCursor};"
+                            style:cursor={splitResize.resizeCursor}
                             onmousedown={onResizeMouseDown}
                             ondblclick={splitResize.resetSplit}
                             onkeydown={() => {}}></div>

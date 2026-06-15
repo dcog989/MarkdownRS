@@ -55,16 +55,14 @@ let tooltipContent = $derived.by(() => {
     class:border-r={true}
     class:justify-center={isCollapsed}
     class:px-3={!isCollapsed}
-    style="
-        min-width: {isCollapsed ? '36px' : `${appContext.settings.tabWidthMin}px`};
-        max-width: {isCollapsed ? '36px' : `${appContext.settings.tabWidthMax}px`};
-        width: {isCollapsed ? '36px' : 'auto'};
-        border-top-left-radius: 0.375rem;
-        border-top-right-radius: 0.375rem;
-        {isActive
-        ? 'border-top: 2px solid var(--accent-primary); border-bottom: 1px solid transparent;'
-        : ''}
-    "
+    class:rounded-t-md={true}
+    class:border-t-accent-primary={isActive}
+    class:border-b-transparent={isActive}
+    style:min-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMin}px`}
+    style:max-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMax}px`}
+    style:width={isCollapsed ? '36px' : 'auto'}
+    style:border-top={isActive ? '2px solid var(--accent-primary)' : undefined}
+    style:border-bottom={isActive ? '1px solid transparent' : undefined}
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
         e.preventDefault();
@@ -108,7 +106,7 @@ let tooltipContent = $derived.by(() => {
                 <div
                     class={'absolute inset-0 flex items-center justify-center ' +
                         (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}
-                    style="top: {isActive ? '2px' : '0'}">
+                    style:top={isActive ? '2px' : '0'}>
                     <Pin
                         size={12}
                         class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
@@ -116,11 +114,8 @@ let tooltipContent = $derived.by(() => {
             {:else}
                 <div
                     class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
-                    style="top: {isActive ? '2px' : '0'}; background: linear-gradient(to right, transparent 0%, {isActive
-                        ? 'var(--surface-1)'
-                        : 'var(--surface-hover)'} 40%, {isActive
-                        ? 'var(--surface-1)'
-                        : 'var(--surface-hover)'} 100%);">
+                    style:top={isActive ? '2px' : '0'}
+                    style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--surface-1)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--surface-1)' : 'var(--surface-hover)'} 100%)`}>
                     <button
                         type="button"
                         aria-label={`Close ${tab.title}`}

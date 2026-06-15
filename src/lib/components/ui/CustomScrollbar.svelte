@@ -157,6 +157,7 @@ $effect(() => {
         class:bg-accent-primary={isDragging}
         class:!opacity-100={isDragging}
         class:!w-3={isDragging}
-        style="height: {thumbHeight}px; transform: translateY({thumbTop}px);"
+        style:height={`${thumbHeight}px`}
+        style:transform={`translateY(${thumbTop}px)`}
         onmousedown={onThumbMouseDown}></div>
 </div>

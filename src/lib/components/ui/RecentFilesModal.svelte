@@ -105,13 +105,9 @@ function handleKeydown(e: KeyboardEvent) {
                 {#each filteredFiles as path, index (path)}
                     {@const isSelected = index === selectedIndex}
                     <div
-                        class="group px-4 py-2.5 transition-colors"
+                        class="recent-row group px-4 py-2.5 transition-colors"
                         class:bg-row-even={index % 2 === 1 && !isSelected}
-                        style:background-color={isSelected
-                            ? 'var(--accent-primary)'
-                            : index % 2 === 1
-                              ? 'var(--surface-row)'
-                              : 'transparent'}
+                        data-selected={isSelected}
                         use:scrollIntoView={isSelected}>
                         <div
                             role="button"
@@ -121,40 +117,17 @@ function handleKeydown(e: KeyboardEvent) {
                             onkeydown={(e) => { if (e.key === 'Enter') handleOpenFile(path); }}
                             onmouseenter={() => (selectedIndex = index)}>
                             <div class="min-w-0 flex-1">
-                                <div
-                                    class="truncate font-medium"
-                                    style:color={isSelected
-                                        ? 'var(--text-inverse)'
-                                        : 'var(--text-primary)'}>
+                                <div class="recent-title truncate font-medium">
                                     {getFilename(path)}
                                 </div>
-                                <div
-                                    class="text-ui-sm truncate"
-                                    style:color={isSelected
-                                        ? 'var(--text-inverse)'
-                                        : 'var(--text-secondary)'}
-                                    style:opacity={isSelected ? 0.8 : 0.6}>
+                                <div class="recent-path text-ui-sm truncate">
                                     {path}
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onclick={(e) => handleRemove(path, e)}
-                                class="rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
-                                style:color={isSelected
-                                    ? 'var(--text-inverse)'
-                                    : 'var(--text-secondary)'}
-                                style:background-color={isSelected
-                                    ? 'rgba(255,255,255,0.15)'
-                                    : 'transparent'}
-                                onmouseenter={(e) =>
-                                    (e.currentTarget.style.backgroundColor = isSelected
-                                        ? 'rgba(255,255,255,0.25)'
-                                        : 'var(--surface-hover)')}
-                                onmouseleave={(e) =>
-                                    (e.currentTarget.style.backgroundColor = isSelected
-                                        ? 'rgba(255,255,255,0.15)'
-                                        : 'transparent')}
+                                class="recent-remove rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
                                 title="Remove from history">
                                 <X size={16} />
                             </button>
@@ -173,3 +146,45 @@ function handleKeydown(e: KeyboardEvent) {
         {/if}
     </div>
 </Modal>
+
+<style>
+    .recent-row[data-selected="true"] {
+        background-color: var(--accent-primary);
+    }
+
+    .recent-row[data-selected="true"] .recent-title {
+        color: var(--text-inverse);
+    }
+
+    .recent-row[data-selected="true"] .recent-path {
+        color: var(--text-inverse);
+        opacity: 0.8;
+    }
+
+    .recent-row[data-selected="false"] .recent-title {
+        color: var(--text-primary);
+    }
+
+    .recent-row[data-selected="false"] .recent-path {
+        color: var(--text-secondary);
+        opacity: 0.6;
+    }
+
+    .recent-remove {
+        color: var(--text-secondary);
+        background-color: transparent;
+    }
+
+    .recent-remove:hover {
+        background-color: var(--surface-hover);
+    }
+
+    .recent-row[data-selected="true"] .recent-remove {
+        color: var(--text-inverse);
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .recent-row[data-selected="true"] .recent-remove:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+    }
+</style>

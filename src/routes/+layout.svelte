@@ -17,7 +17,6 @@ $effect(() => {
     const theme = appContext.settings.theme;
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
-    root.style.colorScheme = theme;
 });
 
 $effect(() => {

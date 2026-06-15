@@ -143,6 +143,29 @@
   text-decoration: none;
 }
 
+/* Gutter Markers for Recent Changes */
+.cm-lineNumber-marker {
+  position: relative;
+  display: block;
+}
+
+.cm-lineNumber-changed {
+  font-weight: bold;
+  color: color-mix(in srgb, var(--highlight-line), var(--text-secondary) calc((1 - var(--line-alpha)) * 100%));
+  text-shadow: 0 0 4px color-mix(in srgb, var(--highlight-line), transparent calc(100% - var(--line-shadow-alpha) * 1%));
+}
+
+.cm-deletion-marker {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 10;
+  background-color: color-mix(in srgb, var(--danger), transparent calc((1 - var(--deletion-alpha)) * 100%));
+}
+
 /* Modifier Keys */
 .cm-editor.cm-modifier-down {
   & .cm-url,

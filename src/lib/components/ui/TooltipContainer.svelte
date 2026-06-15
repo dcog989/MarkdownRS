@@ -61,7 +61,8 @@ $effect(() => {
     <div
         bind:this={tooltipEl}
         class="pointer-events-none fixed z-9999"
-        style="left: {adjustedX}px; top: {adjustedY}px;"
+        style:left={`${adjustedX}px`}
+        style:top={`${adjustedY}px`}
         transition:fade={{ duration: CONFIG.UI.ANIMATION_DURATION_MS }}>
         <div
             class="text-ui-sm max-w-lg rounded border p-2 leading-relaxed whitespace-pre-line shadow-2xl {className} bg-bg-header border-border-light text-fg-default">

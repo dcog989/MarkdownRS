@@ -115,9 +115,9 @@ const rulerMeasure = ViewPlugin.fromClass(
         const paddingLeft = parseFloat(style.paddingLeft) || 0;
         const left = gutterWidth + paddingLeft + column * charWidth;
         dom.style.setProperty('--ruler-left', `${left}px`);
-        dom.style.setProperty('--ruler-display', '');
+        dom.dataset.rulerActive = '';
       } else {
-        dom.style.setProperty('--ruler-display', 'none');
+        delete dom.dataset.rulerActive;
       }
     }
   },
@@ -135,7 +135,10 @@ const rulerTheme = EditorView.theme({
     pointerEvents: 'none',
     zIndex: '0',
     left: 'var(--ruler-left, 0px)',
-    display: 'var(--ruler-display, none)',
+    display: 'none',
+  },
+  '.cm-scroller[data-ruler-active]::after': {
+    display: 'block',
   },
 });
 

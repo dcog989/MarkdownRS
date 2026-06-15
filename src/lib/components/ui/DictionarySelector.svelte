@@ -176,7 +176,7 @@ function handleKeydown(e: KeyboardEvent) {
             'above'
                 ? 'bottom-full mb-1'
                 : 'top-full mt-1'}"
-            style="max-height: {dropdownMaxHeight}px;">
+            style:max-height={`${dropdownMaxHeight}px`}>
             {#each availableDictionaries as dict (dict.code)}
                 <button
                     type="button"

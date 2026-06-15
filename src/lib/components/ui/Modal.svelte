@@ -156,7 +156,7 @@ $effect(() => {
         class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === 'center'
             ? 'items-center'
             : 'items-start pt-16'}"
-        style="z-index: {zIndex};"
+        style:z-index={zIndex}
         onclick={handleBackdropClick}
         onkeydown={handleKeydown}>
         <div
@@ -164,8 +164,11 @@ $effect(() => {
             role="dialog"
             aria-modal="true"
             tabindex="-1"
-            class="ui-panel shadow-2xl"
-            style="min-width: {MODAL_CONSTRAINTS.MIN_WIDTH}; max-width: {MODAL_CONSTRAINTS.MAX_WIDTH}; max-height: calc(100vh - 5rem); width: fit-content; display: flex; flex-direction: column;"
+            class="ui-panel flex-col shadow-2xl"
+            style:min-width={MODAL_CONSTRAINTS.MIN_WIDTH}
+            style:max-width={MODAL_CONSTRAINTS.MAX_WIDTH}
+            style:max-height="calc(100vh - 5rem)"
+            style:width="fit-content"
             onclick={(e) => e.stopPropagation()}
             onkeydown={() => {}}>
             <!-- Header Strategy: Snippet First, then Title+Close Default -->

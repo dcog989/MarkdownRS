@@ -13,28 +13,20 @@ class LineNumberMarker extends GutterMarker {
 
   toDOM() {
     const span = document.createElement('span');
+    span.className = 'cm-lineNumber-marker';
     span.textContent = String(this.lineNo);
-    span.style.position = 'relative';
-    span.style.display = 'block';
 
     if (this.alpha > 0) {
-      span.style.color = `color-mix(in srgb, var(--highlight-line), var(--text-secondary) ${Math.round((1 - this.alpha) * 100)}%)`;
-      span.style.fontWeight = 'bold';
-
+      span.classList.add('cm-lineNumber-changed');
+      span.style.setProperty('--line-alpha', String(this.alpha));
       const shadowAlpha = Math.round(this.alpha * 40);
-      span.style.textShadow = `0 0 4px color-mix(in srgb, var(--highlight-line), transparent ${100 - shadowAlpha}%)`;
+      span.style.setProperty('--line-shadow-alpha', String(shadowAlpha));
     }
 
     if (this.deletionAlpha > 0) {
       const delMarker = document.createElement('div');
-      delMarker.style.position = 'absolute';
-      delMarker.style.bottom = '-2px';
-      delMarker.style.left = '0';
-      delMarker.style.right = '0';
-      delMarker.style.height = '2px';
-      delMarker.style.backgroundColor = `color-mix(in srgb, var(--danger), transparent ${Math.round((1 - this.deletionAlpha) * 100)}%)`;
-      delMarker.style.pointerEvents = 'none';
-      delMarker.style.zIndex = '10';
+      delMarker.className = 'cm-deletion-marker';
+      delMarker.style.setProperty('--deletion-alpha', String(this.deletionAlpha));
       span.appendChild(delMarker);
     }
 
