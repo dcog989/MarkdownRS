@@ -133,30 +133,41 @@ pub fn load_rumdl_rules(
         .and_then(|p| p.metadata().ok())
         .and_then(|m| m.modified().ok());
 
+    // Fast path: check cache under lock — no I/O.
+    {
+        let cache = CACHE
+            .lock()
+            .map_err(|_| "Cache lock poisoned".to_string())?;
+
+        let valid = cache
+            .as_ref()
+            .is_some_and(|c| c.config_path == candidate_path && c.config_mtime == candidate_mtime);
+
+        if valid {
+            let cached = cache.as_ref().unwrap();
+            return Ok((cached.config.clone(), clone_rules(&cached.rules)));
+        }
+    }
+    // Lock released — safe to do I/O below.
+
+    // Slow path: build config outside the lock.
+    let (config, rules) = if let Some(ref cp) = candidate_path {
+        load_full_state(project_root, cp)?
+    } else {
+        let (c, r) = load_default_rules();
+        (c.clone(), clone_rules(r))
+    };
+
+    // Re-acquire lock to update cache.
     let mut cache = CACHE
         .lock()
         .map_err(|_| "Cache lock poisoned".to_string())?;
+    *cache = Some(CachedState {
+        config_path: candidate_path,
+        config_mtime: candidate_mtime,
+        config: config.clone(),
+        rules: clone_rules(&rules),
+    });
 
-    let valid = cache
-        .as_ref()
-        .is_some_and(|c| c.config_path == candidate_path && c.config_mtime == candidate_mtime);
-
-    if !valid {
-        let (config, rules) = if let Some(ref cp) = candidate_path {
-            load_full_state(project_root, cp)?
-        } else {
-            let (c, r) = load_default_rules();
-            (c.clone(), clone_rules(r))
-        };
-        *cache = Some(CachedState {
-            config_path: candidate_path,
-            config_mtime: candidate_mtime,
-            config: config.clone(),
-            rules: clone_rules(&rules),
-        });
-        return Ok((config, rules));
-    }
-
-    let cached = cache.as_ref().unwrap();
-    Ok((cached.config.clone(), clone_rules(&cached.rules)))
+    Ok((config, rules))
 }
