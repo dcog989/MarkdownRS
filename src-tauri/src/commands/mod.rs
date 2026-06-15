@@ -1,4 +1,5 @@
 pub mod bookmarks;
+pub mod context_menu;
 pub mod data;
 pub mod export;
 pub mod files;
