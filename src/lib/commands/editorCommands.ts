@@ -1,5 +1,19 @@
+import {
+  addCursorAbove,
+  addCursorBelow,
+  copyLineDown,
+  copyLineUp,
+  cursorMatchingBracket,
+  deleteLine,
+  indentLess,
+  indentMore,
+  moveLineDown,
+  moveLineUp,
+  selectLine,
+  toggleComment,
+} from '@codemirror/commands';
 import { openFind, openReplace } from '$lib/stores/interfaceStore.svelte';
-import { dispatchKeyEvent } from './helpers';
+import { runEditorCommand } from './helpers';
 import type { Command } from './types';
 
 export const editorCommands: Command[] = [
@@ -8,7 +22,7 @@ export const editorCommands: Command[] = [
     label: 'Editor: Toggle Line Comment',
     category: 'Editor',
     defaultKey: 'ctrl+/',
-    handler: () => dispatchKeyEvent('/', true),
+    handler: () => runEditorCommand(toggleComment),
   },
   {
     id: 'editor.find',
@@ -31,76 +45,76 @@ export const editorCommands: Command[] = [
     label: 'Editor: Duplicate Line/Selection',
     category: 'Editor',
     defaultKey: 'ctrl+shift+d',
-    handler: () => dispatchKeyEvent('d', true, true),
+    handler: () => runEditorCommand(copyLineDown),
   },
   {
     id: 'editor.deleteLine',
     label: 'Editor: Delete Line',
     category: 'Editor',
     defaultKey: 'ctrl+shift+k',
-    handler: () => dispatchKeyEvent('k', true, true),
+    handler: () => runEditorCommand(deleteLine),
   },
   {
     id: 'editor.moveLineUp',
     label: 'Editor: Move Line Up',
     category: 'Editor',
     defaultKey: 'alt+arrowup',
-    handler: () => dispatchKeyEvent('ArrowUp', false, false, true),
+    handler: () => runEditorCommand(moveLineUp),
   },
   {
     id: 'editor.moveLineDown',
     label: 'Editor: Move Line Down',
     category: 'Editor',
     defaultKey: 'alt+arrowdown',
-    handler: () => dispatchKeyEvent('ArrowDown', false, false, true),
+    handler: () => runEditorCommand(moveLineDown),
   },
   {
     id: 'editor.copyLineUp',
     label: 'Editor: Copy Line Up',
     category: 'Editor',
     defaultKey: 'shift+alt+arrowup',
-    handler: () => dispatchKeyEvent('ArrowUp', false, true, true),
+    handler: () => runEditorCommand(copyLineUp),
   },
   {
     id: 'editor.addCursorAbove',
     label: 'Editor: Add Cursor Above',
     category: 'Editor',
     defaultKey: 'ctrl+alt+arrowup',
-    handler: () => dispatchKeyEvent('ArrowUp', true, false, true),
+    handler: () => runEditorCommand(addCursorAbove),
   },
   {
     id: 'editor.addCursorBelow',
     label: 'Editor: Add Cursor Below',
     category: 'Editor',
     defaultKey: 'ctrl+alt+arrowdown',
-    handler: () => dispatchKeyEvent('ArrowDown', true, false, true),
+    handler: () => runEditorCommand(addCursorBelow),
   },
   {
     id: 'editor.selectLine',
     label: 'Editor: Select Line',
     category: 'Editor',
     defaultKey: 'ctrl+l',
-    handler: () => dispatchKeyEvent('l', true),
+    handler: () => runEditorCommand(selectLine),
   },
   {
     id: 'editor.gotoMatchingBracket',
     label: 'Editor: Go to Matching Bracket',
     category: 'Editor',
     defaultKey: 'ctrl+shift+\\',
-    handler: () => dispatchKeyEvent('\\', true, true),
+    handler: () => runEditorCommand(cursorMatchingBracket),
   },
   {
     id: 'editor.indent',
     label: 'Editor: Indent',
     category: 'Editor',
     defaultKey: 'ctrl+]',
-    handler: () => dispatchKeyEvent(']', true),
+    handler: () => runEditorCommand(indentMore),
   },
   {
     id: 'editor.outdent',
     label: 'Editor: Outdent',
     category: 'Editor',
     defaultKey: 'ctrl+[',
-    handler: () => dispatchKeyEvent('[', true),
+    handler: () => runEditorCommand(indentLess),
   },
 ];

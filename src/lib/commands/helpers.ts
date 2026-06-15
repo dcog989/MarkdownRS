@@ -1,4 +1,6 @@
+import type { Command } from '@codemirror/view';
 import { appContext } from '$lib/stores/state.svelte';
+import { getActiveEditorView } from '$lib/utils/editorCommands';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 
 export function isCurrentFileMarkdown(): boolean {
@@ -7,14 +9,7 @@ export function isCurrentFileMarkdown(): boolean {
   return activeTab.path ? isMarkdownFile(activeTab.path) : true;
 }
 
-export function dispatchKeyEvent(key: string, ctrl = true, shift = false, alt = false): void {
-  const event = new KeyboardEvent('keydown', {
-    key,
-    ctrlKey: ctrl,
-    shiftKey: shift,
-    altKey: alt,
-    bubbles: true,
-    cancelable: true,
-  });
-  document.activeElement?.dispatchEvent(event);
+export function runEditorCommand(command: Command): void {
+  const view = getActiveEditorView();
+  if (view) command(view);
 }
