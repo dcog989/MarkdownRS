@@ -17,15 +17,14 @@ export {
 } from './lines';
 
 export {
-  addBlockquote,
-  addBullets,
   addCheckboxes,
-  addCodeFence,
   addNumbers,
   decreaseHeading,
   increaseHeading,
-  removeBlockquote,
   removeListMarkers,
+  toggleBlockquote,
+  toggleBullets,
+  toggleCodeFence,
 } from './markdown';
 export { smartParagraphs } from './paragraphs';
 export {

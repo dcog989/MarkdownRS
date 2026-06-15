@@ -51,13 +51,11 @@ class TextProcessor {
     this.strategies.set('constant-case', ClientLogic.toConstantCase);
 
     // --- Markdown Formatting ---
-    this.strategies.set('add-bullets', ClientLogic.addBullets);
+    this.strategies.set('toggle-bullets', ClientLogic.toggleBullets);
     this.strategies.set('add-numbers', ClientLogic.addNumbers);
     this.strategies.set('add-checkboxes', ClientLogic.addCheckboxes);
-    this.strategies.set('remove-bullets', ClientLogic.removeListMarkers);
-    this.strategies.set('blockquote', ClientLogic.addBlockquote);
-    this.strategies.set('remove-blockquote', ClientLogic.removeBlockquote);
-    this.strategies.set('add-code-fence', ClientLogic.addCodeFence);
+    this.strategies.set('toggle-blockquote', ClientLogic.toggleBlockquote);
+    this.strategies.set('toggle-code-fence', ClientLogic.toggleCodeFence);
     this.strategies.set('increase-heading', ClientLogic.increaseHeading);
     this.strategies.set('decrease-heading', ClientLogic.decreaseHeading);
     this.strategies.set('bold', (t) => `**${t}**`);

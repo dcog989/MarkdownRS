@@ -61,15 +61,13 @@ export type OperationId =
   | 'constant-case'
   | 'invert-case'
   // Markdown Formatting
-  | 'add-bullets'
+  | 'toggle-bullets'
   | 'add-numbers'
   | 'add-checkboxes'
   | 'generate-toc'
   | 'format-document'
-  | 'remove-bullets'
-  | 'blockquote'
-  | 'remove-blockquote'
-  | 'add-code-fence'
+  | 'toggle-blockquote'
+  | 'toggle-code-fence'
   | 'increase-heading'
   | 'decrease-heading'
   | 'bold'
@@ -347,10 +345,10 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
   },
 
   // Markdown Formatting
-  'add-bullets': {
-    id: 'add-bullets',
-    label: 'Add Bullet Points',
-    description: "Prefix lines with '- '",
+  'toggle-bullets': {
+    id: 'toggle-bullets',
+    label: 'Bullet Points',
+    description: "Add or remove '- ' bullet prefix",
     icon: List,
     category: 'markdown',
     execution: 'client',
@@ -389,34 +387,18 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     execution: 'server',
     backendCommand: 'format_markdown',
   },
-  'remove-bullets': {
-    id: 'remove-bullets',
-    label: 'Remove List Markers',
-    description: 'Remove bullets, numbers, checkboxes',
-    icon: CircleMinus,
-    category: 'markdown',
-    execution: 'client',
-  },
-  blockquote: {
-    id: 'blockquote',
-    label: 'Add Blockquote',
-    description: "Prefix lines with '> '",
+  'toggle-blockquote': {
+    id: 'toggle-blockquote',
+    label: 'Blockquote',
+    description: "Add or remove '> ' blockquote prefix",
     icon: TextAlignStart,
     category: 'markdown',
     execution: 'client',
   },
-  'remove-blockquote': {
-    id: 'remove-blockquote',
-    label: 'Remove Blockquote',
-    description: "Remove '> ' prefix",
-    icon: CircleMinus,
-    category: 'markdown',
-    execution: 'client',
-  },
-  'add-code-fence': {
-    id: 'add-code-fence',
-    label: 'Wrap in Code Block',
-    description: 'Wrap with ``` fences',
+  'toggle-code-fence': {
+    id: 'toggle-code-fence',
+    label: 'Code Block',
+    description: 'Add or remove ``` fences',
     icon: Hash,
     category: 'markdown',
     execution: 'client',
