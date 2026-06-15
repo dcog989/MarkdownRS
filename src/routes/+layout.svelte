@@ -20,10 +20,6 @@ $effect(() => {
 });
 
 $effect(() => {
-    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
-});
-
-$effect(() => {
     const themeName = appContext.app.activeTheme;
     if (!themeName || themeName === 'System') return;
 

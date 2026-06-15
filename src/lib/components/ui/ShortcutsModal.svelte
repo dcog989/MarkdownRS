@@ -21,7 +21,6 @@ let searchQuery = $state('');
 let searchInputEl = $state<HTMLInputElement>();
 let recordingCommandId = $state<string | null>(null);
 let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
-let shortcutVersion = $state(0);
 
 const nav = createListNavigation(
     () => flatShortcuts.length,
@@ -62,8 +61,6 @@ function handleRecordKey(e: KeyboardEvent) {
 
     const keyStr = shortcutManager.getEventKey(e);
 
-    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
-
     const conflict = shortcutManager.findCommandByShortcut(keyStr, recordingCommandId);
     if (conflict) {
       conflictCommand = { command: conflict, key: keyStr, targetId: recordingCommandId };
@@ -76,10 +73,8 @@ function handleRecordKey(e: KeyboardEvent) {
 
 function assignShortcut(commandId: string, key: string) {
   appContext.app.customShortcuts[commandId] = key;
-  shortcutManager.setCustomMappings(appContext.app.customShortcuts);
   saveSettings();
   stopRecording();
-  shortcutVersion++;
 }
 
 function handleReassign() {
@@ -101,13 +96,10 @@ function stopRecording() {
 
 function resetShortcut(commandId: string) {
     delete appContext.app.customShortcuts[commandId];
-    shortcutManager.setCustomMappings(appContext.app.customShortcuts);
     saveSettings();
-    shortcutVersion++;
 }
 
 const categories = $derived.by(() => {
-    shortcutVersion;
     const grouped = shortcutManager.getShortcutsByCategory();
     const query = searchQuery.toLowerCase();
     return Array.from(grouped.entries())
@@ -184,7 +176,6 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                 </div>
             </div>
         {/if}
-        {#key shortcutVersion}
         <div class="space-y-6">
             {#if categories.length > 0}
                 {@const globalIndex = { value: -1 }}
@@ -260,6 +251,5 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                 </div>
             {/if}
         </div>
-        {/key}
     </div>
 </Modal>

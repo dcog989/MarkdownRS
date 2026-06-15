@@ -1,21 +1,18 @@
 import type { Command } from '$lib/commands/commands';
+import { appContext } from '$lib/stores/state.svelte.ts';
 
 export class KeyboardShortcutManager {
   private commands: Map<string, Command> = new Map();
-  private customMappings: Record<string, string> = {};
   private enabled: boolean = true;
 
   register(command: Command): void {
     this.commands.set(command.id, command);
   }
 
-  setCustomMappings(mappings: Record<string, string>): void {
-    this.customMappings = { ...mappings };
-  }
-
   getShortcutDisplay(id: string): string {
     const cmd = this.commands.get(id);
-    const key = this.customMappings[id] || cmd?.defaultKey;
+    const customShortcuts = appContext.app.customShortcuts;
+    const key = customShortcuts[id] || cmd?.defaultKey;
     if (!key) return '';
     return key
       .split('+')
@@ -28,10 +25,11 @@ export class KeyboardShortcutManager {
   }
 
   findCommandByShortcut(key: string, excludeId?: string): Command | undefined {
+    const customShortcuts = appContext.app.customShortcuts;
     const normalizedKey = key.toLowerCase();
     for (const cmd of this.commands.values()) {
       if (cmd.id === excludeId) continue;
-      const mappedKey = this.customMappings[cmd.id] || cmd.defaultKey;
+      const mappedKey = customShortcuts[cmd.id] || cmd.defaultKey;
       if (mappedKey && mappedKey.toLowerCase() === normalizedKey) {
         return cmd;
       }
@@ -59,12 +57,13 @@ export class KeyboardShortcutManager {
 
     const pressedKey = this.getEventKey(e);
     const isInput = this.isInputElement(e.target);
+    const customShortcuts = appContext.app.customShortcuts;
 
     for (const cmd of this.commands.values()) {
-      const mappedKey = this.customMappings[cmd.id] || cmd.defaultKey;
+      const mappedKey = customShortcuts[cmd.id] || cmd.defaultKey;
       if (!mappedKey || !cmd.handler) continue;
       if (pressedKey === mappedKey.toLowerCase()) {
-        if (isInput && !(cmd.id in this.customMappings) && !cmd.global) {
+        if (isInput && !(cmd.id in customShortcuts) && !cmd.global) {
           continue;
         }
         const result = await cmd.handler(e);
