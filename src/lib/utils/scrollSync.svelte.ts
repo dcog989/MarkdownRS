@@ -10,22 +10,15 @@
  *
  * NON-REACTIVE STATE (plain properties):
  * - lineMap: Array of line->pixel mappings (rebuilt on content change, not reactive)
- * - worker: Web Worker instance (no reactivity needed)
- * - pendingSyncs: SvelteMap tracking pending sync operations (async coordination)
- * - visibleElements: SvelteSet of visible preview elements (DOM optimization)
- * - Various timers and observers (imperative cleanup required)
  *
  * Pattern Rationale:
  * - Use $state for values that UI/effects need to react to
  * - Use plain properties for data that's computed/rebuilt imperatively
- * - Use SvelteMap/SvelteSet for collections that need reactivity but not Proxy overhead
  */
 
 import type { EditorView } from '@codemirror/view';
-import { SvelteMap } from 'svelte/reactivity';
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
-import ScrollSyncWorker from '$lib/workers/scrollSync.worker?worker';
 import { queryHTMLElements } from './dom';
 
 interface LineMapEntry {
@@ -33,37 +26,10 @@ interface LineMapEntry {
   y: number;
 }
 
-interface SyncMessage {
-  type: 'sync';
-  direction: 'editor-to-preview' | 'preview-to-editor';
-  scrollTop: number;
-  scrollHeight: number;
-  clientHeight: number;
-  totalLines: number;
-}
-
-interface UpdateMapMessage {
-  type: 'update-map';
-  lineMap: LineMapEntry[];
-}
-
-interface SyncResultMessage {
-  type: 'sync-result';
-  targetScrollTop: number;
-  direction: 'editor-to-preview' | 'preview-to-editor';
-}
-
 export class ScrollSyncManager {
   editor = $state<EditorView | null>(null);
   preview = $state<HTMLElement | null>(null);
   private lineMap: LineMapEntry[] = [];
-
-  // Web Worker for interpolation calculations
-  private worker: Worker | null = null;
-  private pendingSyncs = new SvelteMap<
-    string,
-    { target: HTMLElement | Element; direction: 'editor-to-preview' | 'preview-to-editor' }
-  >();
 
   // State to prevent circular scroll loops
   private activeSource = $state<'editor' | 'preview' | null>(null);
@@ -89,9 +55,6 @@ export class ScrollSyncManager {
   private initEffects() {
     if (this.effectInitialized) return;
     this.effectInitialized = true;
-
-    // Worker init deferred to here — needs browser context, not module evaluation time
-    this.initWorker();
 
     // $effect.root must run inside a mounted component context, not at module load time.
     // Calling it during module evaluation (before mount) throws in production builds.
@@ -126,59 +89,6 @@ export class ScrollSyncManager {
     });
   }
 
-  private initWorker() {
-    try {
-      this.worker = new ScrollSyncWorker();
-      this.worker.onmessage = (event: MessageEvent<SyncResultMessage>) => {
-        this.handleWorkerResult(event.data);
-      };
-      this.worker.onerror = (_err) => {
-        this.fallbackToMainThread();
-      };
-    } catch (_err) {
-      this.fallbackToMainThread();
-    }
-  }
-
-  private fallbackToMainThread() {
-    // If worker fails, we'll do calculations on main thread
-    this.worker = null;
-  }
-
-  private handleWorkerResult(data: SyncResultMessage) {
-    if (data.type !== 'sync-result') return;
-
-    const pending = this.pendingSyncs.get(data.direction);
-    if (!pending) return;
-
-    this.pendingSyncs.delete(data.direction);
-
-    const { target, direction } = pending;
-    let targetY = data.targetScrollTop;
-
-    if (direction === 'editor-to-preview') {
-      if (targetY === -1) {
-        targetY = target.scrollHeight - target.clientHeight;
-      }
-    } else {
-      if (!this.editor) return;
-      if (targetY === -1) {
-        targetY = this.editor.scrollDOM.scrollHeight - this.editor.scrollDOM.clientHeight;
-      } else {
-        const docLines = this.editor.state.doc.lines;
-        const safeLine = Math.max(1, Math.min(targetY, docLines));
-        const lineInt = Math.floor(safeLine);
-        const lineFrac = safeLine - lineInt;
-        const lineInfo = this.editor.lineBlockAt(this.editor.state.doc.line(lineInt).from);
-        targetY = lineInfo.top + lineInfo.height * lineFrac;
-      }
-    }
-
-    if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-      this.smoothScrollTo(target, targetY);
-    }
-  }
-
   markMapDirty() {
     this.mapDirty = true;
   }
@@ -195,7 +105,6 @@ export class ScrollSyncManager {
   }
 
   registerPreview(el: HTMLElement) {
-    // Defer $effect.root and Worker init until first call from a mounted component
     this.initEffects();
 
     if (this.preview === el) return;
@@ -259,14 +168,6 @@ export class ScrollSyncManager {
       if (last.line < totalLines) {
         this.lineMap.push({ line: totalLines, y: scrollHeight });
       }
-    }
-
-    if (this.worker) {
-      const message: UpdateMapMessage = {
-        type: 'update-map',
-        lineMap: this.lineMap,
-      };
-      this.worker.postMessage(message);
     }
   }
 
@@ -400,27 +301,7 @@ export class ScrollSyncManager {
       return;
     }
 
-    if (!this.worker) {
-      this.syncScrollPositionFallback(source, target, direction);
-      return;
-    }
-
-    const lineBlock = this.editor.lineBlockAtHeight(scrollTop);
-    const docLine = this.editor.state.doc.lineAt(lineBlock.from);
-    const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
-    const currentLine = docLine.number + fraction;
-
-    this.pendingSyncs.set(direction, { target, direction });
-
-    const message: SyncMessage = {
-      type: 'sync',
-      direction,
-      scrollTop: currentLine,
-      scrollHeight,
-      clientHeight,
-      totalLines: this.editor.state.doc.lines,
-    };
-    this.worker.postMessage(message);
+    this.syncScrollPosition(source, target, direction);
   }
 
   private syncEditor() {
@@ -449,25 +330,10 @@ export class ScrollSyncManager {
       return;
     }
 
-    if (!this.worker || this.lineMap.length < 2) {
-      this.syncScrollPositionFallback(source, target, direction);
-      return;
-    }
-
-    this.pendingSyncs.set(direction, { target, direction });
-
-    const message: SyncMessage = {
-      type: 'sync',
-      direction,
-      scrollTop,
-      scrollHeight,
-      clientHeight,
-      totalLines: this.editor.state.doc.lines,
-    };
-    this.worker.postMessage(message);
+    this.syncScrollPosition(source, target, direction);
   }
 
-  private syncScrollPositionFallback(
+  private syncScrollPosition(
     source: HTMLElement,
     target: HTMLElement,
     direction: 'editor-to-preview' | 'preview-to-editor',
