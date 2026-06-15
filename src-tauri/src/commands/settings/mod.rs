@@ -124,7 +124,7 @@ pub async fn save_settings(
 pub async fn set_context_menu_item(_enable: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        if enable {
+        if _enable {
             registry::set_context_menu()
         } else {
             registry::remove_context_menu()
