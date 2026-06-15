@@ -51,6 +51,44 @@ export {
   reloadFileContent,
 };
 
+export type CloseManyMode = 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all' | 'unpinned';
+
+export async function closeManyTabs(mode: CloseManyMode, tabId?: string): Promise<void> {
+  const tabs = appContext.editor.tabs;
+  const tabIndex = tabId != null ? tabs.findIndex((t) => t.id === tabId) : -1;
+
+  let targets: (typeof tabs)[number][] = [];
+
+  switch (mode) {
+    case 'right':
+      targets = tabs.slice(tabIndex + 1);
+      break;
+    case 'left':
+      targets = tabs.slice(0, tabIndex);
+      break;
+    case 'others':
+      targets = tabs.filter((t) => t.id !== tabId);
+      break;
+    case 'saved':
+      targets = tabId != null ? tabs.filter((t) => !t.isDirty && t.id !== tabId) : tabs.filter((t) => !t.isDirty);
+      break;
+    case 'unsaved':
+      targets = tabId != null ? tabs.filter((t) => t.isDirty && t.id !== tabId) : tabs.filter((t) => t.isDirty);
+      break;
+    case 'unpinned':
+      targets = tabs.filter((t) => !t.isPinned);
+      break;
+    case 'all':
+      targets = tabs;
+      break;
+  }
+
+  for (const t of targets) {
+    if (t.isPinned && mode !== 'all') continue;
+    await requestCloseTab(t.id, mode === 'all');
+  }
+}
+
 export async function withActiveTab<T>(tabId: string, operation: () => Promise<T>): Promise<T | undefined> {
   const prevActive = appContext.app.activeTabId;
   if (prevActive === tabId) {

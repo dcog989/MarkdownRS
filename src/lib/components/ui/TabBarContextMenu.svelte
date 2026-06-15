@@ -4,7 +4,7 @@ import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import Submenu from '$lib/components/ui/Submenu.svelte';
 import { addTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { requestCloseTab, saveCurrentFile } from '$lib/utils/fileSystem';
+import { closeManyTabs, saveCurrentFile } from '$lib/utils/fileSystem';
 
 let { x, y, onClose } = $props<{
     x: number;
@@ -20,16 +20,7 @@ let hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
 let hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
 
 async function handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') {
-    let targets: typeof appContext.editor.tabs = [];
-
-    if (mode === 'saved') targets = appContext.editor.tabs.filter((t) => !t.isDirty);
-    else if (mode === 'unsaved') targets = appContext.editor.tabs.filter((t) => t.isDirty);
-    else if (mode === 'unpinned') targets = appContext.editor.tabs.filter((t) => !t.isPinned);
-    else if (mode === 'all') targets = appContext.editor.tabs;
-
-    for (const t of targets.filter((t) => !t.isPinned || mode === 'all')) {
-        await requestCloseTab(t.id, mode === 'all');
-    }
+    await closeManyTabs(mode);
     onClose();
 }
 

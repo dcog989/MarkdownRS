@@ -13,6 +13,7 @@ import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import {
+  closeManyTabs,
   renameFile,
   requestCloseTab,
   saveCurrentFile,
@@ -105,18 +106,7 @@ export class TabContextMenuLogic {
   };
 
   handleCloseMany = async (mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') => {
-    let targets: typeof appContext.editor.tabs = [];
-
-    if (mode === 'right') targets = appContext.editor.tabs.slice(this.tabIndex + 1);
-    else if (mode === 'left') targets = appContext.editor.tabs.slice(0, this.tabIndex);
-    else if (mode === 'others') targets = appContext.editor.tabs.filter((t) => t.id !== this.tabId);
-    else if (mode === 'saved') targets = appContext.editor.tabs.filter((t) => !t.isDirty && t.id !== this.tabId);
-    else if (mode === 'unsaved') targets = appContext.editor.tabs.filter((t) => t.isDirty && t.id !== this.tabId);
-    else if (mode === 'all') targets = appContext.editor.tabs;
-
-    for (const t of targets.filter((t) => !t.isPinned)) {
-      await requestCloseTab(t.id);
-    }
+    await closeManyTabs(mode, this.tabId);
     this.onClose();
   };
 
