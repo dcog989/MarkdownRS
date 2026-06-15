@@ -9,17 +9,7 @@ use std::path::PathBuf;
 use tauri::State;
 
 fn resolve_project_root(state: &AppState) -> Option<PathBuf> {
-    state
-        .settings_cache
-        .lock()
-        .ok()
-        .and_then(|cache| cache.clone())
-        .and_then(|settings| {
-            settings
-                .get("workspaceRoot")
-                .and_then(|v| v.as_str())
-                .map(PathBuf::from)
-        })
+    state.project_root.lock().ok().and_then(|r| r.clone())
 }
 
 fn resolve_file_path(file_path: Option<&str>) -> Option<PathBuf> {

@@ -1,6 +1,7 @@
 use crate::db::Database;
 use spellbook::Dictionary;
 use std::collections::HashSet;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Mutex};
 
@@ -27,4 +28,6 @@ pub struct AppState {
     /// Cached parsed settings JSON to avoid re-reading settings.toml on
     /// every `load_settings` call. Set to `None` after `save_settings`.
     pub settings_cache: Mutex<Option<serde_json::Value>>,
+    /// Cached `workspaceRoot` from settings, set on load and cleared on save.
+    pub project_root: Mutex<Option<PathBuf>>,
 }

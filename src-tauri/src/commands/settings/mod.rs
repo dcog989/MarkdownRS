@@ -70,6 +70,15 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
             e.into_inner()
         });
         *cache = Some(json_val.clone());
+
+        let mut pr = state.project_root.lock().unwrap_or_else(|e| {
+            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        });
+        *pr = json_val
+            .get("workspaceRoot")
+            .and_then(|v| v.as_str())
+            .map(PathBuf::from);
     }
 
     Ok(json_val)
@@ -116,6 +125,11 @@ pub async fn save_settings(
             e.into_inner()
         });
         *cache = None;
+        let mut pr = state.project_root.lock().unwrap_or_else(|e| {
+            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        });
+        *pr = None;
     }
 
     Ok(())

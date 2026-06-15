@@ -370,6 +370,7 @@ fn main() {
                 spellcheck_status: std::sync::Mutex::new(state::SpellcheckStatus::Uninitialized),
                 max_file_size_bytes: std::sync::atomic::AtomicU64::new(state::MAX_FILE_SIZE_UNSET),
                 settings_cache: std::sync::Mutex::new(None),
+                project_root: std::sync::Mutex::new(None),
             });
 
             // Check for command-line arguments on first launch.
