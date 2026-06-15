@@ -22,7 +22,7 @@ let {
 let searchQuery = $state('');
 let selectedIndex = $state(0);
 // @ts-expect-error: used by bind:this in template
-let searchInputRef: HTMLInputElement;
+let searchInputRef = $state<HTMLInputElement | null>();
 let dropdownListRef = $state<HTMLDivElement>();
 let lastClientX = 0;
 let lastClientY = 0;
