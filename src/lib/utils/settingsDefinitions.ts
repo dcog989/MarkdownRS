@@ -1,9 +1,4 @@
-import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { getActiveEditorView } from '$lib/utils/editorCommands';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
+import { onLogLevelChange, onThemeChange, reloadSpellcheck } from './settingsHandlers';
 
 export type SettingDef = {
   key: string;
@@ -23,16 +18,6 @@ export type SettingDef = {
 };
 
 export function getSettingDefinitions(availableThemes: string[], isWindows: boolean): SettingDef[] {
-  const reloadSpellcheck = () => {
-    spellcheckState.clear();
-    invalidateSpellcheckCache();
-    appContext.spellcheck.init(true).then(() => {
-      showToast('success', 'Spellcheck settings updated');
-      const activeView = getActiveEditorView();
-      if (activeView) triggerImmediateLint(activeView);
-    });
-  };
-
   return [
     {
       key: 'logLevel',
@@ -41,7 +26,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Advanced',
       defaultValue: 'info',
       options: ['trace', 'debug', 'info', 'warn', 'error'],
-      onChange: () => showToast('info', 'Restart required to apply log level changes'),
+      onChange: onLogLevelChange,
     },
 
     {
@@ -51,7 +36,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Appearance',
       defaultValue: 'System',
       options: availableThemes,
-      onChange: () => syncThemeFromActiveTheme(),
+      onChange: onThemeChange,
     },
 
     {
