@@ -1,81 +1,26 @@
 <script lang="ts">
-import {
-    Bookmark,
-    ChevronDown,
-    Eye,
-    EyeOff,
-    Feather,
-    Menu,
-    Plus,
-    Settings,
-    Zap,
-} from 'lucide-svelte';
+import { ChevronDown, Menu, Plus } from 'lucide-svelte';
 import { onDestroy, onMount, tick } from 'svelte';
 import { flip } from 'svelte/animate';
 import { fade } from 'svelte/transition';
 import { SortableController } from '$lib/actions/sortable.svelte.ts';
 import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
 import TabBarContextMenu from '$lib/components/ui/TabBarContextMenu.svelte';
+import TabBarMenu from '$lib/components/ui/TabBarMenu.svelte';
 import TabButton from '$lib/components/ui/TabButton.svelte';
 import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
 import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
-import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
 import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import {
-    toggleAbout,
-    toggleBookmarks,
-    toggleCommandPalette,
-    toggleSettings,
-} from '$lib/stores/interfaceStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { showToast } from '$lib/stores/toastStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
 import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { saveSettings } from '$lib/utils/settings';
-import { shortcutManager } from '$lib/utils/shortcuts';
+import { createMruCycling } from '$lib/utils/mruCycling.svelte.ts';
 
 let scrollContainer = $state<HTMLElement>();
 let showDropdown = $state(false);
 let showMenu = $state(false);
-
-let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
-let isPreviewAvailable = $derived(
-    activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true,
-);
-
-let shortcuts = $derived({
-    settings: shortcutManager.getShortcutDisplay('window.settings'),
-    commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
-    bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
-    splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
-    writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
-});
-
-function toggleSplit() {
-    if (!isPreviewAvailable) {
-        showToast('warning', 'Preview not available for this file type');
-        return;
-    }
-    toggleSplitView();
-    saveSettings();
-}
-
-function handleWriterMode() {
-    const wasWriterMode = appContext.app.writerMode;
-    toggleWriterMode();
-    if (wasWriterMode) {
-        document.exitFullscreen().catch(() => {});
-    } else {
-        document.documentElement.requestFullscreen().catch(() => {});
-    }
-}
-
-function closeMenu() {
-    showMenu = false;
-}
 
 let isDragging = $state(false);
 let draggingId = $state<string | null>(null);
@@ -88,10 +33,8 @@ let contextMenuY = $state(0);
 let showTabBarContextMenu = $state(false);
 let tabBarContextMenuX = $state(0);
 let tabBarContextMenuY = $state(0);
-let showMruPopup = $state(false);
-let mruSelectedIndex = $state(0);
-let isMruCycling = $state(false);
-let mruTimer: number | null = null;
+
+let mru = createMruCycling();
 
 const sortController = new SortableController<EditorTab>({
     items: [],
@@ -131,7 +74,6 @@ $effect(() => {
 });
 
 $effect(() => {
-    // Trigger fade indicator update when tab count changes
     void appContext.editor.tabs.length;
     tick().then(updateFadeIndicators);
 });
@@ -144,58 +86,17 @@ $effect(() => {
 });
 
 onMount(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.key === 'Tab') {
-            e.preventDefault();
-            if (!isMruCycling) {
-                isMruCycling = true;
-                mruSelectedIndex = appContext.editor.mruStack.length > 1 ? 1 : 0;
-                if (mruTimer) clearTimeout(mruTimer);
-                mruTimer = window.setTimeout(
-                    () => (showMruPopup = true),
-                    CONFIG.UI_TIMING.MRU_POPUP_DELAY_MS,
-                );
-            } else {
-                mruSelectedIndex = (mruSelectedIndex + 1) % appContext.editor.mruStack.length;
-                showMruPopup = true;
-                if (mruTimer) clearTimeout(mruTimer);
-            }
-        }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-        if (e.key === 'Control' || !e.ctrlKey) {
-            if (isMruCycling) {
-                if (mruTimer) clearTimeout(mruTimer);
-                const targetId = appContext.editor.mruStack[mruSelectedIndex];
-                if (targetId) {
-                    appContext.app.activeTabId = targetId;
-                    pushToMru(targetId);
-                }
-                isMruCycling = false;
-                showMruPopup = false;
-            }
-        }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('keydown', mru.onKeyDown);
+    window.addEventListener('keyup', mru.onKeyUp);
 
     return () => {
-        if (mruTimer) {
-            clearTimeout(mruTimer);
-            mruTimer = null;
-        }
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
+        mru.cleanup();
+        window.removeEventListener('keydown', mru.onKeyDown);
+        window.removeEventListener('keyup', mru.onKeyUp);
     };
 });
 
 onDestroy(() => {
-    if (mruTimer) {
-        clearTimeout(mruTimer);
-        mruTimer = null;
-    }
     sortController.destroy();
 });
 
@@ -279,14 +180,12 @@ $effect(() => {
             class="no-scrollbar tab-scroll-container flex h-full w-full items-stretch overflow-x-auto"
             onscroll={updateFadeIndicators}
             oncontextmenu={(e) => {
-                // Check if the right-click is on an empty area (not on a tab)
                 const target = asHTMLElement(e.target);
                 if (!target) return;
                 if (
                     target.classList.contains("tab-scroll-container") ||
                     target.closest(".tab-scroll-container")
                 ) {
-                    // Only show context menu if we didn't click on a tab button
                     if (
                         !target.closest('[data-tab-item="true"]') &&
                         !target.closest("button")
@@ -370,99 +269,7 @@ $effect(() => {
             onclick={() => (showMenu = !showMenu)}>
             <Menu size={16} />
         </button>
-        {#if showMenu}
-            <div
-                role="button"
-                tabindex="0"
-                aria-label="Close menu"
-                class="fixed inset-0 z-40"
-                onclick={closeMenu}
-                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeMenu(); }}></div>
-            <div
-                role="dialog"
-                tabindex="-1"
-                class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-lg border py-1 shadow-xl w-80"
-                onclick={(e) => e.stopPropagation()}
-                onkeydown={() => {}}>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        toggleCommandPalette();
-                        closeMenu();
-                    }}>
-                    <Zap size={14} class="opacity-70" />
-                    <span class="flex-1">Command Palette</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.commands}</span>
-                </button>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        toggleBookmarks();
-                        closeMenu();
-                    }}>
-                    <Bookmark size={14} class="opacity-70" />
-                    <span class="flex-1">Bookmarks</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
-                </button>
-
-                <div class="bg-border-main my-1 h-px"></div>
-
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    class:opacity-50={!isPreviewAvailable}
-                    class:cursor-not-allowed={!isPreviewAvailable}
-                    onclick={() => {
-                        if (isPreviewAvailable) {
-                            toggleSplit();
-                            closeMenu();
-                        }
-                    }}>
-                    {#if isPreviewAvailable}
-                        <Eye size={14} class="opacity-70" />
-                    {:else}
-                        <EyeOff size={14} class="opacity-50" />
-                    {/if}
-                    <span class="flex-1">Toggle Split Preview</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
-                </button>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        handleWriterMode();
-                        closeMenu();
-                    }}>
-                    <Feather size={14} class="opacity-70" />
-                    <span class="flex-1">Writer Mode</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
-                </button>
-
-                <div class="bg-border-main my-1 h-px"></div>
-
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        toggleSettings();
-                        closeMenu();
-                    }}>
-                    <Settings size={14} class="opacity-70" /><span class="flex-1">Settings</span
-                    ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
-                </button>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={() => {
-                        toggleAbout();
-                        closeMenu();
-                    }}>
-                    <img src="/logo.svg" alt="" class="h-4 w-4" /><span>About MarkdownRS</span>
-                </button>
-            </div>
-        {/if}
+        <TabBarMenu bind:showMenu />
     </div>
 </div>
 
@@ -482,13 +289,12 @@ $effect(() => {
 {/if}
 
 <MruTabsPopup
-    isOpen={showMruPopup}
-    onClose={() => (showMruPopup = false)}
+    isOpen={mru.showPopup}
+    onClose={() => (mru.showPopup = false)}
     onSelect={(id) => {
         appContext.app.activeTabId = id;
         pushToMru(id);
     }}
-    selectedId={isMruCycling
-        ? appContext.editor.mruStack[mruSelectedIndex]
+    selectedId={mru.isCycling
+        ? appContext.editor.mruStack[mru.selectedIndex]
         : appContext.app.activeTabId} />
-
