@@ -9,6 +9,8 @@ import { debounce } from '$lib/utils/timing';
 
 type UnwatchFn = () => void;
 
+const TOAST_THROTTLE_MS = 5000;
+
 class FileWatcherService {
   private watchers = new Map<string, UnwatchFn>();
   private tabCounts = new Map<string, number>();
@@ -129,7 +131,11 @@ class FileWatcherService {
 
       if (dirtyTabs.length > 0) {
         const tabNames = dirtyTabs.map((t) => t.title).join(', ');
-        showToast('warning', `File changed on disk: ${tabNames}. You have unsaved changes.`, 5000);
+        showToast(
+          'warning',
+          `File changed on disk: ${tabNames}. You have unsaved changes.`,
+          CONFIG.UI.TOAST_DURATION_MS,
+        );
       }
 
       if (cleanTabs.length > 0) {
@@ -156,7 +162,7 @@ class FileWatcherService {
 
         const now = Date.now();
         const lastTime = this.lastToastTime.get(path) ?? 0;
-        if (now - lastTime > 5000) {
+        if (now - lastTime > TOAST_THROTTLE_MS) {
           const tabNames = cleanTabs.map((t) => t.title).join(', ');
           showToast('info', `Loaded ${tabNames} from disk`);
           this.lastToastTime.set(path, now);

@@ -12,6 +12,9 @@ import { throttle } from '$lib/utils/timing';
 import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolation';
 import { SmoothScroller } from './smoothScroller';
 
+const CLEAR_SOURCE_DELAY_MS = 200;
+const FAST_SCROLL_DELAY_MS = 300;
+
 export class ScrollSyncManager {
   editor = $state<EditorView | null>(null);
   preview = $state<HTMLElement | null>(null);
@@ -146,7 +149,7 @@ export class ScrollSyncManager {
     if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
     this.clearSourceTimer = window.setTimeout(() => {
       this.activeSource = null;
-    }, 200);
+    }, CLEAR_SOURCE_DELAY_MS);
   }
 
   private syncPreview() {
@@ -241,7 +244,7 @@ export class ScrollSyncManager {
     if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
     this.clearSourceTimer = window.setTimeout(() => {
       this.activeSource = null;
-    }, 300);
+    }, FAST_SCROLL_DELAY_MS);
 
     v.scrollDOM.scrollTop = targetY;
     this.syncPreview();

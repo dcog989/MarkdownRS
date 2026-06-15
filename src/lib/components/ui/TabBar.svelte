@@ -28,6 +28,8 @@ let dragOffsetX = $state(0);
 let currentDragX = $state(0);
 
 let contextMenuTabId: string | null = $state(null);
+
+const PEEK_AMOUNT = 55;
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
 let showTabBarContextMenu = $state(false);
@@ -122,8 +124,6 @@ async function scrollToActive() {
 
     const containerRect = scrollContainer.getBoundingClientRect();
     const tabRect = activeEl.getBoundingClientRect();
-    const PEEK_AMOUNT = 55;
-
     if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
         scrollContainer.scrollTo({
             left:

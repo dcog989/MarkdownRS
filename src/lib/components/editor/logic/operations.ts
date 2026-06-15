@@ -3,6 +3,8 @@ import type { EditorView } from '@codemirror/view';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { textProcessor } from '$lib/services/textProcessor';
 
+const STATE_CHANGE_DELAY_MS = 100;
+
 export async function performTextOperation(
   view: EditorView,
   operationId: OperationId,
@@ -53,6 +55,6 @@ export async function performTextOperation(
   } finally {
     setTimeout(() => {
       onStateChange?.(false);
-    }, 100);
+    }, STATE_CHANGE_DELAY_MS);
   }
 }

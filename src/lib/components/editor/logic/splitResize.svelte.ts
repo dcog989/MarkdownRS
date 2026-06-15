@@ -1,4 +1,5 @@
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { CONFIG } from '$lib/utils/config';
 
 export function createSplitResize() {
   let isDragging = $state(false);
@@ -42,7 +43,7 @@ export function createSplitResize() {
     const deltaPercent = deltaPixels / totalSize;
     let newSplit = initialSplit + deltaPercent;
 
-    newSplit = Math.max(0.1, Math.min(0.9, newSplit));
+    newSplit = Math.max(CONFIG.SPLIT.MIN_PERCENTAGE, Math.min(CONFIG.SPLIT.MAX_PERCENTAGE, newSplit));
     appContext.settings.splitPercentage = newSplit;
   }
 
