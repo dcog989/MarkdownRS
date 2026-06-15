@@ -9,6 +9,7 @@ let {
     searchValue = $bindable(''),
     searchPlaceholder = 'Search...',
     inputRef = $bindable(),
+    focusDelay,
     onClose,
     onKeydown,
     extraActions,
@@ -18,6 +19,7 @@ let {
     searchValue: string;
     searchPlaceholder?: string;
     inputRef?: HTMLInputElement;
+    focusDelay?: number;
     onClose: () => void;
     onKeydown?: (e: KeyboardEvent) => void;
     extraActions?: Snippet;
@@ -32,6 +34,7 @@ let {
 
     <div class="relative flex-1 min-w-0">
         <Input
+            {focusDelay}
             bind:ref={inputRef}
             bind:value={searchValue}
             type="text"

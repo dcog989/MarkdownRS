@@ -32,7 +32,6 @@ type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
 type SortDirection = 'asc' | 'desc';
 
 let searchQuery = $state('');
-let searchInputEl = $state<HTMLInputElement>();
 let selectedIndex = $state(0);
 let editingId = $state<string | null>(null);
 let editTitle = $state('');
@@ -55,9 +54,6 @@ $effect(() => {
         editingId = null;
         showAddForm = false;
         browseError = '';
-    }
-    if (isOpen) {
-        setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
     }
 });
 
@@ -238,7 +234,7 @@ function handleKeydown(e: KeyboardEvent) {
             title="Bookmarks"
             icon={Bookmark}
             bind:searchValue={searchQuery}
-            bind:inputRef={searchInputEl}
+            focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
             searchPlaceholder="Search bookmarks..."
             {onClose}
             onKeydown={handleKeydown}>

@@ -21,7 +21,6 @@ interface Props {
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
 let searchQuery = $state('');
-let searchInputEl = $state<HTMLInputElement>();
 let selectedIndex = $state(0);
 
 $effect(() => {
@@ -29,7 +28,6 @@ $effect(() => {
         loadRecentFiles();
         searchQuery = '';
         selectedIndex = 0;
-        setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
     }
 });
 
@@ -83,7 +81,7 @@ function handleKeydown(e: KeyboardEvent) {
             title="Recent Files"
             icon={History}
             bind:searchValue={searchQuery}
-            bind:inputRef={searchInputEl}
+            focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
             searchPlaceholder="Search history..."
             {onClose}
             onKeydown={handleKeydown}>

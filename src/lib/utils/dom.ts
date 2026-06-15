@@ -1,3 +1,12 @@
+export function focusOnMount(node: HTMLElement, delay: number = 0) {
+  const timer = setTimeout(() => node.focus(), delay);
+  return {
+    destroy() {
+      clearTimeout(timer);
+    },
+  };
+}
+
 export function asHTMLElement(element: EventTarget | Element | null | undefined): HTMLElement | null {
   if (!element) return null;
   return element instanceof HTMLElement ? element : null;

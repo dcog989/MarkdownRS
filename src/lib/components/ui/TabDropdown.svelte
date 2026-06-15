@@ -5,6 +5,7 @@ import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
+import { focusOnMount } from '$lib/utils/dom';
 import { requestCloseTab } from '$lib/utils/fileSystem';
 import { formatFileSize } from '$lib/utils/fileValidation';
 
@@ -20,7 +21,8 @@ let {
 
 let searchQuery = $state('');
 let selectedIndex = $state(0);
-let searchInputRef = $state<HTMLInputElement>();
+// @ts-expect-error: used by bind:this in template
+let searchInputRef: HTMLInputElement;
 let dropdownListRef = $state<HTMLDivElement>();
 let lastClientX = 0;
 let lastClientY = 0;
@@ -78,7 +80,6 @@ $effect(() => {
             mouseMovementTimer = null;
         }, 100);
 
-        setTimeout(() => searchInputRef?.focus(), CONFIG.UI_TIMING.FOCUS_DELAY_MS);
     } else {
         if (mouseMovementTimer !== null) {
             clearTimeout(mouseMovementTimer);
@@ -148,6 +149,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         role="menu">
         <div class="border-border-light shrink-0 border-b p-2">
             <input
+                use:focusOnMount={CONFIG.UI_TIMING.FOCUS_DELAY_MS}
                 bind:this={searchInputRef}
                 bind:value={searchQuery}
                 type="text"

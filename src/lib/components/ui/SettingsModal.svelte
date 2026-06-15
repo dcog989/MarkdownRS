@@ -23,8 +23,6 @@ let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('window.shor
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
 let searchQuery = $state('');
-let searchInputEl = $state<HTMLInputElement>();
-
 let isContextMenuEnabled = $state(false);
 let isCheckingContextMenu = $state(false);
 let isWindows = $state(false);
@@ -64,7 +62,6 @@ $effect(() => {
                 appContext.app.availableThemes = DEFAULT_THEME_NAMES;
             });
 
-        setTimeout(() => searchInputEl?.focus(), CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS);
     } else {
         searchQuery = '';
     }
@@ -130,7 +127,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
             title="Settings"
             icon={Settings}
             bind:searchValue={searchQuery}
-            bind:inputRef={searchInputEl}
+            focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
             searchPlaceholder="Search Settings..."
             {onClose}>
             {#snippet extraActions()}
