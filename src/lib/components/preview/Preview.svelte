@@ -165,7 +165,7 @@ function injectHtml(node: HTMLElement, content: string) {
             }
         }}
         role="none"
-        class="no-scrollbar bg-bg-preview relative z-0 h-full w-full max-w-none overflow-y-auto p-8 pb-40"
+        class="preview-root no-scrollbar bg-bg-preview relative z-0 h-full w-full max-w-none overflow-y-auto p-8 pb-40"
         style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
             .previewFontSize}px;"
         spellcheck="false">

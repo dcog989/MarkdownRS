@@ -19,7 +19,7 @@ export class ExportService {
     if (!container) {
       container = document.createElement('div');
       container.id = 'export-container';
-      container.className = 'prose';
+      container.className = 'prose preview-root';
       container.setAttribute('aria-hidden', 'true');
       document.body.appendChild(container);
     }
