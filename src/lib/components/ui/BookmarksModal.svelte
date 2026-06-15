@@ -326,13 +326,9 @@ function handleKeydown(e: KeyboardEvent) {
                     {@const isSelected = index === selectedIndex}
                     <div
                         out:slide={{ duration: 200 }}
-                        class="px-4 py-2.5 transition-colors overflow-hidden"
+                        class="bookmark-row px-4 py-2.5 transition-colors overflow-hidden"
                         class:bg-row-even={index % 2 === 1 && !isSelected}
-                        style:background-color={isSelected
-                            ? 'var(--accent-primary)'
-                            : index % 2 === 1
-                              ? 'var(--surface-row)'
-                              : 'transparent'}
+                        data-selected={isSelected}
                         use:scrollIntoView={isSelected}>
                         {#if editingId === bookmark.id}
                             <div class="space-y-2">
@@ -365,53 +361,25 @@ function handleKeydown(e: KeyboardEvent) {
                                 onkeydown={(e) => { if (e.key === 'Enter') handleOpenBookmark(bookmark); }}
                                 onmouseenter={() => (selectedIndex = index)}>
                                 <div class="min-w-0 flex-1">
-                                    <div
-                                        class="truncate font-medium"
-                                        style:color={isSelected
-                                            ? 'var(--text-inverse)'
-                                            : 'var(--text-primary)'}>
+                                    <div class="title truncate font-medium">
                                         {bookmark.title}
                                     </div>
-                                    <div
-                                        class="text-ui-sm truncate"
-                                        style:color={isSelected
-                                            ? 'var(--text-inverse)'
-                                            : 'var(--text-secondary)'}
-                                        style:opacity={isSelected ? 0.8 : 0.6}>
+                                    <div class="path text-ui-sm truncate">
                                         {bookmark.path}
                                     </div>
                                     {#if bookmark.tags.length > 0}
                                         <div class="mt-1 flex flex-wrap items-center gap-1">
-                                            <span
-                                                style:color={isSelected
-                                                    ? 'var(--text-inverse)'
-                                                    : 'currentColor'}>
-                                                <Tag
-                                                    size={12}
-                                                    class={isSelected
-                                                        ? 'opacity-70'
-                                                        : 'opacity-50'} />
+                                            <span class="tag-icon">
+                                                <Tag size={12} class="opacity-50" />
                                             </span>
                                             {#each bookmark.tags as tag (tag)}
-                                                <span
-                                                    class="text-ui-sm rounded px-1.5 py-0.5"
-                                                    style:background-color={isSelected
-                                                        ? 'rgba(255,255,255,0.2)'
-                                                        : 'var(--surface-input)'}
-                                                    style:color={isSelected
-                                                        ? 'var(--text-inverse)'
-                                                        : 'var(--text-secondary)'}>
+                                                <span class="tag text-ui-sm rounded px-1.5 py-0.5">
                                                     {tag}
                                                 </span>
                                             {/each}
                                         </div>
                                     {/if}
-                                    <div
-                                        class="text-ui-sm mt-1"
-                                        style:color={isSelected
-                                            ? 'var(--text-inverse)'
-                                            : 'var(--text-secondary)'}
-                                        style:opacity={isSelected ? 0.7 : 0.5}>
+                                    <div class="date text-ui-sm mt-1">
                                         Added: {formatDate(bookmark.created)}
                                         {#if bookmark.last_accessed}
                                             • Accessed: {formatDate(bookmark.last_accessed)}
@@ -425,41 +393,13 @@ function handleKeydown(e: KeyboardEvent) {
                                             e.stopPropagation();
                                             startEdit(bookmark);
                                         }}
-                                        class="rounded p-1.5 transition-colors"
-                                        style:color={isSelected
-                                            ? 'var(--text-inverse)'
-                                            : 'var(--text-secondary)'}
-                                        style:background-color={isSelected
-                                            ? 'rgba(255,255,255,0.15)'
-                                            : 'transparent'}
-                                        onmouseenter={(e) =>
-                                            (e.currentTarget.style.backgroundColor = isSelected
-                                                ? 'rgba(255,255,255,0.25)'
-                                                : 'var(--surface-hover)')}
-                                        onmouseleave={(e) =>
-                                            (e.currentTarget.style.backgroundColor = isSelected
-                                                ? 'rgba(255,255,255,0.15)'
-                                                : 'transparent')}>
+                                        class="icon-btn rounded p-1.5 transition-colors">
                                         <Pen size={14} />
                                     </button>
                                     <button
                                         type="button"
                                         onclick={(e) => handleDelete(bookmark.id, e)}
-                                        class="rounded p-1.5 transition-colors"
-                                        style:color={isSelected
-                                            ? 'var(--text-inverse)'
-                                            : 'var(--danger-text)'}
-                                        style:background-color={isSelected
-                                            ? 'rgba(255,255,255,0.15)'
-                                            : 'transparent'}
-                                        onmouseenter={(e) =>
-                                            (e.currentTarget.style.backgroundColor = isSelected
-                                                ? 'rgba(255,255,255,0.25)'
-                                                : 'var(--surface-hover)')}
-                                        onmouseleave={(e) =>
-                                            (e.currentTarget.style.backgroundColor = isSelected
-                                                ? 'rgba(255,255,255,0.15)'
-                                                : 'transparent')}>
+                                        class="icon-btn icon-btn--danger rounded p-1.5 transition-colors">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
@@ -481,3 +421,67 @@ function handleKeydown(e: KeyboardEvent) {
         {/if}
     </div>
 </Modal>
+
+<style>
+    .bookmark-row[data-selected="true"] {
+        background-color: var(--accent-primary);
+    }
+
+    .bookmark-row[data-selected="true"] .title,
+    .bookmark-row[data-selected="true"] .path,
+    .bookmark-row[data-selected="true"] .date,
+    .bookmark-row[data-selected="true"] .tag-icon {
+        color: var(--text-inverse);
+    }
+
+    .bookmark-row[data-selected="true"] .path,
+    .bookmark-row[data-selected="true"] .date {
+        opacity: 0.8;
+    }
+
+    .bookmark-row[data-selected="false"] .path {
+        color: var(--text-secondary);
+        opacity: 0.6;
+    }
+
+    .bookmark-row[data-selected="false"] .date {
+        color: var(--text-secondary);
+        opacity: 0.5;
+    }
+
+    .bookmark-row .tag {
+        background-color: var(--surface-input);
+        color: var(--text-secondary);
+    }
+
+    .bookmark-row[data-selected="true"] .tag {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--text-inverse);
+    }
+
+    .bookmark-row[data-selected="true"] .tag-icon {
+        opacity: 0.7;
+    }
+
+    .icon-btn {
+        color: var(--text-secondary);
+        background-color: transparent;
+    }
+
+    .icon-btn:hover {
+        background-color: var(--surface-hover);
+    }
+
+    .icon-btn--danger {
+        color: var(--danger-text);
+    }
+
+    .bookmark-row[data-selected="true"] .icon-btn {
+        color: var(--text-inverse);
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .bookmark-row[data-selected="true"] .icon-btn:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+    }
+</style>

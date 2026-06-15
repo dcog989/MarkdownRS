@@ -87,10 +87,7 @@ async function copyAllStats() {
 
 <footer
     class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex shrink-0 items-center justify-between overflow-hidden border-t px-3 py-1.5 whitespace-nowrap transition-colors duration-200 select-none"
-    style="
-        background-color: color-mix(in srgb, var(--surface-2), transparent {appContext.settings
-        .statusBarTransparency}%);
-    ">
+    style:background-color="color-mix(in srgb, var(--surface-2), transparent {appContext.settings.statusBarTransparency}%)">
     <div
         role="button"
         tabindex="0"
@@ -100,7 +97,7 @@ async function copyAllStats() {
         onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }}>
         <div
             class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
-            style="opacity: {textOpacity};">
+            style:opacity={textOpacity}>
         <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
             <span class="font-mono opacity-70">Ln</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
@@ -167,7 +164,7 @@ async function copyAllStats() {
 
     <div
         class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
-        style="opacity: {textOpacity};">
+        style:opacity={textOpacity}>
         <span class="opacity-40">|</span>
 
         {#if fileType === 'markdown'}

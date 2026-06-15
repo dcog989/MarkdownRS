@@ -87,16 +87,7 @@ function close() {
                     1
                         ? 'bg-row-even'
                         : ''}"
-                    style="
-                        background-color: {index === nav.selectedIndex
-                        ? 'var(--accent-primary)'
-                        : index % 2 === 1
-                          ? 'var(--surface-row)'
-                          : 'transparent'};
-                        color: {index === nav.selectedIndex
-                        ? 'var(--text-inverse)'
-                        : 'var(--text-primary)'};
-                    "
+                    data-selected={index === nav.selectedIndex}
                     use:scrollIntoView={index === nav.selectedIndex}
                     onmouseenter={() => nav.select(index)}
                     onclick={() => execute(command)}>
@@ -111,3 +102,19 @@ function close() {
         {/if}
     </div>
 </Modal>
+
+<style>
+    .command-item[data-selected="true"] {
+        background-color: var(--accent-primary);
+        color: var(--text-inverse);
+    }
+
+    .command-item[data-selected="false"] {
+        background-color: transparent;
+        color: var(--text-primary);
+    }
+
+    .command-item[data-selected="false"]:nth-child(even) {
+        background-color: var(--surface-row);
+    }
+</style>
