@@ -1,5 +1,5 @@
 import type { Command } from '$lib/commands/commands';
-import { appState } from '$lib/stores/appState.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 
 export type SortMode = 'alphabetical' | 'recent' | 'most-used';
 
@@ -11,8 +11,8 @@ export const SORT_LABELS: Record<SortMode, string> = {
 
 export function cycleSortMode() {
   const modes: SortMode[] = ['alphabetical', 'recent', 'most-used'];
-  const idx = modes.indexOf(appState.commandPaletteSort);
-  appState.commandPaletteSort = modes[(idx + 1) % modes.length];
+  const idx = modes.indexOf(settingsState.commandPaletteSort);
+  settingsState.commandPaletteSort = modes[(idx + 1) % modes.length];
 }
 
 export function sortCommands(

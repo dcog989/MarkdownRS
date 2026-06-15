@@ -12,6 +12,7 @@ import {
   setLineChangeTracker,
   updateTransientState,
 } from '$lib/stores/editorStore.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { hashContent, isDirty, updateSavedHash } from '$lib/utils/contentHash';
@@ -466,7 +467,7 @@ export async function loadSession(): Promise<void> {
 
       // Initialize Active Tab Logic
 
-      switch (appState.startupBehavior) {
+      switch (settingsState.startupBehavior) {
         case 'first':
           appState.activeTabId = convertedTabs[0].id;
 
@@ -491,8 +492,8 @@ export async function loadSession(): Promise<void> {
     }
 
     // Ensure there's always one tab if empty or requested "new"
-    if (editorStore.tabs.length === 0 || appState.startupBehavior === 'new') {
-      if (appState.startupBehavior === 'new' && activeRustTabs.length > 0) {
+    if (editorStore.tabs.length === 0 || settingsState.startupBehavior === 'new') {
+      if (settingsState.startupBehavior === 'new' && activeRustTabs.length > 0) {
         appState.activeTabId = addTab();
       } else if (editorStore.tabs.length === 0) {
         appState.activeTabId = addTab();

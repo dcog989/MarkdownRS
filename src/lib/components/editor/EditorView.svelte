@@ -83,26 +83,26 @@ $effect(() => { cmView = view; });
 
 $effect(() => {
     if (!view) return;
-    const theme = appContext.app.theme;
-    const fontSize = appContext.app.editorFontSize;
-    const fontFamily = appContext.app.editorFontFamily;
+    const theme = appContext.settings.theme;
+    const fontSize = appContext.settings.editorFontSize;
+    const fontFamily = appContext.settings.editorFontFamily;
     const insertMode = appContext.metrics.insertMode;
     view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === 'dark', insertMode)) });
 });
 
 $effect(() => {
     if (!view) return;
-    view.dispatch({ effects: comps.historyComp.reconfigure(history({ minDepth: appContext.app.undoDepth })) });
+    view.dispatch({ effects: comps.historyComp.reconfigure(history({ minDepth: appContext.settings.undoDepth })) });
 });
 
 $effect(() => {
     if (!view) return;
-    view.dispatch({ effects: comps.indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))) });
+    view.dispatch({ effects: comps.indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, appContext.settings.defaultIndent)))) });
 });
 
 $effect(() => {
     if (!view) return;
-    const showWs = appContext.app.showWhitespace;
+    const showWs = appContext.settings.showWhitespace;
     view.dispatch({ effects: comps.whitespaceComp.reconfigure(showWs ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin]) });
 });
 

@@ -11,7 +11,7 @@ export class KeyboardShortcutManager {
 
   getShortcutDisplay(id: string): string {
     const cmd = this.commands.get(id);
-    const customShortcuts = appContext.app.customShortcuts;
+    const customShortcuts = appContext.settings.customShortcuts;
     const key = customShortcuts[id] || cmd?.defaultKey;
     if (!key) return '';
     return key
@@ -25,7 +25,7 @@ export class KeyboardShortcutManager {
   }
 
   findCommandByShortcut(key: string, excludeId?: string): Command | undefined {
-    const customShortcuts = appContext.app.customShortcuts;
+    const customShortcuts = appContext.settings.customShortcuts;
     const normalizedKey = key.toLowerCase();
     for (const cmd of this.commands.values()) {
       if (cmd.id === excludeId) continue;
@@ -57,7 +57,7 @@ export class KeyboardShortcutManager {
 
     const pressedKey = this.getEventKey(e);
     const isInput = this.isInputElement(e.target);
-    const customShortcuts = appContext.app.customShortcuts;
+    const customShortcuts = appContext.settings.customShortcuts;
 
     for (const cmd of this.commands.values()) {
       const mappedKey = customShortcuts[cmd.id] || cmd.defaultKey;

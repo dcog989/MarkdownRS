@@ -51,15 +51,15 @@ $effect(() => {
                 if (!customThemes) return;
                 const defaults = DEFAULT_THEME_NAMES;
                 const customs = customThemes.filter((t) => !defaults.includes(t) && !LEGACY_THEME_NAMES.includes(t));
-                appContext.app.availableThemes = ['System', ...defaults, ...customs];
+                appContext.settings.availableThemes = ['System', ...defaults, ...customs];
 
-                if (!appContext.app.availableThemes.includes(appContext.app.activeTheme)) {
-                    appContext.app.activeTheme = 'System';
+                if (!appContext.settings.availableThemes.includes(appContext.settings.activeTheme)) {
+                    appContext.settings.activeTheme = 'System';
                     saveSettings();
                 }
             })
             .catch(() => {
-                appContext.app.availableThemes = DEFAULT_THEME_NAMES;
+                appContext.settings.availableThemes = DEFAULT_THEME_NAMES;
             });
 
     } else {
@@ -77,7 +77,7 @@ async function toggleContextMenu(enable: boolean) {
     }
 }
 
-let settingsDefinitions = $derived(getSettingDefinitions(appContext.app.availableThemes, isWindows));
+let settingsDefinitions = $derived(getSettingDefinitions(appContext.settings.availableThemes, isWindows));
 
 let sortedSettings = $derived(
     (settingsDefinitions as SettingDef[])

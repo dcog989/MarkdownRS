@@ -72,14 +72,14 @@ function handleRecordKey(e: KeyboardEvent) {
 }
 
 function assignShortcut(commandId: string, key: string) {
-  appContext.app.customShortcuts[commandId] = key;
+  appContext.settings.customShortcuts[commandId] = key;
   saveSettings();
   stopRecording();
 }
 
 function handleReassign() {
   if (!conflictCommand) return;
-  delete appContext.app.customShortcuts[conflictCommand.command.id];
+  delete appContext.settings.customShortcuts[conflictCommand.command.id];
   assignShortcut(conflictCommand.targetId, conflictCommand.key);
   conflictCommand = null;
 }
@@ -95,7 +95,7 @@ function stopRecording() {
 }
 
 function resetShortcut(commandId: string) {
-    delete appContext.app.customShortcuts[commandId];
+    delete appContext.settings.customShortcuts[commandId];
     saveSettings();
 }
 
@@ -222,7 +222,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                                                 ? 'Press keys...'
                                                 : shortcutManager.getShortcutDisplay(def.id)}
                                         </button>
-                                        {#if appContext.app.customShortcuts[def.id]}
+                                        {#if appContext.settings.customShortcuts[def.id]}
                                             <button
                                                 type="button"
                                                 class="p-1 transition-all opacity-0 group-hover:opacity-100"

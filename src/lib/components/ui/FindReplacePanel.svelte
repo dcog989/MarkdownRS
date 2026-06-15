@@ -222,7 +222,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 }
 
 function handleBlur() {
-    if (!appContext.app.findPanelCloseOnBlur) return;
+    if (!appContext.settings.findPanelCloseOnBlur) return;
 
     setTimeout(() => {
         const activeElement = document.activeElement;
@@ -249,7 +249,7 @@ onMount(() => {
         bind:this={panelRef}
         class="bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
         style="background-color: color-mix(in srgb, var(--color-bg-panel) 82%, transparent);"
-        class:opacity-[0.15]={appContext.app.findPanelTransparent && !isMouseOver}
+        class:opacity-[0.15]={appContext.settings.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
         onfocusout={handleBlur}
         onmouseenter={() => (isMouseOver = true)}

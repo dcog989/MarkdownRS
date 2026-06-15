@@ -7,6 +7,7 @@ import { dialogStore } from './dialogStore.svelte';
 import { editorMetrics } from './editorMetrics.svelte';
 import { editorStore } from './editorStore.svelte';
 import { interfaceStore } from './interfaceStore.svelte';
+import { settingsState } from './settingsState.svelte';
 import { toastStore } from './toastStore.svelte';
 import { tooltipStore } from './tooltipStore.svelte';
 
@@ -17,6 +18,7 @@ import { tooltipStore } from './tooltipStore.svelte';
  */
 export const appContext = {
   app: appState,
+  settings: settingsState,
   editor: editorStore,
   metrics: editorMetrics,
   bookmarks: bookmarkStore,

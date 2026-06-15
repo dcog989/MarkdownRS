@@ -4,7 +4,7 @@ import { commands } from '$lib/commands/commands';
 import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
 import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
-import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
+import { syncThemeFromActiveTheme } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { shortcutManager } from '$lib/utils/shortcuts';
 import { getThemeCss } from '$lib/utils/themes';
@@ -13,14 +13,14 @@ import '../app.css';
 let { children } = $props();
 
 $effect(() => {
-    const theme = appContext.app.theme;
+    const theme = appContext.settings.theme;
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
     root.style.colorScheme = theme;
 });
 
 $effect(() => {
-    const themeName = appContext.app.activeTheme;
+    const themeName = appContext.settings.activeTheme;
     if (!themeName || themeName === 'System') return;
 
     async function loadTheme() {
@@ -82,7 +82,7 @@ onMount(() => {
 
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handleOSThemeChange = () => {
-        if (appContext.app.activeTheme === 'System') {
+        if (appContext.settings.activeTheme === 'System') {
             syncThemeFromActiveTheme();
         }
     };

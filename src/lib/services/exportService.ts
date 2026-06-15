@@ -36,7 +36,7 @@ export class ExportService {
     const container = this.getExportContainer();
 
     try {
-      const result = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm', tab.path);
+      const result = await renderMarkdown(tab.content, appContext.settings.markdownFlavor === 'gfm', tab.path);
       container.innerHTML = result.html;
     } catch (err) {
       AppError.handle('Export:HTML', err, {
@@ -81,7 +81,7 @@ export class ExportService {
 
       if (!path) return;
 
-      const result = await renderMarkdown(tab.content, appContext.app.markdownFlavor === 'gfm', tab.path);
+      const result = await renderMarkdown(tab.content, appContext.settings.markdownFlavor === 'gfm', tab.path);
       const bodyContent = result.html;
 
       // Extract the native preview styles we added to app.css for the export container
@@ -89,7 +89,7 @@ export class ExportService {
       const baseVars = this.getComputedCssVariables();
 
       const html = `<!DOCTYPE html>
-<html lang="en" data-theme="${appContext.app.theme}">
+<html lang="en" data-theme="${appContext.settings.theme}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,7 +101,7 @@ export class ExportService {
             padding: 2rem;
             background-color: var(--color-bg-main);
             color: var(--preview-fg-body);
-            font-family: ${appContext.app.previewFontFamily};
+            font-family: ${appContext.settings.previewFontFamily};
             line-height: 1.6;
         }
         .prose { max-width: 800px; margin: 0 auto; }

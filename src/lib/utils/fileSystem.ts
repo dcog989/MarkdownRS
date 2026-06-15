@@ -96,7 +96,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   const tab = appContext.editor.tabs.find((t) => t.id === id);
   if (!tab || (tab.isPinned && !force)) return;
 
-  if (!appContext.app.confirmationSuppressed && tab.isDirty && tab.content.trim().length > 0) {
+  if (!appContext.settings.confirmationSuppressed && tab.isDirty && tab.content.trim().length > 0) {
     const result = await confirmDialog({
       title: 'Close Document',
       message: `"${tab.title}" has been modified.\nSave or Discard changes?`,

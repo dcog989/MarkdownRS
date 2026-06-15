@@ -3,10 +3,10 @@ import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date'
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { appState } from './appState.svelte';
 import { computeWordCount, getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, updateTab } from './editorStoreCore.svelte';
 import type { EditorTab } from './editorTypes';
+import { settingsState } from './settingsState.svelte';
 
 export function updateContent(id: string, content: string, lineCount: number) {
   const index = editorStore.tabs.findIndex((t) => t.id === id);
@@ -16,7 +16,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
   if (oldTab.content === content) return;
 
   let newTitle = oldTab.title;
-  if (appState.tabNameFromContent) {
+  if (settingsState.tabNameFromContent) {
     const smartTitle = extractSmartTitle(content);
     if (smartTitle) {
       newTitle = smartTitle;

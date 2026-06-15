@@ -1,4 +1,5 @@
 import { appState } from '$lib/stores/appState.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackendSafe } from './backend';
 import { debounce } from './timing';
 
@@ -7,7 +8,6 @@ const SETTINGS_EXCLUDED_KEYS = new Set([
   'isTabSwitching',
   'osPlatform',
   'availableThemes',
-
   'writerMode',
 ]);
 
@@ -15,9 +15,9 @@ let lastSavedState: string = '';
 
 function getSettingsObject(): Record<string, unknown> {
   const settings: Record<string, unknown> = {};
-  for (const key in appState) {
+  for (const key in settingsState) {
     if (!SETTINGS_EXCLUDED_KEYS.has(key)) {
-      settings[key] = (appState as Record<string, unknown>)[key];
+      settings[key] = (settingsState as Record<string, unknown>)[key];
     }
   }
   return settings;
@@ -41,19 +41,19 @@ export async function initSettings() {
 
   if (saved && Object.keys(saved).length > 0) {
     Object.keys(saved).forEach((key) => {
-      if (Object.hasOwn(appState, key)) {
-        (appState as Record<string, unknown>)[key] = saved[key];
+      if (Object.hasOwn(settingsState, key)) {
+        (settingsState as Record<string, unknown>)[key] = saved[key];
       }
     });
   }
 
   // Keep theme in sync with activeTheme from saved settings
-  appState.theme =
-    appState.activeTheme === 'System'
+  settingsState.theme =
+    settingsState.activeTheme === 'System'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light'
-      : appState.activeTheme.toLowerCase().includes('light')
+      : settingsState.activeTheme.toLowerCase().includes('light')
         ? 'light'
         : 'dark';
 

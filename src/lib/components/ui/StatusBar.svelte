@@ -26,7 +26,7 @@ let preferredExtension = $derived(activeTab?.preferredExtension);
 let path = $derived(activeTab?.path);
 let tabId = $derived(activeTab?.id);
 
-let textOpacity = $derived(1 - appContext.app.statusBarTransparency / 100);
+let textOpacity = $derived(1 - appContext.settings.statusBarTransparency / 100);
 let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
 let fileType = $derived.by(() => {
@@ -55,7 +55,7 @@ function toggleLineEnding() {
 }
 
 function toggleWordWrap() {
-    appContext.app.editorWordWrap = !appContext.app.editorWordWrap;
+    appContext.settings.editorWordWrap = !appContext.settings.editorWordWrap;
     saveSettings();
 }
 
@@ -88,7 +88,7 @@ async function copyAllStats() {
 <footer
     class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex shrink-0 items-center justify-between overflow-hidden border-t px-3 py-1.5 whitespace-nowrap transition-colors duration-200 select-none"
     style="
-        background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.app
+        background-color: color-mix(in srgb, var(--color-bg-panel), transparent {appContext.settings
         .statusBarTransparency}%);
     ">
     <div
@@ -200,7 +200,7 @@ async function copyAllStats() {
         <button
             type="button"
             class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
-                .app.editorWordWrap
+                .settings.editorWordWrap
                 ? 'text-accent-secondary'
                 : 'text-inherit'}"
             onclick={toggleWordWrap}

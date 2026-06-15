@@ -169,7 +169,7 @@ export class TabContextMenuLogic {
     this.onClose();
 
     try {
-      if (!appContext.app.confirmationSuppressed) {
+      if (!appContext.settings.confirmationSuppressed) {
         const result = await confirmDialog({
           title: 'Delete File',
           message: `Are you sure you want to move "${targetTitle}" to the Recycle Bin?`,

@@ -6,8 +6,8 @@ export function setupAutoSave() {
   let timerId: number | null = null;
 
   function start() {
-    const enabled = appContext.app.autoSaveEnabled;
-    const interval = appContext.app.autoSaveInterval;
+    const enabled = appContext.settings.autoSaveEnabled;
+    const interval = appContext.settings.autoSaveInterval;
 
     if (!enabled) return;
 

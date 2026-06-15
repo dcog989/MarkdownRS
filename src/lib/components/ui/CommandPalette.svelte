@@ -4,7 +4,7 @@ import { tick } from 'svelte';
 import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { appState } from '$lib/stores/appState.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { cycleSortMode, SORT_LABELS } from '$lib/utils/commandPaletteSort';
 import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
@@ -43,8 +43,8 @@ $effect(() => {
 function execute(command: Command) {
     if (!command) return;
     command.handler?.();
-    appState.commandUsage[command.id] = Date.now();
-    appState.commandUsageCounts[command.id] = (appState.commandUsageCounts[command.id] ?? 0) + 1;
+    settingsState.commandUsage[command.id] = Date.now();
+    settingsState.commandUsageCounts[command.id] = (settingsState.commandUsageCounts[command.id] ?? 0) + 1;
     close();
 }
 
@@ -68,10 +68,10 @@ function close() {
                 <button
                     type="button"
                     class="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-fg-muted transition-colors outline-none hover-surface"
-                    title={appState.commandPaletteSort}
+                    title={settingsState.commandPaletteSort}
                     onclick={cycleSortMode}>
                     <ArrowUpDown size={14} />
-                    {SORT_LABELS[appState.commandPaletteSort]}
+                    {SORT_LABELS[settingsState.commandPaletteSort]}
                 </button>
             {/snippet}
         </ModalSearchHeader>

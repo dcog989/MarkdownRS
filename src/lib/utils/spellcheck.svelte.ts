@@ -17,7 +17,7 @@
  */
 
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { appState } from '$lib/stores/appState.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from './backend';
 
 const MAX_SUGGESTION_CACHE_SIZE = 200;
@@ -46,9 +46,9 @@ export class SpellcheckManager {
     this.initPromise = (async () => {
       await this.loadCustomDictionary();
 
-      const dictionaries = appState.languageDictionaries || ['en-US'];
-      const technicalDictionaries = appState.technicalDictionaries;
-      const scienceDictionaries = appState.scienceDictionaries;
+      const dictionaries = settingsState.languageDictionaries || ['en-US'];
+      const technicalDictionaries = settingsState.technicalDictionaries;
+      const scienceDictionaries = settingsState.scienceDictionaries;
 
       try {
         await callBackend(

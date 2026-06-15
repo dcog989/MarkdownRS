@@ -9,7 +9,7 @@ import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
 import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
 import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
-import { appState } from '$lib/stores/appState.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { sortCommands } from '$lib/utils/commandPaletteSort';
 import { openFileByPath } from '$lib/utils/fileSystem';
@@ -17,7 +17,7 @@ import { openFileByPath } from '$lib/utils/fileSystem';
 const basePaletteCommands: Command[] = commands.filter((c) => c.showInPalette !== false);
 
 const paletteCommands = $derived(
-    sortCommands(basePaletteCommands, appState.commandPaletteSort, appState.commandUsage, appState.commandUsageCounts),
+    sortCommands(basePaletteCommands, settingsState.commandPaletteSort, settingsState.commandUsage, settingsState.commandUsageCounts),
 );
 </script>
 

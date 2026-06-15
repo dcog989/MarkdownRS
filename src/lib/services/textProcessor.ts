@@ -78,8 +78,8 @@ class TextProcessor {
     this.strategies.set('split-sentences', ClientLogic.splitSentences);
     this.strategies.set('wrap-quotes', ClientLogic.wrapQuotes);
     this.strategies.set('add-line-numbers', ClientLogic.addLineNumbers);
-    this.strategies.set('indent-lines', (t) => ClientLogic.indentLines(t, appContext.app.defaultIndent));
-    this.strategies.set('unindent-lines', (t) => ClientLogic.unindentLines(t, appContext.app.defaultIndent));
+    this.strategies.set('indent-lines', (t) => ClientLogic.indentLines(t, appContext.settings.defaultIndent));
+    this.strategies.set('unindent-lines', (t) => ClientLogic.unindentLines(t, appContext.settings.defaultIndent));
     this.strategies.set('smart-paragraphs', ClientLogic.smartParagraphs);
   }
 

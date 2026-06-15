@@ -16,6 +16,7 @@ import {
 } from './editorCache';
 import { editorStore } from './editorStoreCore.svelte';
 import type { EditorTab } from './editorTypes';
+import { settingsState } from './settingsState.svelte';
 
 export function addTab(title: string = '', content: string = '') {
   const id = crypto.randomUUID();
@@ -75,9 +76,9 @@ export function addTab(title: string = '', content: string = '') {
   initTabCaches(id, sizeBytes);
   initializeTabLoadState(id, true);
 
-  if (appState.newTabPosition === 'beginning') {
+  if (settingsState.newTabPosition === 'beginning') {
     editorStore.tabs.unshift(newTab);
-  } else if (appState.newTabPosition === 'right' && appState.activeTabId) {
+  } else if (settingsState.newTabPosition === 'right' && appState.activeTabId) {
     const activeIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
     editorStore.tabs.splice(activeIndex + 1, 0, newTab);
   } else {

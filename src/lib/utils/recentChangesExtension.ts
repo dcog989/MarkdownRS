@@ -51,7 +51,7 @@ class LineNumberMarker extends GutterMarker {
 }
 
 export function createRecentChangesHighlighter(tracker: LineChangeTracker | undefined) {
-  if (!tracker || (appContext.app.recentChangesCount === 0 && appContext.app.recentChangesTimespan === 0)) {
+  if (!tracker || (appContext.settings.recentChangesCount === 0 && appContext.settings.recentChangesTimespan === 0)) {
     return [lineNumbers()];
   }
 
@@ -139,12 +139,16 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
         let deletionAlpha = 0;
 
         if (tracker) {
-          alpha = tracker.getLineAlpha(lineNo, appContext.app.recentChangesTimespan, appContext.app.recentChangesCount);
+          alpha = tracker.getLineAlpha(
+            lineNo,
+            appContext.settings.recentChangesTimespan,
+            appContext.settings.recentChangesCount,
+          );
 
           deletionAlpha = tracker.getDeletionAlpha(
             lineNo,
-            appContext.app.recentChangesTimespan,
-            appContext.app.recentChangesCount,
+            appContext.settings.recentChangesTimespan,
+            appContext.settings.recentChangesCount,
           );
         }
 

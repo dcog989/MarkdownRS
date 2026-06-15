@@ -8,7 +8,6 @@ import {
   sanitizePath,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
-import { appState } from '$lib/stores/appState.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
 import {
   addTab,
@@ -20,6 +19,7 @@ import {
   updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { runFlushFunctions } from '$lib/utils/editorCommands';
@@ -63,7 +63,7 @@ export async function openFile(path?: string): Promise<void> {
 
     const metadata = await getFileMetadata(sanitizedPath);
 
-    const maxFileSizeMB = appState.maxFileSizeMB;
+    const maxFileSizeMB = settingsState.maxFileSizeMB;
     const BYTES_PER_MB = 1024 * 1024;
     const maxBytes = maxFileSizeMB * BYTES_PER_MB;
 
@@ -88,7 +88,7 @@ export async function openFile(path?: string): Promise<void> {
     const detectedLineEnding = detectLineEnding(result.content);
 
     let initialTitle = fileName;
-    if (appContext.app.tabNameFromContent) {
+    if (appContext.settings.tabNameFromContent) {
       const smartTitle = extractSmartTitle(result.content);
       if (smartTitle) initialTitle = smartTitle;
     }
@@ -232,7 +232,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       let contentToSave = tab.content;
 
-      const shouldFormat = !skipFormat && appContext.app.formatOnSave && isMarkdownFile(sanitizedPath);
+      const shouldFormat = !skipFormat && appContext.settings.formatOnSave && isMarkdownFile(sanitizedPath);
 
       if (shouldFormat) {
         const formatted = await formatMarkdown(contentToSave);
@@ -250,7 +250,9 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       }
 
       const targetLineEnding =
-        appContext.app.lineEndingPreference === 'system' ? tab.lineEnding || 'LF' : appContext.app.lineEndingPreference;
+        appContext.settings.lineEndingPreference === 'system'
+          ? tab.lineEnding || 'LF'
+          : appContext.settings.lineEndingPreference;
 
       let diskContent = normalizeLineEndings(contentToSave);
       if (targetLineEnding === 'CRLF') {
@@ -279,7 +281,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       const fileName = getFilename(sanitizedPath) || 'Untitled';
       let finalTitle = fileName;
 
-      if (appContext.app.tabNameFromContent) {
+      if (appContext.settings.tabNameFromContent) {
         const smartTitle = extractSmartTitle(contentToSave);
         if (smartTitle) finalTitle = smartTitle;
       }

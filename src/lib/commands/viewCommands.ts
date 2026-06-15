@@ -1,4 +1,5 @@
-import { setTheme, toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
+import { toggleWriterMode } from '$lib/stores/appState.svelte';
+import { setTheme, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { saveSettings } from '$lib/utils/settings';
@@ -65,7 +66,7 @@ export const viewCommands: Command[] = [
     category: 'View',
     defaultKey: 'ctrl+shift+8',
     handler: () => {
-      appContext.app.showWhitespace = !appContext.app.showWhitespace;
+      appContext.settings.showWhitespace = !appContext.settings.showWhitespace;
       saveSettings();
     },
   },
@@ -77,7 +78,7 @@ export const viewCommands: Command[] = [
     defaultKey: 'ctrl+=',
     handler: (e) => {
       e?.preventDefault();
-      appContext.app.editorFontSize = Math.min(32, appContext.app.editorFontSize + 1);
+      appContext.settings.editorFontSize = Math.min(32, appContext.settings.editorFontSize + 1);
     },
   },
   {
@@ -88,7 +89,7 @@ export const viewCommands: Command[] = [
     defaultKey: 'ctrl+-',
     handler: (e) => {
       e?.preventDefault();
-      appContext.app.editorFontSize = Math.max(8, appContext.app.editorFontSize - 1);
+      appContext.settings.editorFontSize = Math.max(8, appContext.settings.editorFontSize - 1);
     },
   },
   {
@@ -99,7 +100,7 @@ export const viewCommands: Command[] = [
     defaultKey: 'ctrl+0',
     handler: (e) => {
       e?.preventDefault();
-      appContext.app.editorFontSize = 14;
+      appContext.settings.editorFontSize = 14;
     },
   },
   {

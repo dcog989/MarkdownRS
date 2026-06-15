@@ -1,4 +1,4 @@
-import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
+import { syncThemeFromActiveTheme } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { getActiveEditorView } from '$lib/utils/editorCommands';

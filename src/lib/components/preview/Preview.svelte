@@ -4,7 +4,7 @@ import { onDestroy } from 'svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
-import { toggleOrientation } from '$lib/stores/appState.svelte';
+import { toggleOrientation } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
@@ -24,7 +24,7 @@ let tabContent = $derived.by(() => {
 });
 
 let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
-let flavor = $derived(appContext.app.markdownFlavor);
+let flavor = $derived(appContext.settings.markdownFlavor);
 
 $effect(() => {
     renderer.onTabSwitch(tabId);
@@ -61,10 +61,10 @@ function injectHtml(node: HTMLElement, content: string) {
             type="button"
             class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
             onclick={() => toggleOrientation()}
-            use:tooltip={appContext.app.splitOrientation === 'vertical'
+            use:tooltip={appContext.settings.splitOrientation === 'vertical'
                 ? 'Switch to Horizontal Split'
                 : 'Switch to Vertical Split'}>
-            {#if appContext.app.splitOrientation === 'vertical'}
+            {#if appContext.settings.splitOrientation === 'vertical'}
                 <FlipVertical size={16} />
             {:else}
                 <FlipHorizontal size={16} />
@@ -84,7 +84,7 @@ function injectHtml(node: HTMLElement, content: string) {
         }}
         role="none"
         class="preview-root no-scrollbar bg-bg-preview relative z-0 h-full w-full max-w-none overflow-y-auto p-8 pb-40"
-        style="font-family: {appContext.app.previewFontFamily}; font-size: {appContext.app
+        style="font-family: {appContext.settings.previewFontFamily}; font-size: {appContext.settings
             .previewFontSize}px;"
         spellcheck="false">
         {#if !isMarkdown}

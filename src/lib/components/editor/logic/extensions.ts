@@ -80,13 +80,13 @@ export interface ExtensionsConfig {
 }
 
 export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
-  const isDark = appContext.app.theme === 'dark';
+  const isDark = appContext.settings.theme === 'dark';
   const c = config.compartments;
   const extensions: Extension[] = [
     highlightActiveLineGutter(),
     highlightActiveLine(),
     drawSelection(),
-    c.historyComp.of(history({ minDepth: appContext.app.undoDepth })),
+    c.historyComp.of(history({ minDepth: appContext.settings.undoDepth })),
     search({ top: true }),
     highlightSelectionMatches(),
     c.autoComp.of(config.autocompletionConfig),
@@ -99,15 +99,15 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     getEditorKeymap([...config.customKeymap]),
     c.themeComp.of(
       generateDynamicTheme(
-        appContext.app.editorFontSize,
-        appContext.app.editorFontFamily,
+        appContext.settings.editorFontSize,
+        appContext.settings.editorFontFamily,
         isDark,
         appContext.metrics.insertMode,
       ),
     ),
-    c.indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.app.defaultIndent)))),
+    c.indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.settings.defaultIndent)))),
     c.whitespaceComp.of(
-      appContext.app.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin],
+      appContext.settings.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin],
     ),
     userThemeExtension,
     defaultFallbackHighlighting,

@@ -1,12 +1,13 @@
 <script lang="ts">
 import { Bookmark, Eye, EyeOff, Feather, Settings, Zap } from 'lucide-svelte';
-import { toggleSplitView, toggleWriterMode } from '$lib/stores/appState.svelte';
+import { toggleWriterMode } from '$lib/stores/appState.svelte';
 import {
     toggleAbout,
     toggleBookmarks,
     toggleCommandPalette,
     toggleSettings,
 } from '$lib/stores/interfaceStore.svelte.ts';
+import { toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';

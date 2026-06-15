@@ -106,7 +106,7 @@ const rulerMeasure = ViewPlugin.fromClass(
       }
     }
     measure(view: EditorView) {
-      const column = appContext.app.wrapGuideColumn;
+      const column = appContext.settings.wrapGuideColumn;
       const dom = view.scrollDOM;
       if (column > 0) {
         const charWidth = view.defaultCharacterWidth;

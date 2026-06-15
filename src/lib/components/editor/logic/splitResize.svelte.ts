@@ -5,7 +5,7 @@ export function createSplitResize() {
   let dragStart = 0;
   let initialSplit = 0;
 
-  let isVertical = $derived(appContext.app.splitOrientation === 'vertical');
+  let isVertical = $derived(appContext.settings.splitOrientation === 'vertical');
   let resizeCursor = $derived(isVertical ? 'col-resize' : 'row-resize');
   let clientAxis = $derived.by(() => (isVertical ? 'clientX' : 'clientY') as 'clientX' | 'clientY');
   let sizeAxis = $derived.by(() => (isVertical ? 'width' : 'height') as 'width' | 'height');
@@ -23,7 +23,7 @@ export function createSplitResize() {
     e.preventDefault();
     isDragging = true;
     dragStart = e[clientAxis];
-    initialSplit = appContext.app.splitPercentage;
+    initialSplit = appContext.settings.splitPercentage;
 
     _boundHandleResize = (ev: MouseEvent) => handleResize(ev);
     _boundStopResize = () => stopResize();
@@ -43,7 +43,7 @@ export function createSplitResize() {
     let newSplit = initialSplit + deltaPercent;
 
     newSplit = Math.max(0.1, Math.min(0.9, newSplit));
-    appContext.app.splitPercentage = newSplit;
+    appContext.settings.splitPercentage = newSplit;
   }
 
   function stopResize() {
@@ -57,7 +57,7 @@ export function createSplitResize() {
   }
 
   function resetSplit() {
-    appContext.app.splitPercentage = 0.5;
+    appContext.settings.splitPercentage = 0.5;
   }
 
   function cleanup() {

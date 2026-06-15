@@ -56,10 +56,10 @@ export async function smartCompleteAnyWord(context: CompletionContext): Promise<
 }
 
 export function getAutocompletionConfig() {
-  if (!appContext.app.enableAutocomplete) return [];
+  if (!appContext.settings.enableAutocomplete) return [];
   return autocompletion({
     activateOnTyping: true,
-    activateOnTypingDelay: appContext.app.autocompleteDelay,
+    activateOnTypingDelay: appContext.settings.autocompleteDelay,
     closeOnBlur: true,
     defaultKeymap: true,
     aboveCursor: false,
@@ -69,8 +69,8 @@ export function getAutocompletionConfig() {
 }
 
 export function createWrapExtension() {
-  const wrapEnabled = appContext.app.editorWordWrap;
-  const column = appContext.app.wrapGuideColumn;
+  const wrapEnabled = appContext.settings.editorWordWrap;
+  const column = appContext.settings.wrapGuideColumn;
   const extensions = [];
   if (wrapEnabled) {
     extensions.push(EditorView.lineWrapping);
@@ -87,7 +87,7 @@ export function createWrapExtension() {
 }
 
 export function createDoubleClickHandler() {
-  if (!appContext.app.doubleClickSelectsTrailingSpace) return [];
+  if (!appContext.settings.doubleClickSelectsTrailingSpace) return [];
   return EditorView.domEventHandlers({
     dblclick: (event, view) => {
       const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
@@ -191,7 +191,7 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
   const filteredKeys = new Set<string>();
 
   for (const def of cmHandlerMap) {
-    const customKey = appContext.app.customShortcuts[def.registryKey];
+    const customKey = appContext.settings.customShortcuts[def.registryKey];
     const cmKey = customKey ? toCmKey(customKey) : def.defaultCmKey;
 
     cmBindings.push({ key: cmKey, run: def.handler, preventDefault: true });

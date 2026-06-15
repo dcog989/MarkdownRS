@@ -26,7 +26,7 @@ let isMarkdown = $derived.by(() => {
     return activeTab.preferredExtension !== 'txt';
 });
 
-let showPreview = $derived(appContext.app.splitView && isMarkdown);
+let showPreview = $derived(appContext.settings.splitView && isMarkdown);
 
 onDestroy(() => {
     splitResize.cleanup();
@@ -58,7 +58,7 @@ function onResizeMouseDown(e: MouseEvent) {
                     <div
                         class="writer-content"
                         style="flex: {showPreview
-                            ? `0 0 ${appContext.app.splitPercentage * 100}%`
+                            ? `0 0 ${appContext.settings.splitPercentage * 100}%`
                             : '1 1 100%'}; height: 100%; overflow: hidden;">
                         <Editor tabId={appContext.app.activeTabId} />
                     </div>

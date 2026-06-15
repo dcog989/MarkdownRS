@@ -7,7 +7,7 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
   function handleMouseEnter(e: MouseEvent) {
     if (!content) return;
 
-    const delay = appContext.app.tooltipDelay;
+    const delay = appContext.settings.tooltipDelay;
     const x = e.clientX;
     const y = e.clientY;
 

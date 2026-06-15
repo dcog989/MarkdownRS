@@ -16,7 +16,7 @@ interface Props {
 let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
 
 let isFileMissing = $derived(tab.fileCheckFailed === true);
-let isCollapsed = $derived(appContext.app.collapsePinnedTabs && tab.isPinned);
+let isCollapsed = $derived(appContext.settings.collapsePinnedTabs && tab.isPinned);
 
 let tooltipContent = $derived.by(() => {
     const parts: string[] = [];
@@ -56,8 +56,8 @@ let tooltipContent = $derived.by(() => {
     class:justify-center={isCollapsed}
     class:px-3={!isCollapsed}
     style="
-        min-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMin}px`};
-        max-width: {isCollapsed ? '36px' : `${appContext.app.tabWidthMax}px`};
+        min-width: {isCollapsed ? '36px' : `${appContext.settings.tabWidthMin}px`};
+        max-width: {isCollapsed ? '36px' : `${appContext.settings.tabWidthMax}px`};
         width: {isCollapsed ? '36px' : 'auto'};
         border-top-left-radius: 0.375rem;
         border-top-right-radius: 0.375rem;
