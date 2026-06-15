@@ -1,12 +1,19 @@
 export {
-  invertCase,
+  swapCase,
   toCamelCase,
+  toCapitalCase,
   toConstantCase,
+  toDotCase,
+  toHeaderCase,
   toKebabCase,
+  toLowerCaseFirst,
+  toNoCase,
   toPascalCase,
+  toPathCase,
   toSentenceCase,
   toSnakeCase,
   toTitleCase,
+  toUpperCaseFirst,
 } from './case';
 export {
   removeDuplicates,

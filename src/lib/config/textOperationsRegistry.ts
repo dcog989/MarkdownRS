@@ -59,7 +59,14 @@ export type OperationId =
   | 'snake-case'
   | 'kebab-case'
   | 'constant-case'
-  | 'invert-case'
+  | 'swap-case'
+  | 'dot-case'
+  | 'path-case'
+  | 'header-case'
+  | 'capital-case'
+  | 'no-case'
+  | 'upper-case-first'
+  | 'lower-case-first'
   // Markdown Formatting
   | 'toggle-bullets'
   | 'add-numbers'
@@ -335,10 +342,66 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     category: 'case',
     execution: 'client',
   },
-  'invert-case': {
-    id: 'invert-case',
-    label: 'iNVERT cASE',
-    description: 'Swap uppercase and lowercase',
+  'swap-case': {
+    id: 'swap-case',
+    label: 'sWAP cASE',
+    description: 'Swap uppercase and lowercase letters',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'dot-case': {
+    id: 'dot-case',
+    label: 'dot.case',
+    description: 'Convert to dot.case format',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'path-case': {
+    id: 'path-case',
+    label: 'path/case',
+    description: 'Convert to path/case format',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'header-case': {
+    id: 'header-case',
+    label: 'Header-Case',
+    description: 'Convert to Header-Case format',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'capital-case': {
+    id: 'capital-case',
+    label: 'Capital Case',
+    description: 'Convert to Capital Case format',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'no-case': {
+    id: 'no-case',
+    label: 'no case',
+    description: 'Convert to space-separated lowercase',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'upper-case-first': {
+    id: 'upper-case-first',
+    label: 'Upper case first',
+    description: 'Capitalize the first letter',
+    icon: Type,
+    category: 'case',
+    execution: 'client',
+  },
+  'lower-case-first': {
+    id: 'lower-case-first',
+    label: 'lower case first',
+    description: 'Lowercase the first letter',
     icon: Type,
     category: 'case',
     execution: 'client',

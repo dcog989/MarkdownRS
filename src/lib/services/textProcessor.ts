@@ -41,7 +41,7 @@ class TextProcessor {
     // --- Case Transformations ---
     this.strategies.set('uppercase', (t) => t.toUpperCase());
     this.strategies.set('lowercase', (t) => t.toLowerCase());
-    this.strategies.set('invert-case', ClientLogic.invertCase);
+    this.strategies.set('swap-case', ClientLogic.swapCase);
     this.strategies.set('title-case', ClientLogic.toTitleCase);
     this.strategies.set('sentence-case', ClientLogic.toSentenceCase);
     this.strategies.set('camel-case', ClientLogic.toCamelCase);
@@ -49,6 +49,13 @@ class TextProcessor {
     this.strategies.set('snake-case', ClientLogic.toSnakeCase);
     this.strategies.set('kebab-case', ClientLogic.toKebabCase);
     this.strategies.set('constant-case', ClientLogic.toConstantCase);
+    this.strategies.set('dot-case', ClientLogic.toDotCase);
+    this.strategies.set('path-case', ClientLogic.toPathCase);
+    this.strategies.set('header-case', ClientLogic.toHeaderCase);
+    this.strategies.set('capital-case', ClientLogic.toCapitalCase);
+    this.strategies.set('no-case', ClientLogic.toNoCase);
+    this.strategies.set('upper-case-first', ClientLogic.toUpperCaseFirst);
+    this.strategies.set('lower-case-first', ClientLogic.toLowerCaseFirst);
 
     // --- Markdown Formatting ---
     this.strategies.set('toggle-bullets', ClientLogic.toggleBullets);
