@@ -199,58 +199,46 @@ fn save_tabs(
         .collect();
     delete_stmt.execute(ids.as_slice())?;
 
-    let (columns, placeholders_str, update_set) = if include_original_index {
-        (
-            "id, title, content, is_dirty, path, scroll_percentage,
-             created, modified, is_pinned, custom_title,
-             file_check_failed, file_check_performed, mru_position, sort_index, original_index",
-            "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15",
-            format!(
-                "title              = excluded.title,
-                content            = CASE WHEN excluded.content IS NOT NULL
-                                          THEN excluded.content
-                                          ELSE {0}.content END,
-                is_dirty           = excluded.is_dirty,
-                path               = excluded.path,
-                scroll_percentage  = excluded.scroll_percentage,
-                created            = excluded.created,
-                modified           = excluded.modified,
-                is_pinned          = excluded.is_pinned,
-                custom_title       = excluded.custom_title,
-                file_check_failed  = excluded.file_check_failed,
-                file_check_performed = excluded.file_check_performed,
-                mru_position       = excluded.mru_position,
-                sort_index         = excluded.sort_index,
-                original_index     = excluded.original_index",
-                table_name
-            ),
-        )
+    let (base_cols, base_placeholders) = (
+        "id, title, content, is_dirty, path, scroll_percentage,
+         created, modified, is_pinned, custom_title,
+         file_check_failed, file_check_performed, mru_position, sort_index",
+        "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14",
+    );
+    let base_update_set = format!(
+        "title              = excluded.title,
+         content            = CASE WHEN excluded.content IS NOT NULL
+                                   THEN excluded.content
+                                   ELSE {0}.content END,
+         is_dirty           = excluded.is_dirty,
+         path               = excluded.path,
+         scroll_percentage  = excluded.scroll_percentage,
+         created            = excluded.created,
+         modified           = excluded.modified,
+         is_pinned          = excluded.is_pinned,
+         custom_title       = excluded.custom_title,
+         file_check_failed  = excluded.file_check_failed,
+         file_check_performed = excluded.file_check_performed,
+         mru_position       = excluded.mru_position,
+         sort_index         = excluded.sort_index",
+        table_name
+    );
+
+    let extra_col = if include_original_index {
+        ", original_index"
     } else {
-        (
-            "id, title, content, is_dirty, path, scroll_percentage,
-             created, modified, is_pinned, custom_title,
-             file_check_failed, file_check_performed, mru_position, sort_index",
-            "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14",
-            format!(
-                "title              = excluded.title,
-                content            = CASE WHEN excluded.content IS NOT NULL
-                                          THEN excluded.content
-                                          ELSE {0}.content END,
-                is_dirty           = excluded.is_dirty,
-                path               = excluded.path,
-                scroll_percentage  = excluded.scroll_percentage,
-                created            = excluded.created,
-                modified           = excluded.modified,
-                is_pinned          = excluded.is_pinned,
-                custom_title       = excluded.custom_title,
-                file_check_failed  = excluded.file_check_failed,
-                file_check_performed = excluded.file_check_performed,
-                mru_position       = excluded.mru_position,
-                sort_index         = excluded.sort_index",
-                table_name
-            ),
-        )
+        ""
     };
+    let extra_ph = if include_original_index { ", ?15" } else { "" };
+    let extra_set = if include_original_index {
+        ",\n         original_index     = excluded.original_index"
+    } else {
+        ""
+    };
+
+    let columns = format!("{}{}", base_cols, extra_col);
+    let placeholders_str = format!("{}{}", base_placeholders, extra_ph);
+    let update_set = format!("{}{}", base_update_set, extra_set);
 
     let upsert_sql = format!(
         "INSERT INTO {} ({}) VALUES ({}) ON CONFLICT(id) DO UPDATE SET {}",
@@ -258,47 +246,32 @@ fn save_tabs(
     );
     let mut upsert_stmt = tx.prepare_cached(&upsert_sql)?;
 
-    if include_original_index {
-        for tab in tabs {
-            let content = tab.content.as_deref().filter(|c| !c.is_empty());
-            upsert_stmt.execute(params![
-                &tab.id,
-                &tab.title,
-                content,
-                tab.is_dirty as i32,
-                &tab.path,
-                tab.scroll_percentage,
-                &tab.created,
-                &tab.modified,
-                tab.is_pinned as i32,
-                &tab.custom_title,
-                tab.file_check_failed as i32,
-                tab.file_check_performed as i32,
-                &tab.mru_position,
-                &tab.sort_index,
-                &tab.original_index,
-            ])?;
+    for tab in tabs {
+        let content = tab.content.as_deref().filter(|c| !c.is_empty());
+        let is_dirty: i32 = tab.is_dirty as i32;
+        let is_pinned: i32 = tab.is_pinned as i32;
+        let file_check_failed: i32 = tab.file_check_failed as i32;
+        let file_check_performed: i32 = tab.file_check_performed as i32;
+
+        let mut params: Vec<&dyn rusqlite::types::ToSql> = Vec::with_capacity(15);
+        params.push(&tab.id);
+        params.push(&tab.title);
+        params.push(&content);
+        params.push(&is_dirty);
+        params.push(&tab.path);
+        params.push(&tab.scroll_percentage);
+        params.push(&tab.created);
+        params.push(&tab.modified);
+        params.push(&is_pinned);
+        params.push(&tab.custom_title);
+        params.push(&file_check_failed);
+        params.push(&file_check_performed);
+        params.push(&tab.mru_position);
+        params.push(&tab.sort_index);
+        if include_original_index {
+            params.push(&tab.original_index);
         }
-    } else {
-        for tab in tabs {
-            let content = tab.content.as_deref().filter(|c| !c.is_empty());
-            upsert_stmt.execute(params![
-                &tab.id,
-                &tab.title,
-                content,
-                tab.is_dirty as i32,
-                &tab.path,
-                tab.scroll_percentage,
-                &tab.created,
-                &tab.modified,
-                tab.is_pinned as i32,
-                &tab.custom_title,
-                tab.file_check_failed as i32,
-                tab.file_check_performed as i32,
-                &tab.mru_position,
-                &tab.sort_index,
-            ])?;
-        }
+        upsert_stmt.execute(params.as_slice())?;
     }
 
     Ok(())
