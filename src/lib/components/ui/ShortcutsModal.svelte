@@ -187,8 +187,6 @@ function handleKeydown(e: KeyboardEvent) {
             <div class="fixed inset-0 z-50">
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- biome-ignore lint/a11y/noStaticElementInteractions: backdrop click to close -->
-                <!-- biome-ignore lint/a11y/useKeyWithClickEvents: Escape key handled elsewhere -->
                 <div
                     class="absolute inset-0 bg-black/40"
                     onclick={handleCancelConflict}></div>
@@ -233,7 +231,6 @@ function handleKeydown(e: KeyboardEvent) {
                                 {@const currentIndex = ++globalIndex.value}
                                 {@const isSelected = currentIndex === selectedIndex}
                                 <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                <!-- biome-ignore lint/a11y/noStaticElementInteractions: interactive row for keyboard navigation -->
                                 <div
                                     class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
                                     style:background-color={isSelected
