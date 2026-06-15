@@ -1,6 +1,9 @@
 use serde::Serialize;
 use tauri::Manager;
 
+const LOGS_DIR: &str = "Logs";
+const LOG_FILE_NAME: &str = "markdown-rs.log";
+
 #[derive(Serialize)]
 pub struct AppInfo {
     pub name: String,
@@ -34,14 +37,14 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
     let logs_path = app_handle
         .path()
         .app_local_data_dir()
-        .map(|p| p.join("Logs").to_string_lossy().to_string())
+        .map(|p| p.join(LOGS_DIR).to_string_lossy().to_string())
         .unwrap_or_default();
     let log_file_path = app_handle
         .path()
         .app_local_data_dir()
         .map(|p| {
-            p.join("Logs")
-                .join("markdown-rs.log")
+            p.join(LOGS_DIR)
+                .join(LOG_FILE_NAME)
                 .to_string_lossy()
                 .to_string()
         })
