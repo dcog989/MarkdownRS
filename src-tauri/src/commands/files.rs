@@ -1,7 +1,7 @@
 use crate::commands::settings::get_max_file_size_bytes;
 use crate::utils::{decode_text, format_system_time, handle_error, run_blocking, validate_path};
 use serde::Serialize;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use tokio::fs;
 
 #[derive(Serialize)]
@@ -117,21 +117,8 @@ pub async fn resolve_path_relative(
     base_path: Option<String>,
     click_path: String,
 ) -> Result<String, String> {
-    // Security check: Validate input path BEFORE processing to prevent traversal
-    // Reject paths with more than 3 parent directory references
-    let parent_dir_count = Path::new(&click_path)
-        .components()
-        .filter(|c| *c == Component::ParentDir)
-        .count();
-    if parent_dir_count > 3 {
-        log::warn!(
-            "Path traversal blocked: excessive parent directory references in input: {}",
-            click_path
-        );
-        return Err("Access denied: invalid path".to_string());
-    }
+    validate_path(&click_path)?;
 
-    // Determine if the click path is absolute before moving it.
     let click_is_absolute = Path::new(&click_path).is_absolute();
 
     // Get the base directory for path traversal protection
