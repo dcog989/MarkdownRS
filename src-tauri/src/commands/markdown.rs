@@ -4,7 +4,7 @@ use crate::markdown::linter::{self, LintDiagnostic};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use crate::markdown::toc;
 use crate::state::AppState;
-use crate::utils::IntoTauriError;
+use crate::utils::{IntoTauriError, run_blocking};
 use std::path::PathBuf;
 use tauri::State;
 
@@ -28,10 +28,10 @@ pub async fn render_markdown(
         flavor: MarkdownFlavor::from_option_str(flavor),
     };
 
-    let result = tokio::task::spawn_blocking(move || renderer::render_markdown(&content, options))
-        .await
-        .map_err(|e| format!("Render task failed: {}", e))?
-        .to_tauri_result();
+    let result = run_blocking("render markdown", move || {
+        renderer::render_markdown(&content, options).to_tauri_result()
+    })
+    .await;
 
     let duration = start.elapsed();
     log::info!(
@@ -48,9 +48,10 @@ pub async fn generate_document_toc(content: String) -> Result<String, String> {
     let start = std::time::Instant::now();
     let content_size = content.len();
 
-    let result = tokio::task::spawn_blocking(move || toc::generate_document_toc(&content))
-        .await
-        .map_err(|e| format!("TOC generation task failed: {}", e))?;
+    let result = run_blocking("generate TOC", move || {
+        Ok(toc::generate_document_toc(&content))
+    })
+    .await?;
 
     let duration = start.elapsed();
     log::info!(
@@ -74,11 +75,10 @@ pub async fn format_markdown(
     let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
     let pr: Option<PathBuf> = resolve_project_root(&state);
 
-    let result = tokio::task::spawn_blocking(move || {
+    let result = run_blocking("format markdown", move || {
         formatter_rumdl::format_markdown(&content, fp.as_deref(), pr.as_deref())
     })
-    .await
-    .map_err(|e| format!("Formatter task failed: {}", e))?;
+    .await;
 
     let duration = start.elapsed();
     log::info!(
@@ -99,11 +99,10 @@ pub async fn lint_markdown(
     let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
     let pr: Option<PathBuf> = resolve_project_root(&state);
 
-    tokio::task::spawn_blocking(move || {
+    run_blocking("lint markdown", move || {
         linter::lint_content(&content, fp.as_deref(), pr.as_deref())
     })
     .await
-    .map_err(|e| format!("Lint task failed: {}", e))?
 }
 
 #[tauri::command]

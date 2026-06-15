@@ -1,5 +1,5 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{decode_text, format_system_time, handle_error, validate_path};
+use crate::utils::{decode_text, format_system_time, handle_error, run_blocking, validate_path};
 use serde::Serialize;
 use std::path::{Component, Path, PathBuf};
 use tokio::fs;
@@ -106,12 +106,10 @@ pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
 #[tauri::command]
 pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
     validate_path(&path)?;
-    // trash crate is blocking, so we wrap it in spawn_blocking to prevent UI freezes
-    tokio::task::spawn_blocking(move || {
+    run_blocking("send to recycle bin", move || {
         trash::delete(&path).map_err(|e| handle_error(Some(&path), "send to recycle bin", e))
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
 }
 
 #[tauri::command]

@@ -150,6 +150,18 @@ pub async fn cleanup_stale_temp_files(
     Ok(())
 }
 
+/// Runs a blocking closure on the tokio blocking thread-pool,
+/// returning Err with the task name on a join panic.
+pub async fn run_blocking<F, T>(task_label: &'static str, f: F) -> Result<T, String>
+where
+    F: FnOnce() -> Result<T, String> + Send + 'static,
+    T: Send + 'static,
+{
+    tokio::task::spawn_blocking(f)
+        .await
+        .map_err(|e| format!("{} task failed: {}", task_label, e))?
+}
+
 /// Decodes bytes to (content, encoding_name) using BOM detection,
 /// UTF-8 fallback, and chardetng as a last resort.
 pub fn decode_text(raw_bytes: Vec<u8>) -> (String, String) {
