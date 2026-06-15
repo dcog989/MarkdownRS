@@ -23,6 +23,7 @@ export const navigationCommands: Command[] = [
     category: 'Navigation',
     showInPalette: false,
     defaultKey: 'ctrl+pagedown',
+    global: true,
     handler: () => {
       const tabs = appContext.editor.tabs;
       if (!appContext.app.activeTabId) return;
@@ -41,6 +42,7 @@ export const navigationCommands: Command[] = [
     category: 'Navigation',
     showInPalette: false,
     defaultKey: 'ctrl+pageup',
+    global: true,
     handler: () => {
       const tabs = appContext.editor.tabs;
       if (!appContext.app.activeTabId) return;

@@ -15,6 +15,7 @@ export const editorCommands: Command[] = [
     label: 'Editor: Find',
     category: 'Editor',
     defaultKey: 'ctrl+f',
+    global: true,
     handler: openFind,
   },
   {
@@ -22,6 +23,7 @@ export const editorCommands: Command[] = [
     label: 'Editor: Replace',
     category: 'Editor',
     defaultKey: 'ctrl+h',
+    global: true,
     handler: openReplace,
   },
   {

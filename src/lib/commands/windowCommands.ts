@@ -14,6 +14,7 @@ export const windowCommands: Command[] = [
     label: 'Window: Command Palette',
     category: 'Window',
     defaultKey: 'ctrl+shift+p',
+    global: true,
     handler: toggleCommandPalette,
   },
   {
@@ -21,6 +22,7 @@ export const windowCommands: Command[] = [
     label: 'Window: Bookmarks',
     category: 'Window',
     defaultKey: 'ctrl+shift+b',
+    global: true,
     handler: toggleBookmarks,
   },
   {
@@ -28,6 +30,7 @@ export const windowCommands: Command[] = [
     label: 'Window: Settings',
     category: 'Window',
     defaultKey: 'ctrl+,',
+    global: true,
     handler: () => {
       appContext.interface.showSettings = true;
     },
@@ -37,6 +40,7 @@ export const windowCommands: Command[] = [
     label: 'Window: Keyboard Shortcuts',
     category: 'Window',
     defaultKey: 'f1',
+    global: true,
     handler: toggleShortcuts,
   },
   {
@@ -50,6 +54,7 @@ export const windowCommands: Command[] = [
     label: 'Window: Text Transformations',
     category: 'Window',
     defaultKey: 'ctrl+t',
+    global: true,
     handler: (e) => {
       e?.preventDefault();
       e?.stopImmediatePropagation();

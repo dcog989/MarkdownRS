@@ -17,6 +17,7 @@ export const fileCommands: Command[] = [
     label: 'File: New File',
     category: 'File',
     defaultKey: 'ctrl+n',
+    global: true,
     handler: () => {
       const id = addTab();
       appContext.app.activeTabId = id;
@@ -27,6 +28,7 @@ export const fileCommands: Command[] = [
     label: 'File: Open File',
     category: 'File',
     defaultKey: 'ctrl+o',
+    global: true,
     handler: () => openFile(),
   },
   {
@@ -34,6 +36,7 @@ export const fileCommands: Command[] = [
     label: 'File: Save',
     category: 'File',
     defaultKey: 'ctrl+s',
+    global: true,
     handler: () => saveCurrentFile(),
   },
   {
@@ -41,6 +44,7 @@ export const fileCommands: Command[] = [
     label: 'File: Save As...',
     category: 'File',
     defaultKey: 'ctrl+shift+s',
+    global: true,
     handler: saveCurrentFileAs,
   },
   {
@@ -48,6 +52,7 @@ export const fileCommands: Command[] = [
     label: 'File: Close Tab',
     category: 'File',
     defaultKey: 'ctrl+w',
+    global: true,
     handler: () => {
       if (appContext.app.activeTabId) {
         requestCloseTab(appContext.app.activeTabId);
@@ -59,6 +64,7 @@ export const fileCommands: Command[] = [
     label: 'File: Reopen Last Closed Tab',
     category: 'File',
     defaultKey: 'ctrl+shift+t',
+    global: true,
     handler: () => triggerReopenClosedTab(0),
   },
   {
@@ -73,6 +79,7 @@ export const fileCommands: Command[] = [
     label: 'File: Recent Files...',
     category: 'File',
     defaultKey: 'ctrl+p',
+    global: true,
     handler: toggleRecentFiles,
   },
 ];

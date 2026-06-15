@@ -29,6 +29,7 @@ export const viewCommands: Command[] = [
     label: 'View: Toggle Split Preview',
     category: 'View',
     defaultKey: 'ctrl+\\',
+    global: true,
     handler: (e) => {
       e?.preventDefault();
       e?.stopImmediatePropagation();
@@ -45,6 +46,7 @@ export const viewCommands: Command[] = [
     label: 'View: Toggle Writer Mode',
     category: 'View',
     defaultKey: 'f11',
+    global: true,
     handler: () => {
       const wasWriterMode = appContext.app.writerMode;
       toggleWriterMode();
@@ -106,6 +108,7 @@ export const viewCommands: Command[] = [
     category: 'View',
     showInPalette: false,
     defaultKey: 'escape',
+    global: true,
     handler: (): boolean => {
       const anyModalOpen =
         appContext.interface.showSettings ||

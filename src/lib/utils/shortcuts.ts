@@ -70,38 +70,13 @@ export class KeyboardShortcutManager {
     if (!this.enabled || e.repeat) return false;
 
     const pressedKey = this.getEventKey(e);
-
-    const globalShortcuts = [
-      'ctrl+p',
-      'ctrl+shift+p',
-      'ctrl+s',
-      'ctrl+shift+s',
-      'ctrl+o',
-      'ctrl+n',
-      'ctrl+w',
-      'ctrl+shift+t',
-      'ctrl+tab',
-      'ctrl+shift+tab',
-      'ctrl+pagedown',
-      'ctrl+pageup',
-      'ctrl+,',
-      'ctrl+t',
-      'ctrl+shift+b',
-      'ctrl+\\',
-      'ctrl+f',
-      'ctrl+h',
-      'f1',
-      'f11',
-      'escape',
-    ];
-
     const isInput = this.isInputElement(e.target);
 
     for (const cmd of this.commands.values()) {
       const mappedKey = this.customMappings[cmd.id] || cmd.defaultKey;
       if (!mappedKey || !cmd.handler) continue;
       if (pressedKey === mappedKey.toLowerCase()) {
-        if (isInput && !(cmd.id in this.customMappings) && !globalShortcuts.includes(pressedKey)) {
+        if (isInput && !(cmd.id in this.customMappings) && !cmd.global) {
           continue;
         }
         const result = await cmd.handler(e);

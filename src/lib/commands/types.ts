@@ -3,6 +3,7 @@ export interface Command {
   label: string;
   category: string;
   defaultKey?: string;
+  global?: boolean;
   // biome-ignore lint/suspicious/noConfusingVoidType: idiomatic handler return type
   handler?: (e?: KeyboardEvent) => void | boolean | Promise<void | boolean>;
   showInPalette?: boolean;
