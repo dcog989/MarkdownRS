@@ -6,64 +6,30 @@ import {
   completeAnyWord,
   completionKeymap,
 } from '@codemirror/autocomplete';
-import { copyLineDown, defaultKeymap, historyKeymap, selectLine } from '@codemirror/commands';
+import { defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
-import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
-import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { toggleSelectionComment } from '$lib/utils/commentToggle';
 
-// Keys from defaultKeymap that our custom bindings must override
-const FILTERED_DEFAULT_KEYS = new Set(['Mod-i', 'Mod-I', 'Mod-d', 'Mod-b', 'Alt-l']);
-
-const markdownKeymap: KeyBinding[] = [
-  {
-    key: 'Mod-b',
-    run: () => {
-      performTextTransform('bold');
-      return true;
-    },
-    preventDefault: true,
-  },
-  {
-    key: 'Mod-i',
-    run: () => {
-      performTextTransform('italic');
-      return true;
-    },
-    preventDefault: true,
-  },
-  {
-    key: 'Mod-k',
-    run: () => {
-      performTextTransform('insert-link');
-      return true;
-    },
-    preventDefault: true,
-  },
-  {
-    key: 'Mod-d',
-    run: () => {
-      const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-      if (tab?.path) {
-        addBookmark(tab.path, tab.title).then(({ isNew }) => {
-          if (isNew) {
-            showToast('success', `Added "${tab.title}" to bookmarks`);
-          } else {
-            showToast('info', `"${tab.title}" is already bookmarked`);
-          }
-        });
-      } else {
-        showToast('warning', 'Save the file before bookmarking');
-      }
-      return true;
-    },
-    preventDefault: true,
-  },
-];
+function toCmKey(registryKey: string): string {
+  const parts = registryKey.split('+').map((p) => p.toLowerCase());
+  const mods: string[] = [];
+  let keyPart = '';
+  for (const p of parts) {
+    if (p === 'ctrl' || p === 'meta') {
+      mods.push('Mod');
+    } else if (p === 'shift') {
+      mods.push('Shift');
+    } else if (p === 'alt') {
+      mods.push('Alt');
+    } else {
+      keyPart = p.length === 1 ? p : p[0].toUpperCase() + p.slice(1);
+    }
+  }
+  return [...mods, keyPart].join('-');
+}
 
 /**
  * Custom completion source that wraps completeAnyWord but filters out
@@ -221,8 +187,27 @@ const handleShiftTab = (view: EditorView) => {
 };
 
 export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
+  const cmBindings: KeyBinding[] = [];
+  const filteredKeys = new Set<string>();
+
+  for (const def of cmHandlerMap) {
+    const customKey = appContext.app.customShortcuts[def.registryKey];
+    const cmKey = customKey ? toCmKey(customKey) : def.defaultCmKey;
+
+    cmBindings.push({ key: cmKey, run: def.handler, preventDefault: true });
+    filteredKeys.add(cmKey);
+
+    const lastChar = cmKey.at(-1);
+    if (lastChar && /^[a-zA-Z]$/.test(lastChar)) {
+      const prefix = cmKey.slice(0, -1);
+      filteredKeys.add(prefix + lastChar.toUpperCase());
+      filteredKeys.add(prefix + lastChar.toLowerCase());
+    }
+  }
+
   return keymap.of([
     ...customKeymap,
+    ...cmBindings,
     {
       key: 'Insert',
       run: () => {
@@ -230,21 +215,11 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
         return true;
       },
     },
-    { key: 'Mod-/', run: toggleSelectionComment },
-    ...markdownKeymap,
-    {
-      key: 'Mod-l',
-      run: selectLine,
-    },
-    {
-      key: 'Mod-Shift-d',
-      run: copyLineDown,
-    },
     ...(completionKeymap as KeyBinding[]),
     ...(historyKeymap as KeyBinding[]),
     ...(closeBracketsKeymap as KeyBinding[]),
     ...(defaultKeymap.filter(
-      (binding) => binding.key !== 'Tab' && !FILTERED_DEFAULT_KEYS.has(binding.key ?? ''),
+      (binding) => binding.key !== 'Tab' && !filteredKeys.has(binding.key ?? ''),
     ) as KeyBinding[]),
     { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
   ]);
