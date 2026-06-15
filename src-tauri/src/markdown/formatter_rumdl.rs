@@ -1,24 +1,20 @@
-use rumdl_lib::config::Config;
 use rumdl_lib::fix_coordinator::FixCoordinator;
-use rumdl_lib::rules::{all_rules, filter_rules};
 use std::path::Path;
 
-use super::config::load_rumdl_config;
+use super::config::{clone_rules, load_default_rules, load_rumdl_rules};
 
 pub fn format_markdown(
     content: &str,
     file_path: Option<&Path>,
     project_root: Option<&Path>,
 ) -> Result<String, String> {
-    let config: Config = if let (Some(fp), Some(pr)) = (file_path, project_root) {
+    let (config, rules) = if let (Some(fp), Some(pr)) = (file_path, project_root) {
         let file_dir = fp.parent().unwrap_or(pr);
-        load_rumdl_config(file_dir, pr)?
+        load_rumdl_rules(file_dir, pr)?
     } else {
-        Config::default()
+        let (c, r) = load_default_rules();
+        (c.clone(), clone_rules(r))
     };
-
-    let all_rules = all_rules(&config);
-    let rules = filter_rules(&all_rules, &config.global);
 
     let fix_coordinator = FixCoordinator::new();
     let mut content_buf = content.to_string();

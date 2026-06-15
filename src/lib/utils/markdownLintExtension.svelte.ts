@@ -16,19 +16,6 @@ function highestSeverity(diagnostics: Diagnostic[]): 'error' | 'warning' | 'info
   return 'clean';
 }
 
-function lineColToOffset(doc: string, line: number, column: number): number {
-  let pos = 0;
-  let currentLine = 1;
-  for (const ch of doc) {
-    if (currentLine === line) {
-      return pos + column - 1;
-    }
-    if (ch === '\n') currentLine += 1;
-    pos += 1;
-  }
-  return doc.length;
-}
-
 export const createMarkdownLinter = () => {
   return linter(
     async (view) => {
@@ -49,9 +36,10 @@ export const createMarkdownLinter = () => {
 
       markdownLintState.diagnostics = result;
 
+      const doc = view.state.doc;
       const diagnostics: Diagnostic[] = result.map((d) => ({
-        from: lineColToOffset(content, d.line, d.column),
-        to: lineColToOffset(content, d.end_line, d.end_column),
+        from: doc.line(d.line).from + d.column - 1,
+        to: doc.line(d.end_line).from + d.end_column - 1,
         severity: d.severity as 'error' | 'warning' | 'info',
         message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
         source: 'rumdl',

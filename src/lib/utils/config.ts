@@ -23,7 +23,7 @@ const DEFAULT_CONFIG = {
 
   // Markdown Lint Settings
   MARKDOWN_LINT: {
-    LINT_DELAY_MS: 1500,
+    LINT_DELAY_MS: 0,
   },
 
   // Tab Settings

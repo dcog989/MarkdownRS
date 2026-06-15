@@ -1,11 +1,9 @@
-use rumdl_lib::config::Config;
 use rumdl_lib::rule::LintWarning;
 use rumdl_lib::rule::Severity;
-use rumdl_lib::rules::{all_rules, filter_rules};
 use serde::Serialize;
 use std::path::Path;
 
-use super::config::load_rumdl_config;
+use super::config::{clone_rules, load_default_rules, load_rumdl_rules};
 
 #[derive(Debug, Serialize)]
 pub struct LintDiagnostic {
@@ -45,15 +43,13 @@ pub fn lint_content(
     file_path: Option<&Path>,
     project_root: Option<&Path>,
 ) -> Result<Vec<LintDiagnostic>, String> {
-    let config: Config = if let (Some(fp), Some(pr)) = (file_path, project_root) {
+    let (config, rules) = if let (Some(fp), Some(pr)) = (file_path, project_root) {
         let file_dir = fp.parent().unwrap_or(pr);
-        load_rumdl_config(file_dir, pr)?
+        load_rumdl_rules(file_dir, pr)?
     } else {
-        Config::default()
+        let (c, r) = load_default_rules();
+        (c.clone(), clone_rules(r))
     };
-
-    let all_rules = all_rules(&config);
-    let rules = filter_rules(&all_rules, &config.global);
 
     let flavor = file_path
         .map(|p| config.get_flavor_for_file(p))
