@@ -96,26 +96,14 @@ pub async fn lint_markdown(
     file_path: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<Vec<LintDiagnostic>, String> {
-    let start = std::time::Instant::now();
-    let content_size = content.len();
-
     let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
     let pr: Option<PathBuf> = resolve_project_root(&state);
 
-    let result = tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         linter::lint_content(&content, fp.as_deref(), pr.as_deref())
     })
     .await
-    .map_err(|e| format!("Lint task failed: {}", e))?;
-
-    let duration = start.elapsed();
-    log::info!(
-        "[Markdown] lint_markdown | duration={:?} | size={} bytes",
-        duration,
-        content_size
-    );
-
-    result
+    .map_err(|e| format!("Lint task failed: {}", e))?
 }
 
 #[tauri::command]

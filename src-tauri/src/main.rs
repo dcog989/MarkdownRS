@@ -173,6 +173,10 @@ fn main() {
                 .build(),
         )
         .setup(|app| {
+            // Pre-warm default rumdl rules so the first lint call doesn't pay
+            // the ~70ms rule-construction cost at runtime.
+            crate::markdown::config::load_default_rules();
+
             let app_handle = app.handle();
             let window = app.get_webview_window("main")
                 .ok_or("Failed to get main window")?;

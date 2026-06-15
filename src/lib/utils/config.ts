@@ -16,14 +16,14 @@ const DEFAULT_CONFIG = {
 
   // Spellcheck Settings
   SPELLCHECK: {
-    LINT_DELAY_MS: 750,
+    LINT_DELAY_MS: 400,
     STARTUP_DELAY_MS: 200,
     REFRESH_DELAY_MS: 50,
   },
 
   // Markdown Lint Settings
   MARKDOWN_LINT: {
-    LINT_DELAY_MS: 1000,
+    LINT_DELAY_MS: 400,
   },
 
   // Tab Settings

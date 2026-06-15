@@ -5,7 +5,7 @@ use rumdl_lib::rule::Rule;
 use rumdl_lib::rules::{all_rules, filter_rules};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 /// Markdown flavor specification (for comrak rendering)
@@ -77,36 +77,34 @@ impl MarkdownFlavor {
 }
 
 struct CachedState {
+    file_dir: PathBuf,
+    project_root: PathBuf,
     config_path: Option<PathBuf>,
     config_mtime: Option<SystemTime>,
-    config: Config,
-    rules: Vec<Box<dyn Rule>>,
+    config: Arc<Config>,
+    rules: Arc<Vec<Box<dyn Rule>>>,
 }
 
 static CACHE: Mutex<Option<CachedState>> = Mutex::new(None);
 
-pub(crate) fn clone_rules(rules: &[Box<dyn Rule>]) -> Vec<Box<dyn Rule>> {
-    rules.iter().map(|r| dyn_clone::clone_box(&**r)).collect()
-}
+type RulesPair = (Arc<Config>, Arc<Vec<Box<dyn Rule>>>);
+type RulesResult = Result<RulesPair, String>;
 
-fn default_rules_impl() -> (Config, Vec<Box<dyn Rule>>) {
+fn default_rules_impl() -> RulesPair {
     let config = rumdl_lib::config::Config::default();
     let all = all_rules(&config);
     let filtered = filter_rules(&all, &config.global);
-    (config, filtered)
+    (Arc::new(config), Arc::new(filtered))
 }
 
 /// Load default config + filtered rules (no config file discovery).
 /// Rules are created once and cached with OnceLock.
-pub fn load_default_rules() -> &'static (Config, Vec<Box<dyn Rule>>) {
-    static DEFAULT: std::sync::OnceLock<(Config, Vec<Box<dyn Rule>>)> = std::sync::OnceLock::new();
+pub fn load_default_rules() -> &'static RulesPair {
+    static DEFAULT: std::sync::OnceLock<RulesPair> = std::sync::OnceLock::new();
     DEFAULT.get_or_init(default_rules_impl)
 }
 
-fn load_full_state(
-    project_root: &Path,
-    cfg_path: &Path,
-) -> Result<(Config, Vec<Box<dyn Rule>>), String> {
+fn load_full_state(project_root: &Path, cfg_path: &Path) -> RulesResult {
     let loaded = SourcedConfig::<ConfigLoaded>::load_sourced_for_path(cfg_path, project_root)
         .map_err(|e| format!("Failed to load rumdl config: {}", e))?;
     let registry = default_registry();
@@ -117,28 +115,36 @@ fn load_full_state(
     let all = all_rules(&config);
     let filtered = filter_rules(&all, &config.global);
 
-    Ok((config, filtered))
+    Ok((Arc::new(config), Arc::new(filtered)))
 }
 
 /// Load rumdl config + filtered rules, using a cache that invalidates when
 /// the discovered config file's path or mtime changes.
-pub fn load_rules_for_file(
-    file_path: Option<&Path>,
-    project_root: Option<&Path>,
-) -> Result<(Config, Vec<Box<dyn Rule>>), String> {
+pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>) -> RulesResult {
     if let (Some(fp), Some(pr)) = (file_path, project_root) {
         let file_dir = fp.parent().unwrap_or(pr);
         load_rumdl_rules(file_dir, pr)
     } else {
         let (c, r) = load_default_rules();
-        Ok((c.clone(), clone_rules(r)))
+        Ok((Arc::clone(c), Arc::clone(r)))
     }
 }
 
-pub fn load_rumdl_rules(
-    file_dir: &Path,
-    project_root: &Path,
-) -> Result<(Config, Vec<Box<dyn Rule>>), String> {
+pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
+    // Fast path: check cache by (file_dir, project_root) — zero I/O.
+    {
+        let cache = CACHE
+            .lock()
+            .map_err(|_| "Cache lock poisoned".to_string())?;
+        if let Some(cached) = cache.as_ref()
+            && cached.file_dir == file_dir
+            && cached.project_root == project_root
+        {
+            return Ok((Arc::clone(&cached.config), Arc::clone(&cached.rules)));
+        }
+    }
+
+    // Cache miss: discover config (may involve I/O).
     let candidate_path =
         SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root);
     let candidate_mtime = candidate_path
@@ -146,40 +152,38 @@ pub fn load_rumdl_rules(
         .and_then(|p| p.metadata().ok())
         .and_then(|m| m.modified().ok());
 
-    // Fast path: check cache under lock — no I/O.
+    // Re-check cache by (path, mtime) in case another thread has populated it.
     {
         let cache = CACHE
             .lock()
             .map_err(|_| "Cache lock poisoned".to_string())?;
-
-        let valid = cache
-            .as_ref()
-            .is_some_and(|c| c.config_path == candidate_path && c.config_mtime == candidate_mtime);
-
-        if valid {
-            let cached = cache.as_ref().unwrap();
-            return Ok((cached.config.clone(), clone_rules(&cached.rules)));
+        if let Some(cached) = cache.as_ref()
+            && cached.config_path == candidate_path
+            && cached.config_mtime == candidate_mtime
+        {
+            return Ok((Arc::clone(&cached.config), Arc::clone(&cached.rules)));
         }
     }
-    // Lock released — safe to do I/O below.
 
     // Slow path: build config outside the lock.
     let (config, rules) = if let Some(ref cp) = candidate_path {
         load_full_state(project_root, cp)?
     } else {
         let (c, r) = load_default_rules();
-        (c.clone(), clone_rules(r))
+        (Arc::clone(c), Arc::clone(r))
     };
 
-    // Re-acquire lock to update cache.
+    // Store in cache.
     let mut cache = CACHE
         .lock()
         .map_err(|_| "Cache lock poisoned".to_string())?;
     *cache = Some(CachedState {
+        file_dir: file_dir.to_path_buf(),
+        project_root: project_root.to_path_buf(),
         config_path: candidate_path,
         config_mtime: candidate_mtime,
-        config: config.clone(),
-        rules: clone_rules(&rules),
+        config: Arc::clone(&config),
+        rules: Arc::clone(&rules),
     });
 
     Ok((config, rules))
