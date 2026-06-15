@@ -1,8 +1,7 @@
-import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
 import { addTab } from '$lib/stores/editorStore.svelte';
 import { toggleRecentFiles } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
 import {
   openFile,
   requestCloseTab,
@@ -67,19 +66,7 @@ export const fileCommands: Command[] = [
     label: 'File: Add to Bookmarks',
     category: 'File',
     defaultKey: 'ctrl+d',
-    handler: async () => {
-      const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-      if (tab?.path) {
-        const { isNew } = await addBookmark(tab.path, tab.title);
-        if (isNew) {
-          showToast('success', `Added "${tab.title}" to bookmarks`);
-        } else {
-          showToast('info', `"${tab.title}" is already bookmarked`);
-        }
-      } else {
-        showToast('warning', 'Save the file before bookmarking');
-      }
-    },
+    handler: () => addBookmarkForActiveTab(),
   },
   {
     id: 'file.recentFiles',

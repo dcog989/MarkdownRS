@@ -12,10 +12,8 @@ import {
   selectLine,
 } from '@codemirror/commands';
 import type { EditorView } from '@codemirror/view';
-import { addBookmark } from '$lib/stores/bookmarkStore.svelte';
+import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
-import { showToast } from '$lib/stores/toastStore.svelte';
 import { toggleSelectionComment } from '$lib/utils/commentToggle';
 
 export type CmHandler = (view: EditorView) => boolean;
@@ -113,18 +111,7 @@ export const cmHandlerMap: CmBindingDef[] = [
   },
   {
     registryKey: 'file.addBookmark',
-    handler: () => {
-      const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-      if (tab?.path) {
-        addBookmark(tab.path, tab.title).then(({ isNew }) => {
-          if (isNew) showToast('success', `Added "${tab.title}" to bookmarks`);
-          else showToast('info', `"${tab.title}" is already bookmarked`);
-        });
-      } else {
-        showToast('warning', 'Save the file before bookmarking');
-      }
-      return true;
-    },
+    handler: () => addBookmarkForActiveTab(),
     defaultCmKey: 'Mod-d',
   },
 ];

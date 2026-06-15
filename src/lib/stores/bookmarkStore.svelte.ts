@@ -1,3 +1,5 @@
+import { appContext } from '$lib/stores/state.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { getCurrentTimestamp } from '$lib/utils/date';
 
@@ -89,4 +91,17 @@ export function isBookmarked(path: string): boolean {
 
 export function getBookmarkByPath(path: string): Bookmark | undefined {
   return bookmarkStore.bookmarks.find((b) => b.path === path);
+}
+
+export function addBookmarkForActiveTab(): boolean {
+  const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+  if (tab?.path) {
+    addBookmark(tab.path, tab.title).then(({ isNew }) => {
+      if (isNew) showToast('success', `Added "${tab.title}" to bookmarks`);
+      else showToast('info', `"${tab.title}" is already bookmarked`);
+    });
+  } else {
+    showToast('warning', 'Save the file before bookmarking');
+  }
+  return true;
 }
