@@ -2,61 +2,25 @@ import { appState } from '$lib/stores/appState.svelte';
 import { callBackendSafe } from './backend';
 import { debounce } from './timing';
 
+const SETTINGS_EXCLUDED_KEYS = new Set([
+  'activeTabId',
+  'isTabSwitching',
+  'osPlatform',
+  'availableThemes',
+  'gfmEnabled',
+  'writerMode',
+]);
+
 let lastSavedState: string = '';
 
-function getSettingsObject() {
-  return {
-    splitPercentage: appState.splitPercentage,
-    splitOrientation: appState.splitOrientation,
-    splitView: appState.splitView,
-    activeTheme: appState.activeTheme,
-    theme: appState.theme,
-    tabCycling: appState.tabCycling,
-    tabWidthMin: appState.tabWidthMin,
-    tabWidthMax: appState.tabWidthMax,
-    editorFontFamily: appState.editorFontFamily,
-    editorFontSize: appState.editorFontSize,
-    editorWordWrap: appState.editorWordWrap,
-    showWhitespace: appState.showWhitespace,
-    enableAutocomplete: appState.enableAutocomplete,
-    autocompleteDelay: appState.autocompleteDelay,
-    recentChangesTimespan: appState.recentChangesTimespan,
-    recentChangesCount: appState.recentChangesCount,
-    undoDepth: appState.undoDepth,
-    previewFontFamily: appState.previewFontFamily,
-    previewFontSize: appState.previewFontSize,
-    markdownFlavor: appState.markdownFlavor,
-    logLevel: appState.logLevel,
-    statusBarTransparency: appState.statusBarTransparency,
-    newTabPosition: appState.newTabPosition,
-    formatOnSave: appState.formatOnSave,
-    formatOnPaste: appState.formatOnPaste,
-    defaultIndent: appState.defaultIndent,
-    formatterBulletChar: appState.formatterBulletChar,
-    formatterEmphasisChar: appState.formatterEmphasisChar,
-    formatterCodeFence: appState.formatterCodeFence,
-    formatterTableAlignment: appState.formatterTableAlignment,
-    startupBehavior: appState.startupBehavior,
-    lineEndingPreference: appState.lineEndingPreference,
-    tooltipDelay: appState.tooltipDelay,
-    findPanelTransparent: appState.findPanelTransparent,
-    findPanelCloseOnBlur: appState.findPanelCloseOnBlur,
-    languageDictionaries: appState.languageDictionaries,
-    technicalDictionaries: appState.technicalDictionaries,
-    scienceDictionaries: appState.scienceDictionaries,
-    tabNameFromContent: appState.tabNameFromContent,
-    wrapGuideColumn: appState.wrapGuideColumn,
-    doubleClickSelectsTrailingSpace: appState.doubleClickSelectsTrailingSpace,
-    collapsePinnedTabs: appState.collapsePinnedTabs,
-    customShortcuts: appState.customShortcuts,
-    confirmationSuppressed: appState.confirmationSuppressed,
-    maxFileSizeMB: appState.maxFileSizeMB,
-    autoSaveEnabled: appState.autoSaveEnabled,
-    autoSaveInterval: appState.autoSaveInterval,
-    commandPaletteSort: appState.commandPaletteSort,
-    commandUsage: appState.commandUsage,
-    commandUsageCounts: appState.commandUsageCounts,
-  };
+function getSettingsObject(): Record<string, unknown> {
+  const settings: Record<string, unknown> = {};
+  for (const key in appState) {
+    if (!SETTINGS_EXCLUDED_KEYS.has(key)) {
+      settings[key] = (appState as Record<string, unknown>)[key];
+    }
+  }
+  return settings;
 }
 
 export async function initSettings() {
