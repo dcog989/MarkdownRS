@@ -1,23 +1,3 @@
-/**
- * File validation utilities
- */
-
-import { CONFIG } from './config';
-
-export interface FileValidationOptions {
-  maxSizeBytes?: number;
-  allowedExtensions?: string[];
-  requireExtension?: boolean;
-}
-
-export interface FileValidationResult {
-  valid: boolean;
-  error?: string;
-}
-
-/** Default max file size in bytes from centralized config (50 MB) */
-const DEFAULT_MAX_FILE_SIZE = CONFIG.EDITOR.MAX_FILE_SIZE_MB * 1024 * 1024;
-
 export function getFilename(path: string): string {
   return path.split(/[\\/]/).pop() || '';
 }
@@ -87,83 +67,6 @@ export const SUPPORTED_TEXT_EXTENSIONS = [
   'tsv',
 ];
 
-const DEFAULT_ALLOWED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS;
-
-/**
- * Validate file path and size
- */
-export function validateFile(
-  path: string,
-  sizeBytes: number,
-  options: FileValidationOptions = {},
-): FileValidationResult {
-  const {
-    maxSizeBytes = DEFAULT_MAX_FILE_SIZE,
-    allowedExtensions = DEFAULT_ALLOWED_EXTENSIONS,
-    requireExtension = false,
-  } = options;
-
-  // Check for null bytes
-  if (path.includes('\0')) {
-    return { valid: false, error: 'Invalid path: contains null bytes' };
-  }
-
-  // Check for problematic directory traversal patterns
-  // Normalize path and check for suspicious patterns that could be attacks
-  // Allow legitimate relative paths like "../config.json" but block "../../../etc/passwd"
-  const normalizedPath = path.replace(/\\/g, '/');
-  const parentDirCount = (normalizedPath.match(/\.\.\//g) || []).length;
-
-  // Block excessive parent directory traversal (more than 3 levels up)
-  if (parentDirCount > 3) {
-    return {
-      valid: false,
-      error: 'Invalid path: excessive directory traversal',
-    };
-  }
-
-  // Block patterns that try to escape using various encodings
-  if (/\.\.%2e|%2e%2e|%252e/i.test(path)) {
-    return {
-      valid: false,
-      error: 'Invalid path: contains encoded directory traversal',
-    };
-  }
-
-  // Check file size
-  if (sizeBytes > maxSizeBytes) {
-    const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2);
-    const maxMB = (maxSizeBytes / (1024 * 1024)).toFixed(0);
-    return {
-      valid: false,
-      error: `File too large: ${sizeMB} MB (maximum ${maxMB} MB)`,
-    };
-  }
-
-  // Check file extension
-  const filename = getFilename(path);
-
-  // Dotfiles (like .gitignore) are considered valid if they match a known type or generally
-  if (filename.startsWith('.') && filename.length > 1) {
-    return { valid: true };
-  }
-
-  const extension = filename.includes('.') ? filename.split('.').pop()?.toLowerCase() : null;
-
-  if (requireExtension && !extension) {
-    return { valid: false, error: 'File must have an extension' };
-  }
-
-  if (extension && !allowedExtensions.includes(extension)) {
-    return {
-      valid: false,
-      error: `Unsupported file type: .${extension}`,
-    };
-  }
-
-  return { valid: true };
-}
-
 /**
  * Format file size for display with smart rounding:
  * - Below 1 KB: round up to nearest tenth (e.g., 0.1 KB, 0.5 KB)
@@ -208,7 +111,7 @@ export function isTextFile(path: string): boolean {
 
   const extension = filename.split('.').pop()?.toLowerCase();
   if (!extension) return false;
-  return DEFAULT_ALLOWED_EXTENSIONS.includes(extension);
+  return SUPPORTED_TEXT_EXTENSIONS.includes(extension);
 }
 
 /**
