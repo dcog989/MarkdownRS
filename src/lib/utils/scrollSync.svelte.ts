@@ -1,46 +1,28 @@
 /**
- * Scroll Sync State Management
+ * Scroll Sync Orchestrator
  *
- * This file uses a hybrid approach of reactive and non-reactive state:
- *
- * REACTIVE STATE ($state):
- * - editor, preview: DOM elements that trigger effects when changed
- * - activeSource: Prevents circular scroll loops (UI reacts to changes)
- * - mapDirty: Triggers map rebuild when content changes
- *
- * NON-REACTIVE STATE (plain properties):
- * - lineMap: Array of line->pixel mappings (rebuilt on content change, not reactive)
- *
- * Pattern Rationale:
- * - Use $state for values that UI/effects need to react to
- * - Use plain properties for data that's computed/rebuilt imperatively
+ * Coordinates scroll syncing between the CodeMirror editor and the rendered
+ * Markdown preview. Delegates DOM measurement to LineMapBuilder,
+ * interpolation to ScrollInterpolator, and animation to SmoothScroller.
  */
 
 import type { EditorView } from '@codemirror/view';
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
-import { queryHTMLElements } from './dom';
-
-interface LineMapEntry {
-  line: number;
-  y: number;
-}
+import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolation';
+import { SmoothScroller } from './smoothScroller';
 
 export class ScrollSyncManager {
   editor = $state<EditorView | null>(null);
   preview = $state<HTMLElement | null>(null);
   private lineMap: LineMapEntry[] = [];
+  private scroller = new SmoothScroller();
 
-  // State to prevent circular scroll loops
   private activeSource = $state<'editor' | 'preview' | null>(null);
   private clearSourceTimer: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private updateMapTimer: number | null = null;
   private mapDirty = $state(false);
-
-  // Smooth scroll animation state
-  private smoothScrollRAF: number | null = null;
-  private smoothScrollTarget: { element: HTMLElement | Element; targetY: number } | null = null;
 
   private boundOnEditorScroll: () => void;
   private boundOnPreviewScroll: () => void;
@@ -56,14 +38,11 @@ export class ScrollSyncManager {
     if (this.effectInitialized) return;
     this.effectInitialized = true;
 
-    // $effect.root must run inside a mounted component context, not at module load time.
-    // Calling it during module evaluation (before mount) throws in production builds.
     $effect.root(() => {
       $effect(() => {
         if (this.preview) {
           this.resizeObserver?.disconnect();
           this.resizeObserver = new ResizeObserver(() => {
-            // Only rebuild if content actually changed (dirty flag), not just resized
             if (this.mapDirty) {
               if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
               this.updateMapTimer = window.setTimeout(() => {
@@ -74,7 +53,6 @@ export class ScrollSyncManager {
             }
           });
 
-          // Observe container only - children will trigger container resize if needed
           this.resizeObserver.observe(this.preview);
 
           return () => {
@@ -119,56 +97,7 @@ export class ScrollSyncManager {
 
   updateMap() {
     if (!this.preview || !this.editor) return;
-
-    const container = this.preview;
-    const containerRect = container.getBoundingClientRect();
-    const scrollTop = container.scrollTop;
-
-    const elements = queryHTMLElements(container, '[data-sourcepos]');
-
-    const rawMap: LineMapEntry[] = [];
-    for (const el of elements) {
-      const sourcepos = el.getAttribute('data-sourcepos');
-      if (!sourcepos) continue;
-      const match = sourcepos.match(/^(\d+):\d+-\d+:\d+$/);
-      if (!match) continue;
-      const line = parseInt(match[1], 10);
-      if (Number.isNaN(line)) continue;
-
-      const rect = el.getBoundingClientRect();
-      const y = rect.top - containerRect.top + scrollTop;
-      rawMap.push({ line, y });
-    }
-
-    if (rawMap.length > 0) {
-      rawMap.sort((a, b) => a.line - b.line);
-
-      const seen: Record<number, boolean> = {};
-      this.lineMap = [];
-      for (const entry of rawMap) {
-        if (!seen[entry.line]) {
-          seen[entry.line] = true;
-          this.lineMap.push(entry);
-        }
-      }
-    } else {
-      this.lineMap = [];
-    }
-
-    if (this.lineMap.length === 0 || this.lineMap[0].line > 1) {
-      this.lineMap.unshift({ line: 1, y: 0 });
-    } else {
-      this.lineMap[0].y = 0;
-    }
-
-    if (this.editor) {
-      const totalLines = this.editor.state.doc.lines;
-      const scrollHeight = container.scrollHeight;
-      const last = this.lineMap[this.lineMap.length - 1];
-      if (last.line < totalLines) {
-        this.lineMap.push({ line: totalLines, y: scrollHeight });
-      }
-    }
+    this.lineMap = buildLineMap(this.preview, this.editor.state.doc.lines);
   }
 
   private syncPreviewThrottled = throttle(
@@ -220,67 +149,11 @@ export class ScrollSyncManager {
     }, 200);
   }
 
-  private smoothScrollTo(element: HTMLElement | Element, targetY: number, instant = false) {
-    const currentY = element.scrollTop;
-    const diff = Math.abs(targetY - currentY);
-
-    if (diff < CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) return;
-
-    if (instant || diff < 50) {
-      element.scrollTop = targetY;
-      return;
-    }
-
-    if (
-      this.smoothScrollTarget &&
-      this.smoothScrollTarget.element === element &&
-      Math.abs(this.smoothScrollTarget.targetY - targetY) < 100
-    ) {
-      this.smoothScrollTarget.targetY = targetY;
-      return;
-    }
-
-    if (this.smoothScrollRAF) {
-      cancelAnimationFrame(this.smoothScrollRAF);
-    }
-
-    this.smoothScrollTarget = { element, targetY };
-
-    const startY = currentY;
-    const duration = Math.min(150, Math.max(50, diff / 10));
-    const startTime = performance.now();
-
-    const animate = (now: number) => {
-      if (!this.smoothScrollTarget || this.smoothScrollTarget.element !== element) {
-        return;
-      }
-
-      const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      const eased = 1 - (1 - progress) ** 3;
-
-      const currentTargetY = this.smoothScrollTarget.targetY;
-      const y = startY + (currentTargetY - startY) * eased;
-
-      element.scrollTop = y;
-
-      if (progress < 1) {
-        this.smoothScrollRAF = requestAnimationFrame(animate);
-      } else {
-        this.smoothScrollRAF = null;
-        this.smoothScrollTarget = null;
-      }
-    };
-
-    this.smoothScrollRAF = requestAnimationFrame(animate);
-  }
-
   private syncPreview() {
     if (!this.editor || !this.preview) return;
 
     const source = this.editor.scrollDOM;
     const target = this.preview;
-    const direction = 'editor-to-preview';
 
     const scrollTop = source.scrollTop;
     const scrollHeight = source.scrollHeight;
@@ -288,20 +161,16 @@ export class ScrollSyncManager {
     const maxScroll = scrollHeight - clientHeight;
 
     if (scrollTop <= 0) {
-      if (target.scrollTop > 0) {
-        this.smoothScrollTo(target, 0, true);
-      }
+      if (target.scrollTop > 0) this.scroller.scrollTo(target, 0, true);
       return;
     }
     if (scrollTop >= maxScroll - 1) {
       const targetBottom = target.scrollHeight - target.clientHeight;
-      if (Math.abs(target.scrollTop - targetBottom) > 2) {
-        this.smoothScrollTo(target, targetBottom, true);
-      }
+      if (Math.abs(target.scrollTop - targetBottom) > 2) this.scroller.scrollTo(target, targetBottom, true);
       return;
     }
 
-    this.syncScrollPosition(source, target, direction);
+    this.syncScrollPosition(source, target, 'editor-to-preview');
   }
 
   private syncEditor() {
@@ -309,7 +178,6 @@ export class ScrollSyncManager {
 
     const source = this.preview;
     const target = this.editor.scrollDOM;
-    const direction = 'preview-to-editor';
 
     const scrollTop = source.scrollTop;
     const scrollHeight = source.scrollHeight;
@@ -317,20 +185,16 @@ export class ScrollSyncManager {
     const maxScroll = scrollHeight - clientHeight;
 
     if (scrollTop <= 0) {
-      if (target.scrollTop > 0) {
-        this.smoothScrollTo(target, 0, true);
-      }
+      if (target.scrollTop > 0) this.scroller.scrollTo(target, 0, true);
       return;
     }
     if (scrollTop >= maxScroll - 1) {
       const targetBottom = target.scrollHeight - target.clientHeight;
-      if (Math.abs(target.scrollTop - targetBottom) > 2) {
-        this.smoothScrollTo(target, targetBottom, true);
-      }
+      if (Math.abs(target.scrollTop - targetBottom) > 2) this.scroller.scrollTo(target, targetBottom, true);
       return;
     }
 
-    this.syncScrollPosition(source, target, direction);
+    this.syncScrollPosition(source, target, 'preview-to-editor');
   }
 
   private syncScrollPosition(
@@ -345,25 +209,20 @@ export class ScrollSyncManager {
     const clientHeight = source.clientHeight;
     const maxScroll = scrollHeight - clientHeight;
 
+    let targetY: number;
+
     if (this.lineMap.length < 2) {
       const pct = scrollTop / maxScroll;
       const targetMax = target.scrollHeight - target.clientHeight;
-      const targetTop = pct * targetMax;
-      if (Math.abs(target.scrollTop - targetTop) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-        this.smoothScrollTo(target, targetTop);
-      }
-      return;
-    }
-
-    let targetY: number;
-    if (direction === 'editor-to-preview') {
+      targetY = pct * targetMax;
+    } else if (direction === 'editor-to-preview') {
       const lineBlock = editor.lineBlockAtHeight(scrollTop);
       const docLine = editor.state.doc.lineAt(lineBlock.from);
       const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
       const currentLine = docLine.number + fraction;
-      targetY = this.interpolate(currentLine, 'line', 'y');
+      targetY = interpolate(currentLine, 'line', 'y', this.lineMap);
     } else {
-      const targetLine = this.interpolate(scrollTop, 'y', 'line');
+      const targetLine = interpolate(scrollTop, 'y', 'line', this.lineMap);
       const docLines = editor.state.doc.lines;
       const safeLine = Math.max(1, Math.min(targetLine, docLines));
       const lineInt = Math.floor(safeLine);
@@ -373,37 +232,8 @@ export class ScrollSyncManager {
     }
 
     if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
-      this.smoothScrollTo(target, targetY);
+      this.scroller.scrollTo(target, targetY);
     }
-  }
-
-  private interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y'): number {
-    const map = this.lineMap;
-    let lo = 0;
-    let hi = map.length - 1;
-
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if (map[mid][inputKey] < val) {
-        lo = mid + 1;
-      } else {
-        hi = mid - 1;
-      }
-    }
-
-    const idx = Math.max(0, Math.min(lo - 1, map.length - 2));
-    const p1 = map[idx];
-    const p2 = map[idx + 1];
-
-    if (!p2) return p1 ? p1[outputKey] : 0;
-
-    const inputSpan = p2[inputKey] - p1[inputKey];
-    const outputSpan = p2[outputKey] - p1[outputKey];
-
-    if (inputSpan === 0) return p1[outputKey];
-
-    const ratio = (val - p1[inputKey]) / inputSpan;
-    return p1[outputKey] + ratio * outputSpan;
   }
 
   handleFastScroll(v: EditorView, targetY: number) {
