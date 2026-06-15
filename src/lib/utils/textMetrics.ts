@@ -66,6 +66,12 @@ export function computeLineStats(content: string): { lineCount: number; widestCo
   return { lineCount, widestColumn };
 }
 
+export function detectLineEnding(content: string): 'LF' | 'CRLF' {
+  const crlfCount = (content.match(/\r\n/g) || []).length;
+  const lfOnlyCount = (content.match(/(?<!\r)\n/g) || []).length;
+  return crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+}
+
 export function byteLength(text: string): number {
   return new TextEncoder().encode(text).length;
 }

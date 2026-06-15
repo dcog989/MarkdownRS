@@ -35,7 +35,7 @@ import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
+import { byteLength, computeLineStats, detectLineEnding } from '$lib/utils/textMetrics';
 import { callBackend } from './backend';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
@@ -119,10 +119,7 @@ export async function openFile(path?: string): Promise<void> {
 
     const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
 
-    const crlfCount = (result.content.match(/\r\n/g) || []).length;
-    const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-    const detectedLineEnding: 'LF' | 'CRLF' =
-      crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+    const detectedLineEnding = detectLineEnding(result.content);
 
     let initialTitle = fileName;
     if (appContext.app.tabNameFromContent) {

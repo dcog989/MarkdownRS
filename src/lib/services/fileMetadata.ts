@@ -1,7 +1,7 @@
 import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackendSafe } from '$lib/utils/backend';
-import { byteLength } from '$lib/utils/textMetrics';
+import { byteLength, detectLineEnding } from '$lib/utils/textMetrics';
 
 export type FileContent = {
   content: string;
@@ -110,10 +110,7 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 
   if (!result) return;
 
-  const crlfCount = (result.content.match(/\r\n/g) || []).length;
-  const lfOnlyCount = (result.content.match(/(?<!\r)\n/g) || []).length;
-  const detectedLineEnding: 'LF' | 'CRLF' =
-    crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+  const detectedLineEnding = detectLineEnding(result.content);
 
   const content = normalizeLineEndings(result.content);
   const sizeBytes = byteLength(result.content);
