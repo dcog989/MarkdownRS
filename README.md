@@ -65,6 +65,15 @@ CachyOS build: `makepkg -sif`
 - `bun run format` - Format code with Prettier + 'cargo fmt'
 - `bun run preview` - Preview the production build
 
+### rumdl Config Cascade
+
+rumdl resolves configuration in this priority order (highest → lowest):
+
+1. **Explicit `--config <path>`** — Skips auto-discovery entirely.
+2. **Upward walk from CWD** (to git root / `$HOME`) — Per directory, tries: `.rumdl.toml` → `rumdl.toml` → `.config/rumdl.toml` → `pyproject.toml` (`[tool.rumdl]`). Falls back to `.markdownlint*` / `markdownlint.*` files if none found.
+3. **User config fallback** (only if step 2 finds nothing) — `$XDG_CONFIG_HOME/rumdl/` or `~/.config/rumdl/`, then `~/.rumdl.toml`, then `~/rumdl.toml`.
+4. **CLI inline overrides** (`--config 'RULE.key=value'`) — Always wins last.
+
 ## Roadmap
 
 - TBD
