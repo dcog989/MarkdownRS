@@ -15,7 +15,6 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 import { CONFIG } from '$lib/utils/config';
 import {
     clearSearch,
-    ensureQuerySync,
     replaceAllInTabs,
     searchAllTabs,
     searchState,
@@ -84,6 +83,17 @@ $effect(() => {
     }
 });
 
+$effect(() => {
+    const view = cmView;
+    if (!view || !isOpen || searchScope !== 'current') return;
+    searchState.findText;
+    searchState.matchCase;
+    searchState.matchWholeWord;
+    searchState.useRegex;
+    searchState.replaceText;
+    untrack(() => updateSearchEditor(view));
+});
+
 function close() {
     isOpen = false;
     clearSearch(cmView);
@@ -96,8 +106,6 @@ function executeSearch(view: EditorView, incremental: boolean) {
             if (incremental) {
                 selectNearestMatch(view);
             } else {
-                // Ensure query is synced before finding next to respect case sensitivity
-                ensureQuerySync(view);
                 updateSearchEditor(view);
                 if (searchState.currentMatches > 0) {
                     findNext(view as never);
@@ -133,8 +141,6 @@ function onReplaceInput() {
 
 function onFindNext() {
     if (cmView && !searchState.regexError) {
-        // Ensure query is synced before navigation to respect case sensitivity
-        ensureQuerySync(cmView);
         findNext(cmView);
         updateSearchEditor(cmView);
         searchInputRef?.focus();
@@ -143,8 +149,6 @@ function onFindNext() {
 
 function onFindPrevious() {
     if (cmView && !searchState.regexError) {
-        // Ensure query is synced before navigation to respect case sensitivity
-        ensureQuerySync(cmView);
         findPrevious(cmView);
         updateSearchEditor(cmView);
         searchInputRef?.focus();
@@ -153,8 +157,6 @@ function onFindPrevious() {
 
 function onReplace() {
     if (cmView && !searchState.regexError) {
-        // Ensure query is synced before replace to respect case sensitivity
-        ensureQuerySync(cmView);
         replaceNext(cmView);
         updateSearchEditor(cmView);
     }
@@ -165,8 +167,6 @@ function onReplaceAll() {
 
     if (searchScope === 'current') {
         if (cmView) {
-            // Ensure query is synced before replace all to respect case sensitivity
-            ensureQuerySync(cmView);
             replaceAll(cmView);
             updateSearchEditor(cmView);
         }
@@ -247,7 +247,7 @@ onMount(() => {
 {#if isOpen}
     <div
         bind:this={panelRef}
-        class="bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-100 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
+        class="bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
         style="background-color: color-mix(in srgb, var(--color-bg-panel) 82%, transparent);"
         class:opacity-[0.15]={appContext.app.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
@@ -394,7 +394,9 @@ onMount(() => {
                     <Search size={12} />
                     Next
                 </button>
-                {#if isReplaceMode}
+            </div>
+            {#if isReplaceMode}
+                <div class="flex flex-wrap gap-2">
                     <button
                         type="button"
                         class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
@@ -411,8 +413,8 @@ onMount(() => {
                         <Replace size={12} />
                         Replace All
                     </button>
-                {/if}
-            </div>
+                </div>
+            {/if}
 
             {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
                 <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
