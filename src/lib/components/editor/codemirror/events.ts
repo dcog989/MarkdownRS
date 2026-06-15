@@ -3,6 +3,7 @@ import { EditorView } from '@codemirror/view';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { extractPathAtPos } from '$lib/utils/filePathExtension';
 import { navigateToPath } from '$lib/utils/fileSystem';
+import { logger } from '$lib/utils/logger';
 
 export type ContextMenuCallback = (event: MouseEvent, view: EditorView) => void;
 
@@ -69,7 +70,7 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
           if (/^(https?:\/\/|www\.)/i.test(targetString)) {
             const url = targetString.startsWith('www.') ? `https://${targetString}` : targetString;
-            openPath(url).catch((err) => console.warn('[Events] Failed to open URL:', err));
+            openPath(url).catch((err) => logger.editor.warn('OpenUrlFailed', { error: String(err) }));
           } else {
             navigateToPath(targetString);
           }

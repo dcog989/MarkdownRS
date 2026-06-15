@@ -5,6 +5,7 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { AppError } from '$lib/utils/errorHandling';
+import { logger } from '$lib/utils/logger';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 
 export class ExportService {
@@ -160,7 +161,7 @@ export class ExportService {
       );
       showToast('success', `Exported to ${path}`);
     } catch (err) {
-      console.warn('[Export] HTML export failed (already reported):', err);
+      logger.file.warn('ExportHtmlFailed', { error: String(err) });
     }
   }
 
@@ -190,7 +191,7 @@ export class ExportService {
       );
       showToast('success', `Exported to ${path}`);
     } catch (err) {
-      console.warn('[Export] PDF export failed (already reported):', err);
+      logger.file.warn('ExportPdfFailed', { error: String(err) });
     }
   }
 
@@ -264,7 +265,7 @@ export class ExportService {
       }
       showToast('success', `Exported to ${path}`);
     } catch (err) {
-      console.warn('[Export] Image export failed (already reported):', err);
+      logger.file.warn('ExportImageFailed', { error: String(err) });
     } finally {
       this.clearExportContent();
     }

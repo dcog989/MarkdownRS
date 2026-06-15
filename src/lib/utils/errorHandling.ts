@@ -111,7 +111,7 @@ export class AppError extends Error {
     logger.editor.error(this.formatForDiskLog());
 
     this.logError(logToDisk).catch((err) => {
-      console.warn('[AppError] Disk log failed:', err);
+      logger.editor.warn('DiskLogFailed', { error: String(err) });
     });
 
     if (shouldShowToast) {

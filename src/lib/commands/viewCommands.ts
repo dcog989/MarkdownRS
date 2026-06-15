@@ -2,6 +2,7 @@ import { toggleWriterMode } from '$lib/stores/appState.svelte';
 import { setTheme, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { logger } from '$lib/utils/logger';
 import { saveSettings } from '$lib/utils/settings';
 import { isCurrentFileMarkdown } from './helpers';
 import type { Command } from './types';
@@ -52,11 +53,11 @@ export const viewCommands: Command[] = [
       const wasWriterMode = appContext.app.writerMode;
       toggleWriterMode();
       if (wasWriterMode) {
-        document.exitFullscreen().catch((err) => console.debug('[View] exitFullscreen failed:', err));
+        document.exitFullscreen().catch((err) => logger.editor.warn('FullscreenExitFailed', { error: String(err) }));
       } else {
         document.documentElement
           .requestFullscreen()
-          .catch((err) => console.debug('[View] requestFullscreen failed:', err));
+          .catch((err) => logger.editor.warn('FullscreenRequestFailed', { error: String(err) }));
       }
     },
   },
@@ -126,7 +127,7 @@ export const viewCommands: Command[] = [
 
       if (appContext.app.writerMode) {
         toggleWriterMode();
-        document.exitFullscreen().catch((err) => console.debug('[View] exitFullscreen failed:', err));
+        document.exitFullscreen().catch((err) => logger.editor.warn('FullscreenExitFailed', { error: String(err) }));
         return true;
       }
       return false;

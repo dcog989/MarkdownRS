@@ -6,6 +6,7 @@ import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
 import { syncThemeFromActiveTheme } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { logger } from '$lib/utils/logger';
 import { shortcutManager } from '$lib/utils/shortcuts';
 import { getThemeCss } from '$lib/utils/themes';
 import '../app.css';
@@ -42,7 +43,7 @@ $effect(() => {
 onMount(() => {
     // Log unhandled promise rejections that aren't caught elsewhere
     const onUnhandledRejection = (event: PromiseRejectionEvent) => {
-        console.warn('[App] Unhandled rejection:', event.reason);
+        logger.editor.warn('UnhandledRejection', { reason: event.reason });
     };
     window.addEventListener('unhandledrejection', onUnhandledRejection);
 

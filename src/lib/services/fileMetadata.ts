@@ -1,6 +1,7 @@
 import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackendSafe } from '$lib/utils/backend';
+import { logger } from '$lib/utils/logger';
 import { byteLength, detectLineEnding } from '$lib/utils/textMetrics';
 
 export type FileContent = {
@@ -53,7 +54,7 @@ export async function refreshMetadata(tabId: string, path: string): Promise<void
     const meta = await getCachedFileMetadata(path);
     updateMetadata(tabId, meta.created, meta.modified);
   } catch {
-    console.debug('[Metadata] refreshMetadata failed (non-critical):', path);
+    logger.file.warn('RefreshMetadataFailed', { path });
   }
 }
 

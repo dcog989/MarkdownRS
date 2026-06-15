@@ -5,6 +5,7 @@ import { tooltip } from '$lib/actions/tooltip';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
+import { AppError } from '$lib/utils/errorHandling';
 
 interface Props {
     isOpen: boolean;
@@ -36,7 +37,7 @@ async function exportBookmarks() {
             `Exported ${bookmarks.length} bookmark${bookmarks.length === 1 ? '' : 's'}`,
         );
     } catch (err) {
-        showToast('error', `Export failed: ${err instanceof Error ? err.message : String(err)}`);
+        AppError.handle('Data:ExportBookmarks', err, { showToast: true });
     } finally {
         busy = false;
     }
@@ -62,7 +63,7 @@ async function importBookmarks() {
         const count = await callBackend('import_bookmarks', { bookmarks }, 'Data:ImportBookmarks');
         showToast('success', `Imported ${count} bookmark${count === 1 ? '' : 's'}`);
     } catch (err) {
-        showToast('error', `Import failed: ${err instanceof Error ? err.message : String(err)}`);
+        AppError.handle('Data:ImportBookmarks', err, { showToast: true });
     } finally {
         busy = false;
     }
@@ -89,7 +90,7 @@ async function exportRecentFiles() {
             `Exported ${paths.length} recent file${paths.length === 1 ? '' : 's'}`,
         );
     } catch (err) {
-        showToast('error', `Export failed: ${err instanceof Error ? err.message : String(err)}`);
+        AppError.handle('Data:ExportRecent', err, { showToast: true });
     } finally {
         busy = false;
     }
@@ -117,7 +118,7 @@ async function importRecentFiles() {
         const count = await callBackend('import_recent_files', { paths }, 'Data:ImportRecent');
         showToast('success', `Imported ${count} recent file${count === 1 ? '' : 's'}`);
     } catch (err) {
-        showToast('error', `Import failed: ${err instanceof Error ? err.message : String(err)}`);
+        AppError.handle('Data:ImportRecent', err, { showToast: true });
     } finally {
         busy = false;
     }
@@ -133,7 +134,7 @@ async function deleteOrphans() {
             `Removed ${count} orphan entr${count === 1 ? 'y' : 'ies'} from history`,
         );
     } catch (err) {
-        showToast('error', `Failed: ${err instanceof Error ? err.message : String(err)}`);
+        AppError.handle('Data:DeleteOrphans', err, { showToast: true });
     } finally {
         busy = false;
     }

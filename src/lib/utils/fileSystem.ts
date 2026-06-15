@@ -15,6 +15,7 @@ import { addTab, closeTab, reopenClosedTab, updateTabFields, updateTabTitle } fr
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { logger } from '$lib/utils/logger';
 import {
   autoSaveCurrentFile,
   navigateToPath,
@@ -198,7 +199,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
     showToast('success', `Renamed to ${finalNewName}`);
     return true;
   } catch (err) {
-    console.warn('[FileSystem] Rename failed:', err);
+    logger.file.warn('RenameFailed', { error: String(err) });
     return false;
   }
 }

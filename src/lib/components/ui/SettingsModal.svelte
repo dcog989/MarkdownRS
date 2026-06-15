@@ -5,6 +5,7 @@ import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
+import { logger } from '$lib/utils/logger';
 import { saveSettings } from '$lib/utils/settings';
 import { getSettingDefinitions, type SettingDef } from '$lib/utils/settingsDefinitions';
 import { shortcutManager } from '$lib/utils/shortcuts';
@@ -39,7 +40,7 @@ $effect(() => {
                     .then((enabled) => {
                         isContextMenuEnabled = enabled ?? false;
                     })
-                    .catch((err) => console.warn('[Settings] Failed to check context menu status:', err))
+                    .catch((err) => logger.editor.warn('ContextMenuCheckFailed', { error: String(err) }))
                     .finally(() => {
                         isCheckingContextMenu = false;
                     });
