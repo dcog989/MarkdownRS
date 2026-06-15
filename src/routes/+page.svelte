@@ -291,9 +291,10 @@ function resetSplit() {
             class:writer-mode={appContext.app.writerMode}
             bind:this={mainContainer}>
             {#if appContext.app.activeTabId}
-                <div
-                    class="flex h-full w-full flex-row"
-                    class:flex-col={!isVertical}>
+                    <div
+                        class="flex h-full w-full"
+                        class:flex-row={isVertical}
+                        class:flex-col={!isVertical}>
                     <div
                         class="writer-content"
                         style="flex: {showPreview
