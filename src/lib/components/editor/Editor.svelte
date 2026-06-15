@@ -21,7 +21,6 @@ import {
 } from '$lib/stores/editorStore.svelte';
 import { getTransientState } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { ScrollManager } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
 import { registerEditorInstance, registerFlushFn, unregisterEditorInstance, unregisterFlushFn } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
@@ -56,7 +55,6 @@ let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
 let pendingTransform = $derived(editorStore.pendingTransform);
 
 // Logic State
-let scrollManager = new ScrollManager();
 let previousTabId: string = '';
 
 // Initialize Helpers
@@ -112,7 +110,7 @@ $effect(() => {
 
         untrack(() => {
             if (!cmView) return;
-            performTextOperation(cmView, currentOp, scrollManager);
+            performTextOperation(cmView, currentOp);
         });
     }
 });
