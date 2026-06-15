@@ -1,6 +1,6 @@
 use comrak::Options;
 use comrak::options::{Extension, Parse, Render};
-use rumdl_lib::config::{Config, ConfigLoaded, SourcedConfig};
+use rumdl_lib::config::{Config, ConfigLoaded, SourcedConfig, default_registry};
 use rumdl_lib::rule::Rule;
 use rumdl_lib::rules::{all_rules, filter_rules};
 use serde::{Deserialize, Serialize};
@@ -109,7 +109,10 @@ fn load_full_state(
 ) -> Result<(Config, Vec<Box<dyn Rule>>), String> {
     let loaded = SourcedConfig::<ConfigLoaded>::load_sourced_for_path(cfg_path, project_root)
         .map_err(|e| format!("Failed to load rumdl config: {}", e))?;
-    let config: Config = loaded.into_validated_unchecked().into();
+    let registry = default_registry();
+    let (config, _warnings) = loaded
+        .validate_into(registry)
+        .map_err(|e| format!("Config validation failed: {}", e))?;
 
     let all = all_rules(&config);
     let filtered = filter_rules(&all, &config.global);
