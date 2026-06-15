@@ -1,3 +1,7 @@
+export function formatDuration(startTime: number): string {
+  return `${(performance.now() - startTime).toFixed(2)}ms`;
+}
+
 /**
  * Debounce utility functions
  */

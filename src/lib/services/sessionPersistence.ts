@@ -20,7 +20,7 @@ import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { debounce } from '$lib/utils/timing';
+import { debounce, formatDuration } from '$lib/utils/timing';
 import {
   checkAndReloadIfChanged,
   checkFileExists,
@@ -126,10 +126,9 @@ class SessionPersistenceManager {
 
       await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
 
-      const duration = (performance.now() - start).toFixed(2);
       const tabsWithContent = activeRustTabs.filter((t) => t.content !== null).length;
       logger.session.info('SessionSaved', {
-        duration: `${duration}ms`,
+        duration: formatDuration(start),
         activeTabs: activeRustTabs.length,
         closedTabs: closedTabs.length,
         withContent: tabsWithContent,
@@ -366,9 +365,8 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
 
     setTabLoadState(tabId, TabLoadState.LOADED);
 
-    const duration = (performance.now() - start).toFixed(2);
     logger.session.debug('TabContentLazyLoaded', {
-      duration: `${duration}ms`,
+      duration: formatDuration(start),
       tabId,
       size: sizeBytes,
     });
@@ -538,9 +536,8 @@ export async function loadSession(): Promise<void> {
     const hasUnsavedTabsWithContent = editorStore.tabs.some((t) => !t.path && t.content.length > 0);
     editorStore.sessionDirty = hasUnsavedTabsWithContent;
 
-    const duration = (performance.now() - start).toFixed(2);
     logger.session.info('SessionLoaded', {
-      duration: `${duration}ms`,
+      duration: formatDuration(start),
       activeTabs: editorStore.tabs.length,
       closedTabs: editorStore.closedTabsHistory.length,
     });

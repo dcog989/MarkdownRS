@@ -36,6 +36,7 @@ import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats, detectLineEnding } from '$lib/utils/textMetrics';
+import { formatDuration } from '$lib/utils/timing';
 import { callBackend } from './backend';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
@@ -151,9 +152,8 @@ export async function openFile(path?: string): Promise<void> {
     await fileWatcher.watch(sanitizedPath);
     appContext.app.activeTabId = id;
 
-    const duration = (performance.now() - start).toFixed(2);
     logger.file.info('FileOpened', {
-      duration: `${duration}ms`,
+      duration: formatDuration(start),
       path: sanitizedPath,
       size: metadata.size,
       encoding: result.encoding,
@@ -345,9 +345,8 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       fileWatcher.setWriteLock(sanitizedPath, false);
 
-      const duration = (performance.now() - start).toFixed(2);
       logger.file.info('FileSaved', {
-        duration: `${duration}ms`,
+        duration: formatDuration(start),
         path: sanitizedPath,
         size: byteLength(diskContent),
         saveAs: forceNewPath,

@@ -23,6 +23,7 @@ import {
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { logger } from '$lib/utils/logger';
 import { initSettings, saveSettings } from '$lib/utils/settings';
+import { formatDuration } from '$lib/utils/timing';
 
 let autoSaveInterval: number | null = null;
 let mainContainer = $state<HTMLDivElement>();
@@ -65,10 +66,9 @@ $effect(() => {
         const loadStart = performance.now();
         loadTabContentLazy(tab.id)
             .then(() => {
-                const duration = (performance.now() - loadStart).toFixed(2);
                 logger.session.debug('TabContentLoaded', {
                     tabId: tab.id,
-                    duration: `${duration}ms`,
+                    duration: formatDuration(loadStart),
                 });
             })
             .catch((err) => logger.editor.warn('TabContentLoadFailed', { tabId: tab.id, error: String(err) }));
@@ -134,21 +134,18 @@ onMount(() => {
         try {
             const settingsStart = performance.now();
             await initSettings();
-            const settingsDuration = (performance.now() - settingsStart).toFixed(2);
-            logger.editor.debug('SettingsInitialized', { duration: `${settingsDuration}ms` });
+            logger.editor.debug('SettingsInitialized', { duration: formatDuration(settingsStart) });
 
             const sessionStart = performance.now();
             await loadSession();
-            const sessionDuration = (performance.now() - sessionStart).toFixed(2);
-            logger.session.info('SessionRestored', { duration: `${sessionDuration}ms` });
+            logger.session.info('SessionRestored', { duration: formatDuration(sessionStart) });
 
             if (appContext.editor.tabs.length === 0) {
                 const id = addTab();
                 appContext.app.activeTabId = id;
             }
 
-            const appDuration = (performance.now() - appStartTime).toFixed(2);
-            logger.editor.info('AppInitialized', { duration: `${appDuration}ms` });
+            logger.editor.info('AppInitialized', { duration: formatDuration(appStartTime) });
 
             isInitialized = true;
         } catch (err) {
