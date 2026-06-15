@@ -2,6 +2,7 @@
 import { ClipboardCopy, TextWrap } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import MarkdownLintStatus from '$lib/components/ui/MarkdownLintStatus.svelte';
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte.ts';
 import { togglePreferredExtension, updateTabFields } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
@@ -168,6 +169,11 @@ async function copyAllStats() {
         class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
         style="opacity: {textOpacity};">
         <span class="opacity-40">|</span>
+
+        {#if fileType === 'markdown'}
+            <MarkdownLintStatus />
+            <span class="opacity-40">|</span>
+        {/if}
 
         <button
             type="button"

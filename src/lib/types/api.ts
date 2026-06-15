@@ -19,6 +19,17 @@ export interface FileMetadata {
   size: number;
 }
 
+export interface LintDiagnostic {
+  message: string;
+  line: number;
+  column: number;
+  end_line: number;
+  end_column: number;
+  severity: 'error' | 'warning' | 'info';
+  fixable: boolean;
+  rule_name: string | null;
+}
+
 export interface FileContent {
   content: string;
   encoding: string;
@@ -146,13 +157,16 @@ export interface BackendCommands {
   format_markdown: {
     args: {
       content: string;
-      flavor?: string;
-      listIndent?: number;
-      bulletChar?: string;
-      codeBlockFence?: string;
-      emphasisChar?: string;
+      filePath?: string;
     };
     return: string;
+  };
+  lint_markdown: {
+    args: {
+      content: string;
+      filePath?: string;
+    };
+    return: LintDiagnostic[];
   };
   get_markdown_flavors: {
     args: Record<string, never>;

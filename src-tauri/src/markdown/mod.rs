@@ -1,5 +1,6 @@
 pub mod config;
-pub mod formatter;
+pub mod formatter_rumdl;
+pub mod linter;
 pub mod renderer;
 pub mod toc;
 

@@ -1,8 +1,30 @@
-use crate::markdown::config::{DEFAULT_LIST_INDENT, MarkdownFlavor};
-use crate::markdown::formatter::{self, FormatterOptions};
+use crate::markdown::config::MarkdownFlavor;
+use crate::markdown::formatter_rumdl;
+use crate::markdown::linter::{self, LintDiagnostic};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use crate::markdown::toc;
+use crate::state::AppState;
 use crate::utils::IntoTauriError;
+use std::path::PathBuf;
+use tauri::State;
+
+fn resolve_project_root(state: &AppState) -> Option<PathBuf> {
+    state
+        .settings_cache
+        .lock()
+        .ok()
+        .and_then(|cache| cache.clone())
+        .and_then(|settings| {
+            settings
+                .get("workspaceRoot")
+                .and_then(|v| v.as_str())
+                .map(PathBuf::from)
+        })
+}
+
+fn resolve_file_path(file_path: Option<&str>) -> Option<PathBuf> {
+    file_path.map(PathBuf::from)
+}
 
 #[tauri::command]
 pub async fn render_markdown(
@@ -53,34 +75,52 @@ pub async fn generate_document_toc(content: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn format_markdown(
     content: String,
-    flavor: Option<String>,
-    list_indent: Option<usize>,
-    bullet_char: Option<String>,
-    code_block_fence: Option<String>,
-    emphasis_char: Option<String>,
+    file_path: Option<String>,
+    state: State<'_, AppState>,
 ) -> Result<String, String> {
     let start = std::time::Instant::now();
     let content_size = content.len();
 
-    let options = FormatterOptions {
-        flavor: MarkdownFlavor::from_option_str(flavor),
-        list_indent: list_indent.unwrap_or(DEFAULT_LIST_INDENT),
-        bullet_char: bullet_char.unwrap_or_else(|| "-".to_string()),
-        code_block_fence: code_block_fence.unwrap_or_else(|| "```".to_string()),
-        emphasis_char: emphasis_char.unwrap_or_else(|| "*".to_string()),
-    };
+    let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
+    let pr: Option<PathBuf> = resolve_project_root(&state);
 
-    // The formatter is CPU-bound and may use significant stack space; run it on
-    // the blocking thread pool so it cannot stall async tasks.
-    let result =
-        tokio::task::spawn_blocking(move || formatter::format_markdown(&content, &options))
-            .await
-            .map_err(|e| format!("Formatter task failed: {}", e))?
-            .to_tauri_result();
+    let result = tokio::task::spawn_blocking(move || {
+        formatter_rumdl::format_markdown(&content, fp.as_deref(), pr.as_deref())
+    })
+    .await
+    .map_err(|e| format!("Formatter task failed: {}", e))?;
 
     let duration = start.elapsed();
     log::info!(
         "[Markdown] format_markdown | duration={:?} | size={} bytes",
+        duration,
+        content_size
+    );
+
+    result
+}
+
+#[tauri::command]
+pub async fn lint_markdown(
+    content: String,
+    file_path: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<Vec<LintDiagnostic>, String> {
+    let start = std::time::Instant::now();
+    let content_size = content.len();
+
+    let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
+    let pr: Option<PathBuf> = resolve_project_root(&state);
+
+    let result = tokio::task::spawn_blocking(move || {
+        linter::lint_content(&content, fp.as_deref(), pr.as_deref())
+    })
+    .await
+    .map_err(|e| format!("Lint task failed: {}", e))?;
+
+    let duration = start.elapsed();
+    log::info!(
+        "[Markdown] lint_markdown | duration={:?} | size={} bytes",
         duration,
         content_size
     );

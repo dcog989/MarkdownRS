@@ -19,6 +19,7 @@ import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugi
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte.ts';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
@@ -73,7 +74,7 @@ let comps: Compartments = {
     spellComp: new Compartment(), whitespaceComp: new Compartment(),
     languageComp: new Compartment(), handlersComp: new Compartment(),
     doubleClickComp: new Compartment(), rulerComp: new Compartment(),
-    filePathComp: new Compartment(),
+    filePathComp: new Compartment(), markdownLintComp: new Compartment(),
 };
 
 let autocompletionConfig = $derived(getAutocompletionConfig());
@@ -142,6 +143,7 @@ $effect(() => {
     if (!prev || md !== prev.md) {
         effects.push(comps.languageComp.reconfigure(md ? markdownExtensions : []));
         effects.push(comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []));
+        effects.push(comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []));
     }
     if (!prev || autoCfg !== prev.autoCfg) {
         effects.push(comps.autoComp.reconfigure(autoCfg));

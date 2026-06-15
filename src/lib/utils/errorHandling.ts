@@ -27,6 +27,7 @@ export type ErrorContext =
   | 'Markdown:TOC'
   | 'Update:Check'
   | 'Update:Install'
+  | 'Markdown:Lint'
   | 'Data:ExportBookmarks'
   | 'Data:ImportBookmarks'
   | 'Data:ExportRecent'

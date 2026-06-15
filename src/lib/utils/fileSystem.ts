@@ -283,12 +283,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       const shouldFormat = !skipFormat && appContext.app.formatOnSave && isMarkdownFile(sanitizedPath);
 
       if (shouldFormat) {
-        const formatted = await formatMarkdown(contentToSave, {
-          listIndent: appContext.app.defaultIndent,
-          bulletChar: appContext.app.formatterBulletChar,
-          emphasisChar: appContext.app.formatterEmphasisChar,
-          codeBlockFence: appContext.app.formatterCodeFence,
-        });
+        const formatted = await formatMarkdown(contentToSave);
 
         tab = getTab();
         if (!tab) return false;

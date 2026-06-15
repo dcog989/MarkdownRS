@@ -1,10 +1,10 @@
 use comrak::Options;
 use comrak::options::{Extension, Parse, Render};
+use rumdl_lib::config::{Config, ConfigLoaded, SourcedConfig};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
-pub const DEFAULT_LIST_INDENT: usize = 2;
-
-/// Markdown flavor specification
+/// Markdown flavor specification (for comrak rendering)
 #[derive(
     Debug,
     Clone,
@@ -70,4 +70,21 @@ impl MarkdownFlavor {
         options.extension.header_id_prefix = Some(String::new());
         options
     }
+}
+
+/// Load rumdl config for a given file directory and project root.
+/// Falls back to a minimal default config if none found.
+pub fn load_rumdl_config(file_dir: &Path, project_root: &Path) -> Result<Config, String> {
+    let config_path =
+        SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root);
+
+    let config = if let Some(cfg_path) = config_path {
+        let loaded = SourcedConfig::<ConfigLoaded>::load_sourced_for_path(&cfg_path, project_root)
+            .map_err(|e| format!("Failed to load rumdl config: {}", e))?;
+        loaded.into_validated_unchecked().into()
+    } else {
+        rumdl_lib::config::Config::default()
+    };
+
+    Ok(config)
 }

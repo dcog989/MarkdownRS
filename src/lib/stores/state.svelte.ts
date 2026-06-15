@@ -1,3 +1,4 @@
+import { markdownLintState } from '$lib/utils/markdownLint.svelte.ts';
 import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
 import { appState } from './appState.svelte';
@@ -22,6 +23,7 @@ export const appContext = {
   interface: interfaceStore,
   scrollSync: scrollSync,
   spellcheck: spellcheckState,
+  markdownLint: markdownLintState,
   ui: {
     tooltip: tooltipStore,
     toast: toastStore,

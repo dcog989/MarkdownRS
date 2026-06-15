@@ -21,6 +21,11 @@ const DEFAULT_CONFIG = {
     REFRESH_DELAY_MS: 50,
   },
 
+  // Markdown Lint Settings
+  MARKDOWN_LINT: {
+    LINT_DELAY_MS: 1500,
+  },
+
   // Tab Settings
   TABS: {
     WIDTH_MIN: 100,

@@ -33,6 +33,7 @@ import {
   horizontalRulePlugin,
   inlineCodePlugin,
 } from '$lib/utils/markdownExtensions';
+import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte.ts';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
 import { userThemeExtension } from '$lib/utils/themeMapper';
@@ -65,6 +66,7 @@ export interface Compartments {
   doubleClickComp: Compartment;
   rulerComp: Compartment;
   filePathComp: Compartment;
+  markdownLintComp: Compartment;
 }
 
 export interface ExtensionsConfig {
@@ -111,6 +113,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     defaultFallbackHighlighting,
     c.languageComp.of(config.isMarkdown ? markdownExtensions : []),
     c.spellComp.of(createSpellCheckLinter()),
+    c.markdownLintComp.of(createMarkdownLinter()),
     c.doubleClickComp.of(createDoubleClickHandler()),
     c.rulerComp.of(rulerPlugin),
     c.wrapComp.of(createWrapExtension()),
