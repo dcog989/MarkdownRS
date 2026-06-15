@@ -7,63 +7,47 @@ use pdfrs::pdf_generator;
 /// markdown elements, while leaving code blocks, inline code, math, image paths,
 /// and link URLs untouched.
 fn replace_bullets_in_elements(elements: &mut [Element]) {
+    fn replace(s: &mut String) {
+        *s = s.replace(['•', '●'], "- ");
+    }
+
     for element in elements.iter_mut() {
         match element {
-            Element::Heading { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
-            Element::Paragraph { text } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
+            Element::Heading { text, .. } => replace(text),
+            Element::Paragraph { text } => replace(text),
             Element::RichParagraph { segments } => {
                 for segment in segments.iter_mut() {
                     match segment {
                         TextSegment::Plain(s)
                         | TextSegment::Bold(s)
                         | TextSegment::Italic(s)
-                        | TextSegment::BoldItalic(s) => {
-                            *s = s.replace(['•', '●'], "- ");
-                        },
-                        TextSegment::Link { text, .. } => {
-                            *text = text.replace(['•', '●'], "- ");
-                        },
+                        | TextSegment::BoldItalic(s) => replace(s),
+                        TextSegment::Link { text, .. } => replace(text),
                         TextSegment::Code(_) => {},
                     }
                 }
             },
-            Element::UnorderedListItem { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
-            Element::OrderedListItem { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
-            Element::TaskListItem { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
+            Element::UnorderedListItem { text, .. } => replace(text),
+            Element::OrderedListItem { text, .. } => replace(text),
+            Element::TaskListItem { text, .. } => replace(text),
             Element::TableRow { cells, .. } => {
                 for cell in cells.iter_mut() {
-                    *cell = cell.replace(['•', '●'], "- ");
+                    replace(cell);
                 }
             },
-            Element::BlockQuote { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
+            Element::BlockQuote { text, .. } => replace(text),
             Element::DefinitionItem {
                 term, definition, ..
             } => {
-                *term = term.replace(['•', '●'], "- ");
-                *definition = definition.replace(['•', '●'], "- ");
+                replace(term);
+                replace(definition);
             },
             Element::Footnote { label, text, .. } => {
-                *label = label.replace(['•', '●'], "- ");
-                *text = text.replace(['•', '●'], "- ");
+                replace(label);
+                replace(text);
             },
-            Element::Link { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
-            Element::StyledText { text, .. } => {
-                *text = text.replace(['•', '●'], "- ");
-            },
+            Element::Link { text, .. } => replace(text),
+            Element::StyledText { text, .. } => replace(text),
             // Leave code, math, and image metadata untouched
             Element::CodeBlock { .. }
             | Element::InlineCode { .. }
