@@ -14,27 +14,32 @@ pub struct Bookmark {
     pub last_accessed: Option<String>,
 }
 
+const UPSERT_SQL: &str = "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+     ON CONFLICT(path) DO UPDATE SET
+        id            = excluded.id,
+        title         = excluded.title,
+        tags          = excluded.tags,
+        created       = excluded.created,
+        last_accessed = excluded.last_accessed";
+
+fn bind_bookmark(bookmark: &Bookmark) -> Result<[Box<dyn rusqlite::types::ToSql + '_>; 6]> {
+    let tags_json = serde_json::to_string(&bookmark.tags)?;
+    Ok([
+        Box::new(&bookmark.id) as Box<dyn rusqlite::types::ToSql>,
+        Box::new(&bookmark.path),
+        Box::new(&bookmark.title),
+        Box::new(tags_json),
+        Box::new(&bookmark.created),
+        Box::new(&bookmark.last_accessed),
+    ])
+}
+
 impl Database {
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
         let conn = lock_conn!(self);
-        let tags_json = serde_json::to_string(&bookmark.tags)?;
-        conn.execute(
-            "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-             ON CONFLICT(path) DO UPDATE SET
-                id            = excluded.id,
-                title         = excluded.title,
-                tags          = excluded.tags,
-                last_accessed = excluded.last_accessed",
-            params![
-                &bookmark.id,
-                &bookmark.path,
-                &bookmark.title,
-                &tags_json,
-                &bookmark.created,
-                &bookmark.last_accessed,
-            ],
-        )?;
+        let params = bind_bookmark(bookmark)?;
+        conn.execute(UPSERT_SQL, params)?;
         Ok(())
     }
 
@@ -88,26 +93,10 @@ impl Database {
         let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
         {
-            let mut stmt = tx.prepare_cached(
-                "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-                 ON CONFLICT(path) DO UPDATE SET
-                    id            = excluded.id,
-                    title         = excluded.title,
-                    tags          = excluded.tags,
-                    created       = excluded.created,
-                    last_accessed = excluded.last_accessed",
-            )?;
+            let mut stmt = tx.prepare_cached(UPSERT_SQL)?;
             for bookmark in bookmarks {
-                let tags_json = serde_json::to_string(&bookmark.tags)?;
-                stmt.execute(params![
-                    &bookmark.id,
-                    &bookmark.path,
-                    &bookmark.title,
-                    tags_json,
-                    &bookmark.created,
-                    &bookmark.last_accessed,
-                ])?;
+                let params = bind_bookmark(bookmark)?;
+                stmt.execute(params)?;
             }
         }
         tx.commit()?;
