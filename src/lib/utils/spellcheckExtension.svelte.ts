@@ -1,287 +1,21 @@
-import { syntaxTree } from '@codemirror/language';
-import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
-import type { Text } from '@codemirror/state';
+import { forceLinting } from '@codemirror/lint';
 import type { EditorView } from '@codemirror/view';
-import type { SyntaxNodeRef } from '@lezer/common';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
+import { SvelteSet } from 'svelte/reactivity';
 import { addToDictionary } from '$lib/utils/fileSystem';
-import { logger } from '$lib/utils/logger';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import type { AppEditorView } from '../../global';
+import { invalidateSpellcheckCache, tabCache } from './spellcheckCache';
+import {
+  applyImmediateSpellcheck,
+  createSpellCheckLinter,
+  spellcheckRefreshEffect,
+  triggerImmediateLint,
+} from './spellcheckLinter';
 
-/**
- * Per-tab spellcheck cache
- * Stores the last checked state to avoid redundant checks on tab switches
- */
-class TabSpellcheckCache {
-  private tabCaches = new Map<
-    string,
-    {
-      fingerprint: string;
-      diagnostics: Diagnostic[];
-      misspelledWords: Set<string>;
-    }
-  >();
-
-  get(tabId: string, fingerprint: string) {
-    const cached = this.tabCaches.get(tabId);
-    if (cached && cached.fingerprint === fingerprint) {
-      return cached;
-    }
-    return null;
-  }
-
-  set(tabId: string, fingerprint: string, diagnostics: Diagnostic[], misspelledWords: Set<string>) {
-    this.tabCaches.set(tabId, {
-      fingerprint,
-      diagnostics,
-      misspelledWords,
-    });
-  }
-
-  invalidate(tabId: string) {
-    this.tabCaches.delete(tabId);
-  }
-
-  invalidateAll() {
-    this.tabCaches.clear();
-  }
-}
-
-const tabCache = new TabSpellcheckCache();
-
-/**
- * Cheap O(1) document fingerprint for cache invalidation.
- * Combines length with three fixed-position samples (start, mid, end)
- * to detect same-length substitutions without stringifying the whole doc.
- */
-function docFingerprint(doc: Text): string {
-  const len = doc.length;
-  if (len === 0) return '0:';
-  const mid = Math.floor(len / 2);
-  const sampleLen = 32;
-  const start = doc.sliceString(0, Math.min(sampleLen, len));
-  const middle = doc.sliceString(Math.max(0, mid - sampleLen / 2), Math.min(len, mid + sampleLen / 2));
-  const end = doc.sliceString(Math.max(0, len - sampleLen), len);
-  return `${len}:${start}|${middle}|${end}`;
-}
-
-// Export function to invalidate cache when dictionary changes
-export function invalidateSpellcheckCache(tabId?: string) {
-  if (tabId) {
-    tabCache.invalidate(tabId);
-  } else {
-    tabCache.invalidateAll();
-  }
-}
-
-// Force immediate linting with cached results (for tab switches)
-export function applyImmediateSpellcheck(view: EditorView) {
-  forceLinting(view as never);
-}
-
-export const createSpellCheckLinter = () => {
-  return linter(
-    async (view) => {
-      if (!spellcheckState.dictionaryLoaded) {
-        return [];
-      }
-
-      const { state } = view;
-      const doc = state.doc;
-      const docFp = docFingerprint(doc);
-
-      // Get tab ID from the view if available
-      const tabId = (view as AppEditorView)._currentTabId;
-
-      // Check cache first
-      if (tabId) {
-        const cached = tabCache.get(tabId, docFp);
-        if (cached) {
-          // Update global misspelled cache from tab-specific cache
-          spellcheckState.misspelledCache = new SvelteSet(cached.misspelledWords);
-          return cached.diagnostics;
-        }
-      }
-
-      const wordsToVerify = new SvelteMap<string, { from: number; to: number }[]>();
-
-      const safeNodeTypes = new SvelteSet([
-        'Paragraph',
-        'Text',
-        'Emphasis',
-        'StrongEmphasis',
-        'ListItem',
-        'HeaderMark',
-        'SetextHeading1',
-        'SetextHeading2',
-        'ATXHeading1',
-        'ATXHeading2',
-        'ATXHeading3',
-      ]);
-
-      // Snapshot dictionary for consistency during this pass
-      const customDict = new SvelteSet(spellcheckState.customDictionary);
-
-      syntaxTree(state).iterate({
-        enter: (node: SyntaxNodeRef): boolean | undefined => {
-          if (
-            node.name.includes('Code') ||
-            node.name.includes('Link') ||
-            node.name.includes('Url') ||
-            node.name.includes('Comment') ||
-            node.name.includes('Attribute') ||
-            node.name === 'HtmlTag'
-          )
-            return false;
-
-          if (safeNodeTypes.has(node.name)) {
-            const nodeText = doc.sliceString(node.from, node.to);
-            // Include apostrophes in word matching
-            const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
-            let match: RegExpExecArray | null;
-
-            while (true) {
-              match = wordRegex.exec(nodeText);
-              if (match === null) break;
-              const word = match[0];
-              if (word.length <= 1) continue;
-
-              const globalFrom = node.from + match.index;
-              const globalTo = globalFrom + word.length;
-
-              // Heuristic: Skip if looks like path/url
-              const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : '';
-              const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : '';
-              if (/[\\/:@.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
-
-              // Heuristic: Skip mixed case/numbers
-              if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
-
-              const wLower = word.toLowerCase();
-
-              // Check custom dictionary (exact)
-              if (customDict.has(wLower)) continue;
-
-              // Check custom dictionary (possessive 's)
-              let checkWord = word;
-              if (wLower.endsWith("'s")) {
-                const base = wLower.slice(0, -2);
-                if (customDict.has(base)) continue;
-                // Use base form for backend check
-                checkWord = word.slice(0, -2);
-              }
-
-              const ranges = wordsToVerify.get(checkWord) || [];
-              ranges.push({ from: globalFrom, to: globalTo });
-              wordsToVerify.set(checkWord, ranges);
-            }
-          }
-        },
-      });
-
-      if (wordsToVerify.size === 0) {
-        // Cache empty result
-        if (tabId) {
-          tabCache.set(tabId, docFp, [], new SvelteSet());
-        }
-        return [];
-      }
-
-      try {
-        const wordsArray = Array.from(wordsToVerify.keys());
-        const misspelled = await callBackend(
-          'check_words',
-          {
-            words: wordsArray,
-          },
-          'Editor:Init',
-        );
-
-        if (!misspelled) {
-          if (tabId) {
-            tabCache.set(tabId, docFp, [], new SvelteSet());
-          }
-          return [];
-        }
-
-        const newCache = new SvelteSet<string>();
-        const diagnostics: Diagnostic[] = [];
-        const diagnosticKeys = new SvelteSet<string>();
-
-        // Get fresh reference in case of updates during await
-        const freshDict = spellcheckState.customDictionary;
-
-        for (const word of misspelled) {
-          const wLower = word.toLowerCase();
-
-          if (freshDict.has(wLower)) continue;
-
-          // Double check possessive against fresh dict (race condition protection)
-          if (wLower.endsWith("'s")) {
-            const base = wLower.slice(0, -2);
-            if (freshDict.has(base)) continue;
-          }
-
-          newCache.add(wLower);
-          const ranges = wordsToVerify.get(word);
-          if (ranges) {
-            for (const range of ranges) {
-              const key = `${range.from}-${range.to}`;
-              if (!diagnosticKeys.has(key)) {
-                diagnosticKeys.add(key);
-                diagnostics.push({
-                  from: range.from,
-                  to: range.to,
-                  severity: 'error',
-                  message: `Misspelled: ${word}`,
-                  source: 'Spellchecker',
-                });
-              }
-            }
-          }
-        }
-
-        // Update global cache
-        spellcheckState.misspelledCache = newCache;
-
-        logger.spellcheck.debug('Diagnostics created', {
-          diagnosticsCount: diagnostics.length,
-          newCacheSize: newCache.size,
-        });
-
-        // Cache result for this tab
-        if (tabId) {
-          tabCache.set(tabId, docFp, diagnostics, newCache);
-        }
-
-        return diagnostics;
-      } catch (error) {
-        logger.spellcheck.error('Linter error', { error: String(error) });
-        if (!spellcheckState.linterFailedNotified) {
-          spellcheckState.linterFailedNotified = true;
-          showToast('warning', 'Spellcheck encountered an error — results may be incomplete');
-        }
-        return [];
-      }
-    },
-    {
-      delay: CONFIG.SPELLCHECK.LINT_DELAY_MS,
-    },
-  );
-};
-
-export function triggerImmediateLint(view: EditorView) {
-  forceLinting(view as never);
-}
+export { applyImmediateSpellcheck, createSpellCheckLinter, invalidateSpellcheckCache, triggerImmediateLint };
 
 export async function refreshSpellcheck(view: EditorView | undefined) {
   if (!view) return;
 
-  // Invalidate all tab caches since dictionary changed
   tabCache.invalidateAll();
 
   await spellcheckState.refreshCustomDictionary();
@@ -306,8 +40,6 @@ export const spellCheckKeymap = [
       }
 
       if (words.length > 0) {
-        // 1. Synchronous Optimistic Update
-        // Update via re-assignment to trigger Svelte 5 signals
         const newDict = new SvelteSet(spellcheckState.customDictionary);
         for (const w of words) {
           if (w && w.length > 1) {
@@ -316,14 +48,15 @@ export const spellCheckKeymap = [
         }
         spellcheckState.customDictionary = newDict;
 
-        // 2. Clear cache
         for (const w of words) {
           spellcheckState.misspelledCache.delete(w.toLowerCase());
         }
 
-        // 3. Background Persistence
+        tabCache.invalidateAll();
+        view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
+        forceLinting(view);
+
         Promise.all(words.map((w) => addToDictionary(w))).then(() => {
-          // Optional: Resync to ensure consistency with backend file
           spellcheckState.refreshCustomDictionary();
         });
       }
