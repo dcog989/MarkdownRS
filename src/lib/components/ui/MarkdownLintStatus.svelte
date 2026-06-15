@@ -4,31 +4,19 @@ import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte.ts';
 
+const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> = {
+    error: { icon: CircleAlert, color: 'text-danger' },
+    warning: { icon: TriangleAlert, color: 'text-warning' },
+    info: { icon: Info, color: 'text-accent-secondary' },
+};
+
 let showPopup = $state(false);
 let buttonEl = $state<HTMLButtonElement>();
 
-let color = $derived.by(() => {
-    switch (markdownLintState.highestSeverity) {
-        case 'error': return 'text-danger';
-        case 'warning': return 'text-warning';
-        case 'info': return 'text-accent-secondary';
-        case 'clean': return 'text-fg-muted';
-    }
-});
+let severityEntry = $derived(severityMap[markdownLintState.highestSeverity]);
+let color = $derived(severityEntry?.color ?? 'text-fg-muted');
 
 let displayCount = $derived(markdownLintState.issueCount > 0 ? String(markdownLintState.issueCount) : '');
-
-function severityIcon(severity: string) {
-    if (severity === 'error') return CircleAlert;
-    if (severity === 'warning') return TriangleAlert;
-    return Info;
-}
-
-function severityColor(severity: string) {
-    if (severity === 'error') return 'text-danger';
-    if (severity === 'warning') return 'text-warning';
-    return 'text-accent-secondary';
-}
 </script>
 
 <button
@@ -37,12 +25,9 @@ function severityColor(severity: string) {
     class="hover:text-fg-default hover-surface relative flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {color}"
     use:tooltip={'Markdown Lint Issues'}
     onclick={() => (showPopup = true)}>
-    {#if markdownLintState.highestSeverity === 'error'}
-        <CircleAlert size={14} />
-    {:else if markdownLintState.highestSeverity === 'warning'}
-        <TriangleAlert size={14} />
-    {:else if markdownLintState.highestSeverity === 'info'}
-        <Info size={14} />
+    {#if severityEntry}
+        {@const Icon = severityEntry.icon}
+        <Icon size={14} />
     {:else}
         <CircleCheck size={14} />
     {/if}
@@ -69,11 +54,12 @@ function severityColor(severity: string) {
                 {:else}
                     <div class="max-h-80 overflow-y-auto">
                         {#each markdownLintState.diagnostics as diag, i}
-                            {@const Icon = severityIcon(diag.severity)}
+                            {@const entry = severityMap[diag.severity] ?? severityMap.info}
+                            {@const Icon = entry.icon}
                             <button
                                 type="button"
                                 class="hover-surface flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm transition-colors">
-                                <Icon size={14} class="mt-0.5 shrink-0 {severityColor(diag.severity)}" />
+                                <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
                                 <div class="min-w-0 flex-1">
                                     <span class="font-mono text-xs text-fg-muted">
                                         Ln {diag.line}
