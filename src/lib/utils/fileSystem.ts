@@ -1,54 +1,44 @@
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { openPath } from '@tauri-apps/plugin-opener';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import {
   checkAndReloadIfChanged,
   checkFileExists,
   invalidateMetadataCache,
-  normalizeLineEndings,
   refreshMetadata,
   reloadFileContent,
   sanitizePath,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
-import { appState } from '$lib/stores/appState.svelte';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-import { computeWordCount } from '$lib/stores/editorCache';
-import {
-  addTab,
-  closeTab,
-  markAsSaved,
-  pushToMru,
-  reopenClosedTab,
-  saveTabComplete,
-  updateContentOnly,
-  updateTabFields,
-  updateTabTitle,
-  updateTransientState,
-} from '$lib/stores/editorStore.svelte';
+import { addTab, closeTab, reopenClosedTab, updateTabFields, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
-import { runFlushFunctions } from '$lib/utils/editorCommands';
-import { AppError } from '$lib/utils/errorHandling';
-import { logger } from '$lib/utils/logger';
-import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats, detectLineEnding } from '$lib/utils/textMetrics';
-import { formatDuration } from '$lib/utils/timing';
-import { callBackend } from './backend';
-import { getFilename, isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
-import { formatMarkdown } from './formatterRust';
+import {
+  autoSaveCurrentFile,
+  navigateToPath,
+  openFile,
+  openFileByPath,
+  saveCurrentFile,
+  saveCurrentFileAs,
+} from './fileDialogs';
+import { renameFileOnDisk } from './fileIO';
 
 export {
   addToDictionary,
+  autoSaveCurrentFile,
   checkAndReloadIfChanged,
   checkFileExists,
   loadSession,
+  navigateToPath,
+  openFile,
+  openFileByPath,
   persistSession,
   persistSessionDebounced,
   reloadFileContent,
+  saveCurrentFile,
+  saveCurrentFileAs,
 };
 
 export type CloseManyMode = 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all' | 'unpinned';
@@ -102,309 +92,6 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
   }
 }
 
-export async function openFile(path?: string): Promise<void> {
-  const start = performance.now();
-
-  try {
-    let targetPath = path;
-
-    if (!targetPath) {
-      const selected = await open({
-        multiple: false,
-        filters: [
-          { name: 'Text Files', extensions: SUPPORTED_TEXT_EXTENSIONS },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-      });
-      if (!selected || typeof selected !== 'string') return;
-      targetPath = selected;
-    }
-
-    const sanitizedPath = sanitizePath(targetPath);
-    const existingTab = appContext.editor.tabs.find((t) => t.path === sanitizedPath);
-
-    // Always update recent files, even if tab exists
-    addToRecentFiles(sanitizedPath);
-
-    if (existingTab) {
-      appContext.app.activeTabId = existingTab.id;
-      pushToMru(existingTab.id);
-      return;
-    }
-
-    // Sanity check: Check file size metadata before attempting to read content
-    const metadata = await callBackend('get_file_metadata', { path: sanitizedPath }, 'File:Metadata');
-
-    // Get max file size from app state (loaded from settings.toml)
-    const maxFileSizeMB = appState.maxFileSizeMB;
-    const BYTES_PER_MB = 1024 * 1024;
-    const maxBytes = maxFileSizeMB * BYTES_PER_MB;
-
-    if (!metadata) {
-      throw new Error('Failed to retrieve file metadata');
-    }
-
-    if (metadata.size > maxBytes) {
-      throw new Error(
-        `File is too large (${(metadata.size / BYTES_PER_MB).toFixed(2)} MB). Maximum allowed is ${maxFileSizeMB} MB.`,
-      );
-    }
-
-    const result = await callBackend('read_text_file', { path: sanitizedPath }, 'File:Read');
-
-    if (!result) {
-      throw new Error('Failed to read file: null result');
-    }
-
-    const fileName = getFilename(sanitizedPath) || 'Untitled';
-
-    const detectedLineEnding = detectLineEnding(result.content);
-
-    let initialTitle = fileName;
-    if (appContext.app.tabNameFromContent) {
-      const smartTitle = extractSmartTitle(result.content);
-      if (smartTitle) initialTitle = smartTitle;
-    }
-
-    const id = addTab(initialTitle, result.content);
-
-    const { lineCount, widestColumn } = computeLineStats(result.content);
-
-    const sizeBytes = byteLength(result.content);
-    const initialWordCount = computeWordCount(result.content, sizeBytes);
-
-    updateTransientState(id, { fileCheckPerformed: false });
-    updateTabFields(id, {
-      path: sanitizedPath,
-      isDirty: false,
-      lineEnding: detectedLineEnding,
-      encoding: result.encoding.toUpperCase(),
-      sizeBytes,
-      wordCount: initialWordCount,
-      lineCount,
-      widestColumn,
-    });
-
-    await refreshMetadata(id, sanitizedPath);
-    await checkFileExists(id);
-    await fileWatcher.watch(sanitizedPath);
-    appContext.app.activeTabId = id;
-
-    logger.file.info('FileOpened', {
-      duration: formatDuration(start),
-      path: sanitizedPath,
-      size: metadata.size,
-      encoding: result.encoding,
-    });
-  } catch (_err) {
-    AppError.handle('File:Read', _err, {
-      showToast: true,
-      additionalInfo: { path },
-    });
-  }
-}
-
-export async function openFileByPath(path: string): Promise<void> {
-  await openFile(path);
-}
-
-export async function navigateToPath(clickedPath: string): Promise<void> {
-  const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-
-  if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes('\n')) {
-    return;
-  }
-
-  try {
-    const resolvedPath = await callBackend(
-      'resolve_path_relative',
-      {
-        basePath: activeTab?.path || null,
-        clickPath: clickedPath.replace(/\\/g, '/'),
-      },
-      'File:Read',
-    );
-
-    if (!resolvedPath) {
-      return;
-    }
-
-    await openPath(resolvedPath);
-  } catch (err) {
-    console.warn('[FileSystem] Navigation failed:', err);
-  }
-}
-
-const activeSaves = new Map<string, boolean>();
-
-export async function saveCurrentFile(skipFormat = false): Promise<boolean> {
-  // Clear tab switching flag to ensure format-on-save works
-  appContext.app.isTabSwitching = false;
-
-  runFlushFunctions();
-  return saveFile(false, skipFormat);
-}
-
-export async function saveCurrentFileAs(): Promise<boolean> {
-  // Clear tab switching flag to ensure format-on-save works
-  appContext.app.isTabSwitching = false;
-
-  runFlushFunctions();
-  return saveFile(true, false);
-}
-
-export async function autoSaveCurrentFile(): Promise<boolean> {
-  const tabId = appContext.app.activeTabId;
-  if (!tabId) return false;
-  const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-  if (!tab?.isDirty || !tab.path) return false;
-  return saveCurrentFile(true);
-}
-
-async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<boolean> {
-  const start = performance.now();
-  const tabId = appContext.app.activeTabId;
-  if (!tabId) return false;
-
-  const getTab = () => appContext.editor.tabs.find((t) => t.id === tabId);
-  let tab = getTab();
-  if (!tab) return false;
-
-  const oldPath = tab.path;
-
-  const pendingSavePath = !forceNewPath && tab.path ? tab.path : null;
-
-  if (pendingSavePath && activeSaves.get(pendingSavePath)) {
-    return false;
-  }
-
-  if (pendingSavePath) {
-    activeSaves.set(pendingSavePath, true);
-  }
-
-  try {
-    let savePath: string | null = null;
-
-    if (!forceNewPath && tab.path) {
-      savePath = tab.path;
-    } else {
-      const preferredExt = tab.preferredExtension || 'md';
-      const filters =
-        preferredExt === 'txt'
-          ? [
-              { name: 'Text', extensions: ['txt'] },
-              { name: 'Markdown', extensions: ['md'] },
-              { name: 'All Files', extensions: ['*'] },
-            ]
-          : [
-              { name: 'Markdown', extensions: ['md'] },
-              { name: 'Text', extensions: ['txt'] },
-              { name: 'All Files', extensions: ['*'] },
-            ];
-
-      savePath = await save({ filters });
-    }
-
-    if (savePath) {
-      const sanitizedPath = sanitizePath(savePath);
-
-      tab = getTab();
-      if (!tab) return false;
-      if (!tab.content) tab.content = '';
-
-      let contentToSave = tab.content;
-
-      // Allow formatting on explicit save actions regardless of tab switching state
-      const shouldFormat = !skipFormat && appContext.app.formatOnSave && isMarkdownFile(sanitizedPath);
-
-      if (shouldFormat) {
-        const formatted = await formatMarkdown(contentToSave);
-
-        tab = getTab();
-        if (!tab) return false;
-        if (tab && tab.content !== contentToSave) {
-          // User typed during format � abort to prevent data loss
-          contentToSave = tab.content;
-        } else if (formatted && formatted !== contentToSave) {
-          contentToSave = formatted;
-          updateContentOnly(tabId, contentToSave, true);
-          tab = getTab();
-          if (!tab) return false;
-        }
-      }
-
-      const targetLineEnding =
-        appContext.app.lineEndingPreference === 'system' ? tab.lineEnding || 'LF' : appContext.app.lineEndingPreference;
-
-      let diskContent = normalizeLineEndings(contentToSave);
-      if (targetLineEnding === 'CRLF') {
-        diskContent = diskContent.replace(/\n/g, '\r\n');
-      } else {
-        diskContent = diskContent.replace(/\r\n/g, '\n');
-      }
-
-      fileWatcher.setWriteLock(sanitizedPath, true);
-
-      const saveResult = await callBackend(
-        'write_text_file',
-        { path: sanitizedPath, content: diskContent },
-        'File:Write',
-        undefined,
-        { ignore: true },
-      );
-      if (!saveResult) {
-        fileWatcher.setWriteLock(sanitizedPath, false);
-        if (pendingSavePath) activeSaves.delete(pendingSavePath);
-        showToast('error', 'Failed to save file');
-        return false;
-      }
-
-      if (oldPath && oldPath !== sanitizedPath) {
-        fileWatcher.unwatch(oldPath);
-      }
-      if (oldPath !== sanitizedPath) {
-        await fileWatcher.watch(sanitizedPath);
-      }
-
-      const fileName = getFilename(sanitizedPath) || 'Untitled';
-      let finalTitle = fileName;
-
-      if (appContext.app.tabNameFromContent) {
-        const smartTitle = extractSmartTitle(contentToSave);
-        if (smartTitle) finalTitle = smartTitle;
-      }
-
-      saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
-      markAsSaved(tabId);
-      invalidateMetadataCache(sanitizedPath);
-      await refreshMetadata(tabId, sanitizedPath);
-
-      addToRecentFiles(sanitizedPath);
-
-      fileWatcher.setWriteLock(sanitizedPath, false);
-
-      logger.file.info('FileSaved', {
-        duration: formatDuration(start),
-        path: sanitizedPath,
-        size: byteLength(diskContent),
-        saveAs: forceNewPath,
-      });
-
-      if (pendingSavePath) activeSaves.delete(pendingSavePath);
-      return true;
-    }
-    if (pendingSavePath) activeSaves.delete(pendingSavePath);
-    return false;
-  } catch (_e) {
-    if (pendingSavePath) activeSaves.delete(pendingSavePath);
-    AppError.handle('File:Write', _e, {
-      showToast: true,
-      additionalInfo: { path: tab?.path },
-    });
-    return false;
-  }
-}
-
 export async function requestCloseTab(id: string, force = false): Promise<void> {
   const tab = appContext.editor.tabs.find((t) => t.id === id);
   if (!tab || (tab.isPinned && !force)) return;
@@ -427,7 +114,6 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   }
 
   if (tab.path) {
-    // Ensure the file is added to recent history before closing
     addToRecentFiles(tab.path);
     try {
       fileWatcher.unwatch(tab.path);
@@ -436,15 +122,12 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     }
   }
 
-  // Tab is removed from store here
   closeTab(id);
 
-  // Update active tab ID from the refreshed MRU stack
   if (appContext.app.activeTabId === id) {
     appContext.app.activeTabId = appContext.editor.mruStack[0] || null;
   }
 
-  // Ensure at least one tab exists
   if (appContext.editor.tabs.length === 0) {
     const newId = addTab();
     appContext.app.activeTabId = newId;
@@ -491,10 +174,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
     if (oldPath === newPath) return true;
 
-    await callBackend('rename_file', { oldPath: oldPath, newPath: newPath }, 'File:Write', undefined, {
-      report: true,
-      msg: 'Failed to rename file',
-    });
+    await renameFileOnDisk(oldPath, newPath);
 
     fileWatcher.unwatch(oldPath);
     await fileWatcher.watch(newPath);
@@ -508,7 +188,6 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
     invalidateMetadataCache(newPath);
     await refreshMetadata(tabId, newPath);
 
-    // Update recent files entry
     addToRecentFiles(newPath);
 
     const bookmark = getBookmarkByPath(oldPath);
