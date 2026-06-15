@@ -10,6 +10,7 @@ import {
 } from '$lib/stores/recentFilesStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { openFileByPath } from '$lib/utils/fileSystem';
+import { getFilename } from '$lib/utils/fileValidation';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 interface Props {
@@ -127,7 +128,7 @@ function handleKeydown(e: KeyboardEvent) {
                                     style:color={isSelected
                                         ? 'var(--color-fg-inverse)'
                                         : 'var(--color-fg-default)'}>
-                                    {path.split(/[\\/]/).pop()}
+                                    {getFilename(path)}
                                 </div>
                                 <div
                                     class="text-ui-sm truncate"

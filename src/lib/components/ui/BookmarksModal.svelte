@@ -16,6 +16,7 @@ import {
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
+import { getFilename } from '$lib/utils/fileValidation';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 interface Props {
@@ -169,7 +170,7 @@ async function handleBrowse() {
         if (selected && typeof selected === 'string') {
             addPath = selected;
             browseError = '';
-            const filename = selected.split(/[\\/]/).pop() || '';
+            const filename = getFilename(selected);
             const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
             if (!addTitle) addTitle = titleWithoutExt;
         }

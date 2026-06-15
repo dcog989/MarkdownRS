@@ -18,6 +18,10 @@ export interface FileValidationResult {
 /** Default max file size in bytes from centralized config (50 MB) */
 const DEFAULT_MAX_FILE_SIZE = CONFIG.EDITOR.MAX_FILE_SIZE_MB * 1024 * 1024;
 
+export function getFilename(path: string): string {
+  return path.split(/[\\/]/).pop() || '';
+}
+
 export const MARKDOWN_EXTENSIONS = ['md', 'markdown', 'mdown', 'mkdn', 'mkd', 'mdwn', 'mdtxt', 'mdtext'];
 
 export const SUPPORTED_TEXT_EXTENSIONS = [
@@ -137,8 +141,7 @@ export function validateFile(
   }
 
   // Check file extension
-  const parts = path.split(/[\\/]/);
-  const filename = parts.pop() || '';
+  const filename = getFilename(path);
 
   // Dotfiles (like .gitignore) are considered valid if they match a known type or generally
   if (filename.startsWith('.') && filename.length > 1) {
@@ -197,8 +200,7 @@ export function formatFileSize(bytes: number): string {
  * Check if path is likely a text file based on extension
  */
 export function isTextFile(path: string): boolean {
-  const parts = path.split(/[\\/]/);
-  const filename = parts.pop() || '';
+  const filename = getFilename(path);
 
   // Dotfiles often text (gitignore, env, etc)
   if (filename.startsWith('.')) return true;
@@ -213,8 +215,7 @@ export function isTextFile(path: string): boolean {
  * Check if path is a markdown file
  */
 export function isMarkdownFile(path: string): boolean {
-  const parts = path.split(/[\\/]/);
-  const filename = parts.pop() || '';
+  const filename = getFilename(path);
 
   // Assume files without extensions (e.g. "New-1") are markdown
   if (!filename.includes('.')) return true;

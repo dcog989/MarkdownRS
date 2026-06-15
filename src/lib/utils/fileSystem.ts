@@ -38,7 +38,7 @@ import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats, detectLineEnding } from '$lib/utils/textMetrics';
 import { formatDuration } from '$lib/utils/timing';
 import { callBackend } from './backend';
-import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
+import { getFilename, isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
 
 export {
@@ -118,7 +118,7 @@ export async function openFile(path?: string): Promise<void> {
       throw new Error('Failed to read file: null result');
     }
 
-    const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
+    const fileName = getFilename(sanitizedPath) || 'Untitled';
 
     const detectedLineEnding = detectLineEnding(result.content);
 
@@ -328,7 +328,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         await fileWatcher.watch(sanitizedPath);
       }
 
-      const fileName = sanitizedPath.split(/[\\/]/).pop() || 'Untitled';
+      const fileName = getFilename(sanitizedPath) || 'Untitled';
       let finalTitle = fileName;
 
       if (appContext.app.tabNameFromContent) {

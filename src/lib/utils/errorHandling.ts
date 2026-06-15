@@ -1,5 +1,6 @@
 import { error as logError } from '@tauri-apps/plugin-log';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { getFilename } from './fileValidation';
 import { logger } from './logger';
 
 export type ErrorContext =
@@ -214,7 +215,7 @@ export class AppError extends Error {
   private extractFileName(): string | null {
     if (this.additionalInfo?.path) {
       const path = String(this.additionalInfo.path);
-      return path.split(/[\\/]/).pop() || null;
+      return getFilename(path) || null;
     }
     return null;
   }

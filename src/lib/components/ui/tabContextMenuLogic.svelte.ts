@@ -20,6 +20,7 @@ import {
   triggerReopenClosedTab,
   withActiveTab,
 } from '$lib/utils/fileSystem';
+import { getFilename } from '$lib/utils/fileValidation';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
 type CloseSubmenu = 'close' | 'export' | 'restore';
@@ -154,7 +155,7 @@ export class TabContextMenuLogic {
       return;
     }
 
-    const currentFileName = tab.path.split(/[\\/]/).pop() || '';
+    const currentFileName = getFilename(tab.path);
     const raw = await promptDialog({
       title: 'Rename',
       message: 'Enter new file name:',
