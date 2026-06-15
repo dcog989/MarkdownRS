@@ -66,6 +66,10 @@ export function computeLineStats(content: string): { lineCount: number; widestCo
   return { lineCount, widestColumn };
 }
 
+export function byteLength(text: string): number {
+  return new TextEncoder().encode(text).length;
+}
+
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat().format(num);
 }

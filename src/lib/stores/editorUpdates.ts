@@ -2,7 +2,7 @@ import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { computeLineStats } from '$lib/utils/textMetrics';
+import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import { computeWordCount, getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, updateTab } from './editorStoreCore.svelte';
@@ -26,7 +26,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
   }
 
   const now = getCurrentTimestamp();
-  const sizeBytes = new TextEncoder().encode(content).length;
+  const sizeBytes = byteLength(content);
 
   scheduleWordCountUpdate(id, content, sizeBytes);
 

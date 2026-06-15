@@ -2,7 +2,7 @@ import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
 import { hashContent } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
-import { computeLineStats } from '$lib/utils/textMetrics';
+import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import {
   clearTabCaches,
@@ -36,7 +36,7 @@ export function addTab(title: string = '', content: string = '') {
   }
 
   const normalizedContent = finalContent.replace(/\r\n/g, '\n');
-  const sizeBytes = new TextEncoder().encode(normalizedContent).length;
+  const sizeBytes = byteLength(normalizedContent);
 
   let wordCount = 0;
   let lineCount = 1;

@@ -35,7 +35,7 @@ import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { computeLineStats } from '$lib/utils/textMetrics';
+import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { callBackend } from './backend';
 import { isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
 import { formatMarkdown } from './formatterRust';
@@ -134,7 +134,7 @@ export async function openFile(path?: string): Promise<void> {
 
     const { lineCount, widestColumn } = computeLineStats(result.content);
 
-    const sizeBytes = new TextEncoder().encode(result.content).length;
+    const sizeBytes = byteLength(result.content);
     const initialWordCount = computeWordCount(result.content, sizeBytes);
 
     updateTransientState(id, { fileCheckPerformed: false });
@@ -352,7 +352,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       logger.file.info('FileSaved', {
         duration: `${duration}ms`,
         path: sanitizedPath,
-        size: new TextEncoder().encode(diskContent).length,
+        size: byteLength(diskContent),
         saveAs: forceNewPath,
       });
 

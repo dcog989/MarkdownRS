@@ -19,7 +19,7 @@ import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
-import { computeLineStats } from '$lib/utils/textMetrics';
+import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { debounce } from '$lib/utils/timing';
 import {
   checkAndReloadIfChanged,
@@ -339,7 +339,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
       lastSavedHash = '';
     }
 
-    const sizeBytes = new TextEncoder().encode(normalizedContent).length;
+    const sizeBytes = byteLength(normalizedContent);
     const wordCount = computeWordCount(normalizedContent, sizeBytes);
 
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
@@ -400,7 +400,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
   const timestamp = t.modified || t.created || '';
 
   const lastSavedHash = !t.path ? '' : hashContent(content);
-  const sizeBytes = new TextEncoder().encode(content).length;
+  const sizeBytes = byteLength(content);
 
   const { lineCount, widestColumn } = computeLineStats(content);
 
