@@ -150,6 +150,20 @@ pub async fn cleanup_stale_temp_files(
     Ok(())
 }
 
+/// Extension trait for poison-safe `Mutex` access.
+pub trait MutexExt<T> {
+    fn lock_or_recover(&self) -> std::sync::MutexGuard<'_, T>;
+}
+
+impl<T> MutexExt<T> for std::sync::Mutex<T> {
+    fn lock_or_recover(&self) -> std::sync::MutexGuard<'_, T> {
+        self.lock().unwrap_or_else(|e| {
+            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        })
+    }
+}
+
 /// Runs a blocking closure on the tokio blocking thread-pool,
 /// returning Err with the task name on a join panic.
 pub async fn run_blocking<F, T>(task_label: &'static str, f: F) -> Result<T, String>

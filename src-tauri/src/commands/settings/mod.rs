@@ -6,7 +6,7 @@ pub use app_info::AppInfo;
 pub use io::get_max_file_size_bytes;
 
 use crate::state::{AppState, MAX_FILE_SIZE_UNSET};
-use crate::utils::handle_error;
+use crate::utils::{MutexExt, handle_error};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use tauri::Manager;
@@ -44,10 +44,7 @@ pub async fn get_theme_css(
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
     if let Some(state) = app_handle.try_state::<AppState>() {
-        let cache = state.settings_cache.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let cache = state.settings_cache.lock_or_recover();
         if let Some(ref cached) = *cache {
             return Ok(cached.clone());
         }
@@ -65,16 +62,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         .map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
-        let mut cache = state.settings_cache.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let mut cache = state.settings_cache.lock_or_recover();
         *cache = Some(json_val.clone());
 
-        let mut pr = state.project_root.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let mut pr = state.project_root.lock_or_recover();
         *pr = json_val
             .get("workspaceRoot")
             .and_then(|v| v.as_str())
@@ -120,15 +111,9 @@ pub async fn save_settings(
         state
             .max_file_size_bytes
             .store(MAX_FILE_SIZE_UNSET, Ordering::Relaxed);
-        let mut cache = state.settings_cache.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let mut cache = state.settings_cache.lock_or_recover();
         *cache = None;
-        let mut pr = state.project_root.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let mut pr = state.project_root.lock_or_recover();
         *pr = None;
     }
 

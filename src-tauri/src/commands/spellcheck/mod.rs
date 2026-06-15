@@ -4,7 +4,7 @@ pub mod user_dict;
 
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
-use crate::utils::{IntoTauriError, handle_error};
+use crate::utils::{IntoTauriError, MutexExt, handle_error};
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -38,10 +38,7 @@ pub async fn init_spellchecker(
     science_dictionaries: Option<bool>,
 ) -> Result<(), String> {
     {
-        let mut status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let mut status = state.spellcheck_status.lock_or_recover();
         if *status == SpellcheckStatus::Loading || *status == SpellcheckStatus::Ready {
             log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready");
             return Ok(());
@@ -198,49 +195,31 @@ pub async fn init_spellchecker(
 
             match dict_result {
                 Ok(Ok(dict)) => {
-                    let mut speller = state.speller.lock().unwrap_or_else(|e| {
-                        log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                        e.into_inner()
-                    });
+                    let mut speller = state.speller.lock_or_recover();
                     *speller = Some(dict);
-                    let mut status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-                        log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                        e.into_inner()
-                    });
+                    let mut status = state.spellcheck_status.lock_or_recover();
                     *status = SpellcheckStatus::Ready;
                     log::info!("Spellchecker ready: {} unique words", total_word_count);
                 },
                 Ok(Err(e)) => {
                     log::error!("Failed to create dictionary: {:?}", e);
-                    let mut status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-                        log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                        e.into_inner()
-                    });
+                    let mut status = state.spellcheck_status.lock_or_recover();
                     *status = SpellcheckStatus::Failed;
                 },
                 Err(e) => {
                     log::error!("Dictionary construction task panicked: {:?}", e);
-                    let mut status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-                        log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                        e.into_inner()
-                    });
+                    let mut status = state.spellcheck_status.lock_or_recover();
                     *status = SpellcheckStatus::Failed;
                 },
             }
         } else {
             log::warn!("No dictionary content available");
-            let mut status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-                log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                e.into_inner()
-            });
+            let mut status = state.spellcheck_status.lock_or_recover();
             *status = SpellcheckStatus::Failed;
         }
 
         if let Ok(text) = fs::read_to_string(&custom_path).await {
-            let mut custom = state.custom_dict.lock().unwrap_or_else(|e| {
-                log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                e.into_inner()
-            });
+            let mut custom = state.custom_dict.lock_or_recover();
             for line in text.lines() {
                 let w = line.trim();
                 if !w.is_empty() {
@@ -255,10 +234,7 @@ pub async fn init_spellchecker(
         if let Err(e) = handle.await {
             log::error!("Spellchecker init task panicked: {:?}", e);
             let state = app_handle_recovery.state::<AppState>();
-            let mut status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-                log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-                e.into_inner()
-            });
+            let mut status = state.spellcheck_status.lock_or_recover();
             if *status == SpellcheckStatus::Loading {
                 *status = SpellcheckStatus::Failed;
             }
@@ -276,20 +252,14 @@ pub async fn check_words(
     log::debug!("check_words called with {} words", words.len());
 
     let custom_snapshot = {
-        let guard = state.custom_dict.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let guard = state.custom_dict.lock_or_recover();
         guard.clone()
     };
 
     let speller = state.speller.clone();
 
     let misspelled = tokio::task::spawn_blocking(move || {
-        let guard = speller.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-            e.into_inner()
-        });
+        let guard = speller.lock_or_recover();
         let dict = match guard.as_ref() {
             Some(d) => d,
             None => return Vec::new(),
@@ -345,10 +315,7 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock().unwrap_or_else(|e| {
-        log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-        e.into_inner()
-    });
+    let speller_guard = state.speller.lock_or_recover();
 
     let speller = match speller_guard.as_ref() {
         Some(s) => s,
@@ -362,10 +329,7 @@ pub async fn get_spelling_suggestions(
 
 #[tauri::command]
 pub async fn get_spellcheck_status(state: State<'_, AppState>) -> Result<String, String> {
-    let status = state.spellcheck_status.lock().unwrap_or_else(|e| {
-        log::warn!("Mutex poisoned, continuing with potentially corrupt state");
-        e.into_inner()
-    });
+    let status = state.spellcheck_status.lock_or_recover();
     let status_str = match *status {
         SpellcheckStatus::Uninitialized => "uninitialized",
         SpellcheckStatus::Loading => "loading",

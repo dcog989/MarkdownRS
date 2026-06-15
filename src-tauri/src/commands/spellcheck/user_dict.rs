@@ -1,4 +1,5 @@
 use crate::state::AppState;
+use crate::utils::MutexExt;
 use anyhow::{Result, anyhow};
 use tauri::Manager;
 use tokio::fs::{self, OpenOptions};
@@ -41,7 +42,7 @@ pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String)
     }
 
     let state = app_handle.state::<AppState>();
-    let mut custom_dict = state.custom_dict.lock().unwrap_or_else(|e| e.into_inner());
+    let mut custom_dict = state.custom_dict.lock_or_recover();
     custom_dict.insert(word.to_lowercase());
 
     Ok(())
