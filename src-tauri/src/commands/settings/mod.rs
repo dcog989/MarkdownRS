@@ -84,8 +84,8 @@ pub async fn save_settings(
     let path = config_dir.join("settings.toml");
 
     let max_size_received = settings
-        .get("maxFileSizeMB")
-        .or_else(|| settings.get("max_file_size_mb"))
+        .get(io::MAX_FILE_SIZE_KEY_CAMEL)
+        .or_else(|| settings.get(io::MAX_FILE_SIZE_KEY_SNAKE))
         .cloned();
     log::info!(
         "save_settings called with maxFileSizeMB: {:?}",
@@ -94,14 +94,14 @@ pub async fn save_settings(
 
     let mut settings = settings;
     if let Some(max_size) = settings
-        .get("maxFileSizeMB")
-        .or_else(|| settings.get("max_file_size_mb"))
+        .get(io::MAX_FILE_SIZE_KEY_CAMEL)
+        .or_else(|| settings.get(io::MAX_FILE_SIZE_KEY_SNAKE))
         && let Some(val) = max_size.as_u64()
     {
         let clamped = val.clamp(1, 500);
-        settings["maxFileSizeMB"] = serde_json::json!(clamped);
+        settings[io::MAX_FILE_SIZE_KEY_CAMEL] = serde_json::json!(clamped);
         if let Some(obj) = settings.as_object_mut() {
-            obj.remove("max_file_size_mb");
+            obj.remove(io::MAX_FILE_SIZE_KEY_SNAKE);
         }
     }
 

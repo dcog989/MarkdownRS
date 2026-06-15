@@ -4,7 +4,17 @@ use std::sync::atomic::Ordering;
 use tauri::Manager;
 use tokio::fs;
 
-const DEFAULT_MAX_FILE_SIZE_BYTES: u64 = 50 * 1024 * 1024;
+pub(super) const MAX_FILE_SIZE_KEY_CAMEL: &str = "maxFileSizeMB";
+pub(super) const MAX_FILE_SIZE_KEY_SNAKE: &str = "max_file_size_mb";
+
+const DEFAULT_MAX_FILE_SIZE_MB: u64 = 50;
+const MAX_FILE_SIZE_MIN_MB: u64 = 1;
+const MAX_FILE_SIZE_MAX_MB: u64 = 500;
+const DEFAULT_MAX_FILE_SIZE_BYTES: u64 = DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024;
+
+pub(super) fn max_file_size_mb_to_bytes(mb: u64) -> u64 {
+    mb.clamp(MAX_FILE_SIZE_MIN_MB, MAX_FILE_SIZE_MAX_MB) * 1024 * 1024
+}
 
 pub async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<String>, String> {
     let config_dir = super::app_config_path(app_handle)?;
@@ -35,11 +45,11 @@ async fn load_max_file_size_from_disk(app_handle: &tauri::AppHandle) -> u64 {
     match load_settings_toml(app_handle).await {
         Ok(toml_val) => {
             let mb = toml_val
-                .get("maxFileSizeMB")
-                .or_else(|| toml_val.get("max_file_size_mb"))
+                .get(MAX_FILE_SIZE_KEY_CAMEL)
+                .or_else(|| toml_val.get(MAX_FILE_SIZE_KEY_SNAKE))
                 .and_then(|v| v.as_integer())
-                .unwrap_or(50);
-            (mb as u64).clamp(1, 500) * 1024 * 1024
+                .unwrap_or(DEFAULT_MAX_FILE_SIZE_MB as i64) as u64;
+            max_file_size_mb_to_bytes(mb)
         },
         Err(_) => DEFAULT_MAX_FILE_SIZE_BYTES,
     }
