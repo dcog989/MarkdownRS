@@ -6,6 +6,7 @@ import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { getOperationsByCategory, OPERATION_CATEGORIES } from '$lib/config/textOperationsRegistry';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
+import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
@@ -13,7 +14,6 @@ let { isOpen = false, onClose } = $props<{ isOpen: boolean; onClose: () => void 
 
 let searchQuery = $state('');
 let inputRef: HTMLInputElement | undefined = $state();
-let selectedIndex = $state(0);
 
 let undoShortcut = $derived(shortcutManager.getShortcutDisplay('edit.undo'));
 
@@ -35,27 +35,21 @@ let filteredCategories = $derived(
 
 let flatOps = $derived(filteredCategories.flatMap((c) => c.operations));
 
+const nav = createListNavigation(
+  () => flatOps.length,
+  (index) => {
+    const op = flatOps[index];
+    if (op) handleOperation(op.id);
+  },
+);
+
 $effect(() => {
   if (isOpen) {
     searchQuery = '';
-    selectedIndex = 0;
+    nav.reset();
     tick().then(() => inputRef?.focus());
   }
 });
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    selectedIndex = (selectedIndex + 1) % flatOps.length;
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    selectedIndex = (selectedIndex - 1 + flatOps.length) % flatOps.length;
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    const op = flatOps[selectedIndex];
-    if (op) handleOperation(op.id);
-  }
-}
 
 function handleOperation(operationId: OperationId) {
   performTextTransform(operationId);
@@ -76,7 +70,7 @@ function close() {
       bind:inputRef
       searchPlaceholder="Search transformations..."
       {onClose}
-      onKeydown={handleKeydown} />
+      onKeydown={nav.handleKeydown} />
   {/snippet}
 
   <div class="space-y-6 p-4">
@@ -94,7 +88,7 @@ function close() {
           <div class="grid grid-cols-2 gap-2">
             {#each category.operations as operation (operation.id)}
               {@const globalIndex = flatOps.indexOf(operation)}
-              {@const isSelected = globalIndex === selectedIndex}
+              {@const isSelected = globalIndex === nav.selectedIndex}
               {@const shortcut = getOpShortcut(operation.id)}
               {@const OperationIcon = operation.icon}
               <button
@@ -107,7 +101,7 @@ function close() {
                   ? 'var(--color-fg-inverse)'
                   : 'var(--color-fg-default)'};"
                 use:scrollIntoView={isSelected}
-                onmouseenter={() => (selectedIndex = globalIndex)}
+                onmouseenter={() => nav.select(globalIndex)}
                 onclick={() => handleOperation(operation.id)}>
                 <div class="mt-0.5 shrink-0" class:opacity-80={isSelected}>
                   <OperationIcon size={16} class="text-accent-secondary" />

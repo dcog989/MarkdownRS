@@ -5,6 +5,7 @@ import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { appState } from '$lib/stores/appState.svelte';
+import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
@@ -20,32 +21,23 @@ let {
 
 let query = $state('');
 let inputRef: HTMLInputElement | undefined = $state();
-let selectedIndex = $state(0);
 
 let filteredCommands = $derived(
     commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())),
 );
 
+const nav = createListNavigation(
+    () => filteredCommands.length,
+    (index) => execute(filteredCommands[index]),
+);
+
 $effect(() => {
     if (isOpen) {
         query = '';
-        selectedIndex = 0;
+        nav.reset();
         tick().then(() => inputRef?.focus());
     }
 });
-
-function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex + 1) % filteredCommands.length;
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        execute(filteredCommands[selectedIndex]);
-    }
-}
 
 function execute(command: Command) {
     if (!command) return;
@@ -82,7 +74,7 @@ function close() {
             bind:inputRef
             searchPlaceholder="Search Commands..."
             onClose={close}
-            onKeydown={handleKeydown}>
+            onKeydown={nav.handleKeydown}>
             {#snippet extraActions()}
                 <button
                     type="button"
@@ -107,17 +99,17 @@ function close() {
                         ? 'bg-row-even'
                         : ''}"
                     style="
-                        background-color: {index === selectedIndex
+                        background-color: {index === nav.selectedIndex
                         ? 'var(--color-accent-primary)'
                         : index % 2 === 1
                           ? 'var(--surface-row)'
                           : 'transparent'};
-                        color: {index === selectedIndex
+                        color: {index === nav.selectedIndex
                         ? 'var(--color-fg-inverse)'
                         : 'var(--color-fg-default)'};
                     "
-                    use:scrollIntoView={index === selectedIndex}
-                    onmouseenter={() => (selectedIndex = index)}
+                    use:scrollIntoView={index === nav.selectedIndex}
+                    onmouseenter={() => nav.select(index)}
                     onclick={() => execute(command)}>
                     <span>{command.label}</span>
                     {#if shortcutManager.getShortcutDisplay(command.id)}

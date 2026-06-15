@@ -5,6 +5,7 @@ import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { saveSettings } from '$lib/utils/settings';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
@@ -17,23 +18,28 @@ let { isOpen = $bindable(false), onClose }: Props = $props();
 
 let searchQuery = $state('');
 let searchInputEl = $state<HTMLInputElement>();
-let selectedIndex = $state(0);
 let recordingCommandId = $state<string | null>(null);
 let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
 let shortcutVersion = $state(0);
 
+const nav = createListNavigation(
+    () => filteredShortcuts.length,
+    (index) => {
+        const def = flatShortcuts[index];
+        if (def) startRecording(def.id);
+    },
+);
+
 $effect(() => {
     if (isOpen) {
         searchQuery = '';
-        selectedIndex = 0;
-        // Focus is handled automatically by the Modal component
-        // which focuses the first focusable element (the search input)
+        nav.reset();
     }
 });
 
 $effect(() => {
     void searchQuery;
-    selectedIndex = 0;
+    nav.reset();
 });
 
 function startRecording(commandId: string) {
@@ -144,27 +150,7 @@ const categories = $derived.by(() => {
 // Create a flat array for proper indexing with selectedIndex
 const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
 
-function handleKeydown(e: KeyboardEvent) {
-    // Only handle navigation keys - let all other keys (including typing) work normally
-    if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
-        return;
-    }
 
-    if (filteredShortcuts.length === 0) return;
-
-    e.preventDefault();
-
-    if (e.key === 'ArrowDown') {
-        selectedIndex = (selectedIndex + 1) % filteredShortcuts.length;
-    } else if (e.key === 'ArrowUp') {
-        selectedIndex = (selectedIndex - 1 + filteredShortcuts.length) % filteredShortcuts.length;
-    } else if (e.key === 'Enter') {
-        const def = flatShortcuts[selectedIndex];
-        if (def) {
-            startRecording(def.id);
-        }
-    }
-}
 </script>
 
 <Modal bind:isOpen {onClose}>
@@ -176,7 +162,7 @@ function handleKeydown(e: KeyboardEvent) {
             bind:inputRef={searchInputEl}
             searchPlaceholder="Search shortcuts..."
             {onClose}
-            onKeydown={handleKeydown} />
+            onKeydown={nav.handleKeydown} />
     {/snippet}
 
     <div class="text-ui min-w-125 p-4 relative">
@@ -229,7 +215,7 @@ function handleKeydown(e: KeyboardEvent) {
                         <div class="divide-border-main/30 divide-y">
                             {#each defs as def (def.id)}
                                 {@const currentIndex = ++globalIndex.value}
-                                {@const isSelected = currentIndex === selectedIndex}
+                                {@const isSelected = currentIndex === nav.selectedIndex}
                                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                                 <div
                                     class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
@@ -239,7 +225,7 @@ function handleKeydown(e: KeyboardEvent) {
                                           ? 'var(--surface-row)'
                                           : 'transparent'}
                                     use:scrollIntoView={isSelected}
-                                    onmouseenter={() => (selectedIndex = currentIndex)}>
+                                    onmouseenter={() => nav.select(currentIndex)}>
                                     <button
                                         type="button"
                                         class="flex-1 cursor-pointer text-left transition-colors outline-none"
