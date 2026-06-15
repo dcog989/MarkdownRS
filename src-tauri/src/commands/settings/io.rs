@@ -20,14 +20,17 @@ pub async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<
     let config_dir = super::app_config_path(app_handle)?;
     let path = config_dir.join("settings.toml");
 
-    match fs::try_exists(&path).await {
-        Ok(false) | Err(_) => return Ok(None),
-        Ok(true) => {},
-    }
-
-    let raw_bytes = fs::read(&path)
-        .await
-        .map_err(|e| handle_error(Some(&path.to_string_lossy()), "read settings file", e))?;
+    let raw_bytes = match fs::read(&path).await {
+        Ok(b) => b,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => {
+            return Err(handle_error(
+                Some(&path.to_string_lossy()),
+                "read settings file",
+                e,
+            ));
+        },
+    };
 
     Ok(Some(read_text_with_bom_detection(raw_bytes)))
 }
