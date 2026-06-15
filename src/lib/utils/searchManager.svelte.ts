@@ -3,28 +3,10 @@ import type { EditorView } from '@codemirror/view';
 import { SvelteMap } from 'svelte/reactivity';
 import { updateContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
+import { searchState } from './searchState.svelte.ts';
 
-// State
-export const searchState = $state({
-  findText: '',
-  replaceText: '',
-  matchCase: false,
-  matchWholeWord: false,
-  useRegex: false,
+export { searchState };
 
-  // Results
-  currentMatches: 0,
-  currentIndex: 0,
-  allTabsResults: new SvelteMap<string, number>(),
-
-  // Validation
-  regexError: null as string | null,
-});
-
-/**
- * Creates a SearchQuery with consistent case sensitivity settings.
- * This ensures both highlighting and cursor navigation use the same configuration.
- */
 export function getSearchQuery(): SearchQuery {
   if (searchState.useRegex && searchState.findText) {
     try {
@@ -32,7 +14,6 @@ export function getSearchQuery(): SearchQuery {
       searchState.regexError = null;
     } catch (e) {
       searchState.regexError = e instanceof Error ? e.message : 'Invalid regex pattern';
-      // Return a safe non-regex query to prevent CodeMirror internal crashes
       return new SearchQuery({
         search: '',
         caseSensitive: searchState.matchCase,
@@ -64,17 +45,11 @@ export function updateSearchEditor(view: EditorView | undefined) {
   calculateSearchStats(view, query);
 }
 
-/**
- * Ensures the search query is synchronized with the editor state.
- * Call this before navigation operations (findNext, findPrevious) to ensure
- * case sensitivity and other settings are applied correctly.
- */
 export function ensureQuerySync(view: EditorView | undefined): SearchQuery | null {
   if (!view || !searchState.findText) return null;
 
   const query = getSearchQuery();
 
-  // Dispatch the query to ensure CodeMirror's internal state is updated
   view.dispatch({
     effects: setSearchQuery.of(query),
   });
@@ -119,10 +94,6 @@ function calculateSearchStats(view: EditorView, query: SearchQuery) {
   searchState.currentIndex = count > 0 ? idx : 0;
 }
 
-/**
- * Selects the nearest match to the current cursor position.
- * Uses the current search query settings including case sensitivity.
- */
 export function selectNearestMatch(view: EditorView | undefined) {
   if (!view || !searchState.findText) return;
 
@@ -213,10 +184,6 @@ export function replaceAllInTabs(): number {
   return total;
 }
 
-/**
- * Builds a regular expression for search operations across multiple tabs.
- * Respects case sensitivity, whole word matching, and regex mode settings.
- */
 function buildSearchRegex(): RegExp | null {
   try {
     let pattern = searchState.findText;
@@ -231,11 +198,9 @@ function buildSearchRegex(): RegExp | null {
     const flags = searchState.matchCase ? 'g' : 'gi';
     const regex = new RegExp(pattern, flags);
 
-    // Clear any previous error on success
     searchState.regexError = null;
     return regex;
   } catch (e) {
-    // Set error message for user feedback
     if (searchState.useRegex && searchState.findText) {
       searchState.regexError = e instanceof Error ? e.message : 'Invalid regex pattern';
     } else {
