@@ -3,7 +3,7 @@ use rumdl_lib::rule::Severity;
 use serde::Serialize;
 use std::path::Path;
 
-use super::config::{clone_rules, load_default_rules, load_rumdl_rules};
+use super::config::load_rules_for_file;
 
 #[derive(Debug, Serialize)]
 pub struct LintDiagnostic {
@@ -43,13 +43,7 @@ pub fn lint_content(
     file_path: Option<&Path>,
     project_root: Option<&Path>,
 ) -> Result<Vec<LintDiagnostic>, String> {
-    let (config, rules) = if let (Some(fp), Some(pr)) = (file_path, project_root) {
-        let file_dir = fp.parent().unwrap_or(pr);
-        load_rumdl_rules(file_dir, pr)?
-    } else {
-        let (c, r) = load_default_rules();
-        (c.clone(), clone_rules(r))
-    };
+    let (config, rules) = load_rules_for_file(file_path, project_root)?;
 
     let flavor = file_path
         .map(|p| config.get_flavor_for_file(p))

@@ -122,6 +122,19 @@ fn load_full_state(
 
 /// Load rumdl config + filtered rules, using a cache that invalidates when
 /// the discovered config file's path or mtime changes.
+pub fn load_rules_for_file(
+    file_path: Option<&Path>,
+    project_root: Option<&Path>,
+) -> Result<(Config, Vec<Box<dyn Rule>>), String> {
+    if let (Some(fp), Some(pr)) = (file_path, project_root) {
+        let file_dir = fp.parent().unwrap_or(pr);
+        load_rumdl_rules(file_dir, pr)
+    } else {
+        let (c, r) = load_default_rules();
+        Ok((c.clone(), clone_rules(r)))
+    }
+}
+
 pub fn load_rumdl_rules(
     file_dir: &Path,
     project_root: &Path,

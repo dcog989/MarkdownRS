@@ -1,5 +1,5 @@
 <script lang="ts">
-import { CircleAlert, Info, TriangleAlert } from 'lucide-svelte';
+import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte.ts';
@@ -44,7 +44,7 @@ function severityColor(severity: string) {
     {:else if markdownLintState.highestSeverity === 'info'}
         <Info size={14} />
     {:else}
-        <CircleAlert size={14} />
+        <CircleCheck size={14} />
     {/if}
     {#if displayCount}
         <span class="font-mono text-xs">{displayCount}</span>
