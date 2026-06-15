@@ -5,7 +5,7 @@ import { CONFIG } from '$lib/utils/config';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 import type { AppEditorView } from '../../global';
 
-function highestSeverity(diagnostics: Diagnostic[]): 'error' | 'warning' | 'info' | 'clean' {
+function highestSeverity(diagnostics: { severity: string }[]): 'error' | 'warning' | 'info' | 'clean' {
   for (const d of diagnostics) {
     if (d.severity === 'error') return 'error';
   }
@@ -37,16 +37,17 @@ export const createMarkdownLinter = () => {
       markdownLintState.diagnostics = result;
 
       const doc = view.state.doc;
+      markdownLintState.highestSeverity = highestSeverity(result);
+
       const diagnostics: Diagnostic[] = result.map((d) => ({
         from: doc.line(d.line).from + d.column - 1,
         to: doc.line(d.end_line).from + d.end_column - 1,
-        severity: d.severity as 'error' | 'warning' | 'info',
+        severity: 'warning' as const,
         message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
         source: 'rumdl',
       }));
 
       markdownLintState.issueCount = diagnostics.length;
-      markdownLintState.highestSeverity = highestSeverity(diagnostics);
 
       return diagnostics;
     },
