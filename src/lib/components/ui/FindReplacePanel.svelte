@@ -108,7 +108,7 @@ function executeSearch(view: EditorView, incremental: boolean) {
             } else {
                 updateSearchEditor(view);
                 if (searchState.currentMatches > 0) {
-                    findNext(view as never);
+                    findNext(view);
                     updateSearchEditor(view);
                 }
             }

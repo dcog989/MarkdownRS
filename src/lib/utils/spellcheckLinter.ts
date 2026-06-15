@@ -193,10 +193,10 @@ export const createSpellCheckLinter = () => {
 
 export function applyImmediateSpellcheck(view: EditorView) {
   view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
-  forceLinting(view as never);
+  forceLinting(view);
 }
 
 export function triggerImmediateLint(view: EditorView) {
   view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
-  forceLinting(view as never);
+  forceLinting(view);
 }
