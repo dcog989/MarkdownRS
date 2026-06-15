@@ -168,9 +168,8 @@ $effect(() => {
 
     {#if showLeftFade}
             <div
-                class="pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
-                transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to right, var(--surface-2), transparent);"></div>
+                class="fade-overlay-left pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
+                transition:fade={{ duration: 150 }}></div>
         {/if}
 
         <div
@@ -247,9 +246,8 @@ $effect(() => {
 
         {#if showRightFade}
             <div
-                class="pointer-events-none absolute top-0 right-0 bottom-0 z-20 w-12"
-                transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to left, var(--surface-2), transparent);"></div>
+                class="fade-overlay-right pointer-events-none absolute top-0 right-0 bottom-0 z-20 w-12"
+                transition:fade={{ duration: 150 }}></div>
         {/if}
     </div>
 
@@ -298,3 +296,13 @@ $effect(() => {
     selectedId={mru.isCycling
         ? appContext.editor.mruStack[mru.selectedIndex]
         : appContext.app.activeTabId} />
+
+<style>
+    .fade-overlay-left {
+        background: linear-gradient(to right, var(--surface-2), transparent);
+    }
+
+    .fade-overlay-right {
+        background: linear-gradient(to left, var(--surface-2), transparent);
+    }
+</style>

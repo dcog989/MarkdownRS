@@ -160,14 +160,13 @@ function updateSetting(setting: SettingDef, value: unknown) {
 
     <div class="p-4">
         {#if sortedSettings.length > 0}
-            <div class="settings-grid" style="row-gap: 0; column-gap: 0;">
+            <div class="settings-grid">
                 {#each sortedSettings as setting, index (setting.key)}
                     {@const rowClass = index % 2 === 1 ? 'bg-row-even' : ''}
 
                     <div class="settings-row {rowClass}">
                         <div
-                            class="text-ui-sm py-2.5 pl-3 rounded-l-md"
-                            style="color: oklch(from var(--text-secondary) l c h / 0.6);">
+                            class="settings-category text-ui-sm py-2.5 pl-3 rounded-l-md">
                             {setting.category}
                         </div>
                         <label
@@ -192,3 +191,14 @@ function updateSetting(setting: SettingDef, value: unknown) {
         {/if}
     </div>
 </Modal>
+
+<style>
+    .settings-grid {
+        row-gap: 0;
+        column-gap: 0;
+    }
+
+    .settings-category {
+        color: oklch(from var(--text-secondary) l c h / 0.6);
+    }
+</style>

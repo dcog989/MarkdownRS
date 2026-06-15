@@ -247,8 +247,7 @@ onMount(() => {
 {#if isOpen}
     <div
         bind:this={panelRef}
-        class="bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
-        style="background-color: color-mix(in srgb, var(--surface-2) 82%, transparent);"
+        class="find-panel bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
         class:opacity-[0.15]={appContext.settings.findPanelTransparent && !isMouseOver}
         onkeydown={handleKeydown}
         onfocusout={handleBlur}
@@ -442,3 +441,9 @@ onMount(() => {
         </div>
     </div>
 {/if}
+
+<style>
+    .find-panel {
+        background-color: color-mix(in srgb, var(--surface-2) 82%, transparent);
+    }
+</style>

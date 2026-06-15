@@ -40,8 +40,7 @@ function onResizeMouseDown(e: MouseEvent) {
 
 <AppLifecycle>
     <div
-        class="bg-bg-main text-fg-default flex h-screen w-screen flex-col overflow-hidden"
-        style="position: relative;">
+        class="app-shell bg-bg-main text-fg-default flex h-screen w-screen flex-col overflow-hidden">
         {#if !appContext.app.writerMode}
             <TabBar />
         {/if}
@@ -98,3 +97,9 @@ function onResizeMouseDown(e: MouseEvent) {
 
     <Toast />
 </AppLifecycle>
+
+<style>
+    .app-shell {
+        position: relative;
+    }
+</style>

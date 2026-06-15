@@ -161,8 +161,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         <div class="relative min-h-0 flex-1">
             <div
                 bind:this={dropdownListRef}
-                class="dropdown-list overflow-y-auto py-1"
-                style="max-height: 60vh;">
+                class="dropdown-list max-h-60vh overflow-y-auto py-1">
                 {#each filteredTabs as tab, index (tab.id)}
                     {@const isSelected = index === selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
@@ -256,3 +255,9 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         </div>
     </div>
 {/if}
+
+<style>
+    .max-h-60vh {
+        max-height: 60vh;
+    }
+</style>

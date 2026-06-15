@@ -68,7 +68,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
                                     <CircleAlert size={14} class="shrink-0" />
                                 </div>
                             {:else if tab.path && tab.isDirty}
-                                <div class="mru-icon" style="--icon-color: #5deb47">
+                                <div class="mru-icon mru-icon--dirty">
                                     <SquarePen size={14} class="shrink-0" />
                                 </div>
                             {:else if !tab.path}
@@ -101,3 +101,9 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         </div>
     </div>
 {/if}
+
+<style>
+    .mru-icon--dirty {
+        --icon-color: #5deb47;
+    }
+</style>
