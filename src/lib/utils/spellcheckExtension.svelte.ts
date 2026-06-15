@@ -23,7 +23,6 @@ class TabSpellcheckCache {
       fingerprint: string;
       diagnostics: Diagnostic[];
       misspelledWords: Set<string>;
-      lastCheckTime: number;
     }
   >();
 
@@ -40,7 +39,6 @@ class TabSpellcheckCache {
       fingerprint,
       diagnostics,
       misspelledWords,
-      lastCheckTime: Date.now(),
     });
   }
 
@@ -50,25 +48,6 @@ class TabSpellcheckCache {
 
   invalidateAll() {
     this.tabCaches.clear();
-  }
-
-  prune() {
-    if (this.tabCaches.size > 10) {
-      const sorted = Array.from(this.tabCaches.entries()).sort((a, b) => b[1].lastCheckTime - a[1].lastCheckTime);
-      this.tabCaches = new Map(sorted.slice(0, 10));
-    }
-  }
-
-  invalidateForWords(words: string[]) {
-    const wordsLower = new Set(words.map((w) => w.toLowerCase()));
-    for (const [tabId, cache] of this.tabCaches) {
-      for (const word of cache.misspelledWords) {
-        if (wordsLower.has(word)) {
-          this.tabCaches.delete(tabId);
-          break;
-        }
-      }
-    }
   }
 }
 
@@ -91,10 +70,8 @@ function docFingerprint(doc: Text): string {
 }
 
 // Export function to invalidate cache when dictionary changes
-export function invalidateSpellcheckCache(tabId?: string, words?: string[]) {
-  if (words && words.length > 0) {
-    tabCache.invalidateForWords(words);
-  } else if (tabId) {
+export function invalidateSpellcheckCache(tabId?: string) {
+  if (tabId) {
     tabCache.invalidate(tabId);
   } else {
     tabCache.invalidateAll();
@@ -210,7 +187,6 @@ export const createSpellCheckLinter = () => {
         // Cache empty result
         if (tabId) {
           tabCache.set(tabId, docFp, [], new SvelteSet());
-          tabCache.prune();
         }
         return [];
       }
@@ -228,7 +204,6 @@ export const createSpellCheckLinter = () => {
         if (!misspelled) {
           if (tabId) {
             tabCache.set(tabId, docFp, [], new SvelteSet());
-            tabCache.prune();
           }
           return [];
         }
@@ -281,7 +256,6 @@ export const createSpellCheckLinter = () => {
         // Cache result for this tab
         if (tabId) {
           tabCache.set(tabId, docFp, diagnostics, newCache);
-          tabCache.prune();
         }
 
         return diagnostics;
@@ -347,10 +321,7 @@ export const spellCheckKeymap = [
           spellcheckState.misspelledCache.delete(w.toLowerCase());
         }
 
-        // 3. Invalidate tab caches containing these specific words
-        tabCache.invalidateForWords(words);
-
-        // 4. Background Persistence
+        // 3. Background Persistence
         Promise.all(words.map((w) => addToDictionary(w))).then(() => {
           // Optional: Resync to ensure consistency with backend file
           spellcheckState.refreshCustomDictionary();
