@@ -14,7 +14,7 @@ import {
 } from '$lib/stores/editorStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
-import { hashContent } from '$lib/utils/contentHash';
+import { hashContent, isDirty, updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
@@ -190,7 +190,7 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
       if (storeTab) {
         const normalizedContent = normalizeLineEndings(res.content);
         storeTab.lastSavedHash = hashContent(normalizedContent);
-        storeTab.isDirty = hashContent(storeTab.content) !== storeTab.lastSavedHash;
+        storeTab.isDirty = isDirty(storeTab.content, storeTab.lastSavedHash);
       }
     } catch (err) {
       AppError.handle('File:Read', err, {
@@ -353,7 +353,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         wordCount,
         lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
         contentLoaded: true,
-        isDirty: hashContent(normalizedContent) !== lastSavedHash,
+        isDirty: isDirty(normalizedContent, lastSavedHash),
       };
 
       logger.session.info('TabContentLoaded', {
@@ -399,7 +399,6 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
   const content = normalizeLineEndings(rawContent);
   const timestamp = t.modified || t.created || '';
 
-  const lastSavedHash = !t.path ? '' : hashContent(content);
   const sizeBytes = byteLength(content);
 
   const { lineCount, widestColumn } = computeLineStats(content);
@@ -411,7 +410,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     title: t.title,
     originalTitle: t.title,
     content,
-    lastSavedHash,
+    lastSavedHash: '',
     isDirty: t.is_dirty,
     path: t.path,
     sizeBytes,
@@ -429,6 +428,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     fileCheckFailed: t.file_check_failed || false,
     contentLoaded,
   };
+
+  if (t.path) updateSavedHash(editorTab);
 
   setLineChangeTracker(t.id, new LineChangeTracker());
   initTransientState(

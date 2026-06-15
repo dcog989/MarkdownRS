@@ -1,4 +1,4 @@
-import { hashContent } from '$lib/utils/contentHash';
+import { hashContent, isDirty } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
@@ -37,7 +37,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
     ...oldTab,
     title: newTitle,
     content,
-    isDirty: hashContent(content) !== oldTab.lastSavedHash,
+    isDirty: isDirty(content, oldTab.lastSavedHash),
     modified: now,
     formattedTimestamp: formatTimestampForDisplay(now),
     sizeBytes,

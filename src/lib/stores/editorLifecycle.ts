@@ -1,6 +1,6 @@
 import { initializeTabLoadState } from '$lib/services/sessionPersistence';
 import { CONFIG } from '$lib/utils/config';
-import { hashContent } from '$lib/utils/contentHash';
+import { updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
@@ -54,7 +54,7 @@ export function addTab(title: string = '', content: string = '') {
     title: finalTitle,
     originalTitle: finalTitle,
     content: normalizedContent,
-    lastSavedHash: hashContent(normalizedContent),
+    lastSavedHash: '',
     isDirty: false,
     path: null,
     sizeBytes,
@@ -71,6 +71,7 @@ export function addTab(title: string = '', content: string = '') {
     wordCountPending: false,
   };
 
+  updateSavedHash(newTab);
   initTabCaches(id, sizeBytes);
   initializeTabLoadState(id, true);
 

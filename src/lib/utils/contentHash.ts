@@ -18,3 +18,11 @@ export function hashContent(content: string): string {
 export function hasContentChanged(content: string, savedHash: string): boolean {
   return hashContent(content) !== savedHash;
 }
+
+export function isDirty(content: string, savedHash: string): boolean {
+  return hashContent(content) !== savedHash;
+}
+
+export function updateSavedHash(tab: { lastSavedHash: string; content: string }): void {
+  tab.lastSavedHash = hashContent(tab.content);
+}
