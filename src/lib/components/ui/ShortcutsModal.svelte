@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Keyboard, RotateCcw } from 'lucide-svelte';
-import { SvelteMap } from 'svelte/reactivity';
+
 import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
@@ -24,7 +24,7 @@ let conflictCommand = $state<{ command: Command; key: string; targetId: string }
 let shortcutVersion = $state(0);
 
 const nav = createListNavigation(
-    () => filteredShortcuts.length,
+    () => flatShortcuts.length,
     (index) => {
         const def = flatShortcuts[index];
         if (def) startRecording(def.id);
@@ -106,33 +106,27 @@ function resetShortcut(commandId: string) {
     shortcutVersion++;
 }
 
-const allShortcuts = $derived.by(() => {
-    shortcutVersion;
-    return shortcutManager.getDefinitions().map((def) => ({ ...def }));
-});
-
-const filteredShortcuts = $derived(
-    allShortcuts.filter((def) => {
-        if (searchQuery.length < 1) return true;
-        const query = searchQuery.toLowerCase();
-        const descriptionMatch = def.label.toLowerCase().includes(query);
-        const categoryMatch = def.category.toLowerCase().includes(query);
-        const commandMatch = def.id.toLowerCase().includes(query);
-        const shortcutMatch = shortcutManager
-            .getShortcutDisplay(def.id)
-            .toLowerCase()
-            .includes(query);
-        return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
-    }),
-);
-
 const categories = $derived.by(() => {
-    const map = new SvelteMap<string, Command[]>();
-    filteredShortcuts.forEach((def) => {
-        if (!map.has(def.category)) map.set(def.category, []);
-        map.get(def.category)?.push(def);
-    });
-    return Array.from(map.entries());
+    shortcutVersion;
+    const grouped = shortcutManager.getShortcutsByCategory();
+    const query = searchQuery.toLowerCase();
+    return Array.from(grouped.entries())
+        .map(([category, defs]) => [
+            category,
+            query.length < 1
+                ? defs
+                : defs.filter((def) => {
+                    const descriptionMatch = def.label.toLowerCase().includes(query);
+                    const categoryMatch = def.category.toLowerCase().includes(query);
+                    const commandMatch = def.id.toLowerCase().includes(query);
+                    const shortcutMatch = shortcutManager
+                        .getShortcutDisplay(def.id)
+                        .toLowerCase()
+                        .includes(query);
+                    return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
+                }),
+        ] as [string, Command[]])
+        .filter(([, defs]) => defs.length > 0);
 });
 
 // Create a flat array for proper indexing with selectedIndex
@@ -192,7 +186,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
         {/if}
         {#key shortcutVersion}
         <div class="space-y-6">
-            {#if filteredShortcuts.length > 0}
+            {#if categories.length > 0}
                 {@const globalIndex = { value: -1 }}
                 {#each categories as [ category, defs ] (category)}
                     <div>

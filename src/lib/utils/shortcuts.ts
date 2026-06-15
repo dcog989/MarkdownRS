@@ -9,10 +9,6 @@ export class KeyboardShortcutManager {
     this.commands.set(command.id, command);
   }
 
-  unregister(id: string): void {
-    this.commands.delete(id);
-  }
-
   setCustomMappings(mappings: Record<string, string>): void {
     this.customMappings = { ...mappings };
   }
@@ -56,14 +52,6 @@ export class KeyboardShortcutManager {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
-  }
-
-  clear(): void {
-    this.commands.clear();
-  }
-
-  isRegistered(id: string): boolean {
-    return this.commands.has(id);
   }
 
   async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
