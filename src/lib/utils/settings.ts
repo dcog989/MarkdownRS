@@ -7,7 +7,7 @@ const SETTINGS_EXCLUDED_KEYS = new Set([
   'isTabSwitching',
   'osPlatform',
   'availableThemes',
-  'gfmEnabled',
+
   'writerMode',
 ]);
 

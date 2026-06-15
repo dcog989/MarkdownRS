@@ -24,7 +24,7 @@ export const appState = $state({
   undoDepth: 100,
   previewFontFamily: 'system-ui, -apple-system, sans-serif',
   previewFontSize: 16,
-  gfmEnabled: true,
+
   markdownFlavor: 'gfm' as 'commonmark' | 'gfm',
   logLevel: 'info' as 'trace' | 'debug' | 'info' | 'warn' | 'error',
   formatOnSave: false,
