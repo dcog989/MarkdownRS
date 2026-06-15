@@ -170,7 +170,7 @@ $effect(() => {
             <div
                 class="pointer-events-none absolute top-0 bottom-0 left-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to right, var(--color-bg-panel), transparent);"></div>
+                style="background: linear-gradient(to right, var(--surface-2), transparent);"></div>
         {/if}
 
         <div
@@ -249,7 +249,7 @@ $effect(() => {
             <div
                 class="pointer-events-none absolute top-0 right-0 bottom-0 z-20 w-12"
                 transition:fade={{ duration: 150 }}
-                style="background: linear-gradient(to left, var(--color-bg-panel), transparent);"></div>
+                style="background: linear-gradient(to left, var(--surface-2), transparent);"></div>
         {/if}
     </div>
 

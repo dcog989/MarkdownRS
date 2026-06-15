@@ -18,11 +18,11 @@ class LineNumberMarker extends GutterMarker {
     span.style.display = 'block';
 
     if (this.alpha > 0) {
-      span.style.color = `color-mix(in srgb, var(--color-highlight-line), var(--color-fg-muted) ${Math.round((1 - this.alpha) * 100)}%)`;
+      span.style.color = `color-mix(in srgb, var(--highlight-line), var(--text-secondary) ${Math.round((1 - this.alpha) * 100)}%)`;
       span.style.fontWeight = 'bold';
 
       const shadowAlpha = Math.round(this.alpha * 40);
-      span.style.textShadow = `0 0 4px color-mix(in srgb, var(--color-highlight-line), transparent ${100 - shadowAlpha}%)`;
+      span.style.textShadow = `0 0 4px color-mix(in srgb, var(--highlight-line), transparent ${100 - shadowAlpha}%)`;
     }
 
     if (this.deletionAlpha > 0) {
@@ -32,7 +32,7 @@ class LineNumberMarker extends GutterMarker {
       delMarker.style.left = '0';
       delMarker.style.right = '0';
       delMarker.style.height = '2px';
-      delMarker.style.backgroundColor = `color-mix(in srgb, var(--color-danger), transparent ${Math.round((1 - this.deletionAlpha) * 100)}%)`;
+      delMarker.style.backgroundColor = `color-mix(in srgb, var(--danger), transparent ${Math.round((1 - this.deletionAlpha) * 100)}%)`;
       delMarker.style.pointerEvents = 'none';
       delMarker.style.zIndex = '10';
       span.appendChild(delMarker);

@@ -89,13 +89,13 @@ function close() {
                         : ''}"
                     style="
                         background-color: {index === nav.selectedIndex
-                        ? 'var(--color-accent-primary)'
+                        ? 'var(--accent-primary)'
                         : index % 2 === 1
                           ? 'var(--surface-row)'
                           : 'transparent'};
                         color: {index === nav.selectedIndex
-                        ? 'var(--color-fg-inverse)'
-                        : 'var(--color-fg-default)'};
+                        ? 'var(--text-inverse)'
+                        : 'var(--text-primary)'};
                     "
                     use:scrollIntoView={index === nav.selectedIndex}
                     onmouseenter={() => nav.select(index)}

@@ -195,8 +195,8 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
                                         style="color: {isActive && tab.isDirty
                                             ? '#5deb47'
                                             : isSelected
-                                              ? 'var(--color-fg-inverse)'
-                                              : 'var(--color-fg-muted)'};" />
+                                              ? 'var(--text-inverse)'
+                                              : 'var(--text-secondary)'};" />
                                 {:else}
                                     <Pencil
                                         size={14}
@@ -211,8 +211,8 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
                                     style="color: {isActive && tab.isDirty
                                         ? '#5deb47'
                                         : isSelected
-                                          ? 'var(--color-fg-inverse)'
-                                          : 'var(--color-accent-secondary)'}" />
+                                          ? 'var(--text-inverse)'
+                                          : 'var(--accent-secondary)'}" />
                             {:else}
                                 <FileText
                                     size={14}

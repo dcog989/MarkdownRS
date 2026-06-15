@@ -193,7 +193,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                                 <div
                                     class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
                                     style:background-color={isSelected
-                                        ? 'var(--color-accent-primary)'
+                                        ? 'var(--accent-primary)'
                                         : currentIndex % 2 === 1
                                           ? 'var(--surface-row)'
                                           : 'transparent'}
@@ -203,8 +203,8 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                                         type="button"
                                         class="flex-1 cursor-pointer text-left transition-colors outline-none"
                                         style:color={isSelected
-                                            ? 'var(--color-fg-inverse)'
-                                            : 'var(--color-fg-default)'}
+                                            ? 'var(--text-inverse)'
+                                            : 'var(--text-primary)'}
                                         onclick={() => startRecording(def.id)}>
                                         {def.label}
                                     </button>
@@ -227,8 +227,8 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                                                 type="button"
                                                 class="p-1 transition-all opacity-0 group-hover:opacity-100"
                                                 style:color={isSelected
-                                                    ? 'var(--color-fg-inverse)'
-                                                    : 'var(--color-accent-primary)'}
+                                                    ? 'var(--text-inverse)'
+                                                    : 'var(--accent-primary)'}
                                                 onclick={() => resetShortcut(def.id)}
                                                 title="Reset to default">
                                                 <RotateCcw size={14} />

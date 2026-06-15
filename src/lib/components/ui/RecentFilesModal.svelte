@@ -108,7 +108,7 @@ function handleKeydown(e: KeyboardEvent) {
                         class="group px-4 py-2.5 transition-colors"
                         class:bg-row-even={index % 2 === 1 && !isSelected}
                         style:background-color={isSelected
-                            ? 'var(--color-accent-primary)'
+                            ? 'var(--accent-primary)'
                             : index % 2 === 1
                               ? 'var(--surface-row)'
                               : 'transparent'}
@@ -124,15 +124,15 @@ function handleKeydown(e: KeyboardEvent) {
                                 <div
                                     class="truncate font-medium"
                                     style:color={isSelected
-                                        ? 'var(--color-fg-inverse)'
-                                        : 'var(--color-fg-default)'}>
+                                        ? 'var(--text-inverse)'
+                                        : 'var(--text-primary)'}>
                                     {getFilename(path)}
                                 </div>
                                 <div
                                     class="text-ui-sm truncate"
                                     style:color={isSelected
-                                        ? 'var(--color-fg-inverse)'
-                                        : 'var(--color-fg-muted)'}
+                                        ? 'var(--text-inverse)'
+                                        : 'var(--text-secondary)'}
                                     style:opacity={isSelected ? 0.8 : 0.6}>
                                     {path}
                                 </div>
@@ -142,8 +142,8 @@ function handleKeydown(e: KeyboardEvent) {
                                 onclick={(e) => handleRemove(path, e)}
                                 class="rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
                                 style:color={isSelected
-                                    ? 'var(--color-fg-inverse)'
-                                    : 'var(--color-fg-muted)'}
+                                    ? 'var(--text-inverse)'
+                                    : 'var(--text-secondary)'}
                                 style:background-color={isSelected
                                     ? 'rgba(255,255,255,0.15)'
                                     : 'transparent'}

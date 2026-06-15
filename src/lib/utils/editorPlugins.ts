@@ -130,7 +130,7 @@ const rulerTheme = EditorView.theme({
     top: '0',
     bottom: '0',
     width: '1px',
-    backgroundColor: 'var(--color-border-light)',
+    backgroundColor: 'var(--border-secondary)',
     opacity: '0.3',
     pointerEvents: 'none',
     zIndex: '0',

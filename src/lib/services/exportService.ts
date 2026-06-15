@@ -99,7 +99,7 @@ export class ExportService {
         body {
             margin: 0;
             padding: 2rem;
-            background-color: var(--color-bg-main);
+            background-color: var(--surface-1);
             color: var(--preview-fg-body);
             font-family: ${appContext.settings.previewFontFamily};
             line-height: 1.6;
@@ -107,8 +107,8 @@ export class ExportService {
         .prose { max-width: 800px; margin: 0 auto; }
 
         h1, h2, h3, h4, h5, h6 { color: var(--preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
-        h1 { font-size: 2em; border-bottom: 1px solid var(--color-border-main); padding-bottom: 0.3em; }
-        h2 { font-size: 1.5em; border-bottom: 1px solid var(--color-border-main); padding-bottom: 0.3em; }
+        h1 { font-size: 2em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
 
         a { color: var(--preview-fg-link); text-decoration: underline; }
 
@@ -141,9 +141,9 @@ export class ExportService {
         }
 
         table { width: 100%; border-collapse: collapse; margin: 1em 0; }
-        th, td { border: 1px solid var(--color-border-main); padding: 0.5em; text-align: left; }
+        th, td { border: 1px solid var(--border-primary); padding: 0.5em; text-align: left; }
         img { max-width: 100%; height: auto; }
-        hr { border: 0; border-top: 1px solid var(--color-border-main); margin: 2em 0; }
+        hr { border: 0; border-top: 1px solid var(--border-primary); margin: 2em 0; }
     </style>
 </head>
 <body>
@@ -179,7 +179,7 @@ export class ExportService {
       showToast('info', 'Generating PDF...');
 
       const computedStyle = getComputedStyle(document.documentElement);
-      const bgColor = computedStyle.getPropertyValue('--color-bg-main').trim() || null;
+      const bgColor = computedStyle.getPropertyValue('--surface-1').trim() || null;
 
       await callBackend(
         'export_to_pdf',
@@ -212,7 +212,7 @@ export class ExportService {
       showToast('info', 'Generating image...');
 
       const computedStyle = getComputedStyle(document.documentElement);
-      const bgColor = computedStyle.getPropertyValue('--color-bg-main').trim() || '#ffffff';
+      const bgColor = computedStyle.getPropertyValue('--surface-1').trim() || '#ffffff';
 
       const targetWidth = 1200;
       const scale = targetWidth / container.scrollWidth;

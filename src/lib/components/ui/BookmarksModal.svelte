@@ -329,7 +329,7 @@ function handleKeydown(e: KeyboardEvent) {
                         class="px-4 py-2.5 transition-colors overflow-hidden"
                         class:bg-row-even={index % 2 === 1 && !isSelected}
                         style:background-color={isSelected
-                            ? 'var(--color-accent-primary)'
+                            ? 'var(--accent-primary)'
                             : index % 2 === 1
                               ? 'var(--surface-row)'
                               : 'transparent'}
@@ -368,15 +368,15 @@ function handleKeydown(e: KeyboardEvent) {
                                     <div
                                         class="truncate font-medium"
                                         style:color={isSelected
-                                            ? 'var(--color-fg-inverse)'
-                                            : 'var(--color-fg-default)'}>
+                                            ? 'var(--text-inverse)'
+                                            : 'var(--text-primary)'}>
                                         {bookmark.title}
                                     </div>
                                     <div
                                         class="text-ui-sm truncate"
                                         style:color={isSelected
-                                            ? 'var(--color-fg-inverse)'
-                                            : 'var(--color-fg-muted)'}
+                                            ? 'var(--text-inverse)'
+                                            : 'var(--text-secondary)'}
                                         style:opacity={isSelected ? 0.8 : 0.6}>
                                         {bookmark.path}
                                     </div>
@@ -384,7 +384,7 @@ function handleKeydown(e: KeyboardEvent) {
                                         <div class="mt-1 flex flex-wrap items-center gap-1">
                                             <span
                                                 style:color={isSelected
-                                                    ? 'var(--color-fg-inverse)'
+                                                    ? 'var(--text-inverse)'
                                                     : 'currentColor'}>
                                                 <Tag
                                                     size={12}
@@ -399,8 +399,8 @@ function handleKeydown(e: KeyboardEvent) {
                                                         ? 'rgba(255,255,255,0.2)'
                                                         : 'var(--surface-input)'}
                                                     style:color={isSelected
-                                                        ? 'var(--color-fg-inverse)'
-                                                        : 'var(--color-fg-muted)'}>
+                                                        ? 'var(--text-inverse)'
+                                                        : 'var(--text-secondary)'}>
                                                     {tag}
                                                 </span>
                                             {/each}
@@ -409,8 +409,8 @@ function handleKeydown(e: KeyboardEvent) {
                                     <div
                                         class="text-ui-sm mt-1"
                                         style:color={isSelected
-                                            ? 'var(--color-fg-inverse)'
-                                            : 'var(--color-fg-muted)'}
+                                            ? 'var(--text-inverse)'
+                                            : 'var(--text-secondary)'}
                                         style:opacity={isSelected ? 0.7 : 0.5}>
                                         Added: {formatDate(bookmark.created)}
                                         {#if bookmark.last_accessed}
@@ -427,8 +427,8 @@ function handleKeydown(e: KeyboardEvent) {
                                         }}
                                         class="rounded p-1.5 transition-colors"
                                         style:color={isSelected
-                                            ? 'var(--color-fg-inverse)'
-                                            : 'var(--color-fg-muted)'}
+                                            ? 'var(--text-inverse)'
+                                            : 'var(--text-secondary)'}
                                         style:background-color={isSelected
                                             ? 'rgba(255,255,255,0.15)'
                                             : 'transparent'}
@@ -447,8 +447,8 @@ function handleKeydown(e: KeyboardEvent) {
                                         onclick={(e) => handleDelete(bookmark.id, e)}
                                         class="rounded p-1.5 transition-colors"
                                         style:color={isSelected
-                                            ? 'var(--color-fg-inverse)'
-                                            : 'var(--color-danger-text)'}
+                                            ? 'var(--text-inverse)'
+                                            : 'var(--danger-text)'}
                                         style:background-color={isSelected
                                             ? 'rgba(255,255,255,0.15)'
                                             : 'transparent'}

@@ -95,11 +95,11 @@ function close() {
                 type="button"
                 class="bg-border-main hover-surface flex items-start gap-3 rounded border p-3 text-left transition-colors outline-none"
                 style="background-color: {isSelected
-                  ? 'var(--color-accent-primary)'
-                  : 'var(--color-bg-panel)'};
+                  ? 'var(--accent-primary)'
+                  : 'var(--surface-2)'};
                   color: {isSelected
-                  ? 'var(--color-fg-inverse)'
-                  : 'var(--color-fg-default)'};"
+                  ? 'var(--text-inverse)'
+                  : 'var(--text-primary)'};"
                 use:scrollIntoView={isSelected}
                 onmouseenter={() => nav.select(globalIndex)}
                 onclick={() => handleOperation(operation.id)}>
@@ -108,7 +108,7 @@ function close() {
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="text-sm font-medium whitespace-nowrap">{operation.label}</div>
-                  <div class="mt-0.5 truncate text-xs" style:color={isSelected ? 'var(--color-fg-inverse)' : 'var(--color-fg-muted)'}>
+                  <div class="mt-0.5 truncate text-xs" style:color={isSelected ? 'var(--text-inverse)' : 'var(--text-secondary)'}>
                     {#if shortcut}
                       <span class="opacity-60">{shortcut}</span>
                       <span class="mx-1 opacity-30">·</span>

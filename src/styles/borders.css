@@ -68,7 +68,7 @@
 }
 
 .border-border-light {
-  border-color: var(--color-border-light);
+  border-color: var(--border-secondary);
 }
 
 .border-danger\/30 {
