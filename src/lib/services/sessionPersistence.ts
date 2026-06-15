@@ -48,113 +48,98 @@ type RustTabState = {
   original_index?: number | null;
 };
 
-class SessionPersistenceManager {
-  private saveQueue = Promise.resolve();
-  private savePending = false;
+let saveInProgress = false;
 
-  async requestSave(): Promise<void> {
-    if (!editorStore.sessionDirty) {
-      return;
-    }
-
-    if (!this.savePending) {
-      this.savePending = true;
-      this.saveQueue = this.saveQueue.then(async () => {
-        await this.executeSave();
-        this.savePending = false;
-      });
-    }
+export async function persistSession(): Promise<void> {
+  if (!editorStore.sessionDirty || saveInProgress) {
+    return;
   }
 
-  private async executeSave(): Promise<void> {
-    const start = performance.now();
+  saveInProgress = true;
+  const start = performance.now();
 
-    try {
-      const mruPositionMap = new Map<string, number>();
-      for (const [index, tabId] of editorStore.mruStack.entries()) {
-        mruPositionMap.set(tabId, index);
-      }
-
-      // 1. Map Active Tabs
-      const activeTabs = editorStore.tabs;
-      const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
-        const ts = getTransientState(t.id);
-        const needsContent = ts ? ts.contentChanged || !ts.isPersisted : true;
-
-        return {
-          id: t.id,
-          path: t.path,
-          title: t.title,
-          content: needsContent ? t.content : null,
-          is_dirty: t.isDirty,
-          scroll_percentage: ts?.scrollPercentage ?? 0,
-          created: t.created || null,
-          modified: t.modified || null,
-          is_pinned: t.isPinned || false,
-          custom_title: t.customTitle || null,
-          file_check_failed: t.fileCheckFailed || false,
-          file_check_performed: ts?.fileCheckPerformed ?? false,
-          mru_position: mruPositionMap.get(t.id) ?? null,
-          sort_index: index,
-          original_index: null,
-        };
-      });
-
-      // 2. Map Closed Tabs
-      const closedTabs: RustTabState[] = editorStore.closedTabsHistory.map((entry, index) => {
-        const ts = getTransientState(entry.tab.id);
-        const needsContent = entry.tab.contentLoaded && (ts ? ts.contentChanged || !ts.isPersisted : true);
-
-        return {
-          id: entry.tab.id,
-          path: entry.tab.path,
-          title: entry.tab.title,
-          content: needsContent ? entry.tab.content : null,
-          is_dirty: entry.tab.isDirty,
-          scroll_percentage: ts?.scrollPercentage ?? 0,
-          created: entry.tab.created || null,
-          modified: entry.tab.modified || null,
-          is_pinned: entry.tab.isPinned || false,
-          custom_title: entry.tab.customTitle || null,
-          file_check_failed: entry.tab.fileCheckFailed || false,
-          file_check_performed: ts?.fileCheckPerformed ?? false,
-          mru_position: null,
-          sort_index: index,
-          original_index: entry.index,
-        };
-      });
-
-      await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
-
-      const tabsWithContent = activeRustTabs.filter((t) => t.content !== null).length;
-      logger.session.info('SessionSaved', {
-        duration: formatDuration(start),
-        activeTabs: activeRustTabs.length,
-        closedTabs: closedTabs.length,
-        withContent: tabsWithContent,
-      });
-
-      // 3. Update persistence state on success
-      editorStore.sessionDirty = false;
-
-      activeTabs.forEach((t) => {
-        markTabPersisted(t.id);
-      });
-
-      editorStore.closedTabsHistory.forEach((entry) => {
-        updateTransientState(entry.tab.id, { contentChanged: false, isPersisted: true });
-      });
-    } catch (err) {
-      editorStore.sessionDirty = true;
-      AppError.handle('Session:Save', err, {
-        showToast: false,
-        severity: 'warning',
-      });
+  try {
+    const mruPositionMap = new Map<string, number>();
+    for (const [index, tabId] of editorStore.mruStack.entries()) {
+      mruPositionMap.set(tabId, index);
     }
+
+    const activeTabs = editorStore.tabs;
+    const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
+      const ts = getTransientState(t.id);
+      const needsContent = ts ? ts.contentChanged || !ts.isPersisted : true;
+
+      return {
+        id: t.id,
+        path: t.path,
+        title: t.title,
+        content: needsContent ? t.content : null,
+        is_dirty: t.isDirty,
+        scroll_percentage: ts?.scrollPercentage ?? 0,
+        created: t.created || null,
+        modified: t.modified || null,
+        is_pinned: t.isPinned || false,
+        custom_title: t.customTitle || null,
+        file_check_failed: t.fileCheckFailed || false,
+        file_check_performed: ts?.fileCheckPerformed ?? false,
+        mru_position: mruPositionMap.get(t.id) ?? null,
+        sort_index: index,
+        original_index: null,
+      };
+    });
+
+    const closedTabs: RustTabState[] = editorStore.closedTabsHistory.map((entry, index) => {
+      const ts = getTransientState(entry.tab.id);
+      const needsContent = entry.tab.contentLoaded && (ts ? ts.contentChanged || !ts.isPersisted : true);
+
+      return {
+        id: entry.tab.id,
+        path: entry.tab.path,
+        title: entry.tab.title,
+        content: needsContent ? entry.tab.content : null,
+        is_dirty: entry.tab.isDirty,
+        scroll_percentage: ts?.scrollPercentage ?? 0,
+        created: entry.tab.created || null,
+        modified: entry.tab.modified || null,
+        is_pinned: entry.tab.isPinned || false,
+        custom_title: entry.tab.customTitle || null,
+        file_check_failed: entry.tab.fileCheckFailed || false,
+        file_check_performed: ts?.fileCheckPerformed ?? false,
+        mru_position: null,
+        sort_index: index,
+        original_index: entry.index,
+      };
+    });
+
+    await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
+
+    const tabsWithContent = activeRustTabs.filter((t) => t.content !== null).length;
+    logger.session.info('SessionSaved', {
+      duration: formatDuration(start),
+      activeTabs: activeRustTabs.length,
+      closedTabs: closedTabs.length,
+      withContent: tabsWithContent,
+    });
+
+    editorStore.sessionDirty = false;
+
+    activeTabs.forEach((t) => {
+      markTabPersisted(t.id);
+    });
+
+    editorStore.closedTabsHistory.forEach((entry) => {
+      updateTransientState(entry.tab.id, { contentChanged: false, isPersisted: true });
+    });
+  } catch (err) {
+    editorStore.sessionDirty = true;
+    AppError.handle('Session:Save', err, {
+      showToast: false,
+      severity: 'warning',
+    });
+  } finally {
+    saveInProgress = false;
   }
 }
-
-const persistenceManager = new SessionPersistenceManager();
 
 export async function initializeTabFileState(tab: EditorTab): Promise<void> {
   if (!tab.path) {
@@ -212,10 +197,6 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
       additionalInfo: { path: tab.path },
     });
   }
-}
-
-export async function persistSession(): Promise<void> {
-  await persistenceManager.requestSave();
 }
 
 enum TabLoadState {
