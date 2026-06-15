@@ -1,3 +1,10 @@
+import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
+import { appContext } from '$lib/stores/state.svelte.ts';
+import { showToast } from '$lib/stores/toastStore.svelte';
+import { getActiveEditorView } from '$lib/utils/editorCommands';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
+
 export type SettingDef = {
   key: string;
   label: string;
@@ -12,9 +19,20 @@ export type SettingDef = {
   tooltip?: string;
   visibleWhen?: { key: string; value: unknown };
   groupWith?: string;
+  onChange?: (newValue: unknown, oldValue: unknown) => void;
 };
 
 export function getSettingDefinitions(availableThemes: string[], isWindows: boolean): SettingDef[] {
+  const reloadSpellcheck = () => {
+    spellcheckState.clear();
+    invalidateSpellcheckCache();
+    appContext.spellcheck.init(true).then(() => {
+      showToast('success', 'Spellcheck settings updated');
+      const activeView = getActiveEditorView();
+      if (activeView) triggerImmediateLint(activeView);
+    });
+  };
+
   return [
     {
       key: 'logLevel',
@@ -23,6 +41,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Advanced',
       defaultValue: 'info',
       options: ['trace', 'debug', 'info', 'warn', 'error'],
+      onChange: () => showToast('info', 'Restart required to apply log level changes'),
     },
 
     {
@@ -32,6 +51,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Appearance',
       defaultValue: 'System',
       options: availableThemes,
+      onChange: () => syncThemeFromActiveTheme(),
     },
 
     {
@@ -351,6 +371,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Spellcheck',
       defaultValue: ['en-US'],
       tooltip: 'Select one or more languages, duplicate words are removed by the app.',
+      onChange: reloadSpellcheck,
     },
     {
       key: 'technicalDictionaries',
@@ -359,6 +380,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Spellcheck',
       defaultValue: false,
       tooltip: 'Include non-language dictionaries (coding, companies, frameworks, etc.).',
+      onChange: reloadSpellcheck,
     },
     {
       key: 'scienceDictionaries',
@@ -367,6 +389,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Spellcheck',
       defaultValue: false,
       tooltip: 'Includes scientific (670k+) and medical (98k+) terms. Warning: Large download and higher memory usage.',
+      onChange: reloadSpellcheck,
     },
 
     ...(isWindows

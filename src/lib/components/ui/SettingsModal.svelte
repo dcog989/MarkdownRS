@@ -1,20 +1,13 @@
 <script lang="ts">
 import { Database, Keyboard, Settings } from 'lucide-svelte';
-import { syncThemeFromActiveTheme } from '$lib/stores/appState.svelte';
 import { toggleData, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
-import { getActiveEditorView } from '$lib/utils/editorCommands';
 import { saveSettings } from '$lib/utils/settings';
 import { getSettingDefinitions, type SettingDef } from '$lib/utils/settingsDefinitions';
 import { shortcutManager } from '$lib/utils/shortcuts';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import {
-    invalidateSpellcheckCache,
-    triggerImmediateLint,
-} from '$lib/utils/spellcheckExtension.svelte.ts';
 import { DEFAULT_THEME_NAMES, LEGACY_THEME_NAMES } from '$lib/utils/themes';
 import Modal from './Modal.svelte';
 import ModalSearchHeader from './ModalSearchHeader.svelte';
@@ -116,35 +109,17 @@ function getSettingValue(key: string, defaultValue: unknown): unknown {
     return (appContext.app as Record<string, unknown>)[key] ?? defaultValue;
 }
 
-function updateSetting(key: string, value: unknown, type: string) {
+function updateSetting(setting: SettingDef, value: unknown) {
     let finalValue = value;
-    if (type === 'number' || type === 'range') {
+    if (setting.type === 'number' || setting.type === 'range') {
         finalValue = Number(value);
     }
 
-    const oldValue = (appContext.app as Record<string, unknown>)[key];
+    const oldValue = (appContext.app as Record<string, unknown>)[setting.key];
     if (oldValue !== finalValue && JSON.stringify(oldValue) !== JSON.stringify(finalValue)) {
-        (appContext.app as Record<string, unknown>)[key] = finalValue;
+        (appContext.app as Record<string, unknown>)[setting.key] = finalValue;
         saveSettings();
-
-        if (key === 'logLevel') {
-            showToast('info', 'Restart required to apply log level changes');
-        } else if (key === 'activeTheme') {
-            syncThemeFromActiveTheme();
-        } else if (
-            key === 'languageDictionaries' ||
-            key === 'technicalDictionaries' ||
-            key === 'scienceDictionaries'
-        ) {
-            spellcheckState.clear();
-            invalidateSpellcheckCache();
-
-            appContext.spellcheck.init(true).then(() => {
-                showToast('success', 'Spellcheck settings updated');
-                const activeView = getActiveEditorView();
-                if (activeView) triggerImmediateLint(activeView);
-            });
-        }
+        setting.onChange?.(finalValue, oldValue);
     }
 }
 </script>
@@ -206,7 +181,7 @@ function updateSetting(key: string, value: unknown, type: string) {
                             <SettingInput
                                 {setting}
                                 value={getSettingValue(setting.key, setting.defaultValue)}
-                                onChange={(v) => updateSetting(setting.key, v, setting.type)}
+                                onChange={(v) => updateSetting(setting, v)}
                                 {isContextMenuEnabled}
                                 {isCheckingContextMenu}
                                 onToggleContextMenu={toggleContextMenu} />
