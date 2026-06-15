@@ -6,6 +6,7 @@ import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { appContext } from '$lib/stores/state.svelte.ts';
 import { createListNavigation } from '$lib/utils/listNavigation.svelte';
+import { scrollIntoView } from '$lib/utils/modalUtils';
 import { saveSettings } from '$lib/utils/settings';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
@@ -103,19 +104,6 @@ function resetShortcut(commandId: string) {
     shortcutManager.setCustomMappings(appContext.app.customShortcuts);
     saveSettings();
     shortcutVersion++;
-}
-
-function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-    if (isSelected) {
-        node.scrollIntoView({ block: 'nearest' });
-    }
-    return {
-        update(newIsSelected: boolean) {
-            if (newIsSelected) {
-                node.scrollIntoView({ block: 'nearest' });
-            }
-        },
-    };
 }
 
 const allShortcuts = $derived.by(() => {
