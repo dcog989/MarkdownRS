@@ -8,8 +8,8 @@ import Logo from '$lib/components/ui/Logo.svelte';
 import StatusBar from '$lib/components/ui/StatusBar.svelte';
 import TabBar from '$lib/components/ui/TabBar.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
-import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 
 const splitResize = createSplitResize();

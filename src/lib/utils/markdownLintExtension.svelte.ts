@@ -1,8 +1,8 @@
 import { type Diagnostic, linter } from '@codemirror/lint';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { callBackendSafe } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
-import { markdownLintState } from '$lib/utils/markdownLint.svelte.ts';
+import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 import type { AppEditorView } from '../../global';
 
 function highestSeverity(diagnostics: Diagnostic[]): 'error' | 'warning' | 'info' | 'clean' {

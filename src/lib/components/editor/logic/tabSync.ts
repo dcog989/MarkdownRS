@@ -5,13 +5,13 @@ import { initializeTabFileState } from '$lib/services/sessionPersistence';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { getHistoryState, getTransientState, updateContent, updateHistoryState } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import type { ScrollManager } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
 import { setActiveEditorView } from '$lib/utils/editorCommands';
 import { logger } from '$lib/utils/logger';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import { applyImmediateSpellcheck } from '$lib/utils/spellcheckExtension.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+import { applyImmediateSpellcheck } from '$lib/utils/spellcheckExtension.svelte';
 import { calculateCursorMetrics } from '$lib/utils/textMetrics';
 import type { AppEditorView } from '../../../../global';
 

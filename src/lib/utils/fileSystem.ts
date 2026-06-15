@@ -13,7 +13,7 @@ import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.sve
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import { addTab, closeTab, reopenClosedTab, updateTabFields, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { logger } from '$lib/utils/logger';
 import {

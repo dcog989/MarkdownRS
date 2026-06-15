@@ -11,7 +11,7 @@ import type { EditorView } from '@codemirror/view';
 import { ChevronDown, ChevronRight, Replace, Search, X } from 'lucide-svelte';
 import { onMount, tick, untrack } from 'svelte';
 import Input from '$lib/components/ui/Input.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import {
     clearSearch,
@@ -20,7 +20,7 @@ import {
     searchState,
     selectNearestMatch,
     updateSearchEditor,
-} from '$lib/utils/searchManager.svelte.ts';
+} from '$lib/utils/searchManager.svelte';
 import { debounce } from '$lib/utils/timing';
 
 let { isOpen = $bindable(false), cmView } = $props<{

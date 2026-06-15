@@ -1,4 +1,4 @@
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { hideTooltip, showTooltip } from '$lib/stores/tooltipStore.svelte';
 
 export function tooltip(node: HTMLElement, content: string | undefined | null) {

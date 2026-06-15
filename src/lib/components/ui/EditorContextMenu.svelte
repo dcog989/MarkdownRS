@@ -22,7 +22,7 @@ import Submenu from '$lib/components/ui/Submenu.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 
 let {
     x,

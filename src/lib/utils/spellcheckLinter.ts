@@ -8,7 +8,7 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { logger } from '$lib/utils/logger';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import type { AppEditorView } from '../../global';
 import { docFingerprint, tabCache } from './spellcheckCache';
 

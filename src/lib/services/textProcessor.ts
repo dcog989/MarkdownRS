@@ -1,5 +1,5 @@
 import { getOperation, type OperationId } from '$lib/config/textOperationsRegistry';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import * as ClientLogic from '$lib/utils/clientTransforms';
 import { formatMarkdown } from '$lib/utils/formatterRust';
 import { generateDocumentToc } from '$lib/utils/tocRust';

@@ -1,6 +1,6 @@
-import { markdownLintState } from '$lib/utils/markdownLint.svelte.ts';
-import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { markdownLintState } from '$lib/utils/markdownLint.svelte';
+import { scrollSync } from '$lib/utils/scrollSync.svelte';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import { appState } from './appState.svelte';
 import { bookmarkStore } from './bookmarkStore.svelte';
 import { dialogStore } from './dialogStore.svelte';

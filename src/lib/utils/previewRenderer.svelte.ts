@@ -2,7 +2,7 @@ import { untrack } from 'svelte';
 import { updateTabFields } from '$lib/stores/editorStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { renderMarkdown } from '$lib/utils/markdownRust';
-import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
+import { scrollSync } from '$lib/utils/scrollSync.svelte';
 
 export class PreviewRenderer {
   isRendering = $state(false);

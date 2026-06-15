@@ -1,7 +1,7 @@
 import { watch } from '@tauri-apps/plugin-fs';
 import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { AppError } from '$lib/utils/errorHandling';

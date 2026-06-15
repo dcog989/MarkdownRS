@@ -1,6 +1,6 @@
 import { save } from '@tauri-apps/plugin-dialog';
 import { domToPng, domToSvg, domToWebp } from 'modern-screenshot';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';

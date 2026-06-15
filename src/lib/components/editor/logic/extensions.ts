@@ -20,7 +20,7 @@ import {
   smartCompleteAnyWord,
 } from '$lib/components/editor/codemirror/config';
 import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
@@ -33,9 +33,9 @@ import {
   horizontalRulePlugin,
   inlineCodePlugin,
 } from '$lib/utils/markdownExtensions';
-import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte.ts';
+import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
-import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
+import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte';
 import { userThemeExtension } from '$lib/utils/themeMapper';
 
 const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {

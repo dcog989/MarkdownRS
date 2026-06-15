@@ -3,7 +3,7 @@ import { FilePlus, Files, Save } from 'lucide-svelte';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import Submenu from '$lib/components/ui/Submenu.svelte';
 import { addTab } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { closeManyTabs, saveCurrentFile } from '$lib/utils/fileSystem';
 
 let { x, y, onClose } = $props<{

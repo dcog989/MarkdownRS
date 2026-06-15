@@ -1,5 +1,5 @@
 import type { Command } from '$lib/commands/commands';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 
 export class KeyboardShortcutManager {
   private commands: Map<string, Command> = new Map();

@@ -1,7 +1,7 @@
 <script lang="ts">
 import Modal from '$lib/components/ui/Modal.svelte';
-import { resolveDialog } from '$lib/stores/dialogStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { resolveDialog } from '$lib/stores/dialogStore.svelte';
+import { appContext } from '$lib/stores/state.svelte';
 
 const buttons = $derived.by(() => {
   const opts = appContext.ui.dialog.options;

@@ -6,9 +6,9 @@ import {
     toggleBookmarks,
     toggleCommandPalette,
     toggleSettings,
-} from '$lib/stores/interfaceStore.svelte.ts';
+} from '$lib/stores/interfaceStore.svelte';
 import { toggleSplitView } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';

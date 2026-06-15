@@ -14,25 +14,25 @@ import {
     editorStore,
     getHistoryState,
     getLineChangeTracker,
+    getTransientState,
     updateContent,
     updateCursor,
     updateHistoryState,
     updateScroll,
 } from '$lib/stores/editorStore.svelte';
-import { getTransientState } from '$lib/stores/editorStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { registerEditorInstance, registerFlushFn, unregisterEditorInstance, unregisterFlushFn } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import {
     invalidateSpellcheckCache,
     refreshSpellcheck,
     spellCheckKeymap,
     triggerImmediateLint,
-} from '$lib/utils/spellcheckExtension.svelte.ts';
+} from '$lib/utils/spellcheckExtension.svelte';
 
 let { tabId } = $props<{ tabId: string }>();
 

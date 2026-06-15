@@ -2,7 +2,7 @@
 import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import { markdownLintState } from '$lib/utils/markdownLint.svelte.ts';
+import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 
 const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> = {
     error: { icon: CircleAlert, color: 'text-danger' },

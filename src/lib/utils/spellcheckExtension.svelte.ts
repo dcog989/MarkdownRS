@@ -2,7 +2,7 @@ import { forceLinting } from '@codemirror/lint';
 import type { EditorView } from '@codemirror/view';
 import { SvelteSet } from 'svelte/reactivity';
 import { addToDictionary } from '$lib/utils/fileSystem';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import { invalidateSpellcheckCache, tabCache } from './spellcheckCache';
 import {
   applyImmediateSpellcheck,

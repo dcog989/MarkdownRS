@@ -1,4 +1,4 @@
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 
 export function createSplitResize() {

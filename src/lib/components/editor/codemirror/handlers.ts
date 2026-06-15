@@ -1,5 +1,5 @@
 import { EditorView } from '@codemirror/view';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 
 function getWhitespaceState(state: EditorView['state'], pos: number): { isBefore: boolean; isAfter: boolean } {
   const charBefore = pos > 0 ? state.sliceDoc(pos - 1, pos) : '';

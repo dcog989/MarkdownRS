@@ -5,8 +5,8 @@ import Logo from '$lib/components/ui/Logo.svelte';
 import { createAppInit } from '$lib/services/appInit.svelte';
 import { setupAutoSave } from '$lib/services/autoSave.svelte';
 import { loadTabContentLazy } from '$lib/services/sessionPersistence';
-import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte';
 import { logger } from '$lib/utils/logger';
 import { formatDuration } from '$lib/utils/timing';
 

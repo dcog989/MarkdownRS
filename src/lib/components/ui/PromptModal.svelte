@@ -1,7 +1,7 @@
 <script lang="ts">
 import { tick } from 'svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { dialogStore, resolvePrompt } from '$lib/stores/dialogStore.svelte.ts';
+import { dialogStore, resolvePrompt } from '$lib/stores/dialogStore.svelte';
 
 let inputEl: HTMLInputElement | undefined = $state();
 let inputValue = $state('');

@@ -5,10 +5,10 @@ import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
 import { toggleOrientation } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { PreviewRenderer } from '$lib/utils/previewRenderer.svelte.ts';
+import { PreviewRenderer } from '$lib/utils/previewRenderer.svelte';
 
 let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();

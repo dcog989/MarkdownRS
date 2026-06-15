@@ -1,4 +1,4 @@
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { autoSaveCurrentFile } from '$lib/utils/fileSystem';
 import { logger } from '$lib/utils/logger';
 

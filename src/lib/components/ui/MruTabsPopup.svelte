@@ -2,7 +2,7 @@
 import { CircleAlert, FileText, PencilLine, SquarePen } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 
 interface Props {
     isOpen: boolean;

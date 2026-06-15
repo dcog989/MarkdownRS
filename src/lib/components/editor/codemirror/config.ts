@@ -11,7 +11,7 @@ import { indentUnit } from '@codemirror/language';
 import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
 import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 
 function toCmKey(registryKey: string): string {
   const parts = registryKey.split('+').map((p) => p.toLowerCase());

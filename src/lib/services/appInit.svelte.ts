@@ -1,6 +1,6 @@
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { addTab, editorStore } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { loadSession, openFileByPath, persistSession, persistSessionDebounced } from '$lib/utils/fileSystem';

@@ -3,7 +3,7 @@ import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lu
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { focusOnMount } from '$lib/utils/dom';
 import { requestCloseTab } from '$lib/utils/fileSystem';

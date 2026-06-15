@@ -9,8 +9,8 @@ import {
 import { confirmDialog, promptDialog } from '$lib/stores/dialogStore.svelte';
 import { pushToMru, reorderTabs, togglePin, updateTabTitle } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorTypes';
-import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte';
+import { appContext } from '$lib/stores/state.svelte';
 import { callBackend } from '$lib/utils/backend';
 import {
   closeManyTabs,

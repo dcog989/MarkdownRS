@@ -5,7 +5,7 @@ import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
 import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
 import { syncThemeFromActiveTheme } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { logger } from '$lib/utils/logger';
 import { shortcutManager } from '$lib/utils/shortcuts';
 import { getThemeCss } from '$lib/utils/themes';

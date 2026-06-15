@@ -12,19 +12,19 @@ import { setupSelectionDragScroll } from '$lib/components/editor/logic/selection
 import { TabSyncManager } from '$lib/components/editor/logic/tabSync';
 import { createUpdateListener } from '$lib/components/editor/logic/updateListener';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { ScrollManager } from '$lib/utils/cmScroll';
 import { getActiveEditorView, setActiveEditorView } from '$lib/utils/editorCommands';
 import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte.ts';
+import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
-import { scrollSync } from '$lib/utils/scrollSync.svelte.ts';
-import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte.ts';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte.ts';
+import { scrollSync } from '$lib/utils/scrollSync.svelte';
+import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte';
 import type { AppEditorView } from '../../../global';
 
 let {

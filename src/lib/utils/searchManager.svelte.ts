@@ -2,8 +2,8 @@ import { SearchQuery, setSearchQuery } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
 import { SvelteMap } from 'svelte/reactivity';
 import { updateContent } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
-import { searchState } from './searchState.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
+import { searchState } from './searchState.svelte';
 
 export { searchState };
 

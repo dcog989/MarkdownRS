@@ -1,9 +1,9 @@
 import { syncThemeFromActiveTheme } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte.ts';
-import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte.ts';
+import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte';
 
 export function reloadSpellcheck() {
   spellcheckState.clear();

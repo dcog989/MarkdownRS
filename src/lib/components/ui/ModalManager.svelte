@@ -10,7 +10,7 @@ import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
 import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { sortCommands } from '$lib/utils/commandPaletteSort';
 import { openFileByPath } from '$lib/utils/fileSystem';
 

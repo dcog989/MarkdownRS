@@ -3,8 +3,8 @@ import { CircleAlert, CircleCheckBig, CircleX, Info, X } from 'lucide-svelte';
 import { onMount } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import { fly } from 'svelte/transition';
-import { appContext } from '$lib/stores/state.svelte.ts';
-import { dismissToast } from '$lib/stores/toastStore.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
+import { dismissToast } from '$lib/stores/toastStore.svelte';
 
 const activeTimers = new SvelteSet<string>();
 

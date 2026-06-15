@@ -13,7 +13,7 @@ import {
     updateAccessTime,
     updateBookmark,
 } from '$lib/stores/bookmarkStore.svelte';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import { appContext } from '$lib/stores/state.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { getFilename } from '$lib/utils/fileValidation';

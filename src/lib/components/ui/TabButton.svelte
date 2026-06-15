@@ -1,8 +1,8 @@
 <script lang="ts">
 import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
-import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
-import { appContext } from '$lib/stores/state.svelte.ts';
+import type { EditorTab } from '$lib/stores/editorStore.svelte';
+import { appContext } from '$lib/stores/state.svelte';
 import { formatFileSize } from '$lib/utils/fileValidation';
 
 interface Props {
