@@ -1,4 +1,6 @@
-import { GutterMarker, gutter, lineNumbers, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import type { Extension } from '@codemirror/state';
+import { GutterMarker, gutter, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { appContext } from '$lib/stores/state.svelte';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 
@@ -42,87 +44,91 @@ class LineNumberMarker extends GutterMarker {
   }
 }
 
-export function createRecentChangesHighlighter(tracker: LineChangeTracker | undefined) {
-  if (!tracker || (appContext.settings.recentChangesCount === 0 && appContext.settings.recentChangesTimespan === 0)) {
-    return [lineNumbers()];
-  }
+export function createRecentChangesHighlighter(
+  tracker: LineChangeTracker | undefined,
+  onContextMenu?: ContextMenuCallback,
+) {
+  const hasTracking = !!(
+    tracker &&
+    appContext.settings.recentChangesCount > 0 &&
+    appContext.settings.recentChangesTimespan > 0
+  );
 
-  return [
-    ViewPlugin.fromClass(
-      class {
-        update(update: ViewUpdate) {
-          if (!update.docChanged || !tracker) return;
+  const result: Extension[] = [];
 
-          const isHistoryAction = update.transactions.some((tr) => tr.isUserEvent('undo') || tr.isUserEvent('redo'));
+  if (hasTracking) {
+    result.push(
+      ViewPlugin.fromClass(
+        class {
+          update(update: ViewUpdate) {
+            if (!update.docChanged || !tracker) return;
 
-          // 1. Map existing markers to their new positions
-          // This handles shifting lines up/down for all operations (including undo/redo)
-          tracker.mapLines((lineNo) => {
-            try {
-              const oldLine = update.startState.doc.line(lineNo);
-              const newPos = update.changes.mapPos(oldLine.from);
-              return update.state.doc.lineAt(newPos).number;
-            } catch {
-              return null;
-            }
-          });
+            const isHistoryAction = update.transactions.some((tr) => tr.isUserEvent('undo') || tr.isUserEvent('redo'));
 
-          // 2. Identify the lines affected by the current change
-          const affectedLines = new Set<number>();
-          const deletions = new Set<number>();
-
-          update.changes.iterChanges((fromA, toA, fromB, toB) => {
-            const docA = update.startState.doc;
-            const docB = update.state.doc;
-
-            const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
-            const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
-
-            // Check for net deletion
-            if (linesA > linesB) {
-              const lineNo = docB.lineAt(fromB).number;
-              deletions.add(lineNo);
-            }
-
-            const startLine = docB.lineAt(fromB).number;
-            const endLine = docB.lineAt(Math.min(toB, docB.length)).number;
-
-            for (let line = startLine; line <= endLine; line++) {
-              affectedLines.add(line);
-            }
-          });
-
-          // 3. Update the tracker based on action type
-          if (isHistoryAction) {
-            // For undo/redo, we assume the affected lines are reverting to a 'clean' state
-            // relative to the action being undone, so we remove the modification marker.
-            if (affectedLines.size > 0) {
-              tracker.removeLines(Array.from(affectedLines));
-            }
-          } else {
-            // Normal edits
-            const isUserAction = update.transactions.some(
-              (tr) =>
-                tr.isUserEvent('input') ||
-                tr.isUserEvent('delete') ||
-                tr.isUserEvent('move') ||
-                tr.isUserEvent('input.paste'),
-            );
-
-            if (isUserAction) {
-              if (affectedLines.size > 0) {
-                tracker.recordChanges(Array.from(affectedLines));
+            tracker.mapLines((lineNo) => {
+              try {
+                const oldLine = update.startState.doc.line(lineNo);
+                const newPos = update.changes.mapPos(oldLine.from);
+                return update.state.doc.lineAt(newPos).number;
+              } catch {
+                return null;
               }
-              if (deletions.size > 0) {
-                for (const line of deletions) {
-                  tracker.recordDeletion(line);
+            });
+
+            const affectedLines = new Set<number>();
+            const deletions = new Set<number>();
+
+            update.changes.iterChanges((fromA, toA, fromB, toB) => {
+              const docA = update.startState.doc;
+              const docB = update.state.doc;
+
+              const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
+              const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
+
+              if (linesA > linesB) {
+                const lineNo = docB.lineAt(fromB).number;
+                deletions.add(lineNo);
+              }
+
+              const startLine = docB.lineAt(fromB).number;
+              const endLine = docB.lineAt(Math.min(toB, docB.length)).number;
+
+              for (let line = startLine; line <= endLine; line++) {
+                affectedLines.add(line);
+              }
+            });
+
+            if (isHistoryAction) {
+              if (affectedLines.size > 0) {
+                tracker.removeLines(Array.from(affectedLines));
+              }
+            } else {
+              const isUserAction = update.transactions.some(
+                (tr) =>
+                  tr.isUserEvent('input') ||
+                  tr.isUserEvent('delete') ||
+                  tr.isUserEvent('move') ||
+                  tr.isUserEvent('input.paste'),
+              );
+
+              if (isUserAction) {
+                if (affectedLines.size > 0) {
+                  tracker.recordChanges(Array.from(affectedLines));
+                }
+                if (deletions.size > 0) {
+                  for (const line of deletions) {
+                    tracker.recordDeletion(line);
+                  }
                 }
               }
             }
           }
-        }
-      },
-    ),
+        },
+      ),
+    );
+  }
+
+  result.push(
     gutter({
       class: 'cm-lineNumbers',
       lineMarker(view, line) {
@@ -136,7 +142,6 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
             appContext.settings.recentChangesTimespan,
             appContext.settings.recentChangesCount,
           );
-
           deletionAlpha = tracker.getDeletionAlpha(
             lineNo,
             appContext.settings.recentChangesTimespan,
@@ -153,6 +158,34 @@ export function createRecentChangesHighlighter(tracker: LineChangeTracker | unde
         }
         return spacer;
       },
+      domEventHandlers: {
+        mousedown(view, line, event) {
+          const me = event as MouseEvent;
+          if (me.button === 0) {
+            me.preventDefault();
+            view.dispatch({
+              selection: { anchor: line.from, head: line.to },
+              scrollIntoView: true,
+            });
+            return true;
+          }
+          return false;
+        },
+        contextmenu(view, line, event) {
+          const me = event as MouseEvent;
+          me.preventDefault();
+          view.dispatch({
+            selection: { anchor: line.from, head: line.to },
+            scrollIntoView: true,
+          });
+          if (onContextMenu) {
+            onContextMenu(me, view);
+          }
+          return true;
+        },
+      },
     }),
-  ];
+  );
+
+  return result;
 }

@@ -5,6 +5,7 @@ import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/view';
 import { onMount, untrack } from 'svelte';
 import { createDoubleClickHandler, createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
+import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { type Compartments, createBaseExtensions, markdownExtensions } from '$lib/components/editor/logic/extensions';
 import { setupModifierKeyHandler } from '$lib/components/editor/logic/modifierKeys';
 import { setupScrollSync } from '$lib/components/editor/logic/scrollSync';
@@ -42,6 +43,7 @@ let {
     onHistoryUpdate,
     customKeymap = [],
     eventHandlers,
+    onContextMenu,
     cmView = $bindable(),
 } = $props<{
     tabId: string;
@@ -58,6 +60,7 @@ let {
     onHistoryUpdate?: (state: unknown) => void;
     customKeymap?: readonly KeyBinding[];
     eventHandlers: Extension;
+    onContextMenu?: ContextMenuCallback;
     cmView?: AppEditorView;
 }>();
 
@@ -118,7 +121,7 @@ $effect(() => {
 
 $effect(() => {
     if (!view) return;
-    view.dispatch({ effects: comps.recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker)) });
+    view.dispatch({ effects: comps.recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker, onContextMenu)) });
 });
 
 $effect(() => {
@@ -151,7 +154,7 @@ $effect(() => {
 });
 
 function createExtensions(currentHistoryState: unknown): Extension[] {
-    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker, autocompletionConfig, isMarkdown, customKeymap, eventHandlers, compartments: comps });
+    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker, autocompletionConfig, isMarkdown, customKeymap, eventHandlers, compartments: comps, onContextMenu });
     extensions.push(createUpdateListener(
         () => view?._currentTabId,
         onContentChange, onMetricsChange, tabSync.timerRefs,

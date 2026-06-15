@@ -216,6 +216,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         {lineChangeTracker}
         customKeymap={spellCheckKeymap}
         {eventHandlers}
+        {onContextMenu}
         onContentChange={handleContentChange}
         onMetricsChange={handleMetricsChange}
         onScrollChange={handleScrollChange}

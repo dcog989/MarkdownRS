@@ -19,6 +19,7 @@ import {
   getEditorKeymap,
   smartCompleteAnyWord,
 } from '$lib/components/editor/codemirror/config';
+import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
 import { appContext } from '$lib/stores/state.svelte';
 import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
@@ -77,6 +78,7 @@ export interface ExtensionsConfig {
   customKeymap: readonly KeyBinding[];
   eventHandlers: Extension;
   compartments: Compartments;
+  onContextMenu?: ContextMenuCallback;
 }
 
 export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
@@ -90,7 +92,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     search({ top: true }),
     highlightSelectionMatches(),
     c.autoComp.of(config.autocompletionConfig),
-    c.recentComp.of(createRecentChangesHighlighter(config.lineChangeTracker)),
+    c.recentComp.of(createRecentChangesHighlighter(config.lineChangeTracker, config.onContextMenu)),
     closeBrackets(),
     smartBacktickHandler,
     prefetchHoverHandler,
