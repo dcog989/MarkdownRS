@@ -2,67 +2,49 @@
 import { invoke } from '@tauri-apps/api/core';
 import { onDestroy, onMount } from 'svelte';
 import Editor from '$lib/components/editor/Editor.svelte';
+import { createSplitResize } from '$lib/components/editor/logic/splitResize.svelte';
 import Preview from '$lib/components/preview/Preview.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
 import StatusBar from '$lib/components/ui/StatusBar.svelte';
 import TabBar from '$lib/components/ui/TabBar.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
+import { createAppInit } from '$lib/services/appInit.svelte';
+import { setupAutoSave } from '$lib/services/autoSave.svelte';
 import { loadTabContentLazy } from '$lib/services/sessionPersistence';
-import { addTab } from '$lib/stores/editorStore.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte.ts';
 import { appContext } from '$lib/stores/state.svelte.ts';
-import { CONFIG } from '$lib/utils/config';
-import { runFlushFunctions } from '$lib/utils/editorCommands';
-import {
-    autoSaveCurrentFile,
-    loadSession,
-    openFileByPath,
-    persistSession,
-    persistSessionDebounced,
-} from '$lib/utils/fileSystem.ts';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { logger } from '$lib/utils/logger';
-import { initSettings, saveSettings } from '$lib/utils/settings';
 import { formatDuration } from '$lib/utils/timing';
 
-let autoSaveInterval: number | null = null;
-let mainContainer = $state<HTMLDivElement>();
-let isDragging = $state(false);
-let dragStart = 0;
-let initialSplit = 0;
-let isUnloading = false;
-let isInitialized = $state(false);
-let initError = $state<string | null>(null);
+const appInit = createAppInit();
+const autoSave = setupAutoSave();
+const splitResize = createSplitResize();
 
-let isVertical = $derived(appContext.app.splitOrientation === 'vertical');
-let resizeCursor = $derived(isVertical ? 'col-resize' : 'row-resize');
-let clientAxis = $derived.by(() => (isVertical ? 'clientX' : 'clientY') as 'clientX' | 'clientY');
-let sizeAxis = $derived.by(() => (isVertical ? 'width' : 'height') as 'width' | 'height');
+let mainContainer = $state<HTMLDivElement>();
+
+let isUnloading = false;
+
+let previousTabId = $state<string | null>(null);
 
 let activeTab = $derived(
     appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId),
 );
 
-// Track tab switches for performance monitoring
-let previousTabId = $state<string | null>(null);
-
-// Lazy load tab content when switching tabs
 $effect(() => {
     const tab = activeTab;
     const currentTabId = tab?.id || null;
 
-    // Log tab switch if the tab changed and app is initialized
-    if (isInitialized && currentTabId && currentTabId !== previousTabId) {
+    if (appInit.isInitialized && currentTabId && currentTabId !== previousTabId) {
         logger.editor.debug('TabSwitched', {
             from: previousTabId || 'none',
             to: currentTabId,
             title: tab?.title || 'unknown',
         });
-
         previousTabId = currentTabId;
     }
 
-    if (tab && !tab.contentLoaded && isInitialized) {
+    if (tab && !tab.contentLoaded && appInit.isInitialized) {
         const loadStart = performance.now();
         loadTabContentLazy(tab.id)
             .then(() => {
@@ -75,133 +57,40 @@ $effect(() => {
     }
 });
 
-// Determine if the file is markdown based on saved path or preferred extension for unsaved files
 let isMarkdown = $derived.by(() => {
     if (!activeTab) return true;
-
-    // For saved files, check the path
-    if (activeTab.path) {
-        return isMarkdownFile(activeTab.path);
-    }
-
-    // For unsaved files, use the preferred extension
+    if (activeTab.path) return isMarkdownFile(activeTab.path);
     return activeTab.preferredExtension !== 'txt';
 });
 
 let showPreview = $derived(appContext.app.splitView && isMarkdown);
 
-// Update native titlebar with current document name and path
-// Uses Rust command to work around Wayland title not updating:
-// https://github.com/tauri-apps/tauri/issues/13749
 $effect(() => {
     const tab = activeTab;
     const path = tab?.path || '';
     const dirtyMarker = tab?.isDirty ? '*' : '';
     const fullTitle = path ? `${dirtyMarker}${path} - MarkdownRS` : 'MarkdownRS';
-    document.title = fullTitle;
     invoke('set_window_title', { title: fullTitle });
 });
 
-// Auto-save timer
 $effect(() => {
-    const enabled = appContext.app.autoSaveEnabled;
-    const interval = appContext.app.autoSaveInterval;
-
-    if (!enabled) return;
-
-    const intervalMs = Math.max(5000, interval * 1000);
-    const timerId = window.setInterval(() => {
-        const tabId = appContext.app.activeTabId;
-        if (!tabId) return;
-        const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-        if (!tab?.isDirty || !tab.path) return;
-        autoSaveCurrentFile().then((saved) => {
-            if (saved) {
-                logger.file.info('AutoSaved', { path: tab.path });
-            }
-        });
-    }, intervalMs);
-
-    return () => {
-        clearInterval(timerId);
-    };
+    autoSave.start();
+    return () => autoSave.stop();
 });
 
 onMount(() => {
-    const appStartTime = performance.now();
-
-    (async () => {
-        try {
-            const settingsStart = performance.now();
-            await initSettings();
-            logger.editor.debug('SettingsInitialized', { duration: formatDuration(settingsStart) });
-
-            const sessionStart = performance.now();
-            await loadSession();
-            logger.session.info('SessionRestored', { duration: formatDuration(sessionStart) });
-
-            if (appContext.editor.tabs.length === 0) {
-                const id = addTab();
-                appContext.app.activeTabId = id;
-            }
-
-            logger.editor.info('AppInitialized', { duration: formatDuration(appStartTime) });
-
-            isInitialized = true;
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            initError = msg;
-            isInitialized = true;
-        }
-    })();
-
-    let unlistenFileOpen: (() => void) | null = null;
-    let unlistenDragDrop: (() => void) | null = null;
-
-    import('@tauri-apps/api/event').then(({ listen }) => {
-        // CLI / External Argument handling
-        listen<string>('open-file-from-args', async (event) => {
-            const filePath = event.payload;
-            await openFileByPath(filePath);
-        }).then((unlisten) => {
-            unlistenFileOpen = unlisten;
-        });
-
-        // Drag and Drop handling
-        listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
-            for (const path of event.payload.paths) {
-                await openFileByPath(path);
-            }
-        }).then((unlisten) => {
-            unlistenDragDrop = unlisten;
-        });
+    appInit.initialize().then(() => {
+        appInit.startSessionPersistence();
     });
 
-    if (!initError) {
-        autoSaveInterval = window.setInterval(() => {
-            if (appContext.editor.sessionDirty) {
-                persistSession();
-            }
-            saveSettings();
-        }, CONFIG.SESSION.AUTO_SAVE_INTERVAL_MS);
-    }
+    let unlistenEvents: (() => void) | null = null;
 
-    const handleBlur = () => {
-        persistSession();
-        saveSettings();
-    };
+    appInit.setupEventListeners().then((unlisten) => {
+        unlistenEvents = unlisten;
+    });
 
-    const handleBeforeUnload = () => {
-        isUnloading = true;
-
-        // Cancel any pending debounced saves to prevent race conditions during unload
-        persistSessionDebounced.clear();
-
-        runFlushFunctions();
-        // Force immediate save before window closes
-        persistSession();
-        saveSettings();
-    };
+    const handleBlur = () => appInit.handleBlur();
+    const handleBeforeUnload = () => appInit.handleBeforeUnload();
 
     window.addEventListener('blur', handleBlur);
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -209,73 +98,28 @@ onMount(() => {
     return () => {
         window.removeEventListener('blur', handleBlur);
         window.removeEventListener('beforeunload', handleBeforeUnload);
-        if (unlistenFileOpen) unlistenFileOpen();
-        if (unlistenDragDrop) unlistenDragDrop();
+        if (unlistenEvents) unlistenEvents();
     };
 });
 
 onDestroy(() => {
-    if (autoSaveInterval !== null) {
-        clearInterval(autoSaveInterval);
-        autoSaveInterval = null;
-    }
-
-    window.removeEventListener('mousemove', handleResize);
-    window.removeEventListener('mouseup', stopResize);
-
-    // Only trigger cleanup saves if initialization succeeded and we are NOT unloading
-    if (isInitialized && !initError && !isUnloading) {
-        persistSessionDebounced.clear();
-        persistSession();
-        saveSettings();
-    }
+    splitResize.cleanup();
+    appInit.handleDestroy(isUnloading);
 });
 
-function startResize(e: MouseEvent) {
-    e.preventDefault();
-    isDragging = true;
-    dragStart = e[clientAxis];
-    initialSplit = appContext.app.splitPercentage;
-    window.addEventListener('mousemove', handleResize);
-    window.addEventListener('mouseup', stopResize);
-    document.body.style.cursor = resizeCursor;
-}
-
-function handleResize(e: MouseEvent) {
-    if (!isDragging || !mainContainer) return;
-    const rect = mainContainer.getBoundingClientRect();
-    const totalSize = rect[sizeAxis];
-    const currentPos = e[clientAxis];
-    const deltaPixels = currentPos - dragStart;
-    const deltaPercent = deltaPixels / totalSize;
-    let newSplit = initialSplit + deltaPercent;
-
-    newSplit = Math.max(0.1, Math.min(0.9, newSplit));
-    appContext.app.splitPercentage = newSplit;
-}
-
-function stopResize() {
-    if (!isDragging) return;
-    isDragging = false;
-    window.removeEventListener('mousemove', handleResize);
-    window.removeEventListener('mouseup', stopResize);
-    document.body.style.cursor = 'default';
-    saveSettings();
-}
-
-function resetSplit() {
-    appContext.app.splitPercentage = 0.5;
-    saveSettings();
+function onResizeMouseDown(e: MouseEvent) {
+    if (mainContainer) splitResize.registerContainer(mainContainer);
+    splitResize.startResize(e);
 }
 </script>
 
-{#if !isInitialized}
+{#if !appInit.isInitialized}
     <div
         class="bg-bg-main text-fg-default flex h-screen w-screen flex-col items-center justify-center">
         <Logo class="mb-4 h-16 w-16 animate-pulse opacity-50" />
         <p class="text-fg-muted text-sm">Loading MarkdownRS...</p>
-        {#if initError}
-            <p class="text-danger-text mt-2 text-xs">{initError}</p>
+        {#if appInit.initError}
+            <p class="text-danger-text mt-2 text-xs">{appInit.initError}</p>
         {/if}
     </div>
 {:else}
@@ -293,8 +137,8 @@ function resetSplit() {
             {#if appContext.app.activeTabId}
                     <div
                         class="flex h-full w-full"
-                        class:flex-row={isVertical}
-                        class:flex-col={!isVertical}>
+                        class:flex-row={splitResize.isVertical}
+                        class:flex-col={!splitResize.isVertical}>
                     <div
                         class="writer-content"
                         style="flex: {showPreview
@@ -309,9 +153,9 @@ function resetSplit() {
                             tabindex="0"
                             aria-label="Resize split view"
                             class="resize-handle"
-                            style="cursor: {resizeCursor};"
-                            onmousedown={startResize}
-                            ondblclick={resetSplit}
+                            style="cursor: {splitResize.resizeCursor};"
+                            onmousedown={onResizeMouseDown}
+                            ondblclick={splitResize.resetSplit}
                             onkeydown={() => {}}></div>
                     {/if}
 
