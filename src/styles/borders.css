@@ -121,6 +121,11 @@
   border-top-right-radius: 0.125rem;
 }
 
+.rounded-t-md {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
 /* Divide Classes */
 .divide-y > :not([hidden]) ~ :not([hidden]) {
   border-top-width: 1px;
