@@ -1,6 +1,5 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{format_system_time, handle_error, validate_path};
-use encoding_rs::{Encoding, UTF_8};
+use crate::utils::{decode_text, format_system_time, handle_error, validate_path};
 use serde::Serialize;
 use std::path::{Component, Path, PathBuf};
 use tokio::fs;
@@ -54,32 +53,8 @@ pub async fn read_text_file(
         .await
         .map_err(|e| handle_error(Some(&path), "read file", e))?;
 
-    if let Some((encoding, _)) = Encoding::for_bom(&bytes) {
-        let (cow, _) = encoding.decode_with_bom_removal(&bytes);
-        return Ok(FileContent {
-            content: cow.into_owned(),
-            encoding: encoding.name().to_string(),
-        });
-    }
-
-    let (cow, _, had_errors) = UTF_8.decode(&bytes);
-    if !had_errors {
-        return Ok(FileContent {
-            content: cow.into_owned(),
-            encoding: "UTF-8".to_string(),
-        });
-    }
-
-    // Fallback detection (CPU bound, fine to run here or could use spawn_blocking if huge)
-    let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
-    detector.feed(&bytes, true);
-    let detected_encoding = detector.guess(None, chardetng::Utf8Detection::Deny);
-    let (cow, _, _) = detected_encoding.decode(&bytes);
-
-    let result = FileContent {
-        content: cow.into_owned(),
-        encoding: detected_encoding.name().to_string(),
-    };
+    let (content, encoding) = decode_text(bytes);
+    let result = FileContent { content, encoding };
 
     let duration = start.elapsed();
     log::info!(

@@ -1,11 +1,10 @@
 use anyhow::Result;
 use chrono::{DateTime, Local};
-use encoding_rs::{UTF_16BE, UTF_16LE};
+use encoding_rs::{Encoding, UTF_8};
 use std::path::{Component, Path};
 use std::time::SystemTime;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
-use unicode_bom::Bom;
 
 /// Trait to convert anyhow errors to String for Tauri IPC compatibility
 pub trait IntoTauriError<T> {
@@ -151,35 +150,27 @@ pub async fn cleanup_stale_temp_files(
     Ok(())
 }
 
-/// Reads text file with automatic BOM (Byte Order Mark) detection and stripping.
-/// Handles UTF-8, UTF-16LE, and UTF-16BE encoded files.
-/// Takes ownership of the byte buffer to allow zero-copy conversion for
-/// valid UTF-8 (the common case via `String::from_utf8`).
-pub fn read_text_with_bom_detection(raw_bytes: Vec<u8>) -> String {
-    match Bom::from(&raw_bytes[..]) {
-        Bom::Null => {
-            // Zero-copy for valid UTF-8 (the 99% case).
-            String::from_utf8(raw_bytes)
-                .unwrap_or_else(|e| String::from_utf8_lossy(e.as_bytes()).into_owned())
-        },
-        Bom::Utf8 => String::from_utf8_lossy(&raw_bytes[3..]).to_string(),
-        Bom::Utf16Le => {
-            let (decoded, _, had_errors) = UTF_16LE.decode(&raw_bytes[2..]);
-            if had_errors {
-                log::warn!("UTF-16LE decoding encountered errors");
-            }
-            decoded.to_string()
-        },
-        Bom::Utf16Be => {
-            let (decoded, _, had_errors) = UTF_16BE.decode(&raw_bytes[2..]);
-            if had_errors {
-                log::warn!("UTF-16BE decoding encountered errors");
-            }
-            decoded.to_string()
-        },
-        bom => {
-            log::warn!("Exotic BOM type {:?} detected, falling back to UTF-8", bom);
-            String::from_utf8_lossy(&raw_bytes[bom.len()..]).to_string()
-        },
+/// Decodes bytes to (content, encoding_name) using BOM detection,
+/// UTF-8 fallback, and chardetng as a last resort.
+pub fn decode_text(raw_bytes: Vec<u8>) -> (String, String) {
+    if let Some((encoding, _)) = Encoding::for_bom(&raw_bytes) {
+        let (cow, _) = encoding.decode_with_bom_removal(&raw_bytes);
+        return (cow.into_owned(), encoding.name().to_string());
     }
+
+    let (cow, _, had_errors) = UTF_8.decode(&raw_bytes);
+    if !had_errors {
+        return (cow.into_owned(), "UTF-8".to_string());
+    }
+
+    let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
+    detector.feed(&raw_bytes, true);
+    let detected = detector.guess(None, chardetng::Utf8Detection::Deny);
+    let (cow, _, _) = detected.decode(&raw_bytes);
+    (cow.into_owned(), detected.name().to_string())
+}
+
+/// Convenience wrapper that returns only the decoded text.
+pub fn read_text_with_bom_detection(raw_bytes: Vec<u8>) -> String {
+    decode_text(raw_bytes).0
 }
