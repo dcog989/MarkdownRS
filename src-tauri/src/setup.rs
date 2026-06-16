@@ -225,8 +225,8 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             .level_for("tao", LevelFilter::Error)
             .level_for("wry", LevelFilter::Error)
             .level_for("markdown_rs", log_level)
-            .max_file_size(10 * 1024 * 1024)
-            .rotation_strategy(RotationStrategy::KeepOne)
+            .max_file_size(2 * 1024 * 1024)
+            .rotation_strategy(RotationStrategy::KeepSome(9))
             .targets([
                 Target::new(TargetKind::Stdout),
                 Target::new(TargetKind::Folder {
