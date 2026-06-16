@@ -159,12 +159,16 @@ pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<Path
 /// Load rumdl config + filtered rules, using a cache that invalidates when
 /// the discovered config file's path or mtime changes.
 pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>) -> RulesResult {
-    if let (Some(fp), Some(pr)) = (file_path, project_root) {
-        let file_dir = fp.parent().unwrap_or(pr);
-        load_rumdl_rules(file_dir, pr)
-    } else {
-        let (c, r) = load_default_rules();
-        Ok((Arc::clone(c), Arc::clone(r)))
+    match file_path {
+        Some(fp) => {
+            let file_dir = fp.parent().unwrap_or_else(|| Path::new(""));
+            let pr = project_root.unwrap_or(file_dir);
+            load_rumdl_rules(file_dir, pr)
+        },
+        None => {
+            let (c, r) = load_default_rules();
+            Ok((Arc::clone(c), Arc::clone(r)))
+        },
     }
 }
 
