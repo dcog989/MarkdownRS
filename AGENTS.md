@@ -34,7 +34,7 @@ Linux CachyOS, Limine boot loader, KDE Plasma 6, Wayland, Btrfs. Firefox, Kate t
 
 ## Coding Principles
 
-- DRY / YAGNI / KISS / SOLID Principles / Composition Over Inheritance / Separation of Concerns (SoC) / Avoid Premature Optimisation
+- DRY / YAGNI / KISS / SOLID Principles / Composition Over Inheritance / Separation of Concerns (SoC)
 - Self-documenting code (clear naming, no comments for commentary)
 - No magic numbers; split files >400 lines
 - Follow existing patterns (Svelte 5 runes, modern TS/Rust)
