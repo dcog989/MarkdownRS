@@ -168,6 +168,12 @@ export interface BackendCommands {
     };
     return: LintDiagnostic[];
   };
+  get_rumdl_config_path: {
+    args: {
+      filePath?: string;
+    };
+    return: string | null;
+  };
   get_markdown_flavors: {
     args: Record<string, never>;
     return: string[];

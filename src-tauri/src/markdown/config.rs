@@ -118,6 +118,44 @@ fn load_full_state(project_root: &Path, cfg_path: &Path) -> RulesResult {
     Ok((Arc::new(config), Arc::new(filtered)))
 }
 
+/// Discover user-level rumdl config path.
+///
+/// Checks (in order):
+/// 1. Platform config dir (`~/.config/rumdl/` on Linux, `%APPDATA%/rumdl/` on Windows)
+///    for `rumdl.toml` and `.rumdl.toml`
+/// 2. Home directory for `~/.rumdl.toml` and `~/rumdl.toml`
+pub fn discover_user_config_path() -> Option<PathBuf> {
+    // Platform config dir (XDG on Linux, APPDATA on Windows)
+    if let Some(config_dir) = dirs::config_dir() {
+        let rumdl_config_dir = config_dir.join("rumdl");
+        for name in &[".rumdl.toml", "rumdl.toml"] {
+            let path = rumdl_config_dir.join(name);
+            if path.exists() {
+                return Some(path);
+            }
+        }
+    }
+
+    // Home directory dotfile fallback
+    if let Some(home) = dirs::home_dir() {
+        for name in &[".rumdl.toml", "rumdl.toml"] {
+            let path = home.join(name);
+            if path.exists() {
+                return Some(path);
+            }
+        }
+    }
+
+    None
+}
+
+/// Discover the rumdl config path for a given file directory and project root,
+/// falling back to user-level config if no project config is found.
+pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<PathBuf> {
+    SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root)
+        .or_else(discover_user_config_path)
+}
+
 /// Load rumdl config + filtered rules, using a cache that invalidates when
 /// the discovered config file's path or mtime changes.
 pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>) -> RulesResult {
@@ -146,7 +184,8 @@ pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
 
     // Cache miss: discover config (may involve I/O).
     let candidate_path =
-        SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root);
+        SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root)
+            .or_else(discover_user_config_path);
     let candidate_mtime = candidate_path
         .as_ref()
         .and_then(|p| p.metadata().ok())

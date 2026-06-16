@@ -1,3 +1,4 @@
+use crate::markdown::config;
 use crate::markdown::config::MarkdownFlavor;
 use crate::markdown::formatter_rumdl;
 use crate::markdown::linter::{self, LintDiagnostic};
@@ -103,6 +104,37 @@ pub async fn lint_markdown(
         linter::lint_content(&content, fp.as_deref(), pr.as_deref())
     })
     .await
+}
+
+#[tauri::command]
+pub async fn get_rumdl_config_path(
+    file_path: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<Option<String>, String> {
+    let start = std::time::Instant::now();
+
+    let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
+    let pr: Option<PathBuf> = resolve_project_root(&state);
+
+    let result = run_blocking("discover rumdl config", move || {
+        let path = match (fp, pr) {
+            (Some(fp), Some(pr)) => {
+                let file_dir = fp
+                    .parent()
+                    .map(|p| p.to_path_buf())
+                    .unwrap_or_else(|| pr.clone());
+                config::discover_config_path(&file_dir, &pr)
+            },
+            _ => config::discover_user_config_path(),
+        };
+        Ok(path.map(|p| p.to_string_lossy().to_string()))
+    })
+    .await;
+
+    let duration = start.elapsed();
+    log::info!("[Markdown] get_rumdl_config_path | duration={:?}", duration);
+
+    result
 }
 
 #[tauri::command]

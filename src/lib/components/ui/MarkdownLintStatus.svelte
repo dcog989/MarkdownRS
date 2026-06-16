@@ -1,7 +1,9 @@
 <script lang="ts">
-import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-svelte';
+import { CircleAlert, CircleCheck, ClipboardCopy, Info, TriangleAlert } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import { appContext } from '$lib/stores/state.svelte';
+import { callBackendSafe } from '$lib/utils/backend';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 
 const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> = {
@@ -17,6 +19,30 @@ let severityEntry = $derived(severityMap[markdownLintState.highestSeverity]);
 let color = $derived(severityEntry?.color ?? 'text-fg-muted');
 
 let displayCount = $derived(markdownLintState.issueCount > 0 ? String(markdownLintState.issueCount) : '');
+
+let configPath = $state<string | null>(null);
+let copied = $state(false);
+
+$effect(() => {
+    if (showPopup) {
+        configPath = null;
+        copied = false;
+        fetchConfigPath();
+    }
+});
+
+async function fetchConfigPath() {
+    const activeTab = appContext.editor.tabs.find(t => t.id === appContext.app.activeTabId);
+    const filePath = activeTab?.path;
+    configPath = await callBackendSafe('get_rumdl_config_path', { filePath: filePath ?? undefined }, 'Markdown:Lint', { showToast: false });
+}
+
+async function copyConfigPath() {
+    if (!configPath) return;
+    await navigator.clipboard.writeText(configPath);
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
+}
 </script>
 
 <button
@@ -75,6 +101,20 @@ let displayCount = $derived(markdownLintState.issueCount > 0 ? String(markdownLi
                         {/each}
                     </div>
                 {/if}
+                <div class="border-border-light flex items-center gap-1 border-t px-3 py-1.5">
+                    <span class="text-fg-muted text-[10px]">
+                        rumdl: {configPath ?? 'no config file'}
+                    </span>
+                    {#if configPath}
+                        <button
+                            type="button"
+                            class="hover:text-fg-default shrink-0 transition-colors"
+                            onclick={copyConfigPath}
+                            title="Copy config path">
+                            <ClipboardCopy size={10} class={copied ? 'text-accent' : 'text-fg-muted'} />
+                        </button>
+                    {/if}
+                </div>
             </div>
         {/snippet}
     </ContextMenu>
