@@ -188,6 +188,7 @@ async function copyAllStats() {
         <button
             type="button"
             onclick={toggleInsertMode}
+            use:tooltip={'Toggle Insert Mode'}
             class="w-8 text-center font-bold {appContext.metrics.insertMode === 'OVR'
                 ? 'text-danger'
                 : 'text-accent-secondary'}">
