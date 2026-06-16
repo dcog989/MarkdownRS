@@ -1,10 +1,4 @@
-import {
-  toggleAbout,
-  toggleBookmarks,
-  toggleCommandPalette,
-  toggleShortcuts,
-  toggleTransform,
-} from '$lib/stores/interfaceStore.svelte';
+import { toggleAbout, toggleBookmarks, toggleCommandPalette, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { Command } from './types';
 
@@ -48,17 +42,5 @@ export const windowCommands: Command[] = [
     label: 'Window: About',
     category: 'Window',
     handler: toggleAbout,
-  },
-  {
-    id: 'window.transform',
-    label: 'Window: Text Transformations',
-    category: 'Window',
-    defaultKey: 'ctrl+t',
-    global: true,
-    handler: (e) => {
-      e?.preventDefault();
-      e?.stopImmediatePropagation();
-      toggleTransform();
-    },
   },
 ];

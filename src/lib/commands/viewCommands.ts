@@ -119,7 +119,6 @@ export const viewCommands: Command[] = [
         appContext.interface.showBookmarks ||
         appContext.interface.showRecentFiles ||
         appContext.interface.showCommandPalette ||
-        appContext.interface.showTransform ||
         appContext.interface.showData ||
         appContext.interface.showFind;
 

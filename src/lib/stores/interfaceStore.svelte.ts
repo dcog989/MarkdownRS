@@ -11,7 +11,6 @@ export const interfaceStore = $state({
   showBookmarks: false,
   showRecentFiles: false,
   showCommandPalette: false,
-  showTransform: false,
   showData: false,
 
   // Editor Panels
@@ -55,9 +54,6 @@ export function toggleRecentFiles() {
 }
 export function toggleCommandPalette() {
   interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette;
-}
-export function toggleTransform() {
-  interfaceStore.showTransform = !interfaceStore.showTransform;
 }
 export function toggleAbout() {
   interfaceStore.showAbout = !interfaceStore.showAbout;

@@ -27,9 +27,26 @@ let filteredCommands = $derived(
     commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())),
 );
 
+let groupedCommands = $derived(
+    filteredCommands.reduce(
+        (acc: { category: string; commands: Command[] }[], c: Command) => {
+            let group = acc.find((g) => g.category === c.category);
+            if (!group) {
+                group = { category: c.category, commands: [] };
+                acc.push(group);
+            }
+            group.commands.push(c);
+            return acc;
+        },
+        [] as { category: string; commands: Command[] }[],
+    ),
+);
+
+let flatOps = $derived(filteredCommands);
+
 const nav = createListNavigation(
-    () => filteredCommands.length,
-    (index) => execute(filteredCommands[index]),
+    () => flatOps.length,
+    (index) => execute(flatOps[index]),
 );
 
 $effect(() => {
@@ -77,44 +94,61 @@ function close() {
         </ModalSearchHeader>
     {/snippet}
 
-    <div class="py-1">
-        {#if filteredCommands.length > 0}
-            {#each filteredCommands as command, index (command.id)}
-                <button
-                    type="button"
-                    class="command-item text-ui flex w-full items-center justify-between px-3 py-2 text-left outline-none {index %
-                        2 ===
-                    1
-                        ? 'bg-row-even'
-                        : ''}"
-                    data-selected={index === nav.selectedIndex}
-                    use:scrollIntoView={index === nav.selectedIndex}
-                    onmouseenter={() => nav.select(index)}
-                    onclick={() => execute(command)}>
-                    <span>{command.label}</span>
-                    {#if shortcutManager.getShortcutDisplay(command.id)}
-                        <span class="text-ui-sm opacity-60">{shortcutManager.getShortcutDisplay(command.id)}</span>
-                    {/if}
-                </button>
+    <div class="space-y-6 p-4">
+        {#if groupedCommands.length > 0}
+            {#each groupedCommands as group (group.category)}
+                <div>
+                    <div class="mb-3 flex items-center gap-2">
+                        <Zap size={16} class="text-accent-primary" />
+                        <h3 class="text-fg-default text-sm font-semibold tracking-wide uppercase">
+                            {group.category}
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        {#each group.commands as command (command.id)}
+                            {@const globalIndex = flatOps.indexOf(command)}
+                            {@const isSelected = globalIndex === nav.selectedIndex}
+                            {@const shortcut = shortcutManager.getShortcutDisplay(command.id)}
+                            <button
+                                type="button"
+                                class="bg-border-main hover-surface flex items-start gap-3 rounded border p-3 text-left transition-colors outline-none"
+                                style="background-color: {isSelected
+                                  ? 'var(--accent-primary)'
+                                  : 'var(--surface-2)'};
+                                  color: {isSelected
+                                  ? 'var(--text-inverse)'
+                                  : 'var(--text-primary)'};"
+                                use:scrollIntoView={isSelected}
+                                onmouseenter={() => nav.select(globalIndex)}
+                                onclick={() => execute(command)}>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-sm font-medium whitespace-nowrap">{command.label}</div>
+                                    {#if shortcut}
+                                        <div class="mt-0.5 truncate text-xs" style:color={isSelected ? 'var(--text-inverse)' : 'var(--text-secondary)'}>
+                                            <span class="opacity-60">{shortcut}</span>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </button>
+                        {/each}
+                    </div>
+                </div>
             {/each}
         {:else}
-            <div class="text-ui text-fg-muted px-3 py-2">No commands found</div>
+            <div class="text-fg-muted px-4 py-8 text-center">
+                <Zap size={48} class="mx-auto mb-2 opacity-30" />
+                <div>No commands match your search</div>
+            </div>
         {/if}
     </div>
+
+    {#snippet footer()}
+        <p class="text-fg-muted mr-auto text-xs"></p>
+        <button
+            type="button"
+            class="btn-base bg-accent-primary text-fg-inverse border-transparent font-medium hover:opacity-80"
+            onclick={close}>
+            Close
+        </button>
+    {/snippet}
 </Modal>
-
-<style>
-    .command-item[data-selected="true"] {
-        background-color: var(--accent-primary);
-        color: var(--text-inverse);
-    }
-
-    .command-item[data-selected="false"] {
-        background-color: transparent;
-        color: var(--text-primary);
-    }
-
-    .command-item[data-selected="false"]:nth-child(even) {
-        background-color: var(--surface-row);
-    }
-</style>

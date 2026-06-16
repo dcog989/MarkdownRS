@@ -8,7 +8,6 @@ import PromptModal from '$lib/components/ui/PromptModal.svelte';
 import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
 import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
-import TextTransformModal from '$lib/components/ui/TextTransformModal.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { sortCommands } from '$lib/utils/commandPaletteSort';
@@ -40,9 +39,6 @@ const paletteCommands = $derived(
     position="top"
     onClose={() => (appContext.interface.showBookmarks = false)}
     onOpenFile={(path) => openFileByPath(path)} />
-<TextTransformModal
-    isOpen={appContext.interface.showTransform}
-    onClose={() => (appContext.interface.showTransform = false)} />
 <ShortcutsModal
     bind:isOpen={appContext.interface.showShortcuts}
     onClose={() => (appContext.interface.showShortcuts = false)} />
