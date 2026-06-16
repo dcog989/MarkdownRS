@@ -22,15 +22,15 @@
 
 /* Editor Colors */
 .cm-editor {
-    background-color: var(--surface-1);
-    color: var(--text-primary);
+    background-color: var(--editor-bg);
+    color: var(--editor-fg);
 }
 
 /* Selection */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: oklch(0.42 0.16 280 / 0.55);
+    background-color: var(--editor-selection-bg);
 }
 
 /* Syntax Highlighting - Colors Only */
@@ -40,18 +40,18 @@
 .cm-h4,
 .cm-h5,
 .cm-h6 {
-    color: #e06c75;
+    color: var(--editor-syntax-heading);
 }
 .cm-keyword {
-    color: #c678dd;
+    color: var(--editor-syntax-keyword);
 }
 .cm-atom,
 .cm-number {
-    color: #d19a66;
+    color: var(--editor-syntax-atom);
 }
 .cm-string {
-    color: #98c379;
+    color: var(--editor-syntax-string);
 }
 .cm-comment {
-    color: #686868;
+    color: var(--editor-syntax-comment);
 }

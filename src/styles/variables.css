@@ -72,7 +72,32 @@
   --pre-bg: #333333;
   --pre-fg: #89e57b;
 
-  /* Syntax Colors - Layer 2: Syntax highlighting (colors only, no typography) */
+  /* Editor Styling - Layer 2: Exposed for theme CSS customization */
+  --editor-bg: var(--surface-1);
+  --editor-fg: var(--text-primary);
+  --editor-gutter-bg: var(--surface-gutter);
+  --editor-gutter-fg: var(--text-tertiary);
+  --editor-gutter-active-bg: var(--surface-2);
+  --editor-gutter-active-fg: var(--text-primary);
+  --editor-active-line-bg: var(--active-line-bg);
+  --editor-selection-bg: var(--selection-bg);
+  --editor-selection-match-bg: var(--selection-match-bg);
+  --editor-cursor-color: currentColor;
+  --editor-code-bg: var(--code-bg);
+  --editor-code-fg: var(--code-fg);
+  --editor-quote-bg: var(--quote-bg);
+  --editor-quote-fg: var(--quote-fg);
+  --editor-highlight-bg: var(--highlight-bg);
+  --editor-hr-color: var(--hr-color);
+
+  /* Editor Syntax Colors - Layer 2: Syntax highlighting (colors only, no typography) */
+  --editor-syntax-heading: var(--syntax-heading);
+  --editor-syntax-keyword: var(--syntax-keyword);
+  --editor-syntax-atom: var(--syntax-atom);
+  --editor-syntax-string: var(--syntax-string);
+  --editor-syntax-comment: var(--syntax-comment);
+
+  /* Syntax Colors - Layer 2: Legacy aliases (use --editor-syntax-* for new themes) */
   --syntax-heading: #e06c75;
   --syntax-keyword: #c678dd;
   --syntax-atom: #d19a66;
@@ -152,6 +177,25 @@
   --hr-color: oklch(0.5 0 0);
   --pre-bg: #f0f0f0;
   --pre-fg: #1a1a1a;
+
+  /* Editor Styling - Light Theme */
+  --editor-gutter-active-bg: var(--surface-2);
+  --editor-active-line-bg: var(--active-line-bg);
+  --editor-selection-bg: var(--selection-bg);
+  --editor-selection-match-bg: var(--selection-match-bg);
+  --editor-code-bg: var(--code-bg);
+  --editor-code-fg: var(--code-fg);
+  --editor-quote-bg: var(--quote-bg);
+  --editor-quote-fg: var(--quote-fg);
+  --editor-highlight-bg: var(--highlight-bg);
+  --editor-hr-color: var(--hr-color);
+
+  /* Editor Syntax Colors - Light Theme */
+  --editor-syntax-heading: var(--syntax-heading);
+  --editor-syntax-keyword: var(--syntax-keyword);
+  --editor-syntax-atom: var(--syntax-atom);
+  --editor-syntax-string: var(--syntax-string);
+  --editor-syntax-comment: var(--syntax-comment);
 
   /* Syntax Colors - Light Theme */
   --syntax-heading: #c62828;
