@@ -166,8 +166,14 @@ pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>
             load_rumdl_rules(file_dir, pr)
         },
         None => {
-            let (c, r) = load_default_rules();
-            Ok((Arc::clone(c), Arc::clone(r)))
+            if let Some(cfg_path) = discover_user_config_path() {
+                let home = dirs::home_dir().unwrap_or_default();
+                let pr = project_root.unwrap_or(&home);
+                load_full_state(pr, &cfg_path)
+            } else {
+                let (c, r) = load_default_rules();
+                Ok((Arc::clone(c), Arc::clone(r)))
+            }
         },
     }
 }
