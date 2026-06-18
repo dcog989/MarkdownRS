@@ -15,7 +15,7 @@
 
 .cm-content {
   color: var(--text-primary);
-  caret-color: var(currentColor);
+  caret-color: currentColor;
 }
 
 .cm-scroller {
