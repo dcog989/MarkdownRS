@@ -213,15 +213,20 @@
   text-decoration-color: var(--text-secondary);
 }
 
-.cm-code-block {
+.cm-code,
+.cm-code-block,
+.cm-formatting.cm-formatting-code,
+.cm-formatting-code-marker,
+.cm-meta.cm-code {
   background-color: var(--code-bg);
   color: var(--code-fg);
+}
+
+.cm-code-block {
   font-variant-ligatures: none;
 }
 
 .cm-code {
-  background-color: var(--code-bg);
-  color: var(--code-fg);
   border-radius: 0.25rem;
   font-variant-ligatures: none;
   box-decoration-break: clone;
@@ -231,8 +236,6 @@
 .cm-formatting.cm-formatting-code,
 .cm-formatting-code-marker,
 .cm-meta.cm-code {
-  background-color: var(--code-bg);
-  color: var(--code-fg);
   border-radius: 0.25rem;
 }
 

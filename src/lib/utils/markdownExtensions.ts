@@ -101,10 +101,6 @@ function getBlockquoteDecorations(view: EditorView) {
 
 export const blockquotePlugin = createDecoPlugin(getBlockquoteDecorations);
 
-const codeBlockMarkDeco = Decoration.mark({
-  class: 'cm-code',
-});
-
 const codeBlockLineDeco = Decoration.line({
   class: 'cm-code-block',
 });
@@ -127,20 +123,6 @@ function getCodeBlockDecorations(view: EditorView) {
 }
 
 export const codeBlockPlugin = createDecoPlugin(getCodeBlockDecorations);
-
-function getInlineCodeDecorations(view: EditorView) {
-  const builder = new RangeSetBuilder<Decoration>();
-
-  iterateVisibleNodes(view, (node) => {
-    if (node.name === 'InlineCode') {
-      builder.add(node.from, node.to, codeBlockMarkDeco);
-    }
-  });
-
-  return builder.finish();
-}
-
-export const inlineCodePlugin = createDecoPlugin(getInlineCodeDecorations);
 
 const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 

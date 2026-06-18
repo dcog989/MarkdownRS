@@ -32,7 +32,6 @@ import {
   codeBlockPlugin,
   highlightPlugin,
   horizontalRulePlugin,
-  inlineCodePlugin,
 } from '$lib/utils/markdownExtensions';
 import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
@@ -48,7 +47,6 @@ export const markdownExtensions = [
   highlightPlugin,
   blockquotePlugin,
   codeBlockPlugin,
-  inlineCodePlugin,
   horizontalRulePlugin,
   bulletPointPlugin,
 ];
