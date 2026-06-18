@@ -1,23 +1,23 @@
-/* MarkdownRS Default Dark Theme Reference
+/* MarkdownRS Default Dark Theme
 
    This file defines the overrides used by the default dark theme.
    You can copy this file to create your own custom theme.
 */
 
 :root {
-    --surface-preview: oklch(0.26 0 0);
-    --preview-fg-body: #abb2bf;
+    --surface-preview: #1e1e1e;
+    --preview-fg-body: #b5bcc9;
     --preview-fg-heading: #e06c75;
     --preview-fg-link: #61afef;
-    --preview-fg-code: #89e57b;
-    --preview-bg-code: oklch(0.53 0.12 140 / 0.15);
+    --preview-fg-code: #98c379;
+    --preview-bg-code: oklch(0.72 0.12 145 / 0.1);
     --preview-fg-quote: #7f848e;
-    --preview-bg-quote: oklch(0.77 0.09 90 / 0.18);
-    --preview-border-quote: #ddce78;
-    --preview-bg-pre: #333333;
-    --preview-fg-pre: #89e57b;
-    --preview-border-primary: oklch(0.35 0 0);
-    --preview-surface-2: oklch(0.26 0 0);
+    --preview-bg-quote: oklch(0.56 0.02 260 / 0.08);
+    --preview-border-quote: #7f848e;
+    --preview-bg-pre: #171b21;
+    --preview-fg-pre: #abb2bf;
+    --preview-border-primary: #343434;
+    --preview-surface-2: #171717;
 }
 
 /* Editor Colors */
