@@ -44,7 +44,7 @@ Along with these dev tools:
 
 ## Development
 
-```bash
+```sh
 # Install dependencies
 bun install
 
