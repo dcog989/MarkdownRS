@@ -5,19 +5,19 @@
 */
 
 :root {
-  --surface-preview: #1e1e1e;
+  --preview-bg-code: oklch(0.72 0.12 145 / 0.1);
+  --preview-bg-pre: #171b21;
+  --preview-bg-quote: oklch(0.56 0 0 / 0.08);
+  --preview-border-primary: #343434;
+  --preview-border-quote: #999999;
   --preview-fg-body: #cccccc;
+  --preview-fg-code: #98c379;
   --preview-fg-heading: #e06c75;
   --preview-fg-link: #61afef;
-  --preview-fg-code: #98c379;
-  --preview-bg-code: oklch(0.72 0.12 145 / 0.1);
-  --preview-fg-quote: #999999;
-  --preview-bg-quote: oklch(0.56 0 0 / 0.08);
-  --preview-border-quote: #999999;
-  --preview-bg-pre: #171b21;
   --preview-fg-pre: #cccccc;
-  --preview-border-primary: #343434;
+  --preview-fg-quote: #999999;
   --preview-surface-2: #171717;
+  --surface-preview: #1e1e1e;
 }
 
 /* Editor Colors */

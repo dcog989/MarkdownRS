@@ -4,28 +4,28 @@
   /* Brand Bases */
   --color-brand-accent: #7c5a73;
   --color-brand-file: #e5c07b;
+  --color-brand-filepath: #98c379;
   --color-brand-link: #56b6c2;
   --color-brand-url: #61afef;
-  --color-brand-filepath: #98c379;
 
   /* Surface System */
   --surface-1: #1e1e1e;
   --surface-2: #171717;
   --surface-3: #111111;
-  --surface-gutter: #171717;
-  --surface-preview: #1e1e1e;
-  --surface-input: #232323;
-  --surface-hover: #2d2d2d;
   --surface-active: #373737;
   --surface-backdrop: oklch(0 0 0 / 0.3);
+  --surface-gutter: #171717;
+  --surface-hover: #2d2d2d;
+  --surface-input: #232323;
+  --surface-preview: #1e1e1e;
   --surface-row: #141414;
 
   /* Text System */
+  --text-inverse: #ffffff;
   --text-primary: #cccccc;
+  --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
   --text-secondary: #888888;
   --text-tertiary: #555555;
-  --text-inverse: #ffffff;
-  --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
   /* Border System */
   --border-primary: #343434;
@@ -33,27 +33,27 @@
   --border-focus: #9c658f;
 
   /* Accent System - derived from Brand */
+  --accent-file: oklch(from var(--color-brand-file) 0.8 c h);
+  --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
+  --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
+  --accent-link-hover: oklch(from var(--color-brand-link) 0.75 c h);
+  --accent-link: oklch(from var(--color-brand-link) 0.65 c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
-  --accent-file: oklch(from var(--color-brand-file) 0.8 c h);
-  --accent-link: oklch(from var(--color-brand-link) 0.65 c h);
-  --accent-link-hover: oklch(from var(--color-brand-link) 0.75 c h);
-  --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
   --accent-url-hover: oklch(from var(--color-brand-url) 0.75 c h);
-  --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
-  --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
+  --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
 
   /* Functional System */
-  --danger: #e06c75;
+  --active-line-bg: #292929;
   --danger-hover: #e8757f;
   --danger-text: #e06c75;
-  --success: #98c379;
-  --success-hover: #a8cf8b;
+  --danger: #e06c75;
+  --dirty-indicator: #98c379;
   --highlight-line: #e5c07b;
   --selection-bg: #4b4b4b;
   --selection-match-bg: oklch(0.68 0.1 60 / 0.35);
-  --active-line-bg: #292929;
-  --dirty-indicator: #98c379;
+  --success-hover: #a8cf8b;
+  --success: #98c379;
 
   /* Animation & Transitions */
   --transition-fast: 100ms;
@@ -63,32 +63,32 @@
   /* Editor & Content Colors */
   --code-bg: oklch(0.72 0.1 145 / 0.06);
   --code-fg: #92b975;
-  --quote-bg: oklch(0.56 0 0 / 0.08);
-  --quote-fg: #888888;
   --highlight-bg: oklch(0.8 0.12 85 / 0.3);
   --hr-color: #666666;
   --pre-bg: #171b21;
   --pre-fg: #cccccc;
+  --quote-bg: oklch(0.56 0 0 / 0.08);
+  --quote-fg: #888888;
 
   /* Syntax Colors */
+  --syntax-atom: #d19a66;
+  --syntax-comment: #888888;
   --syntax-heading: #e06c75;
   --syntax-keyword: #c678dd;
-  --syntax-atom: #d19a66;
   --syntax-string: #98c379;
-  --syntax-comment: #888888;
 
   /* Preview */
+  --preview-bg-code: var(--code-bg);
+  --preview-bg-pre: var(--pre-bg);
+  --preview-bg-quote: var(--quote-bg);
+  --preview-border-primary: var(--border-primary);
+  --preview-border-quote: #999999;
   --preview-fg-body: var(--text-primary);
+  --preview-fg-code: var(--code-fg);
   --preview-fg-heading: #e06c75;
   --preview-fg-link: #61afef;
-  --preview-fg-code: var(--code-fg);
-  --preview-bg-code: var(--code-bg);
-  --preview-fg-quote: #999999;
-  --preview-bg-quote: var(--quote-bg);
-  --preview-border-quote: #999999;
-  --preview-bg-pre: var(--pre-bg);
   --preview-fg-pre: var(--pre-fg);
-  --preview-border-primary: var(--border-primary);
+  --preview-fg-quote: #999999;
   --preview-surface-2: var(--surface-2);
 }
 
@@ -98,67 +98,67 @@
   --surface-1: #fcfcfc;
   --surface-2: #f2f2f2;
   --surface-3: #e8e8e8;
-  --surface-gutter: #f0f0f0;
-  --surface-preview: #ffffff;
-  --surface-input: #ffffff;
-  --surface-hover: #e0e0e0;
   --surface-active: #d4d4d4;
   --surface-backdrop: oklch(0 0 0 / 0.3);
+  --surface-gutter: #f0f0f0;
+  --surface-hover: #e0e0e0;
+  --surface-input: #ffffff;
+  --surface-preview: #ffffff;
   --surface-row: #f6f6f6;
 
   /* Text System - Light Theme */
+  --text-inverse: #ffffff;
   --text-primary: #111111;
+  --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
   --text-secondary: #4d4d4d;
   --text-tertiary: #7a7a7a;
-  --text-inverse: #ffffff;
-  --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
   /* Border System - Light Theme */
   --border-primary: #c7c7c7;
   --border-secondary: #a8a8a8;
 
   /* Accent System - Light Theme (darker variants for light bg) */
+  --accent-file: oklch(from var(--color-brand-file) 0.45 c h);
+  --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.38 c h);
+  --accent-filepath: oklch(from var(--color-brand-filepath) 0.45 c h);
+  --accent-link-hover: oklch(from var(--color-brand-link) 0.35 c h);
+  --accent-link: oklch(from var(--color-brand-link) 0.45 c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.45 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
-  --accent-file: oklch(from var(--color-brand-file) 0.45 c h);
-  --accent-link: oklch(from var(--color-brand-link) 0.45 c h);
-  --accent-link-hover: oklch(from var(--color-brand-link) 0.35 c h);
-  --accent-url: oklch(from var(--color-brand-url) 0.45 c h);
   --accent-url-hover: oklch(from var(--color-brand-url) 0.35 c h);
-  --accent-filepath: oklch(from var(--color-brand-filepath) 0.45 c h);
-  --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.38 c h);
+  --accent-url: oklch(from var(--color-brand-url) 0.45 c h);
 
   /* Functional System - Light Theme */
-  --danger: #c62828;
+  --active-line-bg: oklch(0 0 0 / 0.04);
   --danger-hover: #b71c1c;
   --danger-text: #c62828;
-  --success: #2e7d32;
-  --success-hover: #1b5e20;
+  --danger: #c62828;
+  --dirty-indicator: #2e7d32;
   --selection-bg: oklch(from var(--color-brand-accent) 0.6 0.08 h / 0.2);
   --selection-match-bg: oklch(0.68 0.12 62 / 0.35);
-  --active-line-bg: oklch(0 0 0 / 0.04);
-  --dirty-indicator: #2e7d32;
+  --success-hover: #1b5e20;
+  --success: #2e7d32;
 
   /* Editor & Content Colors - Light Theme */
   --code-bg: oklch(0.76 0.14 70 / 0.15);
   --code-fg: #b45309;
-  --quote-bg: oklch(0.47 0.14 310 / 0.05);
-  --quote-fg: #7b1fa2;
   --highlight-bg: oklch(0.8 0.12 85 / 0.4);
   --hr-color: #6c6c6c;
   --pre-bg: #f0f0f0;
   --pre-fg: #1a1a1a;
+  --quote-bg: oklch(0.47 0.14 310 / 0.05);
+  --quote-fg: #7b1fa2;
 
   /* Syntax Colors - Light Theme (darker variants for light bg) */
+  --syntax-atom: #e65100;
+  --syntax-comment: #6b7280;
   --syntax-heading: #c62828;
   --syntax-keyword: #6a1b9a;
-  --syntax-atom: #e65100;
   --syntax-string: #2e7d32;
-  --syntax-comment: #6b7280;
 
   /* Preview - Light Theme (only values that differ from dark) */
+  --preview-border-quote: var(--quote-fg);
   --preview-fg-heading: #c62828;
   --preview-fg-link: #1565c0;
   --preview-fg-quote: var(--text-secondary);
-  --preview-border-quote: var(--quote-fg);
 }
