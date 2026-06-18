@@ -44,13 +44,13 @@
   --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
 
   /* Functional System */
-  --active-line-bg: #292929;
+  --active-line-bg: rgba(255, 255, 255, 0.06);
   --danger-hover: #e8757f;
   --danger-text: #e06c75;
   --danger: #e06c75;
   --dirty-indicator: #98c379;
   --highlight-line: #e5c07b;
-  --selection-bg: #4b4b4b;
+  --selection-bg: #4c3947;
   --selection-match-bg: oklch(0.68 0.1 60 / 0.35);
   --success-hover: #a8cf8b;
   --success: #98c379;
@@ -129,7 +129,7 @@
   --accent-url: oklch(from var(--color-brand-url) 0.45 c h);
 
   /* Functional System - Light Theme */
-  --active-line-bg: oklch(0 0 0 / 0.04);
+  --active-line-bg: rgba(0, 0, 0, 0.04);
   --danger-hover: #b71c1c;
   --danger-text: #c62828;
   --danger: #c62828;

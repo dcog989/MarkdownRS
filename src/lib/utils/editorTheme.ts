@@ -18,7 +18,10 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     '.cm-scroller::-webkit-scrollbar-thumb:hover': { background: 'var(--text-primary)' },
     '.cm-gutters': { border: 'none', backgroundColor: 'transparent' },
     '.cm-gutterElement': { alignItems: 'flex-start !important' },
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+    '& .cm-selectionLayer .cm-selectionBackground': {
+      background: 'var(--selection-bg) !important',
+    },
+    '.cm-content ::selection': {
       backgroundColor: 'var(--selection-bg) !important',
     },
     '.cm-selectionMatch': { backgroundColor: 'var(--selection-match-bg)' },

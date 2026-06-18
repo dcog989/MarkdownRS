@@ -145,11 +145,12 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
             <!-- fixed positioning so the overlay is always in the viewport,
                  regardless of scroll position within the shortcuts list -->
             <div class="fixed inset-0 z-50">
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <div
                     class="absolute inset-0 bg-black/40"
-                    onclick={handleCancelConflict}></div>
+                    role="button"
+                    tabindex="-1"
+                    onclick={handleCancelConflict}
+                    onkeydown={(e) => e.key === 'Enter' && handleCancelConflict()}></div>
                 <div
                     class="pointer-events-none absolute inset-0 flex items-center justify-center">
                     <div
@@ -190,6 +191,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                                 {@const currentIndex = ++globalIndex.value}
                                 {@const isSelected = currentIndex === nav.selectedIndex}
                                 <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <!-- biome-ignore lint/a11y/noStaticElementInteractions: hover-based navigation item -->
                                 <div
                                     class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
                                     style:background-color={isSelected

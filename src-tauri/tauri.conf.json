@@ -28,12 +28,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "deb",
-      "rpm",
-      "appimage",
-      "nsis"
-    ],
+    "targets": ["deb", "rpm", "appimage", "nsis"],
     "icon": [
       "icons/32x32.png",
       "icons/64x64.png",
@@ -57,23 +52,14 @@
     },
     "fileAssociations": [
       {
-        "ext": [
-          "md",
-          "markdown",
-          "mdown",
-          "mkdn",
-          "mkd",
-          "mdwn"
-        ],
+        "ext": ["md", "markdown", "mdown", "mkdn", "mkd", "mdwn"],
         "name": "Markdown Document",
         "description": "Markdown Document",
         "role": "Editor",
         "mimeType": "text/markdown"
       },
       {
-        "ext": [
-          "txt"
-        ],
+        "ext": ["txt"],
         "name": "Text Document",
         "description": "Text Document",
         "role": "Editor",
@@ -84,9 +70,7 @@
   "plugins": {
     "updater": {
       "pubkey": "CHANGE_ME_TO_YOUR_GENERATED_PUBKEY",
-      "endpoints": [
-        "https://github.com/dcog989/MarkdownRS/releases/latest/download/latest.json"
-      ]
+      "endpoints": ["https://github.com/dcog989/MarkdownRS/releases/latest/download/latest.json"]
     },
     "shell": {
       "open": true

@@ -27,8 +27,10 @@
 }
 
 /* Selection */
-.cm-editor.cm-focused .cm-selectionBackground,
-.cm-editor .cm-selectionBackground,
+.cm-editor .cm-selectionLayer .cm-selectionBackground {
+  background: var(--selection-bg);
+}
+
 .cm-editor .cm-content ::selection {
   background-color: var(--selection-bg);
 }
