@@ -59,9 +59,7 @@
   --transition-fast: 100ms;
   --transition-normal: 150ms;
   --transition-slow: 200ms;
-}
 
-:root {
   /* Editor & Content Colors */
   --code-bg: oklch(0.72 0.12 145 / 0.1);
   --code-fg: #98c379;
