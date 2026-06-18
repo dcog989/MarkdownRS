@@ -30,7 +30,7 @@
   /* Border System */
   --border-primary: #343434;
   --border-secondary: #4b4b4b;
-  --border-focus: #61afef;
+  --border-focus: #9c658f;
 
   /* Accent System - derived from Brand */
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
@@ -61,39 +61,14 @@
   --transition-slow: 200ms;
 
   /* Editor & Content Colors */
-  --code-bg: oklch(0.72 0.12 145 / 0.1);
-  --code-fg: #98c379;
+  --code-bg: oklch(0.72 0.1 145 / 0.06);
+  --code-fg: #92b975;
   --quote-bg: oklch(0.56 0 0 / 0.08);
   --quote-fg: #888888;
   --highlight-bg: oklch(0.8 0.12 85 / 0.3);
   --hr-color: #666666;
   --pre-bg: #171b21;
   --pre-fg: #cccccc;
-
-  /* Editor Styling - Layer 2 */
-  --editor-bg: var(--surface-1);
-  --editor-fg: var(--text-primary);
-  --editor-gutter-bg: var(--surface-gutter);
-  --editor-gutter-fg: var(--text-tertiary);
-  --editor-gutter-active-bg: var(--surface-2);
-  --editor-gutter-active-fg: var(--text-primary);
-  --editor-active-line-bg: var(--active-line-bg);
-  --editor-selection-bg: var(--selection-bg);
-  --editor-selection-match-bg: var(--selection-match-bg);
-  --editor-cursor-color: currentColor;
-  --editor-code-bg: var(--code-bg);
-  --editor-code-fg: var(--code-fg);
-  --editor-quote-bg: var(--quote-bg);
-  --editor-quote-fg: var(--quote-fg);
-  --editor-highlight-bg: var(--highlight-bg);
-  --editor-hr-color: var(--hr-color);
-
-  /* Editor Syntax Colors */
-  --editor-syntax-heading: var(--syntax-heading);
-  --editor-syntax-keyword: var(--syntax-keyword);
-  --editor-syntax-atom: var(--syntax-atom);
-  --editor-syntax-string: var(--syntax-string);
-  --editor-syntax-comment: var(--syntax-comment);
 
   /* Syntax Colors */
   --syntax-heading: #e06c75;
@@ -120,28 +95,27 @@
 /* Light Theme - Layer 3: Theme-specific overrides */
 [data-theme="light"] {
   /* Surface System - Light Theme */
-  --surface-1: oklch(0.99 0 0);
-  --surface-2: oklch(0.96 0 0);
-  --surface-3: oklch(0.92 0 0);
-  --surface-gutter: oklch(0.95 0 0);
-  --surface-preview: oklch(1 0 0);
-  --surface-input: oklch(1 0 0);
-  --surface-hover: oklch(0.9 0 0);
-  --surface-active: oklch(0.85 0 0);
+  --surface-1: #fcfcfc;
+  --surface-2: #f2f2f2;
+  --surface-3: #e8e8e8;
+  --surface-gutter: #f0f0f0;
+  --surface-preview: #ffffff;
+  --surface-input: #ffffff;
+  --surface-hover: #e0e0e0;
+  --surface-active: #d4d4d4;
   --surface-backdrop: oklch(0 0 0 / 0.3);
-  --surface-row: oklch(0.97 0 0);
+  --surface-row: #f6f6f6;
 
   /* Text System - Light Theme */
-  --text-primary: oklch(0.15 0 0);
-  --text-secondary: oklch(0.38 0 0);
-  --text-tertiary: oklch(0.55 0 0);
-  --text-inverse: oklch(1 0 0);
+  --text-primary: #111111;
+  --text-secondary: #4d4d4d;
+  --text-tertiary: #7a7a7a;
+  --text-inverse: #ffffff;
   --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
   /* Border System - Light Theme */
-  --border-primary: oklch(0.82 0 0);
-  --border-secondary: oklch(0.72 0 0);
-  --border-focus: #61afef;
+  --border-primary: #c7c7c7;
+  --border-secondary: #a8a8a8;
 
   /* Accent System - Light Theme (darker variants for light bg) */
   --accent-primary: oklch(from var(--color-brand-accent) 0.45 c h);
@@ -160,7 +134,6 @@
   --danger-text: #c62828;
   --success: #2e7d32;
   --success-hover: #1b5e20;
-  --highlight-line: #e5c07b;
   --selection-bg: oklch(from var(--color-brand-accent) 0.6 0.08 h / 0.2);
   --selection-match-bg: oklch(0.68 0.12 62 / 0.35);
   --active-line-bg: oklch(0 0 0 / 0.04);
@@ -172,47 +145,20 @@
   --quote-bg: oklch(0.47 0.14 310 / 0.05);
   --quote-fg: #7b1fa2;
   --highlight-bg: oklch(0.8 0.12 85 / 0.4);
-  --hr-color: oklch(0.5 0 0);
+  --hr-color: #6c6c6c;
   --pre-bg: #f0f0f0;
   --pre-fg: #1a1a1a;
 
-  /* Editor Styling - Light Theme (rebind to updated vars) */
-  --editor-gutter-active-bg: var(--surface-2);
-  --editor-active-line-bg: var(--active-line-bg);
-  --editor-selection-bg: var(--selection-bg);
-  --editor-selection-match-bg: var(--selection-match-bg);
-  --editor-code-bg: var(--code-bg);
-  --editor-code-fg: var(--code-fg);
-  --editor-quote-bg: var(--quote-bg);
-  --editor-quote-fg: var(--quote-fg);
-  --editor-highlight-bg: var(--highlight-bg);
-  --editor-hr-color: var(--hr-color);
-
-  /* Editor Syntax Colors - Light Theme */
-  --editor-syntax-heading: var(--syntax-heading);
-  --editor-syntax-keyword: var(--syntax-keyword);
-  --editor-syntax-atom: var(--syntax-atom);
-  --editor-syntax-string: var(--syntax-string);
-  --editor-syntax-comment: var(--syntax-comment);
-
-  /* Syntax Colors - Light Theme (darker variants of OneDark hues) */
+  /* Syntax Colors - Light Theme (darker variants for light bg) */
   --syntax-heading: #c62828;
   --syntax-keyword: #6a1b9a;
   --syntax-atom: #e65100;
   --syntax-string: #2e7d32;
   --syntax-comment: #6b7280;
 
-  /* Preview - Light Theme */
-  --preview-fg-body: var(--text-primary);
+  /* Preview - Light Theme (only values that differ from dark) */
   --preview-fg-heading: #c62828;
   --preview-fg-link: #1565c0;
-  --preview-fg-code: var(--code-fg);
-  --preview-bg-code: var(--code-bg);
   --preview-fg-quote: var(--text-secondary);
-  --preview-bg-quote: var(--quote-bg);
   --preview-border-quote: var(--quote-fg);
-  --preview-bg-pre: var(--pre-bg);
-  --preview-fg-pre: var(--pre-fg);
-  --preview-border-primary: var(--border-primary);
-  --preview-surface-2: var(--surface-2);
 }
