@@ -8,7 +8,7 @@
   --color-brand-url: #61afef;
   --color-brand-filepath: #98c379;
 
-  /* Surface System - OneDark Pro grey hierarchy, shifted darker */
+  /* Surface System */
   --surface-1: #1e1e1e;
   --surface-2: #171717;
   --surface-3: #111111;
@@ -43,7 +43,7 @@
   --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
   --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
 
-  /* Functional System - OneDark Pro diagnostic colors */
+  /* Functional System */
   --danger: #e06c75;
   --danger-hover: #e8757f;
   --danger-text: #e06c75;
@@ -65,14 +65,14 @@
   /* Editor & Content Colors */
   --code-bg: oklch(0.72 0.12 145 / 0.1);
   --code-fg: #98c379;
-  --quote-bg: oklch(0.56 0.02 260 / 0.08);
-  --quote-fg: #7f848e;
+  --quote-bg: oklch(0.56 0 0 / 0.08);
+  --quote-fg: #888888;
   --highlight-bg: oklch(0.8 0.12 85 / 0.3);
-  --hr-color: #5c6370;
+  --hr-color: #666666;
   --pre-bg: #171b21;
-  --pre-fg: #abb2bf;
+  --pre-fg: #cccccc;
 
-  /* Editor Styling - Layer 2: Exposed for theme CSS customization */
+  /* Editor Styling - Layer 2 */
   --editor-bg: var(--surface-1);
   --editor-fg: var(--text-primary);
   --editor-gutter-bg: var(--surface-gutter);
@@ -97,12 +97,12 @@
   --editor-syntax-string: var(--syntax-string);
   --editor-syntax-comment: var(--syntax-comment);
 
-  /* Syntax Colors - OneDark Pro palette */
+  /* Syntax Colors */
   --syntax-heading: #e06c75;
   --syntax-keyword: #c678dd;
   --syntax-atom: #d19a66;
   --syntax-string: #98c379;
-  --syntax-comment: #7f848e;
+  --syntax-comment: #888888;
 
   /* Preview */
   --preview-fg-body: var(--text-primary);
@@ -110,9 +110,9 @@
   --preview-fg-link: #61afef;
   --preview-fg-code: var(--code-fg);
   --preview-bg-code: var(--code-bg);
-  --preview-fg-quote: #7f848e;
+  --preview-fg-quote: #999999;
   --preview-bg-quote: var(--quote-bg);
-  --preview-border-quote: #7f848e;
+  --preview-border-quote: #999999;
   --preview-bg-pre: var(--pre-bg);
   --preview-fg-pre: var(--pre-fg);
   --preview-border-primary: var(--border-primary);
