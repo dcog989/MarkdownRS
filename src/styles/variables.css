@@ -22,8 +22,8 @@
 
   /* Text System */
   --text-primary: #cccccc;
-  --text-secondary: #999999;
-  --text-tertiary: #666666;
+  --text-secondary: #888888;
+  --text-tertiary: #555555;
   --text-inverse: #ffffff;
   --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
 
