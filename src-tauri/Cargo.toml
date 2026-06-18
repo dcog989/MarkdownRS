@@ -3,7 +3,7 @@ authors = ["dcog989"]
 description = "The only Markdown editor you need."
 edition = "2024"
 name = "markdown-rs"
-version = "0.27.1"
+version = "0.28.0"
 
 [build-dependencies]
 tauri-build = { version = "2.6", features = [] }
