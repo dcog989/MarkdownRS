@@ -22,15 +22,15 @@
 
 /* Editor Colors */
 .cm-editor {
-    background-color: var(--surface-1);
-    color: var(--text-primary);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
 }
 
 /* Selection */
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor .cm-selectionBackground,
 .cm-editor .cm-content ::selection {
-    background-color: var(--selection-bg);
+  background-color: var(--selection-bg);
 }
 
 /* Syntax Highlighting - Colors Only */
@@ -40,18 +40,18 @@
 .cm-h4,
 .cm-h5,
 .cm-h6 {
-    color: var(--syntax-heading);
+  color: var(--syntax-heading);
 }
 .cm-keyword {
-    color: var(--syntax-keyword);
+  color: var(--syntax-keyword);
 }
 .cm-atom,
 .cm-number {
-    color: var(--syntax-atom);
+  color: var(--syntax-atom);
 }
 .cm-string {
-    color: var(--syntax-string);
+  color: var(--syntax-string);
 }
 .cm-comment {
-    color: var(--syntax-comment);
+  color: var(--syntax-comment);
 }
