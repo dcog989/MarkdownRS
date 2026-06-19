@@ -20,7 +20,7 @@ encoding_rs = "0.8"
 gtk = "0.18"
 image = { version = "0.25", default-features = false, features = ["png"] }
 log = "0.4"
-pdfrs = "0.1"
+pdf_oxide = "0.3"
 regex = "1.12"
 reqwest = "0.13"
 rusqlite = { version = "0.40", features = ["bundled"] }
