@@ -15,26 +15,11 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         file.sync_all().await?;
     }
 
-    match fs::rename(&temp_path, path).await {
-        Ok(_) => Ok(()),
-        Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
-            fs::copy(&temp_path, path).await.inspect_err(|_| {
-                let _ = std::fs::remove_file(&temp_path);
-            })?;
-            if let Err(rm_err) = fs::remove_file(&temp_path).await {
-                log::warn!(
-                    "atomic_write: temp file {:?} could not be removed after cross-device copy: {}",
-                    temp_path,
-                    rm_err
-                );
-            }
-            Ok(())
-        },
-        Err(e) => {
-            let _ = fs::remove_file(&temp_path).await;
-            Err(e)
-        },
+    if let Err(e) = fs::rename(&temp_path, path).await {
+        let _ = fs::remove_file(&temp_path).await;
+        return Err(e);
     }
+    Ok(())
 }
 
 pub async fn cleanup_stale_temp_files(
