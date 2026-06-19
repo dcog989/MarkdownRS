@@ -5,7 +5,7 @@ import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
-import { cycleSortMode, SORT_LABELS } from '$lib/utils/commandPaletteSort';
+import { cycleSortMode, SORT_LABELS, sortCommands } from '$lib/utils/commandPaletteSort';
 import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 import { shortcutManager } from '$lib/utils/shortcuts';
@@ -27,8 +27,12 @@ let filteredCommands = $derived(
     commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())),
 );
 
+let flatOps = $derived(
+    sortCommands(filteredCommands, settingsState.commandPaletteSort, settingsState.commandUsage, settingsState.commandUsageCounts),
+);
+
 let groupedCommands = $derived(
-    filteredCommands.reduce(
+    flatOps.reduce(
         (acc: { category: string; commands: Command[] }[], c: Command) => {
             let group = acc.find((g) => g.category === c.category);
             if (!group) {
@@ -41,8 +45,6 @@ let groupedCommands = $derived(
         [] as { category: string; commands: Command[] }[],
     ),
 );
-
-let flatOps = $derived(filteredCommands);
 
 const nav = createListNavigation(
     () => flatOps.length,
