@@ -1,4 +1,4 @@
-import { initializeTabLoadState } from '$lib/services/sessionPersistence';
+import { initializeTabLoadState } from '$lib/services/tabLoadStateMachine';
 import { CONFIG } from '$lib/utils/config';
 import { updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';

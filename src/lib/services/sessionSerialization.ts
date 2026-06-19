@@ -1,6 +1,5 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
-// Only import types if needed
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import {
   addTab,
@@ -8,28 +7,22 @@ import {
   getTransientState,
   initTransientState,
   markTabPersisted,
-  setFileCheckStatus,
   setLineChangeTracker,
   updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
-import { hashContent, isDirty, updateSavedHash } from '$lib/utils/contentHash';
+import { updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { debounce, formatDuration } from '$lib/utils/timing';
-import {
-  checkAndReloadIfChanged,
-  checkFileExists,
-  normalizeLineEndings,
-  refreshMetadata,
-  reloadFileContent,
-} from './fileMetadata';
-import { fileWatcher } from './fileWatcher';
+import { normalizeLineEndings } from './fileMetadata';
+import { initializeTabFileState } from './tabFileStateInit';
+import { initializeTabLoadState, loadTabContentLazy } from './tabLoadStateMachine';
 
 type RustTabState = {
   id: string;
@@ -142,238 +135,6 @@ export async function persistSession(): Promise<void> {
   }
 }
 
-export async function initializeTabFileState(tab: EditorTab): Promise<void> {
-  if (!tab.path) {
-    return;
-  }
-
-  // First check if the file exists
-  try {
-    await callBackend('get_file_metadata', { path: tab.path }, 'File:Metadata');
-  } catch {
-    // File doesn't exist, mark as such and skip further operations
-    setFileCheckStatus(tab.id, true, true);
-    return;
-  }
-
-  if (!tab.isDirty) {
-    const hasChanged = await checkAndReloadIfChanged(tab.id);
-    if (hasChanged) {
-      await reloadFileContent(tab.id);
-    }
-  }
-
-  if (tab.isDirty) {
-    try {
-      const res = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
-
-      if (!res) {
-        throw new Error('Failed to read file: null result');
-      }
-
-      const storeTab = editorStore.tabs.find((x) => x.id === tab.id);
-      if (storeTab) {
-        const normalizedContent = normalizeLineEndings(res.content);
-        storeTab.lastSavedHash = hashContent(normalizedContent);
-        storeTab.isDirty = isDirty(storeTab.content, storeTab.lastSavedHash);
-      }
-    } catch (err) {
-      AppError.handle('File:Read', err, {
-        showToast: false,
-        severity: 'warning',
-        additionalInfo: { path: tab.path },
-      });
-    }
-  }
-
-  await refreshMetadata(tab.id, tab.path);
-  await checkFileExists(tab.id);
-
-  try {
-    await fileWatcher.watch(tab.path);
-  } catch (err) {
-    AppError.handle('FileWatcher:Watch', err, {
-      showToast: false,
-      severity: 'warning',
-      additionalInfo: { path: tab.path },
-    });
-  }
-}
-
-enum TabLoadState {
-  UNLOADED = 'UNLOADED',
-  LOADING = 'LOADING',
-  LOADED = 'LOADED',
-  ERROR = 'ERROR',
-}
-
-const tabLoadStates = new Map<string, TabLoadState>();
-
-export function initializeTabLoadState(tabId: string, contentLoaded: boolean = true): void {
-  tabLoadStates.set(tabId, contentLoaded ? TabLoadState.LOADED : TabLoadState.UNLOADED);
-}
-
-function validateTransition(currentState: TabLoadState, nextState: TabLoadState): boolean {
-  const validTransitions: Record<TabLoadState, TabLoadState[]> = {
-    [TabLoadState.UNLOADED]: [TabLoadState.LOADING],
-    [TabLoadState.LOADING]: [TabLoadState.LOADED, TabLoadState.ERROR],
-    [TabLoadState.LOADED]: [],
-    [TabLoadState.ERROR]: [TabLoadState.LOADING],
-  };
-
-  return validTransitions[currentState]?.includes(nextState) ?? false;
-}
-
-function setTabLoadState(tabId: string, state: TabLoadState): void {
-  const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
-  if (!validateTransition(currentState, state)) {
-    logger.session.warn('InvalidTabStateTransition', {
-      tabId,
-      from: currentState,
-      to: state,
-    });
-    return;
-  }
-
-  tabLoadStates.set(tabId, state);
-}
-
-/**
- * Lazy load content for a tab from the database
- *
- * State Machine Transitions:
- * - UNLOADED → LOADING → LOADED (success path)
- * - UNLOADED → LOADING → ERROR → LOADING → LOADED (retry path)
- */
-const loadingRequests = new Map<string, number>();
-
-export async function loadTabContentLazy(tabId: string): Promise<void> {
-  const start = performance.now();
-  const index = editorStore.tabs.findIndex((t) => t.id === tabId);
-  if (index === -1) {
-    return;
-  }
-
-  const tab = editorStore.tabs[index];
-  const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
-
-  if (currentState === TabLoadState.LOADED || tab.contentLoaded) {
-    return;
-  }
-
-  if (currentState === TabLoadState.LOADING) {
-    return;
-  }
-
-  setTabLoadState(tabId, TabLoadState.LOADING);
-
-  const requestId = Date.now();
-  loadingRequests.set(tabId, requestId);
-
-  try {
-    const data = await callBackend('load_tab_content', { tabId }, 'Session:Load');
-
-    if (loadingRequests.get(tabId) !== requestId) {
-      return;
-    }
-
-    const currentActiveId = appState.activeTabId;
-    if (currentActiveId !== tabId) {
-      logger.session.debug('TabSwitchedDuringLoad', { tabId, currentActiveId });
-      return;
-    }
-
-    let normalizedContent = '';
-    let lastSavedHash = '';
-
-    if (data && data.content !== null && data.content !== undefined && data.content !== '') {
-      normalizedContent = normalizeLineEndings(data.content);
-      logger.session.debug('ContentLoadedFromDb', {
-        tabId,
-        contentLength: normalizedContent.length,
-        path: tab.path,
-      });
-
-      if (!tab.path) {
-        lastSavedHash = '';
-      } else {
-        try {
-          const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
-          if (fileData?.content) {
-            lastSavedHash = hashContent(normalizeLineEndings(fileData.content));
-          } else {
-            lastSavedHash = hashContent(normalizedContent);
-          }
-        } catch {
-          lastSavedHash = hashContent(normalizedContent);
-        }
-      }
-    } else {
-      // No content in database - this shouldn't happen for saved files
-      logger.session.warn('NoContentInDatabase', {
-        tabId,
-        path: tab.path,
-        hasData: !!data,
-        contentLength: data?.content?.length ?? 0,
-      });
-      normalizedContent = '';
-      lastSavedHash = '';
-    }
-
-    const sizeBytes = byteLength(normalizedContent);
-    const wordCount = computeWordCount(normalizedContent, sizeBytes);
-
-    const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
-    if (currentIndex !== -1) {
-      const currentTab = editorStore.tabs[currentIndex];
-      editorStore.tabs[currentIndex] = {
-        ...currentTab,
-        content: normalizedContent,
-        lastSavedHash,
-        sizeBytes,
-        wordCount,
-        lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
-        contentLoaded: true,
-        isDirty: isDirty(normalizedContent, lastSavedHash),
-      };
-
-      logger.session.info('TabContentLoaded', {
-        tabId,
-        sizeBytes,
-        wordCount,
-        path: tab.path,
-      });
-    }
-
-    setTabLoadState(tabId, TabLoadState.LOADED);
-
-    logger.session.debug('TabContentLazyLoaded', {
-      duration: formatDuration(start),
-      tabId,
-      size: sizeBytes,
-    });
-  } catch (err) {
-    if (loadingRequests.get(tabId) === requestId) {
-      setTabLoadState(tabId, TabLoadState.ERROR);
-
-      AppError.handle('Session:Load', err, {
-        showToast: false,
-        severity: 'warning',
-        additionalInfo: { tabId },
-      });
-
-      const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
-      if (currentIndex !== -1) {
-        editorStore.tabs[currentIndex].contentLoaded = false;
-      }
-    }
-  } finally {
-    if (loadingRequests.get(tabId) === requestId) {
-      loadingRequests.delete(tabId);
-    }
-  }
-}
-
 function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = true): EditorTab {
   const rawContent = t.content || '';
   const content = normalizeLineEndings(rawContent);
@@ -446,7 +207,6 @@ export async function loadSession(): Promise<void> {
     if (activeRustTabs.length > 0) {
       activeRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-      // Convert tabs without content - lazy loader fetches content on first activation
       const convertedTabs: EditorTab[] = activeRustTabs.map((t) => {
         const tab = convertRustTabToEditorTab(t, false);
         return tab;
@@ -465,8 +225,6 @@ export async function loadSession(): Promise<void> {
 
       editorStore.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map((t) => t.id);
 
-      // Initialize Active Tab Logic
-
       switch (settingsState.startupBehavior) {
         case 'first':
           appState.activeTabId = convertedTabs[0].id;
@@ -484,14 +242,11 @@ export async function loadSession(): Promise<void> {
 
       const activeTab = editorStore.tabs.find((t) => t.id === appState.activeTabId);
       if (activeTab) {
-        // Load active tab content immediately - the lazy loader in +page.svelte misses
-        // the initial activation because isInitialized is still false at that point.
         await loadTabContentLazy(activeTab.id);
         await initializeTabFileState(activeTab);
       }
     }
 
-    // Ensure there's always one tab if empty or requested "new"
     if (editorStore.tabs.length === 0 || settingsState.startupBehavior === 'new') {
       if (settingsState.startupBehavior === 'new' && activeRustTabs.length > 0) {
         appState.activeTabId = addTab();
@@ -514,7 +269,6 @@ export async function loadSession(): Promise<void> {
       });
     }
 
-    // Set sessionDirty if there are unsaved tabs with content
     const hasUnsavedTabsWithContent = editorStore.tabs.some((t) => !t.path && t.content.length > 0);
     editorStore.sessionDirty = hasUnsavedTabsWithContent;
 

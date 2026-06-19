@@ -8,7 +8,7 @@ import {
   sanitizePath,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
-import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionPersistence';
+import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionSerialization';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import { addTab, closeTab, reopenClosedTab, updateTabFields, updateTabTitle } from '$lib/stores/editorStore.svelte';

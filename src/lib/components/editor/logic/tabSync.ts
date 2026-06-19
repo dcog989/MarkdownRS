@@ -1,7 +1,7 @@
 import type { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { initializeTabFileState } from '$lib/services/sessionPersistence';
+import { initializeTabFileState } from '$lib/services/tabFileStateInit';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { getHistoryState, getTransientState, updateContent, updateHistoryState } from '$lib/stores/editorStore.svelte';
