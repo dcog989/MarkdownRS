@@ -262,6 +262,14 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
         'Automatically name unsaved tabs from first meaningful line of content (skips structural-only lines like brackets, strips leading #)',
     },
     {
+      key: 'enableClosedTabHistory',
+      label: 'Recently Closed on New Docs',
+      type: 'boolean',
+      category: 'Interface',
+      defaultValue: true,
+      tooltip: 'Show a list of recently closed files on new, empty documents for quick reopening.',
+    },
+    {
       key: 'newTabPosition',
       label: 'Tabs Created At',
       type: 'select',

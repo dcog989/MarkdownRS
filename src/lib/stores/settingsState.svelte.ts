@@ -43,6 +43,7 @@ export const settingsState = $state({
   wrapGuideColumn: 0,
   doubleClickSelectsTrailingSpace: false,
   collapsePinnedTabs: false,
+  enableClosedTabHistory: true,
   customShortcuts: {} as Record<string, string>,
   confirmationSuppressed: false,
   maxFileSizeMB: 50,
