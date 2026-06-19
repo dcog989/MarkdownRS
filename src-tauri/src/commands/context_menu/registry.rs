@@ -1,35 +1,65 @@
 use winreg::RegKey;
 use winreg::enums::*;
 
-pub fn set_context_menu() -> Result<(), String> {
+fn get_exe_info() -> Result<(String, String), String> {
     let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
-    let exe_str = exe_path.to_str().ok_or("Invalid executable path")?;
+    let exe_str = exe_path
+        .to_str()
+        .ok_or("Invalid executable path")?
+        .to_string();
     let exe_name = exe_path
         .file_name()
         .and_then(|n| n.to_str())
+        .map(|s| s.to_string())
         .unwrap_or_else(|| {
             log::warn!(
                 "Could not determine exe filename from {:?}, using fallback",
                 exe_path
             );
-            "markdown-rs.exe"
+            "markdown-rs.exe".to_string()
         });
+    Ok((exe_str, exe_name))
+}
 
+fn set_command(subkey: &RegKey, command: &str) -> Result<(), String> {
+    let (cmd_key, _) = subkey.create_subkey("command").map_err(|e| e.to_string())?;
+    cmd_key.set_value("", &command).map_err(|e| e.to_string())
+}
+
+fn create_verb(
+    hkcu: &RegKey,
+    parent_path: &str,
+    verb: &str,
+    label: &str,
+    icon: &str,
+    command: &str,
+) -> Result<(), String> {
+    let key_path = format!(r"{}\{}", parent_path, verb);
+    let (key, _) = hkcu.create_subkey(&key_path).map_err(|e| e.to_string())?;
+    key.set_value("", &label).map_err(|e| e.to_string())?;
+    key.set_value("Icon", &icon).map_err(|e| e.to_string())?;
+    set_command(&key, command)
+}
+
+fn create_or_warn(hkcu: &RegKey, path: &str, description: &str) {
+    if let Err(e) = hkcu.create_subkey(path) {
+        log::warn!("Failed to create {}: {}", description, e);
+    }
+}
+
+pub fn set_context_menu() -> Result<(), String> {
+    let (exe_str, exe_name) = get_exe_info()?;
+    let command = format!("\"{}\" \"%1\"", exe_str);
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
-    {
-        let path = r"Software\Classes\*\shell\MarkdownRS";
-        let (key, _) = hkcu.create_subkey(path).map_err(|e| e.to_string())?;
-
-        key.set_value("", &"Open with MarkdownRS")
-            .map_err(|e| e.to_string())?;
-        key.set_value("Icon", &exe_str).map_err(|e| e.to_string())?;
-
-        let (cmd_key, _) = key.create_subkey("command").map_err(|e| e.to_string())?;
-        cmd_key
-            .set_value("", &format!("\"{}\" \"%1\"", exe_str))
-            .map_err(|e| e.to_string())?;
-    }
+    create_verb(
+        &hkcu,
+        r"Software\Classes\*\shell",
+        "MarkdownRS",
+        "Open with MarkdownRS",
+        &exe_str,
+        &command,
+    )?;
 
     {
         let app_path = format!(r"Software\Classes\Applications\{}", exe_name);
@@ -51,62 +81,39 @@ pub fn set_context_menu() -> Result<(), String> {
         let (cmd_key, _) = app_key
             .create_subkey(r"shell\open\command")
             .map_err(|e| e.to_string())?;
-        cmd_key
-            .set_value("", &format!("\"{}\" \"%1\"", exe_str))
-            .map_err(|e| e.to_string())?;
+        cmd_key.set_value("", &command).map_err(|e| e.to_string())?;
     }
 
-    {
-        let path = format!(r"Software\Classes\*\OpenWithList\{}", exe_name);
-        if let Err(e) = hkcu.create_subkey(path) {
-            log::warn!("Failed to create OpenWithList entry: {}", e);
-        }
+    create_or_warn(
+        &hkcu,
+        &format!(r"Software\Classes\*\OpenWithList\{}", exe_name),
+        "OpenWithList entry",
+    );
+
+    for ext in &[".md", ".markdown", ".txt"] {
+        create_or_warn(
+            &hkcu,
+            &format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name),
+            &format!("OpenWithList for {}", ext),
+        );
     }
 
-    {
-        for ext in &[".md", ".markdown", ".txt"] {
-            let path = format!(r"Software\Classes\{}\OpenWithList\{}", ext, exe_name);
-            if let Err(e) = hkcu.create_subkey(path) {
-                log::warn!("Failed to create OpenWithList for {}: {}", ext, e);
-            }
-        }
-    }
-
-    {
-        for ext in &[".md", ".markdown"] {
-            let path = format!(r"Software\Classes\{}\shell\Edit", ext);
-            let (key, _) = hkcu.create_subkey(&path).map_err(|e| e.to_string())?;
-
-            if let Err(e) = key.set_value("", &"Edit with MarkdownRS") {
-                log::warn!("Failed to set Edit verb label for {}: {}", ext, e);
-            }
-            if let Err(e) = key.set_value("Icon", &exe_str) {
-                log::warn!("Failed to set Edit verb icon for {}: {}", ext, e);
-            }
-
-            let (cmd_key, _) = key.create_subkey("command").map_err(|e| e.to_string())?;
-            cmd_key
-                .set_value("", &format!("\"{}\" \"%1\"", exe_str))
-                .map_err(|e| e.to_string())?;
-        }
+    for ext in &[".md", ".markdown"] {
+        create_verb(
+            &hkcu,
+            &format!(r"Software\Classes\{}", ext),
+            "shell\\Edit",
+            "Edit with MarkdownRS",
+            &exe_str,
+            &command,
+        )?;
     }
 
     Ok(())
 }
 
 pub fn remove_context_menu() -> Result<(), String> {
-    let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
-    let exe_name = exe_path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or_else(|| {
-            log::warn!(
-                "Could not determine exe filename from {:?}, using fallback",
-                exe_path
-            );
-            "markdown-rs.exe"
-        });
-
+    let (_, exe_name) = get_exe_info()?;
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let mut errors = Vec::new();
 
