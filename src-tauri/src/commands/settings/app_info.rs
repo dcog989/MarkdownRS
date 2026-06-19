@@ -1,8 +1,16 @@
 use serde::Serialize;
+use std::path::PathBuf;
 use tauri::Manager;
 
 const LOGS_DIR: &str = "Logs";
 const LOG_FILE_NAME: &str = "markdown-rs.log";
+
+fn path_or_default(
+    result: Result<PathBuf, impl std::fmt::Debug>,
+    f: impl FnOnce(PathBuf) -> String,
+) -> String {
+    result.map(f).unwrap_or_default()
+}
 
 #[derive(Serialize)]
 pub struct AppInfo {
@@ -24,31 +32,20 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
                 .unwrap_or_default()
         })
         .unwrap_or_default();
-    let data_path = app_handle
-        .path()
-        .app_config_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
-    let cache_path = app_handle
-        .path()
-        .app_local_data_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
-    let logs_path = app_handle
-        .path()
-        .app_local_data_dir()
-        .map(|p| p.join(LOGS_DIR).to_string_lossy().to_string())
-        .unwrap_or_default();
-    let log_file_path = app_handle
-        .path()
-        .app_local_data_dir()
-        .map(|p| {
-            p.join(LOGS_DIR)
-                .join(LOG_FILE_NAME)
-                .to_string_lossy()
-                .to_string()
-        })
-        .unwrap_or_default();
+    let path = app_handle.path();
+    let data_path = path_or_default(path.app_config_dir(), |p| p.to_string_lossy().to_string());
+    let cache_path = path_or_default(path.app_local_data_dir(), |p| {
+        p.to_string_lossy().to_string()
+    });
+    let logs_path = path_or_default(path.app_local_data_dir(), |p| {
+        p.join(LOGS_DIR).to_string_lossy().to_string()
+    });
+    let log_file_path = path_or_default(path.app_local_data_dir(), |p| {
+        p.join(LOGS_DIR)
+            .join(LOG_FILE_NAME)
+            .to_string_lossy()
+            .to_string()
+    });
 
     let os_platform = if cfg!(target_os = "windows") {
         "windows"
