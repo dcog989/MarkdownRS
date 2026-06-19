@@ -90,17 +90,7 @@ pub async fn save_settings(
     );
 
     let mut settings = settings;
-    if let Some(max_size) = settings
-        .get(io::MAX_FILE_SIZE_KEY_CAMEL)
-        .or_else(|| settings.get(io::MAX_FILE_SIZE_KEY_SNAKE))
-        && let Some(val) = max_size.as_u64()
-    {
-        let clamped = val.clamp(1, 500);
-        settings[io::MAX_FILE_SIZE_KEY_CAMEL] = serde_json::json!(clamped);
-        if let Some(obj) = settings.as_object_mut() {
-            obj.remove(io::MAX_FILE_SIZE_KEY_SNAKE);
-        }
-    }
+    io::normalize_max_file_size(&mut settings);
 
     io::write_settings_file(&path, &settings).await?;
 

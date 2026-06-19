@@ -16,6 +16,19 @@ pub(super) fn max_file_size_mb_to_bytes(mb: u64) -> u64 {
     mb.clamp(MAX_FILE_SIZE_MIN_MB, MAX_FILE_SIZE_MAX_MB) * 1024 * 1024
 }
 
+pub(super) fn normalize_max_file_size(settings: &mut serde_json::Value) {
+    let mb = settings
+        .get(MAX_FILE_SIZE_KEY_CAMEL)
+        .or_else(|| settings.get(MAX_FILE_SIZE_KEY_SNAKE))
+        .and_then(|v| v.as_u64())
+        .map(|v| v.clamp(MAX_FILE_SIZE_MIN_MB, MAX_FILE_SIZE_MAX_MB))
+        .unwrap_or(DEFAULT_MAX_FILE_SIZE_MB);
+    settings[MAX_FILE_SIZE_KEY_CAMEL] = serde_json::json!(mb);
+    if let Some(obj) = settings.as_object_mut() {
+        obj.remove(MAX_FILE_SIZE_KEY_SNAKE);
+    }
+}
+
 pub fn read_and_parse_sync(path: &std::path::Path) -> Result<toml::Value, String> {
     let raw_bytes = std::fs::read(path)
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "read settings file", e))?;
