@@ -104,7 +104,7 @@ let sortedSettings = $derived(
 );
 
 function getSettingValue(key: string, defaultValue: unknown): unknown {
-    return (appContext.app as Record<string, unknown>)[key] ?? defaultValue;
+    return (appContext.settings as Record<string, unknown>)[key] ?? defaultValue;
 }
 
 function updateSetting(setting: SettingDef, value: unknown) {
@@ -113,9 +113,9 @@ function updateSetting(setting: SettingDef, value: unknown) {
         finalValue = Number(value);
     }
 
-    const oldValue = (appContext.app as Record<string, unknown>)[setting.key];
+    const oldValue = (appContext.settings as Record<string, unknown>)[setting.key];
     if (oldValue !== finalValue && JSON.stringify(oldValue) !== JSON.stringify(finalValue)) {
-        (appContext.app as Record<string, unknown>)[setting.key] = finalValue;
+        (appContext.settings as Record<string, unknown>)[setting.key] = finalValue;
         saveSettings();
         setting.onChange?.(finalValue, oldValue);
     }
