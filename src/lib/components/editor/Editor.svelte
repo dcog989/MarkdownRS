@@ -2,6 +2,7 @@
 import type { EditorView as CM6EditorView } from '@codemirror/view';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 import { onMount, tick, untrack } from 'svelte';
+import { tooltip } from '$lib/actions/tooltip';
 import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
 import EditorViewComponent from '$lib/components/editor/EditorView.svelte';
 import { performTextOperation } from '$lib/components/editor/logic/operations';
@@ -15,6 +16,7 @@ import {
     getHistoryState,
     getLineChangeTracker,
     getTransientState,
+    reopenClosedTab,
     updateContent,
     updateCursor,
     updateHistoryState,
@@ -234,8 +236,47 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
             <Logo class="h-48 w-48 opacity-[0.08] select-none" />
         </div>
+        {#if appContext.editor.closedTabsHistory.length > 0}
+            <div class="pointer-events-none absolute inset-0 z-20 flex items-start justify-center" style="padding-top: 7.5rem">
+                <div
+                    class="bg-bg-panel border-border-light pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"
+                >
+                    <div class="text-fg-muted border-border-light border-b px-4 py-3 text-xs font-medium uppercase tracking-wide">
+                        Recently Closed
+                    </div>
+                    <div class="flex flex-col closed-tabs-list">
+                        {#each appContext.editor.closedTabsHistory.slice(0, 8) as entry, i (entry.tab.id)}
+                            <button
+                                type="button"
+                                onclick={() => reopenClosedTab(i)}
+                                use:tooltip={entry.tab.path || entry.tab.customTitle || entry.tab.title}
+                                class="hover:bg-bg-hover flex w-full items-center gap-3 border-b border-transparent px-4 py-2.5 text-left text-sm last:border-b-0 transition-colors"
+                            >
+                                <span class="text-fg-muted">•</span>
+                                <span class="truncate closed-tabs-text">{entry.tab.path || entry.tab.customTitle || entry.tab.title}</span>
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        {/if}
     {/if}
 </div>
+
+<style>
+    .closed-tabs-list > button:nth-child(even) {
+        background: var(--surface-row);
+    }
+    .closed-tabs-list > button:nth-child(even):hover {
+        background: var(--surface-hover);
+    }
+    .closed-tabs-text {
+        color: var(--accent-link);
+    }
+    .closed-tabs-list > button:hover .closed-tabs-text {
+        color: var(--accent-link-hover);
+    }
+</style>
 
 {#if showContextMenu}
     <EditorContextMenu
