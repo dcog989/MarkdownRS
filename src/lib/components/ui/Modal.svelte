@@ -94,6 +94,9 @@ $effect(() => {
     // Store the previously focused element
     previouslyFocusedElement = getActiveHTMLElement();
 
+    // Reset scroll position to top
+    viewport?.scrollTo(0, 0);
+
     // Focus the first focusable element when modal opens
     invalidateFocusCache();
     const focusableElements = modalPanel ? getFocusableElements(modalPanel, true) : [];
