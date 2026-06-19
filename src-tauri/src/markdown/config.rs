@@ -1,3 +1,4 @@
+use crate::state::AppState;
 use comrak::Options;
 use comrak::options::{Extension, Parse, Render};
 use rumdl_lib::config::{Config, ConfigLoaded, SourcedConfig, default_registry};
@@ -7,6 +8,18 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
+
+pub struct ResolvedPaths {
+    pub file_path: Option<PathBuf>,
+    pub project_root: Option<PathBuf>,
+}
+
+pub fn resolve_paths(file_path: Option<&str>, state: &AppState) -> ResolvedPaths {
+    ResolvedPaths {
+        file_path: file_path.map(PathBuf::from),
+        project_root: state.project_root.lock().ok().and_then(|r| r.clone()),
+    }
+}
 
 /// Markdown flavor specification (for comrak rendering)
 #[derive(

@@ -1,21 +1,11 @@
-use crate::markdown::config;
-use crate::markdown::config::MarkdownFlavor;
+use crate::markdown::config::{self, MarkdownFlavor, ResolvedPaths};
 use crate::markdown::formatter_rumdl;
 use crate::markdown::linter::{self, LintDiagnostic};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use crate::markdown::toc;
 use crate::state::AppState;
 use crate::utils::{IntoTauriError, run_blocking};
-use std::path::PathBuf;
 use tauri::State;
-
-fn resolve_project_root(state: &AppState) -> Option<PathBuf> {
-    state.project_root.lock().ok().and_then(|r| r.clone())
-}
-
-fn resolve_file_path(file_path: Option<&str>) -> Option<PathBuf> {
-    file_path.map(PathBuf::from)
-}
 
 #[tauri::command]
 pub async fn render_markdown(
@@ -73,8 +63,10 @@ pub async fn format_markdown(
     let start = std::time::Instant::now();
     let content_size = content.len();
 
-    let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
-    let pr: Option<PathBuf> = resolve_project_root(&state);
+    let ResolvedPaths {
+        file_path: fp,
+        project_root: pr,
+    } = config::resolve_paths(file_path.as_deref(), &state);
 
     let result = run_blocking("format markdown", move || {
         formatter_rumdl::format_markdown(&content, fp.as_deref(), pr.as_deref())
@@ -97,8 +89,10 @@ pub async fn lint_markdown(
     file_path: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<Vec<LintDiagnostic>, String> {
-    let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
-    let pr: Option<PathBuf> = resolve_project_root(&state);
+    let ResolvedPaths {
+        file_path: fp,
+        project_root: pr,
+    } = config::resolve_paths(file_path.as_deref(), &state);
 
     run_blocking("lint markdown", move || {
         linter::lint_content(&content, fp.as_deref(), pr.as_deref())
@@ -113,8 +107,10 @@ pub async fn get_rumdl_config_path(
 ) -> Result<Option<String>, String> {
     let start = std::time::Instant::now();
 
-    let fp: Option<PathBuf> = resolve_file_path(file_path.as_deref());
-    let pr: Option<PathBuf> = resolve_project_root(&state);
+    let ResolvedPaths {
+        file_path: fp,
+        project_root: pr,
+    } = config::resolve_paths(file_path.as_deref(), &state);
 
     let result = run_blocking("discover rumdl config", move || {
         let path = match (fp, pr) {
