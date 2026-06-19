@@ -92,23 +92,23 @@ impl Database {
     pub fn load_session(&self) -> Result<SessionData> {
         let conn = lock_conn!(self);
 
-        let mut active_stmt = conn.prepare(
-            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
-             FROM tabs ORDER BY sort_index ASC",
-        )?;
+        fn load_tabs(conn: &rusqlite::Connection, table: &str) -> Result<Vec<TabState>> {
+            let sql = format!(
+                "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, \
+                 created, modified, is_pinned, custom_title, \
+                 file_check_failed, file_check_performed, mru_position, \
+                 sort_index, original_index \
+                 FROM {} ORDER BY sort_index ASC",
+                table
+            );
+            let mut stmt = conn.prepare(&sql)?;
+            Ok(stmt
+                .query_map([], map_tab_state)?
+                .collect::<Result<Vec<_>, _>>()?)
+        }
 
-        let active_tabs = active_stmt
-            .query_map([], map_tab_state)?
-            .collect::<Result<Vec<_>, _>>()?;
-
-        let mut closed_stmt = conn.prepare(
-            "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, created, modified, is_pinned, custom_title, file_check_failed, file_check_performed, mru_position, sort_index, original_index
-             FROM closed_tabs ORDER BY sort_index ASC",
-        )?;
-
-        let closed_tabs = closed_stmt
-            .query_map([], map_tab_state)?
-            .collect::<Result<Vec<_>, _>>()?;
+        let active_tabs = load_tabs(&conn, "tabs")?;
+        let closed_tabs = load_tabs(&conn, "closed_tabs")?;
 
         Ok(SessionData {
             active_tabs,
