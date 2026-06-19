@@ -72,6 +72,8 @@ pub(super) const MIGRATIONS: &[&str] = &[
     // v4: Add missing indexes for closed_tabs.sort_index and bookmarks.created
     "CREATE INDEX IF NOT EXISTS idx_closed_tabs_sort_index ON closed_tabs(sort_index);
      CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created DESC);",
+    // v5: Add original_index to tabs for unified save_tabs logic
+    "ALTER TABLE tabs ADD COLUMN original_index INTEGER;",
 ];
 
 pub(super) fn setup_schema(conn: &mut Connection) -> Result<()> {
