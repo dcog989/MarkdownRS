@@ -9,6 +9,7 @@ import { focusOnMount } from '$lib/utils/dom';
 import { requestCloseTab } from '$lib/utils/fileSystem';
 import { formatFileSize } from '$lib/utils/fileValidation';
 import { createListNavigation } from '$lib/utils/listNavigation.svelte';
+import { scrollIntoView } from '$lib/utils/modalUtils';
 
 let {
     isOpen = false,
@@ -116,18 +117,6 @@ function handleKeydown(e: KeyboardEvent) {
     nav.handleKeydown(e);
 }
 
-function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-    if (isSelected) {
-        node.scrollIntoView({ block: 'nearest' });
-    }
-    return {
-        update(newIsSelected: boolean) {
-            if (newIsSelected) {
-                node.scrollIntoView({ block: 'nearest' });
-            }
-        },
-    };
-}
 </script>
 
 {#if isOpen}
