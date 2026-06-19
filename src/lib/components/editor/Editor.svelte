@@ -271,10 +271,10 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         background: var(--surface-hover);
     }
     .closed-tabs-text {
-        color: var(--accent-link);
+        color: color-mix(in srgb, var(--accent-link), var(--surface-2) 25%);
     }
     .closed-tabs-list > button:hover .closed-tabs-text {
-        color: var(--accent-link-hover);
+        color: color-mix(in srgb, var(--accent-link-hover), var(--surface-2) 15%);
     }
 </style>
 
