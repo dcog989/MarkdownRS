@@ -1,8 +1,7 @@
-use comrak::{Arena, parse_document};
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
+use crate::markdown::{HeadingEntry, config::MarkdownFlavor, parse_headings};
 
 static TOC_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<!--\s*toc\s*-->").expect("Invalid TOC_START_RE"));
@@ -12,10 +11,7 @@ static H1_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^#[\t ].*$").expect("Invalid H1_RE"));
 
 fn extract_headings(content: &str) -> Vec<HeadingEntry> {
-    let flavor = MarkdownFlavor::default().to_comrak_options();
-    let arena = Arena::new();
-    let root = parse_document(&arena, content, &flavor);
-    extract_headings_from_ast(root, &mut comrak::Anchorizer::new())
+    parse_headings(content, MarkdownFlavor::default())
 }
 
 fn generate_toc_markdown(entries: &[HeadingEntry]) -> String {

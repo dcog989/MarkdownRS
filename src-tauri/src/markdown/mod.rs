@@ -4,8 +4,8 @@ pub mod linter;
 pub mod renderer;
 pub mod toc;
 
-use comrak::Anchorizer;
 use comrak::nodes::{AstNode, NodeValue};
+use comrak::{Anchorizer, Arena, parse_document};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -13,6 +13,13 @@ pub struct HeadingEntry {
     pub level: u8,
     pub text: String,
     pub anchor_id: String,
+}
+
+pub(crate) fn parse_headings(content: &str, flavor: config::MarkdownFlavor) -> Vec<HeadingEntry> {
+    let comrak_options = flavor.to_comrak_options();
+    let arena = Arena::new();
+    let root = parse_document(&arena, content, &comrak_options);
+    extract_headings_from_ast(root, &mut Anchorizer::new())
 }
 
 pub(crate) fn collect_heading_text<'a>(node: &'a AstNode<'a>) -> String {
