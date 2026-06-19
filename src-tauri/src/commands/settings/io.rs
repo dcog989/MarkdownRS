@@ -4,8 +4,7 @@ use std::sync::atomic::Ordering;
 use tauri::Manager;
 use tokio::fs;
 
-pub(super) const MAX_FILE_SIZE_KEY_CAMEL: &str = "maxFileSizeMB";
-pub(super) const MAX_FILE_SIZE_KEY_SNAKE: &str = "max_file_size_mb";
+pub(super) const MAX_FILE_SIZE_KEY: &str = "maxFileSizeMB";
 
 const DEFAULT_MAX_FILE_SIZE_MB: u64 = 50;
 const MAX_FILE_SIZE_MIN_MB: u64 = 1;
@@ -18,15 +17,11 @@ pub(super) fn max_file_size_mb_to_bytes(mb: u64) -> u64 {
 
 pub(super) fn normalize_max_file_size(settings: &mut serde_json::Value) {
     let mb = settings
-        .get(MAX_FILE_SIZE_KEY_CAMEL)
-        .or_else(|| settings.get(MAX_FILE_SIZE_KEY_SNAKE))
+        .get(MAX_FILE_SIZE_KEY)
         .and_then(|v| v.as_u64())
         .map(|v| v.clamp(MAX_FILE_SIZE_MIN_MB, MAX_FILE_SIZE_MAX_MB))
         .unwrap_or(DEFAULT_MAX_FILE_SIZE_MB);
-    settings[MAX_FILE_SIZE_KEY_CAMEL] = serde_json::json!(mb);
-    if let Some(obj) = settings.as_object_mut() {
-        obj.remove(MAX_FILE_SIZE_KEY_SNAKE);
-    }
+    settings[MAX_FILE_SIZE_KEY] = serde_json::json!(mb);
 }
 
 pub fn read_and_parse_sync(path: &std::path::Path) -> Result<toml::Value, String> {
@@ -68,8 +63,7 @@ async fn load_max_file_size_from_disk(app_handle: &tauri::AppHandle) -> u64 {
     match load_settings_toml(app_handle).await {
         Ok(toml_val) => {
             let mb = toml_val
-                .get(MAX_FILE_SIZE_KEY_CAMEL)
-                .or_else(|| toml_val.get(MAX_FILE_SIZE_KEY_SNAKE))
+                .get(MAX_FILE_SIZE_KEY)
                 .and_then(|v| v.as_integer())
                 .unwrap_or(DEFAULT_MAX_FILE_SIZE_MB as i64) as u64;
             max_file_size_mb_to_bytes(mb)
