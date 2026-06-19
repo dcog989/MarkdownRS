@@ -15,7 +15,7 @@ import {
   updateHistoryState,
 } from './editorCache';
 import { editorStore } from './editorStoreCore.svelte';
-import type { EditorTab } from './editorTypes';
+import type { ClosedTab, EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
 
 export function addTab(title: string = '', content: string = '') {
@@ -105,12 +105,10 @@ export function closeTab(id: string) {
       editorStore.closedTabsHistory.splice(existingIndex, 1);
     }
 
-    const closedTab = { ...tab };
+    const closedTab: EditorTab = { ...tab };
+    const closedEntry: ClosedTab = { tab: closedTab, index, historyState };
 
-    editorStore.closedTabsHistory = [{ tab: closedTab, index, historyState }, ...editorStore.closedTabsHistory].slice(
-      0,
-      limit,
-    );
+    editorStore.closedTabsHistory = [closedEntry, ...editorStore.closedTabsHistory].slice(0, limit);
   }
 
   editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);

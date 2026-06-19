@@ -70,14 +70,18 @@ export class TabSyncManager {
     createExtensions: (s: unknown) => Extension[],
     onMetricsChange: (m: Partial<EditorMetrics>) => void,
   ) {
+    const totalStart = performance.now();
     const oldTabId = view._currentTabId;
 
+    let saveOldMs = 0;
     if (this.timerRefs.content) {
+      const s = performance.now();
       clearTimeout(this.timerRefs.content);
       this.timerRefs.content = null;
       if (oldTabId) {
         updateContent(oldTabId, view.state.doc.toString(), view.state.doc.lines);
       }
+      saveOldMs = performance.now() - s;
     }
     if (this.timerRefs.metrics) {
       clearTimeout(this.timerRefs.metrics);
@@ -92,8 +96,10 @@ export class TabSyncManager {
     this.lastForceSyncCounter = forceSyncCounter;
 
     const storeContent = storeTab.content;
+    const contentLen = storeContent.length;
     const restoredHistoryState = getHistoryState(tabId);
 
+    const ecStart = performance.now();
     const newState = EditorState.create({
       doc: storeContent,
       extensions: createExtensions(restoredHistoryState),
@@ -102,14 +108,19 @@ export class TabSyncManager {
         head: Math.min(storeTab.cursor.head, storeContent.length),
       },
     });
+    const stateCreateMs = performance.now() - ecStart;
 
+    const vsStart = performance.now();
     view.setState(newState);
+    const setStateMs = performance.now() - vsStart;
 
+    const cursorStart = performance.now();
     const cursorPos = Math.min(storeTab.cursor.head, storeContent.length);
     const line = newState.doc.lineAt(cursorPos);
     onMetricsChange(
       calculateCursorMetrics(storeContent, cursorPos, { number: line.number, from: line.from, text: line.text }),
     );
+    const cursorMs = performance.now() - cursorStart;
 
     view.requestMeasure({
       read: () => {},
@@ -136,17 +147,33 @@ export class TabSyncManager {
     view.focus();
     setActiveEditorView(view);
 
-    if (spellcheckState.dictionaryLoaded) {
+    const largeFileMode = storeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
+
+    if (!largeFileMode && spellcheckState.dictionaryLoaded) {
       applyImmediateSpellcheck(view);
     }
 
-    initializeTabFileState(storeTab).catch((err) => {
-      logger.session.warn('TabInitFailed', { error: String(err) });
-    });
+    if (!largeFileMode) {
+      initializeTabFileState(storeTab).catch((err) => {
+        logger.session.warn('TabInitFailed', { error: String(err) });
+      });
+    }
 
     setTimeout(() => {
       this.isRestoring = false;
     }, CONFIG.UI_TIMING.RESTORE_STATE_DELAY_MS);
+
+    logger.editor.debug('TabSwitchTiming', {
+      tabId,
+      contentLen,
+      sizeBytes: storeTab.sizeBytes,
+      isLarge: largeFileMode,
+      saveOldMs: Math.round(saveOldMs),
+      stateCreateMs: Math.round(stateCreateMs),
+      setStateMs: Math.round(setStateMs),
+      cursorMs: Math.round(cursorMs),
+      totalMs: Math.round(performance.now() - totalStart),
+    });
   }
 
   private handleContentSync(view: AppEditorView, tabId: string, storeTab: EditorTab, forceSyncCounter: number) {

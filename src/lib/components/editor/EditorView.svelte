@@ -32,6 +32,7 @@ let {
     tabId,
     initialContent = '',
     isMarkdown = true,
+    isLargeFile = false,
     initialScrollTop = 0,
     initialSelection = { anchor: 0, head: 0 },
     initialHistoryState,
@@ -49,6 +50,7 @@ let {
     tabId: string;
     initialContent?: string;
     isMarkdown?: boolean;
+    isLargeFile?: boolean;
     initialScrollTop?: number;
     initialSelection?: { anchor: number; head: number };
     initialHistoryState?: unknown;
@@ -80,9 +82,19 @@ let comps: Compartments = {
     filePathComp: new Compartment(), markdownLintComp: new Compartment(),
 };
 
-let autocompletionConfig = $derived(getAutocompletionConfig());
+let effectiveMarkdown = $derived(isMarkdown && !isLargeFile);
+let autocompletionConfig = $derived(isLargeFile ? [] : getAutocompletionConfig());
 
 $effect(() => { cmView = view; });
+
+$effect(() => {
+    const tId = tabId;
+    const forceSyncCounter = appContext.editor.tabs.find((t) => t.id === tId)?.forceSync ?? 0;
+    untrack(() => {
+        if (!view) return;
+        tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
+    });
+});
 
 $effect(() => {
     if (!view) return;
@@ -121,6 +133,7 @@ $effect(() => {
 
 $effect(() => {
     if (!view) return;
+    if (isLargeFile) return;
     view.dispatch({ effects: comps.recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker, onContextMenu)) });
 });
 
@@ -128,12 +141,13 @@ $effect(() => {
     if (!view) return;
     const dictLoaded = spellcheckState.dictionaryLoaded;
     if (!dictLoaded) return;
+    if (isLargeFile) return;
     view.dispatch({ effects: comps.spellComp.reconfigure(createSpellCheckLinter()) });
 });
 
 $effect(() => {
     if (!view) return;
-    const md = isMarkdown;
+    const md = effectiveMarkdown;
     view.dispatch({
         effects: [
             comps.languageComp.reconfigure(md ? markdownExtensions : []),
@@ -154,7 +168,7 @@ $effect(() => {
 });
 
 function createExtensions(currentHistoryState: unknown): Extension[] {
-    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker, autocompletionConfig, isMarkdown, customKeymap, eventHandlers, compartments: comps, onContextMenu });
+    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker: isLargeFile ? undefined : lineChangeTracker, autocompletionConfig, isMarkdown: effectiveMarkdown, customKeymap, eventHandlers, compartments: comps, onContextMenu });
     extensions.push(createUpdateListener(
         () => view?._currentTabId,
         onContentChange, onMetricsChange, tabSync.timerRefs,
@@ -163,15 +177,6 @@ function createExtensions(currentHistoryState: unknown): Extension[] {
     ));
     return extensions;
 }
-
-$effect(() => {
-    const tId = tabId;
-    const forceSyncCounter = appContext.editor.tabs.find((t) => t.id === tId)?.forceSync ?? 0;
-    untrack(() => {
-        if (!view) return;
-        tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
-    });
-});
 
 onMount(() => {
     if (!editorContainer) return;

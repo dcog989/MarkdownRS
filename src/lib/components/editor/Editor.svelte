@@ -203,6 +203,7 @@ let isMarkdown = $derived.by(() => {
 let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
 let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
 let lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
+let isLargeFile = $derived(!!activeTab && activeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES);
 let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
@@ -212,6 +213,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         {tabId}
         {initialContent}
         {isMarkdown}
+        {isLargeFile}
         initialScrollTop={activeTab ? (getTransientState(activeTab.id)?.scrollTop ?? 0) : 0}
         {initialSelection}
         {initialHistoryState}

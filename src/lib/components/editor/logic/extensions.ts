@@ -35,7 +35,6 @@ import {
 } from '$lib/utils/markdownExtensions';
 import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
-import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte';
 import { userThemeExtension } from '$lib/utils/themeMapper';
 
 const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
@@ -112,8 +111,8 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     userThemeExtension,
     defaultFallbackHighlighting,
     c.languageComp.of(config.isMarkdown ? markdownExtensions : []),
-    c.spellComp.of(createSpellCheckLinter()),
-    c.markdownLintComp.of(createMarkdownLinter()),
+    c.spellComp.of([]),
+    c.markdownLintComp.of(config.isMarkdown ? createMarkdownLinter() : []),
     c.doubleClickComp.of(createDoubleClickHandler()),
     c.rulerComp.of(rulerPlugin),
     c.wrapComp.of(createWrapExtension()),
