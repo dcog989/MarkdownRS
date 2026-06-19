@@ -6,7 +6,7 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: vitePreprocess(),
+  preprocess: vitePreprocess({ script: true, style: () => [] }),
   onwarn: (warning, handler) => {
     if (warning.code === 'state_referenced_locally' && warning.filename?.includes('.svelte-kit')) {
       return;
