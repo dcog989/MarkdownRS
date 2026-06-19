@@ -25,9 +25,6 @@ pub struct AppState {
     /// Initialised to `MAX_FILE_SIZE_UNSET`; written once at startup and on
     /// every `save_settings` call, so reads never need a lock.
     pub max_file_size_bytes: AtomicU64,
-    /// Cached parsed settings JSON to avoid re-reading settings.toml on
-    /// every `load_settings` call. Set to `None` after `save_settings`.
-    pub settings_cache: Mutex<Option<serde_json::Value>>,
-    /// Cached `workspaceRoot` from settings, set on load and cleared on save.
+    /// Cached `workspaceRoot` from settings, populated on first `load_settings`.
     pub project_root: Mutex<Option<PathBuf>>,
 }

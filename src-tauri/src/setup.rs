@@ -253,7 +253,6 @@ fn manage_app_state(app: &mut tauri::App, db: crate::db::Database) {
         custom_dict: std::sync::Mutex::new(std::collections::HashSet::new()),
         spellcheck_status: std::sync::Mutex::new(state::SpellcheckStatus::Uninitialized),
         max_file_size_bytes: std::sync::atomic::AtomicU64::new(state::MAX_FILE_SIZE_UNSET),
-        settings_cache: std::sync::Mutex::new(None),
         project_root: std::sync::Mutex::new(None),
     });
 }

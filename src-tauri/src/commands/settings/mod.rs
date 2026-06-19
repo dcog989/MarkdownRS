@@ -40,13 +40,6 @@ pub async fn get_theme_css(
 
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
-    if let Some(state) = app_handle.try_state::<AppState>() {
-        let cache = state.settings_cache.lock_or_recover();
-        if let Some(ref cached) = *cache {
-            return Ok(cached.clone());
-        }
-    }
-
     let content = match io::read_settings_file(&app_handle).await? {
         Some(c) => c,
         None => return Ok(serde_json::json!({})),
@@ -59,9 +52,6 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         .map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
-        let mut cache = state.settings_cache.lock_or_recover();
-        *cache = Some(json_val.clone());
-
         let mut pr = state.project_root.lock_or_recover();
         *pr = json_val
             .get("workspaceRoot")
@@ -98,10 +88,6 @@ pub async fn save_settings(
         state
             .max_file_size_bytes
             .store(MAX_FILE_SIZE_UNSET, Ordering::Relaxed);
-        let mut cache = state.settings_cache.lock_or_recover();
-        *cache = None;
-        let mut pr = state.project_root.lock_or_recover();
-        *pr = None;
     }
 
     Ok(())
