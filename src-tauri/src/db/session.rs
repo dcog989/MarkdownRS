@@ -98,7 +98,7 @@ impl Database {
         )?;
 
         let active_tabs = active_stmt
-            .query_map([], |row| map_tab_state(row))?
+            .query_map([], map_tab_state)?
             .collect::<Result<Vec<_>, _>>()?;
 
         let mut closed_stmt = conn.prepare(
@@ -107,7 +107,7 @@ impl Database {
         )?;
 
         let closed_tabs = closed_stmt
-            .query_map([], |row| map_tab_state(row))?
+            .query_map([], map_tab_state)?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(SessionData {

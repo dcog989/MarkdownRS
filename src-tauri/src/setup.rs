@@ -33,35 +33,13 @@ fn configure_linux_window(window: &tauri::WebviewWindow) {
 fn configure_linux_window(_window: &tauri::WebviewWindow) {}
 
 fn read_log_level_from_settings(config_path: &std::path::Path) -> String {
-    if config_path.exists() {
-        match fs::read(config_path) {
-            Ok(raw_bytes) => {
-                let content = utils::read_text_with_bom_detection(raw_bytes);
-                match toml::from_str::<toml::Value>(&content) {
-                    Ok(toml_val) => toml_val
-                        .get("logLevel")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string())
-                        .unwrap_or_else(default_log_level),
-                    Err(e) => {
-                        eprintln!(
-                            "[WARN] Failed to parse settings.toml: {} - Using default log level",
-                            e
-                        );
-                        default_log_level()
-                    },
-                }
-            },
-            Err(e) => {
-                eprintln!(
-                    "[WARN] Failed to read settings.toml: {} - Using default log level",
-                    e
-                );
-                default_log_level()
-            },
-        }
-    } else {
-        default_log_level()
+    match crate::commands::settings::io::read_and_parse_sync(config_path) {
+        Ok(toml_val) => toml_val
+            .get("logLevel")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(default_log_level),
+        Err(_) => default_log_level(),
     }
 }
 
