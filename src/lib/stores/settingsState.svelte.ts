@@ -47,6 +47,7 @@ export const settingsState = $state({
   customShortcuts: {} as Record<string, string>,
   confirmationSuppressed: false,
   maxFileSizeMB: 50,
+  recentFilesLimit: 99,
   autoSaveEnabled: false,
   autoSaveInterval: 60,
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',

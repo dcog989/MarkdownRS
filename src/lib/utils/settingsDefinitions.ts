@@ -270,6 +270,17 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'Show a list of recently closed files on new, empty documents for quick reopening.',
     },
     {
+      key: 'recentFilesLimit',
+      label: 'Recent Files Limit',
+      type: 'number',
+      category: 'Interface',
+      defaultValue: 99,
+      min: 0,
+      max: 999,
+      step: 1,
+      tooltip: 'Maximum number of recent files to remember. Change applies after next file open.',
+    },
+    {
       key: 'newTabPosition',
       label: 'Tabs Created At',
       type: 'select',

@@ -1,3 +1,4 @@
+import { appContext } from '$lib/stores/state.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { getCurrentTimestamp } from '$lib/utils/date';
 
@@ -23,7 +24,10 @@ export async function addToRecentFiles(path: string) {
   const timestamp = getCurrentTimestamp();
 
   // Optimistic UI update
-  recentFilesStore.files = [path, ...recentFilesStore.files.filter((f) => f !== path)].slice(0, 999);
+  recentFilesStore.files = [path, ...recentFilesStore.files.filter((f) => f !== path)].slice(
+    0,
+    appContext.settings.recentFilesLimit,
+  );
 
   await callBackend('add_to_recent_files', { path, lastOpened: timestamp }, 'Database:Init', undefined, {
     ignore: true,
