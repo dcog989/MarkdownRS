@@ -13,13 +13,16 @@ struct CachedTheme {
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-const DEFAULT_DARK_CSS: &str = include_str!("../../../templates/default-dark.css");
-const DEFAULT_LIGHT_CSS: &str = include_str!("../../../templates/default-light.css");
+pub const DEFAULT_DARK_THEME: &str = "RS-Dark";
+pub const DEFAULT_LIGHT_THEME: &str = "RS-Light";
+
+pub const DEFAULT_DARK_CSS: &str = include_str!("../../../templates/default-dark.css");
+pub const DEFAULT_LIGHT_CSS: &str = include_str!("../../../templates/default-light.css");
 
 pub fn default_css(theme: &str) -> Option<&'static str> {
     match theme {
-        "RS-Dark" | "default-dark" => Some(DEFAULT_DARK_CSS),
-        "RS-Light" | "default-light" => Some(DEFAULT_LIGHT_CSS),
+        DEFAULT_DARK_THEME | "default-dark" => Some(DEFAULT_DARK_CSS),
+        DEFAULT_LIGHT_THEME | "default-light" => Some(DEFAULT_LIGHT_CSS),
         _ => None,
     }
 }
