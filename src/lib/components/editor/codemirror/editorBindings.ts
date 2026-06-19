@@ -21,69 +21,56 @@ export type CmHandler = (view: EditorView) => boolean;
 export interface CmBindingDef {
   registryKey: string;
   handler: CmHandler;
-  defaultCmKey: string;
 }
 
 export const cmHandlerMap: CmBindingDef[] = [
   {
     registryKey: 'editor.toggleComment',
     handler: (view) => toggleSelectionComment(view),
-    defaultCmKey: 'Mod-/',
   },
   {
     registryKey: 'editor.duplicateLine',
     handler: (view) => copyLineDown(view),
-    defaultCmKey: 'Mod-Shift-d',
   },
   {
     registryKey: 'editor.deleteLine',
     handler: (view) => deleteLine(view),
-    defaultCmKey: 'Mod-Shift-k',
   },
   {
     registryKey: 'editor.moveLineUp',
     handler: (view) => moveLineUp(view),
-    defaultCmKey: 'Alt-ArrowUp',
   },
   {
     registryKey: 'editor.moveLineDown',
     handler: (view) => moveLineDown(view),
-    defaultCmKey: 'Alt-ArrowDown',
   },
   {
     registryKey: 'editor.copyLineUp',
     handler: (view) => copyLineUp(view),
-    defaultCmKey: 'Shift-Alt-ArrowUp',
   },
   {
     registryKey: 'editor.addCursorAbove',
     handler: (view) => addCursorAbove(view),
-    defaultCmKey: 'Mod-Alt-ArrowUp',
   },
   {
     registryKey: 'editor.addCursorBelow',
     handler: (view) => addCursorBelow(view),
-    defaultCmKey: 'Mod-Alt-ArrowDown',
   },
   {
     registryKey: 'editor.selectLine',
     handler: (view) => selectLine(view),
-    defaultCmKey: 'Mod-l',
   },
   {
     registryKey: 'editor.gotoMatchingBracket',
     handler: (view) => cursorMatchingBracket(view),
-    defaultCmKey: 'Mod-Shift-\\',
   },
   {
     registryKey: 'editor.indent',
     handler: (view) => indentMore(view),
-    defaultCmKey: 'Mod-]',
   },
   {
     registryKey: 'editor.outdent',
     handler: (view) => indentLess(view),
-    defaultCmKey: 'Mod-[',
   },
   {
     registryKey: 'textop.bold',
@@ -91,7 +78,6 @@ export const cmHandlerMap: CmBindingDef[] = [
       performTextTransform('bold');
       return true;
     },
-    defaultCmKey: 'Mod-b',
   },
   {
     registryKey: 'textop.italic',
@@ -99,7 +85,6 @@ export const cmHandlerMap: CmBindingDef[] = [
       performTextTransform('italic');
       return true;
     },
-    defaultCmKey: 'Mod-i',
   },
   {
     registryKey: 'textop.insert-link',
@@ -107,11 +92,9 @@ export const cmHandlerMap: CmBindingDef[] = [
       performTextTransform('insert-link');
       return true;
     },
-    defaultCmKey: 'Mod-k',
   },
   {
     registryKey: 'file.addBookmark',
     handler: () => addBookmarkForActiveTab(),
-    defaultCmKey: 'Mod-d',
   },
 ];

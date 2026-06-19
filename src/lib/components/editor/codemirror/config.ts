@@ -9,6 +9,7 @@ import {
 import { defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
+import { commands } from '$lib/commands/commands';
 import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -186,13 +187,20 @@ const handleShiftTab = (view: EditorView) => {
   return true;
 };
 
+const commandDefaultKeys = new Map<string, string>();
+for (const cmd of commands) {
+  if (cmd.defaultKey) {
+    commandDefaultKeys.set(cmd.id, cmd.defaultKey);
+  }
+}
+
 export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
   const cmBindings: KeyBinding[] = [];
   const filteredKeys = new Set<string>();
 
   for (const def of cmHandlerMap) {
     const customKey = appContext.settings.customShortcuts[def.registryKey];
-    const cmKey = customKey ? toCmKey(customKey) : def.defaultCmKey;
+    const cmKey = customKey ? toCmKey(customKey) : toCmKey(commandDefaultKeys.get(def.registryKey) ?? '');
 
     cmBindings.push({ key: cmKey, run: def.handler, preventDefault: true });
     filteredKeys.add(cmKey);
