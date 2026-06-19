@@ -21,6 +21,7 @@ import {
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
@@ -151,6 +152,7 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
     await openPath(resolvedPath);
   } catch (err) {
     logger.file.warn('NavigationFailed', { error: String(err) });
+    showToast('error', `Failed to open: ${err}`);
   }
 }
 

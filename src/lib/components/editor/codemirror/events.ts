@@ -1,6 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
-import { openPath } from '@tauri-apps/plugin-opener';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { extractPathAtPos } from '$lib/utils/filePathExtension';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { logger } from '$lib/utils/logger';
@@ -70,7 +70,7 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
           if (/^(https?:\/\/|www\.)/i.test(targetString)) {
             const url = targetString.startsWith('www.') ? `https://${targetString}` : targetString;
-            openPath(url).catch((err) => logger.editor.warn('OpenUrlFailed', { error: String(err) }));
+            openUrl(url).catch((err) => logger.editor.warn('OpenUrlFailed', { error: String(err) }));
           } else {
             navigateToPath(targetString);
           }

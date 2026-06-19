@@ -74,6 +74,9 @@
     },
     "shell": {
       "open": true
+    },
+    "opener": {
+      "requireLiteralLeadingDot": false
     }
   }
 }
