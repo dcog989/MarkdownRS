@@ -4,6 +4,10 @@ use serde::Serialize;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
+fn bytes_to_mb(bytes: u64) -> u64 {
+    bytes / 1024 / 1024
+}
+
 #[derive(Serialize)]
 pub struct FileMetadata {
     pub created: Option<String>,
@@ -40,12 +44,12 @@ pub async fn read_text_file(
         log::warn!(
             "File too large to read: {} ({} MB)",
             path,
-            metadata.len() / 1024 / 1024
+            bytes_to_mb(metadata.len())
         );
         return Err(format!(
             "File too large: {} MB (max {} MB)",
-            metadata.len() / 1024 / 1024,
-            max_file_size / 1024 / 1024
+            bytes_to_mb(metadata.len()),
+            bytes_to_mb(max_file_size)
         ));
     }
 
