@@ -8,6 +8,7 @@ import { CONFIG } from '$lib/utils/config';
 import { focusOnMount } from '$lib/utils/dom';
 import { requestCloseTab } from '$lib/utils/fileSystem';
 import { formatFileSize } from '$lib/utils/fileValidation';
+import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 
 let {
     isOpen = false,
@@ -20,7 +21,6 @@ let {
 }>();
 
 let searchQuery = $state('');
-let selectedIndex = $state(0);
 // @ts-expect-error: used by bind:this in template
 let searchInputRef = $state<HTMLInputElement | null>();
 let dropdownListRef = $state<HTMLDivElement>();
@@ -42,6 +42,11 @@ let filteredTabs = $derived.by(() => {
         );
     });
 });
+
+const nav = createListNavigation(
+    () => filteredTabs.length,
+    (index) => handleSelect(filteredTabs[index].id),
+);
 
 function getDropdownTitle(tab: EditorTab): string {
     return tab.customTitle || tab.title;
@@ -68,7 +73,7 @@ $effect(() => {
         lastClientX = 0;
         lastClientY = 0;
         searchQuery = '';
-        selectedIndex = 0;
+        nav.reset();
         ignoreMouseMovement = true;
 
         if (mouseMovementTimer !== null) {
@@ -99,27 +104,16 @@ function handleHover(index: number, e: MouseEvent) {
 
     lastClientX = e.clientX;
     lastClientY = e.clientY;
-    selectedIndex = index;
+    nav.select(index);
 }
 
 function handleKeydown(e: KeyboardEvent) {
-    if (filteredTabs.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex + 1) % filteredTabs.length;
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex - 1 + filteredTabs.length) % filteredTabs.length;
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (filteredTabs[selectedIndex]) {
-            handleSelect(filteredTabs[selectedIndex].id);
-        }
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+        return;
     }
+    nav.handleKeydown(e);
 }
 
 function scrollIntoView(node: HTMLElement, isSelected: boolean) {
@@ -163,7 +157,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
                 bind:this={dropdownListRef}
                 class="dropdown-list max-h-60vh overflow-y-auto py-1">
                 {#each filteredTabs as tab, index (tab.id)}
-                    {@const isSelected = index === selectedIndex}
+                    {@const isSelected = index === nav.selectedIndex}
                     {@const isActive = appContext.app.activeTabId === tab.id}
                     <div
                         role="none"

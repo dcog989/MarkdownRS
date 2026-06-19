@@ -17,6 +17,7 @@ import { appContext } from '$lib/stores/state.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { getFilename } from '$lib/utils/fileValidation';
+import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 interface Props {
@@ -32,7 +33,6 @@ type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
 type SortDirection = 'asc' | 'desc';
 
 let searchQuery = $state('');
-let selectedIndex = $state(0);
 let editingId = $state<string | null>(null);
 let editTitle = $state('');
 let editTags = $state('');
@@ -50,19 +50,28 @@ $effect(() => {
     }
     if (!isOpen) {
         searchQuery = '';
-        selectedIndex = 0;
         editingId = null;
         showAddForm = false;
         browseError = '';
     }
 });
 
+const nav = createListNavigation(
+    () => sortedBookmarks.length,
+    (index) => {
+        const bookmark = sortedBookmarks[index];
+        if (bookmark && editingId !== bookmark.id) {
+            handleOpenBookmark(bookmark);
+        }
+    },
+);
+
 // Reset selection when search query or sort changes
 $effect(() => {
     void searchQuery;
     void sortBy;
     void sortDirection;
-    selectedIndex = 0;
+    nav.reset();
 });
 
 let filteredBookmarks = $derived(
@@ -210,21 +219,7 @@ function toggleSortDirection() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-    if (sortedBookmarks.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex + 1) % sortedBookmarks.length;
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex - 1 + sortedBookmarks.length) % sortedBookmarks.length;
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const bookmark = sortedBookmarks[selectedIndex];
-        if (bookmark && editingId !== bookmark.id) {
-            handleOpenBookmark(bookmark);
-        }
-    }
+    nav.handleKeydown(e);
 }
 </script>
 
@@ -323,7 +318,7 @@ function handleKeydown(e: KeyboardEvent) {
         {#if sortedBookmarks.length > 0}
             <div class="divide-border-main divide-y">
                 {#each sortedBookmarks as bookmark, index (bookmark.id)}
-                    {@const isSelected = index === selectedIndex}
+                    {@const isSelected = index === nav.selectedIndex}
                     <div
                         out:slide={{ duration: 200 }}
                         class="bookmark-row px-4 py-2.5 transition-colors overflow-hidden"
@@ -359,7 +354,7 @@ function handleKeydown(e: KeyboardEvent) {
                                 class="flex cursor-pointer items-start gap-3"
                                 onclick={() => handleOpenBookmark(bookmark)}
                                 onkeydown={(e) => { if (e.key === 'Enter') handleOpenBookmark(bookmark); }}
-                                onmouseenter={() => (selectedIndex = index)}>
+                                onmouseenter={() => nav.select(index)}>
                                 <div class="min-w-0 flex-1">
                                     <div class="title truncate font-medium">
                                         {bookmark.title}

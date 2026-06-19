@@ -11,6 +11,7 @@ import {
 import { CONFIG } from '$lib/utils/config';
 import { openFileByPath } from '$lib/utils/fileSystem';
 import { getFilename } from '$lib/utils/fileValidation';
+import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 interface Props {
@@ -21,24 +22,30 @@ interface Props {
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
 let searchQuery = $state('');
-let selectedIndex = $state(0);
+let filteredFiles = $derived(
+    recentFilesStore.files.filter((path) => path.toLowerCase().includes(searchQuery.toLowerCase())),
+);
+
+const nav = createListNavigation(
+    () => filteredFiles.length,
+    (index) => {
+        const path = filteredFiles[index];
+        if (path) handleOpenFile(path);
+    },
+);
 
 $effect(() => {
     if (isOpen) {
         loadRecentFiles();
         searchQuery = '';
-        selectedIndex = 0;
+        nav.reset();
     }
 });
 
 $effect(() => {
     void searchQuery;
-    selectedIndex = 0;
+    nav.reset();
 });
-
-let filteredFiles = $derived(
-    recentFilesStore.files.filter((path) => path.toLowerCase().includes(searchQuery.toLowerCase())),
-);
 
 function handleOpenFile(path: string) {
     openFileByPath(path);
@@ -55,24 +62,6 @@ async function handleClearAll() {
         await clearRecentFiles();
     }
 }
-
-function handleKeydown(e: KeyboardEvent) {
-    if (filteredFiles.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex + 1) % filteredFiles.length;
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex - 1 + filteredFiles.length) % filteredFiles.length;
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const path = filteredFiles[selectedIndex];
-        if (path) {
-            handleOpenFile(path);
-        }
-    }
-}
 </script>
 
 <Modal bind:isOpen {onClose}>
@@ -84,7 +73,7 @@ function handleKeydown(e: KeyboardEvent) {
             focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
             searchPlaceholder="Search history..."
             {onClose}
-            onKeydown={handleKeydown}>
+            onKeydown={nav.handleKeydown}>
             {#snippet extraActions()}
                 {#if recentFilesStore.files.length > 0}
                     <button
@@ -103,7 +92,7 @@ function handleKeydown(e: KeyboardEvent) {
         {#if filteredFiles.length > 0}
             <div class="divide-border-main divide-y">
                 {#each filteredFiles as path, index (path)}
-                    {@const isSelected = index === selectedIndex}
+                    {@const isSelected = index === nav.selectedIndex}
                     <div
                         class="recent-row group px-4 py-2.5 transition-colors"
                         class:bg-row-even={index % 2 === 1 && !isSelected}
@@ -115,7 +104,7 @@ function handleKeydown(e: KeyboardEvent) {
                             class="flex cursor-pointer items-center justify-between gap-3"
                             onclick={() => handleOpenFile(path)}
                             onkeydown={(e) => { if (e.key === 'Enter') handleOpenFile(path); }}
-                            onmouseenter={() => (selectedIndex = index)}>
+                            onmouseenter={() => nav.select(index)}>
                             <div class="min-w-0 flex-1">
                                 <div class="recent-title truncate font-medium">
                                     {getFilename(path)}
