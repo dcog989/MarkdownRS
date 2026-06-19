@@ -10,9 +10,9 @@ import {
   moveLineDown,
   moveLineUp,
   selectLine,
-  toggleComment,
 } from '@codemirror/commands';
 import { openFind, openReplace } from '$lib/stores/interfaceStore.svelte';
+import { toggleSelectionComment } from '$lib/utils/commentToggle';
 import { runEditorCommand } from './helpers';
 import type { Command } from './types';
 
@@ -22,7 +22,7 @@ export const editorCommands: Command[] = [
     label: 'Editor: Toggle Line Comment',
     category: 'Editor',
     defaultKey: 'ctrl+/',
-    handler: () => runEditorCommand(toggleComment),
+    handler: () => runEditorCommand(toggleSelectionComment),
   },
   {
     id: 'editor.find',
