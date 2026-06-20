@@ -128,7 +128,7 @@ $effect(() => {
 
 $effect(() => {
     if (!view) return;
-    view.dispatch({ effects: comps.wrapComp.reconfigure(createWrapExtension()) });
+    view.dispatch({ effects: comps.wrapComp.reconfigure(createWrapExtension(isLargeFile)) });
 });
 
 $effect(() => {
@@ -168,7 +168,7 @@ $effect(() => {
 });
 
 function createExtensions(currentHistoryState: unknown): Extension[] {
-    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker: isLargeFile ? undefined : lineChangeTracker, autocompletionConfig, isMarkdown: effectiveMarkdown, customKeymap, eventHandlers, compartments: comps, onContextMenu });
+    const extensions = createBaseExtensions({ currentHistoryState, lineChangeTracker: isLargeFile ? undefined : lineChangeTracker, autocompletionConfig, isMarkdown: effectiveMarkdown, isLargeFile, customKeymap, eventHandlers, compartments: comps, onContextMenu });
     extensions.push(createUpdateListener(
         () => view?._currentTabId,
         onContentChange, onMetricsChange, tabSync.timerRefs,

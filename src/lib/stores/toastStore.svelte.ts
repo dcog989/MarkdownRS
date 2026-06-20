@@ -2,11 +2,17 @@ import { CONFIG } from '$lib/utils/config';
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error';
 
+export type ToastAction = {
+  label: string;
+  onClick: () => void;
+};
+
 export type Toast = {
   id: string;
   message: string;
   type: ToastType;
   duration: number;
+  action?: ToastAction;
 };
 
 let nextId = 0;
@@ -17,7 +23,12 @@ export const toastStore = $state<{ toasts: Toast[] }>({
   toasts: [],
 });
 
-export function showToast(type: ToastType, message: string, duration: number = CONFIG.UI.TOAST_DURATION_MS) {
+export function showToast(
+  type: ToastType,
+  message: string,
+  duration: number = CONFIG.UI.TOAST_DURATION_MS,
+  action?: ToastAction,
+) {
   const key = `${type}:${message}`;
   const now = Date.now();
   const lastTime = lastToastTimestamps.get(key) || 0;
@@ -25,7 +36,7 @@ export function showToast(type: ToastType, message: string, duration: number = C
   lastToastTimestamps.set(key, now);
 
   const id = `toast-${nextId++}`;
-  const toast: Toast = { id, message, type, duration };
+  const toast: Toast = { id, message, type, duration, action };
   toastStore.toasts.push(toast);
 }
 

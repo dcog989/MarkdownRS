@@ -8,7 +8,6 @@ const DEFAULT_CONFIG = {
     METRICS_DEBOUNCE_MS: 80,
     SCROLL_DEBOUNCE_MS: 150,
     SEARCH_DEBOUNCE_MS: 150,
-    MAX_FILE_SIZE_MB: 50,
     SMART_TITLE_MAX_LENGTH: 25,
     CLOSED_TABS_HISTORY_LIMIT: 12,
     LINE_CHANGE_TRACK_LIMIT: 50,
@@ -123,7 +122,6 @@ function validateConfig(): AppConfig {
   const merged = structuredClone(DEFAULT_CONFIG);
 
   // Runtime Range Validation
-  merged.EDITOR.MAX_FILE_SIZE_MB = Math.max(1, Math.min(500, merged.EDITOR.MAX_FILE_SIZE_MB));
   merged.EDITOR.CONTENT_DEBOUNCE_MS = Math.max(10, merged.EDITOR.CONTENT_DEBOUNCE_MS);
 
   merged.SPLIT.MIN_PERCENTAGE = Math.max(0, Math.min(0.45, merged.SPLIT.MIN_PERCENTAGE));

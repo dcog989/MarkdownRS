@@ -72,6 +72,7 @@ export interface ExtensionsConfig {
   lineChangeTracker: LineChangeTracker | undefined;
   autocompletionConfig: Extension | Extension[];
   isMarkdown: boolean;
+  isLargeFile: boolean;
   customKeymap: readonly KeyBinding[];
   eventHandlers: Extension;
   compartments: Compartments;
@@ -115,7 +116,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.markdownLintComp.of(config.isMarkdown ? createMarkdownLinter() : []),
     c.doubleClickComp.of(createDoubleClickHandler()),
     c.rulerComp.of(rulerPlugin),
-    c.wrapComp.of(createWrapExtension()),
+    c.wrapComp.of(createWrapExtension(config.isLargeFile)),
     EditorView.contentAttributes.of({ spellcheck: 'false' }),
     EditorView.scrollMargins.of(() => ({ bottom: 30 })),
     c.handlersComp.of(config.eventHandlers),

@@ -30,6 +30,7 @@ export function defaultTransientState(sizeBytes: number): TabTransientState {
     isPersisted: false,
     wordCountStrategy: pickWordCountStrategy(sizeBytes),
     fileCheckPerformed: false,
+    forceFullFeatures: false,
   };
 }
 

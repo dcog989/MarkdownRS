@@ -33,6 +33,7 @@ export type TabTransientState = {
   isPersisted: boolean;
   wordCountStrategy: 'accurate' | 'fast';
   fileCheckPerformed: boolean;
+  forceFullFeatures: boolean;
 };
 
 export type ClosedTab = {

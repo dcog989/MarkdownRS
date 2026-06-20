@@ -21,8 +21,10 @@ import {
     updateCursor,
     updateHistoryState,
     updateScroll,
+    updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { registerEditorInstance, registerFlushFn, unregisterEditorInstance, unregisterFlushFn } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
@@ -101,6 +103,22 @@ $effect(() => {
     if (cmView && searchState.findText) {
         updateSearchEditor(cmView);
     }
+});
+
+$effect(() => {
+    const tab = activeTab;
+    if (!tab) return;
+    if (tab.sizeBytes <= CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES) return;
+    const ts = getTransientState(tab.id);
+    if (ts?.forceFullFeatures) return;
+
+    showToast('info', 'Large file — simple mode enabled for performance', CONFIG.UI.TOAST_DURATION_MS, {
+        label: 'Enable full features',
+        onClick: () => {
+            updateTransientState(tab.id, { forceFullFeatures: true });
+            forceFullFeatures = true;
+        },
+    });
 });
 
 // Reactive Command Listener
@@ -203,7 +221,14 @@ let isMarkdown = $derived.by(() => {
 let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
 let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
 let lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);
-let isLargeFile = $derived(!!activeTab && activeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES);
+let forceFullFeatures = $state(false);
+
+$effect(() => {
+    const ts = getTransientState(tabId);
+    forceFullFeatures = ts?.forceFullFeatures ?? false;
+});
+
+let isLargeFile = $derived(!!activeTab && activeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES && !forceFullFeatures);
 let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
