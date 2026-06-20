@@ -25,7 +25,7 @@ import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtensio
 import { scrollSync } from '$lib/utils/scrollSync.svelte';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
-import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte';
+import { applyImmediateSpellcheck, createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte';
 import type { AppEditorView } from '../../../global';
 
 let {
@@ -139,10 +139,15 @@ $effect(() => {
 
 $effect(() => {
     if (!view) return;
+    const v = view;
     const dictLoaded = spellcheckState.dictionaryLoaded;
+    tabId;
     if (!dictLoaded) return;
     if (isLargeFile) return;
-    view.dispatch({ effects: comps.spellComp.reconfigure(createSpellCheckLinter()) });
+    v.dispatch({ effects: comps.spellComp.reconfigure(createSpellCheckLinter()) });
+    untrack(() => {
+        applyImmediateSpellcheck(v);
+    });
 });
 
 $effect(() => {
