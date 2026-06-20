@@ -1,10 +1,8 @@
-import { type Extension, RangeSetBuilder } from '@codemirror/state';
+import type { Extension, Range } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 const PATH_REGEX =
   /(['"`])((?!https?:\/\/|www\.)(?:[a-zA-Z]:[/\\]|(?:\.\.?|~)[/\\]|\/(?:[^/\s'"`\r\n]+[/\\])+[^'"`\r\n]*|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1|(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+|(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?:[^/\s"'\r\n(){}[\]<>]+[/\\])+))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\r\n(){}[\]<>]+)/g;
-
-// --- HELPERS ---
 
 function stripTrailingPunctuation(str: string): string {
   return str.replace(/[.,;:?!]+$/, '');
@@ -43,31 +41,30 @@ export function extractPathAtPos(text: string, pos: number): string | null {
   return null;
 }
 
-// --- VIEW PLUGIN ---
-
 const filePathMark = Decoration.mark({ class: 'cm-file-path' });
 const urlMark = Decoration.mark({ class: 'cm-url' });
 
 function findLinks(view: EditorView) {
-  const builder = new RangeSetBuilder<Decoration>();
+  const ranges: Range<Decoration>[] = [];
   const doc = view.state.doc;
 
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
       const line = doc.lineAt(pos);
       const lineText = line.text;
-      const found: { start: number; end: number; deco: Decoration }[] = [];
-      let match: RegExpExecArray | null;
 
       PATH_REGEX.lastIndex = 0;
-      for (;;) {
+      let match: RegExpExecArray | null;
+
+      while (true) {
         match = PATH_REGEX.exec(lineText);
         if (match === null) break;
+
         if (match[1]) {
           const content = match[2];
           const start = line.from + match.index + 1;
           if (content.length > 0) {
-            found.push({ start, end: start + content.length, deco: filePathMark });
+            ranges.push(filePathMark.range(start, start + content.length));
           }
         } else {
           const raw = match[0];
@@ -76,25 +73,16 @@ function findLinks(view: EditorView) {
             const clean = stripTrailingPunctuation(raw);
             const start = line.from + match.index;
             if (clean.length > 0) {
-              found.push({ start, end: start + clean.length, deco: urlMark });
+              ranges.push(urlMark.range(start, start + clean.length));
             }
           } else {
             if (match.index > 0 && /[\w-]/.test(lineText[match.index - 1])) continue;
             const clean = stripTrailingPunctuation(raw);
             const start = line.from + match.index;
             if (clean.length > 0) {
-              found.push({ start, end: start + clean.length, deco: filePathMark });
+              ranges.push(filePathMark.range(start, start + clean.length));
             }
           }
-        }
-      }
-
-      found.sort((a, b) => a.start - b.start);
-      let lastEnd = -1;
-      for (const f of found) {
-        if (f.start >= lastEnd) {
-          builder.add(f.start, f.end, f.deco);
-          lastEnd = f.end;
         }
       }
 
@@ -102,7 +90,7 @@ function findLinks(view: EditorView) {
     }
   }
 
-  return builder.finish();
+  return Decoration.set(ranges, true);
 }
 
 export const linkPlugin: Extension = ViewPlugin.fromClass(

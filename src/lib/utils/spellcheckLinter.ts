@@ -3,14 +3,11 @@ import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
 import { StateEffect } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { logger } from '$lib/utils/logger';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
-import type { AppEditorView } from '../../global';
-import { docFingerprint, tabCache } from './spellcheckCache';
 
 export const spellcheckRefreshEffect = StateEffect.define<null>();
 
@@ -23,21 +20,12 @@ export const createSpellCheckLinter = () => {
 
       const { state } = view;
       const doc = state.doc;
-      const docFp = docFingerprint(doc);
 
-      const tabId = (view as AppEditorView)._currentTabId;
+      const wordsToVerify = new Map<string, { from: number; to: number }[]>();
+      const diagnostics: Diagnostic[] = [];
+      const diagnosticKeys = new Set<string>();
 
-      if (tabId) {
-        const cached = tabCache.get(tabId, docFp);
-        if (cached) {
-          spellcheckState.misspelledCache = new SvelteSet(cached.misspelledWords);
-          return cached.diagnostics;
-        }
-      }
-
-      const wordsToVerify = new SvelteMap<string, { from: number; to: number }[]>();
-
-      const safeNodeTypes = new SvelteSet([
+      const safeNodeTypes = new Set([
         'Paragraph',
         'Text',
         'Emphasis',
@@ -51,9 +39,15 @@ export const createSpellCheckLinter = () => {
         'ATXHeading3',
       ]);
 
-      const customDict = new SvelteSet(spellcheckState.customDictionary);
+      const customDict = spellcheckState.customDictionary;
+      const validCache = spellcheckState.validCache;
+      const misspelledCache = spellcheckState.misspelledCache;
+
+      const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
 
       syntaxTree(state).iterate({
+        from: view.viewport.from,
+        to: view.viewport.to,
         enter: (node: SyntaxNodeRef): boolean | undefined => {
           if (
             node.name.includes('Code') ||
@@ -67,12 +61,14 @@ export const createSpellCheckLinter = () => {
 
           if (safeNodeTypes.has(node.name)) {
             const nodeText = doc.sliceString(node.from, node.to);
-            const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
             let match: RegExpExecArray | null;
+
+            wordRegex.lastIndex = 0;
 
             while (true) {
               match = wordRegex.exec(nodeText);
               if (match === null) break;
+
               const word = match[0];
               if (word.length <= 1) continue;
 
@@ -90,10 +86,32 @@ export const createSpellCheckLinter = () => {
               if (customDict.has(wLower)) continue;
 
               let checkWord = word;
+              let checkLower = wLower;
+
               if (wLower.endsWith("'s")) {
                 const base = wLower.slice(0, -2);
                 if (customDict.has(base)) continue;
                 checkWord = word.slice(0, -2);
+                checkLower = base;
+              }
+
+              if (validCache.has(checkLower)) {
+                continue;
+              }
+
+              if (misspelledCache.has(checkLower)) {
+                const key = `${globalFrom}-${globalTo}`;
+                if (!diagnosticKeys.has(key)) {
+                  diagnosticKeys.add(key);
+                  diagnostics.push({
+                    from: globalFrom,
+                    to: globalTo,
+                    severity: 'error',
+                    message: `Misspelled: ${checkWord}`,
+                    source: 'Spellchecker',
+                  });
+                }
+                continue;
               }
 
               const ranges = wordsToVerify.get(checkWord) || [];
@@ -104,89 +122,58 @@ export const createSpellCheckLinter = () => {
         },
       });
 
-      if (wordsToVerify.size === 0) {
-        if (tabId) {
-          tabCache.set(tabId, docFp, [], new SvelteSet());
-        }
-        return [];
-      }
+      if (wordsToVerify.size > 0) {
+        try {
+          const wordsArray = Array.from(wordsToVerify.keys());
+          const misspelled = await callBackend('check_words', { words: wordsArray }, 'Editor:Init');
 
-      try {
-        const wordsArray = Array.from(wordsToVerify.keys());
-        const misspelled = await callBackend(
-          'check_words',
-          {
-            words: wordsArray,
-          },
-          'Editor:Init',
-        );
+          if (misspelled) {
+            const misspelledSet = new Set(misspelled.map((w: string) => w.toLowerCase()));
 
-        if (!misspelled) {
-          if (tabId) {
-            tabCache.set(tabId, docFp, [], new SvelteSet());
-          }
-          return [];
-        }
+            for (const word of wordsArray) {
+              const wLower = word.toLowerCase();
+              const baseLower = wLower.endsWith("'s") ? wLower.slice(0, -2) : wLower;
 
-        const newCache = new SvelteSet<string>();
-        const diagnostics: Diagnostic[] = [];
-        const diagnosticKeys = new SvelteSet<string>();
+              if (misspelledSet.has(wLower)) {
+                misspelledCache.add(baseLower);
 
-        const freshDict = spellcheckState.customDictionary;
-
-        for (const word of misspelled) {
-          const wLower = word.toLowerCase();
-
-          if (freshDict.has(wLower)) continue;
-
-          if (wLower.endsWith("'s")) {
-            const base = wLower.slice(0, -2);
-            if (freshDict.has(base)) continue;
-          }
-
-          newCache.add(wLower);
-          const ranges = wordsToVerify.get(word);
-          if (ranges) {
-            for (const range of ranges) {
-              const key = `${range.from}-${range.to}`;
-              if (!diagnosticKeys.has(key)) {
-                diagnosticKeys.add(key);
-                diagnostics.push({
-                  from: range.from,
-                  to: range.to,
-                  severity: 'error',
-                  message: `Misspelled: ${word}`,
-                  source: 'Spellchecker',
-                });
+                const ranges = wordsToVerify.get(word);
+                if (ranges) {
+                  for (const range of ranges) {
+                    const key = `${range.from}-${range.to}`;
+                    if (!diagnosticKeys.has(key)) {
+                      diagnosticKeys.add(key);
+                      diagnostics.push({
+                        from: range.from,
+                        to: range.to,
+                        severity: 'error',
+                        message: `Misspelled: ${word}`,
+                        source: 'Spellchecker',
+                      });
+                    }
+                  }
+                }
+              } else {
+                validCache.add(baseLower);
               }
             }
           }
+        } catch (error) {
+          logger.spellcheck.error('Linter error', { error: String(error) });
+          if (!spellcheckState.linterFailedNotified) {
+            spellcheckState.linterFailedNotified = true;
+            showToast('warning', 'Spellcheck encountered an error — results may be incomplete');
+          }
         }
-
-        spellcheckState.misspelledCache = newCache;
-
-        logger.spellcheck.debug('Diagnostics created', {
-          diagnosticsCount: diagnostics.length,
-          newCacheSize: newCache.size,
-        });
-
-        if (tabId) {
-          tabCache.set(tabId, docFp, diagnostics, newCache);
-        }
-
-        return diagnostics;
-      } catch (error) {
-        logger.spellcheck.error('Linter error', { error: String(error) });
-        if (!spellcheckState.linterFailedNotified) {
-          spellcheckState.linterFailedNotified = true;
-          showToast('warning', 'Spellcheck encountered an error — results may be incomplete');
-        }
-        return [];
       }
+
+      return diagnostics;
     },
     {
       delay: CONFIG.SPELLCHECK.LINT_DELAY_MS,
-      needsRefresh: (update) => update.transactions.some((tx) => tx.effects.some((e) => e.is(spellcheckRefreshEffect))),
+      needsRefresh: (update) =>
+        update.viewportChanged ||
+        update.transactions.some((tx) => tx.effects.some((e) => e.is(spellcheckRefreshEffect))),
     },
   );
 };

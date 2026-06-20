@@ -1,9 +1,8 @@
 import { forceLinting } from '@codemirror/lint';
 import type { EditorView } from '@codemirror/view';
 import { SvelteSet } from 'svelte/reactivity';
-import { addToDictionary } from '$lib/utils/fileSystem';
+import { addToDictionary } from '$lib/services/dictionaryService';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
-import { invalidateSpellcheckCache, tabCache } from './spellcheckCache';
 import {
   applyImmediateSpellcheck,
   createSpellCheckLinter,
@@ -11,12 +10,17 @@ import {
   triggerImmediateLint,
 } from './spellcheckLinter';
 
-export { applyImmediateSpellcheck, createSpellCheckLinter, invalidateSpellcheckCache, triggerImmediateLint };
+export { applyImmediateSpellcheck, createSpellCheckLinter, triggerImmediateLint };
+
+export function invalidateSpellcheckCache() {
+  spellcheckState.validCache.clear();
+  spellcheckState.misspelledCache.clear();
+}
 
 export async function refreshSpellcheck(view: EditorView | undefined) {
   if (!view) return;
 
-  tabCache.invalidateAll();
+  invalidateSpellcheckCache();
 
   await spellcheckState.refreshCustomDictionary();
   spellcheckState.misspelledCache = new SvelteSet<string>();
@@ -52,7 +56,7 @@ export const spellCheckKeymap = [
           spellcheckState.misspelledCache.delete(w.toLowerCase());
         }
 
-        tabCache.invalidateAll();
+        invalidateSpellcheckCache();
         view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
         forceLinting(view);
 

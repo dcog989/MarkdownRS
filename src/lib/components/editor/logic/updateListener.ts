@@ -40,10 +40,10 @@ export function createUpdateListener(
       if (timers.metrics) clearTimeout(timers.metrics);
       timers.metrics = window.setTimeout(() => {
         const state = update.view.state;
-        const docString = state.doc.toString();
         const line = state.doc.lineAt(state.selection.main.head);
+
         onMetricsChange(
-          calculateCursorMetrics(docString, state.selection.main.head, {
+          calculateCursorMetrics(state.doc, state.selection.main.head, {
             number: line.number,
             from: line.from,
             text: line.text,

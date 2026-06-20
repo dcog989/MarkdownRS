@@ -1,4 +1,4 @@
-import { RangeSetBuilder } from '@codemirror/state';
+import type { Range } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
 import { appContext } from '$lib/stores/state.svelte';
 
@@ -12,17 +12,19 @@ export class NewlineWidget extends WidgetType {
 }
 
 function getNewlineDecorations(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
+  const ranges: Range<Decoration>[] = [];
+  const newlineDeco = Decoration.widget({ widget: new NewlineWidget(), side: -1 });
+
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
       const line = view.state.doc.lineAt(pos);
       if (line.to < view.state.doc.length) {
-        builder.add(line.to, line.to, Decoration.widget({ widget: new NewlineWidget(), side: -1 }));
+        ranges.push(newlineDeco.range(line.to));
       }
       pos = line.to + 1;
     }
   }
-  return builder.finish();
+  return Decoration.set(ranges, true);
 }
 
 export const newlinePlugin = ViewPlugin.fromClass(
@@ -44,7 +46,7 @@ const spaceDeco = Decoration.mark({ class: 'cm-highlightSpace' });
 const tabDeco = Decoration.mark({ class: 'cm-highlightTab' });
 
 function getSelectionWhitespaceDecorations(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
+  const rangesDeco: Range<Decoration>[] = [];
   const doc = view.state.doc;
   const ranges = view.state.selection.ranges;
   const visibleRanges = view.visibleRanges;
@@ -68,13 +70,13 @@ function getSelectionWhitespaceDecorations(view: EditorView): DecorationSet {
         for (let k = 0; k < text.length; k++) {
           const char = text[k];
           const pos = start + k;
-          if (char === ' ') builder.add(pos, pos + 1, spaceDeco);
-          else if (char === '\t') builder.add(pos, pos + 1, tabDeco);
+          if (char === ' ') rangesDeco.push(spaceDeco.range(pos, pos + 1));
+          else if (char === '\t') rangesDeco.push(tabDeco.range(pos, pos + 1));
         }
       }
     }
   }
-  return builder.finish();
+  return Decoration.set(rangesDeco, true);
 }
 
 export const selectionWhitespacePlugin = ViewPlugin.fromClass(

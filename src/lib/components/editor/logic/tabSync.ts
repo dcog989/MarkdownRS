@@ -118,7 +118,7 @@ export class TabSyncManager {
     const cursorPos = Math.min(storeTab.cursor.head, storeContent.length);
     const line = newState.doc.lineAt(cursorPos);
     onMetricsChange(
-      calculateCursorMetrics(storeContent, cursorPos, { number: line.number, from: line.from, text: line.text }),
+      calculateCursorMetrics(newState.doc, cursorPos, { number: line.number, from: line.from, text: line.text }),
     );
     const cursorMs = performance.now() - cursorStart;
 

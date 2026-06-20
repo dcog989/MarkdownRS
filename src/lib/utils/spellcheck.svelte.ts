@@ -3,17 +3,6 @@
  *
  * This file uses Svelte 5 runes for all spellcheck-related state.
  * All properties are reactive and trigger UI updates when changed.
- *
- * Pattern: Class-based reactive state with $state()
- * - dictionaryLoaded: Boolean for initialization status
- * - misspelledCache: SvelteSet of currently misspelled words
- * - customDictionary: SvelteSet of user-added words
- * - suggestionCache: SvelteMap of word -> suggestions
- *
- * Why not non-reactive caches here?
- * - All spellcheck state is displayed in the UI (underlines, suggestions, etc.)
- * - SvelteSet/SvelteMap work well with $state for this use case
- * - No deep proxy chains that would cause stack overflow
  */
 
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -27,6 +16,7 @@ export class SpellcheckManager {
   misspelledCache = $state(new SvelteSet<string>());
   customDictionary = $state(new SvelteSet<string>());
   suggestionCache = $state(new SvelteMap<string, string[]>());
+  validCache = new Set<string>();
   linterFailedNotified = false;
 
   private initPromise: Promise<void> | null = null;
@@ -110,7 +100,6 @@ export class SpellcheckManager {
     const w = word.trim();
     if (!w || !this.dictionaryLoaded) return;
 
-    // Only fetch if linter has marked it as misspelled
     if (!this.misspelledCache.has(w.toLowerCase())) return;
 
     if (this.suggestionCache.has(w) || this.pendingFetches.has(w)) return;
@@ -156,6 +145,7 @@ export class SpellcheckManager {
     this.customDictionary.clear();
     this.misspelledCache.clear();
     this.suggestionCache.clear();
+    this.validCache.clear();
     this.dictionaryLoaded = false;
     this.linterFailedNotified = false;
     this.initPromise = null;

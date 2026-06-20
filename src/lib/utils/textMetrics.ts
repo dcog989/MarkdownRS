@@ -1,3 +1,4 @@
+import type { Text } from '@codemirror/state';
 import { CONFIG } from './config';
 
 export interface CursorMetrics {
@@ -39,16 +40,40 @@ export function fastCountWords(text: string): number {
   return count;
 }
 
+export function fastCountWordsInDoc(doc: Text, toOffset: number): number {
+  let count = 0;
+  let inWord = false;
+  const iter = doc.iterRange(0, toOffset);
+
+  while (!iter.next().done) {
+    const str = iter.value;
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      const isAlpha =
+        (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || (code >= 48 && code <= 57) || code === 39;
+
+      if (isAlpha) {
+        if (!inWord) {
+          count++;
+          inWord = true;
+        }
+      } else {
+        inWord = false;
+      }
+    }
+  }
+  return count;
+}
+
 export function calculateCursorMetrics(
-  content: string,
+  doc: Text,
   cursorOffset: number,
   line: { number: number; from: number; text: string },
 ): CursorMetrics {
-  const textUpToCursor = content.substring(0, cursorOffset);
   const currentWordIndex =
-    content.length < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
-      ? countWords(textUpToCursor)
-      : fastCountWords(textUpToCursor);
+    doc.length < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES
+      ? countWords(doc.sliceString(0, cursorOffset))
+      : fastCountWordsInDoc(doc, cursorOffset);
 
   return {
     cursorOffset,
