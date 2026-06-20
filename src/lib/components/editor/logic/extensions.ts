@@ -26,13 +26,7 @@ import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/util
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import {
-  blockquotePlugin,
-  bulletPointPlugin,
-  codeBlockPlugin,
-  highlightPlugin,
-  horizontalRulePlugin,
-} from '$lib/utils/markdownExtensions';
+import { markdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
 import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { userThemeExtension } from '$lib/utils/themeMapper';
@@ -43,11 +37,7 @@ const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
 
 export const markdownExtensions = [
   markdown({ base: markdownLanguage, codeLanguages: languages }),
-  highlightPlugin,
-  blockquotePlugin,
-  codeBlockPlugin,
-  horizontalRulePlugin,
-  bulletPointPlugin,
+  markdownDecorationsPlugin,
 ];
 
 export interface Compartments {
