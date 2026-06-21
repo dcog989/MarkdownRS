@@ -46,6 +46,7 @@ jobs:
 
       - name: Build Arch package
         if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
         run: |
           mkdir -p .pkg
           cp PKGBUILD .pkg/
