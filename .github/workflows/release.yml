@@ -55,14 +55,14 @@ jobs:
             archlinux:latest \
             bash -c "
               pacman -Sy --noconfirm archlinux-keyring
-              pacman -Su --noconfirm base-devel
+              pacman -Su --noconfirm base-devel webkit2gtk-4.1 libnm
               useradd -m builder
               chown -R builder:builder /workspace
               su builder -c 'makepkg -f --noconfirm'
             "
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact-name }}
           path: |
@@ -78,7 +78,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
