@@ -32,6 +32,9 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
+      - name: Sync SvelteKit
+        run: bunx svelte-kit sync
+
       - name: Check frontend types
         run: bun run check:types
 
