@@ -19,7 +19,7 @@
     "gen-icons": "python3 scripts/gen-icons.py",
     "package": "bun run build && mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si --noconfirm --force",
     "preview": "vite preview",
-    "release": "bun scripts/version.js --git && git push --follow-tags",
+    "release": "bun scripts/version.js --git",
     "repo:back": "repomix -c .repomix/repomix.src.back.json",
     "repo:front": "repomix -c .repomix/repomix.src.front.json",
     "repo:full": "repomix -c .repomix/repomix.full.json",

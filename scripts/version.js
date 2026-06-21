@@ -105,6 +105,8 @@ if (shouldGit) {
 
     const tagName = `v${newVersion}`;
     execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
+
+    execSync('git push --follow-tags', { stdio: 'inherit' });
   } catch (_error) {}
 } else {
 }
