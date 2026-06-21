@@ -17,7 +17,6 @@ dirs = "6"
 rumdl = "0.2"
 dunce = "1"
 encoding_rs = "0.8"
-gtk = "0.18"
 image = { version = "0.25", default-features = false, features = ["png"] }
 log = "0.4"
 pdf_oxide = "0.3"
@@ -43,6 +42,9 @@ toml = "1.1"
 trash = "5.2"
 unicode-segmentation = "1.13"
 uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.56"
