@@ -22,7 +22,12 @@ import Submenu from '$lib/components/ui/Submenu.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
+import { shortcutManager } from '$lib/utils/shortcuts';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+
+function opShortcut(opId: string): string {
+    return shortcutManager.getShortcutDisplay(`textop.${opId}`);
+}
 
 let {
     x,
@@ -295,15 +300,20 @@ async function handleSendToBrowser() {
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => handleOp('format-document')}>
                 <WandSparkles size={14} />
-                <span>{selectedText ? 'Format Selection' : 'Format Document'}</span
-                ><span class="text-ui-sm ml-auto opacity-50">Alt+Shift+F</span>
+                <span class="flex-1">{selectedText ? 'Format Selection' : 'Format Document'}</span>
+                {#if opShortcut('format-document')}
+                    <span class="text-xs opacity-40">{opShortcut('format-document')}</span>
+                {/if}
             </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => handleOp('generate-toc')}>
                 <List size={14} />
-                <span>Generate Table of Contents</span>
+                <span class="flex-1">Generate Table of Contents</span>
+                {#if opShortcut('generate-toc')}
+                    <span class="text-xs opacity-40">{opShortcut('generate-toc')}</span>
+                {/if}
             </button>
         </div>
 
@@ -329,11 +339,15 @@ async function handleSendToBrowser() {
                     {#if op.divider}
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
+                        {@const id = op.id}
                         <button
                             type="button"
-                            class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>
-                            {op.label}
+                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                            onclick={() => handleOp(id)}>
+                            <span class="flex-1">{op.label}</span>
+                            {#if id && opShortcut(id)}
+                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
+                            {/if}
                         </button>
                     {/if}
                 {/each}
@@ -358,11 +372,15 @@ async function handleSendToBrowser() {
                     {#if op.divider}
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
+                        {@const id = op.id}
                         <button
                             type="button"
-                            class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>
-                            {op.label}
+                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                            onclick={() => handleOp(id)}>
+                            <span class="flex-1">{op.label}</span>
+                            {#if id && opShortcut(id)}
+                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
+                            {/if}
                         </button>
                     {/if}
                 {/each}
@@ -387,11 +405,15 @@ async function handleSendToBrowser() {
                     {#if op.divider}
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
+                        {@const id = op.id}
                         <button
                             type="button"
-                            class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>
-                            {op.label}
+                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                            onclick={() => handleOp(id)}>
+                            <span class="flex-1">{op.label}</span>
+                            {#if id && opShortcut(id)}
+                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
+                            {/if}
                         </button>
                     {/if}
                 {/each}
@@ -416,11 +438,15 @@ async function handleSendToBrowser() {
                     {#if op.divider}
                         <div class="bg-border-main my-1 h-px"></div>
                     {:else}
+                        {@const id = op.id}
                         <button
                             type="button"
-                            class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-                            onclick={() => handleOp(op.id)}>
-                            {op.label}
+                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                            onclick={() => handleOp(id)}>
+                            <span class="flex-1">{op.label}</span>
+                            {#if id && opShortcut(id)}
+                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
+                            {/if}
                         </button>
                     {/if}
                 {/each}

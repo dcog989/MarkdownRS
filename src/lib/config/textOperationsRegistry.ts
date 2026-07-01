@@ -277,6 +277,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: Type,
     category: 'case',
     execution: 'client',
+    defaultKey: 'ctrl+shift+u',
   },
   lowercase: {
     id: 'lowercase',
@@ -285,6 +286,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: Type,
     category: 'case',
     execution: 'client',
+    defaultKey: 'ctrl+shift+l',
   },
   'title-case': {
     id: 'title-case',
@@ -449,6 +451,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     category: 'markdown',
     execution: 'server',
     backendCommand: 'format_markdown',
+    defaultKey: 'alt+shift+f',
   },
   'toggle-blockquote': {
     id: 'toggle-blockquote',
@@ -550,6 +553,7 @@ export const TEXT_OPERATIONS_REGISTRY: Record<OperationId, TextOperation> = {
     icon: TextAlignStart,
     category: 'text',
     execution: 'client',
+    defaultKey: 'ctrl+shift+j',
   },
   'split-sentences': {
     id: 'split-sentences',
