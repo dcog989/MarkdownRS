@@ -49,6 +49,7 @@ let groupedCommands = $derived(
 const nav = createListNavigation(
     () => flatOps.length,
     (index) => execute(flatOps[index]),
+    2,
 );
 
 $effect(() => {
@@ -57,6 +58,14 @@ $effect(() => {
         nav.reset();
         tick().then(() => inputRef?.focus());
     }
+});
+
+$effect(() => {
+    const el = inputRef;
+    if (!el) return;
+    const handler = (e: KeyboardEvent) => nav.handleKeydown(e);
+    el.addEventListener('keydown', handler);
+    return () => el.removeEventListener('keydown', handler);
 });
 
 function execute(command: Command) {
@@ -81,8 +90,7 @@ function close() {
             bind:searchValue={query}
             bind:inputRef
             searchPlaceholder="Search Commands..."
-            onClose={close}
-            onKeydown={nav.handleKeydown}>
+            onClose={close}>
             {#snippet extraActions()}
                 <button
                     type="button"
