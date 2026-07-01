@@ -211,6 +211,16 @@ onMount(() => {
     const cleanupScroll = setupScrollSync(viewInstance, tabId, () => tabSync.isRestoring, onScrollChange);
     const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
 
+    const gutterEl = editorContainer.querySelector('.cm-gutters');
+    let gutterObserver: ResizeObserver | null = null;
+    if (gutterEl) {
+      gutterObserver = new ResizeObserver(() => {
+        onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
+      });
+      gutterObserver.observe(gutterEl);
+      onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
+    }
+
     if (searchState.findText) updateSearchEditor(viewInstance);
 
     viewInstance.focus();
@@ -221,6 +231,7 @@ onMount(() => {
     return () => {
         window.removeEventListener('focus', onWindowFocus);
         tabSync.cleanup();
+        gutterObserver?.disconnect();
         cleanupModifier();
         cleanupScroll();
         cleanupSelScroll();

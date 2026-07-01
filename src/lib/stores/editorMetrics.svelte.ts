@@ -5,6 +5,7 @@ export type EditorMetrics = {
   currentLineLength: number;
   currentWordIndex: number;
   insertMode: 'INS' | 'OVR';
+  gutterWidth: number;
 };
 
 // The state object
@@ -15,6 +16,7 @@ export const editorMetrics = $state({
   currentLineLength: 0,
   currentWordIndex: 0,
   insertMode: 'INS' as 'INS' | 'OVR',
+  gutterWidth: 0,
 });
 
 // Logic functions
@@ -25,6 +27,7 @@ export function updateMetrics(metrics: Partial<EditorMetrics>) {
   if (metrics.currentLineLength !== undefined) editorMetrics.currentLineLength = metrics.currentLineLength;
   if (metrics.currentWordIndex !== undefined) editorMetrics.currentWordIndex = metrics.currentWordIndex;
   if (metrics.insertMode !== undefined) editorMetrics.insertMode = metrics.insertMode;
+  if (metrics.gutterWidth !== undefined) editorMetrics.gutterWidth = metrics.gutterWidth;
 }
 
 export function toggleInsertMode() {

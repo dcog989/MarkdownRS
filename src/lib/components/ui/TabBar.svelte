@@ -10,6 +10,7 @@ import TabBarMenu from '$lib/components/ui/TabBarMenu.svelte';
 import TabButton from '$lib/components/ui/TabButton.svelte';
 import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
 import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
+import { editorMetrics } from '$lib/stores/editorMetrics.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -19,6 +20,8 @@ import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem'
 import { createMruCycling } from '$lib/utils/mruCycling.svelte';
 
 let scrollContainer = $state<HTMLElement>();
+let dropdownContainer = $state<HTMLElement>();
+let dropdownWidth = $state(0);
 let showDropdown = $state(false);
 let showMenu = $state(false);
 
@@ -144,10 +147,23 @@ async function scrollToActive() {
 $effect(() => {
     if (appContext.app.activeTabId) scrollToActive();
 });
+
+$effect(() => {
+    const el = dropdownContainer;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+        dropdownWidth = el.offsetWidth;
+    });
+    ro.observe(el);
+    dropdownWidth = el.offsetWidth;
+    return () => ro.disconnect();
+});
+
+let tabOffset = $derived(Math.max(0, editorMetrics.gutterWidth - dropdownWidth));
 </script>
 
     <div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch">
-    <div class="relative h-8 border-r">
+    <div bind:this={dropdownContainer} class="relative h-8">
         <button
             type="button"
             class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
@@ -164,7 +180,7 @@ $effect(() => {
             }}
             onClose={() => (showDropdown = false)} />
     </div>
-    <div class="relative h-full min-w-0 flex-1">
+    <div class="relative h-full min-w-0 flex-1" style:padding-left={`${tabOffset}px`}>
 
     {#if showLeftFade}
             <div
