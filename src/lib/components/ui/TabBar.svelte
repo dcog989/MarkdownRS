@@ -4,6 +4,7 @@ import { onDestroy, onMount, tick } from 'svelte';
 import { flip } from 'svelte/animate';
 import { fade } from 'svelte/transition';
 import { SortableController } from '$lib/actions/sortable.svelte';
+import { tooltip } from '$lib/actions/tooltip';
 import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
 import TabBarContextMenu from '$lib/components/ui/TabBarContextMenu.svelte';
 import TabBarMenu from '$lib/components/ui/TabBarMenu.svelte';
@@ -18,6 +19,7 @@ import { CONFIG } from '$lib/utils/config';
 import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
 import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
 import { createMruCycling } from '$lib/utils/mruCycling.svelte';
+import { shortcutManager } from '$lib/utils/shortcuts';
 
 let scrollContainer = $state<HTMLElement>();
 let dropdownContainer = $state<HTMLElement>();
@@ -166,6 +168,7 @@ let tabOffset = $derived(Math.max(0, editorMetrics.gutterWidth - dropdownWidth))
     <div bind:this={dropdownContainer} class="relative h-8">
         <button
             type="button"
+            use:tooltip={'Switch Tab'}
             class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
             onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
@@ -267,6 +270,7 @@ let tabOffset = $derived(Math.max(0, editorMetrics.gutterWidth - dropdownWidth))
     <div class="flex h-full items-stretch border-l pr-2">
         <button
             type="button"
+            use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
             class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
             onclick={() => {
                 const newTabId = addTab();
@@ -276,6 +280,7 @@ let tabOffset = $derived(Math.max(0, editorMetrics.gutterWidth - dropdownWidth))
         </button>
         <button
             type="button"
+            use:tooltip={'Menu'}
             class="relative text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
             onclick={() => (showMenu = !showMenu)}>
             <Menu size={16} />
