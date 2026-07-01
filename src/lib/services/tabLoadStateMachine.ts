@@ -5,7 +5,7 @@ import { callBackend } from '$lib/utils/backend';
 import { hashContent, isDirty } from '$lib/utils/contentHash';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
-import { byteLength } from '$lib/utils/textMetrics';
+import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { formatDuration } from '$lib/utils/timing';
 import { normalizeLineEndings } from './fileMetadata';
 
@@ -123,6 +123,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
 
     const sizeBytes = byteLength(normalizedContent);
     const wordCount = computeWordCount(normalizedContent, sizeBytes);
+    const { lineCount, widestColumn } = computeLineStats(normalizedContent);
 
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
     if (currentIndex !== -1) {
@@ -133,6 +134,8 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         lastSavedHash,
         sizeBytes,
         wordCount,
+        lineCount,
+        widestColumn,
         lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
         contentLoaded: true,
         isDirty: isDirty(normalizedContent, lastSavedHash),
