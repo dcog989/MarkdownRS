@@ -59,10 +59,11 @@ CachyOS build: `makepkg -sif`
 
 ### Available Scripts
 
-- `bun run check` - Type-check Svelte files
 - `bun run clean` - Remove everything (build, target, and node_modules)
-- `bun run dev` - Start dev server / HRM
+- `bun run check` - Type-check Svelte files
 - `bun run format` - Format code with Prettier + 'cargo fmt'
+- `bun run update` - Update packages + crates
+- `bun run dev` - Start dev server / HRM
 - `bun run preview` - Preview the production build
 
 ### rumdl Config Cascade
