@@ -59,4 +59,11 @@ jobs:
         working-directory: src-tauri
         run: cargo check && cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Check cargo-deny
+        uses: embark-studios/cargo-deny-action@v2
+        with:
+          command: check
+          log-level: warn
+          arguments: --manifest-path src-tauri/Cargo.toml
+
 

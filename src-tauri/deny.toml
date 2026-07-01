@@ -1,0 +1,49 @@
+[advisories]
+vulnerability = "deny"
+unmaintained = "warn"
+unsound = "deny"
+notice = "warn"
+ignore = []
+
+[licenses]
+unlicensed = "deny"
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "ISC",
+    "Zlib",
+    "Unlicense",
+    "CC0-1.0",
+    "MPL-2.0",
+    "0BSD",
+]
+deny = []
+copyleft = "deny"
+allow-osi-fsf-free = "neither"
+default = "deny"
+confidence = 0.8
+
+[[licenses.clarify]]
+name = "webpki-roots"
+expression = "MPL-2.0"
+license-files = [{ path = "LICENSE", hash = 0xfc2b1d0a }]
+
+[[licenses.clarify]]
+name = "ring"
+expression = "MIT"
+license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+
+[bans]
+multiple-versions = "warn"
+wild = "deny"
+highlight = "all"
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-org = []
