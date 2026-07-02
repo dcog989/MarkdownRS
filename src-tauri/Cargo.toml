@@ -12,7 +12,7 @@ tauri-build = { version = "2.6", features = [] }
 anyhow = "1.0"
 chardetng = "1.0"
 chrono = "0.4"
-comrak = "0.52"
+comrak = "0.53"
 dirs = "6"
 rumdl = "0.2"
 dunce = "1"
