@@ -64,4 +64,4 @@ jobs:
         with:
           command: check
           log-level: warn
-          arguments: --manifest-path src-tauri/Cargo.toml
+          manifest-path: src-tauri/Cargo.toml
