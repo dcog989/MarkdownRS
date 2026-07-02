@@ -28,19 +28,15 @@ The only Markdown editor you need? Many people are saying so.
 
 Developed using the latest versions of:
 
-- [Tauri](https://v2.tauri.app/)
-- [Rust](https://www.rust-lang.org/)
-- [Svelte](https://svelte.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [CodeMirror](https://codemirror.net/)
-- [SQLite](https://sqlite.org/)
-
-Along with these dev tools:
-
-- [Node.js](https://nodejs.org/)
 - [bun](https://bun.com/)
+- [CodeMirror](https://codemirror.net/)
+- [Node.js](https://nodejs.org/)
+- [Rust](https://www.rust-lang.org/)
+- [SQLite](https://sqlite.org/)
+- [Svelte](https://svelte.dev/)
+- [Tauri](https://v2.tauri.app/)
+- [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vite.dev/)
-- [Velopack](https://velopack.io/)
 
 ## Development
 
@@ -86,7 +82,3 @@ rumdl resolves configuration in this priority order (highest → lowest):
 ## License
 
 [MIT License](https://github.com/dcog989/MarkdownRS/blob/main/LICENSE).
-
-```text
-
-```
