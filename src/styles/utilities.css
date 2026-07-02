@@ -99,7 +99,7 @@
 
 /* Resize handle */
 .resize-handle {
-  background-color: var(--surface-2);
+  background-color: var(--border-secondary);
   flex: 0 0 4px;
   z-index: 20;
   transition: background-color 150ms ease-out;
