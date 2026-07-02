@@ -18,6 +18,7 @@ import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
+import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { debounce, formatDuration } from '$lib/utils/timing';
 import { normalizeLineEndings } from './fileMetadata';
@@ -146,9 +147,15 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 
   const wordCount = computeWordCount(content, sizeBytes);
 
+  let title = t.title;
+  if (!t.custom_title && settingsState.tabNameFromContent) {
+    const smartTitle = extractSmartTitle(content);
+    if (smartTitle) title = smartTitle;
+  }
+
   const editorTab: EditorTab = {
     id: t.id,
-    title: t.title,
+    title,
     originalTitle: t.title,
     content,
     lastSavedHash: '',

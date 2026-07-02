@@ -11,7 +11,10 @@ export function extractSmartTitle(content: string): string | null {
 
   if (!firstLine) return null;
 
-  let title = firstLine.replace(/^#+\s*/, '').trim();
+  let title = firstLine
+    .replace(/^#+\s*/, '')
+    .replace(/^(?:<[^>]+>\s*)+/, '')
+    .trim();
   if (title.length === 0) return null;
 
   if (title.length > SMART_TITLE_MAX_LENGTH) {

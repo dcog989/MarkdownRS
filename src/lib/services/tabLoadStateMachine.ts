@@ -1,10 +1,12 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
 import { editorStore } from '$lib/stores/editorStore.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { hashContent, isDirty } from '$lib/utils/contentHash';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
+import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { formatDuration } from '$lib/utils/timing';
 import { normalizeLineEndings } from './fileMetadata';
@@ -128,8 +130,16 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
     if (currentIndex !== -1) {
       const currentTab = editorStore.tabs[currentIndex];
+
+      let title = currentTab.title;
+      if (!currentTab.customTitle && settingsState.tabNameFromContent) {
+        const smartTitle = extractSmartTitle(normalizedContent);
+        if (smartTitle) title = smartTitle;
+      }
+
       editorStore.tabs[currentIndex] = {
         ...currentTab,
+        title,
         content: normalizedContent,
         lastSavedHash,
         sizeBytes,
