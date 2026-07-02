@@ -78,7 +78,7 @@ impl MarkdownFlavor {
                 ..Default::default()
             },
             render: Render {
-                r#unsafe: false,
+                r#unsafe: true,
                 escape: false,
                 sourcepos: true,
                 ..Default::default()
