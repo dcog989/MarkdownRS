@@ -1,10 +1,10 @@
 <script lang="ts">
-import { FileText, FlipHorizontal, FlipVertical } from 'lucide-svelte';
+import { FileText, FlipHorizontal, FlipVertical, X } from 'lucide-svelte';
 import { onDestroy } from 'svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
-import { toggleOrientation } from '$lib/stores/settingsState.svelte';
+import { toggleOrientation, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
@@ -56,7 +56,7 @@ function injectHtml(node: HTMLElement, content: string) {
 </script>
 
 <div class="bg-bg-preview group/preview relative h-full w-full border-l">
-    <div class="absolute top-2 right-2 z-10">
+    <div class="absolute top-2 right-2 z-10 flex gap-1">
         <button
             type="button"
             class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
@@ -69,6 +69,13 @@ function injectHtml(node: HTMLElement, content: string) {
             {:else}
                 <FlipHorizontal size={16} />
             {/if}
+        </button>
+        <button
+            type="button"
+            class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
+            onclick={() => toggleSplitView()}
+            use:tooltip={'Close Preview'}>
+            <X size={16} />
         </button>
     </div>
 
