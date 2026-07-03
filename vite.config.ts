@@ -42,10 +42,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          codemirror: ['@codemirror/state', '@codemirror/view', '@codemirror/lang-markdown'],
-          svelte: ['svelte', 'svelte/transition', 'svelte/animate'],
-          tauri: ['@tauri-apps/api/core', '@tauri-apps/plugin-dialog'],
+        manualChunks(id: string) {
+          if (id.includes('/node_modules/@codemirror/')) return 'codemirror';
+          if (id.includes('/node_modules/svelte/')) return 'svelte';
+          if (id.includes('/node_modules/@tauri-apps/')) return 'tauri';
         },
       },
     },
