@@ -1,10 +1,12 @@
 pub mod bookmarks;
 pub mod context_menu;
 pub mod data;
+#[cfg(feature = "pdf-export")]
 pub mod export;
 pub mod files;
 pub mod markdown;
 pub mod session;
 pub mod settings;
+#[cfg(feature = "spellcheck")]
 pub mod spellcheck;
 pub mod window;

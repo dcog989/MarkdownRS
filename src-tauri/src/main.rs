@@ -82,11 +82,17 @@ fn main() {
             commands::files::remove_from_recent_files,
             commands::files::clear_recent_files,
             commands::settings::get_app_info,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::add_to_dictionary,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::load_user_dictionary,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::init::init_spellchecker,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::check_words,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::get_spelling_suggestions,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::get_spellcheck_status,
             commands::markdown::render_markdown,
             commands::markdown::format_markdown,
@@ -105,6 +111,7 @@ fn main() {
             commands::context_menu::set_context_menu_item,
             commands::context_menu::check_context_menu_status,
             commands::settings::toggle_devtools,
+            #[cfg(feature = "pdf-export")]
             commands::export::export_to_pdf,
             commands::data::export_bookmarks,
             commands::data::import_bookmarks,
