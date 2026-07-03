@@ -44,7 +44,10 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
-            { name: 'codemirror', test: /[\\/]node_modules[\\/]@codemirror[\\/]/ },
+            {
+              name: 'codemirror',
+              test: /[\\/]node_modules[\\/]@codemirror[\\/](state|view|language|commands|autocomplete|search|lint)[\\/]/,
+            },
             { name: 'svelte', test: /[\\/]node_modules[\\/]svelte[\\/]/ },
             { name: 'tauri', test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/ },
           ],
