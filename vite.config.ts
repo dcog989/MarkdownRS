@@ -40,12 +40,14 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id: string) {
-          if (id.includes('/node_modules/@codemirror/')) return 'codemirror';
-          if (id.includes('/node_modules/svelte/')) return 'svelte';
-          if (id.includes('/node_modules/@tauri-apps/')) return 'tauri';
+        codeSplitting: {
+          groups: [
+            { name: 'codemirror', test: /[\\/]node_modules[\\/]@codemirror[\\/]/ },
+            { name: 'svelte', test: /[\\/]node_modules[\\/]svelte[\\/]/ },
+            { name: 'tauri', test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/ },
+          ],
         },
       },
     },
