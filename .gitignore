@@ -27,6 +27,5 @@ project.fragment.lock.json
 project.lock.json
 publish/
 repomix.*.json
-src-tauri/Cargo.lock
 src-tauri/gen/
 src-tauri/target/
