@@ -9,8 +9,6 @@ pub async fn save_session(
     mut active_tabs: Vec<TabState>,
     mut closed_tabs: Vec<TabState>,
 ) -> Result<(), String> {
-    let start = std::time::Instant::now();
-
     log::info!("[Rust] save_session called");
     log::info!("  Active tabs: {}", active_tabs.len());
     log::info!("  Closed tabs: {}", closed_tabs.len());
@@ -31,29 +29,24 @@ pub async fn save_session(
     let active_len = active_tabs.len();
     let closed_len = closed_tabs.len();
     let db = state.db.clone();
-    let result = run_blocking("save session", move || {
-        db.save_session(&active_tabs, &closed_tabs)
-            .map_err(|e| handle_error(Some("active and closed tabs"), "save session", e))
-    })
-    .await;
 
-    let duration = start.elapsed();
-    if result.is_ok() {
-        log::info!(
-            "[Storage] save_session | duration={:?} | active_tabs={} | closed_tabs={}",
-            duration,
-            active_len,
-            closed_len,
-        );
-    }
-
-    result
+    crate::timed_info!(
+        "[Storage]",
+        "save_session",
+        {
+            run_blocking("save session", move || {
+                db.save_session(&active_tabs, &closed_tabs)
+                    .map_err(|e| handle_error(Some("active and closed tabs"), "save session", e))
+            })
+            .await
+        },
+        active_tabs = active_len,
+        closed_tabs = closed_len,
+    )
 }
 
 #[tauri::command]
 pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
-    let start = std::time::Instant::now();
-
     log::info!("[Rust] restore_session called");
 
     // Seed recent files from existing session data (Backfill)
@@ -62,13 +55,14 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
     }
 
     let db = state.db.clone();
-    let result = run_blocking("restore session", move || {
-        db.load_session()
-            .map_err(|e| handle_error(Some("session data"), "restore session", e))
-    })
-    .await;
+    let (result, duration) = crate::timed!({
+        run_blocking("restore session", move || {
+            db.load_session()
+                .map_err(|e| handle_error(Some("session data"), "restore session", e))
+        })
+        .await
+    });
 
-    let duration = start.elapsed();
     if let Ok(ref session) = result {
         let tabs_with_content = session
             .active_tabs
@@ -92,17 +86,16 @@ pub async fn load_tab_content(
     state: State<'_, AppState>,
     tab_id: String,
 ) -> Result<TabData, String> {
-    let start = std::time::Instant::now();
-
     let db = state.db.clone();
     let tab_id_clone = tab_id.clone();
-    let result = run_blocking("load tab content", move || {
-        db.load_tab_data(&tab_id_clone)
-            .map_err(|e| handle_error(Some(&tab_id_clone), "load tab data", e))
-    })
-    .await;
+    let (result, duration) = crate::timed!({
+        run_blocking("load tab content", move || {
+            db.load_tab_data(&tab_id_clone)
+                .map_err(|e| handle_error(Some(&tab_id_clone), "load tab data", e))
+        })
+        .await
+    });
 
-    let duration = start.elapsed();
     if let Ok(ref tab_data) = result {
         log::info!(
             "[Storage] load_tab_content | duration={:?} | tab_id={} | size={} bytes",

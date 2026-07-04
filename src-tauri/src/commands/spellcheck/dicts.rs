@@ -1,25 +1,70 @@
+use DictCategory::*;
+
+enum DictCategory {
+    Technical,
+    Scientific,
+}
+
+struct DictEntry {
+    id: &'static str,
+    url: &'static str,
+    category: DictCategory,
+}
+
+static ALL_TECHNICAL_DICTS: &[DictEntry] = &[
+    DictEntry {
+        id: "medical-terms",
+        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medicalterms/dict/medicalterms-en.txt",
+        category: Scientific,
+    },
+    DictEntry {
+        id: "scientific-terms-us",
+        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific_terms_US/src/custom_scientific_US.dic.txt",
+        category: Scientific,
+    },
+    DictEntry {
+        id: "software-terms",
+        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
+        category: Technical,
+    },
+    DictEntry {
+        id: "companies",
+        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
+        category: Technical,
+    },
+    DictEntry {
+        id: "fullstack",
+        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fullstack/dict/fullstack.txt",
+        category: Technical,
+    },
+    DictEntry {
+        id: "filetypes",
+        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/src/filetypes.txt",
+        category: Technical,
+    },
+];
+
 pub fn resolve_technical_url(id: &str) -> Option<&'static str> {
-    match id {
-        "medical-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medicalterms/dict/medicalterms-en.txt",
-        ),
-        "scientific-terms-us" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific_terms_US/src/custom_scientific_US.dic.txt",
-        ),
-        "software-terms" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
-        ),
-        "companies" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
-        ),
-        "fullstack" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fullstack/dict/fullstack.txt",
-        ),
-        "filetypes" => Some(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/src/filetypes.txt",
-        ),
-        _ => None,
-    }
+    ALL_TECHNICAL_DICTS
+        .iter()
+        .find(|e| e.id == id)
+        .map(|e| e.url)
+}
+
+pub fn list_technical_ids() -> Vec<String> {
+    ALL_TECHNICAL_DICTS
+        .iter()
+        .filter(|e| matches!(e.category, Technical))
+        .map(|e| e.id.to_string())
+        .collect()
+}
+
+pub fn list_scientific_ids() -> Vec<String> {
+    ALL_TECHNICAL_DICTS
+        .iter()
+        .filter(|e| matches!(e.category, Scientific))
+        .map(|e| e.id.to_string())
+        .collect()
 }
 
 pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
@@ -46,22 +91,6 @@ pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static 
         )),
         _ => None,
     }
-}
-
-pub fn list_technical_ids() -> Vec<String> {
-    vec![
-        "software-terms".to_string(),
-        "companies".to_string(),
-        "fullstack".to_string(),
-        "filetypes".to_string(),
-    ]
-}
-
-pub fn list_scientific_ids() -> Vec<String> {
-    vec![
-        "medical-terms".to_string(),
-        "scientific-terms-us".to_string(),
-    ]
 }
 
 #[cfg(test)]

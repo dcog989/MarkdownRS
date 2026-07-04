@@ -20,3 +20,31 @@ where
         .await
         .map_err(|e| format!("{} task failed: {}", task_label, e))?
 }
+
+/// Measures the execution time of a block, returning `(result, duration)`.
+/// Collapses the repeated `Instant::now()` / `.elapsed()` pairing used
+/// throughout the command layer for perf logging.
+#[macro_export]
+macro_rules! timed {
+    ($body:block) => {{
+        let __start = ::std::time::Instant::now();
+        let __result = $body;
+        (__result, __start.elapsed())
+    }};
+}
+
+/// Times a block and logs the duration in one step.
+/// Extra `key = value` pairs are appended to the log line.
+#[macro_export]
+macro_rules! timed_info {
+    ($section:literal, $name:literal, $body:block $(, $key:ident = $val:expr)* $(,)?) => {{
+        let __start = ::std::time::Instant::now();
+        let __result = $body;
+        let __duration = __start.elapsed();
+        log::info!(
+            concat!($section, " ", $name, " | duration={:?}", $(" | ", stringify!($key), "={}",)*),
+            __duration $(, $val)*
+        );
+        __result
+    }};
+}

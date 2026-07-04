@@ -74,19 +74,11 @@ impl Database {
         let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
 
-        self.save_active_tabs(&tx, active_tabs)?;
-        self.save_closed_tabs(&tx, closed_tabs)?;
+        save_tabs(&tx, active_tabs, "tabs")?;
+        save_tabs(&tx, closed_tabs, "closed_tabs")?;
 
         tx.commit()?;
         Ok(())
-    }
-
-    fn save_active_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
-        save_tabs(tx, tabs, "tabs")
-    }
-
-    fn save_closed_tabs(&self, tx: &rusqlite::Transaction, tabs: &[TabState]) -> Result<()> {
-        save_tabs(tx, tabs, "closed_tabs")
     }
 
     pub fn load_session(&self) -> Result<SessionData> {

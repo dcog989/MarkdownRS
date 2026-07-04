@@ -26,41 +26,41 @@ pub async fn read_text_file(
     path: String,
     app_handle: tauri::AppHandle,
 ) -> Result<FileContent, String> {
-    let start = std::time::Instant::now();
+    let (result, duration) = crate::timed!({
+        validate_path(&path)?;
+        let metadata = fs::metadata(&path)
+            .await
+            .map_err(|e| handle_error(Some(&path), "read metadata", e))?;
 
-    validate_path(&path)?;
-    let metadata = fs::metadata(&path)
-        .await
-        .map_err(|e| handle_error(Some(&path), "read metadata", e))?;
+        if metadata.is_dir() {
+            log::warn!("Attempted to read directory as file: {}", path);
+            return Err("Cannot read a directory as a text file".to_string());
+        }
 
-    if metadata.is_dir() {
-        log::warn!("Attempted to read directory as file: {}", path);
-        return Err("Cannot read a directory as a text file".to_string());
-    }
+        let max_file_size = get_max_file_size_bytes(&app_handle).await;
 
-    let max_file_size = get_max_file_size_bytes(&app_handle).await;
+        if metadata.len() > max_file_size {
+            log::warn!(
+                "File too large to read: {} ({} MB)",
+                path,
+                bytes_to_mb(metadata.len())
+            );
+            return Err(format!(
+                "File too large: {} MB (max {} MB)",
+                bytes_to_mb(metadata.len()),
+                bytes_to_mb(max_file_size)
+            ));
+        }
 
-    if metadata.len() > max_file_size {
-        log::warn!(
-            "File too large to read: {} ({} MB)",
-            path,
-            bytes_to_mb(metadata.len())
-        );
-        return Err(format!(
-            "File too large: {} MB (max {} MB)",
-            bytes_to_mb(metadata.len()),
-            bytes_to_mb(max_file_size)
-        ));
-    }
+        let bytes = fs::read(&path)
+            .await
+            .map_err(|e| handle_error(Some(&path), "read file", e))?;
 
-    let bytes = fs::read(&path)
-        .await
-        .map_err(|e| handle_error(Some(&path), "read file", e))?;
+        let (content, encoding) = decode_text(bytes);
+        Ok::<_, String>(FileContent { content, encoding })
+    });
+    let result = result?;
 
-    let (content, encoding) = decode_text(bytes);
-    let result = FileContent { content, encoding };
-
-    let duration = start.elapsed();
     log::info!(
         "[Storage] read_text_file | duration={:?} | size={} bytes | path={}",
         duration,
@@ -73,25 +73,22 @@ pub async fn read_text_file(
 
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<bool, String> {
-    let start = std::time::Instant::now();
     let content_size = content.len();
 
-    validate_path(&path)?;
-    let path_buf = PathBuf::from(&path);
-
-    crate::utils::atomic_write(&path_buf, content.as_bytes())
-        .await
-        .map_err(|e| handle_error(Some(&path), "save file", e))?;
-
-    let duration = start.elapsed();
-    log::info!(
-        "[Storage] write_text_file | duration={:?} | size={} bytes | path={}",
-        duration,
-        content_size,
-        path
-    );
-
-    Ok(true)
+    crate::timed_info!(
+        "[Storage]",
+        "write_text_file",
+        {
+            validate_path(&path)?;
+            let path_buf = PathBuf::from(&path);
+            crate::utils::atomic_write(&path_buf, content.as_bytes())
+                .await
+                .map_err(|e| handle_error(Some(&path), "save file", e))?;
+            Ok::<_, String>(true)
+        },
+        size = content_size,
+        path = path,
+    )
 }
 
 #[tauri::command]
