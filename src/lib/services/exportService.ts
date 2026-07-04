@@ -7,6 +7,7 @@ import { CONFIG } from '$lib/utils/config';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { renderMarkdown } from '$lib/utils/markdownRust';
+import { buildExportHtml } from './exportTemplates';
 
 export class ExportService {
   private getActiveTab() {
@@ -83,74 +84,15 @@ export class ExportService {
       if (!path) return;
 
       const result = await renderMarkdown(tab.content, appContext.settings.markdownFlavor === 'gfm', tab.path);
-      const bodyContent = result.html;
 
-      // Extract the native preview styles we added to app.css for the export container
-      // This ensures the exported HTML looks exactly like the preview
       const baseVars = this.getComputedCssVariables();
-
-      const html = `<!DOCTYPE html>
-<html lang="en" data-theme="${appContext.settings.theme}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${tab.title}</title>
-    <style>
-        ${baseVars}
-        body {
-            margin: 0;
-            padding: 2rem;
-            background-color: var(--surface-1);
-            color: var(--preview-fg-body);
-            font-family: ${appContext.settings.previewFontFamily};
-            line-height: 1.6;
-        }
-        .prose { max-width: 800px; margin: 0 auto; }
-
-        h1, h2, h3, h4, h5, h6 { color: var(--preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
-        h1 { font-size: 2em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
-        h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
-
-        a { color: var(--preview-fg-link); text-decoration: underline; }
-
-        code {
-            color: var(--preview-fg-code);
-            background-color: var(--preview-bg-code);
-            padding: 0.2em 0.4em;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-
-        pre {
-            background-color: var(--preview-bg-pre);
-            color: var(--preview-fg-pre);
-            padding: 1em;
-            border-radius: 4px;
-            overflow: auto;
-            margin: 1em 0;
-        }
-
-        pre code { background: transparent; padding: 0; color: inherit; }
-
-        blockquote {
-            color: var(--preview-fg-quote);
-            background-color: var(--preview-bg-quote);
-            border-left: 4px solid var(--preview-border-quote);
-            padding: 0.5em 1em;
-            margin: 1em 0;
-            font-style: italic;
-        }
-
-        table { width: 100%; border-collapse: collapse; margin: 1em 0; }
-        th, td { border: 1px solid var(--border-primary); padding: 0.5em; text-align: left; }
-        img { max-width: 100%; height: auto; }
-        hr { border: 0; border-top: 1px solid var(--border-primary); margin: 2em 0; }
-    </style>
-</head>
-<body>
-    <div class="prose">${bodyContent}</div>
-</body>
-</html>`;
+      const html = buildExportHtml(
+        tab.title,
+        result.html,
+        appContext.settings.theme,
+        appContext.settings.previewFontFamily,
+        baseVars,
+      );
 
       await callBackend(
         'write_text_file',

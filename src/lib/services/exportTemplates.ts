@@ -1,0 +1,70 @@
+export function buildExportHtml(
+  title: string,
+  bodyContent: string,
+  theme: string,
+  fontFamily: string,
+  baseVars: string,
+): string {
+  return `<!DOCTYPE html>
+<html lang="en" data-theme="${theme}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        ${baseVars}
+        body {
+            margin: 0;
+            padding: 2rem;
+            background-color: var(--surface-1);
+            color: var(--preview-fg-body);
+            font-family: ${fontFamily};
+            line-height: 1.6;
+        }
+        .prose { max-width: 800px; margin: 0 auto; }
+
+        h1, h2, h3, h4, h5, h6 { color: var(--preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
+        h1 { font-size: 2em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
+
+        a { color: var(--preview-fg-link); text-decoration: underline; }
+
+        code {
+            color: var(--preview-fg-code);
+            background-color: var(--preview-bg-code);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        pre {
+            background-color: var(--preview-bg-pre);
+            color: var(--preview-fg-pre);
+            padding: 1em;
+            border-radius: 4px;
+            overflow: auto;
+            margin: 1em 0;
+        }
+
+        pre code { background: transparent; padding: 0; color: inherit; }
+
+        blockquote {
+            color: var(--preview-fg-quote);
+            background-color: var(--preview-bg-quote);
+            border-left: 4px solid var(--preview-border-quote);
+            padding: 0.5em 1em;
+            margin: 1em 0;
+            font-style: italic;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+        th, td { border: 1px solid var(--border-primary); padding: 0.5em; text-align: left; }
+        img { max-width: 100%; height: auto; }
+        hr { border: 0; border-top: 1px solid var(--border-primary); margin: 2em 0; }
+    </style>
+</head>
+<body>
+    <div class="prose">${bodyContent}</div>
+</body>
+</html>`;
+}
