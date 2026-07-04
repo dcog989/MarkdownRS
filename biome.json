@@ -13,6 +13,7 @@
       "!.svelte-kit/",
       "!node_modules/",
       "!src-tauri/",
+      "src-tauri/tauri.conf.json",
       "src-tauri/templates/"
     ]
   },
