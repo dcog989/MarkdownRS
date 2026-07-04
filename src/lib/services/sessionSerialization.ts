@@ -1,6 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
+import type { EditorTab, TabTransientState } from '$lib/stores/editorStore.svelte';
 import {
   addTab,
   editorStore,
@@ -45,6 +45,33 @@ type RustTabState = {
 
 let saveInProgress = false;
 
+function toRustTabState(
+  tab: EditorTab,
+  ts: TabTransientState | undefined,
+  index: number,
+  needsContent: boolean,
+  mruPosition: number | null,
+  originalIndex: number | null = null,
+): RustTabState {
+  return {
+    id: tab.id,
+    path: tab.path,
+    title: tab.title,
+    content: needsContent ? tab.content : null,
+    is_dirty: tab.isDirty,
+    scroll_percentage: ts?.scrollPercentage ?? 0,
+    created: tab.created || null,
+    modified: tab.modified || null,
+    is_pinned: tab.isPinned || false,
+    custom_title: tab.customTitle || null,
+    file_check_failed: tab.fileCheckFailed || false,
+    file_check_performed: ts?.fileCheckPerformed ?? false,
+    mru_position: mruPosition,
+    sort_index: index,
+    original_index: originalIndex,
+  };
+}
+
 export async function persistSession(): Promise<void> {
   if (!editorStore.sessionDirty || saveInProgress) {
     return;
@@ -63,47 +90,13 @@ export async function persistSession(): Promise<void> {
     const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
       const ts = getTransientState(t.id);
       const needsContent = ts ? ts.contentChanged || !ts.isPersisted : true;
-
-      return {
-        id: t.id,
-        path: t.path,
-        title: t.title,
-        content: needsContent ? t.content : null,
-        is_dirty: t.isDirty,
-        scroll_percentage: ts?.scrollPercentage ?? 0,
-        created: t.created || null,
-        modified: t.modified || null,
-        is_pinned: t.isPinned || false,
-        custom_title: t.customTitle || null,
-        file_check_failed: t.fileCheckFailed || false,
-        file_check_performed: ts?.fileCheckPerformed ?? false,
-        mru_position: mruPositionMap.get(t.id) ?? null,
-        sort_index: index,
-        original_index: null,
-      };
+      return toRustTabState(t, ts, index, needsContent, mruPositionMap.get(t.id) ?? null);
     });
 
     const closedTabs: RustTabState[] = editorStore.closedTabsHistory.map((entry, index) => {
       const ts = getTransientState(entry.tab.id);
-      const needsContent = entry.tab.contentLoaded && (ts ? ts.contentChanged || !ts.isPersisted : true);
-
-      return {
-        id: entry.tab.id,
-        path: entry.tab.path,
-        title: entry.tab.title,
-        content: needsContent ? entry.tab.content : null,
-        is_dirty: entry.tab.isDirty,
-        scroll_percentage: ts?.scrollPercentage ?? 0,
-        created: entry.tab.created || null,
-        modified: entry.tab.modified || null,
-        is_pinned: entry.tab.isPinned || false,
-        custom_title: entry.tab.customTitle || null,
-        file_check_failed: entry.tab.fileCheckFailed || false,
-        file_check_performed: ts?.fileCheckPerformed ?? false,
-        mru_position: null,
-        sort_index: index,
-        original_index: entry.index,
-      };
+      const needsContent = (entry.tab.contentLoaded ?? false) && (ts ? ts.contentChanged || !ts.isPersisted : true);
+      return toRustTabState(entry.tab, ts, index, needsContent, null, entry.index);
     });
 
     await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
