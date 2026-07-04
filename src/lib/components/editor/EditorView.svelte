@@ -71,6 +71,21 @@ let view = $state<AppEditorView>();
 
 let scrollManager = new ScrollManager();
 let tabSync = new TabSyncManager(scrollManager);
+let gutterObserver: ResizeObserver | null = null;
+
+function setupGutterObserver() {
+    gutterObserver?.disconnect();
+    const container = editorContainer;
+    if (!container) return;
+    const gutterEl = container.querySelector('.cm-gutters');
+    if (gutterEl) {
+        gutterObserver = new ResizeObserver(() => {
+            onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
+        });
+        gutterObserver.observe(gutterEl);
+        onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
+    }
+}
 
 let comps: Compartments = {
     wrapComp: new Compartment(), autoComp: new Compartment(),
@@ -93,6 +108,10 @@ $effect(() => {
     untrack(() => {
         if (!view) return;
         tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
+        view.requestMeasure({
+            read: () => {},
+            write: () => setupGutterObserver(),
+        });
     });
 });
 
@@ -211,15 +230,7 @@ onMount(() => {
     const cleanupScroll = setupScrollSync(viewInstance, tabId, () => tabSync.isRestoring, onScrollChange);
     const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
 
-    const gutterEl = editorContainer.querySelector('.cm-gutters');
-    let gutterObserver: ResizeObserver | null = null;
-    if (gutterEl) {
-      gutterObserver = new ResizeObserver(() => {
-        onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
-      });
-      gutterObserver.observe(gutterEl);
-      onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
-    }
+    setupGutterObserver();
 
     if (searchState.findText) updateSearchEditor(viewInstance);
 
