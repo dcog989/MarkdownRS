@@ -49,17 +49,18 @@ if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
 
 // 3. Update package.json
 try {
-  packageJson.version = newVersion;
-  fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  let content = fs.readFileSync(packageJsonPath, 'utf8');
+  content = content.replace(/"version": "\d+\.\d+\.\d+"/, `"version": "${newVersion}"`);
+  fs.writeFileSync(packageJsonPath, content);
 } catch (_error) {
   process.exit(1);
 }
 
 // 4. Update tauri.conf.json
 try {
-  const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
-  content.version = newVersion;
-  fs.writeFileSync(tauriConfPath, `${JSON.stringify(content, null, 2)}\n`);
+  let content = fs.readFileSync(tauriConfPath, 'utf8');
+  content = content.replace(/"version": "\d+\.\d+\.\d+"/, `"version": "${newVersion}"`);
+  fs.writeFileSync(tauriConfPath, content);
 } catch (_error) {
   process.exit(1);
 }
