@@ -3,22 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-function formatJson(val, depth = 0) {
-  const pad = (n) => '  '.repeat(n);
-  if (val === null) return 'null';
-  if (typeof val === 'string') return JSON.stringify(val);
-  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-  if (Array.isArray(val)) {
-    if (val.length === 0) return '[]';
-    const items = val.map((v) => `${pad(depth + 1)}${formatJson(v, depth + 1)}`);
-    return `[\n${items.join(',\n')}\n${pad(depth)}]`;
-  }
-  const keys = Object.keys(val);
-  if (keys.length === 0) return '{}';
-  const items = keys.map((k) => `${pad(depth + 1)}${JSON.stringify(k)}: ${formatJson(val[k], depth + 1)}`);
-  return `{\n${items.join(',\n')}\n${pad(depth)}}`;
-}
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const packageJsonPath = path.join(rootDir, 'package.json');
@@ -66,7 +50,7 @@ if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
 // 3. Update package.json
 try {
   packageJson.version = newVersion;
-  fs.writeFileSync(packageJsonPath, `${formatJson(packageJson)}\n`);
+  fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 } catch (_error) {
   process.exit(1);
 }
@@ -75,7 +59,7 @@ try {
 try {
   const content = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
   content.version = newVersion;
-  fs.writeFileSync(tauriConfPath, `${formatJson(content)}\n`);
+  fs.writeFileSync(tauriConfPath, `${JSON.stringify(content, null, 2)}\n`);
 } catch (_error) {
   process.exit(1);
 }
