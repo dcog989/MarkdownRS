@@ -22,8 +22,6 @@ import { createMruCycling } from '$lib/utils/mruCycling.svelte';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
 let scrollContainer = $state<HTMLElement>();
-let dropdownContainer = $state<HTMLElement>();
-let dropdownWidth = $state(0);
 let showDropdown = $state(false);
 let showMenu = $state(false);
 
@@ -150,26 +148,17 @@ $effect(() => {
     if (appContext.app.activeTabId) scrollToActive();
 });
 
-$effect(() => {
-    const el = dropdownContainer;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-        dropdownWidth = el.offsetWidth;
-    });
-    ro.observe(el);
-    dropdownWidth = el.offsetWidth;
-    return () => ro.disconnect();
-});
 
-let tabOffset = $derived(Math.max(0, editorMetrics.gutterWidth - dropdownWidth));
 </script>
 
     <div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch">
-    <div bind:this={dropdownContainer} class="relative h-8">
+    <div
+        class="relative h-8 shrink-0 border-b border-border-primary flex items-center justify-center"
+        style:width={`${editorMetrics.gutterWidth}px`}>
         <button
             type="button"
             use:tooltip={'Switch Tab'}
-            class="text-fg-muted hover-surface flex h-full items-center gap-1 px-2 text-xs"
+            class="text-fg-muted hover-surface flex h-full items-center gap-1 text-xs"
             onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
             <ChevronDown size={12} />
@@ -183,7 +172,7 @@ let tabOffset = $derived(Math.max(0, editorMetrics.gutterWidth - dropdownWidth))
             }}
             onClose={() => (showDropdown = false)} />
     </div>
-    <div class="relative h-full min-w-0 flex-1" style:padding-left={`${tabOffset}px`}>
+    <div class="relative h-full min-w-0 flex-1">
 
     {#if showLeftFade}
             <div
