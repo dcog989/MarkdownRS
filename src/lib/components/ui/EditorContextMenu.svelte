@@ -225,6 +225,41 @@ async function handleSendToBrowser() {
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
     {#snippet children({ submenuSide: _submenuSide })}
+        {#snippet opSubmenu(IconCmp: any, label: string, key: 'sort' | 'case' | 'format' | 'transform', ops: MenuOption[])}
+            <Submenu
+                show={activeSubmenu === key}
+                side={_submenuSide}
+                onOpen={() => (activeSubmenu = key)}
+                onClose={() => {
+                    if (activeSubmenu === key) activeSubmenu = null;
+                }}>
+                {#snippet trigger()}
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
+                        <IconCmp size={14} /><span>{label}</span
+                        ><span class="ml-auto opacity-50">›</span>
+                    </button>
+                {/snippet}
+                {#each ops as op, i (i)}
+                    {#if op.divider}
+                        <div class="bg-border-main my-1 h-px"></div>
+                    {:else}
+                        {@const id = op.id}
+                        <button
+                            type="button"
+                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                            onclick={() => handleOp(id)}>
+                            <span class="flex-1">{op.label}</span>
+                            {#if id && opShortcut(id)}
+                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
+                            {/if}
+                        </button>
+                    {/if}
+                {/each}
+            </Submenu>
+        {/snippet}
+
         {#if suggestions.length > 0 || isLoadingSuggestions}
             <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
                 Suggestions
@@ -319,138 +354,10 @@ async function handleSendToBrowser() {
 
         {#if selectedText}
             <div class="bg-border-main my-1 h-px"></div>
-
-            <Submenu
-                show={activeSubmenu === 'sort'}
-                side={_submenuSide}
-                onOpen={() => (activeSubmenu = 'sort')}
-                onClose={() => {
-                    if (activeSubmenu === 'sort') activeSubmenu = null;
-                }}>
-                {#snippet trigger()}
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <ArrowUpDown size={14} /><span>Sort Lines</span
-                        ><span class="ml-auto opacity-50">›</span>
-                    </button>
-                {/snippet}
-                {#each sortOps as op, i (i)}
-                    {#if op.divider}
-                        <div class="bg-border-main my-1 h-px"></div>
-                    {:else}
-                        {@const id = op.id}
-                        <button
-                            type="button"
-                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                            onclick={() => handleOp(id)}>
-                            <span class="flex-1">{op.label}</span>
-                            {#if id && opShortcut(id)}
-                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
-                            {/if}
-                        </button>
-                    {/if}
-                {/each}
-            </Submenu>
-
-            <Submenu
-                show={activeSubmenu === 'case'}
-                side={_submenuSide}
-                onOpen={() => (activeSubmenu = 'case')}
-                onClose={() => {
-                    if (activeSubmenu === 'case') activeSubmenu = null;
-                }}>
-                {#snippet trigger()}
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <CaseSensitive size={14} /><span>Change Case</span
-                        ><span class="ml-auto opacity-50">›</span>
-                    </button>
-                {/snippet}
-                {#each caseOps as op, i (i)}
-                    {#if op.divider}
-                        <div class="bg-border-main my-1 h-px"></div>
-                    {:else}
-                        {@const id = op.id}
-                        <button
-                            type="button"
-                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                            onclick={() => handleOp(id)}>
-                            <span class="flex-1">{op.label}</span>
-                            {#if id && opShortcut(id)}
-                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
-                            {/if}
-                        </button>
-                    {/if}
-                {/each}
-            </Submenu>
-
-            <Submenu
-                show={activeSubmenu === 'format'}
-                side={_submenuSide}
-                onOpen={() => (activeSubmenu = 'format')}
-                onClose={() => {
-                    if (activeSubmenu === 'format') activeSubmenu = null;
-                }}>
-                {#snippet trigger()}
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <TextAlignStart size={14} /><span>Format Lines</span
-                        ><span class="ml-auto opacity-50">›</span>
-                    </button>
-                {/snippet}
-                {#each formatOps as op, i (i)}
-                    {#if op.divider}
-                        <div class="bg-border-main my-1 h-px"></div>
-                    {:else}
-                        {@const id = op.id}
-                        <button
-                            type="button"
-                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                            onclick={() => handleOp(id)}>
-                            <span class="flex-1">{op.label}</span>
-                            {#if id && opShortcut(id)}
-                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
-                            {/if}
-                        </button>
-                    {/if}
-                {/each}
-            </Submenu>
-
-            <Submenu
-                show={activeSubmenu === 'transform'}
-                side={_submenuSide}
-                onOpen={() => (activeSubmenu = 'transform')}
-                onClose={() => {
-                    if (activeSubmenu === 'transform') activeSubmenu = null;
-                }}>
-                {#snippet trigger()}
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                        <Rotate3d size={14} /><span>Transform Lines</span
-                        ><span class="ml-auto opacity-50">›</span>
-                    </button>
-                {/snippet}
-                {#each transformOps as op, i (i)}
-                    {#if op.divider}
-                        <div class="bg-border-main my-1 h-px"></div>
-                    {:else}
-                        {@const id = op.id}
-                        <button
-                            type="button"
-                            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                            onclick={() => handleOp(id)}>
-                            <span class="flex-1">{op.label}</span>
-                            {#if id && opShortcut(id)}
-                                <span class="text-xs opacity-40">{opShortcut(id)}</span>
-                            {/if}
-                        </button>
-                    {/if}
-                {/each}
-            </Submenu>
+            {@render opSubmenu(ArrowUpDown, "Sort Lines", 'sort', sortOps)}
+            {@render opSubmenu(CaseSensitive, "Change Case", 'case', caseOps)}
+            {@render opSubmenu(TextAlignStart, "Format Lines", 'format', formatOps)}
+            {@render opSubmenu(Rotate3d, "Transform Lines", 'transform', transformOps)}
         {/if}
 
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
