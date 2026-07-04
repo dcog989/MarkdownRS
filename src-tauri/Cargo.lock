@@ -4777,9 +4777,9 @@ dependencies = [
 
 [[package]]
 name = "rumdl"
-version = "0.2.27"
+version = "0.2.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19210b12598c55f46c584e24d44b813569c6dee6392f26afef2b8d6534ae371a"
+checksum = "840b1db1bde9eb56d375ec6a5b83fc8f7995f63bc9b66965282ffacf12895f6a"
 dependencies = [
  "anyhow",
  "blake3",
