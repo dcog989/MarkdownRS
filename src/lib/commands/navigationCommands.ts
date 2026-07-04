@@ -2,6 +2,17 @@ import { pushToMru } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { Command } from './types';
 
+function cycleTab(direction: 1 | -1): void {
+  const tabs = appContext.editor.tabs;
+  if (!appContext.app.activeTabId) return;
+  const currentIndex = tabs.findIndex((t) => t.id === appContext.app.activeTabId);
+  if (currentIndex < 0) return;
+  const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+  const id = tabs[nextIndex].id;
+  appContext.app.activeTabId = id;
+  pushToMru(id);
+}
+
 function tabSwitch(index: number): Command {
   return {
     id: `nav.tab${index + 1}`,
@@ -24,17 +35,7 @@ export const navigationCommands: Command[] = [
     showInPalette: false,
     defaultKey: 'ctrl+pagedown',
     global: true,
-    handler: () => {
-      const tabs = appContext.editor.tabs;
-      if (!appContext.app.activeTabId) return;
-      const currentIndex = tabs.findIndex((t) => t.id === appContext.app.activeTabId);
-      if (currentIndex >= 0) {
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        const id = tabs[nextIndex].id;
-        appContext.app.activeTabId = id;
-        pushToMru(id);
-      }
-    },
+    handler: () => cycleTab(1),
   },
   {
     id: 'nav.prevTab',
@@ -43,17 +44,7 @@ export const navigationCommands: Command[] = [
     showInPalette: false,
     defaultKey: 'ctrl+pageup',
     global: true,
-    handler: () => {
-      const tabs = appContext.editor.tabs;
-      if (!appContext.app.activeTabId) return;
-      const currentIndex = tabs.findIndex((t) => t.id === appContext.app.activeTabId);
-      if (currentIndex >= 0) {
-        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-        const id = tabs[prevIndex].id;
-        appContext.app.activeTabId = id;
-        pushToMru(id);
-      }
-    },
+    handler: () => cycleTab(-1),
   },
   ...Array.from({ length: 5 }, (_, i) => tabSwitch(i)),
   {
