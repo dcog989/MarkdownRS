@@ -8,8 +8,11 @@
       "!.context/",
       "!.svelte-kit/",
       "!node_modules/",
-      "!src-tauri/",
-      "src-tauri/templates/"
+      "!src-tauri/src/",
+      "!src-tauri/tests/",
+      "!src-tauri/target/",
+      "!src-tauri/gen/",
+      "!src-tauri/icons/"
     ]
   },
   "formatter": {
