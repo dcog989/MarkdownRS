@@ -1,6 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
       "**",
@@ -8,11 +12,8 @@
       "!.context/",
       "!.svelte-kit/",
       "!node_modules/",
-      "!src-tauri/src/",
-      "!src-tauri/tests/",
-      "!src-tauri/target/",
-      "!src-tauri/gen/",
-      "!src-tauri/icons/"
+      "!src-tauri/",
+      "src-tauri/templates/"
     ]
   },
   "formatter": {
