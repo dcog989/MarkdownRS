@@ -44,6 +44,14 @@ let browseError = $state('');
 let sortBy = $state<SortOption>('most-recent');
 let sortDirection = $state<SortDirection>('desc');
 
+function sortByField<T>(items: T[], getField: (item: T) => string, direction: SortDirection): void {
+    items.sort((a, b) => {
+        const aVal = getField(a);
+        const bVal = getField(b);
+        return direction === 'desc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+    });
+}
+
 $effect(() => {
     if (isOpen && !appContext.bookmarks.isLoaded) {
         loadBookmarks();
@@ -90,31 +98,13 @@ let sortedBookmarks = $derived(
         const sorted = [...filteredBookmarks].filter((b) => !deletingIds.has(b.id));
         switch (sortBy) {
             case 'most-recent':
-                sorted.sort((a, b) => {
-                    const dateA = a.created || '';
-                    const dateB = b.created || '';
-                    return sortDirection === 'desc'
-                        ? dateB.localeCompare(dateA)
-                        : dateA.localeCompare(dateB);
-                });
+                sortByField(sorted, (b) => b.created || '', sortDirection);
                 break;
             case 'alphabetical':
-                sorted.sort((a, b) => {
-                    const titleA = a.title.toLowerCase();
-                    const titleB = b.title.toLowerCase();
-                    return sortDirection === 'desc'
-                        ? titleB.localeCompare(titleA)
-                        : titleA.localeCompare(titleB);
-                });
+                sortByField(sorted, (b) => b.title.toLowerCase(), sortDirection);
                 break;
             case 'last-updated':
-                sorted.sort((a, b) => {
-                    const dateA = a.last_accessed || a.created || '';
-                    const dateB = b.last_accessed || b.created || '';
-                    return sortDirection === 'desc'
-                        ? dateB.localeCompare(dateA)
-                        : dateA.localeCompare(dateB);
-                });
+                sortByField(sorted, (b) => b.last_accessed || b.created || '', sortDirection);
                 break;
         }
         return sorted;
