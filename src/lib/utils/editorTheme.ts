@@ -16,7 +16,10 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     '.cm-scroller::-webkit-scrollbar-track': { background: 'transparent' },
     '.cm-scroller::-webkit-scrollbar-thumb': { background: 'var(--text-secondary)', borderRadius: '4px' },
     '.cm-scroller::-webkit-scrollbar-thumb:hover': { background: 'var(--text-primary)' },
-    '.cm-gutters': { border: 'none', backgroundColor: 'transparent' },
+    // position:relative overrides CM6's inline position:sticky on .cm-gutters.
+    // Sticky creates a compositor layer that freezes during heavy main-thread frames.
+    // Relative keeps the gutter in the normal flow so it repaints every frame.
+    '.cm-gutters': { border: 'none', backgroundColor: 'transparent', position: 'relative !important' },
     '.cm-gutterElement': { alignItems: 'flex-start !important' },
     '& .cm-selectionLayer .cm-selectionBackground': {
       background: 'var(--selection-bg) !important',
