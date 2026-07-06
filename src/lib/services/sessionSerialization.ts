@@ -138,7 +138,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 
   const { lineCount, widestColumn } = computeLineStats(content);
 
-  const wordCount = computeWordCount(content, sizeBytes);
+  const wordCount = computeWordCount(content);
 
   let title = t.title;
   if (!t.custom_title && settingsState.tabNameFromContent) {
@@ -173,16 +173,12 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
   if (t.path) updateSavedHash(editorTab);
 
   setLineChangeTracker(t.id, new LineChangeTracker());
-  initTransientState(
-    t.id,
-    {
-      scrollPercentage: t.scroll_percentage,
-      contentChanged: contentLoaded ? t.is_dirty || (!t.path && content.length > 0) : t.is_dirty,
-      isPersisted: true,
-      fileCheckPerformed: t.file_check_performed || false,
-    },
-    sizeBytes,
-  );
+  initTransientState(t.id, {
+    scrollPercentage: t.scroll_percentage,
+    contentChanged: contentLoaded ? t.is_dirty || (!t.path && content.length > 0) : t.is_dirty,
+    isPersisted: true,
+    fileCheckPerformed: t.file_check_performed || false,
+  });
 
   return editorTab;
 }

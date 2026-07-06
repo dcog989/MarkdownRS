@@ -124,7 +124,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     }
 
     const sizeBytes = byteLength(normalizedContent);
-    const wordCount = computeWordCount(normalizedContent, sizeBytes);
+    const wordCount = computeWordCount(normalizedContent);
     const { lineCount, widestColumn } = computeLineStats(normalizedContent);
 
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);

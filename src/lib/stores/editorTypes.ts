@@ -31,7 +31,6 @@ export type TabTransientState = {
   topLine: number;
   contentChanged: boolean;
   isPersisted: boolean;
-  wordCountStrategy: 'accurate' | 'fast';
   fileCheckPerformed: boolean;
   forceFullFeatures: boolean;
 };

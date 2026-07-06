@@ -47,7 +47,7 @@ export function addTab(title: string = '', content: string = '') {
     const stats = computeLineStats(normalizedContent);
     lineCount = stats.lineCount;
     widestColumn = stats.widestColumn;
-    wordCount = computeWordCount(normalizedContent, sizeBytes);
+    wordCount = computeWordCount(normalizedContent);
   }
 
   const newTab: EditorTab = {
@@ -73,7 +73,7 @@ export function addTab(title: string = '', content: string = '') {
   };
 
   updateSavedHash(newTab);
-  initTabCaches(id, sizeBytes);
+  initTabCaches(id);
   initializeTabLoadState(id, true);
 
   if (settingsState.newTabPosition === 'beginning') {
@@ -125,10 +125,10 @@ export function reopenClosedTab(historyIndex: number): string | null {
   const entry = editorStore.closedTabsHistory[historyIndex];
   editorStore.closedTabsHistory.splice(historyIndex, 1);
 
-  const restoredTs = getTransientState(entry.tab.id) ?? defaultTransientState(entry.tab.sizeBytes);
+  const restoredTs = getTransientState(entry.tab.id) ?? defaultTransientState();
   restoredTs.contentChanged = true;
   restoredTs.isPersisted = false;
-  initTransientState(entry.tab.id, restoredTs, entry.tab.sizeBytes);
+  initTransientState(entry.tab.id, restoredTs);
   if (entry.tab.contentLoaded === false) {
     entry.tab.contentLoaded = false;
   }

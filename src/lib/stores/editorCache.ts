@@ -1,6 +1,6 @@
 import { CONFIG } from '$lib/utils/config';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { countWords, fastCountWords } from '$lib/utils/textMetrics';
+import { countWords } from '$lib/utils/textMetrics';
 import { editorStore } from './editorStoreCore.svelte';
 import type { TabTransientState } from './editorTypes';
 
@@ -13,22 +13,17 @@ const transientStateCache = new Map<string, TabTransientState>();
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const wordCountDebounceMap = new Map<string, number>();
 
-export function pickWordCountStrategy(sizeBytes: number): 'accurate' | 'fast' {
-  return sizeBytes < CONFIG.PERFORMANCE.LARGE_FILE_SIZE_BYTES ? 'accurate' : 'fast';
+export function computeWordCount(content: string): number {
+  return countWords(content);
 }
 
-export function computeWordCount(content: string, sizeBytes: number): number {
-  return pickWordCountStrategy(sizeBytes) === 'accurate' ? countWords(content) : fastCountWords(content);
-}
-
-export function defaultTransientState(sizeBytes: number): TabTransientState {
+export function defaultTransientState(): TabTransientState {
   return {
     scrollPercentage: 0,
     scrollTop: 0,
     topLine: 1,
     contentChanged: false,
     isPersisted: false,
-    wordCountStrategy: pickWordCountStrategy(sizeBytes),
     fileCheckPerformed: false,
     forceFullFeatures: false,
   };
@@ -47,8 +42,8 @@ export function setLineChangeTracker(id: string, tracker: LineChangeTracker): vo
   lineChangeTrackerCache.set(id, tracker);
 }
 
-export function initTransientState(id: string, overrides?: Partial<TabTransientState>, sizeBytes: number = 0): void {
-  transientStateCache.set(id, { ...defaultTransientState(sizeBytes), ...overrides });
+export function initTransientState(id: string, overrides?: Partial<TabTransientState>): void {
+  transientStateCache.set(id, { ...defaultTransientState(), ...overrides });
 }
 
 export function getTransientState(id: string): TabTransientState | undefined {
@@ -74,15 +69,15 @@ export function clearTabCaches(id: string) {
   lineChangeTrackerCache.delete(id);
 }
 
-export function initTabCaches(id: string, sizeBytes: number) {
+export function initTabCaches(id: string) {
   lineChangeTrackerCache.set(id, new LineChangeTracker());
   transientStateCache.set(id, {
-    ...defaultTransientState(sizeBytes),
+    ...defaultTransientState(),
     contentChanged: true,
   });
 }
 
-export function scheduleWordCountUpdate(tabId: string, content: string, sizeBytes: number) {
+export function scheduleWordCountUpdate(tabId: string, content: string) {
   const existing = wordCountDebounceMap.get(tabId);
   if (existing) clearTimeout(existing);
 
@@ -94,11 +89,7 @@ export function scheduleWordCountUpdate(tabId: string, content: string, sizeByte
     }
 
     const tab = editorStore.tabs[index];
-    const ts = transientStateCache.get(tabId);
-    const strategy = ts?.wordCountStrategy ?? pickWordCountStrategy(sizeBytes);
-    if (ts && !ts.wordCountStrategy) ts.wordCountStrategy = strategy;
-
-    const wordCount = computeWordCount(content, sizeBytes);
+    const wordCount = computeWordCount(content);
 
     editorStore.tabs[index] = {
       ...tab,

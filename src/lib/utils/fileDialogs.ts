@@ -98,7 +98,7 @@ export async function openFile(path?: string): Promise<void> {
     const { lineCount, widestColumn } = computeLineStats(result.content);
 
     const sizeBytes = byteLength(result.content);
-    const initialWordCount = computeWordCount(result.content, sizeBytes);
+    const initialWordCount = computeWordCount(result.content);
 
     updateTransientState(id, { fileCheckPerformed: false });
     updateTabFields(id, {

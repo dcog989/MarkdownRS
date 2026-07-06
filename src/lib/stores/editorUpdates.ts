@@ -3,7 +3,7 @@ import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date'
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { computeWordCount, getTransientState, pickWordCountStrategy, scheduleWordCountUpdate } from './editorCache';
+import { computeWordCount, getTransientState, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, updateTab } from './editorStoreCore.svelte';
 import type { EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
@@ -28,7 +28,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
   const now = getCurrentTimestamp();
   const sizeBytes = byteLength(content);
 
-  scheduleWordCountUpdate(id, content, sizeBytes);
+  scheduleWordCountUpdate(id, content);
 
   const ts = getTransientState(id);
   if (ts) ts.contentChanged = true;
@@ -149,11 +149,10 @@ export function reloadTabContent(
 ) {
   const { lineCount, widestColumn } = computeLineStats(content);
 
-  const wordCount = computeWordCount(content, sizeBytes);
+  const wordCount = computeWordCount(content);
 
   const ts = getTransientState(id);
   if (ts) {
-    ts.wordCountStrategy = pickWordCountStrategy(sizeBytes);
     ts.fileCheckPerformed = false;
     ts.contentChanged = true;
   }
