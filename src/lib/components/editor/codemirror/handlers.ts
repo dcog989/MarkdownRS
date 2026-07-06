@@ -31,9 +31,9 @@ export const smartBacktickHandler = EditorView.inputHandler.of((view, from, to, 
     if (before === '``') {
       const line = state.doc.lineAt(from);
       const textBefore = line.text.slice(0, from - line.from - 2);
+      const charAfter = from < state.doc.length ? state.sliceDoc(from, from + 1) : '';
 
-      // Only expand if line contains only whitespace before the backticks
-      if (/^\s*$/.test(textBefore)) {
+      if (/^\s*$/.test(textBefore) && (charAfter === '' || /\s/.test(charAfter))) {
         const indent = textBefore;
         view.dispatch({
           changes: {
