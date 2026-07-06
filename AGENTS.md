@@ -48,9 +48,7 @@ Linux CachyOS / KDE Plasma 6 + Firefox, Zed code editor, fish shell with Ghostty
 
 ### Disallowed
 
-- `.context/`, `.assets/`, `.docs/`, `.git/`, `node_modules/`, `.repomix/`
-- `repomix.config.json`, `.repomixignore`, `bun.lock`
-- `src-tauri/Cargo.lock`, `src-tauri/target/`, `src-tauri/gen/`, `src-tauri/icons/`
+- `.assets/`, `.git/`, `node_modules/`
 
 ## Common Patterns
 
