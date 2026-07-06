@@ -11,6 +11,7 @@ const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
 const blockquoteBorderDeco = Decoration.mark({ class: 'cm-blockquote-border' });
 const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
 const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
+const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
 const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
 
@@ -38,6 +39,8 @@ function buildAllDecorations(view: EditorView): DecorationSet {
           for (let i = fromLine.number; i <= toLine.number; i++) {
             codeBlockLines.add(i);
           }
+        } else if (node.name === 'InlineCode') {
+          ranges.push(inlineCodeDeco.range(node.from, node.to));
         } else if (node.name === 'HorizontalRule') {
           parserHrs.add(node.from);
         }
