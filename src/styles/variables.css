@@ -6,6 +6,7 @@
   --color-brand-file: #e5c07b;
   --color-brand-filepath: #98c379;
   --color-brand-link: #56b6c2;
+  --color-brand-quote: #c679e1;
   --color-brand-url: #61afef;
 
   /* Surface System */
@@ -67,8 +68,8 @@
   --hr-color: #666666;
   --pre-bg: #171b21;
   --pre-fg: #cccccc;
-  --quote-bg: oklch(0.56 0 0 / 0.08);
-  --quote-fg: #888888;
+  --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.08);
+  --quote-fg: oklch(from var(--color-brand-quote) 0.65 c h);
 
   /* Syntax Colors */
   --syntax-atom: #d19a66;
@@ -82,13 +83,12 @@
   --preview-bg-pre: var(--pre-bg);
   --preview-bg-quote: var(--quote-bg);
   --preview-border-primary: var(--border-primary);
-  --preview-border-quote: #999999;
+  --preview-border-quote: var(--quote-fg);
   --preview-fg-body: var(--text-primary);
   --preview-fg-code: var(--code-fg);
   --preview-fg-heading: #e06c75;
   --preview-fg-link: #61afef;
-  --preview-fg-pre: var(--pre-fg);
-  --preview-fg-quote: #999999;
+  --preview-fg-quote: var(--quote-fg);
   --preview-surface-2: var(--surface-2);
 }
 
@@ -146,8 +146,8 @@
   --hr-color: #6c6c6c;
   --pre-bg: #f0f0f0;
   --pre-fg: #1a1a1a;
-  --quote-bg: oklch(0.47 0.14 310 / 0.05);
-  --quote-fg: #7b1fa2;
+  --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.05);
+  --quote-fg: oklch(from var(--color-brand-quote) 0.45 c h);
 
   /* Syntax Colors - Light Theme (darker variants for light bg) */
   --syntax-atom: #e65100;

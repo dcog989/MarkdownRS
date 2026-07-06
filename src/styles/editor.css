@@ -132,8 +132,16 @@
   color: var(--accent-url);
 }
 
+.cm-link {
+  color: var(--accent-link);
+}
+
 .cm-file-path {
   color: var(--accent-filepath);
+}
+
+.cm-formatting-link-string {
+  color: var(--accent-link);
 }
 
 /* Hide link decoration inside code blocks by default */

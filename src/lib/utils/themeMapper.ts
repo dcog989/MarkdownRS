@@ -20,6 +20,8 @@ export const themeHighlightStyle = HighlightStyle.define([
   { tag: t.monospace, class: 'cm-code' },
   { tag: t.strikethrough, class: 'cm-strikethrough' },
   { tag: t.quote, class: 'cm-blockquote' },
+  { tag: t.link, class: 'cm-link' },
+  { tag: t.url, class: 'cm-url' },
 ]);
 
 export const userThemeExtension = syntaxHighlighting(themeHighlightStyle);
