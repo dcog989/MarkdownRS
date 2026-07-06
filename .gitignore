@@ -2,6 +2,7 @@
 **/[Bb]in/*
 **/[Pp]ackages/*
 *.pkg.tar.zst
+.pkg/PKGBUILD
 .DS_Store
 .assets/
 .context/

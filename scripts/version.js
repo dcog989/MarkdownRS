@@ -9,6 +9,7 @@ const packageJsonPath = path.join(rootDir, 'package.json');
 const pkgbuildPath = path.join(rootDir, 'PKGBUILD');
 const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
 const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
+const cargoLockPath = path.join(rootDir, 'src-tauri', 'Cargo.lock');
 
 const args = process.argv.slice(2);
 const shouldGit = args.includes('--git');
@@ -98,7 +99,9 @@ try {
 // 6. Git Integration
 if (shouldGit) {
   try {
-    const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath].map((p) => `"${p}"`).join(' ');
+    const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath, cargoLockPath]
+      .map((p) => `"${p}"`)
+      .join(' ');
     execSync(`git add ${files}`, { stdio: 'inherit' });
 
     const commitMsg = `chore: release v${newVersion}`;
