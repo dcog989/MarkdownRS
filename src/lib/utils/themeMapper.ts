@@ -22,6 +22,7 @@ export const themeHighlightStyle = HighlightStyle.define([
   { tag: t.quote, class: 'cm-blockquote' },
   { tag: t.link, class: 'cm-link' },
   { tag: t.url, class: 'cm-url' },
+  { tag: t.processingInstruction, class: 'cm-formatting-link-string' },
 ]);
 
 export const userThemeExtension = syntaxHighlighting(themeHighlightStyle);

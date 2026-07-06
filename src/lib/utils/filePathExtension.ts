@@ -1,4 +1,3 @@
-import { syntaxTree } from '@codemirror/language';
 import type { Extension, Range } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
@@ -44,7 +43,6 @@ export function extractPathAtPos(text: string, pos: number): string | null {
 
 const filePathMark = Decoration.mark({ class: 'cm-file-path' });
 const urlMark = Decoration.mark({ class: 'cm-url' });
-const formattingLinkMark = Decoration.mark({ class: 'cm-formatting-link-string' });
 
 function findLinks(view: EditorView) {
   const ranges: Range<Decoration>[] = [];
@@ -90,21 +88,6 @@ function findLinks(view: EditorView) {
 
       pos = line.to + 1;
     }
-
-    syntaxTree(view.state).iterate({
-      from,
-      to,
-      enter(node) {
-        if (node.type.name === 'LinkMark') {
-          ranges.push(formattingLinkMark.range(node.from, node.to));
-        } else if (node.type.name === 'URL') {
-          if (node.to > node.from + 1) {
-            ranges.push(formattingLinkMark.range(node.from, node.from + 1));
-            ranges.push(formattingLinkMark.range(node.to - 1, node.to));
-          }
-        }
-      },
-    });
   }
 
   return Decoration.set(ranges, true);

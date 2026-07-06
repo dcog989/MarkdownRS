@@ -140,10 +140,6 @@
   color: var(--accent-filepath);
 }
 
-.cm-formatting-link-string {
-  color: var(--accent-link);
-}
-
 /* Hide link decoration inside code blocks by default */
 .cm-editor .cm-code .cm-link,
 .cm-editor .cm-code .cm-url,
