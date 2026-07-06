@@ -225,7 +225,7 @@ async function handleSendToBrowser() {
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
     {#snippet children({ submenuSide: _submenuSide })}
-        {#snippet opSubmenu(IconCmp: any, label: string, key: 'sort' | 'case' | 'format' | 'transform', ops: MenuOption[])}
+        {#snippet opSubmenu(IconCmp: typeof ArrowUpDown, label: string, key: 'sort' | 'case' | 'format' | 'transform', ops: MenuOption[])}
             <Submenu
                 show={activeSubmenu === key}
                 side={_submenuSide}
