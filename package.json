@@ -61,7 +61,7 @@
     "text-case": "^1.2.11"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.2",
+    "@biomejs/biome": "2.5.3",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.69.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
