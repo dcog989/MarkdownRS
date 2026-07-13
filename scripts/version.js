@@ -10,6 +10,7 @@ const pkgbuildPath = path.join(rootDir, 'PKGBUILD');
 const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
 const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
 const cargoLockPath = path.join(rootDir, 'src-tauri', 'Cargo.lock');
+const dotPkgPkgbuildPath = path.join(rootDir, '.pkg', 'PKGBUILD');
 
 const args = process.argv.slice(2);
 const shouldGit = args.includes('--git');
@@ -81,7 +82,18 @@ try {
   process.exit(1);
 }
 
-// 5. Update PKGBUILD
+// 6. Update Cargo.lock
+try {
+  let content = fs.readFileSync(cargoLockPath, 'utf8');
+  const regex = /(^\[\[package\]\]\nname = "markdown-rs"\nversion = ")\d+\.\d+\.\d+(")/m;
+
+  if (regex.test(content)) {
+    content = content.replace(regex, `$1${newVersion}$2`);
+    fs.writeFileSync(cargoLockPath, content);
+  }
+} catch (_error) {}
+
+// 7. Update PKGBUILD
 try {
   let content = fs.readFileSync(pkgbuildPath, 'utf8');
   const regex = /^(pkgver=).+$/m;
@@ -96,10 +108,21 @@ try {
   process.exit(1);
 }
 
-// 6. Git Integration
+// 8. Update .pkg/PKGBUILD
+try {
+  let content = fs.readFileSync(dotPkgPkgbuildPath, 'utf8');
+  const regex = /^(pkgver=).+$/m;
+
+  if (regex.test(content)) {
+    content = content.replace(regex, `$1${newVersion}`);
+    fs.writeFileSync(dotPkgPkgbuildPath, content);
+  }
+} catch (_error) {}
+
+// 9. Git Integration
 if (shouldGit) {
   try {
-    const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath, cargoLockPath]
+    const files = [packageJsonPath, pkgbuildPath, dotPkgPkgbuildPath, tauriConfPath, cargoTomlPath, cargoLockPath]
       .map((p) => `"${p}"`)
       .join(' ');
     execSync(`git add ${files}`, { stdio: 'inherit' });
