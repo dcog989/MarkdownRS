@@ -36,7 +36,7 @@ Linux CachyOS / KDE Plasma 6 + Firefox, Zed code editor, fish shell with Ghostty
 
 - DRY / YAGNI / KISS / SOLID Principles / Composition Over Inheritance / Separation of Concerns (SoC)
 - Self-documenting code (clear naming, no comments for commentary)
-- No magic numbers; split files >400 lines
+- No magic numbers; split files >500 lines
 - Follow existing patterns (Svelte 5 runes, modern TS/Rust)
 - Do NOT create docs files unless explicitly asked
 
