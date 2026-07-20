@@ -2,7 +2,7 @@ import type { Extension, Range } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 const PATH_REGEX =
-  /(['"`])((?!https?:\/\/|www\.)(?:[a-zA-Z]:[/\\]|(?:\.\.?|~)[/\\]|\/(?:[^/\s'"`\r\n]+[/\\])+[^'"`\r\n]*|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1|(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+|(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?:[^/\s"'\r\n(){}[\]<>]+[/\\])+))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^"'\r\n(){}[\]<>]+)/g;
+  /(['"`])((?!https?:\/\/|www\.)(?:[a-zA-Z]:[/\\]|(?:\.\.?|~)[/\\]|\/(?:[^/\s'"`\r\n]+[/\\])+[^'"`\r\n]*|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1|(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+|(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?:[^/\s"'\r\n(){}[\]<>]+[/\\])+))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^\s"'(){}[\]<>]+)/g;
 
 function stripTrailingPunctuation(str: string): string {
   return str.replace(/[.,;:?!]+$/, '');
