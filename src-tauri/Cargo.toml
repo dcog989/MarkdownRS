@@ -35,7 +35,7 @@ tauri = { version = "2.11", features = ["protocol-asset", "devtools"] }
 tauri-plugin-clipboard-manager = "2.3"
 tauri-plugin-dialog = "2.7"
 tauri-plugin-fs = { version = "2.5", features = ["watch"] }
-tauri-plugin-log = "2.8"
+tauri-plugin-log = "2.9"
 tauri-plugin-opener = "2.5"
 tauri-plugin-shell = "2.3"
 tauri-plugin-single-instance = "2.4"
