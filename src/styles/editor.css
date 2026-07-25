@@ -98,12 +98,17 @@
   font-weight: bold;
 }
 .cm-h1 {
-  font-size: 1.3em;
+  font-size: 1.7em;
 }
 .cm-h2 {
-  font-size: 1.2em;
+  font-size: 1.5em;
 }
 .cm-h3 {
+  font-size: 1.3em;
+}
+.cm-h4,
+.cm-h5,
+.cm-h6 {
   font-size: 1.1em;
 }
 

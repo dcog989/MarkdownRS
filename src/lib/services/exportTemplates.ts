@@ -24,8 +24,10 @@ export function buildExportHtml(
         .prose { max-width: 800px; margin: 0 auto; }
 
         h1, h2, h3, h4, h5, h6 { color: var(--preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
-        h1 { font-size: 2em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
+        h1 { font-size: 1.7em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
         h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
+        h3 { font-size: 1.3em; }
+        h4, h5, h6 { font-size: 1.1em; }
 
         a { color: var(--preview-fg-link); text-decoration: underline; }
 
