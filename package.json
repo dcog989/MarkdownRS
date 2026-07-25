@@ -61,7 +61,7 @@
     "text-case": "^1.2.11"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.4",
+    "@biomejs/biome": "2.5.5",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.70.1",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
@@ -71,7 +71,7 @@
     "autoprefixer": "^10.5.4",
     "jsdom": "^29.1.1",
     "lefthook": "^2.1.10",
-    "svelte": "^5.56.6",
+    "svelte": "^5.56.8",
     "svelte-check": "^4.7.3",
     "typescript": "6.0.3",
     "vite": "^8.1.5",
