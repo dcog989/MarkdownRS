@@ -1,76 +1,56 @@
-# MarkdownRS
+# Agent Directives
 
-Tauri + Svelte 5 + Rust desktop Markdown editor focused on performance and clean UI.
+## Project Context
 
-## Dev Environment
+- Name: <project-name>
+- Description: <brief core goals and functionality>
+- Tech: <languages, frameworks, databases, core tools>
 
-Linux CachyOS / KDE Plasma 6 + Firefox, Zed code editor, fish shell with Ghostty + Fresh editor. yay and bun package managers. All software is updated as of today.
+## Key Files
 
-## Tech Stack
+- `<path>` — entry point
+- `<path>` — state
+- `<path>` — tests
 
-- **Tauri** (v2) — Desktop framework
-- **Rust** (edition 2024) — Backend logic, Markdown processing, file I/O
-- **Svelte 5** (runes, `.svelte.ts`) — Frontend
-- **TypeScript 6** — Type-safe frontend code
-- **CodeMirror 6** — Code editor
-- **rusqlite** (SQLite) — Metadata/bookmarks
+## Development Workflow
 
-## Entry Points
-
-### Frontend (`src/`)
-
-- `+page.svelte` — Main application page
-- `+layout.svelte` — Root layout
-- `lib/stores/state.svelte.ts` — Central state (`appContext`)
-- `lib/components/editor/Editor.svelte` — Editor component
-- `lib/components/preview/Preview.svelte` — Markdown preview
-
-### Backend (`src-tauri/`)
-
-- `src/main.rs` — Entry point
-- `src/commands/` — Tauri command handlers
-- `src/markdown/` — Markdown processing
-- `src/db/` — SQLite operations
-
-## Coding Principles
-
-- DRY / YAGNI / KISS / SOLID Principles / Composition Over Inheritance / Separation of Concerns (SoC)
-- Self-documenting code (clear naming, no comments for commentary)
-- No magic numbers; split files >500 lines
-- Follow existing patterns (Svelte 5 runes, modern TS/Rust)
-- Do NOT create docs files unless explicitly asked
+- <install>
+- <dev>
+- <test>
+- <lint>
+- <format>
+- <build>
 
 ## File System Access
 
-### Allowed
+- Root: `<project root>`
+- Allowed: All subdirectories, `/tmp/<project-name>-*`
+- Read-Only: `.env*`, `.git/`
+- Disallowed: system dirs, user config, other projects
+- Require confirmation: adding/removing deps, changes outside `src/`, any operation outside project root
 
-- `/home/bubba/Projects/MarkdownRS/` unless excluded below.
+## Rules
 
-### Disallowed
+- Keep modifications minimal and scoped. Ask before architectural changes.
+- Do not delete files or make destructive changes without confirmation.
+- Do not create documentation files unless explicitly requested.
+- Prefer incremental improvements over rewrites.
+- Use explicit types and named constants (no magic numbers).
+- Return explicit error types; do not suppress exceptions.
+- Follow standard repository linting and formatting configs.
+- Decompose files over 400 lines that mix concerns.
+- Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
 
-- `.assets/`, `.git/`, `node_modules/`
+## Communication Style
 
-## Common Patterns
+- Provide concise, actionable responses.
+- Ask clarifying questions when requirements are ambiguous.
+- Flag potential risks or edge cases proactively.
+- Do not pretend to understand how the user feels.
 
-- **Add feature**: Update store in `lib/stores/`, add UI in `lib/components/`, wire with events
-- **Backend call**: Create Rust command in `src-tauri/src/commands/`, expose in `main.rs`, call via `invoke()` from frontend
-- **Editor extension**: Add to `lib/utils/*Extension.ts`, configure in `lib/components/editor/codemirror/config.ts`
-- **State access**: Import `appContext` from `lib/stores/state.svelte.ts`
+## Definition of Done
 
-## Build Scripts
-
-- `bun run dev` — Start Tauri dev server
-- `bun run build` — Full Tauri build (no bundle)
-- `bun run build:frontend` — Vite build only (debug)
-- `bun run check` — Full lint pass (types + frontend + backend)
-- `bun run format` — Auto-format all files
-- `bun run test` — Run Vitest suite
-- `bun run release` — Bump version and tag
-- `bun run clean` — Remove all build artifacts
-
-## Interaction Style
-
-- do not pretend to understand how the user feels. no "You're right to be frustrated." etc.
-- no analogies
-- be concise, be precise
-- answer the question asked, no 'helpful' suggestions
+- Logic fully implemented.
+- `<test>` and `<lint>` pass with zero errors.
+- New/modified features have tests.
+- Existing docs updated if public interfaces changed.
