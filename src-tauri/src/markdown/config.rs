@@ -90,8 +90,6 @@ impl MarkdownFlavor {
 }
 
 struct CachedState {
-    file_dir: PathBuf,
-    project_root: PathBuf,
     config_path: Option<PathBuf>,
     config_mtime: Option<SystemTime>,
     config: Arc<Config>,
@@ -192,20 +190,6 @@ pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>
 }
 
 pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
-    // Fast path: check cache by (file_dir, project_root) — zero I/O.
-    {
-        let cache = CACHE
-            .lock()
-            .map_err(|_| "Cache lock poisoned".to_string())?;
-        if let Some(cached) = cache.as_ref()
-            && cached.file_dir == file_dir
-            && cached.project_root == project_root
-        {
-            return Ok((Arc::clone(&cached.config), Arc::clone(&cached.rules)));
-        }
-    }
-
-    // Cache miss: discover config (may involve I/O).
     let candidate_path =
         SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root)
             .or_else(discover_user_config_path);
@@ -214,7 +198,7 @@ pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
         .and_then(|p| p.metadata().ok())
         .and_then(|m| m.modified().ok());
 
-    // Re-check cache by (path, mtime) in case another thread has populated it.
+    // Check cache by (path, mtime).
     {
         let cache = CACHE
             .lock()
@@ -240,8 +224,6 @@ pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
         .lock()
         .map_err(|_| "Cache lock poisoned".to_string())?;
     *cache = Some(CachedState {
-        file_dir: file_dir.to_path_buf(),
-        project_root: project_root.to_path_buf(),
         config_path: candidate_path,
         config_mtime: candidate_mtime,
         config: Arc::clone(&config),
