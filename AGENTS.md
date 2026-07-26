@@ -2,32 +2,43 @@
 
 ## Project Context
 
-- Name: <project-name>
-- Description: <brief core goals and functionality>
-- Tech: <languages, frameworks, databases, core tools>
+- Name: MarkdownRS
+- Description: Tauri + Svelte 5 + Rust desktop Markdown editor focused on performance and clean UI.
+- Tech: Tauri v2, Rust (edition 2024), Svelte 5 (runes), TypeScript 6, CodeMirror 6, comrak (Markdown), rusqlite (SQLite), Biome, Vitest, Lefthook
 
 ## Key Files
 
-- `<path>` — entry point
-- `<path>` — state
-- `<path>` — tests
+- `src-tauri/src/main.rs` — Backend entry point
+- `src-tauri/src/commands/` — Tauri command handlers
+- `src-tauri/src/markdown/` — Markdown rendering (comrak), linting, formatting (rumdl), TOC
+- `src-tauri/src/db/` — SQLite (rusqlite) for bookmarks, recent files, session
+- `src-tauri/src/state.rs` — Backend state management
+- `src-tauri/src/setup.rs` — App initialization
+- `src/routes/+page.svelte` — Main application page
+- `src/routes/+layout.svelte` — Root layout
+- `src/lib/stores/state.svelte.ts` — Central state (`appContext`)
+- `src/lib/stores/` — Frontend state (appState, editorStore, interfaceStore, settingsState, etc.)
+- `src/lib/components/editor/` — CodeMirror 6 editor component
+- `src/lib/components/preview/` — Markdown preview component
+- `src/lib/utils/` — Frontend utilities (spellcheck, scroll sync, lint, etc.)
+- `src/lib/commands/` — `invoke()` wrappers for Tauri commands
 
 ## Development Workflow
 
-- <install>
-- <dev>
-- <test>
-- <lint>
-- <format>
-- <build>
+- Install: `bun install`
+- Dev: `bun run dev`
+- Test: `bun run test`
+- Lint: `bun run check` (types + frontend (Biome) + backend (cargo clippy))
+- Format: `bun run format` (Biome + cargo fmt)
+- Build: `bun run build`
 
 ## File System Access
 
-- Root: `<project root>`
-- Allowed: All subdirectories, `/tmp/<project-name>-*`
-- Read-Only: `.env*`, `.git/`
+- Root: `/home/bubba/Projects/MarkdownRS`
+- Allowed: All subdirectories, `/tmp/markdownrs-*`
+- Read-Only: `.env*`, `.git/`, `node_modules/`, `.assets/`
 - Disallowed: system dirs, user config, other projects
-- Require confirmation: adding/removing deps, changes outside `src/`, any operation outside project root
+- Require confirmation: adding/removing dependencies, changes outside `src/` or `src-tauri/src/`, any operation outside project root
 
 ## Rules
 
@@ -37,9 +48,17 @@
 - Prefer incremental improvements over rewrites.
 - Use explicit types and named constants (no magic numbers).
 - Return explicit error types; do not suppress exceptions.
-- Follow standard repository linting and formatting configs.
+- Follow standard repository linting and formatting configs (Biome, rustfmt).
 - Decompose files over 400 lines that mix concerns.
 - Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
+- Self-documenting code (clear naming, no comments for commentary).
+
+## Common Patterns
+
+- Add feature: Update store in `src/lib/stores/`, add UI in `src/lib/components/`, wire with events
+- Backend call: Create Rust command in `src-tauri/src/commands/`, register in `main.rs`, call via `invoke()` from frontend (`src/lib/commands/`)
+- Editor extension: Add to `src/lib/utils/*Extension.ts`, configure in editor component
+- State access: Import `appContext` from `src/lib/stores/state.svelte.ts`
 
 ## Communication Style
 
@@ -51,6 +70,6 @@
 ## Definition of Done
 
 - Logic fully implemented.
-- `<test>` and `<lint>` pass with zero errors.
+- `bun run check` and `bun run test` pass with zero errors.
 - New/modified features have tests.
 - Existing docs updated if public interfaces changed.
