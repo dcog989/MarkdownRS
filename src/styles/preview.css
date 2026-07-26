@@ -94,6 +94,7 @@
   border-radius: 4px;
   overflow-x: auto;
   margin: 1em 0;
+  font-family: monospace;
 }
 
 .preview-root pre code {

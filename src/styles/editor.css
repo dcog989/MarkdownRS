@@ -231,6 +231,7 @@
 .cm-meta.cm-code {
   background-color: var(--code-bg);
   color: var(--code-fg);
+  font-family: monospace;
 }
 
 .cm-code-block {
@@ -255,7 +256,7 @@
   color: var(--text-primary);
   padding: 0;
   border-radius: 0;
-  font-family: inherit;
+  font-family: monospace;
 }
 
 .cm-blockquote {
