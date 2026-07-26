@@ -3,6 +3,10 @@ use std::path::Path;
 
 use super::config::load_rules_for_file;
 
+fn strip_leading_blank_lines(s: &str) -> String {
+    s.trim_start_matches('\n').to_string()
+}
+
 pub fn format_markdown(
     content: &str,
     file_path: Option<&Path>,
@@ -11,7 +15,7 @@ pub fn format_markdown(
     let (config, rules) = load_rules_for_file(file_path, project_root)?;
 
     let fix_coordinator = FixCoordinator::new();
-    let mut content_buf = content.to_string();
+    let mut content_buf = strip_leading_blank_lines(content);
 
     let file_path_buf = file_path.map(|p| p.to_path_buf());
 
