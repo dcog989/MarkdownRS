@@ -40,10 +40,14 @@ function getColors() {
         heading: style.getPropertyValue('--syntax-heading').trim() || '#d32f2f',
         code: style.getPropertyValue('--code-fg').trim() || '#888',
         list: style.getPropertyValue('--text-secondary').trim() || '#888',
+        link: style.getPropertyValue('--accent-link').trim() || '#61afef',
+        quote: style.getPropertyValue('--syntax-keyword').trim() || '#c678dd',
     };
 }
 
-function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'code' | 'list' | 'empty' | 'text'; inCodeBlock: boolean } {
+const LINK_RE = /\[.*?\]\(.*?\)|\[.*?\]\[.*?\]|\[.*?\]\[\s*\]|^\s*\[[^\]]+\]:\s*\S|https?:\/\/\S+/;
+
+function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'code' | 'list' | 'link' | 'quote' | 'empty' | 'text'; inCodeBlock: boolean } {
     if (line.trim() === '') return { kind: 'empty', inCodeBlock };
 
     if (/^```/.test(line)) {
@@ -56,7 +60,66 @@ function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'c
     if (/^#{1,6}\s/.test(line)) return { kind: 'heading', inCodeBlock: false };
     if (/^[\s]*[-*+]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
     if (/^[\s]*\d+[.)]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
+    if (/^\s*>\s/.test(line)) return { kind: 'quote', inCodeBlock: false };
+    if (LINK_RE.test(line)) return { kind: 'link', inCodeBlock: false };
     return { kind: 'text', inCodeBlock: false };
+}
+
+function majorityKind(counts: Record<string, number>): string {
+    const total = counts.heading + counts.code + counts.list + counts.link + counts.quote + counts.text;
+    if (total === 0) return 'empty';
+
+    const threshold = total / 2;
+    if (counts.heading > threshold) return 'heading';
+    if (counts.code > threshold) return 'code';
+    if (counts.list > threshold) return 'list';
+    if (counts.link > threshold) return 'link';
+    if (counts.quote > threshold) return 'quote';
+    return 'text';
+}
+
+function drawBar(
+    ctx: CanvasRenderingContext2D,
+    kind: string,
+    y: number,
+    h: number,
+    colors: Record<string, string>,
+    inViewport: boolean,
+    barWidth: number,
+    paddingX: number,
+    compressed?: boolean,
+) {
+    if (kind === 'empty') return;
+
+    const fade = compressed ? 1.5 : 1;
+
+    switch (kind) {
+        case 'heading':
+            ctx.fillStyle = colors.heading;
+            ctx.globalAlpha = inViewport ? 1 : 0.35 * fade;
+            break;
+        case 'code':
+            ctx.fillStyle = colors.code;
+            ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
+            break;
+        case 'list':
+            ctx.fillStyle = colors.list;
+            ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
+            break;
+        case 'link':
+            ctx.fillStyle = colors.link;
+            ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
+            break;
+        case 'quote':
+            ctx.fillStyle = colors.quote;
+            ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
+            break;
+        default:
+            ctx.fillStyle = colors.text;
+            ctx.globalAlpha = inViewport ? 0.7 : 0.2 * fade;
+    }
+
+    ctx.fillRect(paddingX, y, barWidth, h);
 }
 
 function renderMinimap() {
@@ -108,38 +171,59 @@ function renderMinimap() {
     const paddingX = 2;
     const barWidth = MINIMAP_WIDTH - paddingX * 2;
 
+    const COMPRESS_SPACING = 2;
+    const needsCompression = lineH < 1;
     let inCodeBlock = false;
 
-    for (let i = 1; i <= totalLines; i++) {
-        const y = (i - 1) * (lineH + gap);
-        if (y > contentH) break;
+    if (needsCompression) {
+        const totalBars = Math.max(1, Math.floor(contentH / COMPRESS_SPACING));
+        const linesPerBar = totalLines / totalBars;
+        let currentBarIdx = -1;
+        let counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
 
-        const inViewport = y + lineH >= viewportTop && y <= viewportBottom;
+        for (let i = 1; i <= totalLines; i++) {
+            const barIdx = Math.min(Math.floor((i - 1) / linesPerBar), totalBars - 1);
 
-        const line = doc.line(i).text;
-        const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
-        inCodeBlock = newInCodeBlock;
-        if (kind === 'empty') continue;
+            if (barIdx !== currentBarIdx) {
+                if (currentBarIdx >= 0) {
+                    const barKind = majorityKind(counts);
+                    if (barKind !== 'empty') {
+                        const barY = currentBarIdx * COMPRESS_SPACING;
+                        const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
+                        drawBar(ctx, barKind, barY, 1, colors, inViewport, barWidth, paddingX, true);
+                    }
+                }
+                currentBarIdx = barIdx;
+                counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
+            }
 
-        switch (kind) {
-            case 'heading':
-                ctx.fillStyle = colors.heading;
-                ctx.globalAlpha = inViewport ? 1 : 0.35;
-                break;
-            case 'code':
-                ctx.fillStyle = colors.code;
-                ctx.globalAlpha = inViewport ? 0.9 : 0.3;
-                break;
-            case 'list':
-                ctx.fillStyle = colors.list;
-                ctx.globalAlpha = inViewport ? 0.85 : 0.25;
-                break;
-            default:
-                ctx.fillStyle = colors.text;
-                ctx.globalAlpha = inViewport ? 0.7 : 0.2;
+            const line = doc.line(i).text;
+            const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
+            inCodeBlock = newInCodeBlock;
+            counts[kind]++;
         }
 
-        ctx.fillRect(paddingX, y, barWidth, lineH);
+        if (currentBarIdx >= 0) {
+            const barKind = majorityKind(counts);
+            if (barKind !== 'empty') {
+                const barY = currentBarIdx * COMPRESS_SPACING;
+                const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
+                drawBar(ctx, barKind, barY, 1, colors, inViewport, barWidth, paddingX, true);
+            }
+        }
+    } else {
+        for (let i = 1; i <= totalLines; i++) {
+            const y = (i - 1) * (lineH + gap);
+            if (y > contentH) break;
+
+            const inViewport = y + lineH >= viewportTop && y <= viewportBottom;
+
+            const line = doc.line(i).text;
+            const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
+            inCodeBlock = newInCodeBlock;
+
+            drawBar(ctx, kind, y, lineH, colors, inViewport, barWidth, paddingX);
+        }
     }
 }
 
