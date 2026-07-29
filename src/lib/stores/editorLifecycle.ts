@@ -1,3 +1,4 @@
+import { reloadFileContent } from '$lib/services/fileMetadata';
 import { initializeTabLoadState } from '$lib/services/tabLoadStateMachine';
 import { CONFIG } from '$lib/utils/config';
 import { updateSavedHash } from '$lib/utils/contentHash';
@@ -157,7 +158,7 @@ export function reopenClosedTab(historyIndex: number): string | null {
   if (needsDiskReload) {
     // Content was dropped on close to save memory (see closeTab); pull it
     // back from disk now that the tab is active again.
-    import('$lib/services/fileMetadata').then(({ reloadFileContent }) => reloadFileContent(entry.tab.id));
+    void reloadFileContent(entry.tab.id);
   }
 
   return entry.tab.id;
