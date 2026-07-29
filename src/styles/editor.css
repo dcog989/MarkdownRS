@@ -276,6 +276,12 @@
   font-family: monospace;
 }
 
+.rendered-mode .cm-code-block .cm-formatting-mask {
+  font-size: inherit;
+  line-height: inherit;
+  visibility: hidden;
+}
+
 .rendered-mode .cm-line:has(.cm-code-info) {
   display: flex;
   align-items: baseline;
