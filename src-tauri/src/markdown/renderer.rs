@@ -81,17 +81,21 @@ fn is_in_code_or_link<'a>(node: &'a AstNode<'a>) -> bool {
     })
 }
 
+const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
+
 /// Percent-encodes a file path into `out`, keeping unreserved characters and `/` intact.
 fn percent_encode_into(out: &mut String, s: &str) {
     out.reserve(s.len());
+    let mut buf = [0; 4];
     for c in s.chars() {
         match c {
             'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' | '/' => out.push(c),
             _ => {
-                let mut buf = [0; 4];
                 let encoded = c.encode_utf8(&mut buf);
-                for b in encoded.as_bytes() {
-                    out.push_str(&format!("%{:02X}", b));
+                for &b in encoded.as_bytes() {
+                    out.push('%');
+                    out.push(HEX_DIGITS[(b >> 4) as usize] as char);
+                    out.push(HEX_DIGITS[(b & 0x0F) as usize] as char);
                 }
             },
         }
