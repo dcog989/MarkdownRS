@@ -26,6 +26,7 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
 const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
 
 const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
+const strikethroughDeco = Decoration.mark({ class: 'cm-strikethrough' });
 const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
 const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
 const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
@@ -38,6 +39,7 @@ const formattingMaskDeco = Decoration.mark({ class: 'cm-formatting-mask' });
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
 const hlRegex = /==([^=]+)==/g;
+const stRegex = /~~([^~]+)~~/g;
 
 function findCursorHeadingLines(view: EditorView): Set<number> {
   const headings = new Set<number>();
@@ -195,6 +197,25 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         const end = start + match[0].length;
         if (!isVisibleInCodeBlock(tree, start)) {
           ranges.push(highlightDeco.range(start, end));
+          if (!(cursor >= start && cursor <= end)) {
+            ranges.push(formattingMaskDeco.range(start, start + 2));
+            ranges.push(formattingMaskDeco.range(end - 2, end));
+          }
+        }
+      }
+
+      stRegex.lastIndex = 0;
+      while (true) {
+        match = stRegex.exec(line.text);
+        if (match === null) break;
+        const start = line.from + match.index;
+        const end = start + match[0].length;
+        if (!isVisibleInCodeBlock(tree, start)) {
+          ranges.push(strikethroughDeco.range(start, end));
+          if (!(cursor >= start && cursor <= end)) {
+            ranges.push(formattingMaskDeco.range(start, start + 2));
+            ranges.push(formattingMaskDeco.range(end - 2, end));
+          }
         }
       }
 
