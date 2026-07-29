@@ -230,9 +230,14 @@ $effect(() => {
 
     scrollDOM.addEventListener('scroll', onScroll, { passive: true });
 
+    let mutationRafId = 0;
+
     const contentEl = scrollDOM.querySelector('.cm-content');
     if (contentEl) {
-        contentObserver = new MutationObserver(() => scheduleRender());
+        contentObserver = new MutationObserver(() => {
+            cancelAnimationFrame(mutationRafId);
+            mutationRafId = requestAnimationFrame(renderMinimap);
+        });
         contentObserver.observe(contentEl, { characterData: true, childList: true, subtree: true });
     }
 
