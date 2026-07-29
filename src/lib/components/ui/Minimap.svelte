@@ -194,7 +194,20 @@ function onTrackMouseDown(e: MouseEvent) {
 function onWheel(e: WheelEvent) {
     if (!view) return;
     e.preventDefault();
-    view.scrollDOM.scrollBy({ top: e.deltaY, left: e.deltaX });
+
+    let { deltaY, deltaX } = e;
+
+    if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+        const lineH = view.defaultLineHeight;
+        deltaY *= lineH;
+        deltaX *= lineH;
+    } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+        const pageH = view.scrollDOM.clientHeight;
+        deltaY *= pageH;
+        deltaX *= pageH;
+    }
+
+    view.scrollDOM.scrollBy({ top: deltaY, left: deltaX });
 }
 
 function onScroll() {
