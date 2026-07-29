@@ -258,11 +258,11 @@ $effect(() => {
 <style>
     .minimap-track {
         position: absolute;
-        top: 0.125rem;
+        top: 0;
         right: 0;
-        bottom: 0.125rem;
+        bottom: 0;
         z-index: 60;
-        width: 68px;
+        width: 64px;
         overflow: hidden;
     }
     .minimap-canvas {

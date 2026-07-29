@@ -235,7 +235,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 
 <div
     class="bg-bg-main relative h-full w-full overflow-hidden"
-    style:padding-right={appContext.settings.showMinimap ? '68px' : '0'}>
+    style:padding-right={appContext.settings.showMinimap ? '64px' : '0'}>
     <EditorViewComponent
         bind:cmView
         {tabId}
