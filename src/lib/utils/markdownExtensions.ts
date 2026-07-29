@@ -13,6 +13,15 @@ const HEADING_NODE_NAMES = new Set([
   'SetextHeading2',
 ]);
 
+const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
+  { marker: 'EmphasisMark', parents: new Set(['Emphasis', 'StrongEmphasis']) },
+  {
+    marker: 'HeaderMark',
+    parents: new Set(['ATXHeading1', 'ATXHeading2', 'ATXHeading3', 'ATXHeading4', 'ATXHeading5', 'ATXHeading6']),
+  },
+  { marker: 'LinkMark', parents: new Set(['Autolink']) },
+];
+
 const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
 const blockquoteBorderDeco = Decoration.mark({ class: 'cm-blockquote-border' });
 const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
@@ -21,6 +30,7 @@ const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
 const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
+const formattingMaskDeco = Decoration.mark({ class: 'cm-formatting-mask' });
 
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
@@ -51,12 +61,63 @@ function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number):
   return node.name === 'FencedCode' || node.name === 'InlineCode' || node.name === 'CodeBlock';
 }
 
+function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>, ranges: Range<Decoration>[]) {
+  const cursor = view.state.selection.main.head;
+  const usedParents = new Set<string>();
+
+  for (const cfg of MARKER_CONFIG) {
+    for (const p of cfg.parents) usedParents.add(p);
+  }
+
+  const hiddenParents: Array<{ from: number; to: number }> = [];
+
+  for (const { from, to } of view.visibleRanges) {
+    tree.iterate({
+      from,
+      to,
+      enter: (node) => {
+        if (!usedParents.has(node.name)) return;
+        if (cursor >= node.from && cursor <= node.to) return false;
+        hiddenParents.push({ from: node.from, to: node.to });
+        return false;
+      },
+    });
+  }
+
+  if (hiddenParents.length === 0) return;
+
+  for (const { from, to } of view.visibleRanges) {
+    tree.iterate({
+      from,
+      to,
+      enter: (node) => {
+        const cfg = MARKER_CONFIG.find((c) => c.marker === node.name);
+        if (!cfg) return;
+        for (const p of hiddenParents) {
+          if (node.from >= p.from && node.to <= p.to) {
+            ranges.push(formattingMaskDeco.range(node.from, node.to));
+            if (cfg.marker === 'HeaderMark') {
+              const after = view.state.doc.sliceString(node.to, node.to + 1);
+              if (after === ' ') {
+                ranges.push(formattingMaskDeco.range(node.to, node.to + 1));
+              }
+            }
+            break;
+          }
+        }
+      },
+    });
+  }
+}
+
 function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   if (!rendered) return Decoration.set([]);
 
   const tree = syntaxTree(view.state);
   const ranges: Range<Decoration>[] = [];
   const cursorHeadingLines = findCursorHeadingLines(view);
+
+  findHiddenMarkers(view, tree, ranges);
 
   const codeBlockLines = new Set<number>();
   const parserHrs = new Set<number>();

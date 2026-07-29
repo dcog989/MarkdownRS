@@ -119,6 +119,12 @@
   font-size: 1em;
 }
 
+/* Rendered mode: hide bold/italic markers when cursor outside the formatted text */
+.cm-formatting-mask {
+  font-size: 0;
+  line-height: 0;
+}
+
 .cm-keyword {
   color: var(--syntax-keyword);
 }
