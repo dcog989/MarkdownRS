@@ -119,17 +119,9 @@
   font-size: 1em;
 }
 
-/* Rendered mode: hide bold/italic markers when cursor outside the formatted text */
-.cm-formatting-mask {
-  font-size: 0;
-  line-height: 0;
-}
-
-.cm-formatting-mask-autolink {
-  font-size: 0;
-  line-height: 0;
-  padding: 0 0.5px;
-}
+/* Rendered mode: hide bold/italic markers when cursor outside the formatted text
+   via Decoration.replace({}) — markers are removed from DOM so posAtCoords() maps
+   click coordinates to correct document positions without cursor jumps */
 
 .cm-keyword {
   color: var(--syntax-keyword);
@@ -282,12 +274,6 @@
   font-family: monospace;
 }
 
-.rendered-mode .cm-code-block .cm-formatting-mask {
-  font-size: inherit;
-  line-height: inherit;
-  visibility: hidden;
-}
-
 .rendered-mode .cm-line:has(.cm-code-info) {
   display: flex;
   align-items: baseline;
@@ -371,15 +357,7 @@
   display: none;
 }
 
-.cm-bullet {
-  font-size: 0;
-  line-height: 0;
-}
-
-.cm-bullet::before {
-  content: "•";
-  font-size: 1.1rem;
-  line-height: 1;
+.cm-bullet-widget {
   color: var(--accent-secondary);
   font-weight: 900;
 }
@@ -413,15 +391,6 @@
 
 .raw-mode .cm-hr::after {
   display: none;
-}
-
-.raw-mode .cm-bullet {
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.raw-mode .cm-bullet::before {
-  content: none;
 }
 
 .raw-mode .cm-code,

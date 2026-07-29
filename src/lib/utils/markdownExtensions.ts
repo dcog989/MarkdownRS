@@ -1,6 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
 import type { Range } from '@codemirror/state';
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
 
 const HEADING_NODE_NAMES = new Set([
   'ATXHeading1',
@@ -35,10 +35,19 @@ const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
 const codeInfoDeco = Decoration.mark({ class: 'cm-code-info' });
 const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr cm-hr-raw' });
 const horizontalRuleMaskedDeco = Decoration.mark({ class: 'cm-hr cm-hr-mask' });
-const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
+const bulletPointDeco = Decoration.replace({
+  widget: new (class extends WidgetType {
+    toDOM() {
+      const span = document.createElement('span');
+      span.className = 'cm-bullet-widget';
+      span.textContent = '\u2022';
+      return span;
+    }
+  })(),
+});
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
-const formattingMaskDeco = Decoration.mark({ class: 'cm-formatting-mask' });
-const formattingMaskAutolinkDeco = Decoration.mark({ class: 'cm-formatting-mask-autolink' });
+const formattingMaskDeco = Decoration.replace({});
+const formattingMaskAutolinkDeco = Decoration.replace({});
 
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
