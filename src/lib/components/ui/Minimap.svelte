@@ -35,13 +35,13 @@ function fitLines(
 function getColors() {
     const style = getComputedStyle(document.documentElement);
     return {
-        bg: style.getPropertyValue('--surface-1').trim() || '#1e1e1e',
-        text: style.getPropertyValue('--text-primary').trim() || '#888',
-        heading: style.getPropertyValue('--syntax-heading').trim() || '#d32f2f',
-        code: style.getPropertyValue('--code-fg').trim() || '#888',
-        list: style.getPropertyValue('--text-secondary').trim() || '#888',
-        link: style.getPropertyValue('--accent-link').trim() || '#61afef',
-        quote: style.getPropertyValue('--syntax-keyword').trim() || '#c678dd',
+        bg: style.getPropertyValue('--surface-1').trim(),
+        text: style.getPropertyValue('--text-primary').trim(),
+        heading: style.getPropertyValue('--syntax-heading').trim(),
+        code: style.getPropertyValue('--code-fg').trim(),
+        list: style.getPropertyValue('--text-secondary').trim(),
+        link: style.getPropertyValue('--accent-link').trim(),
+        quote: style.getPropertyValue('--syntax-keyword').trim(),
     };
 }
 
