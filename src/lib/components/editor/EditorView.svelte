@@ -20,6 +20,7 @@ import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugi
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+import { createMarkdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
 import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { scrollSync } from '$lib/utils/scrollSync.svelte';
@@ -95,6 +96,7 @@ let comps: Compartments = {
     languageComp: new Compartment(), handlersComp: new Compartment(),
     doubleClickComp: new Compartment(), rulerComp: new Compartment(),
     filePathComp: new Compartment(), markdownLintComp: new Compartment(),
+    decorationComp: new Compartment(),
 };
 
 let effectiveMarkdown = $derived(isMarkdown && !isLargeFile);
@@ -168,9 +170,11 @@ $effect(() => {
 $effect(() => {
     if (!view) return;
     const md = effectiveMarkdown;
+    const rendered = appContext.settings.viewMode === 'rendered';
     view.dispatch({
         effects: [
             comps.languageComp.reconfigure(md ? markdownExtensions : []),
+            comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered) : []),
             comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []),
             comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
         ],
@@ -257,6 +261,6 @@ onMount(() => {
 <div
     role="none"
     tabindex="-1"
-    class="bg-bg-main relative h-full w-full overflow-hidden"
+    class="bg-bg-main relative h-full w-full overflow-hidden {appContext.settings.viewMode === 'raw' ? 'raw-mode' : 'rendered-mode'}"
     bind:this={editorContainer}
     onclick={() => view?.focus()}></div>

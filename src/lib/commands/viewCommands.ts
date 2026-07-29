@@ -1,5 +1,5 @@
 import { toggleWriterMode } from '$lib/stores/appState.svelte';
-import { setTheme, toggleSplitView } from '$lib/stores/settingsState.svelte';
+import { setTheme, toggleSplitView, toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { logger } from '$lib/utils/logger';
@@ -59,6 +59,15 @@ export const viewCommands: Command[] = [
           .requestFullscreen()
           .catch((err) => logger.editor.warn('FullscreenRequestFailed', { error: String(err) }));
       }
+    },
+  },
+  {
+    id: 'view.toggleViewMode',
+    label: 'View: Toggle Raw/Rendered Mode',
+    category: 'View',
+    defaultKey: 'ctrl+shift+r',
+    handler: () => {
+      toggleViewMode();
     },
   },
   {

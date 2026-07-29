@@ -51,6 +51,7 @@ export const settingsState = $state({
   recentFilesLimit: 99,
   autoSaveEnabled: false,
   autoSaveInterval: 60,
+  viewMode: 'rendered' as 'raw' | 'rendered',
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
@@ -77,4 +78,8 @@ export function syncThemeFromActiveTheme() {
 
 export function toggleOrientation() {
   settingsState.splitOrientation = settingsState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
+}
+
+export function toggleViewMode() {
+  settingsState.viewMode = settingsState.viewMode === 'raw' ? 'rendered' : 'raw';
 }

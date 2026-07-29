@@ -1,10 +1,11 @@
 <script lang="ts">
-import { ClipboardCopy, TextWrap } from 'lucide-svelte';
+import { ClipboardCopy, Pencil, TextWrap } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import MarkdownLintStatus from '$lib/components/ui/MarkdownLintStatus.svelte';
 import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { togglePreferredExtension, updateTabFields } from '$lib/stores/editorStore.svelte';
+import { toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';
@@ -205,6 +206,23 @@ async function copyAllStats() {
             use:tooltip={'Toggle Word Wrap'}>
             <TextWrap size={14} />
         </button>
+
+        {#if fileType === 'markdown'}
+            <button
+                type="button"
+                class="hover:text-fg-default hover-surface flex cursor-pointer items-center rounded px-1 transition-colors {appContext
+                    .settings.viewMode === 'rendered'
+                    ? 'text-accent-secondary'
+                    : 'text-inherit'}"
+                onclick={toggleViewMode}
+                use:tooltip={appContext.settings.viewMode === 'rendered' ? 'Rendered Mode' : 'Raw Mode'}>
+                <Pencil size={14} />
+            </button>
+        {:else}
+            <span class="flex cursor-default items-center px-1 opacity-70">
+                <Pencil size={14} />
+            </span>
+        {/if}
 
         {#if canToggleFileType}
             <button

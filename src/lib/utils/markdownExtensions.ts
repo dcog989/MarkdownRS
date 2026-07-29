@@ -2,10 +2,16 @@ import { syntaxTree } from '@codemirror/language';
 import type { Range } from '@codemirror/state';
 import { Decoration, type DecorationSet, type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
-function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
-  const node = tree.resolveInner(pos, 1);
-  return node.name === 'FencedCode' || node.name === 'InlineCode' || node.name === 'CodeBlock';
-}
+const HEADING_NODE_NAMES = new Set([
+  'ATXHeading1',
+  'ATXHeading2',
+  'ATXHeading3',
+  'ATXHeading4',
+  'ATXHeading5',
+  'ATXHeading6',
+  'SetextHeading1',
+  'SetextHeading2',
+]);
 
 const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
 const blockquoteBorderDeco = Decoration.mark({ class: 'cm-blockquote-border' });
@@ -14,14 +20,43 @@ const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
 const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
 const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
 const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
+const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
 
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
 const hlRegex = /==([^=]+)==/g;
 
-function buildAllDecorations(view: EditorView): DecorationSet {
+function findCursorHeadingLines(view: EditorView): Set<number> {
+  const headings = new Set<number>();
+  const cursor = view.state.selection.main.head;
+  const tree = syntaxTree(view.state);
+  const node = tree.resolveInner(cursor, -1);
+  let current: typeof node | null = node;
+  while (current) {
+    if (HEADING_NODE_NAMES.has(current.name)) {
+      const fromLine = view.state.doc.lineAt(current.from);
+      const toLine = view.state.doc.lineAt(current.to);
+      for (let i = fromLine.number; i <= toLine.number; i++) {
+        headings.add(i);
+      }
+      break;
+    }
+    current = current.parent;
+  }
+  return headings;
+}
+
+function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
+  const node = tree.resolveInner(pos, 1);
+  return node.name === 'FencedCode' || node.name === 'InlineCode' || node.name === 'CodeBlock';
+}
+
+function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
+  if (!rendered) return Decoration.set([]);
+
   const tree = syntaxTree(view.state);
   const ranges: Range<Decoration>[] = [];
+  const cursorHeadingLines = findCursorHeadingLines(view);
 
   const codeBlockLines = new Set<number>();
   const parserHrs = new Set<number>();
@@ -56,6 +91,10 @@ function buildAllDecorations(view: EditorView): DecorationSet {
         ranges.push(codeBlockLineDeco.range(line.from));
       }
 
+      if (cursorHeadingLines.has(line.number)) {
+        ranges.push(headingRawDeco.range(line.from, line.to));
+      }
+
       const bqMatch = bqMatchRe.exec(line.text);
       if (bqMatch) {
         ranges.push(blockquoteBgDeco.range(line.from, line.to));
@@ -75,7 +114,6 @@ function buildAllDecorations(view: EditorView): DecorationSet {
       while (true) {
         match = hlRegex.exec(line.text);
         if (match === null) break;
-
         const start = line.from + match.index;
         const end = start + match[0].length;
         if (!isVisibleInCodeBlock(tree, start)) {
@@ -96,19 +134,19 @@ function buildAllDecorations(view: EditorView): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
-export const markdownDecorationsPlugin = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-      this.decorations = buildAllDecorations(view);
-    }
-    update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = buildAllDecorations(update.view);
+export function createMarkdownDecorationsPlugin(rendered: boolean) {
+  return ViewPlugin.fromClass(
+    class {
+      decorations: DecorationSet;
+      constructor(view: EditorView) {
+        this.decorations = buildDecorations(view, rendered);
       }
-    }
-  },
-  {
-    decorations: (v) => v.decorations,
-  },
-);
+      update(update: ViewUpdate) {
+        if (update.docChanged || update.viewportChanged || update.selectionSet) {
+          this.decorations = buildDecorations(update.view, rendered);
+        }
+      }
+    },
+    { decorations: (v) => v.decorations },
+  );
+}

@@ -97,19 +97,26 @@
   color: var(--syntax-heading);
   font-weight: bold;
 }
-.cm-h1 {
+
+/* Rendered mode: heading font sizes */
+.rendered-mode .cm-h1 {
   font-size: 1.7em;
 }
-.cm-h2 {
+.rendered-mode .cm-h2 {
   font-size: 1.5em;
 }
-.cm-h3 {
+.rendered-mode .cm-h3 {
   font-size: 1.3em;
 }
-.cm-h4,
-.cm-h5,
-.cm-h6 {
+.rendered-mode .cm-h4,
+.rendered-mode .cm-h5,
+.rendered-mode .cm-h6 {
   font-size: 1.1em;
+}
+
+/* Rendered mode: cursor inside a heading — revert to normal size */
+.rendered-mode .cm-heading-raw {
+  font-size: 1em;
 }
 
 .cm-keyword {
@@ -305,4 +312,63 @@
   color: var(--accent-secondary);
   font-weight: 900;
   font-size: 1.1em;
+}
+
+/* Raw mode: suppress all visual decorations, keep only syntax colors */
+.raw-mode .cm-h1,
+.raw-mode .cm-h2,
+.raw-mode .cm-h3,
+.raw-mode .cm-h4,
+.raw-mode .cm-h5,
+.raw-mode .cm-h6 {
+  font-size: 1em;
+}
+
+.raw-mode .cm-blockquote-border {
+  border-left: none;
+  padding-left: 0;
+}
+
+.raw-mode .cm-blockquote-bg {
+  background: none;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.raw-mode .cm-hr {
+  color: inherit;
+  font-weight: inherit;
+  padding: 0;
+}
+
+.raw-mode .cm-hr::after {
+  display: none;
+}
+
+.raw-mode .cm-bullet {
+  color: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+}
+
+.raw-mode .cm-code,
+.raw-mode .cm-code-block {
+  background: none;
+  color: inherit;
+}
+
+.raw-mode .cm-highlight {
+  background: none;
+}
+
+.raw-mode .cm-emphasis {
+  font-style: normal;
+}
+
+.raw-mode .cm-strong {
+  font-weight: normal;
+}
+
+.raw-mode .cm-strikethrough {
+  text-decoration: none;
 }

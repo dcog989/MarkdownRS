@@ -40,6 +40,15 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
     },
 
     {
+      key: 'viewMode',
+      label: 'Editor View Mode',
+      type: 'select',
+      category: 'Editor',
+      defaultValue: 'rendered',
+      options: ['raw', 'rendered'],
+      optionLabels: ['Raw Mode', 'Rendered Mode'],
+    },
+    {
       key: 'editorFontFamily',
       label: 'Font Family',
       type: 'text',
