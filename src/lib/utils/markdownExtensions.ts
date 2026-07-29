@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language';
-import type { Range } from '@codemirror/state';
+import type { Extension, Range } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
 
 const HEADING_NODE_NAMES = new Set([
@@ -48,6 +48,16 @@ const bulletPointDeco = Decoration.replace({
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
 const formattingMaskDeco = Decoration.replace({});
 const formattingMaskAutolinkDeco = Decoration.replace({});
+const linkTextDeco = Decoration.mark({ class: 'cm-link-text' });
+const linkTextTheme = EditorView.baseTheme({
+  '.cm-link-text': {
+    color: 'var(--accent-link)',
+    textDecoration: 'underline',
+  },
+  '&.cm-modifier-down .cm-link-text': {
+    cursor: 'pointer',
+  },
+});
 
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
@@ -179,6 +189,29 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
               blockquoteLines.add(i);
             }
           }
+        } else if (node.name === 'Link' || node.name === 'Image') {
+          if (!(cursor >= node.from && cursor <= node.to)) {
+            const linkMarks = node.node.getChildren('LinkMark');
+            const urlNode = node.node.getChild('URL');
+            if (urlNode) {
+              for (const lm of linkMarks) {
+                ranges.push(formattingMaskDeco.range(lm.from, lm.to));
+              }
+              const before = view.state.doc.sliceString(urlNode.from - 1, urlNode.from);
+              const after = view.state.doc.sliceString(urlNode.to, urlNode.to + 1);
+              const hideStart = before === '(' ? urlNode.from - 1 : urlNode.from;
+              const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
+              ranges.push(formattingMaskDeco.range(hideStart, hideEnd));
+              const textMarks = linkMarks.filter((lm) => lm.from < urlNode.from);
+              if (textMarks.length >= 2) {
+                const textStart = textMarks[0].to;
+                const textEnd = textMarks[textMarks.length - 1].from;
+                if (textStart < textEnd) {
+                  ranges.push(linkTextDeco.range(textStart, textEnd));
+                }
+              }
+            }
+          }
         }
       },
     });
@@ -256,21 +289,24 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
-export function createMarkdownDecorationsPlugin(rendered: boolean) {
-  return ViewPlugin.fromClass(
-    class {
-      decorations: DecorationSet;
-      constructor(view: EditorView) {
-        this.decorations = buildDecorations(view, rendered);
-      }
-      update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged || update.selectionSet) {
-          this.decorations = buildDecorations(update.view, rendered);
+export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] {
+  return [
+    ViewPlugin.fromClass(
+      class {
+        decorations: DecorationSet;
+        constructor(view: EditorView) {
+          this.decorations = buildDecorations(view, rendered);
         }
-      }
-    },
-    { decorations: (v) => v.decorations },
-  );
+        update(update: ViewUpdate) {
+          if (update.docChanged || update.viewportChanged || update.selectionSet) {
+            this.decorations = buildDecorations(update.view, rendered);
+          }
+        }
+      },
+      { decorations: (v) => v.decorations },
+    ),
+    linkTextTheme,
+  ];
 }
 
 export const codeBlockCopyHandler = EditorView.domEventHandlers({
