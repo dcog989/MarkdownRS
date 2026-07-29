@@ -67,6 +67,12 @@ export function clearTabCaches(id: string) {
   historyStateCache.delete(id);
   transientStateCache.delete(id);
   lineChangeTrackerCache.delete(id);
+
+  const pendingWordCount = wordCountDebounceMap.get(id);
+  if (pendingWordCount) {
+    clearTimeout(pendingWordCount);
+    wordCountDebounceMap.delete(id);
+  }
 }
 
 export function initTabCaches(id: string) {
