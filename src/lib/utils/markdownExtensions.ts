@@ -148,7 +148,16 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         } else if (node.name === 'InlineCode') {
           ranges.push(inlineCodeDeco.range(node.from, node.to));
         } else if (node.name === 'CodeInfo') {
-          ranges.push(codeInfoDeco.range(node.from, node.to));
+          let p: typeof node.node | null = node.node.parent;
+          while (p) {
+            if (p.name === 'FencedCode') {
+              if (!(cursor >= p.from && cursor <= p.to)) {
+                ranges.push(codeInfoDeco.range(node.from, node.to));
+              }
+              break;
+            }
+            p = p.parent;
+          }
         } else if (node.name === 'HorizontalRule') {
           parserHrs.add(node.from);
         } else if (node.name === 'Blockquote') {
