@@ -158,7 +158,7 @@ $effect(() => {
         aria-label="Close modal"
         class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === 'center'
             ? 'items-center'
-            : 'items-start pt-16'}"
+            : 'items-start pt-12'}"
         style:z-index={zIndex}
         onclick={handleBackdropClick}
         onkeydown={handleKeydown}>
