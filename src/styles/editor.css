@@ -357,6 +357,10 @@
   z-index: -1;
 }
 
+.cm-hr-raw {
+  text-align: left;
+}
+
 .cm-hr-raw::after {
   display: none;
 }
