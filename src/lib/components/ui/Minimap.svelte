@@ -42,13 +42,20 @@ function getColors() {
     };
 }
 
-function getLineKind(line: string): 'heading' | 'code' | 'list' | 'empty' | 'text' {
-    if (line.trim() === '') return 'empty';
-    if (/^#{1,6}\s/.test(line)) return 'heading';
-    if (/^```/.test(line)) return 'code';
-    if (/^[\s]*[-*+]\s/.test(line)) return 'list';
-    if (/^[\s]*\d+[.)]\s/.test(line)) return 'list';
-    return 'text';
+function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'code' | 'list' | 'empty' | 'text'; inCodeBlock: boolean } {
+    if (line.trim() === '') return { kind: 'empty', inCodeBlock };
+
+    if (/^```/.test(line)) {
+        const newState = !inCodeBlock;
+        return { kind: 'code', inCodeBlock: newState };
+    }
+
+    if (inCodeBlock) return { kind: 'code', inCodeBlock };
+
+    if (/^#{1,6}\s/.test(line)) return { kind: 'heading', inCodeBlock: false };
+    if (/^[\s]*[-*+]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
+    if (/^[\s]*\d+[.)]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
+    return { kind: 'text', inCodeBlock: false };
 }
 
 function renderMinimap() {
@@ -88,6 +95,8 @@ function renderMinimap() {
     const paddingX = 2;
     const barWidth = MINIMAP_WIDTH - paddingX * 2;
 
+    let inCodeBlock = false;
+
     for (let i = 1; i <= totalLines; i++) {
         const y = (i - 1) * (lineH + gap);
         if (y > contentH) break;
@@ -95,7 +104,8 @@ function renderMinimap() {
         const inViewport = y + lineH >= viewportTop && y <= viewportBottom;
 
         const line = doc.line(i).text;
-        const kind = getLineKind(line);
+        const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
+        inCodeBlock = newInCodeBlock;
         if (kind === 'empty') continue;
 
         switch (kind) {
