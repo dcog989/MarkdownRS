@@ -21,6 +21,7 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
   },
   { marker: 'LinkMark', parents: new Set(['Autolink']) },
   { marker: 'QuoteMark', parents: new Set(['Blockquote']) },
+  { marker: 'CodeMark', parents: new Set(['InlineCode']) },
 ];
 
 const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
