@@ -10,6 +10,7 @@ import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
 import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
+import Minimap from '$lib/components/ui/Minimap.svelte';
 import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
 import {
     editorStore,
@@ -232,7 +233,9 @@ let isLargeFile = $derived(!!activeTab && activeTab.sizeBytes > CONFIG.PERFORMAN
 let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
 </script>
 
-<div class="bg-bg-main relative h-full w-full overflow-hidden">
+<div
+    class="bg-bg-main relative h-full w-full overflow-hidden"
+    style:padding-right={appContext.settings.showMinimap ? '68px' : '0'}>
     <EditorViewComponent
         bind:cmView
         {tabId}
@@ -252,7 +255,11 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         onSelectionChange={handleSelectionChange}
         onHistoryUpdate={handleHistoryUpdate} />
     {#if cmView}
-        <CustomScrollbar viewport={cmView.scrollDOM} />
+        {#if appContext.settings.showMinimap}
+            <Minimap view={cmView} />
+        {:else}
+            <CustomScrollbar viewport={cmView.scrollDOM} />
+        {/if}
     {/if}
     <FindReplacePanel
         bind:this={findReplacePanel}

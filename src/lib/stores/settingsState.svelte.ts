@@ -42,6 +42,7 @@ export const settingsState = $state({
   tabNameFromContent: false,
   wrapGuideColumn: 0,
   doubleClickSelectsTrailingSpace: false,
+  showMinimap: false,
   collapsePinnedTabs: false,
   enableClosedTabHistory: true,
   customShortcuts: {} as Record<string, string>,

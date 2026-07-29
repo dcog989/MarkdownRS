@@ -104,6 +104,14 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'When double-clicking a word, also select any trailing space',
     },
     {
+      key: 'showMinimap',
+      label: 'Minimap',
+      type: 'boolean',
+      category: 'Editor',
+      defaultValue: false,
+      tooltip: 'Replace the scrollbar with a minimap overview of the document',
+    },
+    {
       key: 'defaultIndent',
       label: 'Indent Default (spaces)',
       type: 'number',
