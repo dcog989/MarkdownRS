@@ -127,9 +127,11 @@
 }
 .cm-emphasis {
   font-style: italic;
+  color: var(--syntax-emphasis);
 }
 .cm-strong {
   font-weight: bold;
+  color: var(--syntax-strong);
 }
 
 /* Interactive Elements */

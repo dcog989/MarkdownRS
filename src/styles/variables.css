@@ -7,7 +7,7 @@
   --color-brand-filepath: #98c379;
   --color-brand-link: #56b6c2;
   --color-brand-quote: #c679e1;
-  --color-brand-url: #61afef;
+  --color-brand-url: #56b6c2;
 
   /* Surface System */
   --surface-1: #1e1e1e;
@@ -77,6 +77,8 @@
   --syntax-heading: #e06c75;
   --syntax-keyword: #c678dd;
   --syntax-string: #98c379;
+  --syntax-emphasis: #61afef;
+  --syntax-strong: #e5c07b;
 
   /* Preview */
   --preview-bg-code: var(--code-bg);
@@ -87,7 +89,7 @@
   --preview-fg-body: var(--text-primary);
   --preview-fg-code: var(--code-fg);
   --preview-fg-heading: #e06c75;
-  --preview-fg-link: #61afef;
+  --preview-fg-link: #56b6c2;
   --preview-fg-quote: var(--quote-fg);
   --preview-surface-2: var(--surface-2);
 }
@@ -155,10 +157,12 @@
   --syntax-heading: #c62828;
   --syntax-keyword: #6a1b9a;
   --syntax-string: #2e7d32;
+  --syntax-emphasis: #1565c0;
+  --syntax-strong: #b8860b;
 
   /* Preview - Light Theme (only values that differ from dark) */
   --preview-border-quote: var(--quote-fg);
   --preview-fg-heading: #c62828;
-  --preview-fg-link: #1565c0;
+  --preview-fg-link: #00838f;
   --preview-fg-quote: var(--text-secondary);
 }

@@ -63,11 +63,13 @@
 .preview-root strong,
 .preview-root b {
   font-weight: bold;
+  color: var(--syntax-strong);
 }
 
 .preview-root em,
 .preview-root i {
   font-style: italic;
+  color: var(--syntax-emphasis);
 }
 
 .preview-root del,
