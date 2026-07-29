@@ -135,14 +135,15 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
             _ => continue,
         };
 
-        if !PATH_REGEX.is_match(text) {
+        let mut captures = PATH_REGEX.captures_iter(text).peekable();
+        if captures.peek().is_none() {
             continue;
         }
 
         let mut last_end = 0;
         let mut new_nodes: Vec<&AstNode<'_>> = Vec::new();
 
-        for cap in PATH_REGEX.captures_iter(text) {
+        for cap in captures {
             let full = cap.get(0).expect("group 0");
             let path_match = cap.get(1).expect("group 1");
 
