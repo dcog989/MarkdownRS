@@ -278,10 +278,9 @@
   color: var(--quote-fg);
 }
 
-.cm-blockquote-border {
-  border-left: 0.25rem solid var(--quote-fg);
+.cm-blockquote-quote {
+  border-left: 4px solid var(--quote-fg);
   padding-left: 0.375rem;
-  border-radius: 0.125rem 0 0 0.125rem;
 }
 
 .cm-blockquote-bg {
@@ -330,7 +329,7 @@
   font-size: 1em;
 }
 
-.raw-mode .cm-blockquote-border {
+.raw-mode .cm-blockquote-quote {
   border-left: none;
   padding-left: 0;
 }

@@ -20,10 +20,13 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
     parents: new Set(['ATXHeading1', 'ATXHeading2', 'ATXHeading3', 'ATXHeading4', 'ATXHeading5', 'ATXHeading6']),
   },
   { marker: 'LinkMark', parents: new Set(['Autolink']) },
+  { marker: 'QuoteMark', parents: new Set(['Blockquote']) },
 ];
 
+const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
+
 const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
-const blockquoteBorderDeco = Decoration.mark({ class: 'cm-blockquote-border' });
+const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
 const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
 const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
 const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
@@ -96,7 +99,7 @@ function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>
         for (const p of hiddenParents) {
           if (node.from >= p.from && node.to <= p.to) {
             ranges.push(formattingMaskDeco.range(node.from, node.to));
-            if (cfg.marker === 'HeaderMark') {
+            if (HIDE_TRAILING_SPACE.has(cfg.marker)) {
               const after = view.state.doc.sliceString(node.to, node.to + 1);
               if (after === ' ') {
                 ranges.push(formattingMaskDeco.range(node.to, node.to + 1));
@@ -121,6 +124,8 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
 
   const codeBlockLines = new Set<number>();
   const parserHrs = new Set<number>();
+  const blockquoteLines = new Set<number>();
+  const cursor = view.state.selection.main.head;
 
   for (const { from, to } of view.visibleRanges) {
     tree.iterate({
@@ -139,6 +144,14 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
           ranges.push(inlineCodeDeco.range(node.from, node.to));
         } else if (node.name === 'HorizontalRule') {
           parserHrs.add(node.from);
+        } else if (node.name === 'Blockquote') {
+          if (!(cursor >= node.from && cursor <= node.to)) {
+            const fromLine = view.state.doc.lineAt(node.from);
+            const toLine = view.state.doc.lineAt(node.to);
+            for (let i = fromLine.number; i <= toLine.number; i++) {
+              blockquoteLines.add(i);
+            }
+          }
         }
       },
     });
@@ -159,9 +172,9 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       const bqMatch = bqMatchRe.exec(line.text);
       if (bqMatch) {
         ranges.push(blockquoteBgDeco.range(line.from, line.to));
-        ranges.push(
-          blockquoteBorderDeco.range(line.from + bqMatch.index, line.from + bqMatch.index + bqMatch[0].length),
-        );
+        if (blockquoteLines.has(line.number)) {
+          ranges.push(blockquoteQuoteDeco.range(line.from));
+        }
       }
 
       const bulletMatch = bulletMatchRe.exec(line.text);
