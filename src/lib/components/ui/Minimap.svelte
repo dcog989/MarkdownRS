@@ -13,6 +13,7 @@ let trackRef = $state<HTMLDivElement>();
 const MINIMAP_WIDTH = 64;
 const LINE_HEIGHT = 3;
 const LINE_GAP = 1;
+const MIN_LINE_HEIGHT = 1;
 
 function fitLines(
     availableHeight: number,
@@ -25,7 +26,7 @@ function fitLines(
     const ideal = lineCount * (maxLineH + maxGap);
     if (ideal <= availableHeight) return { lineH: maxLineH, gap: maxGap };
 
-    const shrinkGap = Math.max(0, (availableHeight - lineCount) / (lineCount - 1));
+    const shrinkGap = Math.max(0, (availableHeight - lineCount * MIN_LINE_HEIGHT) / (lineCount - 1));
     const gap = Math.min(maxGap, shrinkGap);
     const lineH = (availableHeight - gap * (lineCount - 1)) / lineCount;
     return { lineH, gap };
