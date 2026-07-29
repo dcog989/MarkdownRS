@@ -250,6 +250,7 @@ $effect(() => {
         bottom: 0.125rem;
         z-index: 60;
         width: 68px;
+        overflow: hidden;
     }
     .minimap-canvas {
         display: block;
