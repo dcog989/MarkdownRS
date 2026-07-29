@@ -276,6 +276,20 @@
   font-family: monospace;
 }
 
+.rendered-mode .cm-line:has(.cm-code-info) {
+  display: flex;
+  align-items: baseline;
+}
+
+.rendered-mode .cm-code-info {
+  margin-left: auto;
+  padding: 0.15em 0.5em 0 0;
+  opacity: 0.6;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .cm-blockquote {
   color: var(--quote-fg);
 }

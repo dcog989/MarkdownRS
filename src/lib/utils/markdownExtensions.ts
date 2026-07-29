@@ -21,7 +21,7 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
   },
   { marker: 'LinkMark', parents: new Set(['Autolink']) },
   { marker: 'QuoteMark', parents: new Set(['Blockquote']) },
-  { marker: 'CodeMark', parents: new Set(['InlineCode']) },
+  { marker: 'CodeMark', parents: new Set(['InlineCode', 'FencedCode']) },
 ];
 
 const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
@@ -32,6 +32,7 @@ const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
 const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
 const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
 const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
+const codeInfoDeco = Decoration.mark({ class: 'cm-code-info' });
 const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr cm-hr-raw' });
 const horizontalRuleMaskedDeco = Decoration.mark({ class: 'cm-hr cm-hr-mask' });
 const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
@@ -146,6 +147,8 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
           }
         } else if (node.name === 'InlineCode') {
           ranges.push(inlineCodeDeco.range(node.from, node.to));
+        } else if (node.name === 'CodeInfo') {
+          ranges.push(codeInfoDeco.range(node.from, node.to));
         } else if (node.name === 'HorizontalRule') {
           parserHrs.add(node.from);
         } else if (node.name === 'Blockquote') {
