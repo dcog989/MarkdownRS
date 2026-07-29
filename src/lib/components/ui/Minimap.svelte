@@ -14,6 +14,23 @@ const MINIMAP_WIDTH = 64;
 const LINE_HEIGHT = 3;
 const LINE_GAP = 1;
 
+function fitLines(
+    availableHeight: number,
+    lineCount: number,
+    maxLineH: number,
+    maxGap: number,
+): { lineH: number; gap: number } {
+    if (lineCount <= 1) return { lineH: availableHeight, gap: 0 };
+
+    const ideal = lineCount * (maxLineH + maxGap);
+    if (ideal <= availableHeight) return { lineH: maxLineH, gap: maxGap };
+
+    const shrinkGap = Math.max(0, (availableHeight - lineCount) / (lineCount - 1));
+    const gap = Math.min(maxGap, shrinkGap);
+    const lineH = (availableHeight - gap * (lineCount - 1)) / lineCount;
+    return { lineH, gap };
+}
+
 function getColors() {
     const style = getComputedStyle(document.documentElement);
     return {
@@ -46,10 +63,7 @@ function renderMinimap() {
     const dpr = window.devicePixelRatio || 1;
 
     const contentH = Math.min(trackHeight, Math.max(1, totalLines * (LINE_HEIGHT + LINE_GAP)));
-    const gap = totalLines > 1
-        ? Math.min(LINE_GAP, Math.max(0, (contentH - totalLines) / (totalLines - 1)))
-        : 0;
-    const lineH = (contentH - gap * (totalLines - 1)) / totalLines;
+    const { lineH, gap } = fitLines(contentH, totalLines, LINE_HEIGHT, LINE_GAP);
 
     canvas.width = MINIMAP_WIDTH * dpr;
     canvas.height = contentH * dpr;
