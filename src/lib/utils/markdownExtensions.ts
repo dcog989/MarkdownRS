@@ -38,6 +38,7 @@ const horizontalRuleMaskedDeco = Decoration.mark({ class: 'cm-hr cm-hr-mask' });
 const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
 const formattingMaskDeco = Decoration.mark({ class: 'cm-formatting-mask' });
+const formattingMaskAutolinkDeco = Decoration.mark({ class: 'cm-formatting-mask-autolink' });
 
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
@@ -103,11 +104,12 @@ function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>
         if (!cfg) return;
         for (const p of hiddenParents) {
           if (node.from >= p.from && node.to <= p.to) {
-            ranges.push(formattingMaskDeco.range(node.from, node.to));
+            const deco = cfg.marker === 'LinkMark' ? formattingMaskAutolinkDeco : formattingMaskDeco;
+            ranges.push(deco.range(node.from, node.to));
             if (HIDE_TRAILING_SPACE.has(cfg.marker)) {
               const after = view.state.doc.sliceString(node.to, node.to + 1);
               if (after === ' ') {
-                ranges.push(formattingMaskDeco.range(node.to, node.to + 1));
+                ranges.push(deco.range(node.to, node.to + 1));
               }
             }
             break;
