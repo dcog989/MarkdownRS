@@ -11,7 +11,7 @@ let canvasRef = $state<HTMLCanvasElement>();
 let trackRef = $state<HTMLDivElement>();
 
 const MINIMAP_WIDTH = 64;
-const LINE_HEIGHT = 3;
+const LINE_HEIGHT = 2;
 const LINE_GAP = 1;
 const MIN_LINE_HEIGHT = 1;
 
@@ -35,9 +35,10 @@ function fitLines(
 function getColors() {
     const style = getComputedStyle(document.documentElement);
     return {
+        bg: style.getPropertyValue('--surface-1').trim() || '#1e1e1e',
         text: style.getPropertyValue('--text-primary').trim() || '#888',
-        heading: style.getPropertyValue('--accent-primary').trim() || '#569cd6',
-        code: style.getPropertyValue('--accent-secondary').trim() || '#ce9178',
+        heading: style.getPropertyValue('--syntax-heading').trim() || '#d32f2f',
+        code: style.getPropertyValue('--code-fg').trim() || '#888',
         list: style.getPropertyValue('--text-secondary').trim() || '#888',
     };
 }
@@ -84,6 +85,9 @@ function renderMinimap() {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, MINIMAP_WIDTH, contentH);
 
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, MINIMAP_WIDTH, contentH);
+
     const scrollDOM = view.scrollDOM;
     const scrollTop = scrollDOM.scrollTop;
     const scrollHeight = scrollDOM.scrollHeight;
@@ -91,6 +95,15 @@ function renderMinimap() {
 
     const viewportTop = scrollHeight > 0 ? (scrollTop / scrollHeight) * contentH : 0;
     const viewportBottom = scrollHeight > 0 ? ((scrollTop + clientHeight) / scrollHeight) * contentH : contentH;
+
+    if (scrollHeight > clientHeight) {
+        ctx.fillStyle = 'rgba(128, 128, 128, 0.35)';
+        ctx.fillRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
+
+        ctx.strokeStyle = 'rgba(128, 128, 128, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
+    }
 
     const paddingX = 2;
     const barWidth = MINIMAP_WIDTH - paddingX * 2;
@@ -127,17 +140,6 @@ function renderMinimap() {
         }
 
         ctx.fillRect(paddingX, y, barWidth, lineH);
-    }
-
-    ctx.globalAlpha = 1;
-
-    if (scrollHeight > clientHeight) {
-        ctx.fillStyle = 'rgba(128, 128, 128, 0.35)';
-        ctx.fillRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
-
-        ctx.strokeStyle = 'rgba(128, 128, 128, 0.7)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
     }
 }
 
