@@ -1,3 +1,4 @@
+import { closeCompletion } from '@codemirror/autocomplete';
 import type { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
@@ -72,6 +73,8 @@ export class TabSyncManager {
   ) {
     const totalStart = performance.now();
     const oldTabId = view._currentTabId;
+
+    closeCompletion(view);
 
     let saveOldMs = 0;
     if (this.timerRefs.content) {
