@@ -105,8 +105,18 @@ export function closeTab(id: string) {
       editorStore.closedTabsHistory.splice(existingIndex, 1);
     }
 
-    const closedTab: EditorTab = { ...tab };
-    const closedEntry: ClosedTab = { tab: closedTab, index, historyState };
+    // Large, clean, disk-backed files are re-readable from disk on reopen, so
+    // don't hold their full content (and undo history built on that content)
+    // in memory for the lifetime of the closed-tabs history.
+    const canReloadFromDisk =
+      !!tab.path && !tab.isDirty && tab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
+
+    const closedTab: EditorTab = canReloadFromDisk ? { ...tab, content: '', contentLoaded: false } : { ...tab };
+    const closedEntry: ClosedTab = {
+      tab: closedTab,
+      index,
+      historyState: canReloadFromDisk ? undefined : historyState,
+    };
 
     editorStore.closedTabsHistory = [closedEntry, ...editorStore.closedTabsHistory].slice(0, limit);
   }
@@ -129,9 +139,7 @@ export function reopenClosedTab(historyIndex: number): string | null {
   restoredTs.contentChanged = true;
   restoredTs.isPersisted = false;
   initTransientState(entry.tab.id, restoredTs);
-  if (entry.tab.contentLoaded === false) {
-    entry.tab.contentLoaded = false;
-  }
+  const needsDiskReload = entry.tab.contentLoaded === false;
 
   if (entry.historyState) {
     updateHistoryState(entry.tab.id, entry.historyState);
@@ -145,6 +153,13 @@ export function reopenClosedTab(historyIndex: number): string | null {
   appState.activeTabId = entry.tab.id;
 
   editorStore.sessionDirty = true;
+
+  if (needsDiskReload) {
+    // Content was dropped on close to save memory (see closeTab); pull it
+    // back from disk now that the tab is active again.
+    import('$lib/services/fileMetadata').then(({ reloadFileContent }) => reloadFileContent(entry.tab.id));
+  }
+
   return entry.tab.id;
 }
 
