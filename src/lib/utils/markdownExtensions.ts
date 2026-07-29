@@ -180,7 +180,10 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       const bulletMatch = bulletMatchRe.exec(line.text);
       if (bulletMatch) {
         const dashStart = line.from + bulletMatch[1].length;
-        ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
+        const nearMarker = cursor >= dashStart && cursor <= dashStart + 1;
+        if (!nearMarker) {
+          ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
+        }
       }
 
       hlRegex.lastIndex = 0;

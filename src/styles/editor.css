@@ -314,9 +314,16 @@
 }
 
 .cm-bullet {
+  font-size: 0;
+  line-height: 0;
+}
+
+.cm-bullet::before {
+  content: "•";
+  font-size: 1.1rem;
+  line-height: 1;
   color: var(--accent-secondary);
   font-weight: 900;
-  font-size: 1.1em;
 }
 
 /* Raw mode: suppress all visual decorations, keep only syntax colors */
@@ -351,9 +358,12 @@
 }
 
 .raw-mode .cm-bullet {
-  color: inherit;
-  font-weight: inherit;
   font-size: inherit;
+  line-height: inherit;
+}
+
+.raw-mode .cm-bullet::before {
+  content: none;
 }
 
 .raw-mode .cm-code,
