@@ -10,6 +10,7 @@ import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from './backend';
 
 const MAX_SUGGESTION_CACHE_SIZE = 200;
+const MAX_VALID_CACHE_SIZE = 5000;
 
 export class SpellcheckManager {
   dictionaryLoaded = $state(false);
@@ -94,6 +95,13 @@ export class SpellcheckManager {
     if (this.suggestionCache.size > MAX_SUGGESTION_CACHE_SIZE) {
       this.suggestionCache.clear();
     }
+  }
+
+  addValidWord(word: string): void {
+    if (this.validCache.size >= MAX_VALID_CACHE_SIZE) {
+      this.validCache.clear();
+    }
+    this.validCache.add(word);
   }
 
   async prefetchSuggestions(word: string): Promise<void> {

@@ -154,7 +154,7 @@ export const createSpellCheckLinter = () => {
                   }
                 }
               } else {
-                validCache.add(baseLower);
+                spellcheckState.addValidWord(baseLower);
               }
             }
           }
