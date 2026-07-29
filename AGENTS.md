@@ -48,10 +48,10 @@
 - Prefer incremental improvements over rewrites.
 - Use explicit types and named constants (no magic numbers).
 - Return explicit error types; do not suppress exceptions.
-- Follow standard repository linting and formatting configs (Biome, rustfmt).
-- Decompose files over 400 lines that mix concerns.
+- Follow standard repository linting and formatting configs (Biome, rustfmt, .editorconfig).
+- Decompose files over 400 lines if they mix concerns.
 - Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
-- Self-documenting code (clear naming, no comments for commentary).
+- Self-documenting code via clear naming. Use comments only for complex workarounds or issues that need noting.
 
 ## Common Patterns
 
