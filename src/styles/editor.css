@@ -319,6 +319,10 @@
   z-index: -1;
 }
 
+.cm-hr-raw::after {
+  display: none;
+}
+
 .cm-bullet {
   font-size: 0;
   line-height: 0;
