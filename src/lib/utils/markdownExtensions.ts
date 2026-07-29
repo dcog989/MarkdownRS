@@ -1,6 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
 import type { Range } from '@codemirror/state';
-import { Decoration, type DecorationSet, type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 const HEADING_NODE_NAMES = new Set([
   'ATXHeading1',
@@ -261,3 +261,36 @@ export function createMarkdownDecorationsPlugin(rendered: boolean) {
     { decorations: (v) => v.decorations },
   );
 }
+
+export const codeBlockCopyHandler = EditorView.domEventHandlers({
+  mousedown: (event, view) => {
+    const target = event.target as HTMLElement;
+    if (!target.classList.contains('cm-code-info')) return false;
+
+    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (pos === null) return false;
+
+    const tree = syntaxTree(view.state);
+    let node: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
+    while (node && node.name !== 'FencedCode') {
+      node = node.parent;
+    }
+    if (!node) return false;
+
+    const fencedNode = node;
+
+    const doc = view.state.doc;
+    const startLine = doc.lineAt(fencedNode.from);
+    const endLine = doc.lineAt(fencedNode.to);
+
+    let codeEnd = fencedNode.to;
+    if (endLine.number > startLine.number && /^```\s*$/.test(endLine.text)) {
+      codeEnd = endLine.from;
+    }
+
+    const code = doc.sliceString(startLine.to + 1, codeEnd);
+    navigator.clipboard.writeText(code).catch(() => {});
+
+    return true;
+  },
+});

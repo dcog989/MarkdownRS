@@ -289,11 +289,29 @@
 
 .rendered-mode .cm-code-info {
   margin-left: auto;
-  padding: 0.15em 0.5em 0 0;
-  opacity: 0.6;
+  padding: 0.2em 0.6em;
   font-size: 0.75em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 1px solid var(--border-secondary);
+  border-radius: 4px;
+  background-color: var(--surface-active);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+  line-height: 1;
+  margin-top: 0.1em;
+  color: var(--text-primary);
+}
+
+.rendered-mode .cm-code-info::before {
+  content: "Copy ";
+}
+
+.rendered-mode .cm-code-info:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--text-primary);
 }
 
 .cm-blockquote {
