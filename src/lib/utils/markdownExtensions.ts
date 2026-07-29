@@ -31,7 +31,7 @@ const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
 const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
 const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
 const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
-const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr' });
+const horizontalRuleMaskedDeco = Decoration.mark({ class: 'cm-hr cm-hr-mask' });
 const bulletPointDeco = Decoration.mark({ class: 'cm-bullet' });
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
 const formattingMaskDeco = Decoration.mark({ class: 'cm-formatting-mask' });
@@ -219,10 +219,10 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         }
       }
 
-      if (parserHrs.has(line.from)) {
-        ranges.push(horizontalRuleDeco.range(line.from, line.to));
-      } else if (line.text.trim() === '---') {
-        ranges.push(horizontalRuleDeco.range(line.from, line.to));
+      if (parserHrs.has(line.from) || line.text.trim() === '---') {
+        if (!(cursor >= line.from && cursor <= line.to)) {
+          ranges.push(horizontalRuleMaskedDeco.range(line.from, line.to));
+        }
       }
 
       pos = line.to + 1;
