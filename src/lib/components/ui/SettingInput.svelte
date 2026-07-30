@@ -59,17 +59,19 @@ let {
             onchange={(e) => onChange(e.currentTarget.checked)}
             class="accent-accent-primary h-4 w-4 cursor-pointer rounded" />
     {:else if setting.type === 'select'}
-        <select
-            id={setting.key}
-            value={String(value ?? setting.defaultValue)}
-            onchange={(e) => onChange(e.currentTarget.value)}
-            class="text-ui bg-bg-input text-fg-default w-full cursor-pointer rounded border px-2 py-1 outline-none">
-            {#each setting.options || [] as option, idx (option)}
-                <option value={option}>
-                    {setting.optionLabels?.[idx] || option}
-                </option>
-            {/each}
-        </select>
+        <div class="select-wrap">
+            <select
+                id={setting.key}
+                value={String(value ?? setting.defaultValue)}
+                onchange={(e) => onChange(e.currentTarget.value)}
+                class="text-ui bg-bg-input text-fg-default w-full cursor-pointer rounded border pl-2 py-1 outline-none">
+                {#each setting.options || [] as option, idx (option)}
+                    <option value={option}>
+                        {setting.optionLabels?.[idx] || option}
+                    </option>
+                {/each}
+            </select>
+        </div>
     {:else if setting.type === 'dictionary-multi-select'}
         <div>
             <DictionarySelector
