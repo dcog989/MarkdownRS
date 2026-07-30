@@ -140,16 +140,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'Number of spaces used for indentation.',
     },
     {
-      key: 'undoDepth',
-      label: 'Undo History Depth',
-      type: 'number',
-      category: 'Editor',
-      defaultValue: 100,
-      min: 10,
-      max: 999,
-      tooltip: 'Maximum number of undo steps to remember.',
-    },
-    {
       key: 'recentChangesCount',
       label: 'Recent Changes Count',
       type: 'number',

@@ -19,7 +19,7 @@ export const settingsState = $state({
   autocompleteDelay: 850,
   recentChangesTimespan: 600,
   recentChangesCount: 16,
-  undoDepth: 64,
+  undoDepth: 100,
   previewFontFamily: 'system-ui, -apple-system, sans-serif',
   previewFontSize: 16,
 
