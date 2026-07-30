@@ -26,6 +26,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Advanced',
       defaultValue: 'info',
       options: ['trace', 'debug', 'info', 'warn', 'error'],
+      tooltip: 'Controls the verbosity of application logs. Requires restart to take effect.',
       onChange: onLogLevelChange,
     },
 
@@ -36,6 +37,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Appearance',
       defaultValue: 'System',
       options: availableThemes,
+      tooltip: 'Select the application theme. Changes apply immediately.',
       onChange: onThemeChange,
     },
 
@@ -47,6 +49,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 'rendered',
       options: ['raw', 'rendered'],
       optionLabels: ['Raw Mode', 'Rendered Mode'],
+      tooltip: 'Raw: edit Markdown source directly. Rendered: see formatted output while editing.',
     },
     {
       key: 'editorFontFamily',
@@ -54,6 +57,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'text',
       category: 'Editor',
       defaultValue: "'Source Code Pro', 'Cascadia Code', Menlo, Consolas, 'DejaVu Sans Mono', ui-monospace, monospace",
+      tooltip: 'Monospace font used in the editor.',
     },
     {
       key: 'editorFontSize',
@@ -63,6 +67,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 14,
       min: 8,
       max: 32,
+      tooltip: 'Editor font size in pixels.',
     },
     {
       key: 'editorWordWrap',
@@ -70,6 +75,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'boolean',
       category: 'Editor',
       defaultValue: true,
+      tooltip: 'Wrap long lines at the viewport edge.',
     },
     {
       key: 'wrapGuideColumn',
@@ -87,6 +93,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'boolean',
       category: 'Editor',
       defaultValue: false,
+      tooltip: 'Display whitespace characters (spaces, tabs) in the editor.',
     },
     {
       key: 'enableAutocomplete',
@@ -94,6 +101,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'boolean',
       category: 'Editor',
       defaultValue: true,
+      tooltip: 'Show autocomplete suggestions as you type.',
     },
     {
       key: 'autocompleteDelay',
@@ -103,6 +111,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 850,
       min: 0,
       max: 2000,
+      tooltip: 'Delay in milliseconds before autocomplete suggestions appear.',
     },
     {
       key: 'doubleClickSelectsTrailingSpace',
@@ -128,6 +137,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 2,
       min: 2,
       max: 8,
+      tooltip: 'Number of spaces used for indentation.',
     },
     {
       key: 'undoDepth',
@@ -137,6 +147,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 100,
       min: 10,
       max: 999,
+      tooltip: 'Maximum number of undo steps to remember.',
     },
     {
       key: 'recentChangesCount',
@@ -186,6 +197,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 'system',
       options: ['system', 'LF', 'CRLF'],
       optionLabels: ['System Default', 'LF (Unix)', 'CRLF (Windows)'],
+      tooltip: 'Line ending style for new files.',
     },
     {
       key: 'formatOnSave',
@@ -193,6 +205,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'boolean',
       category: 'Formatter',
       defaultValue: false,
+      tooltip: 'Automatically format the document when saving.',
     },
     {
       key: 'formatOnPaste',
@@ -200,6 +213,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'boolean',
       category: 'Formatter',
       defaultValue: false,
+      tooltip: 'Automatically format pasted content.',
     },
     {
       key: 'formatterBulletChar',
@@ -208,6 +222,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Formatter',
       defaultValue: '-',
       options: ['-', '*', '+'],
+      tooltip: 'Character used for unordered list bullets.',
     },
     {
       key: 'formatterEmphasisChar',
@@ -217,6 +232,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: '*',
       options: ['*', '_'],
       optionLabels: ['*', '_'],
+      tooltip: 'Character used for italic/bold emphasis.',
     },
     {
       key: 'formatterCodeFence',
@@ -225,6 +241,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'Formatter',
       defaultValue: '```',
       options: ['```', '~~~'],
+      tooltip: 'Code fence delimiter style.',
     },
     {
       key: 'formatterTableAlignment',
@@ -232,6 +249,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'boolean',
       category: 'Formatter',
       defaultValue: true,
+      tooltip: 'Automatically align table columns on format.',
     },
 
     {
@@ -242,6 +260,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 120,
       min: 80,
       max: 300,
+      tooltip: 'Minimum width of tabs in pixels.',
     },
     {
       key: 'tabWidthMax',
@@ -251,6 +270,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 180,
       min: 100,
       max: 400,
+      tooltip: 'Maximum width of tabs in pixels.',
     },
     {
       key: 'collapsePinnedTabs',
@@ -268,6 +288,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 'mru',
       options: ['sequential', 'mru'],
       optionLabels: ['Sequential', 'MRU'],
+      tooltip: 'Sequential: cycle tabs in order. MRU: cycle to most recently used tab.',
     },
     {
       key: 'tabNameFromContent',
@@ -305,6 +326,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 'end',
       options: ['beginning', 'right', 'end'],
       optionLabels: ['The Beginning', 'The Right', 'The End'],
+      tooltip: 'Where new tabs are inserted in the tab bar.',
     },
     {
       key: 'startupBehavior',
@@ -314,6 +336,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 'last-focused',
       options: ['first', 'last-focused', 'new'],
       optionLabels: ['Show First', 'Show Last Focused', 'Create New'],
+      tooltip: 'What to show when the application starts.',
     },
     {
       key: 'statusBarTransparency',
@@ -324,6 +347,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 0,
       max: 100,
       step: 5,
+      tooltip: 'Status bar background opacity. Lower values are more transparent.',
     },
     {
       key: 'tooltipDelay',
@@ -333,6 +357,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 1250,
       min: 0,
       max: 5000,
+      tooltip: 'Delay in milliseconds before tooltips appear.',
     },
     {
       key: 'findPanelTransparent',
@@ -365,6 +390,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'text',
       category: 'Preview',
       defaultValue: 'system-ui, -apple-system, sans-serif',
+      tooltip: 'Font used in the preview pane.',
     },
     {
       key: 'previewFontSize',
@@ -374,6 +400,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 16,
       min: 10,
       max: 32,
+      tooltip: 'Preview font size in pixels.',
     },
     {
       key: 'markdownFlavor',
@@ -383,6 +410,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: 'gfm',
       options: ['gfm', 'commonmark'],
       optionLabels: ['GitHub Flavored Markdown', 'CommonMark'],
+      tooltip: 'Markdown parsing flavor. GFM includes tables, strikethrough, and task lists.',
     },
 
     {
@@ -421,7 +449,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
             type: 'custom-context-menu',
             category: 'System',
             defaultValue: false,
-            tooltip: "Enable 'Open with MarkdownRS` in Windows Explorer context menu.",
+            tooltip: "Enable 'Open with MarkdownRS' in Windows Explorer context menu.",
           },
         ]
       : []),

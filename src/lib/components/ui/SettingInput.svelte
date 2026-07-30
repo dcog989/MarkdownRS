@@ -21,7 +21,7 @@ let {
 } = $props();
 </script>
 
-<div use:tooltip={setting.tooltip || ''}>
+<div use:tooltip={setting.tooltip}>
     {#if setting.type === 'text'}
         <Input
             id={setting.key}
