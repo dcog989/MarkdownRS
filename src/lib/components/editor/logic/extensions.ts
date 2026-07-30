@@ -1,5 +1,8 @@
 import { closeBrackets } from '@codemirror/autocomplete';
 import { history, historyField } from '@codemirror/commands';
+import { css } from '@codemirror/lang-css';
+import { html } from '@codemirror/lang-html';
+import { javascript } from '@codemirror/lang-javascript';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import {
   defaultHighlightStyle,
@@ -47,7 +50,7 @@ const codeLanguages: LanguageDescription[] = [
     alias: ['ecmascript', 'js', 'node', 'ts', 'typescript', 'jsx', 'tsx'],
     extensions: ['js', 'mjs', 'cjs', 'ts', 'mts', 'cts', 'jsx', 'tsx'],
     load() {
-      return import('@codemirror/lang-javascript').then((m) => m.javascript());
+      return Promise.resolve(javascript());
     },
   }),
   LanguageDescription.of({
@@ -62,14 +65,14 @@ const codeLanguages: LanguageDescription[] = [
     alias: ['xhtml'],
     extensions: ['html', 'htm'],
     load() {
-      return import('@codemirror/lang-html').then((m) => m.html());
+      return Promise.resolve(html());
     },
   }),
   LanguageDescription.of({
     name: 'CSS',
     extensions: ['css'],
     load() {
-      return import('@codemirror/lang-css').then((m) => m.css());
+      return Promise.resolve(css());
     },
   }),
   LanguageDescription.of({
