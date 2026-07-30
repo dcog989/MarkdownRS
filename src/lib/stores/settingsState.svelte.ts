@@ -41,6 +41,7 @@ export const settingsState = $state({
   tabNameFromContent: false,
   wrapGuideColumn: 0,
   showMinimap: false,
+  writerWrapLength: 100,
   collapsePinnedTabs: false,
   enableClosedTabHistory: true,
   customShortcuts: {} as Record<string, string>,

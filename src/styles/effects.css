@@ -152,14 +152,15 @@
 }
 
 .writer-mode .writer-content {
-  max-width: min(100ch, 100vw);
+  width: 100%;
+}
+
+.writer-mode .cm-content {
+  max-width: min(calc(var(--writer-wrap, 100) * 1ch), 100vw);
   margin: 0 auto;
+  padding-left: 0;
 }
 
 .writer-mode .cm-gutters {
   display: none;
-}
-
-.writer-mode .cm-content {
-  padding-left: 0;
 }

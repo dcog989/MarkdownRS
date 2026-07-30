@@ -56,6 +56,7 @@ function onResizeMouseDown(e: MouseEvent) {
                         class:flex-col={!splitResize.isVertical}>
                     <div
                         class="writer-content h-full overflow-hidden"
+                        style:--writer-wrap={appContext.settings.writerWrapLength}
                         style:flex={showPreview
                             ? `0 0 ${appContext.settings.splitPercentage * 100}%`
                             : '1 1 100%'}>

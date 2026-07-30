@@ -41,13 +41,7 @@ function toggleSplit() {
 }
 
 function handleWriterMode() {
-    const wasWriterMode = appContext.app.writerMode;
     toggleWriterMode();
-    if (wasWriterMode) {
-        document.exitFullscreen().catch(() => {});
-    } else {
-        document.documentElement.requestFullscreen().catch(() => {});
-    }
 }
 
 function closeMenu() {

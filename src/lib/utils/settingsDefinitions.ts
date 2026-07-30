@@ -122,6 +122,16 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'Replace the scrollbar with a minimap overview of the document',
     },
     {
+      key: 'writerWrapLength',
+      label: 'Writer Mode Wrap Length',
+      type: 'number',
+      category: 'Editor',
+      defaultValue: 100,
+      min: 40,
+      max: 200,
+      tooltip: 'Maximum line width in characters when Writer Mode is active.',
+    },
+    {
       key: 'defaultIndent',
       label: 'Indent Default (spaces)',
       type: 'number',

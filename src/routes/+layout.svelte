@@ -59,11 +59,6 @@ onMount(() => {
             e.preventDefault();
         }
 
-        // Prevent browser's native fullscreen on F11
-        if (key === 'f11') {
-            e.preventDefault();
-        }
-
         // Let shortcut manager handle the event
         void shortcutManager.handleKeyEvent(e);
     };
@@ -71,13 +66,6 @@ onMount(() => {
     // Prevent browser context menu globally
     const handleContextMenu = (e: MouseEvent) => {
         e.preventDefault();
-    };
-
-    // Sync writerMode with actual fullscreen state
-    const handleFullscreenChange = () => {
-        if (!document.fullscreenElement && appContext.app.writerMode) {
-            appContext.app.writerMode = false;
-        }
     };
 
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -90,14 +78,11 @@ onMount(() => {
 
     window.addEventListener('keydown', handleKeydown, { capture: true });
     document.addEventListener('contextmenu', handleContextMenu, { passive: false });
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-
     return () => {
         window.removeEventListener('unhandledrejection', onUnhandledRejection);
         mq.removeEventListener('change', handleOSThemeChange);
         window.removeEventListener('keydown', handleKeydown, { capture: true });
         document.removeEventListener('contextmenu', handleContextMenu);
-        document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
 });
 </script>
