@@ -173,7 +173,9 @@ export class AppError extends Error {
       case 'File:Read':
         return 'Failed to read file';
       case 'File:Write':
-        return 'Failed to save file';
+        return this.message && this.message !== 'Failed to save file'
+          ? `Failed to save file: ${this.message}`
+          : 'Failed to save file';
       case 'File:Metadata':
         return 'Failed to read file metadata';
       case 'Session:Save':

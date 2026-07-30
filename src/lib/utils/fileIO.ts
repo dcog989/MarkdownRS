@@ -20,8 +20,6 @@ export async function renameFileOnDisk(oldPath: string, newPath: string): Promis
 }
 
 export async function writeTextFile(path: string, content: string): Promise<boolean> {
-  const result = await callBackend('write_text_file', { path, content }, 'File:Write', undefined, {
-    ignore: true,
-  });
+  const result = await callBackend('write_text_file', { path, content }, 'File:Write');
   return !!result;
 }

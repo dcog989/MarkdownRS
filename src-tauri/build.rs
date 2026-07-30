@@ -1,4 +1,6 @@
 fn main() {
+    tauri_build::build();
+
     let themes_dir = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
         .join("../src/styles/themes");
 
