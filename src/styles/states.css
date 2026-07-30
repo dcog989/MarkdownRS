@@ -170,4 +170,5 @@ textarea:focus-visible {
 /* Hover works the same in both modes */
 .bg-bg-panel button:hover {
   background-color: var(--surface-hover);
+  color: var(--text-primary);
 }

@@ -208,7 +208,16 @@
 }
 
 .settings-row {
-  display: contents;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: max-content 1fr 1fr;
+  column-gap: inherit;
+  align-items: inherit;
+  border-radius: 0.375rem;
+}
+
+.settings-row.bg-row-even {
+  background-color: oklch(from var(--text-primary) l c h / 0.04);
 }
 
 .settings-grid > .settings-row > div,
@@ -216,9 +225,4 @@
   min-height: 100%;
   display: flex;
   align-items: center;
-}
-
-.settings-row.bg-row-even > div,
-.settings-row.bg-row-even > label {
-  background-color: var(--surface-row);
 }

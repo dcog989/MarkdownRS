@@ -63,7 +63,7 @@ let {
             id={setting.key}
             value={String(value ?? setting.defaultValue)}
             onchange={(e) => onChange(e.currentTarget.value)}
-            class="text-ui bg-bg-input text-fg-default bg-border-main w-full cursor-pointer rounded border px-2 py-1 outline-none">
+            class="text-ui bg-bg-input text-fg-default w-full cursor-pointer rounded border px-2 py-1 outline-none">
             {#each setting.options || [] as option, idx (option)}
                 <option value={option}>
                     {setting.optionLabels?.[idx] || option}

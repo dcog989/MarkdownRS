@@ -172,7 +172,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
 
                     <div class="settings-row {rowClass}">
                         <div
-                            class="settings-category text-ui-sm py-2.5 pl-3 rounded-l-md">
+                            class="settings-category text-ui-sm py-2.5 pl-3">
                             {setting.category}
                         </div>
                         <label
@@ -180,7 +180,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
                             class="text-ui text-fg-default font-medium py-2.5 pl-8">
                             {setting.label}
                         </label>
-                        <div class="w-full py-2.5 pl-8 pr-3 rounded-r-md">
+                        <div class="w-full py-2.5 pl-8 pr-3">
                             <SettingInput
                                 {setting}
                                 value={getSettingValue(setting.key, setting.defaultValue)}
