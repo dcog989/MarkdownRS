@@ -19,8 +19,8 @@ struct CachedTheme {
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-pub const DEFAULT_DARK_THEME: &str = "RS-Dark";
-pub const DEFAULT_LIGHT_THEME: &str = "RS-Light";
+pub const DEFAULT_DARK_THEME: &str = "Default Dark";
+pub const DEFAULT_LIGHT_THEME: &str = "Default Light";
 
 const SHARED_EDITOR_CSS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),

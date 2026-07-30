@@ -2,7 +2,7 @@ export const settingsState = $state({
   splitView: true,
   theme: 'dark' as 'dark' | 'light',
   activeTheme: 'System',
-  availableThemes: ['System', 'RS-Dark', 'RS-Light'] as string[],
+  availableThemes: ['System', 'Default Dark', 'Default Light'] as string[],
   splitPercentage: 0.5,
   splitOrientation: 'vertical' as 'vertical' | 'horizontal',
   tabCycling: 'mru' as 'mru' | 'sequential',
@@ -62,7 +62,7 @@ export function toggleSplitView() {
 
 export function setTheme(newTheme: 'dark' | 'light') {
   settingsState.theme = newTheme;
-  settingsState.activeTheme = newTheme === 'dark' ? 'RS-Dark' : 'RS-Light';
+  settingsState.activeTheme = newTheme === 'dark' ? 'Default Dark' : 'Default Light';
 }
 
 export function syncThemeFromSystem() {

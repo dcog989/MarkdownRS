@@ -20,7 +20,12 @@ export function onLogLevelChange() {
 }
 
 export function onThemeChange() {
-  if (appContext.settings.activeTheme === 'System') {
+  const { activeTheme } = appContext.settings;
+  if (activeTheme === 'System') {
     syncThemeFromSystem();
+  } else if (activeTheme === 'Default Light') {
+    appContext.settings.theme = 'light';
+  } else if (activeTheme === 'Default Dark') {
+    appContext.settings.theme = 'dark';
   }
 }

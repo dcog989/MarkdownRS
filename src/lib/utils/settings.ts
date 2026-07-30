@@ -49,6 +49,8 @@ export async function initSettings() {
 
   if (settingsState.activeTheme === 'System') {
     syncThemeFromSystem();
+  } else if (settingsState.activeTheme === 'Default Light') {
+    settingsState.theme = 'light';
   }
 
   lastSavedState = JSON.stringify(getSettingsObject());
