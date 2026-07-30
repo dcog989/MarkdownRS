@@ -226,15 +226,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'Code fence delimiter style.',
     },
     {
-      key: 'formatterTableAlignment',
-      label: 'Align Table Columns',
-      type: 'boolean',
-      category: 'Formatter',
-      defaultValue: true,
-      tooltip: 'Automatically align table columns on format.',
-    },
-
-    {
       key: 'tabWidthMin',
       label: 'Tab Width Minimum (px)',
       type: 'number',

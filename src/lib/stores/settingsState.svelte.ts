@@ -31,7 +31,6 @@ export const settingsState = $state({
   formatterBulletChar: '-' as '-' | '*' | '+',
   formatterEmphasisChar: '*' as '*' | '_',
   formatterCodeFence: '```' as '```' | '~~~',
-  formatterTableAlignment: true,
   lineEndingPreference: 'system' as 'system' | 'LF' | 'CRLF',
   tooltipDelay: 1250,
   findPanelTransparent: false,
