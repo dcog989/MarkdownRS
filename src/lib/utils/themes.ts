@@ -2,33 +2,24 @@ import { callBackendSafe } from './backend';
 
 export const LEGACY_THEME_NAMES = ['default-dark', 'default-light'];
 
-export const THEME_MODE: Record<string, 'dark' | 'light'> = {
-  System: 'dark',
-  'RS-Dark': 'dark',
-  'RS-Light': 'light',
-  Catppuccin: 'dark',
-  Gruvbox: 'dark',
-  'Tokyo Night': 'dark',
-  'One Dark Pro': 'dark',
-  GitHub: 'dark',
-  Nord: 'dark',
-  'High Contrast': 'dark',
-  Dracula: 'dark',
-  'Fern Forest': 'dark',
-  'Pink Palace': 'dark',
-  Newspaper: 'light',
-};
-
-export const DEFAULT_THEME_NAMES = Object.keys(THEME_MODE)
-  .filter((t) => t !== 'System')
-  .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+export const DEFAULT_THEME_NAMES = [
+  'Catppuccin',
+  'Dracula',
+  'Fern Forest',
+  'GitHub',
+  'Gruvbox',
+  'High Contrast',
+  'Newspaper',
+  'Nord',
+  'One Dark Pro',
+  'Pink Palace',
+  'RS-Dark',
+  'RS-Light',
+  'Tokyo Night',
+].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
 export function keyed(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, '-');
-}
-
-export function resolveThemeMode(activeTheme: string): 'dark' | 'light' {
-  return THEME_MODE[activeTheme] ?? (activeTheme.toLowerCase().includes('light') ? 'light' : 'dark');
 }
 
 export async function getThemeCss(themeName: string): Promise<string> {

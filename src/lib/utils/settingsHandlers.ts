@@ -1,4 +1,4 @@
-import { syncThemeFromActiveTheme } from '$lib/stores/settingsState.svelte';
+import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
@@ -20,5 +20,7 @@ export function onLogLevelChange() {
 }
 
 export function onThemeChange() {
-  syncThemeFromActiveTheme();
+  if (appContext.settings.activeTheme === 'System') {
+    syncThemeFromSystem();
+  }
 }

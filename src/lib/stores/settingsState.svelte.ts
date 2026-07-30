@@ -1,5 +1,3 @@
-import { resolveThemeMode } from '$lib/utils/themes';
-
 export const settingsState = $state({
   splitView: true,
   theme: 'dark' as 'dark' | 'light',
@@ -67,14 +65,8 @@ export function setTheme(newTheme: 'dark' | 'light') {
   settingsState.activeTheme = newTheme === 'dark' ? 'RS-Dark' : 'RS-Light';
 }
 
-export function syncThemeFromActiveTheme() {
-  if (settingsState.activeTheme === 'System') {
-    if (typeof window !== 'undefined') {
-      settingsState.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return;
-  }
-  settingsState.theme = resolveThemeMode(settingsState.activeTheme);
+export function syncThemeFromSystem() {
+  settingsState.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 export function toggleOrientation() {
