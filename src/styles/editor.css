@@ -362,10 +362,6 @@
   font-weight: 900;
 }
 
-.cm-autolink-bracket {
-  color: transparent;
-}
-
 /* Raw mode: suppress all visual decorations, keep only syntax colors */
 .raw-mode .cm-h1,
 .raw-mode .cm-h2,
