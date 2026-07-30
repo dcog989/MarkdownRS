@@ -1,6 +1,6 @@
 import { callBackendSafe } from './backend';
 
-export const LEGACY_THEME_NAMES = ['default-dark', 'default-light'];
+export const LEGACY_THEME_NAMES = ['default-dark', 'default-light', 'rs-dark', 'rs-light'];
 
 export const DEFAULT_THEME_NAMES = [
   'Catppuccin',
