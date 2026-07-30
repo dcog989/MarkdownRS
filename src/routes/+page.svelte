@@ -1,4 +1,5 @@
 <script lang="ts">
+import { ChevronDown } from 'lucide-svelte';
 import { onDestroy } from 'svelte';
 import AppLifecycle from '$lib/components/app/AppLifecycle.svelte';
 import Editor from '$lib/components/editor/Editor.svelte';
@@ -7,8 +8,10 @@ import Preview from '$lib/components/preview/Preview.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
 import StatusBar from '$lib/components/ui/StatusBar.svelte';
 import TabBar from '$lib/components/ui/TabBar.svelte';
+import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
+import { pushToMru } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 
@@ -27,6 +30,7 @@ let isMarkdown = $derived.by(() => {
 });
 
 let showPreview = $derived(appContext.settings.splitView && isMarkdown);
+let showWriterTabDropdown = $state(false);
 
 onDestroy(() => {
     splitResize.cleanup();
@@ -49,6 +53,25 @@ function onResizeMouseDown(e: MouseEvent) {
             class="relative z-0 flex flex-1 overflow-hidden outline-none"
             class:writer-mode={appContext.app.writerMode}
             bind:this={mainContainer}>
+            {#if appContext.app.writerMode}
+                <div class="absolute top-2 left-0 pl-3 z-20">
+                    <button
+                        type="button"
+                        class="bg-bg-panel border-border-light hover:bg-bg-hover text-fg-default flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium shadow-lg transition-colors"
+                        onclick={() => (showWriterTabDropdown = !showWriterTabDropdown)}>
+                        <ChevronDown size={16} />
+                        <span>{appContext.editor.tabs.length} tab{appContext.editor.tabs.length !== 1 ? 's' : ''}</span>
+                    </button>
+                    <TabDropdown
+                        isOpen={showWriterTabDropdown}
+                        onSelect={(id) => {
+                            appContext.app.activeTabId = id;
+                            pushToMru(id);
+                            showWriterTabDropdown = false;
+                        }}
+                        onClose={() => (showWriterTabDropdown = false)} />
+                </div>
+            {/if}
             {#if appContext.app.activeTabId}
                     <div
                         class="flex h-full w-full"
