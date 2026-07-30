@@ -173,12 +173,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.filePathComp.of(config.isMarkdown ? [linkPlugin, linkTheme] : []),
     getEditorKeymap([...config.customKeymap]),
     c.themeComp.of(
-      generateDynamicTheme(
-        appContext.settings.editorFontSize,
-        appContext.settings.editorFontFamily,
-        isDark,
-        appContext.metrics.insertMode,
-      ),
+      generateDynamicTheme(appContext.settings.editorFontSize, appContext.settings.editorFontFamily, isDark),
     ),
     c.indentComp.of(indentUnit.of(' '.repeat(Math.max(1, appContext.settings.defaultIndent)))),
     c.whitespaceComp.of(

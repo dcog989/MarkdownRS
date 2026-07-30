@@ -11,7 +11,6 @@ import { indentUnit } from '@codemirror/language';
 import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
 import { commands } from '$lib/commands/commands';
 import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
-import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 
 function toCmKey(registryKey: string): string {
@@ -194,13 +193,6 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
   return keymap.of([
     ...customKeymap,
     ...cmBindings,
-    {
-      key: 'Insert',
-      run: () => {
-        toggleInsertMode();
-        return true;
-      },
-    },
     ...(completionKeymap as KeyBinding[]),
     ...(historyKeymap as KeyBinding[]),
     ...(closeBracketsKeymap as KeyBinding[]),

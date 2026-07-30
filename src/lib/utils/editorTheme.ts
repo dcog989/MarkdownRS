@@ -1,14 +1,13 @@
 import { EditorView } from '@codemirror/view';
 
-export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean, insertMode: 'INS' | 'OVR') {
+export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean) {
   const whitespaceColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)';
 
   return EditorView.theme({
     '&': { height: '100%', fontSize: `${fontSize}px` },
     '.cm-cursor': {
-      borderLeftColor: insertMode === 'OVR' ? 'transparent' : 'var(--text-primary)',
+      borderLeftColor: 'var(--text-primary)',
       borderLeftWidth: '2px',
-      borderBottom: insertMode === 'OVR' ? '2px solid var(--accent-secondary)' : 'none',
     },
     '.cm-scroller': { fontFamily, overflow: 'auto', overflowAnchor: 'none' },
     '.cm-content': { fontFamily },

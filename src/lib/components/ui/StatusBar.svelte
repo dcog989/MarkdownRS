@@ -3,7 +3,6 @@ import { ClipboardCopy, Pencil, TextWrap } from 'lucide-svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import MarkdownLintStatus from '$lib/components/ui/MarkdownLintStatus.svelte';
-import { toggleInsertMode } from '$lib/stores/editorMetrics.svelte';
 import { togglePreferredExtension, updateTabFields } from '$lib/stores/editorStore.svelte';
 import { toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -188,16 +187,6 @@ async function copyAllStats() {
 
         <button
             type="button"
-            onclick={toggleInsertMode}
-            use:tooltip={'Toggle Insert Mode'}
-            class="w-8 text-center font-bold {appContext.metrics.insertMode === 'OVR'
-                ? 'text-danger'
-                : 'text-accent-secondary'}">
-            {appContext.metrics.insertMode}
-        </button>
-
-        <button
-            type="button"
             class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
                 .settings.editorWordWrap
                 ? 'text-accent-secondary'
@@ -227,13 +216,15 @@ async function copyAllStats() {
         {#if canToggleFileType}
             <button
                 type="button"
-                class="text-accent-primary hover:text-accent-secondary hover-surface min-w-17.5 cursor-pointer rounded px-1 transition-colors"
+                class="text-accent-primary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
                 onclick={toggleFileType}
                 use:tooltip={'Toggle File Type (markdown/text)'}>
-                {fileType}
+                <span class="w-5 text-center font-bold">{fileType === 'markdown' ? 'M' : 'T'}</span>
             </button>
         {:else}
-            <span class="min-w-17.5 cursor-default" use:tooltip={'File Type'}>{fileType}</span>
+            <span class="flex cursor-default items-center px-1 opacity-70" use:tooltip={'File Type'}>
+                <span class="w-5 text-center font-bold">{fileType === 'markdown' ? 'M' : 'T'}</span>
+            </span>
         {/if}
         </div>
     </div>

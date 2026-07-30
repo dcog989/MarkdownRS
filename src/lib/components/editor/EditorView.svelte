@@ -122,8 +122,7 @@ $effect(() => {
     const theme = appContext.settings.theme;
     const fontSize = appContext.settings.editorFontSize;
     const fontFamily = appContext.settings.editorFontFamily;
-    const insertMode = appContext.metrics.insertMode;
-    view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === 'dark', insertMode)) });
+    view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === 'dark')) });
 });
 
 $effect(() => {
