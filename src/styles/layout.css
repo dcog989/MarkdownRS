@@ -201,7 +201,7 @@
 /* Settings */
 .settings-grid {
   display: grid;
-  grid-template-columns: max-content 1fr 1fr;
+  grid-template-columns: 7rem 1fr 1fr;
   column-gap: 2rem;
   align-items: center;
   width: 100%;
@@ -210,7 +210,7 @@
 .settings-row {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: max-content 1fr 1fr;
+  grid-template-columns: 7rem 1fr 1fr;
   column-gap: inherit;
   align-items: inherit;
   border-radius: 0.375rem;
