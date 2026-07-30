@@ -9,7 +9,7 @@ import { logger } from '$lib/utils/logger';
 import { saveSettings } from '$lib/utils/settings';
 import { getSettingDefinitions, type SettingDef } from '$lib/utils/settingsDefinitions';
 import { shortcutManager } from '$lib/utils/shortcuts';
-import { DEFAULT_THEME_NAMES, LEGACY_THEME_NAMES } from '$lib/utils/themes';
+import { DEFAULT_THEME_NAMES, keyed, LEGACY_THEME_NAMES } from '$lib/utils/themes';
 import Modal from './Modal.svelte';
 import ModalSearchHeader from './ModalSearchHeader.svelte';
 import SettingInput from './SettingInput.svelte';
@@ -51,7 +51,13 @@ $effect(() => {
             .then((customThemes) => {
                 if (!customThemes) return;
                 const defaults = DEFAULT_THEME_NAMES;
-                const customs = customThemes.filter((t) => !defaults.includes(t) && !LEGACY_THEME_NAMES.includes(t));
+                const customs = customThemes
+                    .filter(
+                        (t) =>
+                            !defaults.some((d) => keyed(d) === keyed(t)) &&
+                            !LEGACY_THEME_NAMES.some((l) => keyed(l) === keyed(t)),
+                    )
+                    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
                 appContext.settings.availableThemes = ['System', ...defaults, ...customs];
 
                 if (!appContext.settings.availableThemes.includes(appContext.settings.activeTheme)) {

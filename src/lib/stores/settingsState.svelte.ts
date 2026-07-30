@@ -1,3 +1,5 @@
+import { resolveThemeMode } from '$lib/utils/themes';
+
 export const settingsState = $state({
   splitView: true,
   theme: 'dark' as 'dark' | 'light',
@@ -72,7 +74,7 @@ export function syncThemeFromActiveTheme() {
     }
     return;
   }
-  settingsState.theme = settingsState.activeTheme.toLowerCase().includes('light') ? 'light' : 'dark';
+  settingsState.theme = resolveThemeMode(settingsState.activeTheme);
 }
 
 export function toggleOrientation() {

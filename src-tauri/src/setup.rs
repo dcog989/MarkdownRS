@@ -1,6 +1,4 @@
-use crate::commands::settings::themes::{
-    DEFAULT_DARK_CSS, DEFAULT_DARK_THEME, DEFAULT_LIGHT_CSS, DEFAULT_LIGHT_THEME,
-};
+use crate::commands::settings::themes;
 use crate::migration;
 use crate::portable;
 use crate::state;
@@ -191,14 +189,11 @@ fn log_runtime_info(paths: &AppPaths) {
 
 fn seed_default_themes(themes_dir: std::path::PathBuf) {
     tauri::async_runtime::spawn(async move {
-        let dark_theme_path = themes_dir.join(format!("{}.css", DEFAULT_DARK_THEME));
-        if let Err(e) = tokio::fs::write(&dark_theme_path, DEFAULT_DARK_CSS).await {
-            log::warn!("Failed to write dark theme reference: {}", e);
-        }
-
-        let light_theme_path = themes_dir.join(format!("{}.css", DEFAULT_LIGHT_THEME));
-        if let Err(e) = tokio::fs::write(&light_theme_path, DEFAULT_LIGHT_CSS).await {
-            log::warn!("Failed to write light theme reference: {}", e);
+        for (name, css) in themes::TEMPLATE_THEMES {
+            let theme_path = themes_dir.join(format!("{}.css", name));
+            if let Err(e) = tokio::fs::write(&theme_path, css).await {
+                log::warn!("Failed to write theme '{}': {}", name, e);
+            }
         }
     });
 }

@@ -1,0 +1,42 @@
+/* Shared editor styles — applied to every theme */
+
+.cm-editor {
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.cm-editor .cm-selectionLayer .cm-selectionBackground {
+  background: var(--selection-bg);
+}
+
+.cm-editor .cm-content ::selection {
+  background-color: var(--selection-bg);
+}
+
+.cm-h1,
+.cm-h2,
+.cm-h3,
+.cm-h4,
+.cm-h5,
+.cm-h6 {
+  color: var(--syntax-heading);
+}
+.cm-keyword {
+  color: var(--syntax-keyword);
+}
+.cm-atom,
+.cm-number {
+  color: var(--syntax-atom);
+}
+.cm-string {
+  color: var(--syntax-string);
+}
+.cm-comment {
+  color: var(--syntax-comment);
+}
+.cm-emphasis {
+  color: var(--syntax-emphasis);
+}
+.cm-strong {
+  color: var(--syntax-strong);
+}

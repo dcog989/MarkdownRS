@@ -1,5 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
+import { resolveThemeMode } from '$lib/utils/themes';
 import { callBackendSafe } from './backend';
 import { debounce } from './timing';
 
@@ -47,15 +48,12 @@ export async function initSettings() {
     });
   }
 
-  // Keep theme in sync with activeTheme from saved settings
   settingsState.theme =
     settingsState.activeTheme === 'System'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light'
-      : settingsState.activeTheme.toLowerCase().includes('light')
-        ? 'light'
-        : 'dark';
+      : resolveThemeMode(settingsState.activeTheme);
 
   lastSavedState = JSON.stringify(getSettingsObject());
 }

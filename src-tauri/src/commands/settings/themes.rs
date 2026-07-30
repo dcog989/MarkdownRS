@@ -5,6 +5,12 @@ use std::time::SystemTime;
 use tokio::fs;
 use tokio::sync::Mutex;
 
+mod generated {
+    include!(concat!(env!("OUT_DIR"), "/generated_themes.rs"));
+}
+
+pub use generated::TEMPLATE_THEMES;
+
 struct CachedTheme {
     css: String,
     mtime: SystemTime,
@@ -16,14 +22,38 @@ static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
 pub const DEFAULT_DARK_THEME: &str = "RS-Dark";
 pub const DEFAULT_LIGHT_THEME: &str = "RS-Light";
 
-pub const DEFAULT_DARK_CSS: &str = include_str!("../../../templates/default-dark.css");
-pub const DEFAULT_LIGHT_CSS: &str = include_str!("../../../templates/default-light.css");
+const SHARED_EDITOR_CSS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../src/styles/themes/_editor.css"
+));
+
+pub const DEFAULT_DARK_CSS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../src/styles/themes/default-dark.css"
+));
+pub const DEFAULT_LIGHT_CSS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../src/styles/themes/default-light.css"
+));
+
+pub fn wrap_theme_css(css: &str) -> String {
+    let mut result = String::with_capacity(SHARED_EDITOR_CSS.len() + css.len() + 2);
+    result.push_str(SHARED_EDITOR_CSS);
+    result.push('\n');
+    result.push('\n');
+    result.push_str(css);
+    result
+}
+
+fn keyed(name: &str) -> String {
+    name.trim().to_lowercase().replace(' ', "-")
+}
 
 pub fn default_css(theme: &str) -> Option<&'static str> {
     match theme {
-        DEFAULT_DARK_THEME | "default-dark" => Some(DEFAULT_DARK_CSS),
-        DEFAULT_LIGHT_THEME | "default-light" => Some(DEFAULT_LIGHT_CSS),
-        _ => None,
+        DEFAULT_DARK_THEME => Some(DEFAULT_DARK_CSS),
+        DEFAULT_LIGHT_THEME => Some(DEFAULT_LIGHT_CSS),
+        _ => generated::lookup_template_css(&keyed(theme)),
     }
 }
 
@@ -59,15 +89,21 @@ pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, St
 pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result<String, String> {
     let config_dir = super::app_config_path(app_handle)?;
     let themes_dir = config_dir.join("Themes");
-    let theme_path = themes_dir.join(format!("{}.css", theme_name));
 
-    match fs::try_exists(&theme_path).await {
-        Ok(false) | Err(_) => {
-            log::warn!("Theme '{}' not found at path: {:?}", theme_name, theme_path);
-            return Err(format!("Custom theme '{}' not found", theme_name));
-        },
-        Ok(true) => {},
-    }
+    let theme_path = {
+        let exact = themes_dir.join(format!("{}.css", theme_name));
+        if fs::try_exists(&exact).await.unwrap_or(false) {
+            exact
+        } else {
+            let keyed_path = themes_dir.join(format!("{}.css", keyed(theme_name)));
+            if fs::try_exists(&keyed_path).await.unwrap_or(false) {
+                keyed_path
+            } else {
+                log::warn!("Theme '{}' not found", theme_name);
+                return Err(format!("Custom theme '{}' not found", theme_name));
+            }
+        }
+    };
 
     let metadata = fs::metadata(&theme_path).await.map_err(|e| {
         handle_error(

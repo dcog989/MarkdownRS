@@ -13,7 +13,7 @@
       "!.svelte-kit/",
       "!node_modules/",
       "!src-tauri/",
-      "src-tauri/templates/"
+      "src/styles/themes/"
     ]
   },
   "formatter": {

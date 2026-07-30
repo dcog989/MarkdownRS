@@ -32,10 +32,12 @@ pub async fn get_theme_css(
     app_handle: tauri::AppHandle,
     theme_name: String,
 ) -> Result<String, String> {
-    if let Some(css) = themes::default_css(&theme_name) {
-        return Ok(css.to_string());
-    }
-    themes::read_css(&app_handle, &theme_name).await
+    let css = if let Some(css) = themes::default_css(&theme_name) {
+        css.to_string()
+    } else {
+        themes::read_css(&app_handle, &theme_name).await?
+    };
+    Ok(themes::wrap_theme_css(&css))
 }
 
 #[tauri::command]
