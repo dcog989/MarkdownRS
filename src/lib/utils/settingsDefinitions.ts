@@ -114,14 +114,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'Delay in milliseconds before autocomplete suggestions appear.',
     },
     {
-      key: 'doubleClickSelectsTrailingSpace',
-      label: 'Trailing Space Select on Dbl Click',
-      type: 'boolean',
-      category: 'Editor',
-      defaultValue: false,
-      tooltip: 'When double-clicking a word, also select any trailing space',
-    },
-    {
       key: 'showMinimap',
       label: 'Minimap',
       type: 'boolean',

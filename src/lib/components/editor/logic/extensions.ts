@@ -22,12 +22,7 @@ import {
   highlightWhitespace,
   type KeyBinding,
 } from '@codemirror/view';
-import {
-  createDoubleClickHandler,
-  createWrapExtension,
-  getEditorKeymap,
-  smartCompleteAnyWord,
-} from '$lib/components/editor/codemirror/config';
+import { createWrapExtension, getEditorKeymap, smartCompleteAnyWord } from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
 import { appContext } from '$lib/stores/state.svelte';
@@ -140,7 +135,6 @@ export interface Compartments {
   whitespaceComp: Compartment;
   languageComp: Compartment;
   handlersComp: Compartment;
-  doubleClickComp: Compartment;
   rulerComp: Compartment;
   filePathComp: Compartment;
   markdownLintComp: Compartment;
@@ -195,7 +189,6 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.languageComp.of(config.isMarkdown ? markdownExtensions : []),
     c.spellComp.of([]),
     c.markdownLintComp.of(config.isMarkdown ? createMarkdownLinter() : []),
-    c.doubleClickComp.of(createDoubleClickHandler()),
     c.decorationComp.of(
       config.isMarkdown ? createMarkdownDecorationsPlugin(appContext.settings.viewMode === 'rendered') : [],
     ),

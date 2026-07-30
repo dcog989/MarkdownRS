@@ -88,29 +88,6 @@ export function createWrapExtension(isLargeFile = false) {
   return extensions;
 }
 
-export function createDoubleClickHandler() {
-  if (!appContext.settings.doubleClickSelectsTrailingSpace) return [];
-  return EditorView.domEventHandlers({
-    dblclick: (event, view) => {
-      const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-      if (pos === null) return false;
-      const range = view.state.wordAt(pos);
-      if (!range) return false;
-      let end = range.to;
-      if (end < view.state.doc.length) {
-        const nextChar = view.state.doc.sliceString(end, end + 1);
-        if (nextChar === ' ' || nextChar === '\t') end++;
-      }
-      if (end > range.to) {
-        view.dispatch({ selection: { anchor: range.from, head: end } });
-        event.preventDefault();
-        return true;
-      }
-      return false;
-    },
-  });
-}
-
 // Custom tab handler that indents selection or inserts spaces at cursor
 const handleTabKey = (view: EditorView) => {
   const { state } = view;

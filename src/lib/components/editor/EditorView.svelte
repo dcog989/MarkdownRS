@@ -4,7 +4,7 @@ import { indentUnit } from '@codemirror/language';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/view';
 import { onMount, untrack } from 'svelte';
-import { createDoubleClickHandler, createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
+import { createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { type Compartments, createBaseExtensions, markdownExtensions } from '$lib/components/editor/logic/extensions';
 import { setupModifierKeyHandler } from '$lib/components/editor/logic/modifierKeys';
@@ -94,7 +94,7 @@ let comps: Compartments = {
     themeComp: new Compartment(), indentComp: new Compartment(),
     spellComp: new Compartment(), whitespaceComp: new Compartment(),
     languageComp: new Compartment(), handlersComp: new Compartment(),
-    doubleClickComp: new Compartment(), rulerComp: new Compartment(),
+    rulerComp: new Compartment(),
     filePathComp: new Compartment(), markdownLintComp: new Compartment(),
     decorationComp: new Compartment(),
 };
@@ -140,11 +140,6 @@ $effect(() => {
     if (!view) return;
     const showWs = appContext.settings.showWhitespace;
     view.dispatch({ effects: comps.whitespaceComp.reconfigure(showWs ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin]) });
-});
-
-$effect(() => {
-    if (!view) return;
-    view.dispatch({ effects: comps.doubleClickComp.reconfigure(createDoubleClickHandler()) });
 });
 
 $effect(() => {

@@ -41,7 +41,6 @@ export const settingsState = $state({
   scienceDictionaries: false,
   tabNameFromContent: false,
   wrapGuideColumn: 0,
-  doubleClickSelectsTrailingSpace: false,
   showMinimap: false,
   collapsePinnedTabs: false,
   enableClosedTabHistory: true,
