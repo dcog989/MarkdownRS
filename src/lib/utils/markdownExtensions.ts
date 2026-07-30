@@ -47,7 +47,26 @@ const bulletPointDeco = Decoration.replace({
 });
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
 const formattingMaskDeco = Decoration.replace({});
-const formattingMaskAutolinkDeco = Decoration.replace({});
+const autolinkOpenBracketDeco = Decoration.replace({
+  widget: new (class extends WidgetType {
+    toDOM() {
+      const span = document.createElement('span');
+      span.className = 'cm-autolink-bracket';
+      span.textContent = '<';
+      return span;
+    }
+  })(),
+});
+const autolinkCloseBracketDeco = Decoration.replace({
+  widget: new (class extends WidgetType {
+    toDOM() {
+      const span = document.createElement('span');
+      span.className = 'cm-autolink-bracket';
+      span.textContent = '>';
+      return span;
+    }
+  })(),
+});
 const linkTextDeco = Decoration.mark({ class: 'cm-link-text' });
 const linkTextTheme = EditorView.baseTheme({
   '.cm-link-text': {
@@ -123,7 +142,13 @@ function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>
         if (!cfg) return;
         for (const p of hiddenParents) {
           if (node.from >= p.from && node.to <= p.to) {
-            const deco = cfg.marker === 'LinkMark' ? formattingMaskAutolinkDeco : formattingMaskDeco;
+            let deco: typeof formattingMaskDeco;
+            if (cfg.marker === 'LinkMark') {
+              const char = view.state.doc.sliceString(node.from, node.to);
+              deco = char === '>' ? autolinkCloseBracketDeco : autolinkOpenBracketDeco;
+            } else {
+              deco = formattingMaskDeco;
+            }
             ranges.push(deco.range(node.from, node.to));
             if (HIDE_TRAILING_SPACE.has(cfg.marker)) {
               const after = view.state.doc.sliceString(node.to, node.to + 1);
