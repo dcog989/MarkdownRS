@@ -1,11 +1,12 @@
+import { SvelteMap } from 'svelte/reactivity';
 import { listDirectory } from '$lib/commands/directory';
 import type { FileEntry } from '$lib/types/api';
 
 export const fileTreeStore = $state({
   root: '',
-  expanded: new Map<string, boolean>(),
-  children: new Map<string, FileEntry[]>(),
-  loading: new Map<string, boolean>(),
+  expanded: new SvelteMap<string, boolean>(),
+  children: new SvelteMap<string, FileEntry[]>(),
+  loading: new SvelteMap<string, boolean>(),
   showHidden: false,
 });
 
