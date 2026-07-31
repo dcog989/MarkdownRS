@@ -1,5 +1,5 @@
 import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
-import { addTab } from '$lib/stores/editorStore.svelte';
+import { createNewFile } from '$lib/stores/editorStore.svelte';
 import { toggleRecentFiles } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import {
@@ -18,8 +18,8 @@ export const fileCommands: Command[] = [
     category: 'File',
     defaultKey: 'ctrl+n',
     global: true,
-    handler: () => {
-      const id = addTab();
+    handler: async () => {
+      const id = await createNewFile();
       appContext.app.activeTabId = id;
     },
   },

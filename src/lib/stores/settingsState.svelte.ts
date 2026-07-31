@@ -46,6 +46,7 @@ export const settingsState = $state({
   enableClosedTabHistory: true,
   customShortcuts: {} as Record<string, string>,
   confirmationSuppressed: false,
+  newFileTemplatePath: '',
   maxFileSizeMB: 50,
   recentFilesLimit: 99,
   autoSaveEnabled: false,

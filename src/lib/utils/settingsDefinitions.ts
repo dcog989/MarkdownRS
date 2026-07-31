@@ -31,6 +31,15 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
     },
 
     {
+      key: 'newFileTemplatePath',
+      label: 'New File Template',
+      type: 'file',
+      category: 'File',
+      defaultValue: '',
+      tooltip: 'Use a Markdown file as the template content for new files. Leave empty to create blank files.',
+    },
+
+    {
       key: 'activeTheme',
       label: 'Theme',
       type: 'select',

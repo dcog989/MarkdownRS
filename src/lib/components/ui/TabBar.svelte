@@ -13,7 +13,7 @@ import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
 import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
 import { editorMetrics } from '$lib/stores/editorMetrics.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { addTab, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
+import { createNewFile, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
@@ -261,8 +261,8 @@ $effect(() => {
             type="button"
             use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
             class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
-            onclick={() => {
-                const newTabId = addTab();
+            onclick={async () => {
+                const newTabId = await createNewFile();
                 appContext.app.activeTabId = newTabId;
             }}>
             <Plus size={16} />

@@ -2,7 +2,7 @@
 import { FilePlus, Files, Save } from 'lucide-svelte';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import Submenu from '$lib/components/ui/Submenu.svelte';
-import { addTab } from '$lib/stores/editorStore.svelte';
+import { createNewFile } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { closeManyTabs, saveCurrentFile } from '$lib/utils/fileSystem';
 
@@ -40,8 +40,8 @@ async function handleSaveAll() {
     onClose();
 }
 
-function handleNewTab() {
-    const newTabId = addTab();
+async function handleNewTab() {
+    const newTabId = await createNewFile();
     appContext.app.activeTabId = newTabId;
     onClose();
 }

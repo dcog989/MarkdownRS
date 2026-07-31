@@ -11,7 +11,13 @@ import { fileWatcher } from '$lib/services/fileWatcher';
 import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionSerialization';
 import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-import { addTab, closeTab, reopenClosedTab, updateTabFields, updateTabTitle } from '$lib/stores/editorStore.svelte';
+import {
+  closeTab,
+  createNewFile,
+  reopenClosedTab,
+  updateTabFields,
+  updateTabTitle,
+} from '$lib/stores/editorStore.svelte';
 import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -130,7 +136,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   }
 
   if (appContext.editor.tabs.length === 0) {
-    const newId = addTab();
+    const newId = await createNewFile();
     appContext.app.activeTabId = newId;
   }
 

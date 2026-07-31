@@ -3,6 +3,7 @@ import { initializeTabLoadState } from '$lib/services/tabLoadStateMachine';
 import { CONFIG } from '$lib/utils/config';
 import { updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
+import { readTextFile } from '$lib/utils/fileIO';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import {
@@ -18,6 +19,22 @@ import {
 import { editorStore } from './editorStoreCore.svelte';
 import type { ClosedTab, EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
+import { showToast } from './toastStore.svelte';
+
+export async function createNewFile(): Promise<string> {
+  let content = '';
+  const templatePath = settingsState.newFileTemplatePath;
+  if (templatePath) {
+    try {
+      const result = await readTextFile(templatePath);
+      content = result?.content ?? '';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast('error', `Failed to read template, creating blank file: ${msg}`);
+    }
+  }
+  return addTab('', content);
+}
 
 export function addTab(title: string = '', content: string = '') {
   const id = crypto.randomUUID();

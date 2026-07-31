@@ -21,6 +21,7 @@ export {
 export {
   addTab,
   closeTab,
+  createNewFile,
   pushToMru,
   reopenClosedTab,
   reorderTabs,
