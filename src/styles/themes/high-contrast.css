@@ -21,9 +21,17 @@
   --color-brand-accent: #5dade2;
   --color-brand-file: #f4d03f;
   --color-brand-filepath: #58d68d;
-  --color-brand-link: #5dade2;
+  --color-brand-link: #a58ce0;
   --color-brand-quote: #af7ac5;
-  --color-brand-url: #5dade2;
+  --color-brand-url: #a58ce0;
+
+  /* CVD-safe link overrides: periwinkle-violet separates from the success green
+     under tritanopia (green vs blue collapses); explicit values keep the editor
+     links (--accent-link) in sync with the preview link color */
+  --accent-link: #a58ce0;
+  --accent-link-hover: #c6adf2;
+  --accent-url: #a58ce0;
+  --accent-url-hover: #c6adf2;
 
   --active-line-bg: rgba(255, 255, 255, 0.08);
   --danger: #e67e22;
@@ -47,13 +55,13 @@
   --syntax-atom: #e67e22;
   --syntax-comment: #999999;
   --syntax-heading: #5dade2;
-  --syntax-keyword: #af7ac5;
+  --syntax-keyword: #d29fdc;
   --syntax-string: #58d68d;
   --syntax-emphasis: #5dade2;
   --syntax-strong: #f4d03f;
 
   --preview-fg-heading: #5dade2;
-  --preview-fg-link: #5dade2;
+  --preview-fg-link: #a58ce0;
 }
 
 [data-theme="light"] {
@@ -79,9 +87,14 @@
   --color-brand-accent: #2e86c1;
   --color-brand-file: #b7950b;
   --color-brand-filepath: #1e8449;
-  --color-brand-link: #2e86c1;
+  --color-brand-link: #13507f;
   --color-brand-quote: #7d3c98;
-  --color-brand-url: #2e86c1;
+  --color-brand-url: #13507f;
+
+  --accent-link: #13507f;
+  --accent-link-hover: #0d3d66;
+  --accent-url: #13507f;
+  --accent-url-hover: #0d3d66;
 
   --active-line-bg: rgba(0, 0, 0, 0.05);
   --danger: #ca6f1e;
@@ -102,7 +115,7 @@
   --quote-bg: rgba(125, 60, 152, 0.05);
   --quote-fg: #7d3c98;
 
-  --syntax-atom: #985112;
+  --syntax-atom: #6d3403;
   --syntax-comment: #6b6b6b;
   --syntax-heading: #1f6ea8;
   --syntax-keyword: #7d3c98;
@@ -111,5 +124,5 @@
   --syntax-strong: #7a6100;
 
   --preview-fg-heading: #1f6ea8;
-  --preview-fg-link: #1f6ea8;
+  --preview-fg-link: #13507f;
 }
