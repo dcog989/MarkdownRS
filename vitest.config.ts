@@ -14,7 +14,10 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/**/*.{ts,svelte}'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/routes/**', 'src/test/**', 'src/app.d.ts'],
+      exclude: ['src/**/*.{test,spec,bench}.ts', 'src/routes/**', 'src/test/**', 'src/app.d.ts'],
     },
+  },
+  bench: {
+    include: ['src/**/*.bench.ts'],
   },
 });

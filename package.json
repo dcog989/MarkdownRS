@@ -9,6 +9,7 @@
     "build:frontend": "bunx --bun vite build",
     "check": "svelte-kit sync ; bun run check:types ; bun run check:frontend ; bun run check:backend ; bun run check:test",
     "check:test": "echo \"Running Tests...\" && bun run test && cd src-tauri && cargo test",
+    "bench": "vitest bench",
     "coverage": "vitest run --coverage",
     "check:backend": "echo \"Checking Backend...\" && cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
     "check:frontend": "echo \"Checking Frontend Syntax...\" && bunx biome check .",
