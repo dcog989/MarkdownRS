@@ -1,7 +1,9 @@
 import { EditorView } from '@codemirror/view';
 
 export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean) {
-  const whitespaceColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)';
+  // Theme-driven: resolves against --text-tertiary (defined per theme), so it stays
+  // visible on both dark and light surfaces regardless of the app's dark/light mode.
+  const whitespaceColor = 'var(--text-tertiary)';
 
   return EditorView.theme({
     '&': { height: '100%', fontSize: `${fontSize}px` },
