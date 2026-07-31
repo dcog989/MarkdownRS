@@ -154,6 +154,20 @@ $effect(() => {
 </script>
 
     <div class="bg-bg-panel relative flex h-8 w-full shrink-0 items-stretch">
+    <div class="relative h-8 w-8 shrink-0 border-b border-border-primary">
+        <button
+            type="button"
+            use:tooltip={appContext.settings.fileTreeVisible ? 'Hide File Tree' : 'Show File Tree'}
+            class:bg-bg-active={appContext.settings.fileTreeVisible}
+            class:text-accent-secondary={appContext.settings.fileTreeVisible}
+            class="text-fg-muted hover-surface flex h-full w-full items-center justify-center"
+            onclick={() => {
+                toggleFileTree();
+                saveSettings();
+            }}>
+            <FolderTree size={16} />
+        </button>
+    </div>
     <div
         class="relative h-8 shrink-0 border-b border-border-primary flex items-center justify-center"
         style:width={`${editorMetrics.gutterWidth}px`}>
@@ -259,18 +273,6 @@ $effect(() => {
     </div>
 
     <div class="flex h-full items-stretch border-l pr-2">
-        <button
-            type="button"
-            use:tooltip={appContext.settings.fileTreeVisible ? 'Hide File Tree' : 'Show File Tree'}
-            class:bg-bg-active={appContext.settings.fileTreeVisible}
-            class:text-accent-secondary={appContext.settings.fileTreeVisible}
-            class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
-            onclick={() => {
-                toggleFileTree();
-                saveSettings();
-            }}>
-            <FolderTree size={16} />
-        </button>
         <button
             type="button"
             use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}

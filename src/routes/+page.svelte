@@ -64,7 +64,7 @@ function onResizeMouseDown(e: MouseEvent) {
             bind:this={mainContainer}>
             {#if !appContext.app.writerMode}
                 {#if appContext.settings.fileTreeVisible}
-                    <FileTree onClose={handleToggleFileTree} />
+                    <FileTree />
                 {:else}
                     <div class="ft-peek-edge group shrink-0">
                         <button
@@ -157,12 +157,11 @@ function onResizeMouseDown(e: MouseEvent) {
     .ft-peek-edge {
         display: flex;
         align-items: center;
-        width: 1.625rem;
+        justify-content: center;
+        width: 2rem;
         height: 100%;
-        padding-left: 0.5rem;
         background-color: var(--surface-2);
         border-right: 1px solid var(--border-primary);
-        border-left: 1px solid var(--border-primary);
         transition: background-color 150ms ease-out;
     }
 

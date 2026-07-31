@@ -12,7 +12,6 @@
         FolderOpen,
         LoaderCircle,
         Minus,
-        PanelLeftClose,
     } from 'lucide-svelte';
     import { tooltip } from '$lib/actions/tooltip';
     import {
@@ -29,8 +28,6 @@
     import { openFile } from '$lib/utils/fileSystem';
     import { formatFileSize } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
-
-    const { onClose } = $props<{ onClose?: () => void }>();
 
     const ROW_HEIGHT = CONFIG.FILETREE.ROW_HEIGHT;
     const OVERSCAN = CONFIG.FILETREE.OVERSCAN;
@@ -256,15 +253,6 @@
                 onclick={collapseAll}>
                 <Minus size={14} />
             </button>
-            {#if onClose}
-                <button
-                    type="button"
-                    class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-                    use:tooltip={'Close panel'}
-                    onclick={onClose}>
-                    <PanelLeftClose size={14} />
-                </button>
-            {/if}
         </div>
     </div>
 
