@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Bookmark, Eye, EyeOff, Feather, Settings, Zap } from 'lucide-svelte';
+import { Bookmark, Eye, EyeOff, Feather, FolderTree, Settings, Zap } from 'lucide-svelte';
 import { toggleWriterMode } from '$lib/stores/appState.svelte';
 import {
     toggleAbout,
@@ -7,7 +7,7 @@ import {
     toggleCommandPalette,
     toggleSettings,
 } from '$lib/stores/interfaceStore.svelte';
-import { toggleSplitView } from '$lib/stores/settingsState.svelte';
+import { toggleFileTree, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
@@ -29,6 +29,7 @@ let shortcuts = $derived({
     bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
     splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
     writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
+    fileTree: shortcutManager.getShortcutDisplay('view.toggleFileTree'),
 });
 
 function toggleSplit() {
@@ -106,6 +107,18 @@ function closeMenu() {
             {/if}
             <span class="flex-1">Toggle Split Preview</span
             ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
+        </button>
+        <button
+            type="button"
+            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            onclick={() => {
+                toggleFileTree();
+                saveSettings();
+                closeMenu();
+            }}>
+            <FolderTree size={14} class="opacity-70" />
+            <span class="flex-1">Toggle File Tree</span
+            ><span class="ml-auto text-xs opacity-40">{shortcuts.fileTree}</span>
         </button>
         <button
             type="button"

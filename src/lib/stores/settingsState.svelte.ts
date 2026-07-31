@@ -52,6 +52,8 @@ export const settingsState = $state({
   autoSaveEnabled: false,
   autoSaveInterval: 60,
   viewMode: 'rendered' as 'raw' | 'rendered',
+  fileTreeVisible: true,
+  fileTreeWidth: 240,
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
@@ -76,4 +78,8 @@ export function toggleOrientation() {
 
 export function toggleViewMode() {
   settingsState.viewMode = settingsState.viewMode === 'raw' ? 'rendered' : 'raw';
+}
+
+export function toggleFileTree() {
+  settingsState.fileTreeVisible = !settingsState.fileTreeVisible;
 }

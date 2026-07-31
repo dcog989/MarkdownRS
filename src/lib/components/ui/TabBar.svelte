@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ChevronDown, Menu, Plus } from 'lucide-svelte';
+import { ChevronDown, FolderTree, Menu, Plus } from 'lucide-svelte';
 import { onDestroy, onMount, tick } from 'svelte';
 import { flip } from 'svelte/animate';
 import { fade } from 'svelte/transition';
@@ -14,11 +14,13 @@ import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
 import { editorMetrics } from '$lib/stores/editorMetrics.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { createNewFile, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
+import { toggleFileTree } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
 import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
 import { createMruCycling } from '$lib/utils/mruCycling.svelte';
+import { saveSettings } from '$lib/utils/settings';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
 let scrollContainer = $state<HTMLElement>();
@@ -257,6 +259,18 @@ $effect(() => {
     </div>
 
     <div class="flex h-full items-stretch border-l pr-2">
+        <button
+            type="button"
+            use:tooltip={appContext.settings.fileTreeVisible ? 'Hide File Tree' : 'Show File Tree'}
+            class:bg-bg-active={appContext.settings.fileTreeVisible}
+            class:text-accent-secondary={appContext.settings.fileTreeVisible}
+            class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+            onclick={() => {
+                toggleFileTree();
+                saveSettings();
+            }}>
+            <FolderTree size={16} />
+        </button>
         <button
             type="button"
             use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}

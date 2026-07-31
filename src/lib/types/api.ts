@@ -35,6 +35,15 @@ export interface FileContent {
   encoding: string;
 }
 
+export interface FileEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  is_symlink: boolean;
+  size: number;
+  modified: string | null;
+}
+
 export interface TabData {
   content: string | null;
   history_state: unknown;
@@ -107,6 +116,12 @@ export interface BackendCommands {
   clear_recent_files: {
     args: Record<string, never>;
     return: undefined;
+  };
+
+  // File Tree
+  list_directory: {
+    args: { path: string; showHidden: boolean };
+    return: FileEntry[];
   };
 
   // App Info

@@ -1,9 +1,11 @@
 <script lang="ts">
-import { ChevronDown } from 'lucide-svelte';
+import { ChevronDown, ChevronRight } from 'lucide-svelte';
 import { onDestroy } from 'svelte';
+import { tooltip } from '$lib/actions/tooltip';
 import AppLifecycle from '$lib/components/app/AppLifecycle.svelte';
 import Editor from '$lib/components/editor/Editor.svelte';
 import { createSplitResize } from '$lib/components/editor/logic/splitResize.svelte';
+import FileTree from '$lib/components/filetree/FileTree.svelte';
 import Preview from '$lib/components/preview/Preview.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
 import StatusBar from '$lib/components/ui/StatusBar.svelte';
@@ -12,12 +14,19 @@ import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { pushToMru } from '$lib/stores/editorStore.svelte';
+import { toggleFileTree } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { saveSettings } from '$lib/utils/settings';
 
 const splitResize = createSplitResize();
 
 let mainContainer = $state<HTMLDivElement>();
+
+function handleToggleFileTree() {
+    toggleFileTree();
+    saveSettings();
+}
 
 let activeTab = $derived(
     appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId),
@@ -53,6 +62,24 @@ function onResizeMouseDown(e: MouseEvent) {
             class="relative z-0 flex flex-1 overflow-hidden outline-none"
             class:writer-mode={appContext.app.writerMode}
             bind:this={mainContainer}>
+            {#if !appContext.app.writerMode}
+                {#if appContext.settings.fileTreeVisible}
+                    <FileTree onClose={handleToggleFileTree} />
+                {:else}
+                    <div class="ft-peek-edge group shrink-0">
+                        <button
+                            type="button"
+                            aria-label="Show file tree"
+                            class="ft-peek"
+                            use:tooltip={'Show file tree'}
+                            onclick={handleToggleFileTree}>
+                            <ChevronRight
+                                size={14}
+                                class="text-fg-muted transition-colors group-hover:text-fg-default" />
+                        </button>
+                    </div>
+                {/if}
+            {/if}
             {#if appContext.app.writerMode}
                 <div class="absolute top-2 left-0 pl-3 z-20">
                     <button
@@ -125,5 +152,29 @@ function onResizeMouseDown(e: MouseEvent) {
 <style>
     .app-shell {
         position: relative;
+    }
+
+    .ft-peek-edge {
+        display: flex;
+        align-items: center;
+        width: 1.625rem;
+        height: 100%;
+        padding-left: 0.5rem;
+        background-color: var(--surface-2);
+        border-right: 1px solid var(--border-primary);
+        border-left: 1px solid var(--border-primary);
+        transition: background-color 150ms ease-out;
+    }
+
+    .ft-peek-edge:hover {
+        background-color: var(--surface-hover);
+    }
+
+    .ft-peek {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        flex: 1;
     }
 </style>

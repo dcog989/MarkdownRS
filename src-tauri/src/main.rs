@@ -81,6 +81,7 @@ fn main() {
             commands::files::get_recent_files,
             commands::files::remove_from_recent_files,
             commands::files::clear_recent_files,
+            commands::directory::list_directory,
             commands::settings::get_app_info,
             #[cfg(feature = "spellcheck")]
             commands::spellcheck::add_to_dictionary,

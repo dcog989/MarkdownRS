@@ -42,6 +42,16 @@ const DEFAULT_CONFIG = {
     SNAP_THRESHOLD_PX: 10,
   },
 
+  // File Tree
+  FILETREE: {
+    MIN_WIDTH: 160,
+    MAX_WIDTH: 500,
+    DEFAULT_WIDTH: 240,
+    ROW_HEIGHT: 26,
+    OVERSCAN: 10,
+    INDENT_STEP: 14,
+  },
+
   // Session & Auto-save
   SESSION: {
     AUTO_SAVE_INTERVAL_MS: 5000, // Main auto-save interval for session persistence

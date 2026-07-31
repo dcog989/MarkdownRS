@@ -9,6 +9,7 @@ export type ErrorContext =
   | 'File:Read'
   | 'File:Write'
   | 'File:Metadata'
+  | 'File:ListDirectory'
   | 'Markdown:Render'
   | 'Settings:Load'
   | 'Settings:Save'

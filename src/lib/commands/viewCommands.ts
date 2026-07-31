@@ -1,5 +1,5 @@
 import { toggleWriterMode } from '$lib/stores/appState.svelte';
-import { setTheme, toggleSplitView, toggleViewMode } from '$lib/stores/settingsState.svelte';
+import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { saveSettings } from '$lib/utils/settings';
@@ -50,6 +50,17 @@ export const viewCommands: Command[] = [
     global: true,
     handler: () => {
       toggleWriterMode();
+    },
+  },
+  {
+    id: 'view.toggleFileTree',
+    label: 'View: Toggle File Tree',
+    category: 'View',
+    defaultKey: 'ctrl+shift+e',
+    global: true,
+    handler: () => {
+      toggleFileTree();
+      saveSettings();
     },
   },
   {
