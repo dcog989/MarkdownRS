@@ -95,3 +95,79 @@ pub fn generate_document_toc(content: &str) -> String {
     let toc_markdown = generate_toc_markdown(&entries);
     replace_toc_region(content, &toc_markdown)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_content_is_returned_unchanged() {
+        assert_eq!(generate_document_toc(""), "");
+        assert_eq!(generate_document_toc("  \n  "), "  \n  ");
+    }
+
+    #[test]
+    fn content_without_headings_is_returned_unchanged() {
+        let content = "Just a paragraph.\n\nAnother one.";
+        assert_eq!(generate_document_toc(content), content);
+    }
+
+    #[test]
+    fn inserts_toc_after_the_first_h1() {
+        let content =
+            "# Main Title\n\nIntro text.\n\n## Section One\n\nBody.\n\n## Section Two\n\nMore.";
+        let result = generate_document_toc(content);
+
+        assert!(result.contains("<!-- toc -->"));
+        assert!(result.contains("<!-- tocstop -->"));
+        assert!(result.starts_with("# Main Title\n\n<!-- toc -->"));
+        assert!(result.contains("- [Section One](#section-one)"));
+        assert!(result.contains("- [Section Two](#section-two)"));
+    }
+
+    #[test]
+    fn replaces_an_existing_toc_region() {
+        let content =
+            "# Title\n\n<!-- toc -->\n\n- [Stale](#stale)\n\n<!-- tocstop -->\n\n## Real\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(!result.contains("Stale"));
+        assert!(result.contains("- [Real](#real)"));
+        assert_eq!(result.matches("<!-- toc -->").count(), 1);
+        assert_eq!(result.matches("<!-- tocstop -->").count(), 1);
+    }
+
+    #[test]
+    fn appends_tocstop_when_the_start_marker_has_no_end() {
+        let content = "# Title\n\n<!-- toc -->\n\nContent.\n\n## Heading\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(result.contains("<!-- tocstop -->"));
+        assert!(result.contains("- [Heading](#heading)"));
+    }
+
+    #[test]
+    fn nests_bullets_by_heading_level() {
+        let content = "# Title\n\n## H2\n\n### H3\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(result.contains("- [H2](#h2)"));
+        assert!(result.contains("  - [H3](#h3)"));
+    }
+
+    #[test]
+    fn anchorizes_heading_text() {
+        let content = "# Title\n\n## Some Heading With Words\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(result.contains("- [Some Heading With Words](#some-heading-with-words)"));
+    }
+
+    #[test]
+    fn find_after_first_h1_skips_trailing_newlines() {
+        let content = "# Title\n\n\n## Next";
+        let pos = find_after_first_h1(content);
+        assert_eq!(&content[pos..], "## Next");
+        assert_eq!(&content[pos - 1..pos], "\n");
+    }
+}

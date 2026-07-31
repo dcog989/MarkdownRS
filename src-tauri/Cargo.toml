@@ -55,6 +55,9 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.56"
 
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+
 [profile.release]
 lto = "thin"
 codegen-units = 1

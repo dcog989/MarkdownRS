@@ -33,3 +33,55 @@ pub fn validate_path(path: &str) -> Result<(), String> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_null_bytes() {
+        assert!(validate_path("bad\x00path").is_err());
+    }
+
+    #[test]
+    fn rejects_encoded_directory_traversal() {
+        assert!(validate_path("a/..%2eb").is_err());
+        assert!(validate_path("a/%2e%2e/b").is_err());
+        assert!(validate_path("a/%252eb").is_err());
+    }
+
+    #[test]
+    fn rejects_excessive_parent_components() {
+        assert!(validate_path("../../../../../etc/passwd").is_err());
+    }
+
+    #[test]
+    fn allows_up_to_three_parent_components() {
+        assert!(validate_path("../../../x.md").is_ok());
+    }
+
+    #[test]
+    fn rejects_windows_reserved_names_case_insensitively() {
+        for name in [
+            "CON", "con.txt", "CON.md", "NUL", "PRN", "AUX", "COM1", "LPT1",
+        ] {
+            assert!(
+                validate_path(name).is_err(),
+                "expected '{}' to be rejected",
+                name
+            );
+        }
+    }
+
+    #[test]
+    fn allows_names_that_merely_start_with_reserved_names() {
+        assert!(validate_path("console.log").is_ok());
+        assert!(validate_path("printer.md").is_ok());
+    }
+
+    #[test]
+    fn accepts_normal_paths() {
+        assert!(validate_path("/home/user/docs/notes.md").is_ok());
+        assert!(validate_path("relative/path.txt").is_ok());
+    }
+}
