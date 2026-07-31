@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        ChevronLeft,
         ChevronRight,
         Eye,
         EyeOff,
@@ -22,6 +23,7 @@
         toggle,
         toggleHiddenFiles,
     } from '$lib/stores/fileTreeStore.svelte';
+    import { toggleFileTree } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
     import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
@@ -185,14 +187,19 @@
     const JSON_EXT = new Set(['json', 'jsonc', 'toml', 'yaml', 'yml']);
 
     let isResizing = $state(false);
+    let didDrag = false;
 
     function startResize(e: MouseEvent) {
         e.preventDefault();
         isResizing = true;
+        didDrag = false;
         const startX = e.clientX;
         const startWidth = appContext.settings.fileTreeWidth;
 
         const onMove = (ev: MouseEvent) => {
+            if (Math.abs(ev.clientX - startX) > 3) {
+                didDrag = true;
+            }
             const newWidth = startWidth + (ev.clientX - startX);
             appContext.settings.fileTreeWidth = Math.max(
                 CONFIG.FILETREE.MIN_WIDTH,
@@ -209,6 +216,11 @@
         window.addEventListener('mousemove', onMove);
         window.addEventListener('mouseup', onUp);
         document.body.style.cursor = 'col-resize';
+    }
+
+    function handleResizeClick() {
+        if (didDrag) return;
+        toggleFileTree();
     }
 </script>
 
@@ -329,15 +341,18 @@
     <div
         role="button"
         tabindex="0"
-        aria-label="Resize file tree panel"
+        aria-label="Resize or collapse file tree panel"
         class="ft-resize-handle"
         class:cursor-col-resize={isResizing}
         onmousedown={startResize}
         onkeydown={() => {}}
+        onclick={handleResizeClick}
         ondblclick={() => {
             appContext.settings.fileTreeWidth = CONFIG.FILETREE.DEFAULT_WIDTH;
             saveSettings();
-        }}></div>
+        }}>
+        <ChevronLeft size={36} class="ft-collapse-icon" />
+    </div>
 </div>
 
 <style>
@@ -397,6 +412,24 @@
 
     .ft-resize-handle:hover {
         background-color: var(--accent-primary);
+    }
+
+    :global(.ft-collapse-icon) {
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        transform: translateY(-50%);
+        padding: 4px;
+        border-radius: 6px;
+        color: var(--text-secondary);
+        background-color: var(--surface-hover);
+        opacity: 0;
+        cursor: pointer;
+        transition: opacity 150ms ease-out;
+    }
+
+    .ft-resize-handle:hover :global(.ft-collapse-icon) {
+        opacity: 1;
     }
 
     .cursor-col-resize {
