@@ -162,6 +162,7 @@ function onResizeMouseDown(e: MouseEvent) {
         height: 100%;
         background-color: var(--surface-2);
         border-right: 1px solid var(--border-primary);
+        cursor: pointer;
         transition: background-color 150ms ease-out;
     }
 
@@ -175,5 +176,6 @@ function onResizeMouseDown(e: MouseEvent) {
         justify-content: center;
         height: 100%;
         flex: 1;
+        cursor: pointer;
     }
 </style>
