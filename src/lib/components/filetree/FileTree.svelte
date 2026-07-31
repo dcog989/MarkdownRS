@@ -400,7 +400,7 @@
             appContext.settings.fileTreeWidth = CONFIG.FILETREE.DEFAULT_WIDTH;
             saveSettings();
         }}>
-        <ChevronLeft size={36} class="ft-collapse-icon" />
+        <ChevronLeft size={44} class="ft-collapse-icon" />
     </div>
 </div>
 
@@ -468,7 +468,7 @@
         top: 50%;
         right: 6px;
         transform: translateY(-50%);
-        padding: 4px;
+        padding: 8px;
         border-radius: 6px;
         color: var(--text-secondary);
         background-color: var(--surface-hover);
