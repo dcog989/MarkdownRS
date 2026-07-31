@@ -1,4 +1,6 @@
 :root {
+  color-scheme: light;
+
   --surface-1: #f5f0e8;
   --surface-2: #e8e2d4;
   --surface-3: #ddd6c5;
@@ -24,6 +26,18 @@
   --color-brand-link: #555555;
   --color-brand-quote: #777777;
   --color-brand-url: #555555;
+
+  /* Accent overrides: explicit light-background values (the default oklch
+     derivations target dark surfaces and wash out on this light theme) */
+  --accent-primary: #3a3a3a;
+  --accent-secondary: #6b6b6b;
+  --accent-file: #4d4d4d;
+  --accent-filepath: #333333;
+  --accent-filepath-hover: #222222;
+  --accent-link: #555555;
+  --accent-link-hover: #333333;
+  --accent-url: #555555;
+  --accent-url-hover: #333333;
 
   --active-line-bg: rgba(0, 0, 0, 0.035);
   --danger: #993333;
