@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import type { Extension, Range } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
+import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from './markdownTableWidget';
 
 const HEADING_NODE_NAMES = new Set([
   'ATXHeading1',
@@ -89,7 +90,12 @@ function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number):
   return node.name === 'FencedCode' || node.name === 'InlineCode' || node.name === 'CodeBlock';
 }
 
-function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>, ranges: Range<Decoration>[]) {
+function findHiddenMarkers(
+  view: EditorView,
+  tree: ReturnType<typeof syntaxTree>,
+  ranges: Range<Decoration>[],
+  tableSpans: Array<{ from: number; to: number }>,
+) {
   const cursor = view.state.selection.main.head;
   const usedParents = new Set<string>();
 
@@ -114,6 +120,8 @@ function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>
 
   if (hiddenParents.length === 0) return;
 
+  const isInTable = (from: number, to: number) => tableSpans.some((span) => from >= span.from && to <= span.to);
+
   for (const { from, to } of view.visibleRanges) {
     tree.iterate({
       from,
@@ -121,6 +129,7 @@ function findHiddenMarkers(view: EditorView, tree: ReturnType<typeof syntaxTree>
       enter: (node) => {
         const cfg = MARKER_CONFIG.find((c) => c.marker === node.name);
         if (!cfg) return;
+        if (isInTable(node.from, node.to)) return;
         for (const p of hiddenParents) {
           if (node.from >= p.from && node.to <= p.to) {
             let deco: typeof formattingMaskDeco;
@@ -150,8 +159,18 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   const tree = syntaxTree(view.state);
   const ranges: Range<Decoration>[] = [];
   const cursorHeadingLines = findCursorHeadingLines(view);
+  const tableSpans = collectTableSpans(view.state, view.visibleRanges);
 
-  findHiddenMarkers(view, tree, ranges);
+  findHiddenMarkers(view, tree, ranges, tableSpans);
+
+  const tableLines = new Set<number>();
+  for (const span of tableSpans) {
+    const fromLine = view.state.doc.lineAt(span.from).number;
+    const toLine = view.state.doc.lineAt(Math.max(span.from, span.to - 1)).number;
+    for (let i = fromLine; i <= toLine; i++) {
+      tableLines.add(i);
+    }
+  }
 
   const codeBlockLines = new Set<number>();
   const parserHrs = new Set<number>();
@@ -163,6 +182,11 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       from,
       to,
       enter: (node) => {
+        if (node.name === 'Table') {
+          if (tableSpans.some((span) => node.from === span.from && node.to === span.to)) {
+            return false;
+          }
+        }
         if (node.name === 'FencedCode') {
           const start = Math.max(node.from, from);
           const end = Math.min(node.to, to);
@@ -225,6 +249,11 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
       const line = view.state.doc.lineAt(pos);
+
+      if (tableLines.has(line.number)) {
+        pos = line.to + 1;
+        continue;
+      }
 
       if (codeBlockLines.has(line.number)) {
         ranges.push(codeBlockLineDeco.range(line.from));
@@ -311,6 +340,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
       { decorations: (v) => v.decorations },
     ),
     linkTextTheme,
+    ...(rendered ? [createTableWidgetField(), tableWidgetClickHandler] : []),
   ];
 }
 

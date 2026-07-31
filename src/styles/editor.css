@@ -414,3 +414,52 @@
 .raw-mode .cm-strikethrough {
   text-decoration: none;
 }
+
+/* Rendered mode: table widget replaces the markdown table source.
+   The widget stays inline-level so it sits in the same line box as the raw
+   markdown's first line (a display:block widget would be pushed down ~1 line
+   by the anonymous block box wrapping the preceding inline widget buffer). */
+.rendered-mode .cm-table-widget {
+  display: inline-block;
+  width: 100%;
+  vertical-align: top;
+}
+
+.rendered-mode .cm-table-widget table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.rendered-mode .cm-table-widget th,
+.rendered-mode .cm-table-widget td {
+  border: 1px solid var(--border-secondary);
+  padding: 0.35em 0.6em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.rendered-mode .cm-table-widget th {
+  font-weight: bold;
+  background-color: var(--surface-active);
+}
+
+.rendered-mode .cm-table-widget code {
+  font-family: var(--font-mono);
+  background-color: var(--surface-active);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+.rendered-mode .cm-table-widget a {
+  color: var(--accent-link);
+  text-decoration: underline;
+}
+
+.rendered-mode .cm-table-widget mark {
+  background-color: var(--highlight-bg);
+}
+
+.rendered-mode .cm-table-widget del {
+  text-decoration: line-through;
+}
