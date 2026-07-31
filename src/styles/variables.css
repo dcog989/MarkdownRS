@@ -83,6 +83,7 @@
   /* Preview */
   --preview-bg-code: var(--code-bg);
   --preview-bg-pre: var(--pre-bg);
+  --preview-fg-pre: var(--pre-fg);
   --preview-bg-quote: var(--quote-bg);
   --preview-border-primary: var(--border-primary);
   --preview-border-quote: var(--quote-fg);
