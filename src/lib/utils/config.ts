@@ -50,7 +50,6 @@ const DEFAULT_CONFIG = {
     ROW_HEIGHT: 26,
     OVERSCAN: 10,
     INDENT_STEP: 14,
-    DBL_CLICK_DELAY_MS: 180,
   },
 
   // Session & Auto-save

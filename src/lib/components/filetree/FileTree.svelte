@@ -18,7 +18,7 @@
         RefreshCw,
         Unlink,
     } from 'lucide-svelte';
-    import { onDestroy, onMount } from 'svelte';
+    import { onMount } from 'svelte';
     import { tooltip } from '$lib/actions/tooltip';
     import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
     import {
@@ -94,10 +94,6 @@
         return () => window.removeEventListener('focus', onFocus);
     });
 
-    onDestroy(() => {
-        if (folderClickTimer) clearTimeout(folderClickTimer);
-    });
-
     let allRows = $derived(computeTreeRows());
 
     let scrollEl = $state<HTMLDivElement>();
@@ -124,26 +120,19 @@
 
     let activeFilePath = $derived(activeTab?.path ?? '');
 
-    let folderClickTimer: ReturnType<typeof setTimeout> | null = null;
-
-    function handleRowClick(row: TreeRow) {
-        if (row.entry.is_dir) {
-            if (folderClickTimer) clearTimeout(folderClickTimer);
-            folderClickTimer = setTimeout(
-                () => void toggle(row.entry.path),
-                CONFIG.FILETREE.DBL_CLICK_DELAY_MS,
-            );
-        } else {
+    function handleRowClick(e: MouseEvent, row: TreeRow) {
+        if (!row.entry.is_dir) {
             void openFile(row.entry.path);
+            return;
         }
+        // The second click of a double-click has detail === 2; the dblclick
+        // handler navigates into the folder, so don't toggle on it.
+        if (e.detail > 1) return;
+        void toggle(row.entry.path);
     }
 
     function handleRowDoubleClick(row: TreeRow) {
         if (!row.entry.is_dir) return;
-        if (folderClickTimer) {
-            clearTimeout(folderClickTimer);
-            folderClickTimer = null;
-        }
         navigateInto(row.entry.path);
     }
 
@@ -328,7 +317,7 @@
                             class:ft-active={!row.isRoot && row.entry.path === activeFilePath}
                             class:opacity-70={!row.isRoot && row.entry.name.startsWith('.')}
                             title={row.entry.path}
-                            onclick={() => handleRowClick(row)}
+                            onclick={(e) => handleRowClick(e, row)}
                             ondblclick={() => handleRowDoubleClick(row)}>
                             <span class="ft-chevron flex w-4 shrink-0 items-center justify-center">
                                 {#if row.entry.is_dir}
