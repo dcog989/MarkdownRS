@@ -1,6 +1,7 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { settingsState, syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { callBackendSafe } from './backend';
+import { isModeFollowingTheme } from './themes';
 import { debounce } from './timing';
 
 const SETTINGS_EXCLUDED_KEYS = new Set([
@@ -47,7 +48,7 @@ export async function initSettings() {
     });
   }
 
-  if (settingsState.activeTheme === 'System') {
+  if (settingsState.activeTheme === 'System' || isModeFollowingTheme(settingsState.activeTheme)) {
     syncThemeFromSystem();
   } else if (settingsState.activeTheme === 'Default Light') {
     settingsState.theme = 'light';
