@@ -56,7 +56,7 @@ export const viewCommands: Command[] = [
     id: 'view.toggleFileTree',
     label: 'View: Toggle File Tree',
     category: 'View',
-    defaultKey: 'ctrl+shift+e',
+    defaultKey: 'ctrl+`',
     global: true,
     handler: () => {
       toggleFileTree();
