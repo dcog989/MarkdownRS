@@ -1,4 +1,76 @@
 :root {
+  color-scheme: dark;
+
+  --surface-1: #201d17;
+  --surface-2: #27231c;
+  --surface-3: #2e2a21;
+  --surface-active: #3b362a;
+  --surface-gutter: #27231c;
+  --surface-hover: #332e24;
+  --surface-input: #191713;
+  --surface-preview: #201d17;
+  --surface-row: #242019;
+
+  --text-inverse: #201d17;
+  --text-primary: #e8e2d4;
+  --text-secondary: #bcb3a0;
+  --text-tertiary: #8f887a;
+
+  --border-primary: #3b362a;
+  --border-secondary: #4c4537;
+  --border-focus: #c9a24b;
+
+  --color-brand-accent: #bcb3a0;
+  --color-brand-file: #bcb3a0;
+  --color-brand-filepath: #d5cdbb;
+  --color-brand-link: #c9c0ae;
+  --color-brand-quote: #a49c8c;
+  --color-brand-url: #c9c0ae;
+
+  /* Accent overrides: explicit dark-surface values (the default oklch
+     derivations target light surfaces and wash out on this dark theme) */
+  --accent-primary: #d5cdbb;
+  --accent-secondary: #a49c8c;
+  --accent-file: #bcb3a0;
+  --accent-filepath: #d5cdbb;
+  --accent-filepath-hover: #e8e2d4;
+  --accent-link: #c9c0ae;
+  --accent-link-hover: #e8e2d4;
+  --accent-url: #c9c0ae;
+  --accent-url-hover: #e8e2d4;
+
+  --active-line-bg: rgba(232, 226, 212, 0.05);
+  --danger: #b0564f;
+  --danger-text: #b0564f;
+  --danger-hover: #c96a63;
+  --dirty-indicator: #c9c0ae;
+  --selection-bg: rgba(232, 226, 212, 0.12);
+  --selection-match-bg: rgba(201, 194, 174, 0.2);
+  --success: #a49c8c;
+  --success-hover: #bcb3a0;
+
+  --code-bg: rgba(201, 162, 75, 0.08);
+  --code-fg: #c9a24b;
+  --highlight-bg: rgba(201, 162, 75, 0.18);
+  --hr-color: #4c4537;
+  --pre-bg: #27231c;
+  --pre-fg: #e8e2d4;
+  --quote-bg: rgba(201, 194, 174, 0.05);
+  --quote-fg: #a49c8c;
+
+  --syntax-atom: #bcb3a0;
+  --syntax-comment: #8f887a;
+  --syntax-heading: #e8e2d4;
+  --syntax-keyword: #d5cdbb;
+  --syntax-string: #c9c0ae;
+  --syntax-emphasis: #bcb3a0;
+  --syntax-strong: #f0ebdf;
+
+  --preview-fg-heading: #e8e2d4;
+  --preview-fg-link: #c9c0ae;
+}
+
+[data-theme="light"] {
   color-scheme: light;
 
   --surface-1: #f5f0e8;
