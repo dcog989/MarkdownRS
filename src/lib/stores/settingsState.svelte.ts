@@ -54,6 +54,7 @@ export const settingsState = $state({
   viewMode: 'rendered' as 'raw' | 'rendered',
   fileTreeVisible: true,
   fileTreeWidth: 240,
+  fileTreeFollowDocument: true,
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
@@ -82,4 +83,8 @@ export function toggleViewMode() {
 
 export function toggleFileTree() {
   settingsState.fileTreeVisible = !settingsState.fileTreeVisible;
+}
+
+export function toggleFileTreeFollow() {
+  settingsState.fileTreeFollowDocument = !settingsState.fileTreeFollowDocument;
 }

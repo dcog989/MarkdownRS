@@ -64,3 +64,28 @@ export function collapseAll(): void {
     fileTreeStore.expanded.set(fileTreeStore.root, true);
   }
 }
+
+export function dirname(path: string): string {
+  if (path === '/' || path === '') return path;
+  const idx = path.lastIndexOf('/');
+  if (idx <= 0) return '/';
+  return path.slice(0, idx);
+}
+
+export function canNavigateUp(): boolean {
+  const current = fileTreeStore.root;
+  return Boolean(current) && dirname(current) !== current;
+}
+
+export function navigateToParent(): void {
+  const current = fileTreeStore.root;
+  if (!current) return;
+  const parent = dirname(current);
+  if (parent === current) return;
+  setRoot(parent);
+}
+
+export function navigateInto(path: string): void {
+  if (!path || path === fileTreeStore.root) return;
+  setRoot(path);
+}

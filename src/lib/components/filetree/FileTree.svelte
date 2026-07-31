@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        ArrowUpToLine,
         ChevronLeft,
         ChevronRight,
         Eye,
@@ -11,19 +12,25 @@
         FileText,
         Folder,
         FolderOpen,
+        Link,
         LoaderCircle,
         Minus,
+        Unlink,
     } from 'lucide-svelte';
     import { tooltip } from '$lib/actions/tooltip';
     import {
+        canNavigateUp,
         collapseAll,
+        dirname,
         fileTreeStore,
         isExpanded,
+        navigateInto,
+        navigateToParent,
         setRoot,
         toggle,
         toggleHiddenFiles,
     } from '$lib/stores/fileTreeStore.svelte';
-    import { toggleFileTree } from '$lib/stores/settingsState.svelte';
+    import { toggleFileTree, toggleFileTreeFollow } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
     import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
@@ -43,13 +50,6 @@
         isRoot: boolean;
     };
 
-    function dirname(path: string): string {
-        const idx = path.lastIndexOf('/');
-        if (idx === -1) return path;
-        if (idx === 0) return '/';
-        return path.slice(0, idx);
-    }
-
     function basename(path: string): string {
         return path.split('/').filter(Boolean).pop() || path;
     }
@@ -58,7 +58,11 @@
     let rootDir = $derived(activeTab?.path ? dirname(activeTab.path) : '');
 
     $effect(() => {
-        if (rootDir && rootDir !== fileTreeStore.root) {
+        if (
+            appContext.settings.fileTreeFollowDocument &&
+            rootDir &&
+            rootDir !== fileTreeStore.root
+        ) {
             setRoot(rootDir);
         }
     });
@@ -139,12 +143,27 @@
 
     let activeFilePath = $derived(activeTab?.path ?? '');
 
+    let folderClickTimer: ReturnType<typeof setTimeout> | null = null;
+
     function handleRowClick(row: TreeRow) {
         if (row.entry.is_dir) {
-            void toggle(row.entry.path);
+            if (folderClickTimer) clearTimeout(folderClickTimer);
+            folderClickTimer = setTimeout(
+                () => void toggle(row.entry.path),
+                CONFIG.FILETREE.DBL_CLICK_DELAY_MS,
+            );
         } else {
             void openFile(row.entry.path);
         }
+    }
+
+    function handleRowDoubleClick(row: TreeRow) {
+        if (!row.entry.is_dir) return;
+        if (folderClickTimer) {
+            clearTimeout(folderClickTimer);
+            folderClickTimer = null;
+        }
+        navigateInto(row.entry.path);
     }
 
     function ext(name: string): string {
@@ -248,6 +267,35 @@
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+                class:cursor-not-allowed={!canNavigateUp()}
+                class:opacity-40={!canNavigateUp()}
+                use:tooltip={'Go up one level'}
+                onclick={navigateToParent}>
+                <ArrowUpToLine size={14} />
+            </button>
+            <button
+                type="button"
+                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+                class:bg-bg-active={appContext.settings.fileTreeFollowDocument}
+                class:text-accent-secondary={appContext.settings.fileTreeFollowDocument}
+                use:tooltip={
+                    appContext.settings.fileTreeFollowDocument
+                        ? 'Stop following active document'
+                        : 'Follow active document'
+                }
+                onclick={() => {
+                    toggleFileTreeFollow();
+                    saveSettings();
+                }}>
+                {#if appContext.settings.fileTreeFollowDocument}
+                    <Link size={14} />
+                {:else}
+                    <Unlink size={14} />
+                {/if}
+            </button>
+            <button
+                type="button"
+                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 class:bg-bg-active={fileTreeStore.showHidden}
                 class:text-accent-secondary={fileTreeStore.showHidden}
                 use:tooltip={fileTreeStore.showHidden ? 'Hide hidden files' : 'Show hidden files'}
@@ -291,7 +339,8 @@
                             class:ft-active={!row.isRoot && row.entry.path === activeFilePath}
                             class:opacity-70={!row.isRoot && row.entry.name.startsWith('.')}
                             title={row.entry.path}
-                            onclick={() => handleRowClick(row)}>
+                            onclick={() => handleRowClick(row)}
+                            ondblclick={() => handleRowDoubleClick(row)}>
                             <span class="ft-chevron flex w-4 shrink-0 items-center justify-center">
                                 {#if row.entry.is_dir}
                                     {#if row.loading}

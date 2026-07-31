@@ -7,11 +7,15 @@ vi.mock('$lib/commands/directory', () => ({
 
 import { listDirectory } from '$lib/commands/directory';
 import {
+  canNavigateUp,
   collapseAll,
+  dirname,
   fileTreeStore,
   isDirLoading,
   isExpanded,
   loadChildren,
+  navigateInto,
+  navigateToParent,
   setRoot,
   toggle,
   toggleHiddenFiles,
@@ -146,5 +150,58 @@ describe('fileTreeStore', () => {
 
     expect(fileTreeStore.children.get('/root')).toEqual([]);
     expect(isDirLoading('/root')).toBe(false);
+  });
+
+  it('dirname returns the parent directory', () => {
+    expect(dirname('/home/user/project')).toBe('/home/user');
+    expect(dirname('/home/user/file.md')).toBe('/home/user');
+    expect(dirname('/home')).toBe('/');
+    expect(dirname('/')).toBe('/');
+    expect(dirname('')).toBe('');
+  });
+
+  it('canNavigateUp is false at the filesystem root and when no root is set', () => {
+    expect(canNavigateUp()).toBe(false);
+    fileTreeStore.root = '/';
+    expect(canNavigateUp()).toBe(false);
+    fileTreeStore.root = '/home/user';
+    expect(canNavigateUp()).toBe(true);
+  });
+
+  it('navigateToParent moves the root up one level and stops at the filesystem root', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    setRoot('/home/user/project');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/home/user/project')).toBe(true));
+
+    navigateToParent();
+    expect(fileTreeStore.root).toBe('/home/user');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/home/user')).toBe(true));
+
+    navigateToParent();
+    expect(fileTreeStore.root).toBe('/home');
+    navigateToParent();
+    expect(fileTreeStore.root).toBe('/');
+    navigateToParent();
+    expect(fileTreeStore.root).toBe('/');
+  });
+
+  it('navigateInto moves the root into a subdirectory', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    setRoot('/home/user');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/home/user')).toBe(true));
+
+    navigateInto('/home/user/project');
+    expect(fileTreeStore.root).toBe('/home/user/project');
+    expect(isExpanded('/home/user/project')).toBe(true);
+  });
+
+  it('navigateInto is a no-op for the current root or an empty path', () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    setRoot('/home/user');
+
+    navigateInto('/home/user');
+    expect(fileTreeStore.root).toBe('/home/user');
+    navigateInto('');
+    expect(fileTreeStore.root).toBe('/home/user');
   });
 });
