@@ -18,6 +18,7 @@ The only Markdown editor you need? Many people are saying so.
 - Themes: Multiple built-in light and dark themes, plus custom themes.
 - Rendered Mode: Edit in rendered or raw Markdown mode.
 - KaTeX Math: Render math in the preview with KaTeX.
+- Mermaid Diagrams: Render flowcharts, sequence diagrams, and more with Mermaid.js.
 - Command Palette: Efficient navigation with command palette (Ctrl+Shift+P).
 - Keyboard Shortcuts: Customise any command shortcut as you want.
 - Multi-Tab: Work on multiple documents simultaneously, pin them, bookmark them.
@@ -38,6 +39,10 @@ Math renders in the preview with KaTeX. Delimiters:
 | Display | `$$...$$`, `\[...\]`, <code>```math</code> fence |
 
 Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
+
+## Diagrams (Mermaid)
+
+Flowcharts, sequence diagrams, and other diagrams render in the preview from <code>```mermaid</code> fenced blocks. Mermaid is lazy-loaded only when a diagram is present and rendered diagrams are cached by content hash, so unchanged diagrams are never re-rendered.
 
 ## Code / Dev Stack
 
@@ -68,7 +73,7 @@ bun run package
 
 CachyOS build: `makepkg -sif`
 
-### Available Scripts
+## Available Scripts
 
 - `bun run clean` - Remove everything (build, target, and node_modules)
 - `bun run check` - Type-check Svelte files
@@ -77,7 +82,7 @@ CachyOS build: `makepkg -sif`
 - `bun run dev` - Start dev server / HRM
 - `bun run preview` - Preview the production build
 
-### rumdl Config Cascade
+## rumdl Config Cascade
 
 rumdl resolves configuration in this priority order (highest → lowest):
 
@@ -85,10 +90,6 @@ rumdl resolves configuration in this priority order (highest → lowest):
 2. **Upward walk from CWD** (to git root / `$HOME`) — Per directory, tries: `.rumdl.toml` → `rumdl.toml` → `.config/rumdl.toml` → `pyproject.toml` (`[tool.rumdl]`). Falls back to `.markdownlint*` / `markdownlint.*` files if none found.
 3. **User config fallback** (only if step 2 finds nothing) — `$XDG_CONFIG_HOME/rumdl/` or `~/.config/rumdl/`, then `~/.rumdl.toml`, then `~/rumdl.toml`.
 4. **CLI inline overrides** (`--config 'RULE.key=value'`) — Always wins last.
-
-## Roadmap
-
-- TBD
 
 ## Contributing
 
