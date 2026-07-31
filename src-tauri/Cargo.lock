@@ -2469,9 +2469,9 @@ checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
 name = "hybrid-array"
-version = "0.4.13"
+version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "818356c5132c1fede50f837ca96afbe78ff42413047f4abb886217845e1b6c8c"
+checksum = "707114b52a152fa7bdb290cd7cd5912d9467273b6d74e21b8d81aca1f8533f6b"
 dependencies = [
  "typenum",
 ]
@@ -3177,7 +3177,7 @@ dependencies = [
 
 [[package]]
 name = "markdown-rs"
-version = "0.39.0"
+version = "0.40.0"
 dependencies = [
  "anyhow",
  "chardetng",
@@ -4570,9 +4570,9 @@ dependencies = [
 
 [[package]]
 name = "rumdl"
-version = "0.2.46"
+version = "0.2.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a763ddf4d2f79adf5a862632644b50fe18fa34a2ccba9362d478c46a0117681c"
+checksum = "bc0a9e4ee7141307273d0c2ebda920ea7d6807d6ad382e187fef0da1796ed0ad"
 dependencies = [
  "anyhow",
  "blake3",
