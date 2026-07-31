@@ -104,6 +104,6 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
 
 <style>
     .mru-icon--dirty {
-        --icon-color: #5deb47;
+        --icon-color: var(--dirty-indicator);
     }
 </style>

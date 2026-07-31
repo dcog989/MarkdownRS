@@ -175,7 +175,7 @@ function handleKeydown(e: KeyboardEvent) {
                                         size={14}
                                         class="shrink-0"
                                         style="color: {isActive && tab.isDirty
-                                            ? '#5deb47'
+                                            ? 'var(--dirty-indicator)'
                                             : isSelected
                                               ? 'var(--text-inverse)'
                                               : 'var(--text-secondary)'};" />
@@ -191,7 +191,7 @@ function handleKeydown(e: KeyboardEvent) {
                                     size={14}
                                     class="shrink-0"
                                     style="color: {isActive && tab.isDirty
-                                        ? '#5deb47'
+                                        ? 'var(--dirty-indicator)'
                                         : isSelected
                                           ? 'var(--text-inverse)'
                                           : 'var(--accent-secondary)'}" />
