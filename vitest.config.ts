@@ -6,5 +6,11 @@ export default defineConfig({
   test: {
     include: ['src/**/*.{test,spec}.{js,ts}'],
     environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/**/*.{ts,svelte}'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/routes/**', 'src/app.d.ts'],
+    },
   },
 });

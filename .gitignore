@@ -20,6 +20,7 @@
 [Rr]eleasePS/
 [Rr]eleases/
 build
+coverage/
 node_modules/
 obj/x64/
 obj/x86/
