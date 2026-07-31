@@ -70,7 +70,7 @@ $effect(() => {
 });
 </script>
 
-<div use:tooltip={setting.tooltip} class="w-full">
+<div use:tooltip={setting.type === 'file' ? null : setting.tooltip} class="w-full">
     {#if setting.type === 'text'}
         <Input
             id={setting.key}
@@ -137,10 +137,10 @@ $effect(() => {
             disabled={isCheckingContextMenu} />
     {:else if setting.type === 'file'}
         <div class="w-full min-w-0" bind:this={pathContainer}>
-            <div class="flex items-center gap-2">
-                <button
-                    type="button"
-                    class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium whitespace-nowrap"
+        <div class="flex items-center gap-2" use:tooltip={setting.tooltip}>
+            <button
+                type="button"
+                class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium whitespace-nowrap"
                     onclick={async () => {
                         const selected = await open({
                             multiple: false,
@@ -163,7 +163,7 @@ $effect(() => {
             </div>
             <span
                 bind:this={pathSpan}
-                title={path}
+                use:tooltip={path || null}
                 class="text-ui text-fg-muted mt-1 block w-full truncate font-mono">
                 {displayPath}
             </span>
