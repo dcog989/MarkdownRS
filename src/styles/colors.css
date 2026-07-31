@@ -73,7 +73,7 @@
 }
 
 .text-accent-primary {
-  color: var(--accent-primary);
+  color: var(--accent-secondary);
 }
 
 .text-accent-secondary {

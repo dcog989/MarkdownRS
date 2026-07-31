@@ -9,10 +9,10 @@
   --surface-preview: #1a1b26;
   --surface-row: #13141f;
 
-  --text-primary: #a9b1d6;
-  --text-secondary: #787c99;
-  --text-tertiary: #565f89;
-  --text-inverse: #1a1b26;
+  --text-primary: #c9d0ea;
+  --text-secondary: #9aa0be;
+  --text-tertiary: #7c84a9;
+  --text-inverse: #ffffff;
 
   --border-primary: #363b54;
   --border-secondary: #4a4f6e;
@@ -40,12 +40,12 @@
   --highlight-bg: rgba(224, 175, 104, 0.2);
   --hr-color: #565f89;
   --pre-bg: #16161e;
-  --pre-fg: #a9b1d6;
+  --pre-fg: #c9d0ea;
   --quote-bg: rgba(247, 118, 142, 0.08);
   --quote-fg: #f7768e;
 
   --syntax-atom: #ff9e64;
-  --syntax-comment: #565f89;
+  --syntax-comment: #9aa0be;
   --syntax-heading: #f7768e;
   --syntax-keyword: #bb9af7;
   --syntax-string: #9ece6a;

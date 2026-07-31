@@ -23,10 +23,10 @@
 
   /* Text System */
   --text-inverse: #ffffff;
-  --text-primary: #cccccc;
+  --text-primary: #d4d4d4;
   --text-secondary-faded: oklch(from var(--text-secondary) l c h / 0.6);
-  --text-secondary: #888888;
-  --text-tertiary: #555555;
+  --text-secondary: #9e9e9e;
+  --text-tertiary: #7d7d7d;
 
   /* Border System */
   --border-primary: #343434;
@@ -40,7 +40,7 @@
   --accent-link-hover: oklch(from var(--color-brand-link) 0.75 c h);
   --accent-link: oklch(from var(--color-brand-link) 0.65 c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
-  --accent-secondary: oklch(from var(--color-brand-accent) 0.65 c h);
+  --accent-secondary: oklch(from var(--color-brand-accent) 0.75 c h);
   --accent-url-hover: oklch(from var(--color-brand-url) 0.75 c h);
   --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
 
@@ -67,13 +67,13 @@
   --highlight-bg: oklch(0.8 0.12 85 / 0.3);
   --hr-color: #666666;
   --pre-bg: #171b21;
-  --pre-fg: #cccccc;
+  --pre-fg: #d4d4d4;
   --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.08);
   --quote-fg: oklch(from var(--color-brand-quote) 0.65 c h);
 
   /* Syntax Colors */
   --syntax-atom: #d19a66;
-  --syntax-comment: #888888;
+  --syntax-comment: #9e9e9e;
   --syntax-heading: #e06c75;
   --syntax-keyword: #c678dd;
   --syntax-string: #98c379;
@@ -153,17 +153,17 @@
   --quote-fg: oklch(from var(--color-brand-quote) 0.45 c h);
 
   /* Syntax Colors - Light Theme (darker variants for light bg) */
-  --syntax-atom: #e65100;
-  --syntax-comment: #6b7280;
-  --syntax-heading: #c62828;
+  --syntax-atom: #b32d05;
+  --syntax-comment: #5f6775;
+  --syntax-heading: #b71c1c;
   --syntax-keyword: #6a1b9a;
-  --syntax-string: #2e7d32;
+  --syntax-string: #2a6d2c;
   --syntax-emphasis: #1565c0;
-  --syntax-strong: #b8860b;
+  --syntax-strong: #7d5a00;
 
   /* Preview - Light Theme (only values that differ from dark) */
   --preview-border-quote: var(--quote-fg);
-  --preview-fg-heading: #c62828;
-  --preview-fg-link: #00838f;
+  --preview-fg-heading: #b71c1c;
+  --preview-fg-link: #006a75;
   --preview-fg-quote: var(--text-secondary);
 }

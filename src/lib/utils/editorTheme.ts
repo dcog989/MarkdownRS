@@ -30,7 +30,7 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     },
     '.cm-selectionMatch': { backgroundColor: 'var(--selection-match-bg)' },
     '.cm-searchMatch': {
-      backgroundColor: isDark ? 'rgba(255, 140, 0, 0.85)' : 'rgba(230, 112, 0, 0.85)',
+      backgroundColor: '#ff8c00',
       color: '#000 !important',
       borderRadius: '2px',
     },
@@ -38,8 +38,8 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
       color: '#000 !important',
     },
     '.cm-searchMatch.cm-searchMatch-selected': {
-      backgroundColor: isDark ? '#ff8c00 !important' : '#e67000 !important',
-      color: isDark ? '#000 !important' : '#000 !important',
+      backgroundColor: '#ff8c00 !important',
+      color: '#000 !important',
       boxShadow: isDark ? '0 0 0 2px #ffcc77 !important' : '0 0 0 2px #cc5500 !important',
       zIndex: '10',
       position: 'relative',

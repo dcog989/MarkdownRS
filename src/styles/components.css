@@ -270,8 +270,8 @@ select {
   border-radius: 0.25rem;
   font-size: 0.625rem;
   font-weight: 700;
-  background-color: var(--accent-secondary);
-  color: var(--accent-primary);
+  background-color: var(--accent-primary);
+  color: var(--text-inverse);
 }
 
 .mru-path {

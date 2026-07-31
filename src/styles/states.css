@@ -24,7 +24,7 @@
 }
 
 .hover\:text-accent-primary:hover {
-  color: var(--accent-primary);
+  color: var(--accent-secondary);
 }
 
 .hover\:text-accent-secondary:hover {

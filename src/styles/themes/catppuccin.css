@@ -11,8 +11,8 @@
 
   --text-primary: #cdd6f4;
   --text-secondary: #a6adc8;
-  --text-tertiary: #6c7086;
-  --text-inverse: #11111b;
+  --text-tertiary: #7a7f98;
+  --text-inverse: #ffffff;
 
   --border-primary: #45475a;
   --border-secondary: #585b70;
@@ -45,7 +45,7 @@
   --quote-fg: #f5c2e7;
 
   --syntax-atom: #fab387;
-  --syntax-comment: #6c7086;
+  --syntax-comment: #949ab5;
   --syntax-heading: #f38ba8;
   --syntax-keyword: #cba6f7;
   --syntax-string: #a6e3a1;

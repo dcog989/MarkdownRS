@@ -10,9 +10,9 @@
   --surface-row: #262c38;
 
   --text-primary: #d8dee9;
-  --text-secondary: #81a1c1;
-  --text-tertiary: #4c566a;
-  --text-inverse: #2e3440;
+  --text-secondary: #8ba8c9;
+  --text-tertiary: #7b879e;
+  --text-inverse: #ffffff;
 
   --border-primary: #434c5e;
   --border-secondary: #4c566a;
@@ -44,14 +44,14 @@
   --quote-bg: rgba(180, 142, 173, 0.08);
   --quote-fg: #b48ead;
 
-  --syntax-atom: #d08770;
-  --syntax-comment: #616c8a;
-  --syntax-heading: #bf616a;
-  --syntax-keyword: #b48ead;
+  --syntax-atom: #dd9279;
+  --syntax-comment: #8ba8c9;
+  --syntax-heading: #ffa7b0;
+  --syntax-keyword: #c39fc7;
   --syntax-string: #a3be8c;
-  --syntax-emphasis: #81a1c1;
+  --syntax-emphasis: #8ba8c9;
   --syntax-strong: #ebcb8b;
 
-  --preview-fg-heading: #bf616a;
+  --preview-fg-heading: #ffa7b0;
   --preview-fg-link: #88c0d0;
 }

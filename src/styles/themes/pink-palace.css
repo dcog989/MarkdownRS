@@ -10,9 +10,9 @@
   --surface-row: #150c11;
 
   --text-primary: #f0dce6;
-  --text-secondary: #b08a9c;
-  --text-tertiary: #7a5a6a;
-  --text-inverse: #1a0f14;
+  --text-secondary: #bb96a8;
+  --text-tertiary: #967489;
+  --text-inverse: #ffffff;
 
   --border-primary: #4a2d3d;
   --border-secondary: #603d50;
@@ -45,7 +45,7 @@
   --quote-fg: #ce93d8;
 
   --syntax-atom: #ffd54f;
-  --syntax-comment: #7a5a6a;
+  --syntax-comment: #bb96a8;
   --syntax-heading: #f06292;
   --syntax-keyword: #ce93d8;
   --syntax-string: #f48fb1;

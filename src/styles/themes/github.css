@@ -10,9 +10,9 @@
   --surface-row: #11161d;
 
   --text-primary: #e6edf3;
-  --text-secondary: #8d96a0;
-  --text-tertiary: #6e7681;
-  --text-inverse: #0d1117;
+  --text-secondary: #9aa5b0;
+  --text-tertiary: #7d8792;
+  --text-inverse: #ffffff;
 
   --border-primary: #30363d;
   --border-secondary: #21262d;
@@ -45,7 +45,7 @@
   --quote-fg: #d2a8ff;
 
   --syntax-atom: #ffa657;
-  --syntax-comment: #6e7681;
+  --syntax-comment: #9aa5b0;
   --syntax-heading: #ff7b72;
   --syntax-keyword: #d2a8ff;
   --syntax-string: #3fb950;
@@ -102,14 +102,14 @@
   --quote-bg: rgba(130, 80, 223, 0.05);
   --quote-fg: #8250df;
 
-  --syntax-atom: #bc4c00;
-  --syntax-comment: #8c959f;
-  --syntax-heading: #cf222e;
-  --syntax-keyword: #8250df;
-  --syntax-string: #1a7f37;
-  --syntax-emphasis: #0969da;
-  --syntax-strong: #9a6700;
+  --syntax-atom: #953800;
+  --syntax-comment: #59636e;
+  --syntax-heading: #a61e29;
+  --syntax-keyword: #6f42c1;
+  --syntax-string: #116329;
+  --syntax-emphasis: #0550ae;
+  --syntax-strong: #7d4e00;
 
-  --preview-fg-heading: #cf222e;
-  --preview-fg-link: #0969da;
+  --preview-fg-heading: #a61e29;
+  --preview-fg-link: #0550ae;
 }
