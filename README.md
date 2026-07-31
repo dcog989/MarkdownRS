@@ -13,7 +13,11 @@ The only Markdown editor you need? Many people are saying so.
 - Fast, Low Resource Use: Built with Rust backend for instant startup and smooth editing.
 - Live Preview: Split view with smooth, bi-directional synchronized scrolling.
 - Auto-Save: Session persistence with hot-exit support - never lose your work.
-- Themes: Dark-mode aware, you can easily create your own theme.
+- File Tree: Sidebar file tree for browsing and opening files.
+- New File Template: Create new files from a configurable template.
+- Themes: Multiple built-in light and dark themes, plus custom themes.
+- Rendered Mode: Edit in rendered or raw Markdown mode.
+- KaTeX Math: Render math in the preview with KaTeX.
 - Command Palette: Efficient navigation with command palette (Ctrl+Shift+P).
 - Keyboard Shortcuts: Customise any command shortcut as you want.
 - Multi-Tab: Work on multiple documents simultaneously, pin them, bookmark them.
@@ -23,6 +27,17 @@ The only Markdown editor you need? Many people are saying so.
 - Smart Formatting: Auto-Markdown formatting for consistent, semantic-preserving results.
 - Find & replace across all documents
 - Export to PDF/PNG/WEBP/HTML
+
+## Math (KaTeX)
+
+Math renders in the preview with KaTeX. Delimiters:
+
+| Style | Syntax |
+| --- | --- |
+| Inline | `$...$`, `\(...\)` |
+| Display | `$$...$$`, `\[...\]`, <code>```math</code> fence |
+
+Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
 
 ## Code / Dev Stack
 
