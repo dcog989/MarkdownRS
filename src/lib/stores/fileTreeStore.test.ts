@@ -17,6 +17,7 @@ import {
   loadChildren,
   navigateInto,
   navigateToParent,
+  refreshTree,
   setRoot,
   toggle,
   toggleHiddenFiles,
@@ -148,6 +149,22 @@ describe('fileTreeStore', () => {
 
     expect(isExpanded('/root')).toBe(true);
     expect(isExpanded('/root/sub')).toBe(false);
+  });
+
+  it('refreshTree reloads the root and every expanded directory', async () => {
+    mockedListDirectory.mockResolvedValue([entry('sub', true), entry('a.md')]);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    await toggle('/root/sub');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root/sub')).toBe(true));
+
+    mockedListDirectory.mockResolvedValue([entry('a.md'), entry('new.md')]);
+    await refreshTree();
+
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root', false);
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
+    expect(fileTreeStore.children.get('/root')?.some((e) => e.name === 'new.md')).toBe(true);
+    expect(fileTreeStore.children.get('/root/sub')?.some((e) => e.name === 'new.md')).toBe(true);
   });
 
   it('isDirLoading tracks in-flight loads', async () => {

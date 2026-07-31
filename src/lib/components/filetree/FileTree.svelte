@@ -15,8 +15,10 @@
         Link,
         LoaderCircle,
         Minus,
+        RefreshCw,
         Unlink,
     } from 'lucide-svelte';
+    import { onDestroy, onMount } from 'svelte';
     import { tooltip } from '$lib/actions/tooltip';
     import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
     import {
@@ -29,6 +31,7 @@
         isExpanded,
         navigateInto,
         navigateToParent,
+        refreshTree,
         setRoot,
         toggle,
         toggleHiddenFiles,
@@ -81,6 +84,18 @@
             settingsState.fileTreeRoot = root;
             saveSettings();
         }
+    });
+
+    onMount(() => {
+        const onFocus = () => {
+            if (fileTreeStore.root) void refreshTree();
+        };
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
+    });
+
+    onDestroy(() => {
+        if (folderClickTimer) clearTimeout(folderClickTimer);
     });
 
     let allRows = $derived(computeTreeRows());
@@ -279,6 +294,13 @@
                 use:tooltip={'Collapse all'}
                 onclick={collapseAll}>
                 <Minus size={14} />
+            </button>
+            <button
+                type="button"
+                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+                use:tooltip={'Refresh'}
+                onclick={() => void refreshTree()}>
+                <RefreshCw size={14} />
             </button>
         </div>
     </div>

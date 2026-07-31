@@ -84,6 +84,14 @@ export function collapseAll(): void {
   }
 }
 
+export async function refreshTree(): Promise<void> {
+  const expandedPaths = [...fileTreeStore.expanded.keys()].filter((path) => fileTreeStore.expanded.get(path));
+  fileTreeStore.children.clear();
+  fileTreeStore.loading.clear();
+  invalidateLoads();
+  await Promise.all(expandedPaths.map((path) => loadChildren(path)));
+}
+
 export function dirname(path: string): string {
   if (path === '/' || path === '') return path;
   const idx = path.lastIndexOf('/');
