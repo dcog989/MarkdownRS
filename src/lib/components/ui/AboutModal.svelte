@@ -116,7 +116,7 @@ async function checkForUpdates() {
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.install')}</span>
+                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('common.install')}</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.install_path}

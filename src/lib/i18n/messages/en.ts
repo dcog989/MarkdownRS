@@ -52,6 +52,7 @@ export const en = {
     refresh: 'Refresh',
     emptyState: 'Open a file to browse its folder',
     resizeAria: 'Resize or collapse file tree panel',
+    showFileTree: 'Show File Tree',
   },
   tabBar: {
     showFileTree: 'Show File Tree',
