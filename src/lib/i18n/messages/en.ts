@@ -433,6 +433,7 @@ export const en = {
     rendering: 'Rendering preview...',
     renderFailed: 'Preview render failed',
     renderNull: 'Rendering returned null',
+    mermaidError: 'Mermaid diagram failed to render',
   },
   editorContextMenu: {
     suggestions: 'Suggestions',

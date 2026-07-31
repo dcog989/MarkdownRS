@@ -9,6 +9,7 @@ import { toggleOrientation, toggleSplitView } from '$lib/stores/settingsState.sv
 import { appContext } from '$lib/stores/state.svelte';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { renderMermaidDiagrams } from '$lib/utils/mermaidRenderer';
 import { PreviewRenderer } from '$lib/utils/previewRenderer.svelte';
 
 let { tabId } = $props<{ tabId: string }>();
@@ -47,10 +48,12 @@ onDestroy(() => {
 
 function injectHtml(node: HTMLElement, content: string) {
     node.innerHTML = content;
+    void renderMermaidDiagrams(node);
 
     return {
         update(newContent: string) {
             node.innerHTML = newContent;
+            void renderMermaidDiagrams(node);
         },
     };
 }
