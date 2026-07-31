@@ -158,7 +158,7 @@ fn linkify_file_paths_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<'a>) {
             let path = path_match.as_str();
             link_buf.push_str(r#"<a href=""#);
             percent_encode_into(&mut link_buf, path);
-            link_buf.push_str(r#"" class="file-path-link" style="color: var(--color-accent-filepath); text-decoration: underline; cursor: pointer;">"#);
+            link_buf.push_str(r#"" class="file-path-link" style="color: var(--accent-filepath); text-decoration: underline; cursor: pointer;">"#);
             html_escape_into(&mut link_buf, path);
             link_buf.push_str("</a>");
             let n = arena.alloc(AstNode::from(NodeValue::HtmlInline(std::mem::take(
