@@ -1,7 +1,9 @@
 <script lang="ts">
 import { CircleAlert, CircleCheck, ClipboardCopy, Info, TriangleAlert } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
+import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { callBackendSafe } from '$lib/utils/backend';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte';
@@ -49,7 +51,7 @@ async function copyConfigPath() {
     bind:this={buttonEl}
     type="button"
     class="hover:text-fg-default hover-surface relative flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {color}"
-    use:tooltip={'Markdown Lint Issues'}
+    use:tooltip={$_('lint.issuesTitle')}
     onclick={() => (showPopup = true)}>
     {#if severityEntry}
         {@const Icon = severityEntry.icon}
@@ -68,14 +70,14 @@ async function copyConfigPath() {
         {#snippet children(_: { submenuSide: 'left' | 'right' })}
             <div class="min-w-72">
                 <div class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted">
-                    Markdown Lint Issues
+                    {translate('lint.issuesTitle')}
                     <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
                         ({markdownLintState.issueCount})
                     </span>
                 </div>
                 {#if markdownLintState.diagnostics.length === 0}
                     <div class="px-3 py-4 text-center text-sm text-fg-muted">
-                        No issues found
+                        {translate('lint.noIssues')}
                     </div>
                 {:else}
                     <div class="max-h-80 overflow-y-auto">
@@ -88,7 +90,7 @@ async function copyConfigPath() {
                                 <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
                                 <div class="min-w-0 flex-1">
                                     <span class="font-mono text-xs text-fg-muted">
-                                        Ln {diag.line}
+                                        {translate('statusBar.ln')} {diag.line}
                                     </span>
                                     <p class="truncate text-fg-default">
                                         {diag.message}
@@ -103,14 +105,14 @@ async function copyConfigPath() {
                 {/if}
                 <div class="border-border-light flex items-center gap-1 border-t px-3 py-1.5">
                     <span class="text-fg-muted text-[10px]">
-                        rumdl: {configPath ?? 'no config file'}
+                        {translate('lint.rumdlLabel')}: {configPath ?? translate('lint.noConfigFile')}
                     </span>
                     {#if configPath}
                         <button
                             type="button"
                             class="hover:text-fg-default shrink-0 transition-colors"
                             onclick={copyConfigPath}
-                            title="Copy config path">
+                            title={translate('lint.copyConfigPath')}>
                             <ClipboardCopy size={10} class={copied ? 'text-accent' : 'text-fg-muted'} />
                         </button>
                     {/if}

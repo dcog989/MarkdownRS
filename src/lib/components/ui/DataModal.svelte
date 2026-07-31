@@ -1,8 +1,10 @@
 <script lang="ts">
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { Database, X } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import Modal from '$lib/components/ui/Modal.svelte';
+import { translate } from '$lib/i18n';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
@@ -24,7 +26,7 @@ async function exportBookmarks() {
         if (!bookmarks) return;
         const path = await save({
             defaultPath: 'markdownrs-bookmarks.json',
-            filters: [{ name: 'JSON', extensions: ['json'] }],
+            filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
         });
         if (!path) return;
         await callBackend(
@@ -32,10 +34,7 @@ async function exportBookmarks() {
             { path, content: JSON.stringify(bookmarks, null, 2) },
             'File:Write',
         );
-        showToast(
-            'success',
-            `Exported ${bookmarks.length} bookmark${bookmarks.length === 1 ? '' : 's'}`,
-        );
+        showToast('success', translate('data.exportedBookmarks', { values: { count: bookmarks.length } }));
     } catch (err) {
         AppError.handle('Data:ExportBookmarks', err, { showToast: true });
     } finally {
@@ -49,7 +48,7 @@ async function importBookmarks() {
     try {
         const selected = await open({
             multiple: false,
-            filters: [{ name: 'JSON', extensions: ['json'] }],
+            filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
         });
         if (!selected) return;
         const result = await callBackend(
@@ -57,11 +56,11 @@ async function importBookmarks() {
             { path: selected as string },
             'File:Read',
         );
-        if (!result) throw new Error('Failed to read file');
+        if (!result) throw new Error(translate('data.failedToRead'));
         const bookmarks = JSON.parse(result.content);
-        if (!Array.isArray(bookmarks)) throw new Error('Invalid format: expected an array');
+        if (!Array.isArray(bookmarks)) throw new Error(translate('data.invalidFormatArray'));
         const count = await callBackend('import_bookmarks', { bookmarks }, 'Data:ImportBookmarks');
-        showToast('success', `Imported ${count} bookmark${count === 1 ? '' : 's'}`);
+        showToast('success', translate('data.importedBookmarks', { values: { count } }));
     } catch (err) {
         AppError.handle('Data:ImportBookmarks', err, { showToast: true });
     } finally {
@@ -77,7 +76,7 @@ async function exportRecentFiles() {
         if (!paths) return;
         const dest = await save({
             defaultPath: 'markdownrs-recent-files.json',
-            filters: [{ name: 'JSON', extensions: ['json'] }],
+            filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
         });
         if (!dest) return;
         await callBackend(
@@ -85,10 +84,7 @@ async function exportRecentFiles() {
             { path: dest, content: JSON.stringify(paths, null, 2) },
             'File:Write',
         );
-        showToast(
-            'success',
-            `Exported ${paths.length} recent file${paths.length === 1 ? '' : 's'}`,
-        );
+        showToast('success', translate('data.exportedFiles', { values: { count: paths.length } }));
     } catch (err) {
         AppError.handle('Data:ExportRecent', err, { showToast: true });
     } finally {
@@ -102,7 +98,7 @@ async function importRecentFiles() {
     try {
         const selected = await open({
             multiple: false,
-            filters: [{ name: 'JSON', extensions: ['json'] }],
+            filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
         });
         if (!selected) return;
         const result = await callBackend(
@@ -110,13 +106,13 @@ async function importRecentFiles() {
             { path: selected as string },
             'File:Read',
         );
-        if (!result) throw new Error('Failed to read file');
+        if (!result) throw new Error(translate('data.failedToRead'));
         const paths = JSON.parse(result.content);
         if (!Array.isArray(paths) || paths.some((p) => typeof p !== 'string')) {
-            throw new Error('Invalid format: expected an array of strings');
+            throw new Error(translate('data.invalidFormatStrings'));
         }
         const count = await callBackend('import_recent_files', { paths }, 'Data:ImportRecent');
-        showToast('success', `Imported ${count} recent file${count === 1 ? '' : 's'}`);
+        showToast('success', translate('data.importedFiles', { values: { count } }));
     } catch (err) {
         AppError.handle('Data:ImportRecent', err, { showToast: true });
     } finally {
@@ -129,10 +125,7 @@ async function deleteOrphans() {
     busy = true;
     try {
         const count = await callBackend('delete_orphan_files', {}, 'Data:DeleteOrphans');
-        showToast(
-            'success',
-            `Removed ${count} orphan entr${count === 1 ? 'y' : 'ies'} from history`,
-        );
+        showToast('success', translate('data.removedOrphans', { values: { count } }));
     } catch (err) {
         AppError.handle('Data:DeleteOrphans', err, { showToast: true });
     } finally {
@@ -147,47 +140,47 @@ type Action = {
     danger?: boolean;
 };
 
-const actions: Action[] = [
+const actions = $derived<Action[]>([
     {
-        label: 'Export Bookmarks',
-        description: 'Save all bookmarks to a JSON file.',
+        label: translate('data.exportBookmarks'),
+        description: translate('data.exportBookmarksDesc'),
         handler: exportBookmarks,
     },
     {
-        label: 'Import Bookmarks',
-        description: 'Load bookmarks from a JSON file.',
+        label: translate('data.importBookmarks'),
+        description: translate('data.importBookmarksDesc'),
         handler: importBookmarks,
     },
     {
-        label: 'Export Recent Files',
-        description: 'Save recent file history to a JSON file.',
+        label: translate('data.exportRecentFiles'),
+        description: translate('data.exportRecentFilesDesc'),
         handler: exportRecentFiles,
     },
     {
-        label: 'Import Recent Files',
-        description: 'Load recent file history from a JSON file.',
+        label: translate('data.importRecentFiles'),
+        description: translate('data.importRecentFilesDesc'),
         handler: importRecentFiles,
     },
     {
-        label: 'Delete Orphans',
-        description: 'Removes files from history that are no longer on disk.',
+        label: translate('data.deleteOrphans'),
+        description: translate('data.deleteOrphansDesc'),
         handler: deleteOrphans,
         danger: true,
     },
-];
+]);
 </script>
 
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
         <div class="flex items-center gap-2">
             <Database size={16} class="text-accent-secondary" />
-            <h2 class="text-fg-default text-sm font-semibold">Data</h2>
+            <h2 class="text-fg-default text-sm font-semibold">{$_('data.title')}</h2>
         </div>
         <button
             type="button"
             class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
             onclick={onClose}
-            aria-label="Close">
+            aria-label={$_('common.close')}>
             <X size={16} />
         </button>
     {/snippet}
@@ -202,7 +195,7 @@ const actions: Action[] = [
                     onclick={action.handler}
                     disabled={busy}
                     use:tooltip={action.danger
-                        ? 'Removes files from history that are no longer on disk.'
+                        ? translate('data.deleteOrphansDesc')
                         : ''}>
                     {action.label}
                 </button>

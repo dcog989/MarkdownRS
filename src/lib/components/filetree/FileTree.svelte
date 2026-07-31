@@ -19,6 +19,7 @@
         Unlink,
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
+    import { _ } from 'svelte-i18n';
     import { tooltip } from '$lib/actions/tooltip';
     import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
     import {
@@ -231,7 +232,7 @@
             {:else}
                 <Folder size={14} class="text-accent-secondary shrink-0" />
             {/if}
-            <span class="truncate">{basename(fileTreeStore.root) || 'File Tree'}</span>
+            <span class="truncate">{basename(fileTreeStore.root) || $_('fileTree.header')}</span>
         </button>
 
         <div class="text-fg-muted flex shrink-0 items-center">
@@ -240,7 +241,7 @@
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 class:cursor-not-allowed={!canNavigateUp()}
                 class:opacity-40={!canNavigateUp()}
-                use:tooltip={'Go up one level'}
+                use:tooltip={$_('fileTree.goUp')}
                 onclick={navigateToParent}>
                 <ArrowUpToLine size={14} />
             </button>
@@ -251,8 +252,8 @@
                 class:text-accent-secondary={appContext.settings.fileTreeFollowDocument}
                 use:tooltip={
                     appContext.settings.fileTreeFollowDocument
-                        ? 'Stop following active document'
-                        : 'Follow active document'
+                        ? $_('fileTree.stopFollowing')
+                        : $_('fileTree.followActive')
                 }
                 onclick={() => {
                     toggleFileTreeFollow();
@@ -269,7 +270,7 @@
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 class:bg-bg-active={fileTreeStore.showHidden}
                 class:text-accent-secondary={fileTreeStore.showHidden}
-                use:tooltip={fileTreeStore.showHidden ? 'Hide hidden files' : 'Show hidden files'}
+                use:tooltip={fileTreeStore.showHidden ? $_('fileTree.hideHidden') : $_('fileTree.showHidden')}
                 onclick={toggleHiddenFiles}>
                 {#if fileTreeStore.showHidden}
                     <Eye size={14} />
@@ -280,14 +281,14 @@
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-                use:tooltip={'Collapse all'}
+                use:tooltip={$_('fileTree.collapseAll')}
                 onclick={collapseAll}>
                 <Minus size={14} />
             </button>
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-                use:tooltip={'Refresh'}
+                use:tooltip={$_('fileTree.refresh')}
                 onclick={() => void refreshTree()}>
                 <RefreshCw size={14} />
             </button>
@@ -297,7 +298,7 @@
     <div class="min-h-0 flex-1">
         {#if !fileTreeStore.root}
             <div class="text-fg-muted flex h-full items-center justify-center px-4 text-center text-xs">
-                Open a file to browse its folder
+                {$_('fileTree.emptyState')}
             </div>
         {:else}
             <div
@@ -368,7 +369,7 @@
     <div
         role="button"
         tabindex="0"
-        aria-label="Resize or collapse file tree panel"
+        aria-label={$_('fileTree.resizeAria')}
         class="ft-resize-handle"
         class:cursor-col-resize={isResizing}
         onmousedown={startResize}

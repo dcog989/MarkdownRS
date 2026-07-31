@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -10,14 +11,14 @@ export function reloadSpellcheck() {
   spellcheckState.clear();
   invalidateSpellcheckCache();
   appContext.spellcheck.init(true).then(() => {
-    showToast('success', 'Spellcheck settings updated');
+    showToast('success', translate('settings.spellcheckSettingsUpdated'));
     const activeView = getActiveEditorView();
     if (activeView) triggerImmediateLint(activeView);
   });
 }
 
 export function onLogLevelChange() {
-  showToast('info', 'Restart required to apply log level changes');
+  showToast('info', translate('settings.logLevelChanged'));
 }
 
 export function onThemeChange() {

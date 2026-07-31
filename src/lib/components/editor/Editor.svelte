@@ -2,6 +2,7 @@
 import type { EditorView as CM6EditorView } from '@codemirror/view';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 import { onMount, tick, untrack } from 'svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
 import EditorViewComponent from '$lib/components/editor/EditorView.svelte';
@@ -11,6 +12,7 @@ import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
 import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
 import Minimap from '$lib/components/ui/Minimap.svelte';
+import { translate } from '$lib/i18n';
 import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
 import {
     editorStore,
@@ -113,8 +115,8 @@ $effect(() => {
     const ts = getTransientState(tab.id);
     if (ts?.forceFullFeatures) return;
 
-    showToast('info', 'Large file — simple mode enabled for performance', CONFIG.UI.TOAST_DURATION_MS, {
-        label: 'Enable full features',
+    showToast('info', translate('editor.largeFileSimpleMode'), CONFIG.UI.TOAST_DURATION_MS, {
+        label: translate('editor.enableFullFeatures'),
         onClick: () => {
             updateTransientState(tab.id, { forceFullFeatures: true });
             forceFullFeatures = true;
@@ -276,7 +278,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
                     class="bg-bg-panel border-border-light pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"
                 >
                     <div class="text-fg-muted border-border-light border-b px-4 py-3 text-xs font-medium uppercase tracking-wide">
-                        Recently Closed
+                        {$_('editor.recentlyClosed')}
                     </div>
                     <div class="flex flex-col closed-tabs-list">
                         {#each appContext.editor.closedTabsHistory.slice(0, 8) as entry, i (entry.tab.id)}
@@ -351,14 +353,14 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
                 } else if (text === null) {
                     AppError.handle('UI:DragDrop', 'Clipboard content is not text', {
                         showToast: true,
-                        userMessage: 'Clipboard does not contain valid text',
+                        userMessage: translate('editor.clipboardNoText'),
                         severity: 'info',
                     });
                 }
             } catch (err) {
                 AppError.handle('UI:DragDrop', err, {
                     showToast: true,
-                    userMessage: 'Failed to paste from clipboard',
+                    userMessage: translate('editor.pasteFailed'),
                     severity: 'error',
                 });
             }

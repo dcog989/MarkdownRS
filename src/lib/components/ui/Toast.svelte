@@ -3,6 +3,7 @@ import { CircleAlert, CircleCheckBig, CircleX, Info, X } from 'lucide-svelte';
 import { onMount } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import { fly } from 'svelte/transition';
+import { _ } from 'svelte-i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { dismissToast } from '$lib/stores/toastStore.svelte';
 
@@ -112,7 +113,7 @@ onMount(() => {
                     type="button"
                     class="text-fg-muted hover:bg-bg-hover hover:text-fg-default flex shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent p-1 transition-all"
                     onclick={() => dismissToast(toast.id)}
-                    aria-label="Dismiss">
+                    aria-label={$_('common.dismiss')}>
                     <X size={14} />
                 </button>
             </div>

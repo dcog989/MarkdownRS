@@ -1,3 +1,5 @@
+import { translate } from '$lib/i18n';
+
 export type DialogResult = 'save' | 'discard' | 'cancel';
 
 export type DialogOptions = {
@@ -50,9 +52,9 @@ export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
     queue.push({
       id,
       options: {
-        saveLabel: 'Save',
-        discardLabel: 'Discard',
-        cancelLabel: 'Cancel',
+        saveLabel: translate('common.save'),
+        discardLabel: translate('common.discard'),
+        cancelLabel: translate('common.cancel'),
         ...options,
       },
       resolve,

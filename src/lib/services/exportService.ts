@@ -1,5 +1,6 @@
 import { save } from '@tauri-apps/plugin-dialog';
 import { domToPng, domToSvg, domToWebp } from 'modern-screenshot';
+import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
@@ -31,7 +32,7 @@ export class ExportService {
   private async prepareExportContent(): Promise<HTMLElement | null> {
     const tab = this.getActiveTab();
     if (!tab) {
-      showToast('error', 'No active tab to export.');
+      showToast('error', translate('export.noActiveTab'));
       return null;
     }
 
@@ -43,7 +44,7 @@ export class ExportService {
     } catch (err) {
       AppError.handle('Export:HTML', err, {
         showToast: true,
-        userMessage: 'Failed to render markdown for export',
+        userMessage: translate('export.failedRender'),
       });
       return null;
     }
@@ -78,7 +79,7 @@ export class ExportService {
     try {
       const path = await save({
         defaultPath: `${tab.title.replace(/\.[^/.]+$/, '')}.html`,
-        filters: [{ name: 'HTML', extensions: ['html'] }],
+        filters: [{ name: translate('export.htmlFilter'), extensions: ['html'] }],
       });
 
       if (!path) return;
@@ -99,9 +100,9 @@ export class ExportService {
         { path, content: html },
         'File:Write',
         { path: tab?.path },
-        { report: true, msg: 'Failed to save HTML file' },
+        { report: true, msg: translate('export.failedSaveHtml') },
       );
-      showToast('success', `Exported to ${path}`);
+      showToast('success', translate('export.exportedTo', { values: { path } }));
     } catch (err) {
       logger.file.warn('ExportHtmlFailed', { error: String(err) });
     }
@@ -114,12 +115,12 @@ export class ExportService {
     try {
       const path = await save({
         defaultPath: `${tab.title.replace(/\.[^/.]+$/, '')}.pdf`,
-        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+        filters: [{ name: translate('export.pdfFilter'), extensions: ['pdf'] }],
       });
 
       if (!path) return;
 
-      showToast('info', 'Generating PDF...');
+      showToast('info', translate('export.generatingPdf'));
 
       const computedStyle = getComputedStyle(document.documentElement);
       const bgColor = computedStyle.getPropertyValue('--surface-1').trim() || null;
@@ -129,9 +130,9 @@ export class ExportService {
         { path, content: tab.content, backgroundColor: bgColor },
         'Export:PDF',
         { path: tab?.path },
-        { report: true, msg: 'Failed to generate PDF' },
+        { report: true, msg: translate('export.failedGeneratePdf') },
       );
-      showToast('success', `Exported to ${path}`);
+      showToast('success', translate('export.exportedTo', { values: { path } }));
     } catch (err) {
       logger.file.warn('ExportPdfFailed', { error: String(err) });
     }
@@ -152,7 +153,7 @@ export class ExportService {
 
       if (!path) return;
 
-      showToast('info', 'Generating image...');
+      showToast('info', translate('export.generatingImage'));
 
       const computedStyle = getComputedStyle(document.documentElement);
       const bgColor = computedStyle.getPropertyValue('--surface-1').trim() || '#ffffff';
@@ -188,7 +189,7 @@ export class ExportService {
           { path, content: svgContent },
           'File:Write',
           { path: tab?.path },
-          { report: true, msg: 'Failed to save SVG' },
+          { report: true, msg: translate('export.failedSaveSvg') },
         );
       } else {
         const base64Data = dataUrl.split(',')[1];
@@ -202,10 +203,10 @@ export class ExportService {
           { path, content: Array.from(bytes) },
           'File:Write',
           { path: tab?.path },
-          { report: true, msg: `Failed to save ${format.toUpperCase()}` },
+          { report: true, msg: translate('export.failedSaveFormat', { values: { format: format.toUpperCase() } }) },
         );
       }
-      showToast('success', `Exported to ${path}`);
+      showToast('success', translate('export.exportedTo', { values: { path } }));
     } catch (err) {
       logger.file.warn('ExportImageFailed', { error: String(err) });
     } finally {

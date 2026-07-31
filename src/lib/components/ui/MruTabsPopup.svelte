@@ -1,5 +1,6 @@
 <script lang="ts">
 import { CircleAlert, FileText, PencilLine, SquarePen } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -39,11 +40,11 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
 </script>
 
 {#if isOpen}
-    <div role="button" tabindex="0" aria-label="Close" class="ui-backdrop" onclick={handleBackdropClick} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); if (e.key === 'Escape') onClose(); }}>
+    <div role="button" tabindex="0" aria-label={$_('common.close')} class="ui-backdrop" onclick={handleBackdropClick} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); if (e.key === 'Escape') onClose(); }}>
         <div class="ui-panel">
             <div class="ui-header">
-                <h3 class="text-fg-default text-sm font-semibold">Recent Tabs</h3>
-                <p class="text-ui-sm text-fg-muted mt-1">Release Ctrl to switch</p>
+                <h3 class="text-fg-default text-sm font-semibold">{$_('mruTabs.title')}</h3>
+                <p class="text-ui-sm text-fg-muted mt-1">{$_('mruTabs.hint')}</p>
             </div>
 
             <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -89,7 +90,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
                             </div>
 
                             {#if tab.isDirty}
-                                <div class="mru-dot" use:tooltip={'Modified'}></div>
+                                <div class="mru-dot" use:tooltip={$_('mruTabs.modified')}></div>
                             {/if}
                         </button>
                     {/each}

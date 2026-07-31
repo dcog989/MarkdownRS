@@ -1,6 +1,7 @@
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
+import { translate } from '$lib/i18n';
 import type { RenderResult } from '$lib/types/markdown';
 import { callBackendSafe } from './backend';
 
@@ -61,7 +62,7 @@ export async function renderMarkdown(
   if (!result) {
     await error(`[Markdown] Render error: Rendering returned null`);
     return {
-      html: `<div class="p-4 border border-danger text-danger"><strong>Preview Error:</strong><br/>Rendering returned null</div>`,
+      html: `<div class="p-4 border border-danger text-danger"><strong>${translate('preview.renderFailed')}:</strong><br/>${translate('preview.renderNull')}</div>`,
       line_map: {},
       word_count: 0,
       char_count: 0,

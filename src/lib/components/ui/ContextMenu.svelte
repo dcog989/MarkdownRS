@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount, type Snippet } from 'svelte';
+import { _ } from 'svelte-i18n';
 import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
 
 let { x, y, onClose, children } = $props<{
@@ -219,7 +220,7 @@ function handleBackdropContextMenu(e: MouseEvent) {
 <div
     role="button"
     tabindex="0"
-    aria-label="Close context menu"
+    aria-label={$_('modal.closeContextMenu')}
     class="fixed inset-0 z-200"
     onclick={onClose}
     onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}

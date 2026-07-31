@@ -1,6 +1,8 @@
 <script lang="ts">
 import { open } from '@tauri-apps/plugin-dialog';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
+import { translate } from '$lib/i18n';
 import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
 import type { SettingDef } from '$lib/utils/settingsDefinitions';
 import { elideMiddle } from '$lib/utils/textElide';
@@ -26,7 +28,8 @@ let {
 let path = $derived(value ? String(value) : '');
 let pathContainer = $state<HTMLDivElement>();
 let pathSpan = $state<HTMLSpanElement>();
-let displayPath = $state('No template selected');
+let displayPath = $state($_('settings.noTemplateSelected'));
+let tooltipText = $derived(setting.tooltip ? translate(setting.tooltip) : null);
 
 function measureCharWidth(el: HTMLElement): number {
     const canvas = document.createElement('canvas');
@@ -40,7 +43,7 @@ function fitPathToWidth() {
     const span = pathSpan;
     if (!span) return;
     if (!path) {
-        displayPath = 'No template selected';
+        displayPath = $_('settings.noTemplateSelected');
         return;
     }
     const available = span.clientWidth;
@@ -70,7 +73,7 @@ $effect(() => {
 });
 </script>
 
-<div use:tooltip={setting.type === 'file' ? null : setting.tooltip} class="w-full">
+<div use:tooltip={setting.type === 'file' ? null : tooltipText} class="w-full">
     {#if setting.type === 'text'}
         <Input
             id={setting.key}
@@ -116,7 +119,7 @@ $effect(() => {
                 class="text-ui bg-bg-input text-fg-default w-full cursor-pointer rounded border pl-2 py-1 outline-none">
                 {#each setting.options || [] as option, idx (option)}
                     <option value={option}>
-                        {setting.optionLabels?.[idx] || option}
+                        {setting.optionLabels?.[idx] ? translate(setting.optionLabels[idx]) : option}
                     </option>
                 {/each}
             </select>
@@ -137,27 +140,27 @@ $effect(() => {
             disabled={isCheckingContextMenu} />
     {:else if setting.type === 'file'}
         <div class="w-full min-w-0" bind:this={pathContainer}>
-        <div class="flex items-center gap-2" use:tooltip={setting.tooltip}>
+        <div class="flex items-center gap-2" use:tooltip={tooltipText}>
             <button
                 type="button"
                 class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium whitespace-nowrap"
                     onclick={async () => {
                         const selected = await open({
                             multiple: false,
-                            filters: [{ name: 'Markdown', extensions: MARKDOWN_EXTENSIONS }],
+                            filters: [{ name: translate('fileOps.markdownFilter'), extensions: MARKDOWN_EXTENSIONS }],
                         });
                         if (selected && typeof selected === 'string') {
                             onChange(selected);
                         }
                     }}>
-                    Browse...
+                    {$_('common.browse')}
                 </button>
                 {#if value}
                     <button
                         type="button"
                         class="btn-base btn-sm hover-surface whitespace-nowrap"
                         onclick={() => onChange('')}>
-                        Clear
+                        {$_('common.clear')}
                     </button>
                 {/if}
             </div>

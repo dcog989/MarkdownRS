@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { toggleWriterMode } from '$lib/stores/appState.svelte';
 import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -35,7 +36,7 @@ export const viewCommands: Command[] = [
       e?.preventDefault();
       e?.stopImmediatePropagation();
       if (!isCurrentFileMarkdown()) {
-        showToast('warning', 'Preview not available for this file type');
+        showToast('warning', translate('tabBarMenu.previewNotAvailable'));
         return;
       }
       toggleSplitView();

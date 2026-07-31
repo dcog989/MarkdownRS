@@ -1,5 +1,6 @@
 <script lang="ts">
 import { FilePlus, Files, Save } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import Submenu from '$lib/components/ui/Submenu.svelte';
 import { createNewFile } from '$lib/stores/editorStore.svelte';
@@ -54,7 +55,7 @@ async function handleNewTab() {
                 type="button"
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={handleNewTab}>
-                <FilePlus size={14} class="opacity-70" /><span>New Tab</span
+                <FilePlus size={14} class="opacity-70" /><span>{$_('tabBarContextMenu.newTab')}</span
                 ><span class="text-ui-sm ml-auto opacity-50">Ctrl+N</span>
             </button>
 
@@ -65,7 +66,7 @@ async function handleNewTab() {
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
                 onclick={handleSaveAll}>
-                <Save size={14} class="opacity-70" /><span>Save All</span
+                <Save size={14} class="opacity-70" /><span>{$_('tabBarContextMenu.saveAll')}</span
                 ><span class="text-ui-sm ml-auto opacity-50">Ctrl+Shift+S</span>
             </button>
 
@@ -84,7 +85,7 @@ async function handleNewTab() {
                     type="button"
                     class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left">
                     <Files size={14} class="mr-2 opacity-70" />
-                    <span>Close Many</span>
+                    <span>{$_('tabBarContextMenu.closeMany')}</span>
                     <span class="ml-auto opacity-60">›</span>
                 </button>
             {/snippet}
@@ -94,14 +95,14 @@ async function handleNewTab() {
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasSavedTabs}
                 onclick={() => handleCloseMany('saved')}>
-                Close Saved
+                {$_('tabBarContextMenu.closeSaved')}
             </button>
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                 disabled={!hasUnsavedTabs}
                 onclick={() => handleCloseMany('unsaved')}>
-                Close Not Saved
+                {$_('tabBarContextMenu.closeNotSaved')}
             </button>
             {#if hasPinnedTabs}
                 <button
@@ -109,14 +110,14 @@ async function handleNewTab() {
                     class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                     disabled={!hasUnpinnedTabs}
                     onclick={() => handleCloseMany('unpinned')}>
-                    Close Unpinned
+                    {$_('tabBarContextMenu.closeUnpinned')}
                 </button>
             {/if}
             <button
                 type="button"
                 class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
                 onclick={() => handleCloseMany('all')}>
-                Close All
+                {$_('tabBarContextMenu.closeAll')}
             </button>
         </Submenu>
     {/snippet}

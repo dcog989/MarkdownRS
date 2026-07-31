@@ -1,6 +1,7 @@
 <script lang="ts">
 import { ChevronDown, ChevronRight, Menu } from 'lucide-svelte';
 import { onDestroy } from 'svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import AppLifecycle from '$lib/components/app/AppLifecycle.svelte';
 import Editor from '$lib/components/editor/Editor.svelte';
@@ -71,9 +72,9 @@ function onResizeMouseDown(e: MouseEvent) {
                     <div class="ft-peek-edge group shrink-0">
                         <button
                             type="button"
-                            aria-label="Show file tree"
+                            aria-label={$_('fileTree.showFileTree')}
                             class="ft-peek"
-                            use:tooltip={'Show file tree'}
+                            use:tooltip={$_('fileTree.showFileTree')}
                             onclick={handleToggleFileTree}>
                             <ChevronRight
                                 size={14}
@@ -117,8 +118,8 @@ function onResizeMouseDown(e: MouseEvent) {
                                 style:right={appContext.settings.showMinimap ? '64px' : '16px'}>
                                 <button
                                     type="button"
-                                    aria-label="Menu"
-                                    use:tooltip={'Menu'}
+                                    aria-label={$_('tabBar.menu')}
+                                    use:tooltip={$_('tabBar.menu')}
                                     class="bg-bg-panel border-border-light hover:bg-bg-hover text-fg-default group flex items-center rounded-lg border px-3 py-2 shadow-lg transition-colors"
                                     onclick={() => (showWriterMenu = !showWriterMenu)}>
                                     <Menu size={16} class="opacity-30 transition-opacity group-hover:opacity-100" />
@@ -133,7 +134,7 @@ function onResizeMouseDown(e: MouseEvent) {
                         <div
                             role="button"
                             tabindex="0"
-                            aria-label="Resize split view"
+                            aria-label={$_('common.resizeSplitView')}
                             class="resize-handle"
                             style:cursor={splitResize.resizeCursor}
                             onmousedown={onResizeMouseDown}
@@ -151,7 +152,7 @@ function onResizeMouseDown(e: MouseEvent) {
                 <div
                     class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none">
                     <Logo class="mb-4 h-16 w-16 opacity-50 grayscale" />
-                    <p class="text-sm">Ctrl+N to create a new file</p>
+                    <p class="text-sm">{$_('app.newFileHint')}</p>
                 </div>
             {/if}
 

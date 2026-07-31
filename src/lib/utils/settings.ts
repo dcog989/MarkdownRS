@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { appState } from '$lib/stores/appState.svelte';
 import { settingsState, syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { callBackendSafe } from './backend';
@@ -28,11 +29,11 @@ export async function initSettings() {
   const [saved, appInfo] = await Promise.all([
     callBackendSafe('load_settings', {}, 'Settings:Load', {
       showToast: false,
-      userMessage: 'Failed to load settings',
+      userMessage: translate('error.failedToLoadSettings'),
     }),
     callBackendSafe('get_app_info', {}, 'Settings:AppInfo', {
       showToast: false,
-      userMessage: 'Failed to get app info',
+      userMessage: translate('error.failedToGetAppInfo'),
     }),
   ]);
 
@@ -67,7 +68,7 @@ async function saveSettingsImmediate() {
 
   await callBackendSafe('save_settings', { settings: settingsToSave }, 'Settings:Save', {
     showToast: false,
-    userMessage: 'Failed to save settings',
+    userMessage: translate('error.failedToSaveSettings'),
   });
   lastSavedState = serialized;
 }

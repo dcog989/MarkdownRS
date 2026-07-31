@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { callBackendSafe } from '$lib/utils/backend';
@@ -105,7 +106,7 @@ export async function reloadFileContent(tabId: string): Promise<void> {
 
   const sanitizedPath = sanitizePath(tab.path);
   const result = await callBackendSafe('read_text_file', { path: sanitizedPath }, 'File:Read', {
-    userMessage: 'Failed to reload file',
+    userMessage: translate('fileOps.failedReload'),
     additionalInfo: { path: tab.path, tabId },
   });
 

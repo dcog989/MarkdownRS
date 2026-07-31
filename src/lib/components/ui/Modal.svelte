@@ -1,6 +1,7 @@
 <script lang="ts">
 import { X } from 'lucide-svelte';
 import type { Snippet } from 'svelte';
+import { _ } from 'svelte-i18n';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
@@ -155,7 +156,7 @@ $effect(() => {
     <div
         role="button"
         tabindex="0"
-        aria-label="Close modal"
+        aria-label={$_('modal.closeModal')}
         class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === 'center'
             ? 'items-center'
             : 'items-start pt-12'}"
@@ -186,7 +187,7 @@ $effect(() => {
                         type="button"
                         class="text-fg-muted hover-surface rounded p-1"
                         onclick={onClose}
-                        aria-label="Close">
+                        aria-label={$_('common.close')}>
                         <X size={18} />
                     </button>
                 </div>

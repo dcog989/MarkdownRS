@@ -1,5 +1,6 @@
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { openPath } from '@tauri-apps/plugin-opener';
+import { translate } from '$lib/i18n';
 import {
   checkFileExists,
   invalidateMetadataCache,
@@ -42,8 +43,8 @@ export async function openFile(path?: string): Promise<void> {
       const selected = await open({
         multiple: false,
         filters: [
-          { name: 'Text Files', extensions: SUPPORTED_TEXT_EXTENSIONS },
-          { name: 'All Files', extensions: ['*'] },
+          { name: translate('fileOps.textFilter'), extensions: SUPPORTED_TEXT_EXTENSIONS },
+          { name: translate('fileOps.allFiles'), extensions: ['*'] },
         ],
       });
       if (!selected || typeof selected !== 'string') return;
@@ -68,22 +69,24 @@ export async function openFile(path?: string): Promise<void> {
     const maxBytes = maxFileSizeMB * BYTES_PER_MB;
 
     if (!metadata) {
-      throw new Error('Failed to retrieve file metadata');
+      throw new Error(translate('fileOps.failedMetadata'));
     }
 
     if (metadata.size > maxBytes) {
       throw new Error(
-        `File is too large (${(metadata.size / BYTES_PER_MB).toFixed(2)} MB). Maximum allowed is ${maxFileSizeMB} MB.`,
+        translate('fileOps.tooLarge', {
+          values: { size: (metadata.size / BYTES_PER_MB).toFixed(2), max: maxFileSizeMB },
+        }),
       );
     }
 
     const result = await readTextFile(sanitizedPath);
 
     if (!result) {
-      throw new Error('Failed to read file: null result');
+      throw new Error(translate('fileOps.failedReadNull'));
     }
 
-    const fileName = getFilename(sanitizedPath) || 'Untitled';
+    const fileName = getFilename(sanitizedPath) || translate('fileOps.untitled');
 
     const detectedLineEnding = detectLineEnding(result.content);
 
@@ -152,7 +155,7 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
     await openPath(resolvedPath);
   } catch (err) {
     logger.file.warn('NavigationFailed', { error: String(err) });
-    showToast('error', `Failed to open: ${err}`);
+    showToast('error', translate('fileOps.failedOpen', { values: { error: String(err) } }));
   }
 }
 
@@ -211,14 +214,14 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       const filters =
         preferredExt === 'txt'
           ? [
-              { name: 'Text', extensions: ['txt'] },
-              { name: 'Markdown', extensions: ['md'] },
-              { name: 'All Files', extensions: ['*'] },
+              { name: translate('fileOps.textShortFilter'), extensions: ['txt'] },
+              { name: translate('fileOps.markdownFilter'), extensions: ['md'] },
+              { name: translate('fileOps.allFiles'), extensions: ['*'] },
             ]
           : [
-              { name: 'Markdown', extensions: ['md'] },
-              { name: 'Text', extensions: ['txt'] },
-              { name: 'All Files', extensions: ['*'] },
+              { name: translate('fileOps.markdownFilter'), extensions: ['md'] },
+              { name: translate('fileOps.textShortFilter'), extensions: ['txt'] },
+              { name: translate('fileOps.allFiles'), extensions: ['*'] },
             ];
 
       savePath = await save({ filters });
@@ -268,7 +271,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       if (!success) {
         fileWatcher.setWriteLock(sanitizedPath, false);
         if (pendingSavePath) activeSaves.delete(pendingSavePath);
-        AppError.handle('File:Write', new Error('Failed to save file'), { showToast: true });
+        AppError.handle('File:Write', new Error(translate('fileOps.failedSave')), { showToast: true });
         return false;
       }
 
@@ -279,7 +282,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         await fileWatcher.watch(sanitizedPath);
       }
 
-      const fileName = getFilename(sanitizedPath) || 'Untitled';
+      const fileName = getFilename(sanitizedPath) || translate('fileOps.untitled');
       let finalTitle = fileName;
 
       if (appContext.settings.tabNameFromContent) {

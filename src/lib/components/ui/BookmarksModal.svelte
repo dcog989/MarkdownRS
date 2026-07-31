@@ -2,9 +2,11 @@
 import { open } from '@tauri-apps/plugin-dialog';
 import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Tag, Trash2 } from 'lucide-svelte';
 import { slide } from 'svelte/transition';
+import { _ } from 'svelte-i18n';
 import Input from '$lib/components/ui/Input.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { translate } from '$lib/i18n';
 import {
     addBookmark,
     deleteBookmark,
@@ -160,7 +162,7 @@ async function handleBrowse() {
     try {
         const selected = await open({
             multiple: false,
-            filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown', 'txt'] }],
+            filters: [{ name: translate('bookmarks.markdownFilter'), extensions: ['md', 'markdown', 'txt'] }],
         });
         if (selected && typeof selected === 'string') {
             addPath = selected;
@@ -170,7 +172,7 @@ async function handleBrowse() {
             if (!addTitle) addTitle = titleWithoutExt;
         }
     } catch (_error) {
-        browseError = 'Failed to open file browser';
+        browseError = translate('bookmarks.browseError');
     }
 }
 
@@ -179,11 +181,11 @@ async function handleAddBookmark() {
     try {
         await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
     } catch (_error) {
-        browseError = 'File does not exist or cannot be accessed';
+        browseError = translate('bookmarks.missingFile');
         return;
     }
     if (isBookmarked(addPath)) {
-        browseError = 'This file is already bookmarked';
+        browseError = translate('bookmarks.alreadyBookmarked');
         return;
     }
     const tags = addTags
@@ -199,7 +201,7 @@ async function handleAddBookmark() {
 }
 
 function formatDate(timestamp: string | null): string {
-    if (!timestamp) return 'Never';
+    if (!timestamp) return translate('bookmarks.never');
     const [date] = timestamp.split(' / ');
     return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
 }
@@ -216,11 +218,11 @@ function handleKeydown(e: KeyboardEvent) {
 <Modal bind:isOpen {onClose} {position}>
     {#snippet header()}
         <ModalSearchHeader
-            title="Bookmarks"
+            title={$_('bookmarks.title')}
             icon={Bookmark}
             bind:searchValue={searchQuery}
             focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
-            searchPlaceholder="Search bookmarks..."
+            searchPlaceholder={$_('bookmarks.placeholder')}
             {onClose}
             onKeydown={handleKeydown}>
             {#snippet extraActions()}
@@ -228,15 +230,15 @@ function handleKeydown(e: KeyboardEvent) {
                     <select
                         bind:value={sortBy}
                         class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border pl-1 pr-5 py-1 outline-none w-auto">
-                        <option value="most-recent">Most Recent</option>
-                        <option value="alphabetical">Alphabetical</option>
-                        <option value="last-updated">Last Updated</option>
+                        <option value="most-recent">{$_('bookmarks.sortMostRecent')}</option>
+                        <option value="alphabetical">{$_('bookmarks.sortAlphabetical')}</option>
+                        <option value="last-updated">{$_('bookmarks.sortLastUpdated')}</option>
                     </select>
                     <button
                         type="button"
                         onclick={toggleSortDirection}
                         class="text-fg-muted hover-surface rounded p-1 transition-colors"
-                        title={sortDirection === 'asc' ? 'Sort Ascending' : 'Sort Descending'}>
+                        title={sortDirection === 'asc' ? $_('common.sortAscending') : $_('common.sortDescending')}>
                         {#if sortDirection === 'asc'}
                             <ArrowUp size={16} />
                         {:else}
@@ -249,7 +251,7 @@ function handleKeydown(e: KeyboardEvent) {
                     type="button"
                     class="text-accent-primary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
                     onclick={startAdd}
-                    title="Add Bookmark">
+                    title={$_('bookmarks.addBookmark')}>
                     <Plus size={16} />
                 </button>
             {/snippet}
@@ -263,24 +265,24 @@ function handleKeydown(e: KeyboardEvent) {
                     <Input
                         bind:value={addPath}
                         type="text"
-                        placeholder="File path..."
+                        placeholder={$_('bookmarks.filePathPlaceholder')}
                         class="bg-bg-panel flex-1" />
                     <button
                         type="button"
                         onclick={handleBrowse}
                         class="btn-base btn-sm bg-bg-panel text-fg-default border-border-main font-medium transition-colors">
-                        Browse...
+                        {$_('common.browse')}
                     </button>
                 </div>
                 <Input
                     bind:value={addTitle}
                     type="text"
-                    placeholder="Bookmark title..."
+                    placeholder={$_('bookmarks.bookmarkTitlePlaceholder')}
                     class="bg-bg-panel" />
                 <Input
                     bind:value={addTags}
                     type="text"
-                    placeholder="Tags (comma-separated)..."
+                    placeholder={$_('bookmarks.tagsPlaceholder')}
                     class="bg-bg-panel" />
                 {#if browseError}
                     <div class="text-ui-sm text-danger-text">{browseError}</div>
@@ -290,14 +292,14 @@ function handleKeydown(e: KeyboardEvent) {
                         type="button"
                         onclick={() => (showAddForm = false)}
                         class="btn-base btn-sm btn-secondary">
-                        Cancel
+                        {$_('common.cancel')}
                     </button>
                     <button
                         type="button"
                         onclick={handleAddBookmark}
                         disabled={!addPath || !addTitle}
                         class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium disabled:opacity-50">
-                        Add
+                        {$_('common.add')}
                     </button>
                 </div>
             </div>
@@ -321,19 +323,19 @@ function handleKeydown(e: KeyboardEvent) {
                                 <Input
                                     bind:value={editTags}
                                     type="text"
-                                    placeholder="Tags (comma-separated)" />
+                                    placeholder={$_('bookmarks.tagsPlaceholder')} />
                                 <div class="flex justify-end gap-2">
                                     <button
                                         type="button"
                                         onclick={cancelEdit}
                                         class="btn-base btn-sm btn-secondary">
-                                        Cancel
+                                        {$_('common.cancel')}
                                     </button>
                                     <button
                                         type="button"
                                         onclick={() => saveEdit(bookmark.id)}
                                         class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent">
-                                        Save
+                                        {$_('common.save')}
                                     </button>
                                 </div>
                             </div>
@@ -365,9 +367,9 @@ function handleKeydown(e: KeyboardEvent) {
                                         </div>
                                     {/if}
                                     <div class="date text-ui-sm mt-1">
-                                        Added: {formatDate(bookmark.created)}
+                                        {$_('bookmarks.added')} {formatDate(bookmark.created)}
                                         {#if bookmark.last_accessed}
-                                            • Accessed: {formatDate(bookmark.last_accessed)}
+                                            • {$_('bookmarks.accessed')} {formatDate(bookmark.last_accessed)}
                                         {/if}
                                     </div>
                                 </div>
@@ -394,13 +396,13 @@ function handleKeydown(e: KeyboardEvent) {
                 {/each}
             </div>
         {:else if searchQuery.length >= 2}
-            <div class="text-fg-muted px-4 py-8 text-center">No bookmarks match your search</div>
+            <div class="text-fg-muted px-4 py-8 text-center">{$_('bookmarks.noMatch')}</div>
         {:else if appContext.bookmarks.bookmarks.length === 0}
             <div class="text-fg-muted px-4 py-8 text-center">
                 <Bookmark size={48} class="mx-auto mb-2 opacity-30" />
-                <div class="mb-1">No bookmarks yet</div>
+                <div class="mb-1">{$_('bookmarks.none')}</div>
                 <div class="text-ui-sm opacity-70">
-                    Click the + button above to add your first bookmark
+                    {$_('bookmarks.helper')}
                 </div>
             </div>
         {/if}

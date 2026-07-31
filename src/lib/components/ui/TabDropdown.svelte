@@ -1,5 +1,6 @@
 <script lang="ts">
 import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
@@ -60,10 +61,10 @@ function getTooltipContent(tab: EditorTab): string {
     const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 
     if (tab.fileCheckFailed) {
-        parts.push('File missing from original location');
+        parts.push($_('tabButton.missingFile'));
         if (tab.path) parts.push(tab.path);
     } else {
-        parts.push(tab.path || 'Unsaved content');
+        parts.push(tab.path || $_('tabButton.unsaved'));
     }
     parts.push(bottomLine);
     return parts.join('\n');
@@ -123,7 +124,7 @@ function handleKeydown(e: KeyboardEvent) {
     <div
         role="button"
         tabindex="0"
-        aria-label="Close"
+        aria-label={$_('tabDropdown.close')}
         class="fixed inset-0 z-40"
         onclick={onClose}
         onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}></div>
@@ -136,7 +137,7 @@ function handleKeydown(e: KeyboardEvent) {
                 bind:this={searchInputRef}
                 bind:value={searchQuery}
                 type="text"
-                placeholder="Filter tabs..."
+                placeholder={$_('tabDropdown.filterPlaceholder')}
                 class="text-fg-default w-full bg-transparent px-2 py-1 text-sm outline-none"
                 onkeydown={handleKeydown} />
         </div>
@@ -226,7 +227,7 @@ function handleKeydown(e: KeyboardEvent) {
                                 e.stopPropagation();
                                 requestCloseTab(tab.id);
                             }}
-                            aria-label="Close tab">
+                            aria-label={$_('tabDropdown.closeTab')}>
                             <X size={14} />
                         </button>
                     </div>

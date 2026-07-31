@@ -1,9 +1,11 @@
 <script lang="ts">
 import { ArrowUpDown, Zap } from 'lucide-svelte';
 import { tick } from 'svelte';
+import { _ } from 'svelte-i18n';
 import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { translate } from '$lib/i18n';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { cycleSortMode, SORT_LABELS, sortCommands } from '$lib/utils/commandPaletteSort';
 import { createListNavigation } from '$lib/utils/listNavigation.svelte';
@@ -24,7 +26,9 @@ let query = $state('');
 let inputRef: HTMLInputElement | undefined = $state();
 
 let filteredCommands = $derived(
-    commands.filter((c: Command) => c.label.toLowerCase().includes(query.toLowerCase())),
+    commands.filter((c: Command) =>
+        translate(c.label).toLowerCase().includes(query.toLowerCase()),
+    ),
 );
 
 let flatOps = $derived(
@@ -85,11 +89,11 @@ function close() {
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
         <ModalSearchHeader
-            title="Commands"
+            title={$_('commandPalette.title')}
             icon={Zap}
             bind:searchValue={query}
             bind:inputRef
-            searchPlaceholder="Search Commands..."
+            searchPlaceholder={$_('commandPalette.placeholder')}
             onClose={close}>
             {#snippet extraActions()}
                 <button
@@ -98,7 +102,7 @@ function close() {
                     title={settingsState.commandPaletteSort}
                     onclick={cycleSortMode}>
                     <ArrowUpDown size={14} />
-                    {SORT_LABELS[settingsState.commandPaletteSort]}
+                    {translate(SORT_LABELS[settingsState.commandPaletteSort])}
                 </button>
             {/snippet}
         </ModalSearchHeader>
@@ -111,7 +115,7 @@ function close() {
                     <div class="mb-3 flex items-center gap-2">
                         <Zap size={16} class="text-accent-primary" />
                         <h3 class="text-fg-default text-sm font-semibold tracking-wide uppercase">
-                            {group.category}
+                            {translate(group.category)}
                         </h3>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
@@ -132,7 +136,7 @@ function close() {
                                 onmouseenter={() => nav.select(globalIndex)}
                                 onclick={() => execute(command)}>
                                 <div class="min-w-0 flex-1">
-                                    <div class="text-sm font-medium whitespace-nowrap">{command.label}</div>
+                                    <div class="text-sm font-medium whitespace-nowrap">{translate(command.label)}</div>
                                     {#if shortcut}
                                         <div class="mt-0.5 truncate text-xs" style:color={isSelected ? 'var(--text-inverse)' : 'var(--text-secondary)'}>
                                             <span class="opacity-60">{shortcut}</span>
@@ -147,7 +151,7 @@ function close() {
         {:else}
             <div class="text-fg-muted px-4 py-8 text-center">
                 <Zap size={48} class="mx-auto mb-2 opacity-30" />
-                <div>No commands match your search</div>
+                <div>{$_('commandPalette.noMatch')}</div>
             </div>
         {/if}
     </div>
@@ -158,7 +162,7 @@ function close() {
             type="button"
             class="btn-base bg-accent-primary text-fg-inverse border-transparent font-medium hover:opacity-80"
             onclick={close}>
-            Close
+            {$_('commandPalette.close')}
         </button>
     {/snippet}
 </Modal>

@@ -1,5 +1,7 @@
 <script lang="ts">
 import { Database, Keyboard, Settings } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
+import { translate } from '$lib/i18n';
 import { toggleData, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -78,7 +80,7 @@ async function toggleContextMenu(enable: boolean) {
     try {
         await callBackend('set_context_menu_item', { enable }, 'Settings:Save');
         isContextMenuEnabled = enable;
-        showToast('info', enable ? 'Added to context menu' : 'Removed from context menu');
+        showToast('info', enable ? translate('settings.addedToContextMenu') : translate('settings.removedFromContextMenu'));
     } catch {
         isContextMenuEnabled = !enable;
     }
@@ -98,14 +100,14 @@ let sortedSettings = $derived(
             }
 
             if (searchQuery.length < 2) return true;
-            const fullString = `${s.category}: ${s.label}`;
+            const fullString = `${translate(s.category)}: ${translate(s.label)}`;
             return fullString.toLowerCase().includes(searchQuery.toLowerCase());
         })
         .sort((a, b) => {
             if (a.category !== b.category) {
-                return a.category.localeCompare(b.category);
+                return translate(a.category).localeCompare(translate(b.category));
             }
-            return a.label.localeCompare(b.label);
+            return translate(a.label).localeCompare(translate(b.label));
         }),
 );
 
@@ -131,11 +133,11 @@ function updateSetting(setting: SettingDef, value: unknown) {
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
         <ModalSearchHeader
-            title="Settings"
+            title={$_('settings.modalTitle')}
             icon={Settings}
             bind:searchValue={searchQuery}
             focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
-            searchPlaceholder="Search Settings..."
+            searchPlaceholder={$_('settings.searchPlaceholder')}
             {onClose}>
             {#snippet extraActions()}
                 <button
@@ -145,8 +147,8 @@ function updateSetting(setting: SettingDef, value: unknown) {
                         onClose();
                         toggleShortcuts();
                     }}
-                    title={`Keyboard Shortcuts (${shortcutsShortcut})`}
-                    aria-label="Keyboard Shortcuts">
+                    title={`${$_('settings.keyboardShortcuts')} (${shortcutsShortcut})`}
+                    aria-label={$_('settings.keyboardShortcuts')}>
                     <Keyboard size={16} />
                 </button>
                 <button
@@ -156,8 +158,8 @@ function updateSetting(setting: SettingDef, value: unknown) {
                         onClose();
                         toggleData();
                     }}
-                    title="Data"
-                    aria-label="Data">
+                    title={$_('settings.data')}
+                    aria-label={$_('settings.data')}>
                     <Database size={16} />
                 </button>
             {/snippet}
@@ -173,12 +175,12 @@ function updateSetting(setting: SettingDef, value: unknown) {
                     <div class="settings-row {rowClass}">
                         <div
                             class="settings-category text-ui-sm py-2.5 pl-3">
-                            {setting.category}
+                            {translate(setting.category)}
                         </div>
                         <label
                             for={setting.key}
                             class="text-ui text-fg-default font-medium py-2.5 pl-8">
-                            {setting.label}
+                            {translate(setting.label)}
                         </label>
                         <div class="w-full py-2.5 pl-8 pr-3">
                             <SettingInput
@@ -193,7 +195,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
                 {/each}
             </div>
         {:else}
-            <div class="text-fg-muted px-4 py-8 text-center">No settings match your search</div>
+            <div class="text-fg-muted px-4 py-8 text-center">{$_('settings.noMatch')}</div>
         {/if}
     </div>
 </Modal>

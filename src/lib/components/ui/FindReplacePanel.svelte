@@ -10,7 +10,9 @@ import {
 import type { EditorView } from '@codemirror/view';
 import { ChevronDown, ChevronRight, Replace, Search, X } from 'lucide-svelte';
 import { onMount, tick, untrack } from 'svelte';
+import { _ } from 'svelte-i18n';
 import Input from '$lib/components/ui/Input.svelte';
+import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import {
@@ -173,7 +175,7 @@ function onReplaceAll() {
     } else {
         const count = replaceAllInTabs();
         if (count > 0) {
-            alert(`Replaced ${count} occurrences across open tabs.`);
+            alert(translate('findReplace.replacedCount', { values: { count } }));
         }
     }
 }
@@ -254,7 +256,7 @@ onMount(() => {
         onmouseenter={() => (isMouseOver = true)}
         onmouseleave={() => (isMouseOver = false)}
         role="dialog"
-        aria-label="Find and Replace"
+        aria-label={$_('findReplace.aria')}
         tabindex="-1">
         <div class="bg-border-main text-fg-default flex items-center border-b p-2">
             <div class="flex flex-1 items-center gap-2">
@@ -262,20 +264,20 @@ onMount(() => {
                     type="button"
                     class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
                     onclick={() => (isReplaceMode = !isReplaceMode)}
-                    title="Toggle Replace Mode">
+                    title={$_('findReplace.toggleReplaceMode')}>
                     {#if isReplaceMode}
                         <ChevronDown size={14} />
                     {:else}
                         <ChevronRight size={14} />
                     {/if}
                 </button>
-                <span class="text-ui font-semibold">Find {isReplaceMode ? '& Replace' : ''}</span>
+                <span class="text-ui font-semibold">{$_('findReplace.find')} {isReplaceMode ? $_('findReplace.andReplace') : ''}</span>
             </div>
             <button
                 type="button"
                 class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
                 onclick={close}
-                title="Close (Esc)">
+                title={$_('findReplace.closeEsc')}>
                 <X size={14} />
             </button>
         </div>
@@ -286,7 +288,7 @@ onMount(() => {
                     bind:ref={searchInputRef}
                     type="text"
                     bind:value={searchState.findText}
-                    placeholder="Find"
+                    placeholder={$_('findReplace.find')}
                     class="flex-1 text-ui-sm leading-6 {searchState.regexError
                         ? 'border-danger'
                         : ''}"
@@ -296,16 +298,15 @@ onMount(() => {
                     {#if searchScope === 'current'}
                         {#if searchState.currentMatches > 0}
                             {searchState.currentIndex + 1}
-                            of {searchState.currentMatches}
+                            {$_('findReplace.of')} {searchState.currentMatches}
                         {:else if searchState.findText}
-                            0 of 0
+                            0 {$_('findReplace.of')} 0
                         {/if}
                     {:else if searchScope === 'all'}
                         {#if searchState.allTabsResults.size > 0}
-                            {searchState.allTabsResults.size}
-                            tabs
+                            {$_('findReplace.tabs', { values: { count: searchState.allTabsResults.size } })}
                         {:else if searchState.findText}
-                            0 tabs
+                            {$_('findReplace.zeroTabs')}
                         {/if}
                     {/if}
                 </div>
@@ -323,7 +324,7 @@ onMount(() => {
                     <Input
                         type="text"
                         bind:value={searchState.replaceText}
-                        placeholder="Replace"
+                        placeholder={$_('findReplace.replace')}
                         class="flex-1 text-ui-sm leading-6"
                         oninput={onReplaceInput}
                         spellcheck="false" />
@@ -337,7 +338,7 @@ onMount(() => {
                         bind:checked={searchState.matchCase}
                         onchange={() => cmView && executeSearch(cmView, false)}
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>Match Case</span>
+                    <span>{$_('findReplace.matchCase')}</span>
                 </label>
                 <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
@@ -345,7 +346,7 @@ onMount(() => {
                         bind:checked={searchState.matchWholeWord}
                         onchange={() => cmView && executeSearch(cmView, false)}
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>Whole Word</span>
+                    <span>{$_('findReplace.wholeWord')}</span>
                 </label>
                 <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
@@ -353,7 +354,7 @@ onMount(() => {
                         bind:checked={searchState.useRegex}
                         onchange={() => cmView && executeSearch(cmView, false)}
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>Regex</span>
+                    <span>{$_('findReplace.regex')}</span>
                 </label>
             </div>
 
@@ -364,7 +365,7 @@ onMount(() => {
                         bind:group={searchScope}
                         value="current"
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>Current Document</span>
+                    <span>{$_('findReplace.currentDocument')}</span>
                 </label>
                 <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
                     <input
@@ -372,7 +373,7 @@ onMount(() => {
                         bind:group={searchScope}
                         value="all"
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>All Open Documents</span>
+                    <span>{$_('findReplace.allOpenDocuments')}</span>
                 </label>
             </div>
 
@@ -383,7 +384,7 @@ onMount(() => {
                     onclick={onFindPrevious}
                     disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} />
-                    Previous
+                    {$_('common.previous')}
                 </button>
                 <button
                     type="button"
@@ -391,7 +392,7 @@ onMount(() => {
                     onclick={onFindNext}
                     disabled={searchScope === 'all' || !!searchState.regexError}>
                     <Search size={12} />
-                    Next
+                    {$_('common.next')}
                 </button>
             </div>
             {#if isReplaceMode}
@@ -402,7 +403,7 @@ onMount(() => {
                         onclick={onReplace}
                         disabled={searchScope === 'all' || !!searchState.regexError}>
                         <Replace size={12} />
-                        Replace
+                        {$_('common.replace')}
                     </button>
                     <button
                         type="button"
@@ -410,14 +411,14 @@ onMount(() => {
                         onclick={onReplaceAll}
                         disabled={!!searchState.regexError}>
                         <Replace size={12} />
-                        Replace All
+                        {$_('findReplace.replaceAll')}
                     </button>
                 </div>
             {/if}
 
             {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
                 <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-                    <div class="text-fg-muted mb-1 text-2xs font-semibold">Results:</div>
+                    <div class="text-fg-muted mb-1 text-2xs font-semibold">{$_('findReplace.results')}</div>
                     {#each [...searchState.allTabsResults.entries()] as [ tabId, count ] (tabId)}
                         {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
                         {#if tab}

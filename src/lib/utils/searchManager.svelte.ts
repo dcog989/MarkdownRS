@@ -1,6 +1,7 @@
 import { SearchQuery, setSearchQuery } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
 import { SvelteMap } from 'svelte/reactivity';
+import { translate } from '$lib/i18n';
 import { updateContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { searchState } from './searchState.svelte';
@@ -13,7 +14,7 @@ export function getSearchQuery(): SearchQuery {
       new RegExp(searchState.findText);
       searchState.regexError = null;
     } catch (e) {
-      searchState.regexError = e instanceof Error ? e.message : 'Invalid regex pattern';
+      searchState.regexError = e instanceof Error ? e.message : translate('findReplace.invalidRegex');
       return new SearchQuery({
         search: '',
         caseSensitive: searchState.matchCase,
@@ -202,7 +203,7 @@ function buildSearchRegex(): RegExp | null {
     return regex;
   } catch (e) {
     if (searchState.useRegex && searchState.findText) {
-      searchState.regexError = e instanceof Error ? e.message : 'Invalid regex pattern';
+      searchState.regexError = e instanceof Error ? e.message : translate('findReplace.invalidRegex');
     } else {
       searchState.regexError = null;
     }

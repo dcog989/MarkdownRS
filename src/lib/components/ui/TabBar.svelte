@@ -3,6 +3,7 @@ import { ChevronDown, FolderTree, Menu, Plus } from 'lucide-svelte';
 import { onDestroy, onMount, tick } from 'svelte';
 import { flip } from 'svelte/animate';
 import { fade } from 'svelte/transition';
+import { _ } from 'svelte-i18n';
 import { SortableController } from '$lib/actions/sortable.svelte';
 import { tooltip } from '$lib/actions/tooltip';
 import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
@@ -157,7 +158,7 @@ $effect(() => {
     <div class="relative h-8 w-8 shrink-0 border-b border-border-primary">
         <button
             type="button"
-            use:tooltip={appContext.settings.fileTreeVisible ? 'Hide File Tree' : 'Show File Tree'}
+            use:tooltip={appContext.settings.fileTreeVisible ? $_('tabBar.hideFileTree') : $_('tabBar.showFileTree')}
             class:bg-bg-active={appContext.settings.fileTreeVisible}
             class:text-accent-secondary={appContext.settings.fileTreeVisible}
             class="text-fg-muted hover-surface flex h-full w-full items-center justify-center"
@@ -173,7 +174,7 @@ $effect(() => {
         style:width={`${editorMetrics.gutterWidth}px`}>
         <button
             type="button"
-            use:tooltip={'Switch Tab'}
+            use:tooltip={$_('tabBar.switchTab')}
             class="text-fg-muted hover-surface flex h-full items-center gap-1 text-xs"
             onclick={() => (showDropdown = !showDropdown)}>
             <span>{appContext.editor.tabs.length}</span>
@@ -249,7 +250,7 @@ $effect(() => {
 
             <button
                 type="button"
-                use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
+                use:tooltip={`${$_('tabBar.newTab')}${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
                 class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
                 onclick={async () => {
                     const newTabId = await createNewFile();
@@ -286,7 +287,7 @@ $effect(() => {
     <div class="flex h-full items-stretch border-l">
         <button
             type="button"
-            use:tooltip={'Menu'}
+            use:tooltip={$_('tabBar.menu')}
             class="relative text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
             onclick={() => (showMenu = !showMenu)}>
             <Menu size={16} />

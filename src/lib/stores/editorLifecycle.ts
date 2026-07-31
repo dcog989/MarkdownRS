@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { reloadFileContent } from '$lib/services/fileMetadata';
 import { initializeTabLoadState } from '$lib/services/tabLoadStateMachine';
 import { CONFIG } from '$lib/utils/config';
@@ -30,7 +31,7 @@ export async function createNewFile(): Promise<string> {
       content = result?.content ?? '';
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      showToast('error', `Failed to read template, creating blank file: ${msg}`);
+      showToast('error', translate('fileOps.failedReadTemplate', { values: { error: msg } }));
     }
   }
   return addTab('', content);

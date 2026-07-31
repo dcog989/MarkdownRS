@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
@@ -97,11 +98,11 @@ export function addBookmarkForActiveTab(): boolean {
   const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
   if (tab?.path) {
     addBookmark(tab.path, tab.title).then(({ isNew }) => {
-      if (isNew) showToast('success', `Added "${tab.title}" to bookmarks`);
-      else showToast('info', `"${tab.title}" is already bookmarked`);
+      if (isNew) showToast('success', translate('bookmarks.addedToast', { values: { title: tab.title } }));
+      else showToast('info', translate('bookmarks.alreadyToast', { values: { title: tab.title } }));
     });
   } else {
-    showToast('warning', 'Save the file before bookmarking');
+    showToast('warning', translate('bookmarks.saveFirst'));
   }
   return true;
 }

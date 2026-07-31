@@ -3,7 +3,9 @@ import { openPath } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check } from '@tauri-apps/plugin-updater';
 import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import Modal from '$lib/components/ui/Modal.svelte';
+import { translate } from '$lib/i18n';
 import type { AppInfo } from '$lib/types/api';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -58,24 +60,24 @@ async function openLogFile() {
 async function checkForUpdates() {
     if (isChecking) return;
     isChecking = true;
-    updateStatus = 'Checking for updates...';
+    updateStatus = translate('about.checking');
 
     try {
         const update = await check();
 
         if (update) {
-            updateStatus = `Downloading ${update.version}...`;
+            updateStatus = translate('about.downloading', { values: { version: update.version } });
             await update.downloadAndInstall();
-            updateStatus = 'Restarting...';
+            updateStatus = translate('about.restarting');
             await relaunch();
         } else {
-            updateStatus = 'You are up to date.';
+            updateStatus = translate('about.upToDate');
         }
     } catch (_err) {
-        updateStatus = 'Failed to check for updates.';
+        updateStatus = translate('about.checkFailed');
     } finally {
         isChecking = false;
-        if (updateStatus !== 'Restarting...') {
+        if (updateStatus !== translate('about.restarting')) {
             setTimeout(() => {
                 updateStatus = null;
             }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);
@@ -84,19 +86,18 @@ async function checkForUpdates() {
 }
 </script>
 
-<Modal bind:isOpen {onClose} {position} title="About">
+<Modal bind:isOpen {onClose} {position} title={$_('about.title')}>
     <div class="text-ui flex flex-col items-center gap-4 p-6">
-        <img src="/logo.svg" alt="MarkdownRS Logo" class="h-20 w-20" />
+        <img src="/logo.svg" alt={$_('app.logoAlt')} class="h-20 w-20" />
         <h1 class="text-fg-default text-2xl font-bold">{appInfo.name}</h1>
-        <p class="text-fg-muted">The only markdown editor you need.</p>
+        <p class="text-fg-muted">{$_('app.tagline')}</p>
         <p class="text-accent-secondary text-center italic">
-            "I didn't get where I am today...<br />
-            without knowing a damned fine editor when I see one."
+            "{$_('app.quote')}"
         </p>
 
         <div class="mt-4 w-full space-y-2">
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="text-fg-muted w-16 shrink-0 font-medium">Version</span>
+                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.version')}</span>
                 <span class="text-fg-default flex-1 text-left font-mono font-bold"
                     >{appInfo.version}</span
                 >
@@ -110,12 +111,12 @@ async function checkForUpdates() {
                     {:else}
                         <RefreshCw size={12} />
                     {/if}
-                    <span>Update</span>
+                    <span>{$_('about.update')}</span>
                 </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="text-fg-muted w-16 shrink-0 font-medium">Install</span>
+                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.install')}</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.install_path}
@@ -125,12 +126,12 @@ async function checkForUpdates() {
                     type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.install_path)}>
-                    Copy
+                    {$_('common.copy')}
                 </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="text-fg-muted w-16 shrink-0 font-medium">Data</span>
+                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.data')}</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.data_path}
@@ -140,12 +141,12 @@ async function checkForUpdates() {
                     type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.data_path)}>
-                    Copy
+                    {$_('common.copy')}
                 </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="text-fg-muted w-16 shrink-0 font-medium">Cache</span>
+                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.cache')}</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.cache_path}
@@ -155,12 +156,12 @@ async function checkForUpdates() {
                     type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.cache_path)}>
-                    Copy
+                    {$_('common.copy')}
                 </button>
             </div>
 
             <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="text-fg-muted w-16 shrink-0 font-medium">Logs</span>
+                <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.logs')}</span>
                 <span
                     class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono"
                     title={appInfo.logs_path}
@@ -170,7 +171,7 @@ async function checkForUpdates() {
                     type="button"
                     class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
                     onclick={() => copyToClipboard(appInfo.logs_path)}>
-                    Copy
+                    {$_('common.copy')}
                 </button>
             </div>
         </div>
@@ -179,7 +180,7 @@ async function checkForUpdates() {
             type="button"
             class="text-ui-sm text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
             onclick={openLogFile}>
-            <span>Open Current Log File</span>
+            <span>{$_('about.openLogFile')}</span>
             <ExternalLink size={12} />
         </button>
 
@@ -190,8 +191,8 @@ async function checkForUpdates() {
         {/if}
 
         <div class="mt-4 text-center text-xs">
-            <p class="text-fg-muted">Giants' Shoulders = Node / Vite / Rust / Tauri / Svelte</p>
-            <p class="text-fg-muted mt-1">MarkdownRS © since 2025. All rights reserved.</p>
+            <p class="text-fg-muted">{$_('app.giants')}</p>
+            <p class="text-fg-muted mt-1">{$_('app.rights')}</p>
         </div>
     </div>
 </Modal>

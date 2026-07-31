@@ -1,5 +1,6 @@
 <script lang="ts">
 import { tick } from 'svelte';
+import { _ } from 'svelte-i18n';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { dialogStore, resolvePrompt } from '$lib/stores/dialogStore.svelte';
 
@@ -52,7 +53,7 @@ function handleKeydown(e: KeyboardEvent) {
         type="text"
         bind:value={inputValue}
         onkeydown={handleKeydown}
-        aria-label={dialogStore.promptOptions.message || 'Prompt input'}
+        aria-label={dialogStore.promptOptions.message || $_('modal.promptInput')}
         class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
       />
     </div>
@@ -60,13 +61,13 @@ function handleKeydown(e: KeyboardEvent) {
 
   {#snippet footer()}
     <button type="button" class="btn-base btn-sm" onclick={handleConfirm}>
-      OK
+      {$_('common.ok')}
     </button>
     <button
       type="button"
       class="btn-base btn-sm btn-secondary"
       onclick={() => resolvePrompt(null)}>
-      Cancel
+      {$_('common.cancel')}
     </button>
   {/snippet}
 </Modal>

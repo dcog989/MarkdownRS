@@ -1,6 +1,7 @@
 <script lang="ts">
 import { invoke } from '@tauri-apps/api/core';
 import { onDestroy, onMount } from 'svelte';
+import { _ } from 'svelte-i18n';
 import Logo from '$lib/components/ui/Logo.svelte';
 import { createAppInit } from '$lib/services/appInit.svelte';
 import { setupAutoSave } from '$lib/services/autoSave.svelte';
@@ -52,8 +53,10 @@ $effect(() => {
     const tab = activeTab;
     const path = tab?.path || '';
     const dirtyMarker = tab?.isDirty ? '*' : '';
-    const fullTitle = path ? `${dirtyMarker}${path} - MarkdownRS` : 'MarkdownRS';
-    invoke('set_window_title', { title: fullTitle });
+    const appName = $_('app.name');
+    const titleWithPath = $_('app.titleWithPath', { values: { path } });
+    const title = path ? `${dirtyMarker}${titleWithPath}` : `${dirtyMarker}${appName}`;
+    invoke('set_window_title', { title });
 });
 
 $effect(() => {
@@ -94,7 +97,7 @@ onDestroy(() => {
     <div
         class="bg-bg-main text-fg-default flex h-screen w-screen flex-col items-center justify-center">
         <Logo class="mb-4 h-16 w-16 animate-pulse opacity-50" />
-        <p class="text-fg-muted text-sm">Loading MarkdownRS...</p>
+        <p class="text-fg-muted text-sm">{$_('app.loading')}</p>
         {#if appInit.initError}
             <p class="text-danger-text mt-2 text-xs">{appInit.initError}</p>
         {/if}

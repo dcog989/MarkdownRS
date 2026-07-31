@@ -1,5 +1,6 @@
 <script lang="ts">
 import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -26,10 +27,10 @@ let tooltipContent = $derived.by(() => {
     const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 
     if (tab.fileCheckFailed) {
-        parts.push('File missing from original location');
+        parts.push($_('tabButton.missingFile'));
         if (tab.path) parts.push(tab.path);
     } else {
-        parts.push(tab.path || 'Unsaved content');
+        parts.push(tab.path || $_('tabButton.unsaved'));
     }
     parts.push(bottomLine);
 
@@ -116,14 +117,14 @@ let tooltipContent = $derived.by(() => {
                     style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--surface-1)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--surface-1)' : 'var(--surface-hover)'} 100%)`}>
                     <button
                         type="button"
-                        aria-label={`Close ${tab.title}`}
+                        aria-label={$_('tabButton.closeTab', { values: { title: tab.title } })}
                         class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
                         onclick={(e) => {
                             e.stopPropagation();
                             onclose?.(e, tab.id);
                         }}
                         onkeydown={(e) => e.key === 'Enter' && onclose?.(e, tab.id)}
-                        use:tooltip={`Close ${tab.title}`}>
+                        use:tooltip={$_('tabButton.closeTab', { values: { title: tab.title } })}>
                         <X size={14} class="transition-colors" />
                     </button>
                 </div>

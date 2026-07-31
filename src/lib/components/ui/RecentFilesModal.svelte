@@ -1,7 +1,9 @@
 <script lang="ts">
 import { Clock, History, Trash2, X } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { translate } from '$lib/i18n';
 import {
     clearRecentFiles,
     loadRecentFiles,
@@ -58,7 +60,7 @@ async function handleRemove(path: string, e: MouseEvent) {
 }
 
 async function handleClearAll() {
-    if (confirm('Clear file history?')) {
+    if (confirm(translate('recentFiles.confirmClear'))) {
         await clearRecentFiles();
     }
 }
@@ -67,11 +69,11 @@ async function handleClearAll() {
 <Modal bind:isOpen {onClose}>
     {#snippet header()}
         <ModalSearchHeader
-            title="Recent Files"
+            title={$_('recentFiles.title')}
             icon={History}
             bind:searchValue={searchQuery}
             focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
-            searchPlaceholder="Search history..."
+            searchPlaceholder={$_('recentFiles.placeholder')}
             {onClose}
             onKeydown={nav.handleKeydown}>
             {#snippet extraActions()}
@@ -80,7 +82,7 @@ async function handleClearAll() {
                         type="button"
                         class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
                         onclick={handleClearAll}
-                        title="Clear History">
+                        title={$_('recentFiles.clearHistory')}>
                         <Trash2 size={16} />
                     </button>
                 {/if}
@@ -117,7 +119,7 @@ async function handleClearAll() {
                                 type="button"
                                 onclick={(e) => handleRemove(path, e)}
                                 class="recent-remove rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
-                                title="Remove from history">
+                                title={$_('recentFiles.removeFromHistory')}>
                                 <X size={16} />
                             </button>
                         </div>
@@ -125,12 +127,12 @@ async function handleClearAll() {
                 {/each}
             </div>
         {:else if searchQuery.length > 0}
-            <div class="text-fg-muted px-4 py-8 text-center">No files match your search</div>
+            <div class="text-fg-muted px-4 py-8 text-center">{$_('recentFiles.noMatch')}</div>
         {:else}
             <div class="text-fg-muted px-4 py-8 text-center">
                 <Clock size={48} class="mx-auto mb-2 opacity-30" />
-                <div class="mb-1">No recent files</div>
-                <div class="text-ui-sm opacity-70">Files you open will appear here</div>
+                <div class="mb-1">{$_('recentFiles.none')}</div>
+                <div class="text-ui-sm opacity-70">{$_('recentFiles.helper')}</div>
             </div>
         {/if}
     </div>

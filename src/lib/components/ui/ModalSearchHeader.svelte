@@ -1,13 +1,14 @@
 <script lang="ts">
 import { Search, X } from 'lucide-svelte';
 import type { Snippet } from 'svelte';
+import { _ } from 'svelte-i18n';
 import Input from '$lib/components/ui/Input.svelte';
 
 let {
     title,
     icon: Icon,
     searchValue = $bindable(''),
-    searchPlaceholder = 'Search...',
+    searchPlaceholder = $_('common.search'),
     inputRef = $bindable(),
     focusDelay,
     onClose,
@@ -59,7 +60,7 @@ let {
             type="button"
             class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
             onclick={onClose}
-            aria-label="Close">
+            aria-label={$_('common.close')}>
             <X size={16} />
         </button>
     </div>

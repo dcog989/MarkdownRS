@@ -3,6 +3,7 @@ import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
 import { StateEffect } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
+import { translate } from '$lib/i18n';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
@@ -107,7 +108,7 @@ export const createSpellCheckLinter = () => {
                     from: globalFrom,
                     to: globalTo,
                     severity: 'error',
-                    message: `Misspelled: ${checkWord}`,
+                    message: translate('editor.misspelled', { values: { word: checkWord } }),
                     source: 'Spellchecker',
                   });
                 }
@@ -147,7 +148,7 @@ export const createSpellCheckLinter = () => {
                         from: range.from,
                         to: range.to,
                         severity: 'error',
-                        message: `Misspelled: ${word}`,
+                        message: translate('editor.misspelled', { values: { word } }),
                         source: 'Spellchecker',
                       });
                     }
@@ -162,7 +163,7 @@ export const createSpellCheckLinter = () => {
           logger.spellcheck.error('Linter error', { error: String(error) });
           if (!spellcheckState.linterFailedNotified) {
             spellcheckState.linterFailedNotified = true;
-            showToast('warning', 'Spellcheck encountered an error — results may be incomplete');
+            showToast('warning', translate('editor.spellcheckError'));
           }
         }
       }

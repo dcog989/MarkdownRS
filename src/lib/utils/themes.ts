@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { callBackendSafe } from './backend';
 
 export const LEGACY_THEME_NAMES = ['default-dark', 'default-light', 'rs-dark', 'rs-light'];
@@ -31,7 +32,7 @@ export function isModeFollowingTheme(name: string): boolean {
 
 export async function getThemeCss(themeName: string): Promise<string> {
   const result = await callBackendSafe('get_theme_css', { themeName }, 'Settings:Load', {
-    userMessage: `Failed to load theme '${themeName}'`,
+    userMessage: translate('error.failedToLoadTheme', { values: { theme: themeName } }),
   });
   return result ?? '';
 }

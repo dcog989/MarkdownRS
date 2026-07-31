@@ -17,9 +17,11 @@ import {
 } from 'lucide-svelte';
 import { untrack } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
+import { _ } from 'svelte-i18n';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import Submenu from '$lib/components/ui/Submenu.svelte';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
+import { translate } from '$lib/i18n';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { shortcutManager } from '$lib/utils/shortcuts';
@@ -250,7 +252,7 @@ async function handleSendToBrowser() {
                             type="button"
                             class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                             onclick={() => handleOp(id)}>
-                            <span class="flex-1">{op.label}</span>
+                            <span class="flex-1">{translate(op.label ?? '')}</span>
                             {#if id && opShortcut(id)}
                                 <span class="text-xs opacity-40">{opShortcut(id)}</span>
                             {/if}
@@ -262,13 +264,13 @@ async function handleSendToBrowser() {
 
         {#if suggestions.length > 0 || isLoadingSuggestions}
             <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
-                Suggestions
+                {$_('editorContextMenu.suggestions')}
             </div>
             {#if isLoadingSuggestions}
                 <div
                     class="text-ui-sm flex w-full items-center gap-2 px-3 py-1.5 text-left opacity-70">
                     <Sparkles size={14} class="text-accent-secondary animate-spin" />
-                    <span>Loading suggestions...</span>
+                    <span>{$_('editorContextMenu.loadingSuggestions')}</span>
                 </div>
             {:else}
                 {#each suggestions as s, i (i)}
@@ -292,7 +294,7 @@ async function handleSendToBrowser() {
                         onCut?.();
                         closeMenuAndReset();
                     }}>
-                    <Scissors size={14} /><span>Cut</span
+                    <Scissors size={14} /><span>{$_('editorContextMenu.cut')}</span
                     ><span class="text-ui-sm ml-auto opacity-50">Ctrl+X</span>
                 </button>
                 <button
@@ -302,7 +304,7 @@ async function handleSendToBrowser() {
                         onCopy?.();
                         closeMenuAndReset();
                     }}>
-                    <ClipboardCopy size={14} /><span>Copy</span
+                    <ClipboardCopy size={14} /><span>{$_('editorContextMenu.copy')}</span
                     ><span class="text-ui-sm ml-auto opacity-50">Ctrl+C</span>
                 </button>
             {/if}
@@ -313,7 +315,7 @@ async function handleSendToBrowser() {
                     onPaste?.();
                     closeMenuAndReset();
                 }}>
-                <ClipboardPaste size={14} /><span>Paste</span
+                <ClipboardPaste size={14} /><span>{$_('editorContextMenu.paste')}</span
                 ><span class="text-ui-sm ml-auto opacity-50">Ctrl+V</span>
             </button>
 
@@ -324,7 +326,7 @@ async function handleSendToBrowser() {
                     class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                     onclick={handleSendToBrowser}>
                     <Search size={14} />
-                    <span>Send to browser</span>
+                    <span>{$_('editorContextMenu.sendToBrowser')}</span>
                 </button>
             {/if}
 
@@ -335,7 +337,7 @@ async function handleSendToBrowser() {
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => handleOp('format-document')}>
                 <WandSparkles size={14} />
-                <span class="flex-1">{selectedText ? 'Format Selection' : 'Format Document'}</span>
+                <span class="flex-1">{selectedText ? $_('editorContextMenu.formatSelection') : $_('editorContextMenu.formatDocument')}</span>
                 {#if opShortcut('format-document')}
                     <span class="text-xs opacity-40">{opShortcut('format-document')}</span>
                 {/if}
@@ -345,7 +347,7 @@ async function handleSendToBrowser() {
                 class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                 onclick={() => handleOp('generate-toc')}>
                 <List size={14} />
-                <span class="flex-1">Generate Table of Contents</span>
+                <span class="flex-1">{$_('editorContextMenu.generateToc')}</span>
                 {#if opShortcut('generate-toc')}
                     <span class="text-xs opacity-40">{opShortcut('generate-toc')}</span>
                 {/if}
@@ -354,10 +356,10 @@ async function handleSendToBrowser() {
 
         {#if selectedText}
             <div class="bg-border-main my-1 h-px"></div>
-            {@render opSubmenu(ArrowUpDown, "Sort Lines", 'sort', sortOps)}
-            {@render opSubmenu(CaseSensitive, "Change Case", 'case', caseOps)}
-            {@render opSubmenu(TextAlignStart, "Format Lines", 'format', formatOps)}
-            {@render opSubmenu(Rotate3d, "Transform Lines", 'transform', transformOps)}
+            {@render opSubmenu(ArrowUpDown, $_('editorContextMenu.sortLines'), 'sort', sortOps)}
+            {@render opSubmenu(CaseSensitive, $_('editorContextMenu.changeCase'), 'case', caseOps)}
+            {@render opSubmenu(TextAlignStart, $_('editorContextMenu.formatLines'), 'format', formatOps)}
+            {@render opSubmenu(Rotate3d, $_('editorContextMenu.transformLines'), 'transform', transformOps)}
         {/if}
 
         <div onmouseenter={() => (activeSubmenu = null)} role="none">
@@ -381,7 +383,7 @@ async function handleSendToBrowser() {
                             await addToDictionary(targetWord);
                         }}>
                         <BookPlus size={14} />
-                        <span class="truncate">Add "{targetWord}" to Dictionary</span
+                        <span class="truncate">{$_('editorContextMenu.addToDictionary', { values: { word: targetWord } })}</span
                         ><span class="text-ui-sm ml-auto opacity-50">F8</span>
                     </button>
                 {/if}
@@ -390,7 +392,7 @@ async function handleSendToBrowser() {
                         type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
                         onclick={handleAddAll}>
-                        <BookText size={14} /><span>Add All Invalid to Dictionary</span>
+                        <BookText size={14} /><span>{$_('editorContextMenu.addAllInvalid')}</span>
                     </button>
                 {/if}
             {/if}

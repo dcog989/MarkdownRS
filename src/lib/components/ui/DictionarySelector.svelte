@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Check, ChevronDown, X } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 
 interface Props {
     selected: string[];
@@ -146,7 +147,7 @@ function handleKeydown(e: KeyboardEvent) {
         class="text-ui bg-bg-input text-fg-default bg-border-main focus:border-accent-primary flex w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none">
         <div class="flex flex-1 flex-wrap items-center gap-1.5">
             {#if selected.length === 0}
-                <span class="text-ui-sm opacity-50">Select dictionaries...</span>
+                <span class="text-ui-sm opacity-50">{$_('dictionary.placeholder')}</span>
             {:else}
                 {#each selected as code (code)}
                     <span
@@ -156,7 +157,7 @@ function handleKeydown(e: KeyboardEvent) {
                             type="button"
                             onclick={(e) => removeDict(code, e)}
                             class="hover:text-danger flex items-center transition-colors"
-                            aria-label="Remove {code}">
+                            aria-label={$_('dictionary.removeLanguage', { values: { code } })}>
                             <X size={12} />
                         </button>
                     </span>

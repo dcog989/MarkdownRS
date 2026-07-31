@@ -1,4 +1,5 @@
 import { error as logError } from '@tauri-apps/plugin-log';
+import { translate } from '$lib/i18n';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { getFilename } from './fileValidation';
 import { logger } from './logger';
@@ -172,47 +173,51 @@ export class AppError extends Error {
 
     switch (this.context) {
       case 'File:Read':
-        return 'Failed to read file';
+        return translate('error.failedToRead');
       case 'File:Write':
         return this.message && this.message !== 'Failed to save file'
-          ? `Failed to save file: ${this.message}`
-          : 'Failed to save file';
+          ? translate('error.failedToSaveDetailed', { values: { detail: this.message } })
+          : translate('error.failedToSave');
       case 'File:Metadata':
-        return 'Failed to read file metadata';
+        return translate('error.failedToReadMetadata');
       case 'Session:Save':
-        return 'Failed to save session';
+        return translate('error.failedToSaveSession');
       case 'Session:Load':
-        return 'Failed to load previous session';
+        return translate('error.failedToLoadSession');
       case 'Markdown:Render':
-        return 'Failed to render markdown';
+        return translate('error.failedToRenderMarkdown');
       case 'Settings:Save':
-        return 'Failed to save settings';
+        return translate('error.failedToSaveSettings');
       case 'Settings:Load':
-        return 'Failed to load settings';
+        return translate('error.failedToLoadSettings');
       case 'Transform:Text':
-        return 'Failed to transform text';
+        return translate('error.failedToTransform');
       case 'Dictionary:Add':
-        return 'Failed to add word to dictionary';
+        return translate('error.failedToAddWord');
       case 'Export:PDF':
       case 'Export:HTML':
-        return 'Export failed';
+        return translate('error.exportFailed');
       case 'Bookmark:Add':
-        return 'Failed to add bookmark';
+        return translate('error.failedToAddBookmark');
       case 'Bookmark:Remove':
-        return 'Failed to remove bookmark';
+        return translate('error.failedToRemoveBookmark');
       default:
-        return this.message || 'An error occurred';
+        return this.message || translate('error.generic');
     }
   }
 
   private getFileNotFoundMessage(): string {
     const fileName = this.extractFileName();
-    return fileName ? `File not found: ${fileName}` : 'File not found';
+    return fileName
+      ? translate('error.fileNotFoundNamed', { values: { name: fileName } })
+      : translate('error.fileNotFound');
   }
 
   private getPermissionDeniedMessage(): string {
     const fileName = this.extractFileName();
-    return fileName ? `Cannot access file: ${fileName}` : 'Permission denied';
+    return fileName
+      ? translate('error.cannotAccess', { values: { name: fileName } })
+      : translate('error.permissionDenied');
   }
 
   private extractFileName(): string | null {

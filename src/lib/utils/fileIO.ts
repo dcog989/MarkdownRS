@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { callBackend } from './backend';
 
 export async function readTextFile(path: string): Promise<{ content: string; encoding: string } | null> {
@@ -15,7 +16,7 @@ export async function resolveRelativePath(basePath: string | null, clickPath: st
 export async function renameFileOnDisk(oldPath: string, newPath: string): Promise<void> {
   await callBackend('rename_file', { oldPath, newPath }, 'File:Write', undefined, {
     report: true,
-    msg: 'Failed to rename file',
+    msg: translate('fileOps.failedRename'),
   });
 }
 

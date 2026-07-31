@@ -1,9 +1,11 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { locale } from 'svelte-i18n';
 import { commands } from '$lib/commands/commands';
 import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
 import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
+import { initI18n } from '$lib/i18n';
 import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { logger } from '$lib/utils/logger';
@@ -13,10 +15,18 @@ import '../app.css';
 
 let { children } = $props();
 
+initI18n(appContext.settings.locale);
+
 $effect(() => {
     const theme = appContext.settings.theme;
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
+});
+
+$effect(() => {
+    const appLocale = appContext.settings.locale;
+    document.documentElement.lang = appLocale;
+    locale.set(appLocale);
 });
 
 $effect(() => {

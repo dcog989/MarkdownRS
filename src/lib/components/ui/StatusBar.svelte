@@ -1,8 +1,10 @@
 <script lang="ts">
 import { ClipboardCopy, Pencil, TextWrap } from 'lucide-svelte';
+import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import MarkdownLintStatus from '$lib/components/ui/MarkdownLintStatus.svelte';
+import { translate } from '$lib/i18n';
 import { togglePreferredExtension, updateTabFields } from '$lib/stores/editorStore.svelte';
 import { toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -70,14 +72,14 @@ async function copyAllStats() {
     if (!activeTab) return;
 
     const stats = [
-        `File Path: ${activeTab.path || 'Unsaved'}`,
-        `File Size: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} bytes)`,
-        `Total Lines: ${totalLines.toLocaleString()}`,
-        `Widest Column: ${widestColumn.toLocaleString()}`,
-        `Total Characters: ${totalChars.toLocaleString()}`,
-        `Total Words: ${totalWords.toLocaleString()}`,
-        `Line Ending: ${lineEnding}`,
-        `Encoding: ${encoding}`,
+        `${translate('statusBar.filePath')}: ${activeTab.path || translate('statusBar.unsaved')}`,
+        `${translate('statusBar.fileSize')}: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} ${translate('statusBar.bytes')})`,
+        `${translate('statusBar.totalLines')}: ${totalLines.toLocaleString()}`,
+        `${translate('statusBar.widestColumn')}: ${widestColumn.toLocaleString()}`,
+        `${translate('statusBar.totalCharacters')}: ${totalChars.toLocaleString()}`,
+        `${translate('statusBar.totalWords')}: ${totalWords.toLocaleString()}`,
+        `${translate('statusBar.lineEnding')}: ${lineEnding}`,
+        `${translate('statusBar.encoding')}: ${encoding}`,
     ].join('\n');
 
     await navigator.clipboard.writeText(stats);
@@ -91,15 +93,15 @@ async function copyAllStats() {
     <div
         role="button"
         tabindex="0"
-        aria-label="Status bar options"
+        aria-label={$_('statusBar.options')}
         class="flex w-full items-center justify-between"
         oncontextmenu={handleContextMenu}
         onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }}>
         <div
             class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
             style:opacity={textOpacity}>
-        <div class="flex items-center gap-1" use:tooltip={'Line Position'}>
-            <span class="font-mono opacity-70">Ln</span>
+        <div class="flex items-center gap-1" use:tooltip={$_('statusBar.linePosition')}>
+            <span class="font-mono opacity-70">{$_('statusBar.ln')}</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorLine)}</span
             >
@@ -110,8 +112,8 @@ async function copyAllStats() {
         </div>
         <span class="opacity-40">|</span>
 
-        <div class="flex items-center gap-1" use:tooltip={'Column Position'}>
-            <span class="font-mono opacity-70">Col</span>
+        <div class="flex items-center gap-1" use:tooltip={$_('statusBar.columnPosition')}>
+            <span class="font-mono opacity-70">{$_('statusBar.col')}</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorCol)}</span
             >
@@ -129,8 +131,8 @@ async function copyAllStats() {
         </div>
         <span class="opacity-40">|</span>
 
-        <div class="flex items-center gap-1" use:tooltip={'Character Position'}>
-            <span class="font-mono opacity-70">Char</span>
+        <div class="flex items-center gap-1" use:tooltip={$_('statusBar.charPosition')}>
+            <span class="font-mono opacity-70">{$_('statusBar.char')}</span>
             <span class="inline-block min-w-[4ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.cursorOffset)}</span
             >
@@ -141,8 +143,8 @@ async function copyAllStats() {
         </div>
         <span class="opacity-40">|</span>
 
-        <div class="flex items-center gap-1" use:tooltip={'Word Position'}>
-            <span class="font-mono opacity-70">Word</span>
+        <div class="flex items-center gap-1" use:tooltip={$_('statusBar.wordPosition')}>
+            <span class="font-mono opacity-70">{$_('statusBar.word')}</span>
             <span class="inline-block min-w-[3ch] text-right font-mono"
                 >{formatNumber(appContext.metrics.currentWordIndex)}</span
             >
@@ -157,7 +159,7 @@ async function copyAllStats() {
 
         <span class="opacity-40">|</span>
 
-        <div class="flex items-center gap-1" use:tooltip={'File Size'}>
+        <div class="flex items-center gap-1" use:tooltip={$_('statusBar.fileSize')}>
             <span class="inline-block min-w-[7ch] text-right font-mono">{fileSizeDisplay}</span>
         </div>
     </div>
@@ -176,11 +178,11 @@ async function copyAllStats() {
             type="button"
             class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
             onclick={toggleLineEnding}
-            use:tooltip={'Toggle Line Ending'}>
+            use:tooltip={$_('statusBar.toggleLineEnding')}>
             {lineEnding}
         </button>
 
-        <span class="cursor-default opacity-70" use:tooltip={'File Encoding'}>
+        <span class="cursor-default opacity-70" use:tooltip={$_('statusBar.fileEncoding')}>
             {encoding}
         </span>
         <span class="opacity-40">|</span>
@@ -192,7 +194,7 @@ async function copyAllStats() {
                 ? 'text-accent-secondary'
                 : 'text-inherit'}"
             onclick={toggleWordWrap}
-            use:tooltip={'Toggle Word Wrap'}>
+            use:tooltip={$_('statusBar.toggleWordWrap')}>
             <TextWrap size={14} />
         </button>
 
@@ -204,7 +206,7 @@ async function copyAllStats() {
                     ? 'text-accent-secondary'
                     : 'text-inherit'}"
                 onclick={toggleViewMode}
-                use:tooltip={appContext.settings.viewMode === 'rendered' ? 'Rendered Mode' : 'Raw Mode'}>
+                use:tooltip={appContext.settings.viewMode === 'rendered' ? $_('statusBar.renderedMode') : $_('statusBar.rawMode')}>
                 <Pencil size={14} />
             </button>
         {:else}
@@ -218,11 +220,11 @@ async function copyAllStats() {
                 type="button"
                 class="text-accent-primary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
                 onclick={toggleFileType}
-                use:tooltip={'Toggle File Type (markdown/text)'}>
+                use:tooltip={$_('statusBar.toggleFileType')}>
                 <span class="w-5 text-center font-bold">{fileType === 'markdown' ? 'M' : 'T'}</span>
             </button>
         {:else}
-            <span class="flex cursor-default items-center px-1 opacity-70" use:tooltip={'File Type'}>
+            <span class="flex cursor-default items-center px-1 opacity-70" use:tooltip={$_('statusBar.fileType')}>
                 <span class="w-5 text-center font-bold">{fileType === 'markdown' ? 'M' : 'T'}</span>
             </span>
         {/if}
@@ -237,7 +239,7 @@ async function copyAllStats() {
             class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={copyAllStats}>
             <ClipboardCopy size={14} class="opacity-70" />
-            <span>Copy all document stats</span>
+            <span>{$_('statusBar.copyAllStats')}</span>
         </button>
     </ContextMenu>
 {/if}

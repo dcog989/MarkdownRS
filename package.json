@@ -60,6 +60,7 @@
     "dompurify": "^3.4.12",
     "lucide-svelte": "^1.0.1",
     "modern-screenshot": "^4.7.0",
+    "svelte-i18n": "^4.0.1",
     "text-case": "^1.2.11"
   },
   "devDependencies": {

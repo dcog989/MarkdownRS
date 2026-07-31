@@ -1,3 +1,4 @@
+import { translate } from '$lib/i18n';
 import { addToDictionary } from '$lib/services/dictionaryService';
 import {
   checkAndReloadIfChanged,
@@ -105,8 +106,8 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
   if (!appContext.settings.confirmationSuppressed && tab.isDirty && tab.content.trim().length > 0) {
     const result = await confirmDialog({
-      title: 'Close Document',
-      message: `"${tab.title}" has been modified.\nSave or Discard changes?`,
+      title: translate('fileOps.closeDocumentTitle'),
+      message: translate('fileOps.closeDocumentMessage', { values: { title: tab.title } }),
     });
 
     if (result === 'cancel') return;
@@ -202,7 +203,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
       await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
     }
 
-    showToast('success', `Renamed to ${finalNewName}`);
+    showToast('success', translate('fileOps.renamedTo', { values: { name: finalNewName } }));
     return true;
   } catch (err) {
     logger.file.warn('RenameFailed', { error: String(err) });

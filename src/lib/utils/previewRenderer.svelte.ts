@@ -1,4 +1,5 @@
 import { untrack } from 'svelte';
+import { translate } from '$lib/i18n';
 import { updateTabFields } from '$lib/stores/editorStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { renderMarkdown } from '$lib/utils/markdownRust';
@@ -76,7 +77,7 @@ export class PreviewRenderer {
       } catch (err) {
         if (!currentController.signal.aborted) {
           this.lastRendered = content;
-          this.renderError = err instanceof Error ? err.message : 'Preview render failed';
+          this.renderError = err instanceof Error ? err.message : translate('preview.renderFailed');
         }
       } finally {
         if (!currentController.signal.aborted) {

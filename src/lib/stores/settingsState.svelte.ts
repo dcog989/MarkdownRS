@@ -1,5 +1,6 @@
 export const settingsState = $state({
   splitView: true,
+  locale: 'en',
   theme: 'dark' as 'dark' | 'light',
   activeTheme: 'System',
   availableThemes: ['System', 'Default Dark', 'Default Light'] as string[],

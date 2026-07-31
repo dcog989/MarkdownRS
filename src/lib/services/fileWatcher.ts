@@ -1,4 +1,5 @@
 import { watch } from '@tauri-apps/plugin-fs';
+import { translate } from '$lib/i18n';
 import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -133,7 +134,7 @@ class FileWatcherService {
         const tabNames = dirtyTabs.map((t) => t.title).join(', ');
         showToast(
           'warning',
-          `File changed on disk: ${tabNames}. You have unsaved changes.`,
+          translate('fileOps.fileChangedOnDisk', { values: { tabs: tabNames } }),
           CONFIG.UI.TOAST_DURATION_MS,
         );
       }
@@ -164,7 +165,7 @@ class FileWatcherService {
         const lastTime = this.lastToastTime.get(path) ?? 0;
         if (now - lastTime > TOAST_THROTTLE_MS) {
           const tabNames = cleanTabs.map((t) => t.title).join(', ');
-          showToast('info', `Loaded ${tabNames} from disk`);
+          showToast('info', translate('fileOps.loadedFromDisk', { values: { tabs: tabNames } }));
           this.lastToastTime.set(path, now);
         }
       }
