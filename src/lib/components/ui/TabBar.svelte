@@ -169,7 +169,7 @@ $effect(() => {
         </button>
     </div>
     <div
-        class="relative h-8 shrink-0 border-b border-border-primary flex items-center justify-center"
+        class="relative h-8 shrink-0 border-r border-b border-border-primary flex items-center justify-center"
         style:width={`${editorMetrics.gutterWidth}px`}>
         <button
             type="button"
@@ -247,6 +247,17 @@ $effect(() => {
                 </div>
             {/each}
 
+            <button
+                type="button"
+                use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
+                class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+                onclick={async () => {
+                    const newTabId = await createNewFile();
+                    appContext.app.activeTabId = newTabId;
+                }}>
+                <Plus size={16} />
+            </button>
+
             {#if isDragging && draggingId}
                 {@const dragTab = appContext.editor.tabs.find(
                     (t) => t.id === draggingId,
@@ -272,17 +283,7 @@ $effect(() => {
         {/if}
     </div>
 
-    <div class="flex h-full items-stretch border-l pr-2">
-        <button
-            type="button"
-            use:tooltip={`New Tab${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
-            class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
-            onclick={async () => {
-                const newTabId = await createNewFile();
-                appContext.app.activeTabId = newTabId;
-            }}>
-            <Plus size={16} />
-        </button>
+    <div class="flex h-full items-stretch border-l">
         <button
             type="button"
             use:tooltip={'Menu'}
