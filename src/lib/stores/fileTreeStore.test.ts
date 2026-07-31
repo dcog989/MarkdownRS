@@ -9,6 +9,7 @@ import { listDirectory } from '$lib/commands/directory';
 import {
   canNavigateUp,
   collapseAll,
+  computeTreeRows,
   dirname,
   fileTreeStore,
   isDirLoading,
@@ -115,6 +116,28 @@ describe('fileTreeStore', () => {
     await vi.waitFor(() => expect(fileTreeStore.children.get('/root')?.length).toBe(2));
   });
 
+  it('discards a stale in-flight listing when hidden files are toggled', async () => {
+    let resolveOld: (value: FileEntry[]) => void = () => {};
+    mockedListDirectory.mockImplementation(
+      () =>
+        new Promise<FileEntry[]>((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
+    const first = setRoot('/root');
+    expect(isDirLoading('/root')).toBe(true);
+
+    mockedListDirectory.mockResolvedValue([entry('.hidden', true), entry('a.md')]);
+    toggleHiddenFiles();
+    await vi.waitFor(() => expect(fileTreeStore.children.get('/root')?.length).toBe(2));
+
+    // The outdated request resolving later must not overwrite the fresh listing.
+    resolveOld([entry('stale.md')]);
+    await first;
+    await vi.waitFor(() => expect(fileTreeStore.children.get('/root')?.length).toBe(2));
+    expect(fileTreeStore.children.get('/root')?.some((e) => e.name === 'stale.md')).toBe(false);
+  });
+
   it('collapses every directory except the root', async () => {
     mockedListDirectory.mockResolvedValue([entry('sub', true)]);
     setRoot('/root');
@@ -158,6 +181,32 @@ describe('fileTreeStore', () => {
     expect(dirname('/home')).toBe('/');
     expect(dirname('/')).toBe('/');
     expect(dirname('')).toBe('');
+  });
+
+  it('computeTreeRows terminates and dedupes when a symlinked directory points at an ancestor', () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.expanded.set('/root/sub', true);
+    fileTreeStore.children.set('/root', [
+      { name: 'sub', path: '/root/sub', is_dir: true, is_symlink: false, size: 0, modified: null },
+    ]);
+    fileTreeStore.children.set('/root/sub', [
+      { name: 'root', path: '/root', is_dir: true, is_symlink: true, size: 0, modified: null },
+      { name: 'file.md', path: '/root/sub/file.md', is_dir: false, is_symlink: false, size: 1, modified: null },
+    ]);
+
+    const rows = computeTreeRows();
+
+    const paths = rows.map((r) => r.entry.path);
+    expect(new Set(paths).size).toBe(paths.length);
+    expect(paths).toContain('/root');
+    expect(paths).toContain('/root/sub');
+    expect(paths).toContain('/root/sub/file.md');
+    expect(paths.filter((p) => p === '/root')).toHaveLength(1);
+  });
+
+  it('computeTreeRows returns an empty list when no root is set', () => {
+    expect(computeTreeRows()).toEqual([]);
   });
 
   it('canNavigateUp is false at the filesystem root and when no root is set', () => {

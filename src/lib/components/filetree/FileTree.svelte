@@ -18,9 +18,12 @@
         Unlink,
     } from 'lucide-svelte';
     import { tooltip } from '$lib/actions/tooltip';
+    import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
     import {
+        basename,
         canNavigateUp,
         collapseAll,
+        computeTreeRows,
         dirname,
         fileTreeStore,
         isExpanded,
@@ -36,7 +39,6 @@
         toggleFileTreeFollow,
     } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
-    import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
     import { openFile } from '$lib/utils/fileSystem';
     import { formatFileSize } from '$lib/utils/fileValidation';
@@ -45,18 +47,6 @@
     const ROW_HEIGHT = CONFIG.FILETREE.ROW_HEIGHT;
     const OVERSCAN = CONFIG.FILETREE.OVERSCAN;
     const INDENT_STEP = CONFIG.FILETREE.INDENT_STEP;
-
-    type TreeRow = {
-        entry: FileEntry;
-        depth: number;
-        expanded: boolean;
-        loading: boolean;
-        isRoot: boolean;
-    };
-
-    function basename(path: string): string {
-        return path.split('/').filter(Boolean).pop() || path;
-    }
 
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
     let rootDir = $derived(activeTab?.path ? dirname(activeTab.path) : '');
@@ -93,57 +83,7 @@
         }
     });
 
-    let allRows = $derived.by(() => {
-        const rows: TreeRow[] = [];
-        const { root, expanded, children, loading } = fileTreeStore;
-        if (!root) return rows;
-
-        rows.push({
-            entry: {
-                name: basename(root) || root,
-                path: root,
-                is_dir: true,
-                is_symlink: false,
-                size: 0,
-                modified: null,
-            },
-            depth: 0,
-            expanded: expanded.get(root) ?? false,
-            loading: loading.get(root) ?? false,
-            isRoot: true,
-        });
-
-        if (!(expanded.get(root) ?? false)) return rows;
-
-        type StackItem = { entry: FileEntry; depth: number };
-        const stack: StackItem[] = [];
-        const rootChildren = children.get(root) ?? [];
-        for (let i = rootChildren.length - 1; i >= 0; i--) {
-            stack.push({ entry: rootChildren[i], depth: 1 });
-        }
-
-        while (stack.length > 0) {
-            const item = stack.pop();
-            if (!item) break;
-            const { entry, depth } = item;
-            const isDir = entry.is_dir;
-            const isOpen = isDir && (expanded.get(entry.path) ?? false);
-            rows.push({
-                entry,
-                depth,
-                expanded: isOpen,
-                loading: isDir ? (loading.get(entry.path) ?? false) : false,
-                isRoot: false,
-            });
-            if (isOpen) {
-                const kids = children.get(entry.path) ?? [];
-                for (let i = kids.length - 1; i >= 0; i--) {
-                    stack.push({ entry: kids[i], depth: depth + 1 });
-                }
-            }
-        }
-        return rows;
-    });
+    let allRows = $derived(computeTreeRows());
 
     let scrollEl = $state<HTMLDivElement>();
     let scrollTop = $state(0);
@@ -272,6 +212,7 @@
 <div
     class="bg-bg-panel border-border-light relative flex h-full flex-col overflow-hidden border-r"
     style:width={`${appContext.settings.fileTreeWidth}px`}
+    style:--ft-row-height={`${ROW_HEIGHT}px`}
     class:cursor-col-resize={isResizing}>
     <div class="border-border-light flex h-8 shrink-0 items-center gap-1 border-b pl-2 pr-1">
         <button
@@ -444,7 +385,7 @@
         position: absolute;
         left: 0;
         right: 0;
-        height: 26px;
+        height: var(--ft-row-height);
         align-items: center;
         gap: 0.375rem;
         font-size: 0.8125rem;
