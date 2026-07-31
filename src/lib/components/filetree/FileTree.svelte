@@ -30,7 +30,11 @@
         toggle,
         toggleHiddenFiles,
     } from '$lib/stores/fileTreeStore.svelte';
-    import { toggleFileTree, toggleFileTreeFollow } from '$lib/stores/settingsState.svelte';
+    import {
+        settingsState,
+        toggleFileTree,
+        toggleFileTreeFollow,
+    } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
     import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
@@ -64,6 +68,28 @@
             rootDir !== fileTreeStore.root
         ) {
             setRoot(rootDir);
+        }
+    });
+
+    $effect(() => {
+        if (
+            !appContext.settings.fileTreeFollowDocument &&
+            settingsState.fileTreeRoot &&
+            !fileTreeStore.root
+        ) {
+            setRoot(settingsState.fileTreeRoot);
+        }
+    });
+
+    $effect(() => {
+        const root = fileTreeStore.root;
+        if (
+            root &&
+            !appContext.settings.fileTreeFollowDocument &&
+            settingsState.fileTreeRoot !== root
+        ) {
+            settingsState.fileTreeRoot = root;
+            saveSettings();
         }
     });
 

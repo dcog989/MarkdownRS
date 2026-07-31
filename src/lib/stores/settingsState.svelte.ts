@@ -55,6 +55,7 @@ export const settingsState = $state({
   fileTreeVisible: true,
   fileTreeWidth: 240,
   fileTreeFollowDocument: true,
+  fileTreeRoot: '',
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
