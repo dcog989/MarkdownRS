@@ -221,3 +221,61 @@ fn build_line_map_and_metrics(content: &str) -> (Vec<usize>, usize, usize, usize
 
     (line_map, line_count, word_count, char_count, widest_column)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::markdown::config::MarkdownFlavor;
+
+    fn render_gfm(content: &str) -> String {
+        render_markdown(
+            content,
+            MarkdownOptions {
+                flavor: MarkdownFlavor::Gfm,
+            },
+        )
+        .expect("render should succeed")
+        .html
+    }
+
+    #[test]
+    fn renders_dollar_math_with_math_style_attributes() {
+        let html = render_gfm("Inline $x^2$ and display $$y = x + 1$$.\n");
+        assert!(html.contains(r#"data-math-style="inline""#));
+        assert!(html.contains(r#"data-math-style="display""#));
+        assert!(html.contains("x^2"));
+        assert!(html.contains("y = x + 1"));
+    }
+
+    #[test]
+    fn renders_latex_delimited_math() {
+        let html = render_gfm(r"Inline \(a < b\) and display \[c = a\].\n");
+        assert!(html.contains(r#"data-math-style="inline""#));
+        assert!(html.contains(r#"data-math-style="display""#));
+        assert!(html.contains("a &lt; b"));
+        assert!(html.contains("c = a"));
+    }
+
+    #[test]
+    fn renders_math_code_fence() {
+        let html = render_gfm("```math\nE = mc^2\n```\n");
+        assert!(html.contains(r#"class="language-math" data-math-style="display""#));
+        assert!(html.contains("E = mc^2"));
+    }
+
+    #[test]
+    fn renders_multiline_display_math_block() {
+        let html = render_gfm(
+            "$$\n% \\f is defined as #1f(#2) using the macro\n\\f\\relax{x} = \\int_{-\\infty}^\\infty\n    \\f\\hat\\xi\\,e^{2 \\pi i \\xi x}\n    \\,d\\xi\n$$\n",
+        );
+        assert!(html.contains(r#"data-math-style="display""#));
+        assert!(html.contains(r"\f\relax{x} = \int_{-\infty}^\infty"));
+    }
+
+    #[test]
+    fn leaves_plain_markdown_untouched() {
+        let html = render_gfm("Hello *world*.\n");
+        assert!(!html.contains("data-math-style"));
+        assert!(html.contains("<em"));
+    }
+}

@@ -58,6 +58,7 @@
     "@tauri-apps/plugin-updater": "^2.10.1",
     "@tauri-apps/plugin-window-state": "^2.4.1",
     "dompurify": "^3.4.12",
+    "katex": "^0.18.1",
     "lucide-svelte": "^1.0.1",
     "modern-screenshot": "^4.7.0",
     "svelte-i18n": "^4.0.1",

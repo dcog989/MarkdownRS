@@ -27,6 +27,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'dompurify',
+      'katex',
       'lucide-svelte',
       'svelte/animate',
       'svelte/transition',

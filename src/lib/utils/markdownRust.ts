@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { translate } from '$lib/i18n';
 import type { RenderResult } from '$lib/types/markdown';
 import { callBackendSafe } from './backend';
+import { renderMathInHtml } from './katexRenderer';
 
 /**
  * Resolves a relative path to a clean, absolute path with forward slashes.
@@ -114,5 +115,5 @@ export async function renderMarkdown(
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   });
 
-  return { ...result, html: cleanHtml };
+  return { ...result, html: renderMathInHtml(cleanHtml) };
 }
