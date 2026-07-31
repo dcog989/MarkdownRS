@@ -7,8 +7,7 @@
   "scripts": {
     "build": "tauri build --no-bundle",
     "build:frontend": "bunx --bun vite build",
-    "check": "svelte-kit sync ; bun run check:types ; bun run check:frontend ; bun run check:backend ; bun run check:test",
-    "check:test": "echo \"Running Tests...\" && bun run test && cd src-tauri && cargo test",
+    "check": "svelte-kit sync ; bun run check:types ; bun run check:frontend ; bun run check:backend",
     "bench": "vitest bench",
     "coverage": "vitest run --coverage",
     "check:backend": "echo \"Checking Backend...\" && cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
@@ -30,7 +29,7 @@
     "repo:src": "repomix -c .repomix/repomix.src.json",
     "repo:tool": "repomix -c .repomix/repomix.tool.json",
     "tauri": "tauri",
-    "test": "vitest run",
+    "test": "echo \"Running Tests...\" && vitest run && cd src-tauri && cargo test",
     "test:watch": "vitest",
     "ui:build": "bunx --bun vite build",
     "ui:dev": "bunx --bun vite dev",
