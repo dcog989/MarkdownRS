@@ -6,7 +6,7 @@ export function hashContent(content: string): string {
   let hash = 2166136261; // FNV offset basis
   for (let i = 0; i < content.length; i++) {
     hash ^= content.charCodeAt(i);
-    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    hash = Math.imul(hash, 0x01000193); // FNV prime (16777619)
   }
   return (hash >>> 0).toString(16);
 }

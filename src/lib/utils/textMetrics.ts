@@ -10,13 +10,30 @@ export interface CursorMetrics {
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
 
+// Intl.Segmenter is dictionary-aware (ideographs, abbreviations) but ~10x slower
+// than a regex pass. Most documents are Latin/ASCII prose, so use a fast regex
+// word-run counter there and fall back to Segmenter only when CJK ideographs are
+// present, where segmentation needs the dictionary.
+const CJK_RANGE_RE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+const WORD_RUN_RE = /[\p{L}\p{N}_']+/gu;
+
+function countWordsRegex(text: string): number {
+  WORD_RUN_RE.lastIndex = 0;
+  let count = 0;
+  while (WORD_RUN_RE.exec(text) !== null) count++;
+  return count;
+}
+
 export function countWords(text: string): number {
   if (!text.trim()) return 0;
-  let count = 0;
-  for (const segment of segmenter.segment(text)) {
-    if (segment.isWordLike) count++;
+  if (CJK_RANGE_RE.test(text)) {
+    let count = 0;
+    for (const segment of segmenter.segment(text)) {
+      if (segment.isWordLike) count++;
+    }
+    return count;
   }
-  return count;
+  return countWordsRegex(text);
 }
 
 export function calculateCursorMetrics(
