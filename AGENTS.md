@@ -45,6 +45,7 @@
 - Keep modifications minimal and scoped. Ask before architectural changes.
 - Do not delete files or make destructive changes without confirmation.
 - Do not create documentation files unless explicitly requested.
+- Do not create test files for minor changes, or for behavior that is not reliably unit-testable in jsdom (e.g. CodeMirror layout/click mapping). Prefer no new files; only add a test when the logic is genuinely testable and worth guarding.
 - Prefer incremental improvements over rewrites.
 - Use explicit types and named constants (no magic numbers).
 - Return explicit error types; do not suppress exceptions.
@@ -73,5 +74,5 @@
 
 - Logic fully implemented.
 - `bun run check` and `bun run test` pass with zero errors.
-- New/modified features have tests.
+- Tests added only where the change is non-trivial and the logic is unit-testable (see Rules); do not add test files for minor changes.
 - Existing docs updated if public interfaces changed.
