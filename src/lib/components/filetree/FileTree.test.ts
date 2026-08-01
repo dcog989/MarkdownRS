@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listDirectory } from '$lib/commands/directory';
 import { fileTreeStore } from '$lib/stores/fileTreeStore.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { FileEntry } from '$lib/types/api';
 import { openFile } from '$lib/utils/fileSystem';
@@ -42,7 +43,7 @@ describe('FileTree', () => {
     fileTreeStore.expanded.clear();
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
-    fileTreeStore.showHidden = false;
+    settingsState.fileTreeShowHidden = false;
     mockedListDirectory.mockReset();
   });
 

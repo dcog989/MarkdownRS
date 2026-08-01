@@ -1,5 +1,6 @@
 import { SvelteMap } from 'svelte/reactivity';
 import { listDirectory } from '$lib/commands/directory';
+import { settingsState, toggleFileTreeShowHidden } from '$lib/stores/settingsState.svelte';
 import type { FileEntry } from '$lib/types/api';
 
 export const fileTreeStore = $state({
@@ -7,7 +8,6 @@ export const fileTreeStore = $state({
   expanded: new SvelteMap<string, boolean>(),
   children: new SvelteMap<string, FileEntry[]>(),
   loading: new SvelteMap<string, boolean>(),
-  showHidden: false,
 });
 
 // Tracks the latest in-flight listing generation per directory so stale results
@@ -37,7 +37,7 @@ export async function loadChildren(path: string): Promise<void> {
   loadGeneration.set(path, generation);
   fileTreeStore.loading.set(path, true);
   try {
-    const entries = await listDirectory(path, fileTreeStore.showHidden);
+    const entries = await listDirectory(path, settingsState.fileTreeShowHidden);
     if (loadGeneration.get(path) !== generation) return;
     fileTreeStore.children.set(path, entries);
   } catch {
@@ -68,7 +68,7 @@ export async function toggle(path: string): Promise<void> {
 }
 
 export function toggleHiddenFiles(): void {
-  fileTreeStore.showHidden = !fileTreeStore.showHidden;
+  toggleFileTreeShowHidden();
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();

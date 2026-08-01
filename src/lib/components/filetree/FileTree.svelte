@@ -268,11 +268,16 @@
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-                class:bg-bg-active={fileTreeStore.showHidden}
-                class:text-accent-secondary={fileTreeStore.showHidden}
-                use:tooltip={fileTreeStore.showHidden ? $_('fileTree.hideHidden') : $_('fileTree.showHidden')}
-                onclick={toggleHiddenFiles}>
-                {#if fileTreeStore.showHidden}
+                class:bg-bg-active={settingsState.fileTreeShowHidden}
+                class:text-accent-secondary={settingsState.fileTreeShowHidden}
+                use:tooltip={
+                    settingsState.fileTreeShowHidden ? $_('fileTree.hideHidden') : $_('fileTree.showHidden')
+                }
+                onclick={() => {
+                    toggleHiddenFiles();
+                    saveSettings();
+                }}>
+                {#if settingsState.fileTreeShowHidden}
                     <Eye size={14} />
                 {:else}
                     <EyeOff size={14} />

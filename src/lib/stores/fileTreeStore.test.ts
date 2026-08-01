@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FileEntry } from '$lib/types/api';
+import { settingsState } from './settingsState.svelte';
 
 vi.mock('$lib/commands/directory', () => ({
   listDirectory: vi.fn(),
@@ -43,7 +44,7 @@ describe('fileTreeStore', () => {
     fileTreeStore.expanded.clear();
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
-    fileTreeStore.showHidden = false;
+    settingsState.fileTreeShowHidden = false;
     mockedListDirectory.mockReset();
   });
 
@@ -111,7 +112,7 @@ describe('fileTreeStore', () => {
     mockedListDirectory.mockResolvedValue([entry('.hidden', true), entry('a.md')]);
     toggleHiddenFiles();
 
-    expect(fileTreeStore.showHidden).toBe(true);
+    expect(settingsState.fileTreeShowHidden).toBe(true);
     expect(fileTreeStore.children.has('/root')).toBe(false);
     expect(mockedListDirectory).toHaveBeenLastCalledWith('/root', true);
     await vi.waitFor(() => expect(fileTreeStore.children.get('/root')?.length).toBe(2));
