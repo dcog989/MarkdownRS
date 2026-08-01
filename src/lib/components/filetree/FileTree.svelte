@@ -12,6 +12,7 @@
         FileText,
         Folder,
         FolderOpen,
+        FolderTree,
         Link,
         LoaderCircle,
         Minus,
@@ -296,6 +297,16 @@
                 use:tooltip={$_('fileTree.refresh')}
                 onclick={() => void refreshTree()}>
                 <RefreshCw size={14} />
+            </button>
+            <button
+                type="button"
+                class="bg-bg-active text-accent-secondary hover-surface flex h-6 w-6 items-center justify-center rounded"
+                use:tooltip={$_('tabBar.hideFileTree')}
+                onclick={() => {
+                    toggleFileTree();
+                    saveSettings();
+                }}>
+                <FolderTree size={14} />
             </button>
         </div>
     </div>
