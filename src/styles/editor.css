@@ -474,3 +474,14 @@
 .rendered-mode .cm-table-widget del {
   text-decoration: line-through;
 }
+
+/* Rendered mode: inline image widget */
+.rendered-mode .cm-image-widget {
+  max-width: 100%;
+  max-height: 240px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  vertical-align: middle;
+  border-radius: 4px;
+}

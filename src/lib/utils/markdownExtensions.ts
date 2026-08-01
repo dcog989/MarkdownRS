@@ -1,7 +1,11 @@
 import { syntaxTree } from '@codemirror/language';
 import type { Extension, Range } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
+import { appContext } from '$lib/stores/state.svelte';
+import type { AppEditorView } from '../../global';
+import { imageWidgetClickHandler, imageWidgetDecoration } from './markdownImageWidget';
 import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from './markdownTableWidget';
+import { resolveImageSrc } from './resolveImagePath';
 
 const HEADING_NODE_NAMES = new Set([
   'ATXHeading1',
@@ -88,6 +92,13 @@ function findCursorHeadingLines(view: EditorView): Set<number> {
 function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
   const node = tree.resolveInner(pos, 1);
   return node.name === 'FencedCode' || node.name === 'InlineCode' || node.name === 'CodeBlock';
+}
+
+function getTabDirectory(view: EditorView): string {
+  const tabId = (view as AppEditorView)._currentTabId;
+  if (!tabId) return '';
+  const path = appContext.editor.tabs.find((t) => t.id === tabId)?.path;
+  return path ? path.replace(/[\\/][^\\/]+$/, '') : '';
 }
 
 function findHiddenMarkers(
@@ -218,7 +229,20 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
               blockquoteLines.add(i);
             }
           }
-        } else if (node.name === 'Link' || node.name === 'Image') {
+        } else if (node.name === 'Image') {
+          if (cursor >= node.from && cursor <= node.to) return;
+          if (tableSpans.some((span) => node.from >= span.from && node.to <= span.to)) return false;
+          const urlNode = node.node.getChild('URL');
+          if (!urlNode) return;
+          const linkMarks = node.node.getChildren('LinkMark');
+          const altStart = linkMarks[0]?.to ?? node.from;
+          const altEnd = linkMarks[1]?.from ?? urlNode.from;
+          const alt = view.state.doc.sliceString(altStart, altEnd).trim();
+          const rawSrc = view.state.doc.sliceString(urlNode.from, urlNode.to);
+          const src = resolveImageSrc(rawSrc, getTabDirectory(view));
+          ranges.push(imageWidgetDecoration(node.from, node.to, src, alt));
+          return false;
+        } else if (node.name === 'Link') {
           if (!(cursor >= node.from && cursor <= node.to)) {
             const linkMarks = node.node.getChildren('LinkMark');
             const urlNode = node.node.getChild('URL');
@@ -340,7 +364,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
       { decorations: (v) => v.decorations },
     ),
     linkTextTheme,
-    ...(rendered ? [createTableWidgetField(), tableWidgetClickHandler] : []),
+    ...(rendered ? [createTableWidgetField(), tableWidgetClickHandler, imageWidgetClickHandler] : []),
   ];
 }
 

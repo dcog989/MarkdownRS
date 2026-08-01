@@ -1,49 +1,10 @@
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { error } from '@tauri-apps/plugin-log';
 import DOMPurify from 'dompurify';
 import { translate } from '$lib/i18n';
 import type { RenderResult } from '$lib/types/markdown';
 import { callBackendSafe } from './backend';
 import { renderMathInHtml } from './katexRenderer';
-
-/**
- * Resolves a relative path to a clean, absolute path with forward slashes.
- * Ensures no '..' segments remain, as they break Tauri's asset protocol.
- */
-function resolvePath(baseDir: string, relativePath: string): string {
-  const cleanBase = baseDir.replace(/\\/g, '/');
-  const cleanRelative = relativePath.replace(/\\/g, '/');
-  const parts = [...cleanBase.split('/'), ...cleanRelative.split('/')].filter((p) => p && p !== '.');
-
-  const resolved: string[] = [];
-  for (const part of parts) {
-    if (part === '..') {
-      resolved.pop();
-    } else {
-      resolved.push(part);
-    }
-  }
-
-  const result = resolved.join('/');
-  return /^[a-zA-Z]:/.test(result) ? result : `/${result}`;
-}
-
-/**
- * Detects if a path references the static assets directory
- */
-function isStaticAssetPath(src: string): boolean {
-  return src.includes('../static/') || src.includes('./static/');
-}
-
-/**
- * Converts static asset path to web-root path
- */
-function resolveStaticAssetPath(src: string): string {
-  // Extract just the filename and serve from web root
-  const cleanSrc = src.replace(/\\/g, '/');
-  const filename = cleanSrc.split('/').pop();
-  return `/${filename}`;
-}
+import { resolveImageSrc } from './resolveImagePath';
 
 export function clearRendererCache(_documentId: string): void {}
 
@@ -82,28 +43,9 @@ export async function renderMarkdown(
       const directory = basePath ? basePath.replace(/[\\/][^\\/]+$/, '') : '';
 
       images.forEach((img) => {
-        let src = img.getAttribute('src');
-        if (!src || /^(https?|data|blob|asset|tauri):/i.test(src)) return;
-
-        // Standardize slashes before resolution to prevent encoding errors
-        src = src.replace(/\\/g, '/');
-
-        // Handle static assets specially
-        if (isStaticAssetPath(src)) {
-          img.setAttribute('src', resolveStaticAssetPath(src));
-          return;
-        }
-
-        const absolutePath =
-          src.startsWith('/') || /^[a-zA-Z]:/.test(src)
-            ? resolvePath('', src)
-            : directory
-              ? resolvePath(directory, src)
-              : '';
-
-        if (absolutePath) {
-          img.setAttribute('src', convertFileSrc(absolutePath));
-        }
+        const src = img.getAttribute('src');
+        if (!src) return;
+        img.setAttribute('src', resolveImageSrc(src, directory));
       });
       html = doc.body.innerHTML;
     }
