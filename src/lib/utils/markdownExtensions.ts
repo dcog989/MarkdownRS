@@ -34,7 +34,7 @@ const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
 const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
 const strikethroughDeco = Decoration.mark({ class: 'cm-strikethrough' });
 const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
-const blockquoteBgDeco = Decoration.mark({ class: 'cm-blockquote-bg' });
+const blockquoteBgDeco = Decoration.line({ class: 'cm-blockquote-bg' });
 const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
 const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
 const codeInfoDeco = Decoration.mark({ class: 'cm-code-info' });
@@ -449,7 +449,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       const bqMatch = bqMatchRe.exec(line.text);
       if (bqMatch) {
         if (!calloutLines.has(line.number)) {
-          ranges.push(blockquoteBgDeco.range(line.from, line.to));
+          ranges.push(blockquoteBgDeco.range(line.from));
         }
         if (blockquoteLines.has(line.number)) {
           ranges.push(blockquoteQuoteDeco.range(line.from));
