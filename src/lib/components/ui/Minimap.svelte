@@ -269,13 +269,13 @@ function renderMinimap() {
         let counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
         let barMaxLen = 0;
 
-        function drawCompressedBar(barIdx: number, barKind: string) {
+        const drawCompressedBar = (barIdx: number, barKind: string) => {
             if (barKind === 'empty') return;
             const barY = barIdx * COMPRESS_SPACING;
             const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
             const barW = Math.max(1, Math.min(barWidth, barMaxLen * CHARS_TO_PX));
             drawSpan(ctx, barKind, paddingX, barY, barW, 1, colors, inViewport, 1.5);
-        }
+        };
 
         for (let i = 1; i <= totalLines; i++) {
             const line = doc.line(i).text;
