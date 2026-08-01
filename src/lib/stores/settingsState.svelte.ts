@@ -50,7 +50,7 @@ export const settingsState = $state({
   newFileTemplatePath: '',
   maxFileSizeMB: 50,
   fileHistoryLimit: 999,
-  autoSaveInterval: 0,
+  autoSaveInterval: -1,
   viewMode: 'rendered' as 'raw' | 'rendered',
   fileTreeVisible: true,
   fileTreeWidth: 240,

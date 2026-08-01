@@ -199,7 +199,7 @@ export const en = {
     recentChangesTimespan: 'Recent Changes Time Span (secs)',
     recentChangesTimespanTooltip: 'Max 9999. Set to 0 for unlimited time.',
     autoSaveInterval: 'Auto Save (secs)',
-    autoSaveIntervalTooltip: 'Automatically save the active file every N seconds. Set to 0 to disable.',
+    autoSaveIntervalTooltip: 'Automatically save the active file every N seconds. -1 disables.',
     lineEnding: 'Line Ending',
     lineEndingSystem: 'System Default',
     lineEndingLF: 'LF (Unix)',
