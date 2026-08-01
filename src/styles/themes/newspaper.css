@@ -31,6 +31,7 @@
      derivations target light surfaces and wash out on this dark theme) */
   --accent-primary: #d5cdbb;
   --accent-secondary: #a49c8c;
+  --content-accent: #a49c8c;
   --accent-file: #bcb3a0;
   --accent-filepath: #d5cdbb;
   --accent-filepath-hover: #e8e2d4;
@@ -103,6 +104,7 @@
      derivations target dark surfaces and wash out on this light theme) */
   --accent-primary: #3a3a3a;
   --accent-secondary: #6b6b6b;
+  --content-accent: #6b6b6b;
   --accent-file: #4d4d4d;
   --accent-filepath: #333333;
   --accent-filepath-hover: #222222;

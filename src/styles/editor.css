@@ -358,7 +358,7 @@
 }
 
 .cm-bullet-widget {
-  color: var(--accent-secondary);
+  color: var(--content-accent, var(--accent-secondary));
   font-weight: 900;
 }
 

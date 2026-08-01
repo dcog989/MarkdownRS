@@ -41,6 +41,7 @@
   --accent-link: oklch(from var(--color-brand-link) 0.65 c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.75 c h);
+  --content-accent: oklch(from var(--color-brand-accent) 0.75 c h);
   --accent-url-hover: oklch(from var(--color-brand-url) 0.75 c h);
   --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
 
@@ -128,6 +129,7 @@
   --accent-link: oklch(from var(--color-brand-link) 0.45 c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.45 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
+  --content-accent: oklch(from var(--color-brand-accent) 0.35 c h);
   --accent-url-hover: oklch(from var(--color-brand-url) 0.35 c h);
   --accent-url: oklch(from var(--color-brand-url) 0.45 c h);
 

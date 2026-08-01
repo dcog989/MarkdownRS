@@ -30,6 +30,7 @@
   /* Accent overrides: explicit Solarized values tuned for dark surfaces */
   --accent-primary: #45aaa1;
   --accent-secondary: #6f9d9a;
+  --content-accent: #6f9d9a;
   --accent-file: #b58900;
   --accent-filepath: #859900;
   --accent-filepath-hover: #a6b75a;
@@ -101,6 +102,7 @@
   /* Accent overrides: explicit Solarized values tuned for light surfaces */
   --accent-primary: #217a83;
   --accent-secondary: #5b8788;
+  --content-accent: #5b8788;
   --accent-file: #9a7c00;
   --accent-filepath: #6f8a00;
   --accent-filepath-hover: #5c7300;
