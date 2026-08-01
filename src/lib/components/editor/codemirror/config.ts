@@ -70,10 +70,9 @@ export function getAutocompletionConfig() {
 
 export function createWrapExtension(isLargeFile = false) {
   if (isLargeFile) return [];
-  const wrapEnabled = appContext.settings.editorWordWrap;
   const column = appContext.settings.wrapGuideColumn;
   const extensions = [];
-  if (wrapEnabled) {
+  if (column >= 0) {
     extensions.push(EditorView.lineWrapping);
     if (column > 0) {
       extensions.push(

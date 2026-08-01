@@ -57,7 +57,7 @@ function toggleLineEnding() {
 }
 
 function toggleWordWrap() {
-    appContext.settings.editorWordWrap = !appContext.settings.editorWordWrap;
+    appContext.settings.wrapGuideColumn = appContext.settings.wrapGuideColumn < 0 ? 0 : -1;
     saveSettings();
 }
 
@@ -190,7 +190,7 @@ async function copyAllStats() {
         <button
             type="button"
             class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
-                .settings.editorWordWrap
+                .settings.wrapGuideColumn >= 0
                 ? 'text-accent-secondary'
                 : 'text-inherit'}"
             onclick={toggleWordWrap}

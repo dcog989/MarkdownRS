@@ -179,10 +179,9 @@ export const en = {
     fontFamilyTooltip: 'Monospace font used in the editor.',
     fontSizePx: 'Font Size (px)',
     fontSizeTooltip: 'Editor font size in pixels.',
-    wordWrap: 'Word Wrap',
-    wordWrapTooltip: 'Wrap long lines at the viewport edge.',
-    wrapColumn: 'Wrap Column',
-    wrapColumnTooltip: 'Hard wrap + show a guide at this column (0 wraps at viewport)',
+    wrapColumn: 'Word Wrap',
+    wrapColumnTooltip:
+      'Wrap long lines: 0 wraps at viewport edge, a column number wraps at that column with a guide. -1 disables.',
     whitespaceDisplayed: 'Whitespace Displayed',
     whitespaceTooltip: 'Display whitespace characters (spaces, tabs) in the editor.',
     autocomplete: 'Autocomplete',
