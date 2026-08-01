@@ -326,6 +326,10 @@
   padding-left: 0.375rem;
 }
 
+.rendered-mode .cm-blockquote-quote {
+  font-style: italic;
+}
+
 .cm-blockquote-bg {
   background-color: var(--quote-bg);
   box-decoration-break: clone;
