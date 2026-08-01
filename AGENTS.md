@@ -66,7 +66,7 @@
 - Ask clarifying questions when requirements are ambiguous.
 - Flag potential risks or edge cases proactively.
 - Do not pretend to understand how the user feels.
-- On completion of an update or fix, provide a concise commit message (do not commit unless explicitly asked).
+- On completion of an update or fix, provide a singe line, concise commit message.
 
 ## Definition of Done
 
