@@ -101,4 +101,13 @@ describe('callout decorations', () => {
     expect(parent.querySelector('.cm-line')?.className).toContain('cm-callout cm-callout-note');
     view.destroy();
   });
+
+  it('shows the editable marker text in rendered mode while the cursor is inside', async () => {
+    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', true, 8);
+    await new Promise((r) => setTimeout(r, 50));
+    const marker = parent.querySelector('.cm-callout-marker');
+    expect(marker).not.toBeNull();
+    expect(marker?.textContent).toContain('[!NOTE]');
+    view.destroy();
+  });
 });

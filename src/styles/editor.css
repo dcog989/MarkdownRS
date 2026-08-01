@@ -530,7 +530,11 @@
 }
 
 .rendered-mode .cm-callout .cm-blockquote {
-  color: var(--text-primary);
+  color: var(--callout-accent);
+}
+
+.rendered-mode .cm-callout-marker {
+  font-weight: 600;
 }
 
 .rendered-mode .cm-callout-title {
