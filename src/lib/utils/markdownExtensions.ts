@@ -53,6 +53,9 @@ const bulletPointDeco = Decoration.replace({
 const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
 const formattingMaskDeco = Decoration.replace({});
 const formattingMaskAutolinkDeco = Decoration.replace({ inclusive: true });
+// Inclusive so clicks at the end of a hidden URL range map past it instead of
+// jumping to the start (e.g. before '(') — same fix as the autolink brackets.
+const linkUrlMaskDeco = Decoration.replace({ inclusive: true });
 const linkTextDeco = Decoration.mark({ class: 'cm-link-text' });
 const linkTextTheme = EditorView.baseTheme({
   '.cm-link-text': {
@@ -100,6 +103,41 @@ function getTabDirectory(view: EditorView): string {
   const path = appContext.editor.tabs.find((t) => t.id === tabId)?.path;
   return path ? path.replace(/[\\/][^\\/]+$/, '') : '';
 }
+
+export const linkBoundaryClickHandler = EditorView.domEventHandlers({
+  mousedown: (event, view) => {
+    if (event.button !== 0 || event.shiftKey) return false;
+    const pos = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
+    if (pos == null) return false;
+
+    const doc = view.state.doc;
+    const cursor = view.state.selection.main.head;
+    const line = doc.lineAt(pos.pos);
+    let target: number | null = null;
+
+    syntaxTree(view.state).iterate({
+      from: line.from,
+      to: line.to,
+      enter: (node) => {
+        if (target != null || node.name !== 'Link') return;
+        if (cursor > node.from && cursor < node.to) return;
+        const urlNode = node.node.getChild('URL');
+        if (!urlNode) return;
+        const linkMarks = node.node.getChildren('LinkMark');
+        const textEnd = linkMarks[1]?.from ?? urlNode.from;
+        const after = doc.sliceString(urlNode.to, urlNode.to + 1);
+        const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
+        if (pos.pos >= textEnd && pos.pos < hideEnd) target = hideEnd;
+      },
+    });
+
+    if (target == null) return false;
+    event.preventDefault();
+    view.focus();
+    view.dispatch({ selection: { anchor: target }, scrollIntoView: false });
+    return true;
+  },
+});
 
 function findHiddenMarkers(
   view: EditorView,
@@ -254,7 +292,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
               const after = view.state.doc.sliceString(urlNode.to, urlNode.to + 1);
               const hideStart = before === '(' ? urlNode.from - 1 : urlNode.from;
               const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
-              ranges.push(formattingMaskDeco.range(hideStart, hideEnd));
+              ranges.push(linkUrlMaskDeco.range(hideStart, hideEnd));
               const textMarks = linkMarks.filter((lm) => lm.from < urlNode.from);
               if (textMarks.length >= 2) {
                 const textStart = textMarks[0].to;
@@ -364,7 +402,9 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
       { decorations: (v) => v.decorations },
     ),
     linkTextTheme,
-    ...(rendered ? [createTableWidgetField(), tableWidgetClickHandler, imageWidgetClickHandler] : []),
+    ...(rendered
+      ? [createTableWidgetField(), tableWidgetClickHandler, imageWidgetClickHandler, linkBoundaryClickHandler]
+      : []),
   ];
 }
 
