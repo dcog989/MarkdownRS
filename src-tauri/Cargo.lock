@@ -3177,7 +3177,7 @@ dependencies = [
 
 [[package]]
 name = "markdown-rs"
-version = "0.40.0"
+version = "0.41.0"
 dependencies = [
  "anyhow",
  "chardetng",
