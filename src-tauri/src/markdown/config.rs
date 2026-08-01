@@ -69,6 +69,7 @@ impl MarkdownFlavor {
                     autolink: true,
                     tasklist: true,
                     subscript: true,
+                    footnotes: true,
                     math_dollars: true,
                     math_latex: true,
                     math_code: true,

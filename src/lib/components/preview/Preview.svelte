@@ -90,7 +90,15 @@ function injectHtml(node: HTMLElement, content: string) {
             const a = (e.target as HTMLElement).closest('a');
             if (a) {
                 e.preventDefault();
-                navigateToPath(a.getAttribute('href') || '');
+                const href = a.getAttribute('href') || '';
+                if (href.startsWith('#')) {
+                    container?.querySelector(href)?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                    });
+                    return;
+                }
+                navigateToPath(href);
             }
         }}
         role="none"

@@ -406,4 +406,15 @@ mod tests {
         assert_eq!(html.matches(r#"<a href="#).count(), 1);
         assert!(html.contains(r#"href="../docs/notes.md""#));
     }
+
+    #[test]
+    fn renders_footnotes_with_definition_section() {
+        let html = render_gfm("Hello[^1] world.\n\n[^1]: A footnote note.\n");
+        assert!(html.contains(r#"class="footnote-ref""#));
+        assert!(html.contains(r##"href="#fn-1""##));
+        assert!(html.contains(r##"id="fn-1""##));
+        assert!(html.contains("class=\"footnotes\""));
+        assert!(html.contains("A footnote note."));
+        assert!(html.contains("footnote-backref"));
+    }
 }

@@ -139,6 +139,37 @@
   margin-bottom: 0.5em;
 }
 
+/* Footnotes */
+.preview-root .footnote-ref a {
+  text-decoration: none;
+}
+
+.preview-root .footnotes {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--preview-border-quote);
+  font-size: 0.875em;
+  color: var(--preview-fg-quote);
+}
+
+.preview-root .footnotes ol {
+  margin: 0.5em 0 0;
+}
+
+.preview-root .footnotes li {
+  margin: 0.4em 0;
+}
+
+.preview-root .footnotes li:target,
+.preview-root sup:target {
+  background-color: var(--surface-active);
+}
+
+.preview-root .footnote-backref {
+  margin-left: 0.25em;
+  text-decoration: none;
+}
+
 /* Task Lists */
 .preview-root input[type="checkbox"] {
   margin-right: 0.5em;
