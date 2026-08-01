@@ -132,17 +132,27 @@ function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'c
     return { kind: 'text', inCodeBlock: false };
 }
 
-function majorityKind(counts: Record<string, number>): string {
-    const total = counts.heading + counts.code + counts.list + counts.link + counts.quote + counts.text;
-    if (total === 0) return 'empty';
+const KIND_WEIGHT: Record<string, number> = {
+    heading: 6,
+    link: 4,
+    code: 3,
+    list: 2,
+    quote: 2,
+    text: 0.3,
+};
 
-    const threshold = total / 2;
-    if (counts.heading > threshold) return 'heading';
-    if (counts.code > threshold) return 'code';
-    if (counts.list > threshold) return 'list';
-    if (counts.link > threshold) return 'link';
-    if (counts.quote > threshold) return 'quote';
-    return 'text';
+function pickBarKind(counts: Record<string, number>): string {
+    let best = 'empty';
+    let bestScore = 0;
+    for (const [kind, count] of Object.entries(counts)) {
+        if (kind === 'empty') continue;
+        const score = count * (KIND_WEIGHT[kind] ?? 0);
+        if (score > bestScore) {
+            bestScore = score;
+            best = kind;
+        }
+    }
+    return best;
 }
 
 function drawSpan(
@@ -199,21 +209,6 @@ function drawSpan(
     ctx.fillRect(x, y, w, h);
 }
 
-function drawBar(
-    ctx: CanvasRenderingContext2D,
-    kind: string,
-    y: number,
-    h: number,
-    colors: Record<string, string>,
-    inViewport: boolean,
-    barWidth: number,
-    paddingX: number,
-    compressed?: boolean,
-) {
-    if (kind === 'empty') return;
-    drawSpan(ctx, kind, paddingX, y, barWidth, h, colors, inViewport, compressed ? 1.5 : 1);
-}
-
 function renderMinimap() {
     if (!view || !canvasRef || !trackRef) return;
 
@@ -263,7 +258,7 @@ function renderMinimap() {
     const paddingX = 2;
     const barWidth = MINIMAP_WIDTH - paddingX * 2;
 
-    const COMPRESS_SPACING = 2;
+    const COMPRESS_SPACING = 1;
     const needsCompression = lineH < 1;
     let inCodeBlock = false;
 
@@ -272,37 +267,34 @@ function renderMinimap() {
         const linesPerBar = totalLines / totalBars;
         let currentBarIdx = -1;
         let counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
+        let barMaxLen = 0;
+
+        function drawCompressedBar(barIdx: number, barKind: string) {
+            if (barKind === 'empty') return;
+            const barY = barIdx * COMPRESS_SPACING;
+            const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
+            const barW = Math.max(1, Math.min(barWidth, barMaxLen * CHARS_TO_PX));
+            drawSpan(ctx, barKind, paddingX, barY, barW, 1, colors, inViewport, 1.5);
+        }
 
         for (let i = 1; i <= totalLines; i++) {
+            const line = doc.line(i).text;
             const barIdx = Math.min(Math.floor((i - 1) / linesPerBar), totalBars - 1);
 
             if (barIdx !== currentBarIdx) {
-                if (currentBarIdx >= 0) {
-                    const barKind = majorityKind(counts);
-                    if (barKind !== 'empty') {
-                        const barY = currentBarIdx * COMPRESS_SPACING;
-                        const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
-                        drawBar(ctx, barKind, barY, 1, colors, inViewport, barWidth, paddingX, true);
-                    }
-                }
+                if (currentBarIdx >= 0) drawCompressedBar(currentBarIdx, pickBarKind(counts));
                 currentBarIdx = barIdx;
                 counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
+                barMaxLen = 0;
             }
 
-            const line = doc.line(i).text;
             const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
             inCodeBlock = newInCodeBlock;
             counts[kind]++;
+            barMaxLen = Math.max(barMaxLen, line.length);
         }
 
-        if (currentBarIdx >= 0) {
-            const barKind = majorityKind(counts);
-            if (barKind !== 'empty') {
-                const barY = currentBarIdx * COMPRESS_SPACING;
-                const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
-                drawBar(ctx, barKind, barY, 1, colors, inViewport, barWidth, paddingX, true);
-            }
-        }
+        if (currentBarIdx >= 0) drawCompressedBar(currentBarIdx, pickBarKind(counts));
     } else {
         const lineStart = new Int32Array(totalLines);
         const lineEnd = new Int32Array(totalLines);
