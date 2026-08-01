@@ -447,7 +447,7 @@
 
     .ft-resize-handle {
         position: absolute;
-        top: 0;
+        top: 2rem;
         right: 0;
         bottom: 0;
         width: 6px;
