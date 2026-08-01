@@ -1,17 +1,8 @@
 import { closeBrackets } from '@codemirror/autocomplete';
 import { history, historyField } from '@codemirror/commands';
-import { css } from '@codemirror/lang-css';
-import { html } from '@codemirror/lang-html';
-import { javascript } from '@codemirror/lang-javascript';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import {
-  defaultHighlightStyle,
-  indentUnit,
-  LanguageDescription,
-  LanguageSupport,
-  StreamLanguage,
-  syntaxHighlighting,
-} from '@codemirror/language';
+import { defaultHighlightStyle, indentUnit, LanguageDescription, syntaxHighlighting } from '@codemirror/language';
+import { languages } from '@codemirror/language-data';
 import { highlightSelectionMatches, search } from '@codemirror/search';
 import { type Compartment, EditorState, type Extension } from '@codemirror/state';
 import {
@@ -35,94 +26,15 @@ import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { userThemeExtension } from '$lib/utils/themeMapper';
 
-function legacy(parser: import('@codemirror/language').StreamParser<unknown>) {
-  return new LanguageSupport(StreamLanguage.define(parser));
-}
-
-const codeLanguages: LanguageDescription[] = [
-  LanguageDescription.of({
-    name: 'JavaScript',
-    alias: ['ecmascript', 'js', 'node', 'ts', 'typescript', 'jsx', 'tsx'],
-    extensions: ['js', 'mjs', 'cjs', 'ts', 'mts', 'cts', 'jsx', 'tsx'],
-    load() {
-      return Promise.resolve(javascript());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'Python',
-    extensions: ['py', 'pyw'],
-    load() {
-      return import('@codemirror/lang-python').then((m) => m.python());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'HTML',
-    alias: ['xhtml'],
-    extensions: ['html', 'htm'],
-    load() {
-      return Promise.resolve(html());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'CSS',
-    extensions: ['css'],
-    load() {
-      return Promise.resolve(css());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'JSON',
-    alias: ['json5'],
-    extensions: ['json', 'map'],
-    load() {
-      return import('@codemirror/lang-json').then((m) => m.json());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'YAML',
-    alias: ['yml'],
-    extensions: ['yaml', 'yml'],
-    load() {
-      return import('@codemirror/lang-yaml').then((m) => m.yaml());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'Rust',
-    extensions: ['rs'],
-    load() {
-      return import('@codemirror/lang-rust').then((m) => m.rust());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'C++',
-    alias: ['cpp', 'cxx', 'cplusplus'],
-    extensions: ['cpp', 'c++', 'cc', 'cxx', 'hpp', 'h++', 'hh', 'hxx', 'h', 'c'],
-    load() {
-      return import('@codemirror/lang-cpp').then((m) => m.cpp());
-    },
-  }),
-  LanguageDescription.of({
-    name: 'Bash',
-    alias: ['sh', 'shell', 'zsh'],
-    extensions: ['sh', 'bash', 'zsh'],
-    load() {
-      return import('@codemirror/legacy-modes/mode/shell').then((m) => legacy(m.shell));
-    },
-  }),
-  LanguageDescription.of({
-    name: 'SQL',
-    extensions: ['sql'],
-    load() {
-      return import('@codemirror/lang-sql').then((m) => m.sql());
-    },
-  }),
-];
-
 const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
   fallback: true,
 });
 
-export const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages })];
+export const markdownExtensions = [markdown({ base: markdownLanguage, codeLanguages: languages })];
+
+export function resolveFileLanguage(path: string): LanguageDescription | null {
+  return LanguageDescription.matchFilename(languages, path);
+}
 
 export interface Compartments {
   wrapComp: Compartment;

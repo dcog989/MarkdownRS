@@ -6,7 +6,7 @@ import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/vi
 import { onMount, untrack } from 'svelte';
 import { createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
-import { type Compartments, createBaseExtensions, markdownExtensions } from '$lib/components/editor/logic/extensions';
+import { type Compartments, createBaseExtensions, markdownExtensions, resolveFileLanguage } from '$lib/components/editor/logic/extensions';
 import { setupModifierKeyHandler } from '$lib/components/editor/logic/modifierKeys';
 import { setupScrollSync } from '$lib/components/editor/logic/scrollSync';
 import { setupSelectionDragScroll } from '$lib/components/editor/logic/selectionScroll';
@@ -34,6 +34,7 @@ let {
     initialContent = '',
     isMarkdown = true,
     isLargeFile = false,
+    filePath,
     initialScrollTop = 0,
     initialSelection = { anchor: 0, head: 0 },
     initialHistoryState,
@@ -52,6 +53,7 @@ let {
     initialContent?: string;
     isMarkdown?: boolean;
     isLargeFile?: boolean;
+    filePath?: string;
     initialScrollTop?: number;
     initialSelection?: { anchor: number; head: number };
     initialHistoryState?: unknown;
@@ -167,12 +169,43 @@ $effect(() => {
     const rendered = appContext.settings.viewMode === 'rendered';
     view.dispatch({
         effects: [
-            comps.languageComp.reconfigure(md ? markdownExtensions : []),
             comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered) : []),
             comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []),
             comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
         ],
     });
+});
+
+$effect(() => {
+    if (!view) return;
+    const md = effectiveMarkdown;
+
+    if (md || isLargeFile) {
+        view.dispatch({ effects: comps.languageComp.reconfigure(md ? markdownExtensions : []) });
+        return;
+    }
+
+    const path = filePath;
+    const description = path ? resolveFileLanguage(path) : null;
+    if (!description) {
+        view.dispatch({ effects: comps.languageComp.reconfigure([]) });
+        return;
+    }
+
+    const currentView = view;
+    let cancelled = false;
+    const pathAtDispatch = path;
+    void description
+        .load()
+        .then((support) => {
+            if (cancelled || currentView._currentTabId !== tabId || filePath !== pathAtDispatch) return;
+            currentView.dispatch({ effects: comps.languageComp.reconfigure(support) });
+        })
+        .catch(() => {});
+
+    return () => {
+        cancelled = true;
+    };
 });
 
 $effect(() => {
