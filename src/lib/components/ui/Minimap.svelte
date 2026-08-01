@@ -1,5 +1,7 @@
 <script lang="ts">
+import { syntaxTree } from '@codemirror/language';
 import type { EditorView } from '@codemirror/view';
+import { type Highlighter, highlightTree, type Tag, tags as t } from '@lezer/highlight';
 
 interface Props {
     view: EditorView | null;
@@ -14,6 +16,7 @@ const MINIMAP_WIDTH = 64;
 const LINE_HEIGHT = 2;
 const LINE_GAP = 1;
 const MIN_LINE_HEIGHT = 1;
+const CHARS_TO_PX = 0.75;
 
 function fitLines(
     availableHeight: number,
@@ -42,10 +45,74 @@ function getColors() {
         list: style.getPropertyValue('--text-secondary').trim(),
         link: style.getPropertyValue('--accent-link').trim(),
         quote: style.getPropertyValue('--syntax-keyword').trim(),
+        strong: style.getPropertyValue('--syntax-strong').trim(),
+        emphasis: style.getPropertyValue('--syntax-emphasis').trim(),
+        strike: style.getPropertyValue('--text-tertiary').trim(),
     };
 }
 
 const LINK_RE = /\[.*?\]\(.*?\)|\[.*?\]\[.*?\]|\[.*?\]\[\s*\]|^\s*\[[^\]]+\]:\s*\S|https?:\/\/\S+/;
+
+const minimapHighlighter: Highlighter = {
+    style(tags: readonly Tag[]) {
+        const has = (target: Tag) => tags.some((tag) => tag.set.includes(target));
+        if (has(t.heading)) return 'heading';
+        if (has(t.monospace)) return 'code';
+        if (has(t.link) || has(t.url)) return 'link';
+        if (has(t.strong)) return 'strong';
+        if (has(t.emphasis)) return 'emphasis';
+        if (has(t.strikethrough)) return 'strike';
+        if (has(t.quote)) return 'quote';
+        if (has(t.list)) return 'list';
+        return '';
+    },
+};
+
+const codeBlockHighlighter: Highlighter = {
+    style(tags: readonly Tag[]) {
+        if (tags.length === 0) return '';
+        const has = (target: Tag) => tags.some((tag) => tag.set.includes(target));
+        if (
+            has(t.heading) ||
+            has(t.monospace) ||
+            has(t.link) ||
+            has(t.url) ||
+            has(t.strong) ||
+            has(t.emphasis) ||
+            has(t.strikethrough) ||
+            has(t.quote) ||
+            has(t.list)
+        )
+            return '';
+        return 'code';
+    },
+    scope: (type) => type.name !== 'Document',
+};
+
+const KIND_PRIORITY: Record<string, number> = {
+    link: 6,
+    strong: 5,
+    emphasis: 4,
+    code: 3,
+    heading: 3,
+    quote: 2,
+    list: 1,
+};
+
+function classesToKind(classes: string): string {
+    const parts = classes.split(' ');
+    if (parts[0] === 'code') return 'code';
+    let best = '';
+    let bestPriority = -1;
+    for (const p of parts) {
+        const priority = KIND_PRIORITY[p];
+        if (priority !== undefined && priority > bestPriority) {
+            bestPriority = priority;
+            best = p;
+        }
+    }
+    return best;
+}
 
 function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'code' | 'list' | 'link' | 'quote' | 'empty' | 'text'; inCodeBlock: boolean } {
     if (line.trim() === '') return { kind: 'empty', inCodeBlock };
@@ -78,20 +145,18 @@ function majorityKind(counts: Record<string, number>): string {
     return 'text';
 }
 
-function drawBar(
+function drawSpan(
     ctx: CanvasRenderingContext2D,
     kind: string,
+    x: number,
     y: number,
+    w: number,
     h: number,
     colors: Record<string, string>,
     inViewport: boolean,
-    barWidth: number,
-    paddingX: number,
-    compressed?: boolean,
+    fade = 1,
 ) {
-    if (kind === 'empty') return;
-
-    const fade = compressed ? 1.5 : 1;
+    if (kind === 'empty' || w <= 0 || h <= 0) return;
 
     switch (kind) {
         case 'heading':
@@ -114,12 +179,39 @@ function drawBar(
             ctx.fillStyle = colors.quote;
             ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
             break;
+        case 'strong':
+            ctx.fillStyle = colors.strong;
+            ctx.globalAlpha = inViewport ? 0.95 : 0.3 * fade;
+            break;
+        case 'emphasis':
+            ctx.fillStyle = colors.emphasis;
+            ctx.globalAlpha = inViewport ? 0.85 : 0.28 * fade;
+            break;
+        case 'strike':
+            ctx.fillStyle = colors.strike;
+            ctx.globalAlpha = inViewport ? 0.6 : 0.2 * fade;
+            break;
         default:
             ctx.fillStyle = colors.text;
             ctx.globalAlpha = inViewport ? 0.7 : 0.2 * fade;
     }
 
-    ctx.fillRect(paddingX, y, barWidth, h);
+    ctx.fillRect(x, y, w, h);
+}
+
+function drawBar(
+    ctx: CanvasRenderingContext2D,
+    kind: string,
+    y: number,
+    h: number,
+    colors: Record<string, string>,
+    inViewport: boolean,
+    barWidth: number,
+    paddingX: number,
+    compressed?: boolean,
+) {
+    if (kind === 'empty') return;
+    drawSpan(ctx, kind, paddingX, y, barWidth, h, colors, inViewport, compressed ? 1.5 : 1);
 }
 
 function renderMinimap() {
@@ -212,18 +304,57 @@ function renderMinimap() {
             }
         }
     } else {
-        for (let i = 1; i <= totalLines; i++) {
-            const y = (i - 1) * (lineH + gap);
+        const lineStart = new Int32Array(totalLines);
+        const lineEnd = new Int32Array(totalLines);
+        for (let i = 0; i < totalLines; i++) {
+            const line = doc.line(i + 1);
+            lineStart[i] = line.from;
+            lineEnd[i] = line.to;
+        }
+
+        const tokenSpans: { from: number; to: number; kind: string }[][] = new Array(totalLines);
+        for (let i = 0; i < totalLines; i++) tokenSpans[i] = [];
+
+        let cur = 0;
+        highlightTree(syntaxTree(view.state), [minimapHighlighter, codeBlockHighlighter], (from, to, classes) => {
+            const kind = classesToKind(classes);
+            if (!kind) return;
+            while (cur < totalLines && from >= lineEnd[cur]) cur++;
+            if (cur >= totalLines) return;
+            const ls = lineStart[cur];
+            const le = lineEnd[cur];
+            const s = Math.max(from, ls);
+            const e = Math.min(to, le);
+            if (e <= s) return;
+            tokenSpans[cur].push({ from: s - ls, to: e - ls, kind });
+        });
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(paddingX, 0, barWidth, contentH);
+        ctx.clip();
+
+        for (let i = 0; i < totalLines; i++) {
+            const y = i * (lineH + gap);
             if (y > contentH) break;
 
             const inViewport = y + lineH >= viewportTop && y <= viewportBottom;
 
-            const line = doc.line(i).text;
-            const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
-            inCodeBlock = newInCodeBlock;
+            const line = doc.line(i + 1).text;
+            if (line.length === 0) continue;
 
-            drawBar(ctx, kind, y, lineH, colors, inViewport, barWidth, paddingX);
+            const lineWidth = Math.max(1, Math.min(barWidth, line.length * CHARS_TO_PX));
+            drawSpan(ctx, 'text', paddingX, y, lineWidth, lineH, colors, inViewport);
+
+            for (const sp of tokenSpans[i]) {
+                const x = paddingX + sp.from * CHARS_TO_PX;
+                const w = (sp.to - sp.from) * CHARS_TO_PX;
+                if (w <= 0) continue;
+                drawSpan(ctx, sp.kind, x, y, w, lineH, colors, inViewport);
+            }
         }
+
+        ctx.restore();
     }
 }
 
