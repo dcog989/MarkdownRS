@@ -204,8 +204,6 @@ export const en = {
     lineEndingTooltip: 'Line ending style for new files.',
     formatOnSave: 'Format on Save',
     formatOnSaveTooltip: 'Automatically format the document when saving.',
-    formatOnPaste: 'Format on Paste',
-    formatOnPasteTooltip: 'Automatically format pasted content.',
     tabWidthMin: 'Tab Width Minimum (px)',
     tabWidthMinTooltip: 'Minimum width of tabs in pixels.',
     tabWidthMax: 'Tab Width Maximum (px)',

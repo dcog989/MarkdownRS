@@ -28,7 +28,6 @@ export const settingsState = $state({
   markdownFlavor: 'gfm' as 'commonmark' | 'gfm',
   logLevel: 'info' as 'trace' | 'debug' | 'info' | 'warn' | 'error',
   formatOnSave: false,
-  formatOnPaste: false,
   defaultIndent: 2,
   lineEndingPreference: 'system' as 'system' | 'LF' | 'CRLF',
   tooltipDelay: 1250,

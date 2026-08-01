@@ -202,14 +202,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'settings.formatOnSaveTooltip',
     },
     {
-      key: 'formatOnPaste',
-      label: 'settings.formatOnPaste',
-      type: 'boolean',
-      category: 'settings.category.formatting',
-      defaultValue: false,
-      tooltip: 'settings.formatOnPasteTooltip',
-    },
-    {
       key: 'tabWidthMin',
       label: 'settings.tabWidthMin',
       type: 'number',
