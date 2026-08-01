@@ -59,13 +59,13 @@ function closeMenu() {
         role="button"
         tabindex="0"
         aria-label={$_('tabBarMenu.closeMenu')}
-        class="fixed inset-0 z-40"
+        class="fixed inset-0 z-200"
         onclick={closeMenu}
         onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeMenu(); }}></div>
     <div
         role="dialog"
         tabindex="-1"
-        class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-50 mt-1 rounded-lg border py-1 shadow-xl w-80"
+        class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-200 mt-1 rounded-lg border py-1 shadow-xl w-80"
         onclick={(e) => e.stopPropagation()}
         onkeydown={() => {}}>
         <button
