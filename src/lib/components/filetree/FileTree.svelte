@@ -216,7 +216,7 @@
 </script>
 
 <div
-    class="bg-bg-panel border-border-light relative flex h-full flex-col overflow-hidden border-r"
+    class="bg-bg-panel border-border-light file-tree-root relative flex h-full flex-col overflow-hidden border-r"
     style:width={`${appContext.settings.fileTreeWidth}px`}
     style:--ft-row-height={`${ROW_HEIGHT}px`}
     class:cursor-col-resize={isResizing}>
@@ -294,9 +294,12 @@
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+                class:pointer-events-none={fileTreeStore.refreshing}
                 use:tooltip={$_('fileTree.refresh')}
                 onclick={() => void refreshTree()}>
-                <RefreshCw size={14} />
+                <span class:animate-spin={fileTreeStore.refreshing} class="flex">
+                    <RefreshCw size={14} />
+                </span>
             </button>
             <button
                 type="button"

@@ -8,6 +8,7 @@ export const fileTreeStore = $state({
   expanded: new SvelteMap<string, boolean>(),
   children: new SvelteMap<string, FileEntry[]>(),
   loading: new SvelteMap<string, boolean>(),
+  refreshing: false,
 });
 
 // Tracks the latest in-flight listing generation per directory so stale results
@@ -84,12 +85,24 @@ export function collapseAll(): void {
   }
 }
 
+const REFRESH_SPIN_MIN_MS = 400;
+
 export async function refreshTree(): Promise<void> {
+  fileTreeStore.refreshing = true;
+  const startedAt = Date.now();
   const expandedPaths = [...fileTreeStore.expanded.keys()].filter((path) => fileTreeStore.expanded.get(path));
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();
-  await Promise.all(expandedPaths.map((path) => loadChildren(path)));
+  try {
+    await Promise.all(expandedPaths.map((path) => loadChildren(path)));
+  } finally {
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < REFRESH_SPIN_MIN_MS) {
+      await new Promise((r) => setTimeout(r, REFRESH_SPIN_MIN_MS - elapsed));
+    }
+    fileTreeStore.refreshing = false;
+  }
 }
 
 export function dirname(path: string): string {

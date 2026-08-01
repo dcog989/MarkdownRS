@@ -1,5 +1,6 @@
 import { translate } from '$lib/i18n';
 import { toggleWriterMode } from '$lib/stores/appState.svelte';
+import { refreshTree } from '$lib/stores/fileTreeStore.svelte';
 import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -62,6 +63,24 @@ export const viewCommands: Command[] = [
     handler: () => {
       toggleFileTree();
       saveSettings();
+    },
+  },
+  {
+    id: 'view.refreshFileTree',
+    label: 'View: Refresh File Tree',
+    category: 'View',
+    defaultKey: 'f5',
+    global: true,
+    handler: (e): boolean => {
+      const tree = document.querySelector('.file-tree-root');
+      if (!tree) return false;
+      const active = document.activeElement;
+      const isFocused = active instanceof HTMLElement && tree.contains(active);
+      const isHovered = tree.matches(':hover');
+      if (!isFocused && !isHovered) return false;
+      e?.preventDefault();
+      void refreshTree();
+      return true;
     },
   },
   {
