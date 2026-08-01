@@ -72,6 +72,61 @@ const bulletMatchRe = /^(\s*)-\s/;
 const hlRegex = /==([^=]+)==/g;
 const stRegex = /~~([^~]+)~~/g;
 
+const CALLOUT_STYLES: Record<string, { title: string; icon: string }> = {
+  note: {
+    title: 'Note',
+    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+  },
+  tip: {
+    title: 'Tip',
+    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>',
+  },
+  important: {
+    title: 'Important',
+    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+  },
+  warning: {
+    title: 'Warning',
+    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.7 18.5 13.5 4.4a1.9 1.9 0 0 0-3 0L2.3 18.5A1.9 1.9 0 0 0 4 21h16a1.9 1.9 0 0 0 1.7-2.5z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  },
+  caution: {
+    title: 'Caution',
+    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 2h8.2L22 7.9v8.2l-5.9 5.9H7.9L2 16.1V7.9z"/><path d="M12 8v4M12 16h.01"/></svg>',
+  },
+};
+
+const calloutMatchRe = /^(\s*>\s*)(\[!(note|tip|important|warning|caution)\])(.*)$/i;
+
+export function matchCalloutLine(text: string): { start: number; raw: string; kind: string } | null {
+  const m = calloutMatchRe.exec(text);
+  if (!m) return null;
+  return { start: m[1].length, raw: m[2], kind: m[3].toLowerCase() };
+}
+
+class CalloutTitleWidget extends WidgetType {
+  constructor(
+    private readonly kind: string,
+    private readonly title: string,
+  ) {
+    super();
+  }
+
+  eq(other: CalloutTitleWidget): boolean {
+    return other.kind === this.kind && other.title === this.title;
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement('span');
+    span.className = `cm-callout-title cm-callout-${this.kind}`;
+    span.innerHTML = `${CALLOUT_STYLES[this.kind].icon}<span class="cm-callout-title-text">${this.title}</span>`;
+    return span;
+  }
+
+  ignoreEvent(): boolean {
+    return true;
+  }
+}
+
 function findCursorHeadingLines(view: EditorView): Set<number> {
   const headings = new Set<number>();
   const cursor = view.state.selection.main.head;
@@ -224,6 +279,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   const codeBlockLines = new Set<number>();
   const parserHrs = new Set<number>();
   const blockquoteLines = new Set<number>();
+  const calloutLines = new Map<number, string>();
   const cursor = view.state.selection.main.head;
 
   for (const { from, to } of view.visibleRanges) {
@@ -265,6 +321,19 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
             const toLine = view.state.doc.lineAt(node.to);
             for (let i = fromLine.number; i <= toLine.number; i++) {
               blockquoteLines.add(i);
+            }
+            const callout = matchCalloutLine(fromLine.text);
+            if (callout) {
+              const markerStart = fromLine.from + callout.start;
+              const markerEnd = markerStart + callout.raw.length;
+              ranges.push(
+                Decoration.replace({
+                  widget: new CalloutTitleWidget(callout.kind, CALLOUT_STYLES[callout.kind].title),
+                }).range(markerStart, markerEnd),
+              );
+              for (let i = fromLine.number; i <= toLine.number; i++) {
+                calloutLines.set(i, callout.kind);
+              }
             }
           }
         } else if (node.name === 'Image') {
@@ -327,10 +396,17 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
 
       const bqMatch = bqMatchRe.exec(line.text);
       if (bqMatch) {
-        ranges.push(blockquoteBgDeco.range(line.from, line.to));
+        if (!calloutLines.has(line.number)) {
+          ranges.push(blockquoteBgDeco.range(line.from, line.to));
+        }
         if (blockquoteLines.has(line.number)) {
           ranges.push(blockquoteQuoteDeco.range(line.from));
         }
+      }
+
+      const calloutKind = calloutLines.get(line.number);
+      if (calloutKind) {
+        ranges.push(Decoration.line({ class: `cm-callout cm-callout-${calloutKind}` }).range(line.from));
       }
 
       const bulletMatch = bulletMatchRe.exec(line.text);

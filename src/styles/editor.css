@@ -489,3 +489,46 @@
   vertical-align: middle;
   border-radius: 4px;
 }
+
+/* Rendered mode: GitHub-style callouts */
+.rendered-mode .cm-callout-note {
+  --callout-accent: oklch(0.6 0.15 250);
+}
+
+.rendered-mode .cm-callout-tip {
+  --callout-accent: oklch(0.62 0.16 150);
+}
+
+.rendered-mode .cm-callout-important {
+  --callout-accent: oklch(0.55 0.18 288);
+}
+
+.rendered-mode .cm-callout-warning {
+  --callout-accent: oklch(0.65 0.14 75);
+}
+
+.rendered-mode .cm-callout-caution {
+  --callout-accent: oklch(0.62 0.18 25);
+}
+
+.rendered-mode .cm-callout {
+  background-color: oklch(from var(--callout-accent) l c h / 0.08);
+}
+
+.rendered-mode .cm-callout.cm-blockquote-quote {
+  border-left: 4px solid var(--callout-accent);
+  font-style: normal;
+}
+
+.rendered-mode .cm-callout .cm-blockquote {
+  color: var(--text-primary);
+}
+
+.rendered-mode .cm-callout-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-right: 0.5em;
+  font-weight: 600;
+  color: var(--callout-accent);
+}
