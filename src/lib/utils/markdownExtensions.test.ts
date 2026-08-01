@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { matchCalloutLine } from './markdownExtensions';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { tags as t } from '@lezer/highlight';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createMarkdownDecorationsPlugin, matchCalloutLine } from './markdownExtensions';
 
 describe('matchCalloutLine', () => {
   it('matches a callout marker and reports the marker offset', () => {
@@ -26,5 +31,74 @@ describe('matchCalloutLine', () => {
 
   it('rejects markers not at the start of the line', () => {
     expect(matchCalloutLine('text > [!NOTE]')).toBeNull();
+  });
+});
+
+const originalGetClientRects = Range.prototype.getClientRects;
+const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+
+function mockLayout() {
+  Range.prototype.getClientRects = () =>
+    [
+      { left: 0, right: 800, top: 0, bottom: 20, width: 800, height: 20, x: 0, y: 0, toJSON: () => ({}) },
+    ] as unknown as DOMRectList;
+  Element.prototype.getBoundingClientRect = () =>
+    ({ left: 0, right: 800, top: 0, bottom: 20, width: 800, height: 20, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+}
+
+function restoreLayout() {
+  Range.prototype.getClientRects = originalGetClientRects;
+  Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+}
+
+const highlightStyle = HighlightStyle.define([{ tag: t.quote, class: 'cm-blockquote' }]);
+
+function createCalloutView(doc: string, rendered: boolean, cursorPos?: number) {
+  const parent = document.createElement('div');
+  parent.style.width = '800px';
+  parent.style.height = '600px';
+  document.body.appendChild(parent);
+  const state = EditorState.create({
+    doc,
+    selection: { anchor: cursorPos ?? doc.length },
+    extensions: [
+      markdown({ base: markdownLanguage }),
+      syntaxHighlighting(highlightStyle),
+      createMarkdownDecorationsPlugin(rendered),
+    ],
+  });
+  return { view: new EditorView({ state, parent }), parent };
+}
+
+describe('callout decorations', () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = '';
+  });
+
+  it('colors the marker span in raw mode', async () => {
+    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', false);
+    await new Promise((r) => setTimeout(r, 50));
+    const line = parent.querySelector('.cm-line');
+    expect(line?.className).toContain('cm-callout cm-callout-note');
+    expect(parent.querySelector('.cm-callout-marker .cm-blockquote')?.textContent).toBe('[!NOTE]');
+    view.destroy();
+  });
+
+  it('keeps raw-mode callout colored while the cursor is inside it', async () => {
+    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', false, 8);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector('.cm-callout-marker')).not.toBeNull();
+    expect(parent.querySelector('.cm-line')?.className).toContain('cm-callout cm-callout-note');
+    view.destroy();
+  });
+
+  it('renders the title widget in rendered mode', async () => {
+    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector('.cm-callout-title-text')?.textContent).toBe('Note');
+    expect(parent.querySelector('.cm-line')?.className).toContain('cm-callout cm-callout-note');
+    view.destroy();
   });
 });

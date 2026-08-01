@@ -491,24 +491,33 @@
 }
 
 /* Rendered mode: GitHub-style callouts */
-.rendered-mode .cm-callout-note {
+.cm-callout-note {
   --callout-accent: var(--callout-note-accent);
 }
 
-.rendered-mode .cm-callout-tip {
+.cm-callout-tip {
   --callout-accent: var(--callout-tip-accent);
 }
 
-.rendered-mode .cm-callout-important {
+.cm-callout-important {
   --callout-accent: var(--callout-important-accent);
 }
 
-.rendered-mode .cm-callout-warning {
+.cm-callout-warning {
   --callout-accent: var(--callout-warning-accent);
 }
 
-.rendered-mode .cm-callout-caution {
+.cm-callout-caution {
   --callout-accent: var(--callout-caution-accent);
+}
+
+/* Raw mode: callout text (including `>` and marker) in the callout accent */
+.raw-mode .cm-callout-marker {
+  font-weight: 600;
+}
+
+.raw-mode .cm-callout .cm-blockquote {
+  color: var(--callout-accent);
 }
 
 .rendered-mode .cm-callout {

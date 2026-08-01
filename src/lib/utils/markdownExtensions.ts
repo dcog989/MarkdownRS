@@ -127,6 +127,48 @@ class CalloutTitleWidget extends WidgetType {
   }
 }
 
+/**
+ * Finds callout blockquotes in the visible ranges. Returns the marker text
+ * spans (for coloring/replacement) and the map of callout line numbers to
+ * their type. When `always` is true the cursor gate is skipped so callouts
+ * stay decorated even while being edited (used by raw mode); otherwise blocks
+ * under the cursor are skipped so the raw syntax stays editable.
+ */
+function collectCallouts(
+  view: EditorView,
+  always: boolean,
+): {
+  markers: { from: number; to: number; kind: string }[];
+  lines: Map<number, string>;
+} {
+  const markers: { from: number; to: number; kind: string }[] = [];
+  const lines = new Map<number, string>();
+  const cursor = view.state.selection.main.head;
+  const tree = syntaxTree(view.state);
+
+  for (const { from, to } of view.visibleRanges) {
+    tree.iterate({
+      from,
+      to,
+      enter: (node) => {
+        if (node.name !== 'Blockquote') return;
+        if (!always && cursor >= node.from && cursor <= node.to) return false;
+        const fromLine = view.state.doc.lineAt(node.from);
+        const callout = matchCalloutLine(fromLine.text);
+        if (!callout) return;
+        const markerStart = fromLine.from + callout.start;
+        markers.push({ from: markerStart, to: markerStart + callout.raw.length, kind: callout.kind });
+        const toLine = view.state.doc.lineAt(node.to);
+        for (let i = fromLine.number; i <= toLine.number; i++) {
+          lines.set(i, callout.kind);
+        }
+      },
+    });
+  }
+
+  return { markers, lines };
+}
+
 function findCursorHeadingLines(view: EditorView): Set<number> {
   const headings = new Set<number>();
   const cursor = view.state.selection.main.head;
@@ -258,12 +300,31 @@ function findHiddenMarkers(
 }
 
 function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
-  if (!rendered) return Decoration.set([]);
+  const { markers: calloutMarkers, lines: calloutLines } = collectCallouts(view, !rendered);
+
+  if (!rendered) {
+    const ranges: Range<Decoration>[] = [];
+    for (const m of calloutMarkers) {
+      ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
+    }
+    for (const [lineNo, kind] of calloutLines) {
+      ranges.push(Decoration.line({ class: `cm-callout cm-callout-${kind}` }).range(view.state.doc.line(lineNo).from));
+    }
+    return Decoration.set(ranges, true);
+  }
 
   const tree = syntaxTree(view.state);
   const ranges: Range<Decoration>[] = [];
   const cursorHeadingLines = findCursorHeadingLines(view);
   const tableSpans = collectTableSpans(view.state, view.visibleRanges);
+
+  for (const m of calloutMarkers) {
+    ranges.push(
+      Decoration.replace({
+        widget: new CalloutTitleWidget(m.kind, CALLOUT_STYLES[m.kind].title),
+      }).range(m.from, m.to),
+    );
+  }
 
   findHiddenMarkers(view, tree, ranges, tableSpans);
 
@@ -279,7 +340,6 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   const codeBlockLines = new Set<number>();
   const parserHrs = new Set<number>();
   const blockquoteLines = new Set<number>();
-  const calloutLines = new Map<number, string>();
   const cursor = view.state.selection.main.head;
 
   for (const { from, to } of view.visibleRanges) {
@@ -321,19 +381,6 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
             const toLine = view.state.doc.lineAt(node.to);
             for (let i = fromLine.number; i <= toLine.number; i++) {
               blockquoteLines.add(i);
-            }
-            const callout = matchCalloutLine(fromLine.text);
-            if (callout) {
-              const markerStart = fromLine.from + callout.start;
-              const markerEnd = markerStart + callout.raw.length;
-              ranges.push(
-                Decoration.replace({
-                  widget: new CalloutTitleWidget(callout.kind, CALLOUT_STYLES[callout.kind].title),
-                }).range(markerStart, markerEnd),
-              );
-              for (let i = fromLine.number; i <= toLine.number; i++) {
-                calloutLines.set(i, callout.kind);
-              }
             }
           }
         } else if (node.name === 'Image') {
