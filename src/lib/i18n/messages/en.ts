@@ -35,6 +35,7 @@ export const en = {
     sortDescending: 'Sort Descending',
     resizeSplitView: 'Resize split view',
     dismiss: 'Dismiss',
+    resetToDefault: 'Reset to default',
   },
   modal: {
     closeModal: 'Close modal',
@@ -168,6 +169,8 @@ export const en = {
       'Use a Markdown file as the template content for new files. Leave empty to create blank files.',
     theme: 'Theme',
     themeTooltip: 'Select the application theme. Changes apply immediately.',
+    customAccentColor: 'Custom Accent Color',
+    customAccentColorTooltip: 'Override the theme accent color. Empty uses the theme default.',
     viewMode: 'Editor View Mode',
     viewModeRaw: 'Raw Mode',
     viewModeRendered: 'Rendered Mode',

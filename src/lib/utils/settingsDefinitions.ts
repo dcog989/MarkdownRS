@@ -52,6 +52,15 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
     },
 
     {
+      key: 'customAccentColor',
+      label: 'settings.customAccentColor',
+      type: 'color',
+      category: 'settings.category.appearance',
+      defaultValue: '',
+      tooltip: 'settings.customAccentColorTooltip',
+    },
+
+    {
       key: 'viewMode',
       label: 'settings.viewMode',
       type: 'select',

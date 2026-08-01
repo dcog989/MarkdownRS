@@ -4,6 +4,7 @@ export const settingsState = $state({
   theme: 'dark' as 'dark' | 'light',
   activeTheme: 'System',
   availableThemes: ['System', 'Default Dark', 'Default Light'] as string[],
+  customAccentColor: '',
   splitPercentage: 0.5,
   splitOrientation: 'vertical' as 'vertical' | 'horizontal',
   tabCycling: 'mru' as 'mru' | 'sequential',

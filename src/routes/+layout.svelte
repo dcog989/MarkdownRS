@@ -10,7 +10,7 @@ import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { logger } from '$lib/utils/logger';
 import { shortcutManager } from '$lib/utils/shortcuts';
-import { getThemeCss, isModeFollowingTheme } from '$lib/utils/themes';
+import { buildCustomAccentCss, getThemeCss, isModeFollowingTheme } from '$lib/utils/themes';
 import '../app.css';
 
 let { children } = $props();
@@ -51,6 +51,32 @@ $effect(() => {
     }
 
     loadTheme();
+});
+
+$effect(() => {
+    const customColor = appContext.settings.customAccentColor;
+    const styleTagId = 'custom-accent-styles';
+    const existing = document.getElementById(styleTagId);
+
+    if (!customColor) {
+        if (existing) existing.remove();
+        return;
+    }
+
+    const css = buildCustomAccentCss(customColor);
+    if (!css) {
+        if (existing) existing.remove();
+        return;
+    }
+
+    let styleTag = existing as HTMLStyleElement | null;
+    if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = styleTagId;
+        document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = css;
+    document.head.appendChild(styleTag);
 });
 
 onMount(() => {

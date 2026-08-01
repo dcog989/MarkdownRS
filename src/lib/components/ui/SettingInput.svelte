@@ -3,6 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import { translate } from '$lib/i18n';
+import { appContext } from '$lib/stores/state.svelte';
 import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
 import type { SettingDef } from '$lib/utils/settingsDefinitions';
 import { elideMiddle } from '$lib/utils/textElide';
@@ -30,6 +31,17 @@ let pathContainer = $state<HTMLDivElement>();
 let pathSpan = $state<HTMLSpanElement>();
 let displayPath = $state($_('settings.noTemplateSelected'));
 let tooltipText = $derived(setting.tooltip ? translate(setting.tooltip) : null);
+let resolvedDefaultAccent = $state('#000000');
+
+$effect(() => {
+    if (setting.type !== 'color') return;
+    void appContext.settings.theme;
+    void appContext.settings.activeTheme;
+    const brand = getComputedStyle(document.documentElement).getPropertyValue('--color-brand-accent').trim();
+    resolvedDefaultAccent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand)
+        ? brand.toLowerCase()
+        : '#7c5a73';
+});
 
 function measureCharWidth(el: HTMLElement): number {
     const canvas = document.createElement('canvas');
@@ -110,6 +122,27 @@ $effect(() => {
             checked={Boolean(value ?? setting.defaultValue)}
             onchange={(e) => onChange(e.currentTarget.checked)}
             class="accent-accent-primary h-4 w-4 cursor-pointer rounded" />
+    {:else if setting.type === 'color'}
+        {@const displayColor = String(value ?? '') || resolvedDefaultAccent}
+        <div class="flex items-center gap-2">
+            <label class="relative block h-7 w-10 shrink-0 cursor-pointer overflow-hidden rounded border border-border-primary">
+                <input
+                    id={setting.key}
+                    type="color"
+                    value={displayColor}
+                    oninput={(e) => onChange(e.currentTarget.value)}
+                    class="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+                <span class="block h-full w-full" style:background={displayColor}></span>
+            </label>
+            {#if value}
+                <button
+                    type="button"
+                    class="text-ui text-fg-muted hover-surface rounded px-2 py-0.5"
+                    onclick={() => onChange('')}>
+                    {$_('common.resetToDefault')}
+                </button>
+            {/if}
+        </div>
     {:else if setting.type === 'select'}
         <div class="select-wrap">
             <select

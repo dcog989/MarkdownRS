@@ -36,3 +36,27 @@ export async function getThemeCss(themeName: string): Promise<string> {
   });
   return result ?? '';
 }
+
+const ACCENT_DARK_SECONDARY_MIX = 0.3;
+const ACCENT_LIGHT_PRIMARY_MIX = 0.25;
+const ACCENT_LIGHT_SECONDARY_MIX = 0.15;
+const ACCENT_SELECTION_MIX = 0.25;
+
+export function buildCustomAccentCss(color: string): string {
+  const safe = color.trim();
+  if (!safe) return '';
+  return `
+:root {
+  --color-brand-accent: ${safe} !important;
+  --accent-primary: ${safe} !important;
+  --accent-secondary: color-mix(in oklab, ${safe} ${100 - ACCENT_DARK_SECONDARY_MIX * 100}%, white) !important;
+  --selection-bg: color-mix(in oklab, ${safe} ${ACCENT_SELECTION_MIX * 100}%, transparent) !important;
+  --border-focus: ${safe} !important;
+}
+[data-theme="light"] {
+  --accent-primary: color-mix(in oklab, ${safe} ${100 - ACCENT_LIGHT_PRIMARY_MIX * 100}%, black) !important;
+  --accent-secondary: color-mix(in oklab, ${safe} ${100 - ACCENT_LIGHT_SECONDARY_MIX * 100}%, white) !important;
+  --border-focus: ${safe} !important;
+}
+`;
+}
