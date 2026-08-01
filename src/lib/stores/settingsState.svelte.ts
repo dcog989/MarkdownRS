@@ -17,7 +17,6 @@ export const settingsState = $state({
   editorFontSize: 14,
   wrapGuideColumn: 0,
   showWhitespace: false,
-  enableAutocomplete: true,
   autocompleteDelay: 850,
   recentChangesTimespan: 600,
   recentChangesCount: 16,

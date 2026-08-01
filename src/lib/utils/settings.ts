@@ -49,6 +49,11 @@ export async function initSettings() {
     });
   }
 
+  const legacy = saved as Record<string, unknown> | null;
+  if (legacy?.enableAutocomplete === false) {
+    settingsState.autocompleteDelay = -1;
+  }
+
   if (settingsState.activeTheme === 'System' || isModeFollowingTheme(settingsState.activeTheme)) {
     syncThemeFromSystem();
   } else if (settingsState.activeTheme === 'Default Light') {

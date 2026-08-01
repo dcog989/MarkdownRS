@@ -56,7 +56,7 @@ export async function smartCompleteAnyWord(context: CompletionContext): Promise<
 }
 
 export function getAutocompletionConfig() {
-  if (!appContext.settings.enableAutocomplete) return [];
+  if (appContext.settings.autocompleteDelay < 0) return [];
   return autocompletion({
     activateOnTyping: true,
     activateOnTypingDelay: appContext.settings.autocompleteDelay,
