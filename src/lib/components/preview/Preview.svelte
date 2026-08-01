@@ -11,6 +11,7 @@ import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { renderMermaidDiagrams } from '$lib/utils/mermaidRenderer';
 import { PreviewRenderer } from '$lib/utils/previewRenderer.svelte';
+import { highlightCodeBlocks } from '$lib/utils/syntaxHighlightRenderer';
 
 let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();
@@ -49,11 +50,13 @@ onDestroy(() => {
 function injectHtml(node: HTMLElement, content: string) {
     node.innerHTML = content;
     void renderMermaidDiagrams(node);
+    void highlightCodeBlocks(node);
 
     return {
         update(newContent: string) {
             node.innerHTML = newContent;
             void renderMermaidDiagrams(node);
+            void highlightCodeBlocks(node);
         },
     };
 }

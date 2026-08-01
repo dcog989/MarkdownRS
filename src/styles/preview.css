@@ -107,6 +107,67 @@
   white-space: pre;
 }
 
+/* Code Syntax Highlighting (highlight.js) */
+.preview-root .hljs-comment,
+.preview-root .hljs-quote {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+.preview-root .hljs-keyword,
+.preview-root .hljs-selector-tag,
+.preview-root .hljs-subst {
+  color: var(--syntax-keyword);
+}
+
+.preview-root .hljs-string,
+.preview-root .hljs-regexp,
+.preview-root .hljs-addition,
+.preview-root .hljs-meta .hljs-string {
+  color: var(--syntax-string);
+}
+
+.preview-root .hljs-title,
+.preview-root .hljs-title.function_,
+.preview-root .hljs-section,
+.preview-root .hljs-name,
+.preview-root .hljs-selector-id,
+.preview-root .hljs-selector-class {
+  color: var(--syntax-heading);
+}
+
+.preview-root .hljs-number,
+.preview-root .hljs-literal,
+.preview-root .hljs-symbol,
+.preview-root .hljs-bullet,
+.preview-root .hljs-link,
+.preview-root .hljs-attr,
+.preview-root .hljs-attribute,
+.preview-root .hljs-variable,
+.preview-root .hljs-params {
+  color: var(--syntax-atom);
+}
+
+.preview-root .hljs-built_in,
+.preview-root .hljs-type,
+.preview-root .hljs-meta {
+  color: var(--syntax-emphasis);
+}
+
+.preview-root .hljs-emphasis {
+  color: var(--syntax-emphasis);
+  font-style: italic;
+}
+
+.preview-root .hljs-strong {
+  color: var(--syntax-strong);
+  font-weight: bold;
+}
+
+.preview-root .hljs-deletion {
+  color: var(--danger-text);
+}
+
 /* Quotes */
 .preview-root blockquote {
   color: var(--preview-fg-quote);
