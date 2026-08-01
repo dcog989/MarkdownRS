@@ -49,9 +49,9 @@ pub async fn save_session(
 pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
     log::info!("[Rust] restore_session called");
 
-    // Seed recent files from existing session data (Backfill)
-    if let Err(e) = state.db.seed_recent_files_from_history() {
-        log::warn!("Failed to seed recent files: {}", e);
+    // Seed file history from existing session data (Backfill)
+    if let Err(e) = state.db.seed_file_history_from_session() {
+        log::warn!("Failed to seed file history: {}", e);
     }
 
     let db = state.db.clone();

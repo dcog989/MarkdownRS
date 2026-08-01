@@ -11,7 +11,7 @@
 - `src-tauri/src/main.rs` — Backend entry point
 - `src-tauri/src/commands/` — Tauri command handlers
 - `src-tauri/src/markdown/` — Markdown rendering (comrak), linting, formatting (rumdl), TOC
-- `src-tauri/src/db/` — SQLite (rusqlite) for bookmarks, recent files, session
+- `src-tauri/src/db/` — SQLite (rusqlite) for bookmarks, file history, session
 - `src-tauri/src/state.rs` — Backend state management
 - `src-tauri/src/setup.rs` — App initialization
 - `src/routes/+page.svelte` — Main application page

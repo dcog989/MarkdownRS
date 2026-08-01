@@ -49,7 +49,7 @@ export const settingsState = $state({
   confirmationSuppressed: false,
   newFileTemplatePath: '',
   maxFileSizeMB: 50,
-  recentFilesLimit: 99,
+  fileHistoryLimit: 999,
   autoSaveEnabled: false,
   autoSaveInterval: 60,
   viewMode: 'rendered' as 'raw' | 'rendered',

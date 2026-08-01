@@ -74,6 +74,19 @@ pub(super) const MIGRATIONS: &[&str] = &[
      CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created DESC);",
     // v5: Add original_index to tabs for unified save_tabs logic
     "ALTER TABLE tabs ADD COLUMN original_index INTEGER;",
+    // v6: Rename recent_files to file_history (schema now matches user-facing name)
+    "ALTER TABLE recent_files RENAME TO file_history;
+     DROP INDEX IF EXISTS idx_recent_files_last_opened;
+     CREATE INDEX IF NOT EXISTS idx_file_history_last_opened ON file_history(last_opened DESC);
+     DROP TRIGGER IF EXISTS prune_recent_files;
+     CREATE TRIGGER IF NOT EXISTS prune_file_history
+     AFTER INSERT ON file_history
+     WHEN (SELECT COUNT(*) FROM file_history) > 999
+     BEGIN
+         DELETE FROM file_history WHERE path NOT IN (
+             SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
+         );
+     END;",
 ];
 
 pub(super) fn setup_schema(conn: &mut Connection) -> Result<()> {

@@ -68,14 +68,14 @@ async function importBookmarks() {
     }
 }
 
-async function exportRecentFiles() {
+async function exportFileHistory() {
     if (busy) return;
     busy = true;
     try {
-        const paths = await callBackend('export_recent_files', {}, 'Data:ExportRecent');
+        const paths = await callBackend('export_file_history', {}, 'Data:ExportFileHistory');
         if (!paths) return;
         const dest = await save({
-            defaultPath: 'markdownrs-recent-files.json',
+            defaultPath: 'markdownrs-file-history.json',
             filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
         });
         if (!dest) return;
@@ -86,13 +86,13 @@ async function exportRecentFiles() {
         );
         showToast('success', translate('data.exportedFiles', { values: { count: paths.length } }));
     } catch (err) {
-        AppError.handle('Data:ExportRecent', err, { showToast: true });
+        AppError.handle('Data:ExportFileHistory', err, { showToast: true });
     } finally {
         busy = false;
     }
 }
 
-async function importRecentFiles() {
+async function importFileHistory() {
     if (busy) return;
     busy = true;
     try {
@@ -111,10 +111,10 @@ async function importRecentFiles() {
         if (!Array.isArray(paths) || paths.some((p) => typeof p !== 'string')) {
             throw new Error(translate('data.invalidFormatStrings'));
         }
-        const count = await callBackend('import_recent_files', { paths }, 'Data:ImportRecent');
+        const count = await callBackend('import_file_history', { paths }, 'Data:ImportFileHistory');
         showToast('success', translate('data.importedFiles', { values: { count } }));
     } catch (err) {
-        AppError.handle('Data:ImportRecent', err, { showToast: true });
+        AppError.handle('Data:ImportFileHistory', err, { showToast: true });
     } finally {
         busy = false;
     }
@@ -152,14 +152,14 @@ const actions = $derived<Action[]>([
         handler: importBookmarks,
     },
     {
-        label: translate('data.exportRecentFiles'),
-        description: translate('data.exportRecentFilesDesc'),
-        handler: exportRecentFiles,
+        label: translate('data.exportFileHistory'),
+        description: translate('data.exportFileHistoryDesc'),
+        handler: exportFileHistory,
     },
     {
-        label: translate('data.importRecentFiles'),
-        description: translate('data.importRecentFilesDesc'),
-        handler: importRecentFiles,
+        label: translate('data.importFileHistory'),
+        description: translate('data.importFileHistoryDesc'),
+        handler: importFileHistory,
     },
     {
         label: translate('data.deleteOrphans'),

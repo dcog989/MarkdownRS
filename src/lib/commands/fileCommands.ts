@@ -1,6 +1,6 @@
 import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
 import { createNewFile } from '$lib/stores/editorStore.svelte';
-import { toggleRecentFiles } from '$lib/stores/interfaceStore.svelte';
+import { toggleFileHistory } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import {
   openFile,
@@ -75,11 +75,11 @@ export const fileCommands: Command[] = [
     handler: () => addBookmarkForActiveTab(),
   },
   {
-    id: 'file.recentFiles',
-    label: 'File: Recent Files...',
+    id: 'file.fileHistory',
+    label: 'File: File History...',
     category: 'File',
     defaultKey: 'ctrl+p',
     global: true,
-    handler: toggleRecentFiles,
+    handler: toggleFileHistory,
   },
 ];

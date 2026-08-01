@@ -4,8 +4,8 @@ import AboutModal from '$lib/components/ui/AboutModal.svelte';
 import BookmarksModal from '$lib/components/ui/BookmarksModal.svelte';
 import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
 import DataModal from '$lib/components/ui/DataModal.svelte';
+import FileHistoryModal from '$lib/components/ui/FileHistoryModal.svelte';
 import PromptModal from '$lib/components/ui/PromptModal.svelte';
-import RecentFilesModal from '$lib/components/ui/RecentFilesModal.svelte';
 import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
@@ -24,9 +24,9 @@ const paletteCommands = $derived(
     bind:isOpen={appContext.interface.showCommandPalette}
     commands={paletteCommands}
     onClose={() => (appContext.interface.showCommandPalette = false)} />
-<RecentFilesModal
-    bind:isOpen={appContext.interface.showRecentFiles}
-    onClose={() => (appContext.interface.showRecentFiles = false)} />
+<FileHistoryModal
+    bind:isOpen={appContext.interface.showFileHistory}
+    onClose={() => (appContext.interface.showFileHistory = false)} />
 <SettingsModal
     bind:isOpen={appContext.interface.showSettings}
     onClose={() => (appContext.interface.showSettings = false)} />

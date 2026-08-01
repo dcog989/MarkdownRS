@@ -6,8 +6,8 @@ macro_rules! lock_conn {
 
 mod bookmarks;
 mod database;
+mod file_history;
 mod migrations;
-mod recent_files;
 mod session;
 
 pub use bookmarks::Bookmark;

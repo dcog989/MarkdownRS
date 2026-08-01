@@ -79,8 +79,8 @@ const DEFAULT_CONFIG = {
   // UI Timing - Delays and debounces for UI interactions
   UI_TIMING: {
     // Focus delays - Allow DOM updates before focusing elements
-    FOCUS_DELAY_MS: 50, // TabDropdown, BookmarksModal, RecentFilesModal, SettingsModal
-    FOCUS_IMMEDIATE_MS: 0, // Immediate focus (BookmarksModal, RecentFilesModal, SettingsModal)
+    FOCUS_DELAY_MS: 50, // TabDropdown, BookmarksModal, FileHistoryModal, SettingsModal
+    FOCUS_IMMEDIATE_MS: 0, // Immediate focus (BookmarksModal, FileHistoryModal, SettingsModal)
 
     // Keyboard navigation
     MRU_POPUP_DELAY_MS: 200, // Delay before showing MRU popup during tab cycling (TabBar)

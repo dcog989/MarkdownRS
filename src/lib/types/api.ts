@@ -101,19 +101,19 @@ export interface BackendCommands {
     args: { oldPath: string; newPath: string };
     return: undefined;
   };
-  add_to_recent_files: {
+  add_to_file_history: {
     args: { path: string; lastOpened: string };
     return: undefined;
   };
-  get_recent_files: {
+  get_file_history: {
     args: Record<string, never>;
     return: string[];
   };
-  remove_from_recent_files: {
+  remove_from_file_history: {
     args: { path: string };
     return: undefined;
   };
-  clear_recent_files: {
+  clear_file_history: {
     args: Record<string, never>;
     return: undefined;
   };
@@ -251,11 +251,11 @@ export interface BackendCommands {
     args: { bookmarks: Bookmark[] };
     return: number;
   };
-  export_recent_files: {
+  export_file_history: {
     args: Record<string, never>;
     return: string[];
   };
-  import_recent_files: {
+  import_file_history: {
     args: { paths: string[] };
     return: number;
   };

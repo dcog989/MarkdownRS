@@ -19,7 +19,7 @@ import {
   updateTabFields,
   updateTabTitle,
 } from '$lib/stores/editorStore.svelte';
-import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
+import { addToFileHistory } from '$lib/stores/fileHistoryStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { logger } from '$lib/utils/logger';
@@ -122,7 +122,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   }
 
   if (tab.path) {
-    addToRecentFiles(tab.path);
+    addToFileHistory(tab.path);
     try {
       fileWatcher.unwatch(tab.path);
     } catch {
@@ -196,7 +196,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
     invalidateMetadataCache(newPath);
     await refreshMetadata(tabId, newPath);
 
-    addToRecentFiles(newPath);
+    addToFileHistory(newPath);
 
     const bookmark = getBookmarkByPath(oldPath);
     if (bookmark) {

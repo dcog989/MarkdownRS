@@ -25,35 +25,35 @@ pub fn import_bookmarks(
 }
 
 #[tauri::command]
-pub fn export_recent_files(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+pub fn export_file_history(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     state
         .db
-        .get_recent_files()
-        .map_err(|e| handle_error(Some("recent files"), "export recent files", e))
+        .get_file_history()
+        .map_err(|e| handle_error(Some("file history"), "export file history", e))
 }
 
 #[tauri::command]
-pub fn import_recent_files(
+pub fn import_file_history(
     state: State<'_, AppState>,
     paths: Vec<String>,
 ) -> Result<usize, String> {
     let count = paths.len();
     state
         .db
-        .import_recent_files(&paths)
-        .map_err(|e| handle_error(Some("recent files"), "import recent files", e))?;
+        .import_file_history(&paths)
+        .map_err(|e| handle_error(Some("file history"), "import file history", e))?;
     Ok(count)
 }
 
 #[tauri::command]
 pub fn delete_orphan_files(state: State<'_, AppState>) -> Result<usize, String> {
-    let recent = state
+    let history = state
         .db
-        .delete_orphan_recent_files()
-        .map_err(|e| handle_error(Some("recent files"), "delete orphan recent files", e))?;
+        .delete_orphan_file_history()
+        .map_err(|e| handle_error(Some("file history"), "delete orphan file history", e))?;
     let bookmarks = state
         .db
         .delete_orphan_bookmarks()
         .map_err(|e| handle_error(Some("bookmarks"), "delete orphan bookmarks", e))?;
-    Ok(recent + bookmarks)
+    Ok(history + bookmarks)
 }

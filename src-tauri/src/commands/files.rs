@@ -201,44 +201,44 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
 }
 
 #[tauri::command]
-pub async fn add_to_recent_files(
+pub async fn add_to_file_history(
     state: tauri::State<'_, crate::state::AppState>,
     path: String,
     last_opened: String,
 ) -> Result<(), String> {
     state
         .db
-        .add_recent_file(&path, &last_opened)
-        .map_err(|e| handle_error(Some(&path), "add to recent files", e))
+        .add_file_history_entry(&path, &last_opened)
+        .map_err(|e| handle_error(Some(&path), "add to file history", e))
 }
 
 #[tauri::command]
-pub async fn get_recent_files(
+pub async fn get_file_history(
     state: tauri::State<'_, crate::state::AppState>,
 ) -> Result<Vec<String>, String> {
     state
         .db
-        .get_recent_files()
-        .map_err(|e| handle_error(None, "get recent files", e))
+        .get_file_history()
+        .map_err(|e| handle_error(None, "get file history", e))
 }
 
 #[tauri::command]
-pub async fn remove_from_recent_files(
+pub async fn remove_from_file_history(
     state: tauri::State<'_, crate::state::AppState>,
     path: String,
 ) -> Result<(), String> {
     state
         .db
-        .remove_recent_file(&path)
-        .map_err(|e| handle_error(Some(&path), "remove recent file", e))
+        .remove_file_history_entry(&path)
+        .map_err(|e| handle_error(Some(&path), "remove from file history", e))
 }
 
 #[tauri::command]
-pub async fn clear_recent_files(
+pub async fn clear_file_history(
     state: tauri::State<'_, crate::state::AppState>,
 ) -> Result<(), String> {
     state
         .db
-        .clear_recent_files()
-        .map_err(|e| handle_error(None, "clear recent files", e))
+        .clear_file_history()
+        .map_err(|e| handle_error(None, "clear file history", e))
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Bookmark, Eye, EyeOff, Feather, FolderTree, Settings, Zap } from 'lucide-svelte';
+import { Bookmark, Eye, EyeOff, Feather, FolderTree, History, Settings, Zap } from 'lucide-svelte';
 import { _ } from 'svelte-i18n';
 import { translate } from '$lib/i18n';
 import { toggleWriterMode } from '$lib/stores/appState.svelte';
@@ -7,6 +7,7 @@ import {
     toggleAbout,
     toggleBookmarks,
     toggleCommandPalette,
+    toggleFileHistory,
     toggleSettings,
 } from '$lib/stores/interfaceStore.svelte';
 import { toggleFileTree, toggleSplitView } from '$lib/stores/settingsState.svelte';
@@ -29,6 +30,7 @@ let shortcuts = $derived({
     settings: shortcutManager.getShortcutDisplay('window.settings'),
     commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
     bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
+    fileHistory: shortcutManager.getShortcutDisplay('file.fileHistory'),
     splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
     writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
     fileTree: shortcutManager.getShortcutDisplay('view.toggleFileTree'),
@@ -87,6 +89,17 @@ function closeMenu() {
             <Bookmark size={14} class="opacity-70" />
             <span class="flex-1">{$_('tabBarMenu.bookmarks')}</span
             ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
+        </button>
+        <button
+            type="button"
+            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            onclick={() => {
+                toggleFileHistory();
+                closeMenu();
+            }}>
+            <History size={14} class="opacity-70" />
+            <span class="flex-1">{$_('tabBarMenu.fileHistory')}</span
+            ><span class="ml-auto text-xs opacity-40">{shortcuts.fileHistory}</span>
         </button>
 
         <div class="bg-border-main my-1 h-px"></div>

@@ -19,7 +19,7 @@ import {
   updateTabFields,
   updateTransientState,
 } from '$lib/stores/editorStore.svelte';
-import { addToRecentFiles } from '$lib/stores/recentFilesStore.svelte';
+import { addToFileHistory } from '$lib/stores/fileHistoryStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -54,7 +54,7 @@ export async function openFile(path?: string): Promise<void> {
     const sanitizedPath = sanitizePath(targetPath);
     const existingTab = appContext.editor.tabs.find((t) => t.path === sanitizedPath);
 
-    addToRecentFiles(sanitizedPath);
+    addToFileHistory(sanitizedPath);
 
     if (existingTab) {
       appContext.app.activeTabId = existingTab.id;
@@ -295,7 +295,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       invalidateMetadataCache(sanitizedPath);
       await refreshMetadata(tabId, sanitizedPath);
 
-      addToRecentFiles(sanitizedPath);
+      addToFileHistory(sanitizedPath);
 
       fileWatcher.setWriteLock(sanitizedPath, false);
 

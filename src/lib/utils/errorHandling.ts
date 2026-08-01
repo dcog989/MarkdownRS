@@ -33,8 +33,8 @@ export type ErrorContext =
   | 'Markdown:Lint'
   | 'Data:ExportBookmarks'
   | 'Data:ImportBookmarks'
-  | 'Data:ExportRecent'
-  | 'Data:ImportRecent'
+  | 'Data:ExportFileHistory'
+  | 'Data:ImportFileHistory'
   | 'Data:DeleteOrphans';
 
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
