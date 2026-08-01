@@ -6,12 +6,10 @@ export function setupAutoSave() {
   let timerId: number | null = null;
 
   function start() {
-    const enabled = appContext.settings.autoSaveEnabled;
     const interval = appContext.settings.autoSaveInterval;
+    if (interval <= 0) return;
 
-    if (!enabled) return;
-
-    const intervalMs = Math.max(5000, interval * 1000);
+    const intervalMs = interval * 1000;
     timerId = window.setInterval(() => {
       const tabId = appContext.app.activeTabId;
       if (!tabId) return;
