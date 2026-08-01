@@ -384,7 +384,9 @@
             appContext.settings.fileTreeWidth = CONFIG.FILETREE.DEFAULT_WIDTH;
             saveSettings();
         }}>
-        <ChevronLeft size={44} class="ft-collapse-icon" />
+        <span class="ft-collapse-icon">
+            <ChevronLeft size={44} />
+        </span>
     </div>
 </div>
 
@@ -445,14 +447,18 @@
 
     .ft-resize-handle:hover {
         background-color: var(--accent-primary);
+        transition-delay: 250ms;
     }
 
-    :global(.ft-collapse-icon) {
+    .ft-collapse-icon {
         position: absolute;
-        top: 50%;
+        top: 0;
         right: 6px;
-        transform: translateY(-50%);
-        padding: 8px;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
         border-radius: 6px;
         color: var(--text-secondary);
         background-color: var(--surface-hover);
@@ -461,8 +467,9 @@
         transition: opacity 150ms ease-out;
     }
 
-    .ft-resize-handle:hover :global(.ft-collapse-icon) {
+    .ft-resize-handle:hover .ft-collapse-icon {
         opacity: 1;
+        transition-delay: 250ms;
     }
 
     .cursor-col-resize {
