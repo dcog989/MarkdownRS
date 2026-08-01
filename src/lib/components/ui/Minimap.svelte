@@ -58,10 +58,10 @@ function getLineKind(line: string, inCodeBlock: boolean): { kind: 'heading' | 'c
     if (inCodeBlock) return { kind: 'code', inCodeBlock };
 
     if (/^#{1,6}\s/.test(line)) return { kind: 'heading', inCodeBlock: false };
+    if (LINK_RE.test(line)) return { kind: 'link', inCodeBlock: false };
     if (/^[\s]*[-*+]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
     if (/^[\s]*\d+[.)]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
     if (/^\s*>\s/.test(line)) return { kind: 'quote', inCodeBlock: false };
-    if (LINK_RE.test(line)) return { kind: 'link', inCodeBlock: false };
     return { kind: 'text', inCodeBlock: false };
 }
 
@@ -100,7 +100,7 @@ function drawBar(
             break;
         case 'code':
             ctx.fillStyle = colors.code;
-            ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
+            ctx.globalAlpha = inViewport ? 0.45 : 0.18 * fade;
             break;
         case 'list':
             ctx.fillStyle = colors.list;
