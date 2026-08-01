@@ -1,6 +1,5 @@
 import { untrack } from 'svelte';
 import { translate } from '$lib/i18n';
-import { updateTabFields } from '$lib/stores/editorStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { scrollSync } from '$lib/utils/scrollSync.svelte';
@@ -32,7 +31,6 @@ export class PreviewRenderer {
 
   scheduleRender(
     content: string,
-    tabId: string,
     flavor: string,
     tabPath: string | null | undefined,
     container: HTMLDivElement | undefined,
@@ -57,8 +55,6 @@ export class PreviewRenderer {
         const result = await renderMarkdown(content, flavor === 'gfm', tabPath);
 
         if (currentController.signal.aborted || !result) return;
-
-        updateTabFields(tabId, { wordCount: result.word_count });
 
         this.htmlContent = result.html;
         this.lastRendered = content;

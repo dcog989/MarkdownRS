@@ -39,7 +39,7 @@ $effect(() => {
     if (!isMarkdown) return;
     if (content === renderer.lastRendered && renderer.htmlContent) return;
 
-    return renderer.scheduleRender(content, tabId, currentFlavor, tabPath, container);
+    return renderer.scheduleRender(content, currentFlavor, tabPath, container);
 });
 
 onDestroy(() => {
