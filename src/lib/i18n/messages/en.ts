@@ -159,7 +159,7 @@ export const en = {
       spellcheck: 'Spellcheck',
       system: 'System',
     },
-    logLevel: 'Log Level (Restart Required)',
+    logLevel: 'Log Level',
     logLevelTooltip: 'Controls the verbosity of application logs. Requires restart to take effect.',
     newFileTemplate: 'New File Template',
     newFileTemplateTooltip:
