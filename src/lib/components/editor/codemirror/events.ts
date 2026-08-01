@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { extractPathAtPos } from '$lib/utils/filePathExtension';
+import { extractPathAtPos, extractWikilinkAtPos } from '$lib/utils/filePathExtension';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { logger } from '$lib/utils/logger';
 
@@ -32,14 +32,21 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
           }
         }
 
-        // 2. Check for File Paths (using shared regex logic)
+        // 2. Check for Wikilinks ([[target]] / [[label|target]])
+        if (!targetString) {
+          const line = view.state.doc.lineAt(pos);
+          const posInLine = pos - line.from;
+          targetString = extractWikilinkAtPos(line.text, posInLine) || '';
+        }
+
+        // 3. Check for File Paths (using shared regex logic)
         if (!targetString) {
           const line = view.state.doc.lineAt(pos);
           const posInLine = pos - line.from;
           targetString = extractPathAtPos(line.text, posInLine) || '';
         }
 
-        // 3. Fallback: heuristic regex matching on the current line (Word-based, fails on spaces)
+        // 4. Fallback: heuristic regex matching on the current line (Word-based, fails on spaces)
         if (!targetString) {
           const line = view.state.doc.lineAt(pos);
           const text = line.text;

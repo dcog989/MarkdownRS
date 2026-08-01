@@ -158,13 +158,20 @@
   color: var(--accent-filepath);
 }
 
+.cm-wikilink {
+  color: var(--accent-filepath);
+  text-decoration: underline;
+}
+
 /* Hide link decoration inside code blocks by default */
 .cm-editor .cm-code .cm-link,
 .cm-editor .cm-code .cm-url,
 .cm-editor .cm-code .cm-file-path,
+.cm-editor .cm-code .cm-wikilink,
 .cm-editor .cm-code-block .cm-link,
 .cm-editor .cm-code-block .cm-url,
-.cm-editor .cm-code-block .cm-file-path {
+.cm-editor .cm-code-block .cm-file-path,
+.cm-editor .cm-code-block .cm-wikilink {
   text-decoration: none;
 }
 
@@ -196,12 +203,14 @@
   & .cm-url,
   & .cm-link,
   & .cm-file-path,
+  & .cm-wikilink,
   & .cm-formatting-link-string {
     cursor: pointer;
   }
 
   & .cm-link:hover,
-  & .cm-file-path:hover {
+  & .cm-file-path:hover,
+  & .cm-wikilink:hover {
     background-color: oklch(from var(--accent-link) l c h / 0.1);
   }
 }
@@ -210,8 +219,10 @@
 /* .cm-url omitted — :has() box-shadow handles URL underline across all spans */
 .cm-editor.cm-modifier-down .cm-code .cm-link:hover,
 .cm-editor.cm-modifier-down .cm-code .cm-file-path:hover,
+.cm-editor.cm-modifier-down .cm-code .cm-wikilink:hover,
 .cm-editor.cm-modifier-down .cm-code-block .cm-link:hover,
-.cm-editor.cm-modifier-down .cm-code-block .cm-file-path:hover {
+.cm-editor.cm-modifier-down .cm-code-block .cm-file-path:hover,
+.cm-editor.cm-modifier-down .cm-code-block .cm-wikilink:hover {
   text-decoration: underline;
 }
 

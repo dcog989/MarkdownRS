@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractPathAtPos } from './filePathExtension';
+import { extractPathAtPos, extractWikilinkAtPos } from './filePathExtension';
 
 describe('extractPathAtPos', () => {
   it('extracts a plain relative path', () => {
@@ -34,5 +34,25 @@ describe('extractPathAtPos', () => {
 
   it('does not match a path suffix inside a word', () => {
     expect(extractPathAtPos('my notes/ideas.md rocks', 4)).toBeNull();
+  });
+});
+
+describe('extractWikilinkAtPos', () => {
+  it('extracts the target from a simple wikilink', () => {
+    const text = 'see [[notes/foo]] for details';
+    expect(extractWikilinkAtPos(text, 8)).toBe('notes/foo');
+  });
+
+  it('extracts the target from a wikilink with a display label', () => {
+    const text = 'go to [[notes/foo|the notes]] now';
+    expect(extractWikilinkAtPos(text, 10)).toBe('notes/foo');
+  });
+
+  it('trims whitespace around the target', () => {
+    expect(extractWikilinkAtPos('see [[  notes/foo  ]]', 6)).toBe('notes/foo');
+  });
+
+  it('returns null when the position is outside any wikilink', () => {
+    expect(extractWikilinkAtPos('no wikilink here', 3)).toBeNull();
   });
 });
