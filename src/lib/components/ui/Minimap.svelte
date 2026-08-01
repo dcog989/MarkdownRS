@@ -478,7 +478,7 @@ $effect(() => {
         z-index: 60;
         width: 64px;
         overflow: hidden;
-        opacity: 0.5;
+        opacity: 0.65;
         transition: opacity 150ms ease;
     }
     .minimap-track:hover {
