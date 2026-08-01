@@ -52,6 +52,7 @@
 - Decompose files over 400 lines if they mix concerns.
 - Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
 - Self-documenting code via clear naming. Use comments only for complex workarounds or issues that need noting.
+- Do not run full `bun run check`/`bun run test` on trivial changes (constant tweaks, one-line edits, CSS value changes). Run `bunx biome check --write <file>` on the touched file, or nothing if the change is a simple value edit. Only run the full suite on real logic changes.
 
 ## Common Patterns
 
