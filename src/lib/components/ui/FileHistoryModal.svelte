@@ -107,7 +107,6 @@ function toggleSortDirection() {
                             type="button"
                             class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
                             onclick={handleClearAll}
-                            title={$_('fileHistory.clearHistory')}
                             use:tooltip={$_('fileHistory.clearHistory')}>
                             <Trash2 size={16} />
                         </button>
