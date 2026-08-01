@@ -6,6 +6,7 @@ import { _ } from 'svelte-i18n';
 import Input from '$lib/components/ui/Input.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import {
     addBookmark,
@@ -215,7 +216,7 @@ function handleKeydown(e: KeyboardEvent) {
 }
 </script>
 
-<Modal bind:isOpen {onClose} {position}>
+<Modal bind:isOpen {onClose} {position} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
     {#snippet header()}
         <ModalSearchHeader
             title={$_('bookmarks.title')}

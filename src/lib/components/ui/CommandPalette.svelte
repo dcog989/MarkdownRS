@@ -5,6 +5,7 @@ import { _ } from 'svelte-i18n';
 import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { cycleSortMode, SORT_LABELS, sortCommands } from '$lib/utils/commandPaletteSort';
@@ -86,7 +87,7 @@ function close() {
 }
 </script>
 
-<Modal bind:isOpen {onClose}>
+<Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
     {#snippet header()}
         <ModalSearchHeader
             title={$_('commandPalette.title')}

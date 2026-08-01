@@ -12,6 +12,7 @@ let {
     title,
     zIndex = 100,
     position = 'top',
+    width = 'fit-content',
     header,
     footer,
     children,
@@ -21,6 +22,7 @@ let {
     title?: string;
     zIndex?: number;
     position?: 'center' | 'top';
+    width?: string;
     header?: Snippet;
     footer?: Snippet;
     children: Snippet;
@@ -172,7 +174,7 @@ $effect(() => {
             style:min-width={MODAL_CONSTRAINTS.MIN_WIDTH}
             style:max-width={MODAL_CONSTRAINTS.MAX_WIDTH}
             style:max-height="calc(100vh - 5rem)"
-            style:width="fit-content"
+            style:width={width}
             onclick={(e) => e.stopPropagation()}
             onkeydown={() => {}}>
             <!-- Header Strategy: Snippet First, then Title+Close Default -->

@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Database, Keyboard, Settings } from 'lucide-svelte';
 import { _ } from 'svelte-i18n';
+import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import { toggleData, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
@@ -130,7 +131,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
 }
 </script>
 
-<Modal bind:isOpen {onClose}>
+<Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
     {#snippet header()}
         <ModalSearchHeader
             title={$_('settings.modalTitle')}

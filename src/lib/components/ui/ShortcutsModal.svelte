@@ -5,6 +5,7 @@ import { _ } from 'svelte-i18n';
 import type { Command } from '$lib/commands/commands';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { createListNavigation } from '$lib/utils/listNavigation.svelte';
@@ -129,7 +130,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
 
 </script>
 
-<Modal bind:isOpen {onClose}>
+<Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
     {#snippet header()}
         <ModalSearchHeader
             title={$_('shortcuts.title')}

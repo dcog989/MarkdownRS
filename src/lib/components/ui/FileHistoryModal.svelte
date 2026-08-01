@@ -4,6 +4,7 @@ import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
+import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import {
     clearFileHistory,
@@ -79,7 +80,7 @@ function toggleSortDirection() {
 }
 </script>
 
-<Modal bind:isOpen {onClose}>
+<Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
     {#snippet header()}
         <ModalSearchHeader
             title={$_('fileHistory.title')}
