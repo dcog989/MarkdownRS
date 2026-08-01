@@ -1,5 +1,6 @@
 <script lang="ts">
 import { syntaxTree } from '@codemirror/language';
+import type { Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { type Highlighter, highlightTree, type Tag, tags as t } from '@lezer/highlight';
 
@@ -35,7 +36,21 @@ function fitLines(
     return { lineH, gap };
 }
 
-function getColors() {
+interface MinimapColors {
+    bg: string;
+    text: string;
+    heading: string;
+    code: string;
+    list: string;
+    link: string;
+    quote: string;
+    strong: string;
+    emphasis: string;
+    strike: string;
+    callout: Record<string, string>;
+}
+
+function getColors(): MinimapColors {
     const style = getComputedStyle(document.documentElement);
     return {
         bg: style.getPropertyValue('--surface-1').trim(),
@@ -48,10 +63,45 @@ function getColors() {
         strong: style.getPropertyValue('--syntax-strong').trim(),
         emphasis: style.getPropertyValue('--syntax-emphasis').trim(),
         strike: style.getPropertyValue('--text-tertiary').trim(),
+        callout: {
+            note: style.getPropertyValue('--callout-note-accent').trim(),
+            tip: style.getPropertyValue('--callout-tip-accent').trim(),
+            important: style.getPropertyValue('--callout-important-accent').trim(),
+            warning: style.getPropertyValue('--callout-warning-accent').trim(),
+            caution: style.getPropertyValue('--callout-caution-accent').trim(),
+        },
     };
 }
 
 const LINK_RE = /\[.*?\]\(.*?\)|\[.*?\]\[.*?\]|\[.*?\]\[\s*\]|^\s*\[[^\]]+\]:\s*\S|https?:\/\/\S+/;
+
+const calloutMarkerRe = /^\s*>\s*\[!(note|tip|important|warning|caution)\]/i;
+const quoteLineRe = /^\s*>/;
+const fenceRe = /^\s*(?:```|~~~)/;
+
+function computeCalloutTypes(doc: Text): (string | null)[] {
+    const types: (string | null)[] = new Array(doc.lines).fill(null);
+    let current: string | null = null;
+    let inFence = false;
+    for (let i = 1; i <= doc.lines; i++) {
+        const line = doc.line(i).text;
+        if (fenceRe.test(line)) {
+            inFence = !inFence;
+            continue;
+        }
+        if (inFence) continue;
+        const m = calloutMarkerRe.exec(line);
+        if (m) {
+            current = m[1].toLowerCase();
+            types[i - 1] = current;
+        } else if (current && quoteLineRe.test(line)) {
+            types[i - 1] = current;
+        } else {
+            current = null;
+        }
+    }
+    return types;
+}
 
 const minimapHighlighter: Highlighter = {
     style(tags: readonly Tag[]) {
@@ -139,6 +189,11 @@ const KIND_WEIGHT: Record<string, number> = {
     list: 2,
     quote: 2,
     text: 0.3,
+    'callout-note': 10,
+    'callout-tip': 10,
+    'callout-important': 10,
+    'callout-warning': 10,
+    'callout-caution': 10,
 };
 
 function pickBarKind(counts: Record<string, number>): string {
@@ -162,7 +217,7 @@ function drawSpan(
     y: number,
     w: number,
     h: number,
-    colors: Record<string, string>,
+    colors: MinimapColors,
     inViewport: boolean,
     fade = 1,
 ) {
@@ -188,6 +243,14 @@ function drawSpan(
         case 'quote':
             ctx.fillStyle = colors.quote;
             ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
+            break;
+        case 'callout-note':
+        case 'callout-tip':
+        case 'callout-important':
+        case 'callout-warning':
+        case 'callout-caution':
+            ctx.fillStyle = colors.callout[kind.slice('callout-'.length)];
+            ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
             break;
         case 'strong':
             ctx.fillStyle = colors.strong;
@@ -261,12 +324,13 @@ function renderMinimap() {
     const COMPRESS_SPACING = 1;
     const needsCompression = lineH < 1;
     let inCodeBlock = false;
+    const calloutTypes = computeCalloutTypes(doc);
 
     if (needsCompression) {
         const totalBars = Math.max(1, Math.floor(contentH / COMPRESS_SPACING));
         const linesPerBar = totalLines / totalBars;
         let currentBarIdx = -1;
-        let counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
+        let counts: Record<string, number> = {};
         let barMaxLen = 0;
 
         const drawCompressedBar = (barIdx: number, barKind: string) => {
@@ -284,13 +348,15 @@ function renderMinimap() {
             if (barIdx !== currentBarIdx) {
                 if (currentBarIdx >= 0) drawCompressedBar(currentBarIdx, pickBarKind(counts));
                 currentBarIdx = barIdx;
-                counts = { heading: 0, code: 0, list: 0, link: 0, quote: 0, text: 0, empty: 0 };
+                counts = {};
                 barMaxLen = 0;
             }
 
             const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
             inCodeBlock = newInCodeBlock;
-            counts[kind]++;
+            const calloutType = calloutTypes[i - 1];
+            const effKind = calloutType ? `callout-${calloutType}` : kind;
+            counts[effKind] = (counts[effKind] ?? 0) + 1;
             barMaxLen = Math.max(barMaxLen, line.length);
         }
 
@@ -336,6 +402,12 @@ function renderMinimap() {
             if (line.length === 0) continue;
 
             const lineWidth = Math.max(1, Math.min(barWidth, line.length * CHARS_TO_PX));
+            const calloutType = calloutTypes[i];
+            if (calloutType) {
+                drawSpan(ctx, `callout-${calloutType}`, paddingX, y, lineWidth, lineH, colors, inViewport);
+                continue;
+            }
+
             drawSpan(ctx, 'text', paddingX, y, lineWidth, lineH, colors, inViewport);
 
             for (const sp of tokenSpans[i]) {

@@ -268,23 +268,23 @@
 }
 
 .preview-root .callout-note {
-  --callout-accent: oklch(0.6 0.15 250);
+  --callout-accent: var(--callout-note-accent);
 }
 
 .preview-root .callout-tip {
-  --callout-accent: oklch(0.62 0.16 150);
+  --callout-accent: var(--callout-tip-accent);
 }
 
 .preview-root .callout-important {
-  --callout-accent: oklch(0.55 0.18 288);
+  --callout-accent: var(--callout-important-accent);
 }
 
 .preview-root .callout-warning {
-  --callout-accent: oklch(0.65 0.14 75);
+  --callout-accent: var(--callout-warning-accent);
 }
 
 .preview-root .callout-caution {
-  --callout-accent: oklch(0.62 0.18 25);
+  --callout-accent: var(--callout-caution-accent);
 }
 
 /* Task Lists */

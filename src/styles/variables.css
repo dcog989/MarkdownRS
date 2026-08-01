@@ -81,6 +81,13 @@
   --syntax-emphasis: #61afef;
   --syntax-strong: #e5c07b;
 
+  /* Callout Accents (GitHub-style alerts) */
+  --callout-note-accent: oklch(0.6 0.15 250);
+  --callout-tip-accent: oklch(0.62 0.16 150);
+  --callout-important-accent: oklch(0.55 0.18 288);
+  --callout-warning-accent: oklch(0.65 0.14 75);
+  --callout-caution-accent: oklch(0.62 0.18 25);
+
   /* Preview */
   --preview-bg-code: var(--code-bg);
   --preview-bg-pre: var(--pre-bg);
