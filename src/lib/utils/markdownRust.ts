@@ -52,7 +52,7 @@ export async function renderMarkdown(
   }
 
   const cleanHtml = DOMPurify.sanitize(html, {
-    USE_PROFILES: { html: true },
+    USE_PROFILES: { html: true, svg: true },
     ADD_ATTR: ['target', 'class', 'data-sourcepos', 'align', 'start', 'type', 'disabled', 'checked', 'src'],
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   });

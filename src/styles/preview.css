@@ -231,6 +231,62 @@
   text-decoration: none;
 }
 
+/* Callouts (GitHub alerts) */
+.preview-root .callout {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid var(--callout-accent);
+  border-radius: 4px;
+  background-color: oklch(from var(--callout-accent) l c h / 0.08);
+}
+
+.preview-root .callout > .callout-title {
+  margin: 0 0 0.5em;
+  font-weight: 600;
+  color: var(--callout-accent);
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.preview-root .callout-icon {
+  flex-shrink: 0;
+  color: var(--callout-accent);
+}
+
+.preview-root .callout > p:not(.callout-title) {
+  margin: 0.5em 0;
+}
+
+.preview-root .callout > blockquote {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-style: normal;
+  color: inherit;
+}
+
+.preview-root .callout-note {
+  --callout-accent: oklch(0.6 0.15 250);
+}
+
+.preview-root .callout-tip {
+  --callout-accent: oklch(0.62 0.16 150);
+}
+
+.preview-root .callout-important {
+  --callout-accent: oklch(0.55 0.18 288);
+}
+
+.preview-root .callout-warning {
+  --callout-accent: oklch(0.65 0.14 75);
+}
+
+.preview-root .callout-caution {
+  --callout-accent: oklch(0.62 0.18 25);
+}
+
 /* Task Lists */
 .preview-root input[type="checkbox"] {
   margin-right: 0.5em;
