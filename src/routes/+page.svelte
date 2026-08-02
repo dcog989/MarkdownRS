@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ChevronDown, ChevronRight, Menu } from 'lucide-svelte';
+import { ChevronDown, ChevronRight, FolderTree, Menu } from 'lucide-svelte';
 import { onDestroy } from 'svelte';
 import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
@@ -68,13 +68,25 @@ function onResizeMouseDown(e: MouseEvent) {
                         <button
                             type="button"
                             aria-label={$_('fileTree.showFileTree')}
-                            class="ft-peek"
+                            class="ft-peek-toolbar"
                             use:tooltip={$_('fileTree.showFileTree')}
                             onclick={handleToggleFileTree}>
-                            <ChevronRight
+                            <FolderTree
                                 size={14}
                                 class="text-fg-muted transition-colors group-hover:text-fg-default" />
                         </button>
+                        <div class="flex min-h-0 flex-1 items-center justify-center">
+                            <button
+                                type="button"
+                                aria-label={$_('fileTree.showFileTree')}
+                                class="ft-peek"
+                                use:tooltip={$_('fileTree.showFileTree')}
+                                onclick={handleToggleFileTree}>
+                                <ChevronRight
+                                    size={44}
+                                    class="text-fg-muted opacity-0 transition-opacity group-hover:opacity-100" />
+                            </button>
+                        </div>
                     </div>
                 {/if}
             {/if}
@@ -177,8 +189,8 @@ function onResizeMouseDown(e: MouseEvent) {
 
     .ft-peek-edge {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
         width: 2rem;
         height: 100%;
         background-color: var(--surface-2);
@@ -189,6 +201,16 @@ function onResizeMouseDown(e: MouseEvent) {
 
     .ft-peek-edge:hover {
         background-color: var(--surface-hover);
+    }
+
+    .ft-peek-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 2rem;
+        width: 100%;
+        border-bottom: 1px solid var(--border-primary);
+        cursor: pointer;
     }
 
     .ft-peek {
