@@ -378,7 +378,7 @@
 }
 
 .cm-bullet-widget {
-  color: var(--editor-accent);
+  color: var(--editor-fg);
   font-weight: 900;
 }
 
