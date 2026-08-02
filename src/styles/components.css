@@ -431,6 +431,12 @@ select {
   display: none;
 }
 
+.bg-editor-active {
+  background-color: var(--editor-bg);
+  border-top: 2px solid hsl(from var(--editor-bg) h s calc(l + 30));
+  border-bottom: 1px solid transparent;
+}
+
 /* Tooltip Styling */
 .tooltip {
   position: absolute;

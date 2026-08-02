@@ -5,7 +5,7 @@ import { CONFIG } from '$lib/utils/config';
 import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { loadSession, openFileByPath, persistSession, persistSessionDebounced } from '$lib/utils/fileSystem';
 import { logger } from '$lib/utils/logger';
-import { initSettings, saveSettings } from '$lib/utils/settings';
+import { initSettings, saveSettings, saveSettingsNow } from '$lib/utils/settings';
 import { formatDuration } from '$lib/utils/timing';
 
 export function createAppInit() {
@@ -91,7 +91,7 @@ export function createAppInit() {
     persistSessionDebounced.clear();
     runFlushFunctions();
     persistSession();
-    saveSettings();
+    saveSettingsNow();
   }
 
   function handleDestroy(isUnloading: boolean) {
@@ -99,7 +99,7 @@ export function createAppInit() {
     if (isInitialized && !initError && !isUnloading) {
       persistSessionDebounced.clear();
       persistSession();
-      saveSettings();
+      saveSettingsNow();
     }
   }
 

@@ -60,8 +60,6 @@ let tooltipContent = $derived.by(() => {
     style:min-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMin}px`}
     style:max-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMax}px`}
     style:width={isCollapsed ? '36px' : 'auto'}
-    style:border-top={isActive ? '2px solid var(--accent-primary)' : undefined}
-    style:border-bottom={isActive ? '1px solid transparent' : undefined}
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
         e.preventDefault();
@@ -132,9 +130,3 @@ let tooltipContent = $derived.by(() => {
         </div>
     {/if}
 </div>
-
-<style>
-    .bg-editor-active {
-        background-color: var(--editor-bg);
-    }
-</style>
