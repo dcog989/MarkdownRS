@@ -262,7 +262,7 @@ async function handleSendToBrowser() {
             </Submenu>
         {/snippet}
 
-        {#if suggestions.length > 0 || isLoadingSuggestions}
+        {#if suggestions.length > 0 || isLoadingSuggestions || canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
             <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
                 {$_('editorContextMenu.suggestions')}
             </div>
@@ -281,6 +281,37 @@ async function handleSendToBrowser() {
                         <Sparkles size={14} class="text-accent-secondary" /><span>{s}</span>
                     </button>
                 {/each}
+                {#if canAddSingle}
+                    <div class="bg-border-main my-1 h-px"></div>
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={async () => {
+                            const newDict = new SvelteSet([
+                                ...spellcheckState.customDictionary,
+                                targetWord.toLowerCase(),
+                            ]);
+                            spellcheckState.customDictionary = newDict;
+
+                            spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
+
+                            onDictionaryUpdate?.();
+                            closeMenuAndReset();
+                            await addToDictionary(targetWord);
+                        }}>
+                        <BookPlus size={14} />
+                        <span class="truncate">{$_('editorContextMenu.addToDictionary', { values: { word: targetWord } })}</span
+                        ><span class="text-ui-sm ml-auto opacity-50">F8</span>
+                    </button>
+                {/if}
+                {#if selectedText && selectedText.split(/\s+/).length > 1}
+                    <button
+                        type="button"
+                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                        onclick={handleAddAll}>
+                        <BookText size={14} /><span>{$_('editorContextMenu.addAllInvalid')}</span>
+                    </button>
+                {/if}
             {/if}
             <div class="bg-border-main my-1 h-px"></div>
         {/if}
@@ -361,41 +392,5 @@ async function handleSendToBrowser() {
             {@render opSubmenu(TextAlignStart, $_('editorContextMenu.formatLines'), 'format', formatOps)}
             {@render opSubmenu(Rotate3d, $_('editorContextMenu.transformLines'), 'transform', transformOps)}
         {/if}
-
-        <div onmouseenter={() => (activeSubmenu = null)} role="none">
-            {#if canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
-                <div class="bg-border-main my-1 h-px"></div>
-                {#if canAddSingle}
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={async () => {
-                            const newDict = new SvelteSet([
-                                ...spellcheckState.customDictionary,
-                                targetWord.toLowerCase(),
-                            ]);
-                            spellcheckState.customDictionary = newDict;
-
-                            spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
-
-                            onDictionaryUpdate?.();
-                            closeMenuAndReset();
-                            await addToDictionary(targetWord);
-                        }}>
-                        <BookPlus size={14} />
-                        <span class="truncate">{$_('editorContextMenu.addToDictionary', { values: { word: targetWord } })}</span
-                        ><span class="text-ui-sm ml-auto opacity-50">F8</span>
-                    </button>
-                {/if}
-                {#if selectedText && selectedText.split(/\s+/).length > 1}
-                    <button
-                        type="button"
-                        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                        onclick={handleAddAll}>
-                        <BookText size={14} /><span>{$_('editorContextMenu.addAllInvalid')}</span>
-                    </button>
-                {/if}
-            {/if}
-        </div>
     {/snippet}
 </ContextMenu>
