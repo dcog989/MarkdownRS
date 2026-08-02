@@ -174,18 +174,26 @@ const targetWord = $derived(
 const canAddSingle = $derived(
     targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !spellcheckState.isWordValid(targetWord),
 );
+const invalidWordsInSelection = $derived<string[]>(findInvalidWords(selectedText));
+const hasMultipleWords = $derived(selectedText.trim().split(/\s+/).length > 1);
+const canAddAll = $derived(invalidWordsInSelection.length > 0 && hasMultipleWords);
+
+function findInvalidWords(text: string): string[] {
+    if (!text) return [];
+    const matches = text.match(/\b[a-zA-Z']+\b/g) || [];
+    const uniqueWords = Array.from(new Set(matches));
+    return uniqueWords.filter((w) => !spellcheckState.isWordValid(w));
+}
 
 async function handleAddAll() {
-    const matches = (selectedText as string).match(/\b[a-zA-Z']+\b/g) || [];
-    const uniqueWords: string[] = Array.from(new Set(matches));
-    const invalidWords = uniqueWords.filter((w: string) => !spellcheckState.isWordValid(w));
+    const invalidWords = invalidWordsInSelection.map((w) => w.toLowerCase());
 
     const newDict = new SvelteSet([
         ...spellcheckState.customDictionary,
-        ...invalidWords.map((w) => w.toLowerCase()),
+        ...invalidWords,
     ]);
     invalidWords.forEach((w) => {
-        spellcheckState.misspelledCache.delete(w.toLowerCase());
+        spellcheckState.misspelledCache.delete(w);
     });
     spellcheckState.customDictionary = newDict;
 
@@ -262,10 +270,12 @@ async function handleSendToBrowser() {
             </Submenu>
         {/snippet}
 
-        {#if suggestions.length > 0 || isLoadingSuggestions || canAddSingle || (selectedText && selectedText.split(/\s+/).length > 1)}
-            <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
-                {$_('editorContextMenu.suggestions')}
-            </div>
+        {#if suggestions.length > 0 || isLoadingSuggestions || canAddSingle || canAddAll}
+            {#if suggestions.length > 0 || isLoadingSuggestions}
+                <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
+                    {$_('editorContextMenu.suggestions')}
+                </div>
+            {/if}
             {#if isLoadingSuggestions}
                 <div
                     class="text-ui-sm flex w-full items-center gap-2 px-3 py-1.5 text-left opacity-70">
@@ -304,7 +314,7 @@ async function handleSendToBrowser() {
                         ><span class="text-ui-sm ml-auto opacity-50">F8</span>
                     </button>
                 {/if}
-                {#if selectedText && selectedText.split(/\s+/).length > 1}
+                {#if canAddAll}
                     <button
                         type="button"
                         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
