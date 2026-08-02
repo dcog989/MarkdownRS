@@ -62,8 +62,8 @@ export function toggleSplitView() {
 }
 
 export function setTheme(newTheme: 'dark' | 'light') {
-  settingsState.theme = newTheme;
   settingsState.activeTheme = newTheme === 'dark' ? 'Default Dark' : 'Default Light';
+  syncThemeFromSystem();
 }
 
 export function syncThemeFromSystem() {

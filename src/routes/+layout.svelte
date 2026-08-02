@@ -10,7 +10,7 @@ import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { logger } from '$lib/utils/logger';
 import { shortcutManager } from '$lib/utils/shortcuts';
-import { buildCustomAccentCss, getThemeCss, isModeFollowingTheme } from '$lib/utils/themes';
+import { buildCustomAccentCss, getThemeCss } from '$lib/utils/themes';
 import '../app.css';
 
 let { children } = $props();
@@ -110,10 +110,7 @@ onMount(() => {
 
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handleOSThemeChange = () => {
-        const { activeTheme } = appContext.settings;
-        if (activeTheme === 'System' || isModeFollowingTheme(activeTheme)) {
-            syncThemeFromSystem();
-        }
+        syncThemeFromSystem();
     };
     mq.addEventListener('change', handleOSThemeChange);
 

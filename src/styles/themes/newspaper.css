@@ -1,145 +1,83 @@
 :root {
   color-scheme: dark;
 
-  --surface-1: #201d17;
-  --surface-2: #27231c;
-  --surface-3: #2e2a21;
-  --surface-active: #3b362a;
-  --surface-gutter: #27231c;
-  --surface-hover: #332e24;
-  --surface-input: #191713;
-  --surface-preview: #201d17;
-  --surface-row: #242019;
-
-  --text-inverse: #201d17;
-  --text-primary: #e8e2d4;
-  --text-secondary: #bcb3a0;
-  --text-tertiary: #8f887a;
-
-  --border-primary: #3b362a;
-  --border-secondary: #4c4537;
-  --border-focus: #c9a24b;
-
-  --color-brand-accent: #bcb3a0;
-  --color-brand-file: #bcb3a0;
-  --color-brand-filepath: #d5cdbb;
-  --color-brand-link: #c9c0ae;
-  --color-brand-quote: #a49c8c;
-  --color-brand-url: #c9c0ae;
-
-  /* Accent overrides: explicit dark-surface values (the default oklch
-     derivations target light surfaces and wash out on this dark theme) */
-  --accent-primary: #d5cdbb;
-  --accent-secondary: #a49c8c;
-  --content-accent: #a49c8c;
-  --accent-file: #bcb3a0;
-  --accent-filepath: #d5cdbb;
-  --accent-filepath-hover: #e8e2d4;
-  --accent-link: #c9c0ae;
-  --accent-link-hover: #e8e2d4;
-  --accent-url: #c9c0ae;
-  --accent-url-hover: #e8e2d4;
-
-  --active-line-bg: rgba(232, 226, 212, 0.05);
-  --danger: #b0564f;
-  --danger-text: #b0564f;
-  --danger-hover: #c96a63;
-  --dirty-indicator: #c9c0ae;
-  --selection-bg: rgba(232, 226, 212, 0.12);
-  --selection-match-bg: rgba(201, 194, 174, 0.2);
-  --success: #a49c8c;
-  --success-hover: #bcb3a0;
-
-  --code-bg: rgba(201, 162, 75, 0.08);
-  --code-fg: #c9a24b;
-  --highlight-bg: rgba(201, 162, 75, 0.18);
-  --hr-color: #4c4537;
-  --pre-bg: #27231c;
-  --pre-fg: #e8e2d4;
-  --quote-bg: rgba(201, 194, 174, 0.05);
-  --quote-fg: #a49c8c;
-
-  --syntax-atom: #bcb3a0;
-  --syntax-comment: #8f887a;
-  --syntax-heading: #e8e2d4;
-  --syntax-keyword: #d5cdbb;
-  --syntax-string: #c9c0ae;
-  --syntax-emphasis: #bcb3a0;
-  --syntax-strong: #f0ebdf;
-
-  --preview-fg-heading: #e8e2d4;
-  --preview-fg-link: #c9c0ae;
+  --editor-bg: #201d17;
+  --editor-fg: #e8e2d4;
+  --editor-fg-secondary: #bcb3a0;
+  --editor-fg-tertiary: #8f887a;
+  --editor-surface-2: #27231c;
+  --editor-surface-active: #3b362a;
+  --editor-surface-hover: #332e24;
+  --editor-border: #3b362a;
+  --editor-border-secondary: #4c4537;
+  --editor-selection-bg: rgba(232, 226, 212, 0.12);
+  --editor-selection-match-bg: rgba(201, 194, 174, 0.2);
+  --editor-danger: #b0564f;
+  --editor-danger-fg: #b0564f;
+  --editor-file: #bcb3a0;
+  --editor-filepath: #d5cdbb;
+  --editor-filepath-hover: #e8e2d4;
+  --editor-link: #c9c0ae;
+  --editor-link-hover: #e8e2d4;
+  --editor-url: #c9c0ae;
+  --editor-url-hover: #e8e2d4;
+  --editor-code-bg: rgba(201, 162, 75, 0.08);
+  --editor-code-fg: #c9a24b;
+  --editor-highlight-bg: rgba(201, 162, 75, 0.18);
+  --editor-hr-color: #4c4537;
+  --editor-pre-bg: #27231c;
+  --editor-pre-fg: #e8e2d4;
+  --editor-quote-bg: rgba(201, 194, 174, 0.05);
+  --editor-quote-fg: #a49c8c;
+  --editor-syntax-atom: #bcb3a0;
+  --editor-syntax-comment: #8f887a;
+  --editor-syntax-heading: #e8e2d4;
+  --editor-syntax-keyword: #d5cdbb;
+  --editor-syntax-string: #c9c0ae;
+  --editor-syntax-emphasis: #bcb3a0;
+  --editor-syntax-strong: #f0ebdf;
+  --editor-preview-fg-heading: #e8e2d4;
+  --editor-preview-fg-link: #c9c0ae;
 }
 
 [data-theme="light"] {
   color-scheme: light;
 
-  --surface-1: #f5f0e8;
-  --surface-2: #e8e2d4;
-  --surface-3: #ddd6c5;
-  --surface-active: #d0c9b8;
-  --surface-gutter: #e8e2d4;
-  --surface-hover: #d2cbb8;
-  --surface-input: #faf5ed;
-  --surface-preview: #faf5ed;
-  --surface-row: #f0ebdf;
-
-  --text-inverse: #f5f0e8;
-  --text-primary: #1a1a1a;
-  --text-secondary: #555555;
-  --text-tertiary: #888888;
-
-  --border-primary: #c4bcaa;
-  --border-secondary: #b0a894;
-  --border-focus: #8b4513;
-
-  --color-brand-accent: #555555;
-  --color-brand-file: #555555;
-  --color-brand-filepath: #333333;
-  --color-brand-link: #555555;
-  --color-brand-quote: #777777;
-  --color-brand-url: #555555;
-
-  /* Accent overrides: explicit light-background values (the default oklch
-     derivations target dark surfaces and wash out on this light theme) */
-  --accent-primary: #3a3a3a;
-  --accent-secondary: #6b6b6b;
-  --content-accent: #6b6b6b;
-  --accent-file: #4d4d4d;
-  --accent-filepath: #333333;
-  --accent-filepath-hover: #222222;
-  --accent-link: #555555;
-  --accent-link-hover: #333333;
-  --accent-url: #555555;
-  --accent-url-hover: #333333;
-
-  --active-line-bg: rgba(0, 0, 0, 0.035);
-  --danger: #993333;
-  --danger-text: #993333;
-  --danger-hover: #772222;
-  --dirty-indicator: #444444;
-  --selection-bg: rgba(0, 0, 0, 0.08);
-  --selection-match-bg: rgba(0, 0, 0, 0.12);
-  --success: #444444;
-  --success-hover: #333333;
-
-  --code-bg: rgba(0, 0, 0, 0.035);
-  --code-fg: #8b4513;
-  --highlight-bg: rgba(0, 0, 0, 0.06);
-  --hr-color: #c4bcaa;
-  --pre-bg: #e8e2d4;
-  --pre-fg: #1a1a1a;
-  --quote-bg: rgba(0, 0, 0, 0.03);
-  --quote-fg: #777777;
-
-  --syntax-atom: #555555;
-  --syntax-comment: #888888;
-  --syntax-heading: #1a1a1a;
-  --syntax-keyword: #333333;
-  --syntax-string: #444444;
-  --syntax-emphasis: #333333;
-  --syntax-strong: #000000;
-
-  --preview-fg-heading: #1a1a1a;
-  --preview-fg-link: #555555;
+  --editor-bg: #f5f0e8;
+  --editor-fg: #1a1a1a;
+  --editor-fg-secondary: #555555;
+  --editor-fg-tertiary: #888888;
+  --editor-surface-2: #e8e2d4;
+  --editor-surface-active: #d0c9b8;
+  --editor-surface-hover: #d2cbb8;
+  --editor-border: #c4bcaa;
+  --editor-border-secondary: #b0a894;
+  --editor-selection-bg: rgba(0, 0, 0, 0.08);
+  --editor-selection-match-bg: rgba(0, 0, 0, 0.12);
+  --editor-danger: #993333;
+  --editor-danger-fg: #993333;
+  --editor-file: #4d4d4d;
+  --editor-filepath: #333333;
+  --editor-filepath-hover: #222222;
+  --editor-link: #555555;
+  --editor-link-hover: #333333;
+  --editor-url: #555555;
+  --editor-url-hover: #333333;
+  --editor-code-bg: rgba(0, 0, 0, 0.035);
+  --editor-code-fg: #8b4513;
+  --editor-highlight-bg: rgba(0, 0, 0, 0.06);
+  --editor-hr-color: #c4bcaa;
+  --editor-pre-bg: #e8e2d4;
+  --editor-pre-fg: #1a1a1a;
+  --editor-quote-bg: rgba(0, 0, 0, 0.03);
+  --editor-quote-fg: #777777;
+  --editor-syntax-atom: #555555;
+  --editor-syntax-comment: #888888;
+  --editor-syntax-heading: #1a1a1a;
+  --editor-syntax-keyword: #333333;
+  --editor-syntax-string: #444444;
+  --editor-syntax-emphasis: #333333;
+  --editor-syntax-strong: #000000;
+  --editor-preview-fg-heading: #1a1a1a;
+  --editor-preview-fg-link: #555555;
 }

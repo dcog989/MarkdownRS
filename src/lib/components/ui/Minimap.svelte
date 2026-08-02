@@ -12,12 +12,14 @@ let { view }: Props = $props();
 
 let canvasRef = $state<HTMLCanvasElement>();
 let trackRef = $state<HTMLDivElement>();
+let hovered = $state(false);
 
 const MINIMAP_WIDTH = 64;
 const LINE_HEIGHT = 2;
 const LINE_GAP = 1;
 const MIN_LINE_HEIGHT = 1;
 const CHARS_TO_PX = 0.75;
+const VIEWPORT_UNHOVERED_DIM = 0.75;
 
 function fitLines(
     availableHeight: number,
@@ -53,22 +55,22 @@ interface MinimapColors {
 function getColors(): MinimapColors {
     const style = getComputedStyle(document.documentElement);
     return {
-        bg: style.getPropertyValue('--surface-1').trim(),
-        text: style.getPropertyValue('--text-primary').trim(),
-        heading: style.getPropertyValue('--syntax-heading').trim(),
-        code: style.getPropertyValue('--code-fg').trim(),
-        list: style.getPropertyValue('--text-secondary').trim(),
-        link: style.getPropertyValue('--accent-link').trim(),
-        quote: style.getPropertyValue('--syntax-keyword').trim(),
-        strong: style.getPropertyValue('--syntax-strong').trim(),
-        emphasis: style.getPropertyValue('--syntax-emphasis').trim(),
-        strike: style.getPropertyValue('--text-tertiary').trim(),
+        bg: style.getPropertyValue('--editor-bg').trim(),
+        text: style.getPropertyValue('--editor-fg').trim(),
+        heading: style.getPropertyValue('--editor-syntax-heading').trim(),
+        code: style.getPropertyValue('--editor-code-fg').trim(),
+        list: style.getPropertyValue('--editor-fg-secondary').trim(),
+        link: style.getPropertyValue('--editor-link').trim(),
+        quote: style.getPropertyValue('--editor-syntax-keyword').trim(),
+        strong: style.getPropertyValue('--editor-syntax-strong').trim(),
+        emphasis: style.getPropertyValue('--editor-syntax-emphasis').trim(),
+        strike: style.getPropertyValue('--editor-fg-tertiary').trim(),
         callout: {
-            note: style.getPropertyValue('--callout-note-accent').trim(),
-            tip: style.getPropertyValue('--callout-tip-accent').trim(),
-            important: style.getPropertyValue('--callout-important-accent').trim(),
-            warning: style.getPropertyValue('--callout-warning-accent').trim(),
-            caution: style.getPropertyValue('--callout-caution-accent').trim(),
+            note: style.getPropertyValue('--editor-callout-note-accent').trim(),
+            tip: style.getPropertyValue('--editor-callout-tip-accent').trim(),
+            important: style.getPropertyValue('--editor-callout-important-accent').trim(),
+            warning: style.getPropertyValue('--editor-callout-warning-accent').trim(),
+            caution: style.getPropertyValue('--editor-callout-caution-accent').trim(),
         },
     };
 }
@@ -269,6 +271,10 @@ function drawSpan(
             ctx.globalAlpha = inViewport ? 0.7 : 0.2 * fade;
     }
 
+    if (inViewport && !hovered) {
+        ctx.globalAlpha *= VIEWPORT_UNHOVERED_DIM;
+    }
+
     ctx.fillRect(x, y, w, h);
 }
 
@@ -310,10 +316,10 @@ function renderMinimap() {
     const viewportBottom = scrollHeight > 0 ? ((scrollTop + clientHeight) / scrollHeight) * contentH : contentH;
 
     if (scrollHeight > clientHeight) {
-        ctx.fillStyle = 'rgba(128, 128, 128, 0.35)';
+        ctx.fillStyle = hovered ? 'rgba(128, 128, 128, 0.35)' : 'rgba(80, 80, 80, 0.35)';
         ctx.fillRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
 
-        ctx.strokeStyle = 'rgba(128, 128, 128, 0.7)';
+        ctx.strokeStyle = hovered ? 'rgba(128, 128, 128, 0.7)' : 'rgba(80, 80, 80, 0.7)';
         ctx.lineWidth = 1;
         ctx.strokeRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
     }
@@ -499,6 +505,11 @@ let resizeObserver: ResizeObserver;
 let contentObserver: MutationObserver;
 
 $effect(() => {
+    hovered;
+    scheduleRender();
+});
+
+$effect(() => {
     if (!view) return;
 
     const scrollDOM = view.scrollDOM;
@@ -536,6 +547,8 @@ $effect(() => {
     bind:this={trackRef}
     role="none"
     class="minimap-track"
+    onmouseenter={() => (hovered = true)}
+    onmouseleave={() => (hovered = false)}
     onmousedown={onTrackMouseDown}
     onwheel={onWheel}>
     <canvas bind:this={canvasRef} class="minimap-canvas"></canvas>
@@ -550,11 +563,18 @@ $effect(() => {
         z-index: 60;
         width: 64px;
         overflow: hidden;
-        opacity: 0.65;
-        transition: opacity 150ms ease;
+        background: var(--editor-bg);
     }
-    .minimap-track:hover {
-        opacity: 1;
+    .minimap-track::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.05);
+        transition: background 150ms ease;
+    }
+    .minimap-track:hover::after {
+        background: rgba(255, 255, 255, 0.03);
     }
     .minimap-canvas {
         display: block;

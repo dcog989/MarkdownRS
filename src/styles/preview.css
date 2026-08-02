@@ -1,7 +1,7 @@
 /* Native Preview Styles */
 
 .preview-root {
-  color: var(--preview-fg-body);
+  color: var(--editor-preview-fg-body);
   font-size: 1rem;
   line-height: 1.6;
   max-width: 80ch;
@@ -22,7 +22,7 @@
 .preview-root h4,
 .preview-root h5,
 .preview-root h6 {
-  color: var(--preview-fg-heading);
+  color: var(--editor-preview-fg-heading);
   font-weight: bold;
   margin-top: 1.2em;
   margin-bottom: 0.4em;
@@ -31,14 +31,14 @@
 
 .preview-root h1 {
   font-size: 1.7em;
-  border-bottom: 1px solid var(--preview-border-primary);
+  border-bottom: 1px solid var(--editor-preview-border-primary);
   margin: 0 0 0.4em;
   padding: 0 0 0.4em;
 }
 
 .preview-root h2 {
   font-size: 1.5em;
-  border-bottom: 1px solid var(--preview-border-primary);
+  border-bottom: 1px solid var(--editor-preview-border-primary);
   padding-bottom: 0.4em;
 }
 
@@ -54,7 +54,7 @@
 
 /* Links */
 .preview-root a {
-  color: var(--preview-fg-link);
+  color: var(--editor-preview-fg-link);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -63,26 +63,26 @@
 .preview-root strong,
 .preview-root b {
   font-weight: bold;
-  color: var(--syntax-strong);
+  color: var(--editor-syntax-strong);
 }
 
 .preview-root em,
 .preview-root i {
   font-style: italic;
-  color: var(--syntax-emphasis);
+  color: var(--editor-syntax-emphasis);
 }
 
 .preview-root del,
 .preview-root s,
 .preview-root strike {
   text-decoration: line-through;
-  color: var(--preview-fg-quote);
+  color: var(--editor-preview-fg-quote);
 }
 
 /* Code */
 .preview-root code {
-  color: var(--preview-fg-code);
-  background-color: var(--preview-bg-code);
+  color: var(--editor-preview-fg-code);
+  background-color: var(--editor-preview-bg-code);
   padding: 0.2em 0.4em;
   border-radius: 4px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -90,8 +90,8 @@
 }
 
 .preview-root pre {
-  background-color: var(--preview-bg-pre);
-  color: var(--preview-fg-pre);
+  background-color: var(--editor-preview-bg-pre);
+  color: var(--editor-preview-fg-pre);
   padding: 1em;
   border-radius: 4px;
   overflow-x: auto;
@@ -110,21 +110,21 @@
 /* Code Syntax Highlighting (highlight.js) */
 .preview-root .hljs-comment,
 .preview-root .hljs-quote {
-  color: var(--syntax-comment);
+  color: var(--editor-syntax-comment);
   font-style: italic;
 }
 
 .preview-root .hljs-keyword,
 .preview-root .hljs-selector-tag,
 .preview-root .hljs-subst {
-  color: var(--syntax-keyword);
+  color: var(--editor-syntax-keyword);
 }
 
 .preview-root .hljs-string,
 .preview-root .hljs-regexp,
 .preview-root .hljs-addition,
 .preview-root .hljs-meta .hljs-string {
-  color: var(--syntax-string);
+  color: var(--editor-syntax-string);
 }
 
 .preview-root .hljs-title,
@@ -133,7 +133,7 @@
 .preview-root .hljs-name,
 .preview-root .hljs-selector-id,
 .preview-root .hljs-selector-class {
-  color: var(--syntax-heading);
+  color: var(--editor-syntax-heading);
 }
 
 .preview-root .hljs-number,
@@ -145,34 +145,34 @@
 .preview-root .hljs-attribute,
 .preview-root .hljs-variable,
 .preview-root .hljs-params {
-  color: var(--syntax-atom);
+  color: var(--editor-syntax-atom);
 }
 
 .preview-root .hljs-built_in,
 .preview-root .hljs-type,
 .preview-root .hljs-meta {
-  color: var(--syntax-emphasis);
+  color: var(--editor-syntax-emphasis);
 }
 
 .preview-root .hljs-emphasis {
-  color: var(--syntax-emphasis);
+  color: var(--editor-syntax-emphasis);
   font-style: italic;
 }
 
 .preview-root .hljs-strong {
-  color: var(--syntax-strong);
+  color: var(--editor-syntax-strong);
   font-weight: bold;
 }
 
 .preview-root .hljs-deletion {
-  color: var(--danger-text);
+  color: var(--editor-danger-fg);
 }
 
 /* Quotes */
 .preview-root blockquote {
-  color: var(--preview-fg-quote);
-  background-color: var(--preview-bg-quote);
-  border-left: 4px solid var(--preview-border-quote);
+  color: var(--editor-preview-fg-quote);
+  background-color: var(--editor-preview-bg-quote);
+  border-left: 4px solid var(--editor-preview-border-quote);
   padding: 0.5em 1em;
   margin: 1em 0;
   font-style: italic;
@@ -208,9 +208,9 @@
 .preview-root .footnotes {
   margin-top: 2em;
   padding-top: 1em;
-  border-top: 1px solid var(--preview-border-quote);
+  border-top: 1px solid var(--editor-preview-border-quote);
   font-size: 0.875em;
-  color: var(--preview-fg-quote);
+  color: var(--editor-preview-fg-quote);
 }
 
 .preview-root .footnotes ol {
@@ -223,7 +223,7 @@
 
 .preview-root .footnotes li:target,
 .preview-root sup:target {
-  background-color: var(--surface-active);
+  background-color: var(--editor-surface-active);
 }
 
 .preview-root .footnote-backref {
@@ -268,23 +268,23 @@
 }
 
 .preview-root .callout-note {
-  --callout-accent: var(--callout-note-accent);
+  --callout-accent: var(--editor-callout-note-accent);
 }
 
 .preview-root .callout-tip {
-  --callout-accent: var(--callout-tip-accent);
+  --callout-accent: var(--editor-callout-tip-accent);
 }
 
 .preview-root .callout-important {
-  --callout-accent: var(--callout-important-accent);
+  --callout-accent: var(--editor-callout-important-accent);
 }
 
 .preview-root .callout-warning {
-  --callout-accent: var(--callout-warning-accent);
+  --callout-accent: var(--editor-callout-warning-accent);
 }
 
 .preview-root .callout-caution {
-  --callout-accent: var(--callout-caution-accent);
+  --callout-accent: var(--editor-callout-caution-accent);
 }
 
 /* Task Lists */
@@ -302,14 +302,14 @@
 
 .preview-root th,
 .preview-root td {
-  border: 1px solid var(--preview-border-primary);
+  border: 1px solid var(--editor-preview-border-primary);
   padding: 0.5em;
   text-align: left;
 }
 
 .preview-root th {
   font-weight: bold;
-  background-color: var(--preview-surface-2);
+  background-color: var(--editor-preview-surface-2);
 }
 
 /* Media */
@@ -321,7 +321,7 @@
 
 .preview-root hr {
   border: 0;
-  border-top: 1px solid var(--preview-border-primary);
+  border-top: 1px solid var(--editor-preview-border-primary);
   margin: 2em 0;
 }
 
@@ -338,21 +338,21 @@
 }
 
 .preview-root .mermaid-error {
-  background-color: var(--preview-bg-code);
-  border: 1px solid var(--danger);
+  background-color: var(--editor-preview-bg-code);
+  border: 1px solid var(--editor-danger);
   border-radius: 4px;
   padding: 0.5em 1em;
   text-align: left;
 }
 
 .preview-root .mermaid-error .mermaid-error-label {
-  color: var(--danger-text);
+  color: var(--editor-danger-fg);
   font-weight: bold;
   margin: 0 0 0.25em;
 }
 
 .preview-root .mermaid-error .mermaid-error-detail {
-  color: var(--preview-fg-quote);
+  color: var(--editor-preview-fg-quote);
   margin: 0 0 0.5em;
 }
 

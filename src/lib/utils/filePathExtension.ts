@@ -165,19 +165,19 @@ export const linkPlugin: Extension = ViewPlugin.fromClass(
 
 export const linkTheme = EditorView.baseTheme({
   '.cm-file-path': {
-    color: 'var(--accent-link)',
+    color: 'var(--editor-link)',
     '&:hover': {
-      color: 'var(--accent-link-hover)',
+      color: 'var(--editor-link-hover)',
     },
   },
   '.cm-url': {
-    color: 'var(--accent-url)',
+    color: 'var(--editor-url)',
   },
   '.cm-wikilink': {
-    color: 'var(--accent-link)',
+    color: 'var(--editor-link)',
     textDecoration: 'underline',
     '&:hover': {
-      color: 'var(--accent-link-hover)',
+      color: 'var(--editor-link-hover)',
     },
   },
   '&.cm-modifier-down .cm-file-path, &.cm-modifier-down .cm-url, &.cm-modifier-down .cm-wikilink': {

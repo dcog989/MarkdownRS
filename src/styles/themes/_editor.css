@@ -1,16 +1,16 @@
 /* Shared editor styles — applied to every theme */
 
 .cm-editor {
-  background-color: var(--surface-1);
-  color: var(--text-primary);
+  background-color: var(--editor-bg);
+  color: var(--editor-fg);
 }
 
 .cm-editor .cm-selectionLayer .cm-selectionBackground {
-  background: var(--selection-bg);
+  background: var(--editor-selection-bg);
 }
 
 .cm-editor .cm-content ::selection {
-  background-color: var(--selection-bg);
+  background-color: var(--editor-selection-bg);
 }
 
 .cm-h1,
@@ -19,24 +19,24 @@
 .cm-h4,
 .cm-h5,
 .cm-h6 {
-  color: var(--syntax-heading);
+  color: var(--editor-syntax-heading);
 }
 .cm-keyword {
-  color: var(--syntax-keyword);
+  color: var(--editor-syntax-keyword);
 }
 .cm-atom,
 .cm-number {
-  color: var(--syntax-atom);
+  color: var(--editor-syntax-atom);
 }
 .cm-string {
-  color: var(--syntax-string);
+  color: var(--editor-syntax-string);
 }
 .cm-comment {
-  color: var(--syntax-comment);
+  color: var(--editor-syntax-comment);
 }
 .cm-emphasis {
-  color: var(--syntax-emphasis);
+  color: var(--editor-syntax-emphasis);
 }
 .cm-strong {
-  color: var(--syntax-strong);
+  color: var(--editor-syntax-strong);
 }

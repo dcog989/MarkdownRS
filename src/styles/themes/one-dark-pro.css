@@ -1,57 +1,36 @@
 :root {
-  --surface-1: #282c34;
-  --surface-2: #21252b;
-  --surface-3: #181a1f;
-  --surface-active: #3b404c;
-  --surface-gutter: #21252b;
-  --surface-hover: #363b45;
-  --surface-input: #2c313c;
-  --surface-preview: #282c34;
-  --surface-row: #1e2127;
-
-  --text-primary: #cdd3de;
-  --text-secondary: #99a2b3;
-  --text-tertiary: #7c8395;
-  --text-inverse: #ffffff;
-
-  --border-primary: #3b404c;
-  --border-secondary: #4b5263;
-  --border-focus: #c678dd;
-
-  --color-brand-accent: #c678dd;
-  --color-brand-file: #e5c07b;
-  --color-brand-filepath: #98c379;
-  --color-brand-link: #56b6c2;
-  --color-brand-quote: #c678dd;
-  --color-brand-url: #56b6c2;
-
-  --active-line-bg: rgba(171, 178, 191, 0.04);
-  --danger: #e06c75;
-  --danger-text: #e06c75;
-  --danger-hover: #e8838b;
-  --dirty-indicator: #98c379;
-  --selection-bg: #3e4451;
-  --selection-match-bg: rgba(97, 175, 239, 0.25);
-  --success: #98c379;
-  --success-hover: #a8cf8b;
-
-  --code-bg: rgba(86, 182, 194, 0.06);
-  --code-fg: #98c379;
-  --highlight-bg: rgba(229, 192, 123, 0.2);
-  --hr-color: #4b5263;
-  --pre-bg: #1e2127;
-  --pre-fg: #cdd3de;
-  --quote-bg: rgba(198, 120, 221, 0.08);
-  --quote-fg: #c678dd;
-
-  --syntax-atom: #d19a66;
-  --syntax-comment: #99a2b3;
-  --syntax-heading: #e06c75;
-  --syntax-keyword: #c678dd;
-  --syntax-string: #98c379;
-  --syntax-emphasis: #61afef;
-  --syntax-strong: #e5c07b;
-
-  --preview-fg-heading: #e06c75;
-  --preview-fg-link: #56b6c2;
+  --editor-bg: #282c34;
+  --editor-fg: #cdd3de;
+  --editor-fg-secondary: #99a2b3;
+  --editor-fg-tertiary: #7c8395;
+  --editor-surface-2: #21252b;
+  --editor-surface-active: #3b404c;
+  --editor-surface-hover: #363b45;
+  --editor-border: #3b404c;
+  --editor-border-secondary: #4b5263;
+  --editor-selection-bg: #3e4451;
+  --editor-selection-match-bg: rgba(97, 175, 239, 0.25);
+  --editor-danger: #e06c75;
+  --editor-danger-fg: #e06c75;
+  --editor-file: #e5c07b;
+  --editor-filepath: #98c379;
+  --editor-link: #56b6c2;
+  --editor-url: #56b6c2;
+  --editor-code-bg: rgba(86, 182, 194, 0.06);
+  --editor-code-fg: #98c379;
+  --editor-highlight-bg: rgba(229, 192, 123, 0.2);
+  --editor-hr-color: #4b5263;
+  --editor-pre-bg: #1e2127;
+  --editor-pre-fg: #cdd3de;
+  --editor-quote-bg: rgba(198, 120, 221, 0.08);
+  --editor-quote-fg: #c678dd;
+  --editor-syntax-atom: #d19a66;
+  --editor-syntax-comment: #99a2b3;
+  --editor-syntax-heading: #e06c75;
+  --editor-syntax-keyword: #c678dd;
+  --editor-syntax-string: #98c379;
+  --editor-syntax-emphasis: #61afef;
+  --editor-syntax-strong: #e5c07b;
+  --editor-preview-fg-heading: #e06c75;
+  --editor-preview-fg-link: #56b6c2;
 }

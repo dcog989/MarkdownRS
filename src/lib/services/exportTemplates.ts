@@ -16,32 +16,32 @@ export function buildExportHtml(
         body {
             margin: 0;
             padding: 2rem;
-            background-color: var(--surface-1);
-            color: var(--preview-fg-body);
+            background-color: var(--editor-bg);
+            color: var(--editor-preview-fg-body);
             font-family: ${fontFamily};
             line-height: 1.6;
         }
         .prose { max-width: 800px; margin: 0 auto; }
 
-        h1, h2, h3, h4, h5, h6 { color: var(--preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
-        h1 { font-size: 1.7em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
-        h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; }
+        h1, h2, h3, h4, h5, h6 { color: var(--editor-preview-fg-heading); font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
+        h1 { font-size: 1.7em; border-bottom: 1px solid var(--editor-border); padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid var(--editor-border); padding-bottom: 0.3em; }
         h3 { font-size: 1.3em; }
         h4, h5, h6 { font-size: 1.1em; }
 
-        a { color: var(--preview-fg-link); text-decoration: underline; }
+        a { color: var(--editor-preview-fg-link); text-decoration: underline; }
 
         code {
-            color: var(--preview-fg-code);
-            background-color: var(--preview-bg-code);
+            color: var(--editor-preview-fg-code);
+            background-color: var(--editor-preview-bg-code);
             padding: 0.2em 0.4em;
             border-radius: 4px;
             font-family: monospace;
         }
 
         pre {
-            background-color: var(--preview-bg-pre);
-            color: var(--preview-fg-pre);
+            background-color: var(--editor-preview-bg-pre);
+            color: var(--editor-preview-fg-pre);
             padding: 1em;
             border-radius: 4px;
             overflow: auto;
@@ -51,18 +51,18 @@ export function buildExportHtml(
         pre code { background: transparent; padding: 0; color: inherit; }
 
         blockquote {
-            color: var(--preview-fg-quote);
-            background-color: var(--preview-bg-quote);
-            border-left: 4px solid var(--preview-border-quote);
+            color: var(--editor-preview-fg-quote);
+            background-color: var(--editor-preview-bg-quote);
+            border-left: 4px solid var(--editor-preview-border-quote);
             padding: 0.5em 1em;
             margin: 1em 0;
             font-style: italic;
         }
 
         table { width: 100%; border-collapse: collapse; margin: 1em 0; }
-        th, td { border: 1px solid var(--border-primary); padding: 0.5em; text-align: left; }
+        th, td { border: 1px solid var(--editor-border); padding: 0.5em; text-align: left; }
         img { max-width: 100%; height: auto; }
-        hr { border: 0; border-top: 1px solid var(--border-primary); margin: 2em 0; }
+        hr { border: 0; border-top: 1px solid var(--editor-border); margin: 2em 0; }
     </style>
 </head>
 <body>

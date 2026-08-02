@@ -59,7 +59,7 @@ const linkUrlMaskDeco = Decoration.replace({ inclusive: true });
 const linkTextDeco = Decoration.mark({ class: 'cm-link-text' });
 const linkTextTheme = EditorView.baseTheme({
   '.cm-link-text': {
-    color: 'var(--accent-link)',
+    color: 'var(--editor-link)',
     textDecoration: 'underline',
   },
   '&.cm-modifier-down .cm-link-text': {

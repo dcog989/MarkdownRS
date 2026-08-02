@@ -48,7 +48,7 @@ let tooltipContent = $derived.by(() => {
     data-active={isActive}
     data-tab-id={tab.id}
     class="group text-ui-sm relative flex h-8 shrink-0 cursor-default items-center gap-2 text-left outline-none select-none"
-    class:bg-bg-main={isActive}
+    class:bg-editor-active={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
     class:text-fg-default={isActive}
@@ -104,7 +104,7 @@ let tooltipContent = $derived.by(() => {
             {#if tab.isPinned}
                 <div
                     class={'absolute inset-0 flex items-center justify-center ' +
-                        (isActive ? 'bg-bg-main' : 'bg-bg-panel group-hover:bg-bg-hover')}
+                        (isActive ? 'bg-editor-active' : 'bg-bg-panel group-hover:bg-bg-hover')}
                     style:top={isActive ? '2px' : '0'}>
                     <Pin
                         size={12}
@@ -114,7 +114,7 @@ let tooltipContent = $derived.by(() => {
                 <div
                     class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
                     style:top={isActive ? '2px' : '0'}
-                    style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--surface-1)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--surface-1)' : 'var(--surface-hover)'} 100%)`}>
+                    style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 100%)`}>
                     <button
                         type="button"
                         aria-label={$_('tabButton.closeTab', { values: { title: tab.title } })}
@@ -132,3 +132,9 @@ let tooltipContent = $derived.by(() => {
         </div>
     {/if}
 </div>
+
+<style>
+    .bg-editor-active {
+        background-color: var(--editor-bg);
+    }
+</style>

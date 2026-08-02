@@ -5,7 +5,6 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte';
-import { isModeFollowingTheme } from '$lib/utils/themes';
 
 export function reloadSpellcheck() {
   spellcheckState.clear();
@@ -22,14 +21,5 @@ export function onLogLevelChange() {
 }
 
 export function onThemeChange() {
-  const { activeTheme } = appContext.settings;
-  if (activeTheme === 'System') {
-    syncThemeFromSystem();
-  } else if (activeTheme === 'Default Light') {
-    appContext.settings.theme = 'light';
-  } else if (activeTheme === 'Default Dark') {
-    appContext.settings.theme = 'dark';
-  } else if (isModeFollowingTheme(activeTheme)) {
-    syncThemeFromSystem();
-  }
+  syncThemeFromSystem();
 }

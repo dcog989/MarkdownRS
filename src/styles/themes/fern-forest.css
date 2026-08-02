@@ -1,57 +1,36 @@
 :root {
-  --surface-1: #0f1a0f;
-  --surface-2: #162316;
-  --surface-3: #1c2d1c;
-  --surface-active: #2d4a2d;
-  --surface-gutter: #162316;
-  --surface-hover: #243d24;
-  --surface-input: #142214;
-  --surface-preview: #0f1a0f;
-  --surface-row: #0c150c;
-
-  --text-primary: #d4e7d4;
-  --text-secondary: #8aad8a;
-  --text-tertiary: #6e8f6e;
-  --text-inverse: #ffffff;
-
-  --border-primary: #2d4a2d;
-  --border-secondary: #3d603d;
-  --border-focus: #66bb6a;
-
-  --color-brand-accent: #66bb6a;
-  --color-brand-file: #c9a96e;
-  --color-brand-filepath: #81c784;
-  --color-brand-link: #4fc3f7;
-  --color-brand-quote: #9c7c6e;
-  --color-brand-url: #4db6ac;
-
-  --active-line-bg: rgba(212, 231, 212, 0.04);
-  --danger: #a0522d;
-  --danger-text: #a0522d;
-  --danger-hover: #b8683e;
-  --dirty-indicator: #81c784;
-  --selection-bg: #2d4a2d;
-  --selection-match-bg: rgba(102, 187, 106, 0.25);
-  --success: #81c784;
-  --success-hover: #9ad19c;
-
-  --code-bg: rgba(76, 175, 80, 0.06);
-  --code-fg: #4caf50;
-  --highlight-bg: rgba(201, 169, 110, 0.2);
-  --hr-color: #3d603d;
-  --pre-bg: #0c150c;
-  --pre-fg: #d4e7d4;
-  --quote-bg: rgba(156, 124, 110, 0.08);
-  --quote-fg: #9c7c6e;
-
-  --syntax-atom: #c9a96e;
-  --syntax-comment: #84a684;
-  --syntax-heading: #a0522d;
-  --syntax-keyword: #9c7c6e;
-  --syntax-string: #81c784;
-  --syntax-emphasis: #4fc3f7;
-  --syntax-strong: #c9a96e;
-
-  --preview-fg-heading: #a0522d;
-  --preview-fg-link: #4fc3f7;
+  --editor-bg: #0f1a0f;
+  --editor-fg: #d4e7d4;
+  --editor-fg-secondary: #8aad8a;
+  --editor-fg-tertiary: #6e8f6e;
+  --editor-surface-2: #162316;
+  --editor-surface-active: #2d4a2d;
+  --editor-surface-hover: #243d24;
+  --editor-border: #2d4a2d;
+  --editor-border-secondary: #3d603d;
+  --editor-selection-bg: #2d4a2d;
+  --editor-selection-match-bg: rgba(102, 187, 106, 0.25);
+  --editor-danger: #a0522d;
+  --editor-danger-fg: #a0522d;
+  --editor-file: #c9a96e;
+  --editor-filepath: #81c784;
+  --editor-link: #4fc3f7;
+  --editor-url: #4db6ac;
+  --editor-code-bg: rgba(76, 175, 80, 0.06);
+  --editor-code-fg: #4caf50;
+  --editor-highlight-bg: rgba(201, 169, 110, 0.2);
+  --editor-hr-color: #3d603d;
+  --editor-pre-bg: #0c150c;
+  --editor-pre-fg: #d4e7d4;
+  --editor-quote-bg: rgba(156, 124, 110, 0.08);
+  --editor-quote-fg: #9c7c6e;
+  --editor-syntax-atom: #c9a96e;
+  --editor-syntax-comment: #84a684;
+  --editor-syntax-heading: #a0522d;
+  --editor-syntax-keyword: #9c7c6e;
+  --editor-syntax-string: #81c784;
+  --editor-syntax-emphasis: #4fc3f7;
+  --editor-syntax-strong: #c9a96e;
+  --editor-preview-fg-heading: #a0522d;
+  --editor-preview-fg-link: #4fc3f7;
 }

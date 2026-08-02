@@ -1,4 +1,4 @@
 [data-theme="light"] {
-  --preview-fg-heading: #b71c1c;
-  --preview-fg-link: #006a75;
+  --editor-preview-fg-heading: #b71c1c;
+  --editor-preview-fg-link: #006a75;
 }
