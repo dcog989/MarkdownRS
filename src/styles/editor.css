@@ -58,7 +58,7 @@
 }
 
 .cm-editor .cm-activeLine {
-  background-color: color-mix(in srgb, var(--editor-bg) 94%, white);
+  background-color: hsl(from var(--editor-bg) h s calc(l + 8));
 }
 
 .cm-editor .cm-selectionLayer .cm-selectionBackground {

@@ -10,7 +10,6 @@
   --editor-surface-hover: #332e24;
   --editor-border: #3b362a;
   --editor-border-secondary: #4c4537;
-  --editor-selection-bg: rgba(232, 226, 212, 0.12);
   --editor-selection-match-bg: rgba(201, 194, 174, 0.2);
   --editor-danger: #b0564f;
   --editor-danger-fg: #b0564f;
@@ -52,7 +51,6 @@
   --editor-surface-hover: #d2cbb8;
   --editor-border: #c4bcaa;
   --editor-border-secondary: #b0a894;
-  --editor-selection-bg: rgba(0, 0, 0, 0.08);
   --editor-selection-match-bg: rgba(0, 0, 0, 0.12);
   --editor-danger: #993333;
   --editor-danger-fg: #993333;
