@@ -19,21 +19,9 @@ struct CachedTheme {
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-pub const DEFAULT_DARK_THEME: &str = "Default Dark";
-pub const DEFAULT_LIGHT_THEME: &str = "Default Light";
-
 const SHARED_EDITOR_CSS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../src/styles/themes/_editor.css"
-));
-
-pub const DEFAULT_DARK_CSS: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../src/styles/themes/default-dark.css"
-));
-pub const DEFAULT_LIGHT_CSS: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../src/styles/themes/default-light.css"
 ));
 
 pub fn wrap_theme_css(css: &str) -> String {
@@ -50,11 +38,7 @@ fn keyed(name: &str) -> String {
 }
 
 pub fn default_css(theme: &str) -> Option<&'static str> {
-    match theme {
-        DEFAULT_DARK_THEME => Some(DEFAULT_DARK_CSS),
-        DEFAULT_LIGHT_THEME => Some(DEFAULT_LIGHT_CSS),
-        _ => generated::lookup_template_css(&keyed(theme)),
-    }
+    generated::lookup_template_css(&keyed(theme))
 }
 
 pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, String> {

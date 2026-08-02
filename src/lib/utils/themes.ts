@@ -15,8 +15,6 @@ export const DEFAULT_THEME_NAMES = [
   'One Dark Pro',
   'Pink Palace',
   'Solarized',
-  'Default Dark',
-  'Default Light',
   'Tokyo Night',
 ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 

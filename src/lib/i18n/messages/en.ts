@@ -515,8 +515,6 @@ export const en = {
       oneDarkPro: 'One Dark Pro',
       pinkPalace: 'Pink Palace',
       solarized: 'Solarized',
-      defaultDark: 'Default Dark',
-      defaultLight: 'Default Light',
       tokyoNight: 'Tokyo Night',
     },
   },

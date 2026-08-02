@@ -3,7 +3,7 @@ export const settingsState = $state({
   locale: 'en',
   theme: 'dark' as 'dark' | 'light',
   activeTheme: 'System',
-  availableThemes: ['System', 'Default Dark', 'Default Light'] as string[],
+  availableThemes: ['System'] as string[],
   customAccentColor: '',
   splitPercentage: 0.5,
   splitOrientation: 'vertical' as 'vertical' | 'horizontal',
@@ -62,8 +62,8 @@ export function toggleSplitView() {
 }
 
 export function setTheme(newTheme: 'dark' | 'light') {
-  settingsState.activeTheme = newTheme === 'dark' ? 'Default Dark' : 'Default Light';
-  syncThemeFromSystem();
+  settingsState.activeTheme = 'System';
+  settingsState.theme = newTheme;
 }
 
 export function syncThemeFromSystem() {
