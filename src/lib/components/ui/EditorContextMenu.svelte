@@ -359,48 +359,51 @@ async function handleSendToBrowser() {
                 <ClipboardPaste size={14} /><span>{$_('editorContextMenu.paste')}</span
                 ><span class="text-ui-sm ml-auto opacity-50">Ctrl+V</span>
             </button>
-
-            {#if selectedText}
-                <div class="bg-border-main my-1 h-px"></div>
-                <button
-                    type="button"
-                    class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                    onclick={handleSendToBrowser}>
-                    <Search size={14} />
-                    <span>{$_('editorContextMenu.sendToBrowser')}</span>
-                </button>
-            {/if}
-
-            <div class="bg-border-main my-1 h-px"></div>
-
-            <button
-                type="button"
-                class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                onclick={() => handleOp('format-document')}>
-                <WandSparkles size={14} />
-                <span class="flex-1">{selectedText ? $_('editorContextMenu.formatSelection') : $_('editorContextMenu.formatDocument')}</span>
-                {#if opShortcut('format-document')}
-                    <span class="text-xs opacity-40">{opShortcut('format-document')}</span>
-                {/if}
-            </button>
-            <button
-                type="button"
-                class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-                onclick={() => handleOp('generate-toc')}>
-                <List size={14} />
-                <span class="flex-1">{$_('editorContextMenu.generateToc')}</span>
-                {#if opShortcut('generate-toc')}
-                    <span class="text-xs opacity-40">{opShortcut('generate-toc')}</span>
-                {/if}
-            </button>
         </div>
+
+        <div class="bg-border-main my-1 h-px"></div>
+
+        <button
+            type="button"
+            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            onclick={() => handleOp('format-document')}>
+            <WandSparkles size={14} />
+            <span class="flex-1">{selectedText ? $_('editorContextMenu.formatSelection') : $_('editorContextMenu.formatDocument')}</span>
+            {#if opShortcut('format-document')}
+                <span class="text-xs opacity-40">{opShortcut('format-document')}</span>
+            {/if}
+        </button>
 
         {#if selectedText}
             <div class="bg-border-main my-1 h-px"></div>
-            {@render opSubmenu(ArrowUpDown, $_('editorContextMenu.sortLines'), 'sort', sortOps)}
             {@render opSubmenu(CaseSensitive, $_('editorContextMenu.changeCase'), 'case', caseOps)}
             {@render opSubmenu(TextAlignStart, $_('editorContextMenu.formatLines'), 'format', formatOps)}
+            {@render opSubmenu(ArrowUpDown, $_('editorContextMenu.sortLines'), 'sort', sortOps)}
             {@render opSubmenu(Rotate3d, $_('editorContextMenu.transformLines'), 'transform', transformOps)}
+        {/if}
+
+        <div class="bg-border-main my-1 h-px"></div>
+
+        <button
+            type="button"
+            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            onclick={() => handleOp('generate-toc')}>
+            <List size={14} />
+            <span class="flex-1">{$_('editorContextMenu.generateToc')}</span>
+            {#if opShortcut('generate-toc')}
+                <span class="text-xs opacity-40">{opShortcut('generate-toc')}</span>
+            {/if}
+        </button>
+
+        {#if selectedText}
+            <div class="bg-border-main my-1 h-px"></div>
+            <button
+                type="button"
+                class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+                onclick={handleSendToBrowser}>
+                <Search size={14} />
+                <span>{$_('editorContextMenu.sendToBrowser')}</span>
+            </button>
         {/if}
     {/snippet}
 </ContextMenu>
