@@ -58,6 +58,16 @@
 }
 
 .cm-editor .cm-activeLine {
+  position: relative;
+  background: transparent;
+}
+
+.cm-editor .cm-activeLine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
   background-color: hsl(from var(--editor-bg) h s calc(l + 8));
 }
 
