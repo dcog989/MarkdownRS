@@ -503,6 +503,7 @@ function onScroll() {
 
 let resizeObserver: ResizeObserver;
 let contentObserver: MutationObserver;
+let themeObserver: MutationObserver;
 
 $effect(() => {
     hovered;
@@ -535,10 +536,20 @@ $effect(() => {
 
     scheduleRender();
 
+    let themeRafId = 0;
+    themeObserver = new MutationObserver(() => {
+        cancelAnimationFrame(themeRafId);
+        themeRafId = requestAnimationFrame(renderMinimap);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    themeObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
+
     return () => {
         resizeObserver.disconnect();
         contentObserver?.disconnect();
+        themeObserver.disconnect();
         scrollDOM.removeEventListener('scroll', onScroll);
+        cancelAnimationFrame(themeRafId);
     };
 });
 </script>
