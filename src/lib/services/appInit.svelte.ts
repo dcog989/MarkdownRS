@@ -1,6 +1,7 @@
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { addTab, editorStore } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from '$lib/stores/tooltipStore.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { loadSession, openFileByPath, persistSession, persistSessionDebounced } from '$lib/utils/fileSystem';
@@ -75,7 +76,27 @@ export function createAppInit() {
     });
     unlisteners.push(unlisten2);
 
+    // GTK's leave-notify-event fires reliably on cursor exit, unlike
+    // WebKitGTK's DOM mouseout/mouseleave.
+    const unlisten3 = await listen('window-cursor-left', () => {
+      clearStuckHoverState();
+    });
+    unlisteners.push(unlisten3);
+
+    // GTK's enter-notify-event reports the cursor position on re-entry, where
+    // WebKitGTK skips the initial mouseenter for the element under the cursor.
+    const unlisten4 = await listen<[number, number]>('window-cursor-enter', (event) => {
+      activateHoverAtPoint(event.payload[0], event.payload[1]);
+    });
+    unlisteners.push(unlisten4);
+
+    // Track the cursor position so tooltips anchor to where the pointer is when
+    // their show-delay elapses, not where it was when the element was entered.
+    const handleCursorMove = (e: MouseEvent) => setCursorPosition(e.clientX, e.clientY);
+    window.addEventListener('mousemove', handleCursorMove);
+
     return () => {
+      window.removeEventListener('mousemove', handleCursorMove);
       for (const unlisten of unlisteners) {
         unlisten();
       }

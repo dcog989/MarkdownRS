@@ -43,6 +43,7 @@ let isMarkdown = $derived.by(() => {
 let showPreview = $derived(appContext.settings.splitView && isMarkdown);
 let showWriterTabDropdown = $state(false);
 let showWriterMenu = $state(false);
+let peekHovered = $state(false);
 
 onDestroy(() => {
     splitResize.cleanup();
@@ -64,7 +65,12 @@ function onResizeMouseDown(e: MouseEvent) {
                 {#if appContext.settings.fileTreeVisible}
                     <FileTree />
                 {:else}
-                    <div class="ft-peek-edge group shrink-0">
+                    <div
+                        role="group"
+                        class="ft-peek-edge shrink-0"
+                        class:ft-peek-edge-hover={peekHovered}
+                        onmouseenter={() => (peekHovered = true)}
+                        onmouseleave={() => (peekHovered = false)}>
                         <button
                             type="button"
                             aria-label={$_('fileTree.showFileTree')}
@@ -73,7 +79,7 @@ function onResizeMouseDown(e: MouseEvent) {
                             onclick={handleToggleFileTree}>
                             <FolderTree
                                 size={14}
-                                class="text-fg-muted transition-colors group-hover:text-fg-default" />
+                                class="shrink-0 transition-colors {peekHovered ? 'text-fg-default' : 'text-fg-muted'}" />
                         </button>
                         <div class="flex min-h-0 flex-1 items-center justify-center">
                             <button
@@ -84,7 +90,7 @@ function onResizeMouseDown(e: MouseEvent) {
                                 onclick={handleToggleFileTree}>
                                 <ChevronRight
                                     size={44}
-                                    class="text-fg-muted opacity-0 transition-opacity group-hover:opacity-100" />
+                                    class="text-fg-muted transition-opacity {peekHovered ? 'opacity-100' : 'opacity-0'}" />
                             </button>
                         </div>
                     </div>
@@ -199,7 +205,7 @@ function onResizeMouseDown(e: MouseEvent) {
         transition: background-color 150ms ease-out;
     }
 
-    .ft-peek-edge:hover {
+    .ft-peek-edge-hover {
         background-color: var(--surface-hover);
     }
 

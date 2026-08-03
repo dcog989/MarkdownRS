@@ -558,6 +558,7 @@ $effect(() => {
     bind:this={trackRef}
     role="none"
     class="minimap-track"
+    class:minimap-track-hover={hovered}
     onmouseenter={() => (hovered = true)}
     onmouseleave={() => (hovered = false)}
     onmousedown={onTrackMouseDown}
@@ -584,7 +585,7 @@ $effect(() => {
         background: rgba(0, 0, 0, 0.05);
         transition: background 150ms ease;
     }
-    .minimap-track:hover::after {
+    .minimap-track-hover::after {
         background: rgba(255, 255, 255, 0.03);
     }
     .minimap-canvas {

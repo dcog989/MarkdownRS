@@ -1,5 +1,5 @@
 import { appContext } from '$lib/stores/state.svelte';
-import { hideTooltip, showTooltip } from '$lib/stores/tooltipStore.svelte';
+import { getCursorPosition, hideTooltip, showTooltip } from '$lib/stores/tooltipStore.svelte';
 
 export function tooltip(node: HTMLElement, content: string | undefined | null) {
   let timer: number | null = null;
@@ -8,11 +8,12 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
     if (!content) return;
 
     const delay = appContext.settings.tooltipDelay;
-    const x = e.clientX;
-    const y = e.clientY;
-
     timer = window.setTimeout(() => {
-      showTooltip(content as string, x, y);
+      // Anchor to the cursor's current position: on window re-entry the
+      // synthetic mouseenter carries the entry point, which is stale by the
+      // time the delay elapses.
+      const { x, y } = getCursorPosition();
+      showTooltip(content as string, x ?? e.clientX, y ?? e.clientY);
     }, delay);
   }
 

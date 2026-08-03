@@ -15,7 +15,8 @@ fn default_log_level() -> String {
 
 #[cfg(target_os = "linux")]
 fn configure_linux_window(window: &tauri::WebviewWindow) {
-    use gtk::prelude::GtkWindowExt;
+    use gtk::gdk::EventMask;
+    use gtk::prelude::{GtkWindowExt, WidgetExt, WidgetExtManual};
 
     const ICON_BYTES: &[u8] = include_bytes!("../icons/128x128@2x.png");
     if let Ok(img) = image::load_from_memory(ICON_BYTES) {
@@ -28,6 +29,28 @@ fn configure_linux_window(window: &tauri::WebviewWindow) {
     if let Ok(gtk_window) = window.gtk_window() {
         gtk_window.set_titlebar(None::<&gtk::Widget>);
     }
+
+    // WebKitGTK doesn't dispatch DOM mouseout/mouseleave on fast window exit
+    // (tauri-apps/tauri#5179), so native leave-notify on the webview widget is
+    // the reliable trigger; hooking the outer GtkWindow misses it because the
+    // webview's own GdkWindow absorbs the crossing events. On re-entry it also
+    // skips the initial hover for the element under the cursor, so enter-notify
+    // reports the cursor position for the frontend to re-activate it.
+    let emit_window = window.clone();
+    let _ = window.with_webview(move |webview| {
+        let webview = webview.inner();
+        webview.add_events(EventMask::LEAVE_NOTIFY_MASK | EventMask::ENTER_NOTIFY_MASK);
+        let enter_window = emit_window.clone();
+        webview.connect_enter_notify_event(move |_, event| {
+            let (x, y) = event.position();
+            let _ = enter_window.emit("window-cursor-enter", (x, y));
+            gtk::glib::Propagation::Proceed
+        });
+        webview.connect_leave_notify_event(move |_, _| {
+            let _ = emit_window.emit("window-cursor-left", ());
+            gtk::glib::Propagation::Proceed
+        });
+    });
 }
 
 #[cfg(not(target_os = "linux"))]
