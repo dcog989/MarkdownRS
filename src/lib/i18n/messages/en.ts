@@ -44,8 +44,6 @@ export const en = {
   },
   fileTree: {
     goUp: 'Go up one level',
-    followActive: 'Follow active document',
-    stopFollowing: 'Stop following active document',
     showHidden: 'Show Hidden Files',
     showMarkdownOnly: 'Show only Markdown Files',
     collapseAll: 'Collapse all',

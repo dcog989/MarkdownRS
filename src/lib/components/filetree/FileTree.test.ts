@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listDirectory } from '$lib/commands/directory';
-import { fileTreeStore } from '$lib/stores/fileTreeStore.svelte';
+import type { EditorTab } from '$lib/stores/editorTypes';
+import { fileTreeStore, navigateToParent } from '$lib/stores/fileTreeStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { FileEntry } from '$lib/types/api';
 import { openFile } from '$lib/utils/fileSystem';
-import { saveSettings } from '$lib/utils/settings';
 import FileTree from './FileTree.svelte';
 
 vi.mock('$lib/commands/directory', () => ({
@@ -35,10 +35,27 @@ function entry(name: string, isDir = false): FileEntry {
   };
 }
 
+function makeTab(id: string, path: string): EditorTab {
+  return {
+    id,
+    title: path.split('/').pop() ?? '',
+    content: '',
+    lastSavedHash: '',
+    isDirty: false,
+    path,
+    sizeBytes: 0,
+    wordCount: 0,
+    lineCount: 0,
+    widestColumn: 0,
+    cursor: { anchor: 0, head: 0 },
+    lineEnding: 'LF',
+    encoding: 'utf-8',
+  };
+}
+
 describe('FileTree', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    appContext.settings.fileTreeFollowDocument = false;
     fileTreeStore.root = '';
     fileTreeStore.expanded.clear();
     fileTreeStore.children.clear();
@@ -101,14 +118,46 @@ describe('FileTree', () => {
     expect(fileTreeStore.root).toBe('/root/sub');
   });
 
-  it('persists the tree root when follow mode is off', async () => {
-    appContext.settings.fileTreeFollowDocument = false;
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', []);
+  it('repositions the tree root to the active file folder on tab switch', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    const originalTabs = appContext.editor.tabs;
+    const originalActiveTabId = appContext.app.activeTabId;
 
     render(FileTree);
+    expect(fileTreeStore.root).toBe('');
 
-    await waitFor(() => expect(saveSettings).toHaveBeenCalled());
+    appContext.editor.tabs = [makeTab('t1', '/root/a.md')];
+    appContext.app.activeTabId = 't1';
+
+    try {
+      await waitFor(() => expect(fileTreeStore.root).toBe('/root'));
+    } finally {
+      appContext.editor.tabs = originalTabs;
+      appContext.app.activeTabId = originalActiveTabId;
+    }
+  });
+
+  it('allows navigating the tree without snapping back to the active file folder', async () => {
+    mockedListDirectory.mockResolvedValue([]);
+    const originalTabs = appContext.editor.tabs;
+    const originalActiveTabId = appContext.app.activeTabId;
+
+    appContext.editor.tabs = [makeTab('t1', '/home/user/project/notes.md')];
+    appContext.app.activeTabId = 't1';
+
+    try {
+      render(FileTree);
+      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user/project'));
+
+      navigateToParent();
+      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user'));
+
+      // No tab switch happened, so the tree must stay where the user navigated.
+      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user'));
+      expect(fileTreeStore.root).toBe('/home/user');
+    } finally {
+      appContext.editor.tabs = originalTabs;
+      appContext.app.activeTabId = originalActiveTabId;
+    }
   });
 });

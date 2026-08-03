@@ -14,10 +14,8 @@
         FolderOpen,
         FolderTree,
         FoldVertical,
-        Link,
         LoaderCircle,
         RefreshCw,
-        Unlink,
     } from 'lucide-svelte';
     import { onMount, tick } from 'svelte';
     import { _ } from 'svelte-i18n';
@@ -42,7 +40,6 @@
     import {
         settingsState,
         toggleFileTree,
-        toggleFileTreeFollow,
     } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
     import type { FileEntry } from '$lib/types/api';
@@ -59,23 +56,16 @@
     let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
     let rootDir = $derived(activeTab?.path ? dirname(activeTab.path) : '');
 
+    // The tree follows the active document: switching tabs repositions the root
+    // to that file's folder. It only reacts to a change of the active file's
+    // folder, not to the tree root itself, so navigating the tree (go up, go
+    // into) is freely allowed without it snapping back.
+    let lastFollowedDir = '';
     $effect(() => {
-        if (
-            appContext.settings.fileTreeFollowDocument &&
-            rootDir &&
-            rootDir !== fileTreeStore.root
-        ) {
+        if (!rootDir || rootDir === lastFollowedDir) return;
+        lastFollowedDir = rootDir;
+        if (rootDir !== fileTreeStore.root) {
             setRoot(rootDir);
-        }
-    });
-
-    $effect(() => {
-        if (
-            !appContext.settings.fileTreeFollowDocument &&
-            settingsState.fileTreeRoot &&
-            !fileTreeStore.root
-        ) {
-            setRoot(settingsState.fileTreeRoot);
         }
     });
 
@@ -87,18 +77,6 @@
         if (!dir || dir === lastActiveDir) return;
         lastActiveDir = dir;
         refreshDirectoryIfInTree(dir);
-    });
-
-    $effect(() => {
-        const root = fileTreeStore.root;
-        if (
-            root &&
-            !appContext.settings.fileTreeFollowDocument &&
-            settingsState.fileTreeRoot !== root
-        ) {
-            settingsState.fileTreeRoot = root;
-            saveSettings();
-        }
     });
 
     onMount(() => {
@@ -272,26 +250,6 @@
                 use:tooltip={$_('fileTree.goUp')}
                 onclick={navigateToParent}>
                 <ArrowUpToLine size={14} />
-            </button>
-            <button
-                type="button"
-                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-                class:bg-bg-active={appContext.settings.fileTreeFollowDocument}
-                class:text-accent-secondary={appContext.settings.fileTreeFollowDocument}
-                use:tooltip={
-                    appContext.settings.fileTreeFollowDocument
-                        ? $_('fileTree.stopFollowing')
-                        : $_('fileTree.followActive')
-                }
-                onclick={() => {
-                    toggleFileTreeFollow();
-                    saveSettings();
-                }}>
-                {#if appContext.settings.fileTreeFollowDocument}
-                    <Link size={14} />
-                {:else}
-                    <Unlink size={14} />
-                {/if}
             </button>
             <button
                 type="button"
