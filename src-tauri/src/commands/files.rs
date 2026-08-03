@@ -178,6 +178,27 @@ pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), Str
 }
 
 #[tauri::command]
+pub async fn create_file(path: String) -> Result<(), String> {
+    validate_path(&path)?;
+    // create_new fails if the file already exists, preventing silent overwrites.
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&path)
+        .await
+        .map(|_| ())
+        .map_err(|e| handle_error(Some(&path), "create file", e))
+}
+
+#[tauri::command]
+pub async fn create_dir(path: String) -> Result<(), String> {
+    validate_path(&path)?;
+    fs::create_dir(&path)
+        .await
+        .map_err(|e| handle_error(Some(&path), "create directory", e))
+}
+
+#[tauri::command]
 pub async fn rename_file(old_path: String, new_path: String) -> Result<(), String> {
     validate_path(&old_path)?;
     validate_path(&new_path)?;
@@ -241,4 +262,71 @@ pub async fn clear_file_history(
         .db
         .clear_file_history()
         .map_err(|e| handle_error(None, "clear file history", e))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn make_temp_dir(name: &str) -> PathBuf {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!(
+            "markdownrs-file-test-{}-{}",
+            name,
+            uuid::Uuid::new_v4()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[tokio::test]
+    async fn creates_new_file() {
+        let dir = make_temp_dir("create-file");
+        let file = dir.join("notes.md");
+        create_file(file.to_string_lossy().into_owned())
+            .await
+            .unwrap();
+        assert!(file.is_file());
+        assert_eq!(fs::read(&file).unwrap(), b"");
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn rejects_existing_file() {
+        let dir = make_temp_dir("create-file-existing");
+        let file = dir.join("taken.md");
+        fs::write(&file, "x").unwrap();
+        assert!(
+            create_file(file.to_string_lossy().into_owned())
+                .await
+                .is_err()
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn creates_new_dir() {
+        let dir = make_temp_dir("create-dir");
+        let sub = dir.join("sub");
+        create_dir(sub.to_string_lossy().into_owned())
+            .await
+            .unwrap();
+        assert!(sub.is_dir());
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn rejects_existing_dir() {
+        let dir = make_temp_dir("create-dir-existing");
+        let sub = dir.join("sub");
+        fs::create_dir(&sub).unwrap();
+        assert!(
+            create_dir(sub.to_string_lossy().into_owned())
+                .await
+                .is_err()
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
 }

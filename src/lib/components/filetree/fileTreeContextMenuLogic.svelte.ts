@@ -4,21 +4,71 @@ import { fileWatcher } from '$lib/services/fileWatcher';
 import { confirmDialog, promptDialog } from '$lib/stores/dialogStore.svelte';
 import { dirname, refreshDirectoryIfInTree } from '$lib/stores/fileTreeStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import type { FileEntry } from '$lib/types/api';
 import { callBackend } from '$lib/utils/backend';
+import { createDirOnDisk, createFileOnDisk } from '$lib/utils/fileIO';
 import { openFile, renameFile, requestCloseTab } from '$lib/utils/fileSystem';
 
 export class FileTreeContextMenuLogic {
+  // Where "New File"/"New Folder" entries are created (a directory row itself,
+  // or the parent of a file row, or the tree root for empty-space menus).
+  directory = $state('');
   path = $state('');
   name = $state('');
   isDir = $state(false);
   onClose: () => void = () => {};
 
-  constructor(path: string, name: string, isDir: boolean, onClose: () => void) {
-    this.path = path;
-    this.name = name;
-    this.isDir = isDir;
+  constructor(directory: string, entry: FileEntry | null, onClose: () => void) {
+    this.directory = directory;
+    this.path = entry?.path ?? '';
+    this.name = entry?.name ?? '';
+    this.isDir = entry?.is_dir ?? false;
     this.onClose = onClose;
   }
+
+  hasEntry = $derived(this.path !== '');
+
+  handleNewFile = async (): Promise<void> => {
+    const raw = await promptDialog({
+      title: translate('fileTree.newFile'),
+      message: translate('fileTree.newFileMessage'),
+      value: 'untitled.md',
+    });
+    if (!raw?.trim()) return;
+
+    const clean = raw.trim();
+    // Default to a markdown extension for extensionless names.
+    const finalName = clean.includes('.') ? clean : `${clean}.md`;
+    const newPath = `${this.directory}/${finalName}`;
+    try {
+      const created = await createFileOnDisk(newPath);
+      if (created) {
+        refreshDirectoryIfInTree(this.directory);
+        void openFile(newPath);
+      }
+    } finally {
+      this.onClose();
+    }
+  };
+
+  handleNewFolder = async (): Promise<void> => {
+    const raw = await promptDialog({
+      title: translate('fileTree.newFolder'),
+      message: translate('fileTree.newFolderMessage'),
+      value: 'New Folder',
+    });
+    if (!raw?.trim()) return;
+
+    const newPath = `${this.directory}/${raw.trim()}`;
+    try {
+      const created = await createDirOnDisk(newPath);
+      if (created) {
+        refreshDirectoryIfInTree(this.directory);
+      }
+    } finally {
+      this.onClose();
+    }
+  };
 
   handleOpen = (): void => {
     if (this.isDir) return;
@@ -35,15 +85,14 @@ export class FileTreeContextMenuLogic {
     if (!raw?.trim()) return;
 
     const clean = raw.trim();
-    const directory = dirname(this.path);
     const tab = appContext.editor.tabs.find((t) => t.path === this.path);
     try {
       if (tab) {
         await renameFile(tab.id, clean);
       } else {
-        await callBackend('rename_file', { oldPath: this.path, newPath: `${directory}/${clean}` }, 'File:Write');
+        await callBackend('rename_file', { oldPath: this.path, newPath: `${this.directory}/${clean}` }, 'File:Write');
       }
-      refreshDirectoryIfInTree(directory);
+      refreshDirectoryIfInTree(this.directory);
     } catch {
       // rename failed; the error has already been reported
     } finally {

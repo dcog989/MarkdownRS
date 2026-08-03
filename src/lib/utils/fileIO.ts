@@ -20,6 +20,22 @@ export async function renameFileOnDisk(oldPath: string, newPath: string): Promis
   });
 }
 
+export async function createFileOnDisk(path: string): Promise<boolean> {
+  const result = await callBackend('create_file', { path }, 'File:Write', undefined, {
+    report: true,
+    msg: translate('fileTree.failedCreateFile'),
+  });
+  return result !== null;
+}
+
+export async function createDirOnDisk(path: string): Promise<boolean> {
+  const result = await callBackend('create_dir', { path }, 'File:Write', undefined, {
+    report: true,
+    msg: translate('fileTree.failedCreateDir'),
+  });
+  return result !== null;
+}
+
 export async function writeTextFile(path: string, content: string): Promise<boolean> {
   const result = await callBackend('write_text_file', { path, content }, 'File:Write');
   return !!result;

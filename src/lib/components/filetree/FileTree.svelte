@@ -44,6 +44,7 @@
         toggleFileTreeFollow,
     } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
+    import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
     import { openFile } from '$lib/utils/fileSystem';
     import { formatFileSize } from '$lib/utils/fileValidation';
@@ -191,7 +192,8 @@
     let isResizing = $state(false);
     let didDrag = false;
 
-    let contextMenuRow = $state<TreeRow | null>(null);
+    let contextMenuEntry = $state<FileEntry | null>(null);
+    let contextMenuDir = $state('');
     let contextMenuX = $state(0);
     let contextMenuY = $state(0);
 
@@ -334,9 +336,18 @@
         {:else}
             <div
                 bind:this={scrollEl}
+                role="list"
                 class="ft-scroll h-full overflow-y-auto"
                 onscroll={(e) => {
                     scrollTop = e.currentTarget.scrollTop;
+                }}
+                oncontextmenu={(e) => {
+                    if ((e.target as HTMLElement).closest('.ft-row')) return;
+                    e.preventDefault();
+                    contextMenuEntry = null;
+                    contextMenuDir = fileTreeStore.root;
+                    contextMenuX = e.clientX;
+                    contextMenuY = e.clientY;
                 }}>
                 <div class="ft-spacer relative" style:height={`${spacerHeight}px`}>
                     {#each visibleRows as row, i (row.entry.path)}
@@ -354,7 +365,11 @@
                             oncontextmenu={(e) => {
                                 if (row.isRoot) return;
                                 e.preventDefault();
-                                contextMenuRow = row;
+                                e.stopPropagation();
+                                contextMenuEntry = row.entry;
+                                contextMenuDir = row.entry.is_dir
+                                    ? row.entry.path
+                                    : dirname(row.entry.path);
                                 contextMenuX = e.clientX;
                                 contextMenuY = e.clientY;
                             }}>
@@ -422,12 +437,16 @@
         </span>
     </div>
 
-    {#if contextMenuRow}
+    {#if contextMenuDir}
         <FileTreeContextMenu
-            entry={contextMenuRow.entry}
+            entry={contextMenuEntry}
+            directory={contextMenuDir}
             x={contextMenuX}
             y={contextMenuY}
-            onClose={() => (contextMenuRow = null)} />
+            onClose={() => {
+                contextMenuEntry = null;
+                contextMenuDir = '';
+            }} />
     {/if}
 </div>
 

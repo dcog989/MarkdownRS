@@ -75,6 +75,8 @@ fn main() {
             commands::files::write_binary_file,
             commands::files::get_file_metadata,
             commands::files::send_to_recycle_bin,
+            commands::files::create_file,
+            commands::files::create_dir,
             commands::files::resolve_path_relative,
             commands::files::rename_file,
             commands::files::add_to_file_history,

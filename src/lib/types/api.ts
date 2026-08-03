@@ -101,6 +101,14 @@ export interface BackendCommands {
     args: { oldPath: string; newPath: string };
     return: undefined;
   };
+  create_file: {
+    args: { path: string };
+    return: undefined;
+  };
+  create_dir: {
+    args: { path: string };
+    return: undefined;
+  };
   add_to_file_history: {
     args: { path: string; lastOpened: string };
     return: undefined;
