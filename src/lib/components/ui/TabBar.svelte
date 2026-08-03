@@ -124,24 +124,46 @@ async function scrollToActive() {
 
     const activeEl = scrollContainer.querySelector('[data-active="true"]');
     if (!(activeEl instanceof HTMLElement)) return;
-    if (!activeEl) return;
 
     const containerRect = scrollContainer.getBoundingClientRect();
     const tabRect = activeEl.getBoundingClientRect();
-    if (tabRect.right > containerRect.right - PEEK_AMOUNT) {
-        scrollContainer.scrollTo({
-            left:
-                activeEl.offsetLeft +
-                activeEl.offsetWidth -
-                scrollContainer.clientWidth +
-                PEEK_AMOUNT,
-            behavior: 'smooth',
-        });
-    } else if (tabRect.left < containerRect.left + PEEK_AMOUNT) {
-        scrollContainer.scrollTo({
-            left: activeEl.offsetLeft - PEEK_AMOUNT,
-            behavior: 'smooth',
-        });
+    const isNearRight = tabRect.right > containerRect.right - PEEK_AMOUNT;
+    const isNearLeft = tabRect.left < containerRect.left + PEEK_AMOUNT;
+
+    const tabItem = activeEl.parentElement;
+    const adjacent = isNearRight
+        ? tabItem?.nextElementSibling
+        : isNearLeft
+          ? tabItem?.previousElementSibling
+          : null;
+
+    let targetLeft: number | null = null;
+    if (adjacent instanceof HTMLElement) {
+        // Scroll the adjacent tab (tab+1 / tab-1) into view alongside the
+        // clicked tab, without pushing the clicked tab off-screen.
+        if (isNearRight) {
+            const revealNext =
+                adjacent.offsetLeft + adjacent.offsetWidth - scrollContainer.clientWidth + PEEK_AMOUNT;
+            const keepActive = activeEl.offsetLeft - PEEK_AMOUNT;
+            targetLeft = Math.min(revealNext, keepActive);
+        } else {
+            const revealPrev = adjacent.offsetLeft - PEEK_AMOUNT;
+            const keepActive =
+                activeEl.offsetLeft + activeEl.offsetWidth - scrollContainer.clientWidth + PEEK_AMOUNT;
+            targetLeft = Math.max(revealPrev, keepActive);
+        }
+    } else if (isNearRight) {
+        targetLeft =
+            activeEl.offsetLeft +
+            activeEl.offsetWidth -
+            scrollContainer.clientWidth +
+            PEEK_AMOUNT;
+    } else if (isNearLeft) {
+        targetLeft = activeEl.offsetLeft - PEEK_AMOUNT;
+    }
+
+    if (targetLeft !== null) {
+        scrollContainer.scrollTo({ left: targetLeft, behavior: 'smooth' });
     }
 }
 
