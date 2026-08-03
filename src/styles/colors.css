@@ -35,6 +35,10 @@
   background-color: var(--surface-active, var(--surface-hover));
 }
 
+.bg-editor-bg {
+  background-color: var(--editor-bg);
+}
+
 .bg-transparent {
   background-color: transparent;
 }
