@@ -20,9 +20,10 @@ export const fileTreeStore = $state({
   dirMtimes: new Map<string, number>(),
 });
 
-// Poll cadence and the freshness fallback used when a directory mtime is
-// unavailable (the poll then re-lists such directories only once per interval).
-export const POLL_INTERVAL_MS = 5_000;
+// Directories are re-listed lazily on user interaction (expanding a folder,
+// navigating, switching tabs, saving) rather than on a timer. When a directory
+// mtime is unavailable this freshness threshold prevents re-listing on every
+// expand, so a directory is only re-listed once per interval at most.
 export const STALE_REFRESH_MS = 30_000;
 
 // Tracks the latest in-flight listing generation per directory so stale results
@@ -81,6 +82,14 @@ export async function toggle(path: string): Promise<void> {
     return;
   }
   fileTreeStore.expanded.set(path, true);
+  if (fileTreeStore.children.has(path)) {
+    // A previously loaded folder may be stale on disk; re-list it lazily only
+    // if its mtime changed since it was last seen.
+    if (await directoryNeedsRefresh(path)) {
+      await refreshPath(path);
+    }
+    return;
+  }
   await loadChildren(path);
 }
 
@@ -108,11 +117,11 @@ async function refreshPath(path: string): Promise<void> {
 }
 
 /**
- * Decide whether a directory needs re-listing during the background poll.
- * When the directory mtime is available it is compared against the last seen
- * value (a cheap stat skips unchanged directories entirely). When it is
- * unavailable, fall back to the freshness threshold to avoid re-listing every
- * poll tick.
+ * Decide whether a directory needs re-listing when it is shown again (e.g.
+ * re-expanded after being collapsed). When the directory mtime is available it
+ * is compared against the last seen value (a cheap stat skips unchanged
+ * directories). When it is unavailable, fall back to the freshness threshold
+ * to avoid re-listing on every expand.
  */
 async function directoryNeedsRefresh(path: string): Promise<boolean> {
   const current = await getDirectoryMtime(path);
@@ -128,37 +137,6 @@ async function directoryNeedsRefresh(path: string): Promise<boolean> {
   }
   fileTreeStore.dirMtimes.set(path, current);
   return cached !== current;
-}
-
-let polling = false;
-
-/**
- * Background poll: re-list the root, the active file's directory, and any
- * expanded directory whose mtime changed (or which is stale). Skips entirely
- * when nothing is expanded or a full refresh is already running.
- */
-export async function pollTreeRefresh(activeDir?: string): Promise<void> {
-  if (polling || fileTreeStore.refreshing) return;
-  if (!fileTreeStore.root) return;
-
-  const expandedPaths = [...fileTreeStore.expanded.keys()].filter((path) => fileTreeStore.expanded.get(path));
-  if (expandedPaths.length === 0) return;
-
-  const candidates = new Set<string>(expandedPaths);
-  if (activeDir && fileTreeStore.expanded.get(activeDir)) {
-    candidates.add(activeDir);
-  }
-
-  polling = true;
-  try {
-    for (const path of candidates) {
-      if (await directoryNeedsRefresh(path)) {
-        await refreshPath(path);
-      }
-    }
-  } finally {
-    polling = false;
-  }
 }
 
 // Refresh a directory only when it belongs to the visible tree; no-ops for

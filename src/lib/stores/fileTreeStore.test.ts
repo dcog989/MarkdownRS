@@ -20,7 +20,6 @@ import {
   navigateInto,
   navigateToParent,
   notifyFileSaved,
-  pollTreeRefresh,
   refreshTree,
   setRoot,
   toggle,
@@ -267,49 +266,38 @@ describe('fileTreeStore', () => {
     expect(settingsState.fileTreeShowMarkdownOnly).toBe(false);
   });
 
-  it('pollTreeRefresh skips unchanged directories and re-lists changed ones', async () => {
+  it('toggle re-expands a previously loaded folder, re-listing only when its mtime changed', async () => {
     mockedListDirectory.mockResolvedValue([entry('a.md')]);
     mockedGetDirectoryMtime.mockResolvedValue(1000);
     setRoot('/root');
     await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
 
-    // First poll: the directory was just loaded, mtime is only recorded.
-    await pollTreeRefresh();
-    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+    mockedListDirectory.mockResolvedValue([entry('b.md')]);
+    await toggle('/root/sub');
+    await toggle('/root/sub');
+    mockedListDirectory.mockClear();
 
-    // mtime unchanged -> no re-list.
-    await pollTreeRefresh();
-    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+    // Fresh re-expand: mtime is recorded, cache is used, no re-list.
+    await toggle('/root/sub');
+    expect(mockedListDirectory).not.toHaveBeenCalled();
 
-    // Directory changed on disk -> re-list.
+    // mtime changed while collapsed -> re-list on expand.
+    await toggle('/root/sub');
     mockedGetDirectoryMtime.mockResolvedValue(2000);
-    await pollTreeRefresh();
-    expect(mockedListDirectory).toHaveBeenCalledTimes(2);
+    await toggle('/root/sub');
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
   });
 
-  it('pollTreeRefresh re-lists stale directories when mtime is unavailable', async () => {
-    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+  it('toggle re-lists a stale folder on expand when mtime is unavailable', async () => {
     mockedGetDirectoryMtime.mockResolvedValue(null);
-    setRoot('/root');
-    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    mockedListDirectory.mockResolvedValue([entry('b.md')]);
+    await toggle('/root/sub');
+    await toggle('/root/sub');
+    mockedListDirectory.mockClear();
 
-    await pollTreeRefresh();
-    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
-
-    fileTreeStore.lastLoaded.set('/root', Date.now() - 60_000);
-    await pollTreeRefresh();
-    expect(mockedListDirectory).toHaveBeenCalledTimes(2);
-  });
-
-  it('pollTreeRefresh no-ops when no directory is expanded', async () => {
-    mockedListDirectory.mockResolvedValue([entry('a.md')]);
-    mockedGetDirectoryMtime.mockResolvedValue(1000);
-    setRoot('/root');
-    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
-
-    fileTreeStore.expanded.clear();
-    await pollTreeRefresh();
-    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+    fileTreeStore.lastLoaded.set('/root/sub', Date.now() - 60_000);
+    await toggle('/root/sub');
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
   });
 
   it('notifyFileSaved re-lists the saved file directory', async () => {

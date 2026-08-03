@@ -104,7 +104,8 @@ pub async fn get_directory_mtime(path: String) -> Result<Option<u64>, String> {
     });
     let mtime = result.await?;
 
-    log::info!(
+    // Stat is a hot path (runs on every poll tick), so keep it at debug level.
+    log::debug!(
         "[Storage] get_directory_mtime | duration={:?} | path={}",
         duration,
         path
