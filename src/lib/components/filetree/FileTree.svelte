@@ -50,6 +50,7 @@
     import { openFile } from '$lib/utils/fileSystem';
     import { formatFileSize } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
+    import FileTreeContextMenu from './FileTreeContextMenu.svelte';
 
     const ROW_HEIGHT = CONFIG.FILETREE.ROW_HEIGHT;
     const OVERSCAN = CONFIG.FILETREE.OVERSCAN;
@@ -206,6 +207,10 @@
     let isResizing = $state(false);
     let didDrag = false;
 
+    let contextMenuRow = $state<TreeRow | null>(null);
+    let contextMenuX = $state(0);
+    let contextMenuY = $state(0);
+
     function startResize(e: MouseEvent) {
         e.preventDefault();
         isResizing = true;
@@ -361,7 +366,14 @@
                             class:opacity-70={!row.isRoot && row.entry.name.startsWith('.')}
                             title={row.entry.path}
                             onclick={(e) => handleRowClick(e, row)}
-                            ondblclick={() => handleRowDoubleClick(row)}>
+                            ondblclick={() => handleRowDoubleClick(row)}
+                            oncontextmenu={(e) => {
+                                if (row.isRoot) return;
+                                e.preventDefault();
+                                contextMenuRow = row;
+                                contextMenuX = e.clientX;
+                                contextMenuY = e.clientY;
+                            }}>
                             <span class="ft-chevron flex w-4 shrink-0 items-center justify-center">
                                 {#if row.entry.is_dir}
                                     {#if row.loading}
@@ -425,6 +437,14 @@
             <ChevronLeft size={44} />
         </span>
     </div>
+
+    {#if contextMenuRow}
+        <FileTreeContextMenu
+            entry={contextMenuRow.entry}
+            x={contextMenuX}
+            y={contextMenuY}
+            onClose={() => (contextMenuRow = null)} />
+    {/if}
 </div>
 
 <style>
