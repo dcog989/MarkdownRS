@@ -30,6 +30,11 @@ export const STALE_REFRESH_MS = 30_000;
 // from an outdated request (e.g. after toggling hidden files) are discarded.
 const loadGeneration = new Map<string, number>();
 
+// In-flight listing promises, shared so callers awaiting an already-running
+// load (e.g. revealPath right after a follow-mode root change) actually wait
+// for it instead of returning immediately.
+const inFlightLoads = new Map<string, Promise<void>>();
+
 function invalidateLoads(): void {
   for (const path of loadGeneration.keys()) {
     loadGeneration.set(path, (loadGeneration.get(path) ?? 0) + 1);
@@ -47,25 +52,41 @@ export function setRoot(path: string): void {
   void loadChildren(path);
 }
 
-export async function loadChildren(path: string): Promise<void> {
-  if (fileTreeStore.loading.get(path)) return;
-  if (fileTreeStore.children.has(path)) return;
+export function loadChildren(path: string): Promise<void> {
+  if (fileTreeStore.loading.get(path)) {
+    return inFlightLoads.get(path) ?? Promise.resolve();
+  }
+  if (fileTreeStore.children.has(path)) return Promise.resolve();
+
   const generation = (loadGeneration.get(path) ?? 0) + 1;
   loadGeneration.set(path, generation);
   fileTreeStore.loading.set(path, true);
-  try {
-    const entries = await listDirectory(path, settingsState.fileTreeShowHidden);
-    if (loadGeneration.get(path) !== generation) return;
-    fileTreeStore.children.set(path, entries);
-    fileTreeStore.lastLoaded.set(path, Date.now());
-  } catch {
-    if (loadGeneration.get(path) !== generation) return;
-    fileTreeStore.children.set(path, []);
-  } finally {
-    if (loadGeneration.get(path) === generation) {
-      fileTreeStore.loading.set(path, false);
+
+  const promise = (async () => {
+    try {
+      const entries = await listDirectory(path, settingsState.fileTreeShowHidden);
+      if (loadGeneration.get(path) !== generation) return;
+      fileTreeStore.children.set(path, entries);
+      fileTreeStore.lastLoaded.set(path, Date.now());
+    } catch {
+      if (loadGeneration.get(path) !== generation) return;
+      fileTreeStore.children.set(path, []);
+    } finally {
+      if (loadGeneration.get(path) === generation) {
+        fileTreeStore.loading.set(path, false);
+      }
     }
-  }
+  })();
+
+  inFlightLoads.set(path, promise);
+  promise
+    .finally(() => {
+      if (inFlightLoads.get(path) === promise) {
+        inFlightLoads.delete(path);
+      }
+    })
+    .catch(() => {});
+  return promise;
 }
 
 export function isExpanded(path: string): boolean {
@@ -285,4 +306,39 @@ export function navigateToParent(): void {
 export function navigateInto(path: string): void {
   if (!path || path === fileTreeStore.root) return;
   setRoot(path);
+}
+
+/**
+ * Expand every collapsed ancestor of `target` (including the root) so its row
+ * becomes visible, loading children as needed. Returns whether the target has
+ * a row in the tree afterwards; false when it is outside the root or filtered
+ * out by the markdown-only mode.
+ */
+export async function revealPath(target: string): Promise<boolean> {
+  const root = fileTreeStore.root;
+  if (!root || !target.startsWith(`${root}/`)) return false;
+
+  fileTreeStore.expanded.set(root, true);
+  if (!fileTreeStore.children.has(root)) {
+    await loadChildren(root);
+  }
+
+  const chain: string[] = [];
+  let current = dirname(target);
+  while (current !== root && current.startsWith(`${root}/`)) {
+    chain.unshift(current);
+    current = dirname(current);
+  }
+  for (const dir of chain) {
+    fileTreeStore.expanded.set(dir, true);
+    if (fileTreeStore.children.has(dir)) {
+      if (await directoryNeedsRefresh(dir)) {
+        await refreshPath(dir);
+      }
+    } else {
+      await loadChildren(dir);
+    }
+  }
+
+  return computeTreeRows().some((row) => row.entry.path === target);
 }

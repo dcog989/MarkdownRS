@@ -21,6 +21,7 @@ import {
   navigateToParent,
   notifyFileSaved,
   refreshTree,
+  revealPath,
   setRoot,
   toggle,
   toggleHiddenFiles,
@@ -77,6 +78,31 @@ describe('fileTreeStore', () => {
     await loadChildren('/root');
 
     expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+  });
+
+  it('loadChildren shares an in-flight load so concurrent awaiters wait for it', async () => {
+    let resolveLoad: (value: FileEntry[]) => void = () => {};
+    mockedListDirectory.mockReturnValue(
+      new Promise<FileEntry[]>((resolve) => {
+        resolveLoad = resolve;
+      }),
+    );
+
+    const first = loadChildren('/root');
+    const second = loadChildren('/root');
+    let secondResolved = false;
+    void second.then(() => {
+      secondResolved = true;
+    });
+
+    await vi.waitFor(() => expect(isDirLoading('/root')).toBe(true));
+    expect(secondResolved).toBe(false);
+
+    resolveLoad([entry('a.md')]);
+    await first;
+    await second;
+    expect(secondResolved).toBe(true);
+    expect(fileTreeStore.children.get('/root')).toEqual([entry('a.md')]);
   });
 
   it('toggle expands a collapsed directory and lazy-loads its children', async () => {
@@ -363,5 +389,81 @@ describe('fileTreeStore', () => {
     expect(fileTreeStore.root).toBe('/home/user');
     navigateInto('');
     expect(fileTreeStore.root).toBe('/home/user');
+  });
+
+  it('revealPath expands collapsed ancestors so the target row exists', async () => {
+    mockedListDirectory.mockImplementation(async (path: string) => {
+      if (path === '/root/sub') {
+        return [{ ...entry('deep.md'), path: '/root/sub/deep.md' }];
+      }
+      return [entry('a.md'), entry('sub', true)];
+    });
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    expect(fileTreeStore.children.get('/root')?.some((e) => e.path === '/root/sub')).toBe(true);
+
+    const found = await revealPath('/root/sub/deep.md');
+
+    expect(found).toBe(true);
+    expect(isExpanded('/root/sub')).toBe(true);
+    expect(fileTreeStore.children.get('/root/sub')?.map((e) => e.path)).toContain('/root/sub/deep.md');
+    expect(computeTreeRows().some((r) => r.entry.path === '/root/sub/deep.md')).toBe(true);
+  });
+
+  it('revealPath re-expands a collapsed root', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    collapseAll();
+
+    const found = await revealPath('/root/a.md');
+
+    expect(found).toBe(true);
+    expect(isExpanded('/root')).toBe(true);
+  });
+
+  it('revealPath returns false for paths outside the root without expanding', async () => {
+    setRoot('/root');
+    const found = await revealPath('/other/file.md');
+
+    expect(found).toBe(false);
+    expect(computeTreeRows().some((r) => r.entry.path === '/other/file.md')).toBe(false);
+  });
+
+  it('revealPath waits for an in-flight root load before revealing', async () => {
+    let resolveLoad: (value: FileEntry[]) => void = () => {};
+    mockedListDirectory.mockImplementation((path: string) => {
+      if (path === '/root') {
+        return new Promise<FileEntry[]>((resolve) => {
+          resolveLoad = resolve;
+        });
+      }
+      return Promise.resolve([entry('a.md')]);
+    });
+
+    // A root change (e.g. follow mode) started a load that is still in flight.
+    setRoot('/root');
+    const pendingRootLoad = loadChildren('/root');
+    let found = false;
+    const reveal = revealPath('/root/a.md').then((f) => {
+      found = f;
+    });
+
+    resolveLoad([entry('a.md')]);
+    await pendingRootLoad;
+    await reveal;
+
+    expect(found).toBe(true);
+  });
+
+  it('revealPath returns false when the target is filtered by markdown-only mode', async () => {
+    mockedListDirectory.mockResolvedValue([entry('notes.txt')]);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    settingsState.fileTreeShowMarkdownOnly = true;
+
+    const found = await revealPath('/root/notes.txt');
+
+    expect(found).toBe(false);
   });
 });

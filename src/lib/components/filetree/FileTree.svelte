@@ -19,7 +19,7 @@
         RefreshCw,
         Unlink,
     } from 'lucide-svelte';
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
     import { _ } from 'svelte-i18n';
     import { tooltip } from '$lib/actions/tooltip';
     import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
@@ -33,6 +33,7 @@
         navigateToParent,
         refreshDirectoryIfInTree,
         refreshTree,
+        revealPath,
         setRoot,
         toggle,
         toggleHiddenFiles,
@@ -133,6 +134,30 @@
     });
 
     let activeFilePath = $derived(activeTab?.path ?? '');
+
+    // Reveal the active file when its tab is activated or the panel becomes
+    // visible, expanding collapsed ancestors and centering its row.
+    let lastRevealed = '';
+    $effect(() => {
+        if (!settingsState.fileTreeVisible) return;
+        const path = activeFilePath;
+        if (!path || path === lastRevealed) return;
+        lastRevealed = path;
+        void revealActiveFile(path);
+    });
+
+    async function revealActiveFile(path: string) {
+        const found = await revealPath(path);
+        if (!found) return;
+        await tick();
+        const rowIndex = allRows.findIndex((r) => r.entry.path === path);
+        if (rowIndex === -1 || !scrollEl) return;
+        const top = rowIndex * ROW_HEIGHT;
+        const bottom = top + ROW_HEIGHT;
+        if (top < scrollEl.scrollTop || bottom > scrollEl.scrollTop + viewportHeight) {
+            scrollEl.scrollTop = Math.max(0, top + ROW_HEIGHT / 2 - viewportHeight / 2);
+        }
+    }
 
     function handleRowClick(e: MouseEvent, row: TreeRow) {
         if (!row.entry.is_dir) {
