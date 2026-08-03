@@ -231,7 +231,7 @@ $effect(() => {
                 <div
                     role="tab"
                     tabindex="-1"
-                    class="flex h-full shrink-0 touch-none items-stretch outline-none select-none"
+                    class="flex h-full min-w-0 touch-none items-stretch outline-none select-none"
                     data-tab-item="true"
                     animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
                     style:opacity={isDragging && draggingId === tab.id ? 0.4 : 1}
