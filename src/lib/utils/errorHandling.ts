@@ -11,6 +11,7 @@ export type ErrorContext =
   | 'File:Write'
   | 'File:Metadata'
   | 'File:ListDirectory'
+  | 'File:StatDirectory'
   | 'Markdown:Render'
   | 'Settings:Load'
   | 'Settings:Save'

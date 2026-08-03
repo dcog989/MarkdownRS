@@ -20,6 +20,7 @@ import {
   updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { addToFileHistory } from '$lib/stores/fileHistoryStore.svelte';
+import { notifyFileSaved } from '$lib/stores/fileTreeStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -296,6 +297,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       await refreshMetadata(tabId, sanitizedPath);
 
       addToFileHistory(sanitizedPath);
+      notifyFileSaved(sanitizedPath);
 
       fileWatcher.setWriteLock(sanitizedPath, false);
 

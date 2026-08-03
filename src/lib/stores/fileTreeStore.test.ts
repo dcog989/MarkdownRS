@@ -4,9 +4,10 @@ import { settingsState } from './settingsState.svelte';
 
 vi.mock('$lib/commands/directory', () => ({
   listDirectory: vi.fn(),
+  getDirectoryMtime: vi.fn(),
 }));
 
-import { listDirectory } from '$lib/commands/directory';
+import { getDirectoryMtime, listDirectory } from '$lib/commands/directory';
 import {
   canNavigateUp,
   collapseAll,
@@ -18,6 +19,8 @@ import {
   loadChildren,
   navigateInto,
   navigateToParent,
+  notifyFileSaved,
+  pollTreeRefresh,
   refreshTree,
   setRoot,
   toggle,
@@ -26,6 +29,7 @@ import {
 } from './fileTreeStore.svelte';
 
 const mockedListDirectory = vi.mocked(listDirectory);
+const mockedGetDirectoryMtime = vi.mocked(getDirectoryMtime);
 
 function entry(name: string, isDir = false): FileEntry {
   return {
@@ -47,7 +51,11 @@ describe('fileTreeStore', () => {
     fileTreeStore.loading.clear();
     settingsState.fileTreeShowHidden = false;
     settingsState.fileTreeShowMarkdownOnly = false;
+    settingsState.fileTreeVisible = true;
+    fileTreeStore.lastLoaded.clear();
+    fileTreeStore.dirMtimes.clear();
     mockedListDirectory.mockReset();
+    mockedGetDirectoryMtime.mockReset();
   });
 
   it('setRoot sets the root, expands it, and loads its children', async () => {
@@ -257,6 +265,71 @@ describe('fileTreeStore', () => {
     expect(settingsState.fileTreeShowMarkdownOnly).toBe(true);
     toggleMarkdownOnly();
     expect(settingsState.fileTreeShowMarkdownOnly).toBe(false);
+  });
+
+  it('pollTreeRefresh skips unchanged directories and re-lists changed ones', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    mockedGetDirectoryMtime.mockResolvedValue(1000);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+
+    // First poll: the directory was just loaded, mtime is only recorded.
+    await pollTreeRefresh();
+    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+
+    // mtime unchanged -> no re-list.
+    await pollTreeRefresh();
+    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+
+    // Directory changed on disk -> re-list.
+    mockedGetDirectoryMtime.mockResolvedValue(2000);
+    await pollTreeRefresh();
+    expect(mockedListDirectory).toHaveBeenCalledTimes(2);
+  });
+
+  it('pollTreeRefresh re-lists stale directories when mtime is unavailable', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    mockedGetDirectoryMtime.mockResolvedValue(null);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+
+    await pollTreeRefresh();
+    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+
+    fileTreeStore.lastLoaded.set('/root', Date.now() - 60_000);
+    await pollTreeRefresh();
+    expect(mockedListDirectory).toHaveBeenCalledTimes(2);
+  });
+
+  it('pollTreeRefresh no-ops when no directory is expanded', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    mockedGetDirectoryMtime.mockResolvedValue(1000);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+
+    fileTreeStore.expanded.clear();
+    await pollTreeRefresh();
+    expect(mockedListDirectory).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifyFileSaved re-lists the saved file directory', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    mockedListDirectory.mockClear();
+
+    notifyFileSaved('/root/a.md');
+    await vi.waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith('/root', false));
+  });
+
+  it('notifyFileSaved ignores files outside the tree root', async () => {
+    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+    setRoot('/root');
+    await vi.waitFor(() => expect(fileTreeStore.children.has('/root')).toBe(true));
+    mockedListDirectory.mockClear();
+
+    notifyFileSaved('/other/b.md');
+    expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 
   it('canNavigateUp is false at the filesystem root and when no root is set', () => {

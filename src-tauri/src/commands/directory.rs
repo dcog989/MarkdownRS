@@ -80,6 +80,39 @@ pub async fn list_directory(path: String, show_hidden: bool) -> Result<Vec<FileE
     Ok(entries)
 }
 
+pub fn get_directory_mtime_sync(path: &str) -> Result<Option<u64>, String> {
+    validate_path(path)?;
+    let metadata = std::fs::metadata(path).map_err(|e| handle_error(Some(path), "stat path", e))?;
+    if !metadata.is_dir() {
+        return Ok(None);
+    }
+    let mtime = metadata.modified().ok().and_then(|t| {
+        t.duration_since(std::time::UNIX_EPOCH)
+            .ok()
+            .map(|d| d.as_millis() as u64)
+    });
+    Ok(mtime)
+}
+
+#[tauri::command]
+pub async fn get_directory_mtime(path: String) -> Result<Option<u64>, String> {
+    let (result, duration) = crate::timed!({
+        let path_for_task = path.clone();
+        run_blocking("stat directory", move || {
+            get_directory_mtime_sync(&path_for_task)
+        })
+    });
+    let mtime = result.await?;
+
+    log::info!(
+        "[Storage] get_directory_mtime | duration={:?} | path={}",
+        duration,
+        path
+    );
+
+    Ok(mtime)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -160,6 +193,21 @@ mod tests {
     fn errors_on_missing_directory() {
         let result = list_directory_sync("/nonexistent/markdownrs-xyz-404", false);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn reports_directory_mtime_only_for_directories() {
+        let dir = make_temp_dir("mtime");
+        let mtime = get_directory_mtime_sync(&dir.to_string_lossy()).unwrap();
+        assert!(mtime.is_some() && mtime.unwrap() > 0);
+
+        let file = dir.join("f.txt");
+        fs::write(&file, "x").unwrap();
+        assert_eq!(
+            get_directory_mtime_sync(&file.to_string_lossy()).unwrap(),
+            None
+        );
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

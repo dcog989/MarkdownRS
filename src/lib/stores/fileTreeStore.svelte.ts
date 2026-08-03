@@ -1,5 +1,5 @@
 import { SvelteMap } from 'svelte/reactivity';
-import { listDirectory } from '$lib/commands/directory';
+import { getDirectoryMtime, listDirectory } from '$lib/commands/directory';
 import {
   settingsState,
   toggleFileTreeShowHidden,
@@ -14,7 +14,16 @@ export const fileTreeStore = $state({
   children: new SvelteMap<string, FileEntry[]>(),
   loading: new SvelteMap<string, boolean>(),
   refreshing: false,
+  // Tracks when each directory's children were last fetched and the directory
+  // mtime seen at that point, so the background poll can skip unchanged dirs.
+  lastLoaded: new Map<string, number>(),
+  dirMtimes: new Map<string, number>(),
 });
+
+// Poll cadence and the freshness fallback used when a directory mtime is
+// unavailable (the poll then re-lists such directories only once per interval).
+export const POLL_INTERVAL_MS = 5_000;
+export const STALE_REFRESH_MS = 30_000;
 
 // Tracks the latest in-flight listing generation per directory so stale results
 // from an outdated request (e.g. after toggling hidden files) are discarded.
@@ -24,6 +33,7 @@ function invalidateLoads(): void {
   for (const path of loadGeneration.keys()) {
     loadGeneration.set(path, (loadGeneration.get(path) ?? 0) + 1);
   }
+  fileTreeStore.dirMtimes.clear();
 }
 
 export function setRoot(path: string): void {
@@ -46,6 +56,7 @@ export async function loadChildren(path: string): Promise<void> {
     const entries = await listDirectory(path, settingsState.fileTreeShowHidden);
     if (loadGeneration.get(path) !== generation) return;
     fileTreeStore.children.set(path, entries);
+    fileTreeStore.lastLoaded.set(path, Date.now());
   } catch {
     if (loadGeneration.get(path) !== generation) return;
     fileTreeStore.children.set(path, []);
@@ -85,6 +96,84 @@ export function toggleHiddenFiles(): void {
 
 export function toggleMarkdownOnly(): void {
   toggleFileTreeShowMarkdownOnly();
+}
+
+// Reload a single directory, dropping its cached listing and mtime so a fresh
+// result is fetched and the poll does not reload it again as "changed".
+async function refreshPath(path: string): Promise<void> {
+  fileTreeStore.dirMtimes.delete(path);
+  fileTreeStore.children.delete(path);
+  fileTreeStore.loading.delete(path);
+  await loadChildren(path);
+}
+
+/**
+ * Decide whether a directory needs re-listing during the background poll.
+ * When the directory mtime is available it is compared against the last seen
+ * value (a cheap stat skips unchanged directories entirely). When it is
+ * unavailable, fall back to the freshness threshold to avoid re-listing every
+ * poll tick.
+ */
+async function directoryNeedsRefresh(path: string): Promise<boolean> {
+  const current = await getDirectoryMtime(path);
+  if (current === null) {
+    const last = fileTreeStore.lastLoaded.get(path) ?? 0;
+    return Date.now() - last > STALE_REFRESH_MS;
+  }
+  const cached = fileTreeStore.dirMtimes.get(path);
+  if (cached === undefined) {
+    fileTreeStore.dirMtimes.set(path, current);
+    const last = fileTreeStore.lastLoaded.get(path) ?? 0;
+    return Date.now() - last > STALE_REFRESH_MS;
+  }
+  fileTreeStore.dirMtimes.set(path, current);
+  return cached !== current;
+}
+
+let polling = false;
+
+/**
+ * Background poll: re-list the root, the active file's directory, and any
+ * expanded directory whose mtime changed (or which is stale). Skips entirely
+ * when nothing is expanded or a full refresh is already running.
+ */
+export async function pollTreeRefresh(activeDir?: string): Promise<void> {
+  if (polling || fileTreeStore.refreshing) return;
+  if (!fileTreeStore.root) return;
+
+  const expandedPaths = [...fileTreeStore.expanded.keys()].filter((path) => fileTreeStore.expanded.get(path));
+  if (expandedPaths.length === 0) return;
+
+  const candidates = new Set<string>(expandedPaths);
+  if (activeDir && fileTreeStore.expanded.get(activeDir)) {
+    candidates.add(activeDir);
+  }
+
+  polling = true;
+  try {
+    for (const path of candidates) {
+      if (await directoryNeedsRefresh(path)) {
+        await refreshPath(path);
+      }
+    }
+  } finally {
+    polling = false;
+  }
+}
+
+// Refresh a directory only when it belongs to the visible tree; no-ops for
+// paths outside the root or when the panel is hidden.
+export function refreshDirectoryIfInTree(dir: string): void {
+  if (!fileTreeStore.root) return;
+  if (!settingsState.fileTreeVisible) return;
+  if (dir !== fileTreeStore.root && !dir.startsWith(`${fileTreeStore.root}/`)) return;
+  void refreshPath(dir);
+}
+
+// Hook called after a file is written so the tree reflects new/renamed files
+// and size changes without waiting for the next poll.
+export function notifyFileSaved(path: string): void {
+  refreshDirectoryIfInTree(dirname(path));
 }
 
 export function collapseAll(): void {

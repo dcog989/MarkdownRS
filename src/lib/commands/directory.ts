@@ -10,3 +10,11 @@ export async function listDirectory(path: string, showHidden: boolean): Promise<
     })) ?? []
   );
 }
+
+export async function getDirectoryMtime(path: string): Promise<number | null> {
+  return (
+    (await callBackend('get_directory_mtime', { path }, 'File:StatDirectory', undefined, {
+      ignore: true,
+    })) ?? null
+  );
+}

@@ -82,6 +82,7 @@ fn main() {
             commands::files::remove_from_file_history,
             commands::files::clear_file_history,
             commands::directory::list_directory,
+            commands::directory::get_directory_mtime,
             commands::settings::get_app_info,
             #[cfg(feature = "spellcheck")]
             commands::spellcheck::add_to_dictionary,

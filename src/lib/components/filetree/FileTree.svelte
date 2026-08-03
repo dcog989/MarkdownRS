@@ -31,6 +31,9 @@
         fileTreeStore,
         navigateInto,
         navigateToParent,
+        POLL_INTERVAL_MS,
+        pollTreeRefresh,
+        refreshDirectoryIfInTree,
         refreshTree,
         setRoot,
         toggle,
@@ -75,6 +78,16 @@
         }
     });
 
+    // When the active document changes, refresh its directory so the tree
+    // reflects saves/renames/new files next to the file you are editing.
+    let lastActiveDir = '';
+    $effect(() => {
+        const dir = rootDir;
+        if (!dir || dir === lastActiveDir) return;
+        lastActiveDir = dir;
+        refreshDirectoryIfInTree(dir);
+    });
+
     $effect(() => {
         const root = fileTreeStore.root;
         if (
@@ -92,7 +105,21 @@
             if (fileTreeStore.root) void refreshTree();
         };
         window.addEventListener('focus', onFocus);
-        return () => window.removeEventListener('focus', onFocus);
+
+        // Gated background poll: refresh the tree while the panel is visible,
+        // the window is focused, and there is at least one expanded directory.
+        // The store skips directories whose mtime is unchanged, so this is a
+        // cheap stat per tick rather than a full re-list.
+        const interval = setInterval(() => {
+            if (!appContext.settings.fileTreeVisible) return;
+            if (!document.hasFocus()) return;
+            void pollTreeRefresh(rootDir || undefined);
+        }, POLL_INTERVAL_MS);
+
+        return () => {
+            window.removeEventListener('focus', onFocus);
+            clearInterval(interval);
+        };
     });
 
     let allRows = $derived(computeTreeRows());

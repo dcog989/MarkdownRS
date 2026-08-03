@@ -123,6 +123,10 @@ export interface BackendCommands {
     args: { path: string; showHidden: boolean };
     return: FileEntry[];
   };
+  get_directory_mtime: {
+    args: { path: string };
+    return: number | null;
+  };
 
   // App Info
   get_app_info: {
