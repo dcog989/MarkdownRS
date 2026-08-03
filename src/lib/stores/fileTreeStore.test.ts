@@ -22,6 +22,7 @@ import {
   setRoot,
   toggle,
   toggleHiddenFiles,
+  toggleMarkdownOnly,
 } from './fileTreeStore.svelte';
 
 const mockedListDirectory = vi.mocked(listDirectory);
@@ -45,6 +46,7 @@ describe('fileTreeStore', () => {
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
     settingsState.fileTreeShowHidden = false;
+    settingsState.fileTreeShowMarkdownOnly = false;
     mockedListDirectory.mockReset();
   });
 
@@ -225,6 +227,36 @@ describe('fileTreeStore', () => {
 
   it('computeTreeRows returns an empty list when no root is set', () => {
     expect(computeTreeRows()).toEqual([]);
+  });
+
+  it('computeTreeRows filters non-markdown files but keeps directories when markdown-only is on', () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.expanded.set('/root/sub', true);
+    fileTreeStore.children.set('/root', [entry('a.md'), entry('notes.txt'), entry('sub', true)]);
+    fileTreeStore.children.set('/root/sub', [
+      { ...entry('deep.md'), path: '/root/sub/deep.md' },
+      { ...entry('deep.txt'), path: '/root/sub/deep.txt' },
+    ]);
+    settingsState.fileTreeShowMarkdownOnly = true;
+
+    const rows = computeTreeRows();
+
+    const paths = rows.map((r) => r.entry.path);
+    expect(paths).toContain('/root');
+    expect(paths).toContain('/root/a.md');
+    expect(paths).toContain('/root/sub');
+    expect(paths).toContain('/root/sub/deep.md');
+    expect(paths).not.toContain('/root/notes.txt');
+    expect(paths).not.toContain('/root/sub/deep.txt');
+  });
+
+  it('toggleMarkdownOnly flips the markdown-only flag', () => {
+    expect(settingsState.fileTreeShowMarkdownOnly).toBe(false);
+    toggleMarkdownOnly();
+    expect(settingsState.fileTreeShowMarkdownOnly).toBe(true);
+    toggleMarkdownOnly();
+    expect(settingsState.fileTreeShowMarkdownOnly).toBe(false);
   });
 
   it('canNavigateUp is false at the filesystem root and when no root is set', () => {

@@ -1,7 +1,12 @@
 import { SvelteMap } from 'svelte/reactivity';
 import { listDirectory } from '$lib/commands/directory';
-import { settingsState, toggleFileTreeShowHidden } from '$lib/stores/settingsState.svelte';
+import {
+  settingsState,
+  toggleFileTreeShowHidden,
+  toggleFileTreeShowMarkdownOnly,
+} from '$lib/stores/settingsState.svelte';
 import type { FileEntry } from '$lib/types/api';
+import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
 
 export const fileTreeStore = $state({
   root: '',
@@ -78,6 +83,10 @@ export function toggleHiddenFiles(): void {
   }
 }
 
+export function toggleMarkdownOnly(): void {
+  toggleFileTreeShowMarkdownOnly();
+}
+
 export function collapseAll(): void {
   fileTreeStore.expanded.clear();
   if (fileTreeStore.root) {
@@ -124,8 +133,17 @@ export type TreeRow = {
   isRoot: boolean;
 };
 
+const MARKDOWN_EXTENSION_SET = new Set(MARKDOWN_EXTENSIONS.map((ext) => ext.toLowerCase()));
+
+function isMarkdownName(name: string): boolean {
+  const idx = name.lastIndexOf('.');
+  if (idx === -1) return false;
+  return MARKDOWN_EXTENSION_SET.has(name.slice(idx + 1).toLowerCase());
+}
+
 export function computeTreeRows(): TreeRow[] {
   const { root, expanded, children, loading } = fileTreeStore;
+  const showMarkdownOnly = settingsState.fileTreeShowMarkdownOnly;
   const rows: TreeRow[] = [];
   if (!root) return rows;
 
@@ -163,6 +181,7 @@ export function computeTreeRows(): TreeRow[] {
     if (!item) break;
     const { entry, depth } = item;
     if (visited.has(entry.path)) continue;
+    if (showMarkdownOnly && !entry.is_dir && !isMarkdownName(entry.name)) continue;
     visited.add(entry.path);
     const isDir = entry.is_dir;
     const isOpen = isDir && (expanded.get(entry.path) ?? false);

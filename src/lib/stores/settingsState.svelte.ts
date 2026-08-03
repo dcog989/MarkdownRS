@@ -51,6 +51,7 @@ export const settingsState = $state({
   fileTreeWidth: 240,
   fileTreeFollowDocument: true,
   fileTreeShowHidden: false,
+  fileTreeShowMarkdownOnly: false,
   fileTreeRoot: '',
   commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
   commandUsage: {} as Record<string, number>,
@@ -88,4 +89,8 @@ export function toggleFileTreeFollow() {
 
 export function toggleFileTreeShowHidden() {
   settingsState.fileTreeShowHidden = !settingsState.fileTreeShowHidden;
+}
+
+export function toggleFileTreeShowMarkdownOnly() {
+  settingsState.fileTreeShowMarkdownOnly = !settingsState.fileTreeShowMarkdownOnly;
 }

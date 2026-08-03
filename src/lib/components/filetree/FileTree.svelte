@@ -13,9 +13,9 @@
         Folder,
         FolderOpen,
         FolderTree,
+        FoldVertical,
         Link,
         LoaderCircle,
-        Minus,
         RefreshCw,
         Unlink,
     } from 'lucide-svelte';
@@ -24,19 +24,18 @@
     import { tooltip } from '$lib/actions/tooltip';
     import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
     import {
-        basename,
         canNavigateUp,
         collapseAll,
         computeTreeRows,
         dirname,
         fileTreeStore,
-        isExpanded,
         navigateInto,
         navigateToParent,
         refreshTree,
         setRoot,
         toggle,
         toggleHiddenFiles,
+        toggleMarkdownOnly,
     } from '$lib/stores/fileTreeStore.svelte';
     import {
         settingsState,
@@ -221,21 +220,6 @@
     style:--ft-row-height={`${ROW_HEIGHT}px`}
     class:cursor-col-resize={isResizing}>
     <div class="border-border-light flex h-8 shrink-0 items-center gap-1 border-b pl-2 pr-1">
-        <button
-            type="button"
-            class="hover-surface text-fg-default flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-0.5 text-left text-xs font-medium"
-            use:tooltip={fileTreeStore.root || null}
-            onclick={() => {
-                if (fileTreeStore.root) void toggle(fileTreeStore.root);
-            }}>
-            {#if isExpanded(fileTreeStore.root)}
-                <FolderOpen size={14} class="text-accent-secondary shrink-0" />
-            {:else}
-                <Folder size={14} class="text-accent-secondary shrink-0" />
-            {/if}
-            <span class="truncate">{basename(fileTreeStore.root) || $_('fileTree.header')}</span>
-        </button>
-
         <div class="text-fg-muted flex shrink-0 items-center">
             <button
                 type="button"
@@ -271,9 +255,7 @@
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 class:bg-bg-active={settingsState.fileTreeShowHidden}
                 class:text-accent-secondary={settingsState.fileTreeShowHidden}
-                use:tooltip={
-                    settingsState.fileTreeShowHidden ? $_('fileTree.hideHidden') : $_('fileTree.showHidden')
-                }
+                use:tooltip={$_('fileTree.showHidden')}
                 onclick={() => {
                     toggleHiddenFiles();
                     saveSettings();
@@ -287,9 +269,21 @@
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+                class:bg-bg-active={settingsState.fileTreeShowMarkdownOnly}
+                class:text-accent-secondary={settingsState.fileTreeShowMarkdownOnly}
+                use:tooltip={$_('fileTree.showMarkdownOnly')}
+                onclick={() => {
+                    toggleMarkdownOnly();
+                    saveSettings();
+                }}>
+                <FileText size={14} />
+            </button>
+            <button
+                type="button"
+                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 use:tooltip={$_('fileTree.collapseAll')}
                 onclick={collapseAll}>
-                <Minus size={14} />
+                <FoldVertical size={14} />
             </button>
             <button
                 type="button"
@@ -301,6 +295,8 @@
                     <RefreshCw size={14} />
                 </span>
             </button>
+        </div>
+        <div class="text-fg-muted ml-auto flex shrink-0 items-center">
             <button
                 type="button"
                 class="bg-bg-active text-accent-secondary hover-surface flex h-6 w-6 items-center justify-center rounded"
