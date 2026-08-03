@@ -35,7 +35,7 @@
 ## File System Access
 
 - Root: `/home/bubba/Projects/MarkdownRS`
-- Allowed: All subdirectories, `/tmp/<project-name>`
+- Allowed: All subdirectories, `/tmp/*`
 - Read-Only: `.env*`, `.git/`, `node_modules/`, `.assets/`
 - Disallowed: system dirs, user config, other projects
 - Require confirmation: adding/removing dependencies, changes outside `src/` or `src-tauri/src/`, any operation outside project root
