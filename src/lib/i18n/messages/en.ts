@@ -43,7 +43,6 @@ export const en = {
     closeContextMenu: 'Close context menu',
   },
   fileTree: {
-    goUp: 'Go up one level',
     showHidden: 'Show Hidden Files',
     showMarkdownOnly: 'Show only Markdown Files',
     collapseAll: 'Collapse all',

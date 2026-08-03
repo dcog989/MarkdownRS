@@ -118,6 +118,30 @@ describe('FileTree', () => {
     expect(fileTreeStore.root).toBe('/root/sub');
   });
 
+  it('shows a parent row above the root and navigates up on click', async () => {
+    mockedListDirectory.mockResolvedValue([]);
+    fileTreeStore.root = '/home/user/project';
+    fileTreeStore.expanded.set('/home/user/project', true);
+    fileTreeStore.children.set('/home/user/project', []);
+
+    render(FileTree);
+
+    const parent = await screen.findByText('..');
+    await fireEvent.click(parent);
+
+    expect(fileTreeStore.root).toBe('/home/user');
+  });
+
+  it('hides the parent row at the filesystem root', () => {
+    fileTreeStore.root = '/';
+    fileTreeStore.expanded.set('/', true);
+    fileTreeStore.children.set('/', []);
+
+    render(FileTree);
+
+    expect(screen.queryByText('..')).toBeFalsy();
+  });
+
   it('repositions the tree root to the active file folder on tab switch', async () => {
     mockedListDirectory.mockResolvedValue([entry('a.md')]);
     const originalTabs = appContext.editor.tabs;

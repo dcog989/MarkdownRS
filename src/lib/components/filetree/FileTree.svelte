@@ -87,7 +87,29 @@
         return () => window.removeEventListener('focus', onFocus);
     });
 
-    let allRows = $derived(computeTreeRows());
+    // The tree rows, with a ".." parent entry on top whenever a parent exists.
+    let allRows = $derived.by(() => {
+        const rows = computeTreeRows();
+        if (!fileTreeStore.root || !canNavigateUp()) return rows;
+        return [
+            {
+                entry: {
+                    name: '..',
+                    path: dirname(fileTreeStore.root),
+                    is_dir: true,
+                    is_symlink: false,
+                    size: 0,
+                    modified: null,
+                },
+                depth: 0,
+                expanded: false,
+                loading: false,
+                isRoot: false,
+                isParent: true,
+            },
+            ...rows,
+        ];
+    });
 
     let scrollEl = $state<HTMLDivElement>();
     let scrollTop = $state(0);
@@ -138,6 +160,13 @@
     }
 
     function handleRowClick(e: MouseEvent, row: TreeRow) {
+        if (row.isParent) {
+            // Single click navigates up; ignore the second click of a dblclick
+            // so a double-click does not ascend two levels.
+            if (e.detail > 1) return;
+            navigateToParent();
+            return;
+        }
         if (!row.entry.is_dir) {
             void openFile(row.entry.path);
             return;
@@ -149,7 +178,7 @@
     }
 
     function handleRowDoubleClick(row: TreeRow) {
-        if (!row.entry.is_dir) return;
+        if (row.isParent || !row.entry.is_dir) return;
         navigateInto(row.entry.path);
     }
 
@@ -245,15 +274,6 @@
             <button
                 type="button"
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-                class:cursor-not-allowed={!canNavigateUp()}
-                class:opacity-40={!canNavigateUp()}
-                use:tooltip={$_('fileTree.goUp')}
-                onclick={navigateToParent}>
-                <ArrowUpToLine size={14} />
-            </button>
-            <button
-                type="button"
-                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 class:bg-bg-active={settingsState.fileTreeShowHidden}
                 class:text-accent-secondary={settingsState.fileTreeShowHidden}
                 use:tooltip={$_('fileTree.showHidden')}
@@ -340,13 +360,13 @@
                             class="ft-row hover-surface group flex items-center pr-2 text-left"
                             style:top={`${rowIndex * ROW_HEIGHT}px`}
                             style:padding-left={`${8 + row.depth * INDENT_STEP}px`}
-                            class:ft-active={!row.isRoot && row.entry.path === activeFilePath}
-                            class:opacity-70={!row.isRoot && row.entry.name.startsWith('.')}
+                            class:ft-active={!row.isRoot && !row.isParent && row.entry.path === activeFilePath}
+                            class:opacity-70={!row.isRoot && !row.isParent && row.entry.name.startsWith('.')}
                             title={row.entry.path}
                             onclick={(e) => handleRowClick(e, row)}
                             ondblclick={() => handleRowDoubleClick(row)}
                             oncontextmenu={(e) => {
-                                if (row.isRoot) return;
+                                if (row.isRoot || row.isParent) return;
                                 e.preventDefault();
                                 e.stopPropagation();
                                 contextMenuEntry = row.entry;
@@ -357,7 +377,7 @@
                                 contextMenuY = e.clientY;
                             }}>
                             <span class="ft-chevron flex w-4 shrink-0 items-center justify-center">
-                                {#if row.entry.is_dir}
+                                {#if row.entry.is_dir && !row.isParent}
                                     {#if row.loading}
                                         <LoaderCircle size={12} class="text-fg-muted animate-spin" />
                                     {:else}
@@ -368,7 +388,9 @@
                                 {/if}
                             </span>
 
-                            {#if row.entry.is_dir}
+                            {#if row.isParent}
+                                <ArrowUpToLine size={14} class="text-fg-muted shrink-0" />
+                            {:else if row.entry.is_dir}
                                 {#if row.expanded}
                                     <FolderOpen size={14} class="text-accent-secondary shrink-0" />
                                 {:else}

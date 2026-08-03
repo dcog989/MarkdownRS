@@ -219,6 +219,8 @@ export type TreeRow = {
   expanded: boolean;
   loading: boolean;
   isRoot: boolean;
+  // Component-only row rendering the ".." parent navigation entry.
+  isParent?: boolean;
 };
 
 const MARKDOWN_EXTENSION_SET = new Set(MARKDOWN_EXTENSIONS.map((ext) => ext.toLowerCase()));
