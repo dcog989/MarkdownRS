@@ -1,3 +1,4 @@
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { translate } from '$lib/i18n';
 import { invalidateMetadataCache } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
@@ -105,6 +106,16 @@ export class FileTreeContextMenuLogic {
       await navigator.clipboard.writeText(this.path);
     } catch {
       // clipboard write failed
+    } finally {
+      this.onClose();
+    }
+  };
+
+  handleRevealInFileManager = async (): Promise<void> => {
+    try {
+      await revealItemInDir(this.path);
+    } catch {
+      // reveal failed; nothing to report
     } finally {
       this.onClose();
     }

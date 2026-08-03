@@ -45,6 +45,7 @@
       ]
     },
     "shell:allow-open",
+    "opener:allow-reveal-item-in-dir",
     {
       "identifier": "opener:allow-open-path",
       "allow": [

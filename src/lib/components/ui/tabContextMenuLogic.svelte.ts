@@ -1,3 +1,4 @@
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { tick } from 'svelte';
 import { translate } from '$lib/i18n';
 import { exportService } from '$lib/services/exportService';
@@ -247,6 +248,17 @@ export class TabContextMenuLogic {
       if (tab?.path) navigator.clipboard.writeText(tab.path);
     } catch {
       // clipboard write failed
+    } finally {
+      this.onClose();
+    }
+  };
+
+  handleRevealInFileManager = async () => {
+    const path = this.tab?.path;
+    try {
+      if (path) await revealItemInDir(path);
+    } catch {
+      // reveal failed; nothing to report
     } finally {
       this.onClose();
     }

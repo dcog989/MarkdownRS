@@ -9,6 +9,7 @@ import {
   FileDown,
   FilePen,
   Files,
+  FolderSearch,
   History,
   Pin,
   PinOff,
@@ -258,6 +259,13 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         disabled={!ctx.tab?.path}
         onclick={ctx.handleCopyPath}>
         <Copy size={14} class="opacity-70" /><span>{$_('tabContextMenu.copyFullPath')}</span>
+      </button>
+      <button
+        type="button"
+        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!ctx.tab?.path}
+        onclick={ctx.handleRevealInFileManager}>
+        <FolderSearch size={14} class="opacity-70" /><span>{$_('tabContextMenu.revealInFileManager')}</span>
       </button>
 
       <div class="bg-border-main my-1 h-px"></div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Copy, FilePen, FilePlus, FolderOpen, FolderPlus, Trash2 } from 'lucide-svelte';
+  import { Copy, FilePen, FilePlus, FolderOpen, FolderPlus, FolderSearch, Trash2 } from 'lucide-svelte';
   import { _ } from 'svelte-i18n';
   import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
   import type { FileEntry } from '$lib/types/api';
@@ -58,6 +58,13 @@
         onclick={ctx.handleCopyPath}>
         <Copy size={14} class="opacity-70" />
         <span class="flex-1">{$_('fileTree.copyPath')}</span>
+      </button>
+      <button
+        type="button"
+        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        onclick={ctx.handleRevealInFileManager}>
+        <FolderSearch size={14} class="opacity-70" />
+        <span class="flex-1">{$_('fileTree.revealInFileManager')}</span>
       </button>
 
       <div class="bg-border-main my-1 h-px"></div>
