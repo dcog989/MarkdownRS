@@ -9,12 +9,13 @@ import { formatFileSize } from '$lib/utils/fileValidation';
 interface Props {
     tab: EditorTab;
     isActive: boolean;
+    width?: number;
     onclick?: (id: string) => void;
     onclose?: (e: MouseEvent | KeyboardEvent, tabId: string) => void;
     oncontextmenu?: (e: MouseEvent, tabId: string) => void;
 }
 
-let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
+let { tab, isActive, width, onclick, onclose, oncontextmenu }: Props = $props();
 
 let isFileMissing = $derived(tab.fileCheckFailed === true);
 let isCollapsed = $derived(appContext.settings.collapsePinnedTabs && tab.isPinned);
@@ -59,7 +60,7 @@ let tooltipContent = $derived.by(() => {
     class:rounded-t-md={true}
     style:min-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMin}px`}
     style:max-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMax}px`}
-    style:width={isCollapsed ? '36px' : 'auto'}
+    style:width={width ? `${width}px` : isCollapsed ? '36px' : 'auto'}
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
         e.preventDefault();

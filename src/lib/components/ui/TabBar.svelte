@@ -34,8 +34,14 @@ let currentDragX = $state(0);
 let contextMenuTabId: string | null = $state(null);
 
 const PEEK_AMOUNT = 55;
+const PLUS_BUTTON_WIDTH = 32;
+const COLLAPSED_PIN_WIDTH = 36;
+const TAB_GAP = 8;
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
+
+let collapseMode = $state(false);
+let collapseWidth = $state(0);
 let showTabBarContextMenu = $state(false);
 let tabBarContextMenuX = $state(0);
 let tabBarContextMenuY = $state(0);
@@ -95,7 +101,13 @@ onMount(() => {
     window.addEventListener('keydown', mru.onKeyDown);
     window.addEventListener('keyup', mru.onKeyUp);
 
+    if (scrollContainer) {
+        resizeObserver = new ResizeObserver(() => updateTabWidths());
+        resizeObserver.observe(scrollContainer);
+    }
+
     return () => {
+        resizeObserver?.disconnect();
         mru.cleanup();
         window.removeEventListener('keydown', mru.onKeyDown);
         window.removeEventListener('keyup', mru.onKeyUp);
@@ -108,6 +120,8 @@ onDestroy(() => {
 
 let showLeftFade = $state(false);
 let showRightFade = $state(false);
+
+let resizeObserver: ResizeObserver | undefined;
 
 function updateFadeIndicators() {
     if (!scrollContainer) return;
@@ -171,6 +185,95 @@ $effect(() => {
     if (appContext.app.activeTabId) scrollToActive();
 });
 
+function measureTabNaturalWidth(tabEl: HTMLElement, tab: EditorTab): number {
+    if (appContext.settings.collapsePinnedTabs && tab.isPinned) {
+        return COLLAPSED_PIN_WIDTH;
+    }
+
+    const titleEl = tabEl.querySelector('span.pointer-events-none.truncate');
+    if (!(titleEl instanceof HTMLElement)) {
+        return appContext.settings.tabWidthMin;
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(titleEl);
+    const titleWidth = range.getBoundingClientRect().width;
+    range.detach();
+
+    const icon = tabEl.querySelector('svg');
+    const iconWidth = icon?.getBoundingClientRect().width ?? 14;
+    const cs = getComputedStyle(tabEl);
+    const padding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const border = parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+
+    const natural = iconWidth + TAB_GAP + padding + border + titleWidth;
+    return Math.min(
+        Math.max(natural, appContext.settings.tabWidthMin),
+        appContext.settings.tabWidthMax,
+    );
+}
+
+function updateTabWidths() {
+    const container = scrollContainer;
+    if (!container) return;
+
+    const tabs = appContext.editor.tabs;
+    if (tabs.length === 0) {
+        collapseMode = false;
+        return;
+    }
+
+    const available = container.clientWidth - PLUS_BUTTON_WIDTH;
+    if (available <= 0) return;
+
+    let sumNatural = 0;
+    for (const tab of tabs) {
+        const tabEl = container.querySelector(`[data-tab-id="${tab.id}"]`);
+        const natural =
+            tabEl instanceof HTMLElement
+                ? measureTabNaturalWidth(tabEl, tab)
+                : appContext.settings.tabWidthMin;
+        sumNatural += natural;
+    }
+
+    if (sumNatural <= available) {
+        collapseMode = false;
+        return;
+    }
+
+    collapseMode = true;
+    const pinnedCount = tabs.filter(
+        (tab) => appContext.settings.collapsePinnedTabs && tab.isPinned,
+    ).length;
+    const nonPinnedCount = tabs.length - pinnedCount;
+    const availableForNonPinned = available - pinnedCount * COLLAPSED_PIN_WIDTH;
+    collapseWidth =
+        nonPinnedCount > 0
+            ? Math.max(
+                  appContext.settings.tabWidthMin,
+                  Math.floor(availableForNonPinned / nonPinnedCount),
+              )
+            : appContext.settings.tabWidthMin;
+}
+
+function tabItemWidth(tab: EditorTab): number | undefined {
+    if (!collapseMode) return undefined;
+    if (appContext.settings.collapsePinnedTabs && tab.isPinned) return COLLAPSED_PIN_WIDTH;
+    return collapseWidth;
+}
+
+$effect(() => {
+    void scrollContainer;
+    void appContext.settings.tabWidthMin;
+    void appContext.settings.tabWidthMax;
+    void appContext.settings.collapsePinnedTabs;
+    for (const tab of appContext.editor.tabs) {
+        void tab.title;
+        void tab.customTitle;
+        void tab.isPinned;
+    }
+    updateTabWidths();
+});
 
 </script>
 
@@ -236,6 +339,9 @@ $effect(() => {
                     animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
                     style:opacity={isDragging && draggingId === tab.id ? 0.4 : 1}
                     style:z-index={isDragging && draggingId === tab.id ? 100 : 0}
+                    style:flex={tabItemWidth(tab) !== undefined
+                        ? `0 0 ${tabItemWidth(tab)}px`
+                        : undefined}
                     onpointerdown={(e) =>
                         sortController.startDrag(
                             e,
@@ -244,6 +350,7 @@ $effect(() => {
                         )}>
                     <TabButton
                         {tab}
+                        width={tabItemWidth(tab)}
                         isActive={appContext.app.activeTabId === tab.id}
                         onclose={(_, id) => requestCloseTab(id)}
                         oncontextmenu={(e, id) => {
