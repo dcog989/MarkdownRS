@@ -2,6 +2,7 @@ type SortableOptions<T> = {
   items: T[];
   idKey: keyof T;
   container: HTMLElement | undefined;
+  itemSelector: string;
   onSort: (newItems: T[]) => void;
   onDragStart: (id: string, startX: number, offset: number) => void;
   onDragMove: (currentX: number) => void;
@@ -53,7 +54,7 @@ export class SortableController<T> {
     // Cache layout
     if (this.options.container) {
       this.layoutCache = Array.from(this.options.container.children)
-        .filter((el) => el.getAttribute('role') === 'listitem')
+        .filter((el) => el.matches(this.options.itemSelector))
         .map((el) => {
           const r = el.getBoundingClientRect();
           return { center: r.left + r.width / 2, width: r.width };

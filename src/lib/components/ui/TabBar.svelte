@@ -52,6 +52,7 @@ const sortController = new SortableController<EditorTab>({
     items: [],
     idKey: 'id',
     container: undefined,
+    itemSelector: '[data-tab-item="true"]',
     onSort: (newItems) => {
         reorderTabs(newItems);
     },
