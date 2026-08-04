@@ -18,7 +18,7 @@
     "dev": "tauri dev",
     "format": "bunx biome format --write . && cd src-tauri && cargo fmt",
     "format:check": "bunx biome format . && cd src-tauri && cargo fmt -- --check",
-    "gen-icons": "python3 scripts/gen-icons.py",
+    "gen-icons": "tauri icon src-tauri/icons/icon.png",
     "package": "bun run build && mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si --noconfirm --force",
     "preview": "vite preview",
     "release": "bun scripts/version.js --git",
