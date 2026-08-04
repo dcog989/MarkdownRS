@@ -75,6 +75,9 @@ $effect(() => {
         if (cmView) closeSearchPanel(cmView);
         wasOpen = false;
         clearSearch(cmView);
+        // Restore editor focus for close paths that don't go through close()
+        // (e.g. ctrl+f toggling the panel shut).
+        cmView?.focus();
     }
 });
 
@@ -223,15 +226,17 @@ function handleGlobalKeydown(e: KeyboardEvent) {
     }
 }
 
-function handleBlur() {
+function handleBlur(e: FocusEvent) {
     if (!appContext.settings.findPanelCloseOnBlur) return;
 
-    setTimeout(() => {
-        const activeElement = document.activeElement;
-        if (panelRef && !panelRef.contains(activeElement) && !isMouseOver) {
-            close();
-        }
-    }, 0);
+    // Decide from the blur event's relatedTarget instead of a deferred
+    // activeElement check: opening the panel schedules a focusInput() that can
+    // land after the blur and re-focus the search field, so a delayed check
+    // would see focus back inside the panel and never close it.
+    const next = e.relatedTarget;
+    if (next instanceof Node && panelRef?.contains(next)) return;
+    if (isMouseOver) return;
+    close();
 }
 
 function navigateToTab(tabId: string) {

@@ -26,9 +26,14 @@ export function triggerScrollToTab() {
   interfaceStore.scrollToTabSignal++;
 }
 
-export function openFind() {
+export function openFind(): boolean {
+  if (interfaceStore.showFind) {
+    closeFind();
+    return true;
+  }
   interfaceStore.isReplaceMode = false;
   interfaceStore.showFind = true;
+  return true;
 }
 
 export function openReplace() {
