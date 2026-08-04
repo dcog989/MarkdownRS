@@ -8,7 +8,7 @@ import {
     replaceNext,
 } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
-import { ChevronDown, ChevronRight, Replace, Search, X } from 'lucide-svelte';
+import { Replace, Search, X } from 'lucide-svelte';
 import { onMount, tick, untrack } from 'svelte';
 import { _ } from 'svelte-i18n';
 import Input from '$lib/components/ui/Input.svelte';
@@ -260,18 +260,16 @@ onMount(() => {
         tabindex="-1">
         <div class="bg-border-main text-fg-default flex items-center border-b p-2">
             <div class="flex flex-1 items-center gap-2">
+                <span class="text-ui font-semibold">{$_('findReplace.find')} {isReplaceMode ? $_('findReplace.andReplace') : ''}</span>
                 <button
                     type="button"
                     class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
+                    class:bg-bg-active={isReplaceMode}
+                    class:text-accent-secondary={isReplaceMode}
                     onclick={() => (isReplaceMode = !isReplaceMode)}
                     title={$_('findReplace.toggleReplaceMode')}>
-                    {#if isReplaceMode}
-                        <ChevronDown size={14} />
-                    {:else}
-                        <ChevronRight size={14} />
-                    {/if}
+                    <Replace size={14} />
                 </button>
-                <span class="text-ui font-semibold">{$_('findReplace.find')} {isReplaceMode ? $_('findReplace.andReplace') : ''}</span>
             </div>
             <button
                 type="button"
