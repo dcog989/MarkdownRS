@@ -45,6 +45,8 @@ export const en = {
   fileTree: {
     showHidden: 'Show Hidden Files',
     showMarkdownOnly: 'Show only Markdown Files',
+    lockTree: 'Lock Tree',
+    unlockTree: 'Unlock Tree',
     collapseAll: 'Collapse all',
     refresh: 'Refresh',
     open: 'Open',

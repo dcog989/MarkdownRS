@@ -11,6 +11,7 @@ import FileTree from './FileTree.svelte';
 
 vi.mock('$lib/commands/directory', () => ({
   listDirectory: vi.fn(),
+  getDirectoryMtime: vi.fn(),
 }));
 
 vi.mock('$lib/utils/fileSystem', () => ({
@@ -61,6 +62,7 @@ describe('FileTree', () => {
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
     settingsState.fileTreeShowHidden = false;
+    settingsState.fileTreeLocked = false;
     mockedListDirectory.mockReset();
   });
 
@@ -179,6 +181,92 @@ describe('FileTree', () => {
       // No tab switch happened, so the tree must stay where the user navigated.
       await waitFor(() => expect(fileTreeStore.root).toBe('/home/user'));
       expect(fileTreeStore.root).toBe('/home/user');
+    } finally {
+      appContext.editor.tabs = originalTabs;
+      appContext.app.activeTabId = originalActiveTabId;
+    }
+  });
+
+  it('keeps the tree root fixed while locked, even when the active file folder changes', async () => {
+    mockedListDirectory.mockResolvedValue([]);
+    settingsState.fileTreeLocked = true;
+    fileTreeStore.root = '/locked';
+    fileTreeStore.expanded.set('/locked', true);
+    fileTreeStore.children.set('/locked', [entry('doc.md')]);
+    const originalTabs = appContext.editor.tabs;
+    const originalActiveTabId = appContext.app.activeTabId;
+
+    render(FileTree);
+    expect(fileTreeStore.root).toBe('/locked');
+
+    appContext.editor.tabs = [makeTab('t1', '/other/folder/doc.md')];
+    appContext.app.activeTabId = 't1';
+
+    try {
+      await new Promise((r) => setTimeout(r, 30));
+      expect(fileTreeStore.root).toBe('/locked');
+    } finally {
+      appContext.editor.tabs = originalTabs;
+      appContext.app.activeTabId = originalActiveTabId;
+    }
+  });
+
+  it('hides the parent navigation row while locked', () => {
+    settingsState.fileTreeLocked = true;
+    fileTreeStore.root = '/home/user/project';
+    fileTreeStore.expanded.set('/home/user/project', true);
+    fileTreeStore.children.set('/home/user/project', []);
+
+    render(FileTree);
+
+    expect(screen.queryByText('..')).toBeFalsy();
+  });
+
+  it('does not navigate into a folder on double-click while locked', async () => {
+    settingsState.fileTreeLocked = true;
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('sub', true)]);
+
+    render(FileTree);
+    await fireEvent.dblClick(await screen.findByText('sub'));
+
+    expect(fileTreeStore.root).toBe('/root');
+  });
+
+  it('still opens files and expands folders while locked', async () => {
+    mockedListDirectory.mockResolvedValue([entry('b.md')]);
+    settingsState.fileTreeLocked = true;
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('a.md'), entry('sub', true)]);
+
+    render(FileTree);
+
+    await fireEvent.click(await screen.findByText('a.md'));
+    expect(mockedOpenFile).toHaveBeenCalledWith('/root/a.md');
+
+    await fireEvent.click(await screen.findByText('sub'));
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
+  });
+
+  it('still reveals an open document inside the tree while locked', async () => {
+    mockedListDirectory.mockResolvedValue([entry('doc.md')]);
+    settingsState.fileTreeLocked = true;
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('sub', true)]);
+    const originalTabs = appContext.editor.tabs;
+    const originalActiveTabId = appContext.app.activeTabId;
+
+    render(FileTree);
+    appContext.editor.tabs = [makeTab('t1', '/root/sub/doc.md')];
+    appContext.app.activeTabId = 't1';
+
+    try {
+      await waitFor(() => expect(fileTreeStore.expanded.get('/root/sub')).toBe(true));
+      expect(await screen.findByText('doc.md')).toBeTruthy();
+      expect(fileTreeStore.root).toBe('/root');
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;

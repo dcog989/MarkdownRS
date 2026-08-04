@@ -15,6 +15,8 @@
         FolderTree,
         FoldVertical,
         LoaderCircle,
+        Lock,
+        LockOpen,
         RefreshCw,
     } from 'lucide-svelte';
     import { onMount, tick } from 'svelte';
@@ -40,6 +42,7 @@
     import {
         settingsState,
         toggleFileTree,
+        toggleFileTreeLocked,
     } from '$lib/stores/settingsState.svelte';
     import { appContext } from '$lib/stores/state.svelte';
     import type { FileEntry } from '$lib/types/api';
@@ -58,9 +61,11 @@
     // The tree follows the active document: switching tabs repositions the root
     // to that file's folder. It only reacts to a change of the active file's
     // folder, not to the tree root itself, so navigating the tree (go up, go
-    // into) is freely allowed without it snapping back.
+    // into) is freely allowed without it snapping back. When the tree is locked
+    // the root is pinned in place, so the active file is never followed.
     let lastFollowedDir = '';
     $effect(() => {
+        if (settingsState.fileTreeLocked) return;
         if (!rootDir || rootDir === lastFollowedDir) return;
         lastFollowedDir = rootDir;
         if (rootDir !== fileTreeStore.root) {
@@ -87,9 +92,11 @@
     });
 
     // The tree rows, with a ".." parent entry on top whenever a parent exists.
+    // The parent entry is hidden while the tree is locked, since the root is
+    // pinned and navigation up is disabled.
     let allRows = $derived.by(() => {
         const rows = computeTreeRows();
-        if (!fileTreeStore.root || !canNavigateUp()) return rows;
+        if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked) return rows;
         return [
             {
                 entry: {
@@ -160,6 +167,8 @@
 
     function handleRowClick(e: MouseEvent, row: TreeRow) {
         if (row.isParent) {
+            // Root navigation is disabled while the tree is locked.
+            if (settingsState.fileTreeLocked) return;
             // Single click navigates up; ignore the second click of a dblclick
             // so a double-click does not ascend two levels.
             if (e.detail > 1) return;
@@ -177,6 +186,7 @@
     }
 
     function handleRowDoubleClick(row: TreeRow) {
+        if (settingsState.fileTreeLocked) return;
         if (row.isParent || !row.entry.is_dir) return;
         navigateInto(row.entry.path);
     }
@@ -297,6 +307,24 @@
                     saveSettings();
                 }}>
                 <FileText size={14} />
+            </button>
+            <button
+                type="button"
+                class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+                class:bg-bg-active={settingsState.fileTreeLocked}
+                class:text-accent-secondary={settingsState.fileTreeLocked}
+                use:tooltip={$_(
+                    settingsState.fileTreeLocked ? 'fileTree.unlockTree' : 'fileTree.lockTree',
+                )}
+                onclick={() => {
+                    toggleFileTreeLocked();
+                    saveSettings();
+                }}>
+                {#if settingsState.fileTreeLocked}
+                    <LockOpen size={14} />
+                {:else}
+                    <Lock size={14} />
+                {/if}
             </button>
             <button
                 type="button"
