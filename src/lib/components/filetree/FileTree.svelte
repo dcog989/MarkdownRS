@@ -45,7 +45,6 @@
     import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
     import { openFile } from '$lib/utils/fileSystem';
-    import { formatFileSize } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
     import FileTreeContextMenu from './FileTreeContextMenu.svelte';
 
@@ -411,12 +410,6 @@
                             {/if}
 
                             <span class="ft-name min-w-0 flex-1 truncate">{row.entry.name}</span>
-
-                            {#if !row.entry.is_dir && row.entry.size > 0}
-                                <span class="ft-size text-fg-muted shrink-0 text-[10px] opacity-60">
-                                    {formatFileSize(row.entry.size)}
-                                </span>
-                            {/if}
                         </button>
                     {/each}
                 </div>
@@ -492,11 +485,6 @@
         bottom: 0;
         width: 2px;
         background-color: var(--accent-secondary);
-    }
-
-    .ft-size {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-            'Courier New', monospace;
     }
 
     .ft-resize-handle {
