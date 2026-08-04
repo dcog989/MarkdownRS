@@ -63,6 +63,7 @@ describe('FileTree', () => {
     fileTreeStore.loading.clear();
     settingsState.fileTreeShowHidden = false;
     settingsState.fileTreeLocked = false;
+    settingsState.fileTreeLockedRoot = '';
     mockedListDirectory.mockReset();
   });
 
@@ -267,6 +268,53 @@ describe('FileTree', () => {
       await waitFor(() => expect(fileTreeStore.expanded.get('/root/sub')).toBe(true));
       expect(await screen.findByText('doc.md')).toBeTruthy();
       expect(fileTreeStore.root).toBe('/root');
+    } finally {
+      appContext.editor.tabs = originalTabs;
+      appContext.app.activeTabId = originalActiveTabId;
+    }
+  });
+
+  it('captures the current root when the tree is locked', async () => {
+    fileTreeStore.root = '/home/user/project';
+    fileTreeStore.expanded.set('/home/user/project', true);
+    fileTreeStore.children.set('/home/user/project', [entry('a.md')]);
+
+    render(FileTree);
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Lock Tree' }));
+
+    expect(settingsState.fileTreeLocked).toBe(true);
+    expect(settingsState.fileTreeLockedRoot).toBe('/home/user/project');
+  });
+
+  it('clears the pinned root when unlocking the tree', async () => {
+    settingsState.fileTreeLocked = true;
+    settingsState.fileTreeLockedRoot = '/home/user/project';
+    fileTreeStore.root = '/home/user/project';
+    fileTreeStore.expanded.set('/home/user/project', true);
+    fileTreeStore.children.set('/home/user/project', [entry('a.md')]);
+
+    render(FileTree);
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Unlock Tree' }));
+
+    expect(settingsState.fileTreeLocked).toBe(false);
+    expect(settingsState.fileTreeLockedRoot).toBe('');
+  });
+
+  it('restores the pinned root on startup while locked', async () => {
+    mockedListDirectory.mockResolvedValue([]);
+    settingsState.fileTreeLocked = true;
+    settingsState.fileTreeLockedRoot = '/home/user/project';
+    const originalTabs = appContext.editor.tabs;
+    const originalActiveTabId = appContext.app.activeTabId;
+
+    appContext.editor.tabs = [makeTab('t1', '/other/folder/doc.md')];
+    appContext.app.activeTabId = 't1';
+
+    try {
+      render(FileTree);
+      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user/project'));
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;

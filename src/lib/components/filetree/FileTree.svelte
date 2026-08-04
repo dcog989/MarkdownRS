@@ -73,6 +73,17 @@
         }
     });
 
+    // While the tree is locked, restore the pinned root from settings on
+    // startup (the follow effect above is disabled in that state). Placed
+    // before the reveal effect so the active file can still be revealed
+    // inside the restored root.
+    $effect(() => {
+        if (!settingsState.fileTreeLocked) return;
+        const lockedRoot = settingsState.fileTreeLockedRoot;
+        if (!lockedRoot || lockedRoot === fileTreeStore.root) return;
+        setRoot(lockedRoot);
+    });
+
     // When the active document changes, refresh its directory so the tree
     // reflects saves/renames/new files next to the file you are editing.
     let lastActiveDir = '';
@@ -163,6 +174,16 @@
         if (top < scrollEl.scrollTop || bottom > scrollEl.scrollTop + viewportHeight) {
             scrollEl.scrollTop = Math.max(0, top + ROW_HEIGHT / 2 - viewportHeight / 2);
         }
+    }
+
+    function handleLockToggle() {
+        toggleFileTreeLocked();
+        if (settingsState.fileTreeLocked) {
+            settingsState.fileTreeLockedRoot = fileTreeStore.root;
+        } else {
+            settingsState.fileTreeLockedRoot = '';
+        }
+        saveSettings();
     }
 
     function handleRowClick(e: MouseEvent, row: TreeRow) {
@@ -313,13 +334,13 @@
                 class="hover-surface flex h-6 w-6 items-center justify-center rounded"
                 class:bg-bg-active={settingsState.fileTreeLocked}
                 class:text-accent-secondary={settingsState.fileTreeLocked}
+                aria-label={$_(
+                    settingsState.fileTreeLocked ? 'fileTree.unlockTree' : 'fileTree.lockTree',
+                )}
                 use:tooltip={$_(
                     settingsState.fileTreeLocked ? 'fileTree.unlockTree' : 'fileTree.lockTree',
                 )}
-                onclick={() => {
-                    toggleFileTreeLocked();
-                    saveSettings();
-                }}>
+                onclick={handleLockToggle}>
                 {#if settingsState.fileTreeLocked}
                     <LockOpen size={14} />
                 {:else}
