@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Database, Keyboard, Settings } from 'lucide-svelte';
+import { Database, Keyboard, Settings, Settings2 } from 'lucide-svelte';
 import { _ } from 'svelte-i18n';
 import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
-import { toggleData, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
+import { toggleData, toggleRumdlConfig, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
@@ -151,6 +151,17 @@ function updateSetting(setting: SettingDef, value: unknown) {
                     title={`${$_('settings.keyboardShortcuts')} (${shortcutsShortcut})`}
                     aria-label={$_('settings.keyboardShortcuts')}>
                     <Keyboard size={16} />
+                </button>
+                <button
+                    type="button"
+                    class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
+                    onclick={() => {
+                        onClose();
+                        toggleRumdlConfig();
+                    }}
+                    title={$_('rumdlConfig.title')}
+                    aria-label={$_('rumdlConfig.title')}>
+                    <Settings2 size={16} />
                 </button>
                 <button
                     type="button"
