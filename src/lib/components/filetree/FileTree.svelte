@@ -275,13 +275,13 @@
                 CONFIG.FILETREE.MIN_WIDTH,
                 Math.min(CONFIG.FILETREE.MAX_WIDTH, newWidth),
             );
-            saveSettings();
         };
         const onUp = () => {
             isResizing = false;
             window.removeEventListener('mousemove', onMove);
             window.removeEventListener('mouseup', onUp);
             document.body.style.cursor = '';
+            if (didDrag) saveSettings();
         };
         window.addEventListener('mousemove', onMove);
         window.addEventListener('mouseup', onUp);
