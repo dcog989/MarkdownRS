@@ -89,7 +89,11 @@ export async function persistSession(): Promise<void> {
     const activeTabs = editorStore.tabs;
     const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
       const ts = getTransientState(t.id);
-      const needsContent = ts ? ts.contentChanged || !ts.isPersisted : true;
+      // Content is only authoritative once a tab is loaded into memory. Tabs
+      // restored from the session DB start with a '' placeholder and
+      // contentLoaded=false; writing that placeholder would erase the stored
+      // content of dirty unsaved tabs that haven't been lazily loaded yet.
+      const needsContent = (t.contentLoaded ?? false) && (ts ? ts.contentChanged || !ts.isPersisted : true);
       return toRustTabState(t, ts, index, needsContent, mruPositionMap.get(t.id) ?? null);
     });
 
