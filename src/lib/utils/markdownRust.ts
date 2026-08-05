@@ -25,7 +25,6 @@ export async function renderMarkdown(
     await error(`[Markdown] Render error: Rendering returned null`);
     return {
       html: `<div class="p-4 border border-danger text-danger"><strong>${translate('preview.renderFailed')}:</strong><br/>${translate('preview.renderNull')}</div>`,
-      line_map: {},
       word_count: 0,
       char_count: 0,
       headings: [],
