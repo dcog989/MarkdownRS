@@ -22,7 +22,7 @@ struct DictEntry {
     category: DictCategory,
 }
 
-static ALL_TECHNICAL_DICTS: &[DictEntry] = &[
+static ALL_EXTRA_DICTS: &[DictEntry] = &[
     DictEntry {
         id: "medical-terms",
         url: cspell_url!("main", "/medicalterms/dict/medicalterms-en.txt"),
@@ -59,14 +59,11 @@ static ALL_TECHNICAL_DICTS: &[DictEntry] = &[
 ];
 
 pub fn resolve_technical_url(id: &str) -> Option<&'static str> {
-    ALL_TECHNICAL_DICTS
-        .iter()
-        .find(|e| e.id == id)
-        .map(|e| e.url)
+    ALL_EXTRA_DICTS.iter().find(|e| e.id == id).map(|e| e.url)
 }
 
 pub fn list_technical_ids() -> Vec<String> {
-    ALL_TECHNICAL_DICTS
+    ALL_EXTRA_DICTS
         .iter()
         .filter(|e| matches!(e.category, Technical))
         .map(|e| e.id.to_string())
@@ -74,7 +71,7 @@ pub fn list_technical_ids() -> Vec<String> {
 }
 
 pub fn list_scientific_ids() -> Vec<String> {
-    ALL_TECHNICAL_DICTS
+    ALL_EXTRA_DICTS
         .iter()
         .filter(|e| matches!(e.category, Scientific))
         .map(|e| e.id.to_string())
