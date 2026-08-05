@@ -1,5 +1,4 @@
-use crate::state::AppState;
-use crate::state::SpellcheckStatus;
+use crate::state::{AppState, SpellcheckConfig, SpellcheckStatus};
 use crate::utils;
 use crate::utils::{MutexExt, RwLockExt};
 use spellbook::Dictionary;
@@ -241,18 +240,28 @@ pub async fn init_spellchecker(
     technical_dictionaries: Option<bool>,
     science_dictionaries: Option<bool>,
 ) -> Result<(), String> {
-    {
-        let mut status = state.spellcheck_status.lock_or_recover();
-        if *status == SpellcheckStatus::Loading || *status == SpellcheckStatus::Ready {
-            log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready");
-            return Ok(());
-        }
-        *status = SpellcheckStatus::Loading;
-    }
-
     let dict_codes = dictionaries.unwrap_or_else(|| vec!["en".to_string()]);
     let enable_technical = technical_dictionaries.unwrap_or(true);
     let enable_science = science_dictionaries.unwrap_or(false);
+
+    {
+        let mut status = state.spellcheck_status.lock_or_recover();
+        let mut loaded = state.loaded_spellcheck_config.lock_or_recover();
+        let requested = SpellcheckConfig::new(&dict_codes, enable_technical, enable_science);
+
+        if *status == SpellcheckStatus::Loading {
+            log::info!("[SPELLCHECK-RUST] Spellchecker already initializing");
+            return Ok(());
+        }
+
+        if *status == SpellcheckStatus::Ready && loaded.as_ref() == Some(&requested) {
+            log::info!("[SPELLCHECK-RUST] Spellchecker already ready for requested dictionaries");
+            return Ok(());
+        }
+
+        *loaded = Some(requested);
+        *status = SpellcheckStatus::Loading;
+    }
 
     log::info!(
         "Starting spellchecker initialization. Langs: {:?}, Tech: {}, Sci: {}",
