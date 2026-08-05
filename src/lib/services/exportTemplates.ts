@@ -1,3 +1,19 @@
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Sanitizes a CSS font-family value so it cannot break out of the declaration
+// with `;`, `{`, `}`, or a backslash escape. Quoted multi-word font names are
+// preserved.
+function escapeCssUnity(value: string): string {
+  return value.replace(/[;{}\\]/g, '');
+}
+
 export function buildExportHtml(
   title: string,
   bodyContent: string,
@@ -10,7 +26,7 @@ export function buildExportHtml(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>${escapeHtml(title)}</title>
     <style>
         ${baseVars}
         body {
@@ -18,7 +34,7 @@ export function buildExportHtml(
             padding: 2rem;
             background-color: var(--editor-bg);
             color: var(--editor-preview-fg-body);
-            font-family: ${fontFamily};
+            font-family: ${escapeCssUnity(fontFamily)};
             line-height: 1.6;
         }
         .prose { max-width: 800px; margin: 0 auto; }
