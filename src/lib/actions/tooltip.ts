@@ -35,9 +35,16 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
 
   return {
     update(newContent: string | undefined | null) {
-      handleMouseLeave();
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
       content = newContent;
-      if (appContext.ui.tooltip.visible && content) {
+      if (!content) {
+        hideTooltip();
+        return;
+      }
+      if (appContext.ui.tooltip.visible) {
         appContext.ui.tooltip.content = content;
       }
     },
