@@ -47,15 +47,17 @@ fn callout_icon(kind: &str) -> String {
 /// `</div>`. Blockquotes are matched with a stack so nested blockquotes and
 /// callouts are handled correctly. All edits are spliced into a fresh buffer by
 /// descending position, so nested replacements never shift earlier offsets.
+///
+/// Raw HTML `<blockquote>` tags (passed through when comrak renders with
+/// `unsafe`) may unbalance the open/close counts. The stack matcher tolerates
+/// this: unmatched opens are never spliced and unmatched closes pop nothing, so
+/// raw HTML never disables callout transformation for the rest of the document.
 pub(super) fn transform_callouts(html: &str) -> String {
     let opens: Vec<usize> = html.match_indices("<blockquote").map(|(i, _)| i).collect();
     let closes: Vec<usize> = html
         .match_indices("</blockquote>")
         .map(|(i, _)| i)
         .collect();
-    if opens.len() != closes.len() {
-        return html.to_string();
-    }
 
     let mut stack: Vec<usize> = Vec::new();
     let mut edits: Vec<(usize, usize, String)> = Vec::new();
@@ -219,6 +221,28 @@ mod tests {
         let html = render_gfm("> [!CUSTOM]\n> not a box\n");
         assert!(html.contains("[!CUSTOM]"));
         assert!(!html.contains("callout"));
+    }
+
+    #[test]
+    fn raw_html_blockquote_does_not_break_callout_transform() {
+        let doc = "\
+<blockquote>raw html that is never closed\n\
+\n\
+> [!NOTE]\n\
+> First note.\n\
+\n\
+> [!TIP]\n\
+> Second tip.\n";
+        let html = render_gfm(doc);
+        assert!(
+            html.contains(r#"<div class="callout callout-note""#),
+            "note callout should transform, got: {html}"
+        );
+        assert!(
+            html.contains(r#"<div class="callout callout-tip""#),
+            "tip callout should transform, got: {html}"
+        );
+        assert_eq!(html.matches("class=\"callout-icon\"").count(), 2);
     }
 
     #[test]
