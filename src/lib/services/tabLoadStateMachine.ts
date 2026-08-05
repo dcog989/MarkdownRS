@@ -49,6 +49,13 @@ function setTabLoadState(tabId: string, state: TabLoadState): void {
   tabLoadStates.set(tabId, state);
 }
 
+// LOADING is not a valid source for UNLOADED, so the transition validator would
+// reject a partial-load reset. This unconditional reset marks a tab for retry after
+// an interrupted load (e.g. the active tab changed mid-await).
+function resetTabLoadState(tabId: string): void {
+  tabLoadStates.set(tabId, TabLoadState.UNLOADED);
+}
+
 const loadingRequests = new Map<string, number>();
 
 export async function loadTabContentLazy(tabId: string): Promise<void> {
@@ -84,6 +91,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     const currentActiveId = appState.activeTabId;
     if (currentActiveId !== tabId) {
       logger.session.debug('TabSwitchedDuringLoad', { tabId, currentActiveId });
+      resetTabLoadState(tabId);
       return;
     }
 
