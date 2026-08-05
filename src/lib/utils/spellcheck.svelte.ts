@@ -12,6 +12,13 @@ import { callBackend } from './backend';
 const MAX_SUGGESTION_CACHE_SIZE = 200;
 const MAX_VALID_CACHE_SIZE = 5000;
 
+// The linter stores possessive forms ("word's") under their base ("word") in
+// both validCache and misspelledCache, so lookups must strip the suffix too.
+function stripPossessiveSuffix(word: string): string {
+  const lower = word.toLowerCase();
+  return lower.endsWith("'s") ? lower.slice(0, -2) : lower;
+}
+
 export class SpellcheckManager {
   dictionaryLoaded = $state(false);
   misspelledCache = $state(new SvelteSet<string>());
@@ -86,7 +93,7 @@ export class SpellcheckManager {
 
   isWordValid(word: string): boolean {
     if (!this.dictionaryLoaded) return true;
-    const w = word.toLowerCase();
+    const w = stripPossessiveSuffix(word);
     if (this.customDictionary.has(w)) return true;
     return !this.misspelledCache.has(w);
   }
@@ -108,7 +115,7 @@ export class SpellcheckManager {
     const w = word.trim();
     if (!w || !this.dictionaryLoaded) return;
 
-    if (!this.misspelledCache.has(w.toLowerCase())) return;
+    if (!this.misspelledCache.has(stripPossessiveSuffix(w))) return;
 
     if (this.suggestionCache.has(w) || this.pendingFetches.has(w)) return;
 
