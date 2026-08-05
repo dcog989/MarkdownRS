@@ -2,6 +2,7 @@ import { translate } from '$lib/i18n';
 import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { callBackendSafe } from '$lib/utils/backend';
+import { hashContent } from '$lib/utils/contentHash';
 import { logger } from '$lib/utils/logger';
 import { byteLength, detectLineEnding } from '$lib/utils/textMetrics';
 
@@ -92,10 +93,30 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
 
   if (!meta) return false;
 
-  if (meta.modified && tab.modified && meta.modified !== tab.modified) {
+  // mtime is formatted at second granularity, so a differing stamp reliably
+  // signals a cross-second edit without a file read.
+  if (tab.modified && meta.modified && meta.modified !== tab.modified) {
     return true;
   }
-  return false;
+
+  if (tab.sizeBytes !== undefined && meta.size !== tab.sizeBytes) {
+    return true;
+  }
+
+  // Same-second edits (or a missing tab.modified) are invisible to mtime, so
+  // compare the file content against the last saved hash. lastSavedHash is the
+  // on-disk baseline even for dirty tabs.
+  const file = await callBackendSafe('read_text_file', { path: tab.path }, 'File:Read', {
+    showToast: false,
+    severity: 'warning',
+    additionalInfo: { path: tab.path, tabId },
+    onError: () => {
+      setFileCheckStatus(tabId, true, true);
+    },
+  });
+  if (!file) return false;
+
+  return hashContent(normalizeLineEndings(file.content)) !== tab.lastSavedHash;
 }
 
 export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
