@@ -6,7 +6,8 @@ import { isMarkdownFile } from '$lib/utils/fileValidation';
 export function isCurrentFileMarkdown(): boolean {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
   if (!activeTab) return true;
-  return activeTab.path ? isMarkdownFile(activeTab.path) : true;
+  if (activeTab.path) return isMarkdownFile(activeTab.path);
+  return activeTab.preferredExtension !== 'txt';
 }
 
 export function runEditorCommand(command: Command): void {
