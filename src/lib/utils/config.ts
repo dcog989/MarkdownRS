@@ -10,7 +10,9 @@ const DEFAULT_CONFIG = {
     SEARCH_DEBOUNCE_MS: 300,
     SMART_TITLE_MAX_LENGTH: 25,
     CLOSED_TABS_HISTORY_LIMIT: 12,
-    LINE_CHANGE_TRACK_LIMIT: 50,
+    // Must cover the max recentChangesCount (99) so the count-based highlight
+    // isn't truncated below what the user configured.
+    LINE_CHANGE_TRACK_LIMIT: 99,
     RECENT_CHANGES_FADE_REFRESH_MS: 1000,
   },
 
