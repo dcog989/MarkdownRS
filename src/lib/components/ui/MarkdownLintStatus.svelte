@@ -116,6 +116,15 @@ async function copyConfigPath() {
                             <ClipboardCopy size={10} class={copied ? 'text-accent' : 'text-fg-muted'} />
                         </button>
                     {/if}
+                    <button
+                        type="button"
+                        class="text-accent-primary hover-surface ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] transition-colors"
+                        onclick={() => {
+                            showPopup = false;
+                            appContext.interface.showRumdlConfig = true;
+                        }}>
+                        {translate('lint.editConfig')}
+                    </button>
                 </div>
             </div>
         {/snippet}

@@ -204,6 +204,80 @@ pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<Path
         .or_else(discover_user_config_path)
 }
 
+/// Resolve the target rumdl config file for editing.
+///
+/// For a file-backed document: the discovered project config, or
+/// `<project_root>/.rumdl.toml` (to be created) if none exists.
+/// For a file-less document: the discovered user config, or the canonical
+/// platform config location (e.g. `~/.config/rumdl/rumdl.toml`) if none exists.
+pub fn resolve_config_target(file_path: Option<&Path>, project_root: Option<&Path>) -> PathBuf {
+    match file_path {
+        Some(fp) => {
+            let file_dir = fp.parent().unwrap_or_else(|| Path::new(""));
+            let pr = project_root.unwrap_or(file_dir);
+            SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, pr)
+                .unwrap_or_else(|| pr.join(".rumdl.toml"))
+        },
+        None => {
+            let home = dirs::home_dir().unwrap_or_default();
+            let pr = project_root.unwrap_or(&home);
+            discover_user_config_path().unwrap_or_else(|| {
+                dirs::config_dir()
+                    .map(|d| d.join("rumdl").join("rumdl.toml"))
+                    .unwrap_or_else(|| pr.join(".rumdl.toml"))
+            })
+        },
+    }
+}
+
+/// The config file currently in effect for the given file, if any.
+///
+/// Unlike `resolve_config_target`, this never invents a path to create; it
+/// reports the config the linter actually loaded (project or user fallback).
+pub fn loaded_config_path(
+    file_path: Option<&Path>,
+    project_root: Option<&Path>,
+) -> Option<PathBuf> {
+    match file_path {
+        Some(fp) => {
+            let file_dir = fp.parent().unwrap_or_else(|| Path::new(""));
+            let pr = project_root.unwrap_or(file_dir);
+            discover_config_path(file_dir, pr)
+        },
+        None => discover_user_config_path(),
+    }
+}
+
+/// Validate rumdl config content without writing to the target file.
+///
+/// Parses and validates the content exactly as the linter would, using a
+/// temporary file co-located with the target so relative `extends` paths
+/// resolve identically. The temp file is removed before returning.
+pub fn validate_config_content(
+    content: &str,
+    project_root: &Path,
+    target: &Path,
+) -> Result<(), String> {
+    let dir = target
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let unique = format!(
+        "{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or_default()
+    );
+    let tmp = dir.join(format!(".rumdl-validate-{unique}.toml"));
+
+    std::fs::write(&tmp, content).map_err(|e| format!("Failed to write temp config: {}", e))?;
+    let result = load_full_state(project_root, &tmp);
+    let _ = std::fs::remove_file(&tmp);
+    result.map(|_| ())
+}
+
 /// Load rumdl config + filtered rules, using a cache that invalidates when
 /// the discovered config file's path or mtime changes. Applies to both
 /// file-backed and file-less (unsaved buffer) invocations.
@@ -268,4 +342,62 @@ fn load_cached_rules(candidate_path: Option<PathBuf>, project_root: &Path) -> Ru
     });
 
     Ok((config, rules))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_util::make_temp_dir;
+    use std::fs;
+
+    #[test]
+    fn resolve_config_target_uses_existing_project_config() {
+        let dir = make_temp_dir("target-exists");
+        fs::write(dir.join(".rumdl.toml"), "[global]\n").unwrap();
+        let file = dir.join("notes").join("doc.md");
+
+        let target = resolve_config_target(Some(&file), Some(&dir));
+
+        assert_eq!(target, dir.join(".rumdl.toml"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn resolve_config_target_falls_back_to_project_dotfile() {
+        let dir = make_temp_dir("target-create");
+        let file = dir.join("doc.md");
+
+        let target = resolve_config_target(Some(&file), Some(&dir));
+
+        assert_eq!(target, dir.join(".rumdl.toml"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn validate_config_content_accepts_valid_toml() {
+        let dir = make_temp_dir("validate-ok");
+        let target = dir.join(".rumdl.toml");
+
+        let result = validate_config_content("[global]\ndisable = [\"MD013\"]\n", &dir, &target);
+
+        assert!(result.is_ok());
+        assert!(!target.exists(), "validate must not write to the target");
+        assert!(
+            fs::read_dir(&dir).unwrap().next().is_none(),
+            "validate must clean up its temp file"
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn validate_config_content_rejects_invalid_toml() {
+        let dir = make_temp_dir("validate-bad");
+        let target = dir.join(".rumdl.toml");
+
+        let result = validate_config_content("[global\ninvalid", &dir, &target);
+
+        assert!(result.is_err());
+        assert!(!target.exists());
+        fs::remove_dir_all(&dir).unwrap();
+    }
 }

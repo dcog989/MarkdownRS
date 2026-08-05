@@ -32,6 +32,8 @@ export type ErrorContext =
   | 'Update:Check'
   | 'Update:Install'
   | 'Markdown:Lint'
+  | 'Markdown:ReadRumdlConfig'
+  | 'Markdown:WriteRumdlConfig'
   | 'Data:ExportBookmarks'
   | 'Data:ImportBookmarks'
   | 'Data:ExportFileHistory'

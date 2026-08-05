@@ -393,6 +393,15 @@ export const en = {
     noConfigFile: 'no config file',
     copyConfigPath: 'Copy config path',
     rumdlLabel: 'rumdl',
+    editConfig: 'Edit config',
+  },
+  rumdlConfig: {
+    title: 'rumdl Config',
+    targetLabel: 'Config file',
+    currentlyLoaded: 'Currently active config: {path}',
+    willCreate: 'No config file yet — this file will be created when you save.',
+    placeholder: '# rumdl TOML configuration',
+    saved: 'Saved {path}',
   },
   findReplace: {
     aria: 'Find and Replace',

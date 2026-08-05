@@ -2,6 +2,7 @@ import { editCommands } from './editCommands';
 import { editorCommands } from './editorCommands';
 import { exportCommands } from './exportCommands';
 import { fileCommands } from './fileCommands';
+import { markdownCommands } from './markdownCommands';
 import { navigationCommands } from './navigationCommands';
 import { textOpCommands } from './textOpCommands';
 import type { Command } from './types';
@@ -17,4 +18,5 @@ export const commands: Command[] = [
   ...windowCommands,
   ...editorCommands,
   ...textOpCommands,
+  ...markdownCommands,
 ];

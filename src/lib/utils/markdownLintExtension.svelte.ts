@@ -1,4 +1,5 @@
-import { type Diagnostic, linter } from '@codemirror/lint';
+import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
+import { StateEffect } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { appContext } from '$lib/stores/state.svelte';
 import type { LintDiagnostic } from '$lib/types/api';
@@ -8,6 +9,15 @@ import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 import type { AppEditorView } from '../../global';
 
 const lintCache = new Map<string, { content: string; diagnostics: LintDiagnostic[] }>();
+
+export const markdownLintRefreshEffect = StateEffect.define<null>();
+
+export function forceMarkdownRelint(view: EditorView) {
+  const tabId = (view as AppEditorView)._currentTabId;
+  if (tabId) lintCache.delete(tabId);
+  view.dispatch({ effects: markdownLintRefreshEffect.of(null) });
+  forceLinting(view);
+}
 
 function highestSeverity(diagnostics: { severity: string }[]): 'error' | 'warning' | 'info' | 'clean' {
   for (const d of diagnostics) {
@@ -68,6 +78,12 @@ export const createMarkdownLinter = () => {
 
       return applyDiagnostics(view, result);
     },
-    { delay: CONFIG.MARKDOWN_LINT.LINT_DELAY_MS },
+    {
+      delay: CONFIG.MARKDOWN_LINT.LINT_DELAY_MS,
+      needsRefresh: (update) =>
+        update.docChanged ||
+        update.viewportChanged ||
+        update.transactions.some((tx) => tx.effects.some((e) => e.is(markdownLintRefreshEffect))),
+    },
   );
 };

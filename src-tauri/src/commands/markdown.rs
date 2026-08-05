@@ -5,6 +5,7 @@ use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use crate::markdown::toc;
 use crate::state::AppState;
 use crate::utils::{IntoTauriError, run_blocking};
+use serde::Serialize;
 use tauri::State;
 
 #[tauri::command]
@@ -125,4 +126,77 @@ pub async fn get_rumdl_config_path(
 #[tauri::command]
 pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
     Ok(MarkdownFlavor::all())
+}
+
+#[derive(Serialize)]
+pub struct RumdlConfigRead {
+    pub target_path: String,
+    pub exists: bool,
+    pub content: String,
+    pub loaded_path: Option<String>,
+}
+
+#[tauri::command]
+pub async fn read_rumdl_config(
+    file_path: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<RumdlConfigRead, String> {
+    let ResolvedPaths {
+        file_path: fp,
+        project_root: pr,
+    } = config::resolve_paths(file_path.as_deref(), &state);
+
+    crate::timed_info!("[Markdown]", "read_rumdl_config", {
+        run_blocking("read rumdl config", move || {
+            let target = config::resolve_config_target(fp.as_deref(), pr.as_deref());
+            let exists = target.exists();
+            let content = if exists {
+                std::fs::read_to_string(&target)
+                    .map_err(|e| format!("Failed to read rumdl config: {}", e))?
+            } else {
+                String::new()
+            };
+            let loaded_path = config::loaded_config_path(fp.as_deref(), pr.as_deref())
+                .map(|p| p.to_string_lossy().to_string());
+            Ok(RumdlConfigRead {
+                target_path: target.to_string_lossy().to_string(),
+                exists,
+                content,
+                loaded_path,
+            })
+        })
+        .await
+    })
+}
+
+#[tauri::command]
+pub async fn write_rumdl_config(
+    file_path: Option<String>,
+    content: String,
+    state: State<'_, AppState>,
+) -> Result<String, String> {
+    let ResolvedPaths {
+        file_path: fp,
+        project_root: pr,
+    } = config::resolve_paths(file_path.as_deref(), &state);
+
+    crate::timed_info!("[Markdown]", "write_rumdl_config", {
+        run_blocking("write rumdl config", move || {
+            let pr = pr.unwrap_or_else(|| dirs::home_dir().unwrap_or_default());
+            let target = config::resolve_config_target(fp.as_deref(), Some(&pr));
+
+            if let Some(dir) = target.parent() {
+                std::fs::create_dir_all(dir)
+                    .map_err(|e| format!("Failed to create config directory: {}", e))?;
+            }
+
+            config::validate_config_content(&content, &pr, &target)?;
+
+            std::fs::write(&target, content)
+                .map_err(|e| format!("Failed to write rumdl config: {}", e))?;
+
+            Ok(target.to_string_lossy().to_string())
+        })
+        .await
+    })
 }

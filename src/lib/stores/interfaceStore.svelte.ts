@@ -12,6 +12,7 @@ export const interfaceStore = $state({
   showFileHistory: false,
   showCommandPalette: false,
   showData: false,
+  showRumdlConfig: false,
 
   // Editor Panels
   showFind: false,
@@ -67,4 +68,8 @@ export function toggleAbout() {
 
 export function toggleData() {
   interfaceStore.showData = !interfaceStore.showData;
+}
+
+export function toggleRumdlConfig() {
+  interfaceStore.showRumdlConfig = !interfaceStore.showRumdlConfig;
 }

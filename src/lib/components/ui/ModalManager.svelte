@@ -6,6 +6,7 @@ import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
 import DataModal from '$lib/components/ui/DataModal.svelte';
 import FileHistoryModal from '$lib/components/ui/FileHistoryModal.svelte';
 import PromptModal from '$lib/components/ui/PromptModal.svelte';
+import RumdlConfigModal from '$lib/components/ui/RumdlConfigModal.svelte';
 import SettingsModal from '$lib/components/ui/SettingsModal.svelte';
 import ShortcutsModal from '$lib/components/ui/ShortcutsModal.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
@@ -46,4 +47,7 @@ const paletteCommands = $derived(
 <DataModal
     bind:isOpen={appContext.interface.showData}
     onClose={() => (appContext.interface.showData = false)} />
+<RumdlConfigModal
+    bind:isOpen={appContext.interface.showRumdlConfig}
+    onClose={() => (appContext.interface.showRumdlConfig = false)} />
 <PromptModal />

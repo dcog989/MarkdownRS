@@ -201,6 +201,24 @@ export interface BackendCommands {
     };
     return: string | null;
   };
+  read_rumdl_config: {
+    args: {
+      filePath?: string;
+    };
+    return: {
+      target_path: string;
+      exists: boolean;
+      content: string;
+      loaded_path: string | null;
+    };
+  };
+  write_rumdl_config: {
+    args: {
+      filePath?: string;
+      content: string;
+    };
+    return: string;
+  };
   get_markdown_flavors: {
     args: Record<string, never>;
     return: string[];
