@@ -76,7 +76,12 @@ onMount(() => {
     });
 
     const handleBlur = () => appInit.handleBlur();
-    const handleBeforeUnload = () => appInit.handleBeforeUnload();
+    const handleBeforeUnload = () => {
+        // beforeunload already persists the session; let onDestroy skip the
+        // redundant persist.
+        isUnloading = true;
+        appInit.handleBeforeUnload();
+    };
 
     window.addEventListener('blur', handleBlur);
     window.addEventListener('beforeunload', handleBeforeUnload);
