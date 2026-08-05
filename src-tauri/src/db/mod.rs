@@ -8,6 +8,7 @@ mod bookmarks;
 mod database;
 mod file_history;
 mod migrations;
+mod schema;
 mod session;
 
 pub use bookmarks::Bookmark;

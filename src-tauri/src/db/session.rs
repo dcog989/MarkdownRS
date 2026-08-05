@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 use crate::db::Database;
+use crate::db::schema;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TabState {
@@ -86,11 +87,8 @@ impl Database {
 
         fn load_tabs(conn: &rusqlite::Connection, table: &str) -> Result<Vec<TabState>> {
             let sql = format!(
-                "SELECT id, title, NULL as content, is_dirty, path, scroll_percentage, \
-                 created, modified, is_pinned, custom_title, \
-                 file_check_failed, file_check_performed, mru_position, \
-                 sort_index, original_index \
-                 FROM {} ORDER BY sort_index ASC",
+                "SELECT {} FROM {} ORDER BY sort_index ASC",
+                schema::tab_columns_for_load_sql(),
                 table
             );
             let mut stmt = conn.prepare(&sql)?;
@@ -129,22 +127,23 @@ impl Database {
 }
 
 fn map_tab_state(row: &rusqlite::Row) -> rusqlite::Result<TabState> {
+    let col = |name: &str| schema::tab_column_name(name);
     Ok(TabState {
-        id: row.get(0)?,
-        title: row.get(1)?,
+        id: row.get(col("id"))?,
+        title: row.get(col("title"))?,
         content: None,
-        is_dirty: row.get::<_, i32>(3)? != 0,
-        path: row.get(4)?,
-        scroll_percentage: row.get(5)?,
-        created: row.get(6)?,
-        modified: row.get(7)?,
-        is_pinned: row.get::<_, i32>(8)? != 0,
-        custom_title: row.get(9)?,
-        file_check_failed: row.get::<_, i32>(10)? != 0,
-        file_check_performed: row.get::<_, i32>(11)? != 0,
-        mru_position: row.get(12)?,
-        sort_index: row.get(13)?,
-        original_index: row.get(14)?,
+        is_dirty: row.get::<_, i32>(col("is_dirty"))? != 0,
+        path: row.get(col("path"))?,
+        scroll_percentage: row.get(col("scroll_percentage"))?,
+        created: row.get(col("created"))?,
+        modified: row.get(col("modified"))?,
+        is_pinned: row.get::<_, i32>(col("is_pinned"))? != 0,
+        custom_title: row.get(col("custom_title"))?,
+        file_check_failed: row.get::<_, i32>(col("file_check_failed"))? != 0,
+        file_check_performed: row.get::<_, i32>(col("file_check_performed"))? != 0,
+        mru_position: row.get(col("mru_position"))?,
+        sort_index: row.get(col("sort_index"))?,
+        original_index: row.get(col("original_index"))?,
     })
 }
 
@@ -170,30 +169,33 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
         .collect();
     delete_stmt.execute(ids.as_slice())?;
 
+    let insert_placeholders = (1..=schema::TAB_COLUMNS.len())
+        .map(|i| format!("?{}", i))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let update_assignments = schema::TAB_COLUMNS
+        .iter()
+        .map(|c| {
+            if c.preserve_old_on_null {
+                format!(
+                    "{} = CASE WHEN excluded.{} IS NOT NULL THEN excluded.{} ELSE {}.{} END",
+                    c.name, c.name, c.name, table_name, c.name
+                )
+            } else {
+                format!("{} = excluded.{}", c.name, c.name)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(",\n            ");
     let upsert_sql = format!(
-        "INSERT INTO {} (id, title, content, is_dirty, path, scroll_percentage,
-                         created, modified, is_pinned, custom_title,
-                         file_check_failed, file_check_performed, mru_position,
-                         sort_index, original_index)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+        "INSERT INTO {} ({})
+         VALUES ({})
          ON CONFLICT(id) DO UPDATE SET
-            title              = excluded.title,
-            content            = CASE WHEN excluded.content IS NOT NULL
-                                      THEN excluded.content
-                                      ELSE {0}.content END,
-            is_dirty           = excluded.is_dirty,
-            path               = excluded.path,
-            scroll_percentage  = excluded.scroll_percentage,
-            created            = excluded.created,
-            modified           = excluded.modified,
-            is_pinned          = excluded.is_pinned,
-            custom_title       = excluded.custom_title,
-            file_check_failed  = excluded.file_check_failed,
-            file_check_performed = excluded.file_check_performed,
-            mru_position       = excluded.mru_position,
-            sort_index         = excluded.sort_index,
-            original_index     = excluded.original_index",
+            {}",
         table_name,
+        schema::tab_columns_sql(),
+        insert_placeholders,
+        update_assignments
     );
     let mut upsert_stmt = tx.prepare_cached(&upsert_sql)?;
 
@@ -224,4 +226,76 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::Database;
+    use crate::utils::test_util::make_temp_dir;
+
+    fn open_db() -> Database {
+        let dir = make_temp_dir("session");
+        Database::new(dir.join("session.db")).unwrap()
+    }
+
+    fn tab(id: &str, content: Option<&str>) -> TabState {
+        TabState {
+            id: id.to_string(),
+            title: "Title".to_string(),
+            content: content.map(str::to_string),
+            is_dirty: true,
+            path: Some(format!("/{}.md", id)),
+            scroll_percentage: 42.5,
+            created: Some("2026-01-01".to_string()),
+            modified: None,
+            is_pinned: false,
+            custom_title: Some("Tab".to_string()),
+            file_check_failed: false,
+            file_check_performed: true,
+            mru_position: Some(3),
+            sort_index: Some(0),
+            original_index: Some(0),
+        }
+    }
+
+    #[test]
+    fn save_and_load_session_round_trips_all_columns() {
+        let db = open_db();
+        db.save_session(&[tab("a", Some("body"))], &[tab("b", None)])
+            .unwrap();
+
+        let loaded = db.load_session().unwrap();
+        assert_eq!(loaded.active_tabs.len(), 1);
+        assert_eq!(loaded.closed_tabs.len(), 1);
+
+        let t = &loaded.active_tabs[0];
+        assert_eq!(t.id, "a");
+        assert_eq!(t.title, "Title");
+        assert_eq!(t.content, None);
+        assert!(t.is_dirty);
+        assert_eq!(t.path.as_deref(), Some("/a.md"));
+        assert_eq!(t.scroll_percentage, 42.5);
+        assert_eq!(t.created.as_deref(), Some("2026-01-01"));
+        assert!(!t.is_pinned);
+        assert_eq!(t.custom_title.as_deref(), Some("Tab"));
+        assert!(!t.file_check_failed);
+        assert!(t.file_check_performed);
+        assert_eq!(t.mru_position, Some(3));
+        assert_eq!(t.sort_index, Some(0));
+        assert_eq!(t.original_index, Some(0));
+    }
+
+    #[test]
+    fn save_keeps_existing_content_when_incoming_content_is_null() {
+        let db = open_db();
+        db.save_session(&[tab("a", Some("body"))], &[]).unwrap();
+
+        let mut without_content = tab("a", None);
+        without_content.is_dirty = false;
+        db.save_session(&[without_content], &[]).unwrap();
+
+        let data = db.load_tab_data("a").unwrap();
+        assert_eq!(data.content.as_deref(), Some("body"));
+    }
 }
