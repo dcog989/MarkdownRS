@@ -36,9 +36,10 @@ export function openFind(): boolean {
   return true;
 }
 
-export function openReplace() {
+export function openReplace(): boolean {
   interfaceStore.isReplaceMode = true;
   interfaceStore.showFind = true;
+  return true;
 }
 
 export function closeFind() {

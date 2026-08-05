@@ -126,7 +126,6 @@ export class TabSyncManager {
     const cursorMs = performance.now() - cursorStart;
 
     view.requestMeasure({
-      read: () => {},
       write: () => {
         if (view && view._currentTabId === tabId) {
           const tabTs = getTransientState(tabId);

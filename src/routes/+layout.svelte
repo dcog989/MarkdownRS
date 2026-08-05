@@ -76,7 +76,6 @@ $effect(() => {
         document.head.appendChild(styleTag);
     }
     styleTag.textContent = css;
-    document.head.appendChild(styleTag);
 });
 
 onMount(() => {

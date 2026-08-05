@@ -113,7 +113,6 @@ $effect(() => {
         if (!view) return;
         tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
         view.requestMeasure({
-            read: () => {},
             write: () => setupGutterObserver(),
         });
     });
@@ -253,7 +252,6 @@ onMount(() => {
     scrollSync.registerEditor(viewInstance);
 
     viewInstance.requestMeasure({
-        read: () => {},
         write: () => { viewInstance.scrollDOM.scrollTop = initialScrollTop; },
     });
 
