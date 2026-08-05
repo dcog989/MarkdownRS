@@ -16,7 +16,6 @@ const DEFAULT_CONFIG = {
   // Spellcheck Settings
   SPELLCHECK: {
     LINT_DELAY_MS: 400,
-    STARTUP_DELAY_MS: 500,
     REFRESH_DELAY_MS: 50,
   },
 
@@ -96,9 +95,6 @@ const DEFAULT_CONFIG = {
 
     // State restoration
     RESTORE_STATE_DELAY_MS: 100, // Delay before marking restoration complete (EditorView)
-
-    // Spellcheck refresh
-    SPELLCHECK_REFRESH_DELAY_MS: 100, // Delay before refreshing spellcheck (Editor)
 
     // Update status auto-hide
     UPDATE_STATUS_HIDE_MS: 3000, // Auto-hide update status message (AboutModal)

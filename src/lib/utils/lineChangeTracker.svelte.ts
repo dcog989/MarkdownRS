@@ -11,14 +11,6 @@ export class LineChangeTracker {
   private deletions: LineChange[] = [];
   private maxChanges = CONFIG.EDITOR.LINE_CHANGE_TRACK_LIMIT;
 
-  recordChange(lineNumber: number): void {
-    const timestamp = Date.now();
-
-    this.changes = this.changes.filter((c) => c.lineNumber !== lineNumber);
-    this.changes.push({ lineNumber, timestamp });
-    this.prune();
-  }
-
   /**
    * Record changes to multiple lines
    */
@@ -112,29 +104,6 @@ export class LineChangeTracker {
   removeLines(lineNumbers: number[]): void {
     const lineSet = new SvelteSet(lineNumbers);
     this.changes = this.changes.filter((c) => !lineSet.has(c.lineNumber));
-  }
-
-  /**
-   * Update line numbers after insertions/deletions
-   */
-  adjustLineNumbers(fromLine: number, delta: number): void {
-    // Adjust modification markers
-    for (const change of this.changes) {
-      if (change.lineNumber >= fromLine) {
-        change.lineNumber += delta;
-      }
-    }
-
-    // Adjust deletion markers
-    for (const del of this.deletions) {
-      if (del.lineNumber >= fromLine) {
-        del.lineNumber += delta;
-      }
-    }
-
-    // Remove invalid line numbers
-    this.changes = this.changes.filter((c) => c.lineNumber >= 1);
-    this.deletions = this.deletions.filter((d) => d.lineNumber >= 0); // 0 is valid for top-of-file deletions
   }
 
   /**

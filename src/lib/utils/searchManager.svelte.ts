@@ -46,18 +46,6 @@ export function updateSearchEditor(view: EditorView | undefined) {
   calculateSearchStats(view, query);
 }
 
-export function ensureQuerySync(view: EditorView | undefined): SearchQuery | null {
-  if (!view || !searchState.findText) return null;
-
-  const query = getSearchQuery();
-
-  view.dispatch({
-    effects: setSearchQuery.of(query),
-  });
-
-  return query;
-}
-
 function calculateSearchStats(view: EditorView, query: SearchQuery) {
   if (!searchState.findText) {
     searchState.currentMatches = 0;

@@ -136,7 +136,7 @@ function close() {
                                   ? 'var(--text-inverse)'
                                   : 'var(--text-primary)'};"
                                 use:scrollIntoView={isSelected}
-                                onmouseenter={() => nav.select(globalIndex)}
+                                onmouseenter={() => globalIndex !== undefined && nav.select(globalIndex)}
                                 onclick={() => execute(command)}>
                                 <div class="min-w-0 flex-1">
                                     <div class="text-sm font-medium whitespace-nowrap">{translate(command.label)}</div>
