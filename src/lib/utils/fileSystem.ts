@@ -182,7 +182,8 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
     if (oldPath === newPath) return true;
 
-    await renameFileOnDisk(oldPath, newPath);
+    const renamed = await renameFileOnDisk(oldPath, newPath);
+    if (!renamed) return false;
 
     fileWatcher.unwatch(oldPath);
     await fileWatcher.watch(newPath);
