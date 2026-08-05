@@ -1,5 +1,5 @@
 pkgname=MarkdownRS
-pkgver=0.45.0
+pkgver=1.46.0
 pkgrel=1
 pkgdesc="The only Markdown editor you need."
 arch=('x86_64')
