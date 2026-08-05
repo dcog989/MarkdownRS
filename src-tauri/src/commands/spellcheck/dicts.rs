@@ -1,5 +1,16 @@
 use DictCategory::*;
 
+macro_rules! cspell_url {
+    ($branch:literal, $path:literal) => {
+        concat!(
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/",
+            $branch,
+            "/dictionaries",
+            $path
+        )
+    };
+}
+
 enum DictCategory {
     Technical,
     Scientific,
@@ -14,32 +25,35 @@ struct DictEntry {
 static ALL_TECHNICAL_DICTS: &[DictEntry] = &[
     DictEntry {
         id: "medical-terms",
-        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/medicalterms/dict/medicalterms-en.txt",
+        url: cspell_url!("main", "/medicalterms/dict/medicalterms-en.txt"),
         category: Scientific,
     },
     DictEntry {
         id: "scientific-terms-us",
-        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/scientific_terms_US/src/custom_scientific_US.dic.txt",
+        url: cspell_url!(
+            "main",
+            "/scientific_terms_US/src/custom_scientific_US.dic.txt"
+        ),
         category: Scientific,
     },
     DictEntry {
         id: "software-terms",
-        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/software-terms/dict/softwareTerms.txt",
+        url: cspell_url!("main", "/software-terms/dict/softwareTerms.txt"),
         category: Technical,
     },
     DictEntry {
         id: "companies",
-        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/companies/dict/companies.txt",
+        url: cspell_url!("main", "/companies/dict/companies.txt"),
         category: Technical,
     },
     DictEntry {
         id: "fullstack",
-        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/fullstack/dict/fullstack.txt",
+        url: cspell_url!("main", "/fullstack/dict/fullstack.txt"),
         category: Technical,
     },
     DictEntry {
         id: "filetypes",
-        url: "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/filetypes/src/filetypes.txt",
+        url: cspell_url!("main", "/filetypes/src/filetypes.txt"),
         category: Technical,
     },
 ];
@@ -70,24 +84,54 @@ pub fn list_scientific_ids() -> Vec<String> {
 pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
     match dict_code {
         "en-US" => Some((
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff",
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.dic",
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff"
+            ),
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.dic"
+            ),
         )),
         "en-AU" => Some((
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.aff",
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.dic",
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.aff"
+            ),
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.dic"
+            ),
         )),
         "en-CA" => Some((
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.aff",
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/refs/heads/main/dictionaries/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.dic",
+            cspell_url!(
+                "refs/heads/main",
+                "/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.aff"
+            ),
+            cspell_url!(
+                "refs/heads/main",
+                "/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.dic"
+            ),
         )),
         "en-GB" => Some((
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.aff",
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.dic",
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.aff"
+            ),
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.dic"
+            ),
         )),
         "en-ZA" => Some((
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.aff",
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/main/dictionaries/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.dic",
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.aff"
+            ),
+            cspell_url!(
+                "main",
+                "/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.dic"
+            ),
         )),
         _ => None,
     }
