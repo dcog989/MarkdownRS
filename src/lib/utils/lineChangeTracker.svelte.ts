@@ -99,11 +99,12 @@ export class LineChangeTracker {
   }
 
   /**
-   * Remove specific lines from tracking
+   * Remove specific lines from tracking (both changes and deletions)
    */
   removeLines(lineNumbers: number[]): void {
     const lineSet = new SvelteSet(lineNumbers);
     this.changes = this.changes.filter((c) => !lineSet.has(c.lineNumber));
+    this.deletions = this.deletions.filter((d) => !lineSet.has(d.lineNumber));
   }
 
   /**
