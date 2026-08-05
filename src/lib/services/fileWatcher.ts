@@ -1,6 +1,6 @@
 import { watch } from '@tauri-apps/plugin-fs';
 import { translate } from '$lib/i18n';
-import { checkAndReloadIfChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
+import { hasFileChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -123,8 +123,8 @@ class FileWatcherService {
       const tabs = appContext.editor.tabs.filter((t) => t.path === path);
       if (tabs.length === 0) return;
 
-      const firstTab = tabs[0];
-      const hasChanged = await checkAndReloadIfChanged(firstTab.id);
+      const probeTab = tabs.find((t) => !t.isDirty) ?? tabs[0];
+      const hasChanged = await hasFileChanged(probeTab.id);
       if (!hasChanged) return;
 
       const dirtyTabs = tabs.filter((t) => t.isDirty);

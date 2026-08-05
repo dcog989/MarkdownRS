@@ -77,11 +77,9 @@ export async function checkFileExists(tabId: string): Promise<void> {
   }
 }
 
-export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
+export async function hasFileChanged(tabId: string): Promise<boolean> {
   const tab = appContext.editor.tabs.find((t) => t.id === tabId);
   if (!tab?.path) return false;
-
-  if (tab.isDirty) return false;
 
   const meta = await callBackendSafe('get_file_metadata', { path: tab.path }, 'File:Metadata', {
     showToast: false,
@@ -98,6 +96,15 @@ export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
     return true;
   }
   return false;
+}
+
+export async function checkAndReloadIfChanged(tabId: string): Promise<boolean> {
+  const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+  if (!tab?.path) return false;
+
+  if (tab.isDirty) return false;
+
+  return hasFileChanged(tabId);
 }
 
 export async function reloadFileContent(tabId: string): Promise<void> {
