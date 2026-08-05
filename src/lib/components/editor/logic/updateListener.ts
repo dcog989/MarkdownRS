@@ -18,6 +18,7 @@ export function createUpdateListener(
       const currentTabId = getCurrentTabId();
       const docLines = update.state.doc.lines;
       timers.content = window.setTimeout(() => {
+        timers.content = null;
         if (getCurrentTabId() === currentTabId && currentTabId !== undefined) {
           onContentChange(update.state.doc.toString(), docLines);
           if (onHistoryUpdate && getHistoryState) {
@@ -39,6 +40,7 @@ export function createUpdateListener(
     if (update.docChanged || update.selectionSet) {
       if (timers.metrics) clearTimeout(timers.metrics);
       timers.metrics = window.setTimeout(() => {
+        timers.metrics = null;
         const state = update.view.state;
         const line = state.doc.lineAt(state.selection.main.head);
 
