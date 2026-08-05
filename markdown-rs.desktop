@@ -1,7 +1,11 @@
 [Desktop Entry]
 Type=Application
 Name=MarkdownRS
+Comment=Fast, minimal Markdown editor
 Exec=/usr/bin/markdown-rs
 Icon=markdown-rs
 Terminal=false
-Categories=Office
+Categories=Utility;TextEditor;
+Keywords=markdown;text;editor;notes;
+StartupNotify=true
+StartupWMClass=markdown-rs
