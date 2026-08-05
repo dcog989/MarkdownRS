@@ -1,8 +1,7 @@
 use anyhow::Result;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
-
-use crate::db::Database;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Bookmark {
@@ -35,7 +34,15 @@ fn bind_bookmark(bookmark: &Bookmark) -> Result<[Box<dyn rusqlite::types::ToSql 
     ])
 }
 
-impl Database {
+pub struct BookmarkStore {
+    conn: Arc<Mutex<rusqlite::Connection>>,
+}
+
+impl BookmarkStore {
+    pub(crate) fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
+        Self { conn }
+    }
+
     pub fn add_bookmark(&self, bookmark: &Bookmark) -> Result<()> {
         let conn = lock_conn!(self);
         let params = bind_bookmark(bookmark)?;

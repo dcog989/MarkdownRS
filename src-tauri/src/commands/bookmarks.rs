@@ -7,6 +7,7 @@ use tauri::State;
 pub fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<(), String> {
     state
         .db
+        .bookmarks()
         .add_bookmark(&bookmark)
         .map_err(|e| handle_error(Some(&bookmark.path), "add bookmark", e))
 }
@@ -15,6 +16,7 @@ pub fn add_bookmark(state: State<'_, AppState>, bookmark: Bookmark) -> Result<()
 pub fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
     state
         .db
+        .bookmarks()
         .get_all_bookmarks()
         .map_err(|e| handle_error(Some("all"), "retrieve bookmarks", e))
 }
@@ -23,6 +25,7 @@ pub fn get_all_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, St
 pub fn delete_bookmark(state: State<'_, AppState>, id: String) -> Result<(), String> {
     state
         .db
+        .bookmarks()
         .delete_bookmark(&id)
         .map_err(|e| handle_error(Some(&id), "delete bookmark", e))
 }
@@ -35,6 +38,7 @@ pub fn update_bookmark_access_time(
 ) -> Result<(), String> {
     state
         .db
+        .bookmarks()
         .update_bookmark_access_time(&id, &last_accessed)
         .map_err(|e| handle_error(Some(&id), "update bookmark", e))
 }

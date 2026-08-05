@@ -234,6 +234,7 @@ pub async fn add_to_file_history(
 ) -> Result<(), String> {
     state
         .db
+        .file_history()
         .add_file_history_entry(&path, &last_opened)
         .map_err(|e| handle_error(Some(&path), "add to file history", e))
 }
@@ -244,6 +245,7 @@ pub async fn get_file_history(
 ) -> Result<Vec<String>, String> {
     state
         .db
+        .file_history()
         .get_file_history()
         .map_err(|e| handle_error(None, "get file history", e))
 }
@@ -255,6 +257,7 @@ pub async fn remove_from_file_history(
 ) -> Result<(), String> {
     state
         .db
+        .file_history()
         .remove_file_history_entry(&path)
         .map_err(|e| handle_error(Some(&path), "remove from file history", e))
 }
@@ -265,6 +268,7 @@ pub async fn clear_file_history(
 ) -> Result<(), String> {
     state
         .db
+        .file_history()
         .clear_file_history()
         .map_err(|e| handle_error(None, "clear file history", e))
 }

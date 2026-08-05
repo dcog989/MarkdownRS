@@ -4,10 +4,11 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use super::migrations;
+use super::{BookmarkStore, FileHistoryStore, SessionStore};
 
 #[derive(Clone)]
 pub struct Database {
-    pub(super) conn: Arc<Mutex<Connection>>,
+    conn: Arc<Mutex<Connection>>,
 }
 
 impl Database {
@@ -27,6 +28,18 @@ impl Database {
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
         })
+    }
+
+    pub fn session(&self) -> SessionStore {
+        SessionStore::new(Arc::clone(&self.conn))
+    }
+
+    pub fn bookmarks(&self) -> BookmarkStore {
+        BookmarkStore::new(Arc::clone(&self.conn))
+    }
+
+    pub fn file_history(&self) -> FileHistoryStore {
+        FileHistoryStore::new(Arc::clone(&self.conn))
     }
 
     pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {

@@ -35,7 +35,8 @@ pub async fn save_session(
         "save_session",
         {
             run_blocking("save session", move || {
-                db.save_session(&active_tabs, &closed_tabs)
+                db.session()
+                    .save_session(&active_tabs, &closed_tabs)
                     .map_err(|e| handle_error(Some("active and closed tabs"), "save session", e))
             })
             .await
@@ -50,14 +51,15 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
     log::info!("[Rust] restore_session called");
 
     // Seed file history from existing session data (Backfill)
-    if let Err(e) = state.db.seed_file_history_from_session() {
+    if let Err(e) = state.db.file_history().seed_file_history_from_session() {
         log::warn!("Failed to seed file history: {}", e);
     }
 
     let db = state.db.clone();
     let (result, duration) = crate::timed!({
         run_blocking("restore session", move || {
-            db.load_session()
+            db.session()
+                .load_session()
                 .map_err(|e| handle_error(Some("session data"), "restore session", e))
         })
         .await
@@ -90,7 +92,8 @@ pub async fn load_tab_content(
     let tab_id_clone = tab_id.clone();
     let (result, duration) = crate::timed!({
         run_blocking("load tab content", move || {
-            db.load_tab_data(&tab_id_clone)
+            db.session()
+                .load_tab_data(&tab_id_clone)
                 .map_err(|e| handle_error(Some(&tab_id_clone), "load tab data", e))
         })
         .await

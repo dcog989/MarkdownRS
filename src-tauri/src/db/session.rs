@@ -2,8 +2,8 @@ use anyhow::Result;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::sync::{Arc, Mutex};
 
-use crate::db::Database;
 use crate::db::schema;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -70,7 +70,15 @@ pub struct TabData {
     pub content: Option<String>,
 }
 
-impl Database {
+pub struct SessionStore {
+    conn: Arc<Mutex<rusqlite::Connection>>,
+}
+
+impl SessionStore {
+    pub(crate) fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
+        Self { conn }
+    }
+
     pub fn save_session(&self, active_tabs: &[TabState], closed_tabs: &[TabState]) -> Result<()> {
         let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
@@ -262,10 +270,11 @@ mod tests {
     #[test]
     fn save_and_load_session_round_trips_all_columns() {
         let db = open_db();
-        db.save_session(&[tab("a", Some("body"))], &[tab("b", None)])
+        db.session()
+            .save_session(&[tab("a", Some("body"))], &[tab("b", None)])
             .unwrap();
 
-        let loaded = db.load_session().unwrap();
+        let loaded = db.session().load_session().unwrap();
         assert_eq!(loaded.active_tabs.len(), 1);
         assert_eq!(loaded.closed_tabs.len(), 1);
 
@@ -289,13 +298,15 @@ mod tests {
     #[test]
     fn save_keeps_existing_content_when_incoming_content_is_null() {
         let db = open_db();
-        db.save_session(&[tab("a", Some("body"))], &[]).unwrap();
+        db.session()
+            .save_session(&[tab("a", Some("body"))], &[])
+            .unwrap();
 
         let mut without_content = tab("a", None);
         without_content.is_dirty = false;
-        db.save_session(&[without_content], &[]).unwrap();
+        db.session().save_session(&[without_content], &[]).unwrap();
 
-        let data = db.load_tab_data("a").unwrap();
+        let data = db.session().load_tab_data("a").unwrap();
         assert_eq!(data.content.as_deref(), Some("body"));
     }
 }

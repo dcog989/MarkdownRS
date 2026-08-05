@@ -1,9 +1,16 @@
 use anyhow::Result;
 use chrono::Local;
+use std::sync::{Arc, Mutex};
 
-use crate::db::Database;
+pub struct FileHistoryStore {
+    conn: Arc<Mutex<rusqlite::Connection>>,
+}
 
-impl Database {
+impl FileHistoryStore {
+    pub(crate) fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
+        Self { conn }
+    }
+
     pub fn seed_file_history_from_session(&self) -> Result<()> {
         let conn = lock_conn!(self);
         let now = Local::now().to_rfc3339();

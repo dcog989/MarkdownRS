@@ -11,9 +11,10 @@ mod migrations;
 mod schema;
 mod session;
 
-pub use bookmarks::Bookmark;
+pub use bookmarks::{Bookmark, BookmarkStore};
 pub use database::Database;
-pub use session::{SessionData, TabData, TabState};
+pub use file_history::FileHistoryStore;
+pub use session::{SessionData, SessionStore, TabData, TabState};
 
 /// Removes rows whose `path` column no longer exists on disk.
 /// `id_column` is the column used to identify rows for deletion (e.g. `id` or `path`).

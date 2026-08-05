@@ -7,6 +7,7 @@ use tauri::State;
 pub fn export_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
     state
         .db
+        .bookmarks()
         .get_all_bookmarks()
         .map_err(|e| handle_error(Some("bookmarks"), "export bookmarks", e))
 }
@@ -19,6 +20,7 @@ pub fn import_bookmarks(
     let count = bookmarks.len();
     state
         .db
+        .bookmarks()
         .import_bookmarks(&bookmarks)
         .map_err(|e| handle_error(Some("bookmarks"), "import bookmarks", e))?;
     Ok(count)
@@ -28,6 +30,7 @@ pub fn import_bookmarks(
 pub fn export_file_history(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     state
         .db
+        .file_history()
         .get_file_history()
         .map_err(|e| handle_error(Some("file history"), "export file history", e))
 }
@@ -40,6 +43,7 @@ pub fn import_file_history(
     let count = paths.len();
     state
         .db
+        .file_history()
         .import_file_history(&paths)
         .map_err(|e| handle_error(Some("file history"), "import file history", e))?;
     Ok(count)
@@ -49,10 +53,12 @@ pub fn import_file_history(
 pub fn delete_orphan_files(state: State<'_, AppState>) -> Result<usize, String> {
     let history = state
         .db
+        .file_history()
         .delete_orphan_file_history()
         .map_err(|e| handle_error(Some("file history"), "delete orphan file history", e))?;
     let bookmarks = state
         .db
+        .bookmarks()
         .delete_orphan_bookmarks()
         .map_err(|e| handle_error(Some("bookmarks"), "delete orphan bookmarks", e))?;
     Ok(history + bookmarks)
