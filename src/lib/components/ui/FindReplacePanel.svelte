@@ -139,6 +139,10 @@ function onInput() {
     debouncedSearch(cmView);
 }
 
+function onScopeChange() {
+    if (cmView) executeSearch(cmView, false);
+}
+
 function onReplaceInput() {
     if (!cmView) return;
     debouncedReplace(cmView);
@@ -367,6 +371,7 @@ onMount(() => {
                         type="radio"
                         bind:group={searchScope}
                         value="current"
+                        onchange={onScopeChange}
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>{$_('findReplace.currentDocument')}</span>
                 </label>
@@ -375,6 +380,7 @@ onMount(() => {
                         type="radio"
                         bind:group={searchScope}
                         value="all"
+                        onchange={onScopeChange}
                         class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
                     <span>{$_('findReplace.allOpenDocuments')}</span>
                 </label>
