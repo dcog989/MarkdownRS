@@ -96,24 +96,31 @@ pub async fn get_spelling_suggestions(
     state: State<'_, AppState>,
     word: String,
 ) -> Result<Vec<String>, String> {
-    let speller_guard = state.speller.lock_or_recover();
+    let speller = state.speller.clone();
 
-    let dictionaries = match speller_guard.as_ref() {
-        Some(d) => d,
-        None => return Ok(Vec::new()),
-    };
+    let suggestions = tokio::task::spawn_blocking(move || {
+        let guard = speller.lock_or_recover();
+        let dictionaries = match guard.as_ref() {
+            Some(d) => d,
+            None => return Vec::new(),
+        };
 
-    let mut seen = Vec::new();
-    for dictionary in dictionaries {
-        let mut suggestions = Vec::new();
-        dictionary.suggest(&word, &mut suggestions);
-        for suggestion in suggestions {
-            if !seen.contains(&suggestion) {
-                seen.push(suggestion);
+        let mut seen = Vec::new();
+        for dictionary in dictionaries {
+            let mut suggestions = Vec::new();
+            dictionary.suggest(&word, &mut suggestions);
+            for suggestion in suggestions {
+                if !seen.contains(&suggestion) {
+                    seen.push(suggestion);
+                }
             }
         }
-    }
-    Ok(seen.into_iter().take(MAX_SUGGESTIONS).collect())
+        seen.into_iter().take(MAX_SUGGESTIONS).collect()
+    })
+    .await
+    .map_err(|e| handle_error(None, "get spelling suggestions", e))?;
+
+    Ok(suggestions)
 }
 
 #[tauri::command]
