@@ -13,7 +13,7 @@ export const settingsState = $state({
   statusBarTransparency: 0,
   newTabPosition: 'end' as 'beginning' | 'right' | 'end',
   startupBehavior: 'last-focused' as 'first' | 'last-focused' | 'new',
-  editorFontFamily: "'Source Code Pro', 'Cascadia Code', monospace, ui-monospace",
+  editorFontFamily: 'monospace',
   editorFontSize: 14,
   wrapGuideColumn: 0,
   showWhitespace: false,

@@ -75,7 +75,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: 'settings.fontFamily',
       type: 'text',
       category: 'settings.category.editor',
-      defaultValue: "'Source Code Pro', 'Cascadia Code', Menlo, Consolas, 'DejaVu Sans Mono', ui-monospace, monospace",
+      defaultValue: 'monospace',
       tooltip: 'settings.fontFamilyTooltip',
     },
     {
