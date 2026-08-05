@@ -1,4 +1,4 @@
-const SMART_TITLE_MAX_LENGTH = 25;
+import { CONFIG } from '$lib/utils/config';
 
 export function extractSmartTitle(content: string): string | null {
   const trimmed = content.trim();
@@ -17,8 +17,9 @@ export function extractSmartTitle(content: string): string | null {
     .trim();
   if (title.length === 0) return null;
 
-  if (title.length > SMART_TITLE_MAX_LENGTH) {
-    title = `${title.substring(0, SMART_TITLE_MAX_LENGTH).trim()}...`;
+  const maxLength = CONFIG.EDITOR.SMART_TITLE_MAX_LENGTH;
+  if (title.length > maxLength) {
+    title = `${title.substring(0, maxLength).trim()}...`;
   }
 
   return title;
