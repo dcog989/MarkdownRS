@@ -3,7 +3,7 @@ import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date'
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { computeWordCount, getTransientState, scheduleWordCountUpdate } from './editorCache';
+import { computeWordCount, getLineChangeTracker, getTransientState, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, updateTab } from './editorStoreCore.svelte';
 import type { EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
@@ -157,6 +157,10 @@ export function reloadTabContent(
     ts.contentChanged = true;
   }
 
+  // The whole document was replaced from disk; drop any tracked user edits so
+  // stale recent-change highlights don't linger on unrelated lines.
+  getLineChangeTracker(id).clear();
+
   updateTab(id, (tab) => ({
     content,
     lastSavedHash: hashContent(content),
@@ -175,6 +179,9 @@ export function reloadTabContent(
 export function updateContentOnly(id: string, content: string, forceSync: boolean = false) {
   const ts = getTransientState(id);
   if (ts) ts.contentChanged = true;
+  // A forced sync replaces the whole document (e.g. format-on-save), so the
+  // old line-keyed edits no longer correspond to the current content.
+  if (forceSync) getLineChangeTracker(id).clear();
   updateTab(id, (tab) => ({
     content,
     forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync,
