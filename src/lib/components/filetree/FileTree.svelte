@@ -48,6 +48,7 @@
     import type { FileEntry } from '$lib/types/api';
     import { CONFIG } from '$lib/utils/config';
     import { openFile } from '$lib/utils/fileSystem';
+    import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
     import { saveSettings } from '$lib/utils/settings';
     import FileTreeContextMenu from './FileTreeContextMenu.svelte';
 
@@ -217,7 +218,7 @@
         return idx === -1 ? '' : name.slice(idx + 1).toLowerCase();
     }
 
-    const MARKDOWN_EXT = new Set(['md', 'markdown', 'mdown', 'mkdn', 'mkd', 'mdwn']);
+    const MARKDOWN_EXT = new Set(MARKDOWN_EXTENSIONS);
     const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp', 'avif']);
     const CODE_EXT = new Set([
         'ts',
