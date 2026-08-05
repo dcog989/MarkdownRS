@@ -5,7 +5,7 @@ use crate::db::schema;
 
 pub(super) fn migrations() -> Vec<String> {
     vec![
-        // v1: Initial Schema
+        // v1: Initial Schema (fresh databases start here with the full schema)
         format!(
             "CREATE TABLE IF NOT EXISTS tabs (
         {}
@@ -21,58 +21,25 @@ pub(super) fn migrations() -> Vec<String> {
         created TEXT NOT NULL,
         last_accessed TEXT
     );
-    CREATE TABLE IF NOT EXISTS recent_files (
+    CREATE TABLE IF NOT EXISTS file_history (
         path TEXT PRIMARY KEY,
         last_opened TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_recent_files_last_opened ON recent_files(last_opened DESC);
-    CREATE TRIGGER IF NOT EXISTS prune_recent_files
-    AFTER INSERT ON recent_files
-    WHEN (SELECT COUNT(*) FROM recent_files) > 99
+    CREATE INDEX IF NOT EXISTS idx_tabs_sort_index ON tabs(sort_index);
+    CREATE INDEX IF NOT EXISTS idx_closed_tabs_sort_index ON closed_tabs(sort_index);
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created DESC);
+    CREATE INDEX IF NOT EXISTS idx_file_history_last_opened ON file_history(last_opened DESC);
+    CREATE TRIGGER IF NOT EXISTS prune_file_history
+    AFTER INSERT ON file_history
+    WHEN (SELECT COUNT(*) FROM file_history) > 999
     BEGIN
-        DELETE FROM recent_files WHERE path NOT IN (
-            SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 99
+        DELETE FROM file_history WHERE path NOT IN (
+            SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
         );
     END;",
-            schema::tab_columns_ddl(1),
-            schema::tab_columns_ddl(u32::MAX),
+            schema::tab_columns_ddl(),
+            schema::tab_columns_ddl(),
         ),
-        // v2: Add index on tabs.sort_index for faster session restore
-        "CREATE INDEX IF NOT EXISTS idx_tabs_sort_index ON tabs(sort_index);".to_string(),
-        // v3: Increase recent files retention from 99 to 999
-        "DROP TRIGGER IF EXISTS prune_recent_files;
-     CREATE TRIGGER IF NOT EXISTS prune_recent_files
-     AFTER INSERT ON recent_files
-     WHEN (SELECT COUNT(*) FROM recent_files) > 999
-     BEGIN
-         DELETE FROM recent_files WHERE path NOT IN (
-             SELECT path FROM recent_files ORDER BY last_opened DESC LIMIT 999
-         );
-     END;"
-            .to_string(),
-        // v4: Add missing indexes for closed_tabs.sort_index and bookmarks.created
-        "CREATE INDEX IF NOT EXISTS idx_closed_tabs_sort_index ON closed_tabs(sort_index);
-     CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created DESC);"
-            .to_string(),
-        // v5: Add original_index to tabs for unified save_tabs logic
-        format!(
-            "ALTER TABLE tabs ADD COLUMN original_index {};",
-            schema::tab_column_ddl("original_index")
-        ),
-        // v6: Rename recent_files to file_history (schema now matches user-facing name)
-        "ALTER TABLE recent_files RENAME TO file_history;
-     DROP INDEX IF EXISTS idx_recent_files_last_opened;
-     CREATE INDEX IF NOT EXISTS idx_file_history_last_opened ON file_history(last_opened DESC);
-     DROP TRIGGER IF EXISTS prune_recent_files;
-     CREATE TRIGGER IF NOT EXISTS prune_file_history
-     AFTER INSERT ON file_history
-     WHEN (SELECT COUNT(*) FROM file_history) > 999
-     BEGIN
-         DELETE FROM file_history WHERE path NOT IN (
-             SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
-         );
-     END;"
-            .to_string(),
     ]
 }
 
@@ -105,7 +72,7 @@ mod tests {
         let version: i32 = conn
             .query_row("PRAGMA user_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 6);
+        assert_eq!(version, 1);
 
         let expected: Vec<String> = schema::TAB_COLUMNS
             .iter()
