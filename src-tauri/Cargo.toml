@@ -47,6 +47,7 @@ toml = "1.1"
 trash = "5.2"
 unicode-segmentation = "1.13"
 uuid = { version = "1", features = ["v4"] }
+strum = { version = "0.28.0", features = ["derive"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18"

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
+use strum::{Display, EnumIter, IntoEnumIterator};
 
 pub struct ResolvedPaths {
     pub file_path: Option<PathBuf>,
@@ -32,9 +33,12 @@ pub fn resolve_paths(file_path: Option<&str>, state: &AppState) -> ResolvedPaths
     PartialEq,
     Eq,
     Hash,
-    Default
+    Default,
+    EnumIter,
+    Display
 )]
 #[serde(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
 pub enum MarkdownFlavor {
     /// Pure CommonMark (no extensions)
     CommonMark,
@@ -44,20 +48,9 @@ pub enum MarkdownFlavor {
 }
 
 impl MarkdownFlavor {
-    /// Canonical lowercase name for this flavor (matches serde serialization).
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::CommonMark => "commonmark",
-            Self::Gfm => "gfm",
-        }
-    }
-
     /// All supported flavors in canonical order.
-    pub fn all() -> Vec<&'static str> {
-        [Self::CommonMark, Self::Gfm]
-            .into_iter()
-            .map(Self::as_str)
-            .collect()
+    pub fn all() -> Vec<String> {
+        Self::iter().map(|f| f.to_string()).collect()
     }
 
     /// Convert string to MarkdownFlavor
