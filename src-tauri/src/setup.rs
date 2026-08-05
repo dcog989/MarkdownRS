@@ -185,16 +185,14 @@ fn resolve_app_paths(
         .path()
         .app_local_data_dir()
         .map_err(|e| format!("Failed to get local data dir: {}", e))?;
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
+    let config_dir = utils::app_config_dir(app_handle)
         .map_err(|e| format!("Failed to get app config dir: {}", e))?;
     Ok(AppPaths {
         db_dir: config_dir.join("Database"),
         log_dir: local_dir.join("Logs"),
         themes_dir: config_dir.join("Themes"),
         config_path: config_dir.join("settings.toml"),
-        dict_path: config_dir.join("custom-spelling.dic"),
+        dict_path: utils::custom_dict_path(&config_dir),
         local_dir,
         config_dir,
     })

@@ -1,5 +1,6 @@
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
+use crate::utils;
 use crate::utils::{MutexExt, RwLockExt};
 use spellbook::Dictionary;
 use std::collections::HashSet;
@@ -163,7 +164,7 @@ async fn run_spellcheck_init(
 ) {
     let cache_dir = local_dir.join("spellcheck_cache");
     let tech_cache_dir = cache_dir.join("technical");
-    let custom_path = config_dir.join("custom-spelling.dic");
+    let custom_path = utils::custom_dict_path(&config_dir);
 
     if let Err(e) = tokio::fs::create_dir_all(&cache_dir).await {
         log::warn!("Failed to create spellcheck cache directory: {}", e);
@@ -264,10 +265,7 @@ pub async fn init_spellchecker(
         .path()
         .app_local_data_dir()
         .map_err(|e| e.to_string())?;
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| e.to_string())?;
+    let config_dir = utils::app_config_dir(&app_handle).map_err(|e| e.to_string())?;
 
     let handle = tauri::async_runtime::spawn(run_spellcheck_init(
         app_handle.clone(),

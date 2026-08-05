@@ -12,9 +12,7 @@ use std::sync::atomic::Ordering;
 use tauri::Manager;
 
 pub(super) fn app_config_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    app.path()
-        .app_config_dir()
-        .map_err(|e| handle_error(None, "get app config directory", e))
+    crate::utils::app_config_dir(app).map_err(|e| handle_error(None, "get app config directory", e))
 }
 
 #[tauri::command]

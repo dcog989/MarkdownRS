@@ -1,4 +1,5 @@
 use crate::state::AppState;
+use crate::utils;
 use crate::utils::RwLockExt;
 use anyhow::{Result, anyhow};
 use std::sync::Arc;
@@ -7,11 +8,9 @@ use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 
 pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> Result<()> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
+    let config_dir = utils::app_config_dir(&app_handle)
         .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?;
-    let dict_path = config_dir.join("custom-spelling.dic");
+    let dict_path = utils::custom_dict_path(&config_dir);
 
     if !config_dir.exists()
         && let Err(e) = fs::create_dir_all(&config_dir).await
@@ -50,11 +49,9 @@ pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String)
 }
 
 pub async fn load_user_dictionary_inner(app_handle: tauri::AppHandle) -> Result<Vec<String>> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
+    let config_dir = utils::app_config_dir(&app_handle)
         .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?;
-    let dict_path = config_dir.join("custom-spelling.dic");
+    let dict_path = utils::custom_dict_path(&config_dir);
 
     if !dict_path.exists() {
         return Ok(Vec::new());
