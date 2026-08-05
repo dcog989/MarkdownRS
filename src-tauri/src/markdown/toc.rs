@@ -82,18 +82,38 @@ fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
     }
 }
 
+/// Inserts a TOC generated from the given headings into `content`.
+/// No markdown parsing happens here; the caller supplies headings already
+/// extracted (e.g. by `render_markdown`), so no redundant comrak parse occurs.
+fn insert_toc(content: &str, entries: &[HeadingEntry]) -> String {
+    if entries.is_empty() {
+        return content.to_string();
+    }
+
+    let toc_markdown = generate_toc_markdown(entries);
+    replace_toc_region(content, &toc_markdown)
+}
+
 pub fn generate_document_toc(content: &str) -> String {
     if content.trim().is_empty() {
         return content.to_string();
     }
 
     let entries = extract_headings(content);
-    if entries.is_empty() {
-        return content.to_string();
-    }
+    insert_toc(content, &entries)
+}
 
-    let toc_markdown = generate_toc_markdown(&entries);
-    replace_toc_region(content, &toc_markdown)
+/// Like [`generate_document_toc`], but reuses headings provided by the caller
+/// (typically the `headings` already produced by `render_markdown`) instead of
+/// re-parsing the document. Falls back to a full parse when `headings` is `None`.
+pub fn generate_document_toc_with_headings(
+    content: &str,
+    headings: Option<Vec<HeadingEntry>>,
+) -> String {
+    match headings {
+        Some(entries) => insert_toc(content, &entries),
+        None => generate_document_toc(content),
+    }
 }
 
 #[cfg(test)]
@@ -169,5 +189,40 @@ mod tests {
         let pos = find_after_first_h1(content);
         assert_eq!(&content[pos..], "## Next");
         assert_eq!(&content[pos - 1..pos], "\n");
+    }
+
+    #[test]
+    fn builds_toc_from_provided_headings_without_parsing() {
+        let headings = vec![
+            HeadingEntry {
+                level: 1,
+                text: "Title".to_string(),
+                anchor_id: "title".to_string(),
+            },
+            HeadingEntry {
+                level: 2,
+                text: "Section One".to_string(),
+                anchor_id: "section-one".to_string(),
+            },
+        ];
+
+        let content = "# Title\n\nIntro.\n\n## Section One\n\nBody.";
+        let result = generate_document_toc_with_headings(content, Some(headings));
+
+        assert!(result.contains("- [Title](#title)"));
+        assert!(result.contains("  - [Section One](#section-one)"));
+    }
+
+    #[test]
+    fn empty_headings_return_content_unchanged() {
+        let content = "# Title\n\nBody.";
+        assert_eq!(
+            generate_document_toc_with_headings(content, Some(vec![])),
+            content
+        );
+        assert_eq!(
+            generate_document_toc_with_headings(content, None),
+            generate_document_toc(content)
+        );
     }
 }

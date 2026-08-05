@@ -1,5 +1,6 @@
 import { untrack } from 'svelte';
 import { translate } from '$lib/i18n';
+import { cachePreviewHeadings } from '$lib/stores/previewHeadings.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { renderMarkdown } from '$lib/utils/markdownRust';
 import { scrollSync } from '$lib/utils/scrollSync.svelte';
@@ -58,6 +59,7 @@ export class PreviewRenderer {
 
         this.htmlContent = result.html;
         this.lastRendered = content;
+        cachePreviewHeadings(content, result.headings);
 
         if (container) {
           scrollSync.registerPreview(container);

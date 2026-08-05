@@ -32,7 +32,10 @@ pub async fn render_markdown(
 }
 
 #[tauri::command]
-pub async fn generate_document_toc(content: String) -> Result<String, String> {
+pub async fn generate_document_toc(
+    content: String,
+    headings: Option<Vec<crate::markdown::HeadingEntry>>,
+) -> Result<String, String> {
     let content_size = content.len();
 
     crate::timed_info!(
@@ -40,7 +43,7 @@ pub async fn generate_document_toc(content: String) -> Result<String, String> {
         "generate_document_toc",
         {
             run_blocking("generate TOC", move || {
-                Ok(toc::generate_document_toc(&content))
+                Ok(toc::generate_document_toc_with_headings(&content, headings))
             })
             .await
         },

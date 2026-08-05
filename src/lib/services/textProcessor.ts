@@ -1,4 +1,5 @@
 import { getOperation, type OperationId } from '$lib/config/textOperationsRegistry';
+import { previewHeadingsCache } from '$lib/stores/previewHeadings.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import * as ClientLogic from '$lib/utils/clientTransforms';
 import { formatMarkdown } from '$lib/utils/formatterRust';
@@ -97,7 +98,11 @@ class TextProcessor {
         return formatMarkdown(text);
       }
       if (operationId === 'generate-toc') {
-        return generateDocumentToc(text);
+        // Reuse the headings already produced by render_markdown to avoid a
+        // second full parse. Fall back to the parse-based path when the cached
+        // headings don't match the current text (e.g. preview closed/stale).
+        const freshHeadings = previewHeadingsCache.content === text ? previewHeadingsCache.headings : undefined;
+        return generateDocumentToc(text, freshHeadings);
       }
     }
 

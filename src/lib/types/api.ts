@@ -1,6 +1,6 @@
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import type { Bookmark } from '$lib/stores/bookmarkStore.svelte';
-import type { RenderResult } from './markdown';
+import type { HeadingEntry, RenderResult } from './markdown';
 
 export interface AppInfo {
   name: string;
@@ -178,7 +178,7 @@ export interface BackendCommands {
     return: RenderResult;
   };
   generate_document_toc: {
-    args: { content: string };
+    args: { content: string; headings?: HeadingEntry[] };
     return: string;
   };
   format_markdown: {
