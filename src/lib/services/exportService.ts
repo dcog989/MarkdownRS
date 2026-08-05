@@ -1,6 +1,7 @@
 import { save } from '@tauri-apps/plugin-dialog';
 import { domToPng, domToSvg, domToWebp } from 'modern-screenshot';
 import { translate } from '$lib/i18n';
+import type { EditorTab } from '$lib/stores/editorTypes';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
@@ -29,13 +30,7 @@ export class ExportService {
     return container;
   }
 
-  private async prepareExportContent(): Promise<HTMLElement | null> {
-    const tab = this.getActiveTab();
-    if (!tab) {
-      showToast('error', translate('export.noActiveTab'));
-      return null;
-    }
-
+  private async prepareExportContent(tab: EditorTab): Promise<HTMLElement | null> {
     const container = this.getExportContainer();
 
     try {
@@ -139,11 +134,14 @@ export class ExportService {
   }
 
   async exportToImage(format: 'png' | 'webp' | 'svg') {
-    const container = await this.prepareExportContent();
-    if (!container) return;
-
     const tab = this.getActiveTab();
-    if (!tab) return;
+    if (!tab) {
+      showToast('error', translate('export.noActiveTab'));
+      return;
+    }
+
+    const container = await this.prepareExportContent(tab);
+    if (!container) return;
 
     try {
       const path = await save({
