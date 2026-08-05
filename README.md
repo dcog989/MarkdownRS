@@ -87,12 +87,13 @@ CachyOS build: `makepkg -sif`
 
 ## rumdl Config Cascade
 
-rumdl resolves configuration in this priority order (highest → lowest):
+rumdl is embedded as a library, so the CLI (`--config`, inline overrides) does not apply. Config resolution in priority order (highest → lowest):
 
-1. **Explicit `--config <path>`** — Skips auto-discovery entirely.
-2. **Upward walk from CWD** (to git root / `$HOME`) — Per directory, tries: `.rumdl.toml` → `rumdl.toml` → `.config/rumdl.toml` → `pyproject.toml` (`[tool.rumdl]`). Falls back to `.markdownlint*` / `markdownlint.*` files if none found.
-3. **User config fallback** (only if step 2 finds nothing) — `$XDG_CONFIG_HOME/rumdl/` or `~/.config/rumdl/`, then `~/.rumdl.toml`, then `~/rumdl.toml`.
-4. **CLI inline overrides** (`--config 'RULE.key=value'`) — Always wins last.
+1. **Project discovery** — Walk upward from the open file's directory to the workspace root (from the `workspaceRoot` setting). At each directory, tries: `.rumdl.toml` → `rumdl.toml` → `.config/rumdl.toml` → `pyproject.toml` (`[tool.rumdl]`). Falls back to `.markdownlint*` / `markdownlint.*` files if none found. The walk stops at the workspace root, not the git root / `$HOME`.
+2. **User config fallback** (only if step 1 finds nothing) — `$XDG_CONFIG_HOME/rumdl/` or `~/.config/rumdl/`, then `~/.rumdl.toml`, then `~/rumdl.toml`.
+3. **Defaults** — Built-in default rules if no config is found anywhere.
+
+Unsaved buffers (no file path) skip project discovery and use only the user config fallback (step 2). Configs are cached by path + modification time.
 
 ## Contributing
 
