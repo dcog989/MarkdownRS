@@ -7,6 +7,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: read
+
 jobs:
   build:
     strategy:
@@ -60,7 +63,6 @@ jobs:
 
       - name: Build Arch package
         if: matrix.os == 'ubuntu-latest'
-        continue-on-error: true
         run: |
           mkdir -p .pkg
           cp PKGBUILD .pkg/

@@ -19,6 +19,13 @@ updates:
       biome:
         patterns:
           - '@biomejs/*'
+      test:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - 'jsdom'
+          - 'svelte-check'
+          - '@testing-library/*'
 
   - package-ecosystem: 'cargo'
     directory: '/src-tauri'
