@@ -78,7 +78,8 @@
     "store:default",
     "window-state:default",
     "log:default",
-    "clipboard-manager:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
     "updater:default"
   ]
 }
