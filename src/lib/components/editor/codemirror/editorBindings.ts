@@ -12,6 +12,7 @@ import {
   selectLine,
 } from '@codemirror/commands';
 import type { EditorView } from '@codemirror/view';
+import { TEXT_OPERATIONS_REGISTRY } from '$lib/config/textOperationsRegistry';
 import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { toggleSelectionComment } from '$lib/utils/commentToggle';
@@ -22,6 +23,16 @@ export interface CmBindingDef {
   registryKey: string;
   handler: CmHandler;
 }
+
+const textOpBindings: CmBindingDef[] = Object.values(TEXT_OPERATIONS_REGISTRY)
+  .filter((op) => op.defaultKey)
+  .map((op) => ({
+    registryKey: `textop.${op.id}`,
+    handler: () => {
+      performTextTransform(op.id);
+      return true;
+    },
+  }));
 
 export const cmHandlerMap: CmBindingDef[] = [
   {
@@ -72,27 +83,7 @@ export const cmHandlerMap: CmBindingDef[] = [
     registryKey: 'editor.outdent',
     handler: (view) => indentLess(view),
   },
-  {
-    registryKey: 'textop.bold',
-    handler: () => {
-      performTextTransform('bold');
-      return true;
-    },
-  },
-  {
-    registryKey: 'textop.italic',
-    handler: () => {
-      performTextTransform('italic');
-      return true;
-    },
-  },
-  {
-    registryKey: 'textop.insert-link',
-    handler: () => {
-      performTextTransform('insert-link');
-      return true;
-    },
-  },
+  ...textOpBindings,
   {
     registryKey: 'file.addBookmark',
     handler: () => addBookmarkForActiveTab(),
