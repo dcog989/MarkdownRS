@@ -1,4 +1,5 @@
 use crate::markdown::callouts::transform_callouts;
+use crate::markdown::frontmatter;
 use crate::markdown::linkify::{linkify_file_paths_ast, linkify_wikilinks_ast};
 use crate::markdown::metrics::build_metrics;
 use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
@@ -25,8 +26,15 @@ pub struct RenderResult {
 pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult> {
     let comrak_options = options.flavor.to_comrak_options();
 
+    // Strip any leading frontmatter block by blanking it out: the block is
+    // excluded from the rendered output while preserving the document's line
+    // numbering so `data-sourcepos` (scroll sync) stays aligned.
+    let body = frontmatter::extract_frontmatter(content)
+        .map(|fm| frontmatter::blank_out(content, &fm))
+        .unwrap_or_else(|| content.to_string());
+
     let arena = Arena::new();
-    let root = parse_document(&arena, content, &comrak_options);
+    let root = parse_document(&arena, &body, &comrak_options);
 
     linkify_wikilinks_ast(&arena, root);
     linkify_file_paths_ast(&arena, root);
@@ -106,6 +114,70 @@ mod tests {
         let html = render_gfm("Hello *world*.\n");
         assert!(!html.contains("data-math-style"));
         assert!(html.contains("<em"));
+    }
+
+    #[test]
+    fn strips_yaml_frontmatter_from_output() {
+        let html = render_gfm("---\ntitle: My Article\ntags: [a, b]\n---\n\n# Body\n");
+        assert!(!html.contains("title:"));
+        assert!(!html.contains("My Article"));
+        assert!(html.contains("<h1"));
+        assert!(html.contains("Body"));
+    }
+
+    #[test]
+    fn strips_toml_frontmatter_from_output() {
+        let html = render_gfm("+++\ntitle = \"My Article\"\n+++\n\n# Body\n");
+        assert!(!html.contains("title ="));
+        assert!(html.contains("<h1"));
+    }
+
+    #[test]
+    fn strips_json_frontmatter_from_output() {
+        let html = render_gfm(";;;\n{\"title\": \"My Article\"}\n;;;\n\n# Body\n");
+        assert!(!html.contains("\"title\""));
+        assert!(html.contains("<h1"));
+    }
+
+    #[test]
+    fn strips_pretty_printed_json_frontmatter_from_output() {
+        // The `}` body line must not close the block early, leaving `;;;` behind.
+        let html = render_gfm(";;;\n{\n  \"title\": \"My Article\"\n}\n;;;\n\n# Body\n");
+        assert!(!html.contains("\"title\""));
+        assert!(!html.contains(";;;"), "html was: {html}");
+        assert!(html.contains("<h1"));
+    }
+
+    #[test]
+    fn frontmatter_preserves_sourcepos_line_numbers() {
+        // The frontmatter block occupies lines 1-3; the body heading must map
+        // back to line 5 in the editor for scroll sync.
+        let html = render_gfm("---\ntitle: Test\n---\n\n# Body\n");
+        assert!(
+            html.contains(r#"data-sourcepos="5:1-5:6""#),
+            "html was: {html}"
+        );
+    }
+
+    #[test]
+    fn thematic_break_without_closing_delimiter_is_kept() {
+        // A lone `---` with no closing marker is a thematic break, not frontmatter.
+        let html = render_gfm("---\n\n# Body\n");
+        assert!(html.contains("<hr"));
+        assert!(html.contains("<h1"));
+    }
+
+    #[test]
+    fn frontmatter_only_document_renders_empty_body() {
+        let result = render_markdown(
+            "---\ntitle: Test\n---\n",
+            MarkdownOptions {
+                flavor: MarkdownFlavor::Gfm,
+            },
+        )
+        .expect("render should succeed");
+        assert!(result.html.trim().is_empty());
+        assert!(result.headings.is_empty());
     }
 
     #[test]

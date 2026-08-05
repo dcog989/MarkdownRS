@@ -1,10 +1,50 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { HighlightStyle, syntaxHighlighting, syntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { frontmatterExtension } from './frontmatterExtension';
 import { createMarkdownDecorationsPlugin, matchCalloutLine } from './markdownExtensions';
+
+describe('frontmatterExtension', () => {
+  function parseDoc(doc: string) {
+    const state = EditorState.create({
+      doc,
+      extensions: [markdown({ base: markdownLanguage, extensions: frontmatterExtension })],
+    });
+    const names: string[] = [];
+    syntaxTree(state).iterate({
+      enter: (n) => {
+        names.push(n.name);
+      },
+    });
+    return names;
+  }
+
+  it('parses a YAML frontmatter block as a single Frontmatter node', () => {
+    const names = parseDoc('---\ntitle: Test\n---\n# Body\n');
+    expect(names).toContain('Frontmatter');
+    expect(names).not.toContain('SetextHeading2');
+  });
+
+  it('parses TOML and JSON frontmatter blocks', () => {
+    expect(parseDoc('+++\ntitle = "Test"\n+++\n# Body\n')).toContain('Frontmatter');
+    expect(parseDoc(';;;\n{"title": "Test"}\n;;;\n# Body\n')).toContain('Frontmatter');
+    expect(parseDoc('{\n"title": "Test"\n}\n# Body\n')).toContain('Frontmatter');
+  });
+
+  it('parses pretty-printed JSON frontmatter without closing on the body brace', () => {
+    const names = parseDoc(';;;\n{\n  "title": "Test"\n}\n;;;\n# Body\n');
+    expect(names).toContain('Frontmatter');
+    expect(names.filter((n) => n === 'Paragraph').length).toBe(0);
+  });
+
+  it('does not treat a mid-document --- as frontmatter', () => {
+    const names = parseDoc('Before\n---\nAfter\n');
+    expect(names).not.toContain('Frontmatter');
+  });
+});
 
 describe('matchCalloutLine', () => {
   it('matches a callout marker and reports the marker offset', () => {
@@ -62,7 +102,7 @@ function createCalloutView(doc: string, rendered: boolean, cursorPos?: number) {
     doc,
     selection: { anchor: cursorPos ?? doc.length },
     extensions: [
-      markdown({ base: markdownLanguage }),
+      markdown({ base: markdownLanguage, extensions: frontmatterExtension }),
       syntaxHighlighting(highlightStyle),
       createMarkdownDecorationsPlugin(rendered),
     ],
@@ -132,6 +172,13 @@ describe('horizontal rule decorations', () => {
 
   it('does not mask a --- line inside a fenced code block', async () => {
     const { view, parent } = createCalloutView('```\n---\n```\n', true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).toBeNull();
+    view.destroy();
+  });
+
+  it('does not mask frontmatter delimiters as horizontal rules', async () => {
+    const { view, parent } = createCalloutView('---\ntitle: Test\n---\n\n# Body\n', true);
     await new Promise((r) => setTimeout(r, 50));
     expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).toBeNull();
     view.destroy();

@@ -1,7 +1,7 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-use crate::markdown::{HeadingEntry, config::MarkdownFlavor, parse_headings};
+use crate::markdown::{HeadingEntry, config::MarkdownFlavor, frontmatter, parse_headings};
 
 static TOC_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<!--\s*toc\s*-->").expect("Invalid TOC_START_RE"));
@@ -94,13 +94,40 @@ fn insert_toc(content: &str, entries: &[HeadingEntry]) -> String {
     replace_toc_region(content, &toc_markdown)
 }
 
+/// Runs `insert` on `content` with any leading frontmatter blanked out, then
+/// restores the original frontmatter block. Blanking keeps frontmatter content
+/// (e.g. `#` comments inside YAML) from being chosen as the TOC insertion
+/// anchor, which would corrupt the block.
+fn insert_toc_around_frontmatter(content: &str, insert: impl FnOnce(&str) -> String) -> String {
+    let frontmatter = frontmatter::extract_frontmatter(content);
+    let body = frontmatter
+        .map(|fm| frontmatter::blank_out(content, &fm))
+        .unwrap_or_else(|| content.to_string());
+
+    let result = insert(&body);
+
+    match frontmatter {
+        Some(fm) => {
+            let blanked = "\n".repeat(fm.line_count);
+            if let Some(rest) = result.strip_prefix(&blanked) {
+                format!("{}{}", &content[..fm.end_offset], rest)
+            } else {
+                format!("{}{}", &content[..fm.end_offset], result)
+            }
+        },
+        None => result,
+    }
+}
+
 pub fn generate_document_toc(content: &str) -> String {
     if content.trim().is_empty() {
         return content.to_string();
     }
 
-    let entries = extract_headings(content);
-    insert_toc(content, &entries)
+    insert_toc_around_frontmatter(content, |body| {
+        let entries = extract_headings(body);
+        insert_toc(body, &entries)
+    })
 }
 
 /// Like [`generate_document_toc`], but reuses headings provided by the caller
@@ -111,7 +138,7 @@ pub fn generate_document_toc_with_headings(
     headings: Option<Vec<HeadingEntry>>,
 ) -> String {
     match headings {
-        Some(entries) => insert_toc(content, &entries),
+        Some(entries) => insert_toc_around_frontmatter(content, |body| insert_toc(body, &entries)),
         None => generate_document_toc(content),
     }
 }
@@ -224,5 +251,54 @@ mod tests {
             generate_document_toc_with_headings(content, None),
             generate_document_toc(content)
         );
+    }
+
+    #[test]
+    fn frontmatter_headings_are_excluded_from_toc() {
+        let content = "---\n# Not a real heading\n---\n# Title\n\n## Section\n\nBody.";
+        let result = generate_document_toc(content);
+
+        let toc = result
+            .split("<!-- tocstop -->")
+            .next()
+            .unwrap_or(&result)
+            .split("<!-- toc -->")
+            .last()
+            .unwrap_or(&result);
+        assert!(!toc.contains("Not a real heading"));
+        assert!(toc.contains("- [Title](#title)"));
+        assert!(toc.contains("- [Section](#section)"));
+    }
+
+    #[test]
+    fn frontmatter_is_not_the_toc_anchor_with_cached_headings() {
+        // The `# Author: Y` comment inside the frontmatter must not be chosen
+        // as the anchor when headings come from the cached render.
+        let content = "---\ntitle: X\n# Author: Y\n---\n# Title\n\n## Section\n\nBody.";
+        let headings = Some(vec![
+            HeadingEntry {
+                level: 1,
+                text: "Title".to_string(),
+                anchor_id: "title".to_string(),
+            },
+            HeadingEntry {
+                level: 2,
+                text: "Section".to_string(),
+                anchor_id: "section".to_string(),
+            },
+        ]);
+        let result = generate_document_toc_with_headings(content, headings);
+
+        assert!(result.starts_with("---\ntitle: X\n# Author: Y\n---\n"));
+        let toc = result
+            .split("<!-- tocstop -->")
+            .next()
+            .unwrap_or(&result)
+            .split("<!-- toc -->")
+            .last()
+            .unwrap_or(&result);
+        assert!(!toc.contains("Author"));
+        assert!(toc.contains("- [Title](#title)"));
+        assert!(toc.contains("- [Section](#section)"));
     }
 }

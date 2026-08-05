@@ -347,6 +347,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   }
 
   const codeBlockLines = new Set<number>();
+  const frontmatterLines = new Set<number>();
   const parserHrs = new Set<number>();
   const blockquoteLines = new Set<number>();
   const cursor = view.state.selection.main.head;
@@ -356,6 +357,14 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       from,
       to,
       enter: (node) => {
+        if (node.name === 'Frontmatter') {
+          const startLine = view.state.doc.lineAt(node.from).number;
+          const endLine = view.state.doc.lineAt(node.to).number;
+          for (let i = startLine; i <= endLine; i++) {
+            frontmatterLines.add(i);
+          }
+          return false;
+        }
         if (node.name === 'Table') {
           if (tableSpans.some((span) => node.from === span.from && node.to === span.to)) {
             return false;
@@ -438,6 +447,12 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       const line = view.state.doc.lineAt(pos);
 
       if (tableLines.has(line.number)) {
+        pos = line.to + 1;
+        continue;
+      }
+
+      if (frontmatterLines.has(line.number)) {
+        ranges.push(Decoration.line({ class: 'cm-frontmatter' }).range(line.from));
         pos = line.to + 1;
         continue;
       }

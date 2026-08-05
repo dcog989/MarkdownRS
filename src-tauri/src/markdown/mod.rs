@@ -1,6 +1,7 @@
 pub mod callouts;
 pub mod config;
 pub mod formatter_rumdl;
+pub mod frontmatter;
 pub mod linkify;
 pub mod linter;
 pub mod metrics;
