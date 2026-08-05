@@ -121,5 +121,8 @@ pub async fn get_rumdl_config_path(
 
 #[tauri::command]
 pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
-    Ok(vec!["commonmark".to_string(), "gfm".to_string()])
+    Ok(MarkdownFlavor::all()
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect())
 }

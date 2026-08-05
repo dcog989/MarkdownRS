@@ -43,6 +43,22 @@ pub enum MarkdownFlavor {
 }
 
 impl MarkdownFlavor {
+    /// Canonical lowercase name for this flavor (matches serde serialization).
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::CommonMark => "commonmark",
+            Self::Gfm => "gfm",
+        }
+    }
+
+    /// All supported flavors in canonical order.
+    pub fn all() -> Vec<&'static str> {
+        [Self::CommonMark, Self::Gfm]
+            .into_iter()
+            .map(Self::as_str)
+            .collect()
+    }
+
     /// Convert string to MarkdownFlavor
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
