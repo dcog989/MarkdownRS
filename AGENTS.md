@@ -68,7 +68,7 @@
 - Ask clarifying questions when requirements are ambiguous.
 - Flag potential risks or edge cases proactively.
 - Do not pretend to understand how the user feels.
-- On completion of an update or fix, provide a singe line, concise commit message in a code block so the user can copy it easily.
+- On completion of an update or fix, provide a singe line, concise conventional commit message in a code block so the user can copy it easily.
 
 ## Definition of Done
 
