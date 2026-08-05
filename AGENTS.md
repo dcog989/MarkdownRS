@@ -54,6 +54,7 @@
 - Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
 - Self-documenting code via clear naming. Use comments only for complex workarounds or issues that need noting.
 - Do not run full `bun run check`/`bun run test` on trivial changes (constant tweaks, one-line edits, CSS value changes). Run `bunx biome check --write <file>` on the touched file, or nothing if the change is a simple value edit. Only run the full suite on real logic changes.
+- On completion of an update or fix, print a concise conventional commit message in a fenced code block.
 
 ## Common Patterns
 
@@ -68,7 +69,6 @@
 - Ask clarifying questions when requirements are ambiguous.
 - Flag potential risks or edge cases proactively.
 - Do not pretend to understand how the user feels.
-- On completion of an update or fix, provide a singe line, concise conventional commit message in a code block so the user can copy it easily.
 
 ## Definition of Done
 
