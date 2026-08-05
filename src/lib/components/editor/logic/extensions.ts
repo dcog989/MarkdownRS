@@ -4,7 +4,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { defaultHighlightStyle, indentUnit, LanguageDescription, syntaxHighlighting } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
 import { highlightSelectionMatches, search } from '@codemirror/search';
-import { type Compartment, EditorState, type Extension } from '@codemirror/state';
+import type { Compartment, Extension } from '@codemirror/state';
 import {
   drawSelection,
   EditorView,
@@ -13,7 +13,7 @@ import {
   highlightWhitespace,
   type KeyBinding,
 } from '@codemirror/view';
-import { createWrapExtension, getEditorKeymap, smartCompleteAnyWord } from '$lib/components/editor/codemirror/config';
+import { createWrapExtension, getEditorKeymap } from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
 import { appContext } from '$lib/stores/state.svelte';
@@ -81,7 +81,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     smartBacktickHandler,
     prefetchHoverHandler,
     codeBlockCopyHandler,
-    EditorState.languageData.of(() => [{ autocomplete: smartCompleteAnyWord }]),
+
     c.filePathComp.of(config.isMarkdown ? [linkPlugin, linkTheme] : []),
     getEditorKeymap([...config.customKeymap]),
     c.themeComp.of(
