@@ -2,6 +2,7 @@ import type { TransactionSpec } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import type { OperationId } from '$lib/config/textOperationsRegistry';
 import { textProcessor } from '$lib/services/textProcessor';
+import { AppError } from '$lib/utils/errorHandling';
 
 const STATE_CHANGE_DELAY_MS = 100;
 
@@ -51,7 +52,11 @@ export async function performTextOperation(
 
       view.dispatch(transaction);
     }
-  } catch (_err) {
+  } catch (err) {
+    AppError.handle('Transform:Text', err, {
+      showToast: true,
+      additionalInfo: { operationId },
+    });
   } finally {
     setTimeout(() => {
       onStateChange?.(false);
