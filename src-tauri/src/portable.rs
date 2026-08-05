@@ -22,11 +22,6 @@ pub fn is_portable_mode() -> bool {
     PORTABLE_CONFIG.get().is_some_and(|c| c.is_portable)
 }
 
-#[allow(dead_code)]
-pub fn portable_data_dir() -> Option<&'static std::path::PathBuf> {
-    PORTABLE_CONFIG.get().and_then(|c| c.data_dir())
-}
-
 pub fn detect_portable_mode() -> PortableConfig {
     let exe_path = match std::env::current_exe() {
         Ok(p) => p,
