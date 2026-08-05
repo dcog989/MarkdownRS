@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasContentChanged, hashContent, isDirty, updateSavedHash } from './contentHash';
+import { hashContent, isDirty, updateSavedHash } from './contentHash';
 
 describe('hashContent', () => {
   it('returns a stable hash for identical input', () => {
@@ -13,17 +13,6 @@ describe('hashContent', () => {
   it('handles empty and unicode strings', () => {
     expect(hashContent('')).toBe(hashContent(''));
     expect(hashContent('→ emoji 🎉')).toBe(hashContent('→ emoji 🎉'));
-  });
-});
-
-describe('hasContentChanged', () => {
-  it('returns false when content matches the saved hash', () => {
-    const content = 'unchanged';
-    expect(hasContentChanged(content, hashContent(content))).toBe(false);
-  });
-
-  it('returns true when content differs from the saved hash', () => {
-    expect(hasContentChanged('changed', hashContent('original'))).toBe(true);
   });
 });
 

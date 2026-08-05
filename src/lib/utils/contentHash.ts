@@ -15,10 +15,6 @@ export function hashContent(content: string): string {
  * Quick content comparison using hash
  * Returns true if content has changed (dirty)
  */
-export function hasContentChanged(content: string, savedHash: string): boolean {
-  return hashContent(content) !== savedHash;
-}
-
 export function isDirty(content: string, savedHash: string): boolean {
   return hashContent(content) !== savedHash;
 }
