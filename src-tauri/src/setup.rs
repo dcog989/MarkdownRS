@@ -103,9 +103,12 @@ fn init_database(
                     ));
                 }
                 log::info!("Corrupted database moved to {:?}", backup_path);
-
-                remove_sidecar_files(&db_path, &["-wal", "-shm"]);
             }
+
+            // Sidecar files belong to the failed DB whether or not the main
+            // file still exists (it may have vanished since the failed open);
+            // leaving them behind can break opening the fresh database.
+            remove_sidecar_files(&db_path, &["-wal", "-shm"]);
 
             crate::db::Database::new(db_path).map_err(|retry_err| {
                 log::error!("Failed to initialize fresh database: {}", retry_err);
