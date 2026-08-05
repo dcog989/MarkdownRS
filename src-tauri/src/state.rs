@@ -20,7 +20,7 @@ pub const MAX_FILE_SIZE_UNSET: u64 = u64::MAX;
 pub struct AppState {
     pub db: Database,
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
-    pub speller: Arc<Mutex<Option<Dictionary>>>,
+    pub speller: Arc<Mutex<Option<Vec<Dictionary>>>>,
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
     pub custom_dict: Mutex<HashSet<String>>,
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]

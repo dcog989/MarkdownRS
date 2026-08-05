@@ -24,7 +24,7 @@ async fn download_and_collect_words(
     cache_dir: &Path,
     spec_codes: &[String],
     tech_cache_dir: &Path,
-) -> (String, HashSet<String>) {
+) -> (Vec<(String, String)>, HashSet<String>) {
     let mut dict_tasks = Vec::new();
     for (i, code) in dict_codes.into_iter().enumerate() {
         let c = client.clone();
@@ -50,8 +50,8 @@ async fn download_and_collect_words(
         }));
     }
 
-    let mut combined_aff = String::new();
-    let mut unique_words = HashSet::new();
+    let mut language_dicts: Vec<(String, String)> = Vec::new();
+    let mut technical_words = HashSet::new();
 
     let mut dict_results: Vec<(usize, _)> = Vec::new();
     for task in dict_tasks {
@@ -64,15 +64,10 @@ async fn download_and_collect_words(
     for (_, res) in dict_results {
         match res {
             Ok((aff, dic)) => {
-                if combined_aff.is_empty() {
-                    combined_aff = aff.trim_start_matches('\u{feff}').to_string();
-                }
-                for line in dic.trim_start_matches('\u{feff}').lines() {
-                    let t = line.trim();
-                    if !t.is_empty() && !t.chars().all(char::is_numeric) {
-                        unique_words.insert(t.to_string());
-                    }
-                }
+                language_dicts.push((
+                    aff.trim_start_matches('\u{feff}').to_string(),
+                    dic.trim_start_matches('\u{feff}').to_string(),
+                ));
             },
             Err(e) => log::warn!("{}", e),
         }
@@ -86,7 +81,7 @@ async fn download_and_collect_words(
                     for line in content.lines() {
                         let t = line.trim();
                         if !t.is_empty() && !t.starts_with('#') && !t.starts_with("//") {
-                            unique_words.insert(t.to_string());
+                            technical_words.insert(t.to_string());
                             count += 1;
                         }
                     }
@@ -97,7 +92,7 @@ async fn download_and_collect_words(
         }
     }
 
-    (combined_aff, unique_words)
+    (language_dicts, technical_words)
 }
 
 fn build_combined_dic_string(words: &HashSet<String>) -> Option<(String, usize)> {
@@ -119,35 +114,29 @@ fn build_combined_dic_string(words: &HashSet<String>) -> Option<(String, usize)>
     Some((combined_dic, total))
 }
 
-async fn build_spellbook_dictionary(
-    state: &AppState,
-    combined_aff: &str,
-    combined_dic: String,
-    word_count: usize,
-) {
-    let aff = combined_aff.to_string();
-    let dict_result =
-        tokio::task::spawn_blocking(move || Dictionary::new(&aff, &combined_dic)).await;
+/// Build one `Dictionary` per language (each keeps its own affix rules)
+/// plus a single supplemental word-only dictionary for technical terms.
+fn build_spellbook_dictionaries(
+    language_dicts: Vec<(String, String)>,
+    technical_words: HashSet<String>,
+) -> Vec<Dictionary> {
+    let mut dictionaries = Vec::new();
 
-    match dict_result {
-        Ok(Ok(dict)) => {
-            let mut speller = state.speller.lock_or_recover();
-            *speller = Some(dict);
-            let mut status = state.spellcheck_status.lock_or_recover();
-            *status = SpellcheckStatus::Ready;
-            log::info!("Spellchecker ready: {} unique words", word_count);
-        },
-        Ok(Err(e)) => {
-            log::error!("Failed to create dictionary: {:?}", e);
-            let mut status = state.spellcheck_status.lock_or_recover();
-            *status = SpellcheckStatus::Failed;
-        },
-        Err(e) => {
-            log::error!("Dictionary construction task panicked: {:?}", e);
-            let mut status = state.spellcheck_status.lock_or_recover();
-            *status = SpellcheckStatus::Failed;
-        },
+    for (aff, dic) in &language_dicts {
+        match Dictionary::new(aff, dic) {
+            Ok(dict) => dictionaries.push(dict),
+            Err(e) => log::error!("Failed to build language dictionary: {:?}", e),
+        }
     }
+
+    if !technical_words.is_empty()
+        && let Some((combined_dic, _)) = build_combined_dic_string(&technical_words)
+        && let Ok(dict) = Dictionary::new("", &combined_dic)
+    {
+        dictionaries.push(dict);
+    }
+
+    dictionaries
 }
 
 async fn load_custom_dictionary(store: &AppState, custom_path: &Path) {
@@ -196,7 +185,7 @@ async fn run_spellcheck_init(
     }
 
     let client = build_http_client();
-    let (combined_aff, unique_words) = download_and_collect_words(
+    let (language_dicts, technical_words) = download_and_collect_words(
         &client,
         dict_codes,
         &cache_dir,
@@ -206,15 +195,36 @@ async fn run_spellcheck_init(
     .await;
 
     let state = app_handle.state::<AppState>();
+    let supplemental_count = technical_words.len();
 
-    if let Some((combined_dic, word_count)) = build_combined_dic_string(&unique_words)
-        && !combined_aff.is_empty()
-    {
-        build_spellbook_dictionary(&state, &combined_aff, combined_dic, word_count).await;
-    } else {
-        log::warn!("No dictionary content available");
-        let mut status = state.spellcheck_status.lock_or_recover();
-        *status = SpellcheckStatus::Failed;
+    let dictionaries_result = tokio::task::spawn_blocking(move || {
+        build_spellbook_dictionaries(language_dicts, technical_words)
+    })
+    .await;
+
+    match dictionaries_result {
+        Ok(dictionaries) if !dictionaries.is_empty() => {
+            let dict_count = dictionaries.len();
+            let mut speller = state.speller.lock_or_recover();
+            *speller = Some(dictionaries);
+            let mut status = state.spellcheck_status.lock_or_recover();
+            *status = SpellcheckStatus::Ready;
+            log::info!(
+                "Spellchecker ready: {} dictionaries, {} supplemental words",
+                dict_count,
+                supplemental_count
+            );
+        },
+        Ok(_) => {
+            log::warn!("No dictionary content available");
+            let mut status = state.spellcheck_status.lock_or_recover();
+            *status = SpellcheckStatus::Failed;
+        },
+        Err(e) => {
+            log::error!("Dictionary construction task panicked: {:?}", e);
+            let mut status = state.spellcheck_status.lock_or_recover();
+            *status = SpellcheckStatus::Failed;
+        },
     }
 
     load_custom_dictionary(&state, &custom_path).await;

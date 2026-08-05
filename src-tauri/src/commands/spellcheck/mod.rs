@@ -40,7 +40,7 @@ pub async fn check_words(
 
     let misspelled = tokio::task::spawn_blocking(move || {
         let guard = speller.lock_or_recover();
-        let dict = match guard.as_ref() {
+        let dictionaries = match guard.as_ref() {
             Some(d) => d,
             None => return Vec::new(),
         };
@@ -67,7 +67,8 @@ pub async fn check_words(
                 continue;
             }
 
-            if !dict.check(clean) {
+            let correct_in_any = dictionaries.iter().any(|dict| dict.check(clean));
+            if !correct_in_any {
                 result.push(word.to_string());
             }
         }
@@ -97,14 +98,22 @@ pub async fn get_spelling_suggestions(
 ) -> Result<Vec<String>, String> {
     let speller_guard = state.speller.lock_or_recover();
 
-    let speller = match speller_guard.as_ref() {
-        Some(s) => s,
+    let dictionaries = match speller_guard.as_ref() {
+        Some(d) => d,
         None => return Ok(Vec::new()),
     };
 
-    let mut suggestions = Vec::new();
-    speller.suggest(&word, &mut suggestions);
-    Ok(suggestions.into_iter().take(MAX_SUGGESTIONS).collect())
+    let mut seen = Vec::new();
+    for dictionary in dictionaries {
+        let mut suggestions = Vec::new();
+        dictionary.suggest(&word, &mut suggestions);
+        for suggestion in suggestions {
+            if !seen.contains(&suggestion) {
+                seen.push(suggestion);
+            }
+        }
+    }
+    Ok(seen.into_iter().take(MAX_SUGGESTIONS).collect())
 }
 
 #[tauri::command]
