@@ -59,10 +59,11 @@ export async function closeManyTabs(mode: CloseManyMode, tabId?: string): Promis
 
   switch (mode) {
     case 'right':
-      targets = tabs.slice(tabIndex + 1);
-      break;
     case 'left':
-      targets = tabs.slice(0, tabIndex);
+      // Right/left are relative to a specific tab. Without one, the -1 fallback
+      // index would silently close the wrong tabs (slice(0) / slice(0, -1)).
+      if (tabIndex === -1) return;
+      targets = mode === 'right' ? tabs.slice(tabIndex + 1) : tabs.slice(0, tabIndex);
       break;
     case 'others':
       targets = tabs.filter((t) => t.id !== tabId);
