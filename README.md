@@ -49,7 +49,9 @@ Flowcharts, sequence diagrams, and other diagrams render in the preview from <co
 Developed using the latest versions of:
 
 - [bun](https://bun.com/)
+- [Biome](https://biomejs.dev/)
 - [CodeMirror](https://codemirror.net/)
+- [lefthook](https://github.com/evilmartians/lefthook)
 - [Node.js](https://nodejs.org/)
 - [Rust](https://www.rust-lang.org/)
 - [SQLite](https://sqlite.org/)
@@ -57,6 +59,7 @@ Developed using the latest versions of:
 - [Tauri](https://v2.tauri.app/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vite.dev/)
+- [Vitest](https://vitest.dev/)
 
 ## Development
 
@@ -75,11 +78,11 @@ CachyOS build: `makepkg -sif`
 
 ## Available Scripts
 
-- `bun run clean` - Remove everything (build, target, and node_modules)
-- `bun run check` - Type-check Svelte files
-- `bun run format` - Format code with Prettier + 'cargo fmt'
+- `bun run clean` - Remove build artifacts, target, and node_modules
+- `bun run check` - Full check: Svelte types, Biome lint, and cargo check + clippy
+- `bun run format` - Format code with Biome + 'cargo fmt'
 - `bun run update` - Update packages + crates
-- `bun run dev` - Start dev server / HRM
+- `bun run dev` - Start dev server / HMR
 - `bun run preview` - Preview the production build
 
 ## rumdl Config Cascade
