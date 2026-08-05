@@ -103,12 +103,17 @@ export function createRecentChangesHighlighter(
                 tracker.removeLines(Array.from(affectedLines));
               }
             } else {
+              // tabSync applies store content to the view with userEvent
+              // 'input.type.sync'; prefix matching makes it look like 'input',
+              // so exclude it explicitly to avoid marking reloads/format-on-save
+              // as user edits.
               const isUserAction = update.transactions.some(
                 (tr) =>
-                  tr.isUserEvent('input') ||
-                  tr.isUserEvent('delete') ||
-                  tr.isUserEvent('move') ||
-                  tr.isUserEvent('input.paste'),
+                  !tr.isUserEvent('input.type.sync') &&
+                  (tr.isUserEvent('input') ||
+                    tr.isUserEvent('delete') ||
+                    tr.isUserEvent('move') ||
+                    tr.isUserEvent('input.paste')),
               );
 
               if (isUserAction) {
