@@ -1,10 +1,9 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const packageJsonPath = path.join(rootDir, 'package.json');
 const pkgbuildPath = path.join(rootDir, 'PKGBUILD');
 const tauriConfPath = path.join(rootDir, 'src-tauri', 'tauri.conf.json');
@@ -12,128 +11,112 @@ const cargoTomlPath = path.join(rootDir, 'src-tauri', 'Cargo.toml');
 const cargoLockPath = path.join(rootDir, 'src-tauri', 'Cargo.lock');
 const dotPkgPkgbuildPath = path.join(rootDir, '.pkg', 'PKGBUILD');
 
+const VERSION_RE = /^\d+\.\d+\.\d+$/;
+const JSON_VERSION_RE = /("version": ")\d+\.\d+\.\d+(")/;
+const CARGO_TOML_VERSION_RE = /(\[package\][\s\S]*?^version = ")([^"]+)(")/m;
+const CARGO_LOCK_VERSION_RE = /(^\[\[package\]\]\nname = "markdown-rs"\nversion = ")\d+\.\d+\.\d+(")/m;
+const PKGBUILD_VERSION_RE = /^(pkgver=).+$/m;
+
+function fail(message) {
+  console.error(`[version] ${message}`);
+  process.exit(1);
+}
+
+function readJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (error) {
+    fail(`cannot read ${filePath}: ${error.message}`);
+  }
+}
+
+function updateJsonVersion(filePath, newVersion, label) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    JSON.parse(content);
+    if (!JSON_VERSION_RE.test(content)) {
+      fail(`version pattern not found in ${filePath}`);
+    }
+    fs.writeFileSync(filePath, content.replace(JSON_VERSION_RE, `$1${newVersion}$2`));
+  } catch (error) {
+    fail(`cannot update ${label} (${filePath}): ${error.message}`);
+  }
+}
+
+function updateTextFile(filePath, regex, replacement, label) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      console.warn(`[version] skipping ${label}: ${filePath} not found`);
+      return;
+    }
+    const content = fs.readFileSync(filePath, 'utf8');
+    if (!regex.test(content)) {
+      console.warn(`[version] skipping ${label}: version pattern not found in ${filePath}`);
+      return;
+    }
+    fs.writeFileSync(filePath, content.replace(regex, replacement));
+  } catch (error) {
+    fail(`cannot update ${label} (${filePath}): ${error.message}`);
+  }
+}
+
+function runGit(args) {
+  try {
+    execFileSync('git', args, { stdio: 'inherit' });
+  } catch (error) {
+    fail(`git ${args[0]} failed: ${error.stderr?.toString().trim() ?? error.message}`);
+  }
+}
+
 const args = process.argv.slice(2);
 const shouldGit = args.includes('--git');
-const versionArg = args.find((arg) => !arg.startsWith('--'));
+const versionArg = args.find((arg) => !arg.startsWith('--')) ?? '';
 
-// 1. Read current version from package.json
-/** @type {string} */
-let currentVersion;
-/** @type {{version: string}} */
-let packageJson;
+// 1. Determine new version
+const packageJson = readJson(packageJsonPath);
+const currentVersion = packageJson.version;
 
-try {
-  packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  currentVersion = packageJson.version;
-} catch (_error) {
-  process.exit(1);
-}
-
-// 2. Determine new version
-/** @type {string} */
-let newVersion = versionArg || '';
-
+let newVersion = versionArg;
 if (!newVersion) {
   const parts = currentVersion.split('.').map((n) => parseInt(n, 10));
-
   if (parts.length !== 3 || parts.some(Number.isNaN)) {
-    process.exit(1);
+    fail(`cannot parse current version "${currentVersion}" from package.json`);
   }
-
   parts[2] += 1;
   newVersion = parts.join('.');
-} else {
 }
 
-if (!/^\d+\.\d+\.\d+/.test(newVersion)) {
-  process.exit(1);
+if (!VERSION_RE.test(newVersion)) {
+  fail(`invalid version "${newVersion}" (expected x.y.z)`);
 }
 
-// 3. Update package.json
-try {
-  let content = fs.readFileSync(packageJsonPath, 'utf8');
-  content = content.replace(/"version": "\d+\.\d+\.\d+"/, `"version": "${newVersion}"`);
-  fs.writeFileSync(packageJsonPath, content);
-} catch (_error) {
-  process.exit(1);
-}
+// 2. package.json
+updateJsonVersion(packageJsonPath, newVersion, 'package.json');
 
-// 4. Update tauri.conf.json
-try {
-  let content = fs.readFileSync(tauriConfPath, 'utf8');
-  content = content.replace(/"version": "\d+\.\d+\.\d+"/, `"version": "${newVersion}"`);
-  fs.writeFileSync(tauriConfPath, content);
-} catch (_error) {
-  process.exit(1);
-}
+// 3. tauri.conf.json
+updateJsonVersion(tauriConfPath, newVersion, 'tauri.conf.json');
 
-// 5. Update Cargo.toml
-try {
-  let content = fs.readFileSync(cargoTomlPath, 'utf8');
-  const regex = /(\[package\][\s\S]*?^version = ")([^"]+)(")/m;
+// 4. Cargo.toml
+updateTextFile(cargoTomlPath, CARGO_TOML_VERSION_RE, `$1${newVersion}$3`, 'Cargo.toml');
 
-  if (regex.test(content)) {
-    content = content.replace(regex, `$1${newVersion}$3`);
-    fs.writeFileSync(cargoTomlPath, content);
-  } else {
-    process.exit(1);
-  }
-} catch (_error) {
-  process.exit(1);
-}
+// 5. Cargo.lock (best effort; regenerated by cargo after `bun run clean`)
+updateTextFile(cargoLockPath, CARGO_LOCK_VERSION_RE, `$1${newVersion}$2`, 'Cargo.lock');
 
-// 6. Update Cargo.lock
-try {
-  let content = fs.readFileSync(cargoLockPath, 'utf8');
-  const regex = /(^\[\[package\]\]\nname = "markdown-rs"\nversion = ")\d+\.\d+\.\d+(")/m;
+// 6. PKGBUILD
+updateTextFile(pkgbuildPath, PKGBUILD_VERSION_RE, `$1${newVersion}`, 'PKGBUILD');
 
-  if (regex.test(content)) {
-    content = content.replace(regex, `$1${newVersion}$2`);
-    fs.writeFileSync(cargoLockPath, content);
-  }
-} catch (_error) {}
+// 7. .pkg/PKGBUILD (best effort; recreated by `bun run package`)
+updateTextFile(dotPkgPkgbuildPath, PKGBUILD_VERSION_RE, `$1${newVersion}`, '.pkg/PKGBUILD');
 
-// 7. Update PKGBUILD
-try {
-  let content = fs.readFileSync(pkgbuildPath, 'utf8');
-  const regex = /^(pkgver=).+$/m;
-
-  if (regex.test(content)) {
-    content = content.replace(regex, `$1${newVersion}`);
-    fs.writeFileSync(pkgbuildPath, content);
-  } else {
-    process.exit(1);
-  }
-} catch (_error) {
-  process.exit(1);
-}
-
-// 8. Update .pkg/PKGBUILD
-try {
-  let content = fs.readFileSync(dotPkgPkgbuildPath, 'utf8');
-  const regex = /^(pkgver=).+$/m;
-
-  if (regex.test(content)) {
-    content = content.replace(regex, `$1${newVersion}`);
-    fs.writeFileSync(dotPkgPkgbuildPath, content);
-  }
-} catch (_error) {}
-
-// 9. Git Integration
+// 8. Git integration
 if (shouldGit) {
-  try {
-    const files = [packageJsonPath, pkgbuildPath, dotPkgPkgbuildPath, tauriConfPath, cargoTomlPath, cargoLockPath]
-      .map((p) => `"${p}"`)
-      .join(' ');
-    execSync(`git add ${files}`, { stdio: 'inherit' });
+  const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath, cargoLockPath];
+  const tagName = `v${newVersion}`;
 
-    const commitMsg = `chore: release v${newVersion}`;
-    execSync(`git commit -m "${commitMsg}"`, { stdio: 'inherit' });
-
-    const tagName = `v${newVersion}`;
-    execSync(`git tag -a ${tagName} -m "${tagName}"`, { stdio: 'inherit' });
-
-    execSync('git push --follow-tags', { stdio: 'inherit' });
-  } catch (_error) {}
-} else {
+  runGit(['add', ...files]);
+  runGit(['commit', '-m', `chore: release v${newVersion}`]);
+  runGit(['tag', '-a', tagName, '-m', tagName]);
+  runGit(['push', '--follow-tags']);
 }
+
+console.log(`[version] bumped ${currentVersion} -> ${newVersion}`);
