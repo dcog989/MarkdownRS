@@ -91,6 +91,17 @@ export class LineChangeTracker {
   }
 
   /**
+   * Whether any tracked change or deletion is still inside the time span.
+   * Used to know when time-based highlighting no longer needs periodic
+   * re-renders.
+   */
+  hasActiveHighlights(timespan: number): boolean {
+    if (timespan <= 0) return false;
+    const cutoff = Date.now() - timespan * 1000;
+    return this.changes.some((c) => c.timestamp >= cutoff) || this.deletions.some((d) => d.timestamp >= cutoff);
+  }
+
+  /**
    * Clear all tracked changes
    */
   clear(): void {

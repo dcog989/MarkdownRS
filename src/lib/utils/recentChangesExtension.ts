@@ -1,7 +1,8 @@
 import type { Extension } from '@codemirror/state';
-import { GutterMarker, gutter, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { type EditorView, GutterMarker, gutter, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { appContext } from '$lib/stores/state.svelte';
+import { CONFIG } from '$lib/utils/config';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 
 class LineNumberMarker extends GutterMarker {
@@ -60,6 +61,36 @@ export function createRecentChangesHighlighter(
     result.push(
       ViewPlugin.fromClass(
         class {
+          private fadeTimer: number | null = null;
+
+          constructor(view: EditorView) {
+            this.scheduleFade(view);
+          }
+
+          destroy() {
+            if (this.fadeTimer !== null) {
+              clearTimeout(this.fadeTimer);
+              this.fadeTimer = null;
+            }
+          }
+
+          // Gutter markers only recompute when a view update is dispatched, so
+          // once tracked lines age out of the time span nothing would re-render
+          // them. Dispatch an empty transaction periodically while highlights
+          // are still time-active so the alpha fades out on its own.
+          private scheduleFade(view: EditorView) {
+            if (this.fadeTimer !== null || !tracker) return;
+            const timespan = appContext.settings.recentChangesTimespan;
+            if (timespan <= 0 || !tracker.hasActiveHighlights(timespan)) return;
+
+            const tick = () => {
+              this.fadeTimer = null;
+              view.dispatch({});
+              if (tracker.hasActiveHighlights(timespan)) this.scheduleFade(view);
+            };
+            this.fadeTimer = window.setTimeout(tick, CONFIG.EDITOR.RECENT_CHANGES_FADE_REFRESH_MS);
+          }
+
           update(update: ViewUpdate) {
             if (!update.docChanged || !tracker) return;
 
@@ -127,6 +158,8 @@ export function createRecentChangesHighlighter(
                 }
               }
             }
+
+            this.scheduleFade(update.view);
           }
         },
       ),
