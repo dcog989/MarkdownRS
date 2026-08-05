@@ -1,12 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod bootstrap;
 mod commands;
 mod db;
 mod markdown;
 mod migration;
 mod portable;
-mod setup;
 mod state;
+mod themes;
 mod utils;
 
 use tauri::Emitter;
@@ -64,7 +65,7 @@ fn main() {
                 .with_filename(".window-state.json")
                 .build(),
         )
-        .setup(setup::run)
+        .setup(bootstrap::run)
         .invoke_handler(tauri::generate_handler![
             commands::session::save_session,
             commands::session::restore_session,

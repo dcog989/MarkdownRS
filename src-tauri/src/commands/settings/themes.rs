@@ -5,12 +5,6 @@ use std::time::SystemTime;
 use tokio::fs;
 use tokio::sync::Mutex;
 
-mod generated {
-    include!(concat!(env!("OUT_DIR"), "/generated_themes.rs"));
-}
-
-pub use generated::TEMPLATE_THEMES;
-
 struct CachedTheme {
     css: String,
     mtime: SystemTime,
@@ -38,7 +32,7 @@ fn keyed(name: &str) -> String {
 }
 
 pub fn default_css(theme: &str) -> Option<&'static str> {
-    generated::lookup_template_css(&keyed(theme))
+    crate::themes::lookup_template_css(&keyed(theme))
 }
 
 pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, String> {

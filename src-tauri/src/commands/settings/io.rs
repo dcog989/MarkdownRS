@@ -24,13 +24,6 @@ pub(super) fn normalize_max_file_size(settings: &mut serde_json::Value) {
     settings[MAX_FILE_SIZE_KEY] = serde_json::json!(mb);
 }
 
-pub fn read_and_parse_sync(path: &std::path::Path) -> Result<toml::Value, String> {
-    let raw_bytes = std::fs::read(path)
-        .map_err(|e| handle_error(Some(&path.to_string_lossy()), "read settings file", e))?;
-    let content = read_text_with_bom_detection(raw_bytes);
-    toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))
-}
-
 pub async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<String>, String> {
     let config_dir = super::app_config_path(app_handle)?;
     let path = config_dir.join("settings.toml");
