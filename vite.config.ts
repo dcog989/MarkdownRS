@@ -34,7 +34,6 @@ export default defineConfig({
       '@tauri-apps/api/core',
       '@tauri-apps/plugin-dialog',
       '@tauri-apps/plugin-opener',
-      '@tauri-apps/plugin-shell',
       '@codemirror/state',
       '@codemirror/view',
     ],
