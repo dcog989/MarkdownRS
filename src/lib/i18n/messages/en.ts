@@ -398,6 +398,8 @@ export const en = {
   rumdlConfig: {
     title: 'rumdl Config',
     targetLabel: 'Config file',
+    scopeProject: 'Project',
+    scopeUser: 'User',
     currentlyLoaded: 'Currently active config: {path}',
     willCreate: 'No config file yet — this file will be created when you save.',
     placeholder: '# rumdl TOML configuration',

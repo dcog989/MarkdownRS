@@ -204,30 +204,63 @@ pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<Path
         .or_else(discover_user_config_path)
 }
 
+/// Scope of the rumdl config file being edited.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RumdlConfigScope {
+    /// Config scoped to the current document/project (discovered upward from
+    /// the file, or `<project_root>/.rumdl.toml` to be created).
+    Project,
+    /// User-level config (e.g. `~/.config/rumdl/rumdl.toml`).
+    User,
+}
+
+impl RumdlConfigScope {
+    pub fn from_str(s: Option<&str>) -> Self {
+        match s {
+            Some("user") => Self::User,
+            _ => Self::Project,
+        }
+    }
+}
+
 /// Resolve the target rumdl config file for editing.
 ///
-/// For a file-backed document: the discovered project config, or
-/// `<project_root>/.rumdl.toml` (to be created) if none exists.
-/// For a file-less document: the discovered user config, or the canonical
-/// platform config location (e.g. `~/.config/rumdl/rumdl.toml`) if none exists.
-pub fn resolve_config_target(file_path: Option<&Path>, project_root: Option<&Path>) -> PathBuf {
-    match file_path {
-        Some(fp) => {
-            let file_dir = fp.parent().unwrap_or_else(|| Path::new(""));
-            let pr = project_root.unwrap_or(file_dir);
-            SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, pr)
-                .unwrap_or_else(|| pr.join(".rumdl.toml"))
-        },
-        None => {
-            let home = dirs::home_dir().unwrap_or_default();
-            let pr = project_root.unwrap_or(&home);
-            discover_user_config_path().unwrap_or_else(|| {
-                dirs::config_dir()
-                    .map(|d| d.join("rumdl").join("rumdl.toml"))
+/// Project scope: the discovered project config, or `<project_root>/.rumdl.toml`
+/// (to be created) if none exists. For a file-less document the project root
+/// falls back to the file's directory or the home directory.
+/// User scope: the discovered user config, or the canonical platform config
+/// location (e.g. `~/.config/rumdl/rumdl.toml`) if none exists.
+pub fn resolve_config_target(
+    file_path: Option<&Path>,
+    project_root: Option<&Path>,
+    scope: RumdlConfigScope,
+) -> PathBuf {
+    match scope {
+        RumdlConfigScope::User => user_config_default_target(project_root),
+        RumdlConfigScope::Project => match file_path {
+            Some(fp) => {
+                let file_dir = fp.parent().unwrap_or_else(|| Path::new(""));
+                let pr = project_root.unwrap_or(file_dir);
+                SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, pr)
                     .unwrap_or_else(|| pr.join(".rumdl.toml"))
-            })
+            },
+            None => {
+                let home = dirs::home_dir().unwrap_or_default();
+                project_root.unwrap_or(&home).join(".rumdl.toml")
+            },
         },
     }
+}
+
+fn user_config_default_target(project_root: Option<&Path>) -> PathBuf {
+    discover_user_config_path().unwrap_or_else(|| {
+        dirs::config_dir()
+            .map(|d| d.join("rumdl").join("rumdl.toml"))
+            .unwrap_or_else(|| {
+                let home = dirs::home_dir().unwrap_or_default();
+                project_root.unwrap_or(&home).join(".rumdl.toml")
+            })
+    })
 }
 
 /// The config file currently in effect for the given file, if any.
@@ -356,7 +389,7 @@ mod tests {
         fs::write(dir.join(".rumdl.toml"), "[global]\n").unwrap();
         let file = dir.join("notes").join("doc.md");
 
-        let target = resolve_config_target(Some(&file), Some(&dir));
+        let target = resolve_config_target(Some(&file), Some(&dir), RumdlConfigScope::Project);
 
         assert_eq!(target, dir.join(".rumdl.toml"));
         fs::remove_dir_all(&dir).unwrap();
@@ -367,7 +400,7 @@ mod tests {
         let dir = make_temp_dir("target-create");
         let file = dir.join("doc.md");
 
-        let target = resolve_config_target(Some(&file), Some(&dir));
+        let target = resolve_config_target(Some(&file), Some(&dir), RumdlConfigScope::Project);
 
         assert_eq!(target, dir.join(".rumdl.toml"));
         fs::remove_dir_all(&dir).unwrap();

@@ -204,6 +204,7 @@ export interface BackendCommands {
   read_rumdl_config: {
     args: {
       filePath?: string;
+      target?: 'project' | 'user';
     };
     return: {
       target_path: string;
@@ -215,6 +216,7 @@ export interface BackendCommands {
   write_rumdl_config: {
     args: {
       filePath?: string;
+      target?: 'project' | 'user';
       content: string;
     };
     return: string;

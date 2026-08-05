@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Settings2, X } from 'lucide-svelte';
+import { untrack } from 'svelte';
 import { _ } from 'svelte-i18n';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { translate } from '$lib/i18n';
@@ -24,21 +25,34 @@ let exists = $state(false);
 let loadedPath = $state<string | null>(null);
 let content = $state('');
 let hasChanges = $state(false);
+let scope = $state<'project' | 'user'>('project');
+
+function activeTab() {
+    return appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+}
 
 $effect(() => {
     if (!isOpen) return;
-    void loadConfig();
+    untrack(() => {
+        scope = activeTab()?.path ? 'project' : 'user';
+        void loadConfig();
+    });
 });
+
+async function setScope(next: 'project' | 'user') {
+    if (next === scope) return;
+    scope = next;
+    await loadConfig();
+}
 
 async function loadConfig() {
     busy = true;
     loaded = false;
     try {
-        const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-        const filePath = activeTab?.path;
+        const filePath = activeTab()?.path;
         const result = await callBackend(
             'read_rumdl_config',
-            { filePath: filePath ?? undefined },
+            { filePath: filePath ?? undefined, target: scope },
             'Markdown:ReadRumdlConfig',
         );
         if (result) {
@@ -60,17 +74,17 @@ async function saveConfig() {
     if (busy) return;
     busy = true;
     try {
-        const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-        const filePath = activeTab?.path;
+        const filePath = activeTab()?.path;
         const written = await callBackend(
             'write_rumdl_config',
-            { filePath: filePath ?? undefined, content },
+            { filePath: filePath ?? undefined, target: scope, content },
             'Markdown:WriteRumdlConfig',
         );
         if (written === null) return;
         hasChanges = false;
         showToast('success', translate('rumdlConfig.saved', { values: { path: written } }));
-        const view = activeTab?.id ? getEditorInstance(activeTab.id) : undefined;
+        const tab = activeTab();
+        const view = tab?.id ? getEditorInstance(tab.id) : undefined;
         if (view) forceMarkdownRelint(view);
         onClose();
     } catch (err) {
@@ -97,6 +111,27 @@ async function saveConfig() {
     {/snippet}
 
     <div class="flex flex-col gap-4 p-6">
+        <div class="bg-bg-input border-border-light flex w-max items-center gap-1 rounded border p-1">
+            <button
+                type="button"
+                class="text-ui-sm rounded px-3 py-1 transition-colors {scope === 'project'
+                    ? 'bg-accent-primary text-fg-inverse'
+                    : 'text-fg-muted hover:text-fg-default'}"
+                onclick={() => setScope('project')}
+                disabled={busy || !loaded}>
+                {translate('rumdlConfig.scopeProject')}
+            </button>
+            <button
+                type="button"
+                class="text-ui-sm rounded px-3 py-1 transition-colors {scope === 'user'
+                    ? 'bg-accent-primary text-fg-inverse'
+                    : 'text-fg-muted hover:text-fg-default'}"
+                onclick={() => setScope('user')}
+                disabled={busy || !loaded}>
+                {translate('rumdlConfig.scopeUser')}
+            </button>
+        </div>
+
         <div class="flex items-center gap-2">
             <span class="text-ui-sm text-fg-muted shrink-0">{translate('rumdlConfig.targetLabel')}</span>
             <span class="bg-bg-panel border-border-light text-ui-sm text-fg-default min-w-0 flex-1 truncate rounded border px-2 py-1 font-mono">
@@ -109,7 +144,7 @@ async function saveConfig() {
                 {translate('rumdlConfig.currentlyLoaded', { values: { path: loadedPath } })}
             </p>
         {:else if !exists}
-            <p class="text-ui-sm text-warning">
+            <p class="text-ui-sm text-accent-primary">
                 {translate('rumdlConfig.willCreate')}
             </p>
         {/if}
@@ -126,7 +161,7 @@ async function saveConfig() {
             spellcheck="false"
             disabled={busy || !loaded}
             placeholder={translate('rumdlConfig.placeholder')}
-            class="bg-bg-input text-fg-default border-border-main text-ui font-mono min-h-[10rem] w-full rounded border p-4 leading-relaxed outline-none placeholder:text-fg-muted/60 disabled:opacity-50 rumdl-config-textarea"></textarea>
+            class="bg-bg-input text-fg-default text-ui font-mono w-full rounded border p-4 leading-relaxed outline-none disabled:opacity-50 rumdl-config-textarea"></textarea>
     </div>
 
     {#snippet footer()}
@@ -150,5 +185,11 @@ async function saveConfig() {
 <style>
     .rumdl-config-textarea {
         field-sizing: content;
+        min-height: 10rem;
+    }
+
+    .rumdl-config-textarea::placeholder {
+        color: var(--text-secondary);
+        opacity: 0.6;
     }
 </style>
