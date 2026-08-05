@@ -1,7 +1,12 @@
 use super::dicts;
 use anyhow::{Result, anyhow};
-use std::path::PathBuf;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
 use tokio::fs;
+
+const SPELL_CHECK_TIMEOUT_CONNECT: Duration = Duration::from_secs(2);
+const SPELL_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
 
 async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String> {
     match fs::read_to_string(path).await {
@@ -109,4 +114,102 @@ pub async fn load_technical_dictionary(
     let cache_path = cache_dir.join(format!("{}.txt", id));
 
     ensure_file_downloaded(&client, url, &cache_path, &id).await
+}
+
+pub fn build_http_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .connect_timeout(SPELL_CHECK_TIMEOUT_CONNECT)
+        .timeout(SPELL_CHECK_TIMEOUT)
+        .build()
+        .expect("Failed to build HTTP client")
+}
+
+pub async fn download_and_collect_words(
+    client: &reqwest::Client,
+    dict_codes: Vec<String>,
+    cache_dir: &Path,
+    spec_codes: &[String],
+    tech_cache_dir: &Path,
+) -> (Vec<(String, String)>, HashSet<String>) {
+    let mut dict_tasks = Vec::new();
+    for (i, code) in dict_codes.into_iter().enumerate() {
+        let c = client.clone();
+        let d = cache_dir.to_path_buf();
+        dict_tasks.push(tokio::spawn(async move {
+            (i, load_language_dictionary(c, d, code).await)
+        }));
+    }
+
+    let mut spec_tasks = Vec::new();
+    for code in spec_codes.iter() {
+        let c = client.clone();
+        let d = tech_cache_dir.to_path_buf();
+        let code = code.clone();
+        spec_tasks.push(tokio::spawn(async move {
+            (code.clone(), load_technical_dictionary(c, d, code).await)
+        }));
+    }
+
+    let mut language_dicts: Vec<(String, String)> = Vec::new();
+    let mut technical_words = HashSet::new();
+
+    let mut dict_results: Vec<(usize, _)> = Vec::new();
+    for task in dict_tasks {
+        if let Ok((i, res)) = task.await {
+            dict_results.push((i, res));
+        }
+    }
+    dict_results.sort_by_key(|k| k.0);
+
+    for (_, res) in dict_results {
+        match res {
+            Ok((aff, dic)) => {
+                language_dicts.push((
+                    aff.trim_start_matches('\u{feff}').to_string(),
+                    dic.trim_start_matches('\u{feff}').to_string(),
+                ));
+            },
+            Err(e) => log::warn!("{}", e),
+        }
+    }
+
+    for task in spec_tasks {
+        if let Ok((code, res)) = task.await {
+            match res {
+                Ok(content) => {
+                    let mut count = 0;
+                    for line in content.lines() {
+                        let t = line.trim();
+                        if !t.is_empty() && !t.starts_with('#') && !t.starts_with("//") {
+                            technical_words.insert(t.to_string());
+                            count += 1;
+                        }
+                    }
+                    log::info!("Loaded {}: {} words", code, count);
+                },
+                Err(e) => log::warn!("Failed to load {}: {}", code, e),
+            }
+        }
+    }
+
+    (language_dicts, technical_words)
+}
+
+pub fn build_combined_dic_string(words: &HashSet<String>) -> Option<(String, usize)> {
+    if words.is_empty() {
+        return None;
+    }
+    let mut sorted: Vec<_> = words.iter().cloned().collect();
+    sorted.sort_unstable();
+    let total = sorted.len();
+
+    let mut combined_dic = String::with_capacity(total * 9 + 64);
+    combined_dic.push_str(&total.to_string());
+    combined_dic.push('\n');
+    for word in &sorted {
+        combined_dic.push_str(word);
+        combined_dic.push('\n');
+    }
+
+    Some((combined_dic, total))
 }
