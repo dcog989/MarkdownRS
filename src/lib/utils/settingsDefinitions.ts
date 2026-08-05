@@ -340,7 +340,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: 'settings.previewFontFamily',
       type: 'text',
       category: 'settings.category.preview',
-      defaultValue: 'system-ui, -apple-system, sans-serif',
+      defaultValue: 'sans-serif',
       tooltip: 'settings.previewFontFamilyTooltip',
     },
     {

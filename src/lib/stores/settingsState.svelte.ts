@@ -21,7 +21,7 @@ export const settingsState = $state({
   recentChangesTimespan: 600,
   recentChangesCount: 16,
   undoDepth: 100,
-  previewFontFamily: 'system-ui, -apple-system, sans-serif',
+  previewFontFamily: 'sans-serif',
   previewFontSize: 16,
 
   markdownFlavor: 'gfm' as 'commonmark' | 'gfm',
