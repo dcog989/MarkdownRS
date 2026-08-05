@@ -62,10 +62,12 @@ export function createSplitResize() {
   }
 
   function cleanup() {
+    isDragging = false;
     if (_boundHandleResize) window.removeEventListener('mousemove', _boundHandleResize);
     if (_boundStopResize) window.removeEventListener('mouseup', _boundStopResize);
     _boundHandleResize = null;
     _boundStopResize = null;
+    document.body.style.cursor = 'default';
   }
 
   return {
