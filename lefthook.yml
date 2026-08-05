@@ -8,8 +8,8 @@ pre-commit:
 
     - name: rust-fmt
       glob: "*.rs"
-      run: cd src-tauri && cargo fmt --check
-
+      run: cd src-tauri && cargo fmt
+      stage_fixed: true
 
 pre-push:
   parallel: true
