@@ -102,6 +102,11 @@ struct CachedState {
 
 static CACHE: Mutex<Option<CachedState>> = Mutex::new(None);
 
+/// Cached user-level config path, refreshed only when the remembered path
+/// disappears. Avoids re-running full discovery (~6 `path.exists()` calls)
+/// on every lint/format invocation for file-less buffers.
+static USER_CONFIG_PATH: Mutex<Option<Option<PathBuf>>> = Mutex::new(None);
+
 type RulesPair = (Arc<Config>, Arc<Vec<Box<dyn Rule>>>);
 type RulesResult = Result<RulesPair, String>;
 
@@ -164,6 +169,24 @@ pub fn discover_user_config_path() -> Option<PathBuf> {
     None
 }
 
+/// Resolve the user-level rumdl config path with caching.
+///
+/// The first call performs full discovery; subsequent calls reuse the cached
+/// result as long as the remembered path still exists, re-discovering only if
+/// it disappears. Note that a config file created *after* the first discovery
+/// is not picked up until restart or until the remembered path is deleted.
+fn user_config_path() -> Option<PathBuf> {
+    let mut cached = USER_CONFIG_PATH.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(Some(path)) = cached.as_ref()
+        && path.exists()
+    {
+        return Some(path.clone());
+    }
+    let discovered = discover_user_config_path();
+    *cached = Some(discovered.clone());
+    discovered
+}
+
 /// Discover the rumdl config path for a given file directory and project root,
 /// falling back to user-level config if no project config is found.
 pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<PathBuf> {
@@ -172,7 +195,8 @@ pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<Path
 }
 
 /// Load rumdl config + filtered rules, using a cache that invalidates when
-/// the discovered config file's path or mtime changes.
+/// the discovered config file's path or mtime changes. Applies to both
+/// file-backed and file-less (unsaved buffer) invocations.
 pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>) -> RulesResult {
     match file_path {
         Some(fp) => {
@@ -181,14 +205,9 @@ pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>
             load_rumdl_rules(file_dir, pr)
         },
         None => {
-            if let Some(cfg_path) = discover_user_config_path() {
-                let home = dirs::home_dir().unwrap_or_default();
-                let pr = project_root.unwrap_or(&home);
-                load_full_state(pr, &cfg_path)
-            } else {
-                let (c, r) = load_default_rules();
-                Ok((Arc::clone(c), Arc::clone(r)))
-            }
+            let home = dirs::home_dir().unwrap_or_default();
+            let pr = project_root.unwrap_or(&home);
+            load_cached_rules(user_config_path(), pr)
         },
     }
 }
@@ -196,7 +215,15 @@ pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>
 pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
     let candidate_path =
         SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root)
-            .or_else(discover_user_config_path);
+            .or_else(user_config_path);
+    load_cached_rules(candidate_path, project_root)
+}
+
+/// Build (or fetch from cache) filtered rules for a candidate config path.
+///
+/// The fast path compares the candidate path and its mtime against the cache
+/// and returns the existing config + rules without re-parsing or rebuilding.
+fn load_cached_rules(candidate_path: Option<PathBuf>, project_root: &Path) -> RulesResult {
     let candidate_mtime = candidate_path
         .as_ref()
         .and_then(|p| p.metadata().ok())
