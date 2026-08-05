@@ -87,6 +87,12 @@ pub async fn save_settings(
         state
             .max_file_size_bytes
             .store(MAX_FILE_SIZE_UNSET, Ordering::Relaxed);
+
+        let mut pr = state.project_root.lock_or_recover();
+        *pr = settings
+            .get("workspaceRoot")
+            .and_then(|v| v.as_str())
+            .map(PathBuf::from);
     }
 
     Ok(())
