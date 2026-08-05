@@ -36,19 +36,21 @@ let flatOps = $derived(
     sortCommands(filteredCommands, settingsState.commandPaletteSort, settingsState.commandUsage, settingsState.commandUsageCounts),
 );
 
+let flatOpsIndex = $derived(new Map(flatOps.map((c: Command, i: number) => [c, i])));
+
 let groupedCommands = $derived(
-    flatOps.reduce(
-        (acc: { category: string; commands: Command[] }[], c: Command) => {
-            let group = acc.find((g) => g.category === c.category);
-            if (!group) {
-                group = { category: c.category, commands: [] };
-                acc.push(group);
+    (() => {
+        const byCategory = new Map<string, Command[]>();
+        for (const c of flatOps) {
+            let list = byCategory.get(c.category);
+            if (!list) {
+                list = [];
+                byCategory.set(c.category, list);
             }
-            group.commands.push(c);
-            return acc;
-        },
-        [] as { category: string; commands: Command[] }[],
-    ),
+            list.push(c);
+        }
+        return [...byCategory.entries()].map(([category, commands]) => ({ category, commands }));
+    })(),
 );
 
 const nav = createListNavigation(
@@ -121,7 +123,7 @@ function close() {
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         {#each group.commands as command (command.id)}
-                            {@const globalIndex = flatOps.indexOf(command)}
+                            {@const globalIndex = flatOpsIndex.get(command)}
                             {@const isSelected = globalIndex === nav.selectedIndex}
                             {@const shortcut = shortcutManager.getShortcutDisplay(command.id)}
                             <button
