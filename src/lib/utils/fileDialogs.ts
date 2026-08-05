@@ -196,6 +196,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
   const oldPath = tab.path;
 
   const pendingSavePath = !forceNewPath && tab.path ? tab.path : null;
+  let lockedPath: string | null = null;
 
   if (pendingSavePath && activeSaves.get(pendingSavePath)) {
     return false;
@@ -267,6 +268,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       }
 
       fileWatcher.setWriteLock(sanitizedPath, true);
+      lockedPath = sanitizedPath;
 
       const success = await writeTextFile(sanitizedPath, diskContent);
       if (!success) {
@@ -315,6 +317,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
     return false;
   } catch (_e) {
     if (pendingSavePath) activeSaves.delete(pendingSavePath);
+    if (lockedPath) fileWatcher.setWriteLock(lockedPath, false);
     AppError.handle('File:Write', _e, {
       showToast: true,
       additionalInfo: { path: tab?.path },
