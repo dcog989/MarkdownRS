@@ -306,13 +306,13 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     configure_linux_window(&window);
 
     let paths = resolve_app_paths(app_handle)?;
+    fs::create_dir_all(&paths.log_dir)?;
+    setup_logging(app_handle, &paths.config_path, &paths.log_dir)?;
     migration::migrate_to_config(&paths.local_dir, &paths.config_dir);
     ensure_directories(&paths);
     schedule_temp_cleanup(paths.local_dir.clone(), paths.config_dir.clone());
     log_runtime_info(&paths);
     seed_default_themes(paths.themes_dir);
-
-    setup_logging(app_handle, &paths.config_path, &paths.log_dir)?;
     ensure_dictionary_file(&paths.dict_path);
 
     let db = init_database(paths.db_dir.join("session.db"), &paths.db_dir)?;
