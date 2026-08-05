@@ -62,20 +62,12 @@ pub async fn cleanup_stale_temp_files(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
+    use crate::utils::test_util::make_temp_dir;
     use std::time::Duration;
-    use uuid::Uuid;
-
-    fn temp_dir(name: &str) -> PathBuf {
-        let mut dir = std::env::temp_dir();
-        dir.push(format!("markdownrs-fs-test-{}-{}", name, Uuid::new_v4()));
-        std::fs::create_dir_all(&dir).unwrap();
-        dir
-    }
 
     #[tokio::test(flavor = "current_thread")]
     async fn atomic_write_writes_content_to_target_path() {
-        let dir = temp_dir("write");
+        let dir = make_temp_dir("write");
         let target = dir.join("notes.md");
 
         atomic_write(&target, b"# Hello\n\nBody").await.unwrap();
@@ -86,7 +78,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn atomic_write_does_not_leave_temp_files_behind() {
-        let dir = temp_dir("cleanup");
+        let dir = make_temp_dir("cleanup");
         let target = dir.join("notes.md");
 
         atomic_write(&target, b"content").await.unwrap();
@@ -112,7 +104,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn cleanup_stale_temp_files_removes_old_tmp_files_only() {
-        let dir = temp_dir("stale");
+        let dir = make_temp_dir("stale");
         let old = dir.join("old.tmp");
         let fresh = dir.join("fresh.tmp");
         let keep = dir.join("keep.md");

@@ -272,19 +272,8 @@ pub async fn clear_file_history(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_util::make_temp_dir;
     use std::fs;
-    use std::path::PathBuf;
-
-    fn make_temp_dir(name: &str) -> PathBuf {
-        let mut dir = std::env::temp_dir();
-        dir.push(format!(
-            "markdownrs-file-test-{}-{}",
-            name,
-            uuid::Uuid::new_v4()
-        ));
-        fs::create_dir_all(&dir).unwrap();
-        dir
-    }
 
     #[tokio::test]
     async fn creates_new_file() {

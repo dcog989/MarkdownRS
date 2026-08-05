@@ -117,19 +117,9 @@ pub async fn get_directory_mtime(path: String) -> Result<Option<u64>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_util::make_temp_dir;
     use std::fs;
-    use std::path::{Path, PathBuf};
-
-    fn make_temp_dir(name: &str) -> PathBuf {
-        let mut dir = std::env::temp_dir();
-        dir.push(format!(
-            "markdownrs-dir-test-{}-{}",
-            name,
-            uuid::Uuid::new_v4()
-        ));
-        fs::create_dir_all(&dir).unwrap();
-        dir
-    }
+    use std::path::Path;
 
     fn list_names(dir: &Path, show_hidden: bool) -> Vec<String> {
         list_directory_sync(&dir.to_string_lossy(), show_hidden)

@@ -4,6 +4,9 @@ mod fs;
 mod path;
 mod sync;
 
+#[cfg(test)]
+pub mod test_util;
+
 pub use encoding::*;
 pub use error::*;
 pub use fs::*;

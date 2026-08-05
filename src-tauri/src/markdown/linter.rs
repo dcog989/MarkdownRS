@@ -67,15 +67,13 @@ pub fn lint_content(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_util::make_temp_dir;
     use rumdl_lib::rule::Severity;
     use std::fs;
     use std::path::PathBuf;
-    use uuid::Uuid;
 
     fn temp_dir_with_config(name: &str, config_body: &str) -> PathBuf {
-        let mut dir = std::env::temp_dir();
-        dir.push(format!("markdownrs-lint-test-{}-{}", name, Uuid::new_v4()));
-        fs::create_dir_all(&dir).unwrap();
+        let dir = make_temp_dir(name);
         fs::write(dir.join(".rumdl.toml"), config_body).unwrap();
         dir
     }
