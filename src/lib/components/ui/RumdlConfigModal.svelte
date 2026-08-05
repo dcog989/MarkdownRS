@@ -124,10 +124,9 @@ async function saveConfig() {
                 }
             }}
             spellcheck="false"
-            rows="18"
             disabled={busy || !loaded}
             placeholder={translate('rumdlConfig.placeholder')}
-            class="bg-bg-input text-fg-default border-border-main text-ui font-mono w-full resize-y rounded border p-4 leading-relaxed outline-none placeholder:text-fg-muted/60 disabled:opacity-50"></textarea>
+            class="bg-bg-input text-fg-default border-border-main text-ui font-mono min-h-[10rem] w-full rounded border p-4 leading-relaxed outline-none placeholder:text-fg-muted/60 disabled:opacity-50 rumdl-config-textarea"></textarea>
     </div>
 
     {#snippet footer()}
@@ -147,3 +146,9 @@ async function saveConfig() {
         </button>
     {/snippet}
 </Modal>
+
+<style>
+    .rumdl-config-textarea {
+        field-sizing: content;
+    }
+</style>
