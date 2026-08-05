@@ -192,7 +192,11 @@ function findCursorHeadingLines(view: EditorView): Set<number> {
 
 function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
   const node = tree.resolveInner(pos, 1);
-  return node.name === 'FencedCode' || node.name === 'InlineCode' || node.name === 'CodeBlock';
+  // Fenced code content resolves to CodeText (child of FencedCode); CodeBlock is
+  // indented code, and InlineCode covers inline backtick spans.
+  return (
+    node.name === 'FencedCode' || node.name === 'CodeText' || node.name === 'CodeBlock' || node.name === 'InlineCode'
+  );
 }
 
 function getTabDirectory(view: EditorView): string {
@@ -501,7 +505,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         }
       }
 
-      if (parserHrs.has(line.from) || line.text.trim() === '---') {
+      if (!isVisibleInCodeBlock(tree, line.from) && (parserHrs.has(line.from) || line.text.trim() === '---')) {
         const onLine = cursor >= line.from && cursor <= line.to;
         ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
       }

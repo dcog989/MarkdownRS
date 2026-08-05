@@ -111,3 +111,29 @@ describe('callout decorations', () => {
     view.destroy();
   });
 });
+
+describe('horizontal rule decorations', () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = '';
+  });
+
+  function lineWithText(parent: HTMLElement, text: string): Element | undefined {
+    return Array.from(parent.querySelectorAll('.cm-line')).find((l) => l.textContent === text);
+  }
+
+  it('masks a real horizontal rule outside a code block', async () => {
+    const { view, parent } = createCalloutView('Before\n---\nAfter\n', true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).not.toBeNull();
+    view.destroy();
+  });
+
+  it('does not mask a --- line inside a fenced code block', async () => {
+    const { view, parent } = createCalloutView('```\n---\n```\n', true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).toBeNull();
+    view.destroy();
+  });
+});
