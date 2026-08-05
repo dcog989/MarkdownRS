@@ -16,6 +16,7 @@ import { TEXT_OPERATIONS_REGISTRY } from '$lib/config/textOperationsRegistry';
 import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
 import { performTextTransform } from '$lib/stores/editorStore.svelte';
 import { toggleSelectionComment } from '$lib/utils/commentToggle';
+import { promptGoToLine } from '$lib/utils/editorCommands';
 
 export type CmHandler = (view: EditorView) => boolean;
 
@@ -84,6 +85,13 @@ export const cmHandlerMap: CmBindingDef[] = [
     handler: (view) => indentLess(view),
   },
   ...textOpBindings,
+  {
+    registryKey: 'edit.gotoLine',
+    handler: (view) => {
+      void promptGoToLine(view);
+      return true;
+    },
+  },
   {
     registryKey: 'file.addBookmark',
     handler: () => addBookmarkForActiveTab(),

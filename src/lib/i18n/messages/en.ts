@@ -417,6 +417,8 @@ export const en = {
   },
   editor: {
     recentlyClosed: 'Recently Closed',
+    gotoLineTitle: 'Go to Line',
+    gotoLineMessage: 'Line number (1–{total}):',
     clipboardNoText: 'Clipboard does not contain valid text',
     pasteFailed: 'Failed to paste from clipboard',
     largeFileSimpleMode: 'Large file — simple mode enabled for performance',

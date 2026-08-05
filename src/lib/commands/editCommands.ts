@@ -1,5 +1,5 @@
 import { appContext } from '$lib/stores/state.svelte';
-import { dispatchRedo, dispatchUndo } from '$lib/utils/editorCommands';
+import { dispatchGoToLine, dispatchRedo, dispatchUndo } from '$lib/utils/editorCommands';
 import type { Command } from './types';
 
 export const editCommands: Command[] = [
@@ -33,5 +33,11 @@ export const editCommands: Command[] = [
     category: 'Editor',
     showInPalette: false,
     defaultKey: 'ctrl+g',
+    handler: () => {
+      if (appContext.app.activeTabId) {
+        return dispatchGoToLine(appContext.app.activeTabId);
+      }
+      return false;
+    },
   },
 ];
