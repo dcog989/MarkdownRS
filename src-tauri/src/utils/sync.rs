@@ -11,6 +11,29 @@ impl<T> MutexExt<T> for std::sync::Mutex<T> {
     }
 }
 
+#[cfg(feature = "spellcheck")]
+pub trait RwLockExt<T> {
+    fn read_or_recover(&self) -> std::sync::RwLockReadGuard<'_, T>;
+    fn write_or_recover(&self) -> std::sync::RwLockWriteGuard<'_, T>;
+}
+
+#[cfg(feature = "spellcheck")]
+impl<T> RwLockExt<T> for std::sync::RwLock<T> {
+    fn read_or_recover(&self) -> std::sync::RwLockReadGuard<'_, T> {
+        self.read().unwrap_or_else(|e| {
+            log::warn!("RwLock poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        })
+    }
+
+    fn write_or_recover(&self) -> std::sync::RwLockWriteGuard<'_, T> {
+        self.write().unwrap_or_else(|e| {
+            log::warn!("RwLock poisoned, continuing with potentially corrupt state");
+            e.into_inner()
+        })
+    }
+}
+
 pub async fn run_blocking<F, T>(task_label: &'static str, f: F) -> Result<T, String>
 where
     F: FnOnce() -> Result<T, String> + Send + 'static,

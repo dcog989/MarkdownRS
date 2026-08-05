@@ -1,6 +1,7 @@
 use crate::state::AppState;
-use crate::utils::MutexExt;
+use crate::utils::RwLockExt;
 use anyhow::{Result, anyhow};
+use std::sync::Arc;
 use tauri::Manager;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -42,8 +43,8 @@ pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String)
     }
 
     let state = app_handle.state::<AppState>();
-    let mut custom_dict = state.custom_dict.lock_or_recover();
-    custom_dict.insert(word.to_lowercase());
+    let mut custom_dict = state.custom_dict.write_or_recover();
+    Arc::make_mut(&mut custom_dict).insert(word.to_lowercase());
 
     Ok(())
 }

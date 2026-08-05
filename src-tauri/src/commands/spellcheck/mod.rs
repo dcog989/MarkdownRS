@@ -5,7 +5,8 @@ pub mod user_dict;
 
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
-use crate::utils::{IntoTauriError, MutexExt, handle_error};
+use crate::utils::{IntoTauriError, MutexExt, RwLockExt, handle_error};
+use std::sync::Arc;
 use tauri::State;
 
 const MAX_SUGGESTIONS: usize = 5;
@@ -32,8 +33,8 @@ pub async fn check_words(
     log::debug!("check_words called with {} words", words.len());
 
     let custom_snapshot = {
-        let guard = state.custom_dict.lock_or_recover();
-        guard.clone()
+        let guard = state.custom_dict.read_or_recover();
+        Arc::clone(&guard)
     };
 
     let speller = state.speller.clone();

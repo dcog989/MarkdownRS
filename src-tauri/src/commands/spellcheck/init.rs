@@ -1,9 +1,10 @@
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
-use crate::utils::MutexExt;
+use crate::utils::{MutexExt, RwLockExt};
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 use tauri::Manager;
 
@@ -141,11 +142,12 @@ fn build_spellbook_dictionaries(
 
 async fn load_custom_dictionary(store: &AppState, custom_path: &Path) {
     if let Ok(text) = tokio::fs::read_to_string(custom_path).await {
-        let mut custom = store.custom_dict.lock_or_recover();
+        let mut custom = store.custom_dict.write_or_recover();
+        let set = Arc::make_mut(&mut custom);
         for line in text.lines() {
             let w = line.trim();
             if !w.is_empty() {
-                custom.insert(w.to_lowercase());
+                set.insert(w.to_lowercase());
             }
         }
     }
