@@ -198,7 +198,7 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
     let mut upsert_stmt = tx.prepare_cached(&upsert_sql)?;
 
     for tab in tabs {
-        let content = tab.content.as_deref().filter(|c| !c.is_empty());
+        let content = tab.content.as_deref();
         let is_dirty: i32 = tab.is_dirty as i32;
         let is_pinned: i32 = tab.is_pinned as i32;
         let file_check_failed: i32 = tab.file_check_failed as i32;
