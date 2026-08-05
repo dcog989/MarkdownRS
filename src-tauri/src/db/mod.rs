@@ -1,6 +1,6 @@
 macro_rules! lock_conn {
     ($self:expr) => {
-        $self.conn.lock().unwrap_or_else(|e| e.into_inner())
+        crate::utils::MutexExt::lock_or_recover(&*$self.conn)
     };
 }
 

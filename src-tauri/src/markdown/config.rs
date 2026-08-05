@@ -1,4 +1,5 @@
 use crate::state::AppState;
+use crate::utils::MutexExt;
 use comrak::Options;
 use comrak::options::{Extension, Parse, Render};
 use rumdl_lib::config::{Config, ConfigLoaded, SourcedConfig, default_registry};
@@ -17,7 +18,7 @@ pub struct ResolvedPaths {
 pub fn resolve_paths(file_path: Option<&str>, state: &AppState) -> ResolvedPaths {
     ResolvedPaths {
         file_path: file_path.map(PathBuf::from),
-        project_root: state.project_root.lock().ok().and_then(|r| r.clone()),
+        project_root: state.project_root.lock_or_recover().clone(),
     }
 }
 
@@ -192,7 +193,7 @@ pub fn discover_user_config_path() -> Option<PathBuf> {
 /// it disappears. Note that a config file created *after* the first discovery
 /// is not picked up until restart or until the remembered path is deleted.
 fn user_config_path() -> Option<PathBuf> {
-    let mut cached = USER_CONFIG_PATH.lock().unwrap_or_else(|e| e.into_inner());
+    let mut cached = USER_CONFIG_PATH.lock_or_recover();
     if let Some(Some(path)) = cached.as_ref()
         && path.exists()
     {
@@ -247,9 +248,7 @@ fn load_cached_rules(candidate_path: Option<PathBuf>, project_root: &Path) -> Ru
 
     // Check cache by (path, mtime).
     {
-        let cache = CACHE
-            .lock()
-            .map_err(|_| "Cache lock poisoned".to_string())?;
+        let cache = CACHE.lock_or_recover();
         if let Some(cached) = cache.as_ref()
             && cached.config_path == candidate_path
             && cached.config_mtime == candidate_mtime
@@ -267,9 +266,7 @@ fn load_cached_rules(candidate_path: Option<PathBuf>, project_root: &Path) -> Ru
     };
 
     // Store in cache.
-    let mut cache = CACHE
-        .lock()
-        .map_err(|_| "Cache lock poisoned".to_string())?;
+    let mut cache = CACHE.lock_or_recover();
     *cache = Some(CachedState {
         config_path: candidate_path,
         config_mtime: candidate_mtime,
