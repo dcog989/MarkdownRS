@@ -93,14 +93,20 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
 
   if (!meta) return false;
 
-  // mtime is formatted at second granularity, so a differing stamp reliably
-  // signals a cross-second edit without a file read.
-  if (tab.modified && meta.modified && meta.modified !== tab.modified) {
-    return true;
-  }
+  // The mtime/size fast paths are only valid for clean tabs, whose `modified`
+  // and `sizeBytes` reflect the on-disk state (set from the backend on
+  // load/save). A dirty tab's `modified`/`sizeBytes` are its last-edit state,
+  // so comparing them against the disk would report a change spuriously.
+  if (!tab.isDirty) {
+    // mtime is formatted at second granularity, so a differing stamp reliably
+    // signals a cross-second edit without a file read.
+    if (tab.modified && meta.modified && meta.modified !== tab.modified) {
+      return true;
+    }
 
-  if (tab.sizeBytes !== undefined && meta.size !== tab.sizeBytes) {
-    return true;
+    if (tab.sizeBytes !== undefined && meta.size !== tab.sizeBytes) {
+      return true;
+    }
   }
 
   // Same-second edits (or a missing tab.modified) are invisible to mtime, so
