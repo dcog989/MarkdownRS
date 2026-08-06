@@ -147,7 +147,6 @@
 /* Writer Mode */
 .writer-mode {
   display: flex;
-  align-items: flex-start;
   justify-content: center;
 }
 
