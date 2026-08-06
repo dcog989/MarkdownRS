@@ -446,6 +446,7 @@ export const en = {
     renderFailed: 'Preview render failed',
     renderNull: 'Rendering returned null',
     mermaidError: 'Mermaid diagram failed to render',
+    codeCopied: 'Code block copied to clipboard',
   },
   editorContextMenu: {
     suggestions: 'Suggestions',

@@ -1,7 +1,9 @@
 import { syntaxTree } from '@codemirror/language';
 import type { Extension, Range } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
+import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import type { AppEditorView } from '../../global';
 import { imageWidgetClickHandler, imageWidgetDecoration } from './markdownImageWidget';
 import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from './markdownTableWidget';
@@ -582,7 +584,7 @@ export const codeBlockCopyHandler = EditorView.domEventHandlers({
     }
 
     const code = doc.sliceString(startLine.to + 1, codeEnd);
-    navigator.clipboard.writeText(code).catch(() => {});
+    navigator.clipboard.writeText(code).then(() => showToast('success', translate('preview.codeCopied')));
 
     return true;
   },
