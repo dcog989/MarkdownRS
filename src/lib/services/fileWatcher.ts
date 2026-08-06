@@ -1,4 +1,4 @@
-import { watchImmediate } from '@tauri-apps/plugin-fs';
+import { type WatchEvent, watchImmediate } from '@tauri-apps/plugin-fs';
 import { translate } from '$lib/i18n';
 import { hasFileChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
@@ -11,6 +11,10 @@ import { debounce } from '$lib/utils/timing';
 type UnwatchFn = () => void;
 
 const TOAST_THROTTLE_MS = 5000;
+
+function isAccessEvent(event: WatchEvent): boolean {
+  return typeof event.type === 'object' && event.type !== null && 'access' in event.type;
+}
 
 class FileWatcherService {
   private watchers = new Map<string, UnwatchFn>();
@@ -97,7 +101,13 @@ class FileWatcherService {
     // the app reacted to its own saves as if they were external edits. Events
     // now arrive promptly and the write lock + the 300ms debounce below
     // suppress self-writes while still coalescing genuine edit bursts.
-    const unwatch = await watchImmediate(path, () => {
+    const unwatch = await watchImmediate(path, (event) => {
+      // The inotify watch mask includes OPEN, so every read_text_file (which
+      // opens the file for reading) emits an access event. Reacting to those
+      // would turn our own change-probe reads into a self-sustaining loop of
+      // read events. Real edits always also emit a Modify event, so access
+      // events can be dropped without missing external changes.
+      if (isAccessEvent(event)) return;
       handleChange();
     });
 
