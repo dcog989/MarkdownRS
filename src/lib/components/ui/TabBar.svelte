@@ -34,7 +34,9 @@ let currentDragX = $state(0);
 let contextMenuTabId: string | null = $state(null);
 
 const PEEK_AMOUNT = 55;
-const COLLAPSED_PIN_WIDTH = 36;
+let effectiveTabWidthMin = $derived(
+    Math.min(appContext.settings.tabWidthMin, appContext.settings.tabWidthMax),
+);
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
 
@@ -182,14 +184,18 @@ $effect(() => {
     if (appContext.app.activeTabId) scrollToActive();
 });
 
-// Tab sizing is pure CSS: each tab is `flex: 0 0 auto` (exactly content
-// width, never shrunk) bounded above by the tab max width setting; when tabs
-// exceed the bar, it scrolls instead of truncating titles. Pinned tabs
-// reserve 32px on the right so the pin icon does not cover the title. No JS
-// measurement is needed.
+// Tab sizing is pure CSS. Each tab is a flex item with `flex: 0 1 auto`
+// bounded below by the tab min width setting and above by the tab max width
+// setting: tabs keep their content width (capped at max width) while space is
+// available, and shrink toward min width as the bar fills; any further
+// overflow scrolls. Pinned tabs drop the min/max clamps entirely so they
+// always size to their content (icon + title + pin). The TabButton inside
+// relies on `min-w-0` so it can shrink to the clamped wrapper width and
+// truncate its title. No JS measurement is needed.
 
 $effect(() => {
     void scrollContainer;
+    void appContext.settings.tabWidthMin;
     void appContext.settings.tabWidthMax;
     void appContext.settings.collapsePinnedTabs;
     for (const tab of appContext.editor.tabs) {
@@ -265,14 +271,12 @@ $effect(() => {
                     animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
                     style:opacity={isDragging && draggingId === tab.id ? 0.4 : 1}
                     style:z-index={isDragging && draggingId === tab.id ? 100 : 0}
-                    style:flex={isTabCollapsed
-                        ? `0 0 ${COLLAPSED_PIN_WIDTH}px`
-                        : '0 0 auto'}
-                    style:min-width={isTabCollapsed
-                        ? `${COLLAPSED_PIN_WIDTH}px`
-                        : '0px'}
-                    style:max-width={isTabCollapsed
-                        ? `${COLLAPSED_PIN_WIDTH}px`
+                    style:flex={isTabCollapsed ? '0 0 auto' : '0 1 auto'}
+                    style:min-width={isTabCollapsed || tab.isPinned
+                        ? 'auto'
+                        : `${effectiveTabWidthMin}px`}
+                    style:max-width={isTabCollapsed || tab.isPinned
+                        ? 'none'
                         : `${appContext.settings.tabWidthMax}px`}
                     onpointerdown={(e) =>
                         sortController.startDrag(

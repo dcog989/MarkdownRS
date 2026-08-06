@@ -47,7 +47,7 @@ let tooltipContent = $derived.by(() => {
     tabindex="0"
     data-active={isActive}
     data-tab-id={tab.id}
-    class="group text-ui-sm relative flex h-8 cursor-default items-center gap-2 text-left outline-none select-none"
+    class="group text-ui-sm relative flex h-8 min-w-0 cursor-default items-center gap-2 text-left outline-none select-none"
     class:bg-editor-active={isActive}
     class:bg-bg-panel={!isActive}
     class:hover:bg-bg-hover={!isActive}
@@ -97,37 +97,27 @@ let tooltipContent = $derived.by(() => {
         </div>
 
         {#if tab.isPinned}
-            <div class="w-8 shrink-0" aria-hidden="true"></div>
+            <Pin
+                size={14}
+                class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
+        {:else}
+            <div
+                class="close-btn-wrapper absolute top-0 right-0 bottom-0 z-10 flex w-8 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+                style:top={isActive ? '2px' : '0'}
+                style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 100%)`}>
+                <button
+                    type="button"
+                    aria-label={$_('tabButton.closeTab', { values: { title: tab.title } })}
+                    class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        onclose?.(e, tab.id);
+                    }}
+                    onkeydown={(e) => e.key === 'Enter' && onclose?.(e, tab.id)}
+                    use:tooltip={$_('tabButton.closeTab', { values: { title: tab.title } })}>
+                    <X size={14} class="transition-colors" />
+                </button>
+            </div>
         {/if}
-
-        <div class="absolute top-0 right-0 bottom-0 flex w-8 items-center justify-center">
-            {#if tab.isPinned}
-                <div
-                    class={'absolute inset-0 flex items-center justify-center ' +
-                        (isActive ? 'bg-editor-bg' : 'bg-bg-panel group-hover:bg-bg-hover')}>
-                    <Pin
-                        size={14}
-                        class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
-                </div>
-            {:else}
-                <div
-                    class="close-btn-wrapper absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
-                    style:top={isActive ? '2px' : '0'}
-                    style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 100%)`}>
-                    <button
-                        type="button"
-                        aria-label={$_('tabButton.closeTab', { values: { title: tab.title } })}
-                        class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
-                        onclick={(e) => {
-                            e.stopPropagation();
-                            onclose?.(e, tab.id);
-                        }}
-                        onkeydown={(e) => e.key === 'Enter' && onclose?.(e, tab.id)}
-                        use:tooltip={$_('tabButton.closeTab', { values: { title: tab.title } })}>
-                        <X size={14} class="transition-colors" />
-                    </button>
-                </div>
-            {/if}
-        </div>
     {/if}
 </div>
