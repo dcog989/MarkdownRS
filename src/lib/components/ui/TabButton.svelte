@@ -9,13 +9,12 @@ import { formatFileSize } from '$lib/utils/fileValidation';
 interface Props {
     tab: EditorTab;
     isActive: boolean;
-    width?: number;
     onclick?: (id: string) => void;
     onclose?: (e: MouseEvent | KeyboardEvent, tabId: string) => void;
     oncontextmenu?: (e: MouseEvent, tabId: string) => void;
 }
 
-let { tab, isActive, width, onclick, onclose, oncontextmenu }: Props = $props();
+let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
 
 let isFileMissing = $derived(tab.fileCheckFailed === true);
 let isCollapsed = $derived(appContext.settings.collapsePinnedTabs && tab.isPinned);
@@ -58,9 +57,7 @@ let tooltipContent = $derived.by(() => {
     class:justify-center={isCollapsed}
     class:px-3={!isCollapsed}
     class:rounded-t-md={true}
-    style:min-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMin}px`}
-    style:max-width={isCollapsed ? '36px' : `${appContext.settings.tabWidthMax}px`}
-    style:width={width ? `${width}px` : isCollapsed ? '36px' : 'auto'}
+    style:flex="1 1 auto"
     onclick={() => onclick?.(tab.id)}
     oncontextmenu={(e) => {
         e.preventDefault();
@@ -98,6 +95,10 @@ let tooltipContent = $derived.by(() => {
         <div class="flex-1 truncate" use:tooltip={tooltipContent}>
             <span class="pointer-events-none truncate">{tab.customTitle || tab.title}</span>
         </div>
+
+        {#if tab.isPinned}
+            <div class="w-8 shrink-0" aria-hidden="true"></div>
+        {/if}
 
         <div class="absolute top-0 right-0 bottom-0 flex w-8 items-center justify-center">
             {#if tab.isPinned}
