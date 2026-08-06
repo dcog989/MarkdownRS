@@ -14,7 +14,7 @@ import { TabSyncManager } from '$lib/components/editor/logic/tabSync';
 import { createUpdateListener } from '$lib/components/editor/logic/updateListener';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
 import { appContext } from '$lib/stores/state.svelte';
-import { ScrollManager } from '$lib/utils/cmScroll';
+import { restoreScrollByTopLine, ScrollManager } from '$lib/utils/cmScroll';
 import { getActiveEditorView, setActiveEditorView } from '$lib/utils/editorCommands';
 import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
@@ -36,6 +36,7 @@ let {
     isLargeFile = false,
     filePath,
     initialScrollTop = 0,
+    initialTopLine = 0,
     initialSelection = { anchor: 0, head: 0 },
     initialHistoryState,
     lineChangeTracker,
@@ -55,6 +56,7 @@ let {
     isLargeFile?: boolean;
     filePath?: string;
     initialScrollTop?: number;
+    initialTopLine?: number;
     initialSelection?: { anchor: number; head: number };
     initialHistoryState?: unknown;
     lineChangeTracker: LineChangeTracker | undefined;
@@ -252,10 +254,9 @@ onMount(() => {
 
     scrollSync.registerEditor(viewInstance);
 
-    viewInstance.requestMeasure({
-        read: () => undefined,
-        write: () => { viewInstance.scrollDOM.scrollTop = initialScrollTop; },
-    });
+    // Restore the scroll synchronously so the first painted frame of a
+    // deep-scrolled document is already parsed and highlighted.
+    restoreScrollByTopLine(viewInstance, initialTopLine, initialScrollTop);
 
     const cleanupModifier = setupModifierKeyHandler(viewInstance);
     const cleanupScroll = setupScrollSync(viewInstance, tabId, () => tabSync.isRestoring, onScrollChange);

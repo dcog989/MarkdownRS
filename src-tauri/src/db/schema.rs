@@ -84,6 +84,16 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
         ddl: "INTEGER",
         preserve_old_on_null: false,
     },
+    TabColumn {
+        name: "scroll_top",
+        ddl: "REAL NOT NULL DEFAULT 0",
+        preserve_old_on_null: false,
+    },
+    TabColumn {
+        name: "top_line",
+        ddl: "INTEGER NOT NULL DEFAULT 1",
+        preserve_old_on_null: false,
+    },
 ];
 
 /// Column list for `CREATE TABLE`.

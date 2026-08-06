@@ -1,13 +1,13 @@
 import { closeCompletion } from '@codemirror/autocomplete';
 import type { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
 import { initializeTabFileState } from '$lib/services/tabFileStateInit';
 import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
 import type { EditorTab } from '$lib/stores/editorStore.svelte';
 import { getHistoryState, getTransientState, updateContent, updateHistoryState } from '$lib/stores/editorStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { ScrollManager } from '$lib/utils/cmScroll';
+import { restoreScrollByTopLine } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
 import { setActiveEditorView } from '$lib/utils/editorCommands';
 import { logger } from '$lib/utils/logger';
@@ -125,27 +125,13 @@ export class TabSyncManager {
     );
     const cursorMs = performance.now() - cursorStart;
 
-    view.requestMeasure({
-      read: () => undefined,
-      write: () => {
-        if (view && view._currentTabId === tabId) {
-          const tabTs = getTransientState(tabId);
-          const savedTopLine = tabTs?.topLine ?? 0;
-          const savedScrollTop = tabTs?.scrollTop ?? 0;
-          if (savedTopLine > 1) {
-            try {
-              const safeLine = Math.max(1, Math.min(savedTopLine, newState.doc.lines));
-              const lineInfo = newState.doc.line(safeLine);
-              view.dispatch({ effects: EditorView.scrollIntoView(lineInfo.from, { y: 'start' }) });
-            } catch {
-              view.scrollDOM.scrollTop = savedScrollTop;
-            }
-          } else {
-            view.scrollDOM.scrollTop = savedScrollTop;
-          }
-        }
-      },
-    });
+    // Restore the scroll synchronously in the same task as `setState`, so the
+    // browser paints the deep viewport already parsed and highlighted instead
+    // of an un-styled frame while the parser catches up after a deferred measure.
+    if (view && view._currentTabId === tabId) {
+      const tabTs = getTransientState(tabId);
+      restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0);
+    }
 
     view.focus();
     setActiveEditorView(view);
@@ -201,8 +187,13 @@ export class TabSyncManager {
     view.dispatch({ changes: diff, userEvent: 'input.type.sync' });
     requestAnimationFrame(() => {
       if (view && view._currentTabId === tabId) {
-        view.requestMeasure();
-        this.scrollManager.restore(view, 'anchor');
+        if (isInitialPopulate) {
+          const tabTs = getTransientState(tabId);
+          restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0);
+        } else {
+          view.requestMeasure();
+          this.scrollManager.restore(view, 'anchor');
+        }
       }
     });
 

@@ -64,6 +64,15 @@ pub(super) fn setup_schema(conn: &mut Connection) -> Result<()> {
 mod tests {
     use super::*;
 
+    fn table_columns(conn: &Connection, table: &str) -> Vec<String> {
+        conn.prepare(&format!("PRAGMA table_info({})", table))
+            .unwrap()
+            .query_map([], |row| row.get(1))
+            .unwrap()
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .unwrap()
+    }
+
     #[test]
     fn fresh_database_ends_with_schema_columns() {
         let mut conn = Connection::open_in_memory().unwrap();
@@ -79,14 +88,32 @@ mod tests {
             .map(|c| c.name.to_string())
             .collect();
         for table in ["tabs", "closed_tabs"] {
-            let cols: Vec<String> = conn
-                .prepare(&format!("PRAGMA table_info({})", table))
-                .unwrap()
-                .query_map([], |row| row.get(1))
-                .unwrap()
-                .collect::<rusqlite::Result<Vec<_>>>()
-                .unwrap();
-            assert_eq!(cols, expected, "{} column set drifted from schema", table);
+            assert_eq!(
+                table_columns(&conn, table),
+                expected,
+                "{} column set drifted from schema",
+                table
+            );
+        }
+    }
+
+    #[test]
+    fn setup_schema_is_idempotent_on_existing_database() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        setup_schema(&mut conn).unwrap();
+        setup_schema(&mut conn).unwrap();
+
+        let version: i32 = conn
+            .query_row("PRAGMA user_version", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(version, 1);
+
+        let expected: Vec<String> = schema::TAB_COLUMNS
+            .iter()
+            .map(|c| c.name.to_string())
+            .collect();
+        for table in ["tabs", "closed_tabs"] {
+            assert_eq!(table_columns(&conn, table), expected);
         }
     }
 }

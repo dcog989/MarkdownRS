@@ -32,6 +32,8 @@ type RustTabState = {
   is_dirty: boolean;
   path: string | null;
   scroll_percentage: number;
+  scroll_top: number;
+  top_line: number;
   created: string | null;
   modified: string | null;
   is_pinned: boolean;
@@ -60,6 +62,8 @@ function toRustTabState(
     content: needsContent ? tab.content : null,
     is_dirty: tab.isDirty,
     scroll_percentage: ts?.scrollPercentage ?? 0,
+    scroll_top: ts?.scrollTop ?? 0,
+    top_line: ts?.topLine ?? 1,
     created: tab.created || null,
     modified: tab.modified || null,
     is_pinned: tab.isPinned || false,
@@ -179,6 +183,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
   setLineChangeTracker(t.id, new LineChangeTracker());
   initTransientState(t.id, {
     scrollPercentage: t.scroll_percentage,
+    scrollTop: t.scroll_top,
+    topLine: t.top_line,
     contentChanged: contentLoaded ? t.is_dirty || (!t.path && content.length > 0) : t.is_dirty,
     isPersisted: true,
     fileCheckPerformed: t.file_check_performed || false,

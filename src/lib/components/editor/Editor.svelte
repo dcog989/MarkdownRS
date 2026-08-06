@@ -246,6 +246,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         {isLargeFile}
         filePath={activeTab?.path ?? undefined}
         initialScrollTop={activeTab ? (getTransientState(activeTab.id)?.scrollTop ?? 0) : 0}
+        initialTopLine={activeTab ? (getTransientState(activeTab.id)?.topLine ?? 0) : 0}
         {initialSelection}
         {initialHistoryState}
         {lineChangeTracker}
