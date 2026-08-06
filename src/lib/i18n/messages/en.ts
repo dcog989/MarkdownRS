@@ -201,7 +201,7 @@ export const en = {
     defaultIndent: 'Indent Default (spaces)',
     defaultIndentTooltip: 'Number of spaces used for indentation.',
     recentChangesCount: 'Recent Changes Count',
-    recentChangesCountTooltip: 'Highlight recent changes. Maximum 99. Set to 0 to disable count-based filtering.',
+    recentChangesCountTooltip: 'Highlight recent changes. Maximum 99. 0 = disable recent changes feature.',
     recentChangesTimespan: 'Recent Changes Time Span (secs)',
     recentChangesTimespanTooltip: 'Max 9999. Set to 0 for unlimited time.',
     autoSaveInterval: 'Auto Save (secs)',
