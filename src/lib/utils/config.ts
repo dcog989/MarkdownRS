@@ -8,7 +8,6 @@ const DEFAULT_CONFIG = {
     METRICS_DEBOUNCE_MS: 300,
     SCROLL_DEBOUNCE_MS: 300,
     SEARCH_DEBOUNCE_MS: 300,
-    SMART_TITLE_MAX_LENGTH: 25,
     CLOSED_TABS_HISTORY_LIMIT: 12,
     // Must cover the max recentChangesCount (99) so the count-based highlight
     // isn't truncated below what the user configured.

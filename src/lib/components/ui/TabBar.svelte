@@ -184,14 +184,15 @@ $effect(() => {
     if (appContext.app.activeTabId) scrollToActive();
 });
 
-// Tab sizing is pure CSS. Each tab is a flex item with `flex: 0 1 auto`
-// bounded below by the tab min width setting and above by the tab max width
-// setting: tabs keep their content width (capped at max width) while space is
-// available, and shrink toward min width as the bar fills; any further
-// overflow scrolls. Pinned tabs drop the min/max clamps entirely so they
-// always size to their content (icon + title + pin). The TabButton inside
-// relies on `min-w-0` so it can shrink to the clamped wrapper width and
-// truncate its title. No JS measurement is needed.
+// Tab sizing is pure CSS. Each tab is a flex item with `flex: 0 0 auto`
+// (exactly content width, never shrunk) bounded below by the tab min width
+// setting and above by the tab max width setting. Because tabs never shrink,
+// the only things that can constrain a tab's width are its own content and the
+// max width setting; when the bar is full the extra tabs overflow and the bar
+// scrolls instead of squeezing titles. The TabButton inside relies on `min-w-0`
+// so it can shrink to the clamped wrapper width and truncate its title. Pinned
+// tabs drop the min/max clamps entirely so they always size to their content
+// (icon + title + pin). No JS measurement is needed.
 
 $effect(() => {
     void scrollContainer;
@@ -271,7 +272,7 @@ $effect(() => {
                     animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
                     style:opacity={isDragging && draggingId === tab.id ? 0.4 : 1}
                     style:z-index={isDragging && draggingId === tab.id ? 100 : 0}
-                    style:flex={isTabCollapsed ? '0 0 auto' : '0 1 auto'}
+                    style:flex="0 0 auto"
                     style:min-width={isTabCollapsed || tab.isPinned
                         ? 'auto'
                         : `${effectiveTabWidthMin}px`}
