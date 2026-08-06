@@ -259,7 +259,7 @@ onMount(() => {
     restoreScrollByTopLine(viewInstance, initialTopLine, initialScrollTop);
 
     const cleanupModifier = setupModifierKeyHandler(viewInstance);
-    const cleanupScroll = setupScrollSync(viewInstance, tabId, () => tabSync.isRestoring, onScrollChange);
+    const cleanupScroll = setupScrollSync(viewInstance, () => tabId, () => tabSync.isRestoring, onScrollChange);
     const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
 
     setupGutterObserver();

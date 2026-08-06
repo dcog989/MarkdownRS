@@ -3,14 +3,14 @@ import type { AppEditorView } from '../../../../global';
 
 export function setupScrollSync(
   view: AppEditorView,
-  tabId: string,
+  getTabId: () => string,
   isRestoring: () => boolean,
   onScrollChange?: (percentage: number, scrollTop: number, topLine: number) => void,
 ): () => void {
   if (!onScrollChange) return () => {};
 
   const handler = throttle(() => {
-    if (view._currentTabId !== tabId || isRestoring()) return;
+    if (view._currentTabId !== getTabId() || isRestoring()) return;
     const dom = view.scrollDOM;
     const max = dom.scrollHeight - dom.clientHeight;
     const percentage = max > 0 ? dom.scrollTop / max : 0;
