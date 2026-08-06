@@ -1,4 +1,4 @@
-import { watch } from '@tauri-apps/plugin-fs';
+import { watchImmediate } from '@tauri-apps/plugin-fs';
 import { translate } from '$lib/i18n';
 import { hasFileChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
 import { reloadTabContent } from '$lib/stores/editorStore.svelte';
@@ -92,7 +92,12 @@ class FileWatcherService {
       await this.handleFileChange(path);
     }, CONFIG.PERFORMANCE.FILE_WATCH_DEBOUNCE_MS);
 
-    const unwatch = await watch(path, () => {
+    // Immediate delivery (no plugin debounce): the default `watch` batched
+    // events 2s later, which always landed after our 700ms write lock and so
+    // the app reacted to its own saves as if they were external edits. Events
+    // now arrive promptly and the write lock + the 300ms debounce below
+    // suppress self-writes while still coalescing genuine edit bursts.
+    const unwatch = await watchImmediate(path, () => {
       handleChange();
     });
 
