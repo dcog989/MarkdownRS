@@ -7,8 +7,17 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
   function handleMouseEnter(e: MouseEvent) {
     if (!content) return;
 
+    // Clear any pending show before re-arming: window re-entry fires a
+    // synthetic mouseenter and a real one can arrive shortly after, orphaning
+    // the first timer. The orphaned timer would show the tooltip after the
+    // cursor has already left, leaving it stuck open.
+    if (timer) {
+      clearTimeout(timer);
+    }
+
     const delay = appContext.settings.tooltipDelay;
     timer = window.setTimeout(() => {
+      timer = null;
       // Anchor to the cursor's current position: on window re-entry the
       // synthetic mouseenter carries the entry point, which is stale by the
       // time the delay elapses.
