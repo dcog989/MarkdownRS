@@ -37,7 +37,8 @@
 
 .title-accent {
   position: relative;
-  white-space: nowrap;
+  display: inline-block;
+  padding-bottom: 0.32em;
 }
 
 .title-accent::after {
@@ -45,8 +46,8 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0.06em;
-  height: 0.16em;
+  bottom: 0.08em;
+  height: 0.14em;
   background: var(--purple);
   border: 2px solid var(--ink);
   z-index: -1;
@@ -120,15 +121,15 @@
   border-radius: 50%;
 }
 
-.t-red {
+.traffic-close {
   background: var(--red);
 }
 
-.t-yellow {
+.traffic-minimize {
   background: var(--yellow);
 }
 
-.t-blue {
+.traffic-maximize {
   background: var(--blue);
 }
 
@@ -148,17 +149,17 @@
 
 /* Rand shapes — hero-specific */
 
-.shape-purple {
+.shape-square {
   width: 84px;
   height: 84px;
-  background: var(--purple);
+  background: var(--el-12);
   border: 3px solid var(--ink);
   top: -34px;
   left: -30px;
   transform: rotate(12deg);
 }
 
-.shape-red {
+.shape-circle {
   width: 46px;
   height: 46px;
   background: var(--red);
