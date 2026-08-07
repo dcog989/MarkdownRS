@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MarkdownRS — A fast, native Markdown editor</title>
+    <meta
+      name="description"
+      content="MarkdownRS is a fast, native Markdown editor built with Rust and Tauri. No Electron. Launch in milliseconds and sips memory while you write."
+    />
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="MarkdownRS home">
+        <img src="assets/logo.svg" width="28" height="28" alt="" class="brand-mark" />
+        <span class="brand-name">MarkdownRS</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#screenshots">Screenshots</a>
+        <a href="#features">Features</a>
+        <a href="#tech">Tech</a>
+        <a href="#download" class="nav-cta">Download</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero" id="top">
+        <div class="hero-text">
+          <p class="eyebrow"><span class="dot-red"></span>Rust · Tauri · Svelte</p>
+          <h1 class="hero-title">A fast, native<br />Markdown <span class="title-accent">editor</span></h1>
+          <p class="hero-sub">
+            No Electron. No web views. Just native code that launches in
+            milliseconds and sips memory while you write.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/dcog989/MarkdownRS/releases" target="_blank" rel="noopener">
+              <span class="btn-dot"></span>Download for free
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/dcog989/MarkdownRS" target="_blank" rel="noopener">
+              View on GitHub
+            </a>
+          </div>
+          <dl class="hero-stats">
+            <div class="stat">
+              <dt class="stat-num">Instant</dt>
+              <dd>cold start</dd>
+            </div>
+            <div class="stat">
+              <dt class="stat-num">Native</dt>
+              <dd>no Electron</dd>
+            </div>
+            <div class="stat">
+              <dt class="stat-num">Offline</dt>
+              <dd>math &amp; diagrams</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="hero-visual">
+          <div class="shape shape-purple" aria-hidden="true"></div>
+          <div class="shape shape-red" aria-hidden="true"></div>
+          <div class="shape shape-ring" aria-hidden="true"></div>
+          <div class="shape shape-tri" aria-hidden="true"></div>
+          <figure class="window">
+            <div class="window-bar">
+              <span class="traffic t-red"></span>
+              <span class="traffic t-yellow"></span>
+              <span class="traffic t-blue"></span>
+              <span class="window-title">welcome.md — MarkdownRS</span>
+            </div>
+            <img
+              src="assets/screenshot-split-dark.svg"
+              alt="MarkdownRS split view: raw Markdown editor on the left, live rendered preview on the right"
+              width="1280"
+              height="800"
+            />
+          </figure>
+        </div>
+      </section>
+
+      <!-- Carousel -->
+      <section class="carousel-section" id="screenshots" aria-labelledby="screenshots-title">
+        <p class="section-label"><span class="dot-yellow"></span>In action</p>
+        <h2 class="section-title" id="screenshots-title">See it, don't take our word</h2>
+        <div
+          class="carousel"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="MarkdownRS screenshots"
+          data-carousel
+        >
+          <div class="carousel-track" data-carousel-track>
+            <figure class="carousel-slide" data-carousel-slide aria-roledescription="slide" aria-label="1 of 4">
+              <div class="window-bar window-bar-inline">
+                <span class="traffic t-red"></span>
+                <span class="traffic t-yellow"></span>
+                <span class="traffic t-blue"></span>
+                <span class="window-title">Split view — raw + preview</span>
+              </div>
+              <img src="assets/screenshot-split-dark.svg" alt="Split view with synchronized live preview" />
+              <figcaption>Write on the left, preview on the right. Both stay in sync as you scroll.</figcaption>
+            </figure>
+
+            <figure class="carousel-slide" data-carousel-slide aria-roledescription="slide" aria-label="2 of 4">
+              <div class="window-bar window-bar-inline">
+                <span class="traffic t-red"></span>
+                <span class="traffic t-yellow"></span>
+                <span class="traffic t-blue"></span>
+                <span class="window-title">Zen mode</span>
+              </div>
+              <img src="assets/screenshot-zen.svg" alt="Zen mode with a centered, distraction-free writing column" />
+              <figcaption>Zen mode hides the chrome. Just you and a comfortable column of text.</figcaption>
+            </figure>
+
+            <figure class="carousel-slide" data-carousel-slide aria-roledescription="slide" aria-label="3 of 4">
+              <div class="window-bar window-bar-inline">
+                <span class="traffic t-red"></span>
+                <span class="traffic t-yellow"></span>
+                <span class="traffic t-blue"></span>
+                <span class="window-title">File tree &amp; tabs</span>
+              </div>
+              <img src="assets/screenshot-files.svg" alt="Sidebar file tree with multiple tabs open" />
+              <figcaption>Browse the file tree, pin tabs, and jump between documents instantly.</figcaption>
+            </figure>
+
+            <figure class="carousel-slide" data-carousel-slide aria-roledescription="slide" aria-label="4 of 4">
+              <div class="window-bar window-bar-inline">
+                <span class="traffic t-red"></span>
+                <span class="traffic t-yellow"></span>
+                <span class="traffic t-blue"></span>
+                <span class="window-title">Rendered mode — math &amp; diagrams</span>
+              </div>
+              <img src="assets/screenshot-light.svg" alt="Rendered preview showing KaTeX math and a Mermaid flowchart" />
+              <figcaption>KaTeX math and Mermaid diagrams render right in the preview, fully offline.</figcaption>
+            </figure>
+          </div>
+
+          <button class="carousel-btn carousel-prev" data-carousel-prev aria-label="Previous screenshot" type="button">
+            ←
+          </button>
+          <button class="carousel-btn carousel-next" data-carousel-next aria-label="Next screenshot" type="button">
+            →
+          </button>
+          <div class="carousel-dots" data-carousel-dots role="tablist" aria-label="Choose screenshot"></div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="features-section" id="features" aria-labelledby="features-title">
+        <p class="section-label"><span class="dot-blue"></span>What's inside</p>
+        <h2 class="section-title" id="features-title">Thoughtfully crafted</h2>
+        <ul class="feature-grid">
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #7c5a73">01</span>
+            <h3>Fast &amp; light</h3>
+            <p>Rust backend for instant startup and smooth editing even on large files.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #e4572e">02</span>
+            <h3>Live preview</h3>
+            <p>Split view with smooth, bi-directional synchronized scrolling.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #1f4e9c">03</span>
+            <h3>Rendered mode</h3>
+            <p>Edit in rendered or raw Markdown, switching instantly with CodeMirror 6.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #ffc857">04</span>
+            <h3>Auto-save</h3>
+            <p>Session persistence with hot-exit support — never lose your work.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #7c5a73">05</span>
+            <h3>KaTeX math</h3>
+            <p>Inline and display math, rendered offline and cached by expression.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #e4572e">06</span>
+            <h3>Mermaid diagrams</h3>
+            <p>Flowcharts, sequence diagrams and more, lazy-loaded only when present.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #1f4e9c">07</span>
+            <h3>Command palette</h3>
+            <p>Navigate and run anything with Ctrl+Shift+P.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #ffc857">08</span>
+            <h3>Custom shortcuts</h3>
+            <p>Remap any command to your own keybinding.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #7c5a73">09</span>
+            <h3>Multi-tab &amp; bookmarks</h3>
+            <p>Work on many documents, pin them, and tag local files for instant search.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #e4572e">10</span>
+            <h3>Smart formatting</h3>
+            <p>Auto-Markdown formatting and rumdl linting for consistent results.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #1f4e9c">11</span>
+            <h3>Full Markdown</h3>
+            <p>GFM and CommonMark — tables, strikethrough, task lists and more.</p>
+          </li>
+          <li class="feature-card">
+            <span class="feature-num" style="--card-color: #ffc857">12</span>
+            <h3>Export anywhere</h3>
+            <p>Export documents to PDF, PNG, WEBP or HTML.</p>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Tech stack -->
+      <section class="tech-section" id="tech" aria-labelledby="tech-title">
+        <p class="section-label"><span class="dot-purple"></span>Under the hood</p>
+        <h2 class="section-title" id="tech-title">Built with serious tools</h2>
+        <p class="tech-intro">
+          A native Tauri v2 shell with a Rust backend and a modern Svelte 5
+          frontend. Markdown parsing, linting and storage all happen in Rust.
+        </p>
+        <ul class="tech-grid">
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #7c5a73"></span>Rust</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #e4572e"></span>Tauri v2</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #ffc857"></span>Svelte 5</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #1f4e9c"></span>TypeScript</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #7c5a73"></span>CodeMirror 6</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #e4572e"></span>comrak</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #ffc857"></span>rumdl</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #1f4e9c"></span>rusqlite · SQLite</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #7c5a73"></span>KaTeX</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #e4572e"></span>Mermaid</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #ffc857"></span>Vite</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #1f4e9c"></span>Vitest</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #7c5a73"></span>Biome</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #e4572e"></span>bun</li>
+          <li class="tech-chip"><span class="tech-dot" style="--tdot: #ffc857"></span>Lefthook</li>
+        </ul>
+      </section>
+
+      <!-- Download -->
+      <section class="cta-section" id="download" aria-labelledby="download-title">
+        <div class="cta-card">
+          <div class="shape shape-yellow shape-cta" aria-hidden="true"></div>
+          <div class="shape shape-ring shape-cta-ring" aria-hidden="true"></div>
+          <p class="section-label section-label-light"><span class="dot-red"></span>Get started</p>
+          <h2 class="cta-title" id="download-title">Download MarkdownRS for free</h2>
+          <p class="cta-sub">
+            Open source under the MIT license. Grab the latest release for your
+            platform from GitHub, or build it from source.
+          </p>
+          <div class="cta-actions">
+            <a class="btn btn-primary" href="https://github.com/dcog989/MarkdownRS/releases" target="_blank" rel="noopener">
+              <span class="btn-dot"></span>Download
+            </a>
+            <a class="btn btn-ghost btn-ghost-light" href="https://github.com/dcog989/MarkdownRS" target="_blank" rel="noopener">
+              View on GitHub
+            </a>
+          </div>
+          <p class="cta-note">
+            Linux users: build from the included PKGBUILD, or see the
+            <a href="https://github.com/dcog989/MarkdownRS#development" target="_blank" rel="noopener">README</a>
+            for other install methods.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-top">
+        <a class="brand" href="#top" aria-label="MarkdownRS home">
+          <img src="assets/logo.svg" width="24" height="24" alt="" class="brand-mark" />
+          <span class="brand-name">MarkdownRS</span>
+        </a>
+        <p class="footer-tagline">A fast, native Markdown editor built with Rust. No Electron bloat.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="https://github.com/dcog989/MarkdownRS" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/dcog989/MarkdownRS/issues" target="_blank" rel="noopener">Issues</a>
+        <a href="https://github.com/dcog989/MarkdownRS/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/dcog989/MarkdownRS/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      </nav>
+      <div class="footer-bottom">
+        <span>© 2026 MarkdownRS. MIT License.</span>
+        <span class="footer-built">Built with Rust + Svelte + Tauri</span>
+      </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>

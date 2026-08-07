@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" role="img" aria-label="MarkdownRS file tree and tabs">
+  <title>MarkdownRS file tree</title>
+  <defs>
+    <linearGradient id="fbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#211e26"/>
+      <stop offset="1" stop-color="#19161d"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="800" fill="#121014"/>
+  <!-- Window -->
+  <rect x="48" y="48" width="1184" height="704" rx="18" fill="url(#fbg)" stroke="#332e3b" stroke-width="2"/>
+  <rect x="48" y="48" width="1184" height="52" rx="18" fill="#26222c"/>
+  <rect x="48" y="84" width="1184" height="16" fill="#26222c"/>
+
+  <circle cx="92" cy="74" r="8" fill="#e4572e"/>
+  <circle cx="116" cy="74" r="8" fill="#ffc857"/>
+  <circle cx="140" cy="74" r="8" fill="#1f4e9c"/>
+
+  <!-- Sidebar -->
+  <rect x="48" y="100" width="280" height="652" fill="#1c1921"/>
+  <rect x="328" y="100" width="2" height="652" fill="#332e3b"/>
+
+  <!-- Sidebar title -->
+  <text x="72" y="136" font-family="ui-sans-serif, sans-serif" font-size="12" font-weight="700" fill="#6b6573" letter-spacing="2">EXPLORER</text>
+
+  <g font-family="ui-monospace, monospace" font-size="15">
+    <text x="72" y="176" fill="#8b8595">▸</text>
+    <text x="92" y="176" fill="#c9c4d2">src</text>
+    <text x="92" y="204" fill="#8b8595">▸</text>
+    <text x="112" y="204" fill="#c9c4d2">components</text>
+    <text x="112" y="232" fill="#8b8595">▸</text>
+    <text x="132" y="232" fill="#c9c4d2">preview</text>
+    <rect x="112" y="246" width="148" height="24" rx="5" fill="#2b2530"/>
+    <text x="132" y="263" fill="#e8e4ee">Preview.svelte</text>
+    <text x="132" y="291" fill="#c9c4d2">state.svelte.ts</text>
+    <text x="92" y="319" fill="#c9c4d2">+page.svelte</text>
+
+    <text x="72" y="360" fill="#8b8595">▾</text>
+    <text x="92" y="360" fill="#c9c4d2">src-tauri</text>
+    <text x="112" y="388" fill="#8b8595">▸</text>
+    <text x="132" y="388" fill="#c9c4d2">commands</text>
+    <text x="112" y="416" fill="#8b8595">▸</text>
+    <text x="132" y="416" fill="#c9c4d2">markdown</text>
+    <text x="132" y="444" fill="#c9c4d2">main.rs</text>
+    <text x="132" y="472" fill="#c9c4d2">setup.rs</text>
+
+    <text x="72" y="512" fill="#8b8595">▸</text>
+    <text x="92" y="512" fill="#c9c4d2">bookmarks.db</text>
+  </g>
+
+  <!-- Tabs -->
+  <g font-family="ui-monospace, monospace" font-size="15">
+    <rect x="358" y="56" width="240" height="44" fill="#19161d" rx="8"/>
+    <circle cx="378" cy="78" r="4" fill="#7c5a73"/>
+    <text x="390" y="82" fill="#e8e4ee">Preview.svelte</text>
+
+    <rect x="602" y="56" width="190" height="44" fill="transparent" rx="8"/>
+    <circle cx="622" cy="78" r="4" fill="#5a5563"/>
+    <text x="634" y="82" fill="#8b8595">main.rs</text>
+  </g>
+
+  <!-- Editor -->
+  <g font-family="ui-monospace, monospace">
+    <text x="382" y="150" fill="#4c4754" text-anchor="end">1</text>
+    <text x="382" y="178" fill="#4c4754" text-anchor="end">2</text>
+    <text x="382" y="206" fill="#4c4754" text-anchor="end">3</text>
+    <text x="382" y="234" fill="#4c4754" text-anchor="end">4</text>
+    <text x="382" y="262" fill="#4c4754" text-anchor="end">5</text>
+    <text x="382" y="290" fill="#4c4754" text-anchor="end">6</text>
+    <text x="382" y="318" fill="#4c4754" text-anchor="end">7</text>
+    <text x="382" y="346" fill="#4c4754" text-anchor="end">8</text>
+    <text x="382" y="374" fill="#4c4754" text-anchor="end">9</text>
+    <text x="382" y="402" fill="#4c4754" text-anchor="end">10</text>
+    <text x="382" y="430" fill="#4c4754" text-anchor="end">11</text>
+    <text x="382" y="458" fill="#4c4754" text-anchor="end">12</text>
+    <text x="382" y="486" fill="#4c4754" text-anchor="end">13</text>
+    <text x="382" y="514" fill="#4c4754" text-anchor="end">14</text>
+
+    <text x="406" y="150" font-size="14" fill="#7d5a76">import</text>
+    <text x="468" y="150" font-size="14" fill="#8fc7ff">Preview</text>
+    <text x="536" y="150" font-size="14" fill="#c9c4d2">from</text>
+    <text x="580" y="150" font-size="14" fill="#b9e07a">"./Preview.svelte"</text>
+    <text x="742" y="150" font-size="14" fill="#c9c4d2">;</text>
+
+    <text x="406" y="178" font-size="14" fill="#8b8595">// Renders the live Markdown preview pane</text>
+    <text x="406" y="206" font-size="14" fill="#c9c4d2">const isMarkdown = </text>
+    <text x="578" y="206" font-size="14" fill="#7d5a76">$derived</text>
+    <text x="652" y="206" font-size="14" fill="#c9c4d2">(</text>
+    <text x="662" y="206" font-size="14" fill="#8fc7ff">path</text>
+    <text x="706" y="206" font-size="14" fill="#c9c4d2">.endsWith(</text>
+    <text x="790" y="206" font-size="14" fill="#b9e07a">'.md'</text>
+    <text x="830" y="206" font-size="14" fill="#c9c4d2">));</text>
+
+    <text x="406" y="262" font-size="14" fill="#7d5a76">&lt;Preview</text>
+    <text x="476" y="262" font-size="14" fill="#8fc7ff">tabId</text>
+    <text x="516" y="262" font-size="14" fill="#c9c4d2">=</text>
+    <text x="528" y="262" font-size="14" fill="#c9c4d2">{</text>
+    <text x="540" y="262" font-size="14" fill="#8fc7ff">activeTabId</text>
+    <text x="616" y="262" font-size="14" fill="#c9c4d2">} /&gt;</text>
+    <text x="406" y="290" font-size="14" fill="#8b8595">// ↑ renders markdown → html with comrak</text>
+  </g>
+
+  <!-- Cursor -->
+  <rect x="610" y="194" width="2" height="22" fill="#e8e4ee"/>
+
+  <!-- Status bar -->
+  <rect x="48" y="736" width="1184" height="16" fill="#19161d"/>
+  <text x="72" y="748" font-family="ui-monospace, monospace" font-size="12" fill="#6b6573">preview.svelte — Ln 4, Col 18 · UTF-8 · LF · Markdown</text>
+  <text x="1150" y="748" text-anchor="end" font-family="ui-monospace, monospace" font-size="12" fill="#6b6573">Spaces: 4</text>
+</svg>

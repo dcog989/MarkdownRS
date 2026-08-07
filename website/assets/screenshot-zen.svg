@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" role="img" aria-label="MarkdownRS zen mode, centered writing column">
+  <title>MarkdownRS zen mode</title>
+  <defs>
+    <linearGradient id="zbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232029"/>
+      <stop offset="1" stop-color="#1a1720"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="800" fill="#121014"/>
+  <!-- Window -->
+  <rect x="48" y="48" width="1184" height="704" rx="18" fill="url(#zbg)" stroke="#332e3b" stroke-width="2"/>
+  <rect x="48" y="48" width="1184" height="52" rx="18" fill="#26222c"/>
+  <rect x="48" y="84" width="1184" height="16" fill="#26222c"/>
+
+  <circle cx="92" cy="74" r="8" fill="#e4572e"/>
+  <circle cx="116" cy="74" r="8" fill="#ffc857"/>
+  <circle cx="140" cy="74" r="8" fill="#1f4e9c"/>
+
+  <g font-family="ui-monospace, monospace" font-size="15">
+    <rect x="176" y="56" width="240" height="44" fill="#1a1720" rx="8"/>
+    <circle cx="196" cy="78" r="4" fill="#7c5a73"/>
+    <text x="208" y="82" fill="#e8e4ee">welcome.md</text>
+  </g>
+
+  <!-- Centered writing column -->
+  <g font-family="ui-serif, Georgia, serif">
+    <text x="640" y="200" text-anchor="middle" font-size="40" font-weight="700" fill="#f0ecf5">A calm place to write</text>
+    <text x="640" y="256" text-anchor="middle" font-size="19" fill="#8f8a9c">Focus mode hides the chrome. Just you and the text,</text>
+    <text x="640" y="282" text-anchor="middle" font-size="19" fill="#8f8a9c">centered and distraction-free.</text>
+
+    <g font-size="19" fill="#c9c4d2">
+      <text x="440" y="352">MarkdownRS strips away everything that isn't</text>
+      <text x="440" y="382">the writing. No sidebar, no tabs, no noise — just</text>
+      <text x="440" y="412">a clean column, comfortable line width, and the</text>
+      <text x="440" y="442">cursor waiting for your next sentence.</text>
+    </g>
+
+    <rect x="822" y="336" width="2" height="24" fill="#e8e4ee"/>
+    <rect x="810" y="336" width="12" height="24" fill="#7c5a73" opacity="0.35"/>
+
+    <g font-size="19" fill="#c9c4d2">
+      <text x="440" y="494">Toggle zen mode any time with one shortcut. Your</text>
+      <text x="440" y="524">content stays synchronized with the split view, so</text>
+      <text x="440" y="554">switching between focus and preview is seamless.</text>
+    </g>
+  </g>
+
+  <!-- Floating toolbar -->
+  <g>
+    <rect x="920" y="176" width="200" height="36" rx="18" fill="#2b2732" stroke="#413b4d" stroke-width="1"/>
+    <text x="950" y="199" font-family="ui-sans-serif, sans-serif" font-size="14" fill="#8b8595">type  /  for commands</text>
+  </g>
+</svg>
