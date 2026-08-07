@@ -43,8 +43,8 @@
 }
 
 .tech-dot {
-  width: 10px;
-  height: 10px;
+  width: 16px;
+  height: 16px;
   background: var(--tdot);
   border: 2px solid var(--ink);
   border-radius: 50%;

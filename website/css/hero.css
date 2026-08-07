@@ -114,22 +114,22 @@
   background: var(--paper-deep);
 }
 
-.traffic {
+.window-dot {
   width: 12px;
   height: 12px;
   border: 2px solid var(--ink);
   border-radius: 50%;
 }
 
-.traffic-close {
+.window-dot-close {
   background: var(--red);
 }
 
-.traffic-minimize {
+.window-dot-minimize {
   background: var(--yellow);
 }
 
-.traffic-maximize {
+.window-dot-maximize {
   background: var(--blue);
 }
 
