@@ -1,12 +1,5 @@
 <script lang="ts">
-import {
-    closeSearchPanel,
-    findNext,
-    findPrevious,
-    openSearchPanel,
-    replaceAll,
-    replaceNext,
-} from '@codemirror/search';
+import { closeSearchPanel, findNext, findPrevious, openSearchPanel, replaceAll, replaceNext } from '@codemirror/search';
 import type { EditorView } from '@codemirror/view';
 import { Replace, Search, X } from 'lucide-svelte';
 import { onMount, tick, untrack } from 'svelte';
@@ -16,18 +9,18 @@ import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import {
-    clearSearch,
-    replaceAllInTabs,
-    searchAllTabs,
-    searchState,
-    selectNearestMatch,
-    updateSearchEditor,
+  clearSearch,
+  replaceAllInTabs,
+  searchAllTabs,
+  searchState,
+  selectNearestMatch,
+  updateSearchEditor,
 } from '$lib/utils/searchManager.svelte';
 import { debounce } from '$lib/utils/timing';
 
 let { isOpen = $bindable(false), cmView } = $props<{
-    isOpen?: boolean;
-    cmView: EditorView | undefined;
+  isOpen?: boolean;
+  cmView: EditorView | undefined;
 }>();
 
 let searchScope = $state<'current' | 'all'>('current');
@@ -38,422 +31,434 @@ let wasOpen = false;
 let isMouseOver = $state(false);
 
 export function focusInput() {
-    if (searchInputRef) {
-        searchInputRef.focus();
-        searchInputRef.select();
-    }
+  if (searchInputRef) {
+    searchInputRef.focus();
+    searchInputRef.select();
+  }
 }
 
 export function setReplaceMode(enable: boolean) {
-    isReplaceMode = enable;
+  isReplaceMode = enable;
 }
 
 $effect(() => {
-    const currentlyOpen = isOpen;
+  const currentlyOpen = isOpen;
 
-    if (currentlyOpen && !wasOpen) {
-        if (cmView) openSearchPanel(cmView);
-        wasOpen = true;
+  if (currentlyOpen && !wasOpen) {
+    if (cmView) openSearchPanel(cmView);
+    wasOpen = true;
 
-        // Prefill with selected text if available
-        untrack(() => {
-            if (cmView) {
-                const selection = cmView.state.selection.main;
-                if (selection.from !== selection.to) {
-                    // Text is selected, use it as the search term
-                    const selectedText = cmView.state.doc.sliceString(selection.from, selection.to);
-                    if (selectedText) {
-                        searchState.findText = selectedText;
-                    }
-                }
-                updateSearchEditor(cmView);
-            }
-        });
+    // Prefill with selected text if available
+    untrack(() => {
+      if (cmView) {
+        const selection = cmView.state.selection.main;
+        if (selection.from !== selection.to) {
+          // Text is selected, use it as the search term
+          const selectedText = cmView.state.doc.sliceString(selection.from, selection.to);
+          if (selectedText) {
+            searchState.findText = selectedText;
+          }
+        }
+        updateSearchEditor(cmView);
+      }
+    });
 
-        tick().then(focusInput);
-    } else if (!currentlyOpen && wasOpen) {
-        if (cmView) closeSearchPanel(cmView);
-        wasOpen = false;
-        clearSearch(cmView);
-        // Restore editor focus for close paths that don't go through close()
-        // (e.g. ctrl+f toggling the panel shut).
-        cmView?.focus();
-    }
+    tick().then(focusInput);
+  } else if (!currentlyOpen && wasOpen) {
+    if (cmView) closeSearchPanel(cmView);
+    wasOpen = false;
+    clearSearch(cmView);
+    // Restore editor focus for close paths that don't go through close()
+    // (e.g. ctrl+f toggling the panel shut).
+    cmView?.focus();
+  }
 });
 
 $effect(() => {
-    const view = cmView;
-    if (isOpen && view) {
-        untrack(() => executeSearch(view, false));
-    }
+  const view = cmView;
+  if (isOpen && view) {
+    untrack(() => executeSearch(view, false));
+  }
 });
 
 $effect(() => {
-    const view = cmView;
-    if (!view || !isOpen || searchScope !== 'current') return;
-    searchState.findText;
-    searchState.matchCase;
-    searchState.matchWholeWord;
-    searchState.useRegex;
-    searchState.replaceText;
-    untrack(() => updateSearchEditor(view));
+  const view = cmView;
+  if (!view || !isOpen || searchScope !== 'current') return;
+  searchState.findText;
+  searchState.matchCase;
+  searchState.matchWholeWord;
+  searchState.useRegex;
+  searchState.replaceText;
+  untrack(() => updateSearchEditor(view));
 });
 
 function close() {
-    isOpen = false;
-    clearSearch(cmView);
-    cmView?.focus();
+  isOpen = false;
+  clearSearch(cmView);
+  cmView?.focus();
 }
 
 function executeSearch(view: EditorView, incremental: boolean) {
-    if (searchScope === 'current') {
-        if (searchState.findText) {
-            if (incremental) {
-                selectNearestMatch(view);
-            } else {
-                updateSearchEditor(view);
-                if (searchState.currentMatches > 0) {
-                    findNext(view);
-                    updateSearchEditor(view);
-                }
-            }
-        } else {
-            updateSearchEditor(view);
+  if (searchScope === 'current') {
+    if (searchState.findText) {
+      if (incremental) {
+        selectNearestMatch(view);
+      } else {
+        updateSearchEditor(view);
+        if (searchState.currentMatches > 0) {
+          findNext(view);
+          updateSearchEditor(view);
         }
+      }
     } else {
-        clearSearch(view);
-        searchAllTabs();
+      updateSearchEditor(view);
     }
+  } else {
+    clearSearch(view);
+    searchAllTabs();
+  }
 }
 
 const debouncedSearch = debounce((view: EditorView) => {
-    executeSearch(view, true);
+  executeSearch(view, true);
 }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
 
 const debouncedReplace = debounce((view: EditorView) => {
-    updateSearchEditor(view);
+  updateSearchEditor(view);
 }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
 
 function onInput() {
-    if (!cmView) return;
-    debouncedSearch(cmView);
+  if (!cmView) return;
+  debouncedSearch(cmView);
 }
 
 function onScopeChange() {
-    if (cmView) executeSearch(cmView, false);
+  if (cmView) executeSearch(cmView, false);
 }
 
 function onReplaceInput() {
-    if (!cmView) return;
-    debouncedReplace(cmView);
+  if (!cmView) return;
+  debouncedReplace(cmView);
 }
 
 function onFindNext() {
-    if (cmView && !searchState.regexError) {
-        findNext(cmView);
-        updateSearchEditor(cmView);
-        searchInputRef?.focus();
-    }
+  if (cmView && !searchState.regexError) {
+    findNext(cmView);
+    updateSearchEditor(cmView);
+    searchInputRef?.focus();
+  }
 }
 
 function onFindPrevious() {
-    if (cmView && !searchState.regexError) {
-        findPrevious(cmView);
-        updateSearchEditor(cmView);
-        searchInputRef?.focus();
-    }
+  if (cmView && !searchState.regexError) {
+    findPrevious(cmView);
+    updateSearchEditor(cmView);
+    searchInputRef?.focus();
+  }
 }
 
 function onReplace() {
-    if (cmView && !searchState.regexError) {
-        replaceNext(cmView);
-        updateSearchEditor(cmView);
-    }
+  if (cmView && !searchState.regexError) {
+    replaceNext(cmView);
+    updateSearchEditor(cmView);
+  }
 }
 
 function onReplaceAll() {
-    if (searchState.regexError) return;
+  if (searchState.regexError) return;
 
-    if (searchScope === 'current') {
-        if (cmView) {
-            replaceAll(cmView);
-            updateSearchEditor(cmView);
-        }
-    } else {
-        const count = replaceAllInTabs();
-        if (count > 0) {
-            alert(translate('findReplace.replacedCount', { values: { count } }));
-        }
+  if (searchScope === 'current') {
+    if (cmView) {
+      replaceAll(cmView);
+      updateSearchEditor(cmView);
     }
+  } else {
+    const count = replaceAllInTabs();
+    if (count > 0) {
+      alert(translate('findReplace.replacedCount', { values: { count } }));
+    }
+  }
 }
 
 function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-        e.stopPropagation();
-        close();
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (e.shiftKey) {
-            onFindPrevious();
-        } else {
-            if (isReplaceMode && e.ctrlKey) {
-                onReplaceAll();
-            } else {
-                onFindNext();
-            }
-        }
-    } else if ((e.key === 'f' || e.key === 'h') && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.key === 'h') isReplaceMode = true;
-        focusInput();
+  if (e.key === 'Escape') {
+    e.stopPropagation();
+    close();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      onFindPrevious();
+    } else {
+      if (isReplaceMode && e.ctrlKey) {
+        onReplaceAll();
+      } else {
+        onFindNext();
+      }
     }
+  } else if ((e.key === 'f' || e.key === 'h') && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.key === 'h') isReplaceMode = true;
+    focusInput();
+  }
 }
 
 function handleGlobalKeydown(e: KeyboardEvent) {
-    if (e.key === 'F3') {
-        e.preventDefault();
-        e.stopPropagation();
+  if (e.key === 'F3') {
+    e.preventDefault();
+    e.stopPropagation();
 
-        if (!searchState.findText && !isOpen) {
-            isOpen = true;
-            return;
-        }
-
-        if (!isOpen) isOpen = true;
-
-        if (e.shiftKey) {
-            onFindPrevious();
-        } else {
-            onFindNext();
-        }
+    if (!searchState.findText && !isOpen) {
+      isOpen = true;
+      return;
     }
+
+    if (!isOpen) isOpen = true;
+
+    if (e.shiftKey) {
+      onFindPrevious();
+    } else {
+      onFindNext();
+    }
+  }
 }
 
 function handleBlur(e: FocusEvent) {
-    if (!appContext.settings.findPanelCloseOnBlur) return;
+  if (!appContext.settings.findPanelCloseOnBlur) return;
 
-    // Decide from the blur event's relatedTarget instead of a deferred
-    // activeElement check: opening the panel schedules a focusInput() that can
-    // land after the blur and re-focus the search field, so a delayed check
-    // would see focus back inside the panel and never close it.
-    const next = e.relatedTarget;
-    if (next instanceof Node && panelRef?.contains(next)) return;
-    if (isMouseOver) return;
-    close();
+  // Decide from the blur event's relatedTarget instead of a deferred
+  // activeElement check: opening the panel schedules a focusInput() that can
+  // land after the blur and re-focus the search field, so a delayed check
+  // would see focus back inside the panel and never close it.
+  const next = e.relatedTarget;
+  if (next instanceof Node && panelRef?.contains(next)) return;
+  if (isMouseOver) return;
+  close();
 }
 
 function navigateToTab(tabId: string) {
-    appContext.app.activeTabId = tabId;
+  appContext.app.activeTabId = tabId;
 }
 
 onMount(() => {
-    window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
-    return () => {
-        window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
-    };
+  window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
+  return () => {
+    window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
+  };
 });
 </script>
 
 {#if isOpen}
-    <div
-        bind:this={panelRef}
-        class="find-panel bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
-        class:opacity-[0.15]={appContext.settings.findPanelTransparent && !isMouseOver}
-        onkeydown={handleKeydown}
-        onfocusout={handleBlur}
-        onmouseenter={() => (isMouseOver = true)}
-        onmouseleave={() => (isMouseOver = false)}
-        role="dialog"
-        aria-label={$_('findReplace.aria')}
-        tabindex="-1">
-        <div class="bg-border-main text-fg-default flex items-center border-b p-2">
-            <div class="flex flex-1 items-center gap-2">
-                <span class="text-ui font-semibold">{$_('findReplace.find')} {isReplaceMode ? $_('findReplace.andReplace') : ''}</span>
-                <button
-                    type="button"
-                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
-                    class:bg-bg-active={isReplaceMode}
-                    class:text-accent-secondary={isReplaceMode}
-                    onclick={() => (isReplaceMode = !isReplaceMode)}
-                    title={$_('findReplace.toggleReplaceMode')}>
-                    <Replace size={14} />
-                </button>
-            </div>
-            <button
-                type="button"
-                class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
-                onclick={close}
-                title={$_('findReplace.closeEsc')}>
-                <X size={14} />
-            </button>
-        </div>
+  <div
+    bind:this={panelRef}
+    class="find-panel bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
+    class:opacity-[0.15]={appContext.settings.findPanelTransparent && !isMouseOver}
+    onkeydown={handleKeydown}
+    onfocusout={handleBlur}
+    onmouseenter={() => (isMouseOver = true)}
+    onmouseleave={() => (isMouseOver = false)}
+    role="dialog"
+    aria-label={$_('findReplace.aria')}
+    tabindex="-1"
+  >
+    <div class="bg-border-main text-fg-default flex items-center border-b p-2">
+      <div class="flex flex-1 items-center gap-2">
+        <span class="text-ui font-semibold"
+          >{$_('findReplace.find')} {isReplaceMode ? $_('findReplace.andReplace') : ''}</span
+        >
+        <button
+          type="button"
+          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
+          class:bg-bg-active={isReplaceMode}
+          class:text-accent-secondary={isReplaceMode}
+          onclick={() => (isReplaceMode = !isReplaceMode)}
+          title={$_('findReplace.toggleReplaceMode')}
+        >
+          <Replace size={14} />
+        </button>
+      </div>
+      <button
+        type="button"
+        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
+        onclick={close}
+        title={$_('findReplace.closeEsc')}
+      >
+        <X size={14} />
+      </button>
+    </div>
 
-        <div class="flex max-h-125 flex-col gap-3 overflow-y-auto p-3">
-            <div class="flex items-center gap-2">
-                <Input
-                    bind:ref={searchInputRef}
-                    type="text"
-                    bind:value={searchState.findText}
-                    placeholder={$_('findReplace.find')}
-                    class="flex-1 text-ui-sm leading-6 {searchState.regexError
+    <div class="flex max-h-125 flex-col gap-3 overflow-y-auto p-3">
+      <div class="flex items-center gap-2">
+        <Input
+          bind:ref={searchInputRef}
+          type="text"
+          bind:value={searchState.findText}
+          placeholder={$_('findReplace.find')}
+          class="flex-1 text-ui-sm leading-6 {searchState.regexError
                         ? 'border-danger'
                         : ''}"
-                    oninput={onInput}
-                    spellcheck="false" />
-                <div class="text-fg-muted min-w-20 text-right text-2xs">
-                    {#if searchScope === 'current'}
-                        {#if searchState.currentMatches > 0}
-                            {searchState.currentIndex + 1}
-                            {$_('findReplace.of')} {searchState.currentMatches}
-                        {:else if searchState.findText}
-                            0 {$_('findReplace.of')} 0
-                        {/if}
-                    {:else if searchScope === 'all'}
-                        {#if searchState.allTabsResults.size > 0}
-                            {$_('findReplace.tabs', { values: { count: searchState.allTabsResults.size } })}
-                        {:else if searchState.findText}
-                            {$_('findReplace.zeroTabs')}
-                        {/if}
-                    {/if}
-                </div>
-            </div>
-
-            {#if searchState.regexError}
-                <div
-                    class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-2xs">
-                    {searchState.regexError}
-                </div>
+          oninput={onInput}
+          spellcheck="false"
+        />
+        <div class="text-fg-muted min-w-20 text-right text-2xs">
+          {#if searchScope === 'current'}
+            {#if searchState.currentMatches > 0}
+              {searchState.currentIndex + 1}
+              {$_('findReplace.of')} {searchState.currentMatches}
+            {:else if searchState.findText}
+              0 {$_('findReplace.of')} 0
             {/if}
-
-            {#if isReplaceMode}
-                <div class="flex items-center gap-2">
-                    <Input
-                        type="text"
-                        bind:value={searchState.replaceText}
-                        placeholder={$_('findReplace.replace')}
-                        class="flex-1 text-ui-sm leading-6"
-                        oninput={onReplaceInput}
-                        spellcheck="false" />
-                </div>
+          {:else if searchScope === 'all'}
+            {#if searchState.allTabsResults.size > 0}
+              {$_('findReplace.tabs', { values: { count: searchState.allTabsResults.size } })}
+            {:else if searchState.findText}
+              {$_('findReplace.zeroTabs')}
             {/if}
-
-            <div class="flex flex-wrap gap-4">
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
-                    <input
-                        type="checkbox"
-                        bind:checked={searchState.matchCase}
-                        onchange={() => cmView && executeSearch(cmView, false)}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>{$_('findReplace.matchCase')}</span>
-                </label>
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
-                    <input
-                        type="checkbox"
-                        bind:checked={searchState.matchWholeWord}
-                        onchange={() => cmView && executeSearch(cmView, false)}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>{$_('findReplace.wholeWord')}</span>
-                </label>
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
-                    <input
-                        type="checkbox"
-                        bind:checked={searchState.useRegex}
-                        onchange={() => cmView && executeSearch(cmView, false)}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>{$_('findReplace.regex')}</span>
-                </label>
-            </div>
-
-            <div class="flex flex-wrap gap-4">
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
-                    <input
-                        type="radio"
-                        bind:group={searchScope}
-                        value="current"
-                        onchange={onScopeChange}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>{$_('findReplace.currentDocument')}</span>
-                </label>
-                <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
-                    <input
-                        type="radio"
-                        bind:group={searchScope}
-                        value="all"
-                        onchange={onScopeChange}
-                        class="accent-accent-primary h-3.5 w-3.5 cursor-pointer" />
-                    <span>{$_('findReplace.allOpenDocuments')}</span>
-                </label>
-            </div>
-
-            <div class="flex flex-wrap gap-2">
-                <button
-                    type="button"
-                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
-                    onclick={onFindPrevious}
-                    disabled={searchScope === 'all' || !!searchState.regexError}>
-                    <Search size={12} />
-                    {$_('common.previous')}
-                </button>
-                <button
-                    type="button"
-                    class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
-                    onclick={onFindNext}
-                    disabled={searchScope === 'all' || !!searchState.regexError}>
-                    <Search size={12} />
-                    {$_('common.next')}
-                </button>
-            </div>
-            {#if isReplaceMode}
-                <div class="flex flex-wrap gap-2">
-                    <button
-                        type="button"
-                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
-                        onclick={onReplace}
-                        disabled={searchScope === 'all' || !!searchState.regexError}>
-                        <Replace size={12} />
-                        {$_('common.replace')}
-                    </button>
-                    <button
-                        type="button"
-                        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
-                        onclick={onReplaceAll}
-                        disabled={!!searchState.regexError}>
-                        <Replace size={12} />
-                        {$_('findReplace.replaceAll')}
-                    </button>
-                </div>
-            {/if}
-
-            {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
-                <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-                    <div class="text-fg-muted mb-1 text-2xs font-semibold">{$_('findReplace.results')}</div>
-                    {#each [...searchState.allTabsResults.entries()] as [ tabId, count ] (tabId)}
-                        {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
-                        {#if tab}
-                            <button
-                                type="button"
-                                class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
-                                onclick={() => navigateToTab(tabId)}>
-                                <span
-                                    class="text-fg-default overflow-hidden text-ui-sm text-ellipsis whitespace-nowrap"
-                                    >{tab.title}</span
-                                >
-                                <span
-                                    class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-2xs"
-                                    >{count}</span
-                                >
-                            </button>
-                        {/if}
-                    {/each}
-                </div>
-            {/if}
+          {/if}
         </div>
+      </div>
+
+      {#if searchState.regexError}
+        <div class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-2xs">
+          {searchState.regexError}
+        </div>
+      {/if}
+
+      {#if isReplaceMode}
+        <div class="flex items-center gap-2">
+          <Input
+            type="text"
+            bind:value={searchState.replaceText}
+            placeholder={$_('findReplace.replace')}
+            class="flex-1 text-ui-sm leading-6"
+            oninput={onReplaceInput}
+            spellcheck="false"
+          />
+        </div>
+      {/if}
+
+      <div class="flex flex-wrap gap-4">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+          <input
+            type="checkbox"
+            bind:checked={searchState.matchCase}
+            onchange={() => cmView && executeSearch(cmView, false)}
+            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+          >
+          <span>{$_('findReplace.matchCase')}</span>
+        </label>
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+          <input
+            type="checkbox"
+            bind:checked={searchState.matchWholeWord}
+            onchange={() => cmView && executeSearch(cmView, false)}
+            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+          >
+          <span>{$_('findReplace.wholeWord')}</span>
+        </label>
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+          <input
+            type="checkbox"
+            bind:checked={searchState.useRegex}
+            onchange={() => cmView && executeSearch(cmView, false)}
+            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+          >
+          <span>{$_('findReplace.regex')}</span>
+        </label>
+      </div>
+
+      <div class="flex flex-wrap gap-4">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+          <input
+            type="radio"
+            bind:group={searchScope}
+            value="current"
+            onchange={onScopeChange}
+            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+          >
+          <span>{$_('findReplace.currentDocument')}</span>
+        </label>
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+          <input
+            type="radio"
+            bind:group={searchScope}
+            value="all"
+            onchange={onScopeChange}
+            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
+          >
+          <span>{$_('findReplace.allOpenDocuments')}</span>
+        </label>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          onclick={onFindPrevious}
+          disabled={searchScope === 'all' || !!searchState.regexError}
+        >
+          <Search size={12} />
+          {$_('common.previous')}
+        </button>
+        <button
+          type="button"
+          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          onclick={onFindNext}
+          disabled={searchScope === 'all' || !!searchState.regexError}
+        >
+          <Search size={12} />
+          {$_('common.next')}
+        </button>
+      </div>
+      {#if isReplaceMode}
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            onclick={onReplace}
+            disabled={searchScope === 'all' || !!searchState.regexError}
+          >
+            <Replace size={12} />
+            {$_('common.replace')}
+          </button>
+          <button
+            type="button"
+            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            onclick={onReplaceAll}
+            disabled={!!searchState.regexError}
+          >
+            <Replace size={12} />
+            {$_('findReplace.replaceAll')}
+          </button>
+        </div>
+      {/if}
+
+      {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
+        <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
+          <div class="text-fg-muted mb-1 text-2xs font-semibold">{$_('findReplace.results')}</div>
+          {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
+            {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
+            {#if tab}
+              <button
+                type="button"
+                class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
+                onclick={() => navigateToTab(tabId)}
+              >
+                <span class="text-fg-default overflow-hidden text-ui-sm text-ellipsis whitespace-nowrap"
+                  >{tab.title}</span
+                >
+                <span class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-2xs">{count}</span>
+              </button>
+            {/if}
+          {/each}
+        </div>
+      {/if}
     </div>
+  </div>
 {/if}
 
 <style>
-    .find-panel {
-        background-color: color-mix(in srgb, var(--surface-2) 82%, transparent);
-    }
+.find-panel {
+  background-color: color-mix(in srgb, var(--surface-2) 82%, transparent);
+}
 </style>

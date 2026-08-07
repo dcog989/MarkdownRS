@@ -14,25 +14,19 @@ const buttons = $derived.by(() => {
 </script>
 
 <Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog('cancel')} zIndex={100} position="center">
-    {#snippet header()}
-        <span class="text-fg-default text-sm font-semibold"
-            >{appContext.ui.dialog.options.title}</span
-        >
-    {/snippet}
+  {#snippet header()}
+    <span class="text-fg-default text-sm font-semibold">{appContext.ui.dialog.options.title}</span>
+  {/snippet}
 
-    <div class="text-fg-default whitespace-pre-line p-4 text-sm leading-relaxed">
-        {appContext.ui.dialog.options.message}
-    </div>
+  <div class="text-fg-default whitespace-pre-line p-4 text-sm leading-relaxed">
+    {appContext.ui.dialog.options.message}
+  </div>
 
-    {#snippet footer()}
-        {#each buttons as { action, label }, i (action)}
-            <button
-                type="button"
-                class="btn-base btn-sm"
-                class:btn-secondary={i > 0}
-                onclick={() => resolveDialog(action)}>
-                {label}
-            </button>
-        {/each}
-    {/snippet}
+  {#snippet footer()}
+    {#each buttons as { action, label }, i (action)}
+      <button type="button" class="btn-base btn-sm" class:btn-secondary={i > 0} onclick={() => resolveDialog(action)}>
+        {label}
+      </button>
+    {/each}
+  {/snippet}
 </Modal>

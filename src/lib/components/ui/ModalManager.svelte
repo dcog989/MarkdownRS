@@ -17,37 +17,47 @@ import { openFileByPath } from '$lib/utils/fileSystem';
 const basePaletteCommands: Command[] = commands.filter((c) => c.showInPalette !== false);
 
 const paletteCommands = $derived(
-    sortCommands(basePaletteCommands, settingsState.commandPaletteSort, settingsState.commandUsage, settingsState.commandUsageCounts),
+  sortCommands(
+    basePaletteCommands,
+    settingsState.commandPaletteSort,
+    settingsState.commandUsage,
+    settingsState.commandUsageCounts,
+  ),
 );
 </script>
 
 <CommandPalette
-    bind:isOpen={appContext.interface.showCommandPalette}
-    commands={paletteCommands}
-    onClose={() => (appContext.interface.showCommandPalette = false)} />
+  bind:isOpen={appContext.interface.showCommandPalette}
+  commands={paletteCommands}
+  onClose={() => (appContext.interface.showCommandPalette = false)}
+/>
 <FileHistoryModal
-    bind:isOpen={appContext.interface.showFileHistory}
-    onClose={() => (appContext.interface.showFileHistory = false)} />
+  bind:isOpen={appContext.interface.showFileHistory}
+  onClose={() => (appContext.interface.showFileHistory = false)}
+/>
 <SettingsModal
-    bind:isOpen={appContext.interface.showSettings}
-    onClose={() => (appContext.interface.showSettings = false)} />
+  bind:isOpen={appContext.interface.showSettings}
+  onClose={() => (appContext.interface.showSettings = false)}
+/>
 <AboutModal
-    bind:isOpen={appContext.interface.showAbout}
-    position="top"
-    onClose={() => (appContext.interface.showAbout = false)} />
+  bind:isOpen={appContext.interface.showAbout}
+  position="top"
+  onClose={() => (appContext.interface.showAbout = false)}
+/>
 <BookmarksModal
-    bind:isOpen={appContext.interface.showBookmarks}
-    position="top"
-    onClose={() => (appContext.interface.showBookmarks = false)}
-    onOpenFile={(path) => openFileByPath(path)} />
+  bind:isOpen={appContext.interface.showBookmarks}
+  position="top"
+  onClose={() => (appContext.interface.showBookmarks = false)}
+  onOpenFile={(path) => openFileByPath(path)}
+/>
 <ShortcutsModal
-    bind:isOpen={appContext.interface.showShortcuts}
-    onClose={() => (appContext.interface.showShortcuts = false)} />
+  bind:isOpen={appContext.interface.showShortcuts}
+  onClose={() => (appContext.interface.showShortcuts = false)}
+/>
 
-<DataModal
-    bind:isOpen={appContext.interface.showData}
-    onClose={() => (appContext.interface.showData = false)} />
+<DataModal bind:isOpen={appContext.interface.showData} onClose={() => (appContext.interface.showData = false)} />
 <RumdlConfigModal
-    bind:isOpen={appContext.interface.showRumdlConfig}
-    onClose={() => (appContext.interface.showRumdlConfig = false)} />
+  bind:isOpen={appContext.interface.showRumdlConfig}
+  onClose={() => (appContext.interface.showRumdlConfig = false)}
+/>
 <PromptModal />

@@ -14,8 +14,8 @@ import { saveSettings } from '$lib/utils/settings';
 import { shortcutManager } from '$lib/utils/shortcuts';
 
 interface Props {
-    isOpen: boolean;
-    onClose: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
@@ -26,52 +26,52 @@ let recordingCommandId = $state<string | null>(null);
 let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
 
 const nav = createListNavigation(
-    () => flatShortcuts.length,
-    (index) => {
-        const def = flatShortcuts[index];
-        if (def) startRecording(def.id);
-    },
+  () => flatShortcuts.length,
+  (index) => {
+    const def = flatShortcuts[index];
+    if (def) startRecording(def.id);
+  },
 );
 
 $effect(() => {
-    if (isOpen) {
-        searchQuery = '';
-        nav.reset();
-    }
+  if (isOpen) {
+    searchQuery = '';
+    nav.reset();
+  }
 });
 
 $effect(() => {
-    void searchQuery;
-    nav.reset();
+  void searchQuery;
+  nav.reset();
 });
 
 function startRecording(commandId: string) {
-    recordingCommandId = commandId;
-    shortcutManager.setEnabled(false);
-    window.addEventListener('keydown', handleRecordKey, { capture: true });
+  recordingCommandId = commandId;
+  shortcutManager.setEnabled(false);
+  window.addEventListener('keydown', handleRecordKey, { capture: true });
 }
 
 function handleRecordKey(e: KeyboardEvent) {
-    if (!recordingCommandId) return;
-    e.preventDefault();
-    e.stopPropagation();
+  if (!recordingCommandId) return;
+  e.preventDefault();
+  e.stopPropagation();
 
-    if (e.key === 'Escape') {
-        stopRecording();
-        return;
-    }
-    if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+  if (e.key === 'Escape') {
+    stopRecording();
+    return;
+  }
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
 
-    const keyStr = shortcutManager.getEventKey(e);
+  const keyStr = shortcutManager.getEventKey(e);
 
-    const conflict = shortcutManager.findCommandByShortcut(keyStr, recordingCommandId);
-    if (conflict) {
-      conflictCommand = { command: conflict, key: keyStr, targetId: recordingCommandId };
-      stopRecording();
-      return;
-    }
+  const conflict = shortcutManager.findCommandByShortcut(keyStr, recordingCommandId);
+  if (conflict) {
+    conflictCommand = { command: conflict, key: keyStr, targetId: recordingCommandId };
+    stopRecording();
+    return;
+  }
 
-    assignShortcut(recordingCommandId, keyStr);
+  assignShortcut(recordingCommandId, keyStr);
 }
 
 function assignShortcut(commandId: string, key: string) {
@@ -92,169 +92,173 @@ function handleCancelConflict() {
 }
 
 function stopRecording() {
-    recordingCommandId = null;
-    window.removeEventListener('keydown', handleRecordKey, { capture: true });
-    shortcutManager.setEnabled(true);
+  recordingCommandId = null;
+  window.removeEventListener('keydown', handleRecordKey, { capture: true });
+  shortcutManager.setEnabled(true);
 }
 
 function resetShortcut(commandId: string) {
-    delete appContext.settings.customShortcuts[commandId];
-    saveSettings();
+  delete appContext.settings.customShortcuts[commandId];
+  saveSettings();
 }
 
 const categories = $derived.by(() => {
-    const grouped = shortcutManager.getShortcutsByCategory();
-    const query = searchQuery.toLowerCase();
-    return Array.from(grouped.entries())
-        .map(([category, defs]) => [
-            category,
-            query.length < 1
-                ? defs
-                : defs.filter((def) => {
-                    const descriptionMatch = translate(def.label).toLowerCase().includes(query);
-                    const categoryMatch = translate(def.category).toLowerCase().includes(query);
-                    const commandMatch = def.id.toLowerCase().includes(query);
-                    const shortcutMatch = shortcutManager
-                        .getShortcutDisplay(def.id)
-                        .toLowerCase()
-                        .includes(query);
-                    return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
-                }),
-        ] as [string, Command[]])
-        .filter(([, defs]) => defs.length > 0);
+  const grouped = shortcutManager.getShortcutsByCategory();
+  const query = searchQuery.toLowerCase();
+  return Array.from(grouped.entries())
+    .map(
+      ([category, defs]) =>
+        [
+          category,
+          query.length < 1
+            ? defs
+            : defs.filter((def) => {
+                const descriptionMatch = translate(def.label).toLowerCase().includes(query);
+                const categoryMatch = translate(def.category).toLowerCase().includes(query);
+                const commandMatch = def.id.toLowerCase().includes(query);
+                const shortcutMatch = shortcutManager.getShortcutDisplay(def.id).toLowerCase().includes(query);
+                return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
+              }),
+        ] as [string, Command[]],
+    )
+    .filter(([, defs]) => defs.length > 0);
 });
 
 // Create a flat array for proper indexing with selectedIndex
 const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
-
-
 </script>
 
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
-    {#snippet header()}
-        <ModalSearchHeader
-            title={$_('shortcuts.title')}
-            icon={Keyboard}
-            bind:searchValue={searchQuery}
-            bind:inputRef={searchInputEl}
-            searchPlaceholder={$_('shortcuts.placeholder')}
-            {onClose}
-            onKeydown={nav.handleKeydown} />
-    {/snippet}
+  {#snippet header()}
+    <ModalSearchHeader
+      title={$_('shortcuts.title')}
+      icon={Keyboard}
+      bind:searchValue={searchQuery}
+      bind:inputRef={searchInputEl}
+      searchPlaceholder={$_('shortcuts.placeholder')}
+      {onClose}
+      onKeydown={nav.handleKeydown}
+    />
+  {/snippet}
 
-    <div class="text-ui min-w-125 p-4 relative">
-        {#if conflictCommand}
-            {@const conflict = conflictCommand}
-            <!-- fixed positioning so the overlay is always in the viewport,
+  <div class="text-ui min-w-125 p-4 relative">
+    {#if conflictCommand}
+      {@const conflict = conflictCommand}
+      <!-- fixed positioning so the overlay is always in the viewport,
                  regardless of scroll position within the shortcuts list -->
-            <div class="fixed inset-0 z-50">
-                <div
-                    class="absolute inset-0 bg-black/40"
-                    role="button"
-                    tabindex="-1"
-                    onclick={handleCancelConflict}
-                    onkeydown={(e) => e.key === 'Enter' && handleCancelConflict()}></div>
-                <div
-                    class="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div
-                        class="bg-bg-panel border-border-main pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
-                        <h3 class="text-fg-default mb-4 text-base font-semibold">{$_('shortcuts.conflictTitle')}</h3>
-                        <p class="text-fg-muted mb-3 text-sm leading-relaxed">
-                            <span class="text-fg-default font-mono text-sm">{conflict.key}</span>
-                            {$_('shortcuts.alreadyAssigned')} <strong>{translate(conflict.command.label)}</strong>.
-                        </p>
-                        <p class="text-fg-muted mb-5 text-sm leading-relaxed">
-                            {$_('shortcuts.reassignTo')} <strong>{translate(shortcutManager.getDefinitions().find((c) => c.id === conflict.targetId)?.label ?? '')}</strong>?
-                        </p>
-                        <div class="flex justify-end gap-3">
-                            <button
-                                type="button"
-                                class="btn-base btn-secondary px-4 py-2"
-                                onclick={handleCancelConflict}>{$_('shortcuts.cancel')}</button>
-                            <button
-                                type="button"
-                                class="btn-base px-4 py-2"
-                                onclick={handleReassign}>{$_('shortcuts.reassign')}</button>
-                        </div>
-                    </div>
-                </div>
+      <div class="fixed inset-0 z-50">
+        <div
+          class="absolute inset-0 bg-black/40"
+          role="button"
+          tabindex="-1"
+          onclick={handleCancelConflict}
+          onkeydown={(e) => e.key === 'Enter' && handleCancelConflict()}
+        ></div>
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div class="bg-bg-panel border-border-main pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
+            <h3 class="text-fg-default mb-4 text-base font-semibold">{$_('shortcuts.conflictTitle')}</h3>
+            <p class="text-fg-muted mb-3 text-sm leading-relaxed">
+              <span class="text-fg-default font-mono text-sm">{conflict.key}</span>
+              {$_('shortcuts.alreadyAssigned')} <strong>{translate(conflict.command.label)}</strong>.
+            </p>
+            <p class="text-fg-muted mb-5 text-sm leading-relaxed">
+              {$_('shortcuts.reassignTo')}
+              <strong
+                >{translate(shortcutManager.getDefinitions().find((c) => c.id === conflict.targetId)?.label ?? '')}</strong
+              >?
+            </p>
+            <div class="flex justify-end gap-3">
+              <button type="button" class="btn-base btn-secondary px-4 py-2" onclick={handleCancelConflict}>
+                {$_('shortcuts.cancel')}
+              </button>
+              <button type="button" class="btn-base px-4 py-2" onclick={handleReassign}>
+                {$_('shortcuts.reassign')}
+              </button>
             </div>
-        {/if}
-        <div class="space-y-6">
-            {#if categories.length > 0}
-                {@const globalIndex = { value: -1 }}
-                {#each categories as [ category, defs ] (category)}
-                    <div>
-                        <h3
-                            class="text-ui text-accent-secondary border-t-accent-secondary mb-2 border-b pb-1 font-bold tracking-widest uppercase">
-                            {translate(category)}
-                        </h3>
-                        <div class="divide-border-main/30 divide-y">
-                            {#each defs as def (def.id)}
-                                {@const currentIndex = ++globalIndex.value}
-                                {@const isSelected = currentIndex === nav.selectedIndex}
-                                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                <!-- biome-ignore lint/a11y/noStaticElementInteractions: hover-based navigation item -->
-                                <div
-                                    class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
-                                    style:background-color={isSelected
+          </div>
+        </div>
+      </div>
+    {/if}
+    <div class="space-y-6">
+      {#if categories.length > 0}
+        {@const globalIndex = { value: -1 }}
+        {#each categories as [category, defs] (category)}
+          <div>
+            <h3
+              class="text-ui text-accent-secondary border-t-accent-secondary mb-2 border-b pb-1 font-bold tracking-widest uppercase"
+            >
+              {translate(category)}
+            </h3>
+            <div class="divide-border-main/30 divide-y">
+              {#each defs as def (def.id)}
+                {@const currentIndex = ++globalIndex.value}
+                {@const isSelected = currentIndex === nav.selectedIndex}
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <!-- biome-ignore lint/a11y/noStaticElementInteractions: hover-based navigation item -->
+                <div
+                  class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
+                  style:background-color={isSelected
                                         ? 'var(--accent-primary)'
                                         : currentIndex % 2 === 1
                                           ? 'var(--surface-row)'
                                           : 'transparent'}
-                                    use:scrollIntoView={isSelected}
-                                    onmouseenter={() => nav.select(currentIndex)}>
-                                    <button
-                                        type="button"
-                                        class="flex-1 cursor-pointer text-left transition-colors outline-none"
-                                        style:color={isSelected
+                  use:scrollIntoView={isSelected}
+                  onmouseenter={() => nav.select(currentIndex)}
+                >
+                  <button
+                    type="button"
+                    class="flex-1 cursor-pointer text-left transition-colors outline-none"
+                    style:color={isSelected
                                             ? 'var(--text-inverse)'
                                             : 'var(--text-primary)'}
-                                        onclick={() => startRecording(def.id)}>
-                                        {translate(def.label)}
-                                    </button>
-                                    <div class="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
+                    onclick={() => startRecording(def.id)}
+                  >
+                    {translate(def.label)}
+                  </button>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
 												{recordingCommandId === def.id
                                                 ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
                                                 : isSelected
                                                   ? 'bg-fg-inverse/20 border-fg-inverse/30 text-fg-inverse'
                                                   : 'bg-bg-input text-fg-default bg-border-main hover:border-accent-secondary'}"
-                                            onclick={() => startRecording(def.id)}>
-                                            {recordingCommandId === def.id
+                      onclick={() => startRecording(def.id)}
+                    >
+                      {recordingCommandId === def.id
                                                 ? $_('shortcuts.pressKeys')
                                                 : shortcutManager.getShortcutDisplay(def.id)}
-                                        </button>
-                                        {#if appContext.settings.customShortcuts[def.id]}
-                                            <button
-                                                type="button"
-                                                class="p-1 transition-all opacity-0 group-hover:opacity-100"
-                                                style:color={isSelected
+                    </button>
+                    {#if appContext.settings.customShortcuts[def.id]}
+                      <button
+                        type="button"
+                        class="p-1 transition-all opacity-0 group-hover:opacity-100"
+                        style:color={isSelected
                                                     ? 'var(--text-inverse)'
                                                     : 'var(--accent-primary)'}
-                                                onclick={() => resetShortcut(def.id)}
-                                                title={$_('shortcuts.resetToDefault')}>
-                                                <RotateCcw size={14} />
-                                            </button>
-                                        {/if}
-                                    </div>
-                                </div>
-                            {/each}
-                        </div>
-                    </div>
-                {/each}
-            {:else if searchQuery.length >= 1}
-                <div class="text-fg-muted px-4 py-8 text-center">
-                    {$_('shortcuts.noMatch')}
+                        onclick={() => resetShortcut(def.id)}
+                        title={$_('shortcuts.resetToDefault')}
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    {/if}
+                  </div>
                 </div>
-            {:else}
-                <div class="text-fg-muted px-4 py-8 text-center">
-                    <Keyboard size={48} class="mx-auto mb-2 opacity-30" />
-                    <div>{$_('shortcuts.none')}</div>
-                </div>
-            {/if}
+              {/each}
+            </div>
+          </div>
+        {/each}
+      {:else if searchQuery.length >= 1}
+        <div class="text-fg-muted px-4 py-8 text-center">
+          {$_('shortcuts.noMatch')}
         </div>
+      {:else}
+        <div class="text-fg-muted px-4 py-8 text-center">
+          <Keyboard size={48} class="mx-auto mb-2 opacity-30" />
+          <div>{$_('shortcuts.none')}</div>
+        </div>
+      {/if}
     </div>
+  </div>
 </Modal>

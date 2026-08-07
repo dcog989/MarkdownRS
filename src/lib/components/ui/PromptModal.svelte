@@ -29,15 +29,9 @@ function handleKeydown(e: KeyboardEvent) {
 }
 </script>
 
-<Modal
-  isOpen={dialogStore.promptIsOpen}
-  onClose={() => resolvePrompt(null)}
-  zIndex={100}
-  position="center">
+<Modal isOpen={dialogStore.promptIsOpen} onClose={() => resolvePrompt(null)} zIndex={100} position="center">
   {#snippet header()}
-    <span class="text-fg-default text-sm font-semibold"
-      >{dialogStore.promptOptions.title}</span
-    >
+    <span class="text-fg-default text-sm font-semibold">{dialogStore.promptOptions.title}</span>
   {/snippet}
 
   <div class="flex flex-col gap-3 px-4 py-4">
@@ -55,7 +49,7 @@ function handleKeydown(e: KeyboardEvent) {
         onkeydown={handleKeydown}
         aria-label={dialogStore.promptOptions.message || $_('modal.promptInput')}
         class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
-      />
+      >
     </div>
   </div>
 
@@ -63,10 +57,7 @@ function handleKeydown(e: KeyboardEvent) {
     <button type="button" class="btn-base btn-sm" onclick={handleConfirm}>
       {$_('common.ok')}
     </button>
-    <button
-      type="button"
-      class="btn-base btn-sm btn-secondary"
-      onclick={() => resolvePrompt(null)}>
+    <button type="button" class="btn-base btn-sm btn-secondary" onclick={() => resolvePrompt(null)}>
       {$_('common.cancel')}
     </button>
   {/snippet}

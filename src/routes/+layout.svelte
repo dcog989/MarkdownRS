@@ -18,109 +18,109 @@ let { children } = $props();
 initI18n(appContext.settings.locale);
 
 $effect(() => {
-    const theme = appContext.settings.theme;
-    const root = document.documentElement;
-    root.setAttribute('data-theme', theme);
+  const theme = appContext.settings.theme;
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme);
 });
 
 $effect(() => {
-    const appLocale = appContext.settings.locale;
-    document.documentElement.lang = appLocale;
-    locale.set(appLocale);
+  const appLocale = appContext.settings.locale;
+  document.documentElement.lang = appLocale;
+  locale.set(appLocale);
 });
 
 $effect(() => {
-    const themeName = appContext.settings.activeTheme;
-    if (!themeName || themeName === 'System') {
-        const existing = document.getElementById('user-theme-styles');
-        if (existing) existing.remove();
-        return;
-    }
+  const themeName = appContext.settings.activeTheme;
+  if (!themeName || themeName === 'System') {
+    const existing = document.getElementById('user-theme-styles');
+    if (existing) existing.remove();
+    return;
+  }
 
-    async function loadTheme() {
-        const css = await getThemeCss(themeName);
-        if (!css) return;
+  async function loadTheme() {
+    const css = await getThemeCss(themeName);
+    if (!css) return;
 
-        let styleTag = document.getElementById('user-theme-styles') as HTMLStyleElement;
-        if (!styleTag) {
-            styleTag = document.createElement('style');
-            styleTag.id = 'user-theme-styles';
-            document.head.appendChild(styleTag);
-        }
-        styleTag.textContent = css;
-    }
-
-    loadTheme();
-});
-
-$effect(() => {
-    const customColor = appContext.settings.customAccentColor;
-    const styleTagId = 'custom-accent-styles';
-    const existing = document.getElementById(styleTagId);
-
-    if (!customColor) {
-        if (existing) existing.remove();
-        return;
-    }
-
-    const css = buildCustomAccentCss(customColor);
-    if (!css) {
-        if (existing) existing.remove();
-        return;
-    }
-
-    let styleTag = existing as HTMLStyleElement | null;
+    let styleTag = document.getElementById('user-theme-styles') as HTMLStyleElement;
     if (!styleTag) {
-        styleTag = document.createElement('style');
-        styleTag.id = styleTagId;
-        document.head.appendChild(styleTag);
+      styleTag = document.createElement('style');
+      styleTag.id = 'user-theme-styles';
+      document.head.appendChild(styleTag);
     }
     styleTag.textContent = css;
+  }
+
+  loadTheme();
+});
+
+$effect(() => {
+  const customColor = appContext.settings.customAccentColor;
+  const styleTagId = 'custom-accent-styles';
+  const existing = document.getElementById(styleTagId);
+
+  if (!customColor) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  const css = buildCustomAccentCss(customColor);
+  if (!css) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  let styleTag = existing as HTMLStyleElement | null;
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = styleTagId;
+    document.head.appendChild(styleTag);
+  }
+  styleTag.textContent = css;
 });
 
 onMount(() => {
-    // Log unhandled promise rejections that aren't caught elsewhere
-    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
-        logger.editor.warn('UnhandledRejection', { reason: event.reason });
-    };
-    window.addEventListener('unhandledrejection', onUnhandledRejection);
+  // Log unhandled promise rejections that aren't caught elsewhere
+  const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+    logger.editor.warn('UnhandledRejection', { reason: event.reason });
+  };
+  window.addEventListener('unhandledrejection', onUnhandledRejection);
 
-    for (const cmd of commands) {
-        shortcutManager.register(cmd);
+  for (const cmd of commands) {
+    shortcutManager.register(cmd);
+  }
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    const key = e.key.toLowerCase();
+    const isCtrl = e.ctrlKey || e.metaKey;
+
+    // Prevent default for browser shortcuts that conflict with app shortcuts
+    if (isCtrl && key === 'p') {
+      e.preventDefault();
     }
 
-    const handleKeydown = (e: KeyboardEvent) => {
-        const key = e.key.toLowerCase();
-        const isCtrl = e.ctrlKey || e.metaKey;
+    // Let shortcut manager handle the event
+    void shortcutManager.handleKeyEvent(e);
+  };
 
-        // Prevent default for browser shortcuts that conflict with app shortcuts
-        if (isCtrl && key === 'p') {
-            e.preventDefault();
-        }
+  // Prevent browser context menu globally
+  const handleContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+  };
 
-        // Let shortcut manager handle the event
-        void shortcutManager.handleKeyEvent(e);
-    };
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const handleOSThemeChange = () => {
+    syncThemeFromSystem();
+  };
+  mq.addEventListener('change', handleOSThemeChange);
 
-    // Prevent browser context menu globally
-    const handleContextMenu = (e: MouseEvent) => {
-        e.preventDefault();
-    };
-
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleOSThemeChange = () => {
-        syncThemeFromSystem();
-    };
-    mq.addEventListener('change', handleOSThemeChange);
-
-    window.addEventListener('keydown', handleKeydown, { capture: true });
-    document.addEventListener('contextmenu', handleContextMenu, { passive: false });
-    return () => {
-        window.removeEventListener('unhandledrejection', onUnhandledRejection);
-        mq.removeEventListener('change', handleOSThemeChange);
-        window.removeEventListener('keydown', handleKeydown, { capture: true });
-        document.removeEventListener('contextmenu', handleContextMenu);
-    };
+  window.addEventListener('keydown', handleKeydown, { capture: true });
+  document.addEventListener('contextmenu', handleContextMenu, { passive: false });
+  return () => {
+    window.removeEventListener('unhandledrejection', onUnhandledRejection);
+    mq.removeEventListener('change', handleOSThemeChange);
+    window.removeEventListener('keydown', handleKeydown, { capture: true });
+    document.removeEventListener('contextmenu', handleContextMenu);
+  };
 });
 </script>
 

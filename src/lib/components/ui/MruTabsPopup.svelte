@@ -6,105 +6,113 @@ import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 
 interface Props {
-    isOpen: boolean;
-    onClose: () => void;
-    onSelect: (tabId: string) => void;
-    selectedId: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (tabId: string) => void;
+  selectedId: string | null;
 }
 
 let { isOpen, onClose, onSelect, selectedId }: Props = $props();
 let listContainerRef = $state<HTMLDivElement | null>(null);
 
 let mruTabs = $derived(
-    appContext.editor.mruStack
-        .map((id) => appContext.editor.tabs.find((t) => t.id === id))
-        .filter((t) => t !== undefined),
+  appContext.editor.mruStack
+    .map((id) => appContext.editor.tabs.find((t) => t.id === id))
+    .filter((t) => t !== undefined),
 );
 
 function handleBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) onClose();
+  if (e.target === e.currentTarget) onClose();
 }
 
 function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-    if (isSelected) {
+  if (isSelected) {
+    node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  return {
+    update(newIsSelected: boolean) {
+      if (newIsSelected) {
         node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-    return {
-        update(newIsSelected: boolean) {
-            if (newIsSelected) {
-                node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
-        },
-    };
+      }
+    },
+  };
 }
 </script>
 
 {#if isOpen}
-    <div role="button" tabindex="0" aria-label={$_('common.close')} class="ui-backdrop" onclick={handleBackdropClick} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); if (e.key === 'Escape') onClose(); }}>
-        <div class="ui-panel">
-            <div class="ui-header">
-                <h3 class="text-fg-default text-sm font-semibold">{$_('mruTabs.title')}</h3>
-                <p class="text-ui-sm text-fg-muted mt-1">{$_('mruTabs.hint')}</p>
-            </div>
+  <div
+    role="button"
+    tabindex="0"
+    aria-label={$_('common.close')}
+    class="ui-backdrop"
+    onclick={handleBackdropClick}
+    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); if (e.key === 'Escape') onClose(); }}
+  >
+    <div class="ui-panel">
+      <div class="ui-header">
+        <h3 class="text-fg-default text-sm font-semibold">{$_('mruTabs.title')}</h3>
+        <p class="text-ui-sm text-fg-muted mt-1">{$_('mruTabs.hint')}</p>
+      </div>
 
-            <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div bind:this={listContainerRef} class="no-scrollbar flex-1 overflow-y-auto py-1">
-                    {#each mruTabs as tab, index (tab.id)}
-                        {@const isSelected = tab.id === selectedId}
-                        <button
-                            type="button"
-                            class="mru-item {index % 2 === 1 ? 'mru-item-even' : ''}"
-                            data-selected={isSelected}
-                            use:scrollIntoView={isSelected}
-                            onclick={() => {
+      <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div bind:this={listContainerRef} class="no-scrollbar flex-1 overflow-y-auto py-1">
+          {#each mruTabs as tab, index (tab.id)}
+            {@const isSelected = tab.id === selectedId}
+            <button
+              type="button"
+              class="mru-item {index % 2 === 1 ? 'mru-item-even' : ''}"
+              data-selected={isSelected}
+              use:scrollIntoView={isSelected}
+              onclick={() => {
                                 onSelect(tab.id);
                                 onClose();
-                            }}>
-                            <div class="mru-badge">
-                                {index + 1}
-                            </div>
+                            }}
+            >
+              <div class="mru-badge">
+                {index + 1}
+              </div>
 
-                            {#if tab.fileCheckFailed}
-                                <div class="mru-icon">
-                                    <CircleAlert size={14} class="shrink-0" />
-                                </div>
-                            {:else if tab.path && tab.isDirty}
-                                <div class="mru-icon mru-icon--dirty">
-                                    <SquarePen size={14} class="shrink-0" />
-                                </div>
-                            {:else if !tab.path}
-                                <div class="mru-icon">
-                                    <PencilLine size={14} class="shrink-0" />
-                                </div>
-                            {:else}
-                                <div class="mru-icon">
-                                    <FileText size={14} class="shrink-0" />
-                                </div>
-                            {/if}
-
-                            <div class="min-w-0 flex-1">
-                                <div class="truncate font-medium">{tab.title}</div>
-                                {#if tab.path}
-                                    <div class="mru-path">{tab.path}</div>
-                                {/if}
-                            </div>
-
-                            {#if tab.isDirty}
-                                <div class="mru-dot" use:tooltip={$_('mruTabs.modified')}></div>
-                            {/if}
-                        </button>
-                    {/each}
+              {#if tab.fileCheckFailed}
+                <div class="mru-icon">
+                  <CircleAlert size={14} class="shrink-0" />
                 </div>
-                {#if listContainerRef}
-                    <CustomScrollbar viewport={listContainerRef} />
+              {:else if tab.path && tab.isDirty}
+                <div class="mru-icon mru-icon--dirty">
+                  <SquarePen size={14} class="shrink-0" />
+                </div>
+              {:else if !tab.path}
+                <div class="mru-icon">
+                  <PencilLine size={14} class="shrink-0" />
+                </div>
+              {:else}
+                <div class="mru-icon">
+                  <FileText size={14} class="shrink-0" />
+                </div>
+              {/if}
+
+              <div class="min-w-0 flex-1">
+                <div class="truncate font-medium">{tab.title}</div>
+                {#if tab.path}
+                  <div class="mru-path">{tab.path}</div>
                 {/if}
-            </div>
+              </div>
+
+              {#if tab.isDirty}
+                <div class="mru-dot" use:tooltip={$_('mruTabs.modified')}></div>
+              {/if}
+            </button>
+          {/each}
         </div>
+        {#if listContainerRef}
+          <CustomScrollbar viewport={listContainerRef} />
+        {/if}
+      </div>
     </div>
+  </div>
 {/if}
 
 <style>
-    .mru-icon--dirty {
-        --icon-color: var(--dirty-indicator);
-    }
+.mru-icon--dirty {
+  --icon-color: var(--dirty-indicator);
+}
 </style>

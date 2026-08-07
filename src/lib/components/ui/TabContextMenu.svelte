@@ -41,7 +41,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={ctx.handleSave}>
+        onclick={ctx.handleSave}
+      >
         <Save size={14} class="opacity-70" />
         <span class="flex-1">{$_('tabContextMenu.save')}</span>
         {#if ctx.sc('file.save')}
@@ -51,7 +52,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={ctx.handleSaveAs}>
+        onclick={ctx.handleSaveAs}
+      >
         <FileDown size={14} class="opacity-70" />
         <span class="flex-1">{$_('tabContextMenu.saveAs')}</span>
         {#if ctx.sc('file.saveAs')}
@@ -64,7 +66,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={ctx.handlePin}>
+        onclick={ctx.handlePin}
+      >
         {#if ctx.isPinned}
           <PinOff size={14} class="opacity-70" /><span>{$_('tabContextMenu.unpin')}</span>
         {:else}
@@ -76,7 +79,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!ctx.tab?.path}
-        onclick={ctx.handleToggleBookmark}>
+        onclick={ctx.handleToggleBookmark}
+      >
         {#if ctx.isBookmarked}
           <BookmarkX size={14} class="opacity-70" />
           <span class="flex-1">{$_('tabContextMenu.removeBookmark')}</span>
@@ -98,11 +102,10 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       onOpen={() => (ctx.activeSubmenu = 'export')}
       onClose={() => {
         if (ctx.activeSubmenu === 'export') ctx.activeSubmenu = null;
-      }}>
+      }}
+    >
       {#snippet trigger()}
-        <button
-          type="button"
-          class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left">
+        <button type="button" class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left">
           <Download size={14} class="mr-2 opacity-70" />
           <span>{$_('tabContextMenu.export')}</span>
           <span class="ml-auto opacity-60">›</span>
@@ -110,33 +113,29 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       {/snippet}
 
       {#each ctx.exportItems as item}
-        <button
-          type="button"
-          class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left"
-          onclick={item.handler}>
+        <button type="button" class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left" onclick={item.handler}>
           {item.label}
         </button>
       {/each}
     </Submenu>
 
-    <div
-      class="bg-border-main my-1 h-px"
-      onmouseenter={() => (ctx.activeSubmenu = null)}
-      role="none"></div>
+    <div class="bg-border-main my-1 h-px" onmouseenter={() => (ctx.activeSubmenu = null)} role="none"></div>
 
     <div onmouseenter={() => (ctx.activeSubmenu = null)} role="none">
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={ctx.tabIndex === 0}
-        onclick={() => ctx.handleMoveTab('start')}>
+        onclick={() => ctx.handleMoveTab('start')}
+      >
         <ArrowLeft size={14} class="opacity-70" /><span>{$_('tabContextMenu.moveToStart')}</span>
       </button>
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={ctx.tabIndex === ctx.totalTabs - 1}
-        onclick={() => ctx.handleMoveTab('end')}>
+        onclick={() => ctx.handleMoveTab('end')}
+      >
         <ArrowRight size={14} class="opacity-70" /><span>{$_('tabContextMenu.moveToEnd')}</span>
       </button>
 
@@ -146,7 +145,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={ctx.isPinned}
-        onclick={ctx.handleClose}>
+        onclick={ctx.handleClose}
+      >
         <X size={14} class="opacity-70" />
         <span class="flex-1">{$_('tabContextMenu.close')}</span>
         {#if ctx.sc('file.closeTab')}
@@ -161,11 +161,10 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       onOpen={() => (ctx.activeSubmenu = 'close')}
       onClose={() => {
         if (ctx.activeSubmenu === 'close') ctx.activeSubmenu = null;
-      }}>
+      }}
+    >
       {#snippet trigger()}
-        <button
-          type="button"
-          class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left">
+        <button type="button" class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left">
           <Files size={14} class="mr-2 opacity-70" />
           <span>{$_('tabContextMenu.closeMany')}</span>
           <span class="ml-auto opacity-60">›</span>
@@ -177,16 +176,14 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
           type="button"
           class="text-ui-sm hover-surface w-full px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={item.disabled}
-          onclick={() => ctx.handleCloseMany(item.mode)}>
+          onclick={() => ctx.handleCloseMany(item.mode)}
+        >
           {item.label}
         </button>
       {/each}
     </Submenu>
 
-    <div
-      class="bg-border-main my-1 h-px"
-      onmouseenter={() => (ctx.activeSubmenu = null)}
-      role="none"></div>
+    <div class="bg-border-main my-1 h-px" onmouseenter={() => (ctx.activeSubmenu = null)} role="none"></div>
 
     <div onmouseenter={() => (ctx.activeSubmenu = null)} role="none">
       <button
@@ -195,7 +192,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
           ? ''
           : 'opacity-50'}"
         disabled={!ctx.hasClosedTabs}
-        onclick={() => ctx.handleReopenClosed(0)}>
+        onclick={() => ctx.handleReopenClosed(0)}
+      >
         <History size={14} class="opacity-70" />
         <span class="flex-1">{$_('tabContextMenu.reopenLastClosed')}</span>
         {#if ctx.sc('edit.reopenClosedTab')}
@@ -210,13 +208,15 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       onOpen={() => (ctx.activeSubmenu = 'restore')}
       onClose={() => {
         if (ctx.activeSubmenu === 'restore') ctx.activeSubmenu = null;
-      }}>
+      }}
+    >
       {#snippet trigger()}
         <button
           type="button"
-           class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left {ctx.hasClosedTabs
+          class="text-ui-sm hover-surface flex w-full items-center px-3 py-1.5 text-left {ctx.hasClosedTabs
             ? ''
-            : 'opacity-50'}">
+            : 'opacity-50'}"
+        >
           <Undo2 size={14} class="mr-2 opacity-70" />
           <span>{$_('tabContextMenu.reopenRecent')}</span>
           <span class="ml-auto opacity-60">›</span>
@@ -229,7 +229,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
             type="button"
             class="text-ui-sm hover-surface flex w-full items-center justify-between px-3 py-1.5 text-left"
             use:tooltip={ctx.getHistoryTooltip(item.tab)}
-            onclick={() => ctx.handleReopenClosed(i)}>
+            onclick={() => ctx.handleReopenClosed(i)}
+          >
             <span>{ctx.formatTitle(item.tab.customTitle || item.tab.title)}</span>
           </button>
         {/each}
@@ -244,27 +245,31 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={ctx.handleRename}>
+        onclick={ctx.handleRename}
+      >
         <FilePen size={14} class="opacity-70" /><span>{$_('tabContextMenu.rename')}</span>
       </button>
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={ctx.handleCopyTitle}>
+        onclick={ctx.handleCopyTitle}
+      >
         <Copy size={14} class="opacity-70" /><span>{$_('tabContextMenu.copyFileName')}</span>
       </button>
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!ctx.tab?.path}
-        onclick={ctx.handleCopyPath}>
+        onclick={ctx.handleCopyPath}
+      >
         <Copy size={14} class="opacity-70" /><span>{$_('tabContextMenu.copyFullPath')}</span>
       </button>
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!ctx.tab?.path}
-        onclick={ctx.handleRevealInFileManager}>
+        onclick={ctx.handleRevealInFileManager}
+      >
         <FolderSearch size={14} class="opacity-70" /><span>{$_('tabContextMenu.revealInFileManager')}</span>
       </button>
 
@@ -274,7 +279,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         type="button"
         class="text-ui-sm text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!ctx.tab?.path || ctx.isPinned}
-        onclick={ctx.handleSendToRecycleBin}>
+        onclick={ctx.handleSendToRecycleBin}
+      >
         <Trash2 size={14} class="opacity-70" /><span>{$_('tabContextMenu.deleteToWastebin')}</span>
       </button>
     </div>

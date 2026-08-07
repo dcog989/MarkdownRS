@@ -9,9 +9,9 @@ import { callBackendSafe } from '$lib/utils/backend';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 
 const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> = {
-    error: { icon: CircleAlert, color: 'text-danger' },
-    warning: { icon: TriangleAlert, color: 'text-warning' },
-    info: { icon: Info, color: 'text-accent-secondary' },
+  error: { icon: CircleAlert, color: 'text-danger' },
+  warning: { icon: TriangleAlert, color: 'text-warning' },
+  info: { icon: Info, color: 'text-accent-secondary' },
 };
 
 let showPopup = $state(false);
@@ -26,107 +26,113 @@ let configPath = $state<string | null>(null);
 let copied = $state(false);
 
 $effect(() => {
-    if (showPopup) {
-        configPath = null;
-        copied = false;
-        fetchConfigPath();
-    }
+  if (showPopup) {
+    configPath = null;
+    copied = false;
+    fetchConfigPath();
+  }
 });
 
 async function fetchConfigPath() {
-    const activeTab = appContext.editor.tabs.find(t => t.id === appContext.app.activeTabId);
-    const filePath = activeTab?.path;
-    configPath = await callBackendSafe('get_rumdl_config_path', { filePath: filePath ?? undefined }, 'Markdown:Lint', { showToast: false });
+  const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+  const filePath = activeTab?.path;
+  configPath = await callBackendSafe('get_rumdl_config_path', { filePath: filePath ?? undefined }, 'Markdown:Lint', {
+    showToast: false,
+  });
 }
 
 async function copyConfigPath() {
-    if (!configPath) return;
-    await navigator.clipboard.writeText(configPath);
-    copied = true;
-    setTimeout(() => (copied = false), 1500);
+  if (!configPath) return;
+  await navigator.clipboard.writeText(configPath);
+  copied = true;
+  setTimeout(() => (copied = false), 1500);
 }
 </script>
 
 <button
-    bind:this={buttonEl}
-    type="button"
-    class="hover:text-fg-default hover-surface relative flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {color}"
-    use:tooltip={$_('lint.issuesTitle')}
-    onclick={() => (showPopup = true)}>
-    {#if severityEntry}
-        {@const Icon = severityEntry.icon}
-        <Icon size={14} />
-    {:else}
-        <CircleCheck size={14} />
-    {/if}
-    {#if displayCount}
-        <span class="font-mono text-xs">{displayCount}</span>
-    {/if}
+  bind:this={buttonEl}
+  type="button"
+  class="hover:text-fg-default hover-surface relative flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {color}"
+  use:tooltip={$_('lint.issuesTitle')}
+  onclick={() => (showPopup = true)}
+>
+  {#if severityEntry}
+    {@const Icon = severityEntry.icon}
+    <Icon size={14} />
+  {:else}
+    <CircleCheck size={14} />
+  {/if}
+  {#if displayCount}
+    <span class="font-mono text-xs">{displayCount}</span>
+  {/if}
 </button>
 
 {#if showPopup && buttonEl}
-    {@const rect = buttonEl.getBoundingClientRect()}
-    <ContextMenu x={rect.left} y={rect.bottom + 2} onClose={() => (showPopup = false)}>
-        {#snippet children(_: { submenuSide: 'left' | 'right' })}
-            <div class="min-w-72">
-                <div class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted">
-                    {translate('lint.issuesTitle')}
-                    <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
-                        ({markdownLintState.issueCount})
-                    </span>
+  {@const rect = buttonEl.getBoundingClientRect()}
+  <ContextMenu x={rect.left} y={rect.bottom + 2} onClose={() => (showPopup = false)}>
+    {#snippet children(_: { submenuSide: 'left' | 'right' })}
+      <div class="min-w-72">
+        <div
+          class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted"
+        >
+          {translate('lint.issuesTitle')}
+          <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
+            ({markdownLintState.issueCount})
+          </span>
+        </div>
+        {#if markdownLintState.diagnostics.length === 0}
+          <div class="px-3 py-4 text-center text-sm text-fg-muted">
+            {translate('lint.noIssues')}
+          </div>
+        {:else}
+          <div class="max-h-80 overflow-y-auto">
+            {#each markdownLintState.diagnostics as diag, i}
+              {@const entry = severityMap[diag.severity] ?? severityMap.info}
+              {@const Icon = entry.icon}
+              <button
+                type="button"
+                class="hover-surface flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm transition-colors"
+              >
+                <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
+                <div class="min-w-0 flex-1">
+                  <span class="font-mono text-xs text-fg-muted"> {translate('statusBar.ln')} {diag.line} </span>
+                  <p class="truncate text-fg-default">
+                    {diag.message}
+                  </p>
                 </div>
-                {#if markdownLintState.diagnostics.length === 0}
-                    <div class="px-3 py-4 text-center text-sm text-fg-muted">
-                        {translate('lint.noIssues')}
-                    </div>
-                {:else}
-                    <div class="max-h-80 overflow-y-auto">
-                        {#each markdownLintState.diagnostics as diag, i}
-                            {@const entry = severityMap[diag.severity] ?? severityMap.info}
-                            {@const Icon = entry.icon}
-                            <button
-                                type="button"
-                                class="hover-surface flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm transition-colors">
-                                <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
-                                <div class="min-w-0 flex-1">
-                                    <span class="font-mono text-xs text-fg-muted">
-                                        {translate('statusBar.ln')} {diag.line}
-                                    </span>
-                                    <p class="truncate text-fg-default">
-                                        {diag.message}
-                                    </p>
-                                </div>
-                            </button>
-                            {#if i < markdownLintState.diagnostics.length - 1}
-                                <div class="border-border-light border-t"></div>
-                            {/if}
-                        {/each}
-                    </div>
-                {/if}
-                <div class="border-border-light flex items-center gap-1 border-t px-3 py-1.5">
-                    <span class="text-fg-muted text-[10px]">
-                        {translate('lint.rumdlLabel')}: {configPath ?? translate('lint.noConfigFile')}
-                    </span>
-                    {#if configPath}
-                        <button
-                            type="button"
-                            class="hover:text-fg-default shrink-0 transition-colors"
-                            onclick={copyConfigPath}
-                            title={translate('lint.copyConfigPath')}>
-                            <ClipboardCopy size={10} class={copied ? 'text-accent' : 'text-fg-muted'} />
-                        </button>
-                    {/if}
-                    <button
-                        type="button"
-                        class="text-accent-primary hover-surface ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] transition-colors"
-                        onclick={() => {
+              </button>
+              {#if i < markdownLintState.diagnostics.length - 1}
+                <div class="border-border-light border-t"></div>
+              {/if}
+            {/each}
+          </div>
+        {/if}
+        <div class="border-border-light flex items-center gap-1 border-t px-3 py-1.5">
+          <span class="text-fg-muted text-[10px]">
+            {translate('lint.rumdlLabel')}: {configPath ?? translate('lint.noConfigFile')}
+          </span>
+          {#if configPath}
+            <button
+              type="button"
+              class="hover:text-fg-default shrink-0 transition-colors"
+              onclick={copyConfigPath}
+              title={translate('lint.copyConfigPath')}
+            >
+              <ClipboardCopy size={10} class={copied ? 'text-accent' : 'text-fg-muted'} />
+            </button>
+          {/if}
+          <button
+            type="button"
+            class="text-accent-primary hover-surface ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] transition-colors"
+            onclick={() => {
                             showPopup = false;
                             appContext.interface.showRumdlConfig = true;
-                        }}>
-                        {translate('lint.editConfig')}
-                    </button>
-                </div>
-            </div>
-        {/snippet}
-    </ContextMenu>
+                        }}
+          >
+            {translate('lint.editConfig')}
+          </button>
+        </div>
+      </div>
+    {/snippet}
+  </ContextMenu>
 {/if}

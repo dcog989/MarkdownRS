@@ -13,13 +13,13 @@ import { createListNavigation } from '$lib/utils/listNavigation.svelte';
 import { scrollIntoView } from '$lib/utils/modalUtils';
 
 let {
-    isOpen = false,
-    onSelect,
-    onClose,
+  isOpen = false,
+  onSelect,
+  onClose,
 } = $props<{
-    isOpen: boolean;
-    onSelect: (id: string) => void;
-    onClose: () => void;
+  isOpen: boolean;
+  onSelect: (id: string) => void;
+  onClose: () => void;
 }>();
 
 let searchQuery = $state('');
@@ -32,216 +32,222 @@ let ignoreMouseMovement = $state(false);
 let mouseMovementTimer: number | null = null;
 
 let filteredTabs = $derived.by(() => {
-    const tabs = appContext.editor.tabs;
-    if (searchQuery.trim() === '') {
-        return tabs;
-    }
-    const query = searchQuery.toLowerCase();
-    return tabs.filter((tab) => {
-        return (
-            (tab.customTitle || tab.title).toLowerCase().includes(query) ||
-            (tab.path || '').toLowerCase().includes(query)
-        );
-    });
+  const tabs = appContext.editor.tabs;
+  if (searchQuery.trim() === '') {
+    return tabs;
+  }
+  const query = searchQuery.toLowerCase();
+  return tabs.filter((tab) => {
+    return (
+      (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || '').toLowerCase().includes(query)
+    );
+  });
 });
 
 const nav = createListNavigation(
-    () => filteredTabs.length,
-    (index) => handleSelect(filteredTabs[index].id),
+  () => filteredTabs.length,
+  (index) => handleSelect(filteredTabs[index].id),
 );
 
 function getDropdownTitle(tab: EditorTab): string {
-    return tab.customTitle || tab.title;
+  return tab.customTitle || tab.title;
 }
 
 function getTooltipContent(tab: EditorTab): string {
-    const parts: string[] = [];
-    const sizeStr = formatFileSize(tab.sizeBytes || 0);
-    const formattedTime = tab.formattedTimestamp || '';
-    const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
+  const parts: string[] = [];
+  const sizeStr = formatFileSize(tab.sizeBytes || 0);
+  const formattedTime = tab.formattedTimestamp || '';
+  const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 
-    if (tab.fileCheckFailed) {
-        parts.push($_('tabButton.missingFile'));
-        if (tab.path) parts.push(tab.path);
-    } else {
-        parts.push(tab.path || $_('tabButton.unsaved'));
-    }
-    parts.push(bottomLine);
-    return parts.join('\n');
+  if (tab.fileCheckFailed) {
+    parts.push($_('tabButton.missingFile'));
+    if (tab.path) parts.push(tab.path);
+  } else {
+    parts.push(tab.path || $_('tabButton.unsaved'));
+  }
+  parts.push(bottomLine);
+  return parts.join('\n');
 }
 
 $effect(() => {
-    if (isOpen) {
-        lastClientX = 0;
-        lastClientY = 0;
-        searchQuery = '';
-        nav.reset();
-        ignoreMouseMovement = true;
+  if (isOpen) {
+    lastClientX = 0;
+    lastClientY = 0;
+    searchQuery = '';
+    nav.reset();
+    ignoreMouseMovement = true;
 
-        if (mouseMovementTimer !== null) {
-            clearTimeout(mouseMovementTimer);
-        }
-
-        mouseMovementTimer = window.setTimeout(() => {
-            ignoreMouseMovement = false;
-            mouseMovementTimer = null;
-        }, 100);
-
-    } else {
-        if (mouseMovementTimer !== null) {
-            clearTimeout(mouseMovementTimer);
-            mouseMovementTimer = null;
-        }
+    if (mouseMovementTimer !== null) {
+      clearTimeout(mouseMovementTimer);
     }
+
+    mouseMovementTimer = window.setTimeout(() => {
+      ignoreMouseMovement = false;
+      mouseMovementTimer = null;
+    }, 100);
+  } else {
+    if (mouseMovementTimer !== null) {
+      clearTimeout(mouseMovementTimer);
+      mouseMovementTimer = null;
+    }
+  }
 });
 
 function handleSelect(id: string) {
-    onSelect(id);
+  onSelect(id);
 }
 
 function handleHover(index: number, e: MouseEvent) {
-    if (ignoreMouseMovement) return;
+  if (ignoreMouseMovement) return;
 
-    if (e.clientX === lastClientX && e.clientY === lastClientY) return;
+  if (e.clientX === lastClientX && e.clientY === lastClientY) return;
 
-    lastClientX = e.clientX;
-    lastClientY = e.clientY;
-    nav.select(index);
+  lastClientX = e.clientX;
+  lastClientY = e.clientY;
+  nav.select(index);
 }
 
 function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return;
-    }
-    nav.handleKeydown(e);
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    onClose();
+    return;
+  }
+  nav.handleKeydown(e);
 }
-
 </script>
 
 {#if isOpen}
-    <div
-        role="button"
-        tabindex="0"
-        aria-label={$_('tabDropdown.close')}
-        class="fixed inset-0 z-40"
-        onclick={onClose}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}></div>
-    <div
-        class="bg-bg-panel border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
-        role="menu">
-        <div class="border-border-light shrink-0 border-b p-2">
-            <input
-                use:focusOnMount={CONFIG.UI_TIMING.FOCUS_DELAY_MS}
-                bind:this={searchInputRef}
-                bind:value={searchQuery}
-                type="text"
-                placeholder={$_('tabDropdown.filterPlaceholder')}
-                class="text-fg-default w-full bg-transparent px-2 py-1 text-sm outline-none"
-                onkeydown={handleKeydown} />
-        </div>
+  <div
+    role="button"
+    tabindex="0"
+    aria-label={$_('tabDropdown.close')}
+    class="fixed inset-0 z-40"
+    onclick={onClose}
+    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+  ></div>
+  <div
+    class="bg-bg-panel border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
+    role="menu"
+  >
+    <div class="border-border-light shrink-0 border-b p-2">
+      <input
+        use:focusOnMount={CONFIG.UI_TIMING.FOCUS_DELAY_MS}
+        bind:this={searchInputRef}
+        bind:value={searchQuery}
+        type="text"
+        placeholder={$_('tabDropdown.filterPlaceholder')}
+        class="text-fg-default w-full bg-transparent px-2 py-1 text-sm outline-none"
+        onkeydown={handleKeydown}
+      >
+    </div>
 
-        <div class="relative min-h-0 flex-1">
-            <div
-                bind:this={dropdownListRef}
-                class="dropdown-list max-h-60vh overflow-y-auto py-1">
-                {#each filteredTabs as tab, index (tab.id)}
-                    {@const isSelected = index === nav.selectedIndex}
-                    {@const isActive = appContext.app.activeTabId === tab.id}
-                    <div
-                        role="none"
-                        class="group flex w-full items-stretch {isSelected
+    <div class="relative min-h-0 flex-1">
+      <div bind:this={dropdownListRef} class="dropdown-list max-h-60vh overflow-y-auto py-1">
+        {#each filteredTabs as tab, index (tab.id)}
+          {@const isSelected = index === nav.selectedIndex}
+          {@const isActive = appContext.app.activeTabId === tab.id}
+          <div
+            role="none"
+            class="group flex w-full items-stretch {isSelected
                             ? 'bg-accent-primary'
                             : index % 2 === 1
                               ? 'bg-row-even'
                               : 'bg-transparent'}"
-                        onmousemove={(e) => handleHover(index, e)}
-                        use:scrollIntoView={isSelected}>
-                        <button
-                            type="button"
-                            class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none transition-opacity {isSelected
+            onmousemove={(e) => handleHover(index, e)}
+            use:scrollIntoView={isSelected}
+          >
+            <button
+              type="button"
+              class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none transition-opacity {isSelected
                                 ? 'text-fg-inverse opacity-100'
                                 : isActive
                                   ? 'text-accent-secondary opacity-60 hover:opacity-100'
                                   : 'text-fg-default opacity-50 hover:opacity-100'}"
-                            onclick={() => handleSelect(tab.id)}
-                            role="menuitem"
-                            use:tooltip={getTooltipContent(tab)}>
-                            {#if tab.fileCheckFailed}
-                                <CircleAlert size={14} class="text-danger-text shrink-0" />
-                            {:else if !tab.path}
-                                {#if tab.content.length > 0}
-                                    <PencilLine
-                                        size={14}
-                                        class="shrink-0"
-                                        style="color: {isActive && tab.isDirty
+              onclick={() => handleSelect(tab.id)}
+              role="menuitem"
+              use:tooltip={getTooltipContent(tab)}
+            >
+              {#if tab.fileCheckFailed}
+                <CircleAlert size={14} class="text-danger-text shrink-0" />
+              {:else if !tab.path}
+                {#if tab.content.length > 0}
+                  <PencilLine
+                    size={14}
+                    class="shrink-0"
+                    style="color: {isActive && tab.isDirty
                                             ? 'var(--dirty-indicator)'
                                             : isSelected
                                               ? 'var(--text-inverse)'
-                                              : 'var(--text-secondary)'};" />
-                                {:else}
-                                    <Pencil
-                                        size={14}
-                                        class="shrink-0 {isSelected
+                                              : 'var(--text-secondary)'};"
+                  />
+                {:else}
+                  <Pencil
+                    size={14}
+                    class="shrink-0 {isSelected
                                             ? 'text-fg-inverse'
-                                            : 'text-fg-muted'}" />
-                                {/if}
-                            {:else if tab.isDirty}
-                                <SquarePen
-                                    size={14}
-                                    class="shrink-0"
-                                    style="color: {isActive && tab.isDirty
+                                            : 'text-fg-muted'}"
+                  />
+                {/if}
+              {:else if tab.isDirty}
+                <SquarePen
+                  size={14}
+                  class="shrink-0"
+                  style="color: {isActive && tab.isDirty
                                         ? 'var(--dirty-indicator)'
                                         : isSelected
                                           ? 'var(--text-inverse)'
-                                          : 'var(--accent-secondary)'}" />
-                            {:else}
-                                <FileText
-                                    size={14}
-                                    class="shrink-0 {isSelected
+                                          : 'var(--accent-secondary)'}"
+                />
+              {:else}
+                <FileText
+                  size={14}
+                  class="shrink-0 {isSelected
                                         ? 'text-fg-inverse'
-                                        : 'text-fg-muted'}" />
-                            {/if}
+                                        : 'text-fg-muted'}"
+                />
+              {/if}
 
-                            <span class="flex-1 truncate">{getDropdownTitle(tab)}</span>
+              <span class="flex-1 truncate">{getDropdownTitle(tab)}</span>
 
-                            {#if tab.isPinned}
-                                <Pin
-                                    size={12}
-                                    class="ml-1 shrink-0 {isSelected
+              {#if tab.isPinned}
+                <Pin
+                  size={12}
+                  class="ml-1 shrink-0 {isSelected
                                         ? 'text-fg-inverse'
-                                        : 'text-accent-secondary'}" />
-                            {/if}
-                        </button>
+                                        : 'text-accent-secondary'}"
+                />
+              {/if}
+            </button>
 
-                        <button
-                            type="button"
-                            class="flex shrink-0 items-center justify-center px-3 transition-colors outline-none {tab.isPinned
+            <button
+              type="button"
+              class="flex shrink-0 items-center justify-center px-3 transition-colors outline-none {tab.isPinned
                                 ? 'text-fg-muted cursor-not-allowed opacity-30'
                                 : isSelected
                                   ? 'text-fg-inverse hover:text-danger-text hover:bg-black/40'
                                   : 'text-fg-muted hover:text-danger-text hover:bg-black/30'}"
-                            disabled={tab.isPinned}
-                            onclick={(e) => {
+              disabled={tab.isPinned}
+              onclick={(e) => {
                                 e.stopPropagation();
                                 requestCloseTab(tab.id);
                             }}
-                            aria-label={$_('tabDropdown.closeTab')}>
-                            <X size={14} />
-                        </button>
-                    </div>
-                {/each}
-            </div>
-            {#if dropdownListRef}
-                <CustomScrollbar viewport={dropdownListRef} />
-            {/if}
-        </div>
+              aria-label={$_('tabDropdown.closeTab')}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        {/each}
+      </div>
+      {#if dropdownListRef}
+        <CustomScrollbar viewport={dropdownListRef} />
+      {/if}
     </div>
+  </div>
 {/if}
 
 <style>
-    .max-h-60vh {
-        max-height: 60vh;
-    }
+.max-h-60vh {
+  max-height: 60vh;
+}
 </style>
