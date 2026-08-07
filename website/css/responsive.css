@@ -1,0 +1,139 @@
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 920px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-visual {
+    order: 2;
+  }
+
+  .hero-text {
+    order: 1;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 16px;
+  }
+
+  .site-header {
+    flex-wrap: wrap;
+  }
+
+  .site-nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    border-top: 2px solid var(--ink);
+    padding-top: 0.75rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .carousel-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+
+  .carousel-prev {
+    left: 4px;
+  }
+
+  .carousel-next {
+    right: 4px;
+  }
+
+  .shape-purple,
+  .shape-tri {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Dark mode
+   -------------------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --ink: #ece5da;
+    --ink-soft: #b0a79b;
+    --paper: #15120d;
+    --paper-deep: #1d1913;
+    --card: #26211a;
+
+    --purple: #8d6a82;
+    --red: #f06a42;
+    --yellow: #ffd166;
+    --blue: #5a87d8;
+
+    --shadow-hard: 5px 5px 0 0 rgba(0, 0, 0, 0.8);
+    --shadow-hard-sm: 3px 3px 0 0 rgba(0, 0, 0, 0.8);
+    --shadow-soft: 0 18px 40px -18px rgba(0, 0, 0, 0.65);
+  }
+
+  /* Ink-filled surfaces flip to light once --ink is inverted; keep them dark. */
+  .site-footer {
+    background: #0e0b07;
+    color: #f2ede3;
+  }
+
+  .cta-card {
+    color: #f2ede3;
+  }
+
+  .section-label-light,
+  .btn-ghost-light {
+    color: #f2ede3;
+    border-color: #f2ede3;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 6px 6px 0 0 rgba(0, 0, 0, 0.8);
+  }
+
+  .feature-card:hover {
+    box-shadow: 5px 5px 0 0 rgba(0, 0, 0, 0.8);
+  }
+
+  /* Hard-shadow duplicate behind the hero triangle stays a shadow. */
+  .shape-tri::after {
+    border-bottom-color: rgba(0, 0, 0, 0.55);
+  }
+
+  /* Yellow surfaces keep dark text in both modes (ink inverts in dark). */
+  .nav-cta,
+  .carousel-btn {
+    color: #16130f;
+  }
+
+  .carousel-btn:hover {
+    color: var(--ink);
+  }
+}

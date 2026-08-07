@@ -1,0 +1,117 @@
+/* --------------------------------------------------------------------------
+   Carousel
+   -------------------------------------------------------------------------- */
+
+.carousel-section {
+  border-top: 2px solid var(--ink);
+}
+
+.carousel {
+  position: relative;
+}
+
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  margin: 0;
+  border: 3px solid var(--ink);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+.window-bar-inline {
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper-deep);
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: auto;
+}
+
+.carousel-slide figcaption {
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  border-top: 2px solid var(--ink);
+  background: var(--card);
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--ink);
+  font-size: 1.3rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  box-shadow: var(--shadow-hard-sm);
+  z-index: 5;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+}
+
+.carousel-btn:hover {
+  background: var(--card);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.carousel-btn:active {
+  transform: translateY(-50%) translate(2px, 2px);
+  box-shadow: none;
+}
+
+.carousel-prev {
+  left: -10px;
+}
+
+.carousel-next {
+  right: -10px;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.carousel-dots button {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease;
+}
+
+.carousel-dots button:hover {
+  transform: rotate(45deg);
+}
+
+.carousel-dots button[aria-selected="true"] {
+  background: var(--red);
+  transform: rotate(45deg);
+}

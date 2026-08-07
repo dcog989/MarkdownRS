@@ -1,0 +1,73 @@
+/* ==========================================================================
+   MarkdownRS — landing page
+   Design: Paul Rand-inspired — bold geometric shapes, primary colors,
+   grotesque type, hard offset shadows, generous whitespace.
+   ========================================================================== */
+
+:root {
+  --ink: #16130f;
+  --ink-soft: #4d4740;
+  --paper: #f7f4ee;
+  --paper-deep: #efeae1;
+  --card: #ffffff;
+
+  --purple: #7c5a73;
+  --purple-deep: #5c4055;
+  --red: #e4572e;
+  --yellow: #ffc857;
+  --blue: #1f4e9c;
+
+  --border: var(--ink);
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, "Cascadia Mono", "JetBrains Mono", monospace;
+
+  --shadow-hard: 5px 5px 0 0 var(--ink);
+  --shadow-hard-sm: 3px 3px 0 0 var(--ink);
+  --shadow-soft: 0 18px 40px -18px rgba(22, 19, 15, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+.skip-link {
+  position: fixed;
+  top: -100%;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-decoration: none;
+  border: 2px solid var(--yellow);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}

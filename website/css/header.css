@@ -1,0 +1,82 @@
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem clamp(1rem, 5vw, 3.5rem);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--ink);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-name {
+  font-size: 1.15rem;
+}
+
+.brand:hover .brand-mark {
+  transform: rotate(-8deg);
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  transition: transform 200ms ease;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.site-nav a {
+  text-decoration: none;
+  padding: 0.3rem 0;
+  position: relative;
+}
+
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 0;
+  height: 3px;
+  background: var(--red);
+  transition: right 200ms ease;
+}
+
+.site-nav a:hover::after,
+.site-nav a:focus-visible::after {
+  right: 0;
+}
+
+.site-nav .nav-cta {
+  border: 2px solid var(--ink);
+  padding: 0.35rem 0.9rem;
+  background: var(--yellow);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.site-nav .nav-cta:hover {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}

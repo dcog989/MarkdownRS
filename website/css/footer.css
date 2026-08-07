@@ -1,0 +1,59 @@
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.site-footer {
+  border-top: 3px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 3rem clamp(1rem, 5vw, 3.5rem) 2rem;
+}
+
+.footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 2.25rem;
+}
+
+.site-footer .brand-name {
+  color: var(--paper);
+}
+
+.footer-tagline {
+  margin: 0;
+  color: rgba(247, 244, 238, 0.7);
+  font-size: 0.95rem;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--yellow);
+  text-underline-offset: 4px;
+}
+
+.footer-links a:hover {
+  color: var(--paper);
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(247, 244, 238, 0.2);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: rgba(247, 244, 238, 0.55);
+}
