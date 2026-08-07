@@ -518,12 +518,19 @@ a {
 
 .carousel-track {
   display: flex;
-  overflow: hidden;
-  will-change: transform;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
 }
 
 .carousel-slide {
   flex: 0 0 100%;
+  scroll-snap-align: start;
   margin: 0;
   border: 3px solid var(--ink);
   background: var(--card);
