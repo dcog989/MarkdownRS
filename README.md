@@ -1,6 +1,6 @@
 # MarkdownRS
 
-MarkdownRS is a text editor focused on editing, formatting, and previewing Markdown. It prioritises performance and a clean, minimal UI while still being fully featured for technical and general users.
+MarkdownRS is a focused Markdown editor. It prioritises performance and a clean, minimal UI while still being fully featured for technical and general users.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/GitHub/issues/username/repo.svg)](https://github.com/username/repo/issues) [![GitHub Stars](https://img.shields.io/GitHub/stars/username/repo.svg)](https://github.com/username/repo/stargazers)
 
@@ -10,26 +10,26 @@ The only Markdown editor you need? Many people are saying so.
 
 ## Features
 
-- Fast, Low Resource Use: Built with Rust backend for instant startup and smooth editing.
-- Live Preview: Split view with smooth, bi-directional synchronized scrolling.
-- Auto-Save: Session persistence with hot-exit support - never lose your work.
-- File Tree: Sidebar file tree for browsing and opening files.
-- New File Template: Create new files from a configurable template.
-- Themes: Multiple built-in light and dark themes, plus custom themes.
-- Rendered Mode: Edit in rendered or raw Markdown mode.
-- KaTeX Math: Render math in the preview with KaTeX.
-- Mermaid Diagrams: Render flowcharts, sequence diagrams, and more with Mermaid.js.
-- Command Palette: Efficient navigation with command palette (Ctrl+Shift+P).
-- Keyboard Shortcuts: Customise any command shortcut as you want.
-- Multi-Tab: Work on multiple documents simultaneously, pin them, bookmark them.
-- Text Operations: Sort lines, trim whitespace, change case, etc.
-- Bookmark System: Bookmark and tag local documents with instant filter search.
+### Editing & Authoring
+
 - Full Markdown Support: GFM (GitHub Flavored Markdown) and CommonMark with tables, strikethrough, task lists, etc.
 - Smart Formatting: Auto-Markdown formatting for consistent, semantic-preserving results.
-- Find & replace across all documents
-- Export to PDF/PNG/WEBP/HTML
+- Text Operations: Sort lines, trim whitespace, change case, etc.
+- Rendered Mode: Edit in rendered or raw Markdown mode.
+- Find & Replace: Across all open documents.
 
-## Math (KaTeX)
+### Performance & Reliability
+
+- Fast, Low Resource Use: Built with a Rust backend for instant startup and smooth editing.
+- Auto-Save: Session persistence with hot-exit support — never lose your work.
+
+### Preview & Rendering
+
+- Live Preview: Split view with smooth, bi-directional synchronized scrolling.
+- Math (KaTeX): Render math in the preview with KaTeX.
+- Diagrams (Mermaid): Render flowcharts, sequence diagrams, and more with Mermaid.js.
+
+#### Math (KaTeX)
 
 Math renders in the preview with KaTeX. Delimiters:
 
@@ -40,9 +40,26 @@ Math renders in the preview with KaTeX. Delimiters:
 
 Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
 
-## Diagrams (Mermaid)
+#### Diagrams (Mermaid)
 
 Flowcharts, sequence diagrams, and other diagrams render in the preview from <code>```mermaid</code> fenced blocks. Mermaid is lazy-loaded only when a diagram is present and rendered diagrams are cached by content hash, so unchanged diagrams are never re-rendered.
+
+### Documents & Organisation
+
+- Multi-Tab: Work on multiple documents simultaneously, pin them, bookmark them.
+- File Tree: Sidebar file tree for browsing and opening files.
+- Bookmark System: Bookmark and tag local documents with instant filter search.
+- New File Template: Create new files from a configurable template.
+
+### Customisation
+
+- Command Palette: Efficient navigation with command palette (Ctrl+Shift+P).
+- Keyboard Shortcuts: Customise any command's shortcut as you want.
+- Themes: Multiple built-in light and dark themes, plus custom themes.
+
+### Export
+
+- Export your documents to PDF, PNG, WEBP, or HTML.
 
 ## Code / Dev Stack
 
@@ -85,19 +102,21 @@ CachyOS build: `makepkg -sif`
 - `bun run dev` - Start dev server / HMR
 - `bun run preview` - Preview the production build
 
-## rumdl Config Cascade
+## Markdown Style & Formatting
 
-rumdl is embedded as a library, so the CLI (`--config`, inline overrides) does not apply. Config resolution in priority order (highest → lowest):
+MarkdownRS uses `rumdl` which ensures standard, consistent Markdown style and formatting.
 
-1. **Project discovery** — Walk upward from the open file's directory to the workspace root (from the `workspaceRoot` setting). At each directory, tries: `.rumdl.toml` → `rumdl.toml` → `.config/rumdl.toml` → `pyproject.toml` (`[tool.rumdl]`). Falls back to `.markdownlint*` / `markdownlint.*` files if none found. The walk stops at the workspace root, not the git root / `$HOME`.
-2. **User config fallback** (only if step 1 finds nothing) — `$XDG_CONFIG_HOME/rumdl/` or `~/.config/rumdl/`, then `~/.rumdl.toml`, then `~/rumdl.toml`.
-3. **Defaults** — Built-in default rules if no config is found anywhere.
+You can change which style rules apply by creating a config file:
 
-Unsaved buffers (no file path) skip project discovery and use only the user config fallback (step 2). Configs are cached by path + modification time.
+1. **Put one in your project** — the app looks for a config file near your document (e.g. `.rumdl.toml` or `rumdl.toml`). It checks the document's folder, then works its way up to your chosen workspace root.
+2. **Put one in your home folder** — if no project config is found, it uses a config from your user config folder or your home directory.
+3. **Use the defaults** — if neither exists, the built-in default rules are used.
+
+The most important config wins: a project config always overrides a home-folder config, and both override the defaults. Files that haven't been saved yet (no location on disk) only use the home-folder config or the defaults.
 
 ## Contributing
 
- [Pull Requests](https://github.com/dcog989/MarkdownRS/pulls) and [bug reports / feature requests](https://github.com/dcog989/MarkdownRS/issues) are welcomed.
+[Pull Requests](https://github.com/dcog989/MarkdownRS/pulls) and [bug reports / feature requests](https://github.com/dcog989/MarkdownRS/issues) are welcomed.
 
 ## License
 
