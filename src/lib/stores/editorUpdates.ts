@@ -179,9 +179,9 @@ export function reloadTabContent(
 export function updateContentOnly(id: string, content: string, forceSync: boolean = false) {
   const ts = getTransientState(id);
   if (ts) ts.contentChanged = true;
-  // A forced sync replaces the whole document (e.g. format-on-save), so the
-  // old line-keyed edits no longer correspond to the current content.
-  if (forceSync) getLineChangeTracker(id).clear();
+  // A forced sync replaces the whole document (e.g. format-on-save). Recent
+  // changes are kept: the view plugin remaps tracked lines through the change,
+  // so markers persist as long as undo can still revert the edits.
   updateTab(id, (tab) => ({
     content,
     forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync,
