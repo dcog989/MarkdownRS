@@ -104,9 +104,9 @@ CachyOS build: `makepkg -sif`
 
 ## Markdown Style & Formatting
 
-MarkdownRS uses `rumdl` which ensures standard, consistent Markdown style and formatting.
+MarkdownRS uses [*rumdl*](https://github.com/rvben/rumdl/), a linter and formatter, to ensure standard, consistent Markdown.
 
-You can change which style rules apply by creating a config file:
+You can change which style rules that *rumdl* applies by creating a config file:
 
 1. **Put one in your project** — the app looks for a config file near your document (e.g. `.rumdl.toml` or `rumdl.toml`). It checks the document's folder, then works its way up to your chosen workspace root.
 2. **Put one in your home folder** — if no project config is found, it uses a config from your user config folder or your home directory.
