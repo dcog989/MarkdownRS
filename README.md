@@ -12,8 +12,8 @@ The only Markdown editor you need? Many people are saying so.
 
 ### Editing & Authoring
 
-- Full Markdown Support: GFM (GitHub Flavored Markdown) and CommonMark with tables, strikethrough, task lists, etc.
-- Smart Formatting: Auto-Markdown formatting for consistent, semantic-preserving results.
+- Markdown Flavors: GFM (GitHub Flavored Markdown) and CommonMark.
+- Smart Formatting: Auto-Markdown formatting for standards=compliant, consistent output.
 - Text Operations: Sort lines, trim whitespace, change case, etc.
 - Rendered Mode: Edit in rendered or raw Markdown mode.
 - Find & Replace: Across all open documents.
