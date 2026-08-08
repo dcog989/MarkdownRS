@@ -1,6 +1,6 @@
 # Agent Directives
 
-## Project Context
+## Project
 
 - Name: MarkdownRS
 - Description: Tauri + Svelte 5 + Rust desktop Markdown editor focused on performance and clean UI.
@@ -23,7 +23,9 @@
 - `src/lib/utils/` — Frontend utilities (spellcheck, scroll sync, lint, etc.)
 - `src/lib/commands/` — `invoke()` wrappers for Tauri commands
 
-## Development Workflow
+## Workflow
+
+### Commands
 
 - Install: `bun install`
 - Dev: `bun run dev`
@@ -32,6 +34,22 @@
 - Format: `bun run format` (Biome + cargo fmt)
 - Build: `bun run build`
 
+### Code Changes
+
+- Keep modifications minimal and scoped; prefer incremental improvements over rewrites. Ask before architectural changes.
+- Use explicit types and named constants (no magic numbers).
+- Return explicit error types; do not suppress exceptions.
+- Follow standard repository linting and formatting configs (Biome, rustfmt, .editorconfig).
+- Decompose files over 400 lines if they mix concerns.
+- Self-documenting code via clear naming. Use comments only for complex workarounds or issues that need noting.
+- Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
+- Do not create documentation files unless explicitly requested.
+
+### Verification
+
+- Do not run test, lint, clippy, biome, format, or type-check commands. The user builds, tests, and lints manually.
+- Run them only for a major refactor, or when the user explicitly asks.
+
 ## File System Access
 
 - Root: `/home/bubba/Projects/MarkdownRS`
@@ -39,22 +57,11 @@
 - Read-Only: `.env*`, `.git/`, `node_modules/`, `.assets/`
 - Disallowed: system dirs, user config, other projects
 - Require confirmation: adding/removing dependencies, changes outside `src/` or `src-tauri/src/`, any operation outside project root
-
-## Rules
-
-- Keep modifications minimal and scoped. Ask before architectural changes.
 - Do not delete files or make destructive changes without confirmation.
-- Do not create documentation files unless explicitly requested.
+
+## Testing
+
 - Do not create test files for minor changes, or for behavior that is not reliably unit-testable in jsdom (e.g. CodeMirror layout/click mapping). Prefer no new files; only add a test when the logic is genuinely testable and worth guarding.
-- Prefer incremental improvements over rewrites.
-- Use explicit types and named constants (no magic numbers).
-- Return explicit error types; do not suppress exceptions.
-- Follow standard repository linting and formatting configs (Biome, rustfmt, .editorconfig).
-- Decompose files over 400 lines if they mix concerns.
-- Never run git mutations (commit, push, reset, rebase, amend) unless explicitly asked.
-- Self-documenting code via clear naming. Use comments only for complex workarounds or issues that need noting.
-- Do not run full `bun run check`/`bun run test` on trivial changes (constant tweaks, one-line edits, CSS value changes). Run `bunx biome check --write <file>` on the touched file, or nothing if the change is a simple value edit. Only run the full suite on real logic changes.
-- On completion of an update or fix, print a concise conventional commit message in a fenced code block.
 
 ## Common Patterns
 
@@ -73,6 +80,5 @@
 ## Definition of Done
 
 - Logic fully implemented.
-- `bun run check` and `bun run test` pass with zero errors.
-- Tests added only where the change is non-trivial and the logic is unit-testable (see Rules); do not add test files for minor changes.
 - Existing docs updated if public interfaces changed.
+- On completion of an update or fix, print a concise conventional commit message in a fenced code block.
