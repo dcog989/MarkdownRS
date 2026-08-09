@@ -52,11 +52,10 @@
 
 ## File System Access
 
-- Root: `/home/bubba/Projects/MarkdownRS`
-- Allowed: All subdirectories, `/tmp/*`
+- Allowed: `/home/bubba/Projects/MarkdownRS` and all contained directories + files; `/tmp/*`
 - Read-Only: `.env*`, `.git/`, `node_modules/`, `.assets/`
-- Disallowed: system dirs, user config, other projects
-- Require confirmation: adding/removing dependencies, changes outside `src/` or `src-tauri/src/`, any operation outside project root
+- Disallowed: everything not listed in 'Allowed' unless user grants permission.
+- Require confirmation: adding/removing dependencies, any operation outside project root
 - Do not delete files or make destructive changes without confirmation.
 
 ## Testing
