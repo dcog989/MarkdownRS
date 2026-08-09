@@ -5,14 +5,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "bench": "vitest bench",
     "build": "tauri build --no-bundle",
     "check": "svelte-kit sync && bun run check:types && bun run check:frontend && bun run check:backend",
-    "bench": "vitest bench",
-    "coverage": "vitest run --coverage",
     "check:backend": "echo \"Checking Backend...\" && cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
     "check:frontend": "echo \"Checking Frontend Syntax...\" && bunx biome check .",
     "check:types": "echo \"Checking Frontend Types...\" && svelte-check --tsconfig ./tsconfig.json",
     "clean": "rm -rf .context .svelte-kit node_modules bun.lock src-tauri/gen src-tauri/target src-tauri/Cargo.lock .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
+    "coverage": "vitest run --coverage",
     "crates": "cd src-tauri && cargo upgrade --verbose",
     "dev": "tauri dev",
     "format": "bunx biome format --write . && cd src-tauri && cargo fmt",
@@ -28,7 +28,9 @@
     "ui:dev": "bunx --bun vite dev",
     "update": "bun update --latest && bun run crates",
     "version": "bun scripts/version.js",
-    "website": "bun x serve website"
+    "website": "bun run website:build && bun run website:preview",
+    "website:build": "bunx --bun vite build --config website/vite.config.js",
+    "website:preview": "bun x serve website/dist"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
@@ -74,6 +76,7 @@
     "svelte-check": "^4.7.5",
     "typescript": "6.0.3",
     "vite": "^8.2.1",
+    "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^4.1.10"
   },
   "overrides": {
