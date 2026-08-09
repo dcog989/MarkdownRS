@@ -41,6 +41,7 @@ export class TabContextMenuLogic {
 
   tab = $derived(appContext.editor.tabs.find((t) => t.id === this.tabId));
   isPinned = $derived(this.tab?.isPinned || false);
+  isFileMissing = $derived(this.tab?.fileCheckFailed === true);
   isBookmarked = $derived(this.tab?.path ? isBookmarkedSelector(this.tab.path) : false);
   tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === this.tabId));
 

@@ -267,7 +267,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       <button
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!ctx.tab?.path}
+        disabled={!ctx.tab?.path || ctx.isFileMissing}
         onclick={ctx.handleRevealInFileManager}
       >
         <FolderSearch size={14} class="opacity-70" /><span>{$_('tabContextMenu.revealInFileManager')}</span>
@@ -278,7 +278,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       <button
         type="button"
         class="text-ui-sm text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!ctx.tab?.path || ctx.isPinned}
+        disabled={!ctx.tab?.path || ctx.isPinned || ctx.isFileMissing}
         onclick={ctx.handleSendToRecycleBin}
       >
         <Trash2 size={14} class="opacity-70" /><span>{$_('tabContextMenu.deleteToWastebin')}</span>
