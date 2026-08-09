@@ -7,11 +7,10 @@
   "scripts": {
     "bench": "vitest bench",
     "build": "tauri build --no-bundle",
-    "check": "svelte-kit sync && bun run check:types && bun run check:frontend && bun run check:backend",
-    "check:backend": "echo \"Checking Backend...\" && cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
+    "check": "svelte-kit sync && bun run check:types && bun run check:frontend && echo \"Checking Backend...\" && cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
     "check:frontend": "echo \"Checking Frontend Syntax...\" && bunx biome check .",
     "check:types": "echo \"Checking Frontend Types...\" && svelte-check --tsconfig ./tsconfig.json",
-    "clean": "rm -rf .context .svelte-kit node_modules bun.lock src-tauri/gen src-tauri/target src-tauri/Cargo.lock .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
+    "clean": "rm -rf .context .svelte-kit node_modules bun.lock src-tauri/gen src-tauri/target src-tauri/Cargo.lock website/dist .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
     "coverage": "vitest run --coverage",
     "crates": "cd src-tauri && cargo upgrade --verbose",
     "dev": "tauri dev",
@@ -19,18 +18,11 @@
     "format:check": "bunx biome format . && cd src-tauri && cargo fmt -- --check",
     "gen-icons": "tauri icon src-tauri/icons/icon.png",
     "package": "bun run build && mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si --noconfirm --force",
-    "preview": "vite preview",
     "release": "bun scripts/version.js --git",
-    "tauri": "tauri",
     "test": "echo \"Running Tests...\" && vitest run && cd src-tauri && cargo test",
-    "test:watch": "vitest",
-    "ui:build": "bunx --bun vite build",
-    "ui:dev": "bunx --bun vite dev",
     "update": "bun update --latest && bun run crates",
     "version": "bun scripts/version.js",
-    "website": "bun run website:build && bun run website:preview",
-    "website:build": "bunx --bun vite build --config website/vite.config.js",
-    "website:preview": "bun x serve website/dist"
+    "website": "bunx --bun vite build --config website/vite.config.js && bun x serve website/dist"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
