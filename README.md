@@ -2,9 +2,9 @@
 
 MarkdownRS is a focused Markdown editor. It prioritises performance and a clean, minimal UI while still being fully featured for technical and general users.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/GitHub/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/GitHub/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
-[insert screenshot]
+![screenshot 1](assets/screen-1.webp)
 
 The only Markdown editor you need? Many people are saying so.
 
@@ -36,13 +36,13 @@ Math renders in the preview with KaTeX. Delimiters:
 | Style | Syntax |
 | --- | --- |
 | Inline | `$...$`, `\(...\)` |
-| Display | `$$...$$`, `\[...\]`, <code>```math</code> fence |
+| Display | `$$...$$`, `\[...\]`, ```` ```math ```` fence |
 
 Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
 
 #### Diagrams (Mermaid)
 
-Flowcharts, sequence diagrams, and other diagrams render in the preview from <code>```mermaid</code> fenced blocks. Mermaid is lazy-loaded only when a diagram is present and rendered diagrams are cached by content hash, so unchanged diagrams are never re-rendered.
+Flowcharts, sequence diagrams, and other diagrams render in the preview from ```` ```mermaid ```` fenced blocks. Mermaid is lazy-loaded only when a diagram is present and rendered diagrams are cached by content hash, so unchanged diagrams are never re-rendered.
 
 ### Documents & Organisation
 
