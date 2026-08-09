@@ -8,18 +8,16 @@ env:
   CARGO_TERM_COLOR: always
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build:
+  publish:
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            artifact-name: bundles-linux
           - os: windows-latest
-            artifact-name: bundles-windows
 
     runs-on: ${{ matrix.os }}
 
@@ -58,8 +56,16 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Build application
-        run: bunx tauri build
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "MarkdownRS ${{ github.ref_name }}"
+          releaseDraft: true
 
       - name: Build Arch package
         if: matrix.os == 'ubuntu-latest'
@@ -78,32 +84,9 @@ jobs:
               su builder -c 'makepkg -f --noconfirm'
             "
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.artifact-name }}
-          path: |
-            src-tauri/target/release/bundle/**/*.deb
-            src-tauri/target/release/bundle/**/*.rpm
-            src-tauri/target/release/bundle/**/*.AppImage
-            src-tauri/target/release/bundle/**/*.exe
-            src-tauri/target/release/bundle/**/*.msi
-            .pkg/*.pkg.tar.zst
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/download-artifact@v8
-
-      - name: Create Release
+      - name: Upload Arch package
+        if: matrix.os == 'ubuntu-latest'
         uses: softprops/action-gh-release@v3
         with:
           draft: true
-          generate_release_notes: true
-          files: |
-            bundles-linux/**/*
-            bundles-windows/**/*
+          files: .pkg/*.pkg.tar.zst

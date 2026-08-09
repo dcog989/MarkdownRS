@@ -51,7 +51,7 @@
     "category": "Productivity",
     "shortDescription": "The only Markdown editor you need.",
     "longDescription": "MarkdownRS is a fast, slim, cross-platform notepad, focused on editing Markdown documents.",
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "linux": {
       "appimage": {
         "bundleMediaFramework": false
@@ -76,7 +76,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "CHANGE_ME_TO_YOUR_GENERATED_PUBKEY",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMzMDhCODYxMjhCMzc1NTgKUldSWWRiTW9ZYmdJTXpQL2lKRDgzWjN3OGFSRDZsd2sxblVYSUZtTXc5Y2szNUx0QUdYYTdRUlQK",
       "endpoints": ["https://github.com/dcog989/MarkdownRS/releases/latest/download/latest.json"]
     },
     "shell": {
