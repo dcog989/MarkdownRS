@@ -431,9 +431,12 @@ function renderMinimap() {
   }
 }
 
+let scheduleRafId = 0;
+
 function scheduleRender() {
   if (!view) return;
-  requestAnimationFrame(renderMinimap);
+  cancelAnimationFrame(scheduleRafId);
+  scheduleRafId = requestAnimationFrame(renderMinimap);
 }
 
 function onTrackMouseDown(e: MouseEvent) {
@@ -553,6 +556,7 @@ $effect(() => {
     themeObserver.disconnect();
     scrollDOM.removeEventListener('scroll', onScroll);
     cancelAnimationFrame(themeRafId);
+    cancelAnimationFrame(scheduleRafId);
   };
 });
 </script>
