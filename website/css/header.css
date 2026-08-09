@@ -29,14 +29,14 @@
   font-size: 1.15rem;
 }
 
-.brand:hover .brand-mark {
-  transform: rotate(-8deg);
-}
-
 .brand-mark {
   width: 28px;
   height: 28px;
   transition: transform 200ms ease;
+}
+
+.brand:hover .brand-mark {
+  transform: rotate(-8deg);
 }
 
 .site-nav {
