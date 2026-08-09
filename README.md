@@ -2,7 +2,7 @@
 
 MarkdownRS is a focused Markdown editor. It prioritises performance and a clean, minimal UI while still being fully featured for technical and general users.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/GitHub/issues/username/repo.svg)](https://github.com/username/repo/issues) [![GitHub Stars](https://img.shields.io/GitHub/stars/username/repo.svg)](https://github.com/username/repo/stargazers)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/GitHub/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/GitHub/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
 [insert screenshot]
 
@@ -87,11 +87,15 @@ bun install
 # Run in development mode
 bun run dev
 
-# Build for production
-bun run package
+# Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
+bunx tauri build
 ```
 
-CachyOS build: `makepkg -sif`
+Arch / CachyOS package (requires `bunx tauri build` first, so the compiled binary exists):
+
+```sh
+mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si
+```
 
 ## Available Scripts
 
