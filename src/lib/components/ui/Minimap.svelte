@@ -3,6 +3,7 @@ import { syntaxTree } from '@codemirror/language';
 import type { Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { type Highlighter, highlightTree, type Tag, tags as t } from '@lezer/highlight';
+import { debounce } from '$lib/utils/timing';
 
 interface Props {
   view: EditorView | null;
@@ -20,6 +21,7 @@ const LINE_GAP = 1;
 const MIN_LINE_HEIGHT = 1;
 const CHARS_TO_PX = 0.75;
 const VIEWPORT_UNHOVERED_DIM = 0.75;
+const CONTENT_RENDER_DEBOUNCE_MS = 150;
 
 function fitLines(
   availableHeight: number,
@@ -529,13 +531,12 @@ $effect(() => {
 
   scrollDOM.addEventListener('scroll', onScroll, { passive: true });
 
-  let mutationRafId = 0;
+  const debouncedContentRender = debounce(renderMinimap, CONTENT_RENDER_DEBOUNCE_MS);
 
   const contentEl = scrollDOM.querySelector('.cm-content');
   if (contentEl) {
     contentObserver = new MutationObserver(() => {
-      cancelAnimationFrame(mutationRafId);
-      mutationRafId = requestAnimationFrame(renderMinimap);
+      debouncedContentRender();
     });
     contentObserver.observe(contentEl, { characterData: true, childList: true, subtree: true });
   }
@@ -557,6 +558,7 @@ $effect(() => {
     scrollDOM.removeEventListener('scroll', onScroll);
     cancelAnimationFrame(themeRafId);
     cancelAnimationFrame(scheduleRafId);
+    debouncedContentRender.clear();
   };
 });
 </script>
