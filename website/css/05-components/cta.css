@@ -1,74 +1,76 @@
 /* --------------------------------------------------------------------------
-   Components — download CTA
+   Components — download CTA  [layer: components]
    -------------------------------------------------------------------------- */
 
-.cta-section {
-  padding: clamp(1rem, 2vw, 2rem) clamp(1rem, 5vw, 3.5rem) clamp(4rem, 8vw, 7rem);
-  max-width: 1200px;
-  margin: 0 auto;
-}
+@layer components {
+  .cta-section {
+    padding: clamp(1rem, 2vw, 2rem) clamp(1rem, 5vw, 3.5rem) clamp(4rem, 8vw, 7rem);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-.cta-card {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 6vw, 5rem);
-  background: var(--purple);
-  color: var(--paper);
-  border: 3px solid var(--ink);
-  box-shadow: var(--shadow-hard);
-}
+  .cta-card {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 6vw, 5rem);
+    background: var(--purple);
+    color: var(--paper);
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow-hard);
+  }
 
-.section-label-light {
-  color: var(--paper);
-}
+  .section-label-light {
+    color: var(--paper);
+  }
 
-.cta-title {
-  font-size: clamp(1.8rem, 3.8vw, 2.8rem);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  margin: 0 0 1rem;
-  max-width: 32ch;
-}
+  .cta-title {
+    font-size: clamp(1.8rem, 3.8vw, 2.8rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin: 0 0 1rem;
+    max-width: 32ch;
+  }
 
-.cta-sub {
-  max-width: 52ch;
-  font-size: 1.1rem;
-  color: rgba(247, 244, 238, 0.85);
-  margin: 0 0 2rem;
-}
+  .cta-sub {
+    max-width: 52ch;
+    font-size: 1.1rem;
+    color: rgba(247, 244, 238, 0.85);
+    margin: 0 0 2rem;
+  }
 
-.cta-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
-}
+  .cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
 
-.cta-note {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: rgba(247, 244, 238, 0.7);
-  margin: 0;
-}
+  .cta-note {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: rgba(247, 244, 238, 0.7);
+    margin: 0;
+  }
 
-.cta-note a {
-  color: var(--yellow);
-}
+  .cta-note a {
+    color: var(--yellow);
+  }
 
-.shape-cta {
-  right: -20px;
-  top: -20px;
-  width: 90px;
-  height: 90px;
-  background: var(--yellow);
-  border: 3px solid var(--ink);
-  transform: rotate(15deg);
-}
+  .shape-cta {
+    right: -20px;
+    top: -20px;
+    width: 90px;
+    height: 90px;
+    background: var(--yellow);
+    border: 3px solid var(--ink);
+    transform: rotate(15deg);
+  }
 
-.shape-cta-ring {
-  left: 40%;
-  bottom: -40px;
-  width: 110px;
-  height: 110px;
-  border: 8px solid var(--red);
+  .shape-cta-ring {
+    left: 40%;
+    bottom: -40px;
+    width: 110px;
+    height: 110px;
+    border: 8px solid var(--red);
+  }
 }

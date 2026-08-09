@@ -1,77 +1,79 @@
 /* --------------------------------------------------------------------------
-   Utilities — responsive breakpoints
+   Utilities — responsive breakpoints  [layer: utilities]
    -------------------------------------------------------------------------- */
 
-@media (max-width: 920px) {
-  .hero {
-    grid-template-columns: 1fr;
+@layer utilities {
+  @media (max-width: 920px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-visual {
+      order: 2;
+    }
+
+    .hero-text {
+      order: 1;
+    }
+
+    .feature-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  .hero-visual {
-    order: 2;
+  @media (max-width: 640px) {
+    body {
+      font-size: 16px;
+    }
+
+    .site-header {
+      flex-wrap: wrap;
+    }
+
+    .site-nav {
+      order: 3;
+      width: 100%;
+      justify-content: space-between;
+      border-top: 2px solid var(--ink);
+      padding-top: 0.75rem;
+    }
+
+    .feature-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .carousel-btn {
+      width: 44px;
+      height: 44px;
+      font-size: 1.1rem;
+    }
+
+    .carousel-prev {
+      left: 4px;
+    }
+
+    .carousel-next {
+      right: 4px;
+    }
+
+    .shape-square,
+    .shape-tri {
+      display: none;
+    }
   }
 
-  .hero-text {
-    order: 1;
-  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
 
-  .feature-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  body {
-    font-size: 16px;
-  }
-
-  .site-header {
-    flex-wrap: wrap;
-  }
-
-  .site-nav {
-    order: 3;
-    width: 100%;
-    justify-content: space-between;
-    border-top: 2px solid var(--ink);
-    padding-top: 0.75rem;
-  }
-
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .carousel-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 1.1rem;
-  }
-
-  .carousel-prev {
-    left: 4px;
-  }
-
-  .carousel-next {
-    right: 4px;
-  }
-
-  .shape-square,
-  .shape-tri {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion must override all inline animations */
-    animation-duration: 0.01ms !important;
-    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion must override all inline transitions */
-    transition-duration: 0.01ms !important;
+    *,
+    *::before,
+    *::after {
+      /* biome-ignore lint/complexity/noImportantStyles: reduced-motion must override all inline animations */
+      animation-duration: 0.01ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: reduced-motion must override all inline transitions */
+      transition-duration: 0.01ms !important;
+    }
   }
 }

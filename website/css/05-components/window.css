@@ -1,58 +1,61 @@
 /* --------------------------------------------------------------------------
    Components — mock window chrome (hero + carousel screenshots)
+   [layer: components]
    -------------------------------------------------------------------------- */
 
-.window {
-  margin: 0;
-  border: 3px solid var(--ink);
-  background: var(--card);
-  box-shadow: var(--shadow-hard);
-  transform: rotate(-1.5deg);
-}
+@layer components {
+  .window {
+    margin: 0;
+    border: 3px solid var(--ink);
+    background: var(--card);
+    box-shadow: var(--shadow-hard);
+    transform: rotate(-1.5deg);
+  }
 
-.window-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  border-bottom: 2px solid var(--ink);
-  background: var(--paper-deep);
-}
+  .window-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 2px solid var(--ink);
+    background: var(--paper-deep);
+  }
 
-.window-dot {
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-}
+  .window-dot {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+  }
 
-.window-dot-close {
-  background: var(--red);
-}
+  .window-dot-close {
+    background: var(--red);
+  }
 
-.window-dot-minimize {
-  background: var(--yellow);
-}
+  .window-dot-minimize {
+    background: var(--yellow);
+  }
 
-.window-dot-maximize {
-  background: var(--blue);
-}
+  .window-dot-maximize {
+    background: var(--blue);
+  }
 
-.window-title {
-  margin-left: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-soft);
-}
+  .window-title {
+    margin-left: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
 
-.window img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
+  .window img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
 
-.window-bar-inline {
-  border-bottom: 2px solid var(--ink);
-  background: var(--paper-deep);
+  .window-bar-inline {
+    border-bottom: 2px solid var(--ink);
+    background: var(--paper-deep);
+  }
 }

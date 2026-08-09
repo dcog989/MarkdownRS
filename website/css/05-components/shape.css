@@ -1,18 +1,20 @@
 /* --------------------------------------------------------------------------
-   Components — Rand shapes (shared primitives)
+   Components — Rand shapes (shared primitives)  [layer: components]
    -------------------------------------------------------------------------- */
 
-.shape {
-  position: absolute;
-  pointer-events: none;
-  z-index: 2;
-}
+@layer components {
+  .shape {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2;
+  }
 
-.shape-ring {
-  width: 58px;
-  height: 58px;
-  border: 6px solid var(--yellow);
-  border-radius: 50%;
-  right: -16px;
-  top: 26px;
+  .shape-ring {
+    width: 58px;
+    height: 58px;
+    border: 6px solid var(--yellow);
+    border-radius: 50%;
+    right: -16px;
+    top: 26px;
+  }
 }
