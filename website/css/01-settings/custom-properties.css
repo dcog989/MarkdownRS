@@ -1,0 +1,37 @@
+/* --------------------------------------------------------------------------
+   Settings — design tokens (color, borders, shadows)
+   -------------------------------------------------------------------------- */
+
+:root {
+  --ink: #16130f;
+  --ink-soft: #4d4740;
+  --paper: #f7f4ee;
+  --paper-deep: #efeae1;
+  --card: #ffffff;
+
+  --purple: #7c5a73;
+  --purple-deep: #5c4055;
+  --red: #e4572e;
+  --yellow: #ffc857;
+  --blue: #1f4e9c;
+
+  /* Design element palette (12) */
+  --el-01: #7c5a73;
+  --el-02: #e4572e;
+  --el-03: #1f4e9c;
+  --el-04: #ffc857;
+  --el-05: #2f9e63;
+  --el-06: #d33e6e;
+  --el-07: #4a3f9e;
+  --el-08: #f28c28;
+  --el-09: #1f8a89;
+  --el-10: #7a8c2e;
+  --el-11: #2aa8c0;
+  --el-12: #a83a54;
+
+  --border: var(--ink);
+
+  --shadow-hard: 5px 5px 0 0 var(--ink);
+  --shadow-hard-sm: 3px 3px 0 0 var(--ink);
+  --shadow-soft: 0 18px 40px -18px rgba(22, 19, 15, 0.35);
+}

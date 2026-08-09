@@ -1,0 +1,8 @@
+/* --------------------------------------------------------------------------
+   Settings — font stacks (system monospace)
+   -------------------------------------------------------------------------- */
+
+:root {
+  --font-display: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}

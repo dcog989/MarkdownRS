@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------
-   Carousel
+   Components — carousel
    -------------------------------------------------------------------------- */
 
 .carousel-section {
@@ -29,11 +29,6 @@
   border: 3px solid var(--ink);
   background: var(--card);
   box-shadow: var(--shadow-soft);
-}
-
-.window-bar-inline {
-  border-bottom: 2px solid var(--ink);
-  background: var(--paper-deep);
 }
 
 .carousel-slide img {

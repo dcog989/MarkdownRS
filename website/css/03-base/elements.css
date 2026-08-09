@@ -1,0 +1,31 @@
+/* --------------------------------------------------------------------------
+   Base — global element behavior
+   -------------------------------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.skip-link {
+  position: fixed;
+  top: -100%;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-decoration: none;
+  border: 2px solid var(--yellow);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
