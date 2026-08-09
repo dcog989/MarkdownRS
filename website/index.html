@@ -1,37 +1,37 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MarkdownRS — A fast, native Markdown editor</title>
     <meta
       name="description"
       content="MarkdownRS is a fast, native Markdown editor built with Rust and Tauri. No Electron. No bundled browser engine. Launch in milliseconds and sips memory while you write."
-    />
-    <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    >
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/components.css" />
-    <link rel="stylesheet" href="css/header.css" />
-    <link rel="stylesheet" href="css/hero.css" />
-    <link rel="stylesheet" href="css/carousel.css" />
-    <link rel="stylesheet" href="css/features.css" />
-    <link rel="stylesheet" href="css/tech.css" />
-    <link rel="stylesheet" href="css/cta.css" />
-    <link rel="stylesheet" href="css/footer.css" />
-    <link rel="stylesheet" href="css/responsive.css" />
+    >
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/hero.css">
+    <link rel="stylesheet" href="css/carousel.css">
+    <link rel="stylesheet" href="css/features.css">
+    <link rel="stylesheet" href="css/tech.css">
+    <link rel="stylesheet" href="css/cta.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/responsive.css">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
     <header class="site-header">
       <a class="brand" href="#top" aria-label="MarkdownRS home">
-        <img src="assets/logo.svg" width="28" height="28" alt="" class="brand-mark" />
+        <img src="assets/logo.svg" width="28" height="28" alt="" class="brand-mark">
         <span class="brand-name">MarkdownRS</span>
       </a>
       <nav class="site-nav" aria-label="Primary">
@@ -47,13 +47,18 @@
       <section class="hero" id="top">
         <div class="hero-text">
           <p class="eyebrow"><span class="dot" style="--dot-color: var(--red)"></span>Rust · Tauri · Svelte</p>
-          <h1 class="hero-title">A fast, native<br /><span class="title-accent">Markdown</span> editor</h1>
+          <h1 class="hero-title">A fast, native<br><span class="title-accent">Markdown</span> editor</h1>
           <p class="hero-sub">
-            No Electron. No bundled browser engine. Just native code that launches in
-            milliseconds and sips memory while you write.
+            No Electron. No bundled browser engine. Just native code that launches in milliseconds and sips memory while
+            you write.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="https://github.com/dcog989/MarkdownRS/releases" target="_blank" rel="noopener">
+            <a
+              class="btn btn-primary"
+              href="https://github.com/dcog989/MarkdownRS/releases"
+              target="_blank"
+              rel="noopener"
+            >
               <span class="btn-dot"></span>Download for free
             </a>
             <a class="btn btn-ghost" href="https://github.com/dcog989/MarkdownRS" target="_blank" rel="noopener">
@@ -93,7 +98,7 @@
               alt="MarkdownRS split view: raw Markdown editor on the left, live rendered preview on the right"
               width="1280"
               height="800"
-            />
+            >
           </figure>
         </div>
       </section>
@@ -117,7 +122,12 @@
                 <span class="window-dot window-dot-maximize"></span>
                 <span class="window-title">Split view — raw + preview</span>
               </div>
-              <img src="assets/screenshot-split-dark.svg" width="1280" height="800" alt="Split view with synchronized live preview" />
+              <img
+                src="assets/screenshot-split-dark.svg"
+                width="1280"
+                height="800"
+                alt="Split view with synchronized live preview"
+              >
               <figcaption>Write on the left, preview on the right. Both stay in sync as you scroll.</figcaption>
             </figure>
 
@@ -128,7 +138,12 @@
                 <span class="window-dot window-dot-maximize"></span>
                 <span class="window-title">Zen mode</span>
               </div>
-              <img src="assets/screenshot-zen.svg" width="1280" height="800" alt="Zen mode with a centered, distraction-free writing column" />
+              <img
+                src="assets/screenshot-zen.svg"
+                width="1280"
+                height="800"
+                alt="Zen mode with a centered, distraction-free writing column"
+              >
               <figcaption>Zen mode hides the chrome. Just you and a comfortable column of text.</figcaption>
             </figure>
 
@@ -139,7 +154,12 @@
                 <span class="window-dot window-dot-maximize"></span>
                 <span class="window-title">File tree &amp; tabs</span>
               </div>
-              <img src="assets/screenshot-files.svg" width="1280" height="800" alt="Sidebar file tree with multiple tabs open" />
+              <img
+                src="assets/screenshot-files.svg"
+                width="1280"
+                height="800"
+                alt="Sidebar file tree with multiple tabs open"
+              >
               <figcaption>Browse the file tree, pin tabs, and jump between documents instantly.</figcaption>
             </figure>
 
@@ -150,7 +170,12 @@
                 <span class="window-dot window-dot-maximize"></span>
                 <span class="window-title">Rendered mode — math &amp; diagrams</span>
               </div>
-              <img src="assets/screenshot-light.svg" width="1280" height="800" alt="Rendered preview showing KaTeX math and a Mermaid flowchart" />
+              <img
+                src="assets/screenshot-light.svg"
+                width="1280"
+                height="800"
+                alt="Rendered preview showing KaTeX math and a Mermaid flowchart"
+              >
               <figcaption>KaTeX math and Mermaid diagrams render right in the preview, fully offline.</figcaption>
             </figure>
           </div>
@@ -238,8 +263,8 @@
         <p class="section-label"><span class="dot" style="--dot-color: var(--purple)"></span>Under the hood</p>
         <h2 class="section-title" id="tech-title">Built with serious tools</h2>
         <p class="tech-intro">
-          A native Tauri v2 shell with a Rust backend and a modern Svelte 5
-          frontend. Markdown parsing, linting and storage all happen in Rust.
+          A native Tauri v2 shell with a Rust backend and a modern Svelte 5 frontend. Markdown parsing, linting and
+          storage all happen in Rust.
         </p>
         <ul class="tech-grid">
           <li class="tech-chip"><span class="tech-dot" style="--tdot: var(--el-01)"></span>Rust</li>
@@ -265,17 +290,29 @@
         <div class="cta-card">
           <div class="shape shape-cta" aria-hidden="true"></div>
           <div class="shape shape-ring shape-cta-ring" aria-hidden="true"></div>
-          <p class="section-label section-label-light"><span class="dot" style="--dot-color: var(--red)"></span>Get started</p>
+          <p class="section-label section-label-light">
+            <span class="dot" style="--dot-color: var(--red)"></span>Get started
+          </p>
           <h2 class="cta-title" id="download-title">Download MarkdownRS for free</h2>
           <p class="cta-sub">
-            Open source under the MIT license. Grab the latest release for your
-            platform from GitHub, or build it from source.
+            Open source under the MIT license. Grab the latest release for your platform from GitHub, or build it from
+            source.
           </p>
           <div class="cta-actions">
-            <a class="btn btn-primary" href="https://github.com/dcog989/MarkdownRS/releases" target="_blank" rel="noopener">
+            <a
+              class="btn btn-primary"
+              href="https://github.com/dcog989/MarkdownRS/releases"
+              target="_blank"
+              rel="noopener"
+            >
               <span class="btn-dot"></span>Download
             </a>
-            <a class="btn btn-ghost btn-ghost-light" href="https://github.com/dcog989/MarkdownRS" target="_blank" rel="noopener">
+            <a
+              class="btn btn-ghost btn-ghost-light"
+              href="https://github.com/dcog989/MarkdownRS"
+              target="_blank"
+              rel="noopener"
+            >
               View on GitHub
             </a>
           </div>
@@ -291,7 +328,7 @@
     <footer class="site-footer">
       <div class="footer-top">
         <a class="brand" href="#top" aria-label="MarkdownRS home">
-          <img src="assets/logo.svg" width="24" height="24" alt="" class="brand-mark" />
+          <img src="assets/logo.svg" width="24" height="24" alt="" class="brand-mark">
           <span class="brand-name">MarkdownRS</span>
         </a>
         <p class="footer-tagline">A fast, native Markdown editor built with Rust and Tauri. No Electron bloat.</p>

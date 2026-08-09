@@ -2,27 +2,37 @@
   <title>MarkdownRS file tree</title>
   <defs>
     <linearGradient id="fbg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#211e26"/>
-      <stop offset="1" stop-color="#19161d"/>
+      <stop offset="0" stop-color="#211e26" />
+      <stop offset="1" stop-color="#19161d" />
     </linearGradient>
   </defs>
 
-  <rect width="1280" height="800" fill="#121014"/>
+  <rect width="1280" height="800" fill="#121014" />
   <!-- Window -->
-  <rect x="48" y="48" width="1184" height="704" rx="18" fill="url(#fbg)" stroke="#332e3b" stroke-width="2"/>
-  <rect x="48" y="48" width="1184" height="52" rx="18" fill="#26222c"/>
-  <rect x="48" y="84" width="1184" height="16" fill="#26222c"/>
+  <rect x="48" y="48" width="1184" height="704" rx="18" fill="url(#fbg)" stroke="#332e3b" stroke-width="2" />
+  <rect x="48" y="48" width="1184" height="52" rx="18" fill="#26222c" />
+  <rect x="48" y="84" width="1184" height="16" fill="#26222c" />
 
-  <circle cx="92" cy="74" r="8" fill="#e4572e"/>
-  <circle cx="116" cy="74" r="8" fill="#ffc857"/>
-  <circle cx="140" cy="74" r="8" fill="#1f4e9c"/>
+  <circle cx="92" cy="74" r="8" fill="#e4572e" />
+  <circle cx="116" cy="74" r="8" fill="#ffc857" />
+  <circle cx="140" cy="74" r="8" fill="#1f4e9c" />
 
   <!-- Sidebar -->
-  <rect x="48" y="100" width="280" height="652" fill="#1c1921"/>
-  <rect x="328" y="100" width="2" height="652" fill="#332e3b"/>
+  <rect x="48" y="100" width="280" height="652" fill="#1c1921" />
+  <rect x="328" y="100" width="2" height="652" fill="#332e3b" />
 
   <!-- Sidebar title -->
-  <text x="72" y="136" font-family="ui-sans-serif, sans-serif" font-size="12" font-weight="700" fill="#6b6573" letter-spacing="2">EXPLORER</text>
+  <text
+    x="72"
+    y="136"
+    font-family="ui-sans-serif, sans-serif"
+    font-size="12"
+    font-weight="700"
+    fill="#6b6573"
+    letter-spacing="2"
+  >
+    EXPLORER
+  </text>
 
   <g font-family="ui-monospace, monospace" font-size="15">
     <text x="72" y="176" fill="#8b8595">▸</text>
@@ -31,7 +41,7 @@
     <text x="112" y="204" fill="#c9c4d2">components</text>
     <text x="112" y="232" fill="#8b8595">▸</text>
     <text x="132" y="232" fill="#c9c4d2">preview</text>
-    <rect x="112" y="246" width="148" height="24" rx="5" fill="#2b2530"/>
+    <rect x="112" y="246" width="148" height="24" rx="5" fill="#2b2530" />
     <text x="132" y="263" fill="#e8e4ee">Preview.svelte</text>
     <text x="132" y="291" fill="#c9c4d2">state.svelte.ts</text>
     <text x="92" y="319" fill="#c9c4d2">+page.svelte</text>
@@ -51,12 +61,12 @@
 
   <!-- Tabs -->
   <g font-family="ui-monospace, monospace" font-size="15">
-    <rect x="358" y="56" width="240" height="44" fill="#19161d" rx="8"/>
-    <circle cx="378" cy="78" r="4" fill="#7c5a73"/>
+    <rect x="358" y="56" width="240" height="44" fill="#19161d" rx="8" />
+    <circle cx="378" cy="78" r="4" fill="#7c5a73" />
     <text x="390" y="82" fill="#e8e4ee">Preview.svelte</text>
 
-    <rect x="602" y="56" width="190" height="44" fill="transparent" rx="8"/>
-    <circle cx="622" cy="78" r="4" fill="#5a5563"/>
+    <rect x="602" y="56" width="190" height="44" fill="transparent" rx="8" />
+    <circle cx="622" cy="78" r="4" fill="#5a5563" />
     <text x="634" y="82" fill="#8b8595">main.rs</text>
   </g>
 
@@ -84,7 +94,7 @@
     <text x="742" y="150" font-size="14" fill="#c9c4d2">;</text>
 
     <text x="406" y="178" font-size="14" fill="#8b8595">// Renders the live Markdown preview pane</text>
-    <text x="406" y="206" font-size="14" fill="#c9c4d2">const isMarkdown = </text>
+    <text x="406" y="206" font-size="14" fill="#c9c4d2">const isMarkdown =</text>
     <text x="578" y="206" font-size="14" fill="#7d5a76">$derived</text>
     <text x="652" y="206" font-size="14" fill="#c9c4d2">(</text>
     <text x="662" y="206" font-size="14" fill="#8fc7ff">path</text>
@@ -102,10 +112,14 @@
   </g>
 
   <!-- Cursor -->
-  <rect x="610" y="194" width="2" height="22" fill="#e8e4ee"/>
+  <rect x="610" y="194" width="2" height="22" fill="#e8e4ee" />
 
   <!-- Status bar -->
-  <rect x="48" y="736" width="1184" height="16" fill="#19161d"/>
-  <text x="72" y="748" font-family="ui-monospace, monospace" font-size="12" fill="#6b6573">preview.svelte — Ln 4, Col 18 · UTF-8 · LF · Markdown</text>
-  <text x="1150" y="748" text-anchor="end" font-family="ui-monospace, monospace" font-size="12" fill="#6b6573">Spaces: 4</text>
+  <rect x="48" y="736" width="1184" height="16" fill="#19161d" />
+  <text x="72" y="748" font-family="ui-monospace, monospace" font-size="12" fill="#6b6573">
+    preview.svelte — Ln 4, Col 18 · UTF-8 · LF · Markdown
+  </text>
+  <text x="1150" y="748" text-anchor="end" font-family="ui-monospace, monospace" font-size="12" fill="#6b6573">
+    Spaces: 4
+  </text>
 </svg>
