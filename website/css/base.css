@@ -32,8 +32,8 @@
   --el-12: #a83a54;
 
   --border: var(--ink);
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "Space Mono", ui-monospace, "Cascadia Mono", "JetBrains Mono", monospace;
+  --font-display: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
   --shadow-hard: 5px 5px 0 0 var(--ink);
   --shadow-hard-sm: 3px 3px 0 0 var(--ink);

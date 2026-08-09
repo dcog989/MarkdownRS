@@ -41,11 +41,11 @@
 }
 
 .section-title {
-  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-size: clamp(1.7rem, 3.8vw, 2.7rem);
   line-height: 1.05;
   letter-spacing: -0.03em;
   margin: 0 0 2rem;
-  max-width: 20ch;
+  max-width: 30ch;
 }
 
 /* --------------------------------------------------------------------------

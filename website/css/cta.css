@@ -23,11 +23,11 @@
 }
 
 .cta-title {
-  font-size: clamp(2.1rem, 4.5vw, 3.4rem);
+  font-size: clamp(1.8rem, 3.8vw, 2.8rem);
   line-height: 1.02;
   letter-spacing: -0.03em;
   margin: 0 0 1rem;
-  max-width: 18ch;
+  max-width: 32ch;
 }
 
 .cta-sub {
