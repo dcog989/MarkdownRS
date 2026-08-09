@@ -223,10 +223,18 @@ export const linkBoundaryClickHandler = EditorView.domEventHandlers({
       from: line.from,
       to: line.to,
       enter: (node) => {
-        if (target != null || node.name !== 'Link') return;
-        if (cursor > node.from && cursor < node.to) return;
+        if (target != null) return;
+        if (node.name === 'Autolink') {
+          if (cursor > node.from && cursor < node.to) return;
+          const linkMarks = node.node.getChildren('LinkMark');
+          const maskStart = linkMarks[linkMarks.length - 1]?.from ?? node.to;
+          if (pos.pos >= maskStart && pos.pos <= node.to) target = node.to;
+          return;
+        }
+        if (node.name !== 'Link') return;
         const urlNode = node.node.getChild('URL');
         if (!urlNode) return;
+        if (cursor > node.from && cursor < node.to) return;
         const linkMarks = node.node.getChildren('LinkMark');
         const textEnd = linkMarks[1]?.from ?? urlNode.from;
         const after = doc.sliceString(urlNode.to, urlNode.to + 1);
