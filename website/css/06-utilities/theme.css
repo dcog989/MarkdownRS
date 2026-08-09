@@ -12,7 +12,7 @@
     --paper-deep: #1d1913;
     --card: #26211a;
 
-    --purple: #8d6a82;
+    --purple: #5c4555;
     --red: #f06a42;
     --yellow: #ffd166;
     --blue: #5a87d8;
@@ -25,6 +25,10 @@
   /* Ink-filled surfaces flip to light once --ink is inverted; keep them dark. */
   .site-footer {
     background: #0e0b07;
+    color: #f2ede3;
+  }
+
+  .site-footer .brand-name {
     color: #f2ede3;
   }
 
