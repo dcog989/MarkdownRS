@@ -111,6 +111,9 @@ updateTextFile(dotPkgPkgbuildPath, PKGBUILD_VERSION_RE, `$1${newVersion}`, '.pkg
 // 8. Git integration
 if (shouldGit) {
   const files = [packageJsonPath, pkgbuildPath, tauriConfPath, cargoTomlPath, cargoLockPath];
+  if (fs.existsSync(dotPkgPkgbuildPath)) {
+    files.push(dotPkgPkgbuildPath);
+  }
   const tagName = `v${newVersion}`;
 
   runGit(['add', ...files]);
