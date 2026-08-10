@@ -385,7 +385,9 @@
 }
 
 .cm-hr-raw {
+  display: inline;
   text-align: left;
+  padding: 0;
 }
 
 .cm-hr-raw::after {
