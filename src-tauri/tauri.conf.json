@@ -4,8 +4,8 @@
   "version": "1.51.4",
   "identifier": "com.markdownrs.editor",
   "build": {
-    "beforeDevCommand": "bun run ui:dev",
-    "beforeBuildCommand": "bun run ui:build",
+    "beforeDevCommand": "bunx --bun vite dev",
+    "beforeBuildCommand": "bunx --bun vite build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../build"
   },
