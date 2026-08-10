@@ -591,7 +591,7 @@ export const codeBlockCopyHandler = EditorView.domEventHandlers({
       codeEnd = endLine.from;
     }
 
-    const code = doc.sliceString(startLine.to + 1, codeEnd);
+    const code = doc.sliceString(startLine.to + 1, codeEnd).replace(/\n$/, '');
     navigator.clipboard.writeText(code).then(() => showToast('success', translate('preview.codeCopied')));
 
     return true;
