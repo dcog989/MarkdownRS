@@ -19,21 +19,25 @@ export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
 export function restoreScrollByTopLine(view: EditorView, topLine: number, scrollTop: number): void {
   if (!view.scrollDOM) return;
 
+  const safeLine = Math.max(1, Math.min(topLine, view.state.doc.lines));
+
+  // Parse the visible fold (plus a full extra viewport) before scrolling so
+  // the restored viewport is already parsed and decorated on its first paint.
+  // Rendered-mode widgets (tables, images, headings) replace multi-line raw
+  // constructs with shorter elements, so more source lines fit per pixel than
+  // a fixed line-height estimate suggests; use the measured default line
+  // height and over-cover rather than underestimate. ensureSyntaxTree keeps
+  // parsing in the background if the budget expires, so the highlight still
+  // lands shortly after on very large docs.
+  const lineHeight = view.defaultLineHeight || 21;
+  const linesPerViewport = Math.ceil((view.scrollDOM.clientHeight || 600) / lineHeight);
+  const extendTo = Math.min(view.state.doc.lines, safeLine + linesPerViewport * 2);
+  const parseUpto = view.state.doc.line(extendTo).to;
+  ensureSyntaxTree(view.state, parseUpto, CONFIG.PERFORMANCE.SCROLL_RESTORE_PARSE_TIMEOUT_MS);
+
   if (topLine > 1) {
     try {
-      const safeLine = Math.max(1, Math.min(topLine, view.state.doc.lines));
       const lineInfo = view.state.doc.line(safeLine);
-      // Parse the doc up to the target line (plus an estimate of the visible
-      // viewport) before scrolling so the deep viewport is already
-      // syntax-highlighted when it first paints, instead of flashing un-styled
-      // text for a frame while the parser catches up. ensureSyntaxTree also
-      // continues parsing in the background if the budget later expires, so the
-      // highlight still lands shortly after on very large docs.
-      const lineHeight = 21;
-      const visibleLines = Math.ceil((view.scrollDOM.clientHeight || 600) / lineHeight);
-      const extendTo = Math.min(view.state.doc.lines, safeLine + visibleLines);
-      const parseUpto = view.state.doc.line(extendTo).to;
-      ensureSyntaxTree(view.state, parseUpto, CONFIG.PERFORMANCE.SCROLL_RESTORE_PARSE_TIMEOUT_MS);
       view.dispatch({ effects: EditorView.scrollIntoView(lineInfo.from, { y: 'start' }) });
       return;
     } catch {
