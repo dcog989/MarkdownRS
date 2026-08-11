@@ -104,7 +104,7 @@ function createCalloutView(doc: string, rendered: boolean, cursorPos?: number) {
     extensions: [
       markdown({ base: markdownLanguage, extensions: frontmatterExtension }),
       syntaxHighlighting(highlightStyle),
-      createMarkdownDecorationsPlugin(rendered),
+      createMarkdownDecorationsPlugin(rendered, () => ''),
     ],
   });
   return { view: new EditorView({ state, parent }), parent };

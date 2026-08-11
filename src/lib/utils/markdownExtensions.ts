@@ -9,13 +9,17 @@ import {
   type ViewUpdate,
   WidgetType,
 } from '@codemirror/view';
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import type { AppEditorView } from '../../global';
 import { imageWidgetClickHandler, imageWidgetDecoration } from './markdownImageWidget';
 import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from './markdownTableWidget';
 import { resolveImageSrc } from './resolveImagePath';
+
+/** Resolves the base directory of the tab a view belongs to (for image sources). */
+export type GetTabDirectory = (view: EditorView) => string;
+
+export interface CodeBlockCopyDeps {
+  translate: (key: string) => string;
+  showToast: (type: 'info' | 'success' | 'warning' | 'error', message: string) => void;
+}
 
 const HEADING_NODE_NAMES = new Set([
   'ATXHeading1',
@@ -265,13 +269,6 @@ function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number):
   );
 }
 
-function getTabDirectory(view: EditorView): string {
-  const tabId = (view as AppEditorView)._currentTabId;
-  if (!tabId) return '';
-  const path = appContext.editor.tabs.find((t) => t.id === tabId)?.path;
-  return path ? path.replace(/[\\/][^\\/]+$/, '') : '';
-}
-
 const COPY_SNAP_NODES = new Set(['Emphasis', 'StrongEmphasis', 'Link', 'Image', 'InlineCode']);
 
 /**
@@ -450,6 +447,7 @@ interface DecorationWalk {
   view: EditorView;
   tree: ReturnType<typeof syntaxTree>;
   ranges: Range<Decoration>[];
+  getTabDirectory: GetTabDirectory;
   calloutMarkers: CalloutInfo['markers'];
   calloutLines: CalloutInfo['lines'];
   tableSpans: Array<{ from: number; to: number }>;
@@ -518,7 +516,7 @@ function collectImageWidget(walk: DecorationWalk, node: SyntaxNode): boolean {
   const altEnd = linkMarks[1]?.from ?? urlNode.from;
   const alt = walk.view.state.doc.sliceString(altStart, altEnd).trim();
   const rawSrc = walk.view.state.doc.sliceString(urlNode.from, urlNode.to);
-  const src = resolveImageSrc(rawSrc, getTabDirectory(walk.view));
+  const src = resolveImageSrc(rawSrc, walk.getTabDirectory(walk.view));
   walk.ranges.push(imageWidgetDecoration(node.from, node.to, src, alt));
   return true;
 }
@@ -689,7 +687,7 @@ function collectRawCalloutDecorations(view: EditorView, callouts: CalloutInfo, r
  * construct lives in its own collector so the passes stay readable without
  * splitting into repeated per-construct tree walks.
  */
-function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
+function buildDecorations(view: EditorView, rendered: boolean, getTabDirectory: GetTabDirectory): DecorationSet {
   const callouts = collectCallouts(view);
   const ranges: Range<Decoration>[] = [];
 
@@ -703,6 +701,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
     view,
     tree,
     ranges,
+    getTabDirectory,
     calloutMarkers: callouts.markers,
     calloutLines: callouts.lines,
     tableSpans: collectTableSpans(view.state, view.visibleRanges),
@@ -739,13 +738,13 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
-export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] {
+export function createMarkdownDecorationsPlugin(rendered: boolean, getTabDirectory: GetTabDirectory): Extension[] {
   return [
     ViewPlugin.fromClass(
       class {
         decorations: DecorationSet;
         constructor(view: EditorView) {
-          this.decorations = buildDecorations(view, rendered);
+          this.decorations = buildDecorations(view, rendered, getTabDirectory);
         }
         update(update: ViewUpdate) {
           if (
@@ -758,7 +757,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
             // headings, callouts) paint right after a tab switch or scroll.
             syntaxTree(update.startState) !== syntaxTree(update.state)
           ) {
-            this.decorations = buildDecorations(update.view, rendered);
+            this.decorations = buildDecorations(update.view, rendered, getTabDirectory);
           }
         }
       },
@@ -778,35 +777,37 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
   ];
 }
 
-export const codeBlockCopyHandler = EditorView.domEventHandlers({
-  mousedown: (event, view) => {
-    const target = event.target as HTMLElement;
-    if (!target.classList.contains('cm-code-info')) return false;
+export function createCodeBlockCopyHandler(deps: CodeBlockCopyDeps): Extension {
+  return EditorView.domEventHandlers({
+    mousedown: (event, view) => {
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains('cm-code-info')) return false;
 
-    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    if (pos === null) return false;
+      const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+      if (pos === null) return false;
 
-    const tree = syntaxTree(view.state);
-    let node: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
-    while (node && node.name !== 'FencedCode') {
-      node = node.parent;
-    }
-    if (!node) return false;
+      const tree = syntaxTree(view.state);
+      let node: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
+      while (node && node.name !== 'FencedCode') {
+        node = node.parent;
+      }
+      if (!node) return false;
 
-    const fencedNode = node;
+      const fencedNode = node;
 
-    const doc = view.state.doc;
-    const startLine = doc.lineAt(fencedNode.from);
-    const endLine = doc.lineAt(fencedNode.to);
+      const doc = view.state.doc;
+      const startLine = doc.lineAt(fencedNode.from);
+      const endLine = doc.lineAt(fencedNode.to);
 
-    let codeEnd = fencedNode.to;
-    if (endLine.number > startLine.number && /^```\s*$/.test(endLine.text)) {
-      codeEnd = endLine.from;
-    }
+      let codeEnd = fencedNode.to;
+      if (endLine.number > startLine.number && /^```\s*$/.test(endLine.text)) {
+        codeEnd = endLine.from;
+      }
 
-    const code = doc.sliceString(startLine.to + 1, codeEnd).replace(/\n$/, '');
-    navigator.clipboard.writeText(code).then(() => showToast('success', translate('preview.codeCopied')));
+      const code = doc.sliceString(startLine.to + 1, codeEnd).replace(/\n$/, '');
+      navigator.clipboard.writeText(code).then(() => deps.showToast('success', deps.translate('preview.codeCopied')));
 
-    return true;
-  },
-});
+      return true;
+    },
+  });
+}

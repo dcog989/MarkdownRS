@@ -16,16 +16,19 @@ import {
 import { createWrapExtension, getEditorKeymap } from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import { prefetchHoverHandler, smartBacktickHandler } from '$lib/components/editor/codemirror/handlers';
+import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
+import { showToast } from '$lib/stores/toastStore.svelte';
 import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import { frontmatterExtension } from '$lib/utils/frontmatterExtension';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { codeBlockCopyHandler, createMarkdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
+import { createCodeBlockCopyHandler, createMarkdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
 import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
 import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
 import { userThemeExtension } from '$lib/utils/themeMapper';
+import type { AppEditorView } from '../../../../global';
 
 const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
   fallback: true,
@@ -34,6 +37,14 @@ const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
 export const markdownExtensions = [
   markdown({ base: markdownLanguage, extensions: frontmatterExtension, codeLanguages: languages }),
 ];
+
+/** Base directory of the tab a view belongs to, for resolving relative image sources. */
+export function getTabDirectory(view: EditorView): string {
+  const tabId = (view as AppEditorView)._currentTabId;
+  if (!tabId) return '';
+  const path = appContext.editor.tabs.find((t) => t.id === tabId)?.path;
+  return path ? path.replace(/[\\/][^\\/]+$/, '') : '';
+}
 
 export function resolveFileLanguage(path: string): LanguageDescription | null {
   return LanguageDescription.matchFilename(languages, path);
@@ -83,7 +94,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     closeBrackets(),
     smartBacktickHandler,
     prefetchHoverHandler,
-    codeBlockCopyHandler,
+    createCodeBlockCopyHandler({ translate, showToast }),
 
     c.filePathComp.of(config.isMarkdown ? [linkPlugin, linkTheme] : []),
     getEditorKeymap([...config.customKeymap]),
@@ -100,7 +111,9 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.spellComp.of([]),
     c.markdownLintComp.of(config.isMarkdown ? createMarkdownLinter() : []),
     c.decorationComp.of(
-      config.isMarkdown ? createMarkdownDecorationsPlugin(appContext.settings.viewMode === 'rendered') : [],
+      config.isMarkdown
+        ? createMarkdownDecorationsPlugin(appContext.settings.viewMode === 'rendered', getTabDirectory)
+        : [],
     ),
     c.rulerComp.of(rulerPlugin),
     c.wrapComp.of(createWrapExtension(config.isLargeFile)),

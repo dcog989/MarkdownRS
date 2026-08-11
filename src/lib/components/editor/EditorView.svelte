@@ -9,6 +9,7 @@ import type { ContextMenuCallback } from '$lib/components/editor/codemirror/even
 import {
   type Compartments,
   createBaseExtensions,
+  getTabDirectory,
   markdownExtensions,
   resolveFileLanguage,
 } from '$lib/components/editor/logic/extensions';
@@ -200,7 +201,9 @@ $effect(() => {
   if (!view) return;
   const md = effectiveMarkdown;
   const rendered = appContext.settings.viewMode === 'rendered';
-  view.dispatch({ effects: comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered) : []) });
+  view.dispatch({
+    effects: comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered, getTabDirectory) : []),
+  });
 });
 
 $effect(() => {

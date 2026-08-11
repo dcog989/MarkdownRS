@@ -84,7 +84,7 @@ function createEditor(doc: string, cursorPos: number) {
   const state = EditorState.create({
     doc,
     selection: { anchor: cursorPos },
-    extensions: [markdown({ base: markdownLanguage }), createMarkdownDecorationsPlugin(true)],
+    extensions: [markdown({ base: markdownLanguage }), createMarkdownDecorationsPlugin(true, () => '')],
   });
   const view = new EditorView({ state, parent });
   return { view, parent };
