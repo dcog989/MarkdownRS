@@ -1,4 +1,4 @@
-import { type SyntaxNode, syntaxTree } from '@codemirror/language';
+import { syntaxTree } from '@codemirror/language';
 import { type Extension, type Line, Prec, type Range } from '@codemirror/state';
 import {
   Decoration,
@@ -9,6 +9,7 @@ import {
   type ViewUpdate,
   WidgetType,
 } from '@codemirror/view';
+import type { SyntaxNodeRef } from '@lezer/common';
 import { imageWidgetClickHandler, imageWidgetDecoration } from './markdownImageWidget';
 import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from './markdownTableWidget';
 import { resolveImageSrc } from './resolveImagePath';
@@ -459,7 +460,7 @@ interface DecorationWalk {
   blockquoteLines: Set<number>;
 }
 
-function collectFrontmatterLines(walk: DecorationWalk, node: SyntaxNode): void {
+function collectFrontmatterLines(walk: DecorationWalk, node: SyntaxNodeRef): void {
   const doc = walk.view.state.doc;
   const startLine = doc.lineAt(node.from).number;
   const endLine = doc.lineAt(node.to).number;
@@ -469,11 +470,11 @@ function collectFrontmatterLines(walk: DecorationWalk, node: SyntaxNode): void {
 }
 
 /** Widget-rendered tables are skipped so their children aren't decorated. */
-function shouldSkipTable(walk: DecorationWalk, node: SyntaxNode): boolean {
+function shouldSkipTable(walk: DecorationWalk, node: SyntaxNodeRef): boolean {
   return walk.tableSpans.some((span) => node.from === span.from && node.to === span.to);
 }
 
-function collectCodeBlockLines(walk: DecorationWalk, node: SyntaxNode, rangeFrom: number, rangeTo: number): void {
+function collectCodeBlockLines(walk: DecorationWalk, node: SyntaxNodeRef, rangeFrom: number, rangeTo: number): void {
   const start = Math.max(node.from, rangeFrom);
   const end = Math.min(node.to, rangeTo);
   const fromLine = walk.view.state.doc.lineAt(start);
@@ -483,7 +484,7 @@ function collectCodeBlockLines(walk: DecorationWalk, node: SyntaxNode, rangeFrom
   }
 }
 
-function collectCodeInfo(walk: DecorationWalk, node: SyntaxNode): void {
+function collectCodeInfo(walk: DecorationWalk, node: SyntaxNodeRef): void {
   let p: typeof node.node | null = node.node.parent;
   while (p) {
     if (p.name === 'FencedCode') {
@@ -496,7 +497,7 @@ function collectCodeInfo(walk: DecorationWalk, node: SyntaxNode): void {
   }
 }
 
-function collectBlockquoteLines(walk: DecorationWalk, node: SyntaxNode): void {
+function collectBlockquoteLines(walk: DecorationWalk, node: SyntaxNodeRef): void {
   if (isRevealed(walk.view, node.from, node.to)) return;
   const fromLine = walk.view.state.doc.lineAt(node.from);
   const toLine = walk.view.state.doc.lineAt(node.to);
@@ -506,7 +507,7 @@ function collectBlockquoteLines(walk: DecorationWalk, node: SyntaxNode): void {
 }
 
 /** Returns true when the node's subtree should be skipped. */
-function collectImageWidget(walk: DecorationWalk, node: SyntaxNode): boolean {
+function collectImageWidget(walk: DecorationWalk, node: SyntaxNodeRef): boolean {
   if (isRevealed(walk.view, node.from, node.to)) return false;
   if (walk.tableSpans.some((span) => node.from >= span.from && node.to <= span.to)) return true;
   const urlNode = node.node.getChild('URL');
@@ -521,7 +522,7 @@ function collectImageWidget(walk: DecorationWalk, node: SyntaxNode): boolean {
   return true;
 }
 
-function collectLinkMasks(walk: DecorationWalk, node: SyntaxNode): void {
+function collectLinkMasks(walk: DecorationWalk, node: SyntaxNodeRef): void {
   if (isRevealed(walk.view, node.from, node.to)) return;
   const linkMarks = node.node.getChildren('LinkMark');
   const urlNode = node.node.getChild('URL');
@@ -545,7 +546,7 @@ function collectLinkMasks(walk: DecorationWalk, node: SyntaxNode): void {
 }
 
 /** Per-construct node dispatch; returns true when the subtree should be skipped. */
-function visitDecorationNode(walk: DecorationWalk, node: SyntaxNode, rangeFrom: number, rangeTo: number): boolean {
+function visitDecorationNode(walk: DecorationWalk, node: SyntaxNodeRef, rangeFrom: number, rangeTo: number): boolean {
   switch (node.name) {
     case 'Frontmatter':
       collectFrontmatterLines(walk, node);

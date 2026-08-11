@@ -256,7 +256,7 @@ export const tableWidgetClickHandler = EditorView.domEventHandlers({
 
       const cell = element.closest<HTMLElement>('td, th');
 
-      let anchor: number;
+      let anchor: number | null;
       if (cell) {
         const row = cell.closest('tr');
         const table = cell.closest('table');

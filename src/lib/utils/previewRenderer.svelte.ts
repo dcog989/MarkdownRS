@@ -19,7 +19,7 @@ export class PreviewRenderer {
   renderError = $state('');
 
   lastRendered = '';
-  private lastTabId = '';
+  lastTabId = '';
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private spinnerTimer: ReturnType<typeof setTimeout> | null = null;
   /** Advances on every cancel/new schedule; in-flight renders capture it and bail when stale. */
