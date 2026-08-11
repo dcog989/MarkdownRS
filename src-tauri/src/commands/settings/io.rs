@@ -6,6 +6,12 @@ use tokio::fs;
 
 pub(super) const MAX_FILE_SIZE_KEY: &str = "maxFileSizeMB";
 
+/// Keys the backend manages that the frontend snapshot does not include
+/// (e.g. `workspaceRoot`). They are carried across full-state saves so they
+/// are neither lost nor treated as stale. Any other key absent from the
+/// incoming snapshot is pruned from the file on save.
+const PRESERVED_SETTINGS_KEYS: &[&str] = &["workspaceRoot"];
+
 const DEFAULT_MAX_FILE_SIZE_MB: u64 = 20;
 const MAX_FILE_SIZE_MIN_MB: u64 = 4;
 const MAX_FILE_SIZE_MAX_MB: u64 = 50;
@@ -90,4 +96,37 @@ pub async fn write_settings_file(
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "write settings file", e))?;
     log::info!("Settings saved successfully to {:?}", path);
     Ok(())
+}
+
+/// Extracts the backend-managed keys (e.g. `workspaceRoot`) from the existing
+/// settings file so they survive a full-state save. The frontend snapshot never
+/// contains them; without this they would be pruned along with genuinely stale
+/// keys. Returns an empty table when the file does not exist yet.
+pub async fn preserved_settings_from_path(path: &std::path::Path) -> Result<toml::Value, String> {
+    let raw_bytes = match fs::read(path).await {
+        Ok(b) => b,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(toml::Value::Table(toml::map::Map::new()));
+        },
+        Err(e) => {
+            return Err(handle_error(
+                Some(&path.to_string_lossy()),
+                "read settings file",
+                e,
+            ));
+        },
+    };
+    let content = read_text_with_bom_detection(raw_bytes);
+    let toml_val: toml::Value =
+        toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))?;
+
+    let mut preserved = toml::map::Map::new();
+    if let Some(table) = toml_val.as_table() {
+        for key in PRESERVED_SETTINGS_KEYS {
+            if let Some(value) = table.get(*key) {
+                preserved.insert((*key).to_string(), value.clone());
+            }
+        }
+    }
+    Ok(toml::Value::Table(preserved))
 }

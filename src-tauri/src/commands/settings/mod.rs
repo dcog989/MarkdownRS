@@ -79,6 +79,19 @@ pub async fn save_settings(
     let mut settings = settings;
     io::normalize_max_file_size(&mut settings);
 
+    // Carry backend-managed keys (e.g. `workspaceRoot`) across the full-state
+    // save and prune any other key the frontend snapshot no longer contains.
+    let preserved = io::preserved_settings_from_path(&path).await?;
+    if let Some(table) = preserved.as_table() {
+        for (key, value) in table {
+            if settings.get(key).is_none() {
+                let value = serde_json::to_value(value)
+                    .map_err(|e| handle_error(None, "convert preserved settings to JSON", e))?;
+                settings[key] = value;
+            }
+        }
+    }
+
     io::write_settings_file(&path, &settings).await?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
