@@ -6,8 +6,6 @@ import { callBackendSafe } from './backend';
 import { renderMathInHtml } from './katexRenderer';
 import { resolveImageSrc } from './resolveImagePath';
 
-export function clearRendererCache(_documentId: string): void {}
-
 export async function renderMarkdown(
   content: string,
   gfm: boolean = true,

@@ -7,7 +7,6 @@ export const editorStore = $state({
   sessionDirty: false,
   mruStack: [] as string[],
   closedTabsHistory: [] as ClosedTab[],
-  lastScrollSource: null as 'editor' | 'preview' | null,
   pendingTransform: null as { tabId: string; op: OperationId; timestamp: number } | null,
 });
 

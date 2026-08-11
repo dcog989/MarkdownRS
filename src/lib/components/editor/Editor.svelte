@@ -208,7 +208,7 @@ function handleMetricsChange(m: Partial<EditorMetrics>) {
   updateMetrics(m);
 }
 function handleScrollChange(p: number, s: number, t: number) {
-  updateScroll(tabId, p, s, t, 'editor');
+  updateScroll(tabId, p, s, t);
 }
 function handleSelectionChange(a: number, h: number) {
   updateCursor(tabId, a, h);

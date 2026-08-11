@@ -188,14 +188,19 @@ $effect(() => {
 $effect(() => {
   if (!view) return;
   const md = effectiveMarkdown;
-  const rendered = appContext.settings.viewMode === 'rendered';
   view.dispatch({
     effects: [
-      comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered) : []),
       comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []),
       comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
     ],
   });
+});
+
+$effect(() => {
+  if (!view) return;
+  const md = effectiveMarkdown;
+  const rendered = appContext.settings.viewMode === 'rendered';
+  view.dispatch({ effects: comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered) : []) });
 });
 
 $effect(() => {

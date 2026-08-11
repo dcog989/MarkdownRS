@@ -14,7 +14,6 @@ import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolat
 import { SmoothScroller } from './smoothScroller';
 
 const CLEAR_SOURCE_DELAY_MS = 200;
-const FAST_SCROLL_DELAY_MS = 300;
 const PERSIST_SCROLL_THROTTLE_MS = 50;
 
 type SyncDirection = 'editor-to-preview' | 'preview-to-editor';
@@ -264,17 +263,6 @@ export class ScrollSyncManager {
     if (Math.abs(target.scrollTop - targetY) > CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) {
       this.scroller.scrollTo(target, targetY);
     }
-  }
-
-  handleFastScroll(v: EditorView, targetY: number) {
-    this.setActiveSource('editor');
-    if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
-    this.clearSourceTimer = window.setTimeout(() => {
-      this.activeSource = null;
-    }, FAST_SCROLL_DELAY_MS);
-
-    v.scrollDOM.scrollTop = targetY;
-    this.sync('editor-to-preview');
   }
 }
 

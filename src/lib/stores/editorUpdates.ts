@@ -47,13 +47,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
   editorStore.sessionDirty = true;
 }
 
-export function updateScroll(
-  id: string,
-  percentage: number,
-  scrollTop: number,
-  topLine: number | undefined,
-  source: 'editor' | 'preview',
-) {
+export function updateScroll(id: string, percentage: number, scrollTop: number, topLine: number | undefined) {
   const ts = getTransientState(id);
   if (!ts) return;
 
@@ -63,7 +57,6 @@ export function updateScroll(
     (topLine !== undefined && Math.abs(ts.topLine - topLine) > 0.01);
 
   if (isSignificant) {
-    editorStore.lastScrollSource = source;
     ts.scrollPercentage = percentage;
     ts.scrollTop = scrollTop;
     if (topLine !== undefined) ts.topLine = topLine;
