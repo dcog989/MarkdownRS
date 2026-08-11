@@ -272,7 +272,7 @@ export const en = {
     languageTooltip: 'Language used for the application interface.',
     noTemplateSelected: 'No template selected',
     spellcheckSettingsUpdated: 'Spellcheck settings updated',
-    logLevelChanged: 'Restart required to apply log level changes',
+    logLevelChanged: 'Log level updated',
   },
   shortcuts: {
     title: 'Keyboard Shortcuts',
