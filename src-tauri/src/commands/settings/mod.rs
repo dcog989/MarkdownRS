@@ -70,12 +70,6 @@ pub async fn save_settings(
     let config_dir = app_config_path(&app_handle)?;
     let path = config_dir.join("settings.toml");
 
-    let max_size_received = settings.get(io::MAX_FILE_SIZE_KEY).cloned();
-    log::info!(
-        "save_settings called with maxFileSizeMB: {:?}",
-        max_size_received
-    );
-
     let mut settings = settings;
     io::normalize_max_file_size(&mut settings);
 

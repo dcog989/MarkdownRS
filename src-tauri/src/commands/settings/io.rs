@@ -94,7 +94,7 @@ pub async fn write_settings_file(
     fs::write(path, toml_str)
         .await
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "write settings file", e))?;
-    log::info!("Settings saved successfully to {:?}", path);
+    log::debug!("Settings saved successfully to {:?}", path);
     Ok(())
 }
 
