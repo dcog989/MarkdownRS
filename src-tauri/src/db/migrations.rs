@@ -86,7 +86,10 @@ fn ensure_tab_columns(tx: &rusqlite::Transaction, table: &str) -> Result<()> {
             continue;
         }
         log::info!("Adding missing column {} to {}", col.name, table);
-        tx.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {};", col.ddl))?;
+        tx.execute_batch(&format!(
+            "ALTER TABLE {table} ADD COLUMN {} {};",
+            col.name, col.ddl
+        ))?;
     }
     Ok(())
 }
