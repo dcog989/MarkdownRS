@@ -58,9 +58,9 @@ function resetTabLoadState(tabId: string): void {
 }
 
 const loadingRequests = new Map<string, number>();
+const contentLoadPromises = new Map<string, Promise<void>>();
 
 export async function loadTabContentLazy(tabId: string): Promise<void> {
-  const start = performance.now();
   const index = editorStore.tabs.findIndex((t) => t.id === tabId);
   if (index === -1) {
     return;
@@ -73,9 +73,44 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
     return;
   }
 
+  // The AppLifecycle effect, saveFile, and tab reopen can all race to load the
+  // same tab. Coalesce into a single in-flight load so awaiting callers wait
+  // for the real result instead of returning early.
   if (currentState === TabLoadState.LOADING) {
+    await contentLoadPromises.get(tabId);
     return;
   }
+
+  const loadPromise = loadTabContentInternal(tabId);
+  contentLoadPromises.set(tabId, loadPromise);
+  try {
+    await loadPromise;
+  } finally {
+    if (contentLoadPromises.get(tabId) === loadPromise) {
+      contentLoadPromises.delete(tabId);
+    }
+  }
+}
+
+export async function waitForTabContentLoad(tabId: string): Promise<boolean> {
+  const tab = editorStore.tabs.find((t) => t.id === tabId);
+  if (!tab) return false;
+  if (tab.contentLoaded) return true;
+
+  const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
+
+  if (currentState !== TabLoadState.LOADING) {
+    await loadTabContentLazy(tabId);
+  } else {
+    const pending = contentLoadPromises.get(tabId);
+    if (pending) await pending;
+  }
+
+  return editorStore.tabs.find((t) => t.id === tabId)?.contentLoaded ?? false;
+}
+
+async function loadTabContentInternal(tabId: string): Promise<void> {
+  const start = performance.now();
 
   setTabLoadState(tabId, TabLoadState.LOADING);
 

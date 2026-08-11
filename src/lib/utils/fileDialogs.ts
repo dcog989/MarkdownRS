@@ -10,6 +10,7 @@ import {
   sanitizePath,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
+import { waitForTabContentLoad } from '$lib/services/tabLoadStateMachine';
 import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
 import {
@@ -209,6 +210,23 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
   }
 
   try {
+    // Lazy-loaded session-restored tabs hold an empty placeholder until
+    // loadTabContentLazy resolves; writing that placeholder would truncate the
+    // file on disk to empty. Wait for the in-flight load (or trigger one) so
+    // the content written below is the real file content.
+    if (!tab.contentLoaded) {
+      const loaded = await waitForTabContentLoad(tabId);
+      if (!loaded) {
+        if (pendingSavePath) activeSaves.delete(pendingSavePath);
+        return false;
+      }
+      tab = getTab();
+      if (!tab) {
+        if (pendingSavePath) activeSaves.delete(pendingSavePath);
+        return false;
+      }
+    }
+
     let savePath: string | null = null;
 
     if (!forceNewPath && tab.path) {
