@@ -5,7 +5,25 @@ use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
+
+/// Name of the event emitted when spellcheck initialization reaches a
+/// terminal state. Payload is the status string: "ready" or "failed".
+const SPELLCHECK_STATUS_EVENT: &str = "spellcheck-status";
+
+fn set_spellcheck_status(app_handle: &tauri::AppHandle, status: SpellcheckStatus) {
+    let state = app_handle.state::<AppState>();
+    let mut guard = state.spellcheck_status.lock_or_recover();
+    *guard = status;
+    drop(guard);
+
+    let status_str = match status {
+        SpellcheckStatus::Ready => "ready",
+        SpellcheckStatus::Failed => "failed",
+        SpellcheckStatus::Loading | SpellcheckStatus::Uninitialized => return,
+    };
+    let _ = app_handle.emit(SPELLCHECK_STATUS_EVENT, status_str);
+}
 
 /// Build one `Dictionary` per language (each keeps its own affix rules)
 /// plus a single supplemental word-only dictionary for technical terms.
@@ -97,8 +115,7 @@ async fn run_spellcheck_init(
             "No language dictionaries were loaded; spellchecker disabled ({} supplemental words skipped)",
             supplemental_count
         );
-        let mut status = state.spellcheck_status.lock_or_recover();
-        *status = SpellcheckStatus::Failed;
+        set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
         return;
     }
 
@@ -112,23 +129,20 @@ async fn run_spellcheck_init(
             let dict_count = dictionaries.len();
             let mut speller = state.speller.lock_or_recover();
             *speller = Some(dictionaries);
-            let mut status = state.spellcheck_status.lock_or_recover();
-            *status = SpellcheckStatus::Ready;
             log::info!(
                 "Spellchecker ready: {} dictionaries, {} supplemental words",
                 dict_count,
                 supplemental_count
             );
+            set_spellcheck_status(&app_handle, SpellcheckStatus::Ready);
         },
         Ok(_) => {
             log::warn!("No dictionary content available");
-            let mut status = state.spellcheck_status.lock_or_recover();
-            *status = SpellcheckStatus::Failed;
+            set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
         },
         Err(e) => {
             log::error!("Dictionary construction task panicked: {:?}", e);
-            let mut status = state.spellcheck_status.lock_or_recover();
-            *status = SpellcheckStatus::Failed;
+            set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
         },
     }
 
@@ -192,9 +206,12 @@ pub async fn init_spellchecker(
         if let Err(e) = handle.await {
             log::error!("Spellchecker init task panicked: {:?}", e);
             let state = app_handle.state::<AppState>();
-            let mut status = state.spellcheck_status.lock_or_recover();
-            if *status == SpellcheckStatus::Loading {
-                *status = SpellcheckStatus::Failed;
+            let was_loading = {
+                let status = state.spellcheck_status.lock_or_recover();
+                *status == SpellcheckStatus::Loading
+            };
+            if was_loading {
+                set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
             }
         }
     });
