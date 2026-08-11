@@ -59,12 +59,11 @@ pub async fn check_words(
                 continue;
             }
 
+            // The frontend strips possessive suffixes before calling, so this
+            // only guards against a possessive word arriving directly.
             if lower
                 .strip_suffix("'s")
                 .is_some_and(|b| custom_snapshot.contains(b))
-                || lower
-                    .strip_suffix('\'')
-                    .is_some_and(|b| custom_snapshot.contains(b))
             {
                 continue;
             }

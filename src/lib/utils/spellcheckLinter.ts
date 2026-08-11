@@ -8,7 +8,7 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { CONFIG } from '$lib/utils/config';
 import { logger } from '$lib/utils/logger';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+import { spellcheckState, stripPossessiveSuffix } from '$lib/utils/spellcheck.svelte';
 
 export const spellcheckRefreshEffect = StateEffect.define<null>();
 
@@ -86,15 +86,9 @@ export const createSpellCheckLinter = () => {
 
               if (customDict.has(wLower)) continue;
 
-              let checkWord = word;
-              let checkLower = wLower;
-
-              if (wLower.endsWith("'s")) {
-                const base = wLower.slice(0, -2);
-                if (customDict.has(base)) continue;
-                checkWord = word.slice(0, -2);
-                checkLower = base;
-              }
+              const checkWord = stripPossessiveSuffix(word);
+              const checkLower = checkWord.toLowerCase();
+              if (checkLower !== wLower && customDict.has(checkLower)) continue;
 
               if (validCache.has(checkLower)) {
                 continue;
@@ -133,7 +127,7 @@ export const createSpellCheckLinter = () => {
 
             for (const word of wordsArray) {
               const wLower = word.toLowerCase();
-              const baseLower = wLower.endsWith("'s") ? wLower.slice(0, -2) : wLower;
+              const baseLower = stripPossessiveSuffix(word).toLowerCase();
 
               if (misspelledSet.has(wLower)) {
                 misspelledCache.add(baseLower);
