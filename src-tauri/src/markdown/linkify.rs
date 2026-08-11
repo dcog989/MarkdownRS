@@ -41,13 +41,32 @@ fn is_in_code_or_link<'a>(node: &'a AstNode<'a>) -> bool {
     })
 }
 
-/// Percent-encodes a file path into `out`, keeping unreserved characters and `/` intact.
+/// Percent-encodes a file path into `out`, keeping unreserved characters and
+/// `/` intact. Already-percent-encoded escapes (`%HH`) pass through unchanged
+/// so a pre-encoded path is not double-encoded; a lone `%` is encoded as `%25`.
 fn percent_encode_into(out: &mut String, s: &str) {
     out.reserve(s.len());
     let mut buf = [0; 4];
-    for c in s.chars() {
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
         match c {
             'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' | '/' => out.push(c),
+            '%' => {
+                let mut lookahead = chars.clone();
+                match (
+                    lookahead.next().filter(|c| c.is_ascii_hexdigit()),
+                    lookahead.next().filter(|c| c.is_ascii_hexdigit()),
+                ) {
+                    (Some(h1), Some(h2)) => {
+                        chars.next();
+                        chars.next();
+                        out.push('%');
+                        out.push(h1);
+                        out.push(h2);
+                    },
+                    _ => out.push_str("%25"),
+                }
+            },
             _ => {
                 let encoded = c.encode_utf8(&mut buf);
                 for &b in encoded.as_bytes() {
@@ -183,20 +202,26 @@ pub(super) fn linkify_wikilinks_ast<'a>(arena: &'a Arena<'a>, root: &'a AstNode<
     linkify_text_nodes(arena, root, &WIKILINK_REGEX, build_wikilink_link);
 }
 
+/// Characters trimmed from the end of a matched file path when they are
+/// sentence punctuation rather than part of the path ("Open /a/b.txt, ...").
+static TRAILING_PATH_PUNCT: &[char] = &['.', ',', ';', ':', '!', '?'];
+
 /// Builds a file-path splice for a path match, keeping the leading whitespace
-/// captured by the regex in the "before" text.
+/// captured by the regex in the "before" text. Trailing sentence punctuation
+/// is left as plain text so it is not swallowed into the link's label/href.
 fn build_file_path_link(cap: &regex::Captures<'_>) -> Option<Splice> {
-    let full = cap.get(0)?;
     let path_match = cap.get(1)?;
     let path = path_match.as_str();
+    let trimmed = path.trim_end_matches(|c: char| TRAILING_PATH_PUNCT.contains(&c));
+    let link_end = path_match.start() + trimmed.len();
 
     let mut link = String::from(r#"<a href=""#);
-    percent_encode_into(&mut link, path);
+    percent_encode_into(&mut link, trimmed);
     link.push_str(r#"" class="file-path-link" style="color: var(--accent-filepath); text-decoration: underline; cursor: pointer;">"#);
-    html_escape_into(&mut link, path);
+    html_escape_into(&mut link, trimmed);
     link.push_str("</a>");
 
-    Some((path_match.start(), full.end(), link))
+    Some((path_match.start(), link_end, link))
 }
 
 /// Walks the AST and replaces file-path text segments with HtmlInline link nodes.
@@ -277,5 +302,38 @@ mod tests {
     fn does_not_linkify_blank_wikilink_targets() {
         let html = render_gfm("Text [[ ]] stays as-is.\n");
         assert!(!html.contains("class=\"wikilink\""));
+    }
+
+    #[test]
+    fn trims_trailing_punctuation_from_file_path_links() {
+        let html = render_gfm("See /a/b.txt, then /c/d.md. Done!\n");
+        // The comma and period stay as plain text after the link.
+        assert!(html.contains(r#"href="/a/b.txt""#), "html was: {html}");
+        assert!(html.contains(r#">/a/b.txt</a>,"#), "html was: {html}");
+        assert!(html.contains(r#"href="/c/d.md""#), "html was: {html}");
+        assert!(html.contains(r#">/c/d.md</a>."#), "html was: {html}");
+        assert!(
+            !html.contains(r#"/a/b.txt,"#),
+            "comma must not be linked: {html}"
+        );
+    }
+
+    #[test]
+    fn does_not_double_encode_percent_escapes() {
+        let html = render_gfm("See /docs/my%20file.md now.\n");
+        assert!(
+            html.contains(r#"href="/docs/my%20file.md""#),
+            "html was: {html}"
+        );
+        assert!(!html.contains("%2520"), "html was: {html}");
+    }
+
+    #[test]
+    fn encodes_lone_percent_signs() {
+        let html = render_gfm("See /tmp/50%off.txt now.\n");
+        assert!(
+            html.contains(r#"href="/tmp/50%25off.txt""#),
+            "html was: {html}"
+        );
     }
 }
