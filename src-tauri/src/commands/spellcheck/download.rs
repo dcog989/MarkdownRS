@@ -6,7 +6,8 @@ use std::time::Duration;
 use tokio::fs;
 
 const SPELL_CHECK_TIMEOUT_CONNECT: Duration = Duration::from_secs(2);
-const SPELL_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
+const SPELL_CHECK_TIMEOUT: Duration = Duration::from_secs(30);
+const SPELL_CHECK_MAX_ATTEMPTS: u32 = 2;
 
 /// Bump to invalidate the on-disk dictionary cache (e.g. when a source URL or
 /// upstream wordlist changes); older files are ignored by the versioned name.
@@ -27,6 +28,42 @@ async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String> {
     }
 }
 
+async fn download_once(
+    client: &reqwest::Client,
+    url: &str,
+    cache_path: &PathBuf,
+    label: &str,
+) -> Result<String> {
+    log::info!("Downloading {}: {}", label, url);
+    let resp = client
+        .get(url)
+        .timeout(SPELL_CHECK_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| anyhow!("Network error downloading {}: {}", label, e))?;
+
+    if !resp.status().is_success() {
+        return Err(anyhow!(
+            "HTTP Error downloading {}: Status {}",
+            label,
+            resp.status()
+        ));
+    }
+
+    let text = resp
+        .text()
+        .await
+        .map_err(|e| anyhow!("Failed to decode {}: {}", label, e))?;
+
+    if let Err(e) = crate::utils::atomic_write(cache_path, text.as_bytes()).await {
+        log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
+        let _ = fs::remove_file(cache_path).await;
+        return Err(anyhow!("Write error: {}", e));
+    }
+
+    read_cache_or_delete(cache_path, label).await
+}
+
 async fn ensure_file_downloaded(
     client: &reqwest::Client,
     url: &str,
@@ -38,36 +75,24 @@ async fn ensure_file_downloaded(
         return read_cache_or_delete(cache_path, label).await;
     }
 
-    log::info!("Downloading {}: {}", label, url);
-    match client.get(url).send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                match resp.text().await {
-                    Ok(text) => {
-                        if let Err(e) =
-                            crate::utils::atomic_write(cache_path, text.as_bytes()).await
-                        {
-                            log::error!("Failed to save {} to {:?}: {}", label, cache_path, e);
-                            let _ = fs::remove_file(cache_path).await;
-                            return Err(anyhow!("Write error: {}", e));
-                        }
-                        read_cache_or_delete(cache_path, label).await
-                    },
-                    Err(e) => {
-                        log::error!("Failed to decode {}: {}", label, e);
-                        Err(anyhow!("Text decode error: {}", e))
-                    },
-                }
-            } else {
-                log::warn!("Failed to download {}: Status {}", label, resp.status());
-                Err(anyhow!("HTTP Error: {}", resp.status()))
-            }
-        },
-        Err(e) => {
-            log::error!("Network error downloading {}: {}", label, e);
-            Err(anyhow!("Network error: {}", e))
-        },
+    let mut last_error = None;
+    for attempt in 1..=SPELL_CHECK_MAX_ATTEMPTS {
+        match download_once(client, url, cache_path, label).await {
+            Ok(content) => return Ok(content),
+            Err(e) => {
+                log::warn!(
+                    "Download attempt {}/{} for {} failed: {:#}",
+                    attempt,
+                    SPELL_CHECK_MAX_ATTEMPTS,
+                    label,
+                    e
+                );
+                last_error = Some(e);
+            },
+        }
     }
+
+    Err(last_error.unwrap_or_else(|| anyhow!("Download failed: {}", label)))
 }
 
 pub async fn load_language_dictionary(
