@@ -167,7 +167,7 @@ export class SpellcheckManager {
     this.pendingFetches.add(w);
 
     try {
-      const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Dictionary:Add', undefined, {
+      const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Spellcheck:Suggest', undefined, {
         ignore: true,
       });
       if (suggestions) {
@@ -190,7 +190,7 @@ export class SpellcheckManager {
       return this.suggestionCache.get(word) ?? [];
     }
 
-    const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Dictionary:Add', undefined, {
+    const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Spellcheck:Suggest', undefined, {
       report: true,
     });
     if (suggestions) {
