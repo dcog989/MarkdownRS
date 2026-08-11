@@ -161,7 +161,7 @@ pub async fn download_and_collect_words(
     spec_codes: &[String],
     tech_cache_dir: &Path,
     cancel: &std::sync::atomic::AtomicBool,
-    progress: &mut dyn FnMut(usize, usize),
+    progress: &mut (dyn FnMut(usize, usize) + Send),
 ) -> (Vec<(String, String)>, HashSet<String>) {
     let total = dict_codes.len() + spec_codes.len();
     let mut done = 0;

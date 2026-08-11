@@ -161,6 +161,6 @@ pub async fn cancel_spellcheck_init(
         *loaded = None;
     }
     // Let a frontend waiting on init completion resolve promptly.
-    let _ = app_handle.emit(super::init::SPELLCHECK_STATUS_EVENT, "failed");
+    let _ = app_handle.emit(init::SPELLCHECK_STATUS_EVENT, "failed");
     Ok(())
 }

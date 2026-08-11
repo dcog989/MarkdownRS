@@ -137,7 +137,6 @@ async fn run_spellcheck_init(
 
     let client = super::download::build_http_client();
     let state = app_handle.state::<AppState>();
-    let total = dict_codes.len() + spec_codes.len();
     let progress_handle = app_handle.clone();
     let mut progress = move |done: usize, total: usize| {
         emit_progress(&progress_handle, "download", done, total);

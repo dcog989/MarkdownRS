@@ -112,6 +112,12 @@ export async function waitForTabContentLoad(tabId: string): Promise<boolean> {
 async function loadTabContentInternal(tabId: string): Promise<void> {
   const start = performance.now();
 
+  const tab = editorStore.tabs.find((t) => t.id === tabId);
+  if (!tab) {
+    logger.session.debug('TabClosedDuringLoad', { tabId });
+    return;
+  }
+
   setTabLoadState(tabId, TabLoadState.LOADING);
 
   const requestId = Date.now();
