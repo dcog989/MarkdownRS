@@ -177,6 +177,19 @@ mod tests {
     }
 
     #[test]
+    fn strips_nested_brace_json_frontmatter_from_output() {
+        // The outer `}` must be part of the frontmatter, not a stray paragraph.
+        let html = render_gfm("{\n\"author\": {\n\"name\": \"x\"\n}\n}\n\n# Body\n");
+        assert!(!html.contains("author"), "html was: {html}");
+        assert!(
+            !html.contains("}</p>"),
+            "stray closing brace leaked: {html}"
+        );
+        assert!(html.contains("<h1"));
+        assert!(html.contains("Body"));
+    }
+
+    #[test]
     fn frontmatter_preserves_sourcepos_line_numbers() {
         // The frontmatter block occupies lines 1-3; the body heading must map
         // back to line 5 in the editor for scroll sync.

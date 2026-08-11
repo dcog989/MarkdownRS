@@ -45,7 +45,8 @@ fn match_opening(line: &str) -> Option<FrontmatterFormat> {
 /// The opening line must already be known to be a delimiter. JSON frontmatter
 /// can be wrapped in either `;;;` or `{...}`; the closing line must match the
 /// same style so a `}` inside a `;;;`-delimited body is not mistaken for the
-/// closing delimiter.
+/// closing delimiter. `{...}` blocks are closed by brace depth instead (see
+/// [`extract_frontmatter`]), so this only pairs the exact-match delimiters.
 fn closing_delimiter(opening: &str) -> &str {
     if opening.trim_end() == "{" {
         "}"
@@ -59,6 +60,12 @@ fn closing_delimiter(opening: &str) -> &str {
 /// The opening delimiter must be the first line (at column 0) and a matching
 /// closing delimiter must appear later. A lone `---` thematic break without a
 /// closing line is not treated as frontmatter.
+///
+/// YAML (`---`), TOML (`+++`) and `;;;`-delimited JSON close on the first
+/// matching line. `{...}`-delimited JSON is closed by brace depth: the block
+/// ends on the line where the brace count returns to zero, with double-quoted
+/// strings skipped so `}` inside a string value is not mistaken for the
+/// closing brace. This keeps nested objects from leaking the outer `}`.
 pub fn extract_frontmatter(content: &str) -> Option<Frontmatter> {
     if content.is_empty() {
         return None;
@@ -70,11 +77,46 @@ pub fn extract_frontmatter(content: &str) -> Option<Frontmatter> {
     let closing = closing_delimiter(first.trim_end());
 
     let mut offset = first.len();
+    // Brace-style JSON: the opening `{` counts as depth 1; exact-match
+    // delimiters keep a depth of 0 so the `line == closing` check applies.
+    let mut brace_depth = if format == FrontmatterFormat::Json && closing == "}" {
+        1
+    } else {
+        0
+    };
+    let mut in_string = false;
+    let mut escaped = false;
+
     // Opening delimiter is line 1; `line_count` tracks the current line number.
     for (line_count, segment) in (2..).zip(segments) {
         offset += segment.len();
         let line = segment.strip_suffix('\n').unwrap_or(segment);
-        if line.trim_end() == closing {
+
+        let is_closing = if brace_depth > 0 {
+            for c in line.chars() {
+                if in_string {
+                    if escaped {
+                        escaped = false;
+                    } else if c == '\\' {
+                        escaped = true;
+                    } else if c == '"' {
+                        in_string = false;
+                    }
+                } else {
+                    match c {
+                        '"' => in_string = true,
+                        '{' => brace_depth += 1,
+                        '}' => brace_depth -= 1,
+                        _ => {},
+                    }
+                }
+            }
+            brace_depth == 0
+        } else {
+            line.trim_end() == closing
+        };
+
+        if is_closing {
             return Some(Frontmatter {
                 format,
                 line_count,
@@ -146,6 +188,40 @@ mod tests {
         assert_eq!(fm.format, FrontmatterFormat::Json);
         assert_eq!(fm.line_count, 3);
         assert_eq!(&content[fm.end_offset..], "# Body\n");
+    }
+
+    #[test]
+    fn detects_nested_json_frontmatter_with_braces() {
+        // The inner object's `}` must not close the block; the outer `}`
+        // closes it, so no stray brace leaks into the body.
+        let content = "{\n\"author\": {\n\"name\": \"x\"\n}\n}\n# Body\n";
+        let fm = extract_frontmatter(content).unwrap();
+        assert_eq!(fm.format, FrontmatterFormat::Json);
+        assert_eq!(fm.line_count, 5);
+        assert_eq!(&content[fm.end_offset..], "# Body\n");
+    }
+
+    #[test]
+    fn brace_json_ignores_braces_inside_strings() {
+        let content = "{\n\"s\": \"a }\nb\"\n}\n# Body\n";
+        let fm = extract_frontmatter(content).unwrap();
+        assert_eq!(fm.format, FrontmatterFormat::Json);
+        assert_eq!(fm.line_count, 4);
+        assert_eq!(&content[fm.end_offset..], "# Body\n");
+    }
+
+    #[test]
+    fn brace_json_closing_on_shared_line_with_content() {
+        let content = "{\n\"a\": {\"b\": 1}}\n# Body\n";
+        let fm = extract_frontmatter(content).unwrap();
+        assert_eq!(fm.format, FrontmatterFormat::Json);
+        assert_eq!(fm.line_count, 2);
+        assert_eq!(&content[fm.end_offset..], "# Body\n");
+    }
+
+    #[test]
+    fn brace_json_without_closing_brace_is_ignored() {
+        assert_eq!(extract_frontmatter("{\n\"title\": \"Test\"\n"), None);
     }
 
     #[test]
