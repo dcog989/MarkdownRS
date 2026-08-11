@@ -44,6 +44,8 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
         const normalizedContent = normalizeLineEndings(res.content);
         storeTab.lastSavedHash = hashContent(normalizedContent);
         storeTab.isDirty = isDirty(storeTab.content, storeTab.lastSavedHash);
+        storeTab.encoding = res.encoding.toUpperCase();
+        storeTab.hasBom = res.has_bom;
       }
     } catch (err) {
       AppError.handle('File:Read', err, {

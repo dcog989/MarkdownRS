@@ -33,6 +33,13 @@ export interface LintDiagnostic {
 export interface FileContent {
   content: string;
   encoding: string;
+  has_bom: boolean;
+}
+
+export interface WriteFileResult {
+  bytes_written: number;
+  encoding: string;
+  has_bom: boolean;
 }
 
 export interface FileEntry {
@@ -78,8 +85,8 @@ export interface BackendCommands {
     return: FileContent;
   };
   write_text_file: {
-    args: { path: string; content: string };
-    return: boolean;
+    args: { path: string; content: string; encoding?: string; hasBom?: boolean };
+    return: WriteFileResult;
   };
   write_binary_file: {
     args: { path: string; content: number[] };

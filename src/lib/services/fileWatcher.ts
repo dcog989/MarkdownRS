@@ -232,6 +232,7 @@ class FileWatcherService {
                 reloadedTab.lineEnding,
                 reloadedTab.encoding,
                 reloadedTab.sizeBytes,
+                reloadedTab.hasBom,
               );
             }
           }

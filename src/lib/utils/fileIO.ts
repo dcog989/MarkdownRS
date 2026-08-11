@@ -1,9 +1,12 @@
 import { translate } from '$lib/i18n';
+import type { WriteFileResult } from '$lib/types/api';
 import { callBackend } from './backend';
 import { AppError } from './errorHandling';
 import { getFilename } from './fileValidation';
 
-export async function readTextFile(path: string): Promise<{ content: string; encoding: string } | null> {
+export async function readTextFile(
+  path: string,
+): Promise<{ content: string; encoding: string; has_bom: boolean } | null> {
   return callBackend('read_text_file', { path }, 'File:Read');
 }
 
@@ -47,7 +50,11 @@ export async function createDirOnDisk(path: string): Promise<boolean> {
   return result !== null;
 }
 
-export async function writeTextFile(path: string, content: string): Promise<boolean> {
-  const result = await callBackend('write_text_file', { path, content }, 'File:Write');
-  return !!result;
+export async function writeTextFile(
+  path: string,
+  content: string,
+  options?: { encoding?: string; hasBom?: boolean },
+): Promise<WriteFileResult | null> {
+  const result = await callBackend('write_text_file', { path, content, ...options }, 'File:Write');
+  return result;
 }

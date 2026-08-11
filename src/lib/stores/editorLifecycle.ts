@@ -87,6 +87,7 @@ export function addTab(title: string = '', content: string = '') {
     formattedTimestamp: formatTimestampForDisplay(now),
     lineEnding: 'LF',
     encoding: 'UTF-8',
+    hasBom: false,
     contentLoaded: true,
     wordCountPending: false,
   };

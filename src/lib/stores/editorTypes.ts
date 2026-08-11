@@ -18,6 +18,7 @@ export type EditorTab = {
   customTitle?: string;
   lineEnding: 'LF' | 'CRLF';
   encoding: string;
+  hasBom: boolean;
   fileCheckFailed?: boolean;
   preferredExtension?: 'md' | 'txt';
   contentLoaded?: boolean;

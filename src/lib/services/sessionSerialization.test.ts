@@ -28,6 +28,7 @@ function makeTab(overrides: Partial<EditorTab>): EditorTab {
     cursor: { anchor: 0, head: 0 },
     lineEnding: 'LF',
     encoding: 'UTF-8',
+    hasBom: false,
     contentLoaded: true,
     ...overrides,
   };

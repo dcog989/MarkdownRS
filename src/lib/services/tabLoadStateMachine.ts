@@ -98,6 +98,8 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
 
     let normalizedContent = '';
     let lastSavedHash = '';
+    let diskEncoding: string | null = null;
+    let diskHasBom: boolean | null = null;
 
     if (data && data.content !== null && data.content !== undefined && data.content !== '') {
       normalizedContent = normalizeLineEndings(data.content);
@@ -113,6 +115,8 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         try {
           const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
           if (fileData?.content) {
+            diskEncoding = fileData.encoding;
+            diskHasBom = fileData.has_bom;
             const diskContent = normalizeLineEndings(fileData.content);
             lastSavedHash = hashContent(diskContent);
             // A clean tab's truth is the file on disk. If the stored session
@@ -184,6 +188,8 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         // from the persisted `line_ending` (set during session restore) rather
         // than being inferred from the normalized text.
         lineEnding: currentTab.lineEnding,
+        encoding: diskEncoding ? diskEncoding.toUpperCase() : currentTab.encoding,
+        hasBom: diskHasBom ?? currentTab.hasBom,
         contentLoaded: true,
         isDirty: isDirty(content, lastSavedHash),
       };

@@ -29,7 +29,11 @@ describe('createNewFile', () => {
 
   it('uses the template file content when a template is configured', async () => {
     settingsState.newFileTemplatePath = '/templates/base.md';
-    mockedReadTextFile.mockResolvedValue({ content: '# Title\n\nBody text', encoding: 'UTF-8' });
+    mockedReadTextFile.mockResolvedValue({
+      content: '# Title\n\nBody text',
+      encoding: 'UTF-8',
+      has_bom: false,
+    });
 
     const id = await createNewFile();
 

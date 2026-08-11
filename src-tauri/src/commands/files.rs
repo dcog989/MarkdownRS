@@ -1,5 +1,8 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{decode_text, format_system_time, handle_error, run_blocking, validate_path};
+use crate::utils::{
+    decode_text, encode_text, format_system_time, handle_error, run_blocking, validate_path,
+};
+use encoding_rs::Encoding;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use tokio::fs;
@@ -19,6 +22,14 @@ pub struct FileMetadata {
 pub struct FileContent {
     pub content: String,
     pub encoding: String,
+    pub has_bom: bool,
+}
+
+#[derive(Serialize)]
+pub struct WriteFileResult {
+    pub bytes_written: u64,
+    pub encoding: String,
+    pub has_bom: bool,
 }
 
 #[tauri::command]
@@ -56,8 +67,12 @@ pub async fn read_text_file(
             .await
             .map_err(|e| handle_error(Some(&path), "read file", e))?;
 
-        let (content, encoding) = decode_text(bytes);
-        Ok::<_, String>(FileContent { content, encoding })
+        let (content, encoding, has_bom) = decode_text(bytes);
+        Ok::<_, String>(FileContent {
+            content,
+            encoding,
+            has_bom,
+        })
     });
     let result = result?;
 
@@ -72,7 +87,12 @@ pub async fn read_text_file(
 }
 
 #[tauri::command]
-pub async fn write_text_file(path: String, content: String) -> Result<bool, String> {
+pub async fn write_text_file(
+    path: String,
+    content: String,
+    encoding: Option<String>,
+    has_bom: Option<bool>,
+) -> Result<WriteFileResult, String> {
     let content_size = content.len();
 
     crate::timed_info!(
@@ -81,10 +101,39 @@ pub async fn write_text_file(path: String, content: String) -> Result<bool, Stri
         {
             validate_path(&path)?;
             let path_buf = PathBuf::from(&path);
-            crate::utils::atomic_write(&path_buf, content.as_bytes())
+
+            let encoding_name = encoding.unwrap_or_else(|| "UTF-8".to_string());
+            let encoding = Encoding::for_label(encoding_name.as_bytes())
+                .ok_or_else(|| format!("Unsupported encoding '{}'", encoding_name))?;
+            let requested_bom = has_bom.unwrap_or(false);
+
+            let (bytes, written_encoding, written_has_bom) =
+                match encode_text(&content, encoding, requested_bom) {
+                    Ok(bytes) => (bytes, encoding.name().to_string(), requested_bom),
+                    Err(()) => {
+                        // The edited content holds characters the original
+                        // encoding cannot represent (e.g. an emoji pasted into
+                        // a windows-1252 file); re-encoding would silently
+                        // corrupt them, so fall back to UTF-8 without a BOM and
+                        // report it so the tab's encoding stays truthful.
+                        log::warn!(
+                            "Content not representable in {}, falling back to UTF-8: {}",
+                            encoding.name(),
+                            path
+                        );
+                        (content.as_bytes().to_vec(), "UTF-8".to_string(), false)
+                    },
+                };
+
+            crate::utils::atomic_write(&path_buf, &bytes)
                 .await
                 .map_err(|e| handle_error(Some(&path), "save file", e))?;
-            Ok::<_, String>(true)
+
+            Ok::<_, String>(WriteFileResult {
+                bytes_written: bytes.len() as u64,
+                encoding: written_encoding,
+                has_bom: written_has_bom,
+            })
         },
         size = content_size,
         path = path,

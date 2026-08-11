@@ -103,7 +103,6 @@ export async function openFile(path?: string): Promise<void> {
 
     const { lineCount, widestColumn } = computeLineStats(result.content);
 
-    const sizeBytes = byteLength(result.content);
     const initialWordCount = computeWordCount(result.content);
 
     updateTransientState(id, { fileCheckPerformed: false });
@@ -112,7 +111,8 @@ export async function openFile(path?: string): Promise<void> {
       isDirty: false,
       lineEnding: detectedLineEnding,
       encoding: result.encoding.toUpperCase(),
-      sizeBytes,
+      hasBom: result.has_bom,
+      sizeBytes: metadata.size,
       wordCount: initialWordCount,
       lineCount,
       widestColumn,
@@ -291,8 +291,11 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       fileWatcher.setWriteLock(sanitizedPath, true);
       lockedPath = sanitizedPath;
 
-      const success = await writeTextFile(sanitizedPath, diskContent);
-      if (!success) {
+      const writeResult = await writeTextFile(sanitizedPath, diskContent, {
+        encoding: tab.encoding,
+        hasBom: tab.hasBom,
+      });
+      if (!writeResult) {
         fileWatcher.setWriteLock(sanitizedPath, false);
         if (pendingSavePath) activeSaves.delete(pendingSavePath);
         AppError.handle('File:Write', new Error(translate('fileOps.failedSave')), { showToast: true });
@@ -319,7 +322,15 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         if (smartTitle) finalTitle = smartTitle;
       }
 
-      saveTabComplete(tabId, sanitizedPath, finalTitle, targetLineEnding);
+      saveTabComplete(
+        tabId,
+        sanitizedPath,
+        finalTitle,
+        targetLineEnding,
+        writeResult.encoding.toUpperCase(),
+        writeResult.has_bom,
+        writeResult.bytes_written,
+      );
       markAsSaved(tabId);
       invalidateMetadataCache(sanitizedPath);
       await refreshMetadata(tabId, sanitizedPath);

@@ -36,6 +36,10 @@ pub struct TabState {
     pub top_line: i32,
     #[serde(default)]
     pub line_ending: Option<String>,
+    #[serde(default)]
+    pub encoding: Option<String>,
+    #[serde(default)]
+    pub has_bom: bool,
 }
 
 impl TabState {
@@ -161,6 +165,8 @@ fn map_tab_state(row: &rusqlite::Row) -> rusqlite::Result<TabState> {
         scroll_top: row.get(col("scroll_top"))?,
         top_line: row.get(col("top_line"))?,
         line_ending: row.get(col("line_ending"))?,
+        encoding: row.get(col("encoding"))?,
+        has_bom: row.get::<_, i32>(col("has_bom"))? != 0,
     })
 }
 
@@ -222,6 +228,7 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
         let is_pinned: i32 = tab.is_pinned as i32;
         let file_check_failed: i32 = tab.file_check_failed as i32;
         let file_check_performed: i32 = tab.file_check_performed as i32;
+        let has_bom: i32 = tab.has_bom as i32;
 
         upsert_stmt.execute(rusqlite::params![
             &tab.id,
@@ -242,6 +249,8 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
             &tab.scroll_top,
             &tab.top_line,
             &tab.line_ending,
+            &tab.encoding,
+            &has_bom,
         ])?;
     }
 
@@ -270,6 +279,8 @@ mod tests {
             scroll_top: 1280.0,
             top_line: 42,
             line_ending: Some("LF".to_string()),
+            encoding: Some("UTF-8".to_string()),
+            has_bom: false,
             created: Some("2026-01-01".to_string()),
             modified: None,
             is_pinned: false,
@@ -303,6 +314,8 @@ mod tests {
         assert_eq!(t.scroll_top, 1280.0);
         assert_eq!(t.top_line, 42);
         assert_eq!(t.line_ending.as_deref(), Some("LF"));
+        assert_eq!(t.encoding.as_deref(), Some("UTF-8"));
+        assert!(!t.has_bom);
         assert_eq!(t.created.as_deref(), Some("2026-01-01"));
         assert!(!t.is_pinned);
         assert_eq!(t.custom_title.as_deref(), Some("Tab"));

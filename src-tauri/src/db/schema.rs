@@ -99,6 +99,16 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
         ddl: "TEXT",
         preserve_old_on_null: false,
     },
+    TabColumn {
+        name: "encoding",
+        ddl: "TEXT",
+        preserve_old_on_null: false,
+    },
+    TabColumn {
+        name: "has_bom",
+        ddl: "INTEGER NOT NULL DEFAULT 0",
+        preserve_old_on_null: false,
+    },
 ];
 
 /// Column list for `CREATE TABLE`.

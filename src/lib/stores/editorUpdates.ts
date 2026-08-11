@@ -139,6 +139,7 @@ export function reloadTabContent(
   lineEnding: 'LF' | 'CRLF',
   encoding: string,
   sizeBytes: number,
+  hasBom: boolean,
 ) {
   const { lineCount, widestColumn } = computeLineStats(content);
 
@@ -161,6 +162,7 @@ export function reloadTabContent(
     lineEnding,
     encoding,
     sizeBytes,
+    hasBom,
     wordCount,
     lineCount,
     widestColumn,
@@ -181,10 +183,26 @@ export function updateContentOnly(id: string, content: string, forceSync: boolea
   }));
 }
 
-export function saveTabComplete(id: string, path: string, title: string, lineEnding: 'LF' | 'CRLF') {
+export function saveTabComplete(
+  id: string,
+  path: string,
+  title: string,
+  lineEnding: 'LF' | 'CRLF',
+  encoding: string,
+  hasBom: boolean,
+  sizeBytes: number,
+) {
   const ts = getTransientState(id);
   if (ts) ts.fileCheckPerformed = false;
-  updateTab(id, () => ({ path, title, lineEnding, fileCheckFailed: false }));
+  updateTab(id, () => ({
+    path,
+    title,
+    lineEnding,
+    encoding,
+    hasBom,
+    sizeBytes,
+    fileCheckFailed: false,
+  }));
 }
 
 export function togglePreferredExtension(id: string) {

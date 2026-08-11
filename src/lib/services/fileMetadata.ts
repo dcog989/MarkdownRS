@@ -149,9 +149,18 @@ export async function reloadFileContent(tabId: string): Promise<void> {
   const detectedLineEnding = detectLineEnding(result.content);
 
   const content = normalizeLineEndings(result.content);
-  const sizeBytes = byteLength(result.content);
 
-  reloadTabContent(tabId, content, detectedLineEnding, result.encoding.toUpperCase(), sizeBytes);
+  // The decoded content's byte length (UTF-8) only matches the on-disk size
+  // for BOM-less UTF-8 files; read the real metadata so the size fast path and
+  // status bar reflect the actual file (BOM and non-UTF-8 encodings included).
+  const meta = await callBackendSafe('get_file_metadata', { path: sanitizedPath }, 'File:Metadata', {
+    showToast: false,
+    severity: 'warning',
+  });
+  const sizeBytes = meta?.size ?? byteLength(result.content);
 
+  reloadTabContent(tabId, content, detectedLineEnding, result.encoding.toUpperCase(), sizeBytes, result.has_bom);
+
+  invalidateMetadataCache(sanitizedPath);
   await refreshMetadata(tabId, sanitizedPath);
 }

@@ -141,12 +141,17 @@ mod tests {
 
         setup_schema(&mut conn).unwrap();
 
-        let expected: Vec<String> = schema::TAB_COLUMNS
+        // ALTER TABLE ADD COLUMN appends columns at the end, so the physical
+        // order after a re-add differs from TAB_COLUMNS; compare as sets.
+        let mut expected: Vec<String> = schema::TAB_COLUMNS
             .iter()
             .map(|c| c.name.to_string())
             .collect();
         for table in ["tabs", "closed_tabs"] {
-            assert_eq!(table_columns(&conn, table), expected);
+            let mut actual = table_columns(&conn, table);
+            actual.sort();
+            expected.sort();
+            assert_eq!(actual, expected);
         }
     }
 }

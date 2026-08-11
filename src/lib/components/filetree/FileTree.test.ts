@@ -51,6 +51,7 @@ function makeTab(id: string, path: string): EditorTab {
     cursor: { anchor: 0, head: 0 },
     lineEnding: 'LF',
     encoding: 'utf-8',
+    hasBom: false,
   };
 }
 
