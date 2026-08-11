@@ -4,7 +4,11 @@ import { indentUnit } from '@codemirror/language';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/view';
 import { onMount, untrack } from 'svelte';
-import { createWrapExtension, getAutocompletionConfig } from '$lib/components/editor/codemirror/config';
+import {
+  createWrapExtension,
+  getAutocompletionConfig,
+  getEditorKeymap,
+} from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
 import {
   type Compartments,
@@ -112,6 +116,7 @@ let comps: Compartments = {
   filePathComp: new Compartment(),
   markdownLintComp: new Compartment(),
   decorationComp: new Compartment(),
+  keymapComp: new Compartment(),
 };
 
 let effectiveMarkdown = $derived(isMarkdown && !isLargeFile);
@@ -140,6 +145,11 @@ $effect(() => {
   const fontSize = appContext.settings.editorFontSize;
   const fontFamily = appContext.settings.editorFontFamily;
   view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === 'dark')) });
+});
+
+$effect(() => {
+  if (!view) return;
+  view.dispatch({ effects: comps.keymapComp.reconfigure(getEditorKeymap([...customKeymap])) });
 });
 
 $effect(() => {

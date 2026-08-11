@@ -65,6 +65,7 @@ export interface Compartments {
   filePathComp: Compartment;
   markdownLintComp: Compartment;
   decorationComp: Compartment;
+  keymapComp: Compartment;
 }
 
 export interface ExtensionsConfig {
@@ -97,7 +98,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     createCodeBlockCopyHandler({ translate, showToast }),
 
     c.filePathComp.of(config.isMarkdown ? [linkPlugin, linkTheme] : []),
-    getEditorKeymap([...config.customKeymap]),
+    c.keymapComp.of(getEditorKeymap([...config.customKeymap])),
     c.themeComp.of(
       generateDynamicTheme(appContext.settings.editorFontSize, appContext.settings.editorFontFamily, isDark),
     ),
