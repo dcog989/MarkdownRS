@@ -1,5 +1,6 @@
 import type { Range } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
+import { handleWidgetClick } from './editorWidgetClick';
 
 export class ImageWidget extends WidgetType {
   constructor(
@@ -35,18 +36,9 @@ export function imageWidgetDecoration(from: number, to: number, src: string, alt
 }
 
 export const imageWidgetClickHandler = EditorView.domEventHandlers({
-  mousedown: (event, view) => {
-    const target = event.target as Node | null;
-    const element = target instanceof Element ? target : target?.parentElement;
-    const img = element?.closest<HTMLElement>('.cm-image-widget');
-    if (!img) return false;
-
-    const from = Number(img.dataset.from);
-    if (!Number.isFinite(from)) return false;
-
-    event.preventDefault();
-    view.focus();
-    view.dispatch({ selection: { anchor: from }, scrollIntoView: false });
-    return true;
-  },
+  mousedown: (event, view) =>
+    handleWidgetClick(view, event, '.cm-image-widget', (img) => {
+      const from = Number(img.dataset.from);
+      return Number.isFinite(from) ? from : null;
+    }),
 });
