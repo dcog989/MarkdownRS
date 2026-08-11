@@ -76,6 +76,7 @@ const DEFAULT_CONFIG = {
     INCREMENTAL_BLOCK_SIZE_LIMIT: 200,
     INCREMENTAL_CACHE_LIMIT: 1000,
     SCROLL_RESTORE_PARSE_TIMEOUT_MS: 500,
+    TAB_SWITCH_SCROLL_SUPPRESS_MS: 150, // Pause editor<->preview scroll sync while a tab switch settles
   },
 
   // UI Timing - Delays and debounces for UI interactions

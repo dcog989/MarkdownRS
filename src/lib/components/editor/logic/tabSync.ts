@@ -11,6 +11,7 @@ import { restoreScrollByTopLine } from '$lib/utils/cmScroll';
 import { CONFIG } from '$lib/utils/config';
 import { setActiveEditorView } from '$lib/utils/editorCommands';
 import { logger } from '$lib/utils/logger';
+import { scrollSync } from '$lib/utils/scrollSync.svelte';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import { applyImmediateSpellcheck } from '$lib/utils/spellcheckExtension.svelte';
 import { calculateCursorMetrics } from '$lib/utils/textMetrics';
@@ -75,6 +76,10 @@ export class TabSyncManager {
     const oldTabId = view._currentTabId;
 
     closeCompletion(view);
+
+    // The editor and preview each restore their own saved scroll during a tab
+    // switch; pause cross-pane syncing until the new tab's preview has rendered.
+    scrollSync.beginTabSwitch();
 
     let saveOldMs = 0;
     if (this.timerRefs.content) {

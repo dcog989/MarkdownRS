@@ -6,8 +6,10 @@ export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
 
 /**
  * Restore a saved scroll position by anchoring to a saved top line (robust
- * across content/wrap changes), falling back to a saved pixel offset. No-op
- * when there is no saved position to restore.
+ * across content/wrap changes), falling back to a saved pixel offset. When
+ * there is no saved position, restores to the top: the scroll DOM survives
+ * `setState`, so leaving it untouched on a tab switch would inherit the
+ * previous tab's deep scroll offset.
  *
  * Applies synchronously so it can run inside an existing `requestMeasure`
  * write (or `requestAnimationFrame`) without scheduling an extra measure
@@ -15,7 +17,7 @@ export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
  * top, with the deep viewport still unparsed and unstyled.
  */
 export function restoreScrollByTopLine(view: EditorView, topLine: number, scrollTop: number): void {
-  if (!view.scrollDOM || (topLine <= 1 && scrollTop <= 0)) return;
+  if (!view.scrollDOM) return;
 
   if (topLine > 1) {
     try {

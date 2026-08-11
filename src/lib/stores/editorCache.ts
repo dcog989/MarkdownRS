@@ -22,6 +22,7 @@ export function defaultTransientState(): TabTransientState {
     scrollPercentage: 0,
     scrollTop: 0,
     topLine: 1,
+    previewScrollTop: 0,
     contentChanged: false,
     isPersisted: false,
     fileCheckPerformed: false,

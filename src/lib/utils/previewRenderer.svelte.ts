@@ -1,4 +1,4 @@
-import { untrack } from 'svelte';
+import { tick, untrack } from 'svelte';
 import { translate } from '$lib/i18n';
 import { cachePreviewHeadings } from '$lib/stores/previewHeadings.svelte';
 import { CONFIG } from '$lib/utils/config';
@@ -58,7 +58,10 @@ export class PreviewRenderer {
         if (container) {
           scrollSync.registerPreview(container);
           scrollSync.markMapDirty();
-          untrack(() => scrollSync.updateMap());
+          // Rebuild the line map after the Svelte flush so it reflects the new
+          // tab's DOM (a synchronous build here would still read the previous
+          // tab's rendered content, producing a mixed/stale map).
+          void tick().then(() => untrack(() => scrollSync.updateMap()));
         }
       } catch (err) {
         if (controller.signal.aborted) return;
@@ -71,6 +74,7 @@ export class PreviewRenderer {
         if (this.renderAbortController === controller) {
           this.renderAbortController = null;
           this.resetRenderState();
+          scrollSync.endTabSwitch(CONFIG.PERFORMANCE.TAB_SWITCH_SCROLL_SUPPRESS_MS);
         }
       }
     }, CONFIG.PERFORMANCE.PREVIEW_RENDER_DEBOUNCE_MS);

@@ -5,16 +5,19 @@ import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
+import { getTransientState, updateTransientState } from '$lib/stores/editorStore.svelte';
 import { toggleOrientation, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { renderMermaidDiagrams } from '$lib/utils/mermaidRenderer';
 import { PreviewRenderer } from '$lib/utils/previewRenderer.svelte';
+import { scrollSync } from '$lib/utils/scrollSync.svelte';
 import { highlightCodeBlocks } from '$lib/utils/syntaxHighlightRenderer';
 
 let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();
+let previewHtmlWasEmpty = true;
 
 const renderer = new PreviewRenderer();
 
@@ -30,6 +33,16 @@ let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
 let flavor = $derived(appContext.settings.markdownFlavor);
 
 $effect(() => {
+  // Capture the outgoing tab's preview position before its content is reset,
+  // using the still-rendered html so placeholder/clamp resets are never saved.
+  const previousTabId = renderer.lastTabId;
+  const isSwitching = previousTabId !== '' && previousTabId !== tabId;
+  if (isSwitching) {
+    scrollSync.beginTabSwitch();
+    if (container && renderer.htmlContent) {
+      updateTransientState(previousTabId, { previewScrollTop: container.scrollTop });
+    }
+  }
   renderer.onTabSwitch(tabId);
 });
 
@@ -37,10 +50,30 @@ $effect(() => {
   const content = tabContent;
   const currentFlavor = flavor;
 
-  if (!isMarkdown) return;
+  if (!isMarkdown) {
+    // No preview is rendered for non-markdown tabs, so nothing will call
+    // endTabSwitch; resume syncing now that the switch has settled.
+    scrollSync.endTabSwitch(0);
+    return;
+  }
   if (content === renderer.lastRendered && renderer.htmlContent) return;
 
   return renderer.scheduleRender(content, currentFlavor, tabPath, container);
+});
+
+// Restore the preview's saved scroll position only when htmlContent goes from
+// empty to populated — i.e. a fresh render after a tab switch (onTabSwitch
+// resets htmlContent to ''). Same-tab re-renders keep the browser's pixel
+// offset and must not be touched.
+$effect(() => {
+  const html = renderer.htmlContent;
+  const isFreshRender = previewHtmlWasEmpty && !!html;
+  previewHtmlWasEmpty = !html;
+  if (!isFreshRender || !container) return;
+  const saved = getTransientState(tabId)?.previewScrollTop ?? 0;
+  if (saved <= 0) return;
+  void container.scrollHeight; // force layout so the scroll assignment sticks
+  container.scrollTop = saved;
 });
 
 onDestroy(() => {

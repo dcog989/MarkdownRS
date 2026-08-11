@@ -27,6 +27,34 @@ export class ScrollSyncManager {
   private updateMapTimer: number | null = null;
   private mapDirty = $state(false);
 
+  private suppressSync = false;
+  private suppressTimer: number | null = null;
+
+  /**
+   * Pause editor<->preview syncing while a tab switch settles. Each pane
+   * restores its own saved position during the switch, and the preview's
+   * transient line map is stale mid-transition; letting either pane drive the
+   * other would clobber the restored scroll (and get recorded as a user
+   * position). Ended via {@link endTabSwitch} after the preview renders.
+   */
+  beginTabSwitch() {
+    if (this.suppressTimer) {
+      clearTimeout(this.suppressTimer);
+      this.suppressTimer = null;
+    }
+    this.suppressSync = true;
+  }
+
+  /** Resume syncing after `delayMs`, once the switch's restores have settled. */
+  endTabSwitch(delayMs: number) {
+    if (!this.suppressSync) return;
+    if (this.suppressTimer) clearTimeout(this.suppressTimer);
+    this.suppressTimer = window.setTimeout(() => {
+      this.suppressSync = false;
+      this.suppressTimer = null;
+    }, delayMs);
+  }
+
   private boundOnEditorScroll: () => void;
   private boundOnPreviewScroll: () => void;
 
@@ -133,12 +161,14 @@ export class ScrollSyncManager {
   private syncEditorRAF: number | null = null;
 
   private onEditorScroll() {
+    if (this.suppressSync) return;
     if (this.activeSource === 'preview') return;
     this.setActiveSource('editor');
     this.syncPreviewThrottled();
   }
 
   private onPreviewScroll() {
+    if (this.suppressSync) return;
     if (this.activeSource === 'editor') return;
     this.setActiveSource('preview');
     this.syncEditorThrottled();

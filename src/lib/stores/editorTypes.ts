@@ -29,6 +29,7 @@ export type TabTransientState = {
   scrollPercentage: number;
   scrollTop: number;
   topLine: number;
+  previewScrollTop: number;
   contentChanged: boolean;
   isPersisted: boolean;
   fileCheckPerformed: boolean;
