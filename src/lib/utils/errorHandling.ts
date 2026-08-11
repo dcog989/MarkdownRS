@@ -26,6 +26,7 @@ export type ErrorContext =
   | 'Export:PDF'
   | 'Export:HTML'
   | 'Spellcheck:Init'
+  | 'Spellcheck:Suggest'
   | 'Bookmark:Add'
   | 'Bookmark:Remove'
   | 'Markdown:TOC'
