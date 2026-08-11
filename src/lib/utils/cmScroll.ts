@@ -44,7 +44,7 @@ export function restoreScrollByTopLine(view: EditorView, topLine: number, scroll
       // viewport bottom instead of the top line.
       if (safeLine + linesPerViewport >= view.state.doc.lines) {
         const lastLine = view.state.doc.line(view.state.doc.lines);
-        view.dispatch({ effects: EditorView.scrollIntoView(lastLine.from, { y: 'bottom' }) });
+        view.dispatch({ effects: EditorView.scrollIntoView(lastLine.from, { y: 'end' }) });
         return;
       }
       const lineInfo = view.state.doc.line(safeLine);
