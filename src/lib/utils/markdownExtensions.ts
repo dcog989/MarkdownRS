@@ -387,28 +387,14 @@ function findHiddenMarkers(
   tableSpans: Array<{ from: number; to: number }>,
 ) {
   const usedParents = new Set<string>();
+  const markerCfg = new Map<string, { marker: string; parents: ReadonlySet<string> }>();
 
   for (const cfg of MARKER_CONFIG) {
     for (const p of cfg.parents) usedParents.add(p);
+    markerCfg.set(cfg.marker, cfg);
   }
 
-  const hiddenParents: Array<{ from: number; to: number }> = [];
-
-  for (const { from, to } of view.visibleRanges) {
-    tree.iterate({
-      from,
-      to,
-      enter: (node) => {
-        if (!usedParents.has(node.name)) return;
-        if (isRevealed(view, node.from, node.to)) return false;
-        hiddenParents.push({ from: node.from, to: node.to });
-        return false;
-      },
-    });
-  }
-
-  if (hiddenParents.length === 0) return;
-
+  const hiddenStack: Array<{ from: number; to: number }> = [];
   const isInTable = (from: number, to: number) => tableSpans.some((span) => from >= span.from && to <= span.to);
 
   for (const { from, to } of view.visibleRanges) {
@@ -416,25 +402,36 @@ function findHiddenMarkers(
       from,
       to,
       enter: (node) => {
-        const cfg = MARKER_CONFIG.find((c) => c.marker === node.name);
+        if (usedParents.has(node.name)) {
+          if (isRevealed(view, node.from, node.to)) return false;
+          hiddenStack.push({ from: node.from, to: node.to });
+          return;
+        }
+        if (hiddenStack.length === 0) return;
+        const cfg = markerCfg.get(node.name);
         if (!cfg) return;
+        const parent = hiddenStack[hiddenStack.length - 1];
+        if (node.from < parent.from || node.to > parent.to) return;
         if (isInTable(node.from, node.to)) return;
-        for (const p of hiddenParents) {
-          if (node.from >= p.from && node.to <= p.to) {
-            let deco: typeof formattingMaskDeco;
-            if (cfg.marker === 'LinkMark') {
-              deco = formattingMaskAutolinkDeco;
-            } else {
-              deco = formattingMaskDeco;
-            }
-            ranges.push(deco.range(node.from, node.to));
-            if (HIDE_TRAILING_SPACE.has(cfg.marker)) {
-              const after = view.state.doc.sliceString(node.to, node.to + 1);
-              if (after === ' ') {
-                ranges.push(deco.range(node.to, node.to + 1));
-              }
-            }
-            break;
+        let deco: typeof formattingMaskDeco;
+        if (cfg.marker === 'LinkMark') {
+          deco = formattingMaskAutolinkDeco;
+        } else {
+          deco = formattingMaskDeco;
+        }
+        ranges.push(deco.range(node.from, node.to));
+        if (HIDE_TRAILING_SPACE.has(cfg.marker)) {
+          const after = view.state.doc.sliceString(node.to, node.to + 1);
+          if (after === ' ') {
+            ranges.push(deco.range(node.to, node.to + 1));
+          }
+        }
+      },
+      leave: (node) => {
+        if (usedParents.has(node.name) && hiddenStack.length > 0) {
+          const top = hiddenStack[hiddenStack.length - 1];
+          if (top.from === node.from && top.to === node.to) {
+            hiddenStack.pop();
           }
         }
       },
