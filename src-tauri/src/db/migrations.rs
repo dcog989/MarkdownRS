@@ -3,11 +3,12 @@ use rusqlite::Connection;
 
 use crate::db::schema;
 
-pub(super) fn migrations() -> Vec<String> {
-    vec![
-        // v1: Initial Schema (fresh databases start here with the full schema)
-        format!(
-            "CREATE TABLE IF NOT EXISTS tabs (
+/// Idempotent base schema for a fresh database. Every statement uses
+/// `IF NOT EXISTS`, so re-running against an existing database is a no-op;
+/// `setup_schema` then converges the tab tables on `TAB_COLUMNS`.
+fn base_schema_ddl() -> String {
+    format!(
+        "CREATE TABLE IF NOT EXISTS tabs (
         {}
     );
     CREATE TABLE IF NOT EXISTS closed_tabs (
@@ -37,36 +38,21 @@ pub(super) fn migrations() -> Vec<String> {
             SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
         );
     END;",
-            schema::tab_columns_ddl(),
-            schema::tab_columns_ddl(),
-        ),
-    ]
+        schema::tab_columns_ddl(),
+        schema::tab_columns_ddl(),
+    )
 }
 
 pub(super) fn setup_schema(conn: &mut Connection) -> Result<()> {
-    let current_version: i32 = conn.query_row("PRAGMA user_version", [], |row| row.get(0))?;
-
-    for (i, migration) in migrations().into_iter().enumerate() {
-        let version = (i + 1) as i32;
-        if version > current_version {
-            log::info!("Applying database migration v{}", version);
-            let tx = conn.transaction()?;
-            tx.execute_batch(&migration)?;
-            tx.execute(&format!("PRAGMA user_version = {}", version), [])?;
-            tx.commit()?;
-        }
-    }
-
-    // Existing databases can predate a column addition, or carry a user_version
-    // ahead of the (collapsed) migration list, so neither `CREATE TABLE IF NOT
-    // EXISTS` nor a versioned migration would add new columns. Converge the tab
-    // tables on TAB_COLUMNS regardless of version; this also auto-migrates any
-    // future column added to the single source of truth.
     let tx = conn.transaction()?;
+    tx.execute_batch(&base_schema_ddl())?;
+    // Existing databases can predate a column addition; `CREATE TABLE IF NOT
+    // EXISTS` won't add it, so converge tabs/closed_tabs on TAB_COLUMNS.
+    // This also auto-migrates any future column added to the single source of
+    // truth without a hand-written migration.
     ensure_tab_columns(&tx, "tabs")?;
     ensure_tab_columns(&tx, "closed_tabs")?;
     tx.commit()?;
-
     Ok(())
 }
 
@@ -112,11 +98,6 @@ mod tests {
         let mut conn = Connection::open_in_memory().unwrap();
         setup_schema(&mut conn).unwrap();
 
-        let version: i32 = conn
-            .query_row("PRAGMA user_version", [], |row| row.get(0))
-            .unwrap();
-        assert_eq!(version, 1);
-
         let expected: Vec<String> = schema::TAB_COLUMNS
             .iter()
             .map(|c| c.name.to_string())
@@ -137,11 +118,6 @@ mod tests {
         setup_schema(&mut conn).unwrap();
         setup_schema(&mut conn).unwrap();
 
-        let version: i32 = conn
-            .query_row("PRAGMA user_version", [], |row| row.get(0))
-            .unwrap();
-        assert_eq!(version, 1);
-
         let expected: Vec<String> = schema::TAB_COLUMNS
             .iter()
             .map(|c| c.name.to_string())
@@ -153,16 +129,15 @@ mod tests {
 
     #[test]
     fn setup_schema_adds_missing_columns_to_existing_database() {
-        // Simulate a database created before `line_ending` existed: same
-        // user_version (so the versioned migration is a no-op), but the column
-        // is missing from the physical tables.
+        // Simulate a database created before `line_ending` existed: the column
+        // is missing from the physical tables, and base schema DDL alone won't
+        // add it back.
         let mut conn = Connection::open_in_memory().unwrap();
         setup_schema(&mut conn).unwrap();
         conn.execute_batch("ALTER TABLE tabs DROP COLUMN line_ending")
             .unwrap();
         conn.execute_batch("ALTER TABLE closed_tabs DROP COLUMN line_ending")
             .unwrap();
-        conn.execute_batch("PRAGMA user_version = 1").unwrap();
 
         setup_schema(&mut conn).unwrap();
 
