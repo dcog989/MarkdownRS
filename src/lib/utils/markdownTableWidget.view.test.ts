@@ -161,4 +161,18 @@ describe('table widget integration', () => {
     expect(head).toBeLessThanOrEqual(to);
     view.destroy();
   });
+
+  it('places the caret at the clicked cell in the raw source', async () => {
+    const { view, parent } = createEditor(PRECEDED_SOURCE, 0);
+    await nextFrame();
+
+    const widget = parent.querySelector('.cm-table-widget') as HTMLElement;
+    const priceCell = widget.querySelectorAll('tbody td')[1] as HTMLElement;
+    priceCell.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 400, clientY: 100 }));
+    await nextFrame();
+
+    const head = view.state.selection.main.head;
+    expect(view.state.doc.sliceString(head, head + 3)).toBe('1.5');
+    view.destroy();
+  });
 });

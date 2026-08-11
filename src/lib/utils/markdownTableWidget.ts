@@ -11,8 +11,19 @@ const ALIGN_RIGHT = /^:?.*:$/;
 const ALIGN_LEFT = /^:.*$/;
 
 export function splitRow(row: string): string[] {
-  const cells: string[] = [];
+  return splitRowWithOffsets(row).map((cell) => cell.value);
+}
+
+interface TableCellSpan {
+  value: string;
+  /** Offset of the trimmed cell content within the row string. */
+  start: number;
+}
+
+function splitRowWithOffsets(row: string): TableCellSpan[] {
+  const cells: TableCellSpan[] = [];
   let current = '';
+  let currentStart = 0;
   for (let i = 0; i < row.length; i++) {
     const ch = row[i];
     if (ch === '\\' && row[i + 1] === '|') {
@@ -21,16 +32,20 @@ export function splitRow(row: string): string[] {
       continue;
     }
     if (ch === '|') {
-      cells.push(current);
+      cells.push({ value: current, start: currentStart });
       current = '';
+      currentStart = i + 1;
       continue;
     }
     current += ch;
   }
-  cells.push(current);
-  if (cells.length > 0 && cells[0].trim() === '') cells.shift();
-  if (cells.length > 0 && cells[cells.length - 1].trim() === '') cells.pop();
-  return cells.map((cell) => cell.trim());
+  cells.push({ value: current, start: currentStart });
+  if (cells.length > 0 && cells[0].value.trim() === '') cells.shift();
+  if (cells.length > 0 && cells[cells.length - 1].value.trim() === '') cells.pop();
+  return cells.map(({ value, start }) => {
+    const trimmed = value.trim();
+    return { value: trimmed, start: start + value.indexOf(trimmed) };
+  });
 }
 
 export function parseAlignment(delimiter: string): TableAlignment[] {
@@ -190,6 +205,39 @@ function tableWidgetDeco(from: number, to: number, html: string): Range<Decorati
   return Decoration.replace({ widget: new MarkdownTableWidget(from, to, html) }).range(from, to);
 }
 
+/**
+ * Maps a rendered cell (row index within the widget's thead/tbody, cell index
+ * within that row) back to the caret position in the raw table source. Returns
+ * the offset of the clicked cell's content start, or null when the row/cell
+ * cannot be resolved against the source text.
+ */
+function tableRowToSourcePos(
+  view: EditorView,
+  from: number,
+  to: number,
+  sourceRowIndex: number,
+  cellIndex: number,
+): number | null {
+  const source = view.state.doc.sliceString(from, to);
+  const rows = source.split('\n');
+  const rawLine = rows[sourceRowIndex];
+  if (rawLine == null) return null;
+
+  let lineOffset = 0;
+  for (let i = 0; i < sourceRowIndex; i++) {
+    lineOffset += rows[i].length + 1;
+  }
+
+  // The widget strips a blockquote prefix before rendering, so re-add it when
+  // mapping the cell offset back to the document.
+  const prefix = BLOCKQUOTE_PREFIX.exec(rawLine)?.[0] ?? '';
+  const contentLine = rawLine.slice(prefix.length);
+  const cell = splitRowWithOffsets(contentLine)[cellIndex];
+  if (cell == null) return null;
+
+  return from + lineOffset + prefix.length + cell.start;
+}
+
 export const tableWidgetClickHandler = EditorView.domEventHandlers({
   mousedown: (event, view) => {
     const target = event.target as Node | null;
@@ -201,9 +249,40 @@ export const tableWidgetClickHandler = EditorView.domEventHandlers({
     const to = Number(widget.dataset.to);
     if (!Number.isFinite(from) || !Number.isFinite(to)) return false;
 
+    const cell = element?.closest<HTMLElement>('td, th');
+
+    let anchor: number;
+    if (cell) {
+      const row = cell.closest('tr');
+      const table = cell.closest('table');
+      if (!row || !table) return false;
+
+      // The widget renders the header row (source row 0) as thead and the body
+      // rows (source rows 2+) as tbody; source row 1 is the delimiter row.
+      const headRows = Array.from(table.querySelectorAll('thead > tr'));
+      const bodyRows = Array.from(table.querySelectorAll('tbody > tr'));
+
+      let sourceRowIndex: number;
+      if (headRows.includes(row)) {
+        sourceRowIndex = 0;
+      } else {
+        const bodyIndex = bodyRows.indexOf(row);
+        if (bodyIndex < 0) return false;
+        sourceRowIndex = bodyIndex + 2;
+      }
+
+      const cellIndex = Array.from(row.children).indexOf(cell);
+      if (cellIndex < 0) return false;
+
+      anchor = tableRowToSourcePos(view, from, to, sourceRowIndex, cellIndex);
+      if (anchor == null) return false;
+    } else {
+      // Clicked the widget chrome (padding or an empty row), not a cell; drop
+      // the caret at the table start instead of guessing from pixels.
+      anchor = from;
+    }
+
     event.preventDefault();
-    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    const anchor = pos === null ? from : Math.min(Math.max(pos, from), to);
     view.focus();
     view.dispatch({ selection: { anchor }, scrollIntoView: false });
     return true;
