@@ -588,7 +588,7 @@ function collectTableLines(walk: DecorationWalk): void {
   }
 }
 
-/** Paints per-line decorations; table and frontmatter lines are fully skipped. */
+/** Paints per-line decorations; table, frontmatter, and code-block lines skip the WYSIWYG decorators. */
 function visitDecorationLine(walk: DecorationWalk, line: Line): void {
   if (walk.tableLines.has(line.number)) return;
   if (walk.frontmatterLines.has(line.number)) {
@@ -597,6 +597,7 @@ function visitDecorationLine(walk: DecorationWalk, line: Line): void {
   }
   if (walk.codeBlockLines.has(line.number)) {
     walk.ranges.push(codeBlockLineDeco.range(line.from));
+    return;
   }
   if (walk.cursorHeadingLines.has(line.number)) {
     walk.ranges.push(headingRawDeco.range(line.from, line.to));
