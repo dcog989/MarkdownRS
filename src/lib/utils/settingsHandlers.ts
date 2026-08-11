@@ -1,5 +1,5 @@
 import { translate } from '$lib/i18n';
-import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
+import { settingsState, syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
@@ -20,6 +20,9 @@ export function onLogLevelChange() {
   showToast('info', translate('settings.logLevelChanged'));
 }
 
-export function onThemeChange() {
+export function onThemeChange(newValue: unknown) {
+  if (newValue === 'System') {
+    settingsState.themeMode = 'auto';
+  }
   syncThemeFromSystem();
 }

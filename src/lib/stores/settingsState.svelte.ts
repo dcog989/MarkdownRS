@@ -2,6 +2,7 @@ export const settingsState = $state({
   splitView: true,
   locale: 'en',
   theme: 'dark' as 'dark' | 'light',
+  themeMode: 'auto' as 'auto' | 'dark' | 'light',
   activeTheme: 'System',
   availableThemes: ['System'] as string[],
   customAccentColor: '',
@@ -64,10 +65,12 @@ export function toggleSplitView() {
 
 export function setTheme(newTheme: 'dark' | 'light') {
   settingsState.activeTheme = 'System';
+  settingsState.themeMode = newTheme;
   settingsState.theme = newTheme;
 }
 
 export function syncThemeFromSystem() {
+  if (settingsState.themeMode !== 'auto') return;
   settingsState.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
