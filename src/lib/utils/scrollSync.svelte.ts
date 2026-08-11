@@ -8,11 +8,14 @@
 
 import type { EditorView } from '@codemirror/view';
 import { CONFIG } from '$lib/utils/config';
+import { throttle } from '$lib/utils/timing';
+import type { AppEditorView } from '../../global';
 import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolation';
 import { SmoothScroller } from './smoothScroller';
 
 const CLEAR_SOURCE_DELAY_MS = 200;
 const FAST_SCROLL_DELAY_MS = 300;
+const PERSIST_SCROLL_THROTTLE_MS = 50;
 
 export class ScrollSyncManager {
   editor = $state<EditorView | null>(null);
@@ -101,7 +104,22 @@ export class ScrollSyncManager {
     this.mapDirty = true;
   }
 
-  registerEditor(view: EditorView) {
+  private persistEditorScroll: (() => void) | null = null;
+
+  /**
+   * Single editor scroll listener: fans out to (a) recording the editor's
+   * position into the store (throttled) and (b) driving the preview sync.
+   */
+  registerEditor(
+    view: EditorView,
+    persistOptions?: {
+      getTabId: () => string;
+      isRestoring: () => boolean;
+      onScrollChange: (percentage: number, scrollTop: number, topLine: number) => void;
+    },
+  ) {
+    this.persistEditorScroll = persistOptions ? this.createScrollPersistence(view, persistOptions) : null;
+
     if (this.editor === view) return;
 
     if (this.editor) {
@@ -110,6 +128,26 @@ export class ScrollSyncManager {
 
     this.editor = view;
     view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll, { passive: true });
+  }
+
+  private createScrollPersistence(
+    view: EditorView,
+    options: {
+      getTabId: () => string;
+      isRestoring: () => boolean;
+      onScrollChange: (percentage: number, scrollTop: number, topLine: number) => void;
+    },
+  ): () => void {
+    return throttle(() => {
+      if ((view as AppEditorView)._currentTabId !== options.getTabId() || options.isRestoring()) return;
+      const dom = view.scrollDOM;
+      const max = dom.scrollHeight - dom.clientHeight;
+      const percentage = max > 0 ? dom.scrollTop / max : 0;
+      const scrollTop = dom.scrollTop;
+      const lineBlock = view.lineBlockAtHeight(scrollTop);
+      const docLine = view.state.doc.lineAt(lineBlock.from);
+      options.onScrollChange(percentage, scrollTop, docLine.number);
+    }, PERSIST_SCROLL_THROTTLE_MS);
   }
 
   registerPreview(el: HTMLElement) {
@@ -145,6 +183,7 @@ export class ScrollSyncManager {
   }
 
   private onEditorScroll() {
+    if (this.persistEditorScroll) this.persistEditorScroll();
     if (this.suppressSync) return;
     if (this.activeSource === 'preview') return;
     this.setActiveSource('editor');

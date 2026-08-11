@@ -13,7 +13,6 @@ import {
   resolveFileLanguage,
 } from '$lib/components/editor/logic/extensions';
 import { setupModifierKeyHandler } from '$lib/components/editor/logic/modifierKeys';
-import { setupScrollSync } from '$lib/components/editor/logic/scrollSync';
 import { setupSelectionDragScroll } from '$lib/components/editor/logic/selectionScroll';
 import { TabSyncManager } from '$lib/components/editor/logic/tabSync';
 import { createUpdateListener } from '$lib/components/editor/logic/updateListener';
@@ -292,19 +291,22 @@ onMount(() => {
   view = typedView;
   setActiveEditorView(view);
 
-  scrollSync.registerEditor(viewInstance);
+  scrollSync.registerEditor(
+    viewInstance,
+    onScrollChange
+      ? {
+          getTabId: () => tabId,
+          isRestoring: () => tabSync.isRestoring,
+          onScrollChange,
+        }
+      : undefined,
+  );
 
   // Restore the scroll synchronously so the first painted frame of a
   // deep-scrolled document is already parsed and highlighted.
   restoreScrollByTopLine(viewInstance, initialTopLine, initialScrollTop);
 
   const cleanupModifier = setupModifierKeyHandler(viewInstance);
-  const cleanupScroll = setupScrollSync(
-    viewInstance,
-    () => tabId,
-    () => tabSync.isRestoring,
-    onScrollChange,
-  );
   const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
 
   setupGutterObserver();
@@ -324,7 +326,6 @@ onMount(() => {
     tabSync.cleanup();
     gutterObserver?.disconnect();
     cleanupModifier();
-    cleanupScroll();
     cleanupSelScroll();
     if (getActiveEditorView() === view) setActiveEditorView(undefined);
     const v = view;
