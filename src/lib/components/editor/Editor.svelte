@@ -20,6 +20,7 @@ import {
   getLineChangeTracker,
   getTransientState,
   reopenClosedTab,
+  tabsById,
   updateContent,
   updateCursor,
   updateHistoryState,
@@ -62,7 +63,7 @@ let contextWordUnderCursor = $state('');
 let contextWordFrom = $state(0);
 let contextWordTo = $state(0);
 
-let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
+let activeTab = $derived(tabsById.get(tabId));
 let pendingTransform = $derived(editorStore.pendingTransform);
 
 // Logic State

@@ -26,7 +26,7 @@ export {
   reopenClosedTab,
   reorderTabs,
 } from './editorLifecycle';
-export { editorStore, performTextTransform } from './editorStoreCore.svelte';
+export { editorStore, performTextTransform, tabsById } from './editorStoreCore.svelte';
 export type { ClosedTab, EditorTab, TabTransientState } from './editorTypes';
 
 export {

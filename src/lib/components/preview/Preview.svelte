@@ -5,7 +5,7 @@ import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
 import Logo from '$lib/components/ui/Logo.svelte';
-import { getTransientState, updateTransientState } from '$lib/stores/editorStore.svelte';
+import { getTransientState, tabsById, updateTransientState } from '$lib/stores/editorStore.svelte';
 import { toggleOrientation, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { navigateToPath } from '$lib/utils/fileSystem';
@@ -21,13 +21,10 @@ let previewHtmlWasEmpty = true;
 
 const renderer = new PreviewRenderer();
 
-let tabPath = $derived.by(() => {
-  return appContext.editor.tabs.find((t) => t.id === tabId)?.path;
-});
+let activeTab = $derived(tabsById.get(tabId));
 
-let tabContent = $derived.by(() => {
-  return appContext.editor.tabs.find((t) => t.id === tabId)?.content || '';
-});
+let tabPath = $derived(activeTab?.path);
+let tabContent = $derived(activeTab?.content || '');
 
 let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
 let flavor = $derived(appContext.settings.markdownFlavor);

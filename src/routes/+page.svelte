@@ -14,8 +14,7 @@ import TabBar from '$lib/components/ui/TabBar.svelte';
 import TabBarMenu from '$lib/components/ui/TabBarMenu.svelte';
 import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
 import Toast from '$lib/components/ui/Toast.svelte';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { pushToMru } from '$lib/stores/editorStore.svelte';
+import { pushToMru, tabsById } from '$lib/stores/editorStore.svelte';
 import { toggleFileTree } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
@@ -30,7 +29,7 @@ function handleToggleFileTree() {
   saveSettings();
 }
 
-let activeTab = $derived(appContext.editor.tabs.find((t: EditorTab) => t.id === appContext.app.activeTabId));
+let activeTab = $derived(tabsById.get(appContext.app.activeTabId));
 
 let isMarkdown = $derived.by(() => {
   if (!activeTab) return true;

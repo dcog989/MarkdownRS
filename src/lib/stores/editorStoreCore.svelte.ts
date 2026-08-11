@@ -11,6 +11,8 @@ export const editorStore = $state({
   pendingTransform: null as { tabId: string; op: OperationId; timestamp: number } | null,
 });
 
+export const tabsById = $derived(new Map(editorStore.tabs.map((t) => [t.id, t])));
+
 export function updateTab(
   id: string,
   updater: (tab: EditorTab) => Partial<EditorTab> | undefined,
