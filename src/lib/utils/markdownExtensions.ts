@@ -1,5 +1,5 @@
-import { syntaxTree } from '@codemirror/language';
-import { type Extension, Prec, type Range } from '@codemirror/state';
+import { type SyntaxNode, syntaxTree } from '@codemirror/language';
+import { type Extension, type Line, Prec, type Range } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -141,10 +141,12 @@ class CalloutTitleWidget extends WidgetType {
  * their type. Callouts are always decorated (even under the cursor) so they
  * keep their styled appearance while being edited.
  */
-function collectCallouts(view: EditorView): {
+interface CalloutInfo {
   markers: { from: number; to: number; kind: string; active: boolean }[];
   lines: Map<number, string>;
-} {
+}
+
+function collectCallouts(view: EditorView): CalloutInfo {
   const markers: { from: number; to: number; kind: string; active: boolean }[] = [];
   const lines = new Map<number, string>();
   const tree = syntaxTree(view.state);
@@ -439,139 +441,289 @@ function findHiddenMarkers(
   }
 }
 
+/**
+ * Shared state threaded through the single decoration pass. Each per-construct
+ * collector reads/writes only its own slice, keeping buildDecorations a thin
+ * orchestrator over one tree walk and one line walk.
+ */
+interface DecorationWalk {
+  view: EditorView;
+  tree: ReturnType<typeof syntaxTree>;
+  ranges: Range<Decoration>[];
+  calloutMarkers: CalloutInfo['markers'];
+  calloutLines: CalloutInfo['lines'];
+  tableSpans: Array<{ from: number; to: number }>;
+  cursorHeadingLines: Set<number>;
+  tableLines: Set<number>;
+  frontmatterLines: Set<number>;
+  codeBlockLines: Set<number>;
+  parserHrs: Set<number>;
+  blockquoteLines: Set<number>;
+}
+
+function collectFrontmatterLines(walk: DecorationWalk, node: SyntaxNode): void {
+  const doc = walk.view.state.doc;
+  const startLine = doc.lineAt(node.from).number;
+  const endLine = doc.lineAt(node.to).number;
+  for (let i = startLine; i <= endLine; i++) {
+    walk.frontmatterLines.add(i);
+  }
+}
+
+/** Widget-rendered tables are skipped so their children aren't decorated. */
+function shouldSkipTable(walk: DecorationWalk, node: SyntaxNode): boolean {
+  return walk.tableSpans.some((span) => node.from === span.from && node.to === span.to);
+}
+
+function collectCodeBlockLines(walk: DecorationWalk, node: SyntaxNode, rangeFrom: number, rangeTo: number): void {
+  const start = Math.max(node.from, rangeFrom);
+  const end = Math.min(node.to, rangeTo);
+  const fromLine = walk.view.state.doc.lineAt(start);
+  const toLine = walk.view.state.doc.lineAt(end);
+  for (let i = fromLine.number; i <= toLine.number; i++) {
+    walk.codeBlockLines.add(i);
+  }
+}
+
+function collectCodeInfo(walk: DecorationWalk, node: SyntaxNode): void {
+  let p: typeof node.node | null = node.node.parent;
+  while (p) {
+    if (p.name === 'FencedCode') {
+      if (!isRevealed(walk.view, p.from, p.to)) {
+        walk.ranges.push(codeInfoDeco.range(node.from, node.to));
+      }
+      break;
+    }
+    p = p.parent;
+  }
+}
+
+function collectBlockquoteLines(walk: DecorationWalk, node: SyntaxNode): void {
+  if (isRevealed(walk.view, node.from, node.to)) return;
+  const fromLine = walk.view.state.doc.lineAt(node.from);
+  const toLine = walk.view.state.doc.lineAt(node.to);
+  for (let i = fromLine.number; i <= toLine.number; i++) {
+    walk.blockquoteLines.add(i);
+  }
+}
+
+/** Returns true when the node's subtree should be skipped. */
+function collectImageWidget(walk: DecorationWalk, node: SyntaxNode): boolean {
+  if (isRevealed(walk.view, node.from, node.to)) return false;
+  if (walk.tableSpans.some((span) => node.from >= span.from && node.to <= span.to)) return true;
+  const urlNode = node.node.getChild('URL');
+  if (!urlNode) return false;
+  const linkMarks = node.node.getChildren('LinkMark');
+  const altStart = linkMarks[0]?.to ?? node.from;
+  const altEnd = linkMarks[1]?.from ?? urlNode.from;
+  const alt = walk.view.state.doc.sliceString(altStart, altEnd).trim();
+  const rawSrc = walk.view.state.doc.sliceString(urlNode.from, urlNode.to);
+  const src = resolveImageSrc(rawSrc, getTabDirectory(walk.view));
+  walk.ranges.push(imageWidgetDecoration(node.from, node.to, src, alt));
+  return true;
+}
+
+function collectLinkMasks(walk: DecorationWalk, node: SyntaxNode): void {
+  if (isRevealed(walk.view, node.from, node.to)) return;
+  const linkMarks = node.node.getChildren('LinkMark');
+  const urlNode = node.node.getChild('URL');
+  if (!urlNode) return;
+  for (const lm of linkMarks) {
+    walk.ranges.push(formattingMaskDeco.range(lm.from, lm.to));
+  }
+  const before = walk.view.state.doc.sliceString(urlNode.from - 1, urlNode.from);
+  const after = walk.view.state.doc.sliceString(urlNode.to, urlNode.to + 1);
+  const hideStart = before === '(' ? urlNode.from - 1 : urlNode.from;
+  const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
+  walk.ranges.push(linkUrlMaskDeco.range(hideStart, hideEnd));
+  const textMarks = linkMarks.filter((lm) => lm.from < urlNode.from);
+  if (textMarks.length >= 2) {
+    const textStart = textMarks[0].to;
+    const textEnd = textMarks[textMarks.length - 1].from;
+    if (textStart < textEnd) {
+      walk.ranges.push(linkTextDeco.range(textStart, textEnd));
+    }
+  }
+}
+
+/** Per-construct node dispatch; returns true when the subtree should be skipped. */
+function visitDecorationNode(walk: DecorationWalk, node: SyntaxNode, rangeFrom: number, rangeTo: number): boolean {
+  switch (node.name) {
+    case 'Frontmatter':
+      collectFrontmatterLines(walk, node);
+      return true;
+    case 'Table':
+      return shouldSkipTable(walk, node);
+    case 'FencedCode':
+      collectCodeBlockLines(walk, node, rangeFrom, rangeTo);
+      return false;
+    case 'InlineCode':
+      walk.ranges.push(inlineCodeDeco.range(node.from, node.to));
+      return false;
+    case 'CodeInfo':
+      collectCodeInfo(walk, node);
+      return false;
+    case 'HorizontalRule':
+      walk.parserHrs.add(node.from);
+      return false;
+    case 'Blockquote':
+      collectBlockquoteLines(walk, node);
+      return false;
+    case 'Image':
+      return collectImageWidget(walk, node);
+    case 'Link':
+      collectLinkMasks(walk, node);
+      return false;
+    default:
+      return false;
+  }
+}
+
+function collectTableLines(walk: DecorationWalk): void {
+  for (const span of walk.tableSpans) {
+    const fromLine = walk.view.state.doc.lineAt(span.from).number;
+    const toLine = walk.view.state.doc.lineAt(Math.max(span.from, span.to - 1)).number;
+    for (let i = fromLine; i <= toLine; i++) {
+      walk.tableLines.add(i);
+    }
+  }
+}
+
+/** Paints per-line decorations; table and frontmatter lines are fully skipped. */
+function visitDecorationLine(walk: DecorationWalk, line: Line): void {
+  if (walk.tableLines.has(line.number)) return;
+  if (walk.frontmatterLines.has(line.number)) {
+    walk.ranges.push(Decoration.line({ class: 'cm-frontmatter' }).range(line.from));
+    return;
+  }
+  if (walk.codeBlockLines.has(line.number)) {
+    walk.ranges.push(codeBlockLineDeco.range(line.from));
+  }
+  if (walk.cursorHeadingLines.has(line.number)) {
+    walk.ranges.push(headingRawDeco.range(line.from, line.to));
+  }
+  collectBlockquoteLine(walk, line);
+  collectCalloutLine(walk, line);
+  collectBulletPoint(walk, line);
+  collectStrikethrough(walk, line);
+  collectHorizontalRule(walk, line);
+}
+
+function collectBlockquoteLine(walk: DecorationWalk, line: Line): void {
+  const bqMatch = bqMatchRe.exec(line.text);
+  if (!bqMatch) return;
+  if (!walk.calloutLines.has(line.number)) {
+    walk.ranges.push(blockquoteBgDeco.range(line.from));
+  }
+  if (walk.blockquoteLines.has(line.number)) {
+    walk.ranges.push(blockquoteQuoteDeco.range(line.from));
+  }
+}
+
+function collectCalloutLine(walk: DecorationWalk, line: Line): void {
+  const calloutKind = walk.calloutLines.get(line.number);
+  if (calloutKind) {
+    walk.ranges.push(Decoration.line({ class: `cm-callout cm-callout-${calloutKind}` }).range(line.from));
+  }
+}
+
+function collectBulletPoint(walk: DecorationWalk, line: Line): void {
+  const bulletMatch = bulletMatchRe.exec(line.text);
+  if (!bulletMatch) return;
+  const dashStart = line.from + bulletMatch[1].length;
+  if (isHrLineRevealed(walk.view, dashStart, dashStart + 1)) return;
+  walk.ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
+}
+
+function collectStrikethrough(walk: DecorationWalk, line: Line): void {
+  stRegex.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while (true) {
+    match = stRegex.exec(line.text);
+    if (match === null) break;
+    const start = line.from + match.index;
+    const end = start + match[0].length;
+    if (isVisibleInCodeBlock(walk.tree, start)) continue;
+    walk.ranges.push(strikethroughDeco.range(start, end));
+    if (!isRevealed(walk.view, start, end)) {
+      walk.ranges.push(formattingMaskDeco.range(start, start + 2));
+      walk.ranges.push(formattingMaskDeco.range(end - 2, end));
+    }
+  }
+}
+
+function collectHorizontalRule(walk: DecorationWalk, line: Line): void {
+  if (isVisibleInCodeBlock(walk.tree, line.from)) return;
+  if (!walk.parserHrs.has(line.from) && line.text.trim() !== '---') return;
+  const onLine = isHrLineRevealed(walk.view, line.from, line.to);
+  walk.ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
+}
+
+function collectCalloutDecorations(walk: DecorationWalk): void {
+  for (const m of walk.calloutMarkers) {
+    if (m.active) {
+      walk.ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
+    } else {
+      walk.ranges.push(
+        Decoration.replace({ widget: new CalloutTitleWidget(m.kind, CALLOUT_STYLES[m.kind].title) }).range(
+          m.from,
+          m.to,
+        ),
+      );
+    }
+  }
+}
+
+function collectRawCalloutDecorations(view: EditorView, callouts: CalloutInfo, ranges: Range<Decoration>[]): void {
+  for (const m of callouts.markers) {
+    ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
+  }
+  for (const [lineNo, kind] of callouts.lines) {
+    ranges.push(Decoration.line({ class: `cm-callout cm-callout-${kind}` }).range(view.state.doc.line(lineNo).from));
+  }
+}
+
+/**
+ * Single-pass decoration builder: one syntax-tree walk collects block-level
+ * spans and inline widgets, one line walk paints line/word decorations. Each
+ * construct lives in its own collector so the passes stay readable without
+ * splitting into repeated per-construct tree walks.
+ */
 function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
-  const { markers: calloutMarkers, lines: calloutLines } = collectCallouts(view);
+  const callouts = collectCallouts(view);
+  const ranges: Range<Decoration>[] = [];
 
   if (!rendered) {
-    const ranges: Range<Decoration>[] = [];
-    for (const m of calloutMarkers) {
-      ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
-    }
-    for (const [lineNo, kind] of calloutLines) {
-      ranges.push(Decoration.line({ class: `cm-callout cm-callout-${kind}` }).range(view.state.doc.line(lineNo).from));
-    }
+    collectRawCalloutDecorations(view, callouts, ranges);
     return Decoration.set(ranges, true);
   }
 
   const tree = syntaxTree(view.state);
-  const ranges: Range<Decoration>[] = [];
-  const cursorHeadingLines = findCursorHeadingLines(view);
-  const tableSpans = collectTableSpans(view.state, view.visibleRanges);
+  const walk: DecorationWalk = {
+    view,
+    tree,
+    ranges,
+    calloutMarkers: callouts.markers,
+    calloutLines: callouts.lines,
+    tableSpans: collectTableSpans(view.state, view.visibleRanges),
+    cursorHeadingLines: findCursorHeadingLines(view),
+    tableLines: new Set<number>(),
+    frontmatterLines: new Set<number>(),
+    codeBlockLines: new Set<number>(),
+    parserHrs: new Set<number>(),
+    blockquoteLines: new Set<number>(),
+  };
 
-  for (const m of calloutMarkers) {
-    if (m.active) {
-      ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
-    } else {
-      ranges.push(
-        Decoration.replace({
-          widget: new CalloutTitleWidget(m.kind, CALLOUT_STYLES[m.kind].title),
-        }).range(m.from, m.to),
-      );
-    }
-  }
-
-  findHiddenMarkers(view, tree, ranges, tableSpans);
-
-  const tableLines = new Set<number>();
-  for (const span of tableSpans) {
-    const fromLine = view.state.doc.lineAt(span.from).number;
-    const toLine = view.state.doc.lineAt(Math.max(span.from, span.to - 1)).number;
-    for (let i = fromLine; i <= toLine; i++) {
-      tableLines.add(i);
-    }
-  }
-
-  const codeBlockLines = new Set<number>();
-  const frontmatterLines = new Set<number>();
-  const parserHrs = new Set<number>();
-  const blockquoteLines = new Set<number>();
+  collectCalloutDecorations(walk);
+  findHiddenMarkers(view, tree, ranges, walk.tableSpans);
+  collectTableLines(walk);
 
   for (const { from, to } of view.visibleRanges) {
     tree.iterate({
       from,
       to,
       enter: (node) => {
-        if (node.name === 'Frontmatter') {
-          const startLine = view.state.doc.lineAt(node.from).number;
-          const endLine = view.state.doc.lineAt(node.to).number;
-          for (let i = startLine; i <= endLine; i++) {
-            frontmatterLines.add(i);
-          }
-          return false;
-        }
-        if (node.name === 'Table') {
-          if (tableSpans.some((span) => node.from === span.from && node.to === span.to)) {
-            return false;
-          }
-        }
-        if (node.name === 'FencedCode') {
-          const start = Math.max(node.from, from);
-          const end = Math.min(node.to, to);
-          const fromLine = view.state.doc.lineAt(start);
-          const toLine = view.state.doc.lineAt(end);
-          for (let i = fromLine.number; i <= toLine.number; i++) {
-            codeBlockLines.add(i);
-          }
-        } else if (node.name === 'InlineCode') {
-          ranges.push(inlineCodeDeco.range(node.from, node.to));
-        } else if (node.name === 'CodeInfo') {
-          let p: typeof node.node | null = node.node.parent;
-          while (p) {
-            if (p.name === 'FencedCode') {
-              if (!isRevealed(view, p.from, p.to)) {
-                ranges.push(codeInfoDeco.range(node.from, node.to));
-              }
-              break;
-            }
-            p = p.parent;
-          }
-        } else if (node.name === 'HorizontalRule') {
-          parserHrs.add(node.from);
-        } else if (node.name === 'Blockquote') {
-          if (!isRevealed(view, node.from, node.to)) {
-            const fromLine = view.state.doc.lineAt(node.from);
-            const toLine = view.state.doc.lineAt(node.to);
-            for (let i = fromLine.number; i <= toLine.number; i++) {
-              blockquoteLines.add(i);
-            }
-          }
-        } else if (node.name === 'Image') {
-          if (isRevealed(view, node.from, node.to)) return;
-          if (tableSpans.some((span) => node.from >= span.from && node.to <= span.to)) return false;
-          const urlNode = node.node.getChild('URL');
-          if (!urlNode) return;
-          const linkMarks = node.node.getChildren('LinkMark');
-          const altStart = linkMarks[0]?.to ?? node.from;
-          const altEnd = linkMarks[1]?.from ?? urlNode.from;
-          const alt = view.state.doc.sliceString(altStart, altEnd).trim();
-          const rawSrc = view.state.doc.sliceString(urlNode.from, urlNode.to);
-          const src = resolveImageSrc(rawSrc, getTabDirectory(view));
-          ranges.push(imageWidgetDecoration(node.from, node.to, src, alt));
-          return false;
-        } else if (node.name === 'Link') {
-          if (!isRevealed(view, node.from, node.to)) {
-            const linkMarks = node.node.getChildren('LinkMark');
-            const urlNode = node.node.getChild('URL');
-            if (urlNode) {
-              for (const lm of linkMarks) {
-                ranges.push(formattingMaskDeco.range(lm.from, lm.to));
-              }
-              const before = view.state.doc.sliceString(urlNode.from - 1, urlNode.from);
-              const after = view.state.doc.sliceString(urlNode.to, urlNode.to + 1);
-              const hideStart = before === '(' ? urlNode.from - 1 : urlNode.from;
-              const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
-              ranges.push(linkUrlMaskDeco.range(hideStart, hideEnd));
-              const textMarks = linkMarks.filter((lm) => lm.from < urlNode.from);
-              if (textMarks.length >= 2) {
-                const textStart = textMarks[0].to;
-                const textEnd = textMarks[textMarks.length - 1].from;
-                if (textStart < textEnd) {
-                  ranges.push(linkTextDeco.range(textStart, textEnd));
-                }
-              }
-            }
-          }
-        }
+        if (visitDecorationNode(walk, node, from, to)) return false;
       },
     });
   }
@@ -579,71 +731,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
       const line = view.state.doc.lineAt(pos);
-
-      if (tableLines.has(line.number)) {
-        pos = line.to + 1;
-        continue;
-      }
-
-      if (frontmatterLines.has(line.number)) {
-        ranges.push(Decoration.line({ class: 'cm-frontmatter' }).range(line.from));
-        pos = line.to + 1;
-        continue;
-      }
-
-      if (codeBlockLines.has(line.number)) {
-        ranges.push(codeBlockLineDeco.range(line.from));
-      }
-
-      if (cursorHeadingLines.has(line.number)) {
-        ranges.push(headingRawDeco.range(line.from, line.to));
-      }
-
-      const bqMatch = bqMatchRe.exec(line.text);
-      if (bqMatch) {
-        if (!calloutLines.has(line.number)) {
-          ranges.push(blockquoteBgDeco.range(line.from));
-        }
-        if (blockquoteLines.has(line.number)) {
-          ranges.push(blockquoteQuoteDeco.range(line.from));
-        }
-      }
-
-      const calloutKind = calloutLines.get(line.number);
-      if (calloutKind) {
-        ranges.push(Decoration.line({ class: `cm-callout cm-callout-${calloutKind}` }).range(line.from));
-      }
-
-      const bulletMatch = bulletMatchRe.exec(line.text);
-      if (bulletMatch) {
-        const dashStart = line.from + bulletMatch[1].length;
-        const nearMarker = isHrLineRevealed(view, dashStart, dashStart + 1);
-        if (!nearMarker) {
-          ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
-        }
-      }
-
-      stRegex.lastIndex = 0;
-      let match: RegExpExecArray | null;
-      while (true) {
-        match = stRegex.exec(line.text);
-        if (match === null) break;
-        const start = line.from + match.index;
-        const end = start + match[0].length;
-        if (!isVisibleInCodeBlock(tree, start)) {
-          ranges.push(strikethroughDeco.range(start, end));
-          if (!isRevealed(view, start, end)) {
-            ranges.push(formattingMaskDeco.range(start, start + 2));
-            ranges.push(formattingMaskDeco.range(end - 2, end));
-          }
-        }
-      }
-
-      if (!isVisibleInCodeBlock(tree, line.from) && (parserHrs.has(line.from) || line.text.trim() === '---')) {
-        const onLine = isHrLineRevealed(view, line.from, line.to);
-        ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
-      }
-
+      visitDecorationLine(walk, line);
       pos = line.to + 1;
     }
   }
