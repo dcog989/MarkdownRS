@@ -284,6 +284,11 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       if (oldPath !== sanitizedPath) {
         await fileWatcher.watch(sanitizedPath);
       }
+      // atomic_write replaced the inode at the target, which kills the notify
+      // file watch (inotify DELETE_SELF / kqueue NOTE_DELETE). Re-arm in all
+      // cases: a same-path save kills this tab's watch, and a save-as onto an
+      // already-open path kills that tab's watch too.
+      await fileWatcher.renew(sanitizedPath);
 
       const fileName = getFilename(sanitizedPath) || translate('fileOps.untitled');
       let finalTitle = fileName;

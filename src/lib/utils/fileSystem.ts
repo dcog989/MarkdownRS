@@ -188,6 +188,9 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
     fileWatcher.unwatch(oldPath);
     await fileWatcher.watch(newPath);
+    // rename() moves the inode; if another tab already watched newPath, that
+    // watch is now on a replaced inode and must be re-armed.
+    await fileWatcher.renew(newPath);
 
     updateTabFields(tabId, {
       path: newPath,

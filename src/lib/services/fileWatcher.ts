@@ -23,6 +23,8 @@ class FileWatcherService {
   private pendingChecks = new Set<string>();
   private writeLocks = new Map<string, number>();
   private lastToastTime = new Map<string, number>();
+  private renewInFlight = new Set<string>();
+  private renewQueued = new Set<string>();
 
   async watch(rawPath: string): Promise<void> {
     if (!rawPath) return;
@@ -92,8 +94,14 @@ class FileWatcherService {
   }
 
   private async setupWatcher(path: string): Promise<void> {
-    const handleChange = debounce(async () => {
+    const handleEvent = debounce(async () => {
       await this.handleFileChange(path);
+      // The notify file watch is bound to the file's inode. Atomic saves
+      // (temp-file + rename) replace the inode, which silently kills the watch
+      // (inotify DELETE_SELF / kqueue NOTE_DELETE). Re-arm after every event so
+      // external edits keep being detected; saveFile() also re-arms immediately
+      // after its own write, so this is the backstop for external writers.
+      void this.renew(path);
     }, CONFIG.PERFORMANCE.FILE_WATCH_DEBOUNCE_MS);
 
     // Immediate delivery (no plugin debounce): the default `watch` batched
@@ -108,7 +116,7 @@ class FileWatcherService {
       // read events. Real edits always also emit a Modify event, so access
       // events can be dropped without missing external changes.
       if (isAccessEvent(event)) return;
-      handleChange();
+      handleEvent();
     });
 
     if (!this.tabCounts.has(path)) {
@@ -117,6 +125,59 @@ class FileWatcherService {
     }
 
     this.watchers.set(path, unwatch);
+  }
+
+  /**
+   * Re-arms the watcher for a path whose inode was replaced (atomic save /
+   * external rename-over). The notify file watch dies with the old inode, so a
+   * fresh watch must be registered on the new one. Tearing down the stale
+   * watcher first keeps the plugin resource count flat.
+   */
+  async renew(rawPath: string): Promise<void> {
+    const path = sanitizePath(rawPath);
+    if (!path || !this.tabCounts.has(path)) return;
+
+    if (this.renewInFlight.has(path)) {
+      // A re-arm is mid-setup; coalesce so we don't stack concurrent watchers.
+      this.renewQueued.add(path);
+      return;
+    }
+    this.renewInFlight.add(path);
+
+    try {
+      const oldUnwatch = this.watchers.get(path);
+      this.watchers.delete(path);
+      if (oldUnwatch) {
+        try {
+          oldUnwatch();
+        } catch (err) {
+          AppError.handle('FileWatcher:Unwatch', err, {
+            showToast: false,
+            severity: 'warning',
+            additionalInfo: { path },
+          });
+        }
+      }
+
+      if (!this.watchPromises.has(path)) {
+        this.watchPromises.set(path, this.setupWatcher(path));
+      }
+      await this.watchPromises.get(path);
+    } catch (err) {
+      // File may have been deleted externally; a later save or reopen re-arms.
+      AppError.handle('FileWatcher:Watch', err, {
+        showToast: false,
+        severity: 'warning',
+        additionalInfo: { path },
+      });
+    } finally {
+      this.watchPromises.delete(path);
+      this.renewInFlight.delete(path);
+      if (this.renewQueued.has(path)) {
+        this.renewQueued.delete(path);
+        void this.renew(path);
+      }
+    }
   }
 
   private isWriteLocked(path: string): boolean {
@@ -213,6 +274,8 @@ class FileWatcherService {
     this.writeLocks.clear();
     this.lastToastTime.clear();
     this.pendingChecks.clear();
+    this.renewInFlight.clear();
+    this.renewQueued.clear();
   }
 }
 
