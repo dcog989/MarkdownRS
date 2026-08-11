@@ -1,6 +1,6 @@
 import { appState } from '$lib/stores/appState.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
-import { editorStore } from '$lib/stores/editorStore.svelte';
+import { editorStore, updateTransientState } from '$lib/stores/editorStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { hashContent, isDirty } from '$lib/utils/contentHash';
@@ -145,6 +145,12 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
       const viewText = getEditorInstance(tabId)?.state.doc.toString() ?? '';
       const alreadyHadContent = currentTab.content !== '' || viewText !== '';
       const content = alreadyHadContent ? viewText || currentTab.content : normalizedContent;
+
+      if (alreadyHadContent) {
+        // The kept content isn't in the DB yet; mark it changed so the next
+        // persist writes it even if a concurrent save just reset the flag.
+        updateTransientState(tabId, { contentChanged: true });
+      }
 
       let title = currentTab.title;
       if (!currentTab.customTitle && settingsState.tabNameFromContent) {
