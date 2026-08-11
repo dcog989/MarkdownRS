@@ -6,7 +6,7 @@ pub use app_info::AppInfo;
 pub use io::get_max_file_size_bytes;
 
 use crate::state::{AppState, MAX_FILE_SIZE_UNSET};
-use crate::utils::{MutexExt, handle_error};
+use crate::utils::{MutexExt, handle_error, parse_settings_toml};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use tauri::Manager;
@@ -45,8 +45,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         None => return Ok(serde_json::json!({})),
     };
 
-    let toml_val: toml::Value =
-        toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))?;
+    let toml_val = parse_settings_toml(&content)?;
 
     let json_val = serde_json::to_value(toml_val)
         .map_err(|e| handle_error(None, "convert settings to JSON", e))?;

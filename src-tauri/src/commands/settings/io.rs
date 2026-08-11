@@ -1,5 +1,5 @@
 use crate::state::{AppState, MAX_FILE_SIZE_UNSET};
-use crate::utils::{handle_error, read_text_with_bom_detection};
+use crate::utils::{handle_error, parse_settings_toml, read_text_with_bom_detection};
 use std::sync::atomic::Ordering;
 use tauri::Manager;
 use tokio::fs;
@@ -55,7 +55,7 @@ async fn load_settings_toml(app_handle: &tauri::AppHandle) -> Result<toml::Value
         None => return Ok(toml::Value::Table(toml::map::Map::new())),
     };
 
-    toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))
+    parse_settings_toml(&content)
 }
 
 async fn load_max_file_size_from_disk(app_handle: &tauri::AppHandle) -> u64 {
@@ -117,8 +117,7 @@ pub async fn preserved_settings_from_path(path: &std::path::Path) -> Result<toml
         },
     };
     let content = read_text_with_bom_detection(raw_bytes);
-    let toml_val: toml::Value =
-        toml::from_str(&content).map_err(|e| handle_error(None, "parse settings TOML", e))?;
+    let toml_val = parse_settings_toml(&content)?;
 
     let mut preserved = toml::map::Map::new();
     if let Some(table) = toml_val.as_table() {
