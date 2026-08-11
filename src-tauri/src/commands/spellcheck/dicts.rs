@@ -102,11 +102,11 @@ pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static 
         )),
         "en-CA" => Some((
             cspell_url!(
-                "refs/heads/main",
+                "main",
                 "/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.aff"
             ),
             cspell_url!(
-                "refs/heads/main",
+                "main",
                 "/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.dic"
             ),
         )),

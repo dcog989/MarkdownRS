@@ -8,6 +8,10 @@ use tokio::fs;
 const SPELL_CHECK_TIMEOUT_CONNECT: Duration = Duration::from_secs(2);
 const SPELL_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// Bump to invalidate the on-disk dictionary cache (e.g. when a source URL or
+/// upstream wordlist changes); older files are ignored by the versioned name.
+const DICT_CACHE_VERSION: &str = "v1";
+
 async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String> {
     match fs::read_to_string(path).await {
         Ok(content) => Ok(content),
@@ -71,8 +75,8 @@ pub async fn load_language_dictionary(
     cache_dir: PathBuf,
     dict_code: String,
 ) -> Result<(String, String)> {
-    let aff_path = cache_dir.join(format!("{}.aff", dict_code));
-    let dic_path = cache_dir.join(format!("{}.dic", dict_code));
+    let aff_path = cache_dir.join(format!("{}.{}.aff", dict_code, DICT_CACHE_VERSION));
+    let dic_path = cache_dir.join(format!("{}.{}.dic", dict_code, DICT_CACHE_VERSION));
 
     let (aff_url, dic_url) = if let Some((aff, dic)) = dicts::resolve_language_urls(&dict_code) {
         (aff.to_string(), dic.to_string())
@@ -111,7 +115,7 @@ pub async fn load_technical_dictionary(
 ) -> Result<String> {
     let url =
         dicts::resolve_technical_url(&id).ok_or_else(|| anyhow!("Unknown technical ID: {}", id))?;
-    let cache_path = cache_dir.join(format!("{}.txt", id));
+    let cache_path = cache_dir.join(format!("{}.{}.txt", id, DICT_CACHE_VERSION));
 
     ensure_file_downloaded(&client, url, &cache_path, &id).await
 }
