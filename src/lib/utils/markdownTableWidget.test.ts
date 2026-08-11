@@ -48,6 +48,23 @@ describe('renderCell', () => {
     );
   });
 
+  it('renders url and email autolinks', () => {
+    expect(renderCell('<https://example.com/a?b=1&c=2>')).toBe(
+      '<a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noreferrer">https://example.com/a?b=1&amp;c=2</a>',
+    );
+    expect(renderCell('<mail@example.com>')).toBe('<a href="mailto:mail@example.com">mail@example.com</a>');
+  });
+
+  it('escapes quotes inside autolinks', () => {
+    expect(renderCell('<https://x.com/"onclick="alert(1)>')).toBe(
+      '<a href="https://x.com/&quot;onclick=&quot;alert(1)" target="_blank" rel="noreferrer">https://x.com/"onclick="alert(1)</a>',
+    );
+  });
+
+  it('does not format autolinks inside code spans', () => {
+    expect(renderCell('`<https://example.com>`')).toBe('<code>&lt;https://example.com&gt;</code>');
+  });
+
   it('does not format code inside emphasis markers', () => {
     expect(renderCell('`**not bold**`')).toBe('<code>**not bold**</code>');
   });

@@ -83,6 +83,15 @@ export function renderCell(cell: string): string {
     /\[([^\]]+)\]\((https?:\/\/[^\s)\]]+)\)/g,
     '<a href="$2" target="_blank" rel="noreferrer">$1</a>',
   );
+  // GFM autolinks: `<https://...>` and `<mail@example.com>`. The cell was
+  // HTML-escaped above, so the angle brackets are `&lt;`/`&gt;`; a URL cannot
+  // contain `>` so a lazy match up to the first `&gt;` is safe. Quotes are
+  // re-escaped so the URL cannot break out of the href attribute.
+  html = html.replace(/&lt;(https?:\/\/.*?)&gt;/g, (_match, url: string) => {
+    const href = url.replace(/"/g, '&quot;');
+    return `<a href="${href}" target="_blank" rel="noreferrer">${url}</a>`;
+  });
+  html = html.replace(/&lt;([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})&gt;/g, '<a href="mailto:$1">$1</a>');
   return html.replace(new RegExp(`${PLACEHOLDER_START}(\\d+)${PLACEHOLDER_END}`, 'g'), (_match, index: string) => {
     return codeSpans[Number(index)] ?? '';
   });
