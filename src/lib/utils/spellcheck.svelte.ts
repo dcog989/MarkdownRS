@@ -37,6 +37,7 @@ export class SpellcheckManager {
   linterFailedNotified = false;
 
   private initPromise: Promise<void> | null = null;
+  private initGeneration = 0;
   private pendingFetches = new Set<string>();
 
   async loadCustomDictionary(): Promise<void> {
@@ -47,10 +48,21 @@ export class SpellcheckManager {
   }
 
   async init(force = false): Promise<void> {
-    if (this.initPromise && !force) return this.initPromise;
     if (this.dictionaryLoaded && !force) return;
+    if (this.initPromise) {
+      if (!force) return this.initPromise;
+      // Never stack concurrent inits: let the in-flight one settle, then start
+      // a fresh build for the (possibly changed) configuration.
+      await this.initPromise;
+    }
 
-    this.initPromise = (async () => {
+    const generation = ++this.initGeneration;
+    this.initPromise = this.runInit(generation);
+    return this.initPromise;
+  }
+
+  private async runInit(generation: number): Promise<void> {
+    try {
       await this.loadCustomDictionary();
 
       const dictionaries = settingsState.languageDictionaries || ['en-US'];
@@ -65,19 +77,20 @@ export class SpellcheckManager {
           undefined,
           { ignore: true },
         );
-      } catch (_error) {
-        this.initPromise = null;
+      } catch {
         this.dictionaryLoaded = false;
         return;
       }
 
-      this.dictionaryLoaded = (await this.waitForInitCompletion()) === 'ready';
-      if (!this.dictionaryLoaded) {
+      const status = await this.waitForInitCompletion();
+      if (generation !== this.initGeneration) return;
+      this.dictionaryLoaded = status === 'ready';
+    } finally {
+      // A stale closure (superseded or cleared) must not clobber a newer init.
+      if (generation === this.initGeneration) {
         this.initPromise = null;
       }
-    })();
-
-    return this.initPromise;
+    }
   }
 
   /**
@@ -203,13 +216,14 @@ export class SpellcheckManager {
   }
 
   clear(): void {
+    this.initGeneration++;
+    this.initPromise = null;
     this.customDictionary.clear();
     this.misspelledCache.clear();
     this.suggestionCache.clear();
     this.validCache.clear();
     this.dictionaryLoaded = false;
     this.linterFailedNotified = false;
-    this.initPromise = null;
   }
 }
 
