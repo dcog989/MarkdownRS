@@ -311,45 +311,76 @@ export const renderedCopyHandler = EditorView.domEventHandlers({
   },
 });
 
+interface PendingMaskedClick {
+  target: number;
+  x: number;
+  y: number;
+}
+
+const pendingMaskedClick = new WeakMap<EditorView, PendingMaskedClick>();
+
+/**
+ * Returns the caret position a click on a masked link should land at, or null
+ * when the click is not on a masked URL region.
+ */
+function maskedLinkClickTarget(view: EditorView, pos: number): number | null {
+  const doc = view.state.doc;
+  const cursor = view.state.selection.main.head;
+  const line = doc.lineAt(pos);
+  let target: number | null = null;
+
+  syntaxTree(view.state).iterate({
+    from: line.from,
+    to: line.to,
+    enter: (node) => {
+      if (target != null) return;
+      if (node.name === 'Autolink') {
+        if (cursor > node.from && cursor < node.to) return;
+        const linkMarks = node.node.getChildren('LinkMark');
+        const maskStart = linkMarks[linkMarks.length - 1]?.from ?? node.to;
+        if (pos >= maskStart && pos <= node.to) target = node.to;
+        return;
+      }
+      if (node.name !== 'Link') return;
+      const urlNode = node.node.getChild('URL');
+      if (!urlNode) return;
+      if (cursor > node.from && cursor < node.to) return;
+      const linkMarks = node.node.getChildren('LinkMark');
+      const textEnd = linkMarks[1]?.from ?? urlNode.from;
+      const after = doc.sliceString(urlNode.to, urlNode.to + 1);
+      const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
+      if (pos >= textEnd && pos < hideEnd) target = hideEnd;
+    },
+  });
+
+  return target;
+}
+
+/**
+ * Clicking a masked URL region should place the caret at a sensible spot, but
+ * must not swallow mousedown so that drag-selections starting on the URL (e.g.
+ * an autolink closing a line) still work. So mousedown only remembers the
+ * intended caret; a plain click (no drag, no range produced) applies it on
+ * mouseup, letting the core mouse-selection drive any real drag in between.
+ */
 export const linkBoundaryClickHandler = EditorView.domEventHandlers({
   mousedown: (event, view) => {
+    pendingMaskedClick.delete(view);
     if (event.button !== 0 || event.shiftKey) return false;
     const pos = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
     if (pos == null) return false;
-
-    const doc = view.state.doc;
-    const cursor = view.state.selection.main.head;
-    const line = doc.lineAt(pos.pos);
-    let target: number | null = null;
-
-    syntaxTree(view.state).iterate({
-      from: line.from,
-      to: line.to,
-      enter: (node) => {
-        if (target != null) return;
-        if (node.name === 'Autolink') {
-          if (cursor > node.from && cursor < node.to) return;
-          const linkMarks = node.node.getChildren('LinkMark');
-          const maskStart = linkMarks[linkMarks.length - 1]?.from ?? node.to;
-          if (pos.pos >= maskStart && pos.pos <= node.to) target = node.to;
-          return;
-        }
-        if (node.name !== 'Link') return;
-        const urlNode = node.node.getChild('URL');
-        if (!urlNode) return;
-        if (cursor > node.from && cursor < node.to) return;
-        const linkMarks = node.node.getChildren('LinkMark');
-        const textEnd = linkMarks[1]?.from ?? urlNode.from;
-        const after = doc.sliceString(urlNode.to, urlNode.to + 1);
-        const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
-        if (pos.pos >= textEnd && pos.pos < hideEnd) target = hideEnd;
-      },
-    });
-
+    const target = maskedLinkClickTarget(view, pos.pos);
     if (target == null) return false;
-    event.preventDefault();
-    view.focus();
-    view.dispatch({ selection: { anchor: target }, scrollIntoView: false });
+    pendingMaskedClick.set(view, { target, x: event.clientX, y: event.clientY });
+    return false;
+  },
+  mouseup: (event, view) => {
+    const pending = pendingMaskedClick.get(view);
+    if (!pending) return false;
+    pendingMaskedClick.delete(view);
+    if (!view.state.selection.main.empty) return false;
+    if (Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10) return false;
+    view.dispatch({ selection: { anchor: pending.target }, scrollIntoView: false });
     return true;
   },
 });
