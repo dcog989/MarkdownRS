@@ -141,7 +141,6 @@ function collectCallouts(view: EditorView): {
 } {
   const markers: { from: number; to: number; kind: string; active: boolean }[] = [];
   const lines = new Map<number, string>();
-  const cursor = view.state.selection.main.head;
   const tree = syntaxTree(view.state);
 
   for (const { from, to } of view.visibleRanges) {
@@ -154,7 +153,7 @@ function collectCallouts(view: EditorView): {
         const callout = matchCalloutLine(fromLine.text);
         if (!callout) return;
         const markerStart = fromLine.from + callout.start;
-        const active = cursor >= node.from && cursor <= node.to;
+        const active = isRevealed(view, node.from, node.to);
         markers.push({
           from: markerStart,
           to: markerStart + callout.raw.length,
@@ -174,9 +173,8 @@ function collectCallouts(view: EditorView): {
 
 function findCursorHeadingLines(view: EditorView): Set<number> {
   const headings = new Set<number>();
-  const cursor = view.state.selection.main.head;
   const tree = syntaxTree(view.state);
-  const node = tree.resolveInner(cursor, -1);
+  const node = tree.resolveInner(view.state.selection.main.head, -1);
   let current: typeof node | null = node;
   while (current) {
     if (HEADING_NODE_NAMES.has(current.name)) {
@@ -190,6 +188,18 @@ function findCursorHeadingLines(view: EditorView): Set<number> {
     current = current.parent;
   }
   return headings;
+}
+
+/**
+ * Reveals (paints raw) a node when the caret sits inside it or any selection
+ * range overlaps it. Range overlap keeps a node unpainted while the user drags
+ * a selection through it or edits with multiple carets. Empty ranges (carets)
+ * use the same inclusive bounds as the previous head-only check.
+ */
+function isRevealed(view: EditorView, from: number, to: number): boolean {
+  return view.state.selection.ranges.some((r) =>
+    r.from === r.to ? r.from >= from && r.from <= to : r.from < to && r.to > from,
+  );
 }
 
 function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
@@ -257,7 +267,6 @@ function findHiddenMarkers(
   ranges: Range<Decoration>[],
   tableSpans: Array<{ from: number; to: number }>,
 ) {
-  const cursor = view.state.selection.main.head;
   const usedParents = new Set<string>();
 
   for (const cfg of MARKER_CONFIG) {
@@ -272,7 +281,7 @@ function findHiddenMarkers(
       to,
       enter: (node) => {
         if (!usedParents.has(node.name)) return;
-        if (cursor >= node.from && cursor <= node.to) return false;
+        if (isRevealed(view, node.from, node.to)) return false;
         hiddenParents.push({ from: node.from, to: node.to });
         return false;
       },
@@ -360,7 +369,6 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
   const frontmatterLines = new Set<number>();
   const parserHrs = new Set<number>();
   const blockquoteLines = new Set<number>();
-  const cursor = view.state.selection.main.head;
 
   for (const { from, to } of view.visibleRanges) {
     tree.iterate({
@@ -394,7 +402,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
           let p: typeof node.node | null = node.node.parent;
           while (p) {
             if (p.name === 'FencedCode') {
-              if (!(cursor >= p.from && cursor <= p.to)) {
+              if (!isRevealed(view, p.from, p.to)) {
                 ranges.push(codeInfoDeco.range(node.from, node.to));
               }
               break;
@@ -404,7 +412,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         } else if (node.name === 'HorizontalRule') {
           parserHrs.add(node.from);
         } else if (node.name === 'Blockquote') {
-          if (!(cursor >= node.from && cursor <= node.to)) {
+          if (!isRevealed(view, node.from, node.to)) {
             const fromLine = view.state.doc.lineAt(node.from);
             const toLine = view.state.doc.lineAt(node.to);
             for (let i = fromLine.number; i <= toLine.number; i++) {
@@ -412,7 +420,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
             }
           }
         } else if (node.name === 'Image') {
-          if (cursor >= node.from && cursor <= node.to) return;
+          if (isRevealed(view, node.from, node.to)) return;
           if (tableSpans.some((span) => node.from >= span.from && node.to <= span.to)) return false;
           const urlNode = node.node.getChild('URL');
           if (!urlNode) return;
@@ -425,7 +433,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
           ranges.push(imageWidgetDecoration(node.from, node.to, src, alt));
           return false;
         } else if (node.name === 'Link') {
-          if (!(cursor >= node.from && cursor <= node.to)) {
+          if (!isRevealed(view, node.from, node.to)) {
             const linkMarks = node.node.getChildren('LinkMark');
             const urlNode = node.node.getChild('URL');
             if (urlNode) {
@@ -493,7 +501,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       const bulletMatch = bulletMatchRe.exec(line.text);
       if (bulletMatch) {
         const dashStart = line.from + bulletMatch[1].length;
-        const nearMarker = cursor >= dashStart && cursor <= dashStart + 1;
+        const nearMarker = isRevealed(view, dashStart, dashStart + 1);
         if (!nearMarker) {
           ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
         }
@@ -508,7 +516,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         const end = start + match[0].length;
         if (!isVisibleInCodeBlock(tree, start)) {
           ranges.push(highlightDeco.range(start, end));
-          if (!(cursor >= start && cursor <= end)) {
+          if (!isRevealed(view, start, end)) {
             ranges.push(formattingMaskDeco.range(start, start + 2));
             ranges.push(formattingMaskDeco.range(end - 2, end));
           }
@@ -523,7 +531,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         const end = start + match[0].length;
         if (!isVisibleInCodeBlock(tree, start)) {
           ranges.push(strikethroughDeco.range(start, end));
-          if (!(cursor >= start && cursor <= end)) {
+          if (!isRevealed(view, start, end)) {
             ranges.push(formattingMaskDeco.range(start, start + 2));
             ranges.push(formattingMaskDeco.range(end - 2, end));
           }
@@ -531,7 +539,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       }
 
       if (!isVisibleInCodeBlock(tree, line.from) && (parserHrs.has(line.from) || line.text.trim() === '---')) {
-        const onLine = cursor >= line.from && cursor <= line.to;
+        const onLine = isRevealed(view, line.from, line.to);
         ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
       }
 
