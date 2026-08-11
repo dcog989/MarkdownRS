@@ -244,6 +244,9 @@ function listMarkerBackspace(view: EditorView): boolean {
   if (!empty || head === 0) return false;
   const line = state.doc.lineAt(head);
   if (head !== line.to) return false;
+  // Code-block content is never a WYSIWYG list item; leave Backspace to the
+  // default handler so the literal `- ` text is edited normally.
+  if (isVisibleInCodeBlock(syntaxTree(state), line.from)) return false;
 
   const match = /^(\s*)-\s?$/.exec(line.text);
   if (!match) return false;
