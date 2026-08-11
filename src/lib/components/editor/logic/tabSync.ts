@@ -22,7 +22,6 @@ export class TabSyncManager {
   timerRefs = {
     content: null as number | null,
     metrics: null as number | null,
-    cursor: null as number | null,
   };
   lastForceSyncCounter = 0;
   isRestoring = false;
@@ -210,7 +209,6 @@ export class TabSyncManager {
   cleanup() {
     if (this.timerRefs.content) clearTimeout(this.timerRefs.content);
     if (this.timerRefs.metrics) clearTimeout(this.timerRefs.metrics);
-    if (this.timerRefs.cursor) clearTimeout(this.timerRefs.cursor);
   }
 }
 
