@@ -93,9 +93,9 @@ fn html_escape_into(out: &mut String, s: &str) {
     }
 }
 
-/// A single link replacement: `(content_start, full_end, link_html)`.
-/// `content_start`..`full_end` is the span of `text` consumed by the link
-/// (the "before" slice runs up to `content_start`, the tail from `full_end`).
+/// A single link replacement: `(start, end, link_html)`.
+/// `start`..`end` is the span of `text` consumed by the link (the "before"
+/// slice runs up to `start`, the tail from `end`).
 type Splice = (usize, usize, String);
 
 /// Walks the AST and rewrites matches of `regex` inside plain text nodes into
@@ -257,6 +257,32 @@ mod tests {
         assert!(html.contains(r#"<a href="notes/foo" class="wikilink""#));
         assert!(html.contains(">the notes</a>"));
         assert!(!html.contains(">notes/foo</a>"));
+    }
+
+    #[test]
+    fn heading_text_keeps_wikilink_and_file_path_labels() {
+        let result = crate::markdown::renderer::render_markdown(
+            "# See [[notes/foo]] and /home/user/file.md\n",
+            MarkdownOptions {
+                flavor: MarkdownFlavor::Gfm,
+            },
+        )
+        .expect("render should succeed");
+
+        assert_eq!(result.headings.len(), 1);
+        let heading = &result.headings[0];
+        assert_eq!(
+            heading.text, "See notes/foo and /home/user/file.md",
+            "heading label must not truncate at the links"
+        );
+        // The reported anchor must match the id comrak renders.
+        assert!(
+            result
+                .html
+                .contains(&format!(r#"<h1 id="{}""#, heading.anchor_id)),
+            "heading id mismatch: html was {}",
+            result.html
+        );
     }
 
     #[test]

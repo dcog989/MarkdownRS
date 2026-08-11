@@ -33,13 +33,13 @@ pub(crate) fn extract_headings_from_ast<'a>(
     root.descendants()
         .filter_map(|node| {
             if let NodeValue::Heading(heading) = &node.data.borrow().value {
-                // comrak's `collect_text` is the same extraction the HTML
-                // renderer uses for `id` generation (`html.rs` render_heading),
-                // so the reported text and anchor always match the rendered
-                // heading. A bespoke traversal here would diverge for inline
-                // math (dropped entirely) and produce broken TOC anchors.
-                let text = node.collect_text();
-                let anchor_id = anchorizer.anchorize(&text);
+                // The anchor must derive from comrak's `collect_text` — the
+                // exact extraction the HTML renderer uses for `id` generation
+                // (`html.rs` render_heading) — so TOC links match the rendered
+                // heading. The display text is extracted separately so raw-HTML
+                // spans (e.g. the anchors linkify injects) keep their labels.
+                let anchor_id = anchorizer.anchorize(&node.collect_text());
+                let text = collect_heading_display_text(node);
                 Some(HeadingEntry {
                     level: heading.level,
                     text,
@@ -50,4 +50,51 @@ pub(crate) fn extract_headings_from_ast<'a>(
             }
         })
         .collect()
+}
+
+/// Visible text of a heading: like comrak's `collect_text`, but raw-HTML
+/// inline spans (`HtmlInline`) contribute their tag-stripped content instead
+/// of nothing. Linkify emits wikilink/file-path links as such spans, so their
+/// labels appear in heading text / TOC entries instead of being truncated away.
+fn collect_heading_display_text<'a>(node: &'a AstNode<'a>) -> String {
+    let mut text = String::new();
+    collect_heading_display_text_into(node, &mut text);
+    text
+}
+
+fn collect_heading_display_text_into<'a>(node: &'a AstNode<'a>, out: &mut String) {
+    match &node.data.borrow().value {
+        NodeValue::Text(t) => out.push_str(t.as_ref()),
+        NodeValue::Code(c) => out.push_str(&c.literal),
+        NodeValue::Math(m) => out.push_str(&m.literal),
+        NodeValue::LineBreak | NodeValue::SoftBreak => out.push(' '),
+        NodeValue::HtmlInline(html) => out.push_str(&html_text_content(html)),
+        _ => {
+            for child in node.children() {
+                collect_heading_display_text_into(child, out);
+            }
+        },
+    }
+}
+
+/// Text content of an HTML fragment: everything between tags, with the basic
+/// entities unescaped. Used to recover link labels from the HtmlInline spans
+/// linkify injects.
+fn html_text_content(html: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    for c in html.chars() {
+        match c {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if in_tag => {},
+            _ => out.push(c),
+        }
+    }
+    out.replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
 }
