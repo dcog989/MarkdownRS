@@ -35,7 +35,7 @@ const renderer = new PreviewRenderer({
   },
 });
 
-let activeTab = $derived(tabsById.get(tabId));
+let activeTab = $derived(tabsById().get(tabId));
 
 let tabPath = $derived(activeTab?.path);
 let tabContent = $derived(activeTab?.content || '');

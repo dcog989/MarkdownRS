@@ -29,7 +29,7 @@ function handleToggleFileTree() {
   saveSettings();
 }
 
-let activeTab = $derived(tabsById.get(appContext.app.activeTabId));
+let activeTab = $derived(tabsById().get(appContext.app.activeTabId));
 
 let isMarkdown = $derived.by(() => {
   if (!activeTab) return true;
