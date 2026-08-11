@@ -1,6 +1,14 @@
 import { syntaxTree } from '@codemirror/language';
-import type { Extension, Range } from '@codemirror/state';
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
+import { type Extension, Prec, type Range } from '@codemirror/state';
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  keymap,
+  ViewPlugin,
+  type ViewUpdate,
+  WidgetType,
+} from '@codemirror/view';
 import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -221,6 +229,35 @@ function isHrLineRevealed(view: EditorView, lineFrom: number, lineTo: number): b
     r.from === r.to ? r.from >= lineFrom && r.from <= lineTo : r.from < lineTo && r.to > lineFrom,
   );
 }
+
+/**
+ * In rendered mode, Backspace on an empty list line (e.g. the `- ` item
+ * auto-created by Enter) should reveal the raw marker on the first press and
+ * remove it on the second, instead of lang-markdown's default of blanking the
+ * whole marker into invisible spaces on the first press.
+ */
+function listMarkerBackspace(view: EditorView): boolean {
+  const { state } = view;
+  const { head, empty } = state.selection.main;
+  if (!empty || head === 0) return false;
+  const line = state.doc.lineAt(head);
+  if (head !== line.to) return false;
+
+  const match = /^(\s*)-\s?$/.exec(line.text);
+  if (!match) return false;
+
+  const dashStart = line.from + match[1].length;
+  const dashEnd = dashStart + 1;
+  const hasTrailingSpace = dashEnd < line.to;
+
+  view.dispatch({
+    changes: hasTrailingSpace ? { from: dashEnd, to: line.to } : { from: dashStart, to: dashEnd },
+    selection: { anchor: hasTrailingSpace ? dashEnd : dashStart },
+  });
+  return true;
+}
+
+const renderedModeKeymap = Prec.highest(keymap.of([{ key: 'Backspace', run: listMarkerBackspace }]));
 
 function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
   const node = tree.resolveInner(pos, 1);
@@ -630,6 +667,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
           imageWidgetClickHandler,
           linkBoundaryClickHandler,
           renderedCopyHandler,
+          renderedModeKeymap,
         ]
       : []),
   ];
