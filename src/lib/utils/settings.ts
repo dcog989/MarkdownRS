@@ -10,6 +10,8 @@ const SETTINGS_EXCLUDED_KEYS = new Set([
   'osPlatform',
   'availableThemes',
   'writerMode',
+  'commandUsage',
+  'commandUsageCounts',
 ]);
 
 let lastSavedState: string = '';
@@ -42,7 +44,7 @@ export async function initSettings() {
 
   if (saved && Object.keys(saved).length > 0) {
     Object.keys(saved).forEach((key) => {
-      if (Object.hasOwn(settingsState, key)) {
+      if (!SETTINGS_EXCLUDED_KEYS.has(key) && Object.hasOwn(settingsState, key)) {
         (settingsState as Record<string, unknown>)[key] = saved[key];
       }
     });
