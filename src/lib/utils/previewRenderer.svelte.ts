@@ -15,7 +15,8 @@ export class PreviewRenderer {
   private lastTabId = '';
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private spinnerTimer: ReturnType<typeof setTimeout> | null = null;
-  private renderAbortController: AbortController | null = null;
+  /** Advances on every cancel/new schedule; in-flight renders capture it and bail when stale. */
+  private renderEpoch = 0;
 
   onTabSwitch(tabId: string): void {
     if (this.lastTabId === tabId) return;
@@ -42,14 +43,13 @@ export class PreviewRenderer {
       this.showSpinner = true;
     }, CONFIG.PERFORMANCE.PREVIEW_SPINNER_DELAY_MS);
 
-    const controller = new AbortController();
-    this.renderAbortController = controller;
+    const epoch = ++this.renderEpoch;
 
     this.debounceTimer = setTimeout(async () => {
       this.debounceTimer = null;
       try {
         const result = await renderMarkdown(content, flavor === 'gfm', tabPath);
-        if (controller.signal.aborted || !result) return;
+        if (epoch !== this.renderEpoch || !result) return;
 
         this.htmlContent = result.html;
         this.lastRendered = content;
@@ -64,15 +64,14 @@ export class PreviewRenderer {
           void tick().then(() => untrack(() => scrollSync.updateMap()));
         }
       } catch (err) {
-        if (controller.signal.aborted) return;
+        if (epoch !== this.renderEpoch) return;
         this.lastRendered = content;
         this.renderError = err instanceof Error ? err.message : translate('preview.renderFailed');
       } finally {
         // Only the current render owns the shared state: a superseded render
-        // (aborted by a newer scheduleRender or a tab switch) must not reset
-        // flags that the new cycle already re-armed.
-        if (this.renderAbortController === controller) {
-          this.renderAbortController = null;
+        // (invalidated by a newer scheduleRender or a tab switch) must not
+        // reset flags that the new cycle already re-armed.
+        if (epoch === this.renderEpoch) {
           this.resetRenderState();
           scrollSync.endTabSwitch(CONFIG.PERFORMANCE.TAB_SWITCH_SCROLL_SUPPRESS_MS);
         }
@@ -82,16 +81,13 @@ export class PreviewRenderer {
     return () => this.cancelPending();
   }
 
-  /** Cancels pending timers and any in-flight render, then clears the render state. */
+  /** Cancels pending timers and invalidates any in-flight render, then clears the render state. */
   private cancelPending(): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
-    if (this.renderAbortController) {
-      this.renderAbortController.abort();
-      this.renderAbortController = null;
-    }
+    this.renderEpoch++;
     this.resetRenderState();
   }
 

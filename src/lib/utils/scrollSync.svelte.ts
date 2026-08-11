@@ -10,6 +10,7 @@ import type { EditorView } from '@codemirror/view';
 import { CONFIG } from '$lib/utils/config';
 import { throttle } from '$lib/utils/timing';
 import type { AppEditorView } from '../../global';
+import { LineMapTracker } from './lineMapTracker';
 import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolation';
 import { SmoothScroller } from './smoothScroller';
 
@@ -26,9 +27,7 @@ export class ScrollSyncManager {
 
   private activeSource = $state<'editor' | 'preview' | null>(null);
   private clearSourceTimer: number | null = null;
-  private resizeObserver: ResizeObserver | null = null;
-  private updateMapTimer: number | null = null;
-  private mapDirty = $state(false);
+  private lineMapTracker = new LineMapTracker(() => this.updateMap());
 
   private suppressSync = false;
   private suppressTimer: number | null = null;
@@ -66,43 +65,8 @@ export class ScrollSyncManager {
     this.boundOnPreviewScroll = this.onPreviewScroll.bind(this);
   }
 
-  private effectInitialized = false;
-
-  private initEffects() {
-    if (this.effectInitialized) return;
-    this.effectInitialized = true;
-
-    $effect.root(() => {
-      $effect(() => {
-        if (this.preview) {
-          this.resizeObserver?.disconnect();
-          this.resizeObserver = new ResizeObserver(() => {
-            if (this.mapDirty) {
-              if (this.updateMapTimer) clearTimeout(this.updateMapTimer);
-              this.updateMapTimer = window.setTimeout(() => {
-                this.updateMapTimer = null;
-                this.mapDirty = false;
-                requestAnimationFrame(() => this.updateMap());
-              }, CONFIG.PERFORMANCE.SCROLL_SYNC_RESIZE_DEBOUNCE_MS);
-            }
-          });
-
-          this.resizeObserver.observe(this.preview);
-
-          return () => {
-            this.resizeObserver?.disconnect();
-            if (this.updateMapTimer) {
-              clearTimeout(this.updateMapTimer);
-              this.updateMapTimer = null;
-            }
-          };
-        }
-      });
-    });
-  }
-
   markMapDirty() {
-    this.mapDirty = true;
+    this.lineMapTracker.markDirty();
   }
 
   private persistEditorScroll: (() => void) | null = null;
@@ -152,8 +116,6 @@ export class ScrollSyncManager {
   }
 
   registerPreview(el: HTMLElement) {
-    this.initEffects();
-
     if (this.preview === el) return;
 
     if (this.preview) {
@@ -162,6 +124,7 @@ export class ScrollSyncManager {
 
     this.preview = el;
     el.addEventListener('scroll', this.boundOnPreviewScroll, { passive: true });
+    this.lineMapTracker.setTarget(el);
   }
 
   updateMap() {
