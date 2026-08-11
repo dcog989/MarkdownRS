@@ -19,9 +19,30 @@ impl Database {
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
              PRAGMA synchronous = NORMAL;
-             PRAGMA auto_vacuum = INCREMENTAL;
              PRAGMA busy_timeout = 5000;",
         )?;
+
+        // auto_vacuum only changes the on-disk layout when the database is
+        // vacuumed; a database created before the pragma was enabled silently
+        // keeps auto_vacuum=NONE and incremental_vacuum would reclaim nothing.
+        // Convert pre-existing databases once (fresh ones are created in
+        // INCREMENTAL mode before any tables, so they need no VACUUM).
+        let auto_vacuum: i32 = conn.query_row("PRAGMA auto_vacuum", [], |row| row.get(0))?;
+        conn.execute_batch("PRAGMA auto_vacuum = INCREMENTAL;")?;
+        if auto_vacuum == 0 {
+            let has_tables: bool = conn.query_row(
+                "SELECT EXISTS(
+                    SELECT 1 FROM sqlite_master
+                    WHERE type IN ('table','index','trigger') AND name NOT LIKE 'sqlite_%'
+                 )",
+                [],
+                |row| row.get(0),
+            )?;
+            if has_tables {
+                log::info!("Converting existing database to auto_vacuum=INCREMENTAL");
+                conn.execute_batch("VACUUM;")?;
+            }
+        }
 
         migrations::setup_schema(&mut conn)?;
 
