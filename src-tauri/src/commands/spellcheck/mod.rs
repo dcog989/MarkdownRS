@@ -99,6 +99,11 @@ pub async fn get_spelling_suggestions(
 ) -> Result<Vec<String>, String> {
     let speller = state.speller.clone();
 
+    let custom_snapshot = {
+        let guard = state.custom_dict.read_or_recover();
+        Arc::clone(&guard)
+    };
+
     let suggestions = tokio::task::spawn_blocking(move || {
         let guard = speller.lock_or_recover();
         let dictionaries = match guard.as_ref() {
@@ -111,6 +116,9 @@ pub async fn get_spelling_suggestions(
             let mut suggestions = Vec::new();
             dictionary.suggest(&word, &mut suggestions);
             for suggestion in suggestions {
+                if custom_snapshot.contains(&suggestion.to_lowercase()) {
+                    continue;
+                }
                 if !seen.contains(&suggestion) {
                     seen.push(suggestion);
                 }
