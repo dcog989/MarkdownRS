@@ -216,7 +216,13 @@ export function createTableWidgetField(): StateField<DecorationSet> {
       return buildTableDecorations(state);
     },
     update(decorations, tr) {
-      if (!tr.docChanged && tr.selection == null) return decorations;
+      // The background parser grows the syntax tree asynchronously via
+      // Language.setState transactions (no doc/selection change). A table
+      // outside the initially-parsed region (first ~3000 chars) would stay
+      // raw until the next click unless we also rebuild when the tree grows,
+      // e.g. right after a tab switch restores a deep scroll position.
+      if (!tr.docChanged && tr.selection == null && syntaxTree(tr.startState) === syntaxTree(tr.state))
+        return decorations;
       return buildTableDecorations(tr.state);
     },
     provide: (field) => EditorView.decorations.compute([field], (state) => state.field(field)),

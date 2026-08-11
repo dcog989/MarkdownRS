@@ -683,7 +683,16 @@ export function createMarkdownDecorationsPlugin(rendered: boolean): Extension[] 
           this.decorations = buildDecorations(view, rendered);
         }
         update(update: ViewUpdate) {
-          if (update.docChanged || update.viewportChanged || update.selectionSet) {
+          if (
+            update.docChanged ||
+            update.viewportChanged ||
+            update.selectionSet ||
+            // The background parser grows the tree asynchronously via
+            // Language.setState (no doc/viewport/selection change); rebuild so
+            // constructs beyond the initially-parsed region (e.g. deep tables,
+            // headings, callouts) paint right after a tab switch or scroll.
+            syntaxTree(update.startState) !== syntaxTree(update.state)
+          ) {
             this.decorations = buildDecorations(update.view, rendered);
           }
         }
