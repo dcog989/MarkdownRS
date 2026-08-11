@@ -2,6 +2,7 @@ import { translate } from '$lib/i18n';
 import { settingsState, syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { callBackend } from '$lib/utils/backend';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte';
@@ -16,7 +17,10 @@ export function reloadSpellcheck() {
   });
 }
 
-export function onLogLevelChange() {
+export function onLogLevelChange(newValue: unknown) {
+  void callBackend('set_log_level', { level: String(newValue) }, 'Settings:Save', undefined, {
+    ignore: true,
+  });
   showToast('info', translate('settings.logLevelChanged'));
 }
 

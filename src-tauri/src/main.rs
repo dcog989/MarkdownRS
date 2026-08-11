@@ -119,6 +119,7 @@ fn main() {
             commands::settings::get_theme_css,
             commands::settings::load_settings,
             commands::settings::save_settings,
+            commands::settings::set_log_level,
             commands::context_menu::set_context_menu_item,
             commands::context_menu::check_context_menu_status,
             commands::settings::toggle_devtools,

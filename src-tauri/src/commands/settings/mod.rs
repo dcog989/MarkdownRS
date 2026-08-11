@@ -103,6 +103,12 @@ pub async fn save_settings(
 }
 
 #[tauri::command]
+pub async fn set_log_level(level: String) -> Result<(), String> {
+    crate::bootstrap::logging::apply_log_level(&level);
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn toggle_devtools(#[allow(unused_variables)] window: tauri::WebviewWindow) {
     #[cfg(debug_assertions)]
     if window.is_devtools_open() {

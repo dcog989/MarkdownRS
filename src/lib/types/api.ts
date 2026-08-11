@@ -275,6 +275,10 @@ export interface BackendCommands {
     args: { settings: unknown };
     return: undefined;
   };
+  set_log_level: {
+    args: { level: string };
+    return: undefined;
+  };
   set_context_menu_item: {
     args: { enable: boolean };
     return: undefined;

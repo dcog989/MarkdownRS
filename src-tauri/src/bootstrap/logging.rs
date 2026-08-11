@@ -46,10 +46,12 @@ pub fn init(
 
     app_handle.plugin(
         tauri_plugin_log::Builder::default()
-            .level(log_level)
+            // Permissive dispatch so the effective level can be raised/lowered
+            // at runtime via `log::set_max_level`; the global gate is restored
+            // to the configured level right after registration.
+            .level(LevelFilter::Trace)
             .level_for("tao", LevelFilter::Error)
             .level_for("wry", LevelFilter::Error)
-            .level_for("markdown_rs", log_level)
             .max_file_size(2 * 1024 * 1024)
             .rotation_strategy(RotationStrategy::KeepSome(9))
             .targets([
@@ -63,7 +65,17 @@ pub fn init(
             .build(),
     )?;
 
+    log::set_max_level(log_level);
+
     Ok(())
+}
+
+/// Applies a new effective log level at runtime. The plugin's dispatch filter
+/// is permissive (Trace), so the global `log::set_max_level` gate fully
+/// controls what is emitted; `tao`/`wry` stay capped at error by their
+/// per-target filters.
+pub fn apply_log_level(level: &str) {
+    log::set_max_level(parse_log_level(level));
 }
 
 pub fn log_runtime_info(paths: &AppPaths) {
