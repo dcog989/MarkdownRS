@@ -94,6 +94,11 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
         ddl: "INTEGER NOT NULL DEFAULT 1",
         preserve_old_on_null: false,
     },
+    TabColumn {
+        name: "line_ending",
+        ddl: "TEXT",
+        preserve_old_on_null: false,
+    },
 ];
 
 /// Column list for `CREATE TABLE`.

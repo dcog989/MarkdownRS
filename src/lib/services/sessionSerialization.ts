@@ -43,6 +43,7 @@ type RustTabState = {
   mru_position?: number | null;
   sort_index?: number;
   original_index?: number | null;
+  line_ending?: string | null;
 };
 
 let saveInProgress = false;
@@ -73,6 +74,7 @@ function toRustTabState(
     mru_position: mruPosition,
     sort_index: index,
     original_index: originalIndex,
+    line_ending: tab.lineEnding,
   };
 }
 
@@ -172,7 +174,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     formattedTimestamp: formatTimestampForDisplay(timestamp),
     isPinned: t.is_pinned,
     customTitle: t.custom_title || undefined,
-    lineEnding: (t.content && t.content.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF') as 'LF' | 'CRLF',
+    lineEnding: t.line_ending === 'CRLF' ? 'CRLF' : 'LF',
     encoding: 'UTF-8',
     fileCheckFailed: t.file_check_failed || false,
     contentLoaded,

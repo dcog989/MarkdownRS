@@ -154,7 +154,10 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         wordCount,
         lineCount,
         widestColumn,
-        lineEnding: normalizedContent.indexOf('\r\n') !== -1 ? 'CRLF' : 'LF',
+        // The DB stores LF-normalized content, so the line ending must come
+        // from the persisted `line_ending` (set during session restore) rather
+        // than being inferred from the normalized text.
+        lineEnding: currentTab.lineEnding,
         contentLoaded: true,
         isDirty: isDirty(normalizedContent, lastSavedHash),
       };

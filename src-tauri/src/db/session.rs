@@ -34,6 +34,8 @@ pub struct TabState {
     pub scroll_top: f64,
     #[serde(default)]
     pub top_line: i32,
+    #[serde(default)]
+    pub line_ending: Option<String>,
 }
 
 impl TabState {
@@ -158,6 +160,7 @@ fn map_tab_state(row: &rusqlite::Row) -> rusqlite::Result<TabState> {
         original_index: row.get(col("original_index"))?,
         scroll_top: row.get(col("scroll_top"))?,
         top_line: row.get(col("top_line"))?,
+        line_ending: row.get(col("line_ending"))?,
     })
 }
 
@@ -238,6 +241,7 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
             &tab.original_index,
             &tab.scroll_top,
             &tab.top_line,
+            &tab.line_ending,
         ])?;
     }
 
@@ -265,6 +269,7 @@ mod tests {
             scroll_percentage: 42.5,
             scroll_top: 1280.0,
             top_line: 42,
+            line_ending: Some("LF".to_string()),
             created: Some("2026-01-01".to_string()),
             modified: None,
             is_pinned: false,
@@ -297,6 +302,7 @@ mod tests {
         assert_eq!(t.scroll_percentage, 42.5);
         assert_eq!(t.scroll_top, 1280.0);
         assert_eq!(t.top_line, 42);
+        assert_eq!(t.line_ending.as_deref(), Some("LF"));
         assert_eq!(t.created.as_deref(), Some("2026-01-01"));
         assert!(!t.is_pinned);
         assert_eq!(t.custom_title.as_deref(), Some("Tab"));

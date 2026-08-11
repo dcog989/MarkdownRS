@@ -57,6 +57,37 @@ pub(super) fn setup_schema(conn: &mut Connection) -> Result<()> {
         }
     }
 
+    // Existing databases can predate a column addition, or carry a user_version
+    // ahead of the (collapsed) migration list, so neither `CREATE TABLE IF NOT
+    // EXISTS` nor a versioned migration would add new columns. Converge the tab
+    // tables on TAB_COLUMNS regardless of version; this also auto-migrates any
+    // future column added to the single source of truth.
+    let tx = conn.transaction()?;
+    ensure_tab_columns(&tx, "tabs")?;
+    ensure_tab_columns(&tx, "closed_tabs")?;
+    tx.commit()?;
+
+    Ok(())
+}
+
+fn ensure_tab_columns(tx: &rusqlite::Transaction, table: &str) -> Result<()> {
+    let existing: Vec<String> = tx
+        .prepare(&format!("PRAGMA table_info({})", table))?
+        .query_map([], |row| row.get(1))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+
+    for col in schema::TAB_COLUMNS {
+        if existing.iter().any(|name| name == col.name) {
+            continue;
+        }
+        if col.ddl.contains("PRIMARY KEY") {
+            // A primary key column cannot be retroactively added; every real
+            // database already has it from the initial schema.
+            continue;
+        }
+        log::info!("Adding missing column {} to {}", col.name, table);
+        tx.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {};", col.ddl))?;
+    }
     Ok(())
 }
 
@@ -107,6 +138,30 @@ mod tests {
             .query_row("PRAGMA user_version", [], |row| row.get(0))
             .unwrap();
         assert_eq!(version, 1);
+
+        let expected: Vec<String> = schema::TAB_COLUMNS
+            .iter()
+            .map(|c| c.name.to_string())
+            .collect();
+        for table in ["tabs", "closed_tabs"] {
+            assert_eq!(table_columns(&conn, table), expected);
+        }
+    }
+
+    #[test]
+    fn setup_schema_adds_missing_columns_to_existing_database() {
+        // Simulate a database created before `line_ending` existed: same
+        // user_version (so the versioned migration is a no-op), but the column
+        // is missing from the physical tables.
+        let mut conn = Connection::open_in_memory().unwrap();
+        setup_schema(&mut conn).unwrap();
+        conn.execute_batch("ALTER TABLE tabs DROP COLUMN line_ending")
+            .unwrap();
+        conn.execute_batch("ALTER TABLE closed_tabs DROP COLUMN line_ending")
+            .unwrap();
+        conn.execute_batch("PRAGMA user_version = 1").unwrap();
+
+        setup_schema(&mut conn).unwrap();
 
         let expected: Vec<String> = schema::TAB_COLUMNS
             .iter()
