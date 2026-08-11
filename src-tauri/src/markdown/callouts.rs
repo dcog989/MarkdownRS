@@ -44,14 +44,18 @@ fn callout_icon(kind: &str) -> String {
 /// `[!TYPE]` marker. For each matching blockquote the opening tag becomes a
 /// `<div class="callout callout-{type}">`, a title paragraph is prepended, the
 /// marker is stripped from the body, and the matching `</blockquote>` becomes
-/// `</div>`. Blockquotes are matched with a stack so nested blockquotes and
-/// callouts are handled correctly. All edits are spliced into a fresh buffer by
-/// descending position, so nested replacements never shift earlier offsets.
+/// `</div>`. The output is built in a single left-to-right pass over the
+/// original HTML: each `<blockquote>...</blockquote>` is emitted when its
+/// closing tag is seen, at which point any nested blockquotes have already been
+/// transformed and spliced into the parent's interior. This keeps nested
+/// callouts correct (an earlier flat-edit model misaligned offsets whenever one
+/// callout contained another).
 ///
 /// Raw HTML `<blockquote>` tags (passed through when comrak renders with
 /// `unsafe`) may unbalance the open/close counts. The stack matcher tolerates
-/// this: unmatched opens are never spliced and unmatched closes pop nothing, so
-/// raw HTML never disables callout transformation for the rest of the document.
+/// this: unmatched opens are emitted verbatim on unwind and unmatched closes pop
+/// nothing, so raw HTML never disables callout transformation for the rest of
+/// the document.
 pub(super) fn transform_callouts(html: &str) -> String {
     let opens: Vec<usize> = html.match_indices("<blockquote").map(|(i, _)| i).collect();
     let closes: Vec<usize> = html
@@ -59,100 +63,174 @@ pub(super) fn transform_callouts(html: &str) -> String {
         .map(|(i, _)| i)
         .collect();
 
-    let mut stack: Vec<usize> = Vec::new();
-    let mut edits: Vec<(usize, usize, String)> = Vec::new();
-
-    let mut push_edit = |open_pos: usize, close_pos: usize| {
-        if let Some(edit) = transform_callout_block(html, open_pos, close_pos) {
-            edits.push(edit);
-        }
-    };
+    let mut stack: Vec<CalloutFrame> = Vec::new();
+    let mut out = String::with_capacity(html.len());
+    let mut cursor = 0;
 
     let mut oi = 0;
     let mut ci = 0;
+
     while oi < opens.len() || ci < closes.len() {
         let o = opens.get(oi).copied();
         let c = closes.get(ci).copied();
-        match (o, c) {
-            (Some(o), Some(c)) if c < o => {
-                ci += 1;
-                if let Some(open_pos) = stack.pop() {
-                    push_edit(open_pos, c);
-                }
-            },
-            (Some(o), _) => {
-                stack.push(o);
-                oi += 1;
-            },
-            (None, Some(c)) => {
-                ci += 1;
-                if let Some(open_pos) = stack.pop() {
-                    push_edit(open_pos, c);
-                }
-            },
+
+        let (pos, is_open) = match (o, c) {
+            (Some(o), Some(c)) if o < c => (o, true),
+            (Some(_), Some(c)) => (c, false),
+            (Some(o), None) => (o, true),
+            (None, Some(c)) => (c, false),
             (None, None) => break,
+        };
+
+        // Copy the literal text up to this token into the current destination.
+        if let Some(top) = stack.last_mut() {
+            top.interior.push_str(&html[cursor..pos]);
+        } else {
+            out.push_str(&html[cursor..pos]);
+        }
+
+        if is_open {
+            let tag_end = match html[pos..].find('>') {
+                Some(gt) => pos + gt + 1,
+                None => {
+                    // Malformed tag with no `>`: the remainder is literal text.
+                    if let Some(top) = stack.last_mut() {
+                        top.interior.push_str(&html[pos..]);
+                    } else {
+                        out.push_str(&html[pos..]);
+                    }
+                    break;
+                },
+            };
+            stack.push(CalloutFrame {
+                open_pos: pos,
+                open_end: tag_end,
+                interior: String::new(),
+            });
+            cursor = tag_end;
+            oi += 1;
+        } else {
+            ci += 1;
+            if let Some(frame) = stack.pop() {
+                let transformed = transform_callout_block(html, &frame);
+                if let Some(top) = stack.last_mut() {
+                    top.interior.push_str(&transformed);
+                } else {
+                    out.push_str(&transformed);
+                }
+                cursor = pos + "</blockquote>".len();
+            }
+            // An unmatched close is left in place as literal text.
         }
     }
 
-    if edits.is_empty() {
-        return html.to_string();
+    // Flush the trailing text, then emit any unclosed (raw HTML) blockquotes verbatim.
+    if let Some(top) = stack.last_mut() {
+        top.interior.push_str(&html[cursor..]);
+    } else {
+        out.push_str(&html[cursor..]);
+    }
+    while let Some(frame) = stack.pop() {
+        let mut verbatim = String::new();
+        verbatim.push_str(&html[frame.open_pos..frame.open_end]);
+        verbatim.push_str(&frame.interior);
+        if let Some(top) = stack.last_mut() {
+            top.interior.push_str(&verbatim);
+        } else {
+            out.push_str(&verbatim);
+        }
     }
 
-    edits.sort_by_key(|(start, _, _)| std::cmp::Reverse(*start));
-    let mut out = html.to_string();
-    for (start, end, replacement) in edits {
-        out.replace_range(start..end, &replacement);
-    }
     out
 }
 
-/// Builds the splice for a single callout blockquote. Returns `None` when the
-/// blockquote does not open with a callout-marker paragraph.
-fn transform_callout_block(
-    html: &str,
+/// An open `<blockquote>` whose interior is being accumulated. Nested
+/// blockquotes are transformed and appended to `interior` before the frame
+/// itself is closed.
+struct CalloutFrame {
     open_pos: usize,
-    close_pos: usize,
-) -> Option<(usize, usize, String)> {
-    let tag_end = html[open_pos..].find('>')? + open_pos;
+    open_end: usize,
+    interior: String,
+}
 
-    let first_tag = html[tag_end + 1..].find('<')? + tag_end + 1;
-    if html[first_tag..].starts_with("<blockquote") {
+/// Detected callout structure inside a matched blockquote frame.
+struct CalloutData {
+    class: &'static str,
+    title: &'static str,
+    attrs: String,
+    first_tag: usize,
+    p_tag_end: usize,
+    content_end: usize,
+    marker_end: usize,
+}
+
+/// Detects the callout marker in a blockquote frame's first paragraph.
+fn detect_callout(html: &str, frame: &CalloutFrame) -> Option<CalloutData> {
+    let interior = &frame.interior;
+    let first_tag = interior.find('<')?;
+    if interior[first_tag..].starts_with("<blockquote") || !interior[first_tag..].starts_with("<p")
+    {
         return None;
     }
-    let p_start = first_tag;
-    if !html[p_start..].starts_with("<p") {
-        return None;
-    }
-
-    let p_tag_end = html[p_start..].find('>')? + p_start;
+    let p_tag_end = first_tag + interior[first_tag..].find('>')?;
     let content_start = p_tag_end + 1;
-    let content_end = html[content_start..]
-        .find("</p>")
-        .map(|i| content_start + i)?;
+    let content_end = content_start + interior[content_start..].find("</p>")?;
 
-    let marker = CALLOUT_REGEX.captures(&html[content_start..content_end])?;
+    let marker = CALLOUT_REGEX.captures(&interior[content_start..content_end])?;
     let marker_match = marker.get(0)?;
     let (class, title) = callout_style(marker.get(1)?.as_str());
 
-    let attrs = &html[open_pos + "<blockquote".len()..tag_end];
-    let icon = callout_icon(class);
-    let mut out = String::new();
-    out.push_str(&format!(
-        r#"<div class="callout callout-{class}"{attrs}><p class="callout-title">{icon}<span class="callout-title-text">{title}</span></p>"#
-    ));
-    out.push_str(&html[tag_end + 1..p_start]);
+    let tag_end = frame.open_pos + html[frame.open_pos..].find('>')?;
+    let attrs = html[frame.open_pos + "<blockquote".len()..tag_end].to_string();
 
-    let marker_end = content_start + marker_match.len();
-    if !html[marker_end..content_end].trim().is_empty() {
-        out.push_str(&html[p_start..p_tag_end + 1]);
-        out.push_str(&html[marker_end..content_end]);
-        out.push_str("</p>");
+    Some(CalloutData {
+        class,
+        title,
+        attrs,
+        first_tag,
+        p_tag_end,
+        content_end,
+        marker_end: content_start + marker_match.end(),
+    })
+}
+
+/// Emits a single blockquote from its frame: either the callout `<div>`, or the
+/// original `<blockquote>` with any nested callouts already transformed.
+fn transform_callout_block(html: &str, frame: &CalloutFrame) -> String {
+    match detect_callout(html, frame) {
+        Some(callout) => {
+            let interior = &frame.interior;
+            let mut out = String::new();
+            out.push_str(&format!(
+                r#"<div class="callout callout-{}"{}<p class="callout-title">{}<span class="callout-title-text">{}</span></p>"#,
+                callout.class,
+                callout.attrs,
+                callout_icon(callout.class),
+                callout.title
+            ));
+            out.push_str(&interior[..callout.first_tag]);
+
+            if !interior[callout.marker_end..callout.content_end]
+                .trim()
+                .is_empty()
+            {
+                out.push_str(&interior[callout.first_tag..callout.p_tag_end + 1]);
+                out.push_str(&interior[callout.marker_end..callout.content_end]);
+                out.push_str("</p>");
+            }
+
+            out.push_str(&interior[callout.content_end + "</p>".len()..]);
+            out.push_str("</div>");
+            out
+        },
+        None => {
+            let mut out = String::new();
+            out.push_str(&html[frame.open_pos..frame.open_end]);
+            out.push_str(&frame.interior);
+            out.push_str("</blockquote>");
+            out
+        },
     }
-
-    out.push_str(&html[content_end + "</p>".len()..close_pos]);
-    out.push_str("</div>");
-
-    Some((open_pos, close_pos + "</blockquote>".len(), out))
 }
 
 #[cfg(test)]
@@ -295,5 +373,51 @@ mod tests {
         let html = render_gfm("> outer\n> > inner text\n");
         assert!(html.contains("<blockquote"));
         assert!(!html.contains("callout"));
+    }
+
+    #[test]
+    fn transforms_callout_nested_inside_a_callout() {
+        let html = render_gfm("> [!NOTE]\n> Outer note.\n>\n> > [!TIP]\n> > Inner tip.\n");
+        assert!(
+            html.contains(r#"<div class="callout callout-note""#),
+            "outer callout missing: {html}"
+        );
+        assert!(
+            html.contains(r#"<div class="callout callout-tip""#),
+            "inner callout missing: {html}"
+        );
+        assert_eq!(
+            html.matches("class=\"callout-icon\"").count(),
+            2,
+            "html was: {html}"
+        );
+        assert!(html.contains("Outer note."), "html was: {html}");
+        assert!(html.contains("Inner tip."), "html was: {html}");
+        assert!(
+            !html.contains("[!NOTE]"),
+            "outer marker should be stripped: {html}"
+        );
+        assert!(
+            !html.contains("[!TIP]"),
+            "inner marker should be stripped: {html}"
+        );
+        assert!(
+            !html.contains("<blockquote"),
+            "all callout blockquotes should be transformed: {html}"
+        );
+    }
+
+    #[test]
+    fn transforms_callout_nested_inside_a_plain_blockquote() {
+        let html = render_gfm("> plain\n> > [!NOTE]\n> > Nested note.\n");
+        assert!(
+            html.contains(r#"<div class="callout callout-note""#),
+            "nested callout missing: {html}"
+        );
+        assert!(html.contains("<blockquote"), "outer quote kept: {html}");
+        assert!(
+            !html.contains("[!NOTE]"),
+            "marker should be stripped: {html}"
+        );
     }
 }
