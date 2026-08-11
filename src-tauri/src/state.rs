@@ -54,6 +54,11 @@ pub struct AppState {
     /// re-init only happens when the requested selection actually changes.
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
     pub loaded_spellcheck_config: Mutex<Option<SpellcheckConfig>>,
+    /// Monotonic id of the latest accepted spellcheck init request. A build
+    /// that finishes with a stale generation (a newer request superseded it)
+    /// discards its result instead of clobbering state.
+    #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
+    pub spellcheck_init_gen: AtomicU64,
     /// Cached value of the `maxFileSizeMB` setting converted to bytes.
     /// Initialised to `MAX_FILE_SIZE_UNSET`; written once at startup and on
     /// every `save_settings` call, so reads never need a lock.

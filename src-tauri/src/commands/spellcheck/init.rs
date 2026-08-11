@@ -5,11 +5,30 @@ use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use tauri::{Emitter, Manager};
 
 /// Name of the event emitted when spellcheck initialization reaches a
 /// terminal state. Payload is the status string: "ready" or "failed".
 const SPELLCHECK_STATUS_EVENT: &str = "spellcheck-status";
+
+fn is_current_generation(state: &AppState, generation_id: u64) -> bool {
+    state.spellcheck_init_gen.load(Ordering::SeqCst) == generation_id
+}
+
+/// Applies `status` unless a newer init request superseded this build.
+fn finish_init(
+    app_handle: &tauri::AppHandle,
+    state: &AppState,
+    generation_id: u64,
+    status: SpellcheckStatus,
+) {
+    if !is_current_generation(state, generation_id) {
+        log::info!("[SPELLCHECK-RUST] Init superseded, discarding result");
+        return;
+    }
+    set_spellcheck_status(app_handle, status);
+}
 
 fn set_spellcheck_status(app_handle: &tauri::AppHandle, status: SpellcheckStatus) {
     let state = app_handle.state::<AppState>();
@@ -66,6 +85,7 @@ async fn load_custom_dictionary(store: &AppState, custom_path: &Path) {
 
 async fn run_spellcheck_init(
     app_handle: tauri::AppHandle,
+    generation_id: u64,
     dict_codes: Vec<String>,
     enable_technical: bool,
     enable_science: bool,
@@ -115,7 +135,7 @@ async fn run_spellcheck_init(
             "No language dictionaries were loaded; spellchecker disabled ({} supplemental words skipped)",
             supplemental_count
         );
-        set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
+        finish_init(&app_handle, &state, generation_id, SpellcheckStatus::Failed);
         return;
     }
 
@@ -127,6 +147,10 @@ async fn run_spellcheck_init(
     match dictionaries_result {
         Ok(dictionaries) if !dictionaries.is_empty() => {
             let dict_count = dictionaries.len();
+            if !is_current_generation(&state, generation_id) {
+                log::info!("[SPELLCHECK-RUST] Init superseded, discarding dictionaries");
+                return;
+            }
             let mut speller = state.speller.lock_or_recover();
             *speller = Some(dictionaries);
             log::info!(
@@ -138,11 +162,11 @@ async fn run_spellcheck_init(
         },
         Ok(_) => {
             log::warn!("No dictionary content available");
-            set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
+            finish_init(&app_handle, &state, generation_id, SpellcheckStatus::Failed);
         },
         Err(e) => {
             log::error!("Dictionary construction task panicked: {:?}", e);
-            set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
+            finish_init(&app_handle, &state, generation_id, SpellcheckStatus::Failed);
         },
     }
 
@@ -161,27 +185,34 @@ pub async fn init_spellchecker(
     let enable_technical = technical_dictionaries.unwrap_or(true);
     let enable_science = science_dictionaries.unwrap_or(false);
 
+    let requested = SpellcheckConfig::new(&dict_codes, enable_technical, enable_science);
+
+    {
+        let status = state.spellcheck_status.lock_or_recover();
+        let loaded = state.loaded_spellcheck_config.lock_or_recover();
+        if loaded.as_ref() == Some(&requested) && *status != SpellcheckStatus::Failed {
+            log::info!(
+                "[SPELLCHECK-RUST] Spellchecker already initializing or ready for requested dictionaries"
+            );
+            return Ok(());
+        }
+    }
+
+    let generation_id = state
+        .spellcheck_init_gen
+        .fetch_add(1, Ordering::SeqCst)
+        .wrapping_add(1);
+
     {
         let mut status = state.spellcheck_status.lock_or_recover();
         let mut loaded = state.loaded_spellcheck_config.lock_or_recover();
-        let requested = SpellcheckConfig::new(&dict_codes, enable_technical, enable_science);
-
-        if *status == SpellcheckStatus::Loading {
-            log::info!("[SPELLCHECK-RUST] Spellchecker already initializing");
-            return Ok(());
-        }
-
-        if *status == SpellcheckStatus::Ready && loaded.as_ref() == Some(&requested) {
-            log::info!("[SPELLCHECK-RUST] Spellchecker already ready for requested dictionaries");
-            return Ok(());
-        }
-
         *loaded = Some(requested);
         *status = SpellcheckStatus::Loading;
     }
 
     log::info!(
-        "Starting spellchecker initialization. Langs: {:?}, Tech: {}, Sci: {}",
+        "Starting spellchecker initialization (gen {}). Langs: {:?}, Tech: {}, Sci: {}",
+        generation_id,
         dict_codes,
         enable_technical,
         enable_science
@@ -195,6 +226,7 @@ pub async fn init_spellchecker(
 
     let handle = tauri::async_runtime::spawn(run_spellcheck_init(
         app_handle.clone(),
+        generation_id,
         dict_codes,
         enable_technical,
         enable_science,
@@ -206,11 +238,11 @@ pub async fn init_spellchecker(
         if let Err(e) = handle.await {
             log::error!("Spellchecker init task panicked: {:?}", e);
             let state = app_handle.state::<AppState>();
-            let was_loading = {
+            let should_fail = {
                 let status = state.spellcheck_status.lock_or_recover();
-                *status == SpellcheckStatus::Loading
+                *status == SpellcheckStatus::Loading && is_current_generation(&state, generation_id)
             };
-            if was_loading {
+            if should_fail {
                 set_spellcheck_status(&app_handle, SpellcheckStatus::Failed);
             }
         }
