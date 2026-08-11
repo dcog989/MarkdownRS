@@ -37,6 +37,16 @@ export function restoreScrollByTopLine(view: EditorView, topLine: number, scroll
 
   if (topLine > 1) {
     try {
+      // `topLine` is the line the saved scrollTop cut through; anchoring it to
+      // the viewport top shifts the content up by that partial line. At the
+      // bottom of the document the last line then falls out of view (there is
+      // no content below to absorb the shift), so align the last line with the
+      // viewport bottom instead of the top line.
+      if (safeLine + linesPerViewport >= view.state.doc.lines) {
+        const lastLine = view.state.doc.line(view.state.doc.lines);
+        view.dispatch({ effects: EditorView.scrollIntoView(lastLine.from, { y: 'bottom' }) });
+        return;
+      }
       const lineInfo = view.state.doc.line(safeLine);
       view.dispatch({ effects: EditorView.scrollIntoView(lineInfo.from, { y: 'start' }) });
       return;
