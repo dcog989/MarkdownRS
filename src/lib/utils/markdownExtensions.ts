@@ -199,21 +199,18 @@ function findCursorHeadingLines(view: EditorView): Set<number> {
 }
 
 /**
- * Reveals (paints raw) a node when the caret sits inside it or any selection
- * range overlaps it. Range overlap keeps a node unpainted while the user drags
- * a selection through it or edits with multiple carets. Empty ranges (carets)
- * reveal only when strictly inside, so a caret sitting exactly on a node edge
- * does not toggle the whole construct between painted and raw.
+ * Reveals (paints raw) a node when the caret sits inside it, at either edge, or
+ * when any selection range overlaps it. Range overlap keeps a node unpainted
+ * while the user drags a selection through it or edits with multiple carets.
+ * Including both edges means the raw markers stay visible the moment the caret
+ * stops right before or right after a construct (e.g. `*Italics*`), matching
+ * WYSIWYG editing expectations.
  */
 function isRevealed(view: EditorView, from: number, to: number): boolean {
   return view.state.selection.ranges.some((r) => {
     if (r.from !== r.to) return r.from < to && r.to > from;
     const caret = r.from;
-    if (caret > from && caret < to) return true;
-    // A caret exactly at the node's end is only stable when it is the end of
-    // the line (nothing left to type past), e.g. a URL closing a line. There
-    // the markers should stay visible; mid-line it still flips as you move.
-    return caret === to && view.state.doc.lineAt(caret).to === caret;
+    return caret >= from && caret <= to;
   });
 }
 

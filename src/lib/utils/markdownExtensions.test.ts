@@ -152,6 +152,39 @@ describe('callout decorations', () => {
   });
 });
 
+describe('inline marker reveal', () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = '';
+  });
+
+  it('reveals raw markers when the caret is immediately after the construct', async () => {
+    const { view, parent } = createCalloutView('*Italics* and more\n', true, 9);
+    await new Promise((r) => setTimeout(r, 50));
+    const line = parent.querySelector('.cm-line');
+    expect(line?.textContent).toContain('*Italics*');
+    view.destroy();
+  });
+
+  it('reveals raw markers when the caret is immediately before the construct', async () => {
+    const { view, parent } = createCalloutView('*Italics* and more\n', true, 0);
+    await new Promise((r) => setTimeout(r, 50));
+    const line = parent.querySelector('.cm-line');
+    expect(line?.textContent).toContain('*Italics*');
+    view.destroy();
+  });
+
+  it('masks markers when the caret is past the construct', async () => {
+    const { view, parent } = createCalloutView('*Italics* and more\n', true, 10);
+    await new Promise((r) => setTimeout(r, 50));
+    const line = parent.querySelector('.cm-line');
+    expect(line?.textContent).not.toContain('*');
+    expect(line?.textContent).toContain('Italics and more');
+    view.destroy();
+  });
+});
+
 describe('horizontal rule decorations', () => {
   beforeEach(mockLayout);
   afterEach(() => {
