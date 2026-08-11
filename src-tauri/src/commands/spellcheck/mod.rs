@@ -6,6 +6,7 @@ pub mod user_dict;
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
 use crate::utils::{IntoTauriError, MutexExt, RwLockExt, handle_error};
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use tauri::{Emitter, State};
@@ -121,7 +122,8 @@ pub async fn get_spelling_suggestions(
             None => return Vec::new(),
         };
 
-        let mut seen = Vec::new();
+        let mut seen = HashSet::new();
+        let mut ordered = Vec::new();
         for dictionary in dictionaries {
             let mut suggestions = Vec::new();
             dictionary.suggest(&word, &mut suggestions);
@@ -129,12 +131,15 @@ pub async fn get_spelling_suggestions(
                 if custom_snapshot.contains(&suggestion.to_lowercase()) {
                     continue;
                 }
-                if !seen.contains(&suggestion) {
-                    seen.push(suggestion);
+                if seen.insert(suggestion.clone()) {
+                    ordered.push(suggestion);
                 }
             }
+            if ordered.len() >= MAX_SUGGESTIONS {
+                break;
+            }
         }
-        seen.into_iter().take(MAX_SUGGESTIONS).collect()
+        ordered.into_iter().take(MAX_SUGGESTIONS).collect()
     })
     .await
     .map_err(|e| handle_error(None, "get spelling suggestions", e))?;
