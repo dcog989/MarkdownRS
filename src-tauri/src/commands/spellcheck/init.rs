@@ -92,6 +92,16 @@ async fn run_spellcheck_init(
     let state = app_handle.state::<AppState>();
     let supplemental_count = technical_words.len();
 
+    if language_dicts.is_empty() {
+        log::warn!(
+            "No language dictionaries were loaded; spellchecker disabled ({} supplemental words skipped)",
+            supplemental_count
+        );
+        let mut status = state.spellcheck_status.lock_or_recover();
+        *status = SpellcheckStatus::Failed;
+        return;
+    }
+
     let dictionaries_result = tokio::task::spawn_blocking(move || {
         build_spellbook_dictionaries(language_dicts, technical_words)
     })
