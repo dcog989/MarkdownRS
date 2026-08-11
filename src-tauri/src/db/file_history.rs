@@ -6,6 +6,13 @@ pub struct FileHistoryStore {
     conn: Arc<Mutex<rusqlite::Connection>>,
 }
 
+/// Matches the frontend's `getCurrentTimestamp()` (`YYYYMMDD / HHMMSS`) so the
+/// stored `last_opened` values share one sortable format. Mixed formats (e.g.
+/// RFC3339) break `ORDER BY last_opened DESC`.
+fn now_timestamp() -> String {
+    Local::now().format("%Y%m%d / %H%M%S").to_string()
+}
+
 impl FileHistoryStore {
     pub(crate) fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
         Self { conn }
@@ -13,7 +20,7 @@ impl FileHistoryStore {
 
     pub fn seed_file_history_from_session(&self) -> Result<()> {
         let conn = lock_conn!(self);
-        let now = Local::now().to_rfc3339();
+        let now = now_timestamp();
 
         conn.execute(
             "INSERT OR IGNORE INTO file_history (path, last_opened)
@@ -79,7 +86,7 @@ impl FileHistoryStore {
         if paths.is_empty() {
             return Ok(());
         }
-        let now = Local::now().to_rfc3339();
+        let now = now_timestamp();
         let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
         tx.execute_batch("DROP TRIGGER IF EXISTS prune_file_history")?;
