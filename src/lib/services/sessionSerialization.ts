@@ -48,6 +48,13 @@ type RustTabState = {
 
 let saveInProgress = false;
 
+/** Large, clean, disk-backed files are re-read from disk on restore, so skip
+ *  writing their content into the session DB on every save (dirty ones must
+ *  still persist, or their unsaved edits would be lost). */
+function shouldSkipContent(tab: EditorTab): boolean {
+  return !!tab.path && !tab.isDirty && tab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
+}
+
 function toRustTabState(
   tab: EditorTab,
   ts: TabTransientState | undefined,
@@ -60,7 +67,7 @@ function toRustTabState(
     id: tab.id,
     path: tab.path,
     title: tab.title,
-    content: needsContent ? tab.content : null,
+    content: needsContent && !shouldSkipContent(tab) ? tab.content : null,
     is_dirty: tab.isDirty,
     scroll_percentage: ts?.scrollPercentage ?? 0,
     scroll_top: ts?.scrollTop ?? 0,

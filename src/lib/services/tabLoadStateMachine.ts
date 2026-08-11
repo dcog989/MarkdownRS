@@ -113,7 +113,16 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         try {
           const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
           if (fileData?.content) {
-            lastSavedHash = hashContent(normalizeLineEndings(fileData.content));
+            const diskContent = normalizeLineEndings(fileData.content);
+            lastSavedHash = hashContent(diskContent);
+            // A clean tab's truth is the file on disk. If the stored session
+            // content no longer matches (e.g. the file changed externally
+            // while the app was closed, or its content was skipped from the
+            // session), disk wins — otherwise a save could overwrite newer
+            // on-disk changes with the stale snapshot.
+            if (!tab.isDirty && diskContent !== normalizedContent) {
+              normalizedContent = diskContent;
+            }
           } else {
             lastSavedHash = hashContent(normalizedContent);
           }
