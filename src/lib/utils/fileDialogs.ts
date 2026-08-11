@@ -3,12 +3,14 @@ import { openPath } from '@tauri-apps/plugin-opener';
 import { translate } from '$lib/i18n';
 import {
   checkFileExists,
+  hasFileChanged,
   invalidateMetadataCache,
   normalizeLineEndings,
   refreshMetadata,
   sanitizePath,
 } from '$lib/services/fileMetadata';
 import { fileWatcher } from '$lib/services/fileWatcher';
+import { confirmDialog } from '$lib/stores/dialogStore.svelte';
 import { computeWordCount } from '$lib/stores/editorCache';
 import {
   addTab,
@@ -235,6 +237,25 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       tab = getTab();
       if (!tab) return false;
       if (!tab.content) tab.content = '';
+
+      // Don't silently clobber external edits: if the file changed on disk
+      // since the tab's last saved baseline, ask before overwriting. This also
+      // catches edits that landed inside a previous save's write-lock window,
+      // which the watcher was told to ignore. Save-As targets the user chose
+      // explicitly, so only guard writes back to the tab's own path.
+      if (!forceNewPath && (await hasFileChanged(tab.id))) {
+        const result = await confirmDialog({
+          title: translate('fileOps.overwriteChangedTitle'),
+          message: translate('fileOps.overwriteChangedMessage', { values: { title: tab.title } }),
+          saveLabel: translate('fileOps.overwriteLabel'),
+          discardLabel: '',
+          cancelLabel: translate('common.cancel'),
+        });
+        if (result !== 'save') {
+          if (pendingSavePath) activeSaves.delete(pendingSavePath);
+          return false;
+        }
+      }
 
       let contentToSave = tab.content;
 

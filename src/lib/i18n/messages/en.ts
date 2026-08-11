@@ -499,6 +499,9 @@ export const en = {
     failedReload: 'Failed to reload file',
     fileChangedOnDisk: 'File changed on disk: {tabs}. You have unsaved changes.',
     loadedFromDisk: 'Loaded {tabs} from disk',
+    overwriteChangedTitle: 'File changed on disk',
+    overwriteChangedMessage: '"{title}" was changed on disk by another program. Saving will overwrite those changes.',
+    overwriteLabel: 'Overwrite',
     failedReadTemplate: 'Failed to read template, creating blank file: {error}',
   },
   error: {
