@@ -18,16 +18,12 @@ export class PreviewRenderer {
   private renderAbortController: AbortController | null = null;
 
   onTabSwitch(tabId: string): void {
-    if (this.lastTabId !== tabId) {
-      this.lastTabId = tabId;
-      this.lastRendered = '';
-      this.htmlContent = '';
-      this.renderError = '';
-      if (this.renderAbortController) {
-        this.renderAbortController.abort();
-        this.renderAbortController = null;
-      }
-    }
+    if (this.lastTabId === tabId) return;
+    this.lastTabId = tabId;
+    this.lastRendered = '';
+    this.htmlContent = '';
+    this.renderError = '';
+    this.cancelPending();
   }
 
   scheduleRender(
@@ -36,9 +32,7 @@ export class PreviewRenderer {
     tabPath: string | null | undefined,
     container: HTMLDivElement | undefined,
   ): () => void {
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    if (this.spinnerTimer) clearTimeout(this.spinnerTimer);
-    if (this.renderAbortController) this.renderAbortController.abort();
+    this.cancelPending();
 
     this.renderError = '';
     this.isRendering = true;
@@ -48,14 +42,14 @@ export class PreviewRenderer {
       this.showSpinner = true;
     }, CONFIG.PERFORMANCE.PREVIEW_SPINNER_DELAY_MS);
 
-    this.debounceTimer = setTimeout(async () => {
-      this.renderAbortController = new AbortController();
-      const currentController = this.renderAbortController;
+    const controller = new AbortController();
+    this.renderAbortController = controller;
 
+    this.debounceTimer = setTimeout(async () => {
+      this.debounceTimer = null;
       try {
         const result = await renderMarkdown(content, flavor === 'gfm', tabPath);
-
-        if (currentController.signal.aborted || !result) return;
+        if (controller.signal.aborted || !result) return;
 
         this.htmlContent = result.html;
         this.lastRendered = content;
@@ -66,35 +60,47 @@ export class PreviewRenderer {
           scrollSync.markMapDirty();
           untrack(() => scrollSync.updateMap());
         }
-
-        if (!currentController.signal.aborted) {
-          this.isRendering = false;
-          this.showSpinner = false;
-          if (this.spinnerTimer) clearTimeout(this.spinnerTimer);
-        }
       } catch (err) {
-        if (!currentController.signal.aborted) {
-          this.lastRendered = content;
-          this.renderError = err instanceof Error ? err.message : translate('preview.renderFailed');
-        }
+        if (controller.signal.aborted) return;
+        this.lastRendered = content;
+        this.renderError = err instanceof Error ? err.message : translate('preview.renderFailed');
       } finally {
-        if (!currentController.signal.aborted) {
-          this.isRendering = false;
-          this.showSpinner = false;
-          if (this.spinnerTimer) clearTimeout(this.spinnerTimer);
+        // Only the current render owns the shared state: a superseded render
+        // (aborted by a newer scheduleRender or a tab switch) must not reset
+        // flags that the new cycle already re-armed.
+        if (this.renderAbortController === controller) {
+          this.renderAbortController = null;
+          this.resetRenderState();
         }
       }
     }, CONFIG.PERFORMANCE.PREVIEW_RENDER_DEBOUNCE_MS);
 
-    return () => {
-      if (this.debounceTimer) clearTimeout(this.debounceTimer);
-      if (this.spinnerTimer) clearTimeout(this.spinnerTimer);
-    };
+    return () => this.cancelPending();
+  }
+
+  /** Cancels pending timers and any in-flight render, then clears the render state. */
+  private cancelPending(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    if (this.renderAbortController) {
+      this.renderAbortController.abort();
+      this.renderAbortController = null;
+    }
+    this.resetRenderState();
+  }
+
+  private resetRenderState(): void {
+    this.isRendering = false;
+    this.showSpinner = false;
+    if (this.spinnerTimer) {
+      clearTimeout(this.spinnerTimer);
+      this.spinnerTimer = null;
+    }
   }
 
   cleanup(): void {
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    if (this.spinnerTimer) clearTimeout(this.spinnerTimer);
-    if (this.renderAbortController) this.renderAbortController.abort();
+    this.cancelPending();
   }
 }
