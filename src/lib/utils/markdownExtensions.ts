@@ -194,11 +194,29 @@ function findCursorHeadingLines(view: EditorView): Set<number> {
  * Reveals (paints raw) a node when the caret sits inside it or any selection
  * range overlaps it. Range overlap keeps a node unpainted while the user drags
  * a selection through it or edits with multiple carets. Empty ranges (carets)
- * use the same inclusive bounds as the previous head-only check.
+ * reveal only when strictly inside, so a caret sitting exactly on a node edge
+ * does not toggle the whole construct between painted and raw.
  */
 function isRevealed(view: EditorView, from: number, to: number): boolean {
+  return view.state.selection.ranges.some((r) => {
+    if (r.from !== r.to) return r.from < to && r.to > from;
+    const caret = r.from;
+    if (caret > from && caret < to) return true;
+    // A caret exactly at the node's end is only stable when it is the end of
+    // the line (nothing left to type past), e.g. a URL closing a line. There
+    // the markers should stay visible; mid-line it still flips as you move.
+    return caret === to && view.state.doc.lineAt(caret).to === caret;
+  });
+}
+
+/**
+ * Horizontal rules are their own line, so any caret on the line (edges
+ * included) keeps the rule visible as raw text instead of flipping it under
+ * the caret. Uses the node's block span, not a nested inline construct.
+ */
+function isHrLineRevealed(view: EditorView, lineFrom: number, lineTo: number): boolean {
   return view.state.selection.ranges.some((r) =>
-    r.from === r.to ? r.from >= from && r.from <= to : r.from < to && r.to > from,
+    r.from === r.to ? r.from >= lineFrom && r.from <= lineTo : r.from < lineTo && r.to > lineFrom,
   );
 }
 
@@ -537,7 +555,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       const bulletMatch = bulletMatchRe.exec(line.text);
       if (bulletMatch) {
         const dashStart = line.from + bulletMatch[1].length;
-        const nearMarker = isRevealed(view, dashStart, dashStart + 1);
+        const nearMarker = isHrLineRevealed(view, dashStart, dashStart + 1);
         if (!nearMarker) {
           ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
         }
@@ -575,7 +593,7 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
       }
 
       if (!isVisibleInCodeBlock(tree, line.from) && (parserHrs.has(line.from) || line.text.trim() === '---')) {
-        const onLine = isRevealed(view, line.from, line.to);
+        const onLine = isHrLineRevealed(view, line.from, line.to);
         ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
       }
 
