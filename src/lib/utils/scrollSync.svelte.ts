@@ -8,7 +8,6 @@
 
 import type { EditorView } from '@codemirror/view';
 import { CONFIG } from '$lib/utils/config';
-import { throttle } from '$lib/utils/timing';
 import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolation';
 import { SmoothScroller } from './smoothScroller';
 
@@ -131,47 +130,32 @@ export class ScrollSyncManager {
     this.lineMap = buildLineMap(this.preview, this.editor.state.doc.lines);
   }
 
-  private syncPreviewThrottled = throttle(
-    () => {
-      if (!this.syncPreviewRAF) {
-        this.syncPreviewRAF = requestAnimationFrame(() => {
-          this.syncPreviewRAF = null;
-          this.syncPreview();
-        });
-      }
-    },
-    CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
-    { leading: true, trailing: true },
-  );
+  private syncPreviewOnFrame = this.scheduleOnFrame(() => this.syncPreview());
+  private syncEditorOnFrame = this.scheduleOnFrame(() => this.syncEditor());
 
-  private syncEditorThrottled = throttle(
-    () => {
-      if (!this.syncEditorRAF) {
-        this.syncEditorRAF = requestAnimationFrame(() => {
-          this.syncEditorRAF = null;
-          this.syncEditor();
-        });
-      }
-    },
-    CONFIG.PERFORMANCE.SCROLL_SYNC_THROTTLE_MS,
-    { leading: true, trailing: true },
-  );
-
-  private syncPreviewRAF: number | null = null;
-  private syncEditorRAF: number | null = null;
+  private scheduleOnFrame(cb: () => void): () => void {
+    let raf: number | null = null;
+    return () => {
+      if (raf !== null) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        cb();
+      });
+    };
+  }
 
   private onEditorScroll() {
     if (this.suppressSync) return;
     if (this.activeSource === 'preview') return;
     this.setActiveSource('editor');
-    this.syncPreviewThrottled();
+    this.syncPreviewOnFrame();
   }
 
   private onPreviewScroll() {
     if (this.suppressSync) return;
     if (this.activeSource === 'editor') return;
     this.setActiveSource('preview');
-    this.syncEditorThrottled();
+    this.syncEditorOnFrame();
   }
 
   private setActiveSource(source: 'editor' | 'preview') {
