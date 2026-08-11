@@ -1,5 +1,5 @@
 use crate::state::{AppState, MAX_FILE_SIZE_UNSET, SpellcheckStatus};
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::{Arc, Mutex, RwLock};
 use tauri::Manager;
 
@@ -11,6 +11,7 @@ pub fn manage(app: &mut tauri::App, db: crate::db::Database) {
         spellcheck_status: Mutex::new(SpellcheckStatus::Uninitialized),
         loaded_spellcheck_config: Mutex::new(None),
         spellcheck_init_gen: AtomicU64::new(0),
+        spellcheck_cancel: AtomicBool::new(false),
         max_file_size_bytes: AtomicU64::new(MAX_FILE_SIZE_UNSET),
         project_root: Mutex::new(None),
     });

@@ -2,11 +2,12 @@ use crate::db::Database;
 use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::path::PathBuf;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::{Arc, Mutex, RwLock};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize)]
 #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
+#[serde(rename_all = "lowercase")]
 pub enum SpellcheckStatus {
     Uninitialized,
     Loading,
@@ -59,6 +60,10 @@ pub struct AppState {
     /// discards its result instead of clobbering state.
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
     pub spellcheck_init_gen: AtomicU64,
+    /// Set by `cancel_spellcheck_init`; the running init checks it to abort
+    /// early. Reset to `false` whenever a new init starts.
+    #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
+    pub spellcheck_cancel: AtomicBool,
     /// Cached value of the `maxFileSizeMB` setting converted to bytes.
     /// Initialised to `MAX_FILE_SIZE_UNSET`; written once at startup and on
     /// every `save_settings` call, so reads never need a lock.

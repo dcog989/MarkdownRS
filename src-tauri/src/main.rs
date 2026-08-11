@@ -99,6 +99,8 @@ fn main() {
             commands::spellcheck::get_spelling_suggestions,
             #[cfg(feature = "spellcheck")]
             commands::spellcheck::get_spellcheck_status,
+            #[cfg(feature = "spellcheck")]
+            commands::spellcheck::cancel_spellcheck_init,
             commands::markdown::render_markdown,
             commands::markdown::format_markdown,
             commands::markdown::lint_markdown,
