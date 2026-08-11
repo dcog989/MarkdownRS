@@ -85,6 +85,34 @@ mod tests {
     }
 
     #[test]
+    fn heading_anchor_and_text_match_rendered_heading_id() {
+        // The reported heading anchor must equal the `id` comrak renders, or
+        // TOC links break. Math in headings is the case where a bespoke text
+        // traversal diverged from comrak's `collect_text`.
+        let result = render_markdown(
+            "# $x^2$\n\n## Some Heading\n",
+            MarkdownOptions {
+                flavor: MarkdownFlavor::Gfm,
+            },
+        )
+        .expect("render should succeed");
+
+        assert_eq!(result.headings[0].text, "x^2");
+        assert_eq!(result.headings[0].anchor_id, "x2");
+        assert_eq!(result.headings[1].anchor_id, "some-heading");
+        assert!(
+            result.html.contains(r#"<h1 id="x2">"#),
+            "html was: {}",
+            result.html
+        );
+        assert!(
+            result.html.contains(r#"<h2 id="some-heading">"#),
+            "html was: {}",
+            result.html
+        );
+    }
+
+    #[test]
     fn renders_latex_delimited_math() {
         let html = render_gfm(r"Inline \(a < b\) and display \[c = a\].\n");
         assert!(html.contains(r#"data-math-style="inline""#));

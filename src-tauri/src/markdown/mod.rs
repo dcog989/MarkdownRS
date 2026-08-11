@@ -26,18 +26,6 @@ pub(crate) fn parse_headings(content: &str, flavor: config::MarkdownFlavor) -> V
     extract_headings_from_ast(root, &mut Anchorizer::new())
 }
 
-pub(crate) fn collect_heading_text<'a>(node: &'a AstNode<'a>) -> String {
-    let mut text = String::new();
-    for child in node.children() {
-        match &child.data.borrow().value {
-            NodeValue::Text(t) => text.push_str(t.as_ref()),
-            NodeValue::Code(c) => text.push_str(&c.literal),
-            _ => text.push_str(&collect_heading_text(child)),
-        }
-    }
-    text
-}
-
 pub(crate) fn extract_headings_from_ast<'a>(
     root: &'a AstNode<'a>,
     anchorizer: &mut Anchorizer,
@@ -45,7 +33,12 @@ pub(crate) fn extract_headings_from_ast<'a>(
     root.descendants()
         .filter_map(|node| {
             if let NodeValue::Heading(heading) = &node.data.borrow().value {
-                let text = collect_heading_text(node);
+                // comrak's `collect_text` is the same extraction the HTML
+                // renderer uses for `id` generation (`html.rs` render_heading),
+                // so the reported text and anchor always match the rendered
+                // heading. A bespoke traversal here would diverge for inline
+                // math (dropped entirely) and produce broken TOC anchors.
+                let text = node.collect_text();
                 let anchor_id = anchorizer.anchorize(&text);
                 Some(HeadingEntry {
                     level: heading.level,
