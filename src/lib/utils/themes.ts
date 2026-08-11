@@ -22,12 +22,6 @@ export function keyed(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
-const MODE_FOLLOWING_THEMES = new Set(['GitHub', 'High Contrast', 'Newspaper', 'Solarized']);
-
-export function isModeFollowingTheme(name: string): boolean {
-  return MODE_FOLLOWING_THEMES.has(name);
-}
-
 export async function getThemeCss(themeName: string): Promise<string> {
   const result = await callBackendSafe('get_theme_css', { themeName }, 'Settings:Load', {
     userMessage: translate('error.failedToLoadTheme', { values: { theme: themeName } }),
