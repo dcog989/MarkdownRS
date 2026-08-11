@@ -1,9 +1,16 @@
-import { tick, untrack } from 'svelte';
 import { translate } from '$lib/i18n';
 import { cachePreviewHeadings } from '$lib/stores/previewHeadings.svelte';
 import { CONFIG } from '$lib/utils/config';
 import { renderMarkdown } from '$lib/utils/markdownRust';
-import { scrollSync } from '$lib/utils/scrollSync.svelte';
+
+/** Lifecycle hooks owned by the preview component, keeping the renderer free of
+ *  scroll-sync and DOM-registration concerns. */
+export interface PreviewRendererCallbacks {
+  /** A render's HTML was applied; rebuild any derived DOM state post-flush. */
+  onContentRendered: () => void;
+  /** The current render cycle settled (was not superseded); resume deferred work. */
+  onRenderSettled: () => void;
+}
 
 export class PreviewRenderer {
   isRendering = $state(false);
@@ -18,6 +25,8 @@ export class PreviewRenderer {
   /** Advances on every cancel/new schedule; in-flight renders capture it and bail when stale. */
   private renderEpoch = 0;
 
+  constructor(private readonly callbacks: PreviewRendererCallbacks) {}
+
   onTabSwitch(tabId: string): void {
     if (this.lastTabId === tabId) return;
     this.lastTabId = tabId;
@@ -27,12 +36,7 @@ export class PreviewRenderer {
     this.cancelPending();
   }
 
-  scheduleRender(
-    content: string,
-    flavor: string,
-    tabPath: string | null | undefined,
-    container: HTMLDivElement | undefined,
-  ): () => void {
+  scheduleRender(content: string, flavor: string, tabPath: string | null | undefined): () => void {
     this.cancelPending();
 
     this.renderError = '';
@@ -54,15 +58,7 @@ export class PreviewRenderer {
         this.htmlContent = result.html;
         this.lastRendered = content;
         cachePreviewHeadings(content, result.headings);
-
-        if (container) {
-          scrollSync.registerPreview(container);
-          scrollSync.markMapDirty();
-          // Rebuild the line map after the Svelte flush so it reflects the new
-          // tab's DOM (a synchronous build here would still read the previous
-          // tab's rendered content, producing a mixed/stale map).
-          void tick().then(() => untrack(() => scrollSync.updateMap()));
-        }
+        this.callbacks.onContentRendered();
       } catch (err) {
         if (epoch !== this.renderEpoch) return;
         this.lastRendered = content;
@@ -73,7 +69,7 @@ export class PreviewRenderer {
         // reset flags that the new cycle already re-armed.
         if (epoch === this.renderEpoch) {
           this.resetRenderState();
-          scrollSync.endTabSwitch(CONFIG.PERFORMANCE.TAB_SWITCH_SCROLL_SUPPRESS_MS);
+          this.callbacks.onRenderSettled();
         }
       }
     }, CONFIG.PERFORMANCE.PREVIEW_RENDER_DEBOUNCE_MS);

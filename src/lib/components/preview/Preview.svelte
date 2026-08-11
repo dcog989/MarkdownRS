@@ -1,6 +1,6 @@
 <script lang="ts">
 import { FileText, FlipHorizontal, FlipVertical, X } from 'lucide-svelte';
-import { onDestroy } from 'svelte';
+import { onDestroy, tick } from 'svelte';
 import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
@@ -8,6 +8,7 @@ import Logo from '$lib/components/ui/Logo.svelte';
 import { getTransientState, tabsById, updateTransientState } from '$lib/stores/editorStore.svelte';
 import { toggleOrientation, toggleSplitView } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import { CONFIG } from '$lib/utils/config';
 import { navigateToPath } from '$lib/utils/fileSystem';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { renderMermaidDiagrams } from '$lib/utils/mermaidRenderer';
@@ -19,7 +20,20 @@ let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();
 let previewHtmlWasEmpty = true;
 
-const renderer = new PreviewRenderer();
+const renderer = new PreviewRenderer({
+  onContentRendered: () => {
+    if (!container) return;
+    scrollSync.registerPreview(container);
+    scrollSync.markMapDirty();
+    // Rebuild the line map after the Svelte flush so it reflects the new
+    // tab's DOM (a synchronous build here would still read the previous
+    // tab's rendered content, producing a mixed/stale map).
+    void tick().then(() => scrollSync.updateMap());
+  },
+  onRenderSettled: () => {
+    scrollSync.endTabSwitch(CONFIG.PERFORMANCE.TAB_SWITCH_SCROLL_SUPPRESS_MS);
+  },
+});
 
 let activeTab = $derived(tabsById.get(tabId));
 
@@ -55,7 +69,7 @@ $effect(() => {
   }
   if (content === renderer.lastRendered && renderer.htmlContent) return;
 
-  return renderer.scheduleRender(content, currentFlavor, tabPath, container);
+  return renderer.scheduleRender(content, currentFlavor, tabPath);
 });
 
 // Restore the preview's saved scroll position only when htmlContent goes from
