@@ -93,15 +93,20 @@ export async function persistSession(): Promise<void> {
     }
 
     const activeTabs = editorStore.tabs;
-    const activeRustTabs: RustTabState[] = activeTabs.map((t, index) => {
+    const snapshots = activeTabs.map((t, index) => {
       const ts = getTransientState(t.id);
       // Content is only authoritative once a tab is loaded into memory. Tabs
       // restored from the session DB start with a '' placeholder and
       // contentLoaded=false; writing that placeholder would erase the stored
       // content of dirty unsaved tabs that haven't been lazily loaded yet.
       const needsContent = (t.contentLoaded ?? false) && (ts ? ts.contentChanged || !ts.isPersisted : true);
-      return toRustTabState(t, ts, index, needsContent, mruPositionMap.get(t.id) ?? null);
+      return {
+        id: t.id,
+        wasChanged: ts?.contentChanged ?? false,
+        saved: toRustTabState(t, ts, index, needsContent, mruPositionMap.get(t.id) ?? null),
+      };
     });
+    const activeRustTabs = snapshots.map((s) => s.saved);
 
     const closedTabs: RustTabState[] = editorStore.closedTabsHistory.map((entry, index) => {
       const ts = getTransientState(entry.tab.id);
@@ -119,15 +124,38 @@ export async function persistSession(): Promise<void> {
       withContent: tabsWithContent,
     });
 
-    editorStore.sessionDirty = false;
+    // Only mark a tab persisted if the saved snapshot still matches its live
+    // state. Edits that landed while the write was in flight keep the tab (and
+    // session) dirty so the next persist re-saves them instead of dropping
+    // them (the old code unconditionally reset contentChanged after the await).
+    let anyUnpersisted = false;
+    for (const s of snapshots) {
+      const current = editorStore.tabs.find((t) => t.id === s.id);
+      if (!current) continue;
 
-    activeTabs.forEach((t) => {
-      markTabPersisted(t.id);
-    });
+      let editedDuringSave: boolean;
+      if (s.saved.content !== null) {
+        editedDuringSave = current.content !== s.saved.content;
+      } else {
+        // Content wasn't sent (clean or unloaded tab), so the DB kept its
+        // previous value; only a clean->dirty transition during the save needs
+        // another round.
+        const ts = getTransientState(s.id);
+        editedDuringSave = (ts?.contentChanged ?? false) && !s.wasChanged;
+      }
+
+      if (editedDuringSave) {
+        anyUnpersisted = true;
+      } else {
+        markTabPersisted(s.id);
+      }
+    }
 
     editorStore.closedTabsHistory.forEach((entry) => {
       updateTransientState(entry.tab.id, { contentChanged: false, isPersisted: true });
     });
+
+    editorStore.sessionDirty = anyUnpersisted;
   } catch (err) {
     editorStore.sessionDirty = true;
     AppError.handle('Session:Save', err, {
