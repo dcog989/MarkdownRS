@@ -174,18 +174,20 @@ function collectCallouts(view: EditorView): {
 function findCursorHeadingLines(view: EditorView): Set<number> {
   const headings = new Set<number>();
   const tree = syntaxTree(view.state);
-  const node = tree.resolveInner(view.state.selection.main.head, -1);
-  let current: typeof node | null = node;
-  while (current) {
-    if (HEADING_NODE_NAMES.has(current.name)) {
-      const fromLine = view.state.doc.lineAt(current.from);
-      const toLine = view.state.doc.lineAt(current.to);
-      for (let i = fromLine.number; i <= toLine.number; i++) {
-        headings.add(i);
+  for (const range of view.state.selection.ranges) {
+    const node = tree.resolveInner(range.from, -1);
+    let current: typeof node | null = node;
+    while (current) {
+      if (HEADING_NODE_NAMES.has(current.name)) {
+        const fromLine = view.state.doc.lineAt(current.from);
+        const toLine = view.state.doc.lineAt(current.to);
+        for (let i = fromLine.number; i <= toLine.number; i++) {
+          headings.add(i);
+        }
+        break;
       }
-      break;
+      current = current.parent;
     }
-    current = current.parent;
   }
   return headings;
 }
