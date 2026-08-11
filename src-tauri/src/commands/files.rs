@@ -208,20 +208,27 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
     validate_path(&old_path)?;
     validate_path(&new_path)?;
 
-    // Attempt the rename directly instead of doing separate existence probes
-    // (TOCTOU: the filesystem can change between probe and operation).
-    // Map the resulting error kinds to user-friendly messages.
+    // Refuse to overwrite an existing target. fs::rename() (rename(2) /
+    // MoveFileExW with REPLACE) atomically replaces the destination, so a
+    // direct rename would silently destroy whatever already sits at new_path.
+    // The existence probe below leaves a tiny TOCTOU window; a fully race-free
+    // no-replace rename would need renameat2(RENAME_NOREPLACE) or MoveFileExW
+    // without the REPLACE flag, which std does not expose. A small probe
+    // window is preferable to silent data loss.
+    if fs::symlink_metadata(&new_path).await.is_ok() {
+        return Err(handle_error(
+            Some(&new_path),
+            "rename file",
+            "a file with that name already exists",
+        ));
+    }
+
     fs::rename(&old_path, &new_path)
         .await
         .map_err(|e| match e.kind() {
             std::io::ErrorKind::NotFound => {
                 handle_error(Some(&old_path), "rename file", "source file does not exist")
             },
-            std::io::ErrorKind::AlreadyExists => handle_error(
-                Some(&new_path),
-                "rename file",
-                "a file with that name already exists",
-            ),
             _ => handle_error(Some(&old_path), "rename file", e),
         })
 }
@@ -392,6 +399,48 @@ mod tests {
             dunce::canonicalize(&target).unwrap().to_string_lossy()
         );
         fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn refuses_to_overwrite_existing_target() {
+        let dir = make_temp_dir("rename-existing");
+        let source = dir.join("source.md");
+        let target = dir.join("target.md");
+        fs::write(&source, "new content").unwrap();
+        fs::write(&target, "existing content").unwrap();
+
+        let result = rename_file(
+            source.to_string_lossy().into_owned(),
+            target.to_string_lossy().into_owned(),
+        )
+        .await;
+
+        assert!(
+            result.is_err(),
+            "expected rename onto existing target to be refused"
+        );
+        assert_eq!(fs::read_to_string(&target).unwrap(), "existing content");
+        assert!(source.is_file(), "source should remain in place on refusal");
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn renames_file_when_target_is_free() {
+        let dir = make_temp_dir("rename-free");
+        let source = dir.join("source.md");
+        fs::write(&source, "content").unwrap();
+        let target = dir.join("renamed.md");
+
+        let result = rename_file(
+            source.to_string_lossy().into_owned(),
+            target.to_string_lossy().into_owned(),
+        )
+        .await;
+
+        assert!(result.is_ok(), "expected rename to succeed: {:?}", result);
+        assert_eq!(fs::read_to_string(&target).unwrap(), "content");
+        assert!(!source.exists(), "source should be moved");
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[tokio::test]
