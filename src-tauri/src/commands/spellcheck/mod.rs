@@ -20,6 +20,16 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
 }
 
 #[tauri::command]
+pub async fn add_words_to_dictionary(
+    app_handle: tauri::AppHandle,
+    words: Vec<String>,
+) -> Result<(), String> {
+    user_dict::add_words_to_dictionary_inner(app_handle, words)
+        .await
+        .to_tauri_result()
+}
+
+#[tauri::command]
 pub async fn load_user_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
     user_dict::load_user_dictionary_inner(app_handle)
         .await

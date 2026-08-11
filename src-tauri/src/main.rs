@@ -90,6 +90,8 @@ fn main() {
             #[cfg(feature = "spellcheck")]
             commands::spellcheck::add_to_dictionary,
             #[cfg(feature = "spellcheck")]
+            commands::spellcheck::add_words_to_dictionary,
+            #[cfg(feature = "spellcheck")]
             commands::spellcheck::load_user_dictionary,
             #[cfg(feature = "spellcheck")]
             commands::spellcheck::init::init_spellchecker,

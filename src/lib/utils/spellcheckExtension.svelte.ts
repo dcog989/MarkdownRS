@@ -1,7 +1,7 @@
 import { forceLinting } from '@codemirror/lint';
 import type { EditorView } from '@codemirror/view';
 import { SvelteSet } from 'svelte/reactivity';
-import { addToDictionary } from '$lib/services/dictionaryService';
+import { addWordsToDictionary } from '$lib/services/dictionaryService';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import {
   applyImmediateSpellcheck,
@@ -43,27 +43,29 @@ export const spellCheckKeymap = [
         }
       }
 
-      if (words.length > 0) {
-        const newDict = new SvelteSet(spellcheckState.customDictionary);
-        for (const w of words) {
-          if (w && w.length > 1) {
-            newDict.add(w.toLowerCase());
-          }
-        }
-        spellcheckState.customDictionary = newDict;
+      // Only add words that are not already valid, matching the context-menu
+      // "Add to Dictionary" semantics, and batch them into a single backend call.
+      const invalidWords = words.filter((w) => w.length > 1 && !spellcheckState.isWordValid(w));
+      if (invalidWords.length === 0) return true;
 
-        for (const w of words) {
-          spellcheckState.misspelledCache.delete(w.toLowerCase());
-        }
-
-        invalidateSpellcheckCache();
-        view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
-        forceLinting(view);
-
-        Promise.all(words.map((w) => addToDictionary(w))).then(() => {
-          spellcheckState.refreshCustomDictionary();
-        });
+      const newDict = new SvelteSet(spellcheckState.customDictionary);
+      for (const w of invalidWords) {
+        newDict.add(w.toLowerCase());
       }
+      spellcheckState.customDictionary = newDict;
+
+      for (const w of invalidWords) {
+        spellcheckState.misspelledCache.delete(w.toLowerCase());
+      }
+
+      invalidateSpellcheckCache();
+      view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
+      forceLinting(view);
+
+      void addWordsToDictionary(invalidWords).then(() => {
+        spellcheckState.refreshCustomDictionary();
+      });
+
       return true;
     },
   },

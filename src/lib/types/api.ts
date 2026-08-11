@@ -154,6 +154,10 @@ export interface BackendCommands {
     args: { word: string };
     return: undefined;
   };
+  add_words_to_dictionary: {
+    args: { words: string[] };
+    return: undefined;
+  };
   load_user_dictionary: {
     args: Record<string, never>;
     return: string[];
