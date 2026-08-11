@@ -283,7 +283,7 @@ const COPY_SNAP_NODES = new Set(['Emphasis', 'StrongEmphasis', 'Link', 'Image', 
  * instead of `bold` or a half-marker fragment) regardless of how the painted
  * selection edges align with the underlying document.
  */
-function snapToMarkdownConstruct(view: EditorView, from: number, to: number): { from: number; to: number } {
+export function snapToMarkdownConstruct(view: EditorView, from: number, to: number): { from: number; to: number } {
   let snapFrom = from;
   let snapTo = to;
   syntaxTree(view.state).iterate({
