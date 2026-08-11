@@ -394,9 +394,10 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
             if (!cmView) return;
             cmView.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
             showContextMenu = false;
-            setTimeout(() => {
-                if (cmView) refreshSpellcheck(cmView);
-            }, CONFIG.SPELLCHECK.REFRESH_DELAY_MS);
+            // No delay needed: the dispatch applies synchronously and
+            // refreshSpellcheck awaits the custom-dictionary reload before
+            // re-linting, so the replaced word is settled by then.
+            refreshSpellcheck(cmView);
         }}
   />
 {/if}
