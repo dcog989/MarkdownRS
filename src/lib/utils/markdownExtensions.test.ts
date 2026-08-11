@@ -197,9 +197,16 @@ describe('horizontal rule decorations', () => {
   }
 
   it('masks a real horizontal rule outside a code block', async () => {
-    const { view, parent } = createCalloutView('Before\n---\nAfter\n', true);
+    const { view, parent } = createCalloutView('Before\n\n---\nAfter\n', true);
     await new Promise((r) => setTimeout(r, 50));
     expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).not.toBeNull();
+    view.destroy();
+  });
+
+  it('does not treat a setext heading underline as a horizontal rule', async () => {
+    const { view, parent } = createCalloutView('Title\n---\nBody\n', true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector('.cm-hr')).toBeNull();
     view.destroy();
   });
 
