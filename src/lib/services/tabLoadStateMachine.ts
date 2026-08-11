@@ -4,6 +4,7 @@ import { editorStore } from '$lib/stores/editorStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { hashContent, isDirty } from '$lib/utils/contentHash';
+import { getEditorInstance } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
@@ -131,24 +132,34 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
       lastSavedHash = '';
     }
 
-    const sizeBytes = byteLength(normalizedContent);
-    const wordCount = computeWordCount(normalizedContent);
-    const { lineCount, widestColumn } = computeLineStats(normalizedContent);
-
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
+    let sizeBytes = 0;
+    let wordCount = 0;
     if (currentIndex !== -1) {
       const currentTab = editorStore.tabs[currentIndex];
 
+      // Restored tabs start with an empty placeholder, so any content that
+      // appeared while the load was in flight (user edits — possibly not yet
+      // debounced into the store — or a disk reload) must win over the stored
+      // session content instead of being clobbered by it.
+      const viewText = getEditorInstance(tabId)?.state.doc.toString() ?? '';
+      const alreadyHadContent = currentTab.content !== '' || viewText !== '';
+      const content = alreadyHadContent ? viewText || currentTab.content : normalizedContent;
+
       let title = currentTab.title;
       if (!currentTab.customTitle && settingsState.tabNameFromContent) {
-        const smartTitle = extractSmartTitle(normalizedContent);
+        const smartTitle = extractSmartTitle(content);
         if (smartTitle) title = smartTitle;
       }
+
+      sizeBytes = byteLength(content);
+      wordCount = computeWordCount(content);
+      const { lineCount, widestColumn } = computeLineStats(content);
 
       editorStore.tabs[currentIndex] = {
         ...currentTab,
         title,
-        content: normalizedContent,
+        content,
         lastSavedHash,
         sizeBytes,
         wordCount,
@@ -159,7 +170,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         // than being inferred from the normalized text.
         lineEnding: currentTab.lineEnding,
         contentLoaded: true,
-        isDirty: isDirty(normalizedContent, lastSavedHash),
+        isDirty: isDirty(content, lastSavedHash),
       };
 
       logger.session.info('TabContentLoaded', {
@@ -167,6 +178,7 @@ export async function loadTabContentLazy(tabId: string): Promise<void> {
         sizeBytes,
         wordCount,
         path: tab.path,
+        keptPreLoadContent: alreadyHadContent,
       });
     }
 
