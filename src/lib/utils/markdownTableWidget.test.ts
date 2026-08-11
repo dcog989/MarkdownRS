@@ -34,12 +34,11 @@ describe('renderCell', () => {
     expect(renderCell('a < b & c > d')).toBe('a &lt; b &amp; c &gt; d');
   });
 
-  it('renders bold, italic, code, strike and highlight', () => {
+  it('renders bold, italic, code and strike', () => {
     expect(renderCell('**bold**')).toBe('<strong>bold</strong>');
     expect(renderCell('*italic*')).toBe('<em>italic</em>');
     expect(renderCell('`code`')).toBe('<code>code</code>');
     expect(renderCell('~~strike~~')).toBe('<del>strike</del>');
-    expect(renderCell('==mark==')).toBe('<mark>mark</mark>');
   });
 
   it('renders links', () => {

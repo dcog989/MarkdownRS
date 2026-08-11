@@ -41,7 +41,6 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
 
 const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
 
-const highlightDeco = Decoration.mark({ class: 'cm-highlight' });
 const strikethroughDeco = Decoration.mark({ class: 'cm-strikethrough' });
 const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
 const blockquoteBgDeco = Decoration.line({ class: 'cm-blockquote-bg' });
@@ -79,7 +78,6 @@ const linkTextTheme = EditorView.baseTheme({
 
 const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
-const hlRegex = /==([^=]+)==/g;
 const stRegex = /~~([^~]+)~~/g;
 
 const CALLOUT_STYLES: Record<string, { title: string; icon: string }> = {
@@ -631,23 +629,8 @@ function buildDecorations(view: EditorView, rendered: boolean): DecorationSet {
         }
       }
 
-      hlRegex.lastIndex = 0;
-      let match: RegExpExecArray | null;
-      while (true) {
-        match = hlRegex.exec(line.text);
-        if (match === null) break;
-        const start = line.from + match.index;
-        const end = start + match[0].length;
-        if (!isVisibleInCodeBlock(tree, start)) {
-          ranges.push(highlightDeco.range(start, end));
-          if (!isRevealed(view, start, end)) {
-            ranges.push(formattingMaskDeco.range(start, start + 2));
-            ranges.push(formattingMaskDeco.range(end - 2, end));
-          }
-        }
-      }
-
       stRegex.lastIndex = 0;
+      let match: RegExpExecArray | null;
       while (true) {
         match = stRegex.exec(line.text);
         if (match === null) break;

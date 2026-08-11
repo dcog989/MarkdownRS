@@ -22,7 +22,6 @@
   --editor-url-hover: #e8e2d4;
   --editor-code-bg: rgba(201, 162, 75, 0.08);
   --editor-code-fg: #c9a24b;
-  --editor-highlight-bg: rgba(201, 162, 75, 0.18);
   --editor-hr-color: #4c4537;
   --editor-pre-bg: #27231c;
   --editor-pre-fg: #e8e2d4;
@@ -63,7 +62,6 @@
   --editor-url-hover: #333333;
   --editor-code-bg: rgba(0, 0, 0, 0.035);
   --editor-code-fg: #8b4513;
-  --editor-highlight-bg: rgba(0, 0, 0, 0.06);
   --editor-hr-color: #c4bcaa;
   --editor-pre-bg: #e8e2d4;
   --editor-pre-fg: #1a1a1a;

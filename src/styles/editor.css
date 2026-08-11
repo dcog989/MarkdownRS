@@ -253,11 +253,6 @@
 }
 
 /* Markdown Elements */
-.cm-highlight {
-  background-color: var(--editor-highlight-bg);
-  color: inherit;
-}
-
 .cm-strikethrough {
   color: var(--editor-fg-secondary);
   text-decoration: line-through;
@@ -436,10 +431,6 @@
   color: inherit;
 }
 
-.raw-mode .cm-highlight {
-  background: none;
-}
-
 .raw-mode .cm-emphasis {
   font-style: normal;
 }
@@ -491,10 +482,6 @@
 .rendered-mode .cm-table-widget a {
   color: var(--editor-link);
   text-decoration: underline;
-}
-
-.rendered-mode .cm-table-widget mark {
-  background-color: var(--editor-highlight-bg);
 }
 
 .rendered-mode .cm-table-widget del {

@@ -19,7 +19,6 @@
   --editor-url-hover: #c6adf2;
   --editor-code-bg: rgba(255, 255, 255, 0.06);
   --editor-code-fg: #f4d03f;
-  --editor-highlight-bg: rgba(244, 208, 63, 0.2);
   --editor-hr-color: #555555;
   --editor-pre-bg: #111111;
   --editor-pre-fg: #ffffff;
@@ -57,7 +56,6 @@
   --editor-url-hover: #0d3d66;
   --editor-code-bg: rgba(0, 0, 0, 0.04);
   --editor-code-fg: #b7950b;
-  --editor-highlight-bg: rgba(183, 149, 11, 0.2);
   --editor-hr-color: #888888;
   --editor-pre-bg: #f0f0f0;
   --editor-pre-fg: #000000;

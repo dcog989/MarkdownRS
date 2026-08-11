@@ -74,7 +74,6 @@ export function renderCell(cell: string): string {
   });
   let html = withCodePlaceholders;
   html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-  html = html.replace(/==([^=]+)==/g, '<mark>$1</mark>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
   html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
