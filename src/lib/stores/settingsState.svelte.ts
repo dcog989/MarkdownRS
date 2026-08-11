@@ -43,7 +43,7 @@ export const settingsState = $state({
   customShortcuts: {} as Record<string, string>,
   confirmationSuppressed: false,
   newFileTemplatePath: '',
-  maxFileSizeMB: 50,
+  maxFileSizeMB: 20,
   fileHistoryLimit: 999,
   autoSaveInterval: -1,
   viewMode: 'rendered' as 'raw' | 'rendered',

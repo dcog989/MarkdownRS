@@ -6,7 +6,7 @@ use tokio::fs;
 
 pub(super) const MAX_FILE_SIZE_KEY: &str = "maxFileSizeMB";
 
-const DEFAULT_MAX_FILE_SIZE_MB: u64 = 10;
+const DEFAULT_MAX_FILE_SIZE_MB: u64 = 20;
 const MAX_FILE_SIZE_MIN_MB: u64 = 4;
 const MAX_FILE_SIZE_MAX_MB: u64 = 50;
 const DEFAULT_MAX_FILE_SIZE_BYTES: u64 = DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024;
