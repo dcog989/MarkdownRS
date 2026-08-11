@@ -173,6 +173,7 @@ export const createSpellCheckLinter = () => {
     {
       delay: CONFIG.SPELLCHECK.LINT_DELAY_MS,
       needsRefresh: (update) =>
+        update.docChanged ||
         update.viewportChanged ||
         update.transactions.some((tx) => tx.effects.some((e) => e.is(spellcheckRefreshEffect))),
     },
