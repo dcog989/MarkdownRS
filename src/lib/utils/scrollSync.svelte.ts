@@ -17,6 +17,8 @@ const CLEAR_SOURCE_DELAY_MS = 200;
 const FAST_SCROLL_DELAY_MS = 300;
 const PERSIST_SCROLL_THROTTLE_MS = 50;
 
+type SyncDirection = 'editor-to-preview' | 'preview-to-editor';
+
 export class ScrollSyncManager {
   editor = $state<EditorView | null>(null);
   preview = $state<HTMLElement | null>(null);
@@ -168,8 +170,8 @@ export class ScrollSyncManager {
     this.lineMap = buildLineMap(this.preview, this.editor.state.doc.lines);
   }
 
-  private syncPreviewOnFrame = this.scheduleOnFrame(() => this.syncPreview());
-  private syncEditorOnFrame = this.scheduleOnFrame(() => this.syncEditor());
+  private syncPreviewOnFrame = this.scheduleOnFrame(() => this.sync('editor-to-preview'));
+  private syncEditorOnFrame = this.scheduleOnFrame(() => this.sync('preview-to-editor'));
 
   private scheduleOnFrame(cb: () => void): () => void {
     let raf: number | null = null;
@@ -205,11 +207,11 @@ export class ScrollSyncManager {
     }, CLEAR_SOURCE_DELAY_MS);
   }
 
-  private syncPreview() {
+  private sync(direction: SyncDirection) {
     if (!this.editor || !this.preview) return;
 
-    const source = this.editor.scrollDOM;
-    const target = this.preview;
+    const source = direction === 'editor-to-preview' ? this.editor.scrollDOM : this.preview;
+    const target = direction === 'editor-to-preview' ? this.preview : this.editor.scrollDOM;
 
     const scrollTop = source.scrollTop;
     const scrollHeight = source.scrollHeight;
@@ -226,38 +228,10 @@ export class ScrollSyncManager {
       return;
     }
 
-    this.syncScrollPosition(source, target, 'editor-to-preview');
+    this.syncScrollPosition(source, target, direction);
   }
 
-  private syncEditor() {
-    if (!this.editor || !this.preview) return;
-
-    const source = this.preview;
-    const target = this.editor.scrollDOM;
-
-    const scrollTop = source.scrollTop;
-    const scrollHeight = source.scrollHeight;
-    const clientHeight = source.clientHeight;
-    const maxScroll = scrollHeight - clientHeight;
-
-    if (scrollTop <= 0) {
-      if (target.scrollTop > 0) this.scroller.scrollTo(target, 0, true);
-      return;
-    }
-    if (scrollTop >= maxScroll - 1) {
-      const targetBottom = target.scrollHeight - target.clientHeight;
-      if (Math.abs(target.scrollTop - targetBottom) > 2) this.scroller.scrollTo(target, targetBottom, true);
-      return;
-    }
-
-    this.syncScrollPosition(source, target, 'preview-to-editor');
-  }
-
-  private syncScrollPosition(
-    source: HTMLElement,
-    target: HTMLElement,
-    direction: 'editor-to-preview' | 'preview-to-editor',
-  ) {
+  private syncScrollPosition(source: HTMLElement, target: HTMLElement, direction: SyncDirection) {
     const editor = this.editor;
     if (!editor) return;
     const scrollTop = source.scrollTop;
@@ -300,7 +274,7 @@ export class ScrollSyncManager {
     }, FAST_SCROLL_DELAY_MS);
 
     v.scrollDOM.scrollTop = targetY;
-    this.syncPreview();
+    this.sync('editor-to-preview');
   }
 }
 
