@@ -1,6 +1,11 @@
 import type { Command } from '$lib/commands/commands';
 import { appContext } from '$lib/stores/state.svelte';
 
+// The registry's `ctrl` prefix means the platform's primary modifier:
+// Cmd on macOS, Ctrl elsewhere. Record/press meta on macOS as `ctrl` so the
+// ctrl-prefixed default keys match.
+const IS_MAC = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform);
+
 export class KeyboardShortcutManager {
   private commands: Map<string, Command> = new Map();
   private enabled: boolean = true;
@@ -16,7 +21,10 @@ export class KeyboardShortcutManager {
     if (!key) return '';
     return key
       .split('+')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .map((part) => {
+        const label = part.charAt(0).toUpperCase() + part.slice(1);
+        return IS_MAC && part === 'ctrl' ? 'Cmd' : label;
+      })
       .join('+');
   }
 
@@ -93,10 +101,14 @@ export class KeyboardShortcutManager {
 
   getEventKey(e: KeyboardEvent): string {
     const parts: string[] = [];
-    if (e.ctrlKey) parts.push('ctrl');
+    if (IS_MAC) {
+      if (e.metaKey || e.ctrlKey) parts.push('ctrl');
+    } else {
+      if (e.ctrlKey) parts.push('ctrl');
+      if (e.metaKey) parts.push('meta');
+    }
     if (e.altKey) parts.push('alt');
     if (e.shiftKey) parts.push('shift');
-    if (e.metaKey) parts.push('meta');
     let key = e.key.toLowerCase();
     if (key === ' ') key = 'space';
     if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
