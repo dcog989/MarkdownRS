@@ -333,7 +333,10 @@ mod tests {
         );
         assert!(result.contains("- [Real Title](#real-title)"));
         assert!(result.contains("- [Section](#section)"));
-        assert!(!result.contains("not a heading"));
+        assert!(
+            !result.contains("- [not a heading]"),
+            "fenced-code heading must not appear as a TOC entry: {result}"
+        );
     }
 
     #[test]

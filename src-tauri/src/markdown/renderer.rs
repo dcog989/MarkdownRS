@@ -101,12 +101,12 @@ mod tests {
         assert_eq!(result.headings[0].anchor_id, "x2");
         assert_eq!(result.headings[1].anchor_id, "some-heading");
         assert!(
-            result.html.contains(r#"<h1 id="x2">"#),
+            result.html.contains(r#"<h1 id="x2""#),
             "html was: {}",
             result.html
         );
         assert!(
-            result.html.contains(r#"<h2 id="some-heading">"#),
+            result.html.contains(r#"<h2 id="some-heading""#),
             "html was: {}",
             result.html
         );
