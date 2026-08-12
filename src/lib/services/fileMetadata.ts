@@ -93,25 +93,17 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
 
   if (!meta) return false;
 
-  // The mtime/size fast paths are only valid for clean tabs, whose `modified`
-  // and `sizeBytes` reflect the on-disk state (set from the backend on
-  // load/save). A dirty tab's `modified`/`sizeBytes` are its last-edit state,
-  // so comparing them against the disk would report a change spuriously.
-  if (!tab.isDirty) {
-    // mtime is formatted at second granularity, so a differing stamp reliably
-    // signals a cross-second edit without a file read.
-    if (tab.modified && meta.modified && meta.modified !== tab.modified) {
-      return true;
-    }
-
-    if (tab.sizeBytes !== undefined && meta.size !== tab.sizeBytes) {
-      return true;
-    }
-  }
-
-  // Same-second edits (or a missing tab.modified) are invisible to mtime, so
-  // compare the file content against the last saved hash. lastSavedHash is the
-  // on-disk baseline even for dirty tabs.
+  // mtime/size are second-granularity hints, not proof of an external edit.
+  // tab.modified is also stamped from the frontend clock on edits and keeps a
+  // fresh timestamp even when the content is reverted back to the saved text
+  // (e.g. undo), so a clean tab's `modified` can differ from the disk mtime
+  // without the file having changed. Trusting a metadata difference would
+  // spuriously warn "file changed on disk" on a plain re-save. The on-disk
+  // content compared against the last-saved hash is the authoritative check,
+  // so it runs for every tab, clean or dirty. lastSavedHash is the on-disk
+  // baseline even for dirty tabs: a dirty tab whose disk baseline still
+  // matches returns false (no external edit), while one whose disk changed
+  // returns true (the save would overwrite someone else's edit).
   const file = await callBackendSafe('read_text_file', { path: tab.path }, 'File:Read', {
     showToast: false,
     severity: 'warning',
