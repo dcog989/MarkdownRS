@@ -10,6 +10,10 @@ struct CachedTheme {
     mtime: SystemTime,
 }
 
+/// Upper bound on cached themes; the cache is cleared when exceeded so entries
+/// for deleted/renamed themes never linger indefinitely.
+const MAX_CACHED_THEMES: usize = 32;
+
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
@@ -83,6 +87,10 @@ pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result
         }
     };
 
+    // Key the cache by the resolved file path, not the request's display name,
+    // so different spellings of the same theme share a single entry.
+    let cache_key = theme_path.to_string_lossy().into_owned();
+
     let metadata = fs::metadata(&theme_path).await.map_err(|e| {
         handle_error(
             Some(&theme_path.to_string_lossy()),
@@ -96,7 +104,7 @@ pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result
 
     {
         let cache = THEME_CACHE.lock().await;
-        if let Some(cached) = cache.get(theme_name)
+        if let Some(cached) = cache.get(&cache_key)
             && cached.mtime == file_mtime
         {
             return Ok(cached.css.clone());
@@ -108,8 +116,11 @@ pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result
         .map_err(|e| handle_error(Some(&theme_path.to_string_lossy()), "read theme", e))?;
 
     let mut cache = THEME_CACHE.lock().await;
+    if cache.len() >= MAX_CACHED_THEMES && !cache.contains_key(&cache_key) {
+        cache.clear();
+    }
     cache.insert(
-        theme_name.to_string(),
+        cache_key,
         CachedTheme {
             css: css.clone(),
             mtime: file_mtime,
