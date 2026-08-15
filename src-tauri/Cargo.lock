@@ -1860,7 +1860,6 @@ checksum = "a88cf1f829d945f548cf8fec32c61b1f202b6d93b45848602fc02af4b12ad218"
 dependencies = [
  "futures-channel",
  "futures-core",
- "futures-executor",
  "futures-io",
  "futures-sink",
  "futures-task",
@@ -2070,15 +2069,6 @@ checksum = "1bd49230192a3797a9a4d6abe9b3eed6f7fa4c8a8a4947977c6f80025f92cbd8"
 dependencies = [
  "rustix",
  "windows-link 0.2.1",
-]
-
-[[package]]
-name = "getopts"
-version = "0.2.24"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfe4fbac503b8d1f88e6676011885f34b7174f46e59956bba534ba83abded4df"
-dependencies = [
- "unicode-width",
 ]
 
 [[package]]
@@ -3255,16 +3245,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "memory-stats"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c73f5c649995a115e1a0220b35e4df0a1294500477f97a91d0660fb5abeb574a"
-dependencies = [
- "libc",
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "mimalloc"
 version = "0.1.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4229,7 +4209,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9f068eba8e7071c5f9511831b44f32c740d5adf574e990f946ddb53db2f314e"
 dependencies = [
  "bitflags 2.13.1",
- "getopts",
  "memchr",
  "pulldown-cmark-escape",
  "unicase",
@@ -4571,11 +4550,10 @@ dependencies = [
 
 [[package]]
 name = "rumdl"
-version = "0.2.52"
+version = "0.2.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e85cd265428a0b54dd61b36c5ba10548a88016b184460dcb7318998ecf24fde"
+checksum = "1755d0ef088f6118632ce88c4aca7d9cf4a00eea4de37ae97e55eea6de18dac9"
 dependencies = [
- "anyhow",
  "blake3",
  "chrono",
  "clap",
@@ -4586,16 +4564,13 @@ dependencies = [
  "env_logger",
  "etcetera",
  "fancy-regex 0.17.0",
- "futures",
  "globset",
  "ignore",
  "indexmap 2.14.0",
  "libc",
  "log",
- "memory-stats",
  "mimalloc",
  "notify",
- "phf 0.13.1",
  "postcard",
  "pulldown-cmark",
  "rayon",
