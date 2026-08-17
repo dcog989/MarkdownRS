@@ -30,11 +30,9 @@ export function searchEmojis(query: string, limit: number = emojiHaystacks.lengt
   const q = query.trim().toLowerCase();
   if (!q) return emojiEntries.slice(0, limit);
   const results: EmojiEntry[] = [];
-  for (const { entry, haystack } of emojiHaystacks) {
-    if (haystack.includes(q)) {
-      results.push(entry);
-      if (results.length >= limit) break;
-    }
+  for (const match of findMatches(query)) {
+    results.push(match.entry);
+    if (results.length >= limit) break;
   }
   return results;
 }
@@ -43,13 +41,21 @@ export function searchEmojis(query: string, limit: number = emojiHaystacks.lengt
 export function autocompleteEmojis(query: string): EmojiEntry[] {
   const q = query.trim().toLowerCase();
   if (!q) return emojiEntries.slice(0, MAX_AUTOCOMPLETE_RESULTS);
-  const scored: { entry: EmojiEntry; score: number }[] = [];
-  for (const { entry, haystack } of emojiHaystacks) {
-    if (!haystack.includes(q)) continue;
-    scored.push({ entry, score: scoreEntry(entry, q) });
-  }
+  const scored = findMatches(query);
   scored.sort((a, b) => a.score - b.score);
   return scored.slice(0, MAX_AUTOCOMPLETE_RESULTS).map((s) => s.entry);
+}
+
+/** All emoji whose haystack contains the query, scored for ranking. */
+function findMatches(query: string): { entry: EmojiEntry; score: number }[] {
+  const q = query.trim().toLowerCase();
+  const matches: { entry: EmojiEntry; score: number }[] = [];
+  for (const { entry, haystack } of emojiHaystacks) {
+    if (haystack.includes(q)) {
+      matches.push({ entry, score: scoreEntry(entry, q) });
+    }
+  }
+  return matches;
 }
 
 function scoreEntry(entry: EmojiEntry, query: string): number {
