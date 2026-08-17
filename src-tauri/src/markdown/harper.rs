@@ -167,7 +167,7 @@ pub fn lint_grammar(content: &str, overrides: &HashMap<String, bool>) -> Vec<Lin
         .flat_map(|(rule_name, lints)| {
             lints
                 .into_iter()
-                .filter_map(|lint| map_lint(&line_index, &rule_name, &lint))
+                .filter_map(move |lint| map_lint(&line_index, &rule_name, &lint))
         })
         .collect()
 }
