@@ -250,6 +250,14 @@ function isMarkdownName(name: string): boolean {
   return MARKDOWN_EXTENSION_SET.has(name.slice(idx + 1).toLowerCase());
 }
 
+// The markdown-only rule is shared by the regular tree builder and the
+// whole-tree search so the filtering semantics cannot drift between them.
+// Directories are always shown; non-markdown files are pruned.
+function passesMarkdownOnly(entry: FileEntry, markdownOnly: boolean): boolean {
+  if (!markdownOnly) return true;
+  return entry.is_dir || isMarkdownName(entry.name);
+}
+
 function rootEntry(root: string): FileEntry {
   return {
     name: basename(root) || root,
@@ -294,7 +302,7 @@ export function computeTreeRows(): TreeRow[] {
     if (!item) break;
     const { entry, depth } = item;
     if (visited.has(entry.path)) continue;
-    if (showMarkdownOnly && !entry.is_dir && !isMarkdownName(entry.name)) continue;
+    if (!passesMarkdownOnly(entry, showMarkdownOnly)) continue;
     visited.add(entry.path);
     const isDir = entry.is_dir;
     const isOpen = isDir && (expanded.get(entry.path) ?? false);
@@ -371,7 +379,7 @@ async function searchTree(root: string, query: string, markdownOnly: boolean, ge
       visited.add(child.path);
       if (child.is_dir) {
         stack.push({ entry: child, depth: node.depth + 1 });
-      } else if (!(markdownOnly && !isMarkdownName(child.name))) {
+      } else if (passesMarkdownOnly(child, markdownOnly)) {
         stack.push({ entry: child, depth: node.depth + 1 });
       }
     }
