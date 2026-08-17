@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use harper_core::linting::{FlatConfig, Lint, LintGroup, Linter};
+use harper_core::linting::{FlatConfig, Lint, LintGroup};
 use harper_core::parsers::MarkdownOptions;
 use harper_core::spell::FstDictionary;
 use harper_core::{Dialect, Document};
@@ -107,7 +107,7 @@ fn build_group(overrides: &HashMap<String, bool>) -> LintGroup {
         .with_lint_config(build_config(overrides))
 }
 
-fn map_lint(line_index: &LineIndex, lint: &Lint) -> Option<LintDiagnostic> {
+fn map_lint(line_index: &LineIndex, rule_name: &str, lint: &Lint) -> Option<LintDiagnostic> {
     let start = lint.span.start;
     let end = lint.span.end;
     if start >= end || end > line_index.char_count {
@@ -130,7 +130,7 @@ fn map_lint(line_index: &LineIndex, lint: &Lint) -> Option<LintDiagnostic> {
         end_column,
         severity: severity.to_string(),
         fixable: false,
-        rule_name: Some(format!("{:?}", lint.lint_kind)),
+        rule_name: Some(rule_name.to_string()),
         source: LINT_SOURCE_HARPER.to_string(),
     })
 }
@@ -145,11 +145,26 @@ pub fn lint_grammar(content: &str, overrides: &HashMap<String, bool>) -> Vec<Lin
     rebuild_cached_group_if_needed(overrides);
 
     let mut cache = CACHE.lock_or_recover();
-    let group = &mut cache.as_mut().expect("cache slot populated").group;
+    let group = {
+        let slot = cache.as_mut().expect("cache slot populated");
+        // rebuild_cached_group_if_needed rebuilt outside the lock; a concurrent
+        // call may have swapped the group for a different config in between, so
+        // honor the overrides actually requested here. Rare, so building under
+        // the lock is acceptable.
+        if slot.overrides != *overrides {
+            slot.overrides = overrides.clone();
+            slot.group = build_group(overrides);
+        }
+        &mut slot.group
+    };
     group
-        .lint(&document)
-        .iter()
-        .filter_map(|lint| map_lint(&line_index, lint))
+        .organized_lints(&document)
+        .into_iter()
+        .flat_map(|(rule_name, lints)| {
+            lints
+                .into_iter()
+                .filter_map(|lint| map_lint(&line_index, &rule_name, &lint))
+        })
         .collect()
 }
 
