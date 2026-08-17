@@ -119,7 +119,10 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
   const meta = await callBackend('path_exists', { path: sourcePath }, 'File:Metadata', undefined, {
     ignore: true,
   });
-  if (!meta) return false;
+  if (!meta) {
+    showToast('error', translate('editor.imagePasteFileNotFound', { values: { path: sourcePath } }));
+    return true;
+  }
 
   const normalizedPath = tabPath.replace(/\\/g, '/');
   const directory = normalizedPath.replace(/[\\/][^\\/]+$/, '');
