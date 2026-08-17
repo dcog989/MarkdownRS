@@ -401,7 +401,7 @@ function handleResizeClick() {
   </div>
 
   {#if fileTreeStore.root}
-    <div class="ft-filter border-border-light shrink-0 border-b px-2 py-2">
+    <div class="ft-filter border-border-light shrink-0 border-b">
       <span class="ft-filter-icon"><Search size={13} /></span>
       <input
         type="text"
@@ -566,7 +566,7 @@ function handleResizeClick() {
 
 .ft-filter-input {
   width: 100%;
-  padding: 0.25rem 1.75rem 0.25rem 1.75rem;
+  padding: 0.25rem 1.75rem 0.25rem 2rem;
   font-size: 0.75rem;
   color: var(--text-primary);
   background-color: var(--surface-input);
