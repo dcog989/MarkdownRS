@@ -77,7 +77,8 @@ export const createMarkdownLinter = () => {
       const tabId = (view as AppEditorView)._currentTabId;
       if (!tabId) return [];
 
-      const content = view.state.doc.sliceString(0);
+      const doc = view.state.doc;
+      const content = doc.sliceString(0);
 
       const cached = lintCache.get(tabId);
       if (cached && cached.content === content) {
@@ -101,8 +102,9 @@ export const createMarkdownLinter = () => {
       // The document may have changed while awaiting the backend (tab switch,
       // sync), so the line numbers in the result no longer apply. Discard the
       // stale result; the linter re-runs for the new content on the next
-      // docChanged refresh.
-      if (view.state.doc.sliceString(0) !== content) {
+      // docChanged refresh. Doc identity changes on every edit, making this
+      // an O(1) staleness check.
+      if (view.state.doc !== doc) {
         return [];
       }
 

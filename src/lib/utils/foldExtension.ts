@@ -70,7 +70,6 @@ export function createFoldExtensions(): Extension[] {
           me.preventDefault();
           view.dispatch({
             selection: { anchor: line.from, head: line.to },
-            scrollIntoView: true,
           });
           return true;
         },
