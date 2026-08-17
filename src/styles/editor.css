@@ -40,7 +40,9 @@
 }
 
 .cm-editor .cm-lineNumbers {
-  min-width: 5ch;
+  /* 3ch floor keeps the width stable for small files; the CM spacer grows
+     the column automatically once line counts exceed three digits. */
+  min-width: 3ch;
 }
 
 .cm-editor .cm-gutterElement {

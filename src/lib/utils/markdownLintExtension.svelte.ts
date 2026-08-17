@@ -76,6 +76,15 @@ export const createMarkdownLinter = () => {
         },
         'Markdown:Lint',
       );
+
+      // The document may have changed while awaiting the backend (tab switch,
+      // sync), so the line numbers in the result no longer apply. Discard the
+      // stale result; the linter re-runs for the new content on the next
+      // docChanged refresh.
+      if (view.state.doc.sliceString(0) !== content) {
+        return [];
+      }
+
       if (!result) {
         lintCache.set(tabId, { content, diagnostics: [] });
         markdownLintState.issueCount = 0;

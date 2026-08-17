@@ -162,6 +162,14 @@ export const createSpellCheckLinter = () => {
         }
       }
 
+      // The document may have changed while awaiting the backend (tab
+      // switch, sync), which invalidates every position computed against
+      // the snapshot above. Discard the result; the linter re-runs for the
+      // new content on the next docChanged refresh.
+      if (view.state.doc !== doc) {
+        return [];
+      }
+
       return diagnostics;
     },
     {

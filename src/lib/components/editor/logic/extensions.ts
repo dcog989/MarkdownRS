@@ -23,6 +23,7 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
+import { createFoldExtensions } from '$lib/utils/foldExtension';
 import { frontmatterExtension } from '$lib/utils/frontmatterExtension';
 import { createImagePasteExtension } from '$lib/utils/imagePaste';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
@@ -67,6 +68,7 @@ export interface Compartments {
   filePathComp: Compartment;
   markdownLintComp: Compartment;
   decorationComp: Compartment;
+  foldComp: Compartment;
   keymapComp: Compartment;
   imagePasteComp: Compartment;
 }
@@ -94,6 +96,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     search({ top: true }),
     highlightSelectionMatches(),
     c.autoComp.of(config.autocompletionConfig),
+    c.foldComp.of(config.isMarkdown ? createFoldExtensions() : []),
     c.recentComp.of(createRecentChangesHighlighter(config.lineChangeTracker, config.onContextMenu)),
     closeBrackets(),
     smartBacktickHandler,

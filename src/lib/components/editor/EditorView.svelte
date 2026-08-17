@@ -28,6 +28,7 @@ import { getActiveEditorView, setActiveEditorView } from '$lib/utils/editorComma
 import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
+import { createFoldExtensions } from '$lib/utils/foldExtension';
 import { createImagePasteExtension } from '$lib/utils/imagePaste';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { createMarkdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
@@ -117,6 +118,7 @@ let comps: Compartments = {
   filePathComp: new Compartment(),
   markdownLintComp: new Compartment(),
   decorationComp: new Compartment(),
+  foldComp: new Compartment(),
   keymapComp: new Compartment(),
   imagePasteComp: new Compartment(),
 };
@@ -203,6 +205,7 @@ $effect(() => {
   const md = effectiveMarkdown;
   view.dispatch({
     effects: [
+      comps.foldComp.reconfigure(md ? createFoldExtensions() : []),
       comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []),
       comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
       comps.imagePasteComp.reconfigure(md ? createImagePasteExtension() : []),
