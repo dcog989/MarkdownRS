@@ -24,6 +24,7 @@ import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/util
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
 import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
 import { frontmatterExtension } from '$lib/utils/frontmatterExtension';
+import { createImagePasteExtension } from '$lib/utils/imagePaste';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { createCodeBlockCopyHandler, createMarkdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
 import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
@@ -41,7 +42,7 @@ export const markdownExtensions = [
 
 /** Base directory of the tab a view belongs to, for resolving relative image sources. */
 export function getTabDirectory(view: EditorView): string {
-  const tabId = (view as AppEditorView)._currentTabId;
+  const tabId = (view as AppEditorView)._currentTabId ?? appContext.app.activeTabId;
   if (!tabId) return '';
   const path = appContext.editor.tabs.find((t) => t.id === tabId)?.path;
   return path ? path.replace(/[\\/][^\\/]+$/, '') : '';
@@ -67,6 +68,7 @@ export interface Compartments {
   markdownLintComp: Compartment;
   decorationComp: Compartment;
   keymapComp: Compartment;
+  imagePasteComp: Compartment;
 }
 
 export interface ExtensionsConfig {
@@ -112,6 +114,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.languageComp.of(config.isMarkdown ? markdownExtensions : []),
     c.spellComp.of([]),
     c.markdownLintComp.of(config.isMarkdown ? createMarkdownLinter() : []),
+    c.imagePasteComp.of(config.isMarkdown ? [createImagePasteExtension()] : []),
     c.decorationComp.of(
       config.isMarkdown
         ? createMarkdownDecorationsPlugin(appContext.settings.viewMode === 'rendered', getTabDirectory)

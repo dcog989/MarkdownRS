@@ -17,6 +17,7 @@ export type ErrorContext =
   | 'Settings:Save'
   | 'Settings:AppInfo'
   | 'Editor:Init'
+  | 'Editor:ImagePaste'
   | 'Database:Init'
   | 'Transform:Text'
   | 'Dictionary:Add'

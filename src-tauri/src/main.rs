@@ -78,6 +78,8 @@ fn main() {
             commands::files::send_to_recycle_bin,
             commands::files::create_file,
             commands::files::create_dir,
+            commands::files::ensure_dir,
+            commands::files::path_exists,
             commands::files::resolve_path_relative,
             commands::files::rename_file,
             commands::files::add_to_file_history,

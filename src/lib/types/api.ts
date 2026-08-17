@@ -117,6 +117,14 @@ export interface BackendCommands {
     args: { path: string };
     return: undefined;
   };
+  ensure_dir: {
+    args: { path: string };
+    return: undefined;
+  };
+  path_exists: {
+    args: { path: string };
+    return: boolean;
+  };
   add_to_file_history: {
     args: { path: string; lastOpened: string };
     return: undefined;

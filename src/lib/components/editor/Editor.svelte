@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { EditorView as CM6EditorView } from '@codemirror/view';
-import { readText } from '@tauri-apps/plugin-clipboard-manager';
 import { onMount, tick, untrack } from 'svelte';
 import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
@@ -36,8 +35,8 @@ import {
   unregisterEditorInstance,
   unregisterFlushFn,
 } from '$lib/utils/editorCommands';
-import { AppError } from '$lib/utils/errorHandling';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
+import { pasteFromClipboard } from '$lib/utils/imagePaste';
 import { snapToMarkdownConstruct } from '$lib/utils/markdownExtensions';
 import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
@@ -363,32 +362,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
             if (!cmView) return;
             showContextMenu = false;
             cmView.focus();
-            try {
-                const text = await readText();
-                if (typeof text === 'string' && text.length > 0) {
-                    cmView.dispatch({
-                        changes: {
-                            from: cmView.state.selection.main.from,
-                            to: cmView.state.selection.main.to,
-                            insert: text,
-                        },
-                        selection: { anchor: cmView.state.selection.main.from + text.length },
-                        scrollIntoView: true,
-                    });
-                } else if (text === null) {
-                    AppError.handle('UI:DragDrop', 'Clipboard content is not text', {
-                        showToast: true,
-                        userMessage: translate('editor.clipboardNoText'),
-                        severity: 'info',
-                    });
-                }
-            } catch (err) {
-                AppError.handle('UI:DragDrop', err, {
-                    showToast: true,
-                    userMessage: translate('editor.pasteFailed'),
-                    severity: 'error',
-                });
-            }
+            await pasteFromClipboard(cmView);
         }}
     onReplaceWord={(w) => {
             if (!cmView) return;

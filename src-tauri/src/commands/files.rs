@@ -253,6 +253,30 @@ pub async fn create_dir(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn ensure_dir(path: String) -> Result<(), String> {
+    validate_path(&path)?;
+    match fs::metadata(&path).await {
+        Ok(meta) if meta.is_dir() => Ok(()),
+        Ok(_) => Err(handle_error(
+            Some(&path),
+            "create directory",
+            "path exists and is not a directory",
+        )),
+        Err(_) => fs::create_dir_all(&path)
+            .await
+            .map_err(|e| handle_error(Some(&path), "create directory", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn path_exists(path: String) -> bool {
+    if validate_path(&path).is_err() {
+        return false;
+    }
+    fs::metadata(&path).await.is_ok()
+}
+
+#[tauri::command]
 pub async fn rename_file(old_path: String, new_path: String) -> Result<(), String> {
     validate_path(&old_path)?;
     validate_path(&new_path)?;
