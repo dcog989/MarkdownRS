@@ -53,6 +53,10 @@ struct CachedGroup {
     group: LintGroup,
 }
 
+/// Shared `LintGroup` across the whole process. `LintGroup::lint` mutates its
+/// internal content-hashed caches, so the mutex is held for the full CPU-bound
+/// lint; concurrent lint calls (e.g. multiple tabs) therefore serialize on this
+/// single lock. This is the price of warming the group's caches across calls.
 static CACHE: Mutex<Option<CachedGroup>> = Mutex::new(None);
 
 /// Map char offsets (as used by Harper's `Span<char>`) to 1-based line/column positions.
