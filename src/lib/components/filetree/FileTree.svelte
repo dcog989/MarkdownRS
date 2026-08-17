@@ -26,12 +26,12 @@ import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import type { TreeRow } from '$lib/stores/fileTreeStore.svelte';
 import {
+  applyFilter,
   canNavigateUp,
   collapseAll,
   computeTreeRows,
   dirname,
   fileTreeStore,
-  filterTreeRows,
   navigateInto,
   navigateToParent,
   refreshDirectoryIfInTree,
@@ -104,13 +104,14 @@ onMount(() => {
 
 // The tree rows, with a ".." parent entry on top whenever a parent exists.
 // The parent entry is hidden while the tree is locked, since the root is
-// pinned and navigation up is disabled. An active filter prunes non-matching
-// rows (the parent entry is always hidden while filtering).
+// pinned and navigation up is disabled. An active filter replaces the rows
+// with the whole-tree search results and always hides the parent entry.
 let allRows = $derived.by(() => {
-  const filteredRows = filterTreeRows(computeTreeRows(), filterQuery);
   const filtering = filterQuery.trim() !== '';
-  if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked || filtering) {
-    return filteredRows;
+  if (filtering) return fileTreeStore.filterRows;
+  const rows = computeTreeRows();
+  if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked) {
+    return rows;
   }
   return [
     {
@@ -128,7 +129,7 @@ let allRows = $derived.by(() => {
       isRoot: false,
       isParent: true,
     },
-    ...filteredRows,
+    ...rows,
   ];
 });
 
@@ -142,6 +143,12 @@ $effect(() => {
   if (root === filterRoot) return;
   filterRoot = root;
   filterQuery = '';
+});
+
+// Run the whole-tree search as the user types; re-run when the markdown-only
+// toggle changes so newly matching files appear and stale ones are dropped.
+$effect(() => {
+  void applyFilter(filterQuery, settingsState.fileTreeShowMarkdownOnly);
 });
 
 let scrollEl = $state<HTMLDivElement>();
@@ -402,7 +409,13 @@ function handleResizeClick() {
 
   {#if fileTreeStore.root}
     <div class="ft-filter border-border-light shrink-0 border-b">
-      <span class="ft-filter-icon"><Search size={13} /></span>
+      <span class="ft-filter-icon">
+        {#if fileTreeStore.filterLoading}
+          <LoaderCircle size={13} class="animate-spin" />
+        {:else}
+          <Search size={13} />
+        {/if}
+      </span>
       <input
         type="text"
         class="ft-filter-input"
@@ -508,7 +521,7 @@ function handleResizeClick() {
           {/each}
         </div>
       </div>
-      {#if filterQuery.trim() && allRows.length <= 1}
+      {#if filterQuery.trim() && !fileTreeStore.filterLoading && allRows.length <= 1}
         <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-xs">
           {$_('fileTree.noFilterMatch')}
         </div>

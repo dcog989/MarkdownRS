@@ -19,6 +19,9 @@ export const fileTreeStore = $state({
   // mtime seen at that point, so the background poll can skip unchanged dirs.
   lastLoaded: new Map<string, number>(),
   dirMtimes: new Map<string, number>(),
+  // Whole-tree filter results, populated asynchronously by `applyFilter`.
+  filterRows: [] as TreeRow[],
+  filterLoading: false,
 });
 
 // Directories are re-listed lazily on user interaction (expanding a folder,
@@ -30,6 +33,10 @@ export const STALE_REFRESH_MS = 30_000;
 // Tracks the latest in-flight listing generation per directory so stale results
 // from an outdated request (e.g. after toggling hidden files) are discarded.
 const loadGeneration = new Map<string, number>();
+
+// Tracks the latest whole-tree filter generation so a slow search aborts as soon
+// as the query, root, or a tree-affecting setting changes.
+let filterGeneration = 0;
 
 // In-flight listing promises, shared so callers awaiting an already-running
 // load (e.g. revealPath right after a follow-mode root change) actually wait
@@ -43,12 +50,21 @@ function invalidateLoads(): void {
   fileTreeStore.dirMtimes.clear();
 }
 
+// Discard whole-tree filter results when the tree content or root changes so a
+// stale search cannot linger on the wrong folder or stale directory listings.
+function invalidateFilter(): void {
+  filterGeneration++;
+  fileTreeStore.filterRows = [];
+  fileTreeStore.filterLoading = false;
+}
+
 export function setRoot(path: string): void {
   fileTreeStore.root = path;
   fileTreeStore.expanded.clear();
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();
+  invalidateFilter();
   fileTreeStore.expanded.set(path, true);
   void loadChildren(path);
 }
@@ -120,6 +136,7 @@ export function toggleHiddenFiles(): void {
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();
+  invalidateFilter();
   if (fileTreeStore.root) {
     void loadChildren(fileTreeStore.root);
   }
@@ -192,6 +209,7 @@ export async function refreshTree(): Promise<void> {
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();
+  invalidateFilter();
   try {
     await Promise.all(expandedPaths.map((path) => loadChildren(path)));
   } finally {
@@ -232,6 +250,17 @@ function isMarkdownName(name: string): boolean {
   return MARKDOWN_EXTENSION_SET.has(name.slice(idx + 1).toLowerCase());
 }
 
+function rootEntry(root: string): FileEntry {
+  return {
+    name: basename(root) || root,
+    path: root,
+    is_dir: true,
+    is_symlink: false,
+    size: 0,
+    modified: null,
+  };
+}
+
 export function computeTreeRows(): TreeRow[] {
   const { root, expanded, children, loading } = fileTreeStore;
   const showMarkdownOnly = settingsState.fileTreeShowMarkdownOnly;
@@ -244,14 +273,7 @@ export function computeTreeRows(): TreeRow[] {
   visited.add(root);
 
   rows.push({
-    entry: {
-      name: basename(root) || root,
-      path: root,
-      is_dir: true,
-      is_symlink: false,
-      size: 0,
-      modified: null,
-    },
+    entry: rootEntry(root),
     depth: 0,
     expanded: expanded.get(root) ?? false,
     loading: loading.get(root) ?? false,
@@ -294,33 +316,97 @@ export function computeTreeRows(): TreeRow[] {
 }
 
 /**
- * Filter a computed row list to the entries whose name fuzzy-matches `query`.
- * The root and every ancestor of a match stay visible so the paths leading to
- * matching files remain navigable; non-matching siblings are pruned. When the
- * query is empty the rows are returned unchanged. The ".." parent navigation
- * row is dropped while a filter is active.
+ * Search the whole tree under the current root for files whose name
+ * fuzzy-matches `query`, listing directories on demand so matches inside
+ * collapsed or never-opened folders are found too. The returned rows keep the
+ * root and every folder leading to a match so each match is shown within its
+ * containing folder; non-matching files and branches are pruned.
+ * Folder names never match — only file names do.
  */
-export function filterTreeRows(rows: TreeRow[], query: string): TreeRow[] {
+export async function applyFilter(query: string, markdownOnly: boolean): Promise<void> {
+  const generation = ++filterGeneration;
   const q = query.trim();
   const root = fileTreeStore.root;
-  if (!q) return rows;
+  if (!q || !root) {
+    fileTreeStore.filterRows = [];
+    fileTreeStore.filterLoading = false;
+    return;
+  }
 
-  const keep = new Set<string>([root]);
-  for (const row of rows) {
-    if (row.isRoot || row.isParent) continue;
-    if (fuzzyMatch(q, row.entry.name) === null) continue;
-    keep.add(row.entry.path);
-    // Folders leading to the match are kept so the match stays reachable.
-    for (let parent = dirname(row.entry.path); parent && parent !== root; parent = dirname(parent)) {
-      if (keep.has(parent)) break;
-      keep.add(parent);
+  fileTreeStore.filterLoading = true;
+  try {
+    const rows = await searchTree(root, q, markdownOnly, generation);
+    if (generation !== filterGeneration) return;
+    fileTreeStore.filterRows = rows;
+  } finally {
+    if (generation === filterGeneration) {
+      fileTreeStore.filterLoading = false;
+    }
+  }
+}
+
+type WalkNode = { entry: FileEntry; depth: number };
+
+async function searchTree(root: string, query: string, markdownOnly: boolean, generation: number): Promise<TreeRow[]> {
+  const visited = new Set<string>([root]);
+  const ordered: WalkNode[] = [];
+  const stack: WalkNode[] = [{ entry: rootEntry(root), depth: 0 }];
+
+  while (stack.length > 0) {
+    if (generation !== filterGeneration) return [];
+    const node = stack.pop();
+    if (!node) break;
+    ordered.push(node);
+    if (!node.entry.is_dir) continue;
+
+    if (!fileTreeStore.children.has(node.entry.path)) {
+      await loadChildren(node.entry.path);
+      if (generation !== filterGeneration) return [];
+      if (!fileTreeStore.children.has(node.entry.path)) continue;
+    }
+    const kids = fileTreeStore.children.get(node.entry.path) ?? [];
+    for (let i = kids.length - 1; i >= 0; i--) {
+      const child = kids[i];
+      if (visited.has(child.path)) continue;
+      visited.add(child.path);
+      if (child.is_dir) {
+        stack.push({ entry: child, depth: node.depth + 1 });
+      } else if (!(markdownOnly && !isMarkdownName(child.name))) {
+        stack.push({ entry: child, depth: node.depth + 1 });
+      }
     }
   }
 
-  return rows.filter((row) => {
-    if (row.isParent) return false;
-    return keep.has(row.entry.path);
-  });
+  const matches = new Set<string>();
+  for (const item of ordered) {
+    if (item.entry.is_dir) continue;
+    if (fuzzyMatch(query, item.entry.name) !== null) matches.add(item.entry.path);
+  }
+  if (matches.size === 0) return [];
+
+  const visible = new Set<string>([root]);
+  for (const path of matches) {
+    for (let parent = dirname(path); parent && parent !== root; parent = dirname(parent)) {
+      visible.add(parent);
+    }
+  }
+
+  const rows: TreeRow[] = [];
+  for (const item of ordered) {
+    if (item.entry.is_dir) {
+      if (!visible.has(item.entry.path)) continue;
+    } else if (!matches.has(item.entry.path)) {
+      continue;
+    }
+    rows.push({
+      entry: item.entry,
+      depth: item.depth,
+      expanded: false,
+      loading: false,
+      isRoot: item.entry.path === root,
+    });
+  }
+  return rows;
 }
 
 export function canNavigateUp(): boolean {

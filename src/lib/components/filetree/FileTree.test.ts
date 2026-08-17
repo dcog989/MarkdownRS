@@ -62,6 +62,8 @@ describe('FileTree', () => {
     fileTreeStore.expanded.clear();
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
+    fileTreeStore.filterRows = [];
+    fileTreeStore.filterLoading = false;
     settingsState.fileTreeShowHidden = false;
     settingsState.fileTreeLocked = false;
     settingsState.fileTreeLockedRoot = '';
@@ -320,5 +322,38 @@ describe('FileTree', () => {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
     }
+  });
+
+  it('filters to matching files within their containing folder while typing', async () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('notes.md'), entry('sub', true)]);
+    fileTreeStore.children.set('/root/sub', [{ ...entry('deep.md'), path: '/root/sub/deep.md' }]);
+
+    render(FileTree);
+    const input = screen.getByPlaceholderText('Filter files...');
+    await fireEvent.input(input, { target: { value: 'deep' } });
+
+    expect(await screen.findByText('deep.md')).toBeTruthy();
+    expect(await screen.findByText('sub')).toBeTruthy();
+    // Non-matching siblings are pruned and the parent navigation row is hidden.
+    expect(screen.queryByText('notes.md')).toBeFalsy();
+    expect(screen.queryByText('..')).toBeFalsy();
+  });
+
+  it('searches folders that were never expanded while filtering', async () => {
+    mockedListDirectory.mockResolvedValue([{ ...entry('hidden.md'), path: '/root/deep/hidden.md' }]);
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('notes.md'), entry('deep', true)]);
+    // '/root/deep' has no cached children; the filter must list it on demand.
+
+    render(FileTree);
+    const input = screen.getByPlaceholderText('Filter files...');
+    await fireEvent.input(input, { target: { value: 'hidden' } });
+
+    await waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith('/root/deep', false));
+    expect(await screen.findByText('hidden.md')).toBeTruthy();
+    expect(screen.queryByText('notes.md')).toBeFalsy();
   });
 });

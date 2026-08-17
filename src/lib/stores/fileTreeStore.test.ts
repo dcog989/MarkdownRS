@@ -9,12 +9,12 @@ vi.mock('$lib/commands/directory', () => ({
 
 import { getDirectoryMtime, listDirectory } from '$lib/commands/directory';
 import {
+  applyFilter,
   canNavigateUp,
   collapseAll,
   computeTreeRows,
   dirname,
   fileTreeStore,
-  filterTreeRows,
   isDirLoading,
   isExpanded,
   loadChildren,
@@ -55,6 +55,8 @@ describe('fileTreeStore', () => {
     settingsState.fileTreeVisible = true;
     fileTreeStore.lastLoaded.clear();
     fileTreeStore.dirMtimes.clear();
+    fileTreeStore.filterRows = [];
+    fileTreeStore.filterLoading = false;
     mockedListDirectory.mockReset();
     mockedGetDirectoryMtime.mockReset();
   });
@@ -468,7 +470,7 @@ describe('fileTreeStore', () => {
     expect(found).toBe(false);
   });
 
-  it('filterTreeRows keeps the root and matching paths, pruning non-matching siblings', () => {
+  it('applyFilter keeps the root and matching files within their folder, pruning non-matching siblings', async () => {
     fileTreeStore.root = '/root';
     fileTreeStore.expanded.set('/root', true);
     fileTreeStore.expanded.set('/root/sub', true);
@@ -478,9 +480,8 @@ describe('fileTreeStore', () => {
       { ...entry('other.txt'), path: '/root/sub/other.txt' },
     ]);
 
-    const rows = computeTreeRows();
-    const filtered = filterTreeRows(rows, 'deep');
-    const paths = filtered.map((r) => r.entry.path);
+    await applyFilter('deep', false);
+    const paths = fileTreeStore.filterRows.map((r) => r.entry.path);
 
     // The anchor root and the folder leading to the match stay visible.
     expect(paths).toContain('/root');
@@ -489,52 +490,62 @@ describe('fileTreeStore', () => {
     expect(paths).not.toContain('/root/notes.md');
     expect(paths).not.toContain('/root/config.json');
     expect(paths).not.toContain('/root/sub/other.txt');
+    expect(fileTreeStore.filterRows.some((r) => r.isParent)).toBe(false);
+    expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 
-  it('filterTreeRows matches folders by name too', () => {
+  it('applyFilter lists folders on demand so collapsed branches are searched', async () => {
+    mockedListDirectory.mockResolvedValue([{ ...entry('deep.md'), path: '/root/sub/deep.md' }]);
     fileTreeStore.root = '/root';
     fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.expanded.set('/root/sub', true);
     fileTreeStore.children.set('/root', [entry('notes.md'), entry('sub', true)]);
-    fileTreeStore.children.set('/root/sub', [{ ...entry('deep.md'), path: '/root/sub/deep.md' }]);
+    // '/root/sub' was never expanded, so its children are not cached yet.
 
-    const filtered = filterTreeRows(computeTreeRows(), 'sub');
-    const paths = filtered.map((r) => r.entry.path);
+    await applyFilter('deep', false);
 
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
+    const paths = fileTreeStore.filterRows.map((r) => r.entry.path);
     expect(paths).toContain('/root');
     expect(paths).toContain('/root/sub');
     expect(paths).toContain('/root/sub/deep.md');
     expect(paths).not.toContain('/root/notes.md');
   });
 
-  it('filterTreeRows drops the parent navigation row while filtering', () => {
+  it('applyFilter matches file names only, not folder names', async () => {
     fileTreeStore.root = '/root';
     fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('notes.md')]);
+    fileTreeStore.expanded.set('/root/sub', true);
+    fileTreeStore.children.set('/root', [entry('notes.md'), entry('sub', true)]);
+    fileTreeStore.children.set('/root/sub', [{ ...entry('deep.md'), path: '/root/sub/deep.md' }]);
 
-    const withParent = [
-      {
-        entry: { name: '..', path: '/', is_dir: true, is_symlink: false, size: 0, modified: null },
-        depth: 0,
-        expanded: false,
-        loading: false,
-        isRoot: false,
-        isParent: true,
-      },
-      ...computeTreeRows(),
-    ];
+    await applyFilter('sub', false);
 
-    const filtered = filterTreeRows(withParent, 'notes');
-    expect(filtered.some((r) => r.isParent)).toBe(false);
+    // No file matches "sub", so the search yields no rows.
+    expect(fileTreeStore.filterRows).toEqual([]);
+    expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 
-  it('filterTreeRows returns rows unchanged for an empty or whitespace query', () => {
+  it('applyFilter respects markdown-only mode', async () => {
     fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('notes.md')]);
-    const rows = computeTreeRows();
+    fileTreeStore.children.set('/root', [entry('note.md'), entry('note.txt')]);
 
-    expect(filterTreeRows(rows, '')).toBe(rows);
-    expect(filterTreeRows(rows, '   ')).toBe(rows);
+    await applyFilter('note', true);
+    const paths = fileTreeStore.filterRows.map((r) => r.entry.path);
+
+    expect(paths).toContain('/root/note.md');
+    expect(paths).not.toContain('/root/note.txt');
+  });
+
+  it('applyFilter clears results for an empty or whitespace query', async () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.children.set('/root', [entry('notes.md')]);
+
+    await applyFilter('', false);
+    expect(fileTreeStore.filterRows).toEqual([]);
+
+    await applyFilter('   ', false);
+    expect(fileTreeStore.filterRows).toEqual([]);
+    expect(fileTreeStore.filterLoading).toBe(false);
+    expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 });
