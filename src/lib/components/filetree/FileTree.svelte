@@ -1,10 +1,7 @@
 <script lang="ts">
 import {
   ArrowUpToLine,
-  ChevronLeft,
   ChevronRight,
-  Eye,
-  EyeOff,
   File,
   FileCode,
   FileImage,
@@ -12,21 +9,12 @@ import {
   FileText,
   Folder,
   FolderOpen,
-  FolderTree,
-  FoldVertical,
   LoaderCircle,
-  Lock,
-  LockOpen,
-  RefreshCw,
-  Search,
-  X,
 } from 'lucide-svelte';
 import { onMount, tick } from 'svelte';
 import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
 import {
   canNavigateUp,
-  collapseAll,
   dirname,
   fileTreeStore,
   navigateInto,
@@ -36,10 +24,8 @@ import {
   revealPath,
   setRoot,
   toggle,
-  toggleHiddenFiles,
-  toggleMarkdownOnly,
 } from '$lib/stores/fileTreeStore.svelte';
-import { settingsState, toggleFileTree, toggleFileTreeLocked } from '$lib/stores/settingsState.svelte';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { TreeRow } from '$lib/stores/treeViewStore.svelte';
 import { applyFilter, computeTreeRows, treeViewStore } from '$lib/stores/treeViewStore.svelte';
@@ -47,8 +33,10 @@ import type { FileEntry } from '$lib/types/api';
 import { CONFIG } from '$lib/utils/config';
 import { openFile } from '$lib/utils/fileSystem';
 import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from '$lib/utils/fileValidation';
-import { saveSettings } from '$lib/utils/settings';
 import FileTreeContextMenu from './FileTreeContextMenu.svelte';
+import FileTreeFilter from './FileTreeFilter.svelte';
+import FileTreeResizeHandle from './FileTreeResizeHandle.svelte';
+import FileTreeToolbar from './FileTreeToolbar.svelte';
 
 const ROW_HEIGHT = CONFIG.FILETREE.ROW_HEIGHT;
 const OVERSCAN = CONFIG.FILETREE.OVERSCAN;
@@ -206,16 +194,6 @@ async function revealActiveFile(path: string) {
   }
 }
 
-function handleLockToggle() {
-  toggleFileTreeLocked();
-  if (settingsState.fileTreeLocked) {
-    settingsState.fileTreeLockedRoot = fileTreeStore.root;
-  } else {
-    settingsState.fileTreeLockedRoot = '';
-  }
-  saveSettings();
-}
-
 function handleRowClick(e: MouseEvent, row: TreeRow) {
   if (row.isParent) {
     // Root navigation is disabled while the tree is locked.
@@ -280,169 +258,21 @@ const CODE_EXT = new Set([
 ]);
 const JSON_EXT = new Set(['json', 'jsonc', 'toml', 'yaml', 'yml']);
 
-let isResizing = $state(false);
-let didDrag = false;
-
 let contextMenuEntry = $state<FileEntry | null>(null);
 let contextMenuDir = $state('');
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
-
-function startResize(e: MouseEvent) {
-  e.preventDefault();
-  isResizing = true;
-  didDrag = false;
-  const startX = e.clientX;
-  const startWidth = appContext.settings.fileTreeWidth;
-
-  const onMove = (ev: MouseEvent) => {
-    if (Math.abs(ev.clientX - startX) > 3) {
-      didDrag = true;
-    }
-    const newWidth = startWidth + (ev.clientX - startX);
-    appContext.settings.fileTreeWidth = Math.max(
-      CONFIG.FILETREE.MIN_WIDTH,
-      Math.min(CONFIG.FILETREE.MAX_WIDTH, newWidth),
-    );
-  };
-  const onUp = () => {
-    isResizing = false;
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('mouseup', onUp);
-    document.body.style.cursor = '';
-    if (didDrag) saveSettings();
-  };
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onUp);
-  document.body.style.cursor = 'col-resize';
-}
-
-function handleResizeClick() {
-  if (didDrag) return;
-  toggleFileTree();
-}
 </script>
 
 <div
   class="bg-bg-panel border-border-light file-tree-root relative flex h-full flex-col overflow-hidden border-r"
   style:width={`${appContext.settings.fileTreeWidth}px`}
   style:--ft-row-height={`${ROW_HEIGHT}px`}
-  class:cursor-col-resize={isResizing}
 >
-  <div class="border-border-light flex h-8 shrink-0 items-center gap-1 border-b pl-2 pr-1">
-    <div class="text-fg-muted flex shrink-0 items-center">
-      <button
-        type="button"
-        class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-        class:bg-bg-active={settingsState.fileTreeShowHidden}
-        class:text-accent-secondary={settingsState.fileTreeShowHidden}
-        use:tooltip={$_('fileTree.showHidden')}
-        onclick={() => {
-                    toggleHiddenFiles();
-                    saveSettings();
-                }}
-      >
-        {#if settingsState.fileTreeShowHidden}
-          <Eye size={14} />
-        {:else}
-          <EyeOff size={14} />
-        {/if}
-      </button>
-      <button
-        type="button"
-        class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-        class:bg-bg-active={settingsState.fileTreeShowMarkdownOnly}
-        class:text-accent-secondary={settingsState.fileTreeShowMarkdownOnly}
-        use:tooltip={$_('fileTree.showMarkdownOnly')}
-        onclick={() => {
-                    toggleMarkdownOnly();
-                    saveSettings();
-                }}
-      >
-        <FileText size={14} />
-      </button>
-      <button
-        type="button"
-        class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-        class:bg-bg-active={settingsState.fileTreeLocked}
-        class:text-accent-secondary={settingsState.fileTreeLocked}
-        aria-label={$_(
-                    settingsState.fileTreeLocked ? 'fileTree.unlockTree' : 'fileTree.lockTree',
-                )}
-        use:tooltip={$_(
-                    settingsState.fileTreeLocked ? 'fileTree.unlockTree' : 'fileTree.lockTree',
-                )}
-        onclick={handleLockToggle}
-      >
-        {#if settingsState.fileTreeLocked}
-          <LockOpen size={14} />
-        {:else}
-          <Lock size={14} />
-        {/if}
-      </button>
-      <button
-        type="button"
-        class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-        use:tooltip={$_('fileTree.collapseAll')}
-        onclick={collapseAll}
-      >
-        <FoldVertical size={14} />
-      </button>
-      <button
-        type="button"
-        class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-        class:pointer-events-none={fileTreeStore.refreshing}
-        use:tooltip={$_('fileTree.refresh')}
-        onclick={() => void refreshTree()}
-      >
-        <span class:animate-spin={fileTreeStore.refreshing} class="flex">
-          <RefreshCw size={14} />
-        </span>
-      </button>
-    </div>
-    <div class="text-fg-muted ml-auto flex shrink-0 items-center">
-      <button
-        type="button"
-        class="bg-bg-active text-accent-secondary hover-surface flex h-6 w-6 items-center justify-center rounded"
-        use:tooltip={$_('tabBar.hideFileTree')}
-        onclick={() => {
-                    toggleFileTree();
-                    saveSettings();
-                }}
-      >
-        <FolderTree size={14} />
-      </button>
-    </div>
-  </div>
+  <FileTreeToolbar />
 
   {#if fileTreeStore.root}
-    <div class="ft-filter border-border-light shrink-0 border-b">
-      <span class="ft-filter-icon">
-        {#if treeViewStore.filterLoading}
-          <LoaderCircle size={13} class="animate-spin" />
-        {:else}
-          <Search size={13} />
-        {/if}
-      </span>
-      <input
-        type="text"
-        class="ft-filter-input"
-        bind:value={filterQuery}
-        placeholder={$_('fileTree.filterPlaceholder')}
-        aria-label={$_('fileTree.filterPlaceholder')}
-      >
-      {#if filterQuery}
-        <button
-          type="button"
-          class="hover-surface ft-filter-clear"
-          aria-label={$_('fileTree.clearFilter')}
-          title={$_('fileTree.clearFilter')}
-          onclick={() => (filterQuery = '')}
-        >
-          <X size={12} />
-        </button>
-      {/if}
-    </div>
+    <FileTreeFilter bind:value={filterQuery} loading={treeViewStore.filterLoading} />
   {/if}
 
   <div class="min-h-0 flex-1">
@@ -537,24 +367,7 @@ function handleResizeClick() {
     {/if}
   </div>
 
-  <div
-    role="button"
-    tabindex="0"
-    aria-label={$_('fileTree.resizeAria')}
-    class="ft-resize-handle"
-    class:cursor-col-resize={isResizing}
-    onmousedown={startResize}
-    onkeydown={() => {}}
-    onclick={handleResizeClick}
-    ondblclick={() => {
-            appContext.settings.fileTreeWidth = CONFIG.FILETREE.DEFAULT_WIDTH;
-            saveSettings();
-        }}
-  >
-    <span class="ft-collapse-icon">
-      <ChevronLeft size={44} />
-    </span>
-  </div>
+  <FileTreeResizeHandle />
 
   {#if contextMenuDir}
     <FileTreeContextMenu
@@ -571,50 +384,6 @@ function handleResizeClick() {
 </div>
 
 <style>
-.ft-filter {
-  position: relative;
-}
-
-.ft-filter-icon {
-  position: absolute;
-  top: 50%;
-  left: 0.875rem;
-  transform: translateY(-50%);
-  display: flex;
-  color: var(--text-secondary);
-  pointer-events: none;
-}
-
-.ft-filter-input {
-  width: 100%;
-  padding: 0.25rem 1.75rem 0.25rem 2rem;
-  font-size: 0.75rem;
-  color: var(--text-primary);
-  background-color: var(--surface-input);
-  border: 1px solid var(--border-primary);
-  border-radius: 0.25rem;
-  outline: none;
-}
-
-.ft-filter-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.ft-filter-clear {
-  position: absolute;
-  top: 50%;
-  right: 0.875rem;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 0.25rem;
-  color: var(--text-secondary);
-}
-
 .ft-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--border-primary) transparent;
@@ -651,47 +420,5 @@ function handleResizeClick() {
   bottom: 0;
   width: 2px;
   background-color: var(--accent-secondary);
-}
-
-.ft-resize-handle {
-  position: absolute;
-  top: 2rem;
-  right: 0;
-  bottom: 0;
-  width: 6px;
-  cursor: col-resize;
-  z-index: 30;
-  transition: background-color 150ms ease-out;
-}
-
-.ft-resize-handle:hover {
-  background-color: var(--accent-primary);
-  transition-delay: 250ms;
-}
-
-.ft-collapse-icon {
-  position: absolute;
-  top: 0;
-  right: 6px;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  background-color: var(--surface-hover);
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity 150ms ease-out;
-}
-
-.ft-resize-handle:hover .ft-collapse-icon {
-  opacity: 1;
-  transition-delay: 250ms;
-}
-
-.cursor-col-resize {
-  cursor: col-resize;
 }
 </style>
