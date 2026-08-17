@@ -12,6 +12,7 @@ import type { AppEditorView } from '../../global';
 
 const IMAGE_ASSET_DIR = 'assets';
 const MAX_NAME_DEDUPE_ATTEMPTS = 99;
+const MAX_IMAGE_PIXELS = 25_000_000;
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'avif']);
 
 let pasteQueue: Promise<unknown> = Promise.resolve();
@@ -263,8 +264,12 @@ async function uniqueFileName(directory: string, baseFileName: string): Promise<
 async function imageToPngBytes(image: Image): Promise<Uint8Array> {
   const rgba = await image.rgba();
   const { width, height } = await image.size();
-  if (rgba.length !== width * height * 4) {
-    throw new Error(`Invalid clipboard image data: expected ${width * height * 4} bytes, got ${rgba.length}`);
+  const pixels = width * height;
+  if (pixels > MAX_IMAGE_PIXELS) {
+    throw new Error(`Clipboard image too large: ${pixels} pixels (max ${MAX_IMAGE_PIXELS})`);
+  }
+  if (rgba.length !== pixels * 4) {
+    throw new Error(`Invalid clipboard image data: expected ${pixels * 4} bytes, got ${rgba.length}`);
   }
 
   const canvas = document.createElement('canvas');
