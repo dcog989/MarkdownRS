@@ -107,7 +107,7 @@ onMount(() => {
 // pinned and navigation up is disabled. An active filter replaces the rows
 // with the whole-tree search results and always hides the parent entry.
 let allRows = $derived.by(() => {
-  const filtering = filterQuery.trim() !== '';
+  const filtering = effectiveFilterQuery.trim() !== '';
   if (filtering) return fileTreeStore.filterRows;
   const rows = computeTreeRows();
   if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked) {
@@ -145,10 +145,18 @@ $effect(() => {
   filterQuery = '';
 });
 
-// Run the whole-tree search as the user types; re-run when the markdown-only
-// toggle changes so newly matching files appear and stale ones are dropped.
+// The query only applies to the root it was typed under. `filterRoot` is
+// updated by the reset effect above, which runs after the render, so a
+// re-positioned tree could otherwise be filtered with the previous folder's
+// query for one reactive flush. Guarding the derived value makes that single
+// frame render the unfiltered tree instead of a pruned or empty one.
+let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? filterQuery : '');
+
+// Run the whole-tree search as the user types; re-run when the root or the
+// markdown-only toggle changes so stale results are dropped and new matches
+// appear.
 $effect(() => {
-  void applyFilter(filterQuery, settingsState.fileTreeShowMarkdownOnly);
+  void applyFilter(effectiveFilterQuery, settingsState.fileTreeShowMarkdownOnly);
 });
 
 let scrollEl = $state<HTMLDivElement>();
@@ -521,7 +529,7 @@ function handleResizeClick() {
           {/each}
         </div>
       </div>
-      {#if filterQuery.trim() && !fileTreeStore.filterLoading && allRows.length <= 1}
+      {#if effectiveFilterQuery.trim() && !fileTreeStore.filterLoading && allRows.length <= 1}
         <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-xs">
           {$_('fileTree.noFilterMatch')}
         </div>
