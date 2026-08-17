@@ -7,7 +7,7 @@ import {
 } from '$lib/stores/settingsState.svelte';
 import type { FileEntry } from '$lib/types/api';
 import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
-import { fuzzyMatch } from '$lib/utils/fuzzyMatch';
+import { fuzzyMatches } from '$lib/utils/fuzzyMatch';
 
 export const fileTreeStore = $state({
   root: '',
@@ -388,7 +388,7 @@ async function searchTree(root: string, query: string, markdownOnly: boolean, ge
   const matches = new Set<string>();
   for (const item of ordered) {
     if (item.entry.is_dir) continue;
-    if (fuzzyMatch(query, item.entry.name) !== null) matches.add(item.entry.path);
+    if (fuzzyMatches(query, item.entry.name)) matches.add(item.entry.path);
   }
   if (matches.size === 0) return [];
 

@@ -14,14 +14,34 @@ function isStrongBoundary(index: number, candidate: string): boolean {
 }
 
 /**
+ * Boolean ordered-subsequence check (case-insensitive). Zero allocations,
+ * intended for hot paths that only care whether a query matches (e.g. the
+ * file tree filter) rather than how well it matches.
+ */
+export function fuzzyMatches(query: string, candidate: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  const c = candidate.toLowerCase();
+  let searchFrom = 0;
+  for (let i = 0; i < q.length; i++) {
+    const idx = c.indexOf(q[i], searchFrom);
+    if (idx === -1) return false;
+    searchFrom = idx + 1;
+  }
+  return true;
+}
+
+/**
  * Fuzzy subsequence match for search-as-you-type paths. Returns null when the
  * query characters cannot be found in order (case-insensitive), otherwise a
  * score where higher is better. Matches that fall on segment boundaries, in
  * the basename, consecutively, or that match the original casing score higher;
- * matches buried deep in a long path score lower.
+ * matches buried deep in a long path score lower. Only use the scored form
+ * when the score matters; use `fuzzyMatches` for plain membership checks.
  */
 export function fuzzyMatch(query: string, candidate: string): FuzzyMatchResult | null {
   if (!query) return { score: 0, positions: [] };
+  if (!fuzzyMatches(query, candidate)) return null;
 
   const q = query.toLowerCase();
   const c = candidate.toLowerCase();
