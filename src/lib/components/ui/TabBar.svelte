@@ -53,14 +53,17 @@ const sortController = new SortableController<EditorTab>({
   onDragEnd: () => {
     if (sortController.isDragging) {
       persistSessionDebounced();
-    } else if (sortController.draggingId) {
-      appContext.app.activeTabId = sortController.draggingId;
-      pushToMru(sortController.draggingId);
     }
     dragGhostTab = null;
     tick().then(updateFadeIndicators);
   },
 });
+
+function activateTab(id: string) {
+  if (sortController.consumeDragClick()) return;
+  appContext.app.activeTabId = id;
+  pushToMru(id);
+}
 
 $effect(() => {
   if (sortController.draggingId && !sortController.isDragging) {
@@ -274,6 +277,7 @@ $effect(() => {
           <TabButton
             {tab}
             isActive={appContext.app.activeTabId === tab.id}
+            onclick={activateTab}
             onclose={(_, id) => requestCloseTab(id)}
             oncontextmenu={(e, id) => {
                             contextMenuTabId = id;
