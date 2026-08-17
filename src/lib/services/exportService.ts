@@ -198,7 +198,7 @@ export class ExportService {
         }
         await callBackend(
           'write_binary_file',
-          { path, content: Array.from(bytes) },
+          { path, content: bytes },
           'File:Write',
           { path: tab?.path },
           { report: true, msg: translate('export.failedSaveFormat', { values: { format: format.toUpperCase() } }) },

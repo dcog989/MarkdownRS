@@ -137,7 +137,7 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
     targetPath = await serializedPaste(async () => {
       const sourceName = sanitizeFileName(sourcePath.replace(/\\/g, '/').split('/').pop() ?? 'image');
       const name = await uniqueFileName(directory, sourceName);
-      await callBackend('write_binary_file', { path: name, content: Array.from(bytes) }, 'File:Write');
+      await callBackend('write_binary_file', { path: name, content: bytes }, 'File:Write');
       return name;
     });
   } catch (err) {
@@ -194,7 +194,7 @@ async function savePastedImage(tabPath: string, image: Image): Promise<string | 
   try {
     fileName = await serializedPaste(async () => {
       const name = await uniqueFileName(directory, buildFileName(normalizedPath));
-      await callBackend('write_binary_file', { path: name, content: Array.from(bytes) }, 'File:Write');
+      await callBackend('write_binary_file', { path: name, content: bytes }, 'File:Write');
       return name;
     });
   } catch (err) {

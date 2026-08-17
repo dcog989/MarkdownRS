@@ -95,7 +95,7 @@ export interface BackendCommands {
     return: WriteFileResult;
   };
   write_binary_file: {
-    args: { path: string; content: number[] };
+    args: { path: string; content: Uint8Array };
     return: undefined;
   };
   get_file_metadata: {
