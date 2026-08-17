@@ -1,5 +1,11 @@
 import { EditorView } from '@codemirror/view';
 
+// The app's base UI font stack (mirrors app.css) and the .text-ui-sm size, used
+// for in-editor tooltips so they don't render in the editor's monospace font.
+const UI_FONT_FAMILY =
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Droid Sans", sans-serif';
+const UI_FONT_SIZE = '0.8125rem';
+
 export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean) {
   // Theme-driven: resolves against --editor-fg-tertiary (defined per theme), so it stays
   // visible on both dark and light surfaces regardless of the app's dark/light mode.
@@ -66,6 +72,10 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
       backgroundColor: 'var(--editor-surface-2)',
       border: '1px solid var(--editor-border-secondary)',
       color: 'var(--editor-fg)',
+      fontFamily: UI_FONT_FAMILY,
+      fontSize: UI_FONT_SIZE,
+      lineHeight: '1.4',
+      overflowY: 'auto',
     },
     '.cm-highlightSpace': {
       backgroundImage: 'none !important',

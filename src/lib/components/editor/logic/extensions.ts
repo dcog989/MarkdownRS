@@ -12,6 +12,7 @@ import {
   highlightActiveLineGutter,
   highlightWhitespace,
   type KeyBinding,
+  tooltips,
 } from '@codemirror/view';
 import { createWrapExtension, getEditorKeymap } from '$lib/components/editor/codemirror/config';
 import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
@@ -120,6 +121,10 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.wrapComp.of(createWrapExtension(config.isLargeFile)),
     EditorView.contentAttributes.of({ spellcheck: 'false' }),
     EditorView.scrollMargins.of(() => ({ bottom: 30 })),
+    // Constrain tooltip placement to the editor frame instead of the whole
+    // window, so a lint hint near line 1 flips below the target instead of
+    // rendering above it and getting cut off by the editor's overflow.
+    tooltips({ tooltipSpace: (view) => view.dom.getBoundingClientRect() }),
     c.handlersComp.of(config.eventHandlers),
   ];
 
