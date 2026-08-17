@@ -2,11 +2,16 @@ import { foldGutter, foldKeymap } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 
+// Shared so the gutter's click-target check can't silently break if the
+// marker class is ever renamed.
+const FOLD_MARKER_CLASS = 'cm-fold-marker';
+const FOLD_MARKER_CLOSED_CLASS = 'cm-fold-marker-closed';
+
 // Chevron built from CSS borders so the arrow matches the theme's
 // --editor-fg-tertiary/--editor-fg colors and scales with the font size.
 const foldMarkerDOM = (open: boolean) => {
   const span = document.createElement('span');
-  span.className = open ? 'cm-fold-marker' : 'cm-fold-marker cm-fold-marker-closed';
+  span.className = open ? FOLD_MARKER_CLASS : `${FOLD_MARKER_CLASS} ${FOLD_MARKER_CLOSED_CLASS}`;
   span.setAttribute('aria-hidden', 'true');
   return span;
 };
@@ -61,7 +66,7 @@ export function createFoldExtensions(): Extension[] {
         mousedown(view, line, event) {
           const me = event as MouseEvent;
           if (me.button !== 0) return false;
-          if ((me.target as HTMLElement).closest('.cm-fold-marker')) return false;
+          if ((me.target as HTMLElement).closest(`.${FOLD_MARKER_CLASS}`)) return false;
           me.preventDefault();
           view.dispatch({
             selection: { anchor: line.from, head: line.to },
