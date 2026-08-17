@@ -392,7 +392,9 @@ export const en = {
     bytes: 'bytes',
   },
   lint: {
+    title: 'Issues',
     issuesTitle: 'Markdown Lint Issues',
+    grammarTitle: 'Grammar Issues',
     noIssues: 'No issues found',
     noConfigFile: 'no config file',
     copyConfigPath: 'Copy config path',
