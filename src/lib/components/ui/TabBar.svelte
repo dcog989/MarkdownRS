@@ -26,10 +26,6 @@ let scrollContainer = $state<HTMLElement>();
 let showDropdown = $state(false);
 let showMenu = $state(false);
 
-let isDragging = $state(false);
-let draggingId = $state<string | null>(null);
-let dragOffsetX = $state(0);
-let currentDragX = $state(0);
 let dragBarTop = $state(0);
 let dragGhostTab = $state<EditorTab | null>(null);
 
@@ -54,29 +50,23 @@ const sortController = new SortableController<EditorTab>({
   onSort: (newItems) => {
     reorderTabs(newItems);
   },
-  onDragStart: (id, _, offset) => {
-    draggingId = id;
-    isDragging = false;
-    dragOffsetX = offset;
-    dragGhostTab = appContext.editor.tabs.find((t) => t.id === id) ?? null;
-    dragBarTop = scrollContainer?.getBoundingClientRect().top ?? 0;
-  },
-  onDragMove: (x) => {
-    isDragging = true;
-    currentDragX = x;
-  },
   onDragEnd: () => {
-    if (isDragging) {
+    if (sortController.isDragging) {
       persistSessionDebounced();
-    } else if (draggingId) {
-      appContext.app.activeTabId = draggingId;
-      pushToMru(draggingId);
+    } else if (sortController.draggingId) {
+      appContext.app.activeTabId = sortController.draggingId;
+      pushToMru(sortController.draggingId);
     }
-    isDragging = false;
-    draggingId = null;
     dragGhostTab = null;
     tick().then(updateFadeIndicators);
   },
+});
+
+$effect(() => {
+  if (sortController.draggingId && !sortController.isDragging) {
+    dragGhostTab = appContext.editor.tabs.find((t) => t.id === sortController.draggingId) ?? null;
+    dragBarTop = scrollContainer?.getBoundingClientRect().top ?? 0;
+  }
 });
 
 $effect(() => {
@@ -133,7 +123,7 @@ function updateFadeIndicators() {
 
 async function scrollToActive() {
   await tick();
-  if (!scrollContainer || isDragging) return;
+  if (!scrollContainer || sortController.isDragging) return;
 
   await new Promise((resolve) => setTimeout(resolve, CONFIG.UI_TIMING.TAB_SCROLL_SETTLE_MS));
 
@@ -264,9 +254,9 @@ $effect(() => {
           tabindex="-1"
           class="flex h-full touch-none items-stretch outline-none select-none"
           data-tab-item="true"
-          animate:flip={{ duration: draggingId === tab.id ? 0 : 250 }}
-          style:opacity={isDragging && draggingId === tab.id ? 0.4 : 1}
-          style:z-index={isDragging && draggingId === tab.id ? 100 : 0}
+          animate:flip={{ duration: sortController.draggingId === tab.id ? 0 : 250 }}
+          style:opacity={sortController.isDragging && sortController.draggingId === tab.id ? 0.4 : 1}
+          style:z-index={sortController.isDragging && sortController.draggingId === tab.id ? 100 : 0}
           style:flex={isTabCollapsed || tab.isPinned ? '0 0 auto' : '0 1 auto'}
           style:min-width={isTabCollapsed || tab.isPinned
                         ? 'auto'
@@ -306,13 +296,13 @@ $effect(() => {
         <Plus size={16} />
       </button>
 
-      {#if isDragging && draggingId}
+      {#if sortController.isDragging && sortController.draggingId}
         {#if dragGhostTab}
           <div
             class="pointer-events-none fixed z-999"
             style:left="0"
             style:top={`${dragBarTop}px`}
-            style:transform={`translateX(${currentDragX - dragOffsetX}px)`}
+            style:transform={`translateX(${sortController.currentDragX - sortController.dragOffsetX}px)`}
             style:opacity="0.95"
           >
             <TabButton tab={dragGhostTab} isActive={appContext.app.activeTabId === dragGhostTab.id} />

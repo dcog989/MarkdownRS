@@ -4,8 +4,6 @@ type SortableOptions<T> = {
   container: HTMLElement | undefined;
   itemSelector: string;
   onSort: (newItems: T[]) => void;
-  onDragStart: (id: string, startX: number, offset: number) => void;
-  onDragMove: (currentX: number) => void;
   onDragEnd: () => void;
   /** Distance from the container edge (px) that triggers auto-scroll. */
   edgeScrollMargin?: number;
@@ -27,11 +25,17 @@ const DEFAULT_EDGE_SCROLL_STEP = 8;
  * when cached positions go stale during flip animations.
  */
 export class SortableController<T> {
+  /** Id of the item being dragged, or null when no pointer interaction is active. */
+  draggingId = $state<string | null>(null);
+  /** True once the pointer has moved past the drag threshold. */
+  isDragging = $state(false);
+  /** Pointer x-offset within the item, kept so the ghost tracks the grab point. */
+  dragOffsetX = $state(0);
+  /** Latest pointer x, mirrored for the ghost to follow. */
+  currentDragX = $state(0);
+
   private options: SortableOptions<T>;
-  private isDragging = false;
-  private draggingId: string | null = null;
   private startX = 0;
-  private currentX = 0;
   private rafId: number | null = null;
   private activeWrapper: HTMLElement | null = null;
 
@@ -62,12 +66,10 @@ export class SortableController<T> {
     this.draggingId = id;
     this.isDragging = false;
     this.startX = e.clientX;
-    this.currentX = e.clientX;
+    this.currentDragX = e.clientX;
 
     const rect = wrapper.getBoundingClientRect();
-    const offset = e.clientX - rect.left;
-
-    this.options.onDragStart(id, e.clientX, offset);
+    this.dragOffsetX = e.clientX - rect.left;
 
     window.addEventListener('pointermove', this._handleMove);
     window.addEventListener('pointerup', this._handleUp);
@@ -77,7 +79,7 @@ export class SortableController<T> {
   handleMove(e: PointerEvent) {
     if (!this.draggingId) return;
 
-    this.currentX = e.clientX;
+    this.currentDragX = e.clientX;
 
     if (!this.isDragging) {
       if (Math.abs(e.clientX - this.startX) > 5) {
@@ -86,8 +88,6 @@ export class SortableController<T> {
         return;
       }
     }
-
-    this.options.onDragMove(e.clientX);
 
     if (this.rafId) return;
 
@@ -152,9 +152,9 @@ export class SortableController<T> {
     const margin = this.options.edgeScrollMargin ?? DEFAULT_EDGE_SCROLL_MARGIN;
     const step = this.options.edgeScrollStep ?? DEFAULT_EDGE_SCROLL_STEP;
     const rect = container.getBoundingClientRect();
-    if (this.currentX <= rect.left + margin) {
+    if (this.currentDragX <= rect.left + margin) {
       container.scrollLeft -= step;
-    } else if (this.currentX >= rect.right - margin) {
+    } else if (this.currentDragX >= rect.right - margin) {
       container.scrollLeft += step;
     }
   }
@@ -175,7 +175,7 @@ export class SortableController<T> {
     for (let i = 0; i < elements.length; i++) {
       if (i === draggedIndex) continue;
       const rect = elements[i].getBoundingClientRect();
-      if (this.currentX <= rect.left + rect.width / 2) break;
+      if (this.currentDragX <= rect.left + rect.width / 2) break;
       targetIndex += 1;
     }
 
