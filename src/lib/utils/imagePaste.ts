@@ -26,17 +26,27 @@ function serializedPaste<T>(op: () => Promise<T>): Promise<T> {
   return run;
 }
 
+function dirnameOf(filePath: string): string {
+  return filePath.replace(/\\/g, '/').replace(/[\\/][^\\/]+$/, '');
+}
+
+function relativeTo(targetPath: string, directory: string): string {
+  return targetPath.slice(directory.length + 1).replace(/\\/g, '/');
+}
+
+function handlePasteError(err: unknown): void {
+  AppError.handle('Editor:ImagePaste', err, {
+    showToast: true,
+    userMessage: translate('editor.imagePasteFailed'),
+    severity: 'error',
+  });
+}
+
 export function createImagePasteExtension() {
   return EditorView.domEventHandlers({
     paste: (event, view) => {
       event.preventDefault();
-      pasteFromClipboard(view).catch((err) => {
-        AppError.handle('Editor:ImagePaste', err, {
-          showToast: true,
-          userMessage: translate('editor.imagePasteFailed'),
-          severity: 'error',
-        });
-      });
+      pasteFromClipboard(view).catch(handlePasteError);
       return true;
     },
   });
@@ -66,11 +76,7 @@ export async function pasteFromClipboard(view: EditorView): Promise<void> {
       const saved = await savePastedImage(tabPath, image);
       if (saved) insertImageMarkdown(view, saved.relativeRef);
     } catch (err) {
-      AppError.handle('Editor:ImagePaste', err, {
-        showToast: true,
-        userMessage: translate('editor.imagePasteFailed'),
-        severity: 'error',
-      });
+      handlePasteError(err);
     }
     return;
   }
@@ -81,11 +87,7 @@ export async function pasteFromClipboard(view: EditorView): Promise<void> {
     dispatchPastedText(view, text);
     return;
   }
-  AppError.handle('Editor:ImagePaste', new Error('Clipboard has neither text nor an image'), {
-    showToast: true,
-    userMessage: translate('editor.imagePasteFailed'),
-    severity: 'error',
-  });
+  handlePasteError(new Error('Clipboard has neither text nor an image'));
 }
 
 async function safeReadText(): Promise<string> {
@@ -106,11 +108,7 @@ async function tryImportImageFile(view: EditorView, rawText: string): Promise<bo
   try {
     return await importImageFileChecked(view, rawText);
   } catch (err) {
-    AppError.handle('Editor:ImagePaste', err, {
-      showToast: true,
-      userMessage: translate('editor.imagePasteFailed'),
-      severity: 'error',
-    });
+    handlePasteError(err);
     return true;
   }
 }
@@ -136,8 +134,7 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
     return true;
   }
 
-  const normalizedPath = tabPath.replace(/\\/g, '/');
-  const directory = normalizedPath.replace(/[\\/][^\\/]+$/, '');
+  const directory = dirnameOf(tabPath);
   const bytes = await readFile(sourcePath);
   let targetPath: string;
   try {
@@ -148,15 +145,11 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
       return name;
     });
   } catch (err) {
-    AppError.handle('Editor:ImagePaste', err, {
-      showToast: true,
-      userMessage: translate('editor.imagePasteFailed'),
-      severity: 'error',
-    });
+    handlePasteError(err);
     return true;
   }
 
-  const relativeRef = targetPath.slice(directory.length + 1).replace(/\\/g, '/');
+  const relativeRef = relativeTo(targetPath, directory);
   insertImageMarkdown(view, relativeRef);
   return true;
 }
@@ -201,7 +194,7 @@ async function savePastedImage(
   image: Image,
 ): Promise<{ absolutePath: string; relativeRef: string } | null> {
   const normalizedPath = tabPath.replace(/\\/g, '/');
-  const directory = normalizedPath.replace(/[\\/][^\\/]+$/, '');
+  const directory = dirnameOf(tabPath);
   const bytes = await imageToPngBytes(image);
 
   let fileName: string;
@@ -212,15 +205,11 @@ async function savePastedImage(
       return name;
     });
   } catch (err) {
-    AppError.handle('Editor:ImagePaste', err, {
-      showToast: true,
-      userMessage: translate('editor.imagePasteFailed'),
-      severity: 'error',
-    });
+    handlePasteError(err);
     return null;
   }
 
-  const relativeRef = fileName.slice(directory.length + 1).replace(/\\/g, '/');
+  const relativeRef = relativeTo(fileName, directory);
   return { absolutePath: fileName, relativeRef };
 }
 
