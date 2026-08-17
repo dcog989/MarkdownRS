@@ -31,6 +31,7 @@ impl Default for HarperOptions {
 impl HarperOptions {
     /// Constructs an options value with grammar checking disabled. Used by
     /// unit tests so lint output stays hermetic.
+    #[cfg(test)]
     pub fn disabled() -> Self {
         Self {
             enabled: false,
