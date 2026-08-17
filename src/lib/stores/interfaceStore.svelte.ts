@@ -13,6 +13,7 @@ export const interfaceStore = $state({
   showCommandPalette: false,
   showData: false,
   showRumdlConfig: false,
+  showEmojiPicker: false,
 
   // Editor Panels
   showFind: false,
@@ -72,4 +73,8 @@ export function toggleData() {
 
 export function toggleRumdlConfig() {
   interfaceStore.showRumdlConfig = !interfaceStore.showRumdlConfig;
+}
+
+export function toggleEmojiPicker() {
+  interfaceStore.showEmojiPicker = !interfaceStore.showEmojiPicker;
 }

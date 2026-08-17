@@ -1,5 +1,6 @@
 import { editCommands } from './editCommands';
 import { editorCommands } from './editorCommands';
+import { emojiCommands } from './emojiCommands';
 import { exportCommands } from './exportCommands';
 import { fileCommands } from './fileCommands';
 import { markdownCommands } from './markdownCommands';
@@ -12,6 +13,7 @@ import { windowCommands } from './windowCommands';
 export const commands: Command[] = [
   ...fileCommands,
   ...editCommands,
+  ...emojiCommands,
   ...exportCommands,
   ...viewCommands,
   ...navigationCommands,

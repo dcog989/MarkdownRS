@@ -154,6 +154,11 @@ export const en = {
     sortRecent: 'Recent',
     sortMostUsed: 'Most Used',
   },
+  emojiPicker: {
+    title: 'Emoji',
+    placeholder: 'Search emoji...',
+    noMatch: 'No emoji match your search',
+  },
   settings: {
     modalTitle: 'Settings',
     searchPlaceholder: 'Search Settings...',

@@ -151,6 +151,8 @@ export const viewCommands: Command[] = [
         appContext.interface.showFileHistory ||
         appContext.interface.showCommandPalette ||
         appContext.interface.showData ||
+        appContext.interface.showRumdlConfig ||
+        appContext.interface.showEmojiPicker ||
         appContext.interface.showFind;
 
       if (anyModalOpen) return false;

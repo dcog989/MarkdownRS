@@ -4,6 +4,7 @@ import AboutModal from '$lib/components/ui/AboutModal.svelte';
 import BookmarksModal from '$lib/components/ui/BookmarksModal.svelte';
 import CommandPalette from '$lib/components/ui/CommandPalette.svelte';
 import DataModal from '$lib/components/ui/DataModal.svelte';
+import EmojiPicker from '$lib/components/ui/EmojiPicker.svelte';
 import FileHistoryModal from '$lib/components/ui/FileHistoryModal.svelte';
 import PromptModal from '$lib/components/ui/PromptModal.svelte';
 import RumdlConfigModal from '$lib/components/ui/RumdlConfigModal.svelte';
@@ -59,5 +60,9 @@ const paletteCommands = $derived(
 <RumdlConfigModal
   bind:isOpen={appContext.interface.showRumdlConfig}
   onClose={() => (appContext.interface.showRumdlConfig = false)}
+/>
+<EmojiPicker
+  bind:isOpen={appContext.interface.showEmojiPicker}
+  onClose={() => (appContext.interface.showEmojiPicker = false)}
 />
 <PromptModal />

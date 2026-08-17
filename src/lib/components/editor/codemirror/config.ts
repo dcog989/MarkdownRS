@@ -12,6 +12,7 @@ import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
 import { commands } from '$lib/commands/commands';
 import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
 import { appContext } from '$lib/stores/state.svelte';
+import { emojiAutocompleteKeymap, emojiCompletion } from '$lib/utils/emojiCompletion';
 
 function toCmKey(registryKey: string): string {
   const parts = registryKey.split('+').map((p) => p.toLowerCase());
@@ -57,15 +58,18 @@ export async function smartCompleteAnyWord(context: CompletionContext): Promise<
 
 export function getAutocompletionConfig() {
   if (appContext.settings.autocompleteDelay < 0) return [];
-  return autocompletion({
-    activateOnTyping: true,
-    activateOnTypingDelay: appContext.settings.autocompleteDelay,
-    closeOnBlur: true,
-    defaultKeymap: true,
-    aboveCursor: false,
-    maxRenderedOptions: 100,
-    override: [smartCompleteAnyWord],
-  });
+  return [
+    emojiAutocompleteKeymap,
+    autocompletion({
+      activateOnTyping: true,
+      activateOnTypingDelay: appContext.settings.autocompleteDelay,
+      closeOnBlur: true,
+      defaultKeymap: true,
+      aboveCursor: false,
+      maxRenderedOptions: 100,
+      override: [emojiCompletion, smartCompleteAnyWord],
+    }),
+  ];
 }
 
 export function createWrapExtension(isLargeFile = false) {
