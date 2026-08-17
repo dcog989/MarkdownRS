@@ -1,7 +1,14 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { startCompletion } from '@codemirror/autocomplete';
+import type { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { autocompleteEmojis } from '$lib/config/emojiData';
+
+/** True when the character immediately before `pos` is a word char. */
+function isPrecededByWordChar(state: EditorState, pos: number): boolean {
+  const preceding = state.sliceDoc(pos - 1, pos);
+  return Boolean(preceding && /\w/.test(preceding));
+}
 
 /** GitHub-style `:shortcode:` trigger followed by an (incomplete) code. */
 const SHORTCODE_MATCH = /:[a-zA-Z0-9_+-]{0,32}/;
@@ -36,8 +43,7 @@ export function emojiCompletion(context: CompletionContext): CompletionResult | 
 
   // Don't trigger mid-word (e.g. `hello:world` or `12:30`): the colon should
   // follow whitespace, punctuation, or the start of the line.
-  const preceding = context.state.sliceDoc(before.from - 1, before.from);
-  if (preceding && /\w/.test(preceding)) return null;
+  if (isPrecededByWordChar(context.state, before.from)) return null;
 
   return buildResult(before.from, before.text.slice(1));
 }
@@ -58,7 +64,9 @@ export const emojiAutocompleteKeymap = keymap.of([
         selection: { anchor: sel.head + 1 },
         userEvent: 'input.type',
       });
-      startCompletion(view);
+      // Skip `startCompletion` when `:` follows a word char: emojiCompletion
+      // would reject it and fall through to generic word completion.
+      if (!isPrecededByWordChar(view.state, sel.head)) startCompletion(view);
       return true;
     },
   },
