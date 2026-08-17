@@ -6,16 +6,37 @@ use harper_core::parsers::MarkdownOptions;
 use harper_core::spell::FstDictionary;
 use harper_core::{Dialect, Document};
 
-use super::linter::LintDiagnostic;
+use super::linter::{LINT_SOURCE_HARPER, LintDiagnostic, SEVERITY_INFO, SEVERITY_WARNING};
 use crate::utils::MutexExt;
 
 /// Per-call configuration of the Harper grammar checker.
-#[derive(Default)]
 pub struct HarperOptions {
     /// Whether Harper linting is enabled at all.
     pub enabled: bool,
     /// Per-rule overrides (rule name -> enabled). Unknown rule names are ignored.
     pub linter_overrides: HashMap<String, bool>,
+}
+
+impl Default for HarperOptions {
+    /// Grammar checking defaults to on, matching the app setting and the
+    /// `lint_markdown` command's fallback when the flag is omitted.
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            linter_overrides: HashMap::new(),
+        }
+    }
+}
+
+impl HarperOptions {
+    /// Constructs an options value with grammar checking disabled. Used by
+    /// unit tests so lint output stays hermetic.
+    pub fn disabled() -> Self {
+        Self {
+            enabled: false,
+            linter_overrides: HashMap::new(),
+        }
+    }
 }
 
 /// Harper categorises lints as more important when their priority is lower.
@@ -26,8 +47,9 @@ const WARNING_PRIORITY_BOUND: u8 = 32;
 const ALWAYS_DISABLED_RULES: &[&str] = &["SpellCheck"];
 
 struct CachedGroup {
-    /// Sorted serialisation of the overrides a group was built with.
-    signature: String,
+    /// The overrides a group was built with; a group is rebuilt when this
+    /// differs from the requested overrides.
+    overrides: HashMap<String, bool>,
     group: LintGroup,
 }
 
@@ -66,15 +88,6 @@ impl LineIndex {
     }
 }
 
-fn config_signature(overrides: &HashMap<String, bool>) -> String {
-    let mut entries: Vec<String> = overrides
-        .iter()
-        .map(|(name, enabled)| format!("{name}={enabled}"))
-        .collect();
-    entries.sort();
-    entries.join("|")
-}
-
 fn build_config(overrides: &HashMap<String, bool>) -> FlatConfig {
     let mut config = FlatConfig::new_curated();
     for (name, enabled) in overrides {
@@ -104,9 +117,9 @@ fn map_lint(line_index: &LineIndex, lint: &Lint) -> Option<LintDiagnostic> {
     let (line, column) = line_index.position_of(start);
     let (end_line, end_column) = line_index.position_of(end);
     let severity = if lint.priority <= WARNING_PRIORITY_BOUND {
-        "warning"
+        SEVERITY_WARNING
     } else {
-        "info"
+        SEVERITY_INFO
     };
 
     Some(LintDiagnostic {
@@ -118,7 +131,7 @@ fn map_lint(line_index: &LineIndex, lint: &Lint) -> Option<LintDiagnostic> {
         severity: severity.to_string(),
         fixable: false,
         rule_name: Some(format!("{:?}", lint.lint_kind)),
-        source: "harper".to_string(),
+        source: LINT_SOURCE_HARPER.to_string(),
     })
 }
 
@@ -129,20 +142,44 @@ pub fn lint_grammar(content: &str, overrides: &HashMap<String, bool>) -> Vec<Lin
     let document = Document::new_markdown_curated(content, MarkdownOptions::default());
     let line_index = LineIndex::new(content);
 
-    let signature = config_signature(overrides);
+    rebuild_cached_group_if_needed(overrides);
 
     let mut cache = CACHE.lock_or_recover();
-    if cache.as_ref().is_none_or(|c| c.signature != signature) {
-        *cache = Some(CachedGroup {
-            signature,
-            group: build_group(overrides),
-        });
-    }
-
     let group = &mut cache.as_mut().expect("cache slot populated").group;
     group
         .lint(&document)
         .iter()
         .filter_map(|lint| map_lint(&line_index, lint))
         .collect()
+}
+
+/// Rebuilds the cached `LintGroup` when the requested rule configuration no
+/// longer matches what it was built with. The group is built outside the lock
+/// so a config change does not stall concurrent lint calls; the check inside
+/// the lock picks one winner when several calls race.
+fn rebuild_cached_group_if_needed(overrides: &HashMap<String, bool>) {
+    let needs_rebuild = {
+        let cache = CACHE.lock_or_recover();
+        cache.as_ref().is_none_or(|c| c.overrides != *overrides)
+    };
+    if !needs_rebuild {
+        return;
+    }
+
+    let group = build_group(overrides);
+
+    let mut cache = CACHE.lock_or_recover();
+    match cache.as_mut() {
+        Some(cached) if cached.overrides != *overrides => {
+            cached.overrides = overrides.clone();
+            cached.group = group;
+        },
+        None => {
+            *cache = Some(CachedGroup {
+                overrides: overrides.clone(),
+                group,
+            });
+        },
+        _ => {},
+    }
 }

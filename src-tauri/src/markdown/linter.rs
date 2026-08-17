@@ -7,6 +7,13 @@ use super::config::load_rules_for_file;
 use super::harper::{self, HarperOptions};
 
 const LINT_SOURCE_RUMDL: &str = "rumdl";
+/// Harper diagnostics are tagged with this source so the UI can group them.
+pub const LINT_SOURCE_HARPER: &str = "harper";
+
+/// Severity strings shared by every lint source (rumdl, harper, ...).
+pub const SEVERITY_ERROR: &str = "error";
+pub const SEVERITY_WARNING: &str = "warning";
+pub const SEVERITY_INFO: &str = "info";
 
 #[derive(Debug, Serialize)]
 pub struct LintDiagnostic {
@@ -23,9 +30,9 @@ pub struct LintDiagnostic {
 
 fn map_severity(s: &Severity) -> &'static str {
     match s {
-        Severity::Error => "error",
-        Severity::Warning => "warning",
-        Severity::Info => "info",
+        Severity::Error => SEVERITY_ERROR,
+        Severity::Warning => SEVERITY_WARNING,
+        Severity::Info => SEVERITY_INFO,
     }
 }
 
@@ -75,6 +82,9 @@ pub fn lint_content(
             &harper_options.linter_overrides,
         ));
     }
+
+    // Sources report in their own order; sort so callers see document order.
+    diagnostics.sort_by_key(|d| (d.line, d.column));
 
     Ok(diagnostics)
 }
@@ -138,7 +148,7 @@ mod tests {
             "# Heading\n\nbody   \n",
             Some(&file),
             Some(&dir),
-            &HarperOptions::default(),
+            &HarperOptions::disabled(),
         )
         .unwrap();
         let fixable = result.iter().any(|d| d.fixable);
@@ -158,7 +168,7 @@ mod tests {
             "# Heading\n\nbody   \n",
             Some(&file),
             Some(&dir),
-            &HarperOptions::default(),
+            &HarperOptions::disabled(),
         )
         .unwrap();
 
@@ -178,7 +188,7 @@ mod tests {
             "# Heading\n\nbody  \n",
             Some(&file),
             Some(&dir),
-            &HarperOptions::default(),
+            &HarperOptions::disabled(),
         )
         .unwrap();
 

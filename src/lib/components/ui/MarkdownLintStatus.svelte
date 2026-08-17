@@ -5,7 +5,7 @@ import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
 import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
-import type { LintDiagnostic } from '$lib/types/api';
+import { LINT_SOURCE_HARPER, type LintDiagnostic } from '$lib/types/api';
 import { callBackendSafe } from '$lib/utils/backend';
 import { markdownLintState } from '$lib/utils/markdownLint.svelte';
 
@@ -23,8 +23,8 @@ let color = $derived(severityEntry?.color ?? 'text-fg-muted');
 
 let displayCount = $derived(markdownLintState.issueCount > 0 ? String(markdownLintState.issueCount) : '');
 
-let markdownDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source !== 'harper'));
-let grammarDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source === 'harper'));
+let markdownDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source !== LINT_SOURCE_HARPER));
+let grammarDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source === LINT_SOURCE_HARPER));
 
 let configPath = $state<string | null>(null);
 let copied = $state(false);

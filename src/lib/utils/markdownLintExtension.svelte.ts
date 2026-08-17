@@ -20,6 +20,20 @@ export function forceMarkdownRelint(view: EditorView) {
   forceLinting(view);
 }
 
+// Backend linters report 1-based columns measured in Unicode scalar values,
+// while CodeMirror works in UTF-16 code units. Translate so diagnostics on
+// lines containing astral characters (e.g. emoji) stay aligned.
+function columnToCodeUnits(text: string, column: number): number {
+  let units = 0;
+  let charsSeen = 0;
+  for (const ch of text) {
+    if (charsSeen >= column - 1) break;
+    units += ch.length;
+    charsSeen += 1;
+  }
+  return units;
+}
+
 function highestSeverity(diagnostics: { severity: string }[]): 'error' | 'warning' | 'info' | 'clean' {
   for (const d of diagnostics) {
     if (d.severity === 'error') return 'error';
@@ -37,13 +51,20 @@ function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnosti
   const doc = view.state.doc;
   markdownLintState.highestSeverity = highestSeverity(result);
 
-  const diagnostics: Diagnostic[] = result.map((d) => ({
-    from: doc.line(d.line).from + d.column - 1,
-    to: doc.line(d.end_line).from + d.end_column - 1,
-    severity: 'warning' as const,
-    message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
-    source: d.source,
-  }));
+  const diagnostics: Diagnostic[] = result.map((d) => {
+    const startLine = doc.line(d.line);
+    const endLine = doc.line(d.end_line);
+    const from = startLine.from + columnToCodeUnits(startLine.text, d.column);
+    const to = endLine.from + columnToCodeUnits(endLine.text, d.end_column);
+
+    return {
+      from,
+      to,
+      severity: 'warning' as const,
+      message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
+      source: d.source,
+    };
+  });
 
   markdownLintState.issueCount = diagnostics.length;
 
