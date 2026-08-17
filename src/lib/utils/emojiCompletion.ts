@@ -11,7 +11,7 @@ function isPrecededByWordChar(state: EditorState, pos: number): boolean {
 }
 
 /** GitHub-style `:shortcode:` trigger followed by an (incomplete) code. */
-const SHORTCODE_MATCH = /:[a-zA-Z0-9_+-]{0,32}/;
+const SHORTCODE_MATCH = /:[a-zA-Z0-9_+-]{0,64}/;
 
 function buildResult(from: number, query: string): CompletionResult {
   const options = autocompleteEmojis(query).map((entry) => ({
@@ -23,6 +23,8 @@ function buildResult(from: number, query: string): CompletionResult {
 
   return {
     from,
+    // `to` intentionally omitted: CodeMirror defaults it to the cursor
+    // position, so the apply replaces exactly the typed `:shortcode`.
     options,
     // CodeMirror's default filter matches the typed text against the option
     // label, which can't work for emoji glyphs. Disable it.
