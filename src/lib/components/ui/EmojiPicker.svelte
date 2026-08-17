@@ -5,7 +5,7 @@ import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import Modal from '$lib/components/ui/Modal.svelte';
 import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { pickerEmojis } from '$lib/config/emojiData';
+import { searchEmojis } from '$lib/config/emojiData';
 import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
@@ -18,7 +18,7 @@ let { isOpen = $bindable(false), onClose = () => {} } = $props<{
 let query = $state('');
 let inputRef: HTMLInputElement | undefined = $state();
 
-let results = $derived(pickerEmojis(query));
+let results = $derived(searchEmojis(query));
 
 $effect(() => {
   if (isOpen) {

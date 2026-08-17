@@ -59,8 +59,3 @@ function scoreEntry(entry: EmojiEntry, query: string): number {
   if (entry.keywords.some((k) => k.startsWith(query))) return 3;
   return 4;
 }
-
-/** Result list for the emoji picker modal grid (all matches, scrollable). */
-export function pickerEmojis(query: string): EmojiEntry[] {
-  return searchEmojis(query);
-}
