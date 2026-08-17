@@ -144,6 +144,12 @@ async function searchTree(root: string, query: string, markdownOnly: boolean, ge
       if (visited.has(child.path)) continue;
       visited.add(child.path);
       if (child.is_dir) {
+        // Kick off listings for newly discovered folders immediately so pending
+        // loads run concurrently; the await below then joins an in-flight load
+        // instead of starting a new serial round-trip.
+        if (!fileTreeStore.children.has(child.path)) {
+          void loadChildren(child.path);
+        }
         stack.push({ entry: child, depth: node.depth + 1 });
       } else if (passesMarkdownOnly(child, markdownOnly)) {
         stack.push({ entry: child, depth: node.depth + 1 });

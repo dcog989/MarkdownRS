@@ -524,6 +524,24 @@ describe('fileTreeStore', () => {
     expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 
+  it('applyFilter lists multiple collapsed sibling folders in one search', async () => {
+    mockedListDirectory.mockImplementation(async (path: string) =>
+      path === '/root/a'
+        ? [{ ...entry('alpha.md'), path: '/root/a/alpha.md' }]
+        : path === '/root/b'
+          ? [{ ...entry('beta.md'), path: '/root/b/beta.md' }]
+          : [],
+    );
+    fileTreeStore.root = '/root';
+    fileTreeStore.children.set('/root', [entry('a', true), entry('b', true)]);
+
+    await applyFilter('alpha', false);
+
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/a', false);
+    expect(mockedListDirectory).toHaveBeenCalledWith('/root/b', false);
+    expect(treeViewStore.filterRows.map((r) => r.entry.path)).toContain('/root/a/alpha.md');
+  });
+
   it('applyFilter respects markdown-only mode', async () => {
     fileTreeStore.root = '/root';
     fileTreeStore.children.set('/root', [entry('note.md'), entry('note.txt')]);
