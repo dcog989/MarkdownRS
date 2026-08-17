@@ -126,7 +126,7 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
 
   const normalizedPath = tabPath.replace(/\\/g, '/');
   const directory = normalizedPath.replace(/[\\/][^\\/]+$/, '');
-  const sourceName = sourcePath.replace(/\\/g, '/').split('/').pop() ?? 'image';
+  const sourceName = sanitizeFileName(sourcePath.replace(/\\/g, '/').split('/').pop() ?? 'image');
   const targetPath = await uniqueFileName(directory, sourceName);
 
   const bytes = await readFile(sourcePath);
@@ -146,6 +146,17 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
   const relativeRef = targetPath.slice(directory.length + 1).replace(/\\/g, '/');
   insertImageMarkdown(view, relativeRef);
   return true;
+}
+
+function sanitizeFileName(name: string): string {
+  const dot = name.lastIndexOf('.');
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : '';
+  const clean = stem
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${clean || 'image'}${ext.toLowerCase()}`;
 }
 
 function extractImagePath(text: string): string | null {
