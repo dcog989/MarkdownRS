@@ -145,18 +145,7 @@ pub fn lint_grammar(content: &str, overrides: &HashMap<String, bool>) -> Vec<Lin
     rebuild_cached_group_if_needed(overrides);
 
     let mut cache = CACHE.lock_or_recover();
-    let group = {
-        let slot = cache.as_mut().expect("cache slot populated");
-        // rebuild_cached_group_if_needed rebuilt outside the lock; a concurrent
-        // call may have swapped the group for a different config in between, so
-        // honor the overrides actually requested here. Rare, so building under
-        // the lock is acceptable.
-        if slot.overrides != *overrides {
-            slot.overrides = overrides.clone();
-            slot.group = build_group(overrides);
-        }
-        &mut slot.group
-    };
+    let group = &mut cache.as_mut().expect("cache slot populated").group;
     group
         .organized_lints(&document)
         .into_iter()
