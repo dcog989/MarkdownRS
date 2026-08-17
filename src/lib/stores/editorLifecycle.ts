@@ -17,7 +17,7 @@ import {
   initTransientState,
   updateHistoryState,
 } from './editorCache';
-import { editorStore } from './editorStoreCore.svelte';
+import { editorStore, sortTabsPinnedFirst } from './editorStoreCore.svelte';
 import type { ClosedTab, EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
 import { showToast } from './toastStore.svelte';
@@ -105,6 +105,7 @@ export function addTab(title: string = '', content: string = '') {
     editorStore.tabs.push(newTab);
   }
 
+  editorStore.tabs = sortTabsPinnedFirst(editorStore.tabs);
   pushToMru(id);
   editorStore.sessionDirty = true;
   return id;
@@ -168,6 +169,8 @@ export function reopenClosedTab(historyIndex: number): string | null {
   const insertIndex = Math.min(entry.index, editorStore.tabs.length);
   editorStore.tabs.splice(insertIndex, 0, entry.tab);
 
+  editorStore.tabs = sortTabsPinnedFirst(editorStore.tabs);
+
   pushToMru(entry.tab.id);
 
   appState.activeTabId = entry.tab.id;
@@ -190,6 +193,6 @@ export function pushToMru(id: string) {
 }
 
 export function reorderTabs(newTabs: EditorTab[]) {
-  editorStore.tabs = newTabs;
+  editorStore.tabs = sortTabsPinnedFirst(newTabs);
   editorStore.sessionDirty = true;
 }

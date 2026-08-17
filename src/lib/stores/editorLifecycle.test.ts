@@ -5,8 +5,9 @@ vi.mock('$lib/utils/fileIO', () => ({
 }));
 
 import { readTextFile } from '$lib/utils/fileIO';
-import { createNewFile } from './editorLifecycle';
-import { editorStore } from './editorStoreCore.svelte';
+import { createNewFile, reorderTabs } from './editorLifecycle';
+import { editorStore, sortTabsPinnedFirst } from './editorStoreCore.svelte';
+import type { EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
 
 const mockedReadTextFile = vi.mocked(readTextFile);
@@ -50,5 +51,55 @@ describe('createNewFile', () => {
 
     const tab = editorStore.tabs.find((t) => t.id === id);
     expect(tab?.content).toBe('');
+  });
+});
+
+function tab(id: string, isPinned: boolean): EditorTab {
+  return {
+    id,
+    title: id,
+    content: '',
+    lastSavedHash: '',
+    isDirty: false,
+    path: null,
+    sizeBytes: 0,
+    wordCount: 0,
+    lineCount: 1,
+    widestColumn: 0,
+    cursor: { anchor: 0, head: 0 },
+    lineEnding: 'LF',
+    encoding: 'UTF-8',
+    hasBom: false,
+    isPinned,
+  };
+}
+
+describe('pinned tab ordering', () => {
+  beforeEach(() => {
+    editorStore.tabs = [];
+  });
+
+  it('sortTabsPinnedFirst keeps pinned tabs left of unpinned, preserving group order', () => {
+    const unpinnedA = tab('u-a', false);
+    const pinnedA = tab('p-a', true);
+    const unpinnedB = tab('u-b', false);
+    const pinnedB = tab('p-b', true);
+
+    const sorted = sortTabsPinnedFirst([unpinnedA, pinnedA, unpinnedB, pinnedB]);
+
+    expect(sorted.map((t) => t.id)).toEqual(['p-a', 'p-b', 'u-a', 'u-b']);
+  });
+
+  it('reorderTabs enforces the invariant even when given an interleaved list', () => {
+    editorStore.tabs = [tab('p', true), tab('u1', false), tab('u2', false)];
+    const interleaved = [tab('u1', false), tab('p', true), tab('u2', false)];
+
+    reorderTabs(interleaved);
+
+    const pinned = editorStore.tabs.filter((t) => t.isPinned);
+    const unpinned = editorStore.tabs.filter((t) => !t.isPinned);
+    expect(pinned).toHaveLength(1);
+    expect(unpinned).toHaveLength(2);
+    expect(editorStore.tabs[0].id).toBe('p');
   });
 });

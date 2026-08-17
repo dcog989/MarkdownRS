@@ -4,7 +4,7 @@ import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { computeWordCount, getLineChangeTracker, getTransientState, scheduleWordCountUpdate } from './editorCache';
-import { editorStore, updateTab } from './editorStoreCore.svelte';
+import { editorStore, sortTabsPinnedFirst, updateTab } from './editorStoreCore.svelte';
 import type { EditorTab } from './editorTypes';
 import { settingsState } from './settingsState.svelte';
 
@@ -101,6 +101,7 @@ export function markAsSaved(id: string) {
 
 export function togglePin(id: string) {
   updateTab(id, (tab) => ({ isPinned: !tab.isPinned }));
+  editorStore.tabs = sortTabsPinnedFirst(editorStore.tabs);
 }
 
 export function updateTabTitle(id: string, title: string, customTitle?: string) {

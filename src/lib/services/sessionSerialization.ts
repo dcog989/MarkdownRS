@@ -8,6 +8,7 @@ import {
   initTransientState,
   markTabPersisted,
   setLineChangeTracker,
+  sortTabsPinnedFirst,
   updateTransientState,
 } from '$lib/stores/editorStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
@@ -260,7 +261,7 @@ export async function loadSession(): Promise<void> {
         return tab;
       });
 
-      editorStore.tabs = convertedTabs;
+      editorStore.tabs = sortTabsPinnedFirst(convertedTabs);
 
       convertedTabs.forEach((tab) => {
         initializeTabLoadState(tab.id, false);

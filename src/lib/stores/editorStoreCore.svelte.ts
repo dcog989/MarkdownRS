@@ -14,6 +14,16 @@ export function tabsById(): Map<string, EditorTab> {
   return new Map(editorStore.tabs.map((t) => [t.id, t]));
 }
 
+/**
+ * Stable partition with pinned tabs first. Pinned tabs are always kept to the
+ * left of unpinned tabs; relative order within each group is preserved.
+ */
+export function sortTabsPinnedFirst(tabs: EditorTab[]): EditorTab[] {
+  const pinned = tabs.filter((t) => t.isPinned);
+  const unpinned = tabs.filter((t) => !t.isPinned);
+  return [...pinned, ...unpinned];
+}
+
 export function updateTab(
   id: string,
   updater: (tab: EditorTab) => Partial<EditorTab> | undefined,
