@@ -9,13 +9,22 @@ type SortableOptions<T> = {
   onDragEnd: () => void;
 };
 
+/**
+ * Pointer-based drag-to-reorder controller for a horizontal list.
+ *
+ * Reordering is insert-based: the dragged item is treated as lifted out of the
+ * list and its target slot is derived from the pointer position relative to the
+ * *other* items' live centers. Because the other items never reorder relative
+ * to each other, the dragged item can only ever shift relative to them, which
+ * rules out the spurious moves a stepwise "swap with neighbor" strategy causes
+ * when cached positions go stale during flip animations.
+ */
 export class SortableController<T> {
   private options: SortableOptions<T>;
   private isDragging = false;
   private draggingId: string | null = null;
-  private dragStartX = 0;
-  private currentDragX = 0;
-  private layoutCache: { center: number; width: number }[] = [];
+  private startX = 0;
+  private currentX = 0;
   private rafId: number | null = null;
   private activeWrapper: HTMLElement | null = null;
 
@@ -45,21 +54,11 @@ export class SortableController<T> {
 
     this.draggingId = id;
     this.isDragging = false;
-    this.dragStartX = e.clientX;
-    this.currentDragX = e.clientX;
+    this.startX = e.clientX;
+    this.currentX = e.clientX;
 
     const rect = wrapper.getBoundingClientRect();
     const offset = e.clientX - rect.left;
-
-    // Cache layout
-    if (this.options.container) {
-      this.layoutCache = Array.from(this.options.container.children)
-        .filter((el) => el.matches(this.options.itemSelector))
-        .map((el) => {
-          const r = el.getBoundingClientRect();
-          return { center: r.left + r.width / 2, width: r.width };
-        });
-    }
 
     this.options.onDragStart(id, e.clientX, offset);
 
@@ -71,10 +70,10 @@ export class SortableController<T> {
   handleMove(e: PointerEvent) {
     if (!this.draggingId) return;
 
-    this.currentDragX = e.clientX;
+    this.currentX = e.clientX;
 
     if (!this.isDragging) {
-      if (Math.abs(e.clientX - this.dragStartX) > 5) {
+      if (Math.abs(e.clientX - this.startX) > 5) {
         this.isDragging = true;
       } else {
         return;
@@ -87,7 +86,7 @@ export class SortableController<T> {
 
     this.rafId = requestAnimationFrame(() => {
       this.rafId = null;
-      this.calculateSwap();
+      this.sortFromPointer();
     });
   }
 
@@ -121,52 +120,46 @@ export class SortableController<T> {
   private reset() {
     this.isDragging = false;
     this.draggingId = null;
-    this.layoutCache = [];
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
   }
 
-  private calculateSwap() {
+  private get itemElements(): HTMLElement[] {
+    if (!this.options.container) return [];
+    return Array.from(this.options.container.children).filter((el) =>
+      el.matches(this.options.itemSelector),
+    ) as HTMLElement[];
+  }
+
+  private sortFromPointer() {
     if (!this.draggingId) return;
 
-    // Find index of dragged item in current list
-    const currentIndex = this.options.items.findIndex((item) => String(item[this.options.idKey]) === this.draggingId);
-    if (currentIndex === -1) return;
+    const items = this.options.items;
+    const elements = this.itemElements;
+    if (elements.length === 0) return;
 
-    const currentCenter = this.layoutCache[currentIndex]?.center || 0;
-    const deltaX = this.currentDragX - this.dragStartX;
-    let targetIndex = currentIndex;
+    const draggedIndex = items.findIndex((item) => String(item[this.options.idKey]) === this.draggingId);
+    if (draggedIndex === -1 || draggedIndex >= elements.length) return;
 
-    // Swap Right
-    if (deltaX > 0 && currentIndex < this.layoutCache.length - 1) {
-      const rightTab = this.layoutCache[currentIndex + 1];
-      const swapThreshold = currentCenter + (rightTab.center - currentCenter) / 2;
-      if (this.currentDragX > swapThreshold) targetIndex = currentIndex + 1;
-    }
-    // Swap Left
-    else if (deltaX < 0 && currentIndex > 0) {
-      const swapThreshold =
-        this.layoutCache[currentIndex - 1].center + (currentCenter - this.layoutCache[currentIndex - 1].center) / 2;
-      if (this.currentDragX < swapThreshold) targetIndex = currentIndex - 1;
+    // Count how many non-dragged tabs sit left of the pointer; that is the slot
+    // the dragged tab should land in (the dragged tab itself is excluded).
+    let targetIndex = 0;
+    for (let i = 0; i < elements.length; i++) {
+      if (i === draggedIndex) continue;
+      const rect = elements[i].getBoundingClientRect();
+      if (this.currentX <= rect.left + rect.width / 2) break;
+      targetIndex += 1;
     }
 
-    targetIndex = Math.max(0, Math.min(targetIndex, this.options.items.length - 1));
+    targetIndex = Math.max(0, Math.min(targetIndex, items.length - 1));
+    if (targetIndex === draggedIndex) return;
 
-    if (targetIndex !== currentIndex) {
-      const newItems = [...this.options.items];
-      const [item] = newItems.splice(currentIndex, 1);
-      newItems.splice(targetIndex, 0, item);
+    const newItems = [...items];
+    const [item] = newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, item);
 
-      this.options.onSort(newItems);
-
-      // Update layout cache by swapping the cached positions
-      const [movedCache] = this.layoutCache.splice(currentIndex, 1);
-      this.layoutCache.splice(targetIndex, 0, movedCache);
-
-      // Update the drag start position to the new position
-      this.dragStartX = this.currentDragX;
-    }
+    this.options.onSort(newItems);
   }
 }
