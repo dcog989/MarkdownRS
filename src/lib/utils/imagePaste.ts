@@ -131,9 +131,7 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
 
   const bytes = await readFile(sourcePath);
   try {
-    await callBackend('write_binary_file', { path: targetPath, content: Array.from(bytes) }, 'File:Write', {
-      path: tabPath,
-    });
+    await callBackend('write_binary_file', { path: targetPath, content: Array.from(bytes) }, 'File:Write');
   } catch (err) {
     AppError.handle('Editor:ImagePaste', err, {
       showToast: true,
@@ -193,9 +191,7 @@ async function savePastedImage(
   const bytes = await imageToPngBytes(image);
 
   try {
-    await callBackend('write_binary_file', { path: fileName, content: Array.from(bytes) }, 'File:Write', {
-      path: tabPath,
-    });
+    await callBackend('write_binary_file', { path: fileName, content: Array.from(bytes) }, 'File:Write');
   } catch (err) {
     AppError.handle('Editor:ImagePaste', err, {
       showToast: true,
