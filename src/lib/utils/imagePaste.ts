@@ -73,8 +73,8 @@ export async function pasteFromClipboard(view: EditorView): Promise<void> {
     }
 
     try {
-      const saved = await savePastedImage(tabPath, image);
-      if (saved) insertImageMarkdown(view, saved.relativeRef);
+      const relativeRef = await savePastedImage(tabPath, image);
+      if (relativeRef) insertImageMarkdown(view, relativeRef);
     } catch (err) {
       handlePasteError(err);
     }
@@ -83,7 +83,12 @@ export async function pasteFromClipboard(view: EditorView): Promise<void> {
 
   const text = await safeReadText();
   if (text.length > 0) {
-    if (await tryImportImageFile(view, text)) return;
+    try {
+      if (await importImageFileChecked(view, text)) return;
+    } catch (err) {
+      handlePasteError(err);
+      return;
+    }
     dispatchPastedText(view, text);
     return;
   }
@@ -104,15 +109,6 @@ async function safeReadText(): Promise<string> {
  * instead of an image bitmap: imports a copy of that file into the note's
  * assets folder and inserts a relative markdown reference.
  */
-async function tryImportImageFile(view: EditorView, rawText: string): Promise<boolean> {
-  try {
-    return await importImageFileChecked(view, rawText);
-  } catch (err) {
-    handlePasteError(err);
-    return true;
-  }
-}
-
 async function importImageFileChecked(view: EditorView, rawText: string): Promise<boolean> {
   const firstLine = rawText.split(/\r?\n/, 1)[0]?.trim();
   if (!firstLine) return false;
@@ -189,10 +185,7 @@ function getActiveTabPath(view: EditorView): string | undefined {
   return tab?.path ?? undefined;
 }
 
-async function savePastedImage(
-  tabPath: string,
-  image: Image,
-): Promise<{ absolutePath: string; relativeRef: string } | null> {
+async function savePastedImage(tabPath: string, image: Image): Promise<string | null> {
   const normalizedPath = tabPath.replace(/\\/g, '/');
   const directory = dirnameOf(tabPath);
   const bytes = await imageToPngBytes(image);
@@ -209,8 +202,7 @@ async function savePastedImage(
     return null;
   }
 
-  const relativeRef = relativeTo(fileName, directory);
-  return { absolutePath: fileName, relativeRef };
+  return relativeTo(fileName, directory);
 }
 
 function buildFileName(markdownPath: string): string {
