@@ -98,6 +98,10 @@ export interface BackendCommands {
     args: { path: string; content: Uint8Array };
     return: undefined;
   };
+  copy_file: {
+    args: { fromPath: string; toPath: string };
+    return: undefined;
+  };
   get_file_metadata: {
     args: { path: string };
     return: FileMetadata;

@@ -74,6 +74,7 @@ fn main() {
             commands::files::read_text_file,
             commands::files::write_text_file,
             commands::files::write_binary_file,
+            commands::files::copy_file,
             commands::files::get_file_metadata,
             commands::files::send_to_recycle_bin,
             commands::files::create_file,

@@ -232,6 +232,27 @@ pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), Str
 }
 
 #[tauri::command]
+pub async fn copy_file(from_path: String, to_path: String) -> Result<(), String> {
+    validate_path(&from_path)?;
+    validate_path(&to_path)?;
+
+    run_blocking("copy file", move || {
+        // Refuse to overwrite an existing target; the caller picks a fresh name.
+        if std::fs::symlink_metadata(&to_path).is_ok() {
+            return Err(handle_error(
+                Some(&to_path),
+                "copy file",
+                "a file with that name already exists",
+            ));
+        }
+        std::fs::copy(&from_path, &to_path)
+            .map(|_| ())
+            .map_err(|e| handle_error(Some(&from_path), "copy file", e))
+    })
+    .await
+}
+
+#[tauri::command]
 pub async fn create_file(path: String) -> Result<(), String> {
     validate_path(&path)?;
     // create_new fails if the file already exists, preventing silent overwrites.

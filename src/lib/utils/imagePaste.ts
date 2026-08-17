@@ -2,7 +2,6 @@ import { EditorSelection, type TransactionSpec } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import type { Image } from '@tauri-apps/api/image';
 import { readImage, readText } from '@tauri-apps/plugin-clipboard-manager';
-import { readFile } from '@tauri-apps/plugin-fs';
 import { translate } from '$lib/i18n';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
@@ -131,13 +130,12 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
   }
 
   const directory = dirnameOf(tabPath);
-  const bytes = await readFile(sourcePath);
   let targetPath: string;
   try {
     targetPath = await serializedPaste(async () => {
       const sourceName = sanitizeFileName(sourcePath.replace(/\\/g, '/').split('/').pop() ?? 'image');
       const name = await uniqueFileName(directory, sourceName);
-      await callBackend('write_binary_file', { path: name, content: bytes }, 'File:Write');
+      await callBackend('copy_file', { fromPath: sourcePath, toPath: name }, 'File:Write');
       return name;
     });
   } catch (err) {
