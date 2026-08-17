@@ -1,8 +1,10 @@
-export function getFilename(path: string): string {
-  return path.split(/[\\/]/).pop() || '';
-}
+import { basename as getFilename } from './path';
+
+export { getFilename };
 
 export const MARKDOWN_EXTENSIONS = ['md', 'markdown', 'mdown', 'mkdn', 'mkd', 'mdwn', 'mdtxt', 'mdtext'];
+
+export const MARKDOWN_EXTENSION_SET = new Set(MARKDOWN_EXTENSIONS.map((ext) => ext.toLowerCase()));
 
 export const SUPPORTED_TEXT_EXTENSIONS = [
   // Markdown & Text

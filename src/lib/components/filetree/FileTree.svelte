@@ -47,7 +47,7 @@ import { appContext } from '$lib/stores/state.svelte';
 import type { FileEntry } from '$lib/types/api';
 import { CONFIG } from '$lib/utils/config';
 import { openFile } from '$lib/utils/fileSystem';
-import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
+import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from '$lib/utils/fileValidation';
 import { saveSettings } from '$lib/utils/settings';
 import FileTreeContextMenu from './FileTreeContextMenu.svelte';
 
@@ -107,8 +107,7 @@ onMount(() => {
 // pinned and navigation up is disabled. An active filter replaces the rows
 // with the whole-tree search results and always hides the parent entry.
 let allRows = $derived.by(() => {
-  const filtering = effectiveFilterQuery.trim() !== '';
-  if (filtering) return fileTreeStore.filterRows;
+  if (filterActive) return fileTreeStore.filterRows;
   const rows = computeTreeRows();
   if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked) {
     return rows;
@@ -151,6 +150,8 @@ $effect(() => {
 // query for one reactive flush. Guarding the derived value makes that single
 // frame render the unfiltered tree instead of a pruned or empty one.
 let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? filterQuery : '');
+
+let filterActive = $derived(effectiveFilterQuery.trim() !== '');
 
 // Run the whole-tree search as the user types; re-run when the root or the
 // markdown-only toggle changes so stale results are dropped and new matches
@@ -246,7 +247,6 @@ function ext(name: string): string {
   return idx === -1 ? '' : name.slice(idx + 1).toLowerCase();
 }
 
-const MARKDOWN_EXT = new Set(MARKDOWN_EXTENSIONS);
 const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp', 'avif']);
 const CODE_EXT = new Set([
   'ts',
@@ -529,7 +529,7 @@ function handleResizeClick() {
           {/each}
         </div>
       </div>
-      {#if effectiveFilterQuery.trim() && !fileTreeStore.filterLoading && allRows.length <= 1}
+      {#if filterActive && !fileTreeStore.filterLoading && allRows.length <= 1}
         <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-xs">
           {$_('fileTree.noFilterMatch')}
         </div>

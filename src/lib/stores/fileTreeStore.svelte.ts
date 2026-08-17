@@ -6,8 +6,11 @@ import {
   toggleFileTreeShowMarkdownOnly,
 } from '$lib/stores/settingsState.svelte';
 import type { FileEntry } from '$lib/types/api';
-import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
+import { MARKDOWN_EXTENSION_SET } from '$lib/utils/fileValidation';
 import { fuzzyMatches } from '$lib/utils/fuzzyMatch';
+import { basename, dirname } from '$lib/utils/path';
+
+export { basename, dirname };
 
 export const fileTreeStore = $state({
   root: '',
@@ -221,17 +224,6 @@ export async function refreshTree(): Promise<void> {
   }
 }
 
-export function dirname(path: string): string {
-  if (path === '/' || path === '') return path;
-  const idx = path.lastIndexOf('/');
-  if (idx <= 0) return '/';
-  return path.slice(0, idx);
-}
-
-export function basename(path: string): string {
-  return path.split('/').filter(Boolean).pop() || path;
-}
-
 export type TreeRow = {
   entry: FileEntry;
   depth: number;
@@ -241,8 +233,6 @@ export type TreeRow = {
   // Component-only row rendering the ".." parent navigation entry.
   isParent?: boolean;
 };
-
-const MARKDOWN_EXTENSION_SET = new Set(MARKDOWN_EXTENSIONS.map((ext) => ext.toLowerCase()));
 
 function isMarkdownName(name: string): boolean {
   const idx = name.lastIndexOf('.');

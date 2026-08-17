@@ -8,6 +8,7 @@ import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { AppError } from '$lib/utils/errorHandling';
 import type { AppEditorView } from '../../global';
+import { dirname } from './path';
 
 const IMAGE_ASSET_DIR = 'assets';
 const MAX_NAME_DEDUPE_ATTEMPTS = 99;
@@ -23,10 +24,6 @@ function serializedPaste<T>(op: () => Promise<T>): Promise<T> {
     () => undefined,
   );
   return run;
-}
-
-function dirnameOf(filePath: string): string {
-  return filePath.replace(/\\/g, '/').replace(/[\\/][^\\/]+$/, '');
 }
 
 function relativeTo(targetPath: string, directory: string): string {
@@ -129,7 +126,7 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
     return true;
   }
 
-  const directory = dirnameOf(tabPath);
+  const directory = dirname(tabPath);
   let targetPath: string;
   try {
     targetPath = await serializedPaste(async () => {
@@ -185,7 +182,7 @@ function getActiveTabPath(view: EditorView): string | undefined {
 
 async function savePastedImage(tabPath: string, image: Image): Promise<string | null> {
   const normalizedPath = tabPath.replace(/\\/g, '/');
-  const directory = dirnameOf(tabPath);
+  const directory = dirname(tabPath);
   const bytes = await imageToPngBytes(image);
 
   let fileName: string;
