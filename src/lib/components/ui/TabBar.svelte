@@ -30,6 +30,8 @@ let isDragging = $state(false);
 let draggingId = $state<string | null>(null);
 let dragOffsetX = $state(0);
 let currentDragX = $state(0);
+let dragBarTop = $state(0);
+let dragGhostTab = $state<EditorTab | null>(null);
 
 let contextMenuTabId: string | null = $state(null);
 
@@ -56,6 +58,8 @@ const sortController = new SortableController<EditorTab>({
     draggingId = id;
     isDragging = false;
     dragOffsetX = offset;
+    dragGhostTab = appContext.editor.tabs.find((t) => t.id === id) ?? null;
+    dragBarTop = scrollContainer?.getBoundingClientRect().top ?? 0;
   },
   onDragMove: (x) => {
     isDragging = true;
@@ -70,6 +74,7 @@ const sortController = new SortableController<EditorTab>({
     }
     isDragging = false;
     draggingId = null;
+    dragGhostTab = null;
     tick().then(updateFadeIndicators);
   },
 });
@@ -302,17 +307,15 @@ $effect(() => {
       </button>
 
       {#if isDragging && draggingId}
-        {@const dragTab = appContext.editor.tabs.find(
-                    (t) => t.id === draggingId,
-                )}
-        {#if dragTab}
+        {#if dragGhostTab}
           <div
             class="pointer-events-none fixed z-999"
-            style="left: {currentDragX -
-                            dragOffsetX}px; top: {scrollContainer?.getBoundingClientRect()
-                            .top ?? 0}px; opacity: 0.95;"
+            style:left="0"
+            style:top={`${dragBarTop}px`}
+            style:transform={`translateX(${currentDragX - dragOffsetX}px)`}
+            style:opacity="0.95"
           >
-            <TabButton tab={dragTab} isActive={appContext.app.activeTabId === dragTab.id} />
+            <TabButton tab={dragGhostTab} isActive={appContext.app.activeTabId === dragGhostTab.id} />
           </div>
         {/if}
       {/if}
