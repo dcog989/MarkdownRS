@@ -63,7 +63,6 @@ const sortController = new SortableController<EditorTab>({
   },
   onDragEnd: () => {
     if (isDragging) {
-      appContext.editor.sessionDirty = true;
       persistSessionDebounced();
     } else if (draggingId) {
       appContext.app.activeTabId = draggingId;

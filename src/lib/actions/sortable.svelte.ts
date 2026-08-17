@@ -7,7 +7,14 @@ type SortableOptions<T> = {
   onDragStart: (id: string, startX: number, offset: number) => void;
   onDragMove: (currentX: number) => void;
   onDragEnd: () => void;
+  /** Distance from the container edge (px) that triggers auto-scroll. */
+  edgeScrollMargin?: number;
+  /** How far the container scrolls on each frame while held near an edge. */
+  edgeScrollStep?: number;
 };
+
+const DEFAULT_EDGE_SCROLL_MARGIN = 48;
+const DEFAULT_EDGE_SCROLL_STEP = 8;
 
 /**
  * Pointer-based drag-to-reorder controller for a horizontal list.
@@ -86,6 +93,7 @@ export class SortableController<T> {
 
     this.rafId = requestAnimationFrame(() => {
       this.rafId = null;
+      this.scrollTowardEdge();
       this.sortFromPointer();
     });
   }
@@ -94,7 +102,12 @@ export class SortableController<T> {
     if (!this.draggingId) return;
 
     if (this.activeWrapper) {
-      this.activeWrapper.releasePointerCapture(e.pointerId);
+      try {
+        this.activeWrapper.releasePointerCapture(e.pointerId);
+      } catch {
+        // Capture may already be gone (e.g. the wrapper was removed mid-drag);
+        // releasing is best-effort and must not block onDragEnd.
+      }
       this.activeWrapper = null;
     }
 
@@ -131,6 +144,19 @@ export class SortableController<T> {
     return Array.from(this.options.container.children).filter((el) =>
       el.matches(this.options.itemSelector),
     ) as HTMLElement[];
+  }
+
+  private scrollTowardEdge() {
+    const container = this.options.container;
+    if (!container) return;
+    const margin = this.options.edgeScrollMargin ?? DEFAULT_EDGE_SCROLL_MARGIN;
+    const step = this.options.edgeScrollStep ?? DEFAULT_EDGE_SCROLL_STEP;
+    const rect = container.getBoundingClientRect();
+    if (this.currentX <= rect.left + margin) {
+      container.scrollLeft -= step;
+    } else if (this.currentX >= rect.right - margin) {
+      container.scrollLeft += step;
+    }
   }
 
   private sortFromPointer() {

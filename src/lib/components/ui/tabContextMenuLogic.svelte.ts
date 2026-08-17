@@ -136,7 +136,6 @@ export class TabContextMenuLogic {
     if (to === 'start') newTabs.unshift(tab);
     else newTabs.push(tab);
     reorderTabs(newTabs);
-    appContext.editor.sessionDirty = true;
     appContext.app.activeTabId = this.tabId;
     pushToMru(this.tabId);
     await tick();
