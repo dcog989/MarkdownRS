@@ -40,7 +40,6 @@ function insertEmoji(char: string) {
     });
   }
   isOpen = false;
-  onClose();
   if (view) {
     // Modal.svelte blurs the previously focused element when it closes;
     // re-focus the editor once its cleanup has run.
