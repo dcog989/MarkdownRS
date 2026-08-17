@@ -14,6 +14,17 @@ const IMAGE_ASSET_DIR = 'assets';
 const MAX_NAME_DEDUPE_ATTEMPTS = 99;
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'avif']);
 
+let pasteQueue: Promise<unknown> = Promise.resolve();
+
+function serializedPaste<T>(op: () => Promise<T>): Promise<T> {
+  const run = pasteQueue.then(op, op);
+  pasteQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 export function createImagePasteExtension() {
   return EditorView.domEventHandlers({
     paste: (event, view) => {
@@ -126,12 +137,15 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
 
   const normalizedPath = tabPath.replace(/\\/g, '/');
   const directory = normalizedPath.replace(/[\\/][^\\/]+$/, '');
-  const sourceName = sanitizeFileName(sourcePath.replace(/\\/g, '/').split('/').pop() ?? 'image');
-  const targetPath = await uniqueFileName(directory, sourceName);
-
   const bytes = await readFile(sourcePath);
+  let targetPath: string;
   try {
-    await callBackend('write_binary_file', { path: targetPath, content: Array.from(bytes) }, 'File:Write');
+    targetPath = await serializedPaste(async () => {
+      const sourceName = sanitizeFileName(sourcePath.replace(/\\/g, '/').split('/').pop() ?? 'image');
+      const name = await uniqueFileName(directory, sourceName);
+      await callBackend('write_binary_file', { path: name, content: Array.from(bytes) }, 'File:Write');
+      return name;
+    });
   } catch (err) {
     AppError.handle('Editor:ImagePaste', err, {
       showToast: true,
@@ -187,11 +201,15 @@ async function savePastedImage(
 ): Promise<{ absolutePath: string; relativeRef: string } | null> {
   const normalizedPath = tabPath.replace(/\\/g, '/');
   const directory = normalizedPath.replace(/[\\/][^\\/]+$/, '');
-  const fileName = await uniqueFileName(directory, buildFileName(normalizedPath));
   const bytes = await imageToPngBytes(image);
 
+  let fileName: string;
   try {
-    await callBackend('write_binary_file', { path: fileName, content: Array.from(bytes) }, 'File:Write');
+    fileName = await serializedPaste(async () => {
+      const name = await uniqueFileName(directory, buildFileName(normalizedPath));
+      await callBackend('write_binary_file', { path: name, content: Array.from(bytes) }, 'File:Write');
+      return name;
+    });
   } catch (err) {
     AppError.handle('Editor:ImagePaste', err, {
       showToast: true,
