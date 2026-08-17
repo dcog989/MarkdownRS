@@ -7,8 +7,15 @@ const fakeDisk = vi.hoisted(() => {
   return { files, nextMtime };
 });
 
+type MockArgs = {
+  path?: string;
+  content?: string;
+  encoding?: string;
+  hasBom?: boolean;
+};
+
 vi.mock('$lib/utils/backend', () => ({
-  callBackend: vi.fn().mockImplementation(async (command: string, args: any) => {
+  callBackend: vi.fn().mockImplementation(async (command: string, args: MockArgs) => {
     const path = args?.path as string;
     switch (command) {
       case 'get_file_metadata': {
@@ -22,9 +29,9 @@ vi.mock('$lib/utils/backend', () => ({
         return { content: f.content, encoding: f.encoding, has_bom: f.has_bom };
       }
       case 'write_text_file': {
-        const bytes = new TextEncoder().encode(args.content).length;
+        const bytes = new TextEncoder().encode(args.content ?? '').length;
         fakeDisk.files.set(path, {
-          content: args.content,
+          content: args.content ?? '',
           mtime: fakeDisk.nextMtime(),
           size: bytes,
           encoding: args.encoding ?? 'UTF-8',
@@ -36,7 +43,7 @@ vi.mock('$lib/utils/backend', () => ({
         return undefined;
     }
   }),
-  callBackendSafe: vi.fn().mockImplementation(async (command: string, args: any) => {
+  callBackendSafe: vi.fn().mockImplementation(async (command: string, args: MockArgs) => {
     const path = args?.path as string;
     if (command === 'get_file_metadata') {
       const f = fakeDisk.files.get(path);
@@ -124,7 +131,8 @@ describe('save overwrite guard', () => {
     const { updateContent } = await import('$lib/stores/editorUpdates');
     updateContent(tab.id, '# Scratch\n\nMy edit\n', 3);
 
-    fakeDisk.files.get(SCRATCH)!.content = '# External edit\n';
+    const external = fakeDisk.files.get(SCRATCH);
+    if (external) external.content = '# External edit\n';
 
     const resultPromise = saveCurrentFile();
     await vi.waitFor(() => expect(dialogStore.isOpen).toBe(true));
