@@ -7,6 +7,7 @@ import {
 } from '$lib/stores/settingsState.svelte';
 import type { FileEntry } from '$lib/types/api';
 import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
+import { fuzzyMatch } from '$lib/utils/fuzzyMatch';
 
 export const fileTreeStore = $state({
   root: '',
@@ -290,6 +291,36 @@ export function computeTreeRows(): TreeRow[] {
     }
   }
   return rows;
+}
+
+/**
+ * Filter a computed row list to the entries whose name fuzzy-matches `query`.
+ * The root and every ancestor of a match stay visible so the paths leading to
+ * matching files remain navigable; non-matching siblings are pruned. When the
+ * query is empty the rows are returned unchanged. The ".." parent navigation
+ * row is dropped while a filter is active.
+ */
+export function filterTreeRows(rows: TreeRow[], query: string): TreeRow[] {
+  const q = query.trim();
+  const root = fileTreeStore.root;
+  if (!q) return rows;
+
+  const keep = new Set<string>([root]);
+  for (const row of rows) {
+    if (row.isRoot || row.isParent) continue;
+    if (fuzzyMatch(q, row.entry.name) === null) continue;
+    keep.add(row.entry.path);
+    // Folders leading to the match are kept so the match stays reachable.
+    for (let parent = dirname(row.entry.path); parent && parent !== root; parent = dirname(parent)) {
+      if (keep.has(parent)) break;
+      keep.add(parent);
+    }
+  }
+
+  return rows.filter((row) => {
+    if (row.isParent) return false;
+    return keep.has(row.entry.path);
+  });
 }
 
 export function canNavigateUp(): boolean {

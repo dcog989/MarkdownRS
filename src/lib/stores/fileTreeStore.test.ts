@@ -14,6 +14,7 @@ import {
   computeTreeRows,
   dirname,
   fileTreeStore,
+  filterTreeRows,
   isDirLoading,
   isExpanded,
   loadChildren,
@@ -465,5 +466,75 @@ describe('fileTreeStore', () => {
     const found = await revealPath('/root/notes.txt');
 
     expect(found).toBe(false);
+  });
+
+  it('filterTreeRows keeps the root and matching paths, pruning non-matching siblings', () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.expanded.set('/root/sub', true);
+    fileTreeStore.children.set('/root', [entry('notes.md'), entry('config.json'), entry('sub', true)]);
+    fileTreeStore.children.set('/root/sub', [
+      { ...entry('deep.md'), path: '/root/sub/deep.md' },
+      { ...entry('other.txt'), path: '/root/sub/other.txt' },
+    ]);
+
+    const rows = computeTreeRows();
+    const filtered = filterTreeRows(rows, 'deep');
+    const paths = filtered.map((r) => r.entry.path);
+
+    // The anchor root and the folder leading to the match stay visible.
+    expect(paths).toContain('/root');
+    expect(paths).toContain('/root/sub');
+    expect(paths).toContain('/root/sub/deep.md');
+    expect(paths).not.toContain('/root/notes.md');
+    expect(paths).not.toContain('/root/config.json');
+    expect(paths).not.toContain('/root/sub/other.txt');
+  });
+
+  it('filterTreeRows matches folders by name too', () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.expanded.set('/root/sub', true);
+    fileTreeStore.children.set('/root', [entry('notes.md'), entry('sub', true)]);
+    fileTreeStore.children.set('/root/sub', [{ ...entry('deep.md'), path: '/root/sub/deep.md' }]);
+
+    const filtered = filterTreeRows(computeTreeRows(), 'sub');
+    const paths = filtered.map((r) => r.entry.path);
+
+    expect(paths).toContain('/root');
+    expect(paths).toContain('/root/sub');
+    expect(paths).toContain('/root/sub/deep.md');
+    expect(paths).not.toContain('/root/notes.md');
+  });
+
+  it('filterTreeRows drops the parent navigation row while filtering', () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('notes.md')]);
+
+    const withParent = [
+      {
+        entry: { name: '..', path: '/', is_dir: true, is_symlink: false, size: 0, modified: null },
+        depth: 0,
+        expanded: false,
+        loading: false,
+        isRoot: false,
+        isParent: true,
+      },
+      ...computeTreeRows(),
+    ];
+
+    const filtered = filterTreeRows(withParent, 'notes');
+    expect(filtered.some((r) => r.isParent)).toBe(false);
+  });
+
+  it('filterTreeRows returns rows unchanged for an empty or whitespace query', () => {
+    fileTreeStore.root = '/root';
+    fileTreeStore.expanded.set('/root', true);
+    fileTreeStore.children.set('/root', [entry('notes.md')]);
+    const rows = computeTreeRows();
+
+    expect(filterTreeRows(rows, '')).toBe(rows);
+    expect(filterTreeRows(rows, '   ')).toBe(rows);
   });
 });

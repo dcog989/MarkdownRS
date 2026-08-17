@@ -18,6 +18,8 @@ import {
   Lock,
   LockOpen,
   RefreshCw,
+  Search,
+  X,
 } from 'lucide-svelte';
 import { onMount, tick } from 'svelte';
 import { _ } from 'svelte-i18n';
@@ -29,6 +31,7 @@ import {
   computeTreeRows,
   dirname,
   fileTreeStore,
+  filterTreeRows,
   navigateInto,
   navigateToParent,
   refreshDirectoryIfInTree,
@@ -101,10 +104,14 @@ onMount(() => {
 
 // The tree rows, with a ".." parent entry on top whenever a parent exists.
 // The parent entry is hidden while the tree is locked, since the root is
-// pinned and navigation up is disabled.
+// pinned and navigation up is disabled. An active filter prunes non-matching
+// rows (the parent entry is always hidden while filtering).
 let allRows = $derived.by(() => {
-  const rows = computeTreeRows();
-  if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked) return rows;
+  const filteredRows = filterTreeRows(computeTreeRows(), filterQuery);
+  const filtering = filterQuery.trim() !== '';
+  if (!fileTreeStore.root || !canNavigateUp() || settingsState.fileTreeLocked || filtering) {
+    return filteredRows;
+  }
   return [
     {
       entry: {
@@ -121,8 +128,20 @@ let allRows = $derived.by(() => {
       isRoot: false,
       isParent: true,
     },
-    ...rows,
+    ...filteredRows,
   ];
+});
+
+// The filter only makes sense for the current root; clear it when the tree
+// repositions (following the active file or navigating up/into) so a stale
+// query cannot leave the panel showing pruned results for the wrong folder.
+let filterQuery = $state('');
+let filterRoot = $state('');
+$effect(() => {
+  const root = fileTreeStore.root;
+  if (root === filterRoot) return;
+  filterRoot = root;
+  filterQuery = '';
 });
 
 let scrollEl = $state<HTMLDivElement>();
@@ -381,6 +400,30 @@ function handleResizeClick() {
     </div>
   </div>
 
+  {#if fileTreeStore.root}
+    <div class="ft-filter border-border-light shrink-0 border-b px-2 py-2">
+      <span class="ft-filter-icon"><Search size={13} /></span>
+      <input
+        type="text"
+        class="ft-filter-input"
+        bind:value={filterQuery}
+        placeholder={$_('fileTree.filterPlaceholder')}
+        aria-label={$_('fileTree.filterPlaceholder')}
+      >
+      {#if filterQuery}
+        <button
+          type="button"
+          class="hover-surface ft-filter-clear"
+          aria-label={$_('fileTree.clearFilter')}
+          title={$_('fileTree.clearFilter')}
+          onclick={() => (filterQuery = '')}
+        >
+          <X size={12} />
+        </button>
+      {/if}
+    </div>
+  {/if}
+
   <div class="min-h-0 flex-1">
     {#if !fileTreeStore.root}
       <div class="text-fg-muted flex h-full items-center justify-center px-4 text-center text-xs">
@@ -465,6 +508,11 @@ function handleResizeClick() {
           {/each}
         </div>
       </div>
+      {#if filterQuery.trim() && allRows.length <= 1}
+        <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-xs">
+          {$_('fileTree.noFilterMatch')}
+        </div>
+      {/if}
     {/if}
   </div>
 
@@ -502,6 +550,50 @@ function handleResizeClick() {
 </div>
 
 <style>
+.ft-filter {
+  position: relative;
+}
+
+.ft-filter-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.875rem;
+  transform: translateY(-50%);
+  display: flex;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.ft-filter-input {
+  width: 100%;
+  padding: 0.25rem 1.75rem 0.25rem 1.75rem;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  background-color: var(--surface-input);
+  border: 1px solid var(--border-primary);
+  border-radius: 0.25rem;
+  outline: none;
+}
+
+.ft-filter-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.ft-filter-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.875rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  color: var(--text-secondary);
+}
+
 .ft-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--border-primary) transparent;
