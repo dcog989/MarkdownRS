@@ -1,5 +1,5 @@
 import { LOCALE_NAMES, SUPPORTED_LOCALES, setAppLocale } from '$lib/i18n';
-import { onLogLevelChange, onThemeChange, reloadSpellcheck } from './settingsHandlers';
+import { onHarperChanged, onLogLevelChange, onThemeChange, reloadSpellcheck } from './settingsHandlers';
 
 export type SettingDef = {
   key: string;
@@ -390,6 +390,16 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: false,
       tooltip: 'settings.scienceDictionariesTooltip',
       onChange: reloadSpellcheck,
+    },
+
+    {
+      key: 'harperEnabled',
+      label: 'settings.harperEnabled',
+      type: 'boolean',
+      category: 'settings.category.grammar',
+      defaultValue: true,
+      tooltip: 'settings.harperEnabledTooltip',
+      onChange: onHarperChanged,
     },
 
     ...(isWindows

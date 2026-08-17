@@ -26,6 +26,8 @@ export const settingsState = $state({
   previewFontSize: 16,
 
   markdownFlavor: 'gfm' as 'commonmark' | 'gfm',
+  harperEnabled: true,
+  harperLinters: {} as Record<string, boolean>,
   logLevel: 'info' as 'trace' | 'debug' | 'info' | 'warn' | 'error',
   formatOnSave: false,
   defaultIndent: 2,

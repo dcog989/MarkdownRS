@@ -28,6 +28,7 @@ export interface LintDiagnostic {
   severity: 'error' | 'warning' | 'info';
   fixable: boolean;
   rule_name: string | null;
+  source: string;
 }
 
 export interface FileContent {
@@ -207,6 +208,8 @@ export interface BackendCommands {
     args: {
       content: string;
       filePath?: string;
+      harperEnabled?: boolean;
+      harperLinters?: Record<string, boolean>;
     };
     return: LintDiagnostic[];
   };

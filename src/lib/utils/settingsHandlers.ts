@@ -4,6 +4,7 @@ import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { callBackend } from '$lib/utils/backend';
 import { getActiveEditorView } from '$lib/utils/editorCommands';
+import { forceMarkdownRelint } from '$lib/utils/markdownLintExtension.svelte';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 import { invalidateSpellcheckCache, triggerImmediateLint } from '$lib/utils/spellcheckExtension.svelte';
 
@@ -15,6 +16,11 @@ export function reloadSpellcheck() {
     const activeView = getActiveEditorView();
     if (activeView) triggerImmediateLint(activeView);
   });
+}
+
+export function onHarperChanged() {
+  const activeView = getActiveEditorView();
+  if (activeView) forceMarkdownRelint(activeView);
 }
 
 export function onLogLevelChange(newValue: unknown) {

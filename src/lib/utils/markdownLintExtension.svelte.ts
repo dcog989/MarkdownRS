@@ -1,6 +1,7 @@
 import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
 import { StateEffect } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
+import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import type { LintDiagnostic } from '$lib/types/api';
 import { callBackendSafe } from '$lib/utils/backend';
@@ -41,7 +42,7 @@ function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnosti
     to: doc.line(d.end_line).from + d.end_column - 1,
     severity: 'warning' as const,
     message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
-    source: 'rumdl',
+    source: d.source,
   }));
 
   markdownLintState.issueCount = diagnostics.length;
@@ -65,7 +66,16 @@ export const createMarkdownLinter = () => {
       const tab = appContext.editor.tabs.find((t) => t.id === tabId);
       const filePath = tab?.path ?? undefined;
 
-      const result = await callBackendSafe('lint_markdown', { content, filePath }, 'Markdown:Lint');
+      const result = await callBackendSafe(
+        'lint_markdown',
+        {
+          content,
+          filePath,
+          harperEnabled: settingsState.harperEnabled,
+          harperLinters: settingsState.harperLinters,
+        },
+        'Markdown:Lint',
+      );
       if (!result) {
         lintCache.set(tabId, { content, diagnostics: [] });
         markdownLintState.issueCount = 0;

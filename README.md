@@ -118,6 +118,20 @@ You can change which style rules that *rumdl* applies by creating a config file:
 
 The most important config wins: a project config always overrides a home-folder config, and both override the defaults. Files that haven't been saved yet (no location on disk) only use the home-folder config or the defaults.
 
+### Grammar Checking (Harper)
+
+MarkdownRS also checks grammar with [Harper](https://writewithharper.com/), in addition to the style rules above. Harper lints are hidden inside inline code and code blocks.
+
+The `Grammar Check (Harper)` toggle (Settings → Grammar) enables or disables this. Individual rules can be overridden in `settings.toml` (in the app config directory) under a `[harperLinters]` table:
+
+```toml
+[harperLinters]
+OxfordComma = false      # disable a rule
+LongSentences = true     # force a rule on
+```
+
+The available rule names and their defaults are listed in the [Harper rules reference](https://writewithharper.com/docs/rules). Unknown rule names are ignored, and removing a key restores the rule's default behaviour. Note that `SpellCheck` is always disabled — spelling is handled by the built-in spellchecker — and rule overrides are app-global (not per-project).
+
 ## Contributing
 
 [Pull Requests](https://github.com/dcog989/MarkdownRS/pulls) and [bug reports / feature requests](https://github.com/dcog989/MarkdownRS/issues) are welcomed.

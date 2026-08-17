@@ -82,6 +82,8 @@ pub async fn format_markdown(
 pub async fn lint_markdown(
     content: String,
     file_path: Option<String>,
+    harper_enabled: Option<bool>,
+    harper_linters: Option<std::collections::HashMap<String, bool>>,
     state: State<'_, AppState>,
 ) -> Result<Vec<LintDiagnostic>, String> {
     let ResolvedPaths {
@@ -90,7 +92,11 @@ pub async fn lint_markdown(
     } = config::resolve_paths(file_path.as_deref(), &state);
 
     run_blocking("lint markdown", move || {
-        linter::lint_content(&content, fp.as_deref(), pr.as_deref())
+        let harper_options = crate::markdown::harper::HarperOptions {
+            enabled: harper_enabled.unwrap_or(true),
+            linter_overrides: harper_linters.unwrap_or_default(),
+        };
+        linter::lint_content(&content, fp.as_deref(), pr.as_deref(), &harper_options)
     })
     .await
 }

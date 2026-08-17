@@ -4,6 +4,9 @@ use serde::Serialize;
 use std::path::Path;
 
 use super::config::load_rules_for_file;
+use super::harper::{self, HarperOptions};
+
+const LINT_SOURCE_RUMDL: &str = "rumdl";
 
 #[derive(Debug, Serialize)]
 pub struct LintDiagnostic {
@@ -15,6 +18,7 @@ pub struct LintDiagnostic {
     pub severity: String,
     pub fixable: bool,
     pub rule_name: Option<String>,
+    pub source: String,
 }
 
 fn map_severity(s: &Severity) -> &'static str {
@@ -35,6 +39,7 @@ fn map_warning(w: &LintWarning) -> LintDiagnostic {
         severity: map_severity(&w.severity).to_string(),
         fixable: w.fix.is_some(),
         rule_name: w.rule_name.clone(),
+        source: LINT_SOURCE_RUMDL.to_string(),
     }
 }
 
@@ -42,6 +47,7 @@ pub fn lint_content(
     content: &str,
     file_path: Option<&Path>,
     project_root: Option<&Path>,
+    harper_options: &HarperOptions,
 ) -> Result<Vec<LintDiagnostic>, String> {
     let (config, rules) = load_rules_for_file(file_path, project_root)?;
 
@@ -58,10 +64,19 @@ pub fn lint_content(
         Some(&config),
     );
 
-    match result {
-        Ok(warnings) => Ok(warnings.iter().map(map_warning).collect()),
-        Err(e) => Err(format!("Lint error: {}", e)),
+    let mut diagnostics: Vec<LintDiagnostic> = match result {
+        Ok(warnings) => warnings.iter().map(map_warning).collect(),
+        Err(e) => return Err(format!("Lint error: {}", e)),
+    };
+
+    if harper_options.enabled {
+        diagnostics.extend(harper::lint_grammar(
+            content,
+            &harper_options.linter_overrides,
+        ));
     }
+
+    Ok(diagnostics)
 }
 
 #[cfg(test)]
@@ -119,7 +134,13 @@ mod tests {
         // MD009's trailing-space fix is auto-fixable.
         let dir = temp_dir_with_config("fixable", "[global]\n");
         let file = fake_file(&dir, "doc.md");
-        let result = lint_content("# Heading\n\nbody   \n", Some(&file), Some(&dir)).unwrap();
+        let result = lint_content(
+            "# Heading\n\nbody   \n",
+            Some(&file),
+            Some(&dir),
+            &HarperOptions::default(),
+        )
+        .unwrap();
         let fixable = result.iter().any(|d| d.fixable);
         assert!(
             fixable,
@@ -133,7 +154,13 @@ mod tests {
     fn default_rules_flag_trailing_whitespace() {
         let dir = temp_dir_with_config("default", "[global]\n");
         let file = fake_file(&dir, "doc.md");
-        let result = lint_content("# Heading\n\nbody   \n", Some(&file), Some(&dir)).unwrap();
+        let result = lint_content(
+            "# Heading\n\nbody   \n",
+            Some(&file),
+            Some(&dir),
+            &HarperOptions::default(),
+        )
+        .unwrap();
 
         assert!(
             result.iter().any(|d| d.line == 3),
@@ -147,7 +174,13 @@ mod tests {
     fn all_rules_disabled_produces_no_warnings() {
         let dir = temp_dir_with_config("disabled", "[global]\ndisable = [\"all\"]\n");
         let file = fake_file(&dir, "doc.md");
-        let result = lint_content("# Heading\n\nbody  \n", Some(&file), Some(&dir)).unwrap();
+        let result = lint_content(
+            "# Heading\n\nbody  \n",
+            Some(&file),
+            Some(&dir),
+            &HarperOptions::default(),
+        )
+        .unwrap();
 
         assert!(result.is_empty(), "expected no warnings, got {:?}", result);
         fs::remove_dir_all(&dir).unwrap();

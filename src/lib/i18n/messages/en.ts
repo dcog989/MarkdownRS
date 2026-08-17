@@ -165,6 +165,7 @@ export const en = {
     category: {
       editor: 'Editor',
       formatting: 'Formatting',
+      grammar: 'Grammar',
       interface: 'Interface',
       preview: 'Preview',
       spellcheck: 'Spellcheck',
@@ -266,6 +267,9 @@ export const en = {
     scienceDictionaries: 'Science+ Dictionaries',
     scienceDictionariesTooltip:
       'Includes scientific (670k+) and medical (98k+) terms. Warning: Large download and higher memory usage.',
+    harperEnabled: 'Grammar Check (Harper)',
+    harperEnabledTooltip:
+      'Enable Harper grammar checking. Rule overrides can be set under [harperLinters] in settings.toml. See writewithharper.com/docs/rules for available rules.',
     contextMenuEnabled: 'Context Menu Enabled',
     contextMenuEnabledTooltip: "Enable 'Open with MarkdownRS' in Windows Explorer context menu.",
     language: 'Language',
