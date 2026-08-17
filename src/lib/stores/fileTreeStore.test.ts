@@ -9,10 +9,8 @@ vi.mock('$lib/commands/directory', () => ({
 
 import { getDirectoryMtime, listDirectory } from '$lib/commands/directory';
 import {
-  applyFilter,
   canNavigateUp,
   collapseAll,
-  computeTreeRows,
   dirname,
   fileTreeStore,
   isDirLoading,
@@ -28,6 +26,7 @@ import {
   toggleHiddenFiles,
   toggleMarkdownOnly,
 } from './fileTreeStore.svelte';
+import { applyFilter, computeTreeRows, treeViewStore } from './treeViewStore.svelte';
 
 const mockedListDirectory = vi.mocked(listDirectory);
 const mockedGetDirectoryMtime = vi.mocked(getDirectoryMtime);
@@ -55,8 +54,8 @@ describe('fileTreeStore', () => {
     settingsState.fileTreeVisible = true;
     fileTreeStore.lastLoaded.clear();
     fileTreeStore.dirMtimes.clear();
-    fileTreeStore.filterRows = [];
-    fileTreeStore.filterLoading = false;
+    treeViewStore.filterRows = [];
+    treeViewStore.filterLoading = false;
     mockedListDirectory.mockReset();
     mockedGetDirectoryMtime.mockReset();
   });
@@ -481,7 +480,7 @@ describe('fileTreeStore', () => {
     ]);
 
     await applyFilter('deep', false);
-    const paths = fileTreeStore.filterRows.map((r) => r.entry.path);
+    const paths = treeViewStore.filterRows.map((r) => r.entry.path);
 
     // The anchor root and the folder leading to the match stay visible.
     expect(paths).toContain('/root');
@@ -490,7 +489,7 @@ describe('fileTreeStore', () => {
     expect(paths).not.toContain('/root/notes.md');
     expect(paths).not.toContain('/root/config.json');
     expect(paths).not.toContain('/root/sub/other.txt');
-    expect(fileTreeStore.filterRows.some((r) => r.isParent)).toBe(false);
+    expect(treeViewStore.filterRows.some((r) => r.isParent)).toBe(false);
     expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 
@@ -504,7 +503,7 @@ describe('fileTreeStore', () => {
     await applyFilter('deep', false);
 
     expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
-    const paths = fileTreeStore.filterRows.map((r) => r.entry.path);
+    const paths = treeViewStore.filterRows.map((r) => r.entry.path);
     expect(paths).toContain('/root');
     expect(paths).toContain('/root/sub');
     expect(paths).toContain('/root/sub/deep.md');
@@ -521,7 +520,7 @@ describe('fileTreeStore', () => {
     await applyFilter('sub', false);
 
     // No file matches "sub", so the search yields no rows.
-    expect(fileTreeStore.filterRows).toEqual([]);
+    expect(treeViewStore.filterRows).toEqual([]);
     expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 
@@ -530,7 +529,7 @@ describe('fileTreeStore', () => {
     fileTreeStore.children.set('/root', [entry('note.md'), entry('note.txt')]);
 
     await applyFilter('note', true);
-    const paths = fileTreeStore.filterRows.map((r) => r.entry.path);
+    const paths = treeViewStore.filterRows.map((r) => r.entry.path);
 
     expect(paths).toContain('/root/note.md');
     expect(paths).not.toContain('/root/note.txt');
@@ -541,11 +540,11 @@ describe('fileTreeStore', () => {
     fileTreeStore.children.set('/root', [entry('notes.md')]);
 
     await applyFilter('', false);
-    expect(fileTreeStore.filterRows).toEqual([]);
+    expect(treeViewStore.filterRows).toEqual([]);
 
     await applyFilter('   ', false);
-    expect(fileTreeStore.filterRows).toEqual([]);
-    expect(fileTreeStore.filterLoading).toBe(false);
+    expect(treeViewStore.filterRows).toEqual([]);
+    expect(treeViewStore.filterLoading).toBe(false);
     expect(mockedListDirectory).not.toHaveBeenCalled();
   });
 });

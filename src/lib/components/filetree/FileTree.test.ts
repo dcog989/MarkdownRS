@@ -5,6 +5,7 @@ import type { EditorTab } from '$lib/stores/editorTypes';
 import { fileTreeStore, navigateToParent } from '$lib/stores/fileTreeStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
+import { treeViewStore } from '$lib/stores/treeViewStore.svelte';
 import type { FileEntry } from '$lib/types/api';
 import { openFile } from '$lib/utils/fileSystem';
 import FileTree from './FileTree.svelte';
@@ -62,8 +63,8 @@ describe('FileTree', () => {
     fileTreeStore.expanded.clear();
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
-    fileTreeStore.filterRows = [];
-    fileTreeStore.filterLoading = false;
+    treeViewStore.filterRows = [];
+    treeViewStore.filterLoading = false;
     settingsState.fileTreeShowHidden = false;
     settingsState.fileTreeLocked = false;
     settingsState.fileTreeLockedRoot = '';

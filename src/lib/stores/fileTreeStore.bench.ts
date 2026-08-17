@@ -1,6 +1,7 @@
 import { bench, describe } from 'vitest';
 import type { FileEntry } from '$lib/types/api';
-import { computeTreeRows, fileTreeStore } from './fileTreeStore.svelte';
+import { fileTreeStore } from './fileTreeStore.svelte';
+import { computeTreeRows } from './treeViewStore.svelte';
 
 function entry(path: string, isDir: boolean): FileEntry {
   const parts = path.split('/');
