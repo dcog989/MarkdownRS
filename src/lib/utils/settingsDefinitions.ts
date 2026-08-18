@@ -401,8 +401,9 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: 'settings.harperEnabled',
       type: 'boolean',
       category: 'settings.category.grammar',
-      defaultValue: true,
+      defaultValue: false,
       tooltip: 'settings.harperEnabledTooltip',
+      labelWarning: 'settings.harperMemoryWarning',
       onChange: onHarperChanged,
     },
 
