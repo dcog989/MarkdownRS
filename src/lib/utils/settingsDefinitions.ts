@@ -150,7 +150,9 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: 'number',
       category: 'settings.category.editor',
       defaultValue: 16,
-      min: 0,
+      // -1 disables recent-changes highlighting, matching the check in
+      // recentChangesExtension (count > 0).
+      min: -1,
       max: 99,
       tooltip: 'settings.recentChangesCountTooltip',
     },
