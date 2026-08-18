@@ -1,4 +1,4 @@
-import { LOCALE_NAMES, SUPPORTED_LOCALES, setAppLocale } from '$lib/i18n';
+import { LOCALE_NAMES, SUPPORTED_LOCALES, SYSTEM_LOCALE, setAppLocale } from '$lib/i18n';
 import { onHarperChanged, onLogLevelChange, onThemeChange, reloadSpellcheck } from './settingsHandlers';
 
 export type SettingDef = {
@@ -330,9 +330,9 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: 'settings.language',
       type: 'select',
       category: 'settings.category.interface',
-      defaultValue: 'en',
-      options: [...SUPPORTED_LOCALES],
-      optionLabels: SUPPORTED_LOCALES.map((l) => LOCALE_NAMES[l]),
+      defaultValue: 'system',
+      options: [SYSTEM_LOCALE, ...SUPPORTED_LOCALES],
+      optionLabels: ['settings.languageSystem', ...SUPPORTED_LOCALES.map((l) => LOCALE_NAMES[l])],
       tooltip: 'settings.languageTooltip',
       onChange: (value) => setAppLocale(String(value)),
     },

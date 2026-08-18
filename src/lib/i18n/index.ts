@@ -7,6 +7,9 @@ export type MessageKey = DeepKey<typeof en>;
 export const SUPPORTED_LOCALES = ['en'] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
+// Sentinel value for the locale setting: follow the OS language on each start.
+export const SYSTEM_LOCALE = 'system';
+
 export const LOCALE_NAMES: Record<AppLocale, string> = {
   en: 'English',
 };
@@ -30,7 +33,7 @@ export function initI18n(preferredLocale: string): void {
     initialLocale: 'en',
     ignoreTag: true,
   });
-  locale.set(preferredLocale);
+  locale.set(resolveLocale(preferredLocale));
 }
 
 export function detectSystemLocale(): string {
@@ -47,8 +50,12 @@ export function detectSystemLocale(): string {
   return 'en';
 }
 
+export function resolveLocale(localeId: string): string {
+  return localeId === SYSTEM_LOCALE ? detectSystemLocale() : localeId;
+}
+
 export function setAppLocale(localeId: string): void {
-  locale.set(localeId);
+  locale.set(resolveLocale(localeId));
 }
 
 export type TranslateOptions = {

@@ -1,6 +1,6 @@
 export const settingsState = $state({
   splitView: true,
-  locale: 'en',
+  locale: 'system',
   theme: 'dark' as 'dark' | 'light',
   themeMode: 'auto' as 'auto' | 'dark' | 'light',
   activeTheme: 'System',

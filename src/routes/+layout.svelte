@@ -5,7 +5,7 @@ import { commands } from '$lib/commands/commands';
 import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
 import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
 import ModalManager from '$lib/components/ui/ModalManager.svelte';
-import { initI18n } from '$lib/i18n';
+import { initI18n, resolveLocale } from '$lib/i18n';
 import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { logger } from '$lib/utils/logger';
@@ -24,7 +24,7 @@ $effect(() => {
 });
 
 $effect(() => {
-  const appLocale = appContext.settings.locale;
+  const appLocale = resolveLocale(appContext.settings.locale);
   document.documentElement.lang = appLocale;
   locale.set(appLocale);
 });
