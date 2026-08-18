@@ -23,7 +23,11 @@ const foldTheme = EditorView.theme({
   // bring the numbers close under them.
   '.cm-foldGutter .cm-gutterElement': {
     display: 'flex',
-    alignItems: 'center !important',
+    // Rendered-mode headings grow their line, and the gutter element tracks
+    // that full height. Centering on it would put the arrow mid-way down the
+    // oversized line; the marker's own margin-top anchors it to the line
+    // number instead (see .cm-fold-marker).
+    alignItems: 'flex-start !important',
     justifyContent: 'center',
     padding: '0 1px !important',
     cursor: 'pointer',
@@ -42,6 +46,10 @@ const foldTheme = EditorView.theme({
     borderTop: '6px solid currentColor',
     color: 'var(--editor-fg-tertiary)',
     opacity: '0.9',
+    // The marker is 6px tall (border-top), so half of it is 3px. A default
+    // line is 1.4em; offsetting by 0.7em - 3px centers the arrow on the line
+    // number's vertical position regardless of how tall the rendered line is.
+    marginTop: 'calc(0.7em - 3px)',
   },
   '.cm-fold-marker-closed': { transform: 'rotate(-90deg)' },
   '.cm-foldGutter .cm-gutterElement:hover .cm-fold-marker': {
