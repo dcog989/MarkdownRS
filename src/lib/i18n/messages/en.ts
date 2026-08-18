@@ -269,6 +269,7 @@ export const en = {
     technicalDictionaries: 'Technical Dictionaries',
     technicalDictionariesTooltip: 'Activate technical dictionaries - coding, companies, frameworks, etc..',
     scienceDictionaries: 'Science+ Dictionaries',
+    scienceDictionariesMemoryWarning: 'This feature consumes ~130 MB memory.',
     scienceDictionariesTooltip: 'Scientific (670k+) and medical (98k+) terms. Large download + memory usage.',
     harperEnabled: 'Harper Grammar Checker',
     harperEnabledTooltip: 'Enable Harper grammar checking. Override rules under [harperLinters] in settings.toml.',

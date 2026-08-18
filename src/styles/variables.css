@@ -56,6 +56,7 @@
   --selection-match-bg: oklch(0.68 0.1 60 / 0.35);
   --success-hover: #a8cf8b;
   --success: #98c379;
+  --warning: #e0a458;
 
   /* Animation & Transitions */
   --transition-fast: 100ms;
@@ -209,6 +210,7 @@
   --selection-match-bg: oklch(0.68 0.12 62 / 0.35);
   --success-hover: #1b5e20;
   --success: #2e7d32;
+  --warning: #b45309;
 
   /* Editor & Content Colors - Light Theme */
   --code-bg: oklch(0.76 0.14 70 / 0.15);

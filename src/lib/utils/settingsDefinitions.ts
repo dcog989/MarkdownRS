@@ -13,6 +13,7 @@ export type SettingDef = {
   max?: number;
   step?: number;
   tooltip?: string;
+  labelWarning?: string;
   visibleWhen?: { key: string; value: unknown };
   groupWith?: string;
   onChange?: (newValue: unknown, oldValue: unknown) => void;
@@ -391,6 +392,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'settings.category.spellcheck',
       defaultValue: false,
       tooltip: 'settings.scienceDictionariesTooltip',
+      labelWarning: 'settings.scienceDictionariesMemoryWarning',
       onChange: reloadSpellcheck,
     },
 

@@ -1,6 +1,7 @@
 <script lang="ts">
-import { Database, Keyboard, Settings, Settings2 } from 'lucide-svelte';
+import { Database, Keyboard, Settings, Settings2, TriangleAlert } from 'lucide-svelte';
 import { _ } from 'svelte-i18n';
+import { tooltip } from '$lib/actions/tooltip';
 import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
 import { translate } from '$lib/i18n';
 import { toggleData, toggleRumdlConfig, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
@@ -192,6 +193,14 @@ function updateSetting(setting: SettingDef, value: unknown) {
             </div>
             <label for={setting.key} class="text-ui text-fg-default font-medium py-2.5 pl-8">
               {translate(setting.label)}
+              {#if setting.labelWarning}
+                <span
+                  use:tooltip={translate(setting.labelWarning)}
+                  class="text-warning ml-2 inline-flex cursor-help align-middle"
+                >
+                  <TriangleAlert size={15} aria-label={translate(setting.labelWarning)} />
+                </span>
+              {/if}
             </label>
             <div class="w-full py-2.5 pl-8 pr-3">
               <SettingInput

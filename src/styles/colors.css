@@ -96,6 +96,10 @@
   color: var(--danger);
 }
 
+.text-warning {
+  color: var(--warning);
+}
+
 .text-danger-text {
   color: var(--danger-text);
 }
