@@ -8,6 +8,7 @@ import { saveSettings } from '$lib/utils/settings';
 
 let isResizing = $state(false);
 let didDrag = false;
+let hovered = $state(false);
 
 function startResize(e: MouseEvent) {
   e.preventDefault();
@@ -50,6 +51,9 @@ function handleResizeClick() {
   aria-label={$_('fileTree.resizeAria')}
   class="ft-resize-handle"
   class:cursor-col-resize={isResizing}
+  class:ft-resize-hover={hovered}
+  onmouseenter={() => (hovered = true)}
+  onmouseleave={() => (hovered = false)}
   onmousedown={startResize}
   onkeydown={() => {}}
   onclick={handleResizeClick}
@@ -75,7 +79,7 @@ function handleResizeClick() {
   transition: background-color 150ms ease-out;
 }
 
-.ft-resize-handle:hover {
+.ft-resize-handle.ft-resize-hover {
   background-color: var(--accent-primary);
   transition-delay: 250ms;
 }
@@ -97,7 +101,7 @@ function handleResizeClick() {
   transition: opacity 150ms ease-out;
 }
 
-.ft-resize-handle:hover .ft-collapse-icon {
+.ft-resize-handle.ft-resize-hover .ft-collapse-icon {
   opacity: 1;
   transition-delay: 250ms;
 }
