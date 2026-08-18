@@ -5,6 +5,11 @@ import { appContext } from '$lib/stores/state.svelte';
 import { CONFIG } from '$lib/utils/config';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 
+/// Line count used for the gutter's width spacer. Documents with fewer lines
+/// still render a three-character gutter, so the editor (and tab bar gutter
+/// column) does not shift between tabs.
+const MIN_GUTTER_WIDTH_LINES = 9999;
+
 class LineNumberMarker extends GutterMarker {
   constructor(
     private lineNo: number,
@@ -189,10 +194,10 @@ export function createRecentChangesHighlighter(
 
         return new LineNumberMarker(lineNo, alpha, deletionAlpha);
       },
-      initialSpacer: (view) => new LineNumberMarker(view.state.doc.lines, 0, 0),
+      initialSpacer: (view) => new LineNumberMarker(Math.max(view.state.doc.lines, MIN_GUTTER_WIDTH_LINES), 0, 0),
       updateSpacer: (spacer, update) => {
         if (update.docChanged) {
-          return new LineNumberMarker(update.state.doc.lines, 0, 0);
+          return new LineNumberMarker(Math.max(update.state.doc.lines, MIN_GUTTER_WIDTH_LINES), 0, 0);
         }
         return spacer;
       },
