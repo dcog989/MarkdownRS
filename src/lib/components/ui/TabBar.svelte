@@ -53,14 +53,21 @@ const sortController = new SortableController<EditorTab>({
   onDragEnd: () => {
     if (sortController.isDragging) {
       persistSessionDebounced();
+    } else if (sortController.draggingId) {
+      appContext.app.activeTabId = sortController.draggingId;
+      pushToMru(sortController.draggingId);
     }
     dragGhostTab = null;
     tick().then(updateFadeIndicators);
   },
 });
 
+// Mouse activation is handled in the drag controller's pointerup path because
+// `startDrag` calls `preventDefault()` on `pointerdown` and captures the
+// pointer, both of which suppress the trailing `click` event on the tab. This
+// handler is kept for keyboard activation (Enter on a focused tab), which is
+// never preceded by pointer capture.
 function activateTab(id: string) {
-  if (sortController.consumeDragClick()) return;
   appContext.app.activeTabId = id;
   pushToMru(id);
 }

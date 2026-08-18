@@ -38,7 +38,6 @@ export class SortableController<T> {
   private startX = 0;
   private rafId: number | null = null;
   private activeWrapper: HTMLElement | null = null;
-  private suppressClick = false;
 
   private _handleMove = this.handleMove.bind(this);
   private _handleUp = this.handleUp.bind(this);
@@ -63,7 +62,6 @@ export class SortableController<T> {
 
     this.activeWrapper = wrapper;
     wrapper.setPointerCapture(e.pointerId);
-    this.suppressClick = false;
 
     this.draggingId = id;
     this.isDragging = false;
@@ -114,19 +112,8 @@ export class SortableController<T> {
     }
 
     this.cleanupListeners();
-    this.suppressClick = this.isDragging;
     this.options.onDragEnd();
     this.reset();
-  }
-
-  /**
-   * Returns true when the trailing click after a drag should be ignored, and
-   * clears the flag so the next genuine click activates normally.
-   */
-  consumeDragClick(): boolean {
-    const suppress = this.suppressClick;
-    this.suppressClick = false;
-    return suppress;
   }
 
   private cleanupListeners() {
