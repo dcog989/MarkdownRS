@@ -131,7 +131,7 @@ pub async fn get_spelling_suggestions(
                 if custom_snapshot.contains(&suggestion.to_lowercase()) {
                     continue;
                 }
-                if seen.insert(suggestion.clone()) {
+                if seen.insert(suggestion.to_lowercase()) {
                     ordered.push(suggestion);
                 }
             }
