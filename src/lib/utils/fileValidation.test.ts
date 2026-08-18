@@ -60,8 +60,9 @@ describe('isMarkdownFile', () => {
     expect(isMarkdownFile('a.mkd')).toBe(true);
   });
 
-  it('assumes extensionless files are markdown', () => {
-    expect(isMarkdownFile('New-1')).toBe(true);
+  it('rejects extensionless files', () => {
+    expect(isMarkdownFile('New-1')).toBe(false);
+    expect(isMarkdownFile('Makefile')).toBe(false);
   });
 
   it('rejects non-markdown extensions', () => {

@@ -121,10 +121,6 @@ export function isTextFile(path: string): boolean {
  */
 export function isMarkdownFile(path: string): boolean {
   const filename = getFilename(path);
-
-  // Assume files without extensions (e.g. "New-1") are markdown
-  if (!filename.includes('.')) return true;
-
   const extension = filename.split('.').pop()?.toLowerCase();
   return extension ? MARKDOWN_EXTENSIONS.includes(extension) : false;
 }
