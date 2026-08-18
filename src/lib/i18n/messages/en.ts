@@ -484,7 +484,6 @@ export const en = {
     generatingPdf: 'Generating PDF...',
     failedGeneratePdf: 'Failed to generate PDF',
     generatingImage: 'Generating image...',
-    failedSaveSvg: 'Failed to save SVG',
     failedSaveFormat: 'Failed to save {format}',
   },
   fileOps: {

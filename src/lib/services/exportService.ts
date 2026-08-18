@@ -187,7 +187,7 @@ export class ExportService {
           { path, content: svgContent },
           'File:Write',
           { path: tab?.path },
-          { report: true, msg: translate('export.failedSaveSvg') },
+          { report: true, msg: translate('export.failedSaveFormat', { values: { format: 'SVG' } }) },
         );
       } else {
         const base64Data = dataUrl.split(',')[1];
