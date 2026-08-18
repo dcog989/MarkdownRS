@@ -42,6 +42,16 @@ let showWriterTabDropdown = $state(false);
 let showWriterMenu = $state(false);
 let peekHovered = $state(false);
 
+// `peekHovered` lives in this route component, not the conditionally-rendered
+// peek edge, so it survives the edge being unmounted while hovered (clicking the
+// edge to re-open the tree never fires mouseleave). Reset it once the tree is
+// visible so the edge starts fresh on the next collapse.
+$effect(() => {
+  if (appContext.settings.fileTreeVisible) {
+    peekHovered = false;
+  }
+});
+
 onDestroy(() => {
   splitResize.cleanup();
 });
