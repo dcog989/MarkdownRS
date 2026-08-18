@@ -277,7 +277,8 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       let contentToSave = tab.content;
 
-      const shouldFormat = !skipFormat && appContext.settings.formatOnSave && isMarkdownFile(sanitizedPath);
+      const tabIsMarkdown = tab.preferredExtension ? tab.preferredExtension === 'md' : isMarkdownFile(sanitizedPath);
+      const shouldFormat = !skipFormat && appContext.settings.formatOnSave && tabIsMarkdown;
 
       if (shouldFormat) {
         const formatted = await formatMarkdown(contentToSave);
