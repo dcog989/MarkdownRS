@@ -10,7 +10,8 @@ export function isCurrentFileMarkdown(): boolean {
   return activeTab.preferredExtension !== 'txt';
 }
 
-export function runEditorCommand(command: Command): void {
+export function runEditorCommand(command: Command): boolean {
   const view = getActiveEditorView();
-  if (view) command(view);
+  if (view) return command(view);
+  return false;
 }
