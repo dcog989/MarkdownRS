@@ -33,8 +33,11 @@ export function updateContent(id: string, content: string, lineCount: number) {
   const ts = getTransientState(id);
   if (ts) ts.contentChanged = true;
 
-  editorStore.tabs[index] = {
-    ...oldTab,
+  // Mutate in place (Object.assign) rather than replacing the tab object: a
+  // full `tabs[index] = {...}` would otherwise invalidate the editor's sync
+  // effect (which reads the tabs array) on EVERY keystroke, forcing a relayout
+  // each time and causing a visible repaint flash on plain-text lines.
+  Object.assign(editorStore.tabs[index], {
     title: newTitle,
     content,
     isDirty: isDirty(content, oldTab.lastSavedHash),
@@ -43,7 +46,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
     sizeBytes,
     lineCount,
     wordCountPending: true,
-  };
+  });
   editorStore.sessionDirty = true;
 }
 

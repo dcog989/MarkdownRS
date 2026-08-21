@@ -216,8 +216,8 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
       wordCount = computeWordCount(content);
       const { lineCount, widestColumn } = computeLineStats(content);
 
-      editorStore.tabs[currentIndex] = {
-        ...currentTab,
+      // In-place mutation (see updateContent) to avoid churning the tabs array.
+      Object.assign(editorStore.tabs[currentIndex], {
         title,
         content,
         lastSavedHash,
@@ -233,7 +233,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
         hasBom: diskHasBom ?? currentTab.hasBom,
         contentLoaded: true,
         isDirty: isDirty(content, lastSavedHash),
-      };
+      });
 
       logger.session.info('TabContentLoaded', {
         tabId,

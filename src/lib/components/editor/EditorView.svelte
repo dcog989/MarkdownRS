@@ -132,7 +132,12 @@ $effect(() => {
 
 $effect(() => {
   const tId = tabId;
-  const forceSyncCounter = appContext.editor.tabs.find((t) => t.id === tId)?.forceSync ?? 0;
+  const storeTab = appContext.editor.tabs.find((t) => t.id === tId);
+  const forceSyncCounter = storeTab?.forceSync ?? 0;
+  // Track contentLoaded explicitly: initial population (empty CM doc -> loaded
+  // store content) must re-run this sync even though the in-place updates in
+  // updateContent/loadTabContentInternal keep the tab object identity stable.
+  const contentLoaded = storeTab?.contentLoaded ?? false;
   untrack(() => {
     if (!view) return;
     tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);

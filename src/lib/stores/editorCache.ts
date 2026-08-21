@@ -95,14 +95,13 @@ export function scheduleWordCountUpdate(tabId: string, content: string) {
       return;
     }
 
-    const tab = editorStore.tabs[index];
     const wordCount = computeWordCount(content);
 
-    editorStore.tabs[index] = {
-      ...tab,
+    // In-place mutation (see updateContent) to avoid churning the tabs array.
+    Object.assign(editorStore.tabs[index], {
       wordCount,
       wordCountPending: false,
-    };
+    });
 
     wordCountDebounceMap.delete(tabId);
   }, CONFIG.PERFORMANCE.WORD_COUNT_DEBOUNCE_MS);
