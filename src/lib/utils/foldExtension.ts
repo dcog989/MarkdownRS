@@ -17,27 +17,29 @@ const foldMarkerDOM = (open: boolean) => {
 };
 
 const foldTheme = EditorView.theme({
-  // The app's .cm-gutterElement rule (src/styles/editor.css) pads every
-  // gutter cell with 0 8px. That balloons the fold column and shoves the
-  // arrows away from the line numbers, so pull the fold cells tight and
-  // bring the numbers close under them.
+  // The fold arrows are shown immediately to the left of the line numbers
+  // instead of in their own column: collapse the fold gutter to zero width
+  // and let each marker overflow right into the line-number gutter's left
+  // padding. This removes the extra column entirely.
+  '.cm-foldGutter': { overflow: 'visible' },
   '.cm-foldGutter .cm-gutterElement': {
-    display: 'flex',
-    // Rendered-mode headings grow their line, and the gutter element tracks
-    // that full height. Centering on it would put the arrow mid-way down the
-    // oversized line; the marker's own margin-top anchors it to the line
-    // number instead (see .cm-fold-marker).
-    alignItems: 'flex-start !important',
-    justifyContent: 'center',
-    padding: '0 1px !important',
+    position: 'relative',
+    width: '0',
+    overflow: 'visible',
+    padding: '0',
     cursor: 'pointer',
     userSelect: 'none',
   },
   '.cm-lineNumbers .cm-gutterElement': {
-    paddingLeft: '4px',
+    paddingLeft: '10px',
     paddingRight: '8px',
   },
-  '.cm-fold-marker': {
+  '.cm-foldGutter .cm-fold-marker': {
+    // Zero-width gutter, so the folded column gives no layout space; the
+    // absolute marker positions itself in the line numbers' left padding.
+    position: 'absolute',
+    left: '4px',
+    top: '0',
     display: 'inline-block',
     width: '0',
     height: '0',
