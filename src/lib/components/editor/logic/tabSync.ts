@@ -134,7 +134,7 @@ export class TabSyncManager {
     // of an un-styled frame while the parser catches up after a deferred measure.
     if (view && view._currentTabId === tabId) {
       const tabTs = getTransientState(tabId);
-      restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0);
+      restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0, tabTs?.scrollPercentage ?? 0);
     }
 
     view.focus();
@@ -193,7 +193,7 @@ export class TabSyncManager {
       if (view && view._currentTabId === tabId) {
         if (isInitialPopulate) {
           const tabTs = getTransientState(tabId);
-          restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0);
+          restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0, tabTs?.scrollPercentage ?? 0);
         } else {
           view.requestMeasure();
           this.scrollManager.restore(view, 'anchor');

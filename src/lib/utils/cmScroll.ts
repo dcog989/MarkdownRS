@@ -4,6 +4,10 @@ import { CONFIG } from '$lib/utils/config';
 
 export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
 
+/** A saved position at or above this fraction of the scroll range is treated as
+ *  "at the bottom" for the bottom-aligned scroll restore. */
+const AT_BOTTOM_PERCENTAGE_THRESHOLD = 0.99;
+
 /**
  * Restore a saved scroll position by anchoring to a saved top line (robust
  * across content/wrap changes), falling back to a saved pixel offset. When
@@ -16,7 +20,12 @@ export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
  * cycle; deferring it would let the new document paint one frame at scroll
  * top, with the deep viewport still unparsed and unstyled.
  */
-export function restoreScrollByTopLine(view: EditorView, topLine: number, scrollTop: number): void {
+export function restoreScrollByTopLine(
+  view: EditorView,
+  topLine: number,
+  scrollTop: number,
+  scrollPercentage = 0,
+): void {
   if (!view.scrollDOM) return;
 
   const safeLine = Math.max(1, Math.min(topLine, view.state.doc.lines));
@@ -42,7 +51,13 @@ export function restoreScrollByTopLine(view: EditorView, topLine: number, scroll
       // bottom of the document the last line then falls out of view (there is
       // no content below to absorb the shift), so align the last line with the
       // viewport bottom instead of the top line.
-      if (safeLine + linesPerViewport >= view.state.doc.lines) {
+      //
+      // Deciding "at the bottom" from the saved scroll percentage (rather than
+      // an estimated lines-per-viewport against the source line count) is the
+      // reliable signal: per-line heights vary with wrapping and rendered
+      // widgets, so `defaultLineHeight`-based estimates misfire and would
+      // bottom-align ordinary mid-document scrolls.
+      if (scrollPercentage >= AT_BOTTOM_PERCENTAGE_THRESHOLD) {
         const lastLine = view.state.doc.line(view.state.doc.lines);
         view.dispatch({ effects: EditorView.scrollIntoView(lastLine.from, { y: 'end' }) });
         return;

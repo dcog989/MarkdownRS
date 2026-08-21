@@ -48,6 +48,7 @@ let {
   filePath,
   initialScrollTop = 0,
   initialTopLine = 0,
+  initialScrollPercentage = 0,
   initialSelection = { anchor: 0, head: 0 },
   initialHistoryState,
   lineChangeTracker,
@@ -68,6 +69,7 @@ let {
   filePath?: string;
   initialScrollTop?: number;
   initialTopLine?: number;
+  initialScrollPercentage?: number;
   initialSelection?: { anchor: number; head: number };
   initialHistoryState?: unknown;
   lineChangeTracker: LineChangeTracker | undefined;
@@ -334,7 +336,7 @@ onMount(() => {
 
   // Restore the scroll synchronously so the first painted frame of a
   // deep-scrolled document is already parsed and highlighted.
-  restoreScrollByTopLine(viewInstance, initialTopLine, initialScrollTop);
+  restoreScrollByTopLine(viewInstance, initialTopLine, initialScrollTop, initialScrollPercentage);
 
   const cleanupModifier = setupModifierKeyHandler(viewInstance);
   const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
