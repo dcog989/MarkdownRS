@@ -137,7 +137,8 @@ $effect(() => {
   // Track contentLoaded explicitly: initial population (empty CM doc -> loaded
   // store content) must re-run this sync even though the in-place updates in
   // updateContent/loadTabContentInternal keep the tab object identity stable.
-  const contentLoaded = storeTab?.contentLoaded ?? false;
+  // The value is dependency-only; the actual logic reads it via the storeTab.
+  void (storeTab?.contentLoaded ?? false);
   untrack(() => {
     if (!view) return;
     tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
