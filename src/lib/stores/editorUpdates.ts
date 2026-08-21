@@ -1,7 +1,7 @@
 import { hashContent, isDirty } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { extractSmartTitle } from '$lib/utils/smartTitle';
+import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { computeWordCount, getLineChangeTracker, getTransientState, scheduleWordCountUpdate } from './editorCache';
 import { editorStore, sortTabsPinnedFirst, updateTab } from './editorStoreCore.svelte';
@@ -20,9 +20,11 @@ export function updateContent(id: string, content: string, lineCount: number) {
     const smartTitle = extractSmartTitle(content);
     if (smartTitle) {
       newTitle = smartTitle;
-    } else if (oldTab.originalTitle) {
-      newTitle = oldTab.originalTitle;
+    } else {
+      newTitle = getBaseTitle(oldTab);
     }
+  } else if (!oldTab.customTitle) {
+    newTitle = getBaseTitle(oldTab);
   }
 
   const now = getCurrentTimestamp();

@@ -19,7 +19,7 @@ import { formatTimestampForDisplay } from '$lib/utils/date';
 import { AppError } from '$lib/utils/errorHandling';
 import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
 import { logger } from '$lib/utils/logger';
-import { extractSmartTitle } from '$lib/utils/smartTitle';
+import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { debounce, formatDuration } from '$lib/utils/timing';
 import { normalizeLineEndings } from './fileMetadata';
@@ -190,16 +190,25 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 
   const wordCount = computeWordCount(content);
 
+  // The persisted title may have been content-derived under a previous session
+  // where content-naming was enabled. File-backed tabs are re-titled from their
+  // path, so the title is never stale after the setting is turned off.
+  const baseTitle = getBaseTitle({ path: t.path, title: t.title, originalTitle: t.title });
+
   let title = t.title;
-  if (!t.custom_title && settingsState.tabNameFromContent) {
-    const smartTitle = extractSmartTitle(content);
-    if (smartTitle) title = smartTitle;
+  if (!t.custom_title) {
+    if (settingsState.tabNameFromContent) {
+      const smartTitle = extractSmartTitle(content);
+      if (smartTitle) title = smartTitle;
+    } else if (t.path) {
+      title = baseTitle;
+    }
   }
 
   const editorTab: EditorTab = {
     id: t.id,
     title,
-    originalTitle: t.title,
+    originalTitle: baseTitle,
     content,
     lastSavedHash: '',
     isDirty: t.is_dirty,

@@ -5,6 +5,7 @@ import { CONFIG } from '$lib/utils/config';
 import { updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { readTextFile } from '$lib/utils/fileIO';
+import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
 import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
 import { appState } from './appState.svelte';
 import {
@@ -161,6 +162,17 @@ export function reopenClosedTab(historyIndex: number): string | null {
   restoredTs.isPersisted = false;
   initTransientState(entry.tab.id, restoredTs);
   const needsDiskReload = entry.tab.contentLoaded === false;
+
+  // The stored title may have been content-derived under a setting that has
+  // since changed; re-derive it from the current preference.
+  if (!entry.tab.customTitle) {
+    if (settingsState.tabNameFromContent) {
+      const smartTitle = extractSmartTitle(entry.tab.content);
+      if (smartTitle) entry.tab.title = smartTitle;
+    } else {
+      entry.tab.title = getBaseTitle(entry.tab);
+    }
+  }
 
   if (entry.historyState) {
     updateHistoryState(entry.tab.id, entry.historyState);

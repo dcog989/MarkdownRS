@@ -1,5 +1,11 @@
 import { LOCALE_NAMES, SUPPORTED_LOCALES, SYSTEM_LOCALE, setAppLocale } from '$lib/i18n';
-import { onHarperChanged, onLogLevelChange, onThemeChange, reloadSpellcheck } from './settingsHandlers';
+import {
+  onHarperChanged,
+  onLogLevelChange,
+  onTabNameFromContentChange,
+  onThemeChange,
+  reloadSpellcheck,
+} from './settingsHandlers';
 
 export type SettingDef = {
   key: string;
@@ -241,6 +247,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: 'settings.category.interface',
       defaultValue: false,
       tooltip: 'settings.tabsNamedFromContentTooltip',
+      onChange: onTabNameFromContentChange,
     },
     {
       key: 'enableClosedTabHistory',

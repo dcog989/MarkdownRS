@@ -1,3 +1,18 @@
+import { getFilename } from '$lib/utils/fileValidation';
+
+/**
+ * The non-content-derived fallback title for a tab: the file name for
+ * file-backed tabs, or the original/untitled name otherwise. Used whenever
+ * content-naming is disabled so tabs never keep a stale first-line title.
+ */
+export function getBaseTitle(tab: { path?: string | null; title: string; originalTitle?: string }): string {
+  if (tab.path) {
+    const name = getFilename(tab.path);
+    if (name) return name;
+  }
+  return tab.originalTitle || tab.title;
+}
+
 export function extractSmartTitle(content: string): string | null {
   const trimmed = content.trim();
   if (trimmed.length === 0) return null;
