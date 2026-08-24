@@ -26,16 +26,12 @@ The only Markdown editor you need? Many people are saying so.
 ### Preview & Rendering
 
 - Live Preview: Split view with smooth, bi-directional synchronized scrolling.
-- Math (KaTeX): Render math in the preview with KaTeX.
 - Diagrams (Mermaid): Render flowcharts, sequence diagrams, and more with Mermaid.js.
+- Math (KaTeX): Render math in the preview with KaTeX delimiters:
 
-### Math (KaTeX)
-
-Math renders in the preview with KaTeX. Delimiters:
-
-| Style | Syntax |
-| --- | --- |
-| Inline | `$...$`, `\(...\)` |
+| Style   | Syntax |
+|---------|--------|
+| Inline  | `$...$`, `\(...\)` |
 | Display | `$$...$$`, `\[...\]`, ```` ```math ```` fence |
 
 Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
@@ -81,8 +77,6 @@ LongSentences = true     # force a rule on
 
 ## Code / Dev Stack
 
-Developed using the latest versions of:
-
 - [bun](https://bun.com/)
 - [Biome](https://biomejs.dev/)
 - [CodeMirror](https://codemirror.net/)
@@ -99,26 +93,16 @@ Developed using the latest versions of:
 ## Development
 
 ```sh
-bun install        # Install dependencies
-bun run dev        # Run in development mode
-bunx tauri build   # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
+bun install          # Install dependencies
+bun run check        # Full check: Svelte types, Biome lint, and cargo check + clippy
+bun run format       # Format code with Biome + 'cargo fmt'
+bun run update       # Update packages + crates
+bun run dev          # Start dev server / HMR
+bun run preview      # Preview the production build
+bunx tauri build     # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
+bun run clean        # Remove build artifacts, target, and node_modules
+bun run package      # build and install
 ```
-
-Arch / CachyOS package (requires `bunx tauri build` first, so the compiled binary exists):
-
-```sh
-mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si
-```
-
-## Available Scripts
-
-- `bun run clean` - Remove build artifacts, target, and node_modules
-- `bun run check` - Full check: Svelte types, Biome lint, and cargo check + clippy
-- `bun run format` - Format code with Biome + 'cargo fmt'
-- `bun run update` - Update packages + crates
-- `bun run dev` - Start dev server / HMR
-- `bun run preview` - Preview the production build
-- `bun run package` - build and install
 
 ## Contributing
 
