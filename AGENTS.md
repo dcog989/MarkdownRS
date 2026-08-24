@@ -4,7 +4,7 @@
 
 - Name: MarkdownRS
 - Description: Tauri + Svelte 5 + Rust desktop Markdown editor focused on performance and clean UI.
-- Tech: Tauri v2, Rust (edition 2024), Svelte 5 (runes), TypeScript 6, CodeMirror 6, comrak (Markdown), rusqlite (SQLite), Biome, Vitest, Lefthook
+- Tech: Tauri v2, Rust (edition 2024), Svelte 5 (runes), TypeScript 6, CodeMirror 6, comrak (Markdown), rusqlite (SQLite), Biome, Vitest, Lefthook, Cocogitto
 
 ## Key Files
 
@@ -33,6 +33,7 @@
 - Lint: `bun run check` (types + frontend (Biome) + backend (cargo clippy))
 - Format: `bun run format` (Biome + cargo fmt)
 - Build: `bun run build`
+- Release: `bun run release` (Cocogitto, external Rust binary — `cargo install cocogitto` / `pacman -S cocogitto`; config in `cog.toml`, `tag_prefix = "v"`). Bumps the version from conventional commits, syncs manifests via `scripts/sync_version.sh`, writes `CHANGELOG.md` (template `changelog.tpl`), commits and tags, then pushes. Manual version: `bun run version -- 1.2.3`.
 
 ### Code Changes
 
