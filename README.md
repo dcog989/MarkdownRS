@@ -29,7 +29,7 @@ The only Markdown editor you need? Many people are saying so.
 - Math (KaTeX): Render math in the preview with KaTeX.
 - Diagrams (Mermaid): Render flowcharts, sequence diagrams, and more with Mermaid.js.
 
-#### Math (KaTeX)
+### Math (KaTeX)
 
 Math renders in the preview with KaTeX. Delimiters:
 
@@ -40,7 +40,7 @@ Math renders in the preview with KaTeX. Delimiters:
 
 Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
 
-#### Diagrams (Mermaid)
+### Diagrams (Mermaid)
 
 Flowcharts, sequence diagrams, and other diagrams render in the preview from ```` ```mermaid ```` fenced blocks. Mermaid is lazy-loaded only when a diagram is present and rendered diagrams are cached by content hash, so unchanged diagrams are never re-rendered.
 
@@ -60,6 +60,24 @@ Flowcharts, sequence diagrams, and other diagrams render in the preview from ```
 ### Export
 
 - Export your documents to PDF, PNG, WEBP, or HTML.
+
+### Markdown Linting / Formatting
+
+The embedded [rumdl](https://github.com/rvben/rumdl/) lints and formats Markdown content; rules can be configured with the built-in editor.
+
+*rumdl* config files - `.rumdl.toml` or `rumdl.toml` - can be placed at project or home folder levels. If neither exists, the built-in defaults are used.
+
+### Grammar Checking
+
+The [Harper](https://writewithharper.com/) Grammar Check is optional and its rules can be edited in `settings.toml`:
+
+```toml
+[harperLinters]
+OxfordComma = false      # disable a rule
+LongSentences = true     # force a rule on
+```
+
+---
 
 ## Code / Dev Stack
 
@@ -81,14 +99,9 @@ Developed using the latest versions of:
 ## Development
 
 ```sh
-# Install dependencies
-bun install
-
-# Run in development mode
-bun run dev
-
-# Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
-bunx tauri build
+bun install        # Install dependencies
+bun run dev        # Run in development mode
+bunx tauri build   # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 ```
 
 Arch / CachyOS package (requires `bunx tauri build` first, so the compiled binary exists):
@@ -105,32 +118,7 @@ mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si
 - `bun run update` - Update packages + crates
 - `bun run dev` - Start dev server / HMR
 - `bun run preview` - Preview the production build
-
-## Markdown Style & Formatting
-
-MarkdownRS uses [*rumdl*](https://github.com/rvben/rumdl/), a linter and formatter, to ensure standard, consistent Markdown.
-
-You can change which style rules that *rumdl* applies by creating a config file:
-
-1. **Put one in your project** — the app looks for a config file near your document (e.g. `.rumdl.toml` or `rumdl.toml`). It checks the document's folder, then works its way up to your chosen workspace root.
-2. **Put one in your home folder** — if no project config is found, it uses a config from your user config folder or your home directory.
-3. **Use the defaults** — if neither exists, the built-in default rules are used.
-
-The most important config wins: a project config always overrides a home-folder config, and both override the defaults. Files that haven't been saved yet (no location on disk) only use the home-folder config or the defaults.
-
-### Grammar Checking (Harper)
-
-MarkdownRS also checks grammar with [Harper](https://writewithharper.com/), in addition to the style rules above. Harper lints are hidden inside inline code and code blocks.
-
-The `Grammar Check (Harper)` toggle (Settings → Grammar) enables or disables this. Individual rules can be overridden in `settings.toml` (in the app config directory) under a `[harperLinters]` table:
-
-```toml
-[harperLinters]
-OxfordComma = false      # disable a rule
-LongSentences = true     # force a rule on
-```
-
-The available rule names and their defaults are listed in the [Harper rules reference](https://writewithharper.com/docs/rules). Unknown rule names are ignored, and removing a key restores the rule's default behaviour. Note that `SpellCheck` is always disabled — spelling is handled by the built-in spellchecker — and rule overrides are app-global (not per-project).
+- `bun run package` - build and install
 
 ## Contributing
 
