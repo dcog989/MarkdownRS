@@ -22,3 +22,14 @@ export function isDirty(content: string, savedHash: string): boolean {
 export function updateSavedHash(tab: { lastSavedHash: string; content: string }): void {
   tab.lastSavedHash = hashContent(tab.content);
 }
+
+/**
+ * A tab is modified when its in-memory content differs from what's on disk.
+ * An unsaved (path-less) tab has no on-disk baseline to compare against, so
+ * it is only ever clean while it holds no content; anything non-empty counts
+ * as modified even if the hash happens to match the initial template.
+ */
+export function isTabDirty(tab: { path: string | null; content: string; lastSavedHash: string }): boolean {
+  if (tab.path) return isDirty(tab.content, tab.lastSavedHash);
+  return tab.content.trim().length > 0;
+}

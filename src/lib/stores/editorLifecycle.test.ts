@@ -52,6 +52,28 @@ describe('createNewFile', () => {
     const tab = editorStore.tabs.find((t) => t.id === id);
     expect(tab?.content).toBe('');
   });
+
+  it('marks a template-backed unsaved tab as dirty so closing prompts for a save', async () => {
+    settingsState.newFileTemplatePath = '/templates/base.md';
+    mockedReadTextFile.mockResolvedValue({
+      content: '# Title\n\nBody text',
+      encoding: 'UTF-8',
+      has_bom: false,
+    });
+
+    const id = await createNewFile();
+
+    const tab = editorStore.tabs.find((t) => t.id === id);
+    expect(tab?.isDirty).toBe(true);
+    expect(tab?.path).toBeNull();
+  });
+
+  it('leaves an empty unsaved tab clean', async () => {
+    const id = await createNewFile();
+
+    const tab = editorStore.tabs.find((t) => t.id === id);
+    expect(tab?.isDirty).toBe(false);
+  });
 });
 
 function tab(id: string, isPinned: boolean): EditorTab {

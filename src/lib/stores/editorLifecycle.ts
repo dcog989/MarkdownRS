@@ -2,7 +2,7 @@ import { translate } from '$lib/i18n';
 import { reloadFileContent } from '$lib/services/fileMetadata';
 import { initializeTabLoadState } from '$lib/services/tabLoadStateMachine';
 import { CONFIG } from '$lib/utils/config';
-import { updateSavedHash } from '$lib/utils/contentHash';
+import { isTabDirty, updateSavedHash } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { readTextFile } from '$lib/utils/fileIO';
 import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
@@ -94,6 +94,10 @@ export function addTab(title: string = '', content: string = '') {
   };
 
   updateSavedHash(newTab);
+  // A new unsaved tab starts clean only if it has no content (e.g. an empty
+  // template); any non-empty content must be treated as modified so closing
+  // prompts for a save instead of silently discarding it.
+  newTab.isDirty = isTabDirty(newTab);
   initTabCaches(id);
   initializeTabLoadState(id, true);
 

@@ -3,7 +3,7 @@ import { computeWordCount } from '$lib/stores/editorCache';
 import { editorStore, updateTransientState } from '$lib/stores/editorStore.svelte';
 import { settingsState } from '$lib/stores/settingsState.svelte';
 import { callBackend } from '$lib/utils/backend';
-import { hashContent, isDirty } from '$lib/utils/contentHash';
+import { hashContent, isTabDirty } from '$lib/utils/contentHash';
 import { getEditorInstance } from '$lib/utils/editorCommands';
 import { AppError } from '$lib/utils/errorHandling';
 import { logger } from '$lib/utils/logger';
@@ -232,7 +232,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
         encoding: diskEncoding ? diskEncoding.toUpperCase() : currentTab.encoding,
         hasBom: diskHasBom ?? currentTab.hasBom,
         contentLoaded: true,
-        isDirty: isDirty(content, lastSavedHash),
+        isDirty: isTabDirty({ path: currentTab.path, content, lastSavedHash }),
       });
 
       logger.session.info('TabContentLoaded', {

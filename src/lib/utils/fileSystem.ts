@@ -22,6 +22,7 @@ import {
 import { addToFileHistory } from '$lib/stores/fileHistoryStore.svelte';
 import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
+import { runFlushFunctions } from '$lib/utils/editorCommands';
 import { logger } from '$lib/utils/logger';
 import {
   autoSaveCurrentFile,
@@ -104,6 +105,12 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
 export async function requestCloseTab(id: string, force = false): Promise<void> {
   const tab = appContext.editor.tabs.find((t) => t.id === id);
   if (!tab || (tab.isPinned && !force)) return;
+
+  // The editor syncs content into the store on a debounce (CONTENT_DEBOUNCE_MS);
+  // a tab whose last edit is still pending would otherwise read as clean here
+  // and close without the unsaved-changes prompt. Flush pending content first,
+  // the same way saveCurrentFile does before writing.
+  runFlushFunctions();
 
   if (!appContext.settings.confirmationSuppressed && tab.isDirty) {
     const result = await confirmDialog({

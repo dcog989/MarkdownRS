@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hashContent, isDirty, updateSavedHash } from './contentHash';
+import { hashContent, isDirty, isTabDirty, updateSavedHash } from './contentHash';
 
 describe('hashContent', () => {
   it('returns a stable hash for identical input', () => {
@@ -31,5 +31,22 @@ describe('updateSavedHash', () => {
     const tab = { lastSavedHash: 'old', content: 'new content' };
     updateSavedHash(tab);
     expect(tab.lastSavedHash).toBe(hashContent('new content'));
+  });
+});
+
+describe('isTabDirty', () => {
+  it('compares content to the saved hash for disk-backed tabs', () => {
+    expect(isTabDirty({ path: '/a.md', content: 'same', lastSavedHash: hashContent('same') })).toBe(false);
+    expect(isTabDirty({ path: '/a.md', content: 'different', lastSavedHash: hashContent('same') })).toBe(true);
+  });
+
+  it('treats any non-empty unsaved tab as modified, even if the hash matches', () => {
+    const content = 'template';
+    expect(isTabDirty({ path: null, content, lastSavedHash: hashContent(content) })).toBe(true);
+  });
+
+  it('treats an empty or whitespace-only unsaved tab as clean', () => {
+    expect(isTabDirty({ path: null, content: '', lastSavedHash: '' })).toBe(false);
+    expect(isTabDirty({ path: null, content: '   \n  ', lastSavedHash: '' })).toBe(false);
   });
 });

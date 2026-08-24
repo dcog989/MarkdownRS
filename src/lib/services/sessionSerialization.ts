@@ -232,6 +232,14 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
 
   if (t.path) updateSavedHash(editorTab);
 
+  // An unsaved restored tab has no on-disk baseline, so it is modified
+  // whenever it holds content. The persisted is_dirty flag can be stale
+  // (e.g. a template-backed new file persisted while still marked clean) and
+  // would otherwise let Ctrl+W discard the content without a save prompt.
+  if (!t.path && editorTab.content.trim().length > 0) {
+    editorTab.isDirty = true;
+  }
+
   setLineChangeTracker(t.id, new LineChangeTracker());
   initTransientState(t.id, {
     scrollPercentage: t.scroll_percentage,

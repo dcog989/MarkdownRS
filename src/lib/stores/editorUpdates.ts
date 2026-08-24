@@ -1,4 +1,4 @@
-import { hashContent, isDirty } from '$lib/utils/contentHash';
+import { hashContent, isTabDirty } from '$lib/utils/contentHash';
 import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
 import { isMarkdownFile } from '$lib/utils/fileValidation';
 import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
@@ -42,7 +42,7 @@ export function updateContent(id: string, content: string, lineCount: number) {
   Object.assign(editorStore.tabs[index], {
     title: newTitle,
     content,
-    isDirty: isDirty(content, oldTab.lastSavedHash),
+    isDirty: isTabDirty({ path: oldTab.path, content, lastSavedHash: oldTab.lastSavedHash }),
     modified: now,
     formattedTimestamp: formatTimestampForDisplay(now),
     sizeBytes,
