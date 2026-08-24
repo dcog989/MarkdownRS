@@ -76,7 +76,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMzMDhCODYxMjhCMzc1NTgKUldSWWRiTW9ZYmdJTXpQL2lKRDgzWjN3OGFSRDZsd2sxblVYSUZtTXc5Y2szNUx0QUdYYTdRUlQK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhCQ0Y1N0E1RjQ2NjZBMDUKUldRRmFtYjBwVmZQaTNDV3JtcHRxZXo5M1ZRckNDcVFqWkdYOUtiazdJYWF5QWRUVDZVV2dKdzYK",
       "endpoints": ["https://github.com/dcog989/MarkdownRS/releases/latest/download/latest.json"]
     },
     "shell": {
