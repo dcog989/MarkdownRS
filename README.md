@@ -110,4 +110,4 @@ bun run package      # build and install
 
 ## License
 
-[MIT License](https://github.com/dcog989/MarkdownRS/blob/main/LICENSE).
+[GNU General Public License v3](https://github.com/dcog989/MarkdownRS/blob/main/LICENSE).
