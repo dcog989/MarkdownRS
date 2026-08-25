@@ -90,3 +90,10 @@ jobs:
         with:
           draft: false
           files: .pkg/*.pkg.tar.zst
+
+      - name: Upload CHANGELOG
+        if: matrix.os == 'ubuntu-latest'
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: false
+          files: CHANGELOG.md
