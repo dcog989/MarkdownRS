@@ -1,4 +1,6 @@
+import { startCompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@codemirror/view';
+import { armFenceLanguagePicker } from '$lib/utils/fenceLanguageCompletion';
 import { spellcheckState } from '$lib/utils/spellcheck.svelte';
 
 function getWhitespaceState(state: EditorView['state'], pos: number): { isBefore: boolean; isAfter: boolean } {
@@ -35,14 +37,21 @@ export const smartBacktickHandler = EditorView.inputHandler.of((view, from, to, 
 
       if (/^\s*$/.test(textBefore) && (charAfter === '' || /\s/.test(charAfter))) {
         const indent = textBefore;
+        const blockStart = from + 2 + indent.length;
+        // When the language picker is available, park the cursor right after
+        // the opening fence and offer a language selection; otherwise drop
+        // straight into the block as before.
+        const armed = armFenceLanguagePicker(view, line.number);
         view.dispatch({
           changes: {
             from,
             to,
             insert: `\`\n${indent}\n${indent}\`\`\``,
           },
-          selection: { anchor: from + 1 + indent.length + 1 },
+          selection: { anchor: armed ? from + 1 : blockStart },
+          scrollIntoView: true,
         });
+        if (armed) startCompletion(view);
         return true;
       }
     }

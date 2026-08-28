@@ -13,6 +13,7 @@ import { commands } from '$lib/commands/commands';
 import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
 import { appContext } from '$lib/stores/state.svelte';
 import { emojiAutocompleteKeymap, emojiCompletion } from '$lib/utils/emojiCompletion';
+import { fenceCursorPlugin, fenceLanguageCompletion } from '$lib/utils/fenceLanguageCompletion';
 
 function toCmKey(registryKey: string): string {
   const parts = registryKey.split('+').map((p) => p.toLowerCase());
@@ -60,6 +61,7 @@ export function getAutocompletionConfig() {
   if (appContext.settings.autocompleteDelay < 0) return [];
   return [
     emojiAutocompleteKeymap,
+    fenceCursorPlugin,
     autocompletion({
       activateOnTyping: true,
       activateOnTypingDelay: appContext.settings.autocompleteDelay,
@@ -67,7 +69,7 @@ export function getAutocompletionConfig() {
       defaultKeymap: true,
       aboveCursor: false,
       maxRenderedOptions: 100,
-      override: [emojiCompletion, smartCompleteAnyWord],
+      override: [emojiCompletion, fenceLanguageCompletion, smartCompleteAnyWord],
     }),
   ];
 }
