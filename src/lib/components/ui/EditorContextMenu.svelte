@@ -120,6 +120,7 @@ const formatOps: MenuOption[] = [
   { id: 'increase-heading', label: 'Increase Heading Level' },
   { id: 'decrease-heading', label: 'Decrease Heading Level' },
   { divider: true },
+  { id: 'hard-wrap', label: 'Wrap at Column' },
   { id: 'wrap-quotes', label: 'Wrap in Quotes' },
 ];
 

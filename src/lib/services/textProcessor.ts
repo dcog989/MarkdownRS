@@ -82,6 +82,12 @@ class TextProcessor {
     this.strategies.set('indent-lines', (t) => ClientLogic.indentLines(t, appContext.settings.defaultIndent));
     this.strategies.set('unindent-lines', (t) => ClientLogic.unindentLines(t, appContext.settings.defaultIndent));
     this.strategies.set('smart-paragraphs', ClientLogic.smartParagraphs);
+    this.strategies.set('hard-wrap', (t) =>
+      ClientLogic.reflowParagraphs(
+        t,
+        appContext.settings.wrapGuideColumn > 0 ? appContext.settings.wrapGuideColumn : 80,
+      ),
+    );
   }
 
   /**

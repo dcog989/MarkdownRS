@@ -1,4 +1,4 @@
-import { Eraser, List, TextAlignStart, Type } from 'lucide-svelte';
+import { Eraser, List, TextAlignStart, Type, WrapText } from 'lucide-svelte';
 import type { TextOperation } from './types';
 
 /**
@@ -13,7 +13,8 @@ export type TextManipulationOperationId =
   | 'add-line-numbers'
   | 'indent-lines'
   | 'unindent-lines'
-  | 'smart-paragraphs';
+  | 'smart-paragraphs'
+  | 'hard-wrap';
 
 /**
  * Text Manipulation operations
@@ -92,6 +93,14 @@ export const TEXT_MANIPULATION_OPERATIONS: Record<
     label: 'Smart Paragraphs',
     description: 'Split large blocks into paragraphs',
     icon: TextAlignStart,
+    category: 'text',
+    execution: 'client',
+  },
+  'hard-wrap': {
+    id: 'hard-wrap',
+    label: 'Wrap at Column',
+    description: 'Rewrap paragraphs at the configured wrap column',
+    icon: WrapText,
     category: 'text',
     execution: 'client',
   },

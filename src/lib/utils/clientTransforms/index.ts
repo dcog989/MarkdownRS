@@ -34,6 +34,7 @@ export {
   toggleCodeFence,
 } from './markdown';
 export { smartParagraphs } from './paragraphs';
+export { reflowParagraphs } from './reflow';
 export {
   addLineNumbers,
   indentLines,
