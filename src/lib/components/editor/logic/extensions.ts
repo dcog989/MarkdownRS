@@ -22,7 +22,7 @@ import { appContext } from '$lib/stores/state.svelte';
 import { showToast } from '$lib/stores/toastStore.svelte';
 import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
-import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
+import { linkPlugin } from '$lib/utils/filePathExtension';
 import { createFoldExtensions } from '$lib/utils/foldExtension';
 import { frontmatterExtension } from '$lib/utils/frontmatterExtension';
 import { createImagePasteExtension } from '$lib/utils/imagePaste';
@@ -105,7 +105,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
 
     // Links are clickable (Ctrl+Click) in every file type, so the highlight
     // affordance must match: apply decorations unless simple mode for large files.
-    c.filePathComp.of(!config.isLargeFile ? [linkPlugin, linkTheme] : []),
+    c.filePathComp.of(!config.isLargeFile ? [linkPlugin] : []),
     c.keymapComp.of(getEditorKeymap([...config.customKeymap])),
     c.themeComp.of(
       generateDynamicTheme(appContext.settings.editorFontSize, appContext.settings.editorFontFamily, isDark),

@@ -27,7 +27,7 @@ import { restoreScrollByTopLine, ScrollManager } from '$lib/utils/cmScroll';
 import { getActiveEditorView, setActiveEditorView } from '$lib/utils/editorCommands';
 import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
 import { generateDynamicTheme } from '$lib/utils/editorTheme';
-import { linkPlugin, linkTheme } from '$lib/utils/filePathExtension';
+import { linkPlugin } from '$lib/utils/filePathExtension';
 import { createFoldExtensions } from '$lib/utils/foldExtension';
 import { createImagePasteExtension } from '$lib/utils/imagePaste';
 import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
@@ -214,7 +214,7 @@ $effect(() => {
   view.dispatch({
     effects: [
       comps.foldComp.reconfigure(md ? createFoldExtensions() : []),
-      comps.filePathComp.reconfigure(!isLargeFile ? [linkPlugin, linkTheme] : []),
+      comps.filePathComp.reconfigure(!isLargeFile ? [linkPlugin] : []),
       comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
       comps.imagePasteComp.reconfigure(md ? createImagePasteExtension() : []),
     ],
@@ -373,6 +373,7 @@ onMount(() => {
   class="bg-bg-main relative h-full w-full overflow-hidden"
   class:raw-mode={effectiveMarkdown && appContext.settings.viewMode === 'raw'}
   class:rendered-mode={effectiveMarkdown && appContext.settings.viewMode === 'rendered'}
+  class:markdown-mode={effectiveMarkdown}
   bind:this={editorContainer}
   onclick={() => view?.focus()}
 ></div>

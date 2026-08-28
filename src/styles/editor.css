@@ -152,21 +152,31 @@
 }
 
 /* Interactive Elements */
-.cm-url {
+/* Persistent link styling is a markdown convention. Plain-text documents keep
+   links unstyled and reveal them only while Ctrl is held (see below). */
+.markdown-mode .cm-url {
   color: var(--editor-url);
 }
 
-.cm-link {
+.markdown-mode .cm-link {
   color: var(--editor-link);
 }
 
-.cm-file-path {
-  color: var(--editor-filepath);
+.markdown-mode .cm-file-path {
+  color: var(--editor-link);
 }
 
-.cm-wikilink {
-  color: var(--editor-filepath);
+.markdown-mode .cm-file-path:hover {
+  color: var(--editor-link-hover);
+}
+
+.markdown-mode .cm-wikilink {
+  color: var(--editor-link);
   text-decoration: underline;
+}
+
+.markdown-mode .cm-wikilink:hover {
+  color: var(--editor-link-hover);
 }
 
 /* Hide link decoration inside code blocks by default */
@@ -238,7 +248,7 @@
 }
 
 /* Hover color for .cm-url — always active, applies to all spans in the line */
-.cm-editor .cm-line:has(.cm-url:hover) .cm-url {
+.markdown-mode .cm-editor .cm-line:has(.cm-url:hover) .cm-url {
   color: var(--editor-url-hover);
 }
 
@@ -246,6 +256,19 @@
 .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover) .cm-url {
   background-color: oklch(from var(--editor-link) l c h / 0.1);
   box-shadow: 0 1px 0 0 currentColor;
+}
+
+/* Plain-text documents (editor container without .markdown-mode): links look
+   plain until Ctrl is held, then they are revealed as blue + underline so the
+   click affordance matches. Child combinator binds to the editor container. */
+div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-file-path:hover,
+div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-wikilink:hover {
+  color: var(--editor-link);
+  text-decoration: underline;
+}
+
+div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover) .cm-url {
+  color: var(--editor-url);
 }
 
 /* Markdown Elements */
