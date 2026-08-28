@@ -179,7 +179,8 @@
   color: var(--editor-link-hover);
 }
 
-/* Hide link decoration inside code blocks by default */
+/* Hide persistent link styling inside code blocks (fenced + inline): links only
+   get styled when Ctrl is held and the link is hovered (see below) */
 .cm-editor .cm-code .cm-link,
 .cm-editor .cm-code .cm-url,
 .cm-editor .cm-code .cm-file-path,
@@ -188,6 +189,7 @@
 .cm-editor .cm-code-block .cm-url,
 .cm-editor .cm-code-block .cm-file-path,
 .cm-editor .cm-code-block .cm-wikilink {
+  color: var(--editor-code-fg);
   text-decoration: none;
 }
 
@@ -244,18 +246,31 @@
 .cm-editor.cm-modifier-down .cm-code-block .cm-link:hover,
 .cm-editor.cm-modifier-down .cm-code-block .cm-file-path:hover,
 .cm-editor.cm-modifier-down .cm-code-block .cm-wikilink:hover {
+  color: var(--editor-link);
   text-decoration: underline;
 }
 
-/* Hover color for .cm-url — always active, applies to all spans in the line */
+/* Hover color for .cm-url — always active, applies to all spans in the line,
+   but not inside code blocks (fenced + inline) */
 .markdown-mode .cm-editor .cm-line:has(.cm-url:hover) .cm-url {
   color: var(--editor-url-hover);
+}
+
+.cm-editor .cm-line:has(.cm-url:hover) .cm-code .cm-url,
+.cm-editor .cm-line.cm-code-block:has(.cm-url:hover) .cm-url {
+  color: var(--editor-code-fg);
 }
 
 /* Ctrl+hover effects for .cm-url */
 .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover) .cm-url {
   background-color: oklch(from var(--editor-link) l c h / 0.1);
   box-shadow: 0 1px 0 0 currentColor;
+}
+
+/* Ctrl+hover: reveal URL color inside code blocks too */
+.cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover) .cm-code .cm-url,
+.cm-editor.cm-modifier-down .cm-line.cm-code-block:has(.cm-url:hover) .cm-url {
+  color: var(--editor-url);
 }
 
 /* Plain-text documents (editor container without .markdown-mode): links look
