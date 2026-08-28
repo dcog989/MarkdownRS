@@ -103,7 +103,9 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     prefetchHoverHandler,
     createCodeBlockCopyHandler({ translate, showToast }),
 
-    c.filePathComp.of(config.isMarkdown ? [linkPlugin, linkTheme] : []),
+    // Links are clickable (Ctrl+Click) in every file type, so the highlight
+    // affordance must match: apply decorations unless simple mode for large files.
+    c.filePathComp.of(!config.isLargeFile ? [linkPlugin, linkTheme] : []),
     c.keymapComp.of(getEditorKeymap([...config.customKeymap])),
     c.themeComp.of(
       generateDynamicTheme(appContext.settings.editorFontSize, appContext.settings.editorFontFamily, isDark),

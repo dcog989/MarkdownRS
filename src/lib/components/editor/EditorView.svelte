@@ -214,7 +214,7 @@ $effect(() => {
   view.dispatch({
     effects: [
       comps.foldComp.reconfigure(md ? createFoldExtensions() : []),
-      comps.filePathComp.reconfigure(md ? [linkPlugin, linkTheme] : []),
+      comps.filePathComp.reconfigure(!isLargeFile ? [linkPlugin, linkTheme] : []),
       comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
       comps.imagePasteComp.reconfigure(md ? createImagePasteExtension() : []),
     ],
