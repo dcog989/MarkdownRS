@@ -298,6 +298,9 @@ export function snapToMarkdownConstruct(view: EditorView, from: number, to: numb
     to,
     enter: (node) => {
       if (!COPY_SNAP_NODES.has(node.name)) return;
+      // Selecting text fully inside inline-code backticks copies only the
+      // content; snapping would drag the invisible ticks into the clipboard.
+      if (node.name === 'InlineCode' && node.from < from && to < node.to) return;
       if (node.from < from || node.to > to) {
         snapFrom = Math.min(snapFrom, node.from);
         snapTo = Math.max(snapTo, node.to);
