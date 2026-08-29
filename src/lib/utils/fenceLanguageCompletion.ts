@@ -1,5 +1,5 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import { completionStatus, pickedCompletion, startCompletion } from '@codemirror/autocomplete';
+import { completionStatus, pickedCompletion } from '@codemirror/autocomplete';
 import { languages } from '@codemirror/language-data';
 import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 

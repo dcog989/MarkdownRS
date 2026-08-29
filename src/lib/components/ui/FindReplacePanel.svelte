@@ -251,7 +251,7 @@ onMount(() => {
 {#if isOpen}
   <div
     bind:this={panelRef}
-    class="find-panel bg-border-main absolute top-0 right-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
+    class="find-panel bg-border-main absolute top-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
     class:opacity-[0.15]={appContext.settings.findPanelTransparent && !isMouseOver}
     onkeydown={handleKeydown}
     onfocusout={handleBlur}
@@ -300,13 +300,13 @@ onMount(() => {
           oninput={onInput}
           spellcheck="false"
         />
-        <div class="text-fg-muted min-w-20 text-right text-2xs">
+        <div class="text-fg-muted min-w-8 text-right text-ui-sm whitespace-nowrap">
           {#if searchScope === 'current'}
             {#if searchState.currentMatches > 0}
               {searchState.currentIndex + 1}
-              {$_('findReplace.of')} {searchState.currentMatches}
+              / {searchState.currentMatches}
             {:else if searchState.findText}
-              0 {$_('findReplace.of')} 0
+              0 / 0
             {/if}
           {:else if searchScope === 'all'}
             {#if searchState.allTabsResults.size > 0}
@@ -435,7 +435,7 @@ onMount(() => {
 
       {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
         <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-          <div class="text-fg-muted mb-1 text-2xs font-semibold">{$_('findReplace.results')}</div>
+          <div class="text-fg-muted mb-1 text-ui-sm font-semibold">{$_('findReplace.results')}</div>
           {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
             {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
             {#if tab}
@@ -447,7 +447,7 @@ onMount(() => {
                 <span class="text-fg-default overflow-hidden text-ui-sm text-ellipsis whitespace-nowrap"
                   >{tab.title}</span
                 >
-                <span class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-2xs">{count}</span>
+                <span class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-ui-sm">{count}</span>
               </button>
             {/if}
           {/each}
@@ -459,6 +459,7 @@ onMount(() => {
 
 <style>
 .find-panel {
+  right: var(--find-panel-right, 0px);
   background-color: color-mix(in srgb, var(--surface-2) 82%, transparent);
 }
 </style>

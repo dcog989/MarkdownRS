@@ -424,7 +424,6 @@ export const en = {
     closeEsc: 'Close (Esc)',
     find: 'Find',
     replace: 'Replace',
-    of: 'of',
     tabs: '{count} tabs',
     zeroTabs: '0 tabs',
     matchCase: 'Match Case',
