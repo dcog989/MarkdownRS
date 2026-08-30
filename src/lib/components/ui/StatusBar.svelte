@@ -38,7 +38,9 @@ let fileType = $derived.by(() => {
   return 'markdown';
 });
 
-let canToggleFileType = $derived(!!tabId);
+// Markdown files can only be markdown, other text files (txt, css, cpp, py, ...)
+// can only be text: only unsaved documents get the text/markdown toggle.
+let canToggleFileType = $derived(!!tabId && !path);
 
 // Context Menu State
 let showMenu = $state(false);
