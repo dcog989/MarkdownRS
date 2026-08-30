@@ -4,6 +4,7 @@ pkgrel=1
 pkgdesc="The only Markdown editor you need."
 arch=('x86_64')
 license=('MIT')
+options=('!debug')
 depends=('webkit2gtk-4.1' 'openssl' 'libnm')
 source=()
 sha256sums=()
