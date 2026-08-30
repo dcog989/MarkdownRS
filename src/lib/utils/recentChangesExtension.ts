@@ -122,7 +122,11 @@ export function createRecentChangesHighlighter(
               const linesA = docA.lineAt(toA).number - docA.lineAt(fromA).number;
               const linesB = docB.lineAt(toB).number - docB.lineAt(fromB).number;
 
-              if (linesA > linesB) {
+              // Only treat the edit as a deletion when actual (non-blank)
+              // content was removed. Deleting a blank line or joining two
+              // lines removes only whitespace/newlines and should not mark a
+              // line as deleted.
+              if (linesA > linesB && /\S/.test(docA.sliceString(fromA, toA))) {
                 const lineNo = docB.lineAt(fromB).number;
                 deletions.add(lineNo);
               }
