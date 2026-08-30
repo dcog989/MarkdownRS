@@ -4,7 +4,7 @@ description = "The only Markdown editor you need."
 edition = "2024"
 name = "markdown-rs"
 version = "1.59.0"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-only"
 
 [build-dependencies]
 tauri-build = { version = "2.6", features = [] }
