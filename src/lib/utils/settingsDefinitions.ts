@@ -132,6 +132,14 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: 'settings.minimapTooltip',
     },
     {
+      key: 'enableFolding',
+      label: 'settings.folding',
+      type: 'boolean',
+      category: 'settings.category.editor',
+      defaultValue: true,
+      tooltip: 'settings.foldingTooltip',
+    },
+    {
       key: 'writerWrapLength',
       label: 'settings.writerWrapLength',
       type: 'number',

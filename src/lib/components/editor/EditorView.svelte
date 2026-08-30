@@ -211,9 +211,10 @@ $effect(() => {
 $effect(() => {
   if (!view) return;
   const md = effectiveMarkdown;
+  const foldingEnabled = appContext.settings.enableFolding;
   view.dispatch({
     effects: [
-      comps.foldComp.reconfigure(md ? createFoldExtensions() : []),
+      comps.foldComp.reconfigure(md && foldingEnabled ? createFoldExtensions() : []),
       comps.filePathComp.reconfigure(!isLargeFile ? [linkPlugin] : []),
       comps.markdownLintComp.reconfigure(md ? createMarkdownLinter() : []),
       comps.imagePasteComp.reconfigure(md ? createImagePasteExtension() : []),

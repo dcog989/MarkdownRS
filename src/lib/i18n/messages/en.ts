@@ -203,6 +203,8 @@ export const en = {
     autocompleteDelayTooltip: 'Autocomplete suggestion delay (ms). -1 disables.',
     minimap: 'Minimap',
     minimapTooltip: 'Display minimap in place of the scrollbar.',
+    folding: 'Content Folding',
+    foldingTooltip: 'Show fold arrows in the gutter to collapse headings and code blocks.',
     writerWrapLength: 'Writer Mode Wrap Length.',
     writerWrapLengthTooltip: 'Maximum line width in characters when Writer Mode is active.',
     defaultIndent: 'Indent Size (spaces).',

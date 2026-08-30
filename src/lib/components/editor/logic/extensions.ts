@@ -96,7 +96,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     search({ top: true }),
     highlightSelectionMatches(),
     c.autoComp.of(config.autocompletionConfig),
-    c.foldComp.of(config.isMarkdown ? createFoldExtensions() : []),
+    c.foldComp.of(config.isMarkdown && appContext.settings.enableFolding ? createFoldExtensions() : []),
     c.recentComp.of(createRecentChangesHighlighter(config.lineChangeTracker, config.onContextMenu)),
     closeBrackets(),
     smartBacktickHandler,
