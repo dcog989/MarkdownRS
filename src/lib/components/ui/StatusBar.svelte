@@ -214,10 +214,6 @@ async function copyAllStats() {
             <EyeOff size={14} />
           {/if}
         </button>
-      {:else}
-        <span class="flex cursor-default items-center px-1 opacity-70">
-          <Eye size={14} />
-        </span>
       {/if}
 
       {#if canToggleFileType}
