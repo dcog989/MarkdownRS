@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ClipboardCopy, Eye, TextWrap } from 'lucide-svelte';
+import { ClipboardCopy, Eye, EyeOff, TextWrap } from 'lucide-svelte';
 import { _ } from 'svelte-i18n';
 import { tooltip } from '$lib/actions/tooltip';
 import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
@@ -208,7 +208,11 @@ async function copyAllStats() {
           onclick={toggleViewMode}
           use:tooltip={appContext.settings.viewMode === 'rendered' ? $_('statusBar.renderedMode') : $_('statusBar.rawMode')}
         >
-          <Eye size={14} />
+          {#if appContext.settings.viewMode === 'rendered'}
+            <Eye size={14} />
+          {:else}
+            <EyeOff size={14} />
+          {/if}
         </button>
       {:else}
         <span class="flex cursor-default items-center px-1 opacity-70">
