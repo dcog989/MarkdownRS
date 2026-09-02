@@ -10,7 +10,7 @@
     "check": "svelte-kit sync && bun run check:types && bun run check:frontend && echo \"Checking Backend...\" && cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
     "check:frontend": "echo \"Checking Frontend Syntax...\" && bunx biome check .",
     "check:types": "echo \"Checking Frontend Types...\" && svelte-check --tsconfig ./tsconfig.json --config ./vite.config.ts",
-    "clean": "rm -rf .context .svelte-kit build node_modules bun.lock src-tauri/gen src-tauri/target website/dist .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
+    "clean": "rm -rf .context .svelte-kit build node_modules src-tauri/gen src-tauri/target website/dist coverage .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
     "coverage": "vitest run --coverage",
     "crates": "cd src-tauri && cargo upgrade --verbose",
     "dev": "tauri dev",
