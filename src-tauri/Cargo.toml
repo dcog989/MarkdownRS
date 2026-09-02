@@ -3,7 +3,7 @@ authors = ["dcog989"]
 description = "The only Markdown editor you need."
 edition = "2024"
 name = "markdown-rs"
-version = "1.60.1"
+version = "1.60.2"
 license = "GPL-3.0-only"
 
 [build-dependencies]

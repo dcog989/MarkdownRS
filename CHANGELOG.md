@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.60.2 - 2026-09-02
+- - -
+
 ## v1.60.1 - 2026-09-02
 
 #### Bug Fixes
