@@ -8,7 +8,7 @@ pre-commit:
 
     - name: rust-fmt
       glob: "*.rs"
-      run: cd src-tauri && cargo fmt
+      run: cargo fmt --manifest-path src-tauri/Cargo.toml -- {staged_files}
       stage_fixed: true
 
 pre-push:
