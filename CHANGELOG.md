@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.60.1 - 2026-09-02
+
+#### Bug Fixes
+
+- (01d5495) allow GPL-3.0-only license in cargo-deny - dcog989
+- - -
+
 ## v1.60.0 - 2026-09-02
 
 #### Features
