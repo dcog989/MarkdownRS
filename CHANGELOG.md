@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.60.0 - 2026-09-02
+
+#### Features
+
+- (6a17256) hide view mode toggle for text files - dcog989
+
+- (6b0531f) show eye-off icon in raw view mode - dcog989
+
+- (51ce9f8) restrict text/markdown toggle to unsaved documents - dcog989
+
+- (f6089ce) add content folding toggle - dcog989
+
+#### Bug Fixes
+
+- (d9e1212) fail loudly when version sync cannot match a manifest field - dcog989
+
+- (8589e6e) only mark non-blank content removals as deletions - dcog989
+
+- (7a1dd33) disable debug subpackage in PKGBUILD - dcog989
+
+#### Refactoring
+
+- (f30b440) use eye icon for rendered mode toggle - dcog989
+- - -
+
 ## v1.59.0 - 2026-08-29
 
 #### Features
