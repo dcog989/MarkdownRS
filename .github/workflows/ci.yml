@@ -28,13 +28,10 @@ jobs:
           path: node_modules
           key: bun-${{ hashFiles('bun.lock') }}-v1
 
-      - name: Cache cargo registry
-        uses: actions/cache@v6
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          workspaces: './src-tauri -> target'
 
       - name: Install system dependencies
         run: |
@@ -84,13 +81,10 @@ jobs:
           path: node_modules
           key: bun-${{ hashFiles('bun.lock') }}-v1
 
-      - name: Cache cargo registry
-        uses: actions/cache@v6
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          workspaces: './src-tauri -> target'
 
       - name: Install system dependencies
         run: |
