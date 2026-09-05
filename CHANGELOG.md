@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.60.3 - 2026-09-05
+
+#### Bug Fixes
+
+- (1e88b0d) update bench files to vitest 5.0 benchmark API - dcog989
+- - -
+
 ## v1.60.2 - 2026-09-02
 - - -
 
