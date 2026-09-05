@@ -1,9 +1,9 @@
-import { syntaxTree } from '@codemirror/language';
-import { EditorView } from '@codemirror/view';
-import { openUrl } from '@tauri-apps/plugin-opener';
-import { extractPathAtPos, extractWikilinkAtPos } from '$lib/utils/filePathExtension';
-import { navigateToPath } from '$lib/utils/fileSystem';
-import { logger } from '$lib/utils/logger';
+import { syntaxTree } from "@codemirror/language";
+import { EditorView } from "@codemirror/view";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { extractPathAtPos, extractWikilinkAtPos } from "$lib/utils/filePathExtension";
+import { navigateToPath } from "$lib/utils/fileSystem";
+import { logger } from "$lib/utils/logger";
 
 export type ContextMenuCallback = (event: MouseEvent, view: EditorView) => void;
 
@@ -15,17 +15,17 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
         const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
         if (pos === null) return false;
 
-        let targetString = '';
+        let targetString = "";
 
         // 1. Check syntax tree for Link/URL nodes (CommonMark links)
         let node = syntaxTree(view.state).resolveInner(pos, 1);
-        while (node?.parent && !['URL', 'Link', 'LinkEmail'].includes(node.name)) {
+        while (node?.parent && !["URL", "Link", "LinkEmail"].includes(node.name)) {
           node = node.parent;
         }
 
-        if (node && ['URL', 'Link', 'LinkEmail'].includes(node.name)) {
-          if (node.name === 'Link') {
-            const urlNode = node.node.getChild('URL');
+        if (node && ["URL", "Link", "LinkEmail"].includes(node.name)) {
+          if (node.name === "Link") {
+            const urlNode = node.node.getChild("URL");
             if (urlNode) targetString = view.state.sliceDoc(urlNode.from, urlNode.to);
           } else {
             targetString = view.state.sliceDoc(node.from, node.to);
@@ -36,14 +36,14 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
         if (!targetString) {
           const line = view.state.doc.lineAt(pos);
           const posInLine = pos - line.from;
-          targetString = extractWikilinkAtPos(line.text, posInLine) || '';
+          targetString = extractWikilinkAtPos(line.text, posInLine) || "";
         }
 
         // 3. Check for File Paths (using shared regex logic)
         if (!targetString) {
           const line = view.state.doc.lineAt(pos);
           const posInLine = pos - line.from;
-          targetString = extractPathAtPos(line.text, posInLine) || '';
+          targetString = extractPathAtPos(line.text, posInLine) || "";
         }
 
         // 4. Fallback: heuristic regex matching on the current line (Word-based, fails on spaces)
@@ -60,13 +60,13 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
 
             targetString = text.slice(start, end).trim();
             // Strip wrapping brackets common in markdown/text
-            targetString = targetString.replace(/^[<([]+|[>)\]]+$/g, '');
+            targetString = targetString.replace(/^[<([]+|[>)\]]+$/g, "");
 
             // Strip trailing punctuation
             if (!/^https?:\/\//i.test(targetString)) {
-              targetString = targetString.replace(/[.,;:!?)\]]+$/, '');
+              targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
             } else {
-              targetString = targetString.replace(/[.,;!?)\]]+$/, '');
+              targetString = targetString.replace(/[.,;!?)\]]+$/, "");
             }
           }
         }
@@ -76,8 +76,8 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
           event.stopImmediatePropagation();
 
           if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-            const url = targetString.startsWith('www.') ? `https://${targetString}` : targetString;
-            openUrl(url).catch((err) => logger.editor.warn('OpenUrlFailed', { error: String(err) }));
+            const url = targetString.startsWith("www.") ? `https://${targetString}` : targetString;
+            openUrl(url).catch((err) => logger.editor.warn("OpenUrlFailed", { error: String(err) }));
           } else {
             navigateToPath(targetString);
           }

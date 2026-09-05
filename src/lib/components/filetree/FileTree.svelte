@@ -10,9 +10,9 @@ import {
   Folder,
   FolderOpen,
   LoaderCircle,
-} from 'lucide-svelte';
-import { onMount, tick } from 'svelte';
-import { _ } from 'svelte-i18n';
+} from "lucide-svelte";
+import { onMount, tick } from "svelte";
+import { _ } from "svelte-i18n";
 import {
   canNavigateUp,
   dirname,
@@ -24,33 +24,33 @@ import {
   revealPath,
   setRoot,
   toggle,
-} from '$lib/stores/fileTreeStore.svelte';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import type { TreeRow } from '$lib/stores/treeViewStore.svelte';
-import { applyFilter, computeTreeRows, treeViewStore } from '$lib/stores/treeViewStore.svelte';
-import type { FileEntry } from '$lib/types/api';
-import { CONFIG } from '$lib/utils/config';
-import { openFile } from '$lib/utils/fileSystem';
-import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from '$lib/utils/fileValidation';
-import FileTreeContextMenu from './FileTreeContextMenu.svelte';
-import FileTreeFilter from './FileTreeFilter.svelte';
-import FileTreeResizeHandle from './FileTreeResizeHandle.svelte';
-import FileTreeToolbar from './FileTreeToolbar.svelte';
+} from "$lib/stores/fileTreeStore.svelte";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import type { TreeRow } from "$lib/stores/treeViewStore.svelte";
+import { applyFilter, computeTreeRows, treeViewStore } from "$lib/stores/treeViewStore.svelte";
+import type { FileEntry } from "$lib/types/api";
+import { CONFIG } from "$lib/utils/config";
+import { openFile } from "$lib/utils/fileSystem";
+import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from "$lib/utils/fileValidation";
+import FileTreeContextMenu from "./FileTreeContextMenu.svelte";
+import FileTreeFilter from "./FileTreeFilter.svelte";
+import FileTreeResizeHandle from "./FileTreeResizeHandle.svelte";
+import FileTreeToolbar from "./FileTreeToolbar.svelte";
 
 const ROW_HEIGHT = CONFIG.FILETREE.ROW_HEIGHT;
 const OVERSCAN = CONFIG.FILETREE.OVERSCAN;
 const INDENT_STEP = CONFIG.FILETREE.INDENT_STEP;
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
-let rootDir = $derived(activeTab?.path ? dirname(activeTab.path) : '');
+let rootDir = $derived(activeTab?.path ? dirname(activeTab.path) : "");
 
 // The tree follows the active document: switching tabs repositions the root
 // to that file's folder. It only reacts to a change of the active file's
 // folder, not to the tree root itself, so navigating the tree (go up, go
 // into) is freely allowed without it snapping back. When the tree is locked
 // the root is pinned in place, so the active file is never followed.
-let lastFollowedDir = '';
+let lastFollowedDir = "";
 $effect(() => {
   if (settingsState.fileTreeLocked) return;
   if (!rootDir || rootDir === lastFollowedDir) return;
@@ -73,7 +73,7 @@ $effect(() => {
 
 // When the active document changes, refresh its directory so the tree
 // reflects saves/renames/new files next to the file you are editing.
-let lastActiveDir = '';
+let lastActiveDir = "";
 $effect(() => {
   const dir = rootDir;
   if (!dir || dir === lastActiveDir) return;
@@ -85,8 +85,8 @@ onMount(() => {
   const onFocus = () => {
     if (fileTreeStore.root) void refreshTree();
   };
-  window.addEventListener('focus', onFocus);
-  return () => window.removeEventListener('focus', onFocus);
+  window.addEventListener("focus", onFocus);
+  return () => window.removeEventListener("focus", onFocus);
 });
 
 // The tree rows, with a ".." parent entry on top whenever a parent exists.
@@ -102,7 +102,7 @@ let allRows = $derived.by(() => {
   return [
     {
       entry: {
-        name: '..',
+        name: "..",
         path: dirname(fileTreeStore.root),
         is_dir: true,
         is_symlink: false,
@@ -122,13 +122,13 @@ let allRows = $derived.by(() => {
 // The filter only makes sense for the current root; clear it when the tree
 // repositions (following the active file or navigating up/into) so a stale
 // query cannot leave the panel showing pruned results for the wrong folder.
-let filterQuery = $state('');
-let filterRoot = $state('');
+let filterQuery = $state("");
+let filterRoot = $state("");
 $effect(() => {
   const root = fileTreeStore.root;
   if (root === filterRoot) return;
   filterRoot = root;
-  filterQuery = '';
+  filterQuery = "";
 });
 
 // The query only applies to the root it was typed under. `filterRoot` is
@@ -136,9 +136,9 @@ $effect(() => {
 // re-positioned tree could otherwise be filtered with the previous folder's
 // query for one reactive flush. Guarding the derived value makes that single
 // frame render the unfiltered tree instead of a pruned or empty one.
-let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? filterQuery : '');
+let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? filterQuery : "");
 
-let filterActive = $derived(effectiveFilterQuery.trim() !== '');
+let filterActive = $derived(effectiveFilterQuery.trim() !== "");
 
 // Run the whole-tree search as the user types; re-run when the root, the
 // markdown-only toggle, or the hidden-files toggle changes so stale results
@@ -168,11 +168,11 @@ $effect(() => {
   return () => ro.disconnect();
 });
 
-let activeFilePath = $derived(activeTab?.path ?? '');
+let activeFilePath = $derived(activeTab?.path ?? "");
 
 // Reveal the active file when its tab is activated or the panel becomes
 // visible, expanding collapsed ancestors and centering its row.
-let lastRevealed = '';
+let lastRevealed = "";
 $effect(() => {
   if (!settingsState.fileTreeVisible) return;
   const path = activeFilePath;
@@ -221,45 +221,45 @@ function handleRowDoubleClick(row: TreeRow) {
 }
 
 function ext(name: string): string {
-  const idx = name.lastIndexOf('.');
-  return idx === -1 ? '' : name.slice(idx + 1).toLowerCase();
+  const idx = name.lastIndexOf(".");
+  return idx === -1 ? "" : name.slice(idx + 1).toLowerCase();
 }
 
-const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp', 'avif']);
+const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "avif"]);
 const CODE_EXT = new Set([
-  'ts',
-  'tsx',
-  'js',
-  'jsx',
-  'rs',
-  'py',
-  'go',
-  'java',
-  'c',
-  'cpp',
-  'h',
-  'hpp',
-  'cs',
-  'css',
-  'scss',
-  'less',
-  'html',
-  'svelte',
-  'vue',
-  'sh',
-  'bash',
-  'zsh',
-  'sql',
-  'lua',
-  'php',
-  'rb',
-  'kt',
-  'swift',
+  "ts",
+  "tsx",
+  "js",
+  "jsx",
+  "rs",
+  "py",
+  "go",
+  "java",
+  "c",
+  "cpp",
+  "h",
+  "hpp",
+  "cs",
+  "css",
+  "scss",
+  "less",
+  "html",
+  "svelte",
+  "vue",
+  "sh",
+  "bash",
+  "zsh",
+  "sql",
+  "lua",
+  "php",
+  "rb",
+  "kt",
+  "swift",
 ]);
-const JSON_EXT = new Set(['json', 'jsonc', 'toml', 'yaml', 'yml']);
+const JSON_EXT = new Set(["json", "jsonc", "toml", "yaml", "yml"]);
 
 let contextMenuEntry = $state<FileEntry | null>(null);
-let contextMenuDir = $state('');
+let contextMenuDir = $state("");
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
 </script>

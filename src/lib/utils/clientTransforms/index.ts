@@ -14,14 +14,14 @@ export {
   toSnakeCase,
   toTitleCase,
   toUpperCaseFirst,
-} from './case';
+} from "./case";
 export {
   removeDuplicates,
   removeUnique,
   reverseLines,
   shuffleLines,
   sortLines,
-} from './lines';
+} from "./lines";
 
 export {
   addCheckboxes,
@@ -32,9 +32,9 @@ export {
   toggleBlockquote,
   toggleBullets,
   toggleCodeFence,
-} from './markdown';
-export { smartParagraphs } from './paragraphs';
-export { reflowParagraphs } from './reflow';
+} from "./markdown";
+export { smartParagraphs } from "./paragraphs";
+export { reflowParagraphs } from "./reflow";
 export {
   addLineNumbers,
   indentLines,
@@ -48,4 +48,4 @@ export {
   trimWhitespace,
   unindentLines,
   wrapQuotes,
-} from './whitespace';
+} from "./whitespace";

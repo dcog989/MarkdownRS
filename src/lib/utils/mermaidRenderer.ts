@@ -1,5 +1,5 @@
-import { translate } from '$lib/i18n';
-import { hashContent } from './contentHash';
+import { translate } from "$lib/i18n";
+import { hashContent } from "./contentHash";
 
 /**
  * Renders ```mermaid fenced code blocks in a preview container after the
@@ -11,10 +11,10 @@ import { hashContent } from './contentHash';
  * update.
  */
 
-const MERMAID_SELECTOR = 'pre > code.language-mermaid';
+const MERMAID_SELECTOR = "pre > code.language-mermaid";
 const MAX_CACHE_ENTRIES = 50;
 
-type MermaidModule = typeof import('mermaid');
+type MermaidModule = typeof import("mermaid");
 
 let mermaidPromise: Promise<MermaidModule> | null = null;
 let initializedTheme: string | null = null;
@@ -23,38 +23,38 @@ let renderSeq = 0;
 const svgCache = new Map<string, string>();
 
 function loadMermaid(): Promise<MermaidModule> {
-  mermaidPromise ??= import('mermaid');
+  mermaidPromise ??= import("mermaid");
   return mermaidPromise;
 }
 
-function detectTheme(): 'dark' | 'default' {
-  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+function detectTheme(): "dark" | "default" {
+  return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "default";
 }
 
 async function getMermaid(): Promise<MermaidModule> {
   const mod = await loadMermaid();
   const theme = detectTheme();
   if (initializedTheme !== theme) {
-    mod.default.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
+    mod.default.initialize({ startOnLoad: false, theme, securityLevel: "strict" });
     initializedTheme = theme;
   }
   return mod;
 }
 
 function createErrorNode(source: string, error: unknown): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mermaid-container mermaid-error';
+  const wrapper = document.createElement("div");
+  wrapper.className = "mermaid-container mermaid-error";
 
-  const label = document.createElement('p');
-  label.className = 'mermaid-error-label';
-  label.textContent = translate('preview.mermaidError');
+  const label = document.createElement("p");
+  label.className = "mermaid-error-label";
+  label.textContent = translate("preview.mermaidError");
 
-  const detail = document.createElement('p');
-  detail.className = 'mermaid-error-detail';
+  const detail = document.createElement("p");
+  detail.className = "mermaid-error-detail";
   detail.textContent = error instanceof Error ? error.message : String(error);
 
-  const code = document.createElement('pre');
-  const codeContent = document.createElement('code');
+  const code = document.createElement("pre");
+  const codeContent = document.createElement("code");
   codeContent.textContent = source;
 
   code.append(codeContent);
@@ -63,8 +63,8 @@ function createErrorNode(source: string, error: unknown): HTMLElement {
 }
 
 function insertDiagram(pre: HTMLPreElement, svg: string, key: string): void {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mermaid-container';
+  const wrapper = document.createElement("div");
+  wrapper.className = "mermaid-container";
   wrapper.dataset.diagramKey = key;
   wrapper.innerHTML = svg;
   pre.replaceWith(wrapper);
@@ -82,10 +82,10 @@ export async function renderMermaidDiagrams(container: HTMLElement): Promise<voi
   const mermaid = (await getMermaid()).default;
 
   for (const block of blocks) {
-    const pre = block.closest('pre');
+    const pre = block.closest("pre");
     if (!pre?.isConnected) continue;
 
-    const source = block.textContent ?? '';
+    const source = block.textContent ?? "";
     const key = hashContent(source);
     const cached = svgCache.get(key);
     if (cached !== undefined) {

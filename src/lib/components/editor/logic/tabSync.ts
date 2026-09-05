@@ -1,21 +1,21 @@
-import { closeCompletion } from '@codemirror/autocomplete';
-import type { Extension } from '@codemirror/state';
-import { EditorState } from '@codemirror/state';
-import { initializeTabFileState } from '$lib/services/tabFileStateInit';
-import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { getHistoryState, getTransientState, updateContent, updateHistoryState } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import type { ScrollManager } from '$lib/utils/cmScroll';
-import { restoreScrollByTopLine } from '$lib/utils/cmScroll';
-import { CONFIG } from '$lib/utils/config';
-import { setActiveEditorView } from '$lib/utils/editorCommands';
-import { logger } from '$lib/utils/logger';
-import { scrollSync } from '$lib/utils/scrollSync.svelte';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
-import { applyImmediateSpellcheck } from '$lib/utils/spellcheckExtension.svelte';
-import { calculateCursorMetrics } from '$lib/utils/textMetrics';
-import type { AppEditorView } from '../../../../global';
+import { closeCompletion } from "@codemirror/autocomplete";
+import type { Extension } from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
+import { initializeTabFileState } from "$lib/services/tabFileStateInit";
+import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { getHistoryState, getTransientState, updateContent, updateHistoryState } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import type { ScrollManager } from "$lib/utils/cmScroll";
+import { restoreScrollByTopLine } from "$lib/utils/cmScroll";
+import { CONFIG } from "$lib/utils/config";
+import { setActiveEditorView } from "$lib/utils/editorCommands";
+import { logger } from "$lib/utils/logger";
+import { scrollSync } from "$lib/utils/scrollSync.svelte";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte";
+import { applyImmediateSpellcheck } from "$lib/utils/spellcheckExtension.svelte";
+import { calculateCursorMetrics } from "$lib/utils/textMetrics";
+import type { AppEditorView } from "../../../../global";
 
 export class TabSyncManager {
   /** Shared mutable timer refs for both tab sync and the update listener */
@@ -148,7 +148,7 @@ export class TabSyncManager {
 
     if (!largeFileMode) {
       initializeTabFileState(storeTab).catch((err) => {
-        logger.session.warn('TabInitFailed', { error: String(err) });
+        logger.session.warn("TabInitFailed", { error: String(err) });
       });
     }
 
@@ -156,7 +156,7 @@ export class TabSyncManager {
       this.isRestoring = false;
     }, CONFIG.UI_TIMING.RESTORE_STATE_DELAY_MS);
 
-    logger.editor.debug('TabSwitchTiming', {
+    logger.editor.debug("TabSwitchTiming", {
       tabId,
       contentLen,
       sizeBytes: storeTab.sizeBytes,
@@ -174,7 +174,7 @@ export class TabSyncManager {
     const storeContent = storeTab.content;
     const isLoaded = storeTab.contentLoaded;
     const isFocused = view.hasFocus;
-    const isInitialPopulate = isLoaded && currentDoc === '' && storeContent !== '';
+    const isInitialPopulate = isLoaded && currentDoc === "" && storeContent !== "";
     const isForcedSync = forceSyncCounter > this.lastForceSyncCounter;
 
     const shouldSync =
@@ -187,8 +187,8 @@ export class TabSyncManager {
     const diff = computeContentDiff(currentDoc, storeContent);
     if (!diff) return;
 
-    this.scrollManager.capture(view, 'Sync');
-    view.dispatch({ changes: diff, userEvent: 'input.type.sync' });
+    this.scrollManager.capture(view, "Sync");
+    view.dispatch({ changes: diff, userEvent: "input.type.sync" });
     requestAnimationFrame(() => {
       if (view && view._currentTabId === tabId) {
         if (isInitialPopulate) {
@@ -196,7 +196,7 @@ export class TabSyncManager {
           restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0, tabTs?.scrollPercentage ?? 0);
         } else {
           view.requestMeasure();
-          this.scrollManager.restore(view, 'anchor');
+          this.scrollManager.restore(view, "anchor");
         }
       }
     });

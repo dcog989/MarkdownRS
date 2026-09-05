@@ -1,45 +1,45 @@
-import { revealItemInDir } from '@tauri-apps/plugin-opener';
-import { translate } from '$lib/i18n';
-import { invalidateMetadataCache } from '$lib/services/fileMetadata';
-import { fileWatcher } from '$lib/services/fileWatcher';
-import { confirmDialog, promptDialog } from '$lib/stores/dialogStore.svelte';
-import { dirname, refreshDirectoryIfInTree } from '$lib/stores/fileTreeStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import type { FileEntry } from '$lib/types/api';
-import { callBackend } from '$lib/utils/backend';
-import { createDirOnDisk, createFileOnDisk } from '$lib/utils/fileIO';
-import { openFile, renameFile, requestCloseTab } from '$lib/utils/fileSystem';
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { translate } from "$lib/i18n";
+import { invalidateMetadataCache } from "$lib/services/fileMetadata";
+import { fileWatcher } from "$lib/services/fileWatcher";
+import { confirmDialog, promptDialog } from "$lib/stores/dialogStore.svelte";
+import { dirname, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import type { FileEntry } from "$lib/types/api";
+import { callBackend } from "$lib/utils/backend";
+import { createDirOnDisk, createFileOnDisk } from "$lib/utils/fileIO";
+import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
 
 export class FileTreeContextMenuLogic {
   // Where "New File"/"New Folder" entries are created (a directory row itself,
   // or the parent of a file row, or the tree root for empty-space menus).
-  directory = $state('');
-  path = $state('');
-  name = $state('');
+  directory = $state("");
+  path = $state("");
+  name = $state("");
   isDir = $state(false);
   onClose: () => void = () => {};
 
   constructor(directory: string, entry: FileEntry | null, onClose: () => void) {
     this.directory = directory;
-    this.path = entry?.path ?? '';
-    this.name = entry?.name ?? '';
+    this.path = entry?.path ?? "";
+    this.name = entry?.name ?? "";
     this.isDir = entry?.is_dir ?? false;
     this.onClose = onClose;
   }
 
-  hasEntry = $derived(this.path !== '');
+  hasEntry = $derived(this.path !== "");
 
   handleNewFile = async (): Promise<void> => {
     const raw = await promptDialog({
-      title: translate('fileTree.newFile'),
-      message: translate('fileTree.newFileMessage'),
-      value: 'untitled.md',
+      title: translate("fileTree.newFile"),
+      message: translate("fileTree.newFileMessage"),
+      value: "untitled.md",
     });
     if (!raw?.trim()) return;
 
     const clean = raw.trim();
     // Default to a markdown extension for extensionless names.
-    const finalName = clean.includes('.') ? clean : `${clean}.md`;
+    const finalName = clean.includes(".") ? clean : `${clean}.md`;
     const newPath = `${this.directory}/${finalName}`;
     try {
       const created = await createFileOnDisk(newPath);
@@ -54,9 +54,9 @@ export class FileTreeContextMenuLogic {
 
   handleNewFolder = async (): Promise<void> => {
     const raw = await promptDialog({
-      title: translate('fileTree.newFolder'),
-      message: translate('fileTree.newFolderMessage'),
-      value: 'New Folder',
+      title: translate("fileTree.newFolder"),
+      message: translate("fileTree.newFolderMessage"),
+      value: "New Folder",
     });
     if (!raw?.trim()) return;
 
@@ -79,8 +79,8 @@ export class FileTreeContextMenuLogic {
 
   handleRename = async (): Promise<void> => {
     const raw = await promptDialog({
-      title: translate('fileTree.rename'),
-      message: translate('fileTree.renameMessage'),
+      title: translate("fileTree.rename"),
+      message: translate("fileTree.renameMessage"),
       value: this.name,
     });
     if (!raw?.trim()) return;
@@ -91,7 +91,7 @@ export class FileTreeContextMenuLogic {
       if (tab) {
         await renameFile(tab.id, clean);
       } else {
-        await callBackend('rename_file', { oldPath: this.path, newPath: `${this.directory}/${clean}` }, 'File:Write');
+        await callBackend("rename_file", { oldPath: this.path, newPath: `${this.directory}/${clean}` }, "File:Write");
       }
       refreshDirectoryIfInTree(this.directory);
     } catch {
@@ -127,12 +127,12 @@ export class FileTreeContextMenuLogic {
 
     if (!appContext.settings.confirmationSuppressed) {
       const result = await confirmDialog({
-        title: translate('tabContextMenu.deleteFileTitle'),
-        message: translate('tabContextMenu.deleteFileMessage', { values: { title: targetName } }),
-        discardLabel: translate('common.delete'),
+        title: translate("tabContextMenu.deleteFileTitle"),
+        message: translate("tabContextMenu.deleteFileMessage", { values: { title: targetName } }),
+        discardLabel: translate("common.delete"),
         saveLabel: undefined,
       });
-      if (result !== 'discard') return;
+      if (result !== "discard") return;
     }
 
     try {
@@ -141,7 +141,7 @@ export class FileTreeContextMenuLogic {
         fileWatcher.unwatch(targetPath);
       }
 
-      await callBackend('send_to_recycle_bin', { path: targetPath }, 'File:Write');
+      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
       invalidateMetadataCache(targetPath);
 
       if (tab) {

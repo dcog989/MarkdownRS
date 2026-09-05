@@ -1,4 +1,4 @@
-export type MarkdownFlavor = 'commonmark' | 'gfm';
+export type MarkdownFlavor = "commonmark" | "gfm";
 
 export interface HeadingEntry {
   level: number;

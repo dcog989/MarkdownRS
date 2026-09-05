@@ -1,28 +1,28 @@
 <script lang="ts">
-import { SmilePlus } from 'lucide-svelte';
-import { tick } from 'svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import Modal from '$lib/components/ui/Modal.svelte';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { searchEmojis } from '$lib/config/emojiData';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { translate } from '$lib/i18n';
-import { getActiveEditorView } from '$lib/utils/editorCommands';
+import { SmilePlus } from "lucide-svelte";
+import { tick } from "svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import Modal from "$lib/components/ui/Modal.svelte";
+import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import { searchEmojis } from "$lib/config/emojiData";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { translate } from "$lib/i18n";
+import { getActiveEditorView } from "$lib/utils/editorCommands";
 
 let { isOpen = $bindable(false), onClose = () => {} } = $props<{
   isOpen: boolean;
   onClose: () => void;
 }>();
 
-let query = $state('');
+let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
 let results = $derived(searchEmojis(query));
 
 $effect(() => {
   if (isOpen) {
-    query = '';
+    query = "";
     tick().then(() => {
       inputRef?.focus();
     });

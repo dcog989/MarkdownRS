@@ -1,7 +1,7 @@
-import { translate } from '$lib/i18n';
-import { cachePreviewHeadings } from '$lib/stores/previewHeadings.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { renderMarkdown } from '$lib/utils/markdownRust';
+import { translate } from "$lib/i18n";
+import { cachePreviewHeadings } from "$lib/stores/previewHeadings.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { renderMarkdown } from "$lib/utils/markdownRust";
 
 /** Lifecycle hooks owned by the preview component, keeping the renderer free of
  *  scroll-sync and DOM-registration concerns. */
@@ -15,11 +15,11 @@ export interface PreviewRendererCallbacks {
 export class PreviewRenderer {
   isRendering = $state(false);
   showSpinner = $state(false);
-  htmlContent = $state('');
-  renderError = $state('');
+  htmlContent = $state("");
+  renderError = $state("");
 
-  lastRendered = '';
-  lastTabId = '';
+  lastRendered = "";
+  lastTabId = "";
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private spinnerTimer: ReturnType<typeof setTimeout> | null = null;
   /** Advances on every cancel/new schedule; in-flight renders capture it and bail when stale. */
@@ -30,16 +30,16 @@ export class PreviewRenderer {
   onTabSwitch(tabId: string): void {
     if (this.lastTabId === tabId) return;
     this.lastTabId = tabId;
-    this.lastRendered = '';
-    this.htmlContent = '';
-    this.renderError = '';
+    this.lastRendered = "";
+    this.htmlContent = "";
+    this.renderError = "";
     this.cancelPending();
   }
 
   scheduleRender(content: string, flavor: string, tabPath: string | null | undefined): () => void {
     this.cancelPending();
 
-    this.renderError = '';
+    this.renderError = "";
     this.isRendering = true;
     this.showSpinner = false;
 
@@ -52,7 +52,7 @@ export class PreviewRenderer {
     this.debounceTimer = setTimeout(async () => {
       this.debounceTimer = null;
       try {
-        const result = await renderMarkdown(content, flavor === 'gfm', tabPath);
+        const result = await renderMarkdown(content, flavor === "gfm", tabPath);
         if (epoch !== this.renderEpoch || !result) return;
 
         this.htmlContent = result.html;
@@ -62,7 +62,7 @@ export class PreviewRenderer {
       } catch (err) {
         if (epoch !== this.renderEpoch) return;
         this.lastRendered = content;
-        this.renderError = err instanceof Error ? err.message : translate('preview.renderFailed');
+        this.renderError = err instanceof Error ? err.message : translate("preview.renderFailed");
       } finally {
         // Only the current render owns the shared state: a superseded render
         // (invalidated by a newer scheduleRender or a tab switch) must not

@@ -1,5 +1,5 @@
-import { EditorSelection } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
+import { EditorSelection } from "@codemirror/state";
+import type { EditorView } from "@codemirror/view";
 
 export function toggleSelectionComment(view: EditorView): boolean {
   const result = view.state.changeByRange((range) => {
@@ -7,7 +7,7 @@ export function toggleSelectionComment(view: EditorView): boolean {
 
     if (from !== to) {
       const selectedText = view.state.sliceDoc(from, to);
-      const isCommented = selectedText.startsWith('<!-- ') && selectedText.endsWith(' -->') && selectedText.length > 9;
+      const isCommented = selectedText.startsWith("<!-- ") && selectedText.endsWith(" -->") && selectedText.length > 9;
 
       if (isCommented) {
         const uncommented = selectedText.slice(5, -4);
@@ -24,18 +24,18 @@ export function toggleSelectionComment(view: EditorView): boolean {
     }
 
     const line = view.state.doc.lineAt(from);
-    const leadingSpace = line.text.match(/^(\s*)/)?.[1] || '';
+    const leadingSpace = line.text.match(/^(\s*)/)?.[1] || "";
     const content = line.text.slice(leadingSpace.length);
 
     if (!content) {
       return { range, changes: [] };
     }
 
-    const isCommented = content.startsWith('<!--') && content.endsWith('-->');
+    const isCommented = content.startsWith("<!--") && content.endsWith("-->");
 
     if (isCommented) {
       let uncommented: string;
-      if (content.startsWith('<!-- ') && content.endsWith(' -->')) {
+      if (content.startsWith("<!-- ") && content.endsWith(" -->")) {
         uncommented = content.slice(5, -4);
       } else {
         uncommented = content.slice(4, -3).trim();

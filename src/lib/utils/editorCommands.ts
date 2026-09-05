@@ -1,7 +1,7 @@
-import { redo, undo } from '@codemirror/commands';
-import type { EditorView } from '@codemirror/view';
-import { translate } from '$lib/i18n';
-import { promptDialog } from '$lib/stores/dialogStore.svelte';
+import { redo, undo } from "@codemirror/commands";
+import type { EditorView } from "@codemirror/view";
+import { translate } from "$lib/i18n";
+import { promptDialog } from "$lib/stores/dialogStore.svelte";
 
 const editorInstances = new Map<string, EditorView>();
 
@@ -23,8 +23,8 @@ export async function promptGoToLine(view: EditorView): Promise<boolean> {
   const currentLine = doc.lineAt(view.state.selection.main.head).number;
 
   const input = await promptDialog({
-    title: translate('editor.gotoLineTitle'),
-    message: translate('editor.gotoLineMessage', { values: { total: lineCount } }),
+    title: translate("editor.gotoLineTitle"),
+    message: translate("editor.gotoLineMessage", { values: { total: lineCount } }),
     value: String(currentLine),
   });
   if (input === null) return false;

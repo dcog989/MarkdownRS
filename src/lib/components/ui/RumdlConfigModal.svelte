@@ -1,15 +1,15 @@
 <script lang="ts">
-import { Settings2, X } from 'lucide-svelte';
-import { untrack } from 'svelte';
-import { _ } from 'svelte-i18n';
-import Modal from '$lib/components/ui/Modal.svelte';
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { getEditorInstance } from '$lib/utils/editorCommands';
-import { AppError } from '$lib/utils/errorHandling';
-import { forceMarkdownRelint } from '$lib/utils/markdownLintExtension.svelte';
+import { Settings2, X } from "lucide-svelte";
+import { untrack } from "svelte";
+import { _ } from "svelte-i18n";
+import Modal from "$lib/components/ui/Modal.svelte";
+import { translate } from "$lib/i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { getEditorInstance } from "$lib/utils/editorCommands";
+import { AppError } from "$lib/utils/errorHandling";
+import { forceMarkdownRelint } from "$lib/utils/markdownLintExtension.svelte";
 
 interface Props {
   isOpen: boolean;
@@ -20,12 +20,12 @@ let { isOpen = $bindable(false), onClose }: Props = $props();
 
 let busy = $state(false);
 let loaded = $state(false);
-let targetPath = $state('');
+let targetPath = $state("");
 let exists = $state(false);
 let loadedPath = $state<string | null>(null);
-let content = $state('');
+let content = $state("");
 let hasChanges = $state(false);
-let scope = $state<'project' | 'user'>('project');
+let scope = $state<"project" | "user">("project");
 
 function activeTab() {
   return appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
@@ -34,12 +34,12 @@ function activeTab() {
 $effect(() => {
   if (!isOpen) return;
   untrack(() => {
-    scope = activeTab()?.path ? 'project' : 'user';
+    scope = activeTab()?.path ? "project" : "user";
     void loadConfig();
   });
 });
 
-async function setScope(next: 'project' | 'user') {
+async function setScope(next: "project" | "user") {
   if (next === scope) return;
   scope = next;
   await loadConfig();
@@ -51,9 +51,9 @@ async function loadConfig() {
   try {
     const filePath = activeTab()?.path;
     const result = await callBackend(
-      'read_rumdl_config',
+      "read_rumdl_config",
       { filePath: filePath ?? undefined, target: scope },
-      'Markdown:ReadRumdlConfig',
+      "Markdown:ReadRumdlConfig",
     );
     if (result) {
       targetPath = result.target_path;
@@ -63,7 +63,7 @@ async function loadConfig() {
       hasChanges = false;
     }
   } catch (err) {
-    AppError.handle('Markdown:ReadRumdlConfig', err, { showToast: true });
+    AppError.handle("Markdown:ReadRumdlConfig", err, { showToast: true });
   } finally {
     busy = false;
     loaded = true;
@@ -76,19 +76,19 @@ async function saveConfig() {
   try {
     const filePath = activeTab()?.path;
     const written = await callBackend(
-      'write_rumdl_config',
+      "write_rumdl_config",
       { filePath: filePath ?? undefined, target: scope, content },
-      'Markdown:WriteRumdlConfig',
+      "Markdown:WriteRumdlConfig",
     );
     if (written === null) return;
     hasChanges = false;
-    showToast('success', translate('rumdlConfig.saved', { values: { path: written } }));
+    showToast("success", translate("rumdlConfig.saved", { values: { path: written } }));
     const tab = activeTab();
     const view = tab?.id ? getEditorInstance(tab.id) : undefined;
     if (view) forceMarkdownRelint(view);
     onClose();
   } catch (err) {
-    AppError.handle('Markdown:WriteRumdlConfig', err, { showToast: true });
+    AppError.handle("Markdown:WriteRumdlConfig", err, { showToast: true });
   } finally {
     busy = false;
   }

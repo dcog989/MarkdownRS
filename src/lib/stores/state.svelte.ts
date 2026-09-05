@@ -1,15 +1,15 @@
-import { markdownLintState } from '$lib/utils/markdownLint.svelte';
-import { scrollSync } from '$lib/utils/scrollSync.svelte';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
-import { appState } from './appState.svelte';
-import { bookmarkStore } from './bookmarkStore.svelte';
-import { dialogStore } from './dialogStore.svelte';
-import { editorMetrics } from './editorMetrics.svelte';
-import { editorStore } from './editorStore.svelte';
-import { interfaceStore } from './interfaceStore.svelte';
-import { settingsState } from './settingsState.svelte';
-import { toastStore } from './toastStore.svelte';
-import { tooltipStore } from './tooltipStore.svelte';
+import { markdownLintState } from "$lib/utils/markdownLint.svelte";
+import { scrollSync } from "$lib/utils/scrollSync.svelte";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte";
+import { appState } from "./appState.svelte";
+import { bookmarkStore } from "./bookmarkStore.svelte";
+import { dialogStore } from "./dialogStore.svelte";
+import { editorMetrics } from "./editorMetrics.svelte";
+import { editorStore } from "./editorStore.svelte";
+import { interfaceStore } from "./interfaceStore.svelte";
+import { settingsState } from "./settingsState.svelte";
+import { toastStore } from "./toastStore.svelte";
+import { tooltipStore } from "./tooltipStore.svelte";
 
 /**
  * Centralized State Tree

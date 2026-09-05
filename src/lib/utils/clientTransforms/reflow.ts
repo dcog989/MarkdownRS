@@ -1,6 +1,6 @@
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import type { SyntaxNode } from '@lezer/common';
-import { frontmatterExtension } from '$lib/utils/frontmatterExtension';
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import type { SyntaxNode } from "@lezer/common";
+import { frontmatterExtension } from "$lib/utils/frontmatterExtension";
 
 /**
  * Markdown parser configured like the editor's own, so structure detection
@@ -16,16 +16,16 @@ const markdownParser = markdown({
  * collecting tokens, e.g. the ">" on a blockquote continuation line.
  */
 const STRUCTURAL_NODE = new Set([
-  'QuoteMark',
-  'ListMark',
-  'HeaderMark',
-  'TaskMarker',
-  'CodeMark',
-  'CodeInfo',
-  'CodeText',
-  'LinkMark',
-  'URL',
-  'EmphasisMark',
+  "QuoteMark",
+  "ListMark",
+  "HeaderMark",
+  "TaskMarker",
+  "CodeMark",
+  "CodeInfo",
+  "CodeText",
+  "LinkMark",
+  "URL",
+  "EmphasisMark",
 ]);
 
 function isStructural(name: string): boolean {
@@ -38,19 +38,19 @@ function isStructural(name: string): boolean {
  * space, preserving the content column exactly.
  */
 function continuationPrefix(firstPrefix: string): string {
-  let result = '';
+  let result = "";
   for (let i = 0; i < firstPrefix.length; i++) {
     const ch = firstPrefix[i];
-    if (ch === '>') result += '>';
-    else if (i > 0 && firstPrefix[i - 1] === '>') result += ' ';
-    else result += ' ';
+    if (ch === ">") result += ">";
+    else if (i > 0 && firstPrefix[i - 1] === ">") result += " ";
+    else result += " ";
   }
   return result;
 }
 
 function wrapTokens(tokens: string[], width: number): string[] {
   const lines: string[] = [];
-  let current = '';
+  let current = "";
 
   for (const token of tokens) {
     const candidate = current ? `${current} ${token}` : token;
@@ -89,7 +89,7 @@ function collectTokens(text: string, node: SyntaxNode, from: number): string[] |
     if (child.to > from) {
       addWords(text.slice(pos, child.from), tokens);
       const name = child.type.name;
-      if (name === 'HardBreak') return null;
+      if (name === "HardBreak") return null;
       if (!isStructural(name)) {
         const chunk = text.slice(child.from, child.to).trim();
         if (chunk) tokens.push(chunk);
@@ -108,9 +108,9 @@ function collectTokens(text: string, node: SyntaxNode, from: number): string[] |
  * marker (task items wrap their marker inside a `Task` node), else node start.
  */
 function contentStartOf(text: string, node: SyntaxNode): number {
-  if (node.type.name === 'Task') {
+  if (node.type.name === "Task") {
     let child = node.firstChild;
-    while (child && child.type.name !== 'TaskMarker') child = child.nextSibling;
+    while (child && child.type.name !== "TaskMarker") child = child.nextSibling;
     if (child) {
       let pos = child.to;
       while (pos < node.to && /\s/.test(text[pos])) pos++;
@@ -138,27 +138,27 @@ export function reflowParagraphs(text: string, column: number): string {
 
   do {
     const name = cursor.type.name;
-    if (name !== 'Paragraph' && name !== 'Task') continue;
+    if (name !== "Paragraph" && name !== "Task") continue;
     const node = cursor.node;
 
     const replaceFrom = contentStartOf(text, node);
     const replaceTo = node.to;
     if (replaceFrom >= replaceTo) continue;
 
-    const lineStart = text.lastIndexOf('\n', replaceFrom - 1) + 1;
+    const lineStart = text.lastIndexOf("\n", replaceFrom - 1) + 1;
     const firstPrefix = text.slice(lineStart, replaceFrom);
     const contentColumn = firstPrefix.length;
     if (contentColumn >= target) continue;
 
     const content = text.slice(replaceFrom, replaceTo);
-    if (!content.includes('\n') && content.length + contentColumn <= target) continue;
+    if (!content.includes("\n") && content.length + contentColumn <= target) continue;
 
     const tokens = collectTokens(text, node, replaceFrom);
     if (!tokens || tokens.length === 0) continue;
 
     const prefix = continuationPrefix(firstPrefix);
     const wrapped = wrapTokens(tokens, target - contentColumn);
-    const insert = wrapped.map((line, i) => (i === 0 ? line : prefix + line)).join('\n');
+    const insert = wrapped.map((line, i) => (i === 0 ? line : prefix + line)).join("\n");
     if (insert === content) continue;
 
     changes.push({ from: replaceFrom, to: replaceTo, insert });

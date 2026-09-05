@@ -1,18 +1,18 @@
-import { SvelteMap } from 'svelte/reactivity';
-import { getDirectoryMtime, listDirectory } from '$lib/commands/directory';
+import { SvelteMap } from "svelte/reactivity";
+import { getDirectoryMtime, listDirectory } from "$lib/commands/directory";
 import {
   settingsState,
   toggleFileTreeShowHidden,
   toggleFileTreeShowMarkdownOnly,
-} from '$lib/stores/settingsState.svelte';
-import type { FileEntry } from '$lib/types/api';
-import { MARKDOWN_EXTENSION_SET } from '$lib/utils/fileValidation';
-import { basename, dirname } from '$lib/utils/path';
+} from "$lib/stores/settingsState.svelte";
+import type { FileEntry } from "$lib/types/api";
+import { MARKDOWN_EXTENSION_SET } from "$lib/utils/fileValidation";
+import { basename, dirname } from "$lib/utils/path";
 
 export { basename, dirname };
 
 export const fileTreeStore = $state({
-  root: '',
+  root: "",
   expanded: new SvelteMap<string, boolean>(),
   children: new SvelteMap<string, FileEntry[]>(),
   loading: new SvelteMap<string, boolean>(),
@@ -206,7 +206,7 @@ export async function refreshTree(): Promise<void> {
 }
 
 function isMarkdownName(name: string): boolean {
-  const idx = name.lastIndexOf('.');
+  const idx = name.lastIndexOf(".");
   if (idx === -1) return false;
   return MARKDOWN_EXTENSION_SET.has(name.slice(idx + 1).toLowerCase());
 }

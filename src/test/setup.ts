@@ -1,8 +1,8 @@
-import { cleanup } from '@testing-library/svelte';
-import { afterEach } from 'vitest';
-import { initI18n } from '$lib/i18n';
+import { cleanup } from "@testing-library/svelte";
+import { afterEach } from "vitest";
+import { initI18n } from "$lib/i18n";
 
-initI18n('en');
+initI18n("en");
 
 class ResizeObserverStub {
   observe(): void {}
@@ -16,7 +16,7 @@ if (!globalThis.ResizeObserver) {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 }
 
-if (typeof HTMLElement.prototype.scrollTo !== 'function') {
+if (typeof HTMLElement.prototype.scrollTo !== "function") {
   HTMLElement.prototype.scrollTo = () => {};
 }
 

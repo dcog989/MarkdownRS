@@ -1,14 +1,14 @@
 <script lang="ts">
-import { Search, X } from 'lucide-svelte';
-import type { Snippet } from 'svelte';
-import { _ } from 'svelte-i18n';
-import Input from '$lib/components/ui/Input.svelte';
+import { Search, X } from "lucide-svelte";
+import type { Snippet } from "svelte";
+import { _ } from "svelte-i18n";
+import Input from "$lib/components/ui/Input.svelte";
 
 let {
   title,
   icon: Icon,
-  searchValue = $bindable(''),
-  searchPlaceholder = $_('common.search'),
+  searchValue = $bindable(""),
+  searchPlaceholder = $_("common.search"),
   inputRef = $bindable(),
   focusDelay,
   onClose,
@@ -16,7 +16,7 @@ let {
   extraActions,
 } = $props<{
   title: string;
-  icon: typeof import('lucide-svelte').X;
+  icon: typeof import("lucide-svelte").X;
   searchValue: string;
   searchPlaceholder?: string;
   inputRef?: HTMLInputElement;

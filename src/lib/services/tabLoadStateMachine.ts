@@ -1,22 +1,22 @@
-import { appState } from '$lib/stores/appState.svelte';
-import { computeWordCount } from '$lib/stores/editorCache';
-import { editorStore, updateTransientState } from '$lib/stores/editorStore.svelte';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { hashContent, isTabDirty } from '$lib/utils/contentHash';
-import { getEditorInstance } from '$lib/utils/editorCommands';
-import { AppError } from '$lib/utils/errorHandling';
-import { logger } from '$lib/utils/logger';
-import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { formatDuration } from '$lib/utils/timing';
-import { normalizeLineEndings } from './fileMetadata';
+import { appState } from "$lib/stores/appState.svelte";
+import { computeWordCount } from "$lib/stores/editorCache";
+import { editorStore, updateTransientState } from "$lib/stores/editorStore.svelte";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { hashContent, isTabDirty } from "$lib/utils/contentHash";
+import { getEditorInstance } from "$lib/utils/editorCommands";
+import { AppError } from "$lib/utils/errorHandling";
+import { logger } from "$lib/utils/logger";
+import { extractSmartTitle } from "$lib/utils/smartTitle";
+import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
+import { formatDuration } from "$lib/utils/timing";
+import { normalizeLineEndings } from "./fileMetadata";
 
 enum TabLoadState {
-  UNLOADED = 'UNLOADED',
-  LOADING = 'LOADING',
-  LOADED = 'LOADED',
-  ERROR = 'ERROR',
+  UNLOADED = "UNLOADED",
+  LOADING = "LOADING",
+  LOADED = "LOADED",
+  ERROR = "ERROR",
 }
 
 const tabLoadStates = new Map<string, TabLoadState>();
@@ -39,7 +39,7 @@ function validateTransition(currentState: TabLoadState, nextState: TabLoadState)
 function setTabLoadState(tabId: string, state: TabLoadState): void {
   const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
   if (!validateTransition(currentState, state)) {
-    logger.session.warn('InvalidTabStateTransition', {
+    logger.session.warn("InvalidTabStateTransition", {
       tabId,
       from: currentState,
       to: state,
@@ -114,7 +114,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
 
   const tab = editorStore.tabs.find((t) => t.id === tabId);
   if (!tab) {
-    logger.session.debug('TabClosedDuringLoad', { tabId });
+    logger.session.debug("TabClosedDuringLoad", { tabId });
     return;
   }
 
@@ -124,7 +124,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
   loadingRequests.set(tabId, requestId);
 
   try {
-    const data = await callBackend('load_tab_content', { tabId }, 'Session:Load');
+    const data = await callBackend("load_tab_content", { tabId }, "Session:Load");
 
     if (loadingRequests.get(tabId) !== requestId) {
       return;
@@ -132,29 +132,29 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
 
     const currentActiveId = appState.activeTabId;
     if (currentActiveId !== tabId) {
-      logger.session.debug('TabSwitchedDuringLoad', { tabId, currentActiveId });
+      logger.session.debug("TabSwitchedDuringLoad", { tabId, currentActiveId });
       resetTabLoadState(tabId);
       return;
     }
 
-    let normalizedContent = '';
-    let lastSavedHash = '';
+    let normalizedContent = "";
+    let lastSavedHash = "";
     let diskEncoding: string | null = null;
     let diskHasBom: boolean | null = null;
 
-    if (data && data.content !== null && data.content !== undefined && data.content !== '') {
+    if (data && data.content !== null && data.content !== undefined && data.content !== "") {
       normalizedContent = normalizeLineEndings(data.content);
-      logger.session.debug('ContentLoadedFromDb', {
+      logger.session.debug("ContentLoadedFromDb", {
         tabId,
         contentLength: normalizedContent.length,
         path: tab.path,
       });
 
       if (!tab.path) {
-        lastSavedHash = '';
+        lastSavedHash = "";
       } else {
         try {
-          const fileData = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
+          const fileData = await callBackend("read_text_file", { path: tab.path }, "File:Read");
           if (fileData?.content) {
             diskEncoding = fileData.encoding;
             diskHasBom = fileData.has_bom;
@@ -176,14 +176,14 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
         }
       }
     } else {
-      logger.session.warn('NoContentInDatabase', {
+      logger.session.warn("NoContentInDatabase", {
         tabId,
         path: tab.path,
         hasData: !!data,
         contentLength: data?.content?.length ?? 0,
       });
-      normalizedContent = '';
-      lastSavedHash = '';
+      normalizedContent = "";
+      lastSavedHash = "";
     }
 
     const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
@@ -196,8 +196,8 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
       // appeared while the load was in flight (user edits — possibly not yet
       // debounced into the store — or a disk reload) must win over the stored
       // session content instead of being clobbered by it.
-      const viewText = getEditorInstance(tabId)?.state.doc.toString() ?? '';
-      const alreadyHadContent = currentTab.content !== '' || viewText !== '';
+      const viewText = getEditorInstance(tabId)?.state.doc.toString() ?? "";
+      const alreadyHadContent = currentTab.content !== "" || viewText !== "";
       const content = alreadyHadContent ? viewText || currentTab.content : normalizedContent;
 
       if (alreadyHadContent) {
@@ -235,7 +235,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
         isDirty: isTabDirty({ path: currentTab.path, content, lastSavedHash }),
       });
 
-      logger.session.info('TabContentLoaded', {
+      logger.session.info("TabContentLoaded", {
         tabId,
         sizeBytes,
         wordCount,
@@ -246,7 +246,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
 
     setTabLoadState(tabId, TabLoadState.LOADED);
 
-    logger.session.debug('TabContentLazyLoaded', {
+    logger.session.debug("TabContentLazyLoaded", {
       duration: formatDuration(start),
       tabId,
       size: sizeBytes,
@@ -255,9 +255,9 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
     if (loadingRequests.get(tabId) === requestId) {
       setTabLoadState(tabId, TabLoadState.ERROR);
 
-      AppError.handle('Session:Load', err, {
+      AppError.handle("Session:Load", err, {
         showToast: false,
-        severity: 'warning',
+        severity: "warning",
         additionalInfo: { tabId },
       });
 

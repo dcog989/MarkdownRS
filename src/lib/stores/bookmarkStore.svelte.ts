@@ -1,8 +1,8 @@
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { getCurrentTimestamp } from '$lib/utils/date';
+import { translate } from "$lib/i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { getCurrentTimestamp } from "$lib/utils/date";
 
 export type Bookmark = {
   id: string;
@@ -21,7 +21,7 @@ export const bookmarkStore = $state({
 
 // Logic functions (async actions)
 export async function loadBookmarks() {
-  const bookmarks = await callBackend('get_all_bookmarks', {}, 'Database:Init', undefined, {
+  const bookmarks = await callBackend("get_all_bookmarks", {}, "Database:Init", undefined, {
     ignore: true,
   });
   bookmarkStore.bookmarks = bookmarks || [];
@@ -46,13 +46,13 @@ export async function addBookmark(
   };
 
   bookmarkStore.bookmarks.unshift(bookmark);
-  await callBackend('add_bookmark', { bookmark }, 'Bookmark:Add', undefined, { report: true });
+  await callBackend("add_bookmark", { bookmark }, "Bookmark:Add", undefined, { report: true });
   return { bookmark, isNew: true };
 }
 
 export async function deleteBookmark(id: string) {
   bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => b.id !== id);
-  await callBackend('delete_bookmark', { id }, 'Bookmark:Remove', undefined, { report: true });
+  await callBackend("delete_bookmark", { id }, "Bookmark:Remove", undefined, { report: true });
 }
 
 export async function updateBookmark(id: string, title: string, tags: string[], path?: string) {
@@ -66,7 +66,7 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
     path: path ?? bookmarkStore.bookmarks[index].path,
   };
 
-  await callBackend('add_bookmark', { bookmark: updated }, 'Bookmark:Add', undefined, {
+  await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add", undefined, {
     report: true,
   });
   bookmarkStore.bookmarks[index] = updated;
@@ -75,7 +75,7 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
 export async function updateAccessTime(id: string) {
   const lastAccessed = getCurrentTimestamp();
   // fire and forget, ignore errors
-  callBackend('update_bookmark_access_time', { id, lastAccessed }, 'File:Read', undefined, {
+  callBackend("update_bookmark_access_time", { id, lastAccessed }, "File:Read", undefined, {
     ignore: true,
   });
 
@@ -98,11 +98,11 @@ export function addBookmarkForActiveTab(): boolean {
   const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
   if (tab?.path) {
     addBookmark(tab.path, tab.title).then(({ isNew }) => {
-      if (isNew) showToast('success', translate('bookmarks.addedToast', { values: { title: tab.title } }));
-      else showToast('info', translate('bookmarks.alreadyToast', { values: { title: tab.title } }));
+      if (isNew) showToast("success", translate("bookmarks.addedToast", { values: { title: tab.title } }));
+      else showToast("info", translate("bookmarks.alreadyToast", { values: { title: tab.title } }));
     });
   } else {
-    showToast('warning', translate('bookmarks.saveFirst'));
+    showToast("warning", translate("bookmarks.saveFirst"));
   }
   return true;
 }

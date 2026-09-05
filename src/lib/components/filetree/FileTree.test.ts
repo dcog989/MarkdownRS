@@ -1,25 +1,25 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { listDirectory } from '$lib/commands/directory';
-import type { EditorTab } from '$lib/stores/editorTypes';
-import { fileTreeStore, navigateToParent } from '$lib/stores/fileTreeStore.svelte';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { treeViewStore } from '$lib/stores/treeViewStore.svelte';
-import type { FileEntry } from '$lib/types/api';
-import { openFile } from '$lib/utils/fileSystem';
-import FileTree from './FileTree.svelte';
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { listDirectory } from "$lib/commands/directory";
+import type { EditorTab } from "$lib/stores/editorTypes";
+import { fileTreeStore, navigateToParent } from "$lib/stores/fileTreeStore.svelte";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { treeViewStore } from "$lib/stores/treeViewStore.svelte";
+import type { FileEntry } from "$lib/types/api";
+import { openFile } from "$lib/utils/fileSystem";
+import FileTree from "./FileTree.svelte";
 
-vi.mock('$lib/commands/directory', () => ({
+vi.mock("$lib/commands/directory", () => ({
   listDirectory: vi.fn(),
   getDirectoryMtime: vi.fn(),
 }));
 
-vi.mock('$lib/utils/fileSystem', () => ({
+vi.mock("$lib/utils/fileSystem", () => ({
   openFile: vi.fn(),
 }));
 
-vi.mock('$lib/utils/settings', () => ({
+vi.mock("$lib/utils/settings", () => ({
   saveSettings: vi.fn(),
 }));
 
@@ -40,9 +40,9 @@ function entry(name: string, isDir = false): FileEntry {
 function makeTab(id: string, path: string): EditorTab {
   return {
     id,
-    title: path.split('/').pop() ?? '',
-    content: '',
-    lastSavedHash: '',
+    title: path.split("/").pop() ?? "",
+    content: "",
+    lastSavedHash: "",
     isDirty: false,
     path,
     sizeBytes: 0,
@@ -50,16 +50,16 @@ function makeTab(id: string, path: string): EditorTab {
     lineCount: 0,
     widestColumn: 0,
     cursor: { anchor: 0, head: 0 },
-    lineEnding: 'LF',
-    encoding: 'utf-8',
+    lineEnding: "LF",
+    encoding: "utf-8",
     hasBom: false,
   };
 }
 
-describe('FileTree', () => {
+describe("FileTree", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fileTreeStore.root = '';
+    fileTreeStore.root = "";
     fileTreeStore.expanded.clear();
     fileTreeStore.children.clear();
     fileTreeStore.loading.clear();
@@ -67,294 +67,294 @@ describe('FileTree', () => {
     treeViewStore.filterLoading = false;
     settingsState.fileTreeShowHidden = false;
     settingsState.fileTreeLocked = false;
-    settingsState.fileTreeLockedRoot = '';
+    settingsState.fileTreeLockedRoot = "";
     mockedListDirectory.mockReset();
   });
 
-  it('shows a hint when no root is set', () => {
+  it("shows a hint when no root is set", () => {
     render(FileTree);
-    expect(screen.getByText('Open a file to browse its folder')).toBeTruthy();
+    expect(screen.getByText("Open a file to browse its folder")).toBeTruthy();
   });
 
-  it('renders the rows for the current root', async () => {
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('a.md'), entry('sub', true)]);
+  it("renders the rows for the current root", async () => {
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("a.md"), entry("sub", true)]);
 
     render(FileTree);
 
-    expect(await screen.findByText('a.md')).toBeTruthy();
-    expect(screen.getByText('sub')).toBeTruthy();
-    expect(screen.getAllByText('root').length).toBeGreaterThan(0);
+    expect(await screen.findByText("a.md")).toBeTruthy();
+    expect(screen.getByText("sub")).toBeTruthy();
+    expect(screen.getAllByText("root").length).toBeGreaterThan(0);
   });
 
-  it('opens a file when a file row is clicked', async () => {
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('a.md')]);
+  it("opens a file when a file row is clicked", async () => {
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("a.md")]);
 
     render(FileTree);
-    await fireEvent.click(await screen.findByText('a.md'));
+    await fireEvent.click(await screen.findByText("a.md"));
 
-    expect(mockedOpenFile).toHaveBeenCalledWith('/root/a.md');
+    expect(mockedOpenFile).toHaveBeenCalledWith("/root/a.md");
   });
 
-  it('expands a directory row on click and lazy-loads its children', async () => {
-    mockedListDirectory.mockResolvedValue([entry('b.md')]);
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('sub', true)]);
+  it("expands a directory row on click and lazy-loads its children", async () => {
+    mockedListDirectory.mockResolvedValue([entry("b.md")]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
 
     render(FileTree);
-    await fireEvent.click(await screen.findByText('sub'));
+    await fireEvent.click(await screen.findByText("sub"));
 
-    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
-    await waitFor(() => expect(fileTreeStore.expanded.get('/root/sub')).toBe(true));
-    expect(await screen.findByText('b.md')).toBeTruthy();
+    expect(mockedListDirectory).toHaveBeenCalledWith("/root/sub", false);
+    await waitFor(() => expect(fileTreeStore.expanded.get("/root/sub")).toBe(true));
+    expect(await screen.findByText("b.md")).toBeTruthy();
   });
 
-  it('navigates into a directory on double-click', async () => {
+  it("navigates into a directory on double-click", async () => {
     mockedListDirectory.mockResolvedValue([]);
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('sub', true)]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
 
     render(FileTree);
-    await fireEvent.dblClick(await screen.findByText('sub'));
+    await fireEvent.dblClick(await screen.findByText("sub"));
 
-    expect(fileTreeStore.root).toBe('/root/sub');
+    expect(fileTreeStore.root).toBe("/root/sub");
   });
 
-  it('shows a parent row above the root and navigates up on click', async () => {
+  it("shows a parent row above the root and navigates up on click", async () => {
     mockedListDirectory.mockResolvedValue([]);
-    fileTreeStore.root = '/home/user/project';
-    fileTreeStore.expanded.set('/home/user/project', true);
-    fileTreeStore.children.set('/home/user/project', []);
+    fileTreeStore.root = "/home/user/project";
+    fileTreeStore.expanded.set("/home/user/project", true);
+    fileTreeStore.children.set("/home/user/project", []);
 
     render(FileTree);
 
-    const parent = await screen.findByText('..');
+    const parent = await screen.findByText("..");
     await fireEvent.click(parent);
 
-    expect(fileTreeStore.root).toBe('/home/user');
+    expect(fileTreeStore.root).toBe("/home/user");
   });
 
-  it('hides the parent row at the filesystem root', () => {
-    fileTreeStore.root = '/';
-    fileTreeStore.expanded.set('/', true);
-    fileTreeStore.children.set('/', []);
+  it("hides the parent row at the filesystem root", () => {
+    fileTreeStore.root = "/";
+    fileTreeStore.expanded.set("/", true);
+    fileTreeStore.children.set("/", []);
 
     render(FileTree);
 
-    expect(screen.queryByText('..')).toBeFalsy();
+    expect(screen.queryByText("..")).toBeFalsy();
   });
 
-  it('repositions the tree root to the active file folder on tab switch', async () => {
-    mockedListDirectory.mockResolvedValue([entry('a.md')]);
+  it("repositions the tree root to the active file folder on tab switch", async () => {
+    mockedListDirectory.mockResolvedValue([entry("a.md")]);
     const originalTabs = appContext.editor.tabs;
     const originalActiveTabId = appContext.app.activeTabId;
 
     render(FileTree);
-    expect(fileTreeStore.root).toBe('');
+    expect(fileTreeStore.root).toBe("");
 
-    appContext.editor.tabs = [makeTab('t1', '/root/a.md')];
-    appContext.app.activeTabId = 't1';
+    appContext.editor.tabs = [makeTab("t1", "/root/a.md")];
+    appContext.app.activeTabId = "t1";
 
     try {
-      await waitFor(() => expect(fileTreeStore.root).toBe('/root'));
+      await waitFor(() => expect(fileTreeStore.root).toBe("/root"));
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
     }
   });
 
-  it('allows navigating the tree without snapping back to the active file folder', async () => {
+  it("allows navigating the tree without snapping back to the active file folder", async () => {
     mockedListDirectory.mockResolvedValue([]);
     const originalTabs = appContext.editor.tabs;
     const originalActiveTabId = appContext.app.activeTabId;
 
-    appContext.editor.tabs = [makeTab('t1', '/home/user/project/notes.md')];
-    appContext.app.activeTabId = 't1';
+    appContext.editor.tabs = [makeTab("t1", "/home/user/project/notes.md")];
+    appContext.app.activeTabId = "t1";
 
     try {
       render(FileTree);
-      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user/project'));
+      await waitFor(() => expect(fileTreeStore.root).toBe("/home/user/project"));
 
       navigateToParent();
-      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user'));
+      await waitFor(() => expect(fileTreeStore.root).toBe("/home/user"));
 
       // No tab switch happened, so the tree must stay where the user navigated.
-      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user'));
-      expect(fileTreeStore.root).toBe('/home/user');
+      await waitFor(() => expect(fileTreeStore.root).toBe("/home/user"));
+      expect(fileTreeStore.root).toBe("/home/user");
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
     }
   });
 
-  it('keeps the tree root fixed while locked, even when the active file folder changes', async () => {
+  it("keeps the tree root fixed while locked, even when the active file folder changes", async () => {
     mockedListDirectory.mockResolvedValue([]);
     settingsState.fileTreeLocked = true;
-    fileTreeStore.root = '/locked';
-    fileTreeStore.expanded.set('/locked', true);
-    fileTreeStore.children.set('/locked', [entry('doc.md')]);
+    fileTreeStore.root = "/locked";
+    fileTreeStore.expanded.set("/locked", true);
+    fileTreeStore.children.set("/locked", [entry("doc.md")]);
     const originalTabs = appContext.editor.tabs;
     const originalActiveTabId = appContext.app.activeTabId;
 
     render(FileTree);
-    expect(fileTreeStore.root).toBe('/locked');
+    expect(fileTreeStore.root).toBe("/locked");
 
-    appContext.editor.tabs = [makeTab('t1', '/other/folder/doc.md')];
-    appContext.app.activeTabId = 't1';
+    appContext.editor.tabs = [makeTab("t1", "/other/folder/doc.md")];
+    appContext.app.activeTabId = "t1";
 
     try {
       await new Promise((r) => setTimeout(r, 30));
-      expect(fileTreeStore.root).toBe('/locked');
+      expect(fileTreeStore.root).toBe("/locked");
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
     }
   });
 
-  it('hides the parent navigation row while locked', () => {
+  it("hides the parent navigation row while locked", () => {
     settingsState.fileTreeLocked = true;
-    fileTreeStore.root = '/home/user/project';
-    fileTreeStore.expanded.set('/home/user/project', true);
-    fileTreeStore.children.set('/home/user/project', []);
+    fileTreeStore.root = "/home/user/project";
+    fileTreeStore.expanded.set("/home/user/project", true);
+    fileTreeStore.children.set("/home/user/project", []);
 
     render(FileTree);
 
-    expect(screen.queryByText('..')).toBeFalsy();
+    expect(screen.queryByText("..")).toBeFalsy();
   });
 
-  it('does not navigate into a folder on double-click while locked', async () => {
+  it("does not navigate into a folder on double-click while locked", async () => {
     settingsState.fileTreeLocked = true;
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('sub', true)]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
 
     render(FileTree);
-    await fireEvent.dblClick(await screen.findByText('sub'));
+    await fireEvent.dblClick(await screen.findByText("sub"));
 
-    expect(fileTreeStore.root).toBe('/root');
+    expect(fileTreeStore.root).toBe("/root");
   });
 
-  it('still opens files and expands folders while locked', async () => {
-    mockedListDirectory.mockResolvedValue([entry('b.md')]);
+  it("still opens files and expands folders while locked", async () => {
+    mockedListDirectory.mockResolvedValue([entry("b.md")]);
     settingsState.fileTreeLocked = true;
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('a.md'), entry('sub', true)]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("a.md"), entry("sub", true)]);
 
     render(FileTree);
 
-    await fireEvent.click(await screen.findByText('a.md'));
-    expect(mockedOpenFile).toHaveBeenCalledWith('/root/a.md');
+    await fireEvent.click(await screen.findByText("a.md"));
+    expect(mockedOpenFile).toHaveBeenCalledWith("/root/a.md");
 
-    await fireEvent.click(await screen.findByText('sub'));
-    expect(mockedListDirectory).toHaveBeenCalledWith('/root/sub', false);
+    await fireEvent.click(await screen.findByText("sub"));
+    expect(mockedListDirectory).toHaveBeenCalledWith("/root/sub", false);
   });
 
-  it('still reveals an open document inside the tree while locked', async () => {
-    mockedListDirectory.mockResolvedValue([entry('doc.md')]);
+  it("still reveals an open document inside the tree while locked", async () => {
+    mockedListDirectory.mockResolvedValue([entry("doc.md")]);
     settingsState.fileTreeLocked = true;
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('sub', true)]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
     const originalTabs = appContext.editor.tabs;
     const originalActiveTabId = appContext.app.activeTabId;
 
     render(FileTree);
-    appContext.editor.tabs = [makeTab('t1', '/root/sub/doc.md')];
-    appContext.app.activeTabId = 't1';
+    appContext.editor.tabs = [makeTab("t1", "/root/sub/doc.md")];
+    appContext.app.activeTabId = "t1";
 
     try {
-      await waitFor(() => expect(fileTreeStore.expanded.get('/root/sub')).toBe(true));
-      expect(await screen.findByText('doc.md')).toBeTruthy();
-      expect(fileTreeStore.root).toBe('/root');
+      await waitFor(() => expect(fileTreeStore.expanded.get("/root/sub")).toBe(true));
+      expect(await screen.findByText("doc.md")).toBeTruthy();
+      expect(fileTreeStore.root).toBe("/root");
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
     }
   });
 
-  it('captures the current root when the tree is locked', async () => {
-    fileTreeStore.root = '/home/user/project';
-    fileTreeStore.expanded.set('/home/user/project', true);
-    fileTreeStore.children.set('/home/user/project', [entry('a.md')]);
+  it("captures the current root when the tree is locked", async () => {
+    fileTreeStore.root = "/home/user/project";
+    fileTreeStore.expanded.set("/home/user/project", true);
+    fileTreeStore.children.set("/home/user/project", [entry("a.md")]);
 
     render(FileTree);
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Lock Tree' }));
+    await fireEvent.click(screen.getByRole("button", { name: "Lock Tree" }));
 
     expect(settingsState.fileTreeLocked).toBe(true);
-    expect(settingsState.fileTreeLockedRoot).toBe('/home/user/project');
+    expect(settingsState.fileTreeLockedRoot).toBe("/home/user/project");
   });
 
-  it('clears the pinned root when unlocking the tree', async () => {
+  it("clears the pinned root when unlocking the tree", async () => {
     settingsState.fileTreeLocked = true;
-    settingsState.fileTreeLockedRoot = '/home/user/project';
-    fileTreeStore.root = '/home/user/project';
-    fileTreeStore.expanded.set('/home/user/project', true);
-    fileTreeStore.children.set('/home/user/project', [entry('a.md')]);
+    settingsState.fileTreeLockedRoot = "/home/user/project";
+    fileTreeStore.root = "/home/user/project";
+    fileTreeStore.expanded.set("/home/user/project", true);
+    fileTreeStore.children.set("/home/user/project", [entry("a.md")]);
 
     render(FileTree);
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Unlock Tree' }));
+    await fireEvent.click(screen.getByRole("button", { name: "Unlock Tree" }));
 
     expect(settingsState.fileTreeLocked).toBe(false);
-    expect(settingsState.fileTreeLockedRoot).toBe('');
+    expect(settingsState.fileTreeLockedRoot).toBe("");
   });
 
-  it('restores the pinned root on startup while locked', async () => {
+  it("restores the pinned root on startup while locked", async () => {
     mockedListDirectory.mockResolvedValue([]);
     settingsState.fileTreeLocked = true;
-    settingsState.fileTreeLockedRoot = '/home/user/project';
+    settingsState.fileTreeLockedRoot = "/home/user/project";
     const originalTabs = appContext.editor.tabs;
     const originalActiveTabId = appContext.app.activeTabId;
 
-    appContext.editor.tabs = [makeTab('t1', '/other/folder/doc.md')];
-    appContext.app.activeTabId = 't1';
+    appContext.editor.tabs = [makeTab("t1", "/other/folder/doc.md")];
+    appContext.app.activeTabId = "t1";
 
     try {
       render(FileTree);
-      await waitFor(() => expect(fileTreeStore.root).toBe('/home/user/project'));
+      await waitFor(() => expect(fileTreeStore.root).toBe("/home/user/project"));
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
     }
   });
 
-  it('filters to matching files within their containing folder while typing', async () => {
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('notes.md'), entry('sub', true)]);
-    fileTreeStore.children.set('/root/sub', [{ ...entry('deep.md'), path: '/root/sub/deep.md' }]);
+  it("filters to matching files within their containing folder while typing", async () => {
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("notes.md"), entry("sub", true)]);
+    fileTreeStore.children.set("/root/sub", [{ ...entry("deep.md"), path: "/root/sub/deep.md" }]);
 
     render(FileTree);
-    const input = screen.getByPlaceholderText('Filter files...');
-    await fireEvent.input(input, { target: { value: 'deep' } });
+    const input = screen.getByPlaceholderText("Filter files...");
+    await fireEvent.input(input, { target: { value: "deep" } });
 
-    expect(await screen.findByText('deep.md')).toBeTruthy();
-    expect(await screen.findByText('sub')).toBeTruthy();
+    expect(await screen.findByText("deep.md")).toBeTruthy();
+    expect(await screen.findByText("sub")).toBeTruthy();
     // Non-matching siblings are pruned and the parent navigation row is hidden.
-    expect(screen.queryByText('notes.md')).toBeFalsy();
-    expect(screen.queryByText('..')).toBeFalsy();
+    expect(screen.queryByText("notes.md")).toBeFalsy();
+    expect(screen.queryByText("..")).toBeFalsy();
   });
 
-  it('searches folders that were never expanded while filtering', async () => {
-    mockedListDirectory.mockResolvedValue([{ ...entry('hidden.md'), path: '/root/deep/hidden.md' }]);
-    fileTreeStore.root = '/root';
-    fileTreeStore.expanded.set('/root', true);
-    fileTreeStore.children.set('/root', [entry('notes.md'), entry('deep', true)]);
+  it("searches folders that were never expanded while filtering", async () => {
+    mockedListDirectory.mockResolvedValue([{ ...entry("hidden.md"), path: "/root/deep/hidden.md" }]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("notes.md"), entry("deep", true)]);
     // '/root/deep' has no cached children; the filter must list it on demand.
 
     render(FileTree);
-    const input = screen.getByPlaceholderText('Filter files...');
-    await fireEvent.input(input, { target: { value: 'hidden' } });
+    const input = screen.getByPlaceholderText("Filter files...");
+    await fireEvent.input(input, { target: { value: "hidden" } });
 
-    await waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith('/root/deep', false));
-    expect(await screen.findByText('hidden.md')).toBeTruthy();
-    expect(screen.queryByText('notes.md')).toBeFalsy();
+    await waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith("/root/deep", false));
+    expect(await screen.findByText("hidden.md")).toBeTruthy();
+    expect(screen.queryByText("notes.md")).toBeFalsy();
   });
 });

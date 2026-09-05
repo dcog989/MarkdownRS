@@ -1,15 +1,15 @@
 <script lang="ts">
-import { tick } from 'svelte';
-import { _ } from 'svelte-i18n';
-import Modal from '$lib/components/ui/Modal.svelte';
-import { dialogStore, resolvePrompt } from '$lib/stores/dialogStore.svelte';
+import { tick } from "svelte";
+import { _ } from "svelte-i18n";
+import Modal from "$lib/components/ui/Modal.svelte";
+import { dialogStore, resolvePrompt } from "$lib/stores/dialogStore.svelte";
 
 let inputEl: HTMLInputElement | undefined = $state();
-let inputValue = $state('');
+let inputValue = $state("");
 
 $effect(() => {
   if (dialogStore.promptIsOpen) {
-    inputValue = dialogStore.promptOptions.value || '';
+    inputValue = dialogStore.promptOptions.value || "";
     tick().then(() => {
       inputEl?.focus();
       inputEl?.select();
@@ -22,7 +22,7 @@ function handleConfirm() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter') {
+  if (e.key === "Enter") {
     e.preventDefault();
     handleConfirm();
   }

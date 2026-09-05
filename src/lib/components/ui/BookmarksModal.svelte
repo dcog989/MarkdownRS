@@ -1,13 +1,13 @@
 <script lang="ts">
-import { open } from '@tauri-apps/plugin-dialog';
-import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Tag, Trash2 } from 'lucide-svelte';
-import { slide } from 'svelte/transition';
-import { _ } from 'svelte-i18n';
-import Input from '$lib/components/ui/Input.svelte';
-import Modal from '$lib/components/ui/Modal.svelte';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { translate } from '$lib/i18n';
+import { open } from "@tauri-apps/plugin-dialog";
+import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Tag, Trash2 } from "lucide-svelte";
+import { slide } from "svelte/transition";
+import { _ } from "svelte-i18n";
+import Input from "$lib/components/ui/Input.svelte";
+import Modal from "$lib/components/ui/Modal.svelte";
+import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { translate } from "$lib/i18n";
 import {
   addBookmark,
   deleteBookmark,
@@ -15,43 +15,43 @@ import {
   loadBookmarks,
   updateAccessTime,
   updateBookmark,
-} from '$lib/stores/bookmarkStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
-import { getFilename } from '$lib/utils/fileValidation';
-import { createListNavigation } from '$lib/utils/listNavigation.svelte';
-import { scrollIntoView } from '$lib/utils/modalUtils';
+} from "$lib/stores/bookmarkStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { CONFIG } from "$lib/utils/config";
+import { getFilename } from "$lib/utils/fileValidation";
+import { createListNavigation } from "$lib/utils/listNavigation.svelte";
+import { scrollIntoView } from "$lib/utils/modalUtils";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onOpenFile: (path: string) => void;
-  position?: 'center' | 'top';
+  position?: "center" | "top";
 }
 
-let { isOpen = $bindable(false), onClose, onOpenFile, position = 'top' }: Props = $props();
+let { isOpen = $bindable(false), onClose, onOpenFile, position = "top" }: Props = $props();
 
-type SortOption = 'most-recent' | 'alphabetical' | 'last-updated';
-type SortDirection = 'asc' | 'desc';
+type SortOption = "most-recent" | "alphabetical" | "last-updated";
+type SortDirection = "asc" | "desc";
 
-let searchQuery = $state('');
+let searchQuery = $state("");
 let editingId = $state<string | null>(null);
-let editTitle = $state('');
-let editTags = $state('');
+let editTitle = $state("");
+let editTags = $state("");
 let showAddForm = $state(false);
-let addPath = $state('');
-let addTitle = $state('');
-let addTags = $state('');
-let browseError = $state('');
-let sortBy = $state<SortOption>('most-recent');
-let sortDirection = $state<SortDirection>('desc');
+let addPath = $state("");
+let addTitle = $state("");
+let addTags = $state("");
+let browseError = $state("");
+let sortBy = $state<SortOption>("most-recent");
+let sortDirection = $state<SortDirection>("desc");
 
 function sortByField<T>(items: T[], getField: (item: T) => string, direction: SortDirection): void {
   items.sort((a, b) => {
     const aVal = getField(a);
     const bVal = getField(b);
-    return direction === 'desc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+    return direction === "desc" ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
   });
 }
 
@@ -60,10 +60,10 @@ $effect(() => {
     loadBookmarks();
   }
   if (!isOpen) {
-    searchQuery = '';
+    searchQuery = "";
     editingId = null;
     showAddForm = false;
-    browseError = '';
+    browseError = "";
   }
 });
 
@@ -100,14 +100,14 @@ let sortedBookmarks = $derived(
   (() => {
     const sorted = [...filteredBookmarks].filter((b) => !deletingIds.has(b.id));
     switch (sortBy) {
-      case 'most-recent':
-        sortByField(sorted, (b) => b.created || '', sortDirection);
+      case "most-recent":
+        sortByField(sorted, (b) => b.created || "", sortDirection);
         break;
-      case 'alphabetical':
+      case "alphabetical":
         sortByField(sorted, (b) => b.title.toLowerCase(), sortDirection);
         break;
-      case 'last-updated':
-        sortByField(sorted, (b) => b.last_accessed || b.created || '', sortDirection);
+      case "last-updated":
+        sortByField(sorted, (b) => b.last_accessed || b.created || "", sortDirection);
         break;
     }
     return sorted;
@@ -123,24 +123,24 @@ async function handleOpenBookmark(bookmark: (typeof appContext.bookmarks.bookmar
 function startEdit(bookmark: (typeof appContext.bookmarks.bookmarks)[0]) {
   editingId = bookmark.id;
   editTitle = bookmark.title;
-  editTags = bookmark.tags.join(', ');
+  editTags = bookmark.tags.join(", ");
 }
 
 function cancelEdit() {
   editingId = null;
-  editTitle = '';
-  editTags = '';
+  editTitle = "";
+  editTags = "";
 }
 
 async function saveEdit(id: string) {
   const tags = editTags
-    .split(',')
+    .split(",")
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
   await updateBookmark(id, editTitle, tags);
   editingId = null;
-  editTitle = '';
-  editTags = '';
+  editTitle = "";
+  editTags = "";
 }
 
 let deletingIds = $state(new Set<string>());
@@ -153,62 +153,62 @@ async function handleDelete(id: string, e: MouseEvent) {
 
 function startAdd() {
   showAddForm = true;
-  addPath = '';
-  addTitle = '';
-  addTags = '';
-  browseError = '';
+  addPath = "";
+  addTitle = "";
+  addTags = "";
+  browseError = "";
 }
 
 async function handleBrowse() {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: translate('bookmarks.markdownFilter'), extensions: ['md', 'markdown', 'txt'] }],
+      filters: [{ name: translate("bookmarks.markdownFilter"), extensions: ["md", "markdown", "txt"] }],
     });
-    if (selected && typeof selected === 'string') {
+    if (selected && typeof selected === "string") {
       addPath = selected;
-      browseError = '';
+      browseError = "";
       const filename = getFilename(selected);
-      const titleWithoutExt = filename.replace(/\.[^/.]+$/, '');
+      const titleWithoutExt = filename.replace(/\.[^/.]+$/, "");
       if (!addTitle) addTitle = titleWithoutExt;
     }
   } catch (_error) {
-    browseError = translate('bookmarks.browseError');
+    browseError = translate("bookmarks.browseError");
   }
 }
 
 async function handleAddBookmark() {
   if (!addPath || !addTitle) return;
   try {
-    await callBackend('get_file_metadata', { path: addPath }, 'File:Metadata');
+    await callBackend("get_file_metadata", { path: addPath }, "File:Metadata");
   } catch (_error) {
-    browseError = translate('bookmarks.missingFile');
+    browseError = translate("bookmarks.missingFile");
     return;
   }
   if (isBookmarked(addPath)) {
-    browseError = translate('bookmarks.alreadyBookmarked');
+    browseError = translate("bookmarks.alreadyBookmarked");
     return;
   }
   const tags = addTags
-    .split(',')
+    .split(",")
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
   await addBookmark(addPath, addTitle, tags);
   showAddForm = false;
-  addPath = '';
-  addTitle = '';
-  addTags = '';
-  browseError = '';
+  addPath = "";
+  addTitle = "";
+  addTags = "";
+  browseError = "";
 }
 
 function formatDate(timestamp: string | null): string {
-  if (!timestamp) return translate('bookmarks.never');
-  const [date] = timestamp.split(' / ');
+  if (!timestamp) return translate("bookmarks.never");
+  const [date] = timestamp.split(" / ");
   return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
 }
 
 function toggleSortDirection() {
-  sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+  sortDirection = sortDirection === "asc" ? "desc" : "asc";
 }
 
 function handleKeydown(e: KeyboardEvent) {

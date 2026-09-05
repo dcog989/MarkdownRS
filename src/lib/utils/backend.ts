@@ -1,6 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
-import type { BackendCommands, CommandName } from '$lib/types/api';
-import { AppError, type ErrorContext, type ErrorOptions } from './errorHandling';
+import { invoke } from "@tauri-apps/api/core";
+import type { BackendCommands, CommandName } from "$lib/types/api";
+import { AppError, type ErrorContext, type ErrorOptions } from "./errorHandling";
 
 export interface BackendCallOptions {
   report?: boolean;
@@ -17,37 +17,37 @@ export interface SafeCallOptions extends ErrorOptions {
  */
 export async function callBackend<K extends CommandName>(
   command: K,
-  args: BackendCommands[K]['args'],
+  args: BackendCommands[K]["args"],
   context: ErrorContext,
   additionalInfo?: Record<string, unknown>,
   options?: BackendCallOptions & { ignore: true },
-): Promise<BackendCommands[K]['return'] | null>;
+): Promise<BackendCommands[K]["return"] | null>;
 
 export async function callBackend<K extends CommandName>(
   command: K,
-  args: BackendCommands[K]['args'],
+  args: BackendCommands[K]["args"],
   context: ErrorContext,
   additionalInfo?: Record<string, unknown>,
   options?: BackendCallOptions & { report: true },
-): Promise<BackendCommands[K]['return'] | null>;
+): Promise<BackendCommands[K]["return"] | null>;
 
 export async function callBackend<K extends CommandName>(
   command: K,
-  args: BackendCommands[K]['args'],
+  args: BackendCommands[K]["args"],
   context: ErrorContext,
   additionalInfo?: Record<string, unknown>,
   options?: BackendCallOptions,
-): Promise<BackendCommands[K]['return']>;
+): Promise<BackendCommands[K]["return"]>;
 
 export async function callBackend<K extends CommandName>(
   command: K,
-  args: BackendCommands[K]['args'],
+  args: BackendCommands[K]["args"],
   context: ErrorContext,
   additionalInfo?: Record<string, unknown>,
   options?: BackendCallOptions,
-): Promise<BackendCommands[K]['return'] | null> {
+): Promise<BackendCommands[K]["return"] | null> {
   try {
-    const result = await invoke<BackendCommands[K]['return']>(command, args);
+    const result = await invoke<BackendCommands[K]["return"]>(command, args);
     return result;
   } catch (err) {
     const errorOpts = {
@@ -56,7 +56,7 @@ export async function callBackend<K extends CommandName>(
         ...args,
         ...additionalInfo,
       } as Record<string, unknown>,
-      severity: 'error' as const,
+      severity: "error" as const,
       userMessage: options?.msg,
       showToast: options?.report ? true : !options?.ignore,
     };
@@ -85,10 +85,10 @@ export async function callBackend<K extends CommandName>(
  */
 export async function callBackendSafe<K extends CommandName>(
   command: K,
-  args: BackendCommands[K]['args'],
+  args: BackendCommands[K]["args"],
   context: ErrorContext,
   options: SafeCallOptions = {},
-): Promise<BackendCommands[K]['return'] | null> {
+): Promise<BackendCommands[K]["return"] | null> {
   try {
     return await callBackend(command, args, context, undefined, { ignore: false });
   } catch (err) {

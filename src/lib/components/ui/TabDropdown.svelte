@@ -1,16 +1,16 @@
 <script lang="ts">
-import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { focusOnMount } from '$lib/utils/dom';
-import { requestCloseTab } from '$lib/utils/fileSystem';
-import { formatFileSize } from '$lib/utils/fileValidation';
-import { createListNavigation } from '$lib/utils/listNavigation.svelte';
-import { scrollIntoView } from '$lib/utils/modalUtils';
+import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { focusOnMount } from "$lib/utils/dom";
+import { requestCloseTab } from "$lib/utils/fileSystem";
+import { formatFileSize } from "$lib/utils/fileValidation";
+import { createListNavigation } from "$lib/utils/listNavigation.svelte";
+import { scrollIntoView } from "$lib/utils/modalUtils";
 
 let {
   isOpen = false,
@@ -22,7 +22,7 @@ let {
   onClose: () => void;
 }>();
 
-let searchQuery = $state('');
+let searchQuery = $state("");
 // @ts-expect-error: used by bind:this in template
 let searchInputRef = $state<HTMLInputElement | null>();
 let dropdownListRef = $state<HTMLDivElement>();
@@ -33,13 +33,13 @@ let mouseMovementTimer: number | null = null;
 
 let filteredTabs = $derived.by(() => {
   const tabs = appContext.editor.tabs;
-  if (searchQuery.trim() === '') {
+  if (searchQuery.trim() === "") {
     return tabs;
   }
   const query = searchQuery.toLowerCase();
   return tabs.filter((tab) => {
     return (
-      (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || '').toLowerCase().includes(query)
+      (tab.customTitle || tab.title).toLowerCase().includes(query) || (tab.path || "").toLowerCase().includes(query)
     );
   });
 });
@@ -56,24 +56,24 @@ function getDropdownTitle(tab: EditorTab): string {
 function getTooltipContent(tab: EditorTab): string {
   const parts: string[] = [];
   const sizeStr = formatFileSize(tab.sizeBytes || 0);
-  const formattedTime = tab.formattedTimestamp || '';
+  const formattedTime = tab.formattedTimestamp || "";
   const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 
   if (tab.fileCheckFailed) {
-    parts.push($_('tabButton.missingFile'));
+    parts.push($_("tabButton.missingFile"));
     if (tab.path) parts.push(tab.path);
   } else {
-    parts.push(tab.path || $_('tabButton.unsaved'));
+    parts.push(tab.path || $_("tabButton.unsaved"));
   }
   parts.push(bottomLine);
-  return parts.join('\n');
+  return parts.join("\n");
 }
 
 $effect(() => {
   if (isOpen) {
     lastClientX = 0;
     lastClientY = 0;
-    searchQuery = '';
+    searchQuery = "";
     nav.reset();
     ignoreMouseMovement = true;
 
@@ -108,7 +108,7 @@ function handleHover(index: number, e: MouseEvent) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     e.preventDefault();
     onClose();
     return;

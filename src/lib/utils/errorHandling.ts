@@ -1,48 +1,48 @@
-import { error as logError } from '@tauri-apps/plugin-log';
-import { translate } from '$lib/i18n';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { getFilename } from './fileValidation';
-import { logger } from './logger';
+import { error as logError } from "@tauri-apps/plugin-log";
+import { translate } from "$lib/i18n";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { getFilename } from "./fileValidation";
+import { logger } from "./logger";
 
 export type ErrorContext =
-  | 'Session:Save'
-  | 'Session:Load'
-  | 'File:Read'
-  | 'File:Write'
-  | 'File:Metadata'
-  | 'File:ListDirectory'
-  | 'File:StatDirectory'
-  | 'Markdown:Render'
-  | 'Settings:Load'
-  | 'Settings:Save'
-  | 'Settings:AppInfo'
-  | 'Editor:Init'
-  | 'Editor:ImagePaste'
-  | 'Database:Init'
-  | 'Transform:Text'
-  | 'Dictionary:Add'
-  | 'UI:DragDrop'
-  | 'FileWatcher:Watch'
-  | 'FileWatcher:Unwatch'
-  | 'Export:PDF'
-  | 'Export:HTML'
-  | 'Spellcheck:Init'
-  | 'Spellcheck:Suggest'
-  | 'Bookmark:Add'
-  | 'Bookmark:Remove'
-  | 'Markdown:TOC'
-  | 'Update:Check'
-  | 'Update:Install'
-  | 'Markdown:Lint'
-  | 'Markdown:ReadRumdlConfig'
-  | 'Markdown:WriteRumdlConfig'
-  | 'Data:ExportBookmarks'
-  | 'Data:ImportBookmarks'
-  | 'Data:ExportFileHistory'
-  | 'Data:ImportFileHistory'
-  | 'Data:DeleteOrphans';
+  | "Session:Save"
+  | "Session:Load"
+  | "File:Read"
+  | "File:Write"
+  | "File:Metadata"
+  | "File:ListDirectory"
+  | "File:StatDirectory"
+  | "Markdown:Render"
+  | "Settings:Load"
+  | "Settings:Save"
+  | "Settings:AppInfo"
+  | "Editor:Init"
+  | "Editor:ImagePaste"
+  | "Database:Init"
+  | "Transform:Text"
+  | "Dictionary:Add"
+  | "UI:DragDrop"
+  | "FileWatcher:Watch"
+  | "FileWatcher:Unwatch"
+  | "Export:PDF"
+  | "Export:HTML"
+  | "Spellcheck:Init"
+  | "Spellcheck:Suggest"
+  | "Bookmark:Add"
+  | "Bookmark:Remove"
+  | "Markdown:TOC"
+  | "Update:Check"
+  | "Update:Install"
+  | "Markdown:Lint"
+  | "Markdown:ReadRumdlConfig"
+  | "Markdown:WriteRumdlConfig"
+  | "Data:ExportBookmarks"
+  | "Data:ImportBookmarks"
+  | "Data:ExportFileHistory"
+  | "Data:ImportFileHistory"
+  | "Data:DeleteOrphans";
 
-export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type ErrorSeverity = "info" | "warning" | "error" | "critical";
 
 export interface ErrorOptions {
   showToast?: boolean;
@@ -57,7 +57,7 @@ export interface ErrorOptions {
 function safeStringify(obj: unknown): string {
   try {
     return JSON.stringify(obj, (_, value: unknown) => {
-      if (typeof value === 'string' && value.length > 500) {
+      if (typeof value === "string" && value.length > 500) {
         return `${value.substring(0, 500)}... [truncated]`;
       }
       if (Array.isArray(value) && value.length > 20) {
@@ -80,13 +80,13 @@ export class AppError extends Error {
   constructor(
     context: ErrorContext,
     message: string,
-    options: Omit<ErrorOptions, 'userMessage'> & { originalError?: Error } = {},
+    options: Omit<ErrorOptions, "userMessage"> & { originalError?: Error } = {},
   ) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
     this.context = context;
     this.timestamp = new Date();
-    this.severity = options.severity || 'error';
+    this.severity = options.severity || "error";
     this.additionalInfo = options.additionalInfo;
     this.originalError = options.originalError;
 
@@ -95,7 +95,7 @@ export class AppError extends Error {
     }
   }
 
-  static from(context: ErrorContext, error: unknown, options: Omit<ErrorOptions, 'userMessage'> = {}): AppError {
+  static from(context: ErrorContext, error: unknown, options: Omit<ErrorOptions, "userMessage"> = {}): AppError {
     if (error instanceof AppError) {
       return error;
     }
@@ -118,7 +118,7 @@ export class AppError extends Error {
     logger.editor.error(this.formatForDiskLog());
 
     this.logError(logToDisk).catch((err) => {
-      logger.editor.warn('DiskLogFailed', { error: String(err) });
+      logger.editor.warn("DiskLogFailed", { error: String(err) });
     });
 
     if (shouldShowToast) {
@@ -126,15 +126,15 @@ export class AppError extends Error {
       const duration = toastDuration || this.getDefaultToastDuration();
 
       switch (this.severity) {
-        case 'critical':
-        case 'error':
-          showToast('error', message, duration);
+        case "critical":
+        case "error":
+          showToast("error", message, duration);
           break;
-        case 'warning':
-          showToast('warning', message, duration);
+        case "warning":
+          showToast("warning", message, duration);
           break;
-        case 'info':
-          showToast('info', message, duration);
+        case "info":
+          showToast("info", message, duration);
           break;
       }
     }
@@ -160,69 +160,69 @@ export class AppError extends Error {
       parts.push(`Original Error: ${this.originalError.message}`);
     }
 
-    return parts.join(' | ');
+    return parts.join(" | ");
   }
 
   private getUserFriendlyMessage(): string {
     if (
-      this.message.includes('No such file') ||
-      this.message.includes('does not exist') ||
-      this.message.includes('not found')
+      this.message.includes("No such file") ||
+      this.message.includes("does not exist") ||
+      this.message.includes("not found")
     ) {
       return this.getFileNotFoundMessage();
     }
 
-    if (this.message.includes('Permission denied') || this.message.includes('Access denied')) {
+    if (this.message.includes("Permission denied") || this.message.includes("Access denied")) {
       return this.getPermissionDeniedMessage();
     }
 
     switch (this.context) {
-      case 'File:Read':
-        return translate('error.failedToRead');
-      case 'File:Write':
-        return this.message && this.message !== 'Failed to save file'
-          ? translate('error.failedToSaveDetailed', { values: { detail: this.message } })
-          : translate('error.failedToSave');
-      case 'File:Metadata':
-        return translate('error.failedToReadMetadata');
-      case 'Session:Save':
-        return translate('error.failedToSaveSession');
-      case 'Session:Load':
-        return translate('error.failedToLoadSession');
-      case 'Markdown:Render':
-        return translate('error.failedToRenderMarkdown');
-      case 'Settings:Save':
-        return translate('error.failedToSaveSettings');
-      case 'Settings:Load':
-        return translate('error.failedToLoadSettings');
-      case 'Transform:Text':
-        return translate('error.failedToTransform');
-      case 'Dictionary:Add':
-        return translate('error.failedToAddWord');
-      case 'Export:PDF':
-      case 'Export:HTML':
-        return translate('error.exportFailed');
-      case 'Bookmark:Add':
-        return translate('error.failedToAddBookmark');
-      case 'Bookmark:Remove':
-        return translate('error.failedToRemoveBookmark');
+      case "File:Read":
+        return translate("error.failedToRead");
+      case "File:Write":
+        return this.message && this.message !== "Failed to save file"
+          ? translate("error.failedToSaveDetailed", { values: { detail: this.message } })
+          : translate("error.failedToSave");
+      case "File:Metadata":
+        return translate("error.failedToReadMetadata");
+      case "Session:Save":
+        return translate("error.failedToSaveSession");
+      case "Session:Load":
+        return translate("error.failedToLoadSession");
+      case "Markdown:Render":
+        return translate("error.failedToRenderMarkdown");
+      case "Settings:Save":
+        return translate("error.failedToSaveSettings");
+      case "Settings:Load":
+        return translate("error.failedToLoadSettings");
+      case "Transform:Text":
+        return translate("error.failedToTransform");
+      case "Dictionary:Add":
+        return translate("error.failedToAddWord");
+      case "Export:PDF":
+      case "Export:HTML":
+        return translate("error.exportFailed");
+      case "Bookmark:Add":
+        return translate("error.failedToAddBookmark");
+      case "Bookmark:Remove":
+        return translate("error.failedToRemoveBookmark");
       default:
-        return this.message || translate('error.generic');
+        return this.message || translate("error.generic");
     }
   }
 
   private getFileNotFoundMessage(): string {
     const fileName = this.extractFileName();
     return fileName
-      ? translate('error.fileNotFoundNamed', { values: { name: fileName } })
-      : translate('error.fileNotFound');
+      ? translate("error.fileNotFoundNamed", { values: { name: fileName } })
+      : translate("error.fileNotFound");
   }
 
   private getPermissionDeniedMessage(): string {
     const fileName = this.extractFileName();
     return fileName
-      ? translate('error.cannotAccess', { values: { name: fileName } })
-      : translate('error.permissionDenied');
+      ? translate("error.cannotAccess", { values: { name: fileName } })
+      : translate("error.permissionDenied");
   }
 
   private extractFileName(): string | null {
@@ -235,13 +235,13 @@ export class AppError extends Error {
 
   private getDefaultToastDuration(): number {
     switch (this.severity) {
-      case 'critical':
+      case "critical":
         return 6000;
-      case 'error':
+      case "error":
         return 4000;
-      case 'warning':
+      case "warning":
         return 3000;
-      case 'info':
+      case "info":
         return 2000;
     }
   }

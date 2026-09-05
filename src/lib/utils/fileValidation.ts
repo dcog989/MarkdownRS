@@ -1,72 +1,72 @@
-import { basename as getFilename } from './path';
+import { basename as getFilename } from "./path";
 
 export { getFilename };
 
-export const MARKDOWN_EXTENSIONS = ['md', 'markdown', 'mdown', 'mkdn', 'mkd', 'mdwn', 'mdtxt', 'mdtext'];
+export const MARKDOWN_EXTENSIONS = ["md", "markdown", "mdown", "mkdn", "mkd", "mdwn", "mdtxt", "mdtext"];
 
 export const MARKDOWN_EXTENSION_SET = new Set(MARKDOWN_EXTENSIONS.map((ext) => ext.toLowerCase()));
 
 export const SUPPORTED_TEXT_EXTENSIONS = [
   // Markdown & Text
   ...MARKDOWN_EXTENSIONS,
-  'txt',
-  'log',
-  'asc',
-  'adoc',
+  "txt",
+  "log",
+  "asc",
+  "adoc",
   // Web
-  'html',
-  'htm',
-  'css',
-  'scss',
-  'less',
-  'js',
-  'jsx',
-  'ts',
-  'tsx',
-  'svelte',
-  'vue',
-  'json',
+  "html",
+  "htm",
+  "css",
+  "scss",
+  "less",
+  "js",
+  "jsx",
+  "ts",
+  "tsx",
+  "svelte",
+  "vue",
+  "json",
   // Config
-  'yaml',
-  'yml',
-  'toml',
-  'ini',
-  'cfg',
-  'conf',
-  'properties',
-  'env',
-  'gitignore',
+  "yaml",
+  "yml",
+  "toml",
+  "ini",
+  "cfg",
+  "conf",
+  "properties",
+  "env",
+  "gitignore",
   // Code
-  'rs',
-  'py',
-  'rb',
-  'php',
-  'pl',
-  'go',
-  'java',
-  'c',
-  'cpp',
-  'h',
-  'hpp',
-  'cs',
-  'swift',
-  'kt',
-  'kts',
-  'sh',
-  'bash',
-  'zsh',
-  'bat',
-  'cmd',
-  'ps1',
-  'lua',
-  'sql',
+  "rs",
+  "py",
+  "rb",
+  "php",
+  "pl",
+  "go",
+  "java",
+  "c",
+  "cpp",
+  "h",
+  "hpp",
+  "cs",
+  "swift",
+  "kt",
+  "kts",
+  "sh",
+  "bash",
+  "zsh",
+  "bat",
+  "cmd",
+  "ps1",
+  "lua",
+  "sql",
   // Data/Misc
-  'xml',
-  'svg',
-  'diff',
-  'patch',
-  'csv',
-  'tsv',
+  "xml",
+  "svg",
+  "diff",
+  "patch",
+  "csv",
+  "tsv",
 ];
 
 /**
@@ -76,7 +76,7 @@ export const SUPPORTED_TEXT_EXTENSIONS = [
  * - MB and above: round up to nearest tenth (e.g., 1.5 MB, 2.3 GB)
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 KB';
+  if (bytes === 0) return "0 KB";
 
   const kb = bytes / 1024;
 
@@ -108,10 +108,10 @@ export function isTextFile(path: string): boolean {
   const filename = getFilename(path);
 
   // Dotfiles often text (gitignore, env, etc)
-  if (filename.startsWith('.')) return true;
-  if (!filename.includes('.')) return true; // No extension often implies text/script
+  if (filename.startsWith(".")) return true;
+  if (!filename.includes(".")) return true; // No extension often implies text/script
 
-  const extension = filename.split('.').pop()?.toLowerCase();
+  const extension = filename.split(".").pop()?.toLowerCase();
   if (!extension) return false;
   return SUPPORTED_TEXT_EXTENSIONS.includes(extension);
 }
@@ -121,6 +121,6 @@ export function isTextFile(path: string): boolean {
  */
 export function isMarkdownFile(path: string): boolean {
   const filename = getFilename(path);
-  const extension = filename.split('.').pop()?.toLowerCase();
+  const extension = filename.split(".").pop()?.toLowerCase();
   return extension ? MARKDOWN_EXTENSIONS.includes(extension) : false;
 }

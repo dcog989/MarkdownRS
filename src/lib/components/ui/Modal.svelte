@@ -1,18 +1,18 @@
 <script lang="ts">
-import { X } from 'lucide-svelte';
-import type { Snippet } from 'svelte';
-import { _ } from 'svelte-i18n';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
+import { X } from "lucide-svelte";
+import type { Snippet } from "svelte";
+import { _ } from "svelte-i18n";
+import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from "$lib/utils/dom";
 
 let {
   isOpen = $bindable(false),
   onClose,
   title,
   zIndex = 100,
-  position = 'top',
-  width = 'fit-content',
+  position = "top",
+  width = "fit-content",
   header,
   footer,
   children,
@@ -21,7 +21,7 @@ let {
   onClose: () => void;
   title?: string;
   zIndex?: number;
-  position?: 'center' | 'top';
+  position?: "center" | "top";
   width?: string;
   header?: Snippet;
   footer?: Snippet;
@@ -60,14 +60,14 @@ function invalidateFocusCache() {
 function handleKeydown(e: KeyboardEvent) {
   if (!isOpen) return;
 
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
     onClose();
     return;
   }
 
-  if (e.key !== 'Tab') return;
+  if (e.key !== "Tab") return;
 
   const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
   if (focusableElements.length === 0) return;
@@ -126,7 +126,7 @@ $effect(() => {
     }
   };
 
-  modalPanel?.addEventListener('focusout', handleFocusOut);
+  modalPanel?.addEventListener("focusout", handleFocusOut);
 
   // Set up a mutation observer to invalidate focus cache when DOM changes
   const mutationObserver = new MutationObserver(() => {
@@ -138,12 +138,12 @@ $effect(() => {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['disabled', 'tabindex'],
+      attributeFilter: ["disabled", "tabindex"],
     });
   }
 
   return () => {
-    modalPanel?.removeEventListener('focusout', handleFocusOut);
+    modalPanel?.removeEventListener("focusout", handleFocusOut);
     mutationObserver.disconnect();
 
     // Blur the previously focused element to remove focus outline

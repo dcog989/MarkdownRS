@@ -1,5 +1,5 @@
-import { syntaxTree } from '@codemirror/language';
-import { type Extension, type Line, Prec, type Range } from '@codemirror/state';
+import { syntaxTree } from "@codemirror/language";
+import { type Extension, type Line, Prec, type Range } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -8,85 +8,85 @@ import {
   ViewPlugin,
   type ViewUpdate,
   WidgetType,
-} from '@codemirror/view';
-import type { SyntaxNodeRef } from '@lezer/common';
-import { imageWidgetClickHandler, imageWidgetDecoration } from './markdownImageWidget';
-import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from './markdownTableWidget';
-import { resolveImageSrc } from './resolveImagePath';
+} from "@codemirror/view";
+import type { SyntaxNodeRef } from "@lezer/common";
+import { imageWidgetClickHandler, imageWidgetDecoration } from "./markdownImageWidget";
+import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from "./markdownTableWidget";
+import { resolveImageSrc } from "./resolveImagePath";
 
 /** Resolves the base directory of the tab a view belongs to (for image sources). */
 export type GetTabDirectory = (view: EditorView) => string;
 
 export interface CodeBlockCopyDeps {
   translate: (key: string) => string;
-  showToast: (type: 'info' | 'success' | 'warning' | 'error', message: string) => void;
+  showToast: (type: "info" | "success" | "warning" | "error", message: string) => void;
 }
 
 const HEADING_NODE_NAMES = new Set([
-  'ATXHeading1',
-  'ATXHeading2',
-  'ATXHeading3',
-  'ATXHeading4',
-  'ATXHeading5',
-  'ATXHeading6',
-  'SetextHeading1',
-  'SetextHeading2',
+  "ATXHeading1",
+  "ATXHeading2",
+  "ATXHeading3",
+  "ATXHeading4",
+  "ATXHeading5",
+  "ATXHeading6",
+  "SetextHeading1",
+  "SetextHeading2",
 ]);
 
 const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
-  { marker: 'EmphasisMark', parents: new Set(['Emphasis', 'StrongEmphasis']) },
+  { marker: "EmphasisMark", parents: new Set(["Emphasis", "StrongEmphasis"]) },
   {
-    marker: 'HeaderMark',
+    marker: "HeaderMark",
     parents: new Set([
-      'ATXHeading1',
-      'ATXHeading2',
-      'ATXHeading3',
-      'ATXHeading4',
-      'ATXHeading5',
-      'ATXHeading6',
-      'SetextHeading1',
-      'SetextHeading2',
+      "ATXHeading1",
+      "ATXHeading2",
+      "ATXHeading3",
+      "ATXHeading4",
+      "ATXHeading5",
+      "ATXHeading6",
+      "SetextHeading1",
+      "SetextHeading2",
     ]),
   },
-  { marker: 'LinkMark', parents: new Set(['Autolink']) },
-  { marker: 'QuoteMark', parents: new Set(['Blockquote']) },
-  { marker: 'CodeMark', parents: new Set(['InlineCode', 'FencedCode']) },
+  { marker: "LinkMark", parents: new Set(["Autolink"]) },
+  { marker: "QuoteMark", parents: new Set(["Blockquote"]) },
+  { marker: "CodeMark", parents: new Set(["InlineCode", "FencedCode"]) },
 ];
 
-const HIDE_TRAILING_SPACE = new Set(['HeaderMark', 'QuoteMark']);
+const HIDE_TRAILING_SPACE = new Set(["HeaderMark", "QuoteMark"]);
 
-const strikethroughDeco = Decoration.mark({ class: 'cm-strikethrough' });
-const blockquoteQuoteDeco = Decoration.line({ class: 'cm-blockquote-quote' });
-const blockquoteBgDeco = Decoration.line({ class: 'cm-blockquote-bg' });
-const codeBlockLineDeco = Decoration.line({ class: 'cm-code-block' });
-const inlineCodeDeco = Decoration.mark({ class: 'cm-code' });
-const codeInfoDeco = Decoration.mark({ class: 'cm-code-info' });
-const horizontalRuleDeco = Decoration.mark({ class: 'cm-hr cm-hr-raw' });
-const horizontalRuleMaskedDeco = Decoration.mark({ class: 'cm-hr cm-hr-mask' });
+const strikethroughDeco = Decoration.mark({ class: "cm-strikethrough" });
+const blockquoteQuoteDeco = Decoration.line({ class: "cm-blockquote-quote" });
+const blockquoteBgDeco = Decoration.line({ class: "cm-blockquote-bg" });
+const codeBlockLineDeco = Decoration.line({ class: "cm-code-block" });
+const inlineCodeDeco = Decoration.mark({ class: "cm-code" });
+const codeInfoDeco = Decoration.mark({ class: "cm-code-info" });
+const horizontalRuleDeco = Decoration.mark({ class: "cm-hr cm-hr-raw" });
+const horizontalRuleMaskedDeco = Decoration.mark({ class: "cm-hr cm-hr-mask" });
 const bulletPointDeco = Decoration.replace({
   widget: new (class extends WidgetType {
     toDOM() {
-      const span = document.createElement('span');
-      span.className = 'cm-bullet-widget';
-      span.textContent = '\u2022';
+      const span = document.createElement("span");
+      span.className = "cm-bullet-widget";
+      span.textContent = "\u2022";
       return span;
     }
   })(),
 });
-const headingRawDeco = Decoration.mark({ class: 'cm-heading-raw' });
+const headingRawDeco = Decoration.mark({ class: "cm-heading-raw" });
 const formattingMaskDeco = Decoration.replace({});
 const formattingMaskAutolinkDeco = Decoration.replace({ inclusive: true });
 // Inclusive so clicks at the end of a hidden URL range map past it instead of
 // jumping to the start (e.g. before '(') — same fix as the autolink brackets.
 const linkUrlMaskDeco = Decoration.replace({ inclusive: true });
-const linkTextDeco = Decoration.mark({ class: 'cm-link-text' });
+const linkTextDeco = Decoration.mark({ class: "cm-link-text" });
 const linkTextTheme = EditorView.baseTheme({
-  '.cm-link-text': {
-    color: 'var(--editor-link)',
-    textDecoration: 'underline',
+  ".cm-link-text": {
+    color: "var(--editor-link)",
+    textDecoration: "underline",
   },
-  '&.cm-modifier-down .cm-link-text': {
-    cursor: 'pointer',
+  "&.cm-modifier-down .cm-link-text": {
+    cursor: "pointer",
   },
 });
 
@@ -96,23 +96,23 @@ const stRegex = /~~([^~]+)~~/g;
 
 const CALLOUT_STYLES: Record<string, { title: string; icon: string }> = {
   note: {
-    title: 'Note',
+    title: "Note",
     icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
   },
   tip: {
-    title: 'Tip',
+    title: "Tip",
     icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>',
   },
   important: {
-    title: 'Important',
+    title: "Important",
     icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
   },
   warning: {
-    title: 'Warning',
+    title: "Warning",
     icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.7 18.5 13.5 4.4a1.9 1.9 0 0 0-3 0L2.3 18.5A1.9 1.9 0 0 0 4 21h16a1.9 1.9 0 0 0 1.7-2.5z"/><path d="M12 9v4M12 17h.01"/></svg>',
   },
   caution: {
-    title: 'Caution',
+    title: "Caution",
     icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 2h8.2L22 7.9v8.2l-5.9 5.9H7.9L2 16.1V7.9z"/><path d="M12 8v4M12 16h.01"/></svg>',
   },
 };
@@ -138,7 +138,7 @@ class CalloutTitleWidget extends WidgetType {
   }
 
   toDOM(): HTMLElement {
-    const span = document.createElement('span');
+    const span = document.createElement("span");
     span.className = `cm-callout-title cm-callout-${this.kind}`;
     span.innerHTML = `${CALLOUT_STYLES[this.kind].icon}<span class="cm-callout-title-text">${this.title}</span>`;
     return span;
@@ -170,7 +170,7 @@ function collectCallouts(view: EditorView): CalloutInfo {
       from,
       to,
       enter: (node) => {
-        if (node.name !== 'Blockquote') return;
+        if (node.name !== "Blockquote") return;
         const fromLine = view.state.doc.lineAt(node.from);
         const callout = matchCalloutLine(fromLine.text);
         if (!callout) return;
@@ -271,18 +271,18 @@ function listMarkerBackspace(view: EditorView): boolean {
   return true;
 }
 
-const renderedModeKeymap = Prec.highest(keymap.of([{ key: 'Backspace', run: listMarkerBackspace }]));
+const renderedModeKeymap = Prec.highest(keymap.of([{ key: "Backspace", run: listMarkerBackspace }]));
 
 function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
   const node = tree.resolveInner(pos, 1);
   // Fenced code content resolves to CodeText (child of FencedCode); CodeBlock is
   // indented code, and InlineCode covers inline backtick spans.
   return (
-    node.name === 'FencedCode' || node.name === 'CodeText' || node.name === 'CodeBlock' || node.name === 'InlineCode'
+    node.name === "FencedCode" || node.name === "CodeText" || node.name === "CodeBlock" || node.name === "InlineCode"
   );
 }
 
-const COPY_SNAP_NODES = new Set(['Emphasis', 'StrongEmphasis', 'Link', 'Image', 'InlineCode']);
+const COPY_SNAP_NODES = new Set(["Emphasis", "StrongEmphasis", "Link", "Image", "InlineCode"]);
 
 /**
  * Expands a selection to cover any inline Markdown construct it partially
@@ -300,7 +300,7 @@ export function snapToMarkdownConstruct(view: EditorView, from: number, to: numb
       if (!COPY_SNAP_NODES.has(node.name)) return;
       // Selecting text fully inside inline-code backticks copies only the
       // content; snapping would drag the invisible ticks into the clipboard.
-      if (node.name === 'InlineCode' && node.from < from && to < node.to) return;
+      if (node.name === "InlineCode" && node.from < from && to < node.to) return;
       if (node.from < from || node.to > to) {
         snapFrom = Math.min(snapFrom, node.from);
         snapTo = Math.max(snapTo, node.to);
@@ -344,21 +344,21 @@ function maskedLinkClickTarget(view: EditorView, pos: number): number | null {
     to: line.to,
     enter: (node) => {
       if (target != null) return;
-      if (node.name === 'Autolink') {
+      if (node.name === "Autolink") {
         if (cursor > node.from && cursor < node.to) return;
-        const linkMarks = node.node.getChildren('LinkMark');
+        const linkMarks = node.node.getChildren("LinkMark");
         const maskStart = linkMarks[linkMarks.length - 1]?.from ?? node.to;
         if (pos >= maskStart && pos <= node.to) target = node.to;
         return;
       }
-      if (node.name !== 'Link') return;
-      const urlNode = node.node.getChild('URL');
+      if (node.name !== "Link") return;
+      const urlNode = node.node.getChild("URL");
       if (!urlNode) return;
       if (cursor > node.from && cursor < node.to) return;
-      const linkMarks = node.node.getChildren('LinkMark');
+      const linkMarks = node.node.getChildren("LinkMark");
       const textEnd = linkMarks[1]?.from ?? urlNode.from;
       const after = doc.sliceString(urlNode.to, urlNode.to + 1);
-      const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
+      const hideEnd = after === ")" ? urlNode.to + 1 : urlNode.to;
       if (pos >= textEnd && pos < hideEnd) target = hideEnd;
     },
   });
@@ -429,7 +429,7 @@ function findHiddenMarkers(
         if (node.from < parent.from || node.to > parent.to) return;
         if (isInTable(node.from, node.to)) return;
         let deco: typeof formattingMaskDeco;
-        if (cfg.marker === 'LinkMark') {
+        if (cfg.marker === "LinkMark") {
           deco = formattingMaskAutolinkDeco;
         } else {
           deco = formattingMaskDeco;
@@ -437,7 +437,7 @@ function findHiddenMarkers(
         ranges.push(deco.range(node.from, node.to));
         if (HIDE_TRAILING_SPACE.has(cfg.marker)) {
           const after = view.state.doc.sliceString(node.to, node.to + 1);
-          if (after === ' ') {
+          if (after === " ") {
             ranges.push(deco.range(node.to, node.to + 1));
           }
         }
@@ -464,8 +464,8 @@ interface DecorationWalk {
   tree: ReturnType<typeof syntaxTree>;
   ranges: Range<Decoration>[];
   getTabDirectory: GetTabDirectory;
-  calloutMarkers: CalloutInfo['markers'];
-  calloutLines: CalloutInfo['lines'];
+  calloutMarkers: CalloutInfo["markers"];
+  calloutLines: CalloutInfo["lines"];
   tableSpans: Array<{ from: number; to: number }>;
   cursorHeadingLines: Set<number>;
   tableLines: Set<number>;
@@ -502,7 +502,7 @@ function collectCodeBlockLines(walk: DecorationWalk, node: SyntaxNodeRef, rangeF
 function collectCodeInfo(walk: DecorationWalk, node: SyntaxNodeRef): void {
   let p: typeof node.node | null = node.node.parent;
   while (p) {
-    if (p.name === 'FencedCode') {
+    if (p.name === "FencedCode") {
       if (!isRevealed(walk.view, p.from, p.to)) {
         walk.ranges.push(codeInfoDeco.range(node.from, node.to));
       }
@@ -525,9 +525,9 @@ function collectBlockquoteLines(walk: DecorationWalk, node: SyntaxNodeRef): void
 function collectImageWidget(walk: DecorationWalk, node: SyntaxNodeRef): boolean {
   if (isRevealed(walk.view, node.from, node.to)) return false;
   if (walk.tableSpans.some((span) => node.from >= span.from && node.to <= span.to)) return true;
-  const urlNode = node.node.getChild('URL');
+  const urlNode = node.node.getChild("URL");
   if (!urlNode) return false;
-  const linkMarks = node.node.getChildren('LinkMark');
+  const linkMarks = node.node.getChildren("LinkMark");
   const altStart = linkMarks[0]?.to ?? node.from;
   const altEnd = linkMarks[1]?.from ?? urlNode.from;
   const alt = walk.view.state.doc.sliceString(altStart, altEnd).trim();
@@ -539,16 +539,16 @@ function collectImageWidget(walk: DecorationWalk, node: SyntaxNodeRef): boolean 
 
 function collectLinkMasks(walk: DecorationWalk, node: SyntaxNodeRef): void {
   if (isRevealed(walk.view, node.from, node.to)) return;
-  const linkMarks = node.node.getChildren('LinkMark');
-  const urlNode = node.node.getChild('URL');
+  const linkMarks = node.node.getChildren("LinkMark");
+  const urlNode = node.node.getChild("URL");
   if (!urlNode) return;
   for (const lm of linkMarks) {
     walk.ranges.push(formattingMaskDeco.range(lm.from, lm.to));
   }
   const before = walk.view.state.doc.sliceString(urlNode.from - 1, urlNode.from);
   const after = walk.view.state.doc.sliceString(urlNode.to, urlNode.to + 1);
-  const hideStart = before === '(' ? urlNode.from - 1 : urlNode.from;
-  const hideEnd = after === ')' ? urlNode.to + 1 : urlNode.to;
+  const hideStart = before === "(" ? urlNode.from - 1 : urlNode.from;
+  const hideEnd = after === ")" ? urlNode.to + 1 : urlNode.to;
   walk.ranges.push(linkUrlMaskDeco.range(hideStart, hideEnd));
   const textMarks = linkMarks.filter((lm) => lm.from < urlNode.from);
   if (textMarks.length >= 2) {
@@ -563,29 +563,29 @@ function collectLinkMasks(walk: DecorationWalk, node: SyntaxNodeRef): void {
 /** Per-construct node dispatch; returns true when the subtree should be skipped. */
 function visitDecorationNode(walk: DecorationWalk, node: SyntaxNodeRef, rangeFrom: number, rangeTo: number): boolean {
   switch (node.name) {
-    case 'Frontmatter':
+    case "Frontmatter":
       collectFrontmatterLines(walk, node);
       return true;
-    case 'Table':
+    case "Table":
       return shouldSkipTable(walk, node);
-    case 'FencedCode':
+    case "FencedCode":
       collectCodeBlockLines(walk, node, rangeFrom, rangeTo);
       return false;
-    case 'InlineCode':
+    case "InlineCode":
       walk.ranges.push(inlineCodeDeco.range(node.from, node.to));
       return false;
-    case 'CodeInfo':
+    case "CodeInfo":
       collectCodeInfo(walk, node);
       return false;
-    case 'HorizontalRule':
+    case "HorizontalRule":
       walk.parserHrs.add(node.from);
       return false;
-    case 'Blockquote':
+    case "Blockquote":
       collectBlockquoteLines(walk, node);
       return false;
-    case 'Image':
+    case "Image":
       return collectImageWidget(walk, node);
-    case 'Link':
+    case "Link":
       collectLinkMasks(walk, node);
       return false;
     default:
@@ -607,7 +607,7 @@ function collectTableLines(walk: DecorationWalk): void {
 function visitDecorationLine(walk: DecorationWalk, line: Line): void {
   if (walk.tableLines.has(line.number)) return;
   if (walk.frontmatterLines.has(line.number)) {
-    walk.ranges.push(Decoration.line({ class: 'cm-frontmatter' }).range(line.from));
+    walk.ranges.push(Decoration.line({ class: "cm-frontmatter" }).range(line.from));
     return;
   }
   if (walk.codeBlockLines.has(line.number)) {
@@ -671,7 +671,7 @@ function collectStrikethrough(walk: DecorationWalk, line: Line): void {
 function isSetextUnderline(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
   let current: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
   while (current) {
-    if (current.name === 'SetextHeading1' || current.name === 'SetextHeading2') return true;
+    if (current.name === "SetextHeading1" || current.name === "SetextHeading2") return true;
     current = current.parent;
   }
   return false;
@@ -679,7 +679,7 @@ function isSetextUnderline(tree: ReturnType<typeof syntaxTree>, pos: number): bo
 
 function collectHorizontalRule(walk: DecorationWalk, line: Line): void {
   if (isVisibleInCodeBlock(walk.tree, line.from)) return;
-  if (!walk.parserHrs.has(line.from) && line.text.trim() !== '---') return;
+  if (!walk.parserHrs.has(line.from) && line.text.trim() !== "---") return;
   // A `---` line can be a setext heading underline; its HeaderMark is masked by
   // findHiddenMarkers, so it must not also be painted as a horizontal rule.
   if (isSetextUnderline(walk.tree, line.from)) return;
@@ -811,14 +811,14 @@ export function createCodeBlockCopyHandler(deps: CodeBlockCopyDeps): Extension {
   return EditorView.domEventHandlers({
     mousedown: (event, view) => {
       const target = event.target as HTMLElement;
-      if (!target.classList.contains('cm-code-info')) return false;
+      if (!target.classList.contains("cm-code-info")) return false;
 
       const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
       if (pos === null) return false;
 
       const tree = syntaxTree(view.state);
       let node: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
-      while (node && node.name !== 'FencedCode') {
+      while (node && node.name !== "FencedCode") {
         node = node.parent;
       }
       if (!node) return false;
@@ -834,8 +834,8 @@ export function createCodeBlockCopyHandler(deps: CodeBlockCopyDeps): Extension {
         codeEnd = endLine.from;
       }
 
-      const code = doc.sliceString(startLine.to + 1, codeEnd).replace(/\n$/, '');
-      navigator.clipboard.writeText(code).then(() => deps.showToast('success', deps.translate('preview.codeCopied')));
+      const code = doc.sliceString(startLine.to + 1, codeEnd).replace(/\n$/, "");
+      navigator.clipboard.writeText(code).then(() => deps.showToast("success", deps.translate("preview.codeCopied")));
 
       return true;
     },

@@ -1,16 +1,16 @@
 <script lang="ts">
-import { onDestroy, type Snippet } from 'svelte';
+import { onDestroy, type Snippet } from "svelte";
 
 let {
   show = false,
-  side = 'right',
+  side = "right",
   trigger,
   children,
   onOpen,
   onClose,
 } = $props<{
   show?: boolean;
-  side?: 'left' | 'right';
+  side?: "left" | "right";
   trigger: Snippet;
   children: Snippet;
   onOpen?: () => void;
@@ -54,7 +54,7 @@ function adjustPosition() {
 
   let x = triggerRect.right;
 
-  if (side === 'left' || x + submenuRect.width > winWidth - 5) {
+  if (side === "left" || x + submenuRect.width > winWidth - 5) {
     x = triggerRect.left - submenuRect.width;
 
     if (x < 5) {

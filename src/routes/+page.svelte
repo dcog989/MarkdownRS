@@ -1,24 +1,24 @@
 <script lang="ts">
-import { ChevronDown, ChevronRight, FolderTree, Menu } from 'lucide-svelte';
-import { onDestroy } from 'svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import AppLifecycle from '$lib/components/app/AppLifecycle.svelte';
-import Editor from '$lib/components/editor/Editor.svelte';
-import { createSplitResize } from '$lib/components/editor/logic/splitResize.svelte';
-import FileTree from '$lib/components/filetree/FileTree.svelte';
-import Preview from '$lib/components/preview/Preview.svelte';
-import Logo from '$lib/components/ui/Logo.svelte';
-import StatusBar from '$lib/components/ui/StatusBar.svelte';
-import TabBar from '$lib/components/ui/TabBar.svelte';
-import TabBarMenu from '$lib/components/ui/TabBarMenu.svelte';
-import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
-import Toast from '$lib/components/ui/Toast.svelte';
-import { pushToMru, tabsById } from '$lib/stores/editorStore.svelte';
-import { toggleFileTree } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { saveSettings } from '$lib/utils/settings';
+import { ChevronDown, ChevronRight, FolderTree, Menu } from "lucide-svelte";
+import { onDestroy } from "svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import AppLifecycle from "$lib/components/app/AppLifecycle.svelte";
+import Editor from "$lib/components/editor/Editor.svelte";
+import { createSplitResize } from "$lib/components/editor/logic/splitResize.svelte";
+import FileTree from "$lib/components/filetree/FileTree.svelte";
+import Preview from "$lib/components/preview/Preview.svelte";
+import Logo from "$lib/components/ui/Logo.svelte";
+import StatusBar from "$lib/components/ui/StatusBar.svelte";
+import TabBar from "$lib/components/ui/TabBar.svelte";
+import TabBarMenu from "$lib/components/ui/TabBarMenu.svelte";
+import TabDropdown from "$lib/components/ui/TabDropdown.svelte";
+import Toast from "$lib/components/ui/Toast.svelte";
+import { pushToMru, tabsById } from "$lib/stores/editorStore.svelte";
+import { toggleFileTree } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { saveSettings } from "$lib/utils/settings";
 
 const splitResize = createSplitResize();
 
@@ -29,12 +29,12 @@ function handleToggleFileTree() {
   saveSettings();
 }
 
-let activeTab = $derived(tabsById().get(appContext.app.activeTabId ?? ''));
+let activeTab = $derived(tabsById().get(appContext.app.activeTabId ?? ""));
 
 let isMarkdown = $derived.by(() => {
   if (!activeTab) return true;
   if (activeTab.path) return isMarkdownFile(activeTab.path);
-  return activeTab.preferredExtension !== 'txt';
+  return activeTab.preferredExtension !== "txt";
 });
 
 let showPreview = $derived(appContext.settings.splitView && isMarkdown);

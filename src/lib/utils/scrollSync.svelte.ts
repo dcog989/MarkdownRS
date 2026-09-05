@@ -6,18 +6,18 @@
  * interpolation to ScrollInterpolator, and animation to SmoothScroller.
  */
 
-import type { EditorView } from '@codemirror/view';
-import { CONFIG } from '$lib/utils/config';
-import { throttle } from '$lib/utils/timing';
-import type { AppEditorView } from '../../global';
-import { LineMapTracker } from './lineMapTracker';
-import { buildLineMap, interpolate, type LineMapEntry } from './scrollInterpolation';
-import { SmoothScroller } from './smoothScroller';
+import type { EditorView } from "@codemirror/view";
+import { CONFIG } from "$lib/utils/config";
+import { throttle } from "$lib/utils/timing";
+import type { AppEditorView } from "../../global";
+import { LineMapTracker } from "./lineMapTracker";
+import { buildLineMap, interpolate, type LineMapEntry } from "./scrollInterpolation";
+import { SmoothScroller } from "./smoothScroller";
 
 const CLEAR_SOURCE_DELAY_MS = 200;
 const PERSIST_SCROLL_THROTTLE_MS = 50;
 
-type SyncDirection = 'editor-to-preview' | 'preview-to-editor';
+type SyncDirection = "editor-to-preview" | "preview-to-editor";
 
 export class ScrollSyncManager {
   editor = $state<EditorView | null>(null);
@@ -25,7 +25,7 @@ export class ScrollSyncManager {
   private lineMap: LineMapEntry[] = [];
   private scroller = new SmoothScroller();
 
-  private activeSource = $state<'editor' | 'preview' | null>(null);
+  private activeSource = $state<"editor" | "preview" | null>(null);
   private clearSourceTimer: number | null = null;
   private lineMapTracker = new LineMapTracker(() => this.updateMap());
 
@@ -88,11 +88,11 @@ export class ScrollSyncManager {
     if (this.editor === view) return;
 
     if (this.editor) {
-      this.editor.scrollDOM.removeEventListener('scroll', this.boundOnEditorScroll);
+      this.editor.scrollDOM.removeEventListener("scroll", this.boundOnEditorScroll);
     }
 
     this.editor = view;
-    view.scrollDOM.addEventListener('scroll', this.boundOnEditorScroll, { passive: true });
+    view.scrollDOM.addEventListener("scroll", this.boundOnEditorScroll, { passive: true });
   }
 
   private createScrollPersistence(
@@ -119,11 +119,11 @@ export class ScrollSyncManager {
     if (this.preview === el) return;
 
     if (this.preview) {
-      this.preview.removeEventListener('scroll', this.boundOnPreviewScroll);
+      this.preview.removeEventListener("scroll", this.boundOnPreviewScroll);
     }
 
     this.preview = el;
-    el.addEventListener('scroll', this.boundOnPreviewScroll, { passive: true });
+    el.addEventListener("scroll", this.boundOnPreviewScroll, { passive: true });
     this.lineMapTracker.setTarget(el);
   }
 
@@ -132,8 +132,8 @@ export class ScrollSyncManager {
     this.lineMap = buildLineMap(this.preview, this.editor.state.doc.lines);
   }
 
-  private syncPreviewOnFrame = this.scheduleOnFrame(() => this.sync('editor-to-preview'));
-  private syncEditorOnFrame = this.scheduleOnFrame(() => this.sync('preview-to-editor'));
+  private syncPreviewOnFrame = this.scheduleOnFrame(() => this.sync("editor-to-preview"));
+  private syncEditorOnFrame = this.scheduleOnFrame(() => this.sync("preview-to-editor"));
 
   private scheduleOnFrame(cb: () => void): () => void {
     let raf: number | null = null;
@@ -149,19 +149,19 @@ export class ScrollSyncManager {
   private onEditorScroll() {
     if (this.persistEditorScroll) this.persistEditorScroll();
     if (this.suppressSync) return;
-    if (this.activeSource === 'preview') return;
-    this.setActiveSource('editor');
+    if (this.activeSource === "preview") return;
+    this.setActiveSource("editor");
     this.syncPreviewOnFrame();
   }
 
   private onPreviewScroll() {
     if (this.suppressSync) return;
-    if (this.activeSource === 'editor') return;
-    this.setActiveSource('preview');
+    if (this.activeSource === "editor") return;
+    this.setActiveSource("preview");
     this.syncEditorOnFrame();
   }
 
-  private setActiveSource(source: 'editor' | 'preview') {
+  private setActiveSource(source: "editor" | "preview") {
     this.activeSource = source;
     if (this.clearSourceTimer) clearTimeout(this.clearSourceTimer);
     this.clearSourceTimer = window.setTimeout(() => {
@@ -172,8 +172,8 @@ export class ScrollSyncManager {
   private sync(direction: SyncDirection) {
     if (!this.editor || !this.preview) return;
 
-    const source = direction === 'editor-to-preview' ? this.editor.scrollDOM : this.preview;
-    const target = direction === 'editor-to-preview' ? this.preview : this.editor.scrollDOM;
+    const source = direction === "editor-to-preview" ? this.editor.scrollDOM : this.preview;
+    const target = direction === "editor-to-preview" ? this.preview : this.editor.scrollDOM;
 
     const scrollTop = source.scrollTop;
     const scrollHeight = source.scrollHeight;
@@ -207,14 +207,14 @@ export class ScrollSyncManager {
       const pct = scrollTop / maxScroll;
       const targetMax = target.scrollHeight - target.clientHeight;
       targetY = pct * targetMax;
-    } else if (direction === 'editor-to-preview') {
+    } else if (direction === "editor-to-preview") {
       const lineBlock = editor.lineBlockAtHeight(scrollTop);
       const docLine = editor.state.doc.lineAt(lineBlock.from);
       const fraction = (scrollTop - lineBlock.top) / Math.max(1, lineBlock.height);
       const currentLine = docLine.number + fraction;
-      targetY = interpolate(currentLine, 'line', 'y', this.lineMap);
+      targetY = interpolate(currentLine, "line", "y", this.lineMap);
     } else {
-      const targetLine = interpolate(scrollTop, 'y', 'line', this.lineMap);
+      const targetLine = interpolate(scrollTop, "y", "line", this.lineMap);
       const docLines = editor.state.doc.lines;
       const safeLine = Math.max(1, Math.min(targetLine, docLines));
       const lineInt = Math.floor(safeLine);

@@ -1,13 +1,13 @@
 <script lang="ts">
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { Database, X } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import Modal from '$lib/components/ui/Modal.svelte';
-import { translate } from '$lib/i18n';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { AppError } from '$lib/utils/errorHandling';
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { Database, X } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import Modal from "$lib/components/ui/Modal.svelte";
+import { translate } from "$lib/i18n";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { AppError } from "$lib/utils/errorHandling";
 
 interface Props {
   isOpen: boolean;
@@ -22,17 +22,17 @@ async function exportBookmarks() {
   if (busy) return;
   busy = true;
   try {
-    const bookmarks = await callBackend('export_bookmarks', {}, 'Data:ExportBookmarks');
+    const bookmarks = await callBackend("export_bookmarks", {}, "Data:ExportBookmarks");
     if (!bookmarks) return;
     const path = await save({
-      defaultPath: 'markdownrs-bookmarks.json',
-      filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
+      defaultPath: "markdownrs-bookmarks.json",
+      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!path) return;
-    await callBackend('write_text_file', { path, content: JSON.stringify(bookmarks, null, 2) }, 'File:Write');
-    showToast('success', translate('data.exportedBookmarks', { values: { count: bookmarks.length } }));
+    await callBackend("write_text_file", { path, content: JSON.stringify(bookmarks, null, 2) }, "File:Write");
+    showToast("success", translate("data.exportedBookmarks", { values: { count: bookmarks.length } }));
   } catch (err) {
-    AppError.handle('Data:ExportBookmarks', err, { showToast: true });
+    AppError.handle("Data:ExportBookmarks", err, { showToast: true });
   } finally {
     busy = false;
   }
@@ -44,17 +44,17 @@ async function importBookmarks() {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
+      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!selected) return;
-    const result = await callBackend('read_text_file', { path: selected as string }, 'File:Read');
-    if (!result) throw new Error(translate('data.failedToRead'));
+    const result = await callBackend("read_text_file", { path: selected as string }, "File:Read");
+    if (!result) throw new Error(translate("data.failedToRead"));
     const bookmarks = JSON.parse(result.content);
-    if (!Array.isArray(bookmarks)) throw new Error(translate('data.invalidFormatArray'));
-    const count = await callBackend('import_bookmarks', { bookmarks }, 'Data:ImportBookmarks');
-    showToast('success', translate('data.importedBookmarks', { values: { count } }));
+    if (!Array.isArray(bookmarks)) throw new Error(translate("data.invalidFormatArray"));
+    const count = await callBackend("import_bookmarks", { bookmarks }, "Data:ImportBookmarks");
+    showToast("success", translate("data.importedBookmarks", { values: { count } }));
   } catch (err) {
-    AppError.handle('Data:ImportBookmarks', err, { showToast: true });
+    AppError.handle("Data:ImportBookmarks", err, { showToast: true });
   } finally {
     busy = false;
   }
@@ -64,17 +64,17 @@ async function exportFileHistory() {
   if (busy) return;
   busy = true;
   try {
-    const paths = await callBackend('export_file_history', {}, 'Data:ExportFileHistory');
+    const paths = await callBackend("export_file_history", {}, "Data:ExportFileHistory");
     if (!paths) return;
     const dest = await save({
-      defaultPath: 'markdownrs-file-history.json',
-      filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
+      defaultPath: "markdownrs-file-history.json",
+      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!dest) return;
-    await callBackend('write_text_file', { path: dest, content: JSON.stringify(paths, null, 2) }, 'File:Write');
-    showToast('success', translate('data.exportedFiles', { values: { count: paths.length } }));
+    await callBackend("write_text_file", { path: dest, content: JSON.stringify(paths, null, 2) }, "File:Write");
+    showToast("success", translate("data.exportedFiles", { values: { count: paths.length } }));
   } catch (err) {
-    AppError.handle('Data:ExportFileHistory', err, { showToast: true });
+    AppError.handle("Data:ExportFileHistory", err, { showToast: true });
   } finally {
     busy = false;
   }
@@ -86,19 +86,19 @@ async function importFileHistory() {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: translate('data.jsonFilter'), extensions: ['json'] }],
+      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!selected) return;
-    const result = await callBackend('read_text_file', { path: selected as string }, 'File:Read');
-    if (!result) throw new Error(translate('data.failedToRead'));
+    const result = await callBackend("read_text_file", { path: selected as string }, "File:Read");
+    if (!result) throw new Error(translate("data.failedToRead"));
     const paths = JSON.parse(result.content);
-    if (!Array.isArray(paths) || paths.some((p) => typeof p !== 'string')) {
-      throw new Error(translate('data.invalidFormatStrings'));
+    if (!Array.isArray(paths) || paths.some((p) => typeof p !== "string")) {
+      throw new Error(translate("data.invalidFormatStrings"));
     }
-    const count = await callBackend('import_file_history', { paths }, 'Data:ImportFileHistory');
-    showToast('success', translate('data.importedFiles', { values: { count } }));
+    const count = await callBackend("import_file_history", { paths }, "Data:ImportFileHistory");
+    showToast("success", translate("data.importedFiles", { values: { count } }));
   } catch (err) {
-    AppError.handle('Data:ImportFileHistory', err, { showToast: true });
+    AppError.handle("Data:ImportFileHistory", err, { showToast: true });
   } finally {
     busy = false;
   }
@@ -108,10 +108,10 @@ async function deleteOrphans() {
   if (busy) return;
   busy = true;
   try {
-    const count = await callBackend('delete_orphan_files', {}, 'Data:DeleteOrphans');
-    showToast('success', translate('data.removedOrphans', { values: { count } }));
+    const count = await callBackend("delete_orphan_files", {}, "Data:DeleteOrphans");
+    showToast("success", translate("data.removedOrphans", { values: { count } }));
   } catch (err) {
-    AppError.handle('Data:DeleteOrphans', err, { showToast: true });
+    AppError.handle("Data:DeleteOrphans", err, { showToast: true });
   } finally {
     busy = false;
   }
@@ -126,28 +126,28 @@ type Action = {
 
 const actions = $derived<Action[]>([
   {
-    label: translate('data.exportBookmarks'),
-    description: translate('data.exportBookmarksDesc'),
+    label: translate("data.exportBookmarks"),
+    description: translate("data.exportBookmarksDesc"),
     handler: exportBookmarks,
   },
   {
-    label: translate('data.importBookmarks'),
-    description: translate('data.importBookmarksDesc'),
+    label: translate("data.importBookmarks"),
+    description: translate("data.importBookmarksDesc"),
     handler: importBookmarks,
   },
   {
-    label: translate('data.exportFileHistory'),
-    description: translate('data.exportFileHistoryDesc'),
+    label: translate("data.exportFileHistory"),
+    description: translate("data.exportFileHistoryDesc"),
     handler: exportFileHistory,
   },
   {
-    label: translate('data.importFileHistory'),
-    description: translate('data.importFileHistoryDesc'),
+    label: translate("data.importFileHistory"),
+    description: translate("data.importFileHistoryDesc"),
     handler: importFileHistory,
   },
   {
-    label: translate('data.deleteOrphans'),
-    description: translate('data.deleteOrphansDesc'),
+    label: translate("data.deleteOrphans"),
+    description: translate("data.deleteOrphansDesc"),
     handler: deleteOrphans,
     danger: true,
   },

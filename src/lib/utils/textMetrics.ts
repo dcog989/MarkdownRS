@@ -1,4 +1,4 @@
-import type { Text } from '@codemirror/state';
+import type { Text } from "@codemirror/state";
 
 export interface CursorMetrics {
   cursorOffset: number;
@@ -8,7 +8,7 @@ export interface CursorMetrics {
   currentWordIndex: number;
 }
 
-const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
+const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
 
 // Intl.Segmenter is dictionary-aware (ideographs, abbreviations) but ~10x slower
 // than a regex pass. Most documents are Latin/ASCII prose, so use a fast regex
@@ -53,16 +53,16 @@ export function calculateCursorMetrics(
 }
 
 export function computeLineStats(content: string): { lineCount: number; widestColumn: number } {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const lineCount = lines.length;
   const widestColumn = lines.reduce((max, line) => Math.max(max, line.length), 0);
   return { lineCount, widestColumn };
 }
 
-export function detectLineEnding(content: string): 'LF' | 'CRLF' {
+export function detectLineEnding(content: string): "LF" | "CRLF" {
   const crlfCount = (content.match(/\r\n/g) || []).length;
   const lfOnlyCount = (content.match(/(?<!\r)\n/g) || []).length;
-  return crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? 'CRLF' : 'LF';
+  return crlfCount > 0 && (crlfCount >= lfOnlyCount || lfOnlyCount === 0) ? "CRLF" : "LF";
 }
 
 export function byteLength(text: string): number {

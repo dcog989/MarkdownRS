@@ -1,57 +1,57 @@
 <script lang="ts">
-import { Database, Keyboard, Settings, Settings2, TriangleAlert } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { translate } from '$lib/i18n';
-import { toggleData, toggleRumdlConfig, toggleShortcuts } from '$lib/stores/interfaceStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
-import { logger } from '$lib/utils/logger';
-import { saveSettings } from '$lib/utils/settings';
-import { getSettingDefinitions, type SettingDef } from '$lib/utils/settingsDefinitions';
-import { shortcutManager } from '$lib/utils/shortcuts';
-import { DEFAULT_THEME_NAMES, keyed, LEGACY_THEME_NAMES } from '$lib/utils/themes';
-import Modal from './Modal.svelte';
-import ModalSearchHeader from './ModalSearchHeader.svelte';
-import SettingInput from './SettingInput.svelte';
+import { Database, Keyboard, Settings, Settings2, TriangleAlert } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { translate } from "$lib/i18n";
+import { toggleData, toggleRumdlConfig, toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { CONFIG } from "$lib/utils/config";
+import { logger } from "$lib/utils/logger";
+import { saveSettings } from "$lib/utils/settings";
+import { getSettingDefinitions, type SettingDef } from "$lib/utils/settingsDefinitions";
+import { shortcutManager } from "$lib/utils/shortcuts";
+import { DEFAULT_THEME_NAMES, keyed, LEGACY_THEME_NAMES } from "$lib/utils/themes";
+import Modal from "./Modal.svelte";
+import ModalSearchHeader from "./ModalSearchHeader.svelte";
+import SettingInput from "./SettingInput.svelte";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay('window.shortcuts'));
+let shortcutsShortcut = $derived(shortcutManager.getShortcutDisplay("window.shortcuts"));
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
-let searchQuery = $state('');
+let searchQuery = $state("");
 let isContextMenuEnabled = $state(false);
 let isCheckingContextMenu = $state(false);
 let isWindows = $state(false);
 
 $effect(() => {
   if (isOpen) {
-    callBackend('get_app_info', {}, 'Settings:Load').then((info) => {
+    callBackend("get_app_info", {}, "Settings:Load").then((info) => {
       if (!info) return;
-      isWindows = info.os_platform === 'windows';
+      isWindows = info.os_platform === "windows";
 
       if (isWindows) {
         isCheckingContextMenu = true;
-        callBackend('check_context_menu_status', {}, 'Settings:Load')
+        callBackend("check_context_menu_status", {}, "Settings:Load")
           .then((enabled) => {
             isContextMenuEnabled = enabled ?? false;
           })
-          .catch((err) => logger.editor.warn('ContextMenuCheckFailed', { error: String(err) }))
+          .catch((err) => logger.editor.warn("ContextMenuCheckFailed", { error: String(err) }))
           .finally(() => {
             isCheckingContextMenu = false;
           });
       }
     });
 
-    callBackend('get_available_themes', {}, 'Settings:Load')
+    callBackend("get_available_themes", {}, "Settings:Load")
       .then((customThemes) => {
         if (!customThemes) return;
         const defaults = DEFAULT_THEME_NAMES;
@@ -61,10 +61,10 @@ $effect(() => {
               !defaults.some((d) => keyed(d) === keyed(t)) && !LEGACY_THEME_NAMES.some((l) => keyed(l) === keyed(t)),
           )
           .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-        appContext.settings.availableThemes = ['System', ...defaults, ...customs];
+        appContext.settings.availableThemes = ["System", ...defaults, ...customs];
 
         if (!appContext.settings.availableThemes.includes(appContext.settings.activeTheme)) {
-          appContext.settings.activeTheme = 'System';
+          appContext.settings.activeTheme = "System";
           saveSettings();
         }
       })
@@ -72,15 +72,15 @@ $effect(() => {
         appContext.settings.availableThemes = DEFAULT_THEME_NAMES;
       });
   } else {
-    searchQuery = '';
+    searchQuery = "";
   }
 });
 
 async function toggleContextMenu(enable: boolean) {
   try {
-    await callBackend('set_context_menu_item', { enable }, 'Settings:Save');
+    await callBackend("set_context_menu_item", { enable }, "Settings:Save");
     isContextMenuEnabled = enable;
-    showToast('info', enable ? translate('settings.addedToContextMenu') : translate('settings.removedFromContextMenu'));
+    showToast("info", enable ? translate("settings.addedToContextMenu") : translate("settings.removedFromContextMenu"));
   } catch {
     isContextMenuEnabled = !enable;
   }
@@ -117,7 +117,7 @@ function getSettingValue(key: string, defaultValue: unknown): unknown {
 
 function updateSetting(setting: SettingDef, value: unknown) {
   let finalValue = value;
-  if (setting.type === 'number' || setting.type === 'range') {
+  if (setting.type === "number" || setting.type === "range") {
     finalValue = Number(value);
   }
 

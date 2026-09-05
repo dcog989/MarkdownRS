@@ -1,8 +1,8 @@
-import { SvelteMap } from 'svelte/reactivity';
+import { SvelteMap } from "svelte/reactivity";
 
 export const searchState = $state({
-  findText: '',
-  replaceText: '',
+  findText: "",
+  replaceText: "",
   matchCase: false,
   matchWholeWord: false,
   useRegex: false,

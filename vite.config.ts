@@ -1,8 +1,8 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
 
 const rawHost = process.env.TAURI_DEV_HOST;
-const unsafeHosts = new Set(['0.0.0.0', '::', '::0', '']);
+const unsafeHosts = new Set(["0.0.0.0", "::", "::0", ""]);
 const host = rawHost && !unsafeHosts.has(rawHost) ? rawHost : false;
 
 if (rawHost && !host) {
@@ -16,9 +16,9 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host,
-    hmr: host ? { protocol: 'ws', host, port: 1421 } : undefined,
+    hmr: host ? { protocol: "ws", host, port: 1421 } : undefined,
     watch: {
-      ignored: ['**/src-tauri/**'],
+      ignored: ["**/src-tauri/**"],
     },
   },
   // Force dep pre-bundling before Tauri opens the webview on cold start.
@@ -26,16 +26,16 @@ export default defineConfig({
   // Keep in sync with bare-specifier imports on the initial-render module graph.
   optimizeDeps: {
     include: [
-      'dompurify',
-      'katex',
-      'lucide-svelte',
-      'svelte/animate',
-      'svelte/transition',
-      '@tauri-apps/api/core',
-      '@tauri-apps/plugin-dialog',
-      '@tauri-apps/plugin-opener',
-      '@codemirror/state',
-      '@codemirror/view',
+      "dompurify",
+      "katex",
+      "lucide-svelte",
+      "svelte/animate",
+      "svelte/transition",
+      "@tauri-apps/api/core",
+      "@tauri-apps/plugin-dialog",
+      "@tauri-apps/plugin-opener",
+      "@codemirror/state",
+      "@codemirror/view",
     ],
   },
   build: {
@@ -45,11 +45,11 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             {
-              name: 'codemirror',
+              name: "codemirror",
               test: /[\\/]node_modules[\\/]@codemirror[\\/](state|view|language|commands|autocomplete|search|lint)[\\/]/,
             },
-            { name: 'svelte', test: /[\\/]node_modules[\\/]svelte[\\/]/ },
-            { name: 'tauri', test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/ },
+            { name: "svelte", test: /[\\/]node_modules[\\/]svelte[\\/]/ },
+            { name: "tauri", test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/ },
           ],
         },
       },

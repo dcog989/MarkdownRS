@@ -1,6 +1,6 @@
-import { translate } from '$lib/i18n';
+import { translate } from "$lib/i18n";
 
-export type DialogResult = 'save' | 'discard' | 'cancel';
+export type DialogResult = "save" | "discard" | "cancel";
 
 export type DialogOptions = {
   title: string;
@@ -29,9 +29,9 @@ let idCounter = 0;
 // Public reactive state
 export const dialogStore = $state({
   isOpen: false,
-  options: { title: '', message: '' } as DialogOptions,
+  options: { title: "", message: "" } as DialogOptions,
   promptIsOpen: false,
-  promptOptions: { title: '', value: '' } as PromptOptions,
+  promptOptions: { title: "", value: "" } as PromptOptions,
   promptResolve: null as ((value: string | null) => void) | null,
 });
 
@@ -52,9 +52,9 @@ export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
     queue.push({
       id,
       options: {
-        saveLabel: translate('common.save'),
-        discardLabel: translate('common.discard'),
-        cancelLabel: translate('common.cancel'),
+        saveLabel: translate("common.save"),
+        discardLabel: translate("common.discard"),
+        cancelLabel: translate("common.cancel"),
         ...options,
       },
       resolve,
@@ -81,7 +81,7 @@ export function resolveDialog(result: DialogResult) {
 
 export function promptDialog(options: PromptOptions): Promise<string | null> {
   return new Promise((resolve) => {
-    dialogStore.promptOptions = { value: '', ...options };
+    dialogStore.promptOptions = { value: "", ...options };
     dialogStore.promptResolve = resolve;
     dialogStore.promptIsOpen = true;
   });

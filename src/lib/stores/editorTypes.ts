@@ -16,11 +16,11 @@ export type EditorTab = {
   originalTitle?: string;
   isPinned?: boolean;
   customTitle?: string;
-  lineEnding: 'LF' | 'CRLF';
+  lineEnding: "LF" | "CRLF";
   encoding: string;
   hasBom: boolean;
   fileCheckFailed?: boolean;
-  preferredExtension?: 'md' | 'txt';
+  preferredExtension?: "md" | "txt";
   contentLoaded?: boolean;
   wordCountPending?: boolean;
   forceSync?: number;

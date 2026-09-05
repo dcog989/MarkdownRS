@@ -1,9 +1,9 @@
 <script lang="ts">
-import { syntaxTree } from '@codemirror/language';
-import type { Text } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
-import { type Highlighter, highlightTree, type Tag, tags as t } from '@lezer/highlight';
-import { debounce } from '$lib/utils/timing';
+import { syntaxTree } from "@codemirror/language";
+import type { Text } from "@codemirror/state";
+import type { EditorView } from "@codemirror/view";
+import { type Highlighter, highlightTree, type Tag, tags as t } from "@lezer/highlight";
+import { debounce } from "$lib/utils/timing";
 
 interface Props {
   view: EditorView | null;
@@ -57,22 +57,22 @@ interface MinimapColors {
 function getColors(): MinimapColors {
   const style = getComputedStyle(document.documentElement);
   return {
-    bg: style.getPropertyValue('--editor-bg').trim(),
-    text: style.getPropertyValue('--editor-fg').trim(),
-    heading: style.getPropertyValue('--editor-syntax-heading').trim(),
-    code: style.getPropertyValue('--editor-code-fg').trim(),
-    list: style.getPropertyValue('--editor-fg-secondary').trim(),
-    link: style.getPropertyValue('--editor-link').trim(),
-    quote: style.getPropertyValue('--editor-syntax-keyword').trim(),
-    strong: style.getPropertyValue('--editor-syntax-strong').trim(),
-    emphasis: style.getPropertyValue('--editor-syntax-emphasis').trim(),
-    strike: style.getPropertyValue('--editor-fg-tertiary').trim(),
+    bg: style.getPropertyValue("--editor-bg").trim(),
+    text: style.getPropertyValue("--editor-fg").trim(),
+    heading: style.getPropertyValue("--editor-syntax-heading").trim(),
+    code: style.getPropertyValue("--editor-code-fg").trim(),
+    list: style.getPropertyValue("--editor-fg-secondary").trim(),
+    link: style.getPropertyValue("--editor-link").trim(),
+    quote: style.getPropertyValue("--editor-syntax-keyword").trim(),
+    strong: style.getPropertyValue("--editor-syntax-strong").trim(),
+    emphasis: style.getPropertyValue("--editor-syntax-emphasis").trim(),
+    strike: style.getPropertyValue("--editor-fg-tertiary").trim(),
     callout: {
-      note: style.getPropertyValue('--editor-callout-note-accent').trim(),
-      tip: style.getPropertyValue('--editor-callout-tip-accent').trim(),
-      important: style.getPropertyValue('--editor-callout-important-accent').trim(),
-      warning: style.getPropertyValue('--editor-callout-warning-accent').trim(),
-      caution: style.getPropertyValue('--editor-callout-caution-accent').trim(),
+      note: style.getPropertyValue("--editor-callout-note-accent").trim(),
+      tip: style.getPropertyValue("--editor-callout-tip-accent").trim(),
+      important: style.getPropertyValue("--editor-callout-important-accent").trim(),
+      warning: style.getPropertyValue("--editor-callout-warning-accent").trim(),
+      caution: style.getPropertyValue("--editor-callout-caution-accent").trim(),
     },
   };
 }
@@ -110,21 +110,21 @@ function computeCalloutTypes(doc: Text): (string | null)[] {
 const minimapHighlighter: Highlighter = {
   style(tags: readonly Tag[]) {
     const has = (target: Tag) => tags.some((tag) => tag.set.includes(target));
-    if (has(t.heading)) return 'heading';
-    if (has(t.monospace)) return 'code';
-    if (has(t.link) || has(t.url)) return 'link';
-    if (has(t.strong)) return 'strong';
-    if (has(t.emphasis)) return 'emphasis';
-    if (has(t.strikethrough)) return 'strike';
-    if (has(t.quote)) return 'quote';
-    if (has(t.list)) return 'list';
-    return '';
+    if (has(t.heading)) return "heading";
+    if (has(t.monospace)) return "code";
+    if (has(t.link) || has(t.url)) return "link";
+    if (has(t.strong)) return "strong";
+    if (has(t.emphasis)) return "emphasis";
+    if (has(t.strikethrough)) return "strike";
+    if (has(t.quote)) return "quote";
+    if (has(t.list)) return "list";
+    return "";
   },
 };
 
 const codeBlockHighlighter: Highlighter = {
   style(tags: readonly Tag[]) {
-    if (tags.length === 0) return '';
+    if (tags.length === 0) return "";
     const has = (target: Tag) => tags.some((tag) => tag.set.includes(target));
     if (
       has(t.heading) ||
@@ -137,10 +137,10 @@ const codeBlockHighlighter: Highlighter = {
       has(t.quote) ||
       has(t.list)
     )
-      return '';
-    return 'code';
+      return "";
+    return "code";
   },
-  scope: (type) => type.name !== 'Document',
+  scope: (type) => type.name !== "Document",
 };
 
 const KIND_PRIORITY: Record<string, number> = {
@@ -154,9 +154,9 @@ const KIND_PRIORITY: Record<string, number> = {
 };
 
 function classesToKind(classes: string): string {
-  const parts = classes.split(' ');
-  if (parts[0] === 'code') return 'code';
-  let best = '';
+  const parts = classes.split(" ");
+  if (parts[0] === "code") return "code";
+  let best = "";
   let bestPriority = -1;
   for (const p of parts) {
     const priority = KIND_PRIORITY[p];
@@ -171,22 +171,22 @@ function classesToKind(classes: string): string {
 function getLineKind(
   line: string,
   inCodeBlock: boolean,
-): { kind: 'heading' | 'code' | 'list' | 'link' | 'quote' | 'empty' | 'text'; inCodeBlock: boolean } {
-  if (line.trim() === '') return { kind: 'empty', inCodeBlock };
+): { kind: "heading" | "code" | "list" | "link" | "quote" | "empty" | "text"; inCodeBlock: boolean } {
+  if (line.trim() === "") return { kind: "empty", inCodeBlock };
 
   if (/^```/.test(line)) {
     const newState = !inCodeBlock;
-    return { kind: 'code', inCodeBlock: newState };
+    return { kind: "code", inCodeBlock: newState };
   }
 
-  if (inCodeBlock) return { kind: 'code', inCodeBlock };
+  if (inCodeBlock) return { kind: "code", inCodeBlock };
 
-  if (/^#{1,6}\s/.test(line)) return { kind: 'heading', inCodeBlock: false };
-  if (LINK_RE.test(line)) return { kind: 'link', inCodeBlock: false };
-  if (/^[\s]*[-*+]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
-  if (/^[\s]*\d+[.)]\s/.test(line)) return { kind: 'list', inCodeBlock: false };
-  if (/^\s*>\s/.test(line)) return { kind: 'quote', inCodeBlock: false };
-  return { kind: 'text', inCodeBlock: false };
+  if (/^#{1,6}\s/.test(line)) return { kind: "heading", inCodeBlock: false };
+  if (LINK_RE.test(line)) return { kind: "link", inCodeBlock: false };
+  if (/^[\s]*[-*+]\s/.test(line)) return { kind: "list", inCodeBlock: false };
+  if (/^[\s]*\d+[.)]\s/.test(line)) return { kind: "list", inCodeBlock: false };
+  if (/^\s*>\s/.test(line)) return { kind: "quote", inCodeBlock: false };
+  return { kind: "text", inCodeBlock: false };
 }
 
 const KIND_WEIGHT: Record<string, number> = {
@@ -196,18 +196,18 @@ const KIND_WEIGHT: Record<string, number> = {
   list: 2,
   quote: 2,
   text: 0.3,
-  'callout-note': 10,
-  'callout-tip': 10,
-  'callout-important': 10,
-  'callout-warning': 10,
-  'callout-caution': 10,
+  "callout-note": 10,
+  "callout-tip": 10,
+  "callout-important": 10,
+  "callout-warning": 10,
+  "callout-caution": 10,
 };
 
 function pickBarKind(counts: Record<string, number>): string {
-  let best = 'empty';
+  let best = "empty";
   let bestScore = 0;
   for (const [kind, count] of Object.entries(counts)) {
-    if (kind === 'empty') continue;
+    if (kind === "empty") continue;
     const score = count * (KIND_WEIGHT[kind] ?? 0);
     if (score > bestScore) {
       bestScore = score;
@@ -228,46 +228,46 @@ function drawSpan(
   inViewport: boolean,
   fade = 1,
 ) {
-  if (kind === 'empty' || w <= 0 || h <= 0) return;
+  if (kind === "empty" || w <= 0 || h <= 0) return;
 
   switch (kind) {
-    case 'heading':
+    case "heading":
       ctx.fillStyle = colors.heading;
       ctx.globalAlpha = inViewport ? 1 : 0.35 * fade;
       break;
-    case 'code':
+    case "code":
       ctx.fillStyle = colors.code;
       ctx.globalAlpha = inViewport ? 0.45 : 0.18 * fade;
       break;
-    case 'list':
+    case "list":
       ctx.fillStyle = colors.list;
       ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
       break;
-    case 'link':
+    case "link":
       ctx.fillStyle = colors.link;
       ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
       break;
-    case 'quote':
+    case "quote":
       ctx.fillStyle = colors.quote;
       ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
       break;
-    case 'callout-note':
-    case 'callout-tip':
-    case 'callout-important':
-    case 'callout-warning':
-    case 'callout-caution':
-      ctx.fillStyle = colors.callout[kind.slice('callout-'.length)];
+    case "callout-note":
+    case "callout-tip":
+    case "callout-important":
+    case "callout-warning":
+    case "callout-caution":
+      ctx.fillStyle = colors.callout[kind.slice("callout-".length)];
       ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
       break;
-    case 'strong':
+    case "strong":
       ctx.fillStyle = colors.strong;
       ctx.globalAlpha = inViewport ? 0.95 : 0.3 * fade;
       break;
-    case 'emphasis':
+    case "emphasis":
       ctx.fillStyle = colors.emphasis;
       ctx.globalAlpha = inViewport ? 0.85 : 0.28 * fade;
       break;
-    case 'strike':
+    case "strike":
       ctx.fillStyle = colors.strike;
       ctx.globalAlpha = inViewport ? 0.6 : 0.2 * fade;
       break;
@@ -303,7 +303,7 @@ function renderMinimap() {
   canvas.style.width = `${MINIMAP_WIDTH}px`;
   canvas.style.height = `${contentH}px`;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
   ctx.scale(dpr, dpr);
@@ -321,10 +321,10 @@ function renderMinimap() {
   const viewportBottom = scrollHeight > 0 ? ((scrollTop + clientHeight) / scrollHeight) * contentH : contentH;
 
   if (scrollHeight > clientHeight) {
-    ctx.fillStyle = hovered ? 'rgba(128, 128, 128, 0.35)' : 'rgba(80, 80, 80, 0.35)';
+    ctx.fillStyle = hovered ? "rgba(128, 128, 128, 0.35)" : "rgba(80, 80, 80, 0.35)";
     ctx.fillRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
 
-    ctx.strokeStyle = hovered ? 'rgba(128, 128, 128, 0.7)' : 'rgba(80, 80, 80, 0.7)';
+    ctx.strokeStyle = hovered ? "rgba(128, 128, 128, 0.7)" : "rgba(80, 80, 80, 0.7)";
     ctx.lineWidth = 1;
     ctx.strokeRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
   }
@@ -345,7 +345,7 @@ function renderMinimap() {
     let barMaxLen = 0;
 
     const drawCompressedBar = (barIdx: number, barKind: string) => {
-      if (barKind === 'empty') return;
+      if (barKind === "empty") return;
       const barY = barIdx * COMPRESS_SPACING;
       const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
       const barW = Math.max(1, Math.min(barWidth, barMaxLen * CHARS_TO_PX));
@@ -419,7 +419,7 @@ function renderMinimap() {
         continue;
       }
 
-      drawSpan(ctx, 'text', paddingX, y, lineWidth, lineH, colors, inViewport);
+      drawSpan(ctx, "text", paddingX, y, lineWidth, lineH, colors, inViewport);
 
       for (const sp of tokenSpans[i]) {
         const x = paddingX + sp.from * CHARS_TO_PX;
@@ -462,9 +462,9 @@ function onTrackMouseDown(e: MouseEvent) {
   }
 
   function onMouseUp(e: MouseEvent) {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    document.body.style.userSelect = '';
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    document.body.style.userSelect = "";
 
     if (!moved && canvasRef) {
       const rect = canvasRef.getBoundingClientRect();
@@ -481,9 +481,9 @@ function onTrackMouseDown(e: MouseEvent) {
     }
   }
 
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-  document.body.style.userSelect = 'none';
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+  document.body.style.userSelect = "none";
 }
 
 function onWheel(e: WheelEvent) {
@@ -529,11 +529,11 @@ $effect(() => {
     resizeObserver.observe(scrollDOM.firstElementChild);
   }
 
-  scrollDOM.addEventListener('scroll', onScroll, { passive: true });
+  scrollDOM.addEventListener("scroll", onScroll, { passive: true });
 
   const debouncedContentRender = debounce(renderMinimap, CONTENT_RENDER_DEBOUNCE_MS);
 
-  const contentEl = scrollDOM.querySelector('.cm-content');
+  const contentEl = scrollDOM.querySelector(".cm-content");
   if (contentEl) {
     contentObserver = new MutationObserver(() => {
       debouncedContentRender();
@@ -548,14 +548,14 @@ $effect(() => {
     cancelAnimationFrame(themeRafId);
     themeRafId = requestAnimationFrame(renderMinimap);
   });
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   themeObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
 
   return () => {
     resizeObserver.disconnect();
     contentObserver?.disconnect();
     themeObserver.disconnect();
-    scrollDOM.removeEventListener('scroll', onScroll);
+    scrollDOM.removeEventListener("scroll", onScroll);
     cancelAnimationFrame(themeRafId);
     cancelAnimationFrame(scheduleRafId);
     debouncedContentRender.clear();

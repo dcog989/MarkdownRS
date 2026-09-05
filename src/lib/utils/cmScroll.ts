@@ -1,8 +1,8 @@
-import { ensureSyntaxTree } from '@codemirror/language';
-import { EditorView } from '@codemirror/view';
-import { CONFIG } from '$lib/utils/config';
+import { ensureSyntaxTree } from "@codemirror/language";
+import { EditorView } from "@codemirror/view";
+import { CONFIG } from "$lib/utils/config";
 
-export type RestoreStrategy = 'pixel' | 'anchor' | 'auto';
+export type RestoreStrategy = "pixel" | "anchor" | "auto";
 
 /** A saved position at or above this fraction of the scroll range is treated as
  *  "at the bottom" for the bottom-aligned scroll restore. */
@@ -59,11 +59,11 @@ export function restoreScrollByTopLine(
       // bottom-align ordinary mid-document scrolls.
       if (scrollPercentage >= AT_BOTTOM_PERCENTAGE_THRESHOLD) {
         const lastLine = view.state.doc.line(view.state.doc.lines);
-        view.dispatch({ effects: EditorView.scrollIntoView(lastLine.from, { y: 'end' }) });
+        view.dispatch({ effects: EditorView.scrollIntoView(lastLine.from, { y: "end" }) });
         return;
       }
       const lineInfo = view.state.doc.line(safeLine);
-      view.dispatch({ effects: EditorView.scrollIntoView(lineInfo.from, { y: 'start' }) });
+      view.dispatch({ effects: EditorView.scrollIntoView(lineInfo.from, { y: "start" }) });
       return;
     } catch {
       // Fall through to pixel offset.
@@ -97,7 +97,7 @@ export class ScrollManager {
     };
   }
 
-  public restore(view: EditorView, strategy: RestoreStrategy = 'auto') {
+  public restore(view: EditorView, strategy: RestoreStrategy = "auto") {
     if (!this.snapshot || !view.scrollDOM) {
       return;
     }
@@ -115,22 +115,22 @@ export class ScrollManager {
           const clientHeight = view.scrollDOM.clientHeight;
 
           let effectiveStrategy = strategy;
-          let reason = 'Manual override';
+          let reason = "Manual override";
 
-          if (strategy === 'auto') {
+          if (strategy === "auto") {
             if (currentLines !== target.totalLines) {
-              effectiveStrategy = 'anchor';
+              effectiveStrategy = "anchor";
               reason = `Line count changed (${target.totalLines} -> ${currentLines})`;
             } else {
-              effectiveStrategy = 'pixel';
-              reason = 'Line count stable';
+              effectiveStrategy = "pixel";
+              reason = "Line count stable";
             }
           }
 
           let targetTop = target.scrollTop;
           let logDetail: string;
 
-          if (effectiveStrategy === 'anchor') {
+          if (effectiveStrategy === "anchor") {
             try {
               const safeLine = Math.max(1, Math.min(target.anchorLine, currentLines));
               const lineInfo = currentDoc.line(safeLine);
@@ -139,7 +139,7 @@ export class ScrollManager {
               logDetail = `Line ${safeLine} @ ${block.top} + ${target.anchorOffset} = ${targetTop}`;
             } catch {
               targetTop = target.scrollTop; // Fallback
-              logDetail = 'Error (Fallback to pixel)';
+              logDetail = "Error (Fallback to pixel)";
             }
           } else {
             logDetail = `Pixel: ${target.scrollTop}`;

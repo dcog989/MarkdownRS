@@ -5,11 +5,11 @@
 
 export const MODAL_CONSTRAINTS = {
   /** Minimum width for all modals */
-  MIN_WIDTH: '480px',
+  MIN_WIDTH: "480px",
   /** Maximum width for all modals */
-  MAX_WIDTH: '640px',
+  MAX_WIDTH: "640px",
   /** Fixed width for searchable modals so they don't resize while filtering */
-  SEARCH_WIDTH: 'min(640px, calc(100vw - 4rem))',
+  SEARCH_WIDTH: "min(640px, calc(100vw - 4rem))",
   /** Maximum height for modal content */
-  MAX_HEIGHT: 'calc(100vh - 6rem)', // Leave 3rem (48px) top + 3rem bottom for spacing
+  MAX_HEIGHT: "calc(100vh - 6rem)", // Leave 3rem (48px) top + 3rem bottom for spacing
 } as const;

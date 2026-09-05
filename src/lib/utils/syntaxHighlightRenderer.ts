@@ -1,5 +1,5 @@
-import type { HLJSApi } from 'highlight.js';
-import { hashContent } from './contentHash';
+import type { HLJSApi } from "highlight.js";
+import { hashContent } from "./contentHash";
 
 /**
  * Applies highlight.js token highlighting to fenced code blocks in a preview
@@ -12,23 +12,23 @@ import { hashContent } from './contentHash';
  */
 
 const CODE_SELECTOR = 'pre > code[class*="language-"]';
-const SKIP_LANGUAGES = new Set(['mermaid', 'math', 'plaintext', 'text']);
+const SKIP_LANGUAGES = new Set(["mermaid", "math", "plaintext", "text"]);
 const MAX_CACHE_ENTRIES = 100;
 
-type HighlightModule = typeof import('highlight.js');
+type HighlightModule = typeof import("highlight.js");
 
 let hljsPromise: Promise<HighlightModule> | null = null;
 
 const highlightCache = new Map<string, string>();
 
 function loadHljs(): Promise<HighlightModule> {
-  hljsPromise ??= import('highlight.js');
+  hljsPromise ??= import("highlight.js");
   return hljsPromise;
 }
 
 function getLanguage(hljs: HLJSApi, className: string): string | null {
   const match = /(?:^|\s)language-([\w+-]+)(?:\s|$)/.exec(className);
-  const language = match?.[1] ?? 'plaintext';
+  const language = match?.[1] ?? "plaintext";
   if (SKIP_LANGUAGES.has(language)) return null;
   return hljs.getLanguage(language) ? language : null;
 }
@@ -50,7 +50,7 @@ export async function highlightCodeBlocks(container: HTMLElement): Promise<void>
     const language = getLanguage(hljs, code.className);
     if (language === null) continue;
 
-    const source = code.textContent ?? '';
+    const source = code.textContent ?? "";
     if (!source.trim()) continue;
 
     const key = `${language}\u0000${hashContent(source)}`;
@@ -61,7 +61,7 @@ export async function highlightCodeBlocks(container: HTMLElement): Promise<void>
       highlighted = result.value;
       highlightCache.set(key, highlighted);
     }
-    code.classList.add('hljs');
+    code.classList.add("hljs");
     code.innerHTML = highlighted;
   }
 }

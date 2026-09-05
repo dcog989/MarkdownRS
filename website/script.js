@@ -1,12 +1,12 @@
 (() => {
-  const carousel = document.querySelector('[data-carousel]');
+  const carousel = document.querySelector("[data-carousel]");
   if (!carousel) return;
 
-  const track = carousel.querySelector('[data-carousel-track]');
-  const prevBtn = carousel.querySelector('[data-carousel-prev]');
-  const nextBtn = carousel.querySelector('[data-carousel-next]');
-  const dotsHost = carousel.querySelector('[data-carousel-dots]');
-  const slides = [...carousel.querySelectorAll('[data-carousel-slide]')];
+  const track = carousel.querySelector("[data-carousel-track]");
+  const prevBtn = carousel.querySelector("[data-carousel-prev]");
+  const nextBtn = carousel.querySelector("[data-carousel-next]");
+  const dotsHost = carousel.querySelector("[data-carousel-dots]");
+  const slides = [...carousel.querySelectorAll("[data-carousel-slide]")];
 
   const AUTOPLAY_MS = 5000;
   const AUTOPLAY_PAUSE_MS = 30000;
@@ -14,20 +14,20 @@
   let index = 0;
   let autoplayTimer = null;
   let pausedUntil = 0;
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function goTo(nextIndex, announce = true) {
     const count = slides.length;
     index = ((nextIndex % count) + count) % count;
     track.scrollTo({
       left: index * track.clientWidth,
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      behavior: prefersReducedMotion ? "auto" : "smooth",
     });
     renderDots();
     updateSlideStates();
     if (announce) {
-      carousel.setAttribute('aria-live', 'polite');
-      window.setTimeout(() => carousel.removeAttribute('aria-live'), 1000);
+      carousel.setAttribute("aria-live", "polite");
+      window.setTimeout(() => carousel.removeAttribute("aria-live"), 1000);
     }
   }
 
@@ -42,24 +42,24 @@
   function updateSlideStates() {
     slides.forEach((slide, i) => {
       const active = i === index;
-      slide.setAttribute('aria-hidden', String(!active));
+      slide.setAttribute("aria-hidden", String(!active));
       if (active) {
-        slide.removeAttribute('inert');
+        slide.removeAttribute("inert");
       } else {
-        slide.setAttribute('inert', '');
+        slide.setAttribute("inert", "");
       }
     });
   }
 
   function renderDots() {
-    dotsHost.innerHTML = '';
+    dotsHost.innerHTML = "";
     slides.forEach((_, i) => {
-      const dot = document.createElement('button');
-      dot.type = 'button';
-      dot.setAttribute('role', 'tab');
-      dot.setAttribute('aria-label', `Show screenshot ${i + 1} of ${slides.length}`);
-      dot.setAttribute('aria-selected', String(i === index));
-      dot.addEventListener('click', () => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.setAttribute("role", "tab");
+      dot.setAttribute("aria-label", `Show screenshot ${i + 1} of ${slides.length}`);
+      dot.setAttribute("aria-selected", String(i === index));
+      dot.addEventListener("click", () => {
         pauseAutoplay();
         goTo(i);
       });
@@ -91,21 +91,21 @@
     scheduleAutoplay();
   }
 
-  prevBtn.addEventListener('click', () => {
+  prevBtn.addEventListener("click", () => {
     pauseAutoplay();
     prev();
   });
 
-  nextBtn.addEventListener('click', () => {
+  nextBtn.addEventListener("click", () => {
     pauseAutoplay();
     next();
   });
 
-  carousel.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') {
+  carousel.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") {
       pauseAutoplay();
       prev();
-    } else if (e.key === 'ArrowRight') {
+    } else if (e.key === "ArrowRight") {
       pauseAutoplay();
       next();
     }
@@ -120,11 +120,11 @@
 
   const resume = () => scheduleAutoplay();
 
-  carousel.addEventListener('mouseenter', pause);
-  carousel.addEventListener('mouseleave', resume);
-  carousel.addEventListener('focusin', pause);
-  carousel.addEventListener('focusout', resume);
-  document.addEventListener('visibilitychange', () => {
+  carousel.addEventListener("mouseenter", pause);
+  carousel.addEventListener("mouseleave", resume);
+  carousel.addEventListener("focusin", pause);
+  carousel.addEventListener("focusout", resume);
+  document.addEventListener("visibilitychange", () => {
     if (document.hidden) pause();
     else scheduleAutoplay();
   });
@@ -133,7 +133,7 @@
   updateSlideStates();
   scheduleAutoplay();
 
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     goTo(index, false);
   });
 })();

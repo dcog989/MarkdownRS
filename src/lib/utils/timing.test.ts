@@ -1,25 +1,25 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { debounce, throttle } from './timing';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { debounce, throttle } from "./timing";
 
-describe('debounce', () => {
+describe("debounce", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('invokes once after the delay for rapid calls', () => {
+  it("invokes once after the delay for rapid calls", () => {
     const fn = vi.fn();
     const debounced = debounce(fn, 100);
 
-    debounced('a');
-    debounced('b');
-    debounced('c');
+    debounced("a");
+    debounced("b");
+    debounced("c");
     vi.advanceTimersByTime(99);
     expect(fn).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(fn).toHaveBeenCalledTimes(1);
-    expect(fn).toHaveBeenCalledWith('c');
+    expect(fn).toHaveBeenCalledWith("c");
   });
 
-  it('delivers the trailing arguments', () => {
+  it("delivers the trailing arguments", () => {
     const fn = vi.fn();
     const debounced = debounce(fn, 50);
     debounced(1);
@@ -27,21 +27,21 @@ describe('debounce', () => {
     expect(fn).toHaveBeenCalledWith(1);
   });
 
-  it('clear cancels a pending invocation', () => {
+  it("clear cancels a pending invocation", () => {
     const fn = vi.fn();
     const debounced = debounce(fn, 100);
-    debounced('x');
+    debounced("x");
     debounced.clear();
     vi.advanceTimersByTime(200);
     expect(fn).not.toHaveBeenCalled();
   });
 });
 
-describe('throttle', () => {
+describe("throttle", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('fires at most once per interval with trailing calls coalesced', () => {
+  it("fires at most once per interval with trailing calls coalesced", () => {
     const fn = vi.fn();
     const throttled = throttle(fn, 100, { leading: true });
 
@@ -56,17 +56,17 @@ describe('throttle', () => {
     expect(fn).toHaveBeenCalledWith(3);
   });
 
-  it('trailing-only (default) schedules the first call', () => {
+  it("trailing-only (default) schedules the first call", () => {
     const fn = vi.fn();
     const throttled = throttle(fn, 100);
 
-    throttled('a');
+    throttled("a");
     expect(fn).not.toHaveBeenCalled();
     vi.advanceTimersByTime(100);
-    expect(fn).toHaveBeenCalledWith('a');
+    expect(fn).toHaveBeenCalledWith("a");
   });
 
-  it('clear cancels the trailing invocation', () => {
+  it("clear cancels the trailing invocation", () => {
     const fn = vi.fn();
     const throttled = throttle(fn, 100, { leading: true });
 

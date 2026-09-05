@@ -56,7 +56,7 @@ export class SortableController<T> {
     // Ignore clicks on close buttons or interactive elements
     const target = e.target;
     if (!(target instanceof HTMLElement || target instanceof SVGElement)) return;
-    if (target.closest('.close-btn-wrapper') || target.closest('button')) return;
+    if (target.closest(".close-btn-wrapper") || target.closest("button")) return;
 
     e.preventDefault();
 
@@ -71,9 +71,9 @@ export class SortableController<T> {
     const rect = wrapper.getBoundingClientRect();
     this.dragOffsetX = e.clientX - rect.left;
 
-    window.addEventListener('pointermove', this._handleMove);
-    window.addEventListener('pointerup', this._handleUp);
-    window.addEventListener('pointercancel', this._handleUp);
+    window.addEventListener("pointermove", this._handleMove);
+    window.addEventListener("pointerup", this._handleUp);
+    window.addEventListener("pointercancel", this._handleUp);
   }
 
   handleMove(e: PointerEvent) {
@@ -117,9 +117,9 @@ export class SortableController<T> {
   }
 
   private cleanupListeners() {
-    window.removeEventListener('pointermove', this._handleMove);
-    window.removeEventListener('pointerup', this._handleUp);
-    window.removeEventListener('pointercancel', this._handleUp);
+    window.removeEventListener("pointermove", this._handleMove);
+    window.removeEventListener("pointerup", this._handleUp);
+    window.removeEventListener("pointercancel", this._handleUp);
   }
 
   destroy() {

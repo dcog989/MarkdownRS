@@ -1,5 +1,5 @@
-import { translate } from '$lib/i18n';
-import { addToDictionary } from '$lib/services/dictionaryService';
+import { translate } from "$lib/i18n";
+import { addToDictionary } from "$lib/services/dictionaryService";
 import {
   checkAndReloadIfChanged,
   checkFileExists,
@@ -7,23 +7,23 @@ import {
   refreshMetadata,
   reloadFileContent,
   sanitizePath,
-} from '$lib/services/fileMetadata';
-import { fileWatcher } from '$lib/services/fileWatcher';
-import { loadSession, persistSession, persistSessionDebounced } from '$lib/services/sessionSerialization';
-import { getBookmarkByPath, updateBookmark } from '$lib/stores/bookmarkStore.svelte';
-import { confirmDialog } from '$lib/stores/dialogStore.svelte';
+} from "$lib/services/fileMetadata";
+import { fileWatcher } from "$lib/services/fileWatcher";
+import { loadSession, persistSession, persistSessionDebounced } from "$lib/services/sessionSerialization";
+import { getBookmarkByPath, updateBookmark } from "$lib/stores/bookmarkStore.svelte";
+import { confirmDialog } from "$lib/stores/dialogStore.svelte";
 import {
   closeTab,
   createNewFile,
   reopenClosedTab,
   updateTabFields,
   updateTabTitle,
-} from '$lib/stores/editorStore.svelte';
-import { addToFileHistory } from '$lib/stores/fileHistoryStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { runFlushFunctions } from '$lib/utils/editorCommands';
-import { logger } from '$lib/utils/logger';
+} from "$lib/stores/editorStore.svelte";
+import { addToFileHistory } from "$lib/stores/fileHistoryStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { runFlushFunctions } from "$lib/utils/editorCommands";
+import { logger } from "$lib/utils/logger";
 import {
   autoSaveCurrentFile,
   navigateToPath,
@@ -31,8 +31,8 @@ import {
   openFileByPath,
   saveCurrentFile,
   saveCurrentFileAs,
-} from './fileDialogs';
-import { renameFileOnDisk } from './fileIO';
+} from "./fileDialogs";
+import { renameFileOnDisk } from "./fileIO";
 
 export {
   addToDictionary,
@@ -50,7 +50,7 @@ export {
   saveCurrentFileAs,
 };
 
-export type CloseManyMode = 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all' | 'unpinned';
+export type CloseManyMode = "right" | "left" | "others" | "saved" | "unsaved" | "all" | "unpinned";
 
 export async function closeManyTabs(mode: CloseManyMode, tabId?: string): Promise<void> {
   const tabs = appContext.editor.tabs;
@@ -59,33 +59,33 @@ export async function closeManyTabs(mode: CloseManyMode, tabId?: string): Promis
   let targets: (typeof tabs)[number][] = [];
 
   switch (mode) {
-    case 'right':
-    case 'left':
+    case "right":
+    case "left":
       // Right/left are relative to a specific tab. Without one, the -1 fallback
       // index would silently close the wrong tabs (slice(0) / slice(0, -1)).
       if (tabIndex === -1) return;
-      targets = mode === 'right' ? tabs.slice(tabIndex + 1) : tabs.slice(0, tabIndex);
+      targets = mode === "right" ? tabs.slice(tabIndex + 1) : tabs.slice(0, tabIndex);
       break;
-    case 'others':
+    case "others":
       targets = tabs.filter((t) => t.id !== tabId);
       break;
-    case 'saved':
+    case "saved":
       targets = tabId != null ? tabs.filter((t) => !t.isDirty && t.id !== tabId) : tabs.filter((t) => !t.isDirty);
       break;
-    case 'unsaved':
+    case "unsaved":
       targets = tabId != null ? tabs.filter((t) => t.isDirty && t.id !== tabId) : tabs.filter((t) => t.isDirty);
       break;
-    case 'unpinned':
+    case "unpinned":
       targets = tabs.filter((t) => !t.isPinned);
       break;
-    case 'all':
+    case "all":
       targets = tabs;
       break;
   }
 
   for (const t of targets) {
-    if (t.isPinned && mode !== 'all') continue;
-    await requestCloseTab(t.id, mode === 'all');
+    if (t.isPinned && mode !== "all") continue;
+    await requestCloseTab(t.id, mode === "all");
   }
 }
 
@@ -114,12 +114,12 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
 
   if (!appContext.settings.confirmationSuppressed && tab.isDirty) {
     const result = await confirmDialog({
-      title: translate('fileOps.closeDocumentTitle'),
-      message: translate('fileOps.closeDocumentMessage', { values: { title: tab.title } }),
+      title: translate("fileOps.closeDocumentTitle"),
+      message: translate("fileOps.closeDocumentMessage", { values: { title: tab.title } }),
     });
 
-    if (result === 'cancel') return;
-    if (result === 'save') {
+    if (result === "cancel") return;
+    if (result === "save") {
       const prev = appContext.app.activeTabId;
       appContext.app.activeTabId = id;
       if (!(await saveCurrentFile())) {
@@ -174,13 +174,13 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
 
   try {
     const oldPath = sanitizePath(tab.path);
-    const pathParts = oldPath.split('/');
-    const oldFileName = pathParts.pop() || '';
-    const directory = pathParts.join('/');
+    const pathParts = oldPath.split("/");
+    const oldFileName = pathParts.pop() || "";
+    const directory = pathParts.join("/");
 
     let finalNewName = cleanNewName;
-    const oldExt = oldFileName.includes('.') ? oldFileName.split('.').pop() : '';
-    const newExt = cleanNewName.includes('.') ? cleanNewName.split('.').pop() : '';
+    const oldExt = oldFileName.includes(".") ? oldFileName.split(".").pop() : "";
+    const newExt = cleanNewName.includes(".") ? cleanNewName.split(".").pop() : "";
 
     if (oldExt && !newExt) {
       finalNewName = `${cleanNewName}.${oldExt}`;
@@ -215,10 +215,10 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
       await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
     }
 
-    showToast('success', translate('fileOps.renamedTo', { values: { name: finalNewName } }));
+    showToast("success", translate("fileOps.renamedTo", { values: { name: finalNewName } }));
     return true;
   } catch (err) {
-    logger.file.warn('RenameFailed', { error: String(err) });
+    logger.file.warn("RenameFailed", { error: String(err) });
     return false;
   }
 }

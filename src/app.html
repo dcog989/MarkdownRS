@@ -23,9 +23,9 @@
 
     %sveltekit.head%
     <script>
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'F12' && window.__TAURI_INTERNALS__) {
-        window.__TAURI_INTERNALS__.invoke('toggle_devtools').catch(() => {});
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "F12" && window.__TAURI_INTERNALS__) {
+        window.__TAURI_INTERNALS__.invoke("toggle_devtools").catch(() => {});
       }
     });
     </script>

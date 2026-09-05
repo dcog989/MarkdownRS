@@ -1,15 +1,15 @@
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
 
 export function createSplitResize() {
   let isDragging = $state(false);
   let dragStart = 0;
   let initialSplit = 0;
 
-  let isVertical = $derived(appContext.settings.splitOrientation === 'vertical');
-  let resizeCursor = $derived(isVertical ? 'col-resize' : 'row-resize');
-  let clientAxis = $derived.by(() => (isVertical ? 'clientX' : 'clientY') as 'clientX' | 'clientY');
-  let sizeAxis = $derived.by(() => (isVertical ? 'width' : 'height') as 'width' | 'height');
+  let isVertical = $derived(appContext.settings.splitOrientation === "vertical");
+  let resizeCursor = $derived(isVertical ? "col-resize" : "row-resize");
+  let clientAxis = $derived.by(() => (isVertical ? "clientX" : "clientY") as "clientX" | "clientY");
+  let sizeAxis = $derived.by(() => (isVertical ? "width" : "height") as "width" | "height");
 
   let containerEl = $state<HTMLElement | null>(null);
 
@@ -29,8 +29,8 @@ export function createSplitResize() {
     _boundHandleResize = (ev: MouseEvent) => handleResize(ev);
     _boundStopResize = () => stopResize();
 
-    window.addEventListener('mousemove', _boundHandleResize);
-    window.addEventListener('mouseup', _boundStopResize);
+    window.addEventListener("mousemove", _boundHandleResize);
+    window.addEventListener("mouseup", _boundStopResize);
     document.body.style.cursor = resizeCursor;
   }
 
@@ -50,11 +50,11 @@ export function createSplitResize() {
   function stopResize() {
     if (!isDragging) return;
     isDragging = false;
-    if (_boundHandleResize) window.removeEventListener('mousemove', _boundHandleResize);
-    if (_boundStopResize) window.removeEventListener('mouseup', _boundStopResize);
+    if (_boundHandleResize) window.removeEventListener("mousemove", _boundHandleResize);
+    if (_boundStopResize) window.removeEventListener("mouseup", _boundStopResize);
     _boundHandleResize = null;
     _boundStopResize = null;
-    document.body.style.cursor = 'default';
+    document.body.style.cursor = "default";
   }
 
   function resetSplit() {
@@ -63,11 +63,11 @@ export function createSplitResize() {
 
   function cleanup() {
     isDragging = false;
-    if (_boundHandleResize) window.removeEventListener('mousemove', _boundHandleResize);
-    if (_boundStopResize) window.removeEventListener('mouseup', _boundStopResize);
+    if (_boundHandleResize) window.removeEventListener("mousemove", _boundHandleResize);
+    if (_boundStopResize) window.removeEventListener("mouseup", _boundStopResize);
     _boundHandleResize = null;
     _boundStopResize = null;
-    document.body.style.cursor = 'default';
+    document.body.style.cursor = "default";
   }
 
   return {

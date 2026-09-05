@@ -103,16 +103,16 @@ function onThumbMouseDown(e: MouseEvent) {
 
   function onMouseUp() {
     isDragging = false;
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    document.body.style.userSelect = '';
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    document.body.style.userSelect = "";
     // Update scrollbar one final time after drag ends
     requestAnimationFrame(updateScrollbar);
   }
 
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-  document.body.style.userSelect = 'none';
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+  document.body.style.userSelect = "none";
 }
 
 function onScroll() {
@@ -132,13 +132,13 @@ $effect(() => {
       resizeObserver.observe(viewport.firstElementChild);
     }
 
-    viewport.addEventListener('scroll', onScroll, { passive: true });
+    viewport.addEventListener("scroll", onScroll, { passive: true });
     updateScrollbar();
   }
 
   return () => {
     resizeObserver.disconnect();
-    viewport?.removeEventListener('scroll', onScroll);
+    viewport?.removeEventListener("scroll", onScroll);
   };
 });
 </script>

@@ -1,13 +1,13 @@
-import { translate } from '$lib/i18n';
-import { reloadFileContent } from '$lib/services/fileMetadata';
-import { initializeTabLoadState } from '$lib/services/tabLoadStateMachine';
-import { CONFIG } from '$lib/utils/config';
-import { isTabDirty, updateSavedHash } from '$lib/utils/contentHash';
-import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
-import { readTextFile } from '$lib/utils/fileIO';
-import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { appState } from './appState.svelte';
+import { translate } from "$lib/i18n";
+import { reloadFileContent } from "$lib/services/fileMetadata";
+import { initializeTabLoadState } from "$lib/services/tabLoadStateMachine";
+import { CONFIG } from "$lib/utils/config";
+import { isTabDirty, updateSavedHash } from "$lib/utils/contentHash";
+import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
+import { readTextFile } from "$lib/utils/fileIO";
+import { extractSmartTitle, getBaseTitle } from "$lib/utils/smartTitle";
+import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
+import { appState } from "./appState.svelte";
 import {
   clearTabCaches,
   computeWordCount,
@@ -17,46 +17,46 @@ import {
   initTabCaches,
   initTransientState,
   updateHistoryState,
-} from './editorCache';
-import { editorStore, sortTabsPinnedFirst } from './editorStoreCore.svelte';
-import type { ClosedTab, EditorTab } from './editorTypes';
-import { settingsState } from './settingsState.svelte';
-import { showToast } from './toastStore.svelte';
+} from "./editorCache";
+import { editorStore, sortTabsPinnedFirst } from "./editorStoreCore.svelte";
+import type { ClosedTab, EditorTab } from "./editorTypes";
+import { settingsState } from "./settingsState.svelte";
+import { showToast } from "./toastStore.svelte";
 
 export async function createNewFile(): Promise<string> {
-  let content = '';
+  let content = "";
   const templatePath = settingsState.newFileTemplatePath;
   if (templatePath) {
     try {
       const result = await readTextFile(templatePath);
-      content = result?.content ?? '';
+      content = result?.content ?? "";
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      showToast('error', translate('fileOps.failedReadTemplate', { values: { error: msg } }));
+      showToast("error", translate("fileOps.failedReadTemplate", { values: { error: msg } }));
     }
   }
-  return addTab('', content);
+  return addTab("", content);
 }
 
-export function addTab(title: string = '', content: string = '') {
+export function addTab(title: string = "", content: string = "") {
   const id = crypto.randomUUID();
   const now = getCurrentTimestamp();
 
   let finalTitle = title;
   const finalContent = content;
 
-  if (!title || title === 'Untitled' || title === '') {
+  if (!title || title === "Untitled" || title === "") {
     const newTabPattern = /New-(\d+)/;
     let maxNewNumber = 0;
     for (const tab of editorStore.tabs) {
-      const currentTitle = tab.customTitle || tab.title || '';
+      const currentTitle = tab.customTitle || tab.title || "";
       const match = currentTitle.match(newTabPattern);
       if (match) maxNewNumber = Math.max(maxNewNumber, parseInt(match[1], 10));
     }
     finalTitle = `New-${maxNewNumber + 1}`;
   }
 
-  const normalizedContent = finalContent.replace(/\r\n/g, '\n');
+  const normalizedContent = finalContent.replace(/\r\n/g, "\n");
   const sizeBytes = byteLength(normalizedContent);
 
   let wordCount = 0;
@@ -75,7 +75,7 @@ export function addTab(title: string = '', content: string = '') {
     title: finalTitle,
     originalTitle: finalTitle,
     content: normalizedContent,
-    lastSavedHash: '',
+    lastSavedHash: "",
     isDirty: false,
     path: null,
     sizeBytes,
@@ -86,8 +86,8 @@ export function addTab(title: string = '', content: string = '') {
     created: now,
     modified: now,
     formattedTimestamp: formatTimestampForDisplay(now),
-    lineEnding: 'LF',
-    encoding: 'UTF-8',
+    lineEnding: "LF",
+    encoding: "UTF-8",
     hasBom: false,
     contentLoaded: true,
     wordCountPending: false,
@@ -101,9 +101,9 @@ export function addTab(title: string = '', content: string = '') {
   initTabCaches(id);
   initializeTabLoadState(id, true);
 
-  if (settingsState.newTabPosition === 'beginning') {
+  if (settingsState.newTabPosition === "beginning") {
     editorStore.tabs.unshift(newTab);
-  } else if (settingsState.newTabPosition === 'right' && appState.activeTabId) {
+  } else if (settingsState.newTabPosition === "right" && appState.activeTabId) {
     const activeIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
     editorStore.tabs.splice(activeIndex + 1, 0, newTab);
   } else {
@@ -137,7 +137,7 @@ export function closeTab(id: string) {
     const canReloadFromDisk =
       !!tab.path && !tab.isDirty && tab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
 
-    const closedTab: EditorTab = canReloadFromDisk ? { ...tab, content: '', contentLoaded: false } : { ...tab };
+    const closedTab: EditorTab = canReloadFromDisk ? { ...tab, content: "", contentLoaded: false } : { ...tab };
     const closedEntry: ClosedTab = {
       tab: closedTab,
       index,

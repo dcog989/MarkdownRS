@@ -1,16 +1,16 @@
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { editorStore, setFileCheckStatus } from '$lib/stores/editorStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { hashContent, isDirty } from '$lib/utils/contentHash';
-import { AppError } from '$lib/utils/errorHandling';
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { editorStore, setFileCheckStatus } from "$lib/stores/editorStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { hashContent, isDirty } from "$lib/utils/contentHash";
+import { AppError } from "$lib/utils/errorHandling";
 import {
   checkAndReloadIfChanged,
   checkFileExists,
   normalizeLineEndings,
   refreshMetadata,
   reloadFileContent,
-} from './fileMetadata';
-import { fileWatcher } from './fileWatcher';
+} from "./fileMetadata";
+import { fileWatcher } from "./fileWatcher";
 
 export async function initializeTabFileState(tab: EditorTab): Promise<void> {
   if (!tab.path) {
@@ -18,7 +18,7 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
   }
 
   try {
-    await callBackend('get_file_metadata', { path: tab.path }, 'File:Metadata');
+    await callBackend("get_file_metadata", { path: tab.path }, "File:Metadata");
   } catch {
     setFileCheckStatus(tab.id, true, true);
     return;
@@ -33,10 +33,10 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
 
   if (tab.isDirty) {
     try {
-      const res = await callBackend('read_text_file', { path: tab.path }, 'File:Read');
+      const res = await callBackend("read_text_file", { path: tab.path }, "File:Read");
 
       if (!res) {
-        throw new Error('Failed to read file: null result');
+        throw new Error("Failed to read file: null result");
       }
 
       const storeTab = editorStore.tabs.find((x) => x.id === tab.id);
@@ -48,9 +48,9 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
         storeTab.hasBom = res.has_bom;
       }
     } catch (err) {
-      AppError.handle('File:Read', err, {
+      AppError.handle("File:Read", err, {
         showToast: false,
-        severity: 'warning',
+        severity: "warning",
         additionalInfo: { path: tab.path },
       });
     }
@@ -62,9 +62,9 @@ export async function initializeTabFileState(tab: EditorTab): Promise<void> {
   try {
     await fileWatcher.watch(tab.path);
   } catch (err) {
-    AppError.handle('FileWatcher:Watch', err, {
+    AppError.handle("FileWatcher:Watch", err, {
       showToast: false,
-      severity: 'warning',
+      severity: "warning",
       additionalInfo: { path: tab.path },
     });
   }

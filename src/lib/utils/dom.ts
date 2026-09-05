@@ -16,7 +16,7 @@ export function asHTMLElement(element: EventTarget | Element | null | undefined)
 export function assertHTMLElement(element: EventTarget | Element | null | undefined, context?: string): HTMLElement {
   const htmlElement = asHTMLElement(element);
   if (!htmlElement) {
-    const elementType = element?.constructor.name ?? 'null';
+    const elementType = element?.constructor.name ?? "null";
     const message = context
       ? `Expected HTMLElement in ${context}, got ${elementType}`
       : `Expected HTMLElement, got ${elementType}`;

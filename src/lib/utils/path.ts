@@ -6,11 +6,11 @@
  * unchanged (the filesystem root has no parent).
  */
 export function dirname(path: string): string {
-  if (path === '') return path;
-  const normalized = path.replaceAll('\\', '/');
-  if (normalized === '/') return '/';
-  const idx = normalized.lastIndexOf('/');
-  if (idx <= 0) return '/';
+  if (path === "") return path;
+  const normalized = path.replaceAll("\\", "/");
+  if (normalized === "/") return "/";
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
   return normalized.slice(0, idx);
 }
 
@@ -19,5 +19,5 @@ export function dirname(path: string): string {
  * separator, e.g. `dirname('/a/')` is `''`).
  */
 export function basename(path: string): string {
-  return path.split(/[\\/]/).pop() || '';
+  return path.split(/[\\/]/).pop() || "";
 }

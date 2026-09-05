@@ -1,12 +1,12 @@
-import { hashContent, isTabDirty } from '$lib/utils/contentHash';
-import { formatTimestampForDisplay, getCurrentTimestamp } from '$lib/utils/date';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { computeWordCount, getLineChangeTracker, getTransientState, scheduleWordCountUpdate } from './editorCache';
-import { editorStore, sortTabsPinnedFirst, updateTab } from './editorStoreCore.svelte';
-import type { EditorTab } from './editorTypes';
-import { settingsState } from './settingsState.svelte';
+import { hashContent, isTabDirty } from "$lib/utils/contentHash";
+import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
+import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { extractSmartTitle, getBaseTitle } from "$lib/utils/smartTitle";
+import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
+import { computeWordCount, getLineChangeTracker, getTransientState, scheduleWordCountUpdate } from "./editorCache";
+import { editorStore, sortTabsPinnedFirst, updateTab } from "./editorStoreCore.svelte";
+import type { EditorTab } from "./editorTypes";
+import { settingsState } from "./settingsState.svelte";
 
 export function updateContent(id: string, content: string, lineCount: number) {
   const index = editorStore.tabs.findIndex((t) => t.id === id);
@@ -84,7 +84,7 @@ export function updateCursor(id: string, anchor: number, head: number) {
 export function updateMetadata(id: string, created?: string, modified?: string) {
   updateTab(id, (tab) => {
     if (tab.created !== created || tab.modified !== modified) {
-      const tsToFormat = modified || tab.modified || created || tab.created || '';
+      const tsToFormat = modified || tab.modified || created || tab.created || "";
       return {
         created: created || tab.created,
         modified: modified || tab.modified,
@@ -142,7 +142,7 @@ export function setFileCheckStatus(id: string, performed: boolean, failed: boole
 export function reloadTabContent(
   id: string,
   content: string,
-  lineEnding: 'LF' | 'CRLF',
+  lineEnding: "LF" | "CRLF",
   encoding: string,
   sizeBytes: number,
   hasBom: boolean,
@@ -193,7 +193,7 @@ export function saveTabComplete(
   id: string,
   path: string,
   title: string,
-  lineEnding: 'LF' | 'CRLF',
+  lineEnding: "LF" | "CRLF",
   encoding: string,
   hasBom: boolean,
   sizeBytes: number,
@@ -216,12 +216,12 @@ export function togglePreferredExtension(id: string) {
     let current = tab.preferredExtension;
     if (!current) {
       if (tab.path) {
-        current = isMarkdownFile(tab.path) ? 'md' : 'txt';
+        current = isMarkdownFile(tab.path) ? "md" : "txt";
       } else {
-        current = 'md';
+        current = "md";
       }
     }
-    return { preferredExtension: current === 'md' ? 'txt' : 'md' };
+    return { preferredExtension: current === "md" ? "txt" : "md" };
   });
 }
 

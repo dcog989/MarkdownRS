@@ -14,8 +14,8 @@ import {
   swapCase as libSwapCase,
   titleCase as libTitleCase,
   upperCaseFirst as libUpperCaseFirst,
-} from 'text-case';
-import { linesMap } from './helpers';
+} from "text-case";
+import { linesMap } from "./helpers";
 
 const SENTENCE_CASE_PREFIX_RE = /^(\s*)(-|\*|\+|[0-9]+\.|-\s*\[[ x]\])\s*(.*)$/;
 

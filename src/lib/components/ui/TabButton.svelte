@@ -1,10 +1,10 @@
 <script lang="ts">
-import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { formatFileSize } from '$lib/utils/fileValidation';
+import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { formatFileSize } from "$lib/utils/fileValidation";
 
 interface Props {
   tab: EditorTab;
@@ -22,23 +22,23 @@ let isCollapsed = $derived(appContext.settings.collapsePinnedTabs && tab.isPinne
 let tooltipContent = $derived.by(() => {
   const parts: string[] = [];
   const sizeStr = formatFileSize(tab.sizeBytes || 0);
-  const formattedTime = tab.formattedTimestamp || '';
+  const formattedTime = tab.formattedTimestamp || "";
 
   const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
 
   if (tab.fileCheckFailed) {
-    parts.push($_('tabButton.missingFile'));
+    parts.push($_("tabButton.missingFile"));
     if (tab.path) parts.push(tab.path);
   } else {
-    parts.push(tab.path || $_('tabButton.unsaved'));
+    parts.push(tab.path || $_("tabButton.unsaved"));
   }
   parts.push(bottomLine);
 
   if (isCollapsed) {
-    return `${tab.customTitle || tab.title}\n${parts.join('\n')}`;
+    return `${tab.customTitle || tab.title}\n${parts.join("\n")}`;
   }
 
-  return parts.join('\n');
+  return parts.join("\n");
 });
 </script>
 

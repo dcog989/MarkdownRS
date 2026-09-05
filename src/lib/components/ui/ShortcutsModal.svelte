@@ -1,17 +1,17 @@
 <script lang="ts">
-import { Keyboard, RotateCcw } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
+import { Keyboard, RotateCcw } from "lucide-svelte";
+import { _ } from "svelte-i18n";
 
-import type { Command } from '$lib/commands/commands';
-import Modal from '$lib/components/ui/Modal.svelte';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { createListNavigation } from '$lib/utils/listNavigation.svelte';
-import { scrollIntoView } from '$lib/utils/modalUtils';
-import { saveSettings } from '$lib/utils/settings';
-import { shortcutManager } from '$lib/utils/shortcuts';
+import type { Command } from "$lib/commands/commands";
+import Modal from "$lib/components/ui/Modal.svelte";
+import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { translate } from "$lib/i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { createListNavigation } from "$lib/utils/listNavigation.svelte";
+import { scrollIntoView } from "$lib/utils/modalUtils";
+import { saveSettings } from "$lib/utils/settings";
+import { shortcutManager } from "$lib/utils/shortcuts";
 
 interface Props {
   isOpen: boolean;
@@ -20,7 +20,7 @@ interface Props {
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
-let searchQuery = $state('');
+let searchQuery = $state("");
 let searchInputEl = $state<HTMLInputElement>();
 let recordingCommandId = $state<string | null>(null);
 let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
@@ -35,7 +35,7 @@ const nav = createListNavigation(
 
 $effect(() => {
   if (isOpen) {
-    searchQuery = '';
+    searchQuery = "";
     nav.reset();
   }
 });
@@ -48,7 +48,7 @@ $effect(() => {
 function startRecording(commandId: string) {
   recordingCommandId = commandId;
   shortcutManager.setEnabled(false);
-  window.addEventListener('keydown', handleRecordKey, { capture: true });
+  window.addEventListener("keydown", handleRecordKey, { capture: true });
 }
 
 function handleRecordKey(e: KeyboardEvent) {
@@ -56,11 +56,11 @@ function handleRecordKey(e: KeyboardEvent) {
   e.preventDefault();
   e.stopPropagation();
 
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     stopRecording();
     return;
   }
-  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+  if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
 
   const keyStr = shortcutManager.getEventKey(e);
 
@@ -93,7 +93,7 @@ function handleCancelConflict() {
 
 function stopRecording() {
   recordingCommandId = null;
-  window.removeEventListener('keydown', handleRecordKey, { capture: true });
+  window.removeEventListener("keydown", handleRecordKey, { capture: true });
   shortcutManager.setEnabled(true);
 }
 

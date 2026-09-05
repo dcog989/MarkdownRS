@@ -1,4 +1,4 @@
-import { debug, error, info, warn } from '@tauri-apps/plugin-log';
+import { debug, error, info, warn } from "@tauri-apps/plugin-log";
 
 /**
  * Frontend Logging Utility
@@ -7,7 +7,7 @@ import { debug, error, info, warn } from '@tauri-apps/plugin-log';
  * Logs are collected and sent to the backend every 500ms or when the buffer is full.
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogMetadata {
   [key: string]: string | number | boolean | undefined | null;
@@ -20,23 +20,23 @@ class Logger {
   private readonly FLUSH_INTERVAL_MS = 500;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => this.flush());
+    if (typeof window !== "undefined") {
+      window.addEventListener("beforeunload", () => this.flush());
     }
   }
 
   private formatMetadata(metadata?: LogMetadata): string {
-    if (!metadata) return '';
+    if (!metadata) return "";
 
     return Object.entries(metadata)
       .filter(([, value]) => value !== undefined && value !== null)
       .map(([key, value]) => {
-        if (typeof value === 'string' && value.length > 100) {
+        if (typeof value === "string" && value.length > 100) {
           return `${key}=${value.substring(0, 100)}...`;
         }
         return `${key}=${value}`;
       })
-      .join(' | ');
+      .join(" | ");
   }
 
   private log(level: LogLevel, namespace: string, action: string, metadata?: LogMetadata): void {
@@ -46,11 +46,11 @@ class Logger {
     // In development, log to console immediately for real-time visibility
     if (import.meta.env.DEV) {
       const fn =
-        level === 'debug'
+        level === "debug"
           ? console.debug
-          : level === 'info'
+          : level === "info"
             ? console.info
-            : level === 'warn'
+            : level === "warn"
               ? console.warn
               : console.error;
       fn(`[Logger/${level.toUpperCase()}] ${message}`);
@@ -88,54 +88,54 @@ class Logger {
     );
 
     for (const [level, messages] of Object.entries(grouped)) {
-      const combined = messages.join('\n');
+      const combined = messages.join("\n");
       try {
         switch (level as LogLevel) {
-          case 'debug':
+          case "debug":
             await debug(combined);
             break;
-          case 'info':
+          case "info":
             await info(combined);
             break;
-          case 'warn':
+          case "warn":
             await warn(combined);
             break;
-          case 'error':
+          case "error":
             await error(combined);
             break;
         }
       } catch (e) {
-        console.error('[Logger] Flush failed:', e);
+        console.error("[Logger] Flush failed:", e);
       }
     }
   }
 
   editor = {
-    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Editor', action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log('info', 'Editor', action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Editor', action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log('error', 'Editor', action, metadata),
+    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "Editor", action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log("info", "Editor", action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "Editor", action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log("error", "Editor", action, metadata),
   };
 
   session = {
-    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Session', action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log('info', 'Session', action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Session', action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log('error', 'Session', action, metadata),
+    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "Session", action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log("info", "Session", action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "Session", action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log("error", "Session", action, metadata),
   };
 
   file = {
-    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'File', action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log('info', 'File', action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'File', action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log('error', 'File', action, metadata),
+    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "File", action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log("info", "File", action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "File", action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log("error", "File", action, metadata),
   };
 
   spellcheck = {
-    debug: (action: string, metadata?: LogMetadata) => this.log('debug', 'Spellcheck', action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log('info', 'Spellcheck', action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log('warn', 'Spellcheck', action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log('error', 'Spellcheck', action, metadata),
+    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "Spellcheck", action, metadata),
+    info: (action: string, metadata?: LogMetadata) => this.log("info", "Spellcheck", action, metadata),
+    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "Spellcheck", action, metadata),
+    error: (action: string, metadata?: LogMetadata) => this.log("error", "Spellcheck", action, metadata),
   };
 }
 

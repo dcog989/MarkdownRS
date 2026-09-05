@@ -8,4 +8,4 @@
  * The registry is decomposed by category in ./textOperations and re-exported
  * here to preserve a stable public API.
  */
-export * from './textOperations';
+export * from "./textOperations";

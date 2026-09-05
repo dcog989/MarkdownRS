@@ -1,14 +1,14 @@
-import { syntaxTree } from '@codemirror/language';
-import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
-import { StateEffect } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
-import type { SyntaxNodeRef } from '@lezer/common';
-import { translate } from '$lib/i18n';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
-import { logger } from '$lib/utils/logger';
-import { spellcheckState, stripPossessiveSuffix } from '$lib/utils/spellcheck.svelte';
+import { syntaxTree } from "@codemirror/language";
+import { type Diagnostic, forceLinting, linter } from "@codemirror/lint";
+import { StateEffect } from "@codemirror/state";
+import type { EditorView } from "@codemirror/view";
+import type { SyntaxNodeRef } from "@lezer/common";
+import { translate } from "$lib/i18n";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { CONFIG } from "$lib/utils/config";
+import { logger } from "$lib/utils/logger";
+import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
 
 export const spellcheckRefreshEffect = StateEffect.define<null>();
 
@@ -27,17 +27,17 @@ export const createSpellCheckLinter = () => {
       const diagnosticKeys = new Set<string>();
 
       const safeNodeTypes = new Set([
-        'Paragraph',
-        'Text',
-        'Emphasis',
-        'StrongEmphasis',
-        'ListItem',
-        'HeaderMark',
-        'SetextHeading1',
-        'SetextHeading2',
-        'ATXHeading1',
-        'ATXHeading2',
-        'ATXHeading3',
+        "Paragraph",
+        "Text",
+        "Emphasis",
+        "StrongEmphasis",
+        "ListItem",
+        "HeaderMark",
+        "SetextHeading1",
+        "SetextHeading2",
+        "ATXHeading1",
+        "ATXHeading2",
+        "ATXHeading3",
       ]);
 
       const customDict = spellcheckState.customDictionary;
@@ -51,12 +51,12 @@ export const createSpellCheckLinter = () => {
         to: view.viewport.to,
         enter: (node: SyntaxNodeRef): boolean | undefined => {
           if (
-            node.name.includes('Code') ||
-            node.name.includes('Link') ||
-            node.name.includes('Url') ||
-            node.name.includes('Comment') ||
-            node.name.includes('Attribute') ||
-            node.name === 'HtmlTag'
+            node.name.includes("Code") ||
+            node.name.includes("Link") ||
+            node.name.includes("Url") ||
+            node.name.includes("Comment") ||
+            node.name.includes("Attribute") ||
+            node.name === "HtmlTag"
           )
             return false;
 
@@ -76,8 +76,8 @@ export const createSpellCheckLinter = () => {
               const globalFrom = node.from + match.index;
               const globalTo = globalFrom + word.length;
 
-              const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : '';
-              const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : '';
+              const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
+              const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : "";
               if (/[\\/:@.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
 
               if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
@@ -101,9 +101,9 @@ export const createSpellCheckLinter = () => {
                   diagnostics.push({
                     from: globalFrom,
                     to: globalTo,
-                    severity: 'error',
-                    message: translate('editor.misspelled', { values: { word: checkWord } }),
-                    source: 'Spellchecker',
+                    severity: "error",
+                    message: translate("editor.misspelled", { values: { word: checkWord } }),
+                    source: "Spellchecker",
                   });
                 }
                 continue;
@@ -120,7 +120,7 @@ export const createSpellCheckLinter = () => {
       if (wordsToVerify.size > 0) {
         try {
           const wordsArray = Array.from(wordsToVerify.keys());
-          const misspelled = await callBackend('check_words', { words: wordsArray }, 'Editor:Init');
+          const misspelled = await callBackend("check_words", { words: wordsArray }, "Editor:Init");
 
           if (misspelled) {
             const misspelledSet = new Set(misspelled.map((w: string) => w.toLowerCase()));
@@ -141,9 +141,9 @@ export const createSpellCheckLinter = () => {
                       diagnostics.push({
                         from: range.from,
                         to: range.to,
-                        severity: 'error',
-                        message: translate('editor.misspelled', { values: { word } }),
-                        source: 'Spellchecker',
+                        severity: "error",
+                        message: translate("editor.misspelled", { values: { word } }),
+                        source: "Spellchecker",
                       });
                     }
                   }
@@ -154,10 +154,10 @@ export const createSpellCheckLinter = () => {
             }
           }
         } catch (error) {
-          logger.spellcheck.error('Linter error', { error: String(error) });
+          logger.spellcheck.error("Linter error", { error: String(error) });
           if (!spellcheckState.linterFailedNotified) {
             spellcheckState.linterFailedNotified = true;
-            showToast('warning', translate('editor.spellcheckError'));
+            showToast("warning", translate("editor.spellcheckError"));
           }
         }
       }

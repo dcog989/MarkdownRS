@@ -1,6 +1,6 @@
-import { appState } from '$lib/stores/appState.svelte';
-import { computeWordCount } from '$lib/stores/editorCache';
-import type { EditorTab, TabTransientState } from '$lib/stores/editorStore.svelte';
+import { appState } from "$lib/stores/appState.svelte";
+import { computeWordCount } from "$lib/stores/editorCache";
+import type { EditorTab, TabTransientState } from "$lib/stores/editorStore.svelte";
 import {
   addTab,
   editorStore,
@@ -10,21 +10,21 @@ import {
   setLineChangeTracker,
   sortTabsPinnedFirst,
   updateTransientState,
-} from '$lib/stores/editorStore.svelte';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
-import { updateSavedHash } from '$lib/utils/contentHash';
-import { formatTimestampForDisplay } from '$lib/utils/date';
-import { AppError } from '$lib/utils/errorHandling';
-import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { logger } from '$lib/utils/logger';
-import { extractSmartTitle, getBaseTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats } from '$lib/utils/textMetrics';
-import { debounce, formatDuration } from '$lib/utils/timing';
-import { normalizeLineEndings } from './fileMetadata';
-import { initializeTabFileState } from './tabFileStateInit';
-import { initializeTabLoadState, loadTabContentLazy } from './tabLoadStateMachine';
+} from "$lib/stores/editorStore.svelte";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { CONFIG } from "$lib/utils/config";
+import { updateSavedHash } from "$lib/utils/contentHash";
+import { formatTimestampForDisplay } from "$lib/utils/date";
+import { AppError } from "$lib/utils/errorHandling";
+import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
+import { logger } from "$lib/utils/logger";
+import { extractSmartTitle, getBaseTitle } from "$lib/utils/smartTitle";
+import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
+import { debounce, formatDuration } from "$lib/utils/timing";
+import { normalizeLineEndings } from "./fileMetadata";
+import { initializeTabFileState } from "./tabFileStateInit";
+import { initializeTabLoadState, loadTabContentLazy } from "./tabLoadStateMachine";
 
 type RustTabState = {
   id: string;
@@ -126,10 +126,10 @@ export async function persistSession(): Promise<void> {
       return toRustTabState(entry.tab, ts, index, needsContent, null, entry.index);
     });
 
-    await callBackend('save_session', { activeTabs: activeRustTabs, closedTabs: closedTabs }, 'Session:Save');
+    await callBackend("save_session", { activeTabs: activeRustTabs, closedTabs: closedTabs }, "Session:Save");
 
     const tabsWithContent = activeRustTabs.filter((t) => t.content !== null).length;
-    logger.session.info('SessionSaved', {
+    logger.session.info("SessionSaved", {
       duration: formatDuration(start),
       activeTabs: activeRustTabs.length,
       closedTabs: closedTabs.length,
@@ -170,9 +170,9 @@ export async function persistSession(): Promise<void> {
     editorStore.sessionDirty = anyUnpersisted;
   } catch (err) {
     editorStore.sessionDirty = true;
-    AppError.handle('Session:Save', err, {
+    AppError.handle("Session:Save", err, {
       showToast: false,
-      severity: 'warning',
+      severity: "warning",
     });
   } finally {
     saveInProgress = false;
@@ -180,9 +180,9 @@ export async function persistSession(): Promise<void> {
 }
 
 function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = true): EditorTab {
-  const rawContent = t.content || '';
+  const rawContent = t.content || "";
   const content = normalizeLineEndings(rawContent);
-  const timestamp = t.modified || t.created || '';
+  const timestamp = t.modified || t.created || "";
 
   const sizeBytes = byteLength(content);
 
@@ -210,7 +210,7 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     title,
     originalTitle: baseTitle,
     content,
-    lastSavedHash: '',
+    lastSavedHash: "",
     isDirty: t.is_dirty,
     path: t.path,
     sizeBytes,
@@ -223,8 +223,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     formattedTimestamp: formatTimestampForDisplay(timestamp),
     isPinned: t.is_pinned,
     customTitle: t.custom_title || undefined,
-    lineEnding: t.line_ending === 'CRLF' ? 'CRLF' : 'LF',
-    encoding: t.encoding ? t.encoding.toUpperCase() : 'UTF-8',
+    lineEnding: t.line_ending === "CRLF" ? "CRLF" : "LF",
+    encoding: t.encoding ? t.encoding.toUpperCase() : "UTF-8",
     hasBom: t.has_bom || false,
     fileCheckFailed: t.file_check_failed || false,
     contentLoaded,
@@ -257,14 +257,14 @@ export async function loadSession(): Promise<void> {
   const start = performance.now();
 
   try {
-    const sessionData = await callBackend('restore_session', {}, 'Session:Load');
+    const sessionData = await callBackend("restore_session", {}, "Session:Load");
 
     let activeRustTabs: RustTabState[] = [];
     let closedRustTabs: RustTabState[] = [];
 
     if (Array.isArray(sessionData)) {
       activeRustTabs = sessionData as RustTabState[];
-    } else if (sessionData && typeof sessionData === 'object') {
+    } else if (sessionData && typeof sessionData === "object") {
       const sd = sessionData as { active_tabs?: unknown[]; closed_tabs?: unknown[] };
       activeRustTabs = (sd.active_tabs || []) as RustTabState[];
       closedRustTabs = (sd.closed_tabs || []) as RustTabState[];
@@ -292,15 +292,15 @@ export async function loadSession(): Promise<void> {
       editorStore.mruStack = sortedMru.length > 0 ? sortedMru : convertedTabs.map((t) => t.id);
 
       switch (settingsState.startupBehavior) {
-        case 'first':
+        case "first":
           appState.activeTabId = convertedTabs[0].id;
 
           break;
-        case 'last-focused':
+        case "last-focused":
           appState.activeTabId = editorStore.mruStack[0] || convertedTabs[0].id;
 
           break;
-        case 'new':
+        case "new":
           break;
         default:
           appState.activeTabId = convertedTabs[0].id;
@@ -313,8 +313,8 @@ export async function loadSession(): Promise<void> {
       }
     }
 
-    if (editorStore.tabs.length === 0 || settingsState.startupBehavior === 'new') {
-      if (settingsState.startupBehavior === 'new' && activeRustTabs.length > 0) {
+    if (editorStore.tabs.length === 0 || settingsState.startupBehavior === "new") {
+      if (settingsState.startupBehavior === "new" && activeRustTabs.length > 0) {
         appState.activeTabId = addTab();
       } else if (editorStore.tabs.length === 0) {
         appState.activeTabId = addTab();
@@ -338,15 +338,15 @@ export async function loadSession(): Promise<void> {
     const hasUnsavedTabsWithContent = editorStore.tabs.some((t) => !t.path && t.content.length > 0);
     editorStore.sessionDirty = hasUnsavedTabsWithContent;
 
-    logger.session.info('SessionLoaded', {
+    logger.session.info("SessionLoaded", {
       duration: formatDuration(start),
       activeTabs: editorStore.tabs.length,
       closedTabs: editorStore.closedTabsHistory.length,
     });
   } catch (err) {
-    AppError.handle('Session:Load', err, {
+    AppError.handle("Session:Load", err, {
       showToast: false,
-      severity: 'warning',
+      severity: "warning",
     });
 
     appState.activeTabId = addTab();

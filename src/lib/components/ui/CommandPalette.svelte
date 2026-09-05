@@ -1,17 +1,17 @@
 <script lang="ts">
-import { ArrowUpDown, Zap } from 'lucide-svelte';
-import { tick } from 'svelte';
-import { _ } from 'svelte-i18n';
-import type { Command } from '$lib/commands/commands';
-import Modal from '$lib/components/ui/Modal.svelte';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { translate } from '$lib/i18n';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { cycleSortMode, SORT_LABELS, sortCommands } from '$lib/utils/commandPaletteSort';
-import { createListNavigation } from '$lib/utils/listNavigation.svelte';
-import { scrollIntoView } from '$lib/utils/modalUtils';
-import { shortcutManager } from '$lib/utils/shortcuts';
+import { ArrowUpDown, Zap } from "lucide-svelte";
+import { tick } from "svelte";
+import { _ } from "svelte-i18n";
+import type { Command } from "$lib/commands/commands";
+import Modal from "$lib/components/ui/Modal.svelte";
+import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { translate } from "$lib/i18n";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { cycleSortMode, SORT_LABELS, sortCommands } from "$lib/utils/commandPaletteSort";
+import { createListNavigation } from "$lib/utils/listNavigation.svelte";
+import { scrollIntoView } from "$lib/utils/modalUtils";
+import { shortcutManager } from "$lib/utils/shortcuts";
 
 let {
   isOpen = $bindable(false),
@@ -23,7 +23,7 @@ let {
   onClose?: () => void;
 }>();
 
-let query = $state('');
+let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
 let filteredCommands = $derived(
@@ -64,7 +64,7 @@ const nav = createListNavigation(
 
 $effect(() => {
   if (isOpen) {
-    query = '';
+    query = "";
     nav.reset();
     tick().then(() => inputRef?.focus());
   }
@@ -74,8 +74,8 @@ $effect(() => {
   const el = inputRef;
   if (!el) return;
   const handler = (e: KeyboardEvent) => nav.handleKeydown(e);
-  el.addEventListener('keydown', handler);
-  return () => el.removeEventListener('keydown', handler);
+  el.addEventListener("keydown", handler);
+  return () => el.removeEventListener("keydown", handler);
 });
 
 function execute(command: Command) {

@@ -1,10 +1,10 @@
-import { translate } from '$lib/i18n';
-import { reloadTabContent, setFileCheckStatus, updateMetadata } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { callBackendSafe } from '$lib/utils/backend';
-import { hashContent } from '$lib/utils/contentHash';
-import { logger } from '$lib/utils/logger';
-import { byteLength, detectLineEnding } from '$lib/utils/textMetrics';
+import { translate } from "$lib/i18n";
+import { reloadTabContent, setFileCheckStatus, updateMetadata } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { callBackendSafe } from "$lib/utils/backend";
+import { hashContent } from "$lib/utils/contentHash";
+import { logger } from "$lib/utils/logger";
+import { byteLength, detectLineEnding } from "$lib/utils/textMetrics";
 
 export type FileContent = {
   content: string;
@@ -28,9 +28,9 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
     return cached.promise;
   }
 
-  const promise = callBackendSafe('get_file_metadata', { path }, 'File:Metadata').then((result) => {
+  const promise = callBackendSafe("get_file_metadata", { path }, "File:Metadata").then((result) => {
     if (!result) {
-      throw new Error('Failed to get file metadata: null result');
+      throw new Error("Failed to get file metadata: null result");
     }
     return result;
   });
@@ -44,11 +44,11 @@ export function invalidateMetadataCache(path: string) {
 }
 
 export function normalizeLineEndings(text: string): string {
-  return text.replace(/\r\n/g, '\n');
+  return text.replace(/\r\n/g, "\n");
 }
 
 export function sanitizePath(path: string): string {
-  return path.replace(/\0/g, '').replace(/\\/g, '/');
+  return path.replace(/\0/g, "").replace(/\\/g, "/");
 }
 
 export async function refreshMetadata(tabId: string, path: string): Promise<void> {
@@ -56,7 +56,7 @@ export async function refreshMetadata(tabId: string, path: string): Promise<void
     const meta = await getCachedFileMetadata(path);
     updateMetadata(tabId, meta.created, meta.modified);
   } catch {
-    logger.file.warn('RefreshMetadataFailed', { path });
+    logger.file.warn("RefreshMetadataFailed", { path });
   }
 }
 
@@ -64,9 +64,9 @@ export async function checkFileExists(tabId: string): Promise<void> {
   const tab = appContext.editor.tabs.find((t) => t.id === tabId);
   if (!tab?.path) return;
 
-  const result = await callBackendSafe('get_file_metadata', { path: tab.path }, 'File:Metadata', {
+  const result = await callBackendSafe("get_file_metadata", { path: tab.path }, "File:Metadata", {
     showToast: false,
-    severity: 'warning',
+    severity: "warning",
     additionalInfo: { path: tab.path, tabId },
     onError: () => {
       setFileCheckStatus(tabId, true, true);
@@ -82,9 +82,9 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
   const tab = appContext.editor.tabs.find((t) => t.id === tabId);
   if (!tab?.path) return false;
 
-  const meta = await callBackendSafe('get_file_metadata', { path: tab.path }, 'File:Metadata', {
+  const meta = await callBackendSafe("get_file_metadata", { path: tab.path }, "File:Metadata", {
     showToast: false,
-    severity: 'warning',
+    severity: "warning",
     additionalInfo: { path: tab.path, tabId },
     onError: () => {
       setFileCheckStatus(tabId, true, true);
@@ -104,9 +104,9 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
   // baseline even for dirty tabs: a dirty tab whose disk baseline still
   // matches returns false (no external edit), while one whose disk changed
   // returns true (the save would overwrite someone else's edit).
-  const file = await callBackendSafe('read_text_file', { path: tab.path }, 'File:Read', {
+  const file = await callBackendSafe("read_text_file", { path: tab.path }, "File:Read", {
     showToast: false,
-    severity: 'warning',
+    severity: "warning",
     additionalInfo: { path: tab.path, tabId },
     onError: () => {
       setFileCheckStatus(tabId, true, true);
@@ -131,8 +131,8 @@ export async function reloadFileContent(tabId: string): Promise<void> {
   if (!tab?.path) return;
 
   const sanitizedPath = sanitizePath(tab.path);
-  const result = await callBackendSafe('read_text_file', { path: sanitizedPath }, 'File:Read', {
-    userMessage: translate('fileOps.failedReload'),
+  const result = await callBackendSafe("read_text_file", { path: sanitizedPath }, "File:Read", {
+    userMessage: translate("fileOps.failedReload"),
     additionalInfo: { path: tab.path, tabId },
   });
 
@@ -145,9 +145,9 @@ export async function reloadFileContent(tabId: string): Promise<void> {
   // The decoded content's byte length (UTF-8) only matches the on-disk size
   // for BOM-less UTF-8 files; read the real metadata so the size fast path and
   // status bar reflect the actual file (BOM and non-UTF-8 encodings included).
-  const meta = await callBackendSafe('get_file_metadata', { path: sanitizedPath }, 'File:Metadata', {
+  const meta = await callBackendSafe("get_file_metadata", { path: sanitizedPath }, "File:Metadata", {
     showToast: false,
-    severity: 'warning',
+    severity: "warning",
   });
   const sizeBytes = meta?.size ?? byteLength(result.content);
 

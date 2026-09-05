@@ -1,6 +1,6 @@
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
-import { hashContent } from './contentHash';
+import katex from "katex";
+import "katex/dist/katex.min.css";
+import { hashContent } from "./contentHash";
 
 /**
  * Renders KaTeX to HTML via `renderToString` with an expression-hash cache.
@@ -9,7 +9,7 @@ import { hashContent } from './contentHash';
  */
 
 const MAX_CACHE_ENTRIES = 1000;
-const MATH_STYLE_ATTR = 'data-math-style';
+const MATH_STYLE_ATTR = "data-math-style";
 
 const BASE_OPTIONS: katex.KatexOptions = {
   throwOnError: false,
@@ -19,7 +19,7 @@ const BASE_OPTIONS: katex.KatexOptions = {
 const mathCache = new Map<string, string>();
 
 function cacheKey(tex: string, displayMode: boolean): string {
-  return `${displayMode ? 'd' : 'i'}:${hashContent(tex)}`;
+  return `${displayMode ? "d" : "i"}:${hashContent(tex)}`;
 }
 
 function renderMathToString(tex: string, displayMode: boolean): string {
@@ -43,16 +43,16 @@ function renderMathToString(tex: string, displayMode: boolean): string {
 export function renderMathInHtml(html: string): string {
   if (!html.includes(MATH_STYLE_ATTR)) return html;
 
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const doc = new DOMParser().parseFromString(html, "text/html");
   const nodes = doc.querySelectorAll(`[${MATH_STYLE_ATTR}]`);
   if (nodes.length === 0) return html;
 
   for (const node of nodes) {
-    const displayMode = node.getAttribute(MATH_STYLE_ATTR) === 'display';
-    const tex = node.textContent ?? '';
+    const displayMode = node.getAttribute(MATH_STYLE_ATTR) === "display";
+    const tex = node.textContent ?? "";
     const html = renderMathToString(tex, displayMode);
-    const target = node.tagName === 'CODE' && node.parentElement?.tagName === 'PRE' ? node.parentElement : node;
-    target.insertAdjacentHTML('beforebegin', html);
+    const target = node.tagName === "CODE" && node.parentElement?.tagName === "PRE" ? node.parentElement : node;
+    target.insertAdjacentHTML("beforebegin", html);
     target.remove();
   }
 

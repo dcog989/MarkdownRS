@@ -1,7 +1,7 @@
 // State
 export const tooltipStore = $state({
   visible: false,
-  content: '',
+  content: "",
   x: 0,
   y: 0,
 });
@@ -37,9 +37,9 @@ export function setCursorPosition(x: number, y: number) {
 export function clearStuckHoverState() {
   hideTooltip();
 
-  const hovered = document.querySelectorAll<HTMLElement>(':hover');
+  const hovered = document.querySelectorAll<HTMLElement>(":hover");
   for (const el of hovered) {
-    el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false, cancelable: true, relatedTarget: null }));
+    el.dispatchEvent(new MouseEvent("mouseleave", { bubbles: false, cancelable: true, relatedTarget: null }));
   }
 }
 
@@ -56,7 +56,7 @@ export function activateHoverAtPoint(x: number, y: number) {
   if (!el) return;
   for (let node: Element | null = el; node; node = node.parentElement) {
     node.dispatchEvent(
-      new MouseEvent('mouseenter', {
+      new MouseEvent("mouseenter", {
         bubbles: false,
         cancelable: true,
         relatedTarget: null,

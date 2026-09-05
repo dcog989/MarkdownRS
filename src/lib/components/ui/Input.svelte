@@ -1,12 +1,12 @@
 <script lang="ts">
-import type { HTMLInputAttributes } from 'svelte/elements';
-import { focusOnMount } from '$lib/utils/dom';
+import type { HTMLInputAttributes } from "svelte/elements";
+import { focusOnMount } from "$lib/utils/dom";
 
 let {
   value = $bindable(),
   ref = $bindable(),
-  class: className = '',
-  type = 'text',
+  class: className = "",
+  type = "text",
   focusDelay,
   ...rest
 } = $props<HTMLInputAttributes & { ref?: HTMLInputElement; focusDelay?: number }>();

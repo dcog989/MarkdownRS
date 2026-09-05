@@ -1,9 +1,9 @@
-import { getOperation, type OperationId } from '$lib/config/textOperationsRegistry';
-import { previewHeadingsCache } from '$lib/stores/previewHeadings.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import * as ClientLogic from '$lib/utils/clientTransforms';
-import { formatMarkdown } from '$lib/utils/formatterRust';
-import { generateDocumentToc } from '$lib/utils/tocRust';
+import { getOperation, type OperationId } from "$lib/config/textOperationsRegistry";
+import { previewHeadingsCache } from "$lib/stores/previewHeadings.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import * as ClientLogic from "$lib/utils/clientTransforms";
+import { formatMarkdown } from "$lib/utils/formatterRust";
+import { generateDocumentToc } from "$lib/utils/tocRust";
 
 export type TransformStrategy = (text: string, options?: unknown) => string | Promise<string>;
 
@@ -20,69 +20,69 @@ class TextProcessor {
 
   private initializeStrategies() {
     // --- Sort & Order ---
-    this.strategies.set('sort-asc', (t) => ClientLogic.sortLines(t, 'asc'));
-    this.strategies.set('sort-desc', (t) => ClientLogic.sortLines(t, 'desc'));
-    this.strategies.set('sort-case-insensitive-asc', (t) => ClientLogic.sortLines(t, 'case-insensitive-asc'));
-    this.strategies.set('sort-case-insensitive-desc', (t) => ClientLogic.sortLines(t, 'case-insensitive-desc'));
-    this.strategies.set('sort-numeric-asc', (t) => ClientLogic.sortLines(t, 'numeric-asc'));
-    this.strategies.set('sort-numeric-desc', (t) => ClientLogic.sortLines(t, 'numeric-desc'));
-    this.strategies.set('sort-length-asc', (t) => ClientLogic.sortLines(t, 'length-asc'));
-    this.strategies.set('sort-length-desc', (t) => ClientLogic.sortLines(t, 'length-desc'));
-    this.strategies.set('reverse', ClientLogic.reverseLines);
-    this.strategies.set('shuffle', ClientLogic.shuffleLines);
+    this.strategies.set("sort-asc", (t) => ClientLogic.sortLines(t, "asc"));
+    this.strategies.set("sort-desc", (t) => ClientLogic.sortLines(t, "desc"));
+    this.strategies.set("sort-case-insensitive-asc", (t) => ClientLogic.sortLines(t, "case-insensitive-asc"));
+    this.strategies.set("sort-case-insensitive-desc", (t) => ClientLogic.sortLines(t, "case-insensitive-desc"));
+    this.strategies.set("sort-numeric-asc", (t) => ClientLogic.sortLines(t, "numeric-asc"));
+    this.strategies.set("sort-numeric-desc", (t) => ClientLogic.sortLines(t, "numeric-desc"));
+    this.strategies.set("sort-length-asc", (t) => ClientLogic.sortLines(t, "length-asc"));
+    this.strategies.set("sort-length-desc", (t) => ClientLogic.sortLines(t, "length-desc"));
+    this.strategies.set("reverse", ClientLogic.reverseLines);
+    this.strategies.set("shuffle", ClientLogic.shuffleLines);
 
     // --- Remove & Filter ---
-    this.strategies.set('remove-duplicates', ClientLogic.removeDuplicates);
-    this.strategies.set('remove-unique', ClientLogic.removeUnique);
-    this.strategies.set('remove-blank', ClientLogic.removeBlankLines);
-    this.strategies.set('remove-trailing-spaces', ClientLogic.removeTrailingSpaces);
-    this.strategies.set('remove-leading-spaces', ClientLogic.removeLeadingSpaces);
-    this.strategies.set('remove-all-spaces', ClientLogic.removeAllSpaces);
+    this.strategies.set("remove-duplicates", ClientLogic.removeDuplicates);
+    this.strategies.set("remove-unique", ClientLogic.removeUnique);
+    this.strategies.set("remove-blank", ClientLogic.removeBlankLines);
+    this.strategies.set("remove-trailing-spaces", ClientLogic.removeTrailingSpaces);
+    this.strategies.set("remove-leading-spaces", ClientLogic.removeLeadingSpaces);
+    this.strategies.set("remove-all-spaces", ClientLogic.removeAllSpaces);
 
     // --- Case Transformations ---
-    this.strategies.set('uppercase', (t) => t.toUpperCase());
-    this.strategies.set('lowercase', (t) => t.toLowerCase());
-    this.strategies.set('swap-case', ClientLogic.swapCase);
-    this.strategies.set('title-case', ClientLogic.toTitleCase);
-    this.strategies.set('sentence-case', ClientLogic.toSentenceCase);
-    this.strategies.set('camel-case', ClientLogic.toCamelCase);
-    this.strategies.set('pascal-case', ClientLogic.toPascalCase);
-    this.strategies.set('snake-case', ClientLogic.toSnakeCase);
-    this.strategies.set('kebab-case', ClientLogic.toKebabCase);
-    this.strategies.set('constant-case', ClientLogic.toConstantCase);
-    this.strategies.set('dot-case', ClientLogic.toDotCase);
-    this.strategies.set('path-case', ClientLogic.toPathCase);
-    this.strategies.set('header-case', ClientLogic.toHeaderCase);
-    this.strategies.set('capital-case', ClientLogic.toCapitalCase);
-    this.strategies.set('no-case', ClientLogic.toNoCase);
-    this.strategies.set('upper-case-first', ClientLogic.toUpperCaseFirst);
-    this.strategies.set('lower-case-first', ClientLogic.toLowerCaseFirst);
+    this.strategies.set("uppercase", (t) => t.toUpperCase());
+    this.strategies.set("lowercase", (t) => t.toLowerCase());
+    this.strategies.set("swap-case", ClientLogic.swapCase);
+    this.strategies.set("title-case", ClientLogic.toTitleCase);
+    this.strategies.set("sentence-case", ClientLogic.toSentenceCase);
+    this.strategies.set("camel-case", ClientLogic.toCamelCase);
+    this.strategies.set("pascal-case", ClientLogic.toPascalCase);
+    this.strategies.set("snake-case", ClientLogic.toSnakeCase);
+    this.strategies.set("kebab-case", ClientLogic.toKebabCase);
+    this.strategies.set("constant-case", ClientLogic.toConstantCase);
+    this.strategies.set("dot-case", ClientLogic.toDotCase);
+    this.strategies.set("path-case", ClientLogic.toPathCase);
+    this.strategies.set("header-case", ClientLogic.toHeaderCase);
+    this.strategies.set("capital-case", ClientLogic.toCapitalCase);
+    this.strategies.set("no-case", ClientLogic.toNoCase);
+    this.strategies.set("upper-case-first", ClientLogic.toUpperCaseFirst);
+    this.strategies.set("lower-case-first", ClientLogic.toLowerCaseFirst);
 
     // --- Markdown Formatting ---
-    this.strategies.set('toggle-bullets', ClientLogic.toggleBullets);
-    this.strategies.set('add-numbers', ClientLogic.addNumbers);
-    this.strategies.set('add-checkboxes', ClientLogic.addCheckboxes);
-    this.strategies.set('toggle-blockquote', ClientLogic.toggleBlockquote);
-    this.strategies.set('toggle-code-fence', ClientLogic.toggleCodeFence);
-    this.strategies.set('increase-heading', ClientLogic.increaseHeading);
-    this.strategies.set('decrease-heading', ClientLogic.decreaseHeading);
-    this.strategies.set('bold', (t) => `**${t}**`);
-    this.strategies.set('italic', (t) => `*${t}*`);
-    this.strategies.set('strike', (t) => `~~${t}~~`);
-    this.strategies.set('inline-code', (t) => `\`${t}\``);
-    this.strategies.set('insert-link', (t) => `[${t}](https://)`);
+    this.strategies.set("toggle-bullets", ClientLogic.toggleBullets);
+    this.strategies.set("add-numbers", ClientLogic.addNumbers);
+    this.strategies.set("add-checkboxes", ClientLogic.addCheckboxes);
+    this.strategies.set("toggle-blockquote", ClientLogic.toggleBlockquote);
+    this.strategies.set("toggle-code-fence", ClientLogic.toggleCodeFence);
+    this.strategies.set("increase-heading", ClientLogic.increaseHeading);
+    this.strategies.set("decrease-heading", ClientLogic.decreaseHeading);
+    this.strategies.set("bold", (t) => `**${t}**`);
+    this.strategies.set("italic", (t) => `*${t}*`);
+    this.strategies.set("strike", (t) => `~~${t}~~`);
+    this.strategies.set("inline-code", (t) => `\`${t}\``);
+    this.strategies.set("insert-link", (t) => `[${t}](https://)`);
 
     // --- Text Manipulation ---
-    this.strategies.set('trim-whitespace', ClientLogic.trimWhitespace);
-    this.strategies.set('normalize-whitespace', ClientLogic.normalizeWhitespace);
-    this.strategies.set('join-lines', ClientLogic.joinLines);
-    this.strategies.set('split-sentences', ClientLogic.splitSentences);
-    this.strategies.set('wrap-quotes', ClientLogic.wrapQuotes);
-    this.strategies.set('add-line-numbers', ClientLogic.addLineNumbers);
-    this.strategies.set('indent-lines', (t) => ClientLogic.indentLines(t, appContext.settings.defaultIndent));
-    this.strategies.set('unindent-lines', (t) => ClientLogic.unindentLines(t, appContext.settings.defaultIndent));
-    this.strategies.set('smart-paragraphs', ClientLogic.smartParagraphs);
-    this.strategies.set('hard-wrap', (t) =>
+    this.strategies.set("trim-whitespace", ClientLogic.trimWhitespace);
+    this.strategies.set("normalize-whitespace", ClientLogic.normalizeWhitespace);
+    this.strategies.set("join-lines", ClientLogic.joinLines);
+    this.strategies.set("split-sentences", ClientLogic.splitSentences);
+    this.strategies.set("wrap-quotes", ClientLogic.wrapQuotes);
+    this.strategies.set("add-line-numbers", ClientLogic.addLineNumbers);
+    this.strategies.set("indent-lines", (t) => ClientLogic.indentLines(t, appContext.settings.defaultIndent));
+    this.strategies.set("unindent-lines", (t) => ClientLogic.unindentLines(t, appContext.settings.defaultIndent));
+    this.strategies.set("smart-paragraphs", ClientLogic.smartParagraphs);
+    this.strategies.set("hard-wrap", (t) =>
       ClientLogic.reflowParagraphs(
         t,
         appContext.settings.wrapGuideColumn > 0 ? appContext.settings.wrapGuideColumn : 80,
@@ -99,11 +99,11 @@ class TextProcessor {
     if (!op) return text;
 
     // Special case: Server-side formatting
-    if (op.execution === 'server') {
-      if (operationId === 'format-document') {
+    if (op.execution === "server") {
+      if (operationId === "format-document") {
         return formatMarkdown(text);
       }
-      if (operationId === 'generate-toc') {
+      if (operationId === "generate-toc") {
         // Reuse the headings already produced by render_markdown to avoid a
         // second full parse. Fall back to the parse-based path when the cached
         // headings don't match the current text (e.g. preview closed/stale).

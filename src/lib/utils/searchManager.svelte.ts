@@ -1,10 +1,10 @@
-import { SearchQuery, setSearchQuery } from '@codemirror/search';
-import type { EditorView } from '@codemirror/view';
-import { SvelteMap } from 'svelte/reactivity';
-import { translate } from '$lib/i18n';
-import { updateContent } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { searchState } from './searchState.svelte';
+import { SearchQuery, setSearchQuery } from "@codemirror/search";
+import type { EditorView } from "@codemirror/view";
+import { SvelteMap } from "svelte/reactivity";
+import { translate } from "$lib/i18n";
+import { updateContent } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { searchState } from "./searchState.svelte";
 
 export { searchState };
 
@@ -14,9 +14,9 @@ export function getSearchQuery(): SearchQuery {
       new RegExp(searchState.findText);
       searchState.regexError = null;
     } catch (e) {
-      searchState.regexError = e instanceof Error ? e.message : translate('findReplace.invalidRegex');
+      searchState.regexError = e instanceof Error ? e.message : translate("findReplace.invalidRegex");
       return new SearchQuery({
-        search: '',
+        search: "",
         caseSensitive: searchState.matchCase,
         wholeWord: searchState.matchWholeWord,
       });
@@ -123,7 +123,7 @@ export function selectNearestMatch(view: EditorView | undefined) {
 export function clearSearch(view: EditorView | undefined) {
   if (!view) return;
   view.dispatch({
-    effects: setSearchQuery.of(new SearchQuery({ search: '' })),
+    effects: setSearchQuery.of(new SearchQuery({ search: "" })),
   });
   searchState.currentMatches = 0;
   searchState.currentIndex = 0;
@@ -164,7 +164,7 @@ export function replaceAllInTabs(): number {
     const matches = [...tab.content.matchAll(regex)];
     if (matches.length > 0) {
       const newContent = tab.content.replace(regex, searchState.replaceText);
-      updateContent(tab.id, newContent, newContent.split('\n').length);
+      updateContent(tab.id, newContent, newContent.split("\n").length);
       total += matches.length;
     }
   });
@@ -177,21 +177,21 @@ function buildSearchRegex(): RegExp | null {
   try {
     let pattern = searchState.findText;
     if (!searchState.useRegex) {
-      pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
     if (searchState.matchWholeWord) {
       pattern = `\\b${pattern}\\b`;
     }
 
-    const flags = searchState.matchCase ? 'g' : 'gi';
+    const flags = searchState.matchCase ? "g" : "gi";
     const regex = new RegExp(pattern, flags);
 
     searchState.regexError = null;
     return regex;
   } catch (e) {
     if (searchState.useRegex && searchState.findText) {
-      searchState.regexError = e instanceof Error ? e.message : translate('findReplace.invalidRegex');
+      searchState.regexError = e instanceof Error ? e.message : translate("findReplace.invalidRegex");
     } else {
       searchState.regexError = null;
     }

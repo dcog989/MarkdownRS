@@ -1,15 +1,15 @@
 <script lang="ts">
-import { invoke } from '@tauri-apps/api/core';
-import { onDestroy, onMount } from 'svelte';
-import { _ } from 'svelte-i18n';
-import Logo from '$lib/components/ui/Logo.svelte';
-import { createAppInit } from '$lib/services/appInit.svelte';
-import { setupAutoSave } from '$lib/services/autoSave.svelte';
-import { loadTabContentLazy } from '$lib/services/tabLoadStateMachine';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { logger } from '$lib/utils/logger';
-import { formatDuration } from '$lib/utils/timing';
+import { invoke } from "@tauri-apps/api/core";
+import { onDestroy, onMount } from "svelte";
+import { _ } from "svelte-i18n";
+import Logo from "$lib/components/ui/Logo.svelte";
+import { createAppInit } from "$lib/services/appInit.svelte";
+import { setupAutoSave } from "$lib/services/autoSave.svelte";
+import { loadTabContentLazy } from "$lib/services/tabLoadStateMachine";
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { logger } from "$lib/utils/logger";
+import { formatDuration } from "$lib/utils/timing";
 
 let { children } = $props();
 
@@ -26,10 +26,10 @@ $effect(() => {
   const currentTabId = tab?.id || null;
 
   if (appInit.isInitialized && currentTabId && currentTabId !== previousTabId) {
-    logger.editor.debug('TabSwitched', {
-      from: previousTabId || 'none',
+    logger.editor.debug("TabSwitched", {
+      from: previousTabId || "none",
       to: currentTabId,
-      title: tab?.title || 'unknown',
+      title: tab?.title || "unknown",
     });
     previousTabId = currentTabId;
   }
@@ -38,23 +38,23 @@ $effect(() => {
     const loadStart = performance.now();
     loadTabContentLazy(tab.id)
       .then(() => {
-        logger.session.debug('TabContentLoaded', {
+        logger.session.debug("TabContentLoaded", {
           tabId: tab.id,
           duration: formatDuration(loadStart),
         });
       })
-      .catch((err) => logger.editor.warn('TabContentLoadFailed', { tabId: tab.id, error: String(err) }));
+      .catch((err) => logger.editor.warn("TabContentLoadFailed", { tabId: tab.id, error: String(err) }));
   }
 });
 
 $effect(() => {
   const tab = activeTab;
-  const path = tab?.path || '';
-  const dirtyMarker = tab?.isDirty ? '*' : '';
-  const appName = $_('app.name');
-  const titleWithPath = $_('app.titleWithPath', { values: { path } });
+  const path = tab?.path || "";
+  const dirtyMarker = tab?.isDirty ? "*" : "";
+  const appName = $_("app.name");
+  const titleWithPath = $_("app.titleWithPath", { values: { path } });
   const title = path ? `${dirtyMarker}${titleWithPath}` : `${dirtyMarker}${appName}`;
-  invoke('set_window_title', { title });
+  invoke("set_window_title", { title });
 });
 
 $effect(() => {
@@ -81,12 +81,12 @@ onMount(() => {
     appInit.handleBeforeUnload();
   };
 
-  window.addEventListener('blur', handleBlur);
-  window.addEventListener('beforeunload', handleBeforeUnload);
+  window.addEventListener("blur", handleBlur);
+  window.addEventListener("beforeunload", handleBeforeUnload);
 
   return () => {
-    window.removeEventListener('blur', handleBlur);
-    window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.removeEventListener("blur", handleBlur);
+    window.removeEventListener("beforeunload", handleBeforeUnload);
     if (unlistenEvents) unlistenEvents();
   };
 });

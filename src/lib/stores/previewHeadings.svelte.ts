@@ -1,10 +1,10 @@
-import type { HeadingEntry } from '$lib/types/markdown';
+import type { HeadingEntry } from "$lib/types/markdown";
 
 export const previewHeadingsCache = $state<{
   content: string;
   headings: HeadingEntry[];
 }>({
-  content: '',
+  content: "",
   headings: [],
 });
 

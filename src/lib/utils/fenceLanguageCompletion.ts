@@ -1,7 +1,7 @@
-import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import { completionStatus, pickedCompletion } from '@codemirror/autocomplete';
-import { languages } from '@codemirror/language-data';
-import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import type { Completion, CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { completionStatus, pickedCompletion } from "@codemirror/autocomplete";
+import { languages } from "@codemirror/language-data";
+import { type EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 /**
  * Matches the opening fence (optionally indented) with any language text typed
@@ -10,18 +10,18 @@ import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 const FENCE_LANGUAGE_MATCH = /^(\s*)```([a-zA-Z0-9_+#.-]*)$/;
 
 const COMMON_LANGUAGES = new Set([
-  'bash',
-  'css',
-  'html',
-  'javascript',
-  'json',
-  'markdown',
-  'python',
-  'rust',
-  'sql',
-  'toml',
-  'typescript',
-  'yaml',
+  "bash",
+  "css",
+  "html",
+  "javascript",
+  "json",
+  "markdown",
+  "python",
+  "rust",
+  "sql",
+  "toml",
+  "typescript",
+  "yaml",
 ]);
 
 const LANGUAGE_OPTIONS: Completion[] = buildLanguageOptions();

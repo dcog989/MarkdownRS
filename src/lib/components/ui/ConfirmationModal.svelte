@@ -1,14 +1,14 @@
 <script lang="ts">
-import Modal from '$lib/components/ui/Modal.svelte';
-import { resolveDialog } from '$lib/stores/dialogStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
+import Modal from "$lib/components/ui/Modal.svelte";
+import { resolveDialog } from "$lib/stores/dialogStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
 
 const buttons = $derived.by(() => {
   const opts = appContext.ui.dialog.options;
-  const result: { action: 'save' | 'discard' | 'cancel'; label: string }[] = [];
-  if (opts.saveLabel) result.push({ action: 'save', label: opts.saveLabel });
-  if (opts.discardLabel) result.push({ action: 'discard', label: opts.discardLabel });
-  if (opts.cancelLabel) result.push({ action: 'cancel', label: opts.cancelLabel });
+  const result: { action: "save" | "discard" | "cancel"; label: string }[] = [];
+  if (opts.saveLabel) result.push({ action: "save", label: opts.saveLabel });
+  if (opts.discardLabel) result.push({ action: "discard", label: opts.discardLabel });
+  if (opts.cancelLabel) result.push({ action: "cancel", label: opts.cancelLabel });
   return result;
 });
 </script>

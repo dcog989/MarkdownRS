@@ -1,9 +1,9 @@
-import type { Extension } from '@codemirror/state';
-import { type EditorView, GutterMarker, gutter, ViewPlugin, type ViewUpdate } from '@codemirror/view';
-import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
-import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
+import type { Extension } from "@codemirror/state";
+import { type EditorView, GutterMarker, gutter, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import type { ContextMenuCallback } from "$lib/components/editor/codemirror/events";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
+import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 
 /// Line count used for the gutter's width spacer. The spacer renders this many
 /// digits, so the editor (and tab bar gutter column) does not shift between
@@ -21,21 +21,21 @@ class LineNumberMarker extends GutterMarker {
   }
 
   toDOM() {
-    const span = document.createElement('span');
-    span.className = 'cm-lineNumber-marker';
+    const span = document.createElement("span");
+    span.className = "cm-lineNumber-marker";
     span.textContent = String(this.lineNo);
 
     if (this.alpha > 0) {
-      span.classList.add('cm-lineNumber-changed');
-      span.style.setProperty('--line-alpha', String(this.alpha));
+      span.classList.add("cm-lineNumber-changed");
+      span.style.setProperty("--line-alpha", String(this.alpha));
       const shadowAlpha = Math.round(this.alpha * 40);
-      span.style.setProperty('--line-shadow-alpha', String(shadowAlpha));
+      span.style.setProperty("--line-shadow-alpha", String(shadowAlpha));
     }
 
     if (this.deletionAlpha > 0) {
-      const delMarker = document.createElement('div');
-      delMarker.className = 'cm-deletion-marker';
-      delMarker.style.setProperty('--deletion-alpha', String(this.deletionAlpha));
+      const delMarker = document.createElement("div");
+      delMarker.className = "cm-deletion-marker";
+      delMarker.style.setProperty("--deletion-alpha", String(this.deletionAlpha));
       span.appendChild(delMarker);
     }
 
@@ -100,7 +100,7 @@ export function createRecentChangesHighlighter(
           update(update: ViewUpdate) {
             if (!update.docChanged || !tracker) return;
 
-            const isHistoryAction = update.transactions.some((tr) => tr.isUserEvent('undo') || tr.isUserEvent('redo'));
+            const isHistoryAction = update.transactions.some((tr) => tr.isUserEvent("undo") || tr.isUserEvent("redo"));
 
             tracker.mapLines((lineNo) => {
               try {
@@ -150,11 +150,11 @@ export function createRecentChangesHighlighter(
               // as user edits.
               const isUserAction = update.transactions.some(
                 (tr) =>
-                  !tr.isUserEvent('input.type.sync') &&
-                  (tr.isUserEvent('input') ||
-                    tr.isUserEvent('delete') ||
-                    tr.isUserEvent('move') ||
-                    tr.isUserEvent('input.paste')),
+                  !tr.isUserEvent("input.type.sync") &&
+                  (tr.isUserEvent("input") ||
+                    tr.isUserEvent("delete") ||
+                    tr.isUserEvent("move") ||
+                    tr.isUserEvent("input.paste")),
               );
 
               if (isUserAction) {
@@ -178,7 +178,7 @@ export function createRecentChangesHighlighter(
 
   result.push(
     gutter({
-      class: 'cm-lineNumbers',
+      class: "cm-lineNumbers",
       lineMarker(view, line) {
         const lineNo = view.state.doc.lineAt(line.from).number;
         let alpha = 0;

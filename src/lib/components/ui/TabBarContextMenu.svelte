@@ -1,11 +1,11 @@
 <script lang="ts">
-import { FilePlus, Files, Save } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import Submenu from '$lib/components/ui/Submenu.svelte';
-import { createNewFile } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { closeManyTabs, saveCurrentFile } from '$lib/utils/fileSystem';
+import { FilePlus, Files, Save } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
+import Submenu from "$lib/components/ui/Submenu.svelte";
+import { createNewFile } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { closeManyTabs, saveCurrentFile } from "$lib/utils/fileSystem";
 
 let { x, y, onClose } = $props<{
   x: number;
@@ -13,14 +13,14 @@ let { x, y, onClose } = $props<{
   onClose: () => void;
 }>();
 
-let activeSubmenu = $state<'close' | null>(null);
+let activeSubmenu = $state<"close" | null>(null);
 
 let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
 let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
 let hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
 let hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
 
-async function handleCloseMany(mode: 'saved' | 'unsaved' | 'all' | 'unpinned') {
+async function handleCloseMany(mode: "saved" | "unsaved" | "all" | "unpinned") {
   await closeManyTabs(mode);
   onClose();
 }

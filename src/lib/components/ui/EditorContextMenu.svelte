@@ -1,5 +1,5 @@
 <script lang="ts">
-import { openUrl } from '@tauri-apps/plugin-opener';
+import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   ArrowUpDown,
   BookPlus,
@@ -14,18 +14,18 @@ import {
   Sparkles,
   TextAlignStart,
   WandSparkles,
-} from 'lucide-svelte';
-import { untrack } from 'svelte';
-import { SvelteSet } from 'svelte/reactivity';
-import { _ } from 'svelte-i18n';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import Submenu from '$lib/components/ui/Submenu.svelte';
-import type { OperationId } from '$lib/config/textOperationsRegistry';
-import { translate } from '$lib/i18n';
-import { addToDictionary } from '$lib/services/dictionaryService';
-import { performTextTransform } from '$lib/stores/editorStore.svelte';
-import { shortcutManager } from '$lib/utils/shortcuts';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+} from "lucide-svelte";
+import { untrack } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
+import { _ } from "svelte-i18n";
+import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
+import Submenu from "$lib/components/ui/Submenu.svelte";
+import type { OperationId } from "$lib/config/textOperationsRegistry";
+import { translate } from "$lib/i18n";
+import { addToDictionary } from "$lib/services/dictionaryService";
+import { performTextTransform } from "$lib/stores/editorStore.svelte";
+import { shortcutManager } from "$lib/utils/shortcuts";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 
 function opShortcut(opId: string): string {
   return shortcutManager.getShortcutDisplay(`textop.${opId}`);
@@ -34,8 +34,8 @@ function opShortcut(opId: string): string {
 let {
   x,
   y,
-  selectedText = '',
-  wordUnderCursor = '',
+  selectedText = "",
+  wordUnderCursor = "",
   onClose,
   onDictionaryUpdate,
   onCut,
@@ -55,7 +55,7 @@ let {
   onReplaceWord?: (newWord: string) => void;
 }>();
 
-let activeSubmenu = $state<'sort' | 'case' | 'format' | 'transform' | null>(null);
+let activeSubmenu = $state<"sort" | "case" | "format" | "transform" | null>(null);
 let suggestions = $state<string[]>([]);
 let isLoadingSuggestions = $state(false);
 
@@ -66,77 +66,77 @@ type MenuOption = {
 };
 
 const sortOps: MenuOption[] = [
-  { id: 'sort-asc', label: 'Ascending (A-Z)' },
-  { id: 'sort-case-insensitive-asc', label: 'Ascending (Ignore Case)' },
-  { id: 'sort-numeric-asc', label: 'Ascending (Numeric)' },
-  { id: 'sort-length-asc', label: 'Ascending (By Length)' },
+  { id: "sort-asc", label: "Ascending (A-Z)" },
+  { id: "sort-case-insensitive-asc", label: "Ascending (Ignore Case)" },
+  { id: "sort-numeric-asc", label: "Ascending (Numeric)" },
+  { id: "sort-length-asc", label: "Ascending (By Length)" },
   { divider: true },
-  { id: 'sort-desc', label: 'Descending (Z-A)' },
-  { id: 'sort-case-insensitive-desc', label: 'Descending (Ignore Case)' },
-  { id: 'sort-numeric-desc', label: 'Descending (Numeric)' },
-  { id: 'sort-length-desc', label: 'Descending (By Length)' },
+  { id: "sort-desc", label: "Descending (Z-A)" },
+  { id: "sort-case-insensitive-desc", label: "Descending (Ignore Case)" },
+  { id: "sort-numeric-desc", label: "Descending (Numeric)" },
+  { id: "sort-length-desc", label: "Descending (By Length)" },
   { divider: true },
-  { id: 'reverse', label: 'Reverse' },
-  { id: 'shuffle', label: 'Shuffle' },
+  { id: "reverse", label: "Reverse" },
+  { id: "shuffle", label: "Shuffle" },
 ];
 
 const caseOps: MenuOption[] = [
-  { id: 'uppercase', label: 'UPPERCASE' },
-  { id: 'lowercase', label: 'lowercase' },
+  { id: "uppercase", label: "UPPERCASE" },
+  { id: "lowercase", label: "lowercase" },
   { divider: true },
-  { id: 'upper-case-first', label: 'Upper case first' },
-  { id: 'lower-case-first', label: 'lower case first' },
+  { id: "upper-case-first", label: "Upper case first" },
+  { id: "lower-case-first", label: "lower case first" },
   { divider: true },
-  { id: 'title-case', label: 'Title Case' },
-  { id: 'sentence-case', label: 'Sentence case' },
-  { id: 'capital-case', label: 'Capital Case' },
-  { id: 'no-case', label: 'no case' },
+  { id: "title-case", label: "Title Case" },
+  { id: "sentence-case", label: "Sentence case" },
+  { id: "capital-case", label: "Capital Case" },
+  { id: "no-case", label: "no case" },
   { divider: true },
-  { id: 'camel-case', label: 'camelCase' },
-  { id: 'pascal-case', label: 'PascalCase' },
-  { id: 'snake-case', label: 'snake_case' },
-  { id: 'kebab-case', label: 'kebab-case' },
-  { id: 'constant-case', label: 'CONSTANT_CASE' },
-  { id: 'dot-case', label: 'dot.case' },
-  { id: 'path-case', label: 'path/case' },
-  { id: 'header-case', label: 'Header-Case' },
+  { id: "camel-case", label: "camelCase" },
+  { id: "pascal-case", label: "PascalCase" },
+  { id: "snake-case", label: "snake_case" },
+  { id: "kebab-case", label: "kebab-case" },
+  { id: "constant-case", label: "CONSTANT_CASE" },
+  { id: "dot-case", label: "dot.case" },
+  { id: "path-case", label: "path/case" },
+  { id: "header-case", label: "Header-Case" },
   { divider: true },
-  { id: 'swap-case', label: 'sWAP cASE' },
+  { id: "swap-case", label: "sWAP cASE" },
 ];
 
 const formatOps: MenuOption[] = [
-  { id: 'indent-lines', label: 'Indent Lines' },
-  { id: 'unindent-lines', label: 'Unindent Lines' },
-  { id: 'trim-whitespace', label: 'Trim Whitespace' },
-  { id: 'normalize-whitespace', label: 'Normalize Whitespace' },
+  { id: "indent-lines", label: "Indent Lines" },
+  { id: "unindent-lines", label: "Unindent Lines" },
+  { id: "trim-whitespace", label: "Trim Whitespace" },
+  { id: "normalize-whitespace", label: "Normalize Whitespace" },
   { divider: true },
-  { id: 'toggle-bullets', label: 'Bullet Points' },
-  { id: 'add-numbers', label: 'Add Numbering' },
-  { id: 'add-checkboxes', label: 'Add Checkboxes' },
+  { id: "toggle-bullets", label: "Bullet Points" },
+  { id: "add-numbers", label: "Add Numbering" },
+  { id: "add-checkboxes", label: "Add Checkboxes" },
   { divider: true },
-  { id: 'toggle-blockquote', label: 'Blockquote' },
-  { id: 'toggle-code-fence', label: 'Code Block' },
+  { id: "toggle-blockquote", label: "Blockquote" },
+  { id: "toggle-code-fence", label: "Code Block" },
   { divider: true },
-  { id: 'increase-heading', label: 'Increase Heading Level' },
-  { id: 'decrease-heading', label: 'Decrease Heading Level' },
+  { id: "increase-heading", label: "Increase Heading Level" },
+  { id: "decrease-heading", label: "Decrease Heading Level" },
   { divider: true },
-  { id: 'hard-wrap', label: 'Wrap at Column' },
-  { id: 'wrap-quotes', label: 'Wrap in Quotes' },
+  { id: "hard-wrap", label: "Wrap at Column" },
+  { id: "wrap-quotes", label: "Wrap in Quotes" },
 ];
 
 const transformOps: MenuOption[] = [
-  { id: 'join-lines', label: 'Join Lines' },
-  { id: 'split-sentences', label: 'Sentences to New Lines' },
-  { id: 'smart-paragraphs', label: 'Smart Paragraphs' },
+  { id: "join-lines", label: "Join Lines" },
+  { id: "split-sentences", label: "Sentences to New Lines" },
+  { id: "smart-paragraphs", label: "Smart Paragraphs" },
   { divider: true },
-  { id: 'remove-duplicates', label: 'Remove Duplicates' },
-  { id: 'remove-unique', label: 'Remove Unique' },
+  { id: "remove-duplicates", label: "Remove Duplicates" },
+  { id: "remove-unique", label: "Remove Unique" },
   { divider: true },
-  { id: 'remove-blank', label: 'Remove Blank Lines' },
-  { id: 'remove-all-spaces', label: 'Remove All Spaces' },
+  { id: "remove-blank", label: "Remove Blank Lines" },
+  { id: "remove-all-spaces", label: "Remove All Spaces" },
   { divider: true },
-  { id: 'reverse', label: 'Reverse Lines' },
-  { id: 'shuffle', label: 'Shuffle Lines' },
+  { id: "reverse", label: "Reverse Lines" },
+  { id: "shuffle", label: "Shuffle Lines" },
 ];
 
 $effect(() => {
@@ -169,7 +169,7 @@ $effect(() => {
 });
 
 const targetWord = $derived(
-  (((selectedText || wordUnderCursor) as string) || '').trim().replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ''),
+  (((selectedText || wordUnderCursor) as string) || "").trim().replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ""),
 );
 const canAddSingle = $derived(
   targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !spellcheckState.isWordValid(targetWord),
@@ -220,7 +220,7 @@ async function handleSendToBrowser() {
   const isUrl = urlPattern.test(text);
 
   if (isUrl) {
-    const url = text.startsWith('www.') ? `https://${text}` : text;
+    const url = text.startsWith("www.") ? `https://${text}` : text;
     await openUrl(url);
   } else {
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text)}`;

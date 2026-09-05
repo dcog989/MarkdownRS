@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Copy, FilePen, FilePlus, FolderOpen, FolderPlus, FolderSearch, Trash2 } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import type { FileEntry } from '$lib/types/api';
-import { FileTreeContextMenuLogic } from './fileTreeContextMenuLogic.svelte';
+import { Copy, FilePen, FilePlus, FolderOpen, FolderPlus, FolderSearch, Trash2 } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
+import type { FileEntry } from "$lib/types/api";
+import { FileTreeContextMenuLogic } from "./fileTreeContextMenuLogic.svelte";
 
 let { entry, directory, x, y, onClose } = $props<{
   entry: FileEntry | null;

@@ -1,11 +1,11 @@
-import type { Extension, Range } from '@codemirror/state';
-import { Decoration, type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import type { Extension, Range } from "@codemirror/state";
+import { Decoration, type EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 const PATH_REGEX =
   /(['"`])((?!https?:\/\/|www\.)(?:[a-zA-Z]:[/\\]|(?:\.\.?|~)[/\\]|\/(?:[^/\s'"`\r\n]+[/\\])+[^'"`\r\n]*|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1|(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+|(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?:[^/\s"'\r\n(){}[\]<>]+[/\\])+))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^\s"'(){}[\]<>]+)/g;
 
 function stripTrailingPunctuation(str: string): string {
-  return str.replace(/[.,;:?!]+$/, '');
+  return str.replace(/[.,;:?!]+$/, "");
 }
 
 const WIKILINK_REGEX = /\[\[([^[|]+?)(?:\|([^[|]+?))?]]/g;
@@ -20,7 +20,7 @@ export function extractWikilinkAtPos(text: string, pos: number): string | null {
     const start = match.index;
     const end = start + match[0].length;
     if (pos >= start && pos < end) {
-      const target = (match[1] || '').trim();
+      const target = (match[1] || "").trim();
       return target || null;
     }
   }
@@ -42,7 +42,7 @@ export function extractPathAtPos(text: string, pos: number): string | null {
       if (pos >= start && pos < end) return content;
     } else {
       const raw = match[0];
-      const isUrl = raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('www.');
+      const isUrl = raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("www.");
       if (isUrl) {
         const clean = stripTrailingPunctuation(raw);
         const start = match.index;
@@ -61,9 +61,9 @@ export function extractPathAtPos(text: string, pos: number): string | null {
   return null;
 }
 
-const filePathMark = Decoration.mark({ class: 'cm-file-path' });
-const urlMark = Decoration.mark({ class: 'cm-url' });
-const wikilinkMark = Decoration.mark({ class: 'cm-wikilink' });
+const filePathMark = Decoration.mark({ class: "cm-file-path" });
+const urlMark = Decoration.mark({ class: "cm-url" });
+const wikilinkMark = Decoration.mark({ class: "cm-wikilink" });
 
 function findWikilinks(view: EditorView) {
   const ranges: Range<Decoration>[] = [];
@@ -119,7 +119,7 @@ function findLinks(view: EditorView) {
           }
         } else {
           const raw = match[0];
-          const isUrl = raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('www.');
+          const isUrl = raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("www.");
           if (isUrl) {
             const clean = stripTrailingPunctuation(raw);
             const start = line.from + match.index;

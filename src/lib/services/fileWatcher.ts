@@ -1,19 +1,19 @@
-import { type WatchEvent, watchImmediate } from '@tauri-apps/plugin-fs';
-import { translate } from '$lib/i18n';
-import { hasFileChanged, reloadFileContent, sanitizePath } from '$lib/services/fileMetadata';
-import { reloadTabContent } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { AppError } from '$lib/utils/errorHandling';
-import { debounce } from '$lib/utils/timing';
+import { type WatchEvent, watchImmediate } from "@tauri-apps/plugin-fs";
+import { translate } from "$lib/i18n";
+import { hasFileChanged, reloadFileContent, sanitizePath } from "$lib/services/fileMetadata";
+import { reloadTabContent } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { AppError } from "$lib/utils/errorHandling";
+import { debounce } from "$lib/utils/timing";
 
 type UnwatchFn = () => void;
 
 const TOAST_THROTTLE_MS = 5000;
 
 function isAccessEvent(event: WatchEvent): boolean {
-  return typeof event.type === 'object' && event.type !== null && 'access' in event.type;
+  return typeof event.type === "object" && event.type !== null && "access" in event.type;
 }
 
 class FileWatcherService {
@@ -43,9 +43,9 @@ class FileWatcherService {
       await this.watchPromises.get(path);
     } catch (err) {
       this.decrementTabCount(path);
-      AppError.handle('FileWatcher:Watch', err, {
+      AppError.handle("FileWatcher:Watch", err, {
         showToast: false,
-        severity: 'warning',
+        severity: "warning",
         additionalInfo: { path },
       });
     } finally {
@@ -80,9 +80,9 @@ class FileWatcherService {
         try {
           unwatch();
         } catch (err) {
-          AppError.handle('FileWatcher:Unwatch', err, {
+          AppError.handle("FileWatcher:Unwatch", err, {
             showToast: false,
-            severity: 'warning',
+            severity: "warning",
             additionalInfo: { path },
           });
         }
@@ -151,9 +151,9 @@ class FileWatcherService {
         try {
           oldUnwatch();
         } catch (err) {
-          AppError.handle('FileWatcher:Unwatch', err, {
+          AppError.handle("FileWatcher:Unwatch", err, {
             showToast: false,
-            severity: 'warning',
+            severity: "warning",
             additionalInfo: { path },
           });
         }
@@ -165,9 +165,9 @@ class FileWatcherService {
       await this.watchPromises.get(path);
     } catch (err) {
       // File may have been deleted externally; a later save or reopen re-arms.
-      AppError.handle('FileWatcher:Watch', err, {
+      AppError.handle("FileWatcher:Watch", err, {
         showToast: false,
-        severity: 'warning',
+        severity: "warning",
         additionalInfo: { path },
       });
     } finally {
@@ -207,10 +207,10 @@ class FileWatcherService {
       const cleanTabs = tabs.filter((t) => !t.isDirty);
 
       if (dirtyTabs.length > 0) {
-        const tabNames = dirtyTabs.map((t) => t.title).join(', ');
+        const tabNames = dirtyTabs.map((t) => t.title).join(", ");
         showToast(
-          'warning',
-          translate('fileOps.fileChangedOnDisk', { values: { tabs: tabNames } }),
+          "warning",
+          translate("fileOps.fileChangedOnDisk", { values: { tabs: tabNames } }),
           CONFIG.UI.TOAST_DURATION_MS,
         );
       }
@@ -241,15 +241,15 @@ class FileWatcherService {
         const now = Date.now();
         const lastTime = this.lastToastTime.get(path) ?? 0;
         if (now - lastTime > TOAST_THROTTLE_MS) {
-          const tabNames = cleanTabs.map((t) => t.title).join(', ');
-          showToast('info', translate('fileOps.loadedFromDisk', { values: { tabs: tabNames } }));
+          const tabNames = cleanTabs.map((t) => t.title).join(", ");
+          showToast("info", translate("fileOps.loadedFromDisk", { values: { tabs: tabNames } }));
           this.lastToastTime.set(path, now);
         }
       }
     } catch (err) {
-      AppError.handle('FileWatcher:Watch', err, {
+      AppError.handle("FileWatcher:Watch", err, {
         showToast: false,
-        severity: 'warning',
+        severity: "warning",
         additionalInfo: { path },
       });
     } finally {
@@ -262,10 +262,10 @@ class FileWatcherService {
       try {
         unwatch();
       } catch (err) {
-        AppError.handle('FileWatcher:Unwatch', err, {
+        AppError.handle("FileWatcher:Unwatch", err, {
           showToast: false,
-          severity: 'warning',
-          additionalInfo: { path: 'unknown' },
+          severity: "warning",
+          additionalInfo: { path: "unknown" },
         });
       }
     }

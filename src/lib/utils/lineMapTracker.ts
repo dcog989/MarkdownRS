@@ -1,4 +1,4 @@
-import { CONFIG } from '$lib/utils/config';
+import { CONFIG } from "$lib/utils/config";
 
 /**
  * Owns the preview resize observation that invalidates the editor<->preview

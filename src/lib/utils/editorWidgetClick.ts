@@ -1,4 +1,4 @@
-import type { EditorView } from '@codemirror/view';
+import type { EditorView } from "@codemirror/view";
 
 /**
  * Shared handling for clicks on rendered markdown widget chrome (image widgets,

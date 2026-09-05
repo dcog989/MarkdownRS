@@ -10,13 +10,13 @@ import {
   moveLineDown,
   moveLineUp,
   selectLine,
-} from '@codemirror/commands';
-import type { EditorView } from '@codemirror/view';
-import { TEXT_OPERATIONS_REGISTRY } from '$lib/config/textOperationsRegistry';
-import { addBookmarkForActiveTab } from '$lib/stores/bookmarkStore.svelte';
-import { performTextTransform } from '$lib/stores/editorStore.svelte';
-import { toggleSelectionComment } from '$lib/utils/commentToggle';
-import { promptGoToLine } from '$lib/utils/editorCommands';
+} from "@codemirror/commands";
+import type { EditorView } from "@codemirror/view";
+import { TEXT_OPERATIONS_REGISTRY } from "$lib/config/textOperationsRegistry";
+import { addBookmarkForActiveTab } from "$lib/stores/bookmarkStore.svelte";
+import { performTextTransform } from "$lib/stores/editorStore.svelte";
+import { toggleSelectionComment } from "$lib/utils/commentToggle";
+import { promptGoToLine } from "$lib/utils/editorCommands";
 
 export type CmHandler = (view: EditorView) => boolean;
 
@@ -37,63 +37,63 @@ const textOpBindings: CmBindingDef[] = Object.values(TEXT_OPERATIONS_REGISTRY)
 
 export const cmHandlerMap: CmBindingDef[] = [
   {
-    registryKey: 'editor.toggleComment',
+    registryKey: "editor.toggleComment",
     handler: (view) => toggleSelectionComment(view),
   },
   {
-    registryKey: 'editor.duplicateLine',
+    registryKey: "editor.duplicateLine",
     handler: (view) => copyLineDown(view),
   },
   {
-    registryKey: 'editor.deleteLine',
+    registryKey: "editor.deleteLine",
     handler: (view) => deleteLine(view),
   },
   {
-    registryKey: 'editor.moveLineUp',
+    registryKey: "editor.moveLineUp",
     handler: (view) => moveLineUp(view),
   },
   {
-    registryKey: 'editor.moveLineDown',
+    registryKey: "editor.moveLineDown",
     handler: (view) => moveLineDown(view),
   },
   {
-    registryKey: 'editor.copyLineUp',
+    registryKey: "editor.copyLineUp",
     handler: (view) => copyLineUp(view),
   },
   {
-    registryKey: 'editor.addCursorAbove',
+    registryKey: "editor.addCursorAbove",
     handler: (view) => addCursorAbove(view),
   },
   {
-    registryKey: 'editor.addCursorBelow',
+    registryKey: "editor.addCursorBelow",
     handler: (view) => addCursorBelow(view),
   },
   {
-    registryKey: 'editor.selectLine',
+    registryKey: "editor.selectLine",
     handler: (view) => selectLine(view),
   },
   {
-    registryKey: 'editor.gotoMatchingBracket',
+    registryKey: "editor.gotoMatchingBracket",
     handler: (view) => cursorMatchingBracket(view),
   },
   {
-    registryKey: 'editor.indent',
+    registryKey: "editor.indent",
     handler: (view) => indentMore(view),
   },
   {
-    registryKey: 'editor.outdent',
+    registryKey: "editor.outdent",
     handler: (view) => indentLess(view),
   },
   ...textOpBindings,
   {
-    registryKey: 'edit.gotoLine',
+    registryKey: "edit.gotoLine",
     handler: (view) => {
       void promptGoToLine(view);
       return true;
     },
   },
   {
-    registryKey: 'file.addBookmark',
+    registryKey: "file.addBookmark",
     handler: () => addBookmarkForActiveTab(),
   },
 ];

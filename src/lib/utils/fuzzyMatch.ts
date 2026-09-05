@@ -3,7 +3,7 @@ export interface FuzzyMatchResult {
   positions: number[];
 }
 
-const BOUNDARY_CHARS = new Set(['/', '.', '_', '-', ' ', '\\', '[', ']', '(', ')', '#', '@']);
+const BOUNDARY_CHARS = new Set(["/", ".", "_", "-", " ", "\\", "[", "]", "(", ")", "#", "@"]);
 
 function isStrongBoundary(index: number, candidate: string): boolean {
   if (index === 0) return true;
@@ -45,7 +45,7 @@ export function fuzzyMatch(query: string, candidate: string): FuzzyMatchResult |
 
   const q = query.toLowerCase();
   const c = candidate.toLowerCase();
-  const basenameStart = candidate.lastIndexOf('/') + 1;
+  const basenameStart = candidate.lastIndexOf("/") + 1;
 
   let score = 0;
   const positions: number[] = [];

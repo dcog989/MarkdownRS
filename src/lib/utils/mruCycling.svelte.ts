@@ -1,6 +1,6 @@
-import { pushToMru } from '$lib/stores/editorLifecycle';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
+import { pushToMru } from "$lib/stores/editorLifecycle";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
 
 export function createMruCycling() {
   let showPopup = $state(false);
@@ -9,7 +9,7 @@ export function createMruCycling() {
   let timer: number | null = null;
 
   function onKeyDown(e: KeyboardEvent) {
-    if (e.ctrlKey && e.key === 'Tab') {
+    if (e.ctrlKey && e.key === "Tab") {
       e.preventDefault();
       if (!isCycling) {
         isCycling = true;
@@ -27,7 +27,7 @@ export function createMruCycling() {
   }
 
   function onKeyUp(e: KeyboardEvent) {
-    if (e.key === 'Control' || !e.ctrlKey) {
+    if (e.key === "Control" || !e.ctrlKey) {
       if (isCycling) {
         if (timer) clearTimeout(timer);
         const targetId = appContext.editor.mruStack[selectedIndex];

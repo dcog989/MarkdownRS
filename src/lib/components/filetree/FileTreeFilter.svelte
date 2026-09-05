@@ -1,8 +1,8 @@
 <script lang="ts">
-import { LoaderCircle, Search, X } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
+import { LoaderCircle, Search, X } from "lucide-svelte";
+import { _ } from "svelte-i18n";
 
-let { value = $bindable(''), loading = false } = $props<{
+let { value = $bindable(""), loading = false } = $props<{
   value?: string;
   loading?: boolean;
 }>();

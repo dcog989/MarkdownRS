@@ -1,13 +1,13 @@
-import { type Diagnostic, forceLinting, linter } from '@codemirror/lint';
-import { StateEffect } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import type { LintDiagnostic } from '$lib/types/api';
-import { callBackendSafe } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
-import { markdownLintState } from '$lib/utils/markdownLint.svelte';
-import type { AppEditorView } from '../../global';
+import { type Diagnostic, forceLinting, linter } from "@codemirror/lint";
+import { StateEffect } from "@codemirror/state";
+import type { EditorView } from "@codemirror/view";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import type { LintDiagnostic } from "$lib/types/api";
+import { callBackendSafe } from "$lib/utils/backend";
+import { CONFIG } from "$lib/utils/config";
+import { markdownLintState } from "$lib/utils/markdownLint.svelte";
+import type { AppEditorView } from "../../global";
 
 const lintCache = new Map<string, { content: string; diagnostics: LintDiagnostic[] }>();
 
@@ -34,15 +34,15 @@ function columnToCodeUnits(text: string, column: number): number {
   return units;
 }
 
-function highestSeverity(diagnostics: { severity: string }[]): 'error' | 'warning' | 'info' | 'clean' {
+function highestSeverity(diagnostics: { severity: string }[]): "error" | "warning" | "info" | "clean" {
   for (const d of diagnostics) {
-    if (d.severity === 'error') return 'error';
+    if (d.severity === "error") return "error";
   }
   for (const d of diagnostics) {
-    if (d.severity === 'warning') return 'warning';
+    if (d.severity === "warning") return "warning";
   }
-  if (diagnostics.length > 0) return 'info';
-  return 'clean';
+  if (diagnostics.length > 0) return "info";
+  return "clean";
 }
 
 function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnostic[] {
@@ -60,7 +60,7 @@ function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnosti
     return {
       from,
       to,
-      severity: 'warning' as const,
+      severity: "warning" as const,
       message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
       source: d.source,
     };
@@ -89,14 +89,14 @@ export const createMarkdownLinter = () => {
       const filePath = tab?.path ?? undefined;
 
       const result = await callBackendSafe(
-        'lint_markdown',
+        "lint_markdown",
         {
           content,
           filePath,
           harperEnabled: settingsState.harperEnabled,
           harperLinters: settingsState.harperLinters,
         },
-        'Markdown:Lint',
+        "Markdown:Lint",
       );
 
       // The document may have changed while awaiting the backend (tab switch,
@@ -111,7 +111,7 @@ export const createMarkdownLinter = () => {
       if (!result) {
         lintCache.set(tabId, { content, diagnostics: [] });
         markdownLintState.issueCount = 0;
-        markdownLintState.highestSeverity = 'clean';
+        markdownLintState.highestSeverity = "clean";
         markdownLintState.diagnostics = [];
         return [];
       }

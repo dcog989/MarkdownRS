@@ -1,10 +1,10 @@
 <script lang="ts">
-import { ChevronLeft } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { toggleFileTree } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { saveSettings } from '$lib/utils/settings';
+import { ChevronLeft } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { toggleFileTree } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { saveSettings } from "$lib/utils/settings";
 
 let isResizing = $state(false);
 let didDrag = false;
@@ -29,14 +29,14 @@ function startResize(e: MouseEvent) {
   };
   const onUp = () => {
     isResizing = false;
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('mouseup', onUp);
-    document.body.style.cursor = '';
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+    document.body.style.cursor = "";
     if (didDrag) saveSettings();
   };
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onUp);
-  document.body.style.cursor = 'col-resize';
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+  document.body.style.cursor = "col-resize";
 }
 
 function handleResizeClick() {

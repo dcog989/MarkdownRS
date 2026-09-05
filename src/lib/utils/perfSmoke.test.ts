@@ -1,16 +1,16 @@
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { ensureSyntaxTree } from '@codemirror/language';
-import { EditorState } from '@codemirror/state';
-import { describe, expect, it } from 'vitest';
-import { hashContent } from './contentHash';
-import { findTableWidgetRanges, renderTable } from './markdownTableWidget';
-import { countWords } from './textMetrics';
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { ensureSyntaxTree } from "@codemirror/language";
+import { EditorState } from "@codemirror/state";
+import { describe, expect, it } from "vitest";
+import { hashContent } from "./contentHash";
+import { findTableWidgetRanges, renderTable } from "./markdownTableWidget";
+import { countWords } from "./textMetrics";
 
 const TABLE_COUNT = 100;
 const ROWS_PER_TABLE = 20;
 
-const LARGE_TABLE = `| Name | Price |\n| --- | ---: |\n${Array.from({ length: ROWS_PER_TABLE }, (_, i) => `| item ${i} | ${i}.5 |`).join('\n')}`;
-const LARGE_DOC = Array.from({ length: TABLE_COUNT }, (_, i) => `## Section ${i}\n\n${LARGE_TABLE}`).join('\n\n');
+const LARGE_TABLE = `| Name | Price |\n| --- | ---: |\n${Array.from({ length: ROWS_PER_TABLE }, (_, i) => `| item ${i} | ${i}.5 |`).join("\n")}`;
+const LARGE_DOC = Array.from({ length: TABLE_COUNT }, (_, i) => `## Section ${i}\n\n${LARGE_TABLE}`).join("\n\n");
 
 // Generous budgets: these catch O(n^2) / pathological regressions without
 // being flaky on slow CI runners.
@@ -21,27 +21,27 @@ const BUDGET_MS = {
   widgetize: 8_000,
 };
 
-describe('large document performance smoke', () => {
-  it('hashes a ~100 KB document quickly', () => {
+describe("large document performance smoke", () => {
+  it("hashes a ~100 KB document quickly", () => {
     const start = performance.now();
     hashContent(LARGE_DOC);
     expect(performance.now() - start).toBeLessThan(BUDGET_MS.hash);
   });
 
-  it('counts words in a ~100 KB document quickly', () => {
+  it("counts words in a ~100 KB document quickly", () => {
     const start = performance.now();
     countWords(LARGE_DOC);
     expect(performance.now() - start).toBeLessThan(BUDGET_MS.words);
   });
 
-  it('renders a wide table quickly', () => {
-    const wideTable = `| ${Array.from({ length: 50 }, (_, i) => `col${i}`).join(' | ')} |\n| ${Array.from({ length: 50 }, () => '---').join(' | ')} |\n${Array.from({ length: 100 }, () => `| ${Array.from({ length: 50 }, (_, i) => `v${i}`).join(' | ')} |`).join('\n')}`;
+  it("renders a wide table quickly", () => {
+    const wideTable = `| ${Array.from({ length: 50 }, (_, i) => `col${i}`).join(" | ")} |\n| ${Array.from({ length: 50 }, () => "---").join(" | ")} |\n${Array.from({ length: 100 }, () => `| ${Array.from({ length: 50 }, (_, i) => `v${i}`).join(" | ")} |`).join("\n")}`;
     const start = performance.now();
     renderTable(wideTable);
     expect(performance.now() - start).toBeLessThan(BUDGET_MS.table);
   });
 
-  it('finds table widget ranges across a large document quickly', () => {
+  it("finds table widget ranges across a large document quickly", () => {
     const state = EditorState.create({
       doc: LARGE_DOC,
       selection: { anchor: 0 },

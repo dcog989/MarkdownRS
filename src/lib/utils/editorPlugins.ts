@@ -1,12 +1,12 @@
-import type { Range } from '@codemirror/state';
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view';
-import { appContext } from '$lib/stores/state.svelte';
+import type { Range } from "@codemirror/state";
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from "@codemirror/view";
+import { appContext } from "$lib/stores/state.svelte";
 
 export class NewlineWidget extends WidgetType {
   toDOM() {
-    const span = document.createElement('span');
-    span.className = 'cm-newline';
-    span.textContent = '¬';
+    const span = document.createElement("span");
+    span.className = "cm-newline";
+    span.textContent = "¬";
     return span;
   }
 }
@@ -42,8 +42,8 @@ export const newlinePlugin = ViewPlugin.fromClass(
   { decorations: (v) => v.decorations },
 );
 
-const spaceDeco = Decoration.mark({ class: 'cm-highlightSpace' });
-const tabDeco = Decoration.mark({ class: 'cm-highlightTab' });
+const spaceDeco = Decoration.mark({ class: "cm-highlightSpace" });
+const tabDeco = Decoration.mark({ class: "cm-highlightTab" });
 
 function getSelectionWhitespaceDecorations(view: EditorView): DecorationSet {
   const rangesDeco: Range<Decoration>[] = [];
@@ -70,8 +70,8 @@ function getSelectionWhitespaceDecorations(view: EditorView): DecorationSet {
         for (let k = 0; k < text.length; k++) {
           const char = text[k];
           const pos = start + k;
-          if (char === ' ') rangesDeco.push(spaceDeco.range(pos, pos + 1));
-          else if (char === '\t') rangesDeco.push(tabDeco.range(pos, pos + 1));
+          if (char === " ") rangesDeco.push(spaceDeco.range(pos, pos + 1));
+          else if (char === "\t") rangesDeco.push(tabDeco.range(pos, pos + 1));
         }
       }
     }
@@ -98,7 +98,7 @@ const rulerMeasure = ViewPlugin.fromClass(
   class {
     gutters: HTMLElement | null;
     constructor(view: EditorView) {
-      const gutters = view.dom.querySelector('.cm-gutters');
+      const gutters = view.dom.querySelector(".cm-gutters");
       this.gutters = gutters instanceof HTMLElement ? gutters : null;
       this.measure(view);
     }
@@ -116,8 +116,8 @@ const rulerMeasure = ViewPlugin.fromClass(
         const style = window.getComputedStyle(view.contentDOM);
         const paddingLeft = parseFloat(style.paddingLeft) || 0;
         const left = gutterWidth + paddingLeft + column * charWidth;
-        dom.style.setProperty('--ruler-left', `${left}px`);
-        dom.dataset.rulerActive = '';
+        dom.style.setProperty("--ruler-left", `${left}px`);
+        dom.dataset.rulerActive = "";
       } else {
         delete dom.dataset.rulerActive;
       }
@@ -126,21 +126,21 @@ const rulerMeasure = ViewPlugin.fromClass(
 );
 
 const rulerTheme = EditorView.theme({
-  '.cm-scroller::after': {
+  ".cm-scroller::after": {
     content: '""',
-    position: 'absolute',
-    top: '0',
-    bottom: '0',
-    width: '1px',
-    backgroundColor: 'var(--border-secondary)',
-    opacity: '0.3',
-    pointerEvents: 'none',
-    zIndex: '0',
-    left: 'var(--ruler-left, 0px)',
-    display: 'none',
+    position: "absolute",
+    top: "0",
+    bottom: "0",
+    width: "1px",
+    backgroundColor: "var(--border-secondary)",
+    opacity: "0.3",
+    pointerEvents: "none",
+    zIndex: "0",
+    left: "var(--ruler-left, 0px)",
+    display: "none",
   },
-  '.cm-scroller[data-ruler-active]::after': {
-    display: 'block',
+  ".cm-scroller[data-ruler-active]::after": {
+    display: "block",
   },
 });
 

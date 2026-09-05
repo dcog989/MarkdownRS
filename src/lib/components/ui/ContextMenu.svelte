@@ -1,19 +1,19 @@
 <script lang="ts">
-import { onMount, type Snippet } from 'svelte';
-import { _ } from 'svelte-i18n';
-import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from '$lib/utils/dom';
+import { onMount, type Snippet } from "svelte";
+import { _ } from "svelte-i18n";
+import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from "$lib/utils/dom";
 
 let { x, y, onClose, children } = $props<{
   x: number;
   y: number;
   onClose: () => void;
-  children: Snippet<[{ submenuSide: 'left' | 'right' }]>;
+  children: Snippet<[{ submenuSide: "left" | "right" }]>;
 }>();
 
 let menuEl = $state<HTMLDivElement>();
 let adjustedX = $state(0);
 let adjustedY = $state(0);
-let submenuSide = $state<'left' | 'right'>('right');
+let submenuSide = $state<"left" | "right">("right");
 let isVisible = $state(false);
 let resizeObserver: ResizeObserver | null = null;
 
@@ -49,14 +49,14 @@ function updatePosition() {
 
   adjustedX = Math.max(5, newX);
   adjustedY = Math.max(5, newY);
-  submenuSide = adjustedX + rect.width + 180 > winWidth ? 'left' : 'right';
+  submenuSide = adjustedX + rect.width + 180 > winWidth ? "left" : "right";
   isVisible = true;
 }
 
 function updateMenuItems() {
   if (!menuEl) return;
   // Get all focusable elements: buttons
-  menuItems = queryHTMLElements(menuEl, 'button:not([disabled])');
+  menuItems = queryHTMLElements(menuEl, "button:not([disabled])");
 }
 
 function focusItem(index: number) {
@@ -76,7 +76,7 @@ function handleKeydown(e: KeyboardEvent) {
   updateMenuItems();
 
   switch (e.key) {
-    case 'ArrowDown':
+    case "ArrowDown":
       e.preventDefault();
       if (focusedIndex < menuItems.length - 1) {
         focusItem(focusedIndex + 1);
@@ -85,7 +85,7 @@ function handleKeydown(e: KeyboardEvent) {
       }
       break;
 
-    case 'ArrowUp':
+    case "ArrowUp":
       e.preventDefault();
       if (focusedIndex > 0) {
         focusItem(focusedIndex - 1);
@@ -94,22 +94,22 @@ function handleKeydown(e: KeyboardEvent) {
       }
       break;
 
-    case 'Enter':
-    case ' ':
+    case "Enter":
+    case " ":
       e.preventDefault();
       if (focusedIndex >= 0 && focusedIndex < menuItems.length) {
         menuItems[focusedIndex]?.click();
       }
       break;
 
-    case 'ArrowRight':
+    case "ArrowRight":
       e.preventDefault();
       if (focusedIndex >= 0 && focusedIndex < menuItems.length) {
         const item = menuItems[focusedIndex];
-        const submenuContainer = item?.closest('.submenu-container');
+        const submenuContainer = item?.closest(".submenu-container");
         if (submenuContainer) {
           // Open submenu by triggering mouseenter
-          const mouseEnterEvent = new MouseEvent('mouseenter', { bubbles: true });
+          const mouseEnterEvent = new MouseEvent("mouseenter", { bubbles: true });
           submenuContainer.dispatchEvent(mouseEnterEvent);
           // Focus first item in submenu
           setTimeout(() => {
@@ -126,17 +126,17 @@ function handleKeydown(e: KeyboardEvent) {
       }
       break;
 
-    case 'ArrowLeft': {
+    case "ArrowLeft": {
       e.preventDefault();
       // Check if we're inside a submenu
       const submenuEl = menuItems[focusedIndex]?.closest('[data-submenu="true"]');
       if (submenuEl) {
         // Close submenu and return to parent
-        const parentContainer = submenuEl.closest('.submenu-container');
+        const parentContainer = submenuEl.closest(".submenu-container");
         if (parentContainer) {
-          const mouseLeaveEvent = new MouseEvent('mouseleave', { bubbles: true });
+          const mouseLeaveEvent = new MouseEvent("mouseleave", { bubbles: true });
           parentContainer.dispatchEvent(mouseLeaveEvent);
-          const triggerBtn = parentContainer.querySelector('button');
+          const triggerBtn = parentContainer.querySelector("button");
           if (triggerBtn) {
             triggerBtn.focus();
             updateMenuItems();
@@ -149,12 +149,12 @@ function handleKeydown(e: KeyboardEvent) {
       break;
     }
 
-    case 'Escape':
+    case "Escape":
       e.preventDefault();
       onClose();
       break;
 
-    case 'Tab':
+    case "Tab":
       e.preventDefault();
       break;
   }
@@ -192,12 +192,12 @@ function handleBackdropContextMenu(e: MouseEvent) {
   const backdrop = asHTMLElement(e.currentTarget);
   if (!backdrop) return;
   const originalDisplay = backdrop.style.display;
-  backdrop.style.display = 'none';
+  backdrop.style.display = "none";
   const target = document.elementFromPoint(e.clientX, e.clientY);
   backdrop.style.display = originalDisplay;
   onClose();
   if (target) {
-    const newEvent = new MouseEvent('contextmenu', {
+    const newEvent = new MouseEvent("contextmenu", {
       bubbles: true,
       cancelable: true,
       view: window,

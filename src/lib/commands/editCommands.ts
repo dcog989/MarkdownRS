@@ -1,13 +1,13 @@
-import { appContext } from '$lib/stores/state.svelte';
-import { dispatchGoToLine, dispatchRedo, dispatchUndo } from '$lib/utils/editorCommands';
-import type { Command } from './types';
+import { appContext } from "$lib/stores/state.svelte";
+import { dispatchGoToLine, dispatchRedo, dispatchUndo } from "$lib/utils/editorCommands";
+import type { Command } from "./types";
 
 export const editCommands: Command[] = [
   {
-    id: 'edit.undo',
-    label: 'Edit: Undo',
-    category: 'Edit',
-    defaultKey: 'ctrl+z',
+    id: "edit.undo",
+    label: "Edit: Undo",
+    category: "Edit",
+    defaultKey: "ctrl+z",
     showInPalette: false,
     handler: () => {
       if (appContext.app.activeTabId) {
@@ -16,10 +16,10 @@ export const editCommands: Command[] = [
     },
   },
   {
-    id: 'edit.redo',
-    label: 'Edit: Redo',
-    category: 'Edit',
-    defaultKey: 'ctrl+y',
+    id: "edit.redo",
+    label: "Edit: Redo",
+    category: "Edit",
+    defaultKey: "ctrl+y",
     showInPalette: false,
     handler: () => {
       if (appContext.app.activeTabId) {
@@ -28,11 +28,11 @@ export const editCommands: Command[] = [
     },
   },
   {
-    id: 'edit.gotoLine',
-    label: 'Editor: Go to Line',
-    category: 'Editor',
+    id: "edit.gotoLine",
+    label: "Editor: Go to Line",
+    category: "Editor",
     showInPalette: false,
-    defaultKey: 'ctrl+g',
+    defaultKey: "ctrl+g",
     handler: () => {
       if (appContext.app.activeTabId) {
         return dispatchGoToLine(appContext.app.activeTabId);

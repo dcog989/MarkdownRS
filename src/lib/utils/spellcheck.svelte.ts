@@ -5,18 +5,18 @@
  * All properties are reactive and trigger UI updates when changed.
  */
 
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { callBackend } from './backend';
-import { logger } from './logger';
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { callBackend } from "./backend";
+import { logger } from "./logger";
 
 const MAX_SUGGESTION_CACHE_SIZE = 200;
 const MAX_VALID_CACHE_SIZE = 5000;
 
 // Emitted by the backend when spellcheck initialization finishes. Payload is
 // the terminal status string: "ready" or "failed".
-const SPELLCHECK_STATUS_EVENT = 'spellcheck-status';
+const SPELLCHECK_STATUS_EVENT = "spellcheck-status";
 // Safety net in case no event ever arrives (backend panic/IPC failure).
 const INIT_COMPLETION_FALLBACK_MS = 60_000;
 
@@ -41,7 +41,7 @@ export class SpellcheckManager {
   private pendingFetches = new Set<string>();
 
   async loadCustomDictionary(): Promise<void> {
-    const words = await callBackend('load_user_dictionary', {}, 'Dictionary:Add', undefined, {
+    const words = await callBackend("load_user_dictionary", {}, "Dictionary:Add", undefined, {
       ignore: true,
     });
     this.customDictionary = new SvelteSet((words || []).map((w) => w.toLowerCase()));
@@ -65,15 +65,15 @@ export class SpellcheckManager {
     try {
       await this.loadCustomDictionary();
 
-      const dictionaries = settingsState.languageDictionaries || ['en-US'];
+      const dictionaries = settingsState.languageDictionaries || ["en-US"];
       const technicalDictionaries = settingsState.technicalDictionaries;
       const scienceDictionaries = settingsState.scienceDictionaries;
 
       try {
         await callBackend(
-          'init_spellchecker',
+          "init_spellchecker",
           { dictionaries, technicalDictionaries, scienceDictionaries },
-          'Spellcheck:Init',
+          "Spellcheck:Init",
           undefined,
           { ignore: true },
         );
@@ -84,7 +84,7 @@ export class SpellcheckManager {
 
       const status = await this.waitForInitCompletion();
       if (generation !== this.initGeneration) return;
-      this.dictionaryLoaded = status === 'ready';
+      this.dictionaryLoaded = status === "ready";
     } finally {
       // A stale closure (superseded or cleared) must not clobber a newer init.
       if (generation === this.initGeneration) {
@@ -112,12 +112,12 @@ export class SpellcheckManager {
       };
 
       const fallback = window.setTimeout(() => {
-        logger.spellcheck.warn('Spellcheck init completion timed out');
-        finish('failed');
+        logger.spellcheck.warn("Spellcheck init completion timed out");
+        finish("failed");
       }, INIT_COMPLETION_FALLBACK_MS);
 
       const onEvent = (event: { payload: string }) => {
-        if (event.payload === 'ready' || event.payload === 'failed') {
+        if (event.payload === "ready" || event.payload === "failed") {
           finish(event.payload);
         }
       };
@@ -131,13 +131,13 @@ export class SpellcheckManager {
             unlisten = fn;
           },
           () => {
-            logger.spellcheck.warn('Spellcheck status listener unavailable');
+            logger.spellcheck.warn("Spellcheck status listener unavailable");
           },
         )
         .finally(() => {
-          void callBackend('get_spellcheck_status', {}, 'Spellcheck:Init', undefined, { ignore: true }).then(
+          void callBackend("get_spellcheck_status", {}, "Spellcheck:Init", undefined, { ignore: true }).then(
             (status) => {
-              if (status === 'ready' || status === 'failed') {
+              if (status === "ready" || status === "failed") {
                 finish(status);
               }
             },
@@ -181,7 +181,7 @@ export class SpellcheckManager {
     this.pendingFetches.add(w);
 
     try {
-      const suggestions = await callBackend('get_spelling_suggestions', { word: w }, 'Spellcheck:Suggest', undefined, {
+      const suggestions = await callBackend("get_spelling_suggestions", { word: w }, "Spellcheck:Suggest", undefined, {
         ignore: true,
       });
       if (suggestions) {
@@ -204,7 +204,7 @@ export class SpellcheckManager {
       return this.suggestionCache.get(word) ?? [];
     }
 
-    const suggestions = await callBackend('get_spelling_suggestions', { word }, 'Spellcheck:Suggest', undefined, {
+    const suggestions = await callBackend("get_spelling_suggestions", { word }, "Spellcheck:Suggest", undefined, {
       report: true,
     });
     if (suggestions) {

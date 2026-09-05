@@ -1,27 +1,27 @@
 <script lang="ts">
-import { CircleAlert, CircleCheck, ClipboardCopy, Info, TriangleAlert } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { LINT_SOURCE_HARPER, type LintDiagnostic } from '$lib/types/api';
-import { callBackendSafe } from '$lib/utils/backend';
-import { markdownLintState } from '$lib/utils/markdownLint.svelte';
+import { CircleAlert, CircleCheck, ClipboardCopy, Info, TriangleAlert } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
+import { translate } from "$lib/i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { LINT_SOURCE_HARPER, type LintDiagnostic } from "$lib/types/api";
+import { callBackendSafe } from "$lib/utils/backend";
+import { markdownLintState } from "$lib/utils/markdownLint.svelte";
 
 const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> = {
-  error: { icon: CircleAlert, color: 'text-danger' },
-  warning: { icon: TriangleAlert, color: 'text-warning' },
-  info: { icon: Info, color: 'text-accent-secondary' },
+  error: { icon: CircleAlert, color: "text-danger" },
+  warning: { icon: TriangleAlert, color: "text-warning" },
+  info: { icon: Info, color: "text-accent-secondary" },
 };
 
 let showPopup = $state(false);
 let buttonEl = $state<HTMLButtonElement>();
 
 let severityEntry = $derived(severityMap[markdownLintState.highestSeverity]);
-let color = $derived(severityEntry?.color ?? 'text-fg-muted');
+let color = $derived(severityEntry?.color ?? "text-fg-muted");
 
-let displayCount = $derived(markdownLintState.issueCount > 0 ? String(markdownLintState.issueCount) : '');
+let displayCount = $derived(markdownLintState.issueCount > 0 ? String(markdownLintState.issueCount) : "");
 
 let markdownDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source !== LINT_SOURCE_HARPER));
 let grammarDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source === LINT_SOURCE_HARPER));
@@ -40,7 +40,7 @@ $effect(() => {
 async function fetchConfigPath() {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
   const filePath = activeTab?.path;
-  configPath = await callBackendSafe('get_rumdl_config_path', { filePath: filePath ?? undefined }, 'Markdown:Lint', {
+  configPath = await callBackendSafe("get_rumdl_config_path", { filePath: filePath ?? undefined }, "Markdown:Lint", {
     showToast: false,
   });
 }

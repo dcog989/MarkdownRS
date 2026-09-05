@@ -1,18 +1,18 @@
 <script lang="ts">
-import type { EditorView as CM6EditorView } from '@codemirror/view';
-import { onMount, tick, untrack } from 'svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import { createEditorEventHandlers } from '$lib/components/editor/codemirror/events';
-import EditorViewComponent from '$lib/components/editor/EditorView.svelte';
-import { performTextOperation } from '$lib/components/editor/logic/operations';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import EditorContextMenu from '$lib/components/ui/EditorContextMenu.svelte';
-import FindReplacePanel from '$lib/components/ui/FindReplacePanel.svelte';
-import Logo from '$lib/components/ui/Logo.svelte';
-import Minimap from '$lib/components/ui/Minimap.svelte';
-import { translate } from '$lib/i18n';
-import { type EditorMetrics, updateMetrics } from '$lib/stores/editorMetrics.svelte';
+import type { EditorView as CM6EditorView } from "@codemirror/view";
+import { onMount, tick, untrack } from "svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import { createEditorEventHandlers } from "$lib/components/editor/codemirror/events";
+import EditorViewComponent from "$lib/components/editor/EditorView.svelte";
+import { performTextOperation } from "$lib/components/editor/logic/operations";
+import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
+import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
+import Logo from "$lib/components/ui/Logo.svelte";
+import Minimap from "$lib/components/ui/Minimap.svelte";
+import { translate } from "$lib/i18n";
+import { type EditorMetrics, updateMetrics } from "$lib/stores/editorMetrics.svelte";
 import {
   editorStore,
   getHistoryState,
@@ -25,27 +25,27 @@ import {
   updateHistoryState,
   updateScroll,
   updateTransientState,
-} from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { CONFIG } from '$lib/utils/config';
+} from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { CONFIG } from "$lib/utils/config";
 import {
   registerEditorInstance,
   registerFlushFn,
   unregisterEditorInstance,
   unregisterFlushFn,
-} from '$lib/utils/editorCommands';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { pasteFromClipboard } from '$lib/utils/imagePaste';
-import { snapToMarkdownConstruct } from '$lib/utils/markdownExtensions';
-import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+} from "$lib/utils/editorCommands";
+import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { pasteFromClipboard } from "$lib/utils/imagePaste";
+import { snapToMarkdownConstruct } from "$lib/utils/markdownExtensions";
+import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 import {
   invalidateSpellcheckCache,
   refreshSpellcheck,
   spellCheckKeymap,
   triggerImmediateLint,
-} from '$lib/utils/spellcheckExtension.svelte';
+} from "$lib/utils/spellcheckExtension.svelte";
 
 let { tabId } = $props<{ tabId: string }>();
 
@@ -57,8 +57,8 @@ let findReplacePanel = $state<{
 let showContextMenu = $state(false);
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
-let contextSelectedText = $state('');
-let contextWordUnderCursor = $state('');
+let contextSelectedText = $state("");
+let contextWordUnderCursor = $state("");
 let contextWordFrom = $state(0);
 let contextWordTo = $state(0);
 
@@ -66,7 +66,7 @@ let activeTab = $derived(tabsById().get(tabId));
 let pendingTransform = $derived(editorStore.pendingTransform);
 
 // Logic State
-let previousTabId: string = '';
+let previousTabId: string = "";
 
 // Initialize Helpers
 const eventHandlers = createEditorEventHandlers(onContextMenu);
@@ -119,8 +119,8 @@ $effect(() => {
   const ts = getTransientState(tab.id);
   if (ts?.forceFullFeatures) return;
 
-  showToast('info', translate('editor.largeFileSimpleMode'), CONFIG.UI.TOAST_DURATION_MS, {
-    label: translate('editor.enableFullFeatures'),
+  showToast("info", translate("editor.largeFileSimpleMode"), CONFIG.UI.TOAST_DURATION_MS, {
+    label: translate("editor.enableFullFeatures"),
     onClick: () => {
       updateTransientState(tab.id, { forceFullFeatures: true });
       forceFullFeatures = true;
@@ -168,7 +168,7 @@ function onContextMenu(event: MouseEvent, view: CM6EditorView) {
   showContextMenu = false;
   const selection = view.state.selection.main;
   const selectedText = view.state.sliceDoc(selection.from, selection.to);
-  let word = '',
+  let word = "",
     from = 0,
     to = 0;
   if (!selectedText || selectedText.trim().split(/\s+/).length === 1) {
@@ -177,7 +177,7 @@ function onContextMenu(event: MouseEvent, view: CM6EditorView) {
     if (range) {
       from = range.from;
       to = range.to;
-      word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, '');
+      word = view.state.sliceDoc(from, to).replace(/[^a-zA-Z']/g, "");
     }
   }
   contextSelectedText = selectedText;
@@ -223,14 +223,14 @@ function handleDictionaryUpdate() {
   }
 }
 
-let initialContent = $derived(activeTab?.content || '');
+let initialContent = $derived(activeTab?.content || "");
 let filename = $derived.by(() => {
   if (activeTab?.path) return activeTab.path;
-  return activeTab?.preferredExtension === 'txt' ? 'unsaved.txt' : 'unsaved.md';
+  return activeTab?.preferredExtension === "txt" ? "unsaved.txt" : "unsaved.md";
 });
 let isMarkdown = $derived.by(() => {
   if (activeTab?.preferredExtension) {
-    return activeTab.preferredExtension === 'md';
+    return activeTab.preferredExtension === "md";
   }
   return isMarkdownFile(filename);
 });
@@ -250,8 +250,8 @@ let isLargeFile = $derived(
 // Mirrors EditorView's `effectiveMarkdown && rendered` gating of the rendered
 // copy handler: snap to the full markdown construct only when the rendered
 // decoration plugin is actually active.
-let snapRenderedCopy = $derived(isMarkdown && !isLargeFile && appContext.settings.viewMode === 'rendered');
-let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === '');
+let snapRenderedCopy = $derived(isMarkdown && !isLargeFile && appContext.settings.viewMode === "rendered");
+let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
 
 <div

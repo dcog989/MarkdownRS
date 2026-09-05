@@ -1,20 +1,20 @@
 <script lang="ts">
-import { FileText, FlipHorizontal, FlipVertical, X } from 'lucide-svelte';
-import { onDestroy, tick } from 'svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import Logo from '$lib/components/ui/Logo.svelte';
-import { getTransientState, tabsById, updateTransientState } from '$lib/stores/editorStore.svelte';
-import { toggleOrientation, toggleSplitView } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { navigateToPath } from '$lib/utils/fileSystem';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { renderMermaidDiagrams } from '$lib/utils/mermaidRenderer';
-import { PreviewRenderer } from '$lib/utils/previewRenderer.svelte';
-import { scrollSync } from '$lib/utils/scrollSync.svelte';
-import { highlightCodeBlocks } from '$lib/utils/syntaxHighlightRenderer';
+import { FileText, FlipHorizontal, FlipVertical, X } from "lucide-svelte";
+import { onDestroy, tick } from "svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import Logo from "$lib/components/ui/Logo.svelte";
+import { getTransientState, tabsById, updateTransientState } from "$lib/stores/editorStore.svelte";
+import { toggleOrientation, toggleSplitView } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { navigateToPath } from "$lib/utils/fileSystem";
+import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { renderMermaidDiagrams } from "$lib/utils/mermaidRenderer";
+import { PreviewRenderer } from "$lib/utils/previewRenderer.svelte";
+import { scrollSync } from "$lib/utils/scrollSync.svelte";
+import { highlightCodeBlocks } from "$lib/utils/syntaxHighlightRenderer";
 
 let { tabId } = $props<{ tabId: string }>();
 let container = $state<HTMLDivElement>();
@@ -38,7 +38,7 @@ const renderer = new PreviewRenderer({
 let activeTab = $derived(tabsById().get(tabId));
 
 let tabPath = $derived(activeTab?.path);
-let tabContent = $derived(activeTab?.content || '');
+let tabContent = $derived(activeTab?.content || "");
 
 let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
 let flavor = $derived(appContext.settings.markdownFlavor);
@@ -47,7 +47,7 @@ $effect(() => {
   // Capture the outgoing tab's preview position before its content is reset,
   // using the still-rendered html so placeholder/clamp resets are never saved.
   const previousTabId = renderer.lastTabId;
-  const isSwitching = previousTabId !== '' && previousTabId !== tabId;
+  const isSwitching = previousTabId !== "" && previousTabId !== tabId;
   if (isSwitching) {
     scrollSync.beginTabSwitch();
     if (container && renderer.htmlContent) {

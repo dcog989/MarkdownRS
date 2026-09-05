@@ -1,7 +1,7 @@
-import { EditorView } from '@codemirror/view';
-import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { calculateCursorMetrics } from '$lib/utils/textMetrics';
+import { EditorView } from "@codemirror/view";
+import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { calculateCursorMetrics } from "$lib/utils/textMetrics";
 
 export function createUpdateListener(
   getCurrentTabId: () => string | undefined,

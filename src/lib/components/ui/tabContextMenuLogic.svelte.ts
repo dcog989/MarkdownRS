@@ -1,19 +1,19 @@
-import { revealItemInDir } from '@tauri-apps/plugin-opener';
-import { tick } from 'svelte';
-import { translate } from '$lib/i18n';
-import { exportService } from '$lib/services/exportService';
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { tick } from "svelte";
+import { translate } from "$lib/i18n";
+import { exportService } from "$lib/services/exportService";
 import {
   addBookmark,
   deleteBookmark,
   getBookmarkByPath,
   isBookmarked as isBookmarkedSelector,
-} from '$lib/stores/bookmarkStore.svelte';
-import { confirmDialog, promptDialog } from '$lib/stores/dialogStore.svelte';
-import { pushToMru, reorderTabs, togglePin, updateTabTitle } from '$lib/stores/editorStore.svelte';
-import type { EditorTab } from '$lib/stores/editorTypes';
-import { triggerScrollToTab } from '$lib/stores/interfaceStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { callBackend } from '$lib/utils/backend';
+} from "$lib/stores/bookmarkStore.svelte";
+import { confirmDialog, promptDialog } from "$lib/stores/dialogStore.svelte";
+import { pushToMru, reorderTabs, togglePin, updateTabTitle } from "$lib/stores/editorStore.svelte";
+import type { EditorTab } from "$lib/stores/editorTypes";
+import { triggerScrollToTab } from "$lib/stores/interfaceStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { callBackend } from "$lib/utils/backend";
 import {
   closeManyTabs,
   renameFile,
@@ -22,14 +22,14 @@ import {
   saveCurrentFileAs,
   triggerReopenClosedTab,
   withActiveTab,
-} from '$lib/utils/fileSystem';
-import { getFilename } from '$lib/utils/fileValidation';
-import { shortcutManager } from '$lib/utils/shortcuts';
+} from "$lib/utils/fileSystem";
+import { getFilename } from "$lib/utils/fileValidation";
+import { shortcutManager } from "$lib/utils/shortcuts";
 
-type CloseSubmenu = 'close' | 'export' | 'restore';
+type CloseSubmenu = "close" | "export" | "restore";
 
 export class TabContextMenuLogic {
-  tabId = $state('');
+  tabId = $state("");
   onClose: () => void = () => {};
 
   constructor(tabId: string, onClose: () => void) {
@@ -62,35 +62,35 @@ export class TabContextMenuLogic {
 
   exportItems = $derived([
     {
-      label: translate('tabContextMenu.exportToHtml'),
+      label: translate("tabContextMenu.exportToHtml"),
       handler: () => this.doExport(() => exportService.exportToHtml()),
     },
-    { label: translate('tabContextMenu.exportToPdf'), handler: () => this.doExport(() => exportService.exportToPdf()) },
+    { label: translate("tabContextMenu.exportToPdf"), handler: () => this.doExport(() => exportService.exportToPdf()) },
     {
-      label: translate('tabContextMenu.exportToPng'),
-      handler: () => this.doExport(() => exportService.exportToImage('png')),
+      label: translate("tabContextMenu.exportToPng"),
+      handler: () => this.doExport(() => exportService.exportToImage("png")),
     },
     {
-      label: translate('tabContextMenu.exportToWebp'),
-      handler: () => this.doExport(() => exportService.exportToImage('webp')),
+      label: translate("tabContextMenu.exportToWebp"),
+      handler: () => this.doExport(() => exportService.exportToImage("webp")),
     },
   ]);
 
   closeManyItems = $derived([
     {
-      mode: 'right' as const,
-      label: translate('tabContextMenu.closeToTheRight'),
+      mode: "right" as const,
+      label: translate("tabContextMenu.closeToTheRight"),
       disabled: !this.hasCloseableTabsToRight,
     },
     {
-      mode: 'left' as const,
-      label: translate('tabContextMenu.closeToTheLeft'),
+      mode: "left" as const,
+      label: translate("tabContextMenu.closeToTheLeft"),
       disabled: !this.hasCloseableTabsToLeft,
     },
-    { mode: 'others' as const, label: translate('tabContextMenu.closeOthers'), disabled: !this.hasCloseableOtherTabs },
-    { mode: 'saved' as const, label: translate('tabContextMenu.closeSaved'), disabled: !this.hasSavedTabs },
-    { mode: 'unsaved' as const, label: translate('tabContextMenu.closeNotSaved'), disabled: !this.hasUnsavedTabs },
-    { mode: 'all' as const, label: translate('tabContextMenu.closeAll'), disabled: false },
+    { mode: "others" as const, label: translate("tabContextMenu.closeOthers"), disabled: !this.hasCloseableOtherTabs },
+    { mode: "saved" as const, label: translate("tabContextMenu.closeSaved"), disabled: !this.hasSavedTabs },
+    { mode: "unsaved" as const, label: translate("tabContextMenu.closeNotSaved"), disabled: !this.hasUnsavedTabs },
+    { mode: "all" as const, label: translate("tabContextMenu.closeAll"), disabled: false },
   ]);
 
   private doExport = async (exportFn: () => Promise<void>) => {
@@ -125,15 +125,15 @@ export class TabContextMenuLogic {
     this.onClose();
   };
 
-  handleCloseMany = async (mode: 'right' | 'left' | 'others' | 'saved' | 'unsaved' | 'all') => {
+  handleCloseMany = async (mode: "right" | "left" | "others" | "saved" | "unsaved" | "all") => {
     await closeManyTabs(mode, this.tabId);
     this.onClose();
   };
 
-  handleMoveTab = async (to: 'start' | 'end') => {
+  handleMoveTab = async (to: "start" | "end") => {
     const newTabs = [...appContext.editor.tabs];
     const [tab] = newTabs.splice(this.tabIndex, 1);
-    if (to === 'start') newTabs.unshift(tab);
+    if (to === "start") newTabs.unshift(tab);
     else newTabs.push(tab);
     reorderTabs(newTabs);
     appContext.app.activeTabId = this.tabId;
@@ -154,8 +154,8 @@ export class TabContextMenuLogic {
 
     if (!tab.path) {
       const newTitle = await promptDialog({
-        title: translate('tabContextMenu.renameTitle'),
-        message: translate('tabContextMenu.renameTabMessage'),
+        title: translate("tabContextMenu.renameTitle"),
+        message: translate("tabContextMenu.renameTabMessage"),
         value: tab.customTitle || tab.title,
       });
       if (newTitle?.trim()) {
@@ -166,8 +166,8 @@ export class TabContextMenuLogic {
 
     const currentFileName = getFilename(tab.path);
     const raw = await promptDialog({
-      title: translate('tabContextMenu.renameTitle'),
-      message: translate('tabContextMenu.renameFileMessage'),
+      title: translate("tabContextMenu.renameTitle"),
+      message: translate("tabContextMenu.renameFileMessage"),
       value: currentFileName,
     });
     if (!raw?.trim()) return;
@@ -190,24 +190,24 @@ export class TabContextMenuLogic {
     try {
       if (!appContext.settings.confirmationSuppressed) {
         const result = await confirmDialog({
-          title: translate('tabContextMenu.deleteFileTitle'),
-          message: translate('tabContextMenu.deleteFileMessage', { values: { title: targetTitle ?? '' } }),
-          discardLabel: translate('common.delete'),
+          title: translate("tabContextMenu.deleteFileTitle"),
+          message: translate("tabContextMenu.deleteFileMessage", { values: { title: targetTitle ?? "" } }),
+          discardLabel: translate("common.delete"),
           saveLabel: undefined,
         });
 
-        if (result !== 'discard') return;
+        if (result !== "discard") return;
       }
 
-      const { fileWatcher } = await import('$lib/services/fileWatcher');
-      const { invalidateMetadataCache } = await import('$lib/services/fileMetadata');
+      const { fileWatcher } = await import("$lib/services/fileWatcher");
+      const { invalidateMetadataCache } = await import("$lib/services/fileMetadata");
 
       fileWatcher.unwatch(targetPath);
-      await callBackend('send_to_recycle_bin', { path: targetPath }, 'File:Write');
+      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
       invalidateMetadataCache(targetPath);
       await requestCloseTab(targetId, true);
     } catch (_err) {
-      const { fileWatcher } = await import('$lib/services/fileWatcher');
+      const { fileWatcher } = await import("$lib/services/fileWatcher");
       await fileWatcher.watch(targetPath);
     }
   };
@@ -270,13 +270,13 @@ export class TabContextMenuLogic {
   };
 
   getHistoryTooltip = (tab: EditorTab): string => {
-    const lines = tab.content.slice(0, 300).split('\n').slice(0, 5);
-    const preview = lines.join('\n') + (tab.content.length > 300 ? '...' : '');
+    const lines = tab.content.slice(0, 300).split("\n").slice(0, 5);
+    const preview = lines.join("\n") + (tab.content.length > 300 ? "..." : "");
 
     let title = tab.title;
     if (tab.path) title += `\n${tab.path}`;
 
-    return `${title}\n\n${translate('tabContextMenu.previewHeader')}\n${preview}`;
+    return `${title}\n\n${translate("tabContextMenu.previewHeader")}\n${preview}`;
   };
 
   formatTitle = (title: string): string => {

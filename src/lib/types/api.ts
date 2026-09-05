@@ -1,6 +1,6 @@
-import type { OperationId } from '$lib/config/textOperationsRegistry';
-import type { Bookmark } from '$lib/stores/bookmarkStore.svelte';
-import type { HeadingEntry, RenderResult } from './markdown';
+import type { OperationId } from "$lib/config/textOperationsRegistry";
+import type { Bookmark } from "$lib/stores/bookmarkStore.svelte";
+import type { HeadingEntry, RenderResult } from "./markdown";
 
 export interface AppInfo {
   name: string;
@@ -20,9 +20,9 @@ export interface FileMetadata {
 }
 
 /** Value of `LintDiagnostic.source` for grammar (Harper) diagnostics. */
-export const LINT_SOURCE_HARPER = 'harper';
+export const LINT_SOURCE_HARPER = "harper";
 /** Value of `LintDiagnostic.source` for style (rumdl) diagnostics. */
-export const LINT_SOURCE_RUMDL = 'rumdl';
+export const LINT_SOURCE_RUMDL = "rumdl";
 
 export interface LintDiagnostic {
   message: string;
@@ -30,7 +30,7 @@ export interface LintDiagnostic {
   column: number;
   end_line: number;
   end_column: number;
-  severity: 'error' | 'warning' | 'info';
+  severity: "error" | "warning" | "info";
   fixable: boolean;
   rule_name: string | null;
   source: string;
@@ -63,7 +63,7 @@ export interface TabData {
 }
 
 // Server-side operations are handled via dedicated backend commands, not client-side transform
-export type TextTransformId = Exclude<OperationId, 'format-document' | 'generate-toc'>;
+export type TextTransformId = Exclude<OperationId, "format-document" | "generate-toc">;
 
 // Maps Rust command names to their Argument and Return types
 export interface BackendCommands {
@@ -239,7 +239,7 @@ export interface BackendCommands {
   read_rumdl_config: {
     args: {
       filePath?: string;
-      target?: 'project' | 'user';
+      target?: "project" | "user";
     };
     return: {
       target_path: string;
@@ -251,7 +251,7 @@ export interface BackendCommands {
   write_rumdl_config: {
     args: {
       filePath?: string;
-      target?: 'project' | 'user';
+      target?: "project" | "user";
       content: string;
     };
     return: string;
@@ -342,7 +342,7 @@ export interface BackendCommands {
   };
 
   // Window State (Plugin)
-  'plugin:window-state|save_window_state': {
+  "plugin:window-state|save_window_state": {
     args: Record<string, never>;
     return: undefined;
   };

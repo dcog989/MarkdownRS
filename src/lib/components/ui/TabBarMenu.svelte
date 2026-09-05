@@ -1,21 +1,21 @@
 <script lang="ts">
-import { Bookmark, Eye, EyeOff, Feather, FolderTree, History, Settings, Zap } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { translate } from '$lib/i18n';
-import { toggleWriterMode } from '$lib/stores/appState.svelte';
+import { Bookmark, Eye, EyeOff, Feather, FolderTree, History, Settings, Zap } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { translate } from "$lib/i18n";
+import { toggleWriterMode } from "$lib/stores/appState.svelte";
 import {
   toggleAbout,
   toggleBookmarks,
   toggleCommandPalette,
   toggleFileHistory,
   toggleSettings,
-} from '$lib/stores/interfaceStore.svelte';
-import { toggleFileTree, toggleSplitView } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { isMarkdownFile } from '$lib/utils/fileValidation';
-import { saveSettings } from '$lib/utils/settings';
-import { shortcutManager } from '$lib/utils/shortcuts';
+} from "$lib/stores/interfaceStore.svelte";
+import { toggleFileTree, toggleSplitView } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { saveSettings } from "$lib/utils/settings";
+import { shortcutManager } from "$lib/utils/shortcuts";
 
 let { showMenu = $bindable(false) } = $props<{
   showMenu?: boolean;
@@ -25,18 +25,18 @@ let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.
 let isPreviewAvailable = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
 
 let shortcuts = $derived({
-  settings: shortcutManager.getShortcutDisplay('window.settings'),
-  commands: shortcutManager.getShortcutDisplay('window.commandPalette'),
-  bookmarks: shortcutManager.getShortcutDisplay('window.bookmarks'),
-  fileHistory: shortcutManager.getShortcutDisplay('file.fileHistory'),
-  splitView: shortcutManager.getShortcutDisplay('view.toggleSplitView'),
-  writerMode: shortcutManager.getShortcutDisplay('view.toggleWriterMode'),
-  fileTree: shortcutManager.getShortcutDisplay('view.toggleFileTree'),
+  settings: shortcutManager.getShortcutDisplay("window.settings"),
+  commands: shortcutManager.getShortcutDisplay("window.commandPalette"),
+  bookmarks: shortcutManager.getShortcutDisplay("window.bookmarks"),
+  fileHistory: shortcutManager.getShortcutDisplay("file.fileHistory"),
+  splitView: shortcutManager.getShortcutDisplay("view.toggleSplitView"),
+  writerMode: shortcutManager.getShortcutDisplay("view.toggleWriterMode"),
+  fileTree: shortcutManager.getShortcutDisplay("view.toggleFileTree"),
 });
 
 function toggleSplit() {
   if (!isPreviewAvailable) {
-    showToast('warning', translate('tabBarMenu.previewNotAvailable'));
+    showToast("warning", translate("tabBarMenu.previewNotAvailable"));
     return;
   }
   toggleSplitView();

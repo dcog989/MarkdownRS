@@ -1,6 +1,6 @@
-import { pushToMru } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import type { Command } from './types';
+import { pushToMru } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import type { Command } from "./types";
 
 function cycleTab(direction: 1 | -1): void {
   const tabs = appContext.editor.tabs;
@@ -17,7 +17,7 @@ function tabSwitch(index: number): Command {
   return {
     id: `nav.tab${index + 1}`,
     label: `Navigation: Go to Tab ${index + 1}`,
-    category: 'Navigation',
+    category: "Navigation",
     showInPalette: false,
     defaultKey: `ctrl+${index + 1}`,
     handler: () => {
@@ -29,30 +29,30 @@ function tabSwitch(index: number): Command {
 
 export const navigationCommands: Command[] = [
   {
-    id: 'nav.nextTab',
-    label: 'Navigation: Next Tab',
-    category: 'Navigation',
+    id: "nav.nextTab",
+    label: "Navigation: Next Tab",
+    category: "Navigation",
     showInPalette: false,
-    defaultKey: 'ctrl+pagedown',
+    defaultKey: "ctrl+pagedown",
     global: true,
     handler: () => cycleTab(1),
   },
   {
-    id: 'nav.prevTab',
-    label: 'Navigation: Previous Tab',
-    category: 'Navigation',
+    id: "nav.prevTab",
+    label: "Navigation: Previous Tab",
+    category: "Navigation",
     showInPalette: false,
-    defaultKey: 'ctrl+pageup',
+    defaultKey: "ctrl+pageup",
     global: true,
     handler: () => cycleTab(-1),
   },
   ...Array.from({ length: 5 }, (_, i) => tabSwitch(i)),
   {
-    id: 'nav.lastTab',
-    label: 'Navigation: Go to Last Tab',
-    category: 'Navigation',
+    id: "nav.lastTab",
+    label: "Navigation: Go to Last Tab",
+    category: "Navigation",
     showInPalette: false,
-    defaultKey: 'ctrl+9',
+    defaultKey: "ctrl+9",
     handler: () => {
       const tabs = appContext.editor.tabs;
       if (tabs.length > 0) {

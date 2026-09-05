@@ -1,10 +1,10 @@
-import { bench, describe } from 'vitest';
-import type { FileEntry } from '$lib/types/api';
-import { fileTreeStore } from './fileTreeStore.svelte';
-import { computeTreeRows } from './treeViewStore.svelte';
+import { bench, describe } from "vitest";
+import type { FileEntry } from "$lib/types/api";
+import { fileTreeStore } from "./fileTreeStore.svelte";
+import { computeTreeRows } from "./treeViewStore.svelte";
 
 function entry(path: string, isDir: boolean): FileEntry {
-  const parts = path.split('/');
+  const parts = path.split("/");
   return {
     name: parts[parts.length - 1] || path,
     path,
@@ -16,7 +16,7 @@ function entry(path: string, isDir: boolean): FileEntry {
 }
 
 function seedTree(dirsPerLevel: number, depth: number): void {
-  const root = '/root';
+  const root = "/root";
   fileTreeStore.root = root;
   fileTreeStore.expanded.set(root, true);
   fileTreeStore.children.clear();
@@ -40,13 +40,13 @@ function seedTree(dirsPerLevel: number, depth: number): void {
   }
 }
 
-describe('computeTreeRows', () => {
-  bench('wide tree (2 levels x 200 dirs)', () => {
+describe("computeTreeRows", () => {
+  bench("wide tree (2 levels x 200 dirs)", () => {
     seedTree(200, 2);
     computeTreeRows();
   });
 
-  bench('deep tree (4 levels x 10 dirs)', () => {
+  bench("deep tree (4 levels x 10 dirs)", () => {
     seedTree(10, 4);
     computeTreeRows();
   });

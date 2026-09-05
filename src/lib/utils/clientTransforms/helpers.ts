@@ -7,9 +7,9 @@ export function extractNumber(str: string): number {
 }
 
 export function linesMap(text: string, fn: (line: string) => string): string {
-  return text.split('\n').map(fn).join('\n');
+  return text.split("\n").map(fn).join("\n");
 }
 
 export function linesFilter(text: string, fn: (line: string) => boolean): string {
-  return text.split('\n').filter(fn).join('\n');
+  return text.split("\n").filter(fn).join("\n");
 }

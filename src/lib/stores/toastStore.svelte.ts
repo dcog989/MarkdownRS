@@ -1,6 +1,6 @@
-import { CONFIG } from '$lib/utils/config';
+import { CONFIG } from "$lib/utils/config";
 
-export type ToastType = 'info' | 'success' | 'warning' | 'error';
+export type ToastType = "info" | "success" | "warning" | "error";
 
 export type ToastAction = {
   label: string;

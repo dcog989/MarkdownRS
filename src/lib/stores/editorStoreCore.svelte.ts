@@ -1,6 +1,6 @@
-import type { OperationId } from '$lib/config/textOperationsRegistry';
-import { appState } from './appState.svelte';
-import type { ClosedTab, EditorTab } from './editorTypes';
+import type { OperationId } from "$lib/config/textOperationsRegistry";
+import { appState } from "./appState.svelte";
+import type { ClosedTab, EditorTab } from "./editorTypes";
 
 export const editorStore = $state({
   tabs: [] as EditorTab[],

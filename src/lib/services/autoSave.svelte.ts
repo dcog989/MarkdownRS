@@ -1,6 +1,6 @@
-import { appContext } from '$lib/stores/state.svelte';
-import { autoSaveCurrentFile } from '$lib/utils/fileSystem';
-import { logger } from '$lib/utils/logger';
+import { appContext } from "$lib/stores/state.svelte";
+import { autoSaveCurrentFile } from "$lib/utils/fileSystem";
+import { logger } from "$lib/utils/logger";
 
 export function setupAutoSave() {
   let timerId: number | null = null;
@@ -13,7 +13,7 @@ export function setupAutoSave() {
     if (!tab?.isDirty || !tab.path) return;
     autoSaveCurrentFile().then((saved) => {
       if (saved) {
-        logger.file.info('AutoSaved', { path: tab.path });
+        logger.file.info("AutoSaved", { path: tab.path });
       }
     });
   }

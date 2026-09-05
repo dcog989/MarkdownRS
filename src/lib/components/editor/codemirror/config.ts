@@ -5,32 +5,32 @@ import {
   closeBracketsKeymap,
   completeAnyWord,
   completionKeymap,
-} from '@codemirror/autocomplete';
-import { defaultKeymap, historyKeymap } from '@codemirror/commands';
-import { indentUnit } from '@codemirror/language';
-import { EditorView, type KeyBinding, keymap } from '@codemirror/view';
-import { commands } from '$lib/commands/commands';
-import { cmHandlerMap } from '$lib/components/editor/codemirror/editorBindings';
-import { appContext } from '$lib/stores/state.svelte';
-import { emojiAutocompleteKeymap, emojiCompletion } from '$lib/utils/emojiCompletion';
-import { fenceCursorPlugin, fenceLanguageCompletion } from '$lib/utils/fenceLanguageCompletion';
+} from "@codemirror/autocomplete";
+import { defaultKeymap, historyKeymap } from "@codemirror/commands";
+import { indentUnit } from "@codemirror/language";
+import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
+import { commands } from "$lib/commands/commands";
+import { cmHandlerMap } from "$lib/components/editor/codemirror/editorBindings";
+import { appContext } from "$lib/stores/state.svelte";
+import { emojiAutocompleteKeymap, emojiCompletion } from "$lib/utils/emojiCompletion";
+import { fenceCursorPlugin, fenceLanguageCompletion } from "$lib/utils/fenceLanguageCompletion";
 
 function toCmKey(registryKey: string): string {
-  const parts = registryKey.split('+').map((p) => p.toLowerCase());
+  const parts = registryKey.split("+").map((p) => p.toLowerCase());
   const mods: string[] = [];
-  let keyPart = '';
+  let keyPart = "";
   for (const p of parts) {
-    if (p === 'ctrl' || p === 'meta') {
-      mods.push('Mod');
-    } else if (p === 'shift') {
-      mods.push('Shift');
-    } else if (p === 'alt') {
-      mods.push('Alt');
+    if (p === "ctrl" || p === "meta") {
+      mods.push("Mod");
+    } else if (p === "shift") {
+      mods.push("Shift");
+    } else if (p === "alt") {
+      mods.push("Alt");
     } else {
       keyPart = p.length === 1 ? p : p[0].toUpperCase() + p.slice(1);
     }
   }
-  return [...mods, keyPart].join('-');
+  return [...mods, keyPart].join("-");
 }
 
 /**
@@ -83,8 +83,8 @@ export function createWrapExtension(isLargeFile = false) {
     if (column > 0) {
       extensions.push(
         EditorView.theme({
-          '.cm-content': { maxWidth: `${column}ch` },
-          '.cm-scroller': { width: '100%' },
+          ".cm-content": { maxWidth: `${column}ch` },
+          ".cm-scroller": { width: "100%" },
         }),
       );
     }
@@ -99,7 +99,7 @@ const handleTabKey = (view: EditorView) => {
   const hasSelection = from !== to;
 
   // Get indent string from the indentUnit facet
-  const indentStr = state.facet(indentUnit) || '    '; // Default to 4 spaces
+  const indentStr = state.facet(indentUnit) || "    "; // Default to 4 spaces
 
   if (hasSelection) {
     // Indent selected lines
@@ -136,7 +136,7 @@ const handleShiftTab = (view: EditorView) => {
   const endLine = state.doc.lineAt(to);
 
   // Get indent string from the indentUnit facet
-  const indentStr = state.facet(indentUnit) || '    '; // Default to 4 spaces
+  const indentStr = state.facet(indentUnit) || "    "; // Default to 4 spaces
   const indentLen = indentStr.length;
 
   const changes = [];
@@ -146,16 +146,16 @@ const handleShiftTab = (view: EditorView) => {
 
     // Check if line starts with the indent string
     if (lineText.startsWith(indentStr)) {
-      changes.push({ from: line.from, to: line.from + indentLen, insert: '' });
+      changes.push({ from: line.from, to: line.from + indentLen, insert: "" });
     } else {
       // Remove as many leading spaces as possible (up to indentLen)
       let removeCount = 0;
       for (let j = 0; j < Math.min(indentLen, lineText.length); j++) {
-        if (lineText[j] === ' ') removeCount++;
+        if (lineText[j] === " ") removeCount++;
         else break;
       }
       if (removeCount > 0) {
-        changes.push({ from: line.from, to: line.from + removeCount, insert: '' });
+        changes.push({ from: line.from, to: line.from + removeCount, insert: "" });
       }
     }
   }
@@ -182,7 +182,7 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
 
   for (const def of cmHandlerMap) {
     const customKey = appContext.settings.customShortcuts[def.registryKey];
-    const cmKey = customKey ? toCmKey(customKey) : toCmKey(commandDefaultKeys.get(def.registryKey) ?? '');
+    const cmKey = customKey ? toCmKey(customKey) : toCmKey(commandDefaultKeys.get(def.registryKey) ?? "");
 
     cmBindings.push({ key: cmKey, run: def.handler, preventDefault: true });
     filteredKeys.add(cmKey);
@@ -202,8 +202,8 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     ...(historyKeymap as KeyBinding[]),
     ...(closeBracketsKeymap as KeyBinding[]),
     ...(defaultKeymap.filter(
-      (binding) => binding.key !== 'Tab' && !filteredKeys.has(binding.key ?? ''),
+      (binding) => binding.key !== "Tab" && !filteredKeys.has(binding.key ?? ""),
     ) as KeyBinding[]),
-    { key: 'Tab', run: handleTabKey, shift: handleShiftTab },
+    { key: "Tab", run: handleTabKey, shift: handleShiftTab },
   ]);
 }

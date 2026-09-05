@@ -1,6 +1,6 @@
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { openPath } from '@tauri-apps/plugin-opener';
-import { translate } from '$lib/i18n';
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { openPath } from "@tauri-apps/plugin-opener";
+import { translate } from "$lib/i18n";
 import {
   checkFileExists,
   hasFileChanged,
@@ -8,11 +8,11 @@ import {
   normalizeLineEndings,
   refreshMetadata,
   sanitizePath,
-} from '$lib/services/fileMetadata';
-import { fileWatcher } from '$lib/services/fileWatcher';
-import { waitForTabContentLoad } from '$lib/services/tabLoadStateMachine';
-import { confirmDialog } from '$lib/stores/dialogStore.svelte';
-import { computeWordCount } from '$lib/stores/editorCache';
+} from "$lib/services/fileMetadata";
+import { fileWatcher } from "$lib/services/fileWatcher";
+import { waitForTabContentLoad } from "$lib/services/tabLoadStateMachine";
+import { confirmDialog } from "$lib/stores/dialogStore.svelte";
+import { computeWordCount } from "$lib/stores/editorCache";
 import {
   addTab,
   markAsSaved,
@@ -21,21 +21,21 @@ import {
   updateContentOnly,
   updateTabFields,
   updateTransientState,
-} from '$lib/stores/editorStore.svelte';
-import { addToFileHistory } from '$lib/stores/fileHistoryStore.svelte';
-import { notifyFileSaved } from '$lib/stores/fileTreeStore.svelte';
-import { settingsState } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { showToast } from '$lib/stores/toastStore.svelte';
-import { runFlushFunctions } from '$lib/utils/editorCommands';
-import { AppError } from '$lib/utils/errorHandling';
-import { logger } from '$lib/utils/logger';
-import { extractSmartTitle } from '$lib/utils/smartTitle';
-import { byteLength, computeLineStats, detectLineEnding } from '$lib/utils/textMetrics';
-import { formatDuration } from '$lib/utils/timing';
-import { getFileMetadata, readTextFile, resolveRelativePath, writeTextFile } from './fileIO';
-import { getFilename, isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from './fileValidation';
-import { formatMarkdown } from './formatterRust';
+} from "$lib/stores/editorStore.svelte";
+import { addToFileHistory } from "$lib/stores/fileHistoryStore.svelte";
+import { notifyFileSaved } from "$lib/stores/fileTreeStore.svelte";
+import { settingsState } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
+import { runFlushFunctions } from "$lib/utils/editorCommands";
+import { AppError } from "$lib/utils/errorHandling";
+import { logger } from "$lib/utils/logger";
+import { extractSmartTitle } from "$lib/utils/smartTitle";
+import { byteLength, computeLineStats, detectLineEnding } from "$lib/utils/textMetrics";
+import { formatDuration } from "$lib/utils/timing";
+import { getFileMetadata, readTextFile, resolveRelativePath, writeTextFile } from "./fileIO";
+import { getFilename, isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
+import { formatMarkdown } from "./formatterRust";
 
 export async function openFile(path?: string): Promise<void> {
   const start = performance.now();
@@ -47,11 +47,11 @@ export async function openFile(path?: string): Promise<void> {
       const selected = await open({
         multiple: false,
         filters: [
-          { name: translate('fileOps.textFilter'), extensions: SUPPORTED_TEXT_EXTENSIONS },
-          { name: translate('fileOps.allFiles'), extensions: ['*'] },
+          { name: translate("fileOps.textFilter"), extensions: SUPPORTED_TEXT_EXTENSIONS },
+          { name: translate("fileOps.allFiles"), extensions: ["*"] },
         ],
       });
-      if (!selected || typeof selected !== 'string') return;
+      if (!selected || typeof selected !== "string") return;
       targetPath = selected;
     }
 
@@ -73,12 +73,12 @@ export async function openFile(path?: string): Promise<void> {
     const maxBytes = maxFileSizeMB * BYTES_PER_MB;
 
     if (!metadata) {
-      throw new Error(translate('fileOps.failedMetadata'));
+      throw new Error(translate("fileOps.failedMetadata"));
     }
 
     if (metadata.size > maxBytes) {
       throw new Error(
-        translate('fileOps.tooLarge', {
+        translate("fileOps.tooLarge", {
           values: { size: (metadata.size / BYTES_PER_MB).toFixed(2), max: maxFileSizeMB },
         }),
       );
@@ -87,10 +87,10 @@ export async function openFile(path?: string): Promise<void> {
     const result = await readTextFile(sanitizedPath);
 
     if (!result) {
-      throw new Error(translate('fileOps.failedReadNull'));
+      throw new Error(translate("fileOps.failedReadNull"));
     }
 
-    const fileName = getFilename(sanitizedPath) || translate('fileOps.untitled');
+    const fileName = getFilename(sanitizedPath) || translate("fileOps.untitled");
 
     const detectedLineEnding = detectLineEnding(result.content);
 
@@ -124,14 +124,14 @@ export async function openFile(path?: string): Promise<void> {
     await fileWatcher.watch(sanitizedPath);
     appContext.app.activeTabId = id;
 
-    logger.file.info('FileOpened', {
+    logger.file.info("FileOpened", {
       duration: formatDuration(start),
       path: sanitizedPath,
       size: metadata.size,
       encoding: result.encoding,
     });
   } catch (_err) {
-    AppError.handle('File:Read', _err, {
+    AppError.handle("File:Read", _err, {
       showToast: true,
       additionalInfo: { path },
     });
@@ -145,12 +145,12 @@ export async function openFileByPath(path: string): Promise<void> {
 export async function navigateToPath(clickedPath: string): Promise<void> {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
 
-  if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes('\n')) {
+  if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes("\n")) {
     return;
   }
 
   try {
-    const resolvedPath = await resolveRelativePath(activeTab?.path || null, clickedPath.replace(/\\/g, '/'));
+    const resolvedPath = await resolveRelativePath(activeTab?.path || null, clickedPath.replace(/\\/g, "/"));
 
     if (!resolvedPath) {
       return;
@@ -158,8 +158,8 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
 
     await openPath(resolvedPath);
   } catch (err) {
-    logger.file.warn('NavigationFailed', { error: String(err) });
-    showToast('error', translate('fileOps.failedOpen', { values: { error: String(err) } }));
+    logger.file.warn("NavigationFailed", { error: String(err) });
+    showToast("error", translate("fileOps.failedOpen", { values: { error: String(err) } }));
   }
 }
 
@@ -232,18 +232,18 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
     if (!forceNewPath && tab.path) {
       savePath = tab.path;
     } else {
-      const preferredExt = tab.preferredExtension || 'md';
+      const preferredExt = tab.preferredExtension || "md";
       const filters =
-        preferredExt === 'txt'
+        preferredExt === "txt"
           ? [
-              { name: translate('fileOps.textShortFilter'), extensions: ['txt'] },
-              { name: translate('fileOps.markdownFilter'), extensions: ['md'] },
-              { name: translate('fileOps.allFiles'), extensions: ['*'] },
+              { name: translate("fileOps.textShortFilter"), extensions: ["txt"] },
+              { name: translate("fileOps.markdownFilter"), extensions: ["md"] },
+              { name: translate("fileOps.allFiles"), extensions: ["*"] },
             ]
           : [
-              { name: translate('fileOps.markdownFilter'), extensions: ['md'] },
-              { name: translate('fileOps.textShortFilter'), extensions: ['txt'] },
-              { name: translate('fileOps.allFiles'), extensions: ['*'] },
+              { name: translate("fileOps.markdownFilter"), extensions: ["md"] },
+              { name: translate("fileOps.textShortFilter"), extensions: ["txt"] },
+              { name: translate("fileOps.allFiles"), extensions: ["*"] },
             ];
 
       savePath = await save({ filters });
@@ -254,7 +254,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       tab = getTab();
       if (!tab) return false;
-      if (!tab.content) tab.content = '';
+      if (!tab.content) tab.content = "";
 
       // Don't silently clobber external edits: if the file changed on disk
       // since the tab's last saved baseline, ask before overwriting. This also
@@ -263,13 +263,13 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       // explicitly, so only guard writes back to the tab's own path.
       if (!forceNewPath && (await hasFileChanged(tab.id))) {
         const result = await confirmDialog({
-          title: translate('fileOps.overwriteChangedTitle'),
-          message: translate('fileOps.overwriteChangedMessage', { values: { title: tab.title } }),
-          saveLabel: translate('fileOps.overwriteLabel'),
-          discardLabel: '',
-          cancelLabel: translate('common.cancel'),
+          title: translate("fileOps.overwriteChangedTitle"),
+          message: translate("fileOps.overwriteChangedMessage", { values: { title: tab.title } }),
+          saveLabel: translate("fileOps.overwriteLabel"),
+          discardLabel: "",
+          cancelLabel: translate("common.cancel"),
         });
-        if (result !== 'save') {
+        if (result !== "save") {
           if (pendingSavePath) activeSaves.delete(pendingSavePath);
           return false;
         }
@@ -277,7 +277,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       let contentToSave = tab.content;
 
-      const tabIsMarkdown = tab.preferredExtension ? tab.preferredExtension === 'md' : isMarkdownFile(sanitizedPath);
+      const tabIsMarkdown = tab.preferredExtension ? tab.preferredExtension === "md" : isMarkdownFile(sanitizedPath);
       const shouldFormat = !skipFormat && appContext.settings.formatOnSave && tabIsMarkdown;
 
       if (shouldFormat) {
@@ -296,15 +296,15 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       }
 
       const targetLineEnding =
-        appContext.settings.lineEndingPreference === 'system'
-          ? tab.lineEnding || 'LF'
+        appContext.settings.lineEndingPreference === "system"
+          ? tab.lineEnding || "LF"
           : appContext.settings.lineEndingPreference;
 
       let diskContent = normalizeLineEndings(contentToSave);
-      if (targetLineEnding === 'CRLF') {
-        diskContent = diskContent.replace(/\n/g, '\r\n');
+      if (targetLineEnding === "CRLF") {
+        diskContent = diskContent.replace(/\n/g, "\r\n");
       } else {
-        diskContent = diskContent.replace(/\r\n/g, '\n');
+        diskContent = diskContent.replace(/\r\n/g, "\n");
       }
 
       fileWatcher.setWriteLock(sanitizedPath, true);
@@ -317,7 +317,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       if (!writeResult) {
         fileWatcher.setWriteLock(sanitizedPath, false);
         if (pendingSavePath) activeSaves.delete(pendingSavePath);
-        AppError.handle('File:Write', new Error(translate('fileOps.failedSave')), { showToast: true });
+        AppError.handle("File:Write", new Error(translate("fileOps.failedSave")), { showToast: true });
         return false;
       }
 
@@ -333,7 +333,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       // already-open path kills that tab's watch too.
       await fileWatcher.renew(sanitizedPath);
 
-      const fileName = getFilename(sanitizedPath) || translate('fileOps.untitled');
+      const fileName = getFilename(sanitizedPath) || translate("fileOps.untitled");
       let finalTitle = fileName;
 
       if (appContext.settings.tabNameFromContent) {
@@ -359,7 +359,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       fileWatcher.setWriteLock(sanitizedPath, false);
 
-      logger.file.info('FileSaved', {
+      logger.file.info("FileSaved", {
         duration: formatDuration(start),
         path: sanitizedPath,
         size: byteLength(diskContent),
@@ -374,7 +374,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
   } catch (_e) {
     if (pendingSavePath) activeSaves.delete(pendingSavePath);
     if (lockedPath) fileWatcher.setWriteLock(lockedPath, false);
-    AppError.handle('File:Write', _e, {
+    AppError.handle("File:Write", _e, {
       showToast: true,
       additionalInfo: { path: tab?.path },
     });

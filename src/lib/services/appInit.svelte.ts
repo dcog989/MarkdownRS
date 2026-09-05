@@ -1,13 +1,13 @@
-import type { UnlistenFn } from '@tauri-apps/api/event';
-import { addTab, editorStore } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from '$lib/stores/tooltipStore.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { runFlushFunctions } from '$lib/utils/editorCommands';
-import { loadSession, openFileByPath, persistSession, persistSessionDebounced } from '$lib/utils/fileSystem';
-import { logger } from '$lib/utils/logger';
-import { initSettings, saveSettings, saveSettingsNow } from '$lib/utils/settings';
-import { formatDuration } from '$lib/utils/timing';
+import type { UnlistenFn } from "@tauri-apps/api/event";
+import { addTab, editorStore } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { runFlushFunctions } from "$lib/utils/editorCommands";
+import { loadSession, openFileByPath, persistSession, persistSessionDebounced } from "$lib/utils/fileSystem";
+import { logger } from "$lib/utils/logger";
+import { initSettings, saveSettings, saveSettingsNow } from "$lib/utils/settings";
+import { formatDuration } from "$lib/utils/timing";
 
 export function createAppInit() {
   let isInitialized = $state(false);
@@ -21,18 +21,18 @@ export function createAppInit() {
     try {
       const settingsStart = performance.now();
       await initSettings();
-      logger.editor.debug('SettingsInitialized', { duration: formatDuration(settingsStart) });
+      logger.editor.debug("SettingsInitialized", { duration: formatDuration(settingsStart) });
 
       const sessionStart = performance.now();
       await loadSession();
-      logger.session.info('SessionRestored', { duration: formatDuration(sessionStart) });
+      logger.session.info("SessionRestored", { duration: formatDuration(sessionStart) });
 
       if (editorStore.tabs.length === 0) {
         const id = addTab();
         appContext.app.activeTabId = id;
       }
 
-      logger.editor.info('AppInitialized', { duration: formatDuration(appStartTime) });
+      logger.editor.info("AppInitialized", { duration: formatDuration(appStartTime) });
 
       isInitialized = true;
     } catch (err) {
@@ -60,16 +60,16 @@ export function createAppInit() {
   }
 
   async function setupEventListeners(): Promise<() => void> {
-    const { listen } = await import('@tauri-apps/api/event');
+    const { listen } = await import("@tauri-apps/api/event");
 
     const unlisteners: UnlistenFn[] = [];
 
-    const unlisten1 = await listen<string>('open-file-from-args', async (event) => {
+    const unlisten1 = await listen<string>("open-file-from-args", async (event) => {
       await openFileByPath(event.payload);
     });
     unlisteners.push(unlisten1);
 
-    const unlisten2 = await listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
+    const unlisten2 = await listen<{ paths: string[] }>("tauri://drag-drop", async (event) => {
       for (const path of event.payload.paths) {
         await openFileByPath(path);
       }
@@ -78,14 +78,14 @@ export function createAppInit() {
 
     // GTK's leave-notify-event fires reliably on cursor exit, unlike
     // WebKitGTK's DOM mouseout/mouseleave.
-    const unlisten3 = await listen('window-cursor-left', () => {
+    const unlisten3 = await listen("window-cursor-left", () => {
       clearStuckHoverState();
     });
     unlisteners.push(unlisten3);
 
     // GTK's enter-notify-event reports the cursor position on re-entry, where
     // WebKitGTK skips the initial mouseenter for the element under the cursor.
-    const unlisten4 = await listen<[number, number]>('window-cursor-enter', (event) => {
+    const unlisten4 = await listen<[number, number]>("window-cursor-enter", (event) => {
       activateHoverAtPoint(event.payload[0], event.payload[1]);
     });
     unlisteners.push(unlisten4);
@@ -93,10 +93,10 @@ export function createAppInit() {
     // Track the cursor position so tooltips anchor to where the pointer is when
     // their show-delay elapses, not where it was when the element was entered.
     const handleCursorMove = (e: MouseEvent) => setCursorPosition(e.clientX, e.clientY);
-    window.addEventListener('mousemove', handleCursorMove);
+    window.addEventListener("mousemove", handleCursorMove);
 
     return () => {
-      window.removeEventListener('mousemove', handleCursorMove);
+      window.removeEventListener("mousemove", handleCursorMove);
       for (const unlisten of unlisteners) {
         unlisten();
       }

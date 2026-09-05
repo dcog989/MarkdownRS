@@ -1,4 +1,4 @@
-import { CONFIG } from '$lib/utils/config';
+import { CONFIG } from "$lib/utils/config";
 
 export class SmoothScroller {
   private raf: number | null = null;

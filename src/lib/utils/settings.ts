@@ -1,20 +1,20 @@
-import { translate } from '$lib/i18n';
-import { appState } from '$lib/stores/appState.svelte';
-import { settingsState, syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
-import { callBackendSafe } from './backend';
-import { debounce } from './timing';
+import { translate } from "$lib/i18n";
+import { appState } from "$lib/stores/appState.svelte";
+import { settingsState, syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
+import { callBackendSafe } from "./backend";
+import { debounce } from "./timing";
 
 const SETTINGS_EXCLUDED_KEYS = new Set([
-  'activeTabId',
-  'isTabSwitching',
-  'osPlatform',
-  'availableThemes',
-  'writerMode',
-  'commandUsage',
-  'commandUsageCounts',
+  "activeTabId",
+  "isTabSwitching",
+  "osPlatform",
+  "availableThemes",
+  "writerMode",
+  "commandUsage",
+  "commandUsageCounts",
 ]);
 
-let lastSavedState: string = '';
+let lastSavedState: string = "";
 
 function getSettingsObject(): Record<string, unknown> {
   const settings: Record<string, unknown> = {};
@@ -35,29 +35,29 @@ function getSettingsObject(): Record<string, unknown> {
 function coerceSettingValue(value: unknown, fallback: unknown): unknown {
   const expected = typeof fallback;
 
-  if (expected === 'number') {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string' && value.trim() !== '') {
+  if (expected === "number") {
+    if (typeof value === "number") return value;
+    if (typeof value === "string" && value.trim() !== "") {
       const num = Number(value);
       if (!Number.isNaN(num)) return num;
     }
     return fallback;
   }
 
-  if (expected === 'boolean') {
-    return typeof value === 'boolean' ? value : fallback;
+  if (expected === "boolean") {
+    return typeof value === "boolean" ? value : fallback;
   }
 
-  if (expected === 'string') {
-    return typeof value === 'string' ? value : fallback;
+  if (expected === "string") {
+    return typeof value === "string" ? value : fallback;
   }
 
   if (Array.isArray(fallback)) {
     return Array.isArray(value) ? value : fallback;
   }
 
-  if (expected === 'object') {
-    return value !== null && typeof value === 'object' && !Array.isArray(value) ? value : fallback;
+  if (expected === "object") {
+    return value !== null && typeof value === "object" && !Array.isArray(value) ? value : fallback;
   }
 
   return fallback;
@@ -65,18 +65,18 @@ function coerceSettingValue(value: unknown, fallback: unknown): unknown {
 
 export async function initSettings() {
   const [saved, appInfo] = await Promise.all([
-    callBackendSafe('load_settings', {}, 'Settings:Load', {
+    callBackendSafe("load_settings", {}, "Settings:Load", {
       showToast: false,
-      userMessage: translate('error.failedToLoadSettings'),
+      userMessage: translate("error.failedToLoadSettings"),
     }),
-    callBackendSafe('get_app_info', {}, 'Settings:AppInfo', {
+    callBackendSafe("get_app_info", {}, "Settings:AppInfo", {
       showToast: false,
-      userMessage: translate('error.failedToGetAppInfo'),
+      userMessage: translate("error.failedToGetAppInfo"),
     }),
   ]);
 
   if (appInfo?.os_platform) {
-    appState.osPlatform = appInfo.os_platform as 'windows' | 'linux' | 'macos';
+    appState.osPlatform = appInfo.os_platform as "windows" | "linux" | "macos";
   }
 
   if (saved && Object.keys(saved).length > 0) {
@@ -108,9 +108,9 @@ async function saveSettingsImmediate() {
     return;
   }
 
-  await callBackendSafe('save_settings', { settings: settingsToSave }, 'Settings:Save', {
+  await callBackendSafe("save_settings", { settings: settingsToSave }, "Settings:Save", {
     showToast: false,
-    userMessage: translate('error.failedToSaveSettings'),
+    userMessage: translate("error.failedToSaveSettings"),
   });
   lastSavedState = serialized;
 }

@@ -1,11 +1,11 @@
-import type { MarkdownExtension } from '@lezer/markdown';
+import type { MarkdownExtension } from "@lezer/markdown";
 
-const DELIMITERS = ['---', '+++', ';;;', '{'] as const;
+const DELIMITERS = ["---", "+++", ";;;", "{"] as const;
 const CLOSING_DELIMITER: Record<string, string> = {
-  '---': '---',
-  '+++': '+++',
-  ';;;': ';;;',
-  '{': '}',
+  "---": "---",
+  "+++": "+++",
+  ";;;": ";;;",
+  "{": "}",
 };
 
 function matchDelimiter(text: string): string | null {
@@ -23,11 +23,11 @@ function matchDelimiter(text: string): string | null {
  * header in the editor.
  */
 export const frontmatterExtension: MarkdownExtension = {
-  defineNodes: [{ name: 'Frontmatter', block: true }],
+  defineNodes: [{ name: "Frontmatter", block: true }],
   parseBlock: [
     {
-      name: 'Frontmatter',
-      before: 'HorizontalRule',
+      name: "Frontmatter",
+      before: "HorizontalRule",
       parse(cx, line) {
         if (cx.lineStart !== 0) return false;
         const open = matchDelimiter(line.text);
@@ -45,7 +45,7 @@ export const frontmatterExtension: MarkdownExtension = {
         }
 
         if (to < 0) return false;
-        cx.addElement(cx.elt('Frontmatter', from, to));
+        cx.addElement(cx.elt("Frontmatter", from, to));
         return true;
       },
     },

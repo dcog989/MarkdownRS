@@ -1,26 +1,26 @@
 <script lang="ts">
-import { ChevronDown, Menu, Plus } from 'lucide-svelte';
-import { onDestroy, onMount, tick } from 'svelte';
-import { flip } from 'svelte/animate';
-import { fade } from 'svelte/transition';
-import { _ } from 'svelte-i18n';
-import { SortableController } from '$lib/actions/sortable.svelte';
-import { tooltip } from '$lib/actions/tooltip';
-import MruTabsPopup from '$lib/components/ui/MruTabsPopup.svelte';
-import TabBarContextMenu from '$lib/components/ui/TabBarContextMenu.svelte';
-import TabBarMenu from '$lib/components/ui/TabBarMenu.svelte';
-import TabButton from '$lib/components/ui/TabButton.svelte';
-import TabContextMenu from '$lib/components/ui/TabContextMenu.svelte';
-import TabDropdown from '$lib/components/ui/TabDropdown.svelte';
-import { editorMetrics } from '$lib/stores/editorMetrics.svelte';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { createNewFile, pushToMru, reorderTabs } from '$lib/stores/editorStore.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { asHTMLElement, assertHTMLElement } from '$lib/utils/dom';
-import { persistSessionDebounced, requestCloseTab } from '$lib/utils/fileSystem';
-import { createMruCycling } from '$lib/utils/mruCycling.svelte';
-import { shortcutManager } from '$lib/utils/shortcuts';
+import { ChevronDown, Menu, Plus } from "lucide-svelte";
+import { onDestroy, onMount, tick } from "svelte";
+import { flip } from "svelte/animate";
+import { fade } from "svelte/transition";
+import { _ } from "svelte-i18n";
+import { SortableController } from "$lib/actions/sortable.svelte";
+import { tooltip } from "$lib/actions/tooltip";
+import MruTabsPopup from "$lib/components/ui/MruTabsPopup.svelte";
+import TabBarContextMenu from "$lib/components/ui/TabBarContextMenu.svelte";
+import TabBarMenu from "$lib/components/ui/TabBarMenu.svelte";
+import TabButton from "$lib/components/ui/TabButton.svelte";
+import TabContextMenu from "$lib/components/ui/TabContextMenu.svelte";
+import TabDropdown from "$lib/components/ui/TabDropdown.svelte";
+import { editorMetrics } from "$lib/stores/editorMetrics.svelte";
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { createNewFile, pushToMru, reorderTabs } from "$lib/stores/editorStore.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { asHTMLElement, assertHTMLElement } from "$lib/utils/dom";
+import { persistSessionDebounced, requestCloseTab } from "$lib/utils/fileSystem";
+import { createMruCycling } from "$lib/utils/mruCycling.svelte";
+import { shortcutManager } from "$lib/utils/shortcuts";
 
 let scrollContainer = $state<HTMLElement>();
 let showDropdown = $state(false);
@@ -44,7 +44,7 @@ let mru = createMruCycling();
 
 const sortController = new SortableController<EditorTab>({
   items: [],
-  idKey: 'id',
+  idKey: "id",
   container: undefined,
   itemSelector: '[data-tab-item="true"]',
   onSort: (newItems) => {
@@ -99,8 +99,8 @@ $effect(() => {
 });
 
 onMount(() => {
-  window.addEventListener('keydown', mru.onKeyDown);
-  window.addEventListener('keyup', mru.onKeyUp);
+  window.addEventListener("keydown", mru.onKeyDown);
+  window.addEventListener("keyup", mru.onKeyUp);
 
   if (scrollContainer) {
     resizeObserver = new ResizeObserver(() => updateFadeIndicators());
@@ -110,8 +110,8 @@ onMount(() => {
   return () => {
     resizeObserver?.disconnect();
     mru.cleanup();
-    window.removeEventListener('keydown', mru.onKeyDown);
-    window.removeEventListener('keyup', mru.onKeyUp);
+    window.removeEventListener("keydown", mru.onKeyDown);
+    window.removeEventListener("keyup", mru.onKeyUp);
   };
 });
 
@@ -168,7 +168,7 @@ async function scrollToActive() {
   }
 
   if (targetLeft !== null) {
-    scrollContainer.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    scrollContainer.scrollTo({ left: targetLeft, behavior: "smooth" });
   }
 }
 

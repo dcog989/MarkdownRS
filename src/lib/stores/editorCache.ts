@@ -1,8 +1,8 @@
-import { CONFIG } from '$lib/utils/config';
-import { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { countWords } from '$lib/utils/textMetrics';
-import { editorStore } from './editorStoreCore.svelte';
-import type { TabTransientState } from './editorTypes';
+import { CONFIG } from "$lib/utils/config";
+import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
+import { countWords } from "$lib/utils/textMetrics";
+import { editorStore } from "./editorStoreCore.svelte";
+import type { TabTransientState } from "./editorTypes";
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity
 const historyStateCache = new Map<string, unknown>();

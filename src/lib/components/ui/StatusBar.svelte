@@ -1,22 +1,22 @@
 <script lang="ts">
-import { ClipboardCopy, Eye, EyeOff, TextWrap } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import MarkdownLintStatus from '$lib/components/ui/MarkdownLintStatus.svelte';
-import { translate } from '$lib/i18n';
-import { togglePreferredExtension, updateTabFields } from '$lib/stores/editorStore.svelte';
-import { toggleViewMode } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { formatFileSize, isMarkdownFile } from '$lib/utils/fileValidation';
-import { saveSettings } from '$lib/utils/settings';
-import { formatNumber } from '$lib/utils/textMetrics';
+import { ClipboardCopy, Eye, EyeOff, TextWrap } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
+import MarkdownLintStatus from "$lib/components/ui/MarkdownLintStatus.svelte";
+import { translate } from "$lib/i18n";
+import { togglePreferredExtension, updateTabFields } from "$lib/stores/editorStore.svelte";
+import { toggleViewMode } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { formatFileSize, isMarkdownFile } from "$lib/utils/fileValidation";
+import { saveSettings } from "$lib/utils/settings";
+import { formatNumber } from "$lib/utils/textMetrics";
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
 
 // Reactive totals pulled directly from pre-calculated state in the tab
-let lineEnding = $derived(activeTab?.lineEnding || 'LF');
-let encoding = $derived(activeTab?.encoding || 'UTF-8');
+let lineEnding = $derived(activeTab?.lineEnding || "LF");
+let encoding = $derived(activeTab?.encoding || "UTF-8");
 let sizeBytes = $derived(activeTab?.sizeBytes || 0);
 let totalWords = $derived(activeTab?.wordCount || 0);
 let wordCountPending = $derived(activeTab?.wordCountPending || false);
@@ -32,10 +32,10 @@ let textOpacity = $derived(1 - appContext.settings.statusBarTransparency / 100);
 let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
 let fileType = $derived.by(() => {
-  if (!tabId) return 'markdown';
-  if (preferredExtension) return preferredExtension === 'txt' ? 'text' : 'markdown';
-  if (path) return isMarkdownFile(path) ? 'markdown' : 'text';
-  return 'markdown';
+  if (!tabId) return "markdown";
+  if (preferredExtension) return preferredExtension === "txt" ? "text" : "markdown";
+  if (path) return isMarkdownFile(path) ? "markdown" : "text";
+  return "markdown";
 });
 
 // Markdown files can only be markdown, other text files (txt, css, cpp, py, ...)
@@ -53,7 +53,7 @@ function toggleFileType() {
 
 function toggleLineEnding() {
   if (tabId) {
-    const next = lineEnding === 'LF' ? 'CRLF' : 'LF';
+    const next = lineEnding === "LF" ? "CRLF" : "LF";
     updateTabFields(tabId, { lineEnding: next });
   }
 }
@@ -74,15 +74,15 @@ async function copyAllStats() {
   if (!activeTab) return;
 
   const stats = [
-    `${translate('statusBar.filePath')}: ${activeTab.path || translate('statusBar.unsaved')}`,
-    `${translate('statusBar.fileSize')}: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} ${translate('statusBar.bytes')})`,
-    `${translate('statusBar.totalLines')}: ${totalLines.toLocaleString()}`,
-    `${translate('statusBar.widestColumn')}: ${widestColumn.toLocaleString()}`,
-    `${translate('statusBar.totalCharacters')}: ${totalChars.toLocaleString()}`,
-    `${translate('statusBar.totalWords')}: ${totalWords.toLocaleString()}`,
-    `${translate('statusBar.lineEnding')}: ${lineEnding}`,
-    `${translate('statusBar.encoding')}: ${encoding}`,
-  ].join('\n');
+    `${translate("statusBar.filePath")}: ${activeTab.path || translate("statusBar.unsaved")}`,
+    `${translate("statusBar.fileSize")}: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} ${translate("statusBar.bytes")})`,
+    `${translate("statusBar.totalLines")}: ${totalLines.toLocaleString()}`,
+    `${translate("statusBar.widestColumn")}: ${widestColumn.toLocaleString()}`,
+    `${translate("statusBar.totalCharacters")}: ${totalChars.toLocaleString()}`,
+    `${translate("statusBar.totalWords")}: ${totalWords.toLocaleString()}`,
+    `${translate("statusBar.lineEnding")}: ${lineEnding}`,
+    `${translate("statusBar.encoding")}: ${encoding}`,
+  ].join("\n");
 
   await navigator.clipboard.writeText(stats);
   showMenu = false;

@@ -1,45 +1,45 @@
-import { bench, describe } from 'vitest';
-import { toSnakeCase, toTitleCase } from './clientTransforms/case';
-import { removeDuplicates, reverseLines, sortLines } from './clientTransforms/lines';
-import { increaseHeading, toggleBlockquote } from './clientTransforms/markdown';
-import { smartParagraphs } from './clientTransforms/paragraphs';
+import { bench, describe } from "vitest";
+import { toSnakeCase, toTitleCase } from "./clientTransforms/case";
+import { removeDuplicates, reverseLines, sortLines } from "./clientTransforms/lines";
+import { increaseHeading, toggleBlockquote } from "./clientTransforms/markdown";
+import { smartParagraphs } from "./clientTransforms/paragraphs";
 
 const DOC_LINES = Array.from(
   { length: 500 },
   (_, i) => `## Section ${i}\n\nParagraph number ${i} with some **bold** words and a [link](https://example.com/${i}).`,
 );
-const DOC = DOC_LINES.join('\n\n');
+const DOC = DOC_LINES.join("\n\n");
 
-describe('text transforms (500-section document)', () => {
-  bench('toSnakeCase', () => {
+describe("text transforms (500-section document)", () => {
+  bench("toSnakeCase", () => {
     toSnakeCase(DOC);
   });
 
-  bench('toTitleCase', () => {
+  bench("toTitleCase", () => {
     toTitleCase(DOC);
   });
 
-  bench('sortLines ascending', () => {
-    sortLines(DOC, 'asc');
+  bench("sortLines ascending", () => {
+    sortLines(DOC, "asc");
   });
 
-  bench('reverseLines', () => {
+  bench("reverseLines", () => {
     reverseLines(DOC);
   });
 
-  bench('removeDuplicates', () => {
+  bench("removeDuplicates", () => {
     removeDuplicates(DOC);
   });
 
-  bench('toggleBlockquote', () => {
+  bench("toggleBlockquote", () => {
     toggleBlockquote(DOC);
   });
 
-  bench('increaseHeading', () => {
+  bench("increaseHeading", () => {
     increaseHeading(DOC);
   });
 
-  bench('smartParagraphs', () => {
+  bench("smartParagraphs", () => {
     smartParagraphs(DOC);
   });
 });

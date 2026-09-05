@@ -1,8 +1,8 @@
-import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import { startCompletion } from '@codemirror/autocomplete';
-import type { EditorState } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import { autocompleteEmojis } from '$lib/config/emojiData';
+import type { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { startCompletion } from "@codemirror/autocomplete";
+import type { EditorState } from "@codemirror/state";
+import { keymap } from "@codemirror/view";
+import { autocompleteEmojis } from "$lib/config/emojiData";
 
 /** True when the character immediately before `pos` is a word char. */
 function isPrecededByWordChar(state: EditorState, pos: number): boolean {
@@ -17,7 +17,7 @@ function buildResult(from: number, query: string): CompletionResult {
   const options = autocompleteEmojis(query).map((entry) => ({
     label: entry.char,
     detail: `:${entry.shortcode}:`,
-    type: 'emoji',
+    type: "emoji",
     apply: entry.char,
   }));
 
@@ -56,15 +56,15 @@ export function emojiCompletion(context: CompletionContext): CompletionResult | 
  */
 export const emojiAutocompleteKeymap = keymap.of([
   {
-    key: ':',
+    key: ":",
     run: (view) => {
       if (view.composing) return false;
       const sel = view.state.selection.main;
       if (sel.from !== sel.head) return false;
       view.dispatch({
-        changes: { from: sel.head, insert: ':' },
+        changes: { from: sel.head, insert: ":" },
         selection: { anchor: sel.head + 1 },
-        userEvent: 'input.type',
+        userEvent: "input.type",
       });
       // Skip `startCompletion` when `:` follows a word char: emojiCompletion
       // would reject it and fall through to generic word completion.

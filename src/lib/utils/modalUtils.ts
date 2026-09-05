@@ -2,7 +2,7 @@ function getScrollParent(node: HTMLElement): HTMLElement | null {
   let el = node.parentElement;
   while (el) {
     const overflowY = getComputedStyle(el).overflowY;
-    if (overflowY === 'auto' || overflowY === 'scroll') return el;
+    if (overflowY === "auto" || overflowY === "scroll") return el;
     el = el.parentElement;
   }
   return null;
@@ -18,7 +18,7 @@ export function scrollIntoView(node: HTMLElement, isSelected: boolean) {
 
     if (nr.top >= cr.top && nr.bottom <= cr.bottom) return;
 
-    node.scrollIntoView({ block: nr.bottom > cr.bottom ? 'end' : 'start' });
+    node.scrollIntoView({ block: nr.bottom > cr.bottom ? "end" : "start" });
   }
 
   if (isSelected) doScroll();

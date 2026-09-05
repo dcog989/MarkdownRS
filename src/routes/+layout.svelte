@@ -1,17 +1,17 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { locale } from 'svelte-i18n';
-import { commands } from '$lib/commands/commands';
-import ConfirmationModal from '$lib/components/ui/ConfirmationModal.svelte';
-import GlobalTooltip from '$lib/components/ui/GlobalTooltip.svelte';
-import ModalManager from '$lib/components/ui/ModalManager.svelte';
-import { initI18n, resolveLocale } from '$lib/i18n';
-import { syncThemeFromSystem } from '$lib/stores/settingsState.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { logger } from '$lib/utils/logger';
-import { shortcutManager } from '$lib/utils/shortcuts';
-import { buildCustomAccentCss, getThemeCss } from '$lib/utils/themes';
-import '../app.css';
+import { onMount } from "svelte";
+import { locale } from "svelte-i18n";
+import { commands } from "$lib/commands/commands";
+import ConfirmationModal from "$lib/components/ui/ConfirmationModal.svelte";
+import GlobalTooltip from "$lib/components/ui/GlobalTooltip.svelte";
+import ModalManager from "$lib/components/ui/ModalManager.svelte";
+import { initI18n, resolveLocale } from "$lib/i18n";
+import { syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { logger } from "$lib/utils/logger";
+import { shortcutManager } from "$lib/utils/shortcuts";
+import { buildCustomAccentCss, getThemeCss } from "$lib/utils/themes";
+import "../app.css";
 
 let { children } = $props();
 
@@ -20,7 +20,7 @@ initI18n(appContext.settings.locale);
 $effect(() => {
   const theme = appContext.settings.theme;
   const root = document.documentElement;
-  root.setAttribute('data-theme', theme);
+  root.setAttribute("data-theme", theme);
 });
 
 $effect(() => {
@@ -31,8 +31,8 @@ $effect(() => {
 
 $effect(() => {
   const themeName = appContext.settings.activeTheme;
-  if (!themeName || themeName === 'System') {
-    const existing = document.getElementById('user-theme-styles');
+  if (!themeName || themeName === "System") {
+    const existing = document.getElementById("user-theme-styles");
     if (existing) existing.remove();
     return;
   }
@@ -41,10 +41,10 @@ $effect(() => {
     const css = await getThemeCss(themeName);
     if (!css) return;
 
-    let styleTag = document.getElementById('user-theme-styles') as HTMLStyleElement;
+    let styleTag = document.getElementById("user-theme-styles") as HTMLStyleElement;
     if (!styleTag) {
-      styleTag = document.createElement('style');
-      styleTag.id = 'user-theme-styles';
+      styleTag = document.createElement("style");
+      styleTag.id = "user-theme-styles";
       document.head.appendChild(styleTag);
     }
     styleTag.textContent = css;
@@ -55,7 +55,7 @@ $effect(() => {
 
 $effect(() => {
   const customColor = appContext.settings.customAccentColor;
-  const styleTagId = 'custom-accent-styles';
+  const styleTagId = "custom-accent-styles";
   const existing = document.getElementById(styleTagId);
 
   if (!customColor) {
@@ -71,7 +71,7 @@ $effect(() => {
 
   let styleTag = existing as HTMLStyleElement | null;
   if (!styleTag) {
-    styleTag = document.createElement('style');
+    styleTag = document.createElement("style");
     styleTag.id = styleTagId;
     document.head.appendChild(styleTag);
   }
@@ -81,9 +81,9 @@ $effect(() => {
 onMount(() => {
   // Log unhandled promise rejections that aren't caught elsewhere
   const onUnhandledRejection = (event: PromiseRejectionEvent) => {
-    logger.editor.warn('UnhandledRejection', { reason: event.reason });
+    logger.editor.warn("UnhandledRejection", { reason: event.reason });
   };
-  window.addEventListener('unhandledrejection', onUnhandledRejection);
+  window.addEventListener("unhandledrejection", onUnhandledRejection);
 
   for (const cmd of commands) {
     shortcutManager.register(cmd);
@@ -94,7 +94,7 @@ onMount(() => {
     const isCtrl = e.ctrlKey || e.metaKey;
 
     // Prevent default for browser shortcuts that conflict with app shortcuts
-    if (isCtrl && key === 'p') {
+    if (isCtrl && key === "p") {
       e.preventDefault();
     }
 
@@ -107,19 +107,19 @@ onMount(() => {
     e.preventDefault();
   };
 
-  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
   const handleOSThemeChange = () => {
     syncThemeFromSystem();
   };
-  mq.addEventListener('change', handleOSThemeChange);
+  mq.addEventListener("change", handleOSThemeChange);
 
-  window.addEventListener('keydown', handleKeydown, { capture: true });
-  document.addEventListener('contextmenu', handleContextMenu, { passive: false });
+  window.addEventListener("keydown", handleKeydown, { capture: true });
+  document.addEventListener("contextmenu", handleContextMenu, { passive: false });
   return () => {
-    window.removeEventListener('unhandledrejection', onUnhandledRejection);
-    mq.removeEventListener('change', handleOSThemeChange);
-    window.removeEventListener('keydown', handleKeydown, { capture: true });
-    document.removeEventListener('contextmenu', handleContextMenu);
+    window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    mq.removeEventListener("change", handleOSThemeChange);
+    window.removeEventListener("keydown", handleKeydown, { capture: true });
+    document.removeEventListener("contextmenu", handleContextMenu);
   };
 });
 </script>

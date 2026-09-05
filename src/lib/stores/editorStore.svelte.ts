@@ -17,7 +17,7 @@ export {
   setLineChangeTracker,
   updateHistoryState,
   updateTransientState,
-} from './editorCache';
+} from "./editorCache";
 export {
   addTab,
   closeTab,
@@ -25,9 +25,9 @@ export {
   pushToMru,
   reopenClosedTab,
   reorderTabs,
-} from './editorLifecycle';
-export { editorStore, performTextTransform, sortTabsPinnedFirst, tabsById } from './editorStoreCore.svelte';
-export type { ClosedTab, EditorTab, TabTransientState } from './editorTypes';
+} from "./editorLifecycle";
+export { editorStore, performTextTransform, sortTabsPinnedFirst, tabsById } from "./editorStoreCore.svelte";
+export type { ClosedTab, EditorTab, TabTransientState } from "./editorTypes";
 
 export {
   markAsSaved,
@@ -45,4 +45,4 @@ export {
   updateTabFields,
   updateTabPath,
   updateTabTitle,
-} from './editorUpdates';
+} from "./editorUpdates";

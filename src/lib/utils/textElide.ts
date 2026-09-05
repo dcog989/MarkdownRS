@@ -1,7 +1,7 @@
 export function elideMiddle(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
 
-  const ellipsis = '…';
+  const ellipsis = "…";
   const keep = maxLength - ellipsis.length;
   if (keep <= 0) return text.slice(0, maxLength);
 

@@ -1,20 +1,20 @@
 export const settingsState = $state({
   splitView: true,
-  locale: 'system',
-  theme: 'dark' as 'dark' | 'light',
-  themeMode: 'auto' as 'auto' | 'dark' | 'light',
-  activeTheme: 'System',
-  availableThemes: ['System'] as string[],
-  customAccentColor: '',
+  locale: "system",
+  theme: "dark" as "dark" | "light",
+  themeMode: "auto" as "auto" | "dark" | "light",
+  activeTheme: "System",
+  availableThemes: ["System"] as string[],
+  customAccentColor: "",
   splitPercentage: 0.5,
-  splitOrientation: 'vertical' as 'vertical' | 'horizontal',
-  tabCycling: 'mru' as 'mru' | 'sequential',
+  splitOrientation: "vertical" as "vertical" | "horizontal",
+  tabCycling: "mru" as "mru" | "sequential",
   tabWidthMin: 120,
   tabWidthMax: 240,
   statusBarTransparency: 0,
-  newTabPosition: 'end' as 'beginning' | 'right' | 'end',
-  startupBehavior: 'last-focused' as 'first' | 'last-focused' | 'new',
-  editorFontFamily: 'monospace',
+  newTabPosition: "end" as "beginning" | "right" | "end",
+  startupBehavior: "last-focused" as "first" | "last-focused" | "new",
+  editorFontFamily: "monospace",
   editorFontSize: 14,
   wrapGuideColumn: 0,
   showWhitespace: false,
@@ -23,20 +23,20 @@ export const settingsState = $state({
   recentChangesTimespan: 600,
   recentChangesCount: 16,
   undoDepth: 100,
-  previewFontFamily: 'sans-serif',
+  previewFontFamily: "sans-serif",
   previewFontSize: 16,
 
-  markdownFlavor: 'gfm' as 'commonmark' | 'gfm',
+  markdownFlavor: "gfm" as "commonmark" | "gfm",
   harperEnabled: false,
   harperLinters: {} as Record<string, boolean>,
-  logLevel: 'info' as 'trace' | 'debug' | 'info' | 'warn' | 'error',
+  logLevel: "info" as "trace" | "debug" | "info" | "warn" | "error",
   formatOnSave: false,
   defaultIndent: 2,
-  lineEndingPreference: 'system' as 'system' | 'LF' | 'CRLF',
+  lineEndingPreference: "system" as "system" | "LF" | "CRLF",
   tooltipDelay: 1250,
   findPanelTransparent: false,
   findPanelCloseOnBlur: false,
-  languageDictionaries: ['en-US'] as string[],
+  languageDictionaries: ["en-US"] as string[],
   technicalDictionaries: false,
   scienceDictionaries: false,
   tabNameFromContent: false,
@@ -46,18 +46,18 @@ export const settingsState = $state({
   enableClosedTabHistory: true,
   customShortcuts: {} as Record<string, string>,
   confirmationSuppressed: false,
-  newFileTemplatePath: '',
+  newFileTemplatePath: "",
   maxFileSizeMB: 20,
   fileHistoryLimit: 999,
   autoSaveInterval: -1,
-  viewMode: 'rendered' as 'raw' | 'rendered',
+  viewMode: "rendered" as "raw" | "rendered",
   fileTreeVisible: true,
   fileTreeWidth: 240,
   fileTreeShowHidden: false,
   fileTreeShowMarkdownOnly: false,
   fileTreeLocked: false,
-  fileTreeLockedRoot: '',
-  commandPaletteSort: 'alphabetical' as 'alphabetical' | 'recent' | 'most-used',
+  fileTreeLockedRoot: "",
+  commandPaletteSort: "alphabetical" as "alphabetical" | "recent" | "most-used",
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
 });
@@ -66,23 +66,23 @@ export function toggleSplitView() {
   settingsState.splitView = !settingsState.splitView;
 }
 
-export function setTheme(newTheme: 'dark' | 'light') {
-  settingsState.activeTheme = 'System';
+export function setTheme(newTheme: "dark" | "light") {
+  settingsState.activeTheme = "System";
   settingsState.themeMode = newTheme;
   settingsState.theme = newTheme;
 }
 
 export function syncThemeFromSystem() {
-  if (settingsState.themeMode !== 'auto') return;
-  settingsState.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (settingsState.themeMode !== "auto") return;
+  settingsState.theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function toggleOrientation() {
-  settingsState.splitOrientation = settingsState.splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
+  settingsState.splitOrientation = settingsState.splitOrientation === "vertical" ? "horizontal" : "vertical";
 }
 
 export function toggleViewMode() {
-  settingsState.viewMode = settingsState.viewMode === 'raw' ? 'rendered' : 'raw';
+  settingsState.viewMode = settingsState.viewMode === "raw" ? "rendered" : "raw";
 }
 
 export function toggleFileTree() {

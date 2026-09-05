@@ -1,13 +1,13 @@
 <script lang="ts">
-import { closeSearchPanel, findNext, findPrevious, openSearchPanel, replaceAll, replaceNext } from '@codemirror/search';
-import type { EditorView } from '@codemirror/view';
-import { Replace, Search, X } from 'lucide-svelte';
-import { onMount, tick, untrack } from 'svelte';
-import { _ } from 'svelte-i18n';
-import Input from '$lib/components/ui/Input.svelte';
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { CONFIG } from '$lib/utils/config';
+import { closeSearchPanel, findNext, findPrevious, openSearchPanel, replaceAll, replaceNext } from "@codemirror/search";
+import type { EditorView } from "@codemirror/view";
+import { Replace, Search, X } from "lucide-svelte";
+import { onMount, tick, untrack } from "svelte";
+import { _ } from "svelte-i18n";
+import Input from "$lib/components/ui/Input.svelte";
+import { translate } from "$lib/i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
 import {
   clearSearch,
   replaceAllInTabs,
@@ -15,15 +15,15 @@ import {
   searchState,
   selectNearestMatch,
   updateSearchEditor,
-} from '$lib/utils/searchManager.svelte';
-import { debounce } from '$lib/utils/timing';
+} from "$lib/utils/searchManager.svelte";
+import { debounce } from "$lib/utils/timing";
 
 let { isOpen = $bindable(false), cmView } = $props<{
   isOpen?: boolean;
   cmView: EditorView | undefined;
 }>();
 
-let searchScope = $state<'current' | 'all'>('current');
+let searchScope = $state<"current" | "all">("current");
 let isReplaceMode = $state(false);
 let searchInputRef = $state<HTMLInputElement>();
 let panelRef = $state<HTMLDivElement>();
@@ -83,7 +83,7 @@ $effect(() => {
 
 $effect(() => {
   const view = cmView;
-  if (!view || !isOpen || searchScope !== 'current') return;
+  if (!view || !isOpen || searchScope !== "current") return;
   searchState.findText;
   searchState.matchCase;
   searchState.matchWholeWord;
@@ -99,7 +99,7 @@ function close() {
 }
 
 function executeSearch(view: EditorView, incremental: boolean) {
-  if (searchScope === 'current') {
+  if (searchScope === "current") {
     if (searchState.findText) {
       if (incremental) {
         selectNearestMatch(view);
@@ -167,7 +167,7 @@ function onReplace() {
 function onReplaceAll() {
   if (searchState.regexError) return;
 
-  if (searchScope === 'current') {
+  if (searchScope === "current") {
     if (cmView) {
       replaceAll(cmView);
       updateSearchEditor(cmView);
@@ -175,16 +175,16 @@ function onReplaceAll() {
   } else {
     const count = replaceAllInTabs();
     if (count > 0) {
-      alert(translate('findReplace.replacedCount', { values: { count } }));
+      alert(translate("findReplace.replacedCount", { values: { count } }));
     }
   }
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     e.stopPropagation();
     close();
-  } else if (e.key === 'Enter') {
+  } else if (e.key === "Enter") {
     e.preventDefault();
     if (e.shiftKey) {
       onFindPrevious();
@@ -195,16 +195,16 @@ function handleKeydown(e: KeyboardEvent) {
         onFindNext();
       }
     }
-  } else if ((e.key === 'f' || e.key === 'h') && (e.ctrlKey || e.metaKey)) {
+  } else if ((e.key === "f" || e.key === "h") && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
     e.stopPropagation();
-    if (e.key === 'h') isReplaceMode = true;
+    if (e.key === "h") isReplaceMode = true;
     focusInput();
   }
 }
 
 function handleGlobalKeydown(e: KeyboardEvent) {
-  if (e.key === 'F3') {
+  if (e.key === "F3") {
     e.preventDefault();
     e.stopPropagation();
 
@@ -241,9 +241,9 @@ function navigateToTab(tabId: string) {
 }
 
 onMount(() => {
-  window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
+  window.addEventListener("keydown", handleGlobalKeydown, { capture: true });
   return () => {
-    window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
+    window.removeEventListener("keydown", handleGlobalKeydown, { capture: true });
   };
 });
 </script>

@@ -1,24 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock('$lib/utils/backend', () => ({
+vi.mock("$lib/utils/backend", () => ({
   callBackend: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { initTransientState } from '$lib/stores/editorCache';
-import type { EditorTab } from '$lib/stores/editorStore.svelte';
-import { editorStore } from '$lib/stores/editorStore.svelte';
-import { callBackend } from '$lib/utils/backend';
-import { persistSession } from './sessionSerialization';
+import { initTransientState } from "$lib/stores/editorCache";
+import type { EditorTab } from "$lib/stores/editorStore.svelte";
+import { editorStore } from "$lib/stores/editorStore.svelte";
+import { callBackend } from "$lib/utils/backend";
+import { persistSession } from "./sessionSerialization";
 
 const mockedCallBackend = vi.mocked(callBackend);
 
 function makeTab(overrides: Partial<EditorTab>): EditorTab {
   return {
-    id: 'tab-1',
-    title: 'Test',
-    originalTitle: 'Test',
-    content: '',
-    lastSavedHash: '',
+    id: "tab-1",
+    title: "Test",
+    originalTitle: "Test",
+    content: "",
+    lastSavedHash: "",
     isDirty: false,
     path: null,
     sizeBytes: 0,
@@ -26,15 +26,15 @@ function makeTab(overrides: Partial<EditorTab>): EditorTab {
     lineCount: 1,
     widestColumn: 0,
     cursor: { anchor: 0, head: 0 },
-    lineEnding: 'LF',
-    encoding: 'UTF-8',
+    lineEnding: "LF",
+    encoding: "UTF-8",
     hasBom: false,
     contentLoaded: true,
     ...overrides,
   };
 }
 
-describe('persistSession', () => {
+describe("persistSession", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     editorStore.tabs = [];
@@ -43,17 +43,17 @@ describe('persistSession', () => {
     editorStore.sessionDirty = true;
   });
 
-  it('does not write the empty placeholder of a restored-but-unloaded tab', async () => {
+  it("does not write the empty placeholder of a restored-but-unloaded tab", async () => {
     editorStore.tabs = [
       makeTab({
-        id: 'restored-unsaved',
-        title: 'test unsaved content',
+        id: "restored-unsaved",
+        title: "test unsaved content",
         isDirty: true,
-        content: '',
+        content: "",
         contentLoaded: false,
       }),
     ];
-    initTransientState('restored-unsaved', { contentChanged: true, isPersisted: true });
+    initTransientState("restored-unsaved", { contentChanged: true, isPersisted: true });
 
     await persistSession();
 
@@ -61,21 +61,21 @@ describe('persistSession', () => {
       string,
       { activeTabs: Array<{ content: string | null }> },
     ];
-    expect(command).toBe('save_session');
+    expect(command).toBe("save_session");
     expect(payload.activeTabs[0].content).toBeNull();
   });
 
-  it('writes content for a loaded dirty tab', async () => {
+  it("writes content for a loaded dirty tab", async () => {
     editorStore.tabs = [
       makeTab({
-        id: 'loaded-unsaved',
-        title: 'test unsaved content',
+        id: "loaded-unsaved",
+        title: "test unsaved content",
         isDirty: true,
-        content: '# test unsaved content\n\nblah blah blah\n',
+        content: "# test unsaved content\n\nblah blah blah\n",
         contentLoaded: true,
       }),
     ];
-    initTransientState('loaded-unsaved', { contentChanged: true, isPersisted: true });
+    initTransientState("loaded-unsaved", { contentChanged: true, isPersisted: true });
 
     await persistSession();
 
@@ -83,6 +83,6 @@ describe('persistSession', () => {
       string,
       { activeTabs: Array<{ content: string | null }> },
     ];
-    expect(payload.activeTabs[0].content).toBe('# test unsaved content\n\nblah blah blah\n');
+    expect(payload.activeTabs[0].content).toBe("# test unsaved content\n\nblah blah blah\n");
   });
 });

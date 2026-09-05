@@ -1,16 +1,16 @@
-import type { Command } from '$lib/commands/commands';
-import { settingsState } from '$lib/stores/settingsState.svelte';
+import type { Command } from "$lib/commands/commands";
+import { settingsState } from "$lib/stores/settingsState.svelte";
 
-export type SortMode = 'alphabetical' | 'recent' | 'most-used';
+export type SortMode = "alphabetical" | "recent" | "most-used";
 
 export const SORT_LABELS: Record<SortMode, string> = {
-  alphabetical: 'A-Z',
-  recent: 'Recent',
-  'most-used': 'Most Used',
+  alphabetical: "A-Z",
+  recent: "Recent",
+  "most-used": "Most Used",
 };
 
 export function cycleSortMode() {
-  const modes: SortMode[] = ['alphabetical', 'recent', 'most-used'];
+  const modes: SortMode[] = ["alphabetical", "recent", "most-used"];
   const idx = modes.indexOf(settingsState.commandPaletteSort);
   settingsState.commandPaletteSort = modes[(idx + 1) % modes.length];
 }
@@ -23,21 +23,21 @@ export function sortCommands(
 ): Command[] {
   const sorted = [...commands];
 
-  if (mode === 'alphabetical') {
+  if (mode === "alphabetical") {
     sorted.sort((a, b) => {
       const catA = a.category;
       const catB = b.category;
       if (catA !== catB) return catA.localeCompare(catB);
       return a.label.localeCompare(b.label);
     });
-  } else if (mode === 'recent') {
+  } else if (mode === "recent") {
     sorted.sort((a, b) => {
       const timeA = usage[a.id] ?? 0;
       const timeB = usage[b.id] ?? 0;
       if (timeB !== timeA) return timeB - timeA;
       return a.label.localeCompare(b.label);
     });
-  } else if (mode === 'most-used') {
+  } else if (mode === "most-used") {
     sorted.sort((a, b) => {
       const countA = usageCounts[a.id] ?? 0;
       const countB = usageCounts[b.id] ?? 0;

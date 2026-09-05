@@ -1,14 +1,14 @@
-import { forceLinting } from '@codemirror/lint';
-import type { EditorView } from '@codemirror/view';
-import { SvelteSet } from 'svelte/reactivity';
-import { addWordsToDictionary } from '$lib/services/dictionaryService';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
+import { forceLinting } from "@codemirror/lint";
+import type { EditorView } from "@codemirror/view";
+import { SvelteSet } from "svelte/reactivity";
+import { addWordsToDictionary } from "$lib/services/dictionaryService";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 import {
   applyImmediateSpellcheck,
   createSpellCheckLinter,
   spellcheckRefreshEffect,
   triggerImmediateLint,
-} from './spellcheckLinter';
+} from "./spellcheckLinter";
 
 export { applyImmediateSpellcheck, createSpellCheckLinter, triggerImmediateLint };
 
@@ -29,17 +29,17 @@ export async function refreshSpellcheck(view: EditorView | undefined) {
 
 export const spellCheckKeymap = [
   {
-    key: 'F8',
+    key: "F8",
     run: (view: EditorView) => {
       const selection = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
       let words: string[] = [];
 
       if (selection && selection.trim().length > 0) {
-        words = selection.split(/\s+/).map((w) => w.replace(/[^a-zA-Z'-]/g, ''));
+        words = selection.split(/\s+/).map((w) => w.replace(/[^a-zA-Z'-]/g, ""));
       } else {
         const range = view.state.wordAt(view.state.selection.main.head);
         if (range) {
-          words = [view.state.sliceDoc(range.from, range.to).replace(/[^a-zA-Z'-]/g, '')];
+          words = [view.state.sliceDoc(range.from, range.to).replace(/[^a-zA-Z'-]/g, "")];
         }
       }
 

@@ -1,8 +1,8 @@
-import type { TransactionSpec } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
-import type { OperationId } from '$lib/config/textOperationsRegistry';
-import { textProcessor } from '$lib/services/textProcessor';
-import { AppError } from '$lib/utils/errorHandling';
+import type { TransactionSpec } from "@codemirror/state";
+import type { EditorView } from "@codemirror/view";
+import type { OperationId } from "$lib/config/textOperationsRegistry";
+import { textProcessor } from "$lib/services/textProcessor";
+import { AppError } from "$lib/utils/errorHandling";
 
 const STATE_CHANGE_DELAY_MS = 100;
 
@@ -25,7 +25,7 @@ export async function performTextOperation(
     if (newText !== targetText) {
       view.focus();
 
-      const userEvent = operationId === 'format-document' ? 'format' : 'input.complete';
+      const userEvent = operationId === "format-document" ? "format" : "input.complete";
 
       const transaction: TransactionSpec = {
         changes: {
@@ -53,7 +53,7 @@ export async function performTextOperation(
       view.dispatch(transaction);
     }
   } catch (err) {
-    AppError.handle('Transform:Text', err, {
+    AppError.handle("Transform:Text", err, {
       showToast: true,
       additionalInfo: { operationId },
     });

@@ -1,39 +1,39 @@
 <script lang="ts">
-import { openPath } from '@tauri-apps/plugin-opener';
-import { relaunch } from '@tauri-apps/plugin-process';
-import { check } from '@tauri-apps/plugin-updater';
-import { ExternalLink, LoaderCircle, RefreshCw } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import Modal from '$lib/components/ui/Modal.svelte';
-import { translate } from '$lib/i18n';
-import type { AppInfo } from '$lib/types/api';
-import { callBackend } from '$lib/utils/backend';
-import { CONFIG } from '$lib/utils/config';
+import { openPath } from "@tauri-apps/plugin-opener";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check } from "@tauri-apps/plugin-updater";
+import { ExternalLink, LoaderCircle, RefreshCw } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import Modal from "$lib/components/ui/Modal.svelte";
+import { translate } from "$lib/i18n";
+import type { AppInfo } from "$lib/types/api";
+import { callBackend } from "$lib/utils/backend";
+import { CONFIG } from "$lib/utils/config";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  position?: 'center' | 'top';
+  position?: "center" | "top";
 }
 
-let { isOpen = $bindable(false), onClose, position = 'top' }: Props = $props();
+let { isOpen = $bindable(false), onClose, position = "top" }: Props = $props();
 
 let isChecking = $state(false);
 let updateStatus = $state<string | null>(null);
 
 let appInfo = $state<AppInfo>({
-  name: 'MarkdownRS',
-  version: '...',
-  install_path: '',
-  data_path: '',
-  cache_path: '',
-  logs_path: '',
-  log_file_path: '',
-  os_platform: '',
+  name: "MarkdownRS",
+  version: "...",
+  install_path: "",
+  data_path: "",
+  cache_path: "",
+  logs_path: "",
+  log_file_path: "",
+  os_platform: "",
 });
 
 $effect(() => {
-  callBackend('get_app_info', {}, 'File:Metadata')
+  callBackend("get_app_info", {}, "File:Metadata")
     .then((info) => {
       if (info) {
         appInfo = info;
@@ -60,24 +60,24 @@ async function openLogFile() {
 async function checkForUpdates() {
   if (isChecking) return;
   isChecking = true;
-  updateStatus = translate('about.checking');
+  updateStatus = translate("about.checking");
 
   try {
     const update = await check();
 
     if (update) {
-      updateStatus = translate('about.downloading', { values: { version: update.version } });
+      updateStatus = translate("about.downloading", { values: { version: update.version } });
       await update.downloadAndInstall();
-      updateStatus = translate('about.restarting');
+      updateStatus = translate("about.restarting");
       await relaunch();
     } else {
-      updateStatus = translate('about.upToDate');
+      updateStatus = translate("about.upToDate");
     }
   } catch (_err) {
-    updateStatus = translate('about.checkFailed');
+    updateStatus = translate("about.checkFailed");
   } finally {
     isChecking = false;
-    if (updateStatus !== translate('about.restarting')) {
+    if (updateStatus !== translate("about.restarting")) {
       setTimeout(() => {
         updateStatus = null;
       }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);

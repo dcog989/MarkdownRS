@@ -1,9 +1,9 @@
 <script lang="ts">
-import { CircleAlert, FileText, PencilLine, SquarePen } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import CustomScrollbar from '$lib/components/ui/CustomScrollbar.svelte';
-import { appContext } from '$lib/stores/state.svelte';
+import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import { appContext } from "$lib/stores/state.svelte";
 
 interface Props {
   isOpen: boolean;
@@ -27,12 +27,12 @@ function handleBackdropClick(e: MouseEvent) {
 
 function scrollIntoView(node: HTMLElement, isSelected: boolean) {
   if (isSelected) {
-    node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    node.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
   return {
     update(newIsSelected: boolean) {
       if (newIsSelected) {
-        node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        node.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     },
   };

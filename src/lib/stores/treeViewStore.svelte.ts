@@ -1,8 +1,8 @@
-import type { FileEntry } from '$lib/types/api';
-import { fuzzyMatches } from '$lib/utils/fuzzyMatch';
-import { basename, dirname } from '$lib/utils/path';
-import { fileTreeStore, loadChildren, passesMarkdownOnly } from './fileTreeStore.svelte';
-import { settingsState } from './settingsState.svelte';
+import type { FileEntry } from "$lib/types/api";
+import { fuzzyMatches } from "$lib/utils/fuzzyMatch";
+import { basename, dirname } from "$lib/utils/path";
+import { fileTreeStore, loadChildren, passesMarkdownOnly } from "./fileTreeStore.svelte";
+import { settingsState } from "./settingsState.svelte";
 
 export const treeViewStore = $state({
   // Whole-tree filter results, populated asynchronously by `applyFilter`.

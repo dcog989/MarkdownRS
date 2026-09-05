@@ -1,21 +1,21 @@
 <script lang="ts">
-import { CircleAlert, CircleCheckBig, CircleX, Info, X } from 'lucide-svelte';
-import { onMount } from 'svelte';
-import { SvelteSet } from 'svelte/reactivity';
-import { fly } from 'svelte/transition';
-import { _ } from 'svelte-i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { dismissToast } from '$lib/stores/toastStore.svelte';
+import { CircleAlert, CircleCheckBig, CircleX, Info, X } from "lucide-svelte";
+import { onMount } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
+import { fly } from "svelte/transition";
+import { _ } from "svelte-i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { dismissToast } from "$lib/stores/toastStore.svelte";
 
 const activeTimers = new SvelteSet<string>();
 
 function getIcon(type: string) {
   switch (type) {
-    case 'success':
+    case "success":
       return CircleCheckBig;
-    case 'error':
+    case "error":
       return CircleX;
-    case 'warning':
+    case "warning":
       return CircleAlert;
     default:
       return Info;
@@ -24,27 +24,27 @@ function getIcon(type: string) {
 
 function getColorClass(type: string) {
   switch (type) {
-    case 'success':
-      return 'text-success border-l-success';
-    case 'error':
-      return 'text-danger border-l-danger';
-    case 'warning':
-      return 'text-accent-secondary border-l-accent-secondary'; // Using accent as warning color
+    case "success":
+      return "text-success border-l-success";
+    case "error":
+      return "text-danger border-l-danger";
+    case "warning":
+      return "text-accent-secondary border-l-accent-secondary"; // Using accent as warning color
     default:
-      return 'text-accent-link border-l-accent-link';
+      return "text-accent-link border-l-accent-link";
   }
 }
 
 function getIconColorClass(type: string) {
   switch (type) {
-    case 'success':
-      return 'text-success';
-    case 'error':
-      return 'text-danger';
-    case 'warning':
-      return 'text-accent-secondary';
+    case "success":
+      return "text-success";
+    case "error":
+      return "text-danger";
+    case "warning":
+      return "text-accent-secondary";
     default:
-      return 'text-accent-link';
+      return "text-accent-link";
   }
 }
 
@@ -69,7 +69,7 @@ function handleInteraction() {
 }
 
 onMount(() => {
-  const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+  const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
 
   events.forEach((event) => {
     window.addEventListener(event, handleInteraction, { capture: true, passive: true });

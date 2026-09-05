@@ -1,48 +1,48 @@
 <script lang="ts">
-import { history, historyField } from '@codemirror/commands';
-import { indentUnit } from '@codemirror/language';
-import { Compartment, EditorState, type Extension } from '@codemirror/state';
-import { EditorView, highlightWhitespace, type KeyBinding } from '@codemirror/view';
-import { onMount, untrack } from 'svelte';
+import { history, historyField } from "@codemirror/commands";
+import { indentUnit } from "@codemirror/language";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import { EditorView, highlightWhitespace, type KeyBinding } from "@codemirror/view";
+import { onMount, untrack } from "svelte";
 import {
   createWrapExtension,
   getAutocompletionConfig,
   getEditorKeymap,
-} from '$lib/components/editor/codemirror/config';
-import type { ContextMenuCallback } from '$lib/components/editor/codemirror/events';
+} from "$lib/components/editor/codemirror/config";
+import type { ContextMenuCallback } from "$lib/components/editor/codemirror/events";
 import {
   type Compartments,
   createBaseExtensions,
   getTabDirectory,
   markdownExtensions,
   resolveFileLanguage,
-} from '$lib/components/editor/logic/extensions';
-import { setupModifierKeyHandler } from '$lib/components/editor/logic/modifierKeys';
-import { setupSelectionDragScroll } from '$lib/components/editor/logic/selectionScroll';
-import { TabSyncManager } from '$lib/components/editor/logic/tabSync';
-import { createUpdateListener } from '$lib/components/editor/logic/updateListener';
-import type { EditorMetrics } from '$lib/stores/editorMetrics.svelte';
-import { appContext } from '$lib/stores/state.svelte';
-import { restoreScrollByTopLine, ScrollManager } from '$lib/utils/cmScroll';
-import { getActiveEditorView, setActiveEditorView } from '$lib/utils/editorCommands';
-import { newlinePlugin, selectionWhitespacePlugin } from '$lib/utils/editorPlugins';
-import { generateDynamicTheme } from '$lib/utils/editorTheme';
-import { linkPlugin } from '$lib/utils/filePathExtension';
-import { createFoldExtensions } from '$lib/utils/foldExtension';
-import { createImagePasteExtension } from '$lib/utils/imagePaste';
-import type { LineChangeTracker } from '$lib/utils/lineChangeTracker.svelte';
-import { createMarkdownDecorationsPlugin } from '$lib/utils/markdownExtensions';
-import { createMarkdownLinter } from '$lib/utils/markdownLintExtension.svelte';
-import { createRecentChangesHighlighter } from '$lib/utils/recentChangesExtension';
-import { scrollSync } from '$lib/utils/scrollSync.svelte';
-import { searchState, updateSearchEditor } from '$lib/utils/searchManager.svelte';
-import { spellcheckState } from '$lib/utils/spellcheck.svelte';
-import { createSpellCheckLinter } from '$lib/utils/spellcheckExtension.svelte';
-import type { AppEditorView } from '../../../global';
+} from "$lib/components/editor/logic/extensions";
+import { setupModifierKeyHandler } from "$lib/components/editor/logic/modifierKeys";
+import { setupSelectionDragScroll } from "$lib/components/editor/logic/selectionScroll";
+import { TabSyncManager } from "$lib/components/editor/logic/tabSync";
+import { createUpdateListener } from "$lib/components/editor/logic/updateListener";
+import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
+import { appContext } from "$lib/stores/state.svelte";
+import { restoreScrollByTopLine, ScrollManager } from "$lib/utils/cmScroll";
+import { getActiveEditorView, setActiveEditorView } from "$lib/utils/editorCommands";
+import { newlinePlugin, selectionWhitespacePlugin } from "$lib/utils/editorPlugins";
+import { generateDynamicTheme } from "$lib/utils/editorTheme";
+import { linkPlugin } from "$lib/utils/filePathExtension";
+import { createFoldExtensions } from "$lib/utils/foldExtension";
+import { createImagePasteExtension } from "$lib/utils/imagePaste";
+import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
+import { createMarkdownDecorationsPlugin } from "$lib/utils/markdownExtensions";
+import { createMarkdownLinter } from "$lib/utils/markdownLintExtension.svelte";
+import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
+import { scrollSync } from "$lib/utils/scrollSync.svelte";
+import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte";
+import { spellcheckState } from "$lib/utils/spellcheck.svelte";
+import { createSpellCheckLinter } from "$lib/utils/spellcheckExtension.svelte";
+import type { AppEditorView } from "../../../global";
 
 let {
   tabId,
-  initialContent = '',
+  initialContent = "",
   isMarkdown = true,
   isLargeFile = false,
   filePath,
@@ -95,7 +95,7 @@ function setupGutterObserver() {
   gutterObserver?.disconnect();
   const container = editorContainer;
   if (!container) return;
-  const gutterEl = container.querySelector('.cm-gutters');
+  const gutterEl = container.querySelector(".cm-gutters");
   if (gutterEl) {
     gutterObserver = new ResizeObserver(() => {
       onMetricsChange({ gutterWidth: (gutterEl as HTMLElement).offsetWidth });
@@ -156,7 +156,7 @@ $effect(() => {
   const theme = appContext.settings.theme;
   const fontSize = appContext.settings.editorFontSize;
   const fontFamily = appContext.settings.editorFontFamily;
-  view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === 'dark')) });
+  view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === "dark")) });
 });
 
 $effect(() => {
@@ -172,7 +172,7 @@ $effect(() => {
 $effect(() => {
   if (!view) return;
   view.dispatch({
-    effects: comps.indentComp.reconfigure(indentUnit.of(' '.repeat(Math.max(1, appContext.settings.defaultIndent)))),
+    effects: comps.indentComp.reconfigure(indentUnit.of(" ".repeat(Math.max(1, appContext.settings.defaultIndent)))),
   });
 });
 
@@ -225,7 +225,7 @@ $effect(() => {
 $effect(() => {
   if (!view) return;
   const md = effectiveMarkdown;
-  const rendered = appContext.settings.viewMode === 'rendered';
+  const rendered = appContext.settings.viewMode === "rendered";
   view.dispatch({
     effects: comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered, getTabDirectory) : []),
   });
@@ -350,12 +350,12 @@ onMount(() => {
 
   const onWindowFocus = () => {
     viewInstance.focus();
-    window.removeEventListener('focus', onWindowFocus);
+    window.removeEventListener("focus", onWindowFocus);
   };
-  window.addEventListener('focus', onWindowFocus);
+  window.addEventListener("focus", onWindowFocus);
 
   return () => {
-    window.removeEventListener('focus', onWindowFocus);
+    window.removeEventListener("focus", onWindowFocus);
     tabSync.cleanup();
     gutterObserver?.disconnect();
     cleanupModifier();

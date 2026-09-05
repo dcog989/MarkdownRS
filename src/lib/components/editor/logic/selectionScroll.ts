@@ -1,4 +1,4 @@
-import type { EditorView } from '@codemirror/view';
+import type { EditorView } from "@codemirror/view";
 
 export function setupSelectionDragScroll(view: EditorView): () => void {
   let selScrollRAF: number | null = null;
@@ -48,12 +48,12 @@ export function setupSelectionDragScroll(view: EditorView): () => void {
     }
   };
 
-  document.addEventListener('mousemove', handleSelMouseMove);
-  document.addEventListener('mouseup', stopSelScroll);
+  document.addEventListener("mousemove", handleSelMouseMove);
+  document.addEventListener("mouseup", stopSelScroll);
 
   return () => {
-    document.removeEventListener('mousemove', handleSelMouseMove);
-    document.removeEventListener('mouseup', stopSelScroll);
+    document.removeEventListener("mousemove", handleSelMouseMove);
+    document.removeEventListener("mouseup", stopSelScroll);
     stopSelScroll();
   };
 }

@@ -1,10 +1,10 @@
-import { syntaxTree } from '@codemirror/language';
-import type { Range } from '@codemirror/state';
-import { type EditorState, StateField } from '@codemirror/state';
-import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view';
-import { handleWidgetClick } from './editorWidgetClick';
+import { syntaxTree } from "@codemirror/language";
+import type { Range } from "@codemirror/state";
+import { type EditorState, StateField } from "@codemirror/state";
+import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
+import { handleWidgetClick } from "./editorWidgetClick";
 
-export type TableAlignment = 'left' | 'center' | 'right' | 'none';
+export type TableAlignment = "left" | "center" | "right" | "none";
 
 const BLOCKQUOTE_PREFIX = /^\s*>+\s?/;
 const ALIGN_CENTER = /^:.*:$/;
@@ -23,26 +23,26 @@ interface TableCellSpan {
 
 function splitRowWithOffsets(row: string): TableCellSpan[] {
   const cells: TableCellSpan[] = [];
-  let current = '';
+  let current = "";
   let currentStart = 0;
   for (let i = 0; i < row.length; i++) {
     const ch = row[i];
-    if (ch === '\\' && row[i + 1] === '|') {
-      current += '|';
+    if (ch === "\\" && row[i + 1] === "|") {
+      current += "|";
       i += 1;
       continue;
     }
-    if (ch === '|') {
+    if (ch === "|") {
       cells.push({ value: current, start: currentStart });
-      current = '';
+      current = "";
       currentStart = i + 1;
       continue;
     }
     current += ch;
   }
   cells.push({ value: current, start: currentStart });
-  if (cells.length > 0 && cells[0].value.trim() === '') cells.shift();
-  if (cells.length > 0 && cells[cells.length - 1].value.trim() === '') cells.pop();
+  if (cells.length > 0 && cells[0].value.trim() === "") cells.shift();
+  if (cells.length > 0 && cells[cells.length - 1].value.trim() === "") cells.pop();
   return cells.map(({ value, start }) => {
     const trimmed = value.trim();
     return { value: trimmed, start: start + value.indexOf(trimmed) };
@@ -52,19 +52,19 @@ function splitRowWithOffsets(row: string): TableCellSpan[] {
 export function parseAlignment(delimiter: string): TableAlignment[] {
   return splitRow(delimiter).map((cell) => {
     const c = cell.trim();
-    if (ALIGN_CENTER.test(c)) return 'center';
-    if (ALIGN_RIGHT.test(c)) return 'right';
-    if (ALIGN_LEFT.test(c)) return 'left';
-    return 'none';
+    if (ALIGN_CENTER.test(c)) return "center";
+    if (ALIGN_RIGHT.test(c)) return "right";
+    if (ALIGN_LEFT.test(c)) return "left";
+    return "none";
   });
 }
 
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-const PLACEHOLDER_START = '\uE000';
-const PLACEHOLDER_END = '\uE001';
+const PLACEHOLDER_START = "\uE000";
+const PLACEHOLDER_END = "\uE001";
 
 export function renderCell(cell: string): string {
   const codeSpans: string[] = [];
@@ -74,11 +74,11 @@ export function renderCell(cell: string): string {
     return `${PLACEHOLDER_START}${codeSpans.length - 1}${PLACEHOLDER_END}`;
   });
   let html = withCodePlaceholders;
-  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-  html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-  html = html.replace(/\b_([^_\n]+)_\b/g, '<em>$1</em>');
+  html = html.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+  html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+  html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  html = html.replace(/\b_([^_\n]+)_\b/g, "<em>$1</em>");
   html = html.replace(
     /\[([^\]]+)\]\((https?:\/\/[^\s)\]]+)\)/g,
     '<a href="$2" target="_blank" rel="noreferrer">$1</a>',
@@ -88,38 +88,38 @@ export function renderCell(cell: string): string {
   // contain `>` so a lazy match up to the first `&gt;` is safe. Quotes are
   // re-escaped so the URL cannot break out of the href attribute.
   html = html.replace(/&lt;(https?:\/\/.*?)&gt;/g, (_match, url: string) => {
-    const href = url.replace(/"/g, '&quot;');
+    const href = url.replace(/"/g, "&quot;");
     return `<a href="${href}" target="_blank" rel="noreferrer">${url}</a>`;
   });
   html = html.replace(/&lt;([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})&gt;/g, '<a href="mailto:$1">$1</a>');
-  return html.replace(new RegExp(`${PLACEHOLDER_START}(\\d+)${PLACEHOLDER_END}`, 'g'), (_match, index: string) => {
-    return codeSpans[Number(index)] ?? '';
+  return html.replace(new RegExp(`${PLACEHOLDER_START}(\\d+)${PLACEHOLDER_END}`, "g"), (_match, index: string) => {
+    return codeSpans[Number(index)] ?? "";
   });
 }
 
 function alignAttr(alignment: TableAlignment): string {
-  if (alignment === 'none') return '';
+  if (alignment === "none") return "";
   return ` style="text-align:${alignment}"`;
 }
 
 export function renderTable(source: string): string {
-  const rows = source.split('\n').map((row) => row.replace(BLOCKQUOTE_PREFIX, ''));
-  const header = rows[0] ?? '';
-  const delimiter = rows[1] ?? '';
+  const rows = source.split("\n").map((row) => row.replace(BLOCKQUOTE_PREFIX, ""));
+  const header = rows[0] ?? "";
+  const delimiter = rows[1] ?? "";
   const body = rows.slice(2);
   const alignment = parseAlignment(delimiter);
   const headerCells = splitRow(header);
   const headerHtml = headerCells
-    .map((cell, index) => `<th${alignAttr(alignment[index] ?? 'none')}>${renderCell(cell)}</th>`)
-    .join('');
+    .map((cell, index) => `<th${alignAttr(alignment[index] ?? "none")}>${renderCell(cell)}</th>`)
+    .join("");
   const bodyHtml = body
     .map(
       (row) =>
         `<tr>${splitRow(row)
-          .map((cell, index) => `<td${alignAttr(alignment[index] ?? 'none')}>${renderCell(cell)}</td>`)
-          .join('')}</tr>`,
+          .map((cell, index) => `<td${alignAttr(alignment[index] ?? "none")}>${renderCell(cell)}</td>`)
+          .join("")}</tr>`,
     )
-    .join('');
+    .join("");
   return `<table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
 }
 
@@ -141,7 +141,7 @@ function findTableSpans(
       from,
       to,
       enter: (node) => {
-        if (node.name !== 'Table') return;
+        if (node.name !== "Table") return;
         if (cursor >= node.from && cursor <= node.to) return false;
         spans.push({ from: node.from, to: node.to });
         return false;
@@ -189,8 +189,8 @@ class MarkdownTableWidget extends WidgetType {
   }
 
   toDOM(): HTMLElement {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'cm-table-widget';
+    const wrapper = document.createElement("div");
+    wrapper.className = "cm-table-widget";
     wrapper.dataset.from = String(this.from);
     wrapper.dataset.to = String(this.to);
     wrapper.innerHTML = this.html;
@@ -228,7 +228,7 @@ function tableRowToSourcePos(
   cellIndex: number,
 ): number | null {
   const source = view.state.doc.sliceString(from, to);
-  const rows = source.split('\n');
+  const rows = source.split("\n");
   const rawLine = rows[sourceRowIndex];
   if (rawLine == null) return null;
 
@@ -239,7 +239,7 @@ function tableRowToSourcePos(
 
   // The widget strips a blockquote prefix before rendering, so re-add it when
   // mapping the cell offset back to the document.
-  const prefix = BLOCKQUOTE_PREFIX.exec(rawLine)?.[0] ?? '';
+  const prefix = BLOCKQUOTE_PREFIX.exec(rawLine)?.[0] ?? "";
   const contentLine = rawLine.slice(prefix.length);
   const cell = splitRowWithOffsets(contentLine)[cellIndex];
   if (cell == null) return null;
@@ -249,23 +249,23 @@ function tableRowToSourcePos(
 
 export const tableWidgetClickHandler = EditorView.domEventHandlers({
   mousedown: (event, view) =>
-    handleWidgetClick(view, event, '.cm-table-widget', (widget, element) => {
+    handleWidgetClick(view, event, ".cm-table-widget", (widget, element) => {
       const from = Number(widget.dataset.from);
       const to = Number(widget.dataset.to);
       if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
 
-      const cell = element.closest<HTMLElement>('td, th');
+      const cell = element.closest<HTMLElement>("td, th");
 
       let anchor: number | null;
       if (cell) {
-        const row = cell.closest('tr');
-        const table = cell.closest('table');
+        const row = cell.closest("tr");
+        const table = cell.closest("table");
         if (!row || !table) return null;
 
         // The widget renders the header row (source row 0) as thead and the body
         // rows (source rows 2+) as tbody; source row 1 is the delimiter row.
-        const headRows = Array.from(table.querySelectorAll('thead > tr'));
-        const bodyRows = Array.from(table.querySelectorAll('tbody > tr'));
+        const headRows = Array.from(table.querySelectorAll("thead > tr"));
+        const bodyRows = Array.from(table.querySelectorAll("tbody > tr"));
 
         let sourceRowIndex: number;
         if (headRows.includes(row)) {

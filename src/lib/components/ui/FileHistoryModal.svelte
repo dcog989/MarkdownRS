@@ -1,22 +1,22 @@
 <script lang="ts">
-import { ArrowDown, ArrowUp, Clock, History, Trash2, X } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import Modal from '$lib/components/ui/Modal.svelte';
-import ModalSearchHeader from '$lib/components/ui/ModalSearchHeader.svelte';
-import { MODAL_CONSTRAINTS } from '$lib/config/modalSizes';
-import { translate } from '$lib/i18n';
+import { ArrowDown, ArrowUp, Clock, History, Trash2, X } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import Modal from "$lib/components/ui/Modal.svelte";
+import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { translate } from "$lib/i18n";
 import {
   clearFileHistory,
   fileHistoryStore,
   loadFileHistory,
   removeFromFileHistory,
-} from '$lib/stores/fileHistoryStore.svelte';
-import { CONFIG } from '$lib/utils/config';
-import { openFileByPath } from '$lib/utils/fileSystem';
-import { getFilename } from '$lib/utils/fileValidation';
-import { createListNavigation } from '$lib/utils/listNavigation.svelte';
-import { scrollIntoView } from '$lib/utils/modalUtils';
+} from "$lib/stores/fileHistoryStore.svelte";
+import { CONFIG } from "$lib/utils/config";
+import { openFileByPath } from "$lib/utils/fileSystem";
+import { getFilename } from "$lib/utils/fileValidation";
+import { createListNavigation } from "$lib/utils/listNavigation.svelte";
+import { scrollIntoView } from "$lib/utils/modalUtils";
 
 interface Props {
   isOpen: boolean;
@@ -25,15 +25,15 @@ interface Props {
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
-type SortDirection = 'asc' | 'desc';
+type SortDirection = "asc" | "desc";
 
-let searchQuery = $state('');
-let sortDirection = $state<SortDirection>('desc');
+let searchQuery = $state("");
+let sortDirection = $state<SortDirection>("desc");
 let filteredFiles = $derived(
   fileHistoryStore.files.filter((path) => path.toLowerCase().includes(searchQuery.toLowerCase())),
 );
 
-let sortedFiles = $derived(sortDirection === 'asc' ? [...filteredFiles].reverse() : filteredFiles);
+let sortedFiles = $derived(sortDirection === "asc" ? [...filteredFiles].reverse() : filteredFiles);
 
 const nav = createListNavigation(
   () => sortedFiles.length,
@@ -46,7 +46,7 @@ const nav = createListNavigation(
 $effect(() => {
   if (isOpen) {
     loadFileHistory();
-    searchQuery = '';
+    searchQuery = "";
     nav.reset();
   }
 });
@@ -68,13 +68,13 @@ async function handleRemove(path: string, e: MouseEvent) {
 }
 
 async function handleClearAll() {
-  if (confirm(translate('fileHistory.confirmClear'))) {
+  if (confirm(translate("fileHistory.confirmClear"))) {
     await clearFileHistory();
   }
 }
 
 function toggleSortDirection() {
-  sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+  sortDirection = sortDirection === "asc" ? "desc" : "asc";
 }
 </script>
 

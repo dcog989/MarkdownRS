@@ -1,23 +1,23 @@
 <script lang="ts">
-import { Eye, EyeOff, FileText, FolderTree, FoldVertical, Lock, LockOpen, RefreshCw } from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
+import { Eye, EyeOff, FileText, FolderTree, FoldVertical, Lock, LockOpen, RefreshCw } from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
 import {
   collapseAll,
   fileTreeStore,
   refreshTree,
   toggleHiddenFiles,
   toggleMarkdownOnly,
-} from '$lib/stores/fileTreeStore.svelte';
-import { settingsState, toggleFileTree, toggleFileTreeLocked } from '$lib/stores/settingsState.svelte';
-import { saveSettings } from '$lib/utils/settings';
+} from "$lib/stores/fileTreeStore.svelte";
+import { settingsState, toggleFileTree, toggleFileTreeLocked } from "$lib/stores/settingsState.svelte";
+import { saveSettings } from "$lib/utils/settings";
 
 function handleLockToggle() {
   toggleFileTreeLocked();
   if (settingsState.fileTreeLocked) {
     settingsState.fileTreeLockedRoot = fileTreeStore.root;
   } else {
-    settingsState.fileTreeLockedRoot = '';
+    settingsState.fileTreeLockedRoot = "";
   }
   saveSettings();
 }

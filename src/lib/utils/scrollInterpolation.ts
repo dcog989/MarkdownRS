@@ -1,4 +1,4 @@
-import { queryHTMLElements } from './dom';
+import { queryHTMLElements } from "./dom";
 
 export interface LineMapEntry {
   line: number;
@@ -9,11 +9,11 @@ export function buildLineMap(container: HTMLElement, totalLines: number): LineMa
   const containerRect = container.getBoundingClientRect();
   const scrollTop = container.scrollTop;
 
-  const elements = queryHTMLElements(container, '[data-sourcepos]');
+  const elements = queryHTMLElements(container, "[data-sourcepos]");
 
   const rawMap: LineMapEntry[] = [];
   for (const el of elements) {
-    const sourcepos = el.getAttribute('data-sourcepos');
+    const sourcepos = el.getAttribute("data-sourcepos");
     if (!sourcepos) continue;
     const match = sourcepos.match(/^(\d+):\d+-\d+:\d+$/);
     if (!match) continue;
@@ -57,7 +57,7 @@ export function buildLineMap(container: HTMLElement, totalLines: number): LineMa
   return lineMap;
 }
 
-export function interpolate(val: number, inputKey: 'line' | 'y', outputKey: 'line' | 'y', map: LineMapEntry[]): number {
+export function interpolate(val: number, inputKey: "line" | "y", outputKey: "line" | "y", map: LineMapEntry[]): number {
   let lo = 0;
   let hi = map.length - 1;
 

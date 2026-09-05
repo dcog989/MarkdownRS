@@ -1,20 +1,20 @@
-import { get } from 'svelte/store';
-import { _, addMessages, getLocaleFromNavigator, init, locale } from 'svelte-i18n';
-import { en } from './messages/en';
+import { get } from "svelte/store";
+import { _, addMessages, getLocaleFromNavigator, init, locale } from "svelte-i18n";
+import { en } from "./messages/en";
 
 export type MessageKey = DeepKey<typeof en>;
 
-export const SUPPORTED_LOCALES = ['en'] as const;
+export const SUPPORTED_LOCALES = ["en"] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
 // Sentinel value for the locale setting: follow the OS language on each start.
-export const SYSTEM_LOCALE = 'system';
+export const SYSTEM_LOCALE = "system";
 
 export const LOCALE_NAMES: Record<AppLocale, string> = {
-  en: 'English',
+  en: "English",
 };
 
-type DeepKey<T, Prefix extends string = ''> = {
+type DeepKey<T, Prefix extends string = ""> = {
   [K in keyof T & string]: T[K] extends string
     ? `${Prefix}${K}`
     : T[K] extends object
@@ -27,10 +27,10 @@ let initialized = false;
 export function initI18n(preferredLocale: string): void {
   if (initialized) return;
   initialized = true;
-  addMessages('en', en);
+  addMessages("en", en);
   init({
-    fallbackLocale: 'en',
-    initialLocale: 'en',
+    fallbackLocale: "en",
+    initialLocale: "en",
     ignoreTag: true,
   });
   locale.set(resolveLocale(preferredLocale));
@@ -42,12 +42,12 @@ export function detectSystemLocale(): string {
     return detected;
   }
   if (detected) {
-    const base = detected.split('-')[0];
+    const base = detected.split("-")[0];
     if (SUPPORTED_LOCALES.includes(base as AppLocale)) {
       return base;
     }
   }
-  return 'en';
+  return "en";
 }
 
 export function resolveLocale(localeId: string): string {

@@ -1,13 +1,13 @@
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { HighlightStyle, syntaxHighlighting, syntaxTree } from '@codemirror/language';
-import { EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
-import { tags as t } from '@lezer/highlight';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { frontmatterExtension } from './frontmatterExtension';
-import { createMarkdownDecorationsPlugin, matchCalloutLine } from './markdownExtensions';
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { HighlightStyle, syntaxHighlighting, syntaxTree } from "@codemirror/language";
+import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { tags as t } from "@lezer/highlight";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { frontmatterExtension } from "./frontmatterExtension";
+import { createMarkdownDecorationsPlugin, matchCalloutLine } from "./markdownExtensions";
 
-describe('frontmatterExtension', () => {
+describe("frontmatterExtension", () => {
   function parseDoc(doc: string) {
     const state = EditorState.create({
       doc,
@@ -22,55 +22,55 @@ describe('frontmatterExtension', () => {
     return names;
   }
 
-  it('parses a YAML frontmatter block as a single Frontmatter node', () => {
-    const names = parseDoc('---\ntitle: Test\n---\n# Body\n');
-    expect(names).toContain('Frontmatter');
-    expect(names).not.toContain('SetextHeading2');
+  it("parses a YAML frontmatter block as a single Frontmatter node", () => {
+    const names = parseDoc("---\ntitle: Test\n---\n# Body\n");
+    expect(names).toContain("Frontmatter");
+    expect(names).not.toContain("SetextHeading2");
   });
 
-  it('parses TOML and JSON frontmatter blocks', () => {
-    expect(parseDoc('+++\ntitle = "Test"\n+++\n# Body\n')).toContain('Frontmatter');
-    expect(parseDoc(';;;\n{"title": "Test"}\n;;;\n# Body\n')).toContain('Frontmatter');
-    expect(parseDoc('{\n"title": "Test"\n}\n# Body\n')).toContain('Frontmatter');
+  it("parses TOML and JSON frontmatter blocks", () => {
+    expect(parseDoc('+++\ntitle = "Test"\n+++\n# Body\n')).toContain("Frontmatter");
+    expect(parseDoc(';;;\n{"title": "Test"}\n;;;\n# Body\n')).toContain("Frontmatter");
+    expect(parseDoc('{\n"title": "Test"\n}\n# Body\n')).toContain("Frontmatter");
   });
 
-  it('parses pretty-printed JSON frontmatter without closing on the body brace', () => {
+  it("parses pretty-printed JSON frontmatter without closing on the body brace", () => {
     const names = parseDoc(';;;\n{\n  "title": "Test"\n}\n;;;\n# Body\n');
-    expect(names).toContain('Frontmatter');
-    expect(names.filter((n) => n === 'Paragraph').length).toBe(0);
+    expect(names).toContain("Frontmatter");
+    expect(names.filter((n) => n === "Paragraph").length).toBe(0);
   });
 
-  it('does not treat a mid-document --- as frontmatter', () => {
-    const names = parseDoc('Before\n---\nAfter\n');
-    expect(names).not.toContain('Frontmatter');
+  it("does not treat a mid-document --- as frontmatter", () => {
+    const names = parseDoc("Before\n---\nAfter\n");
+    expect(names).not.toContain("Frontmatter");
   });
 });
 
-describe('matchCalloutLine', () => {
-  it('matches a callout marker and reports the marker offset', () => {
-    const m = matchCalloutLine('> [!NOTE] Body text');
-    expect(m).toEqual({ start: 2, raw: '[!NOTE]', kind: 'note' });
+describe("matchCalloutLine", () => {
+  it("matches a callout marker and reports the marker offset", () => {
+    const m = matchCalloutLine("> [!NOTE] Body text");
+    expect(m).toEqual({ start: 2, raw: "[!NOTE]", kind: "note" });
   });
 
-  it('matches markers case-insensitively', () => {
-    expect(matchCalloutLine('> [!important]')?.kind).toBe('important');
-    expect(matchCalloutLine('> [!Caution]')?.kind).toBe('caution');
+  it("matches markers case-insensitively", () => {
+    expect(matchCalloutLine("> [!important]")?.kind).toBe("important");
+    expect(matchCalloutLine("> [!Caution]")?.kind).toBe("caution");
   });
 
-  it('handles indented markers and empty bodies', () => {
-    const m = matchCalloutLine('   > [!TIP]');
+  it("handles indented markers and empty bodies", () => {
+    const m = matchCalloutLine("   > [!TIP]");
     expect(m?.start).toBe(5);
-    expect(m?.kind).toBe('tip');
+    expect(m?.kind).toBe("tip");
   });
 
-  it('rejects non-callout quotes and unsupported types', () => {
-    expect(matchCalloutLine('> regular quote')).toBeNull();
-    expect(matchCalloutLine('> [!CUSTOM]')).toBeNull();
-    expect(matchCalloutLine('plain text')).toBeNull();
+  it("rejects non-callout quotes and unsupported types", () => {
+    expect(matchCalloutLine("> regular quote")).toBeNull();
+    expect(matchCalloutLine("> [!CUSTOM]")).toBeNull();
+    expect(matchCalloutLine("plain text")).toBeNull();
   });
 
-  it('rejects markers not at the start of the line', () => {
-    expect(matchCalloutLine('text > [!NOTE]')).toBeNull();
+  it("rejects markers not at the start of the line", () => {
+    expect(matchCalloutLine("text > [!NOTE]")).toBeNull();
   });
 });
 
@@ -91,12 +91,12 @@ function restoreLayout() {
   Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
 }
 
-const highlightStyle = HighlightStyle.define([{ tag: t.quote, class: 'cm-blockquote' }]);
+const highlightStyle = HighlightStyle.define([{ tag: t.quote, class: "cm-blockquote" }]);
 
 function createCalloutView(doc: string, rendered: boolean, cursorPos?: number) {
-  const parent = document.createElement('div');
-  parent.style.width = '800px';
-  parent.style.height = '600px';
+  const parent = document.createElement("div");
+  parent.style.width = "800px";
+  parent.style.height = "600px";
   document.body.appendChild(parent);
   const state = EditorState.create({
     doc,
@@ -104,123 +104,123 @@ function createCalloutView(doc: string, rendered: boolean, cursorPos?: number) {
     extensions: [
       markdown({ base: markdownLanguage, extensions: frontmatterExtension }),
       syntaxHighlighting(highlightStyle),
-      createMarkdownDecorationsPlugin(rendered, () => ''),
+      createMarkdownDecorationsPlugin(rendered, () => ""),
     ],
   });
   return { view: new EditorView({ state, parent }), parent };
 }
 
-describe('callout decorations', () => {
+describe("callout decorations", () => {
   beforeEach(mockLayout);
   afterEach(() => {
     restoreLayout();
-    document.body.innerHTML = '';
+    document.body.innerHTML = "";
   });
 
-  it('colors the marker span in raw mode', async () => {
-    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', false);
+  it("colors the marker span in raw mode", async () => {
+    const { view, parent } = createCalloutView("> [!NOTE] Some text\n> more\n", false);
     await new Promise((r) => setTimeout(r, 50));
-    const line = parent.querySelector('.cm-line');
-    expect(line?.className).toContain('cm-callout cm-callout-note');
-    expect(parent.querySelector('.cm-callout-marker .cm-blockquote')?.textContent).toBe('[!NOTE]');
+    const line = parent.querySelector(".cm-line");
+    expect(line?.className).toContain("cm-callout cm-callout-note");
+    expect(parent.querySelector(".cm-callout-marker .cm-blockquote")?.textContent).toBe("[!NOTE]");
     view.destroy();
   });
 
-  it('keeps raw-mode callout colored while the cursor is inside it', async () => {
-    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', false, 8);
+  it("keeps raw-mode callout colored while the cursor is inside it", async () => {
+    const { view, parent } = createCalloutView("> [!NOTE] Some text\n> more\n", false, 8);
     await new Promise((r) => setTimeout(r, 50));
-    expect(parent.querySelector('.cm-callout-marker')).not.toBeNull();
-    expect(parent.querySelector('.cm-line')?.className).toContain('cm-callout cm-callout-note');
+    expect(parent.querySelector(".cm-callout-marker")).not.toBeNull();
+    expect(parent.querySelector(".cm-line")?.className).toContain("cm-callout cm-callout-note");
     view.destroy();
   });
 
-  it('renders the title widget in rendered mode', async () => {
-    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', true);
+  it("renders the title widget in rendered mode", async () => {
+    const { view, parent } = createCalloutView("> [!NOTE] Some text\n> more\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(parent.querySelector('.cm-callout-title-text')?.textContent).toBe('Note');
-    expect(parent.querySelector('.cm-line')?.className).toContain('cm-callout cm-callout-note');
+    expect(parent.querySelector(".cm-callout-title-text")?.textContent).toBe("Note");
+    expect(parent.querySelector(".cm-line")?.className).toContain("cm-callout cm-callout-note");
     view.destroy();
   });
 
-  it('shows the editable marker text in rendered mode while the cursor is inside', async () => {
-    const { view, parent } = createCalloutView('> [!NOTE] Some text\n> more\n', true, 8);
+  it("shows the editable marker text in rendered mode while the cursor is inside", async () => {
+    const { view, parent } = createCalloutView("> [!NOTE] Some text\n> more\n", true, 8);
     await new Promise((r) => setTimeout(r, 50));
-    const marker = parent.querySelector('.cm-callout-marker');
+    const marker = parent.querySelector(".cm-callout-marker");
     expect(marker).not.toBeNull();
-    expect(marker?.textContent).toContain('[!NOTE]');
+    expect(marker?.textContent).toContain("[!NOTE]");
     view.destroy();
   });
 });
 
-describe('inline marker reveal', () => {
+describe("inline marker reveal", () => {
   beforeEach(mockLayout);
   afterEach(() => {
     restoreLayout();
-    document.body.innerHTML = '';
+    document.body.innerHTML = "";
   });
 
-  it('reveals raw markers when the caret is immediately after the construct', async () => {
-    const { view, parent } = createCalloutView('*Italics* and more\n', true, 9);
+  it("reveals raw markers when the caret is immediately after the construct", async () => {
+    const { view, parent } = createCalloutView("*Italics* and more\n", true, 9);
     await new Promise((r) => setTimeout(r, 50));
-    const line = parent.querySelector('.cm-line');
-    expect(line?.textContent).toContain('*Italics*');
+    const line = parent.querySelector(".cm-line");
+    expect(line?.textContent).toContain("*Italics*");
     view.destroy();
   });
 
-  it('reveals raw markers when the caret is immediately before the construct', async () => {
-    const { view, parent } = createCalloutView('*Italics* and more\n', true, 0);
+  it("reveals raw markers when the caret is immediately before the construct", async () => {
+    const { view, parent } = createCalloutView("*Italics* and more\n", true, 0);
     await new Promise((r) => setTimeout(r, 50));
-    const line = parent.querySelector('.cm-line');
-    expect(line?.textContent).toContain('*Italics*');
+    const line = parent.querySelector(".cm-line");
+    expect(line?.textContent).toContain("*Italics*");
     view.destroy();
   });
 
-  it('masks markers when the caret is past the construct', async () => {
-    const { view, parent } = createCalloutView('*Italics* and more\n', true, 10);
+  it("masks markers when the caret is past the construct", async () => {
+    const { view, parent } = createCalloutView("*Italics* and more\n", true, 10);
     await new Promise((r) => setTimeout(r, 50));
-    const line = parent.querySelector('.cm-line');
-    expect(line?.textContent).not.toContain('*');
-    expect(line?.textContent).toContain('Italics and more');
+    const line = parent.querySelector(".cm-line");
+    expect(line?.textContent).not.toContain("*");
+    expect(line?.textContent).toContain("Italics and more");
     view.destroy();
   });
 });
 
-describe('horizontal rule decorations', () => {
+describe("horizontal rule decorations", () => {
   beforeEach(mockLayout);
   afterEach(() => {
     restoreLayout();
-    document.body.innerHTML = '';
+    document.body.innerHTML = "";
   });
 
   function lineWithText(parent: HTMLElement, text: string): Element | undefined {
-    return Array.from(parent.querySelectorAll('.cm-line')).find((l) => l.textContent === text);
+    return Array.from(parent.querySelectorAll(".cm-line")).find((l) => l.textContent === text);
   }
 
-  it('masks a real horizontal rule outside a code block', async () => {
-    const { view, parent } = createCalloutView('Before\n\n---\nAfter\n', true);
+  it("masks a real horizontal rule outside a code block", async () => {
+    const { view, parent } = createCalloutView("Before\n\n---\nAfter\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).not.toBeNull();
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).not.toBeNull();
     view.destroy();
   });
 
-  it('does not treat a setext heading underline as a horizontal rule', async () => {
-    const { view, parent } = createCalloutView('Title\n---\nBody\n', true);
+  it("does not treat a setext heading underline as a horizontal rule", async () => {
+    const { view, parent } = createCalloutView("Title\n---\nBody\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(parent.querySelector('.cm-hr')).toBeNull();
+    expect(parent.querySelector(".cm-hr")).toBeNull();
     view.destroy();
   });
 
-  it('does not mask a --- line inside a fenced code block', async () => {
-    const { view, parent } = createCalloutView('```\n---\n```\n', true);
+  it("does not mask a --- line inside a fenced code block", async () => {
+    const { view, parent } = createCalloutView("```\n---\n```\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).toBeNull();
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).toBeNull();
     view.destroy();
   });
 
-  it('does not mask frontmatter delimiters as horizontal rules', async () => {
-    const { view, parent } = createCalloutView('---\ntitle: Test\n---\n\n# Body\n', true);
+  it("does not mask frontmatter delimiters as horizontal rules", async () => {
+    const { view, parent } = createCalloutView("---\ntitle: Test\n---\n\n# Body\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(lineWithText(parent, '---')?.querySelector('.cm-hr')).toBeNull();
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).toBeNull();
     view.destroy();
   });
 });

@@ -1,14 +1,14 @@
 ﻿<script lang="ts">
-import type { Snippet } from 'svelte';
-import { fade } from 'svelte/transition';
-import { CONFIG } from '$lib/utils/config';
+import type { Snippet } from "svelte";
+import { fade } from "svelte/transition";
+import { CONFIG } from "$lib/utils/config";
 
 let {
   x,
   y,
   isVisible,
   children,
-  className = 'break-words w-max',
+  className = "break-words w-max",
 } = $props<{
   x: number;
   y: number;

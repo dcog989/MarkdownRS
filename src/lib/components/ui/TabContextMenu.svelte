@@ -17,12 +17,12 @@ import {
   Trash2,
   Undo2,
   X,
-} from 'lucide-svelte';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import ContextMenu from '$lib/components/ui/ContextMenu.svelte';
-import Submenu from '$lib/components/ui/Submenu.svelte';
-import { TabContextMenuLogic } from './tabContextMenuLogic.svelte';
+} from "lucide-svelte";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
+import Submenu from "$lib/components/ui/Submenu.svelte";
+import { TabContextMenuLogic } from "./tabContextMenuLogic.svelte";
 
 let { tabId, x, y, onClose } = $props<{
   tabId: string;

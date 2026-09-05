@@ -1,6 +1,6 @@
-import type { Range } from '@codemirror/state';
-import { Decoration, EditorView, WidgetType } from '@codemirror/view';
-import { handleWidgetClick } from './editorWidgetClick';
+import type { Range } from "@codemirror/state";
+import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { handleWidgetClick } from "./editorWidgetClick";
 
 export class ImageWidget extends WidgetType {
   constructor(
@@ -20,12 +20,12 @@ export class ImageWidget extends WidgetType {
   }
 
   toDOM(): HTMLElement {
-    const img = document.createElement('img');
-    img.className = 'cm-image-widget';
+    const img = document.createElement("img");
+    img.className = "cm-image-widget";
     img.dataset.from = String(this.from);
     img.src = this.src;
-    img.alt = this.alt || '';
-    img.loading = 'lazy';
+    img.alt = this.alt || "";
+    img.loading = "lazy";
     img.draggable = false;
     return img;
   }
@@ -37,7 +37,7 @@ export function imageWidgetDecoration(from: number, to: number, src: string, alt
 
 export const imageWidgetClickHandler = EditorView.domEventHandlers({
   mousedown: (event, view) =>
-    handleWidgetClick(view, event, '.cm-image-widget', (img) => {
+    handleWidgetClick(view, event, ".cm-image-widget", (img) => {
       const from = Number(img.dataset.from);
       return Number.isFinite(from) ? from : null;
     }),

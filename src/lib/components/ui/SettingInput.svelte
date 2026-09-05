@@ -1,14 +1,14 @@
 <script lang="ts">
-import { open } from '@tauri-apps/plugin-dialog';
-import { _ } from 'svelte-i18n';
-import { tooltip } from '$lib/actions/tooltip';
-import { translate } from '$lib/i18n';
-import { appContext } from '$lib/stores/state.svelte';
-import { MARKDOWN_EXTENSIONS } from '$lib/utils/fileValidation';
-import type { SettingDef } from '$lib/utils/settingsDefinitions';
-import { elideMiddle } from '$lib/utils/textElide';
-import DictionarySelector from './DictionarySelector.svelte';
-import Input from './Input.svelte';
+import { open } from "@tauri-apps/plugin-dialog";
+import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
+import { translate } from "$lib/i18n";
+import { appContext } from "$lib/stores/state.svelte";
+import { MARKDOWN_EXTENSIONS } from "$lib/utils/fileValidation";
+import type { SettingDef } from "$lib/utils/settingsDefinitions";
+import { elideMiddle } from "$lib/utils/textElide";
+import DictionarySelector from "./DictionarySelector.svelte";
+import Input from "./Input.svelte";
 
 let {
   setting,
@@ -26,34 +26,34 @@ let {
   onToggleContextMenu?: (enable: boolean) => void;
 } = $props();
 
-let path = $derived(value ? String(value) : '');
+let path = $derived(value ? String(value) : "");
 let pathContainer = $state<HTMLDivElement>();
 let pathSpan = $state<HTMLSpanElement>();
-let displayPath = $state($_('settings.noTemplateSelected'));
+let displayPath = $state($_("settings.noTemplateSelected"));
 let tooltipText = $derived(setting.tooltip ? translate(setting.tooltip) : null);
-let resolvedDefaultAccent = $state('#000000');
+let resolvedDefaultAccent = $state("#000000");
 
 $effect(() => {
-  if (setting.type !== 'color') return;
+  if (setting.type !== "color") return;
   void appContext.settings.theme;
   void appContext.settings.activeTheme;
-  const brand = getComputedStyle(document.documentElement).getPropertyValue('--color-brand-accent').trim();
-  resolvedDefaultAccent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand) ? brand.toLowerCase() : '#7c5a73';
+  const brand = getComputedStyle(document.documentElement).getPropertyValue("--color-brand-accent").trim();
+  resolvedDefaultAccent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand) ? brand.toLowerCase() : "#7c5a73";
 });
 
 function measureCharWidth(el: HTMLElement): number {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
   if (!ctx) return 0;
   ctx.font = getComputedStyle(el).font;
-  return ctx.measureText('M').width;
+  return ctx.measureText("M").width;
 }
 
 function fitPathToWidth() {
   const span = pathSpan;
   if (!span) return;
   if (!path) {
-    displayPath = $_('settings.noTemplateSelected');
+    displayPath = $_("settings.noTemplateSelected");
     return;
   }
   const available = span.clientWidth;
@@ -66,7 +66,7 @@ function fitPathToWidth() {
 let resizeObserver: ResizeObserver | undefined;
 
 $effect(() => {
-  if (setting.type !== 'file') return;
+  if (setting.type !== "file") return;
   const container = pathContainer;
   if (!container) return;
   resizeObserver ??= new ResizeObserver(() => fitPathToWidth());
@@ -78,7 +78,7 @@ $effect(() => {
 });
 
 $effect(() => {
-  if (setting.type !== 'file') return;
+  if (setting.type !== "file") return;
   fitPathToWidth();
 });
 </script>
