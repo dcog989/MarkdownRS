@@ -1,4 +1,4 @@
-import { bench, describe } from "vitest";
+import { describe, test } from "vitest";
 import { renderTable } from "./markdownTableWidget";
 
 const SMALL_TABLE = "| Name | Price |\n| --- | ---: |\n| A | 1.5 |\n| B | 2.5 |\n";
@@ -9,11 +9,11 @@ const BODY_ROWS = Array.from(
 const LARGE_TABLE = `| A | B | C |\n| --- | --- | --- |\n${BODY_ROWS}\n`;
 
 describe("renderTable", () => {
-  bench("small table (2 body rows)", () => {
-    renderTable(SMALL_TABLE);
+  test("small table (2 body rows)", async ({ bench }) => {
+    bench("renderTable", () => renderTable(SMALL_TABLE));
   });
 
-  bench("large table (100 body rows with emphasis)", () => {
-    renderTable(LARGE_TABLE);
+  test("large table (100 body rows with emphasis)", async ({ bench }) => {
+    bench("renderTable", () => renderTable(LARGE_TABLE));
   });
 });

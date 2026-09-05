@@ -1,4 +1,4 @@
-import { bench, describe } from "vitest";
+import { describe, test } from "vitest";
 import { hashContent } from "./contentHash";
 
 const SHORT_DOC = "# Title\n\nSome **bold** text with a [link](https://example.com).\n";
@@ -8,15 +8,15 @@ const LONG_DOC =
 const HUGE_DOC = LONG_DOC.repeat(50);
 
 describe("hashContent", () => {
-  bench("short doc (~80 chars)", () => {
-    hashContent(SHORT_DOC);
+  test("short doc (~80 chars)", async ({ bench }) => {
+    bench("hashContent", () => hashContent(SHORT_DOC));
   });
 
-  bench("long doc (~90 KB)", () => {
-    hashContent(LONG_DOC);
+  test("long doc (~90 KB)", async ({ bench }) => {
+    bench("hashContent", () => hashContent(LONG_DOC));
   });
 
-  bench("huge doc (~4.5 MB)", () => {
-    hashContent(HUGE_DOC);
+  test("huge doc (~4.5 MB)", async ({ bench }) => {
+    bench("hashContent", () => hashContent(HUGE_DOC));
   });
 });

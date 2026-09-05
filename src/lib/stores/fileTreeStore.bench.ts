@@ -1,4 +1,4 @@
-import { bench, describe } from "vitest";
+import { describe, test } from "vitest";
 import type { FileEntry } from "$lib/types/api";
 import { fileTreeStore } from "./fileTreeStore.svelte";
 import { computeTreeRows } from "./treeViewStore.svelte";
@@ -41,13 +41,13 @@ function seedTree(dirsPerLevel: number, depth: number): void {
 }
 
 describe("computeTreeRows", () => {
-  bench("wide tree (2 levels x 200 dirs)", () => {
+  test("wide tree (2 levels x 200 dirs)", async ({ bench }) => {
     seedTree(200, 2);
-    computeTreeRows();
+    bench("computeTreeRows", () => computeTreeRows());
   });
 
-  bench("deep tree (4 levels x 10 dirs)", () => {
+  test("deep tree (4 levels x 10 dirs)", async ({ bench }) => {
     seedTree(10, 4);
-    computeTreeRows();
+    bench("computeTreeRows", () => computeTreeRows());
   });
 });

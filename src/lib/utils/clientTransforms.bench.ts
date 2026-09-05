@@ -1,4 +1,4 @@
-import { bench, describe } from "vitest";
+import { describe, test } from "vitest";
 import { toSnakeCase, toTitleCase } from "./clientTransforms/case";
 import { removeDuplicates, reverseLines, sortLines } from "./clientTransforms/lines";
 import { increaseHeading, toggleBlockquote } from "./clientTransforms/markdown";
@@ -11,35 +11,35 @@ const DOC_LINES = Array.from(
 const DOC = DOC_LINES.join("\n\n");
 
 describe("text transforms (500-section document)", () => {
-  bench("toSnakeCase", () => {
-    toSnakeCase(DOC);
+  test("toSnakeCase", async ({ bench }) => {
+    bench("toSnakeCase", () => toSnakeCase(DOC));
   });
 
-  bench("toTitleCase", () => {
-    toTitleCase(DOC);
+  test("toTitleCase", async ({ bench }) => {
+    bench("toTitleCase", () => toTitleCase(DOC));
   });
 
-  bench("sortLines ascending", () => {
-    sortLines(DOC, "asc");
+  test("sortLines ascending", async ({ bench }) => {
+    bench("sortLines ascending", () => sortLines(DOC, "asc"));
   });
 
-  bench("reverseLines", () => {
-    reverseLines(DOC);
+  test("reverseLines", async ({ bench }) => {
+    bench("reverseLines", () => reverseLines(DOC));
   });
 
-  bench("removeDuplicates", () => {
-    removeDuplicates(DOC);
+  test("removeDuplicates", async ({ bench }) => {
+    bench("removeDuplicates", () => removeDuplicates(DOC));
   });
 
-  bench("toggleBlockquote", () => {
-    toggleBlockquote(DOC);
+  test("toggleBlockquote", async ({ bench }) => {
+    bench("toggleBlockquote", () => toggleBlockquote(DOC));
   });
 
-  bench("increaseHeading", () => {
-    increaseHeading(DOC);
+  test("increaseHeading", async ({ bench }) => {
+    bench("increaseHeading", () => increaseHeading(DOC));
   });
 
-  bench("smartParagraphs", () => {
-    smartParagraphs(DOC);
+  test("smartParagraphs", async ({ bench }) => {
+    bench("smartParagraphs", () => smartParagraphs(DOC));
   });
 });
