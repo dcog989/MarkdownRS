@@ -3111,7 +3111,6 @@ checksum = "a88cf1f829d945f548cf8fec32c61b1f202b6d93b45848602fc02af4b12ad218"
 dependencies = [
  "futures-channel",
  "futures-core",
- "futures-executor",
  "futures-io",
  "futures-sink",
  "futures-task",
@@ -5024,16 +5023,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "memory-stats"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c73f5c649995a115e1a0220b35e4df0a1294500477f97a91d0660fb5abeb574a"
-dependencies = [
- "libc",
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "metal"
 version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6792,11 +6781,10 @@ dependencies = [
 
 [[package]]
 name = "rumdl"
-version = "0.2.52"
+version = "0.2.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e85cd265428a0b54dd61b36c5ba10548a88016b184460dcb7318998ecf24fde"
+checksum = "dc9bd963bd87b1e8c6fa973a57fd576e765ed5ce1ce447e6d8eb0b8bf620f62e"
 dependencies = [
- "anyhow",
  "blake3",
  "chrono",
  "clap",
@@ -6807,16 +6795,13 @@ dependencies = [
  "env_logger",
  "etcetera",
  "fancy-regex 0.17.0",
- "futures",
  "globset",
  "ignore",
  "indexmap 2.14.0",
  "libc",
  "log",
- "memory-stats",
  "mimalloc",
  "notify",
- "phf 0.13.1",
  "postcard",
  "pulldown-cmark",
  "rayon",
@@ -6833,6 +6818,7 @@ dependencies = [
  "tower-lsp",
  "unicode-normalization",
  "unicode-width",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
