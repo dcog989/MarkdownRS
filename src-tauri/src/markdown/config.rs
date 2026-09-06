@@ -74,7 +74,6 @@ impl MarkdownFlavor {
                 Self::CommonMark => Extension::default(),
                 Self::Gfm => Extension {
                     strikethrough: true,
-                    tagfilter: true,
                     table: true,
                     autolink: true,
                     tasklist: true,
