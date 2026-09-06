@@ -144,19 +144,26 @@ const handleShiftTab = (view: EditorView) => {
     const line = state.doc.line(i);
     const lineText = line.text;
 
+    // A leading tab is one full indent unit
+    if (lineText.startsWith("\t")) {
+      changes.push({ from: line.from, to: line.from + 1, insert: "" });
+      continue;
+    }
+
     // Check if line starts with the indent string
     if (lineText.startsWith(indentStr)) {
       changes.push({ from: line.from, to: line.from + indentLen, insert: "" });
-    } else {
-      // Remove as many leading spaces as possible (up to indentLen)
-      let removeCount = 0;
-      for (let j = 0; j < Math.min(indentLen, lineText.length); j++) {
-        if (lineText[j] === " ") removeCount++;
-        else break;
-      }
-      if (removeCount > 0) {
-        changes.push({ from: line.from, to: line.from + removeCount, insert: "" });
-      }
+      continue;
+    }
+
+    // Remove as many leading spaces as possible (up to indentLen)
+    let removeCount = 0;
+    for (let j = 0; j < Math.min(indentLen, lineText.length); j++) {
+      if (lineText[j] === " ") removeCount++;
+      else break;
+    }
+    if (removeCount > 0) {
+      changes.push({ from: line.from, to: line.from + removeCount, insert: "" });
     }
   }
 
