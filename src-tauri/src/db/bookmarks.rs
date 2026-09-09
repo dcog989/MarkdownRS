@@ -88,7 +88,7 @@ impl BookmarkStore {
         Ok(())
     }
 
-    pub fn delete_orphan_bookmarks(&self) -> Result<usize> {
+    pub fn delete_orphan_bookmarks(&self) -> Result<Vec<String>> {
         let conn = lock_conn!(self);
         crate::db::delete_orphans(&conn, "bookmarks", "id")
     }

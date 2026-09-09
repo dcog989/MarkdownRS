@@ -18,11 +18,13 @@ pub use session::{SessionData, SessionStore, TabData, TabState};
 
 /// Removes rows whose `path` column no longer exists on disk.
 /// `id_column` is the column used to identify rows for deletion (e.g. `id` or `path`).
+/// Returns the paths of the deleted rows (may contain duplicates when several
+/// rows share one path).
 fn delete_orphans(
     conn: &rusqlite::Connection,
     table_name: &str,
     id_column: &str,
-) -> anyhow::Result<usize> {
+) -> anyhow::Result<Vec<String>> {
     let select_sql = format!("SELECT {}, path FROM {}", id_column, table_name);
     let entries: Vec<(String, String)> = {
         let mut stmt = conn.prepare(&select_sql)?;
@@ -30,17 +32,16 @@ fn delete_orphans(
             .collect::<rusqlite::Result<Vec<(String, String)>>>()?
     };
 
-    let dead_ids: Vec<&str> = entries
-        .iter()
+    let dead: Vec<(String, String)> = entries
+        .into_iter()
         .filter(|(_, path)| !std::path::Path::new(path).exists())
-        .map(|(id, _)| id.as_str())
         .collect();
 
-    if dead_ids.is_empty() {
-        return Ok(0);
+    if dead.is_empty() {
+        return Ok(Vec::new());
     }
 
-    let placeholders = (1..=dead_ids.len())
+    let placeholders = (1..=dead.len())
         .map(|i| format!("?{}", i))
         .collect::<Vec<_>>()
         .join(",");
@@ -48,11 +49,11 @@ fn delete_orphans(
         "DELETE FROM {} WHERE {} IN ({})",
         table_name, id_column, placeholders
     );
-    let params: Vec<&dyn rusqlite::types::ToSql> = dead_ids
+    let params: Vec<&dyn rusqlite::types::ToSql> = dead
         .iter()
-        .map(|id| id as &dyn rusqlite::types::ToSql)
+        .map(|(id, _)| id as &dyn rusqlite::types::ToSql)
         .collect();
     conn.execute(&sql, params.as_slice())?;
 
-    Ok(dead_ids.len())
+    Ok(dead.into_iter().map(|(_, path)| path).collect())
 }

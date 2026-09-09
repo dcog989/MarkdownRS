@@ -49,3 +49,8 @@ export async function clearFileHistory() {
     ignore: true,
   });
 }
+
+export function pruneFileHistory(paths: string[]) {
+  const removed = new Set(paths);
+  fileHistoryStore.files = fileHistoryStore.files.filter((f) => !removed.has(f));
+}

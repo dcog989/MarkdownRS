@@ -5,6 +5,8 @@ import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { translate } from "$lib/i18n";
+import { pruneBookmarks } from "$lib/stores/bookmarkStore.svelte";
+import { pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { AppError } from "$lib/utils/errorHandling";
@@ -108,8 +110,11 @@ async function deleteOrphans() {
   if (busy) return;
   busy = true;
   try {
-    const count = await callBackend("delete_orphan_files", {}, "Data:DeleteOrphans");
-    showToast("success", translate("data.removedOrphans", { values: { count } }));
+    const deletedPaths = await callBackend("delete_orphan_files", {}, "Data:DeleteOrphans");
+    if (!deletedPaths) return;
+    pruneFileHistory(deletedPaths);
+    pruneBookmarks(deletedPaths);
+    showToast("success", translate("data.removedOrphans", { values: { count: deletedPaths.length } }));
   } catch (err) {
     AppError.handle("Data:DeleteOrphans", err, { showToast: true });
   } finally {

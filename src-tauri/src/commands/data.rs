@@ -58,18 +58,21 @@ pub async fn import_file_history(
 }
 
 #[tauri::command]
-pub async fn delete_orphan_files(state: State<'_, AppState>) -> Result<usize, String> {
+pub async fn delete_orphan_files(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     let db = state.db.clone();
     run_blocking("delete orphan files", move || {
-        let history = db
+        let mut paths = db
             .file_history()
             .delete_orphan_file_history()
             .map_err(|e| handle_error(Some("file history"), "delete orphan file history", e))?;
-        let bookmarks = db
-            .bookmarks()
-            .delete_orphan_bookmarks()
-            .map_err(|e| handle_error(Some("bookmarks"), "delete orphan bookmarks", e))?;
-        Ok(history + bookmarks)
+        paths.extend(
+            db.bookmarks()
+                .delete_orphan_bookmarks()
+                .map_err(|e| handle_error(Some("bookmarks"), "delete orphan bookmarks", e))?,
+        );
+        paths.sort();
+        paths.dedup();
+        Ok(paths)
     })
     .await
 }

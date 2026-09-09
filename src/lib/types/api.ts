@@ -332,7 +332,7 @@ export interface BackendCommands {
   };
   delete_orphan_files: {
     args: Record<string, never>;
-    return: number;
+    return: string[];
   };
 
   // Window

@@ -55,6 +55,11 @@ export async function deleteBookmark(id: string) {
   await callBackend("delete_bookmark", { id }, "Bookmark:Remove", undefined, { report: true });
 }
 
+export function pruneBookmarks(paths: string[]) {
+  const removed = new Set(paths);
+  bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => !removed.has(b.path));
+}
+
 export async function updateBookmark(id: string, title: string, tags: string[], path?: string) {
   const index = bookmarkStore.bookmarks.findIndex((b) => b.id === id);
   if (index === -1) return;
