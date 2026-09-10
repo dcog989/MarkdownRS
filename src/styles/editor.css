@@ -492,10 +492,13 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
 }
 
 .rendered-mode .cm-table-widget code {
-  font-family: var(--font-mono);
-  background-color: var(--editor-surface-active);
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
+  font-family: monospace;
+  font-variant-ligatures: none;
+  background-color: var(--editor-code-bg);
+  color: var(--editor-code-fg);
+  border-radius: 0.25rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .rendered-mode .cm-table-widget a {
