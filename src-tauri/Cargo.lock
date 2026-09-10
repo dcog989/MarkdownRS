@@ -5030,7 +5030,7 @@ dependencies = [
 
 [[package]]
 name = "markdown-rs"
-version = "1.60.3"
+version = "1.60.4"
 dependencies = [
  "anyhow",
  "chardetng",

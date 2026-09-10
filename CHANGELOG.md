@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.60.4 - 2026-09-10
+
+#### Bug Fixes
+
+- (0ba45be) style code blocks and horizontal rules in raw mode, keep headings plain - dcog989
+
+- (dc1e12b) sync file history and bookmark stores after deleting orphans - dcog989
+
+- (9f3f268) drop deprecated comrak tagfilter option - dcog989
+
+- (154426d) dedent tab-indented lines with shift+tab - dcog989
+- - -
+
 ## v1.60.3 - 2026-09-05
 
 #### Bug Fixes
