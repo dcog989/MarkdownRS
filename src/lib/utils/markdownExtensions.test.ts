@@ -223,4 +223,39 @@ describe("horizontal rule decorations", () => {
     expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).toBeNull();
     view.destroy();
   });
+
+  it("styles a horizontal rule in raw mode", async () => {
+    const { view, parent } = createCalloutView("Before\n\n---\nAfter\n", false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).not.toBeNull();
+    view.destroy();
+  });
+
+  it("does not style a setext heading underline as a horizontal rule in raw mode", async () => {
+    const { view, parent } = createCalloutView("Title\n---\nBody\n", false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-hr")).toBeNull();
+    view.destroy();
+  });
+
+  it("does not style a --- line inside a fenced code block as a horizontal rule in raw mode", async () => {
+    const { view, parent } = createCalloutView("```\n---\n```\n", false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).toBeNull();
+    view.destroy();
+  });
+
+  it("does not style frontmatter delimiters as horizontal rules in raw mode", async () => {
+    const { view, parent } = createCalloutView("---\ntitle: Test\n---\n\n# Body\n", false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-hr")).toBeNull();
+    view.destroy();
+  });
+
+  it("styles fenced code block lines in raw mode", async () => {
+    const { view, parent } = createCalloutView("```js\nconst x = 1;\n```\n", false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-line.cm-code-block")).not.toBeNull();
+    view.destroy();
+  });
 });

@@ -436,6 +436,7 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
 .raw-mode .cm-h5,
 .raw-mode .cm-h6 {
   font-size: 1em;
+  font-weight: normal;
 }
 
 .raw-mode .cm-blockquote-quote {
@@ -447,22 +448,6 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
   background: none;
   padding-top: 0;
   padding-bottom: 0;
-}
-
-.raw-mode .cm-hr {
-  color: inherit;
-  font-weight: inherit;
-  padding: 0;
-}
-
-.raw-mode .cm-hr::after {
-  display: none;
-}
-
-.raw-mode .cm-code,
-.raw-mode .cm-code-block {
-  background: none;
-  color: inherit;
 }
 
 .raw-mode .cm-emphasis {

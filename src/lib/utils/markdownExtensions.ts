@@ -687,6 +687,14 @@ function collectHorizontalRule(walk: DecorationWalk, line: Line): void {
   walk.ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
 }
 
+/** Raw mode shows the literal `---`, so the rule is always painted un-masked. */
+function collectRawHorizontalRule(walk: DecorationWalk, line: Line): void {
+  if (isVisibleInCodeBlock(walk.tree, line.from)) return;
+  if (!walk.parserHrs.has(line.from) && line.text.trim() !== "---") return;
+  if (isSetextUnderline(walk.tree, line.from)) return;
+  walk.ranges.push(horizontalRuleDeco.range(line.from, line.to));
+}
+
 function collectCalloutDecorations(walk: DecorationWalk): void {
   for (const m of walk.calloutMarkers) {
     if (m.active) {
@@ -712,6 +720,74 @@ function collectRawCalloutDecorations(view: EditorView, callouts: CalloutInfo, r
 }
 
 /**
+ * Raw mode paints the bare minimum of block structure — callout accents, code
+ * block line backgrounds, and horizontal rules — so source stays recognizable
+ * while remaining fully literal and WYSIWYG-free. Inline constructs rely on
+ * syntax highlighting alone.
+ */
+function buildRawDecorations(
+  view: EditorView,
+  tree: ReturnType<typeof syntaxTree>,
+  callouts: CalloutInfo,
+  ranges: Range<Decoration>[],
+): void {
+  collectRawCalloutDecorations(view, callouts, ranges);
+
+  const walk: DecorationWalk = {
+    view,
+    tree,
+    ranges,
+    getTabDirectory: () => "",
+    calloutMarkers: callouts.markers,
+    calloutLines: callouts.lines,
+    tableSpans: [],
+    cursorHeadingLines: new Set<number>(),
+    tableLines: new Set<number>(),
+    frontmatterLines: new Set<number>(),
+    codeBlockLines: new Set<number>(),
+    parserHrs: new Set<number>(),
+    blockquoteLines: new Set<number>(),
+  };
+
+  for (const { from, to } of view.visibleRanges) {
+    tree.iterate({
+      from,
+      to,
+      enter: (node) => {
+        switch (node.name) {
+          case "Frontmatter":
+            collectFrontmatterLines(walk, node);
+            return true;
+          case "FencedCode":
+            collectCodeBlockLines(walk, node, from, to);
+            return true;
+          case "HorizontalRule":
+            walk.parserHrs.add(node.from);
+            return false;
+        }
+      },
+    });
+  }
+
+  for (const { from, to } of view.visibleRanges) {
+    for (let pos = from; pos <= to; ) {
+      const line = view.state.doc.lineAt(pos);
+      if (walk.frontmatterLines.has(line.number)) {
+        pos = line.to + 1;
+        continue;
+      }
+      if (walk.codeBlockLines.has(line.number)) {
+        walk.ranges.push(codeBlockLineDeco.range(line.from));
+        pos = line.to + 1;
+        continue;
+      }
+      collectRawHorizontalRule(walk, line);
+      pos = line.to + 1;
+    }
+  }
+}
+
+/**
  * Single-pass decoration builder: one syntax-tree walk collects block-level
  * spans and inline widgets, one line walk paints line/word decorations. Each
  * construct lives in its own collector so the passes stay readable without
@@ -722,7 +798,7 @@ function buildDecorations(view: EditorView, rendered: boolean, getTabDirectory: 
   const ranges: Range<Decoration>[] = [];
 
   if (!rendered) {
-    collectRawCalloutDecorations(view, callouts, ranges);
+    buildRawDecorations(view, syntaxTree(view.state), callouts, ranges);
     return Decoration.set(ranges, true);
   }
 
