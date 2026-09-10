@@ -60,7 +60,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tauri-apps/cli": "^2.11.4",
     "@testing-library/svelte": "^5.4.2",
-    "@types/node": "^26.5.0",
+    "@types/node": "^26.5.1",
     "@vitest/coverage-v8": "^5.0.0",
     "jsdom": "^30.0.1",
     "lefthook": "^2.1.12",
