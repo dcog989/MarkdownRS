@@ -6,14 +6,6 @@ name = "markdown-rs"
 version = "1.60.4"
 license = "GPL-3.0-only"
 
-[build-dependencies]
-tauri-build = { version = "2.6", features = [] }
-
-[features]
-default = ["pdf-export", "spellcheck"]
-pdf-export = ["dep:pdf_oxide"]
-spellcheck = ["dep:reqwest"]
-
 [dependencies]
 anyhow = "1.0"
 chardetng = "1.0"
@@ -33,7 +25,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 spellbook = "0.4"
 strum = { version = "0.28.0", features = ["derive"] }
-tauri = { version = "2.11", features = ["protocol-asset", "devtools"] }
+tauri = { version = "2.11", features = ["devtools", "protocol-asset"] }
 tauri-plugin-clipboard-manager = "2.3"
 tauri-plugin-dialog = "2.7"
 tauri-plugin-fs = { version = "2.5", features = ["watch"] }
@@ -44,11 +36,17 @@ tauri-plugin-single-instance = "2.4"
 tauri-plugin-store = "2.4"
 tauri-plugin-updater = "2.11"
 tauri-plugin-window-state = "2.4"
-tokio = { version = "1", features = ["sync", "fs", "io-util"] }
+tokio = { version = "1", features = ["fs", "io-util", "sync"] }
 toml = "1.1"
 trash = "5.2"
 unicode-segmentation = "1.13"
 uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+
+[build-dependencies]
+tauri-build = { version = "2.6", features = [] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18"
@@ -57,11 +55,13 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.56"
 
-[dev-dependencies]
-tokio = { version = "1", features = ["macros", "rt"] }
+[features]
+default = ["pdf-export", "spellcheck"]
+pdf-export = ["dep:pdf_oxide"]
+spellcheck = ["dep:reqwest"]
 
 [profile.release]
-codegen-units = 1
+strip = true
 lto = "thin"
 panic = "abort"
-strip = true
+codegen-units = 1
