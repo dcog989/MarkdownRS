@@ -87,8 +87,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         {:else}
           <Bookmark size={14} class="opacity-70" />
           <span class="flex-1">{$_('tabContextMenu.addBookmark')}</span>
-          {#if ctx.sc('markdown.bookmark')}
-            <span class="ml-auto text-xs opacity-40">{ctx.sc('markdown.bookmark')}</span>
+          {#if ctx.sc('file.addBookmark')}
+            <span class="ml-auto text-xs opacity-40">{ctx.sc('file.addBookmark')}</span>
           {/if}
         {/if}
       </button>
@@ -196,8 +196,8 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       >
         <History size={14} class="opacity-70" />
         <span class="flex-1">{$_('tabContextMenu.reopenLastClosed')}</span>
-        {#if ctx.sc('edit.reopenClosedTab')}
-          <span class="ml-auto text-xs opacity-40">{ctx.sc('edit.reopenClosedTab')}</span>
+        {#if ctx.sc('file.reopenClosedTab')}
+          <span class="ml-auto text-xs opacity-40">{ctx.sc('file.reopenClosedTab')}</span>
         {/if}
       </button>
     </div>
