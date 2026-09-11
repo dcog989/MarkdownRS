@@ -27,10 +27,7 @@ pub(crate) fn parse_headings(content: &str, flavor: config::MarkdownFlavor) -> V
     extract_headings_from_ast(root, &mut Anchorizer::new())
 }
 
-pub(crate) fn extract_headings_from_ast<'a>(
-    root: &'a AstNode<'a>,
-    anchorizer: &mut Anchorizer,
-) -> Vec<HeadingEntry> {
+pub(crate) fn extract_headings_from_ast<'a>(root: &'a AstNode<'a>, anchorizer: &mut Anchorizer) -> Vec<HeadingEntry> {
     root.descendants()
         .filter_map(|node| {
             if let NodeValue::Heading(heading) = &node.data.borrow().value {

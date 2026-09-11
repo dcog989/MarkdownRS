@@ -3,8 +3,8 @@ use std::path::{Component, Path};
 const MAX_PARENT_DIRS: usize = 3;
 
 const RESERVED_NAMES: &[&str] = &[
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
+    "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ];
 
 pub fn validate_path(path: &str) -> Result<(), String> {
@@ -62,14 +62,8 @@ mod tests {
 
     #[test]
     fn rejects_windows_reserved_names_case_insensitively() {
-        for name in [
-            "CON", "con.txt", "CON.md", "NUL", "PRN", "AUX", "COM1", "LPT1",
-        ] {
-            assert!(
-                validate_path(name).is_err(),
-                "expected '{}' to be rejected",
-                name
-            );
+        for name in ["CON", "con.txt", "CON.md", "NUL", "PRN", "AUX", "COM1", "LPT1"] {
+            assert!(validate_path(name).is_err(), "expected '{}' to be rejected", name);
         }
     }
 

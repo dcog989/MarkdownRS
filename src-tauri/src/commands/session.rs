@@ -22,9 +22,7 @@ pub async fn save_session(
     }
     log::info!("  Tabs with content to save: {}", tabs_with_content);
 
-    closed_tabs
-        .iter_mut()
-        .for_each(|tab| tab.normalize_newlines());
+    closed_tabs.iter_mut().for_each(|tab| tab.normalize_newlines());
 
     let active_len = active_tabs.len();
     let closed_len = closed_tabs.len();
@@ -74,11 +72,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
     });
 
     if let Ok(ref session) = result {
-        let tabs_with_content = session
-            .active_tabs
-            .iter()
-            .filter(|t| t.content.is_some())
-            .count();
+        let tabs_with_content = session.active_tabs.iter().filter(|t| t.content.is_some()).count();
         log::info!(
             "[Storage] restore_session | duration={:?} | active_tabs={} | closed_tabs={} | with_content={}",
             duration,
@@ -92,10 +86,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
 }
 
 #[tauri::command]
-pub async fn load_tab_content(
-    state: State<'_, AppState>,
-    tab_id: String,
-) -> Result<TabData, String> {
+pub async fn load_tab_content(state: State<'_, AppState>, tab_id: String) -> Result<TabData, String> {
     let db = state.db.clone();
     let tab_id_clone = tab_id.clone();
     let (result, duration) = crate::timed!({
@@ -129,10 +120,7 @@ pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
     .await?;
 
     if freelist_count > 0 {
-        log::info!(
-            "Vacuuming database: {} free pages to reclaim",
-            freelist_count
-        );
+        log::info!("Vacuuming database: {} free pages to reclaim", freelist_count);
         let db2 = state.db.clone();
         run_blocking("vacuum database", move || {
             db2.incremental_vacuum(100)

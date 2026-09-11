@@ -14,15 +14,12 @@ pub struct AppPaths {
     pub dict_path: PathBuf,
 }
 
-pub fn resolve_app_paths(
-    app_handle: &tauri::AppHandle,
-) -> Result<AppPaths, Box<dyn std::error::Error>> {
+pub fn resolve_app_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, Box<dyn std::error::Error>> {
     let local_dir = app_handle
         .path()
         .app_local_data_dir()
         .map_err(|e| format!("Failed to get local data dir: {}", e))?;
-    let config_dir = utils::app_config_dir(app_handle)
-        .map_err(|e| format!("Failed to get app config dir: {}", e))?;
+    let config_dir = utils::app_config_dir(app_handle).map_err(|e| format!("Failed to get app config dir: {}", e))?;
     Ok(AppPaths {
         db_dir: config_dir.join("Database"),
         log_dir: local_dir.join("Logs"),

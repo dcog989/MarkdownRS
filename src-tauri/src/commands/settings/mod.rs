@@ -26,10 +26,7 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
 }
 
 #[tauri::command]
-pub async fn get_theme_css(
-    app_handle: tauri::AppHandle,
-    theme_name: String,
-) -> Result<String, String> {
+pub async fn get_theme_css(app_handle: tauri::AppHandle, theme_name: String) -> Result<String, String> {
     let css = if let Some(css) = themes::default_css(&theme_name) {
         css.to_string()
     } else {
@@ -47,8 +44,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
 
     let toml_val = parse_settings_toml(&content)?;
 
-    let json_val = serde_json::to_value(toml_val)
-        .map_err(|e| handle_error(None, "convert settings to JSON", e))?;
+    let json_val = serde_json::to_value(toml_val).map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
         let mut pr = state.project_root.lock_or_recover();
@@ -62,10 +58,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
 }
 
 #[tauri::command]
-pub async fn save_settings(
-    app_handle: tauri::AppHandle,
-    settings: serde_json::Value,
-) -> Result<(), String> {
+pub async fn save_settings(app_handle: tauri::AppHandle, settings: serde_json::Value) -> Result<(), String> {
     let config_dir = app_config_path(&app_handle)?;
     let path = config_dir.join("settings.toml");
 
@@ -88,9 +81,7 @@ pub async fn save_settings(
     io::write_settings_file(&path, &settings).await?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
-        state
-            .max_file_size_bytes
-            .store(MAX_FILE_SIZE_UNSET, Ordering::Relaxed);
+        state.max_file_size_bytes.store(MAX_FILE_SIZE_UNSET, Ordering::Relaxed);
 
         let mut pr = state.project_root.lock_or_recover();
         *pr = settings

@@ -30,10 +30,7 @@ pub fn migrate_data_dir_if_needed() {}
 /// Migrate persistent data from old `.local/share` to `.config`.
 pub fn migrate_to_config(local_dir: &Path, config_dir: &Path) {
     for (old, new) in [
-        (
-            local_dir.join("settings.toml"),
-            config_dir.join("settings.toml"),
-        ),
+        (local_dir.join("settings.toml"), config_dir.join("settings.toml")),
         (
             local_dir.join("custom-spelling.dic"),
             config_dir.join("custom-spelling.dic"),

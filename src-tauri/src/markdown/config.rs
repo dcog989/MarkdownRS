@@ -199,8 +199,7 @@ fn user_config_path() -> Option<PathBuf> {
 /// Discover the rumdl config path for a given file directory and project root,
 /// falling back to user-level config if no project config is found.
 pub fn discover_config_path(file_dir: &Path, project_root: &Path) -> Option<PathBuf> {
-    SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root)
-        .or_else(discover_user_config_path)
+    SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root).or_else(discover_user_config_path)
 }
 
 /// Scope of the rumdl config file being edited.
@@ -266,10 +265,7 @@ fn user_config_default_target(project_root: Option<&Path>) -> PathBuf {
 ///
 /// Unlike `resolve_config_target`, this never invents a path to create; it
 /// reports the config the linter actually loaded (project or user fallback).
-pub fn loaded_config_path(
-    file_path: Option<&Path>,
-    project_root: Option<&Path>,
-) -> Option<PathBuf> {
+pub fn loaded_config_path(file_path: Option<&Path>, project_root: Option<&Path>) -> Option<PathBuf> {
     match file_path {
         Some(fp) => {
             let file_dir = fp.parent().unwrap_or_else(|| Path::new(""));
@@ -285,11 +281,7 @@ pub fn loaded_config_path(
 /// Parses and validates the content exactly as the linter would, using a
 /// temporary file co-located with the target so relative `extends` paths
 /// resolve identically. The temp file is removed before returning.
-pub fn validate_config_content(
-    content: &str,
-    project_root: &Path,
-    target: &Path,
-) -> Result<(), String> {
+pub fn validate_config_content(content: &str, project_root: &Path, target: &Path) -> Result<(), String> {
     let dir = target
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -330,8 +322,7 @@ pub fn load_rules_for_file(file_path: Option<&Path>, project_root: Option<&Path>
 
 pub fn load_rumdl_rules(file_dir: &Path, project_root: &Path) -> RulesResult {
     let candidate_path =
-        SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root)
-            .or_else(user_config_path);
+        SourcedConfig::<ConfigLoaded>::discover_config_for_dir(file_dir, project_root).or_else(user_config_path);
     load_cached_rules(candidate_path, project_root)
 }
 

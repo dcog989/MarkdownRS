@@ -16,10 +16,7 @@ pub fn init(db_path: PathBuf, db_dir: &Path) -> Result<Database, String> {
 
                 if let Err(io_err) = fs::rename(&db_path, &backup_path) {
                     log::error!("Failed to rename corrupted database: {}", io_err);
-                    return Err(format!(
-                        "Database corruption detected. Failed to backup: {}",
-                        io_err
-                    ));
+                    return Err(format!("Database corruption detected. Failed to backup: {}", io_err));
                 }
                 log::info!("Corrupted database moved to {:?}", backup_path);
             }

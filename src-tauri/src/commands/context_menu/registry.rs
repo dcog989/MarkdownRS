@@ -3,19 +3,13 @@ use winreg::enums::*;
 
 fn get_exe_info() -> Result<(String, String), String> {
     let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
-    let exe_str = exe_path
-        .to_str()
-        .ok_or("Invalid executable path")?
-        .to_string();
+    let exe_str = exe_path.to_str().ok_or("Invalid executable path")?.to_string();
     let exe_name = exe_path
         .file_name()
         .and_then(|n| n.to_str())
         .map(|s| s.to_string())
         .unwrap_or_else(|| {
-            log::warn!(
-                "Could not determine exe filename from {:?}, using fallback",
-                exe_path
-            );
+            log::warn!("Could not determine exe filename from {:?}, using fallback", exe_path);
             "markdown-rs.exe".to_string()
         });
     Ok((exe_str, exe_name))
@@ -69,9 +63,7 @@ pub fn set_context_menu() -> Result<(), String> {
             log::warn!("Failed to set FriendlyAppName: {}", e);
         }
 
-        let (types_key, _) = app_key
-            .create_subkey("SupportedTypes")
-            .map_err(|e| e.to_string())?;
+        let (types_key, _) = app_key.create_subkey("SupportedTypes").map_err(|e| e.to_string())?;
         for ext in &[".md", ".markdown", ".txt"] {
             if let Err(e) = types_key.set_value(ext, &"") {
                 log::warn!("Failed to set SupportedTypes for {}: {}", ext, e);
@@ -120,27 +112,15 @@ pub fn remove_context_menu() -> Result<(), String> {
     let mut delete_with_tracking = |path: &str, description: &str| {
         if let Err(e) = hkcu.delete_subkey_all(path) {
             if e.kind() != std::io::ErrorKind::NotFound && e.raw_os_error() != Some(2) {
-                log::warn!(
-                    "Failed to delete registry key '{}': {} - {}",
-                    path,
-                    description,
-                    e
-                );
+                log::warn!("Failed to delete registry key '{}': {} - {}", path, description, e);
                 errors.push(format!("{}: {}", description, e));
             }
         } else {
-            log::debug!(
-                "Successfully deleted registry key: {} - {}",
-                path,
-                description
-            );
+            log::debug!("Successfully deleted registry key: {} - {}", path, description);
         }
     };
 
-    delete_with_tracking(
-        r"Software\Classes\*\shell\MarkdownRS",
-        "Classic context menu",
-    );
+    delete_with_tracking(r"Software\Classes\*\shell\MarkdownRS", "Classic context menu");
 
     let app_path = format!(r"Software\Classes\Applications\{}", exe_name);
     delete_with_tracking(&app_path, "Application registration");

@@ -100,11 +100,7 @@ mod tests {
         assert_eq!(result.headings[0].text, "x^2");
         assert_eq!(result.headings[0].anchor_id, "x2");
         assert_eq!(result.headings[1].anchor_id, "some-heading");
-        assert!(
-            result.html.contains(r#"<h1 id="x2""#),
-            "html was: {}",
-            result.html
-        );
+        assert!(result.html.contains(r#"<h1 id="x2""#), "html was: {}", result.html);
         assert!(
             result.html.contains(r#"<h2 id="some-heading""#),
             "html was: {}",
@@ -181,10 +177,7 @@ mod tests {
         // The outer `}` must be part of the frontmatter, not a stray paragraph.
         let html = render_gfm("{\n\"author\": {\n\"name\": \"x\"\n}\n}\n\n# Body\n");
         assert!(!html.contains("author"), "html was: {html}");
-        assert!(
-            !html.contains("}</p>"),
-            "stray closing brace leaked: {html}"
-        );
+        assert!(!html.contains("}</p>"), "stray closing brace leaked: {html}");
         assert!(html.contains("<h1"));
         assert!(html.contains("Body"));
     }
@@ -194,10 +187,7 @@ mod tests {
         // The frontmatter block occupies lines 1-3; the body heading must map
         // back to line 5 in the editor for scroll sync.
         let html = render_gfm("---\ntitle: Test\n---\n\n# Body\n");
-        assert!(
-            html.contains(r#"data-sourcepos="5:1-5:6""#),
-            "html was: {html}"
-        );
+        assert!(html.contains(r#"data-sourcepos="5:1-5:6""#), "html was: {html}");
     }
 
     #[test]

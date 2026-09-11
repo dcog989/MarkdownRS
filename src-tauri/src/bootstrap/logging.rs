@@ -21,9 +21,7 @@ fn read_log_level_from_settings(config_path: &std::path::Path) -> String {
 fn parse_log_level(level: &str) -> LevelFilter {
     match level {
         s if s.eq_ignore_ascii_case("error") => LevelFilter::Error,
-        s if s.eq_ignore_ascii_case("warn") || s.eq_ignore_ascii_case("warning") => {
-            LevelFilter::Warn
-        },
+        s if s.eq_ignore_ascii_case("warn") || s.eq_ignore_ascii_case("warning") => LevelFilter::Warn,
         s if s.eq_ignore_ascii_case("info") => LevelFilter::Info,
         s if s.eq_ignore_ascii_case("trace") => LevelFilter::Trace,
         s if s.eq_ignore_ascii_case("off") => LevelFilter::Off,

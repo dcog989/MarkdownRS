@@ -23,8 +23,7 @@ fn sort_entries(a: &FileEntry, b: &FileEntry) -> std::cmp::Ordering {
 
 pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntry>, String> {
     validate_path(path)?;
-    let entries =
-        std::fs::read_dir(path).map_err(|e| handle_error(Some(path), "read directory", e))?;
+    let entries = std::fs::read_dir(path).map_err(|e| handle_error(Some(path), "read directory", e))?;
 
     let mut result = Vec::new();
     for entry in entries {
@@ -42,9 +41,7 @@ pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntr
         let metadata = entry.metadata().ok();
         let is_dir = metadata.as_ref().map(|m| m.is_dir()).unwrap_or(false);
         let size = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
-        let modified = metadata
-            .as_ref()
-            .and_then(|m| format_system_time(m.modified()));
+        let modified = metadata.as_ref().and_then(|m| format_system_time(m.modified()));
 
         result.push(FileEntry {
             name,
@@ -98,9 +95,7 @@ pub fn get_directory_mtime_sync(path: &str) -> Result<Option<u64>, String> {
 pub async fn get_directory_mtime(path: String) -> Result<Option<u64>, String> {
     let (result, duration) = crate::timed!({
         let path_for_task = path.clone();
-        run_blocking("stat directory", move || {
-            get_directory_mtime_sync(&path_for_task)
-        })
+        run_blocking("stat directory", move || get_directory_mtime_sync(&path_for_task))
     });
     let mtime = result.await?;
 
@@ -194,10 +189,7 @@ mod tests {
 
         let file = dir.join("f.txt");
         fs::write(&file, "x").unwrap();
-        assert_eq!(
-            get_directory_mtime_sync(&file.to_string_lossy()).unwrap(),
-            None
-        );
+        assert_eq!(get_directory_mtime_sync(&file.to_string_lossy()).unwrap(), None);
         fs::remove_dir_all(&dir).unwrap();
     }
 

@@ -72,10 +72,7 @@ fn ensure_tab_columns(tx: &rusqlite::Transaction, table: &str) -> Result<()> {
             continue;
         }
         log::info!("Adding missing column {} to {}", col.name, table);
-        tx.execute_batch(&format!(
-            "ALTER TABLE {table} ADD COLUMN {} {};",
-            col.name, col.ddl
-        ))?;
+        tx.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {} {};", col.name, col.ddl))?;
     }
     Ok(())
 }
@@ -98,10 +95,7 @@ mod tests {
         let mut conn = Connection::open_in_memory().unwrap();
         setup_schema(&mut conn).unwrap();
 
-        let expected: Vec<String> = schema::TAB_COLUMNS
-            .iter()
-            .map(|c| c.name.to_string())
-            .collect();
+        let expected: Vec<String> = schema::TAB_COLUMNS.iter().map(|c| c.name.to_string()).collect();
         for table in ["tabs", "closed_tabs"] {
             assert_eq!(
                 table_columns(&conn, table),
@@ -118,10 +112,7 @@ mod tests {
         setup_schema(&mut conn).unwrap();
         setup_schema(&mut conn).unwrap();
 
-        let expected: Vec<String> = schema::TAB_COLUMNS
-            .iter()
-            .map(|c| c.name.to_string())
-            .collect();
+        let expected: Vec<String> = schema::TAB_COLUMNS.iter().map(|c| c.name.to_string()).collect();
         for table in ["tabs", "closed_tabs"] {
             assert_eq!(table_columns(&conn, table), expected);
         }
@@ -134,8 +125,7 @@ mod tests {
         // add it back.
         let mut conn = Connection::open_in_memory().unwrap();
         setup_schema(&mut conn).unwrap();
-        conn.execute_batch("ALTER TABLE tabs DROP COLUMN line_ending")
-            .unwrap();
+        conn.execute_batch("ALTER TABLE tabs DROP COLUMN line_ending").unwrap();
         conn.execute_batch("ALTER TABLE closed_tabs DROP COLUMN line_ending")
             .unwrap();
 
@@ -143,10 +133,7 @@ mod tests {
 
         // ALTER TABLE ADD COLUMN appends columns at the end, so the physical
         // order after a re-add differs from TAB_COLUMNS; compare as sets.
-        let mut expected: Vec<String> = schema::TAB_COLUMNS
-            .iter()
-            .map(|c| c.name.to_string())
-            .collect();
+        let mut expected: Vec<String> = schema::TAB_COLUMNS.iter().map(|c| c.name.to_string()).collect();
         for table in ["tabs", "closed_tabs"] {
             let mut actual = table_columns(&conn, table);
             actual.sort();

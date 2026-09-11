@@ -7,8 +7,7 @@ static TOC_START_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<!--\s*toc\s*-->").expect("Invalid TOC_START_RE"));
 static TOC_END_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<!--\s*(?:tocstop|/toc)\s*-->").expect("Invalid TOC_END_RE"));
-static H1_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?m)^#[\t ].*$").expect("Invalid H1_RE"));
+static H1_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^#[\t ].*$").expect("Invalid H1_RE"));
 
 /// Per-line view of `content` (split on `\n`) with fenced-code tracking.
 /// `fenced[i]` is true when line `i` lies inside a fenced code block, so TOC
@@ -102,10 +101,7 @@ fn generate_toc_markdown(entries: &[HeadingEntry]) -> String {
     let mut lines: Vec<String> = Vec::new();
     for entry in entries {
         let indent = "  ".repeat((entry.level as usize).saturating_sub(1));
-        lines.push(format!(
-            "{}- [{}](#{})",
-            indent, entry.text, entry.anchor_id
-        ));
+        lines.push(format!("{}- [{}](#{})", indent, entry.text, entry.anchor_id));
     }
     lines.join("\n")
 }
@@ -130,13 +126,8 @@ fn find_after_first_h1(content: &str, lines: &LineMap) -> usize {
 }
 
 /// First match of `re` that lies on a non-fenced line.
-fn find_marker_on_line<'a>(
-    content: &'a str,
-    lines: &LineMap,
-    re: &Regex,
-) -> Option<regex::Match<'a>> {
-    re.find_iter(content)
-        .find(|m| !lines.fenced[lines.line_at(m.start())])
+fn find_marker_on_line<'a>(content: &'a str, lines: &LineMap, re: &Regex) -> Option<regex::Match<'a>> {
+    re.find_iter(content).find(|m| !lines.fenced[lines.line_at(m.start())])
 }
 
 /// First match of `re` at or after `from` that lies on a non-fenced line.
@@ -166,10 +157,7 @@ fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
                 None => {
                     let before = &content[..start_match.end()];
                     let after = &content[start_match.end()..].trim_start_matches(['\n', '\r']);
-                    format!(
-                        "{}\n\n{}\n\n<!-- tocstop -->\n\n{}",
-                        before, toc_markdown, after
-                    )
+                    format!("{}\n\n{}\n\n<!-- tocstop -->\n\n{}", before, toc_markdown, after)
                 },
             }
         },
@@ -236,10 +224,7 @@ pub fn generate_document_toc(content: &str) -> String {
 /// Like [`generate_document_toc`], but reuses headings provided by the caller
 /// (typically the `headings` already produced by `render_markdown`) instead of
 /// re-parsing the document. Falls back to a full parse when `headings` is `None`.
-pub fn generate_document_toc_with_headings(
-    content: &str,
-    headings: Option<Vec<HeadingEntry>>,
-) -> String {
+pub fn generate_document_toc_with_headings(content: &str, headings: Option<Vec<HeadingEntry>>) -> String {
     match headings {
         Some(entries) => insert_toc_around_frontmatter(content, |body| insert_toc(body, &entries)),
         None => generate_document_toc(content),
@@ -264,8 +249,7 @@ mod tests {
 
     #[test]
     fn inserts_toc_after_the_first_h1() {
-        let content =
-            "# Main Title\n\nIntro text.\n\n## Section One\n\nBody.\n\n## Section Two\n\nMore.";
+        let content = "# Main Title\n\nIntro text.\n\n## Section One\n\nBody.\n\n## Section Two\n\nMore.";
         let result = generate_document_toc(content);
 
         assert!(result.contains("<!-- toc -->"));
@@ -277,8 +261,7 @@ mod tests {
 
     #[test]
     fn replaces_an_existing_toc_region() {
-        let content =
-            "# Title\n\n<!-- toc -->\n\n- [Stale](#stale)\n\n<!-- tocstop -->\n\n## Real\n\nBody.";
+        let content = "# Title\n\n<!-- toc -->\n\n- [Stale](#stale)\n\n<!-- tocstop -->\n\n## Real\n\nBody.";
         let result = generate_document_toc(content);
 
         assert!(!result.contains("Stale"));
@@ -347,8 +330,7 @@ mod tests {
         // The fenced markers are code, not TOC markers: a fresh region is
         // inserted after the first real heading.
         assert!(
-            result
-                .starts_with("```\n<!-- toc -->\n<!-- tocstop -->\n```\n\n# Title\n\n<!-- toc -->"),
+            result.starts_with("```\n<!-- toc -->\n<!-- tocstop -->\n```\n\n# Title\n\n<!-- toc -->"),
             "html was: {result}"
         );
         assert_eq!(result.matches("<!-- toc -->").count(), 2);
@@ -381,10 +363,7 @@ mod tests {
     #[test]
     fn empty_headings_return_content_unchanged() {
         let content = "# Title\n\nBody.";
-        assert_eq!(
-            generate_document_toc_with_headings(content, Some(vec![])),
-            content
-        );
+        assert_eq!(generate_document_toc_with_headings(content, Some(vec![])), content);
         assert_eq!(
             generate_document_toc_with_headings(content, None),
             generate_document_toc(content)

@@ -86,10 +86,7 @@ impl LineIndex {
 
     fn position_of(&self, char_offset: usize) -> (usize, usize) {
         let line_index = self.line_starts.partition_point(|&s| s <= char_offset) - 1;
-        (
-            line_index + 1,
-            char_offset - self.line_starts[line_index] + 1,
-        )
+        (line_index + 1, char_offset - self.line_starts[line_index] + 1)
     }
 }
 
@@ -108,8 +105,7 @@ fn build_config(overrides: &HashMap<String, bool>) -> FlatConfig {
 }
 
 fn build_group(overrides: &HashMap<String, bool>) -> LintGroup {
-    LintGroup::new_curated(FstDictionary::curated(), Dialect::American)
-        .with_lint_config(build_config(overrides))
+    LintGroup::new_curated(FstDictionary::curated(), Dialect::American).with_lint_config(build_config(overrides))
 }
 
 fn map_lint(line_index: &LineIndex, rule_name: &str, lint: &Lint) -> Option<LintDiagnostic> {

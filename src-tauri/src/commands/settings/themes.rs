@@ -14,13 +14,9 @@ struct CachedTheme {
 /// for deleted/renamed themes never linger indefinitely.
 const MAX_CACHED_THEMES: usize = 32;
 
-static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
-const SHARED_EDITOR_CSS: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../src/styles/themes/_editor.css"
-));
+const SHARED_EDITOR_CSS: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/_editor.css"));
 
 pub fn wrap_theme_css(css: &str) -> String {
     let mut result = String::with_capacity(SHARED_EDITOR_CSS.len() + css.len() + 2);
@@ -91,13 +87,9 @@ pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result
     // so different spellings of the same theme share a single entry.
     let cache_key = theme_path.to_string_lossy().into_owned();
 
-    let metadata = fs::metadata(&theme_path).await.map_err(|e| {
-        handle_error(
-            Some(&theme_path.to_string_lossy()),
-            "read theme metadata",
-            e,
-        )
-    })?;
+    let metadata = fs::metadata(&theme_path)
+        .await
+        .map_err(|e| handle_error(Some(&theme_path.to_string_lossy()), "read theme metadata", e))?;
     let file_mtime = metadata
         .modified()
         .map_err(|e| handle_error(Some(&theme_path.to_string_lossy()), "get file mtime", e))?;

@@ -6,8 +6,7 @@ pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> 
     crate::utils::validate_path(&path)?;
 
     let (pdf_size, duration) = crate::timed!({
-        let mut pdf =
-            Pdf::from_markdown(&content).map_err(|e| format!("Failed to create PDF: {}", e))?;
+        let mut pdf = Pdf::from_markdown(&content).map_err(|e| format!("Failed to create PDF: {}", e))?;
         let pdf_bytes = pdf
             .to_bytes()
             .map_err(|e| format!("Failed to generate PDF bytes: {}", e))?;

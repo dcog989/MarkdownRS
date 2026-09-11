@@ -1,7 +1,5 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{
-    decode_text, encode_text, format_system_time, handle_error, run_blocking, validate_path,
-};
+use crate::utils::{decode_text, encode_text, format_system_time, handle_error, run_blocking, validate_path};
 use encoding_rs::Encoding;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -33,10 +31,7 @@ pub struct WriteFileResult {
 }
 
 #[tauri::command]
-pub async fn read_text_file(
-    path: String,
-    app_handle: tauri::AppHandle,
-) -> Result<FileContent, String> {
+pub async fn read_text_file(path: String, app_handle: tauri::AppHandle) -> Result<FileContent, String> {
     let (result, duration) = crate::timed!({
         validate_path(&path)?;
         let metadata = fs::metadata(&path)
@@ -51,11 +46,7 @@ pub async fn read_text_file(
         let max_file_size = get_max_file_size_bytes(&app_handle).await;
 
         if metadata.len() > max_file_size {
-            log::warn!(
-                "File too large to read: {} ({} MB)",
-                path,
-                bytes_to_mb(metadata.len())
-            );
+            log::warn!("File too large to read: {} ({} MB)", path, bytes_to_mb(metadata.len()));
             return Err(format!(
                 "File too large: {} MB (max {} MB)",
                 bytes_to_mb(metadata.len()),
@@ -107,23 +98,22 @@ pub async fn write_text_file(
                 .ok_or_else(|| format!("Unsupported encoding '{}'", encoding_name))?;
             let requested_bom = has_bom.unwrap_or(false);
 
-            let (bytes, written_encoding, written_has_bom) =
-                match encode_text(&content, encoding, requested_bom) {
-                    Ok(bytes) => (bytes, encoding.name().to_string(), requested_bom),
-                    Err(()) => {
-                        // The edited content holds characters the original
-                        // encoding cannot represent (e.g. an emoji pasted into
-                        // a windows-1252 file); re-encoding would silently
-                        // corrupt them, so fall back to UTF-8 without a BOM and
-                        // report it so the tab's encoding stays truthful.
-                        log::warn!(
-                            "Content not representable in {}, falling back to UTF-8: {}",
-                            encoding.name(),
-                            path
-                        );
-                        (content.as_bytes().to_vec(), "UTF-8".to_string(), false)
-                    },
-                };
+            let (bytes, written_encoding, written_has_bom) = match encode_text(&content, encoding, requested_bom) {
+                Ok(bytes) => (bytes, encoding.name().to_string(), requested_bom),
+                Err(()) => {
+                    // The edited content holds characters the original
+                    // encoding cannot represent (e.g. an emoji pasted into
+                    // a windows-1252 file); re-encoding would silently
+                    // corrupt them, so fall back to UTF-8 without a BOM and
+                    // report it so the tab's encoding stays truthful.
+                    log::warn!(
+                        "Content not representable in {}, falling back to UTF-8: {}",
+                        encoding.name(),
+                        path
+                    );
+                    (content.as_bytes().to_vec(), "UTF-8".to_string(), false)
+                },
+            };
 
             crate::utils::atomic_write(&path_buf, &bytes)
                 .await
@@ -163,10 +153,7 @@ pub async fn send_to_recycle_bin(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn resolve_path_relative(
-    base_path: Option<String>,
-    click_path: String,
-) -> Result<String, String> {
+pub async fn resolve_path_relative(base_path: Option<String>, click_path: String) -> Result<String, String> {
     validate_path(&click_path)?;
 
     let click_is_absolute = Path::new(&click_path).is_absolute();
@@ -317,14 +304,10 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
         ));
     }
 
-    fs::rename(&old_path, &new_path)
-        .await
-        .map_err(|e| match e.kind() {
-            std::io::ErrorKind::NotFound => {
-                handle_error(Some(&old_path), "rename file", "source file does not exist")
-            },
-            _ => handle_error(Some(&old_path), "rename file", e),
-        })
+    fs::rename(&old_path, &new_path).await.map_err(|e| match e.kind() {
+        std::io::ErrorKind::NotFound => handle_error(Some(&old_path), "rename file", "source file does not exist"),
+        _ => handle_error(Some(&old_path), "rename file", e),
+    })
 }
 
 #[tauri::command]
@@ -343,9 +326,7 @@ pub async fn add_to_file_history(
 }
 
 #[tauri::command]
-pub async fn get_file_history(
-    state: tauri::State<'_, crate::state::AppState>,
-) -> Result<Vec<String>, String> {
+pub async fn get_file_history(state: tauri::State<'_, crate::state::AppState>) -> Result<Vec<String>, String> {
     let db = state.db.clone();
     run_blocking("get file history", move || {
         db.file_history()
@@ -370,9 +351,7 @@ pub async fn remove_from_file_history(
 }
 
 #[tauri::command]
-pub async fn clear_file_history(
-    state: tauri::State<'_, crate::state::AppState>,
-) -> Result<(), String> {
+pub async fn clear_file_history(state: tauri::State<'_, crate::state::AppState>) -> Result<(), String> {
     let db = state.db.clone();
     run_blocking("clear file history", move || {
         db.file_history()
@@ -392,9 +371,7 @@ mod tests {
     async fn creates_new_file() {
         let dir = make_temp_dir("create-file");
         let file = dir.join("notes.md");
-        create_file(file.to_string_lossy().into_owned())
-            .await
-            .unwrap();
+        create_file(file.to_string_lossy().into_owned()).await.unwrap();
         assert!(file.is_file());
         assert_eq!(fs::read(&file).unwrap(), b"");
         fs::remove_dir_all(&dir).unwrap();
@@ -405,11 +382,7 @@ mod tests {
         let dir = make_temp_dir("create-file-existing");
         let file = dir.join("taken.md");
         fs::write(&file, "x").unwrap();
-        assert!(
-            create_file(file.to_string_lossy().into_owned())
-                .await
-                .is_err()
-        );
+        assert!(create_file(file.to_string_lossy().into_owned()).await.is_err());
         fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -417,9 +390,7 @@ mod tests {
     async fn creates_new_dir() {
         let dir = make_temp_dir("create-dir");
         let sub = dir.join("sub");
-        create_dir(sub.to_string_lossy().into_owned())
-            .await
-            .unwrap();
+        create_dir(sub.to_string_lossy().into_owned()).await.unwrap();
         assert!(sub.is_dir());
         fs::remove_dir_all(&dir).unwrap();
     }
@@ -429,11 +400,7 @@ mod tests {
         let dir = make_temp_dir("create-dir-existing");
         let sub = dir.join("sub");
         fs::create_dir(&sub).unwrap();
-        assert!(
-            create_dir(sub.to_string_lossy().into_owned())
-                .await
-                .is_err()
-        );
+        assert!(create_dir(sub.to_string_lossy().into_owned()).await.is_err());
         fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -445,10 +412,7 @@ mod tests {
 
         let result = resolve_path_relative(None, "../escaped.md".to_string()).await;
 
-        assert!(
-            result.is_err(),
-            "expected relative path without base to be rejected"
-        );
+        assert!(result.is_err(), "expected relative path without base to be rejected");
         fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -462,11 +426,8 @@ mod tests {
         let escaped = root.join("escaped.md");
         fs::write(&escaped, "x").unwrap();
 
-        let result = resolve_path_relative(
-            Some(base.to_string_lossy().into_owned()),
-            "../escaped.md".to_string(),
-        )
-        .await;
+        let result =
+            resolve_path_relative(Some(base.to_string_lossy().into_owned()), "../escaped.md".to_string()).await;
 
         assert!(result.is_err(), "expected escaping path to be rejected");
         fs::remove_dir_all(&root).unwrap();
@@ -482,16 +443,9 @@ mod tests {
         let target = subdir.join("notes.md");
         fs::write(&target, "x").unwrap();
 
-        let result = resolve_path_relative(
-            Some(base.to_string_lossy().into_owned()),
-            "notes.md".to_string(),
-        )
-        .await;
+        let result = resolve_path_relative(Some(base.to_string_lossy().into_owned()), "notes.md".to_string()).await;
 
-        assert_eq!(
-            result.unwrap(),
-            dunce::canonicalize(&target).unwrap().to_string_lossy()
-        );
+        assert_eq!(result.unwrap(), dunce::canonicalize(&target).unwrap().to_string_lossy());
         fs::remove_dir_all(&root).unwrap();
     }
 
@@ -509,10 +463,7 @@ mod tests {
         )
         .await;
 
-        assert!(
-            result.is_err(),
-            "expected rename onto existing target to be refused"
-        );
+        assert!(result.is_err(), "expected rename onto existing target to be refused");
         assert_eq!(fs::read_to_string(&target).unwrap(), "existing content");
         assert!(source.is_file(), "source should remain in place on refusal");
         fs::remove_dir_all(&dir).unwrap();
@@ -545,10 +496,7 @@ mod tests {
 
         let result = resolve_path_relative(None, file.to_string_lossy().into_owned()).await;
 
-        assert_eq!(
-            result.unwrap(),
-            dunce::canonicalize(&file).unwrap().to_string_lossy()
-        );
+        assert_eq!(result.unwrap(), dunce::canonicalize(&file).unwrap().to_string_lossy());
         fs::remove_dir_all(&dir).unwrap();
     }
 }

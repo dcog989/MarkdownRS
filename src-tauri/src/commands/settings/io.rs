@@ -38,11 +38,7 @@ pub async fn read_settings_file(app_handle: &tauri::AppHandle) -> Result<Option<
         Ok(b) => b,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(e) => {
-            return Err(handle_error(
-                Some(&path.to_string_lossy()),
-                "read settings file",
-                e,
-            ));
+            return Err(handle_error(Some(&path.to_string_lossy()), "read settings file", e));
         },
     };
 
@@ -85,12 +81,8 @@ pub async fn get_max_file_size_bytes(app_handle: &tauri::AppHandle) -> u64 {
     }
 }
 
-pub async fn write_settings_file(
-    path: &std::path::Path,
-    settings: &serde_json::Value,
-) -> Result<(), String> {
-    let toml_str = toml::to_string_pretty(settings)
-        .map_err(|e| handle_error(None, "serialize settings to TOML", e))?;
+pub async fn write_settings_file(path: &std::path::Path, settings: &serde_json::Value) -> Result<(), String> {
+    let toml_str = toml::to_string_pretty(settings).map_err(|e| handle_error(None, "serialize settings to TOML", e))?;
     fs::write(path, toml_str)
         .await
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "write settings file", e))?;
@@ -109,11 +101,7 @@ pub async fn preserved_settings_from_path(path: &std::path::Path) -> Result<toml
             return Ok(toml::Value::Table(toml::map::Map::new()));
         },
         Err(e) => {
-            return Err(handle_error(
-                Some(&path.to_string_lossy()),
-                "read settings file",
-                e,
-            ));
+            return Err(handle_error(Some(&path.to_string_lossy()), "read settings file", e));
         },
     };
     let content = read_text_with_bom_detection(raw_bytes);

@@ -22,10 +22,7 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
-pub async fn cleanup_stale_temp_files(
-    dir: &Path,
-    max_age: std::time::Duration,
-) -> std::io::Result<()> {
+pub async fn cleanup_stale_temp_files(dir: &Path, max_age: std::time::Duration) -> std::io::Result<()> {
     let mut entries = fs::read_dir(dir).await?;
     let now = std::time::SystemTime::now();
 
@@ -88,11 +85,7 @@ mod tests {
             .map(|e| e.unwrap().file_name())
             .filter(|n| n.to_string_lossy().ends_with(".tmp"))
             .collect();
-        assert!(
-            leftover.is_empty(),
-            "temp files left behind: {:?}",
-            leftover
-        );
+        assert!(leftover.is_empty(), "temp files left behind: {:?}", leftover);
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -113,18 +106,13 @@ mod tests {
         std::fs::write(&keep, "keep").unwrap();
 
         let past = std::time::SystemTime::now() - Duration::from_secs(3600);
-        std::fs::File::open(&old)
-            .unwrap()
-            .set_modified(past)
-            .unwrap();
+        std::fs::File::open(&old).unwrap().set_modified(past).unwrap();
         std::fs::File::open(&fresh)
             .unwrap()
             .set_modified(std::time::SystemTime::now())
             .unwrap();
 
-        cleanup_stale_temp_files(&dir, Duration::from_secs(60))
-            .await
-            .unwrap();
+        cleanup_stale_temp_files(&dir, Duration::from_secs(60)).await.unwrap();
 
         assert!(!old.exists(), "old .tmp should be removed");
         assert!(fresh.exists(), "fresh .tmp should be kept");

@@ -15,10 +15,7 @@ pub async fn export_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark
 }
 
 #[tauri::command]
-pub async fn import_bookmarks(
-    state: State<'_, AppState>,
-    bookmarks: Vec<Bookmark>,
-) -> Result<usize, String> {
+pub async fn import_bookmarks(state: State<'_, AppState>, bookmarks: Vec<Bookmark>) -> Result<usize, String> {
     let count = bookmarks.len();
     let db = state.db.clone();
     run_blocking("import bookmarks", move || {
@@ -42,10 +39,7 @@ pub async fn export_file_history(state: State<'_, AppState>) -> Result<Vec<Strin
 }
 
 #[tauri::command]
-pub async fn import_file_history(
-    state: State<'_, AppState>,
-    paths: Vec<String>,
-) -> Result<usize, String> {
+pub async fn import_file_history(state: State<'_, AppState>, paths: Vec<String>) -> Result<usize, String> {
     let count = paths.len();
     let db = state.db.clone();
     run_blocking("import file history", move || {

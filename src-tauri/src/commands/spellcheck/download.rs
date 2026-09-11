@@ -18,23 +18,14 @@ async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String> {
     match fs::read_to_string(path).await {
         Ok(content) => Ok(content),
         Err(e) => {
-            log::warn!(
-                "Failed to read cached {}: {:?}, deleting corrupted cache",
-                label,
-                path
-            );
+            log::warn!("Failed to read cached {}: {:?}, deleting corrupted cache", label, path);
             let _ = fs::remove_file(path).await;
             Err(anyhow!("Read error: {}", e))
         },
     }
 }
 
-async fn download_once(
-    client: &reqwest::Client,
-    url: &str,
-    cache_path: &PathBuf,
-    label: &str,
-) -> Result<String> {
+async fn download_once(client: &reqwest::Client, url: &str, cache_path: &PathBuf, label: &str) -> Result<String> {
     log::info!("Downloading {}: {}", label, url);
     let resp = client
         .get(url)
@@ -44,11 +35,7 @@ async fn download_once(
         .map_err(|e| anyhow!("Network error downloading {}: {}", label, e))?;
 
     if !resp.status().is_success() {
-        return Err(anyhow!(
-            "HTTP Error downloading {}: Status {}",
-            label,
-            resp.status()
-        ));
+        return Err(anyhow!("HTTP Error downloading {}: Status {}", label, resp.status()));
     }
 
     let text = resp
@@ -134,13 +121,8 @@ pub async fn load_language_dictionary(
     }
 }
 
-pub async fn load_technical_dictionary(
-    client: reqwest::Client,
-    cache_dir: PathBuf,
-    id: String,
-) -> Result<String> {
-    let url =
-        dicts::resolve_technical_url(&id).ok_or_else(|| anyhow!("Unknown technical ID: {}", id))?;
+pub async fn load_technical_dictionary(client: reqwest::Client, cache_dir: PathBuf, id: String) -> Result<String> {
+    let url = dicts::resolve_technical_url(&id).ok_or_else(|| anyhow!("Unknown technical ID: {}", id))?;
     let cache_path = cache_dir.join(format!("{}.{}.txt", id, DICT_CACHE_VERSION));
 
     ensure_file_downloaded(&client, url, &cache_path, &id).await
@@ -170,9 +152,9 @@ pub async fn download_and_collect_words(
     for (i, code) in dict_codes.into_iter().enumerate() {
         let c = client.clone();
         let d = cache_dir.to_path_buf();
-        dict_tasks.push(tokio::spawn(async move {
-            (i, load_language_dictionary(c, d, code).await)
-        }));
+        dict_tasks.push(tokio::spawn(
+            async move { (i, load_language_dictionary(c, d, code).await) },
+        ));
     }
 
     let mut spec_tasks = Vec::new();

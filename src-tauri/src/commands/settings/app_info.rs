@@ -5,10 +5,7 @@ use tauri::Manager;
 const LOGS_DIR: &str = "Logs";
 const LOG_FILE_NAME: &str = "markdown-rs.log";
 
-fn path_or_default(
-    result: Result<PathBuf, impl std::fmt::Debug>,
-    f: impl FnOnce(PathBuf) -> String,
-) -> String {
+fn path_or_default(result: Result<PathBuf, impl std::fmt::Debug>, f: impl FnOnce(PathBuf) -> String) -> String {
     result.map(f).unwrap_or_default()
 }
 
@@ -26,25 +23,16 @@ pub struct AppInfo {
 
 pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
     let install_path = std::env::current_exe()
-        .map(|p| {
-            p.parent()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default()
-        })
+        .map(|p| p.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default())
         .unwrap_or_default();
     let path = app_handle.path();
     let data_path = path_or_default(path.app_config_dir(), |p| p.to_string_lossy().to_string());
-    let cache_path = path_or_default(path.app_local_data_dir(), |p| {
-        p.to_string_lossy().to_string()
-    });
+    let cache_path = path_or_default(path.app_local_data_dir(), |p| p.to_string_lossy().to_string());
     let logs_path = path_or_default(path.app_local_data_dir(), |p| {
         p.join(LOGS_DIR).to_string_lossy().to_string()
     });
     let log_file_path = path_or_default(path.app_local_data_dir(), |p| {
-        p.join(LOGS_DIR)
-            .join(LOG_FILE_NAME)
-            .to_string_lossy()
-            .to_string()
+        p.join(LOGS_DIR).join(LOG_FILE_NAME).to_string_lossy().to_string()
     });
 
     let os_platform = if cfg!(target_os = "windows") {

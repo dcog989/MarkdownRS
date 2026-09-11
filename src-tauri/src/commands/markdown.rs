@@ -9,10 +9,7 @@ use serde::Serialize;
 use tauri::State;
 
 #[tauri::command]
-pub async fn render_markdown(
-    content: String,
-    flavor: Option<String>,
-) -> Result<RenderResult, String> {
+pub async fn render_markdown(content: String, flavor: Option<String>) -> Result<RenderResult, String> {
     let content_size = content.len();
 
     let options = MarkdownOptions {
@@ -115,10 +112,7 @@ pub async fn get_rumdl_config_path(
         run_blocking("discover rumdl config", move || {
             let path = match (fp, pr) {
                 (Some(fp), Some(pr)) => {
-                    let file_dir = fp
-                        .parent()
-                        .map(|p| p.to_path_buf())
-                        .unwrap_or_else(|| pr.clone());
+                    let file_dir = fp.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| pr.clone());
                     config::discover_config_path(&file_dir, &pr)
                 },
                 _ => config::discover_user_config_path(),
@@ -159,13 +153,12 @@ pub async fn read_rumdl_config(
             let resolved = config::resolve_config_target(fp.as_deref(), pr.as_deref(), scope);
             let exists = resolved.exists();
             let content = if exists {
-                std::fs::read_to_string(&resolved)
-                    .map_err(|e| format!("Failed to read rumdl config: {}", e))?
+                std::fs::read_to_string(&resolved).map_err(|e| format!("Failed to read rumdl config: {}", e))?
             } else {
                 String::new()
             };
-            let loaded_path = config::loaded_config_path(fp.as_deref(), pr.as_deref())
-                .map(|p| p.to_string_lossy().to_string());
+            let loaded_path =
+                config::loaded_config_path(fp.as_deref(), pr.as_deref()).map(|p| p.to_string_lossy().to_string());
             Ok(RumdlConfigRead {
                 target_path: resolved.to_string_lossy().to_string(),
                 exists,
@@ -196,14 +189,12 @@ pub async fn write_rumdl_config(
             let resolved = config::resolve_config_target(fp.as_deref(), Some(&pr), scope);
 
             if let Some(dir) = resolved.parent() {
-                std::fs::create_dir_all(dir)
-                    .map_err(|e| format!("Failed to create config directory: {}", e))?;
+                std::fs::create_dir_all(dir).map_err(|e| format!("Failed to create config directory: {}", e))?;
             }
 
             config::validate_config_content(&content, &pr, &resolved)?;
 
-            std::fs::write(&resolved, content)
-                .map_err(|e| format!("Failed to write rumdl config: {}", e))?;
+            std::fs::write(&resolved, content).map_err(|e| format!("Failed to write rumdl config: {}", e))?;
 
             Ok(resolved.to_string_lossy().to_string())
         })

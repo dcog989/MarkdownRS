@@ -64,10 +64,7 @@ impl FileHistoryStore {
 
     pub fn remove_file_history_entry(&self, path: &str) -> Result<()> {
         let conn = lock_conn!(self);
-        conn.execute(
-            "DELETE FROM file_history WHERE path = ?1",
-            rusqlite::params![path],
-        )?;
+        conn.execute("DELETE FROM file_history WHERE path = ?1", rusqlite::params![path])?;
         Ok(())
     }
 
@@ -91,9 +88,8 @@ impl FileHistoryStore {
         let tx = conn.transaction()?;
         tx.execute_batch("DROP TRIGGER IF EXISTS prune_file_history")?;
         {
-            let mut stmt = tx.prepare_cached(
-                "INSERT OR IGNORE INTO file_history (path, last_opened) VALUES (?1, ?2)",
-            )?;
+            let mut stmt =
+                tx.prepare_cached("INSERT OR IGNORE INTO file_history (path, last_opened) VALUES (?1, ?2)")?;
             for path in paths {
                 stmt.execute(rusqlite::params![path, &now])?;
             }

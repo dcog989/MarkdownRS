@@ -52,9 +52,8 @@ impl BookmarkStore {
 
     pub fn get_all_bookmarks(&self) -> Result<Vec<Bookmark>> {
         let conn = lock_conn!(self);
-        let mut stmt = conn.prepare(
-            "SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC"
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT id, path, title, tags, created, last_accessed FROM bookmarks ORDER BY created DESC")?;
 
         let bookmarks = stmt
             .query_map([], |row| {

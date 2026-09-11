@@ -3,8 +3,7 @@ use std::sync::LazyLock;
 
 /// Matches a GitHub-style callout marker at the start of a paragraph.
 static CALLOUT_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)^\[!(note|tip|important|warning|caution)\][ \t]*\r?\n?")
-        .expect("Invalid CALLOUT_REGEX pattern")
+    Regex::new(r"(?i)^\[!(note|tip|important|warning|caution)\][ \t]*\r?\n?").expect("Invalid CALLOUT_REGEX pattern")
 });
 
 /// GitHub-style callout type -> (css class, display title).
@@ -30,9 +29,7 @@ fn callout_icon(kind: &str) -> String {
         "warning" => {
             "<path d=\"M21.7 18.5 13.5 4.4a1.9 1.9 0 0 0-3 0L2.3 18.5A1.9 1.9 0 0 0 4 21h16a1.9 1.9 0 0 0 1.7-2.5z\"/><path d=\"M12 9v4M12 17h.01\"/>"
         },
-        "caution" => {
-            "<path d=\"M7.9 2h8.2L22 7.9v8.2l-5.9 5.9H7.9L2 16.1V7.9z\"/><path d=\"M12 8v4M12 16h.01\"/>"
-        },
+        "caution" => "<path d=\"M7.9 2h8.2L22 7.9v8.2l-5.9 5.9H7.9L2 16.1V7.9z\"/><path d=\"M12 8v4M12 16h.01\"/>",
         _ => "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4M12 8h.01\"/>",
     };
     format!(r#"<svg {attrs}>{inner}</svg>"#)
@@ -58,10 +55,7 @@ fn callout_icon(kind: &str) -> String {
 /// the document.
 pub(super) fn transform_callouts(html: &str) -> String {
     let opens: Vec<usize> = html.match_indices("<blockquote").map(|(i, _)| i).collect();
-    let closes: Vec<usize> = html
-        .match_indices("</blockquote>")
-        .map(|(i, _)| i)
-        .collect();
+    let closes: Vec<usize> = html.match_indices("</blockquote>").map(|(i, _)| i).collect();
 
     let mut stack: Vec<CalloutFrame> = Vec::new();
     let mut out = String::with_capacity(html.len());
@@ -168,8 +162,7 @@ struct CalloutData {
 fn detect_callout(html: &str, frame: &CalloutFrame) -> Option<CalloutData> {
     let interior = &frame.interior;
     let first_tag = interior.find('<')?;
-    if interior[first_tag..].starts_with("<blockquote") || !interior[first_tag..].starts_with("<p")
-    {
+    if interior[first_tag..].starts_with("<blockquote") || !interior[first_tag..].starts_with("<p") {
         return None;
     }
     let p_tag_end = first_tag + interior[first_tag..].find('>')?;
@@ -210,10 +203,7 @@ fn transform_callout_block(html: &str, frame: &CalloutFrame) -> String {
             ));
             out.push_str(&interior[..callout.first_tag]);
 
-            if !interior[callout.marker_end..callout.content_end]
-                .trim()
-                .is_empty()
-            {
+            if !interior[callout.marker_end..callout.content_end].trim().is_empty() {
                 out.push_str(&interior[callout.first_tag..callout.p_tag_end + 1]);
                 out.push_str(&interior[callout.marker_end..callout.content_end]);
                 out.push_str("</p>");
@@ -357,10 +347,7 @@ mod tests {
             "callout-warning",
             "callout-caution",
         ] {
-            assert!(
-                html.contains(&format!(r#"class="callout {class}""#)),
-                "missing {class}"
-            );
+            assert!(html.contains(&format!(r#"class="callout {class}""#)), "missing {class}");
         }
         assert_eq!(html.matches("class=\"callout-icon\"").count(), 5);
         assert!(!html.contains("[!"), "markers should be stripped: {html}");
@@ -386,21 +373,11 @@ mod tests {
             html.contains(r#"<div class="callout callout-tip""#),
             "inner callout missing: {html}"
         );
-        assert_eq!(
-            html.matches("class=\"callout-icon\"").count(),
-            2,
-            "html was: {html}"
-        );
+        assert_eq!(html.matches("class=\"callout-icon\"").count(), 2, "html was: {html}");
         assert!(html.contains("Outer note."), "html was: {html}");
         assert!(html.contains("Inner tip."), "html was: {html}");
-        assert!(
-            !html.contains("[!NOTE]"),
-            "outer marker should be stripped: {html}"
-        );
-        assert!(
-            !html.contains("[!TIP]"),
-            "inner marker should be stripped: {html}"
-        );
+        assert!(!html.contains("[!NOTE]"), "outer marker should be stripped: {html}");
+        assert!(!html.contains("[!TIP]"), "inner marker should be stripped: {html}");
         assert!(
             !html.contains("<blockquote"),
             "all callout blockquotes should be transformed: {html}"
@@ -415,9 +392,6 @@ mod tests {
             "nested callout missing: {html}"
         );
         assert!(html.contains("<blockquote"), "outer quote kept: {html}");
-        assert!(
-            !html.contains("[!NOTE]"),
-            "marker should be stripped: {html}"
-        );
+        assert!(!html.contains("[!NOTE]"), "marker should be stripped: {html}");
     }
 }

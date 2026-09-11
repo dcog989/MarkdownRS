@@ -11,9 +11,7 @@ use tauri::Manager;
 
 pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let app_handle = app.handle();
-    let window = app
-        .get_webview_window("main")
-        .ok_or("Failed to get main window")?;
+    let window = app.get_webview_window("main").ok_or("Failed to get main window")?;
 
     window::configure(&window);
 

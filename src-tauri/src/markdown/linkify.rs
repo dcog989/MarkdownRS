@@ -19,9 +19,8 @@ static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 // Matches wikilinks: `[[target]]` or `[[label|target]]`.
 // The target (group 1) may be a note name or a relative path; the label
 // (group 2) is optional display text.
-static WIKILINK_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\[\[([^\[\]|]+)(?:\|([^\[\]|]+))?\]\]").expect("Invalid WIKILINK_REGEX pattern")
-});
+static WIKILINK_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[\[([^\[\]|]+)(?:\|([^\[\]|]+))?\]\]").expect("Invalid WIKILINK_REGEX pattern"));
 
 const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
 
@@ -110,9 +109,7 @@ fn linkify_text_nodes<'a>(
 ) {
     let text_nodes: Vec<&AstNode<'_>> = root
         .descendants()
-        .filter(|node| {
-            matches!(node.data.borrow().value, NodeValue::Text(_)) && !is_in_code_or_link(node)
-        })
+        .filter(|node| matches!(node.data.borrow().value, NodeValue::Text(_)) && !is_in_code_or_link(node))
         .collect();
 
     for node in text_nodes {
@@ -141,9 +138,7 @@ fn linkify_text_nodes<'a>(
 
             let before = &text[last_end..content_start];
             if !before.is_empty() {
-                let n = arena.alloc(AstNode::from(NodeValue::Text(Cow::Owned(
-                    before.to_string(),
-                ))));
+                let n = arena.alloc(AstNode::from(NodeValue::Text(Cow::Owned(before.to_string()))));
                 new_nodes.push(n);
             }
 
@@ -188,7 +183,9 @@ fn build_wikilink_link(cap: &regex::Captures<'_>) -> Option<Splice> {
 
     let mut link = String::from(r#"<a href=""#);
     percent_encode_into(&mut link, target);
-    link.push_str(r#"" class="wikilink" style="color: var(--accent-filepath); text-decoration: underline; cursor: pointer;">"#);
+    link.push_str(
+        r#"" class="wikilink" style="color: var(--accent-filepath); text-decoration: underline; cursor: pointer;">"#,
+    );
     html_escape_into(&mut link, display);
     link.push_str("</a>");
 
@@ -277,9 +274,7 @@ mod tests {
         );
         // The reported anchor must match the id comrak renders.
         assert!(
-            result
-                .html
-                .contains(&format!(r#"<h1 id="{}""#, heading.anchor_id)),
+            result.html.contains(&format!(r#"<h1 id="{}""#, heading.anchor_id)),
             "heading id mismatch: html was {}",
             result.html
         );
@@ -338,28 +333,19 @@ mod tests {
         assert!(html.contains(r#">/a/b.txt</a>,"#), "html was: {html}");
         assert!(html.contains(r#"href="/c/d.md""#), "html was: {html}");
         assert!(html.contains(r#">/c/d.md</a>."#), "html was: {html}");
-        assert!(
-            !html.contains(r#"/a/b.txt,"#),
-            "comma must not be linked: {html}"
-        );
+        assert!(!html.contains(r#"/a/b.txt,"#), "comma must not be linked: {html}");
     }
 
     #[test]
     fn does_not_double_encode_percent_escapes() {
         let html = render_gfm("See /docs/my%20file.md now.\n");
-        assert!(
-            html.contains(r#"href="/docs/my%20file.md""#),
-            "html was: {html}"
-        );
+        assert!(html.contains(r#"href="/docs/my%20file.md""#), "html was: {html}");
         assert!(!html.contains("%2520"), "html was: {html}");
     }
 
     #[test]
     fn encodes_lone_percent_signs() {
         let html = render_gfm("See /tmp/50%off.txt now.\n");
-        assert!(
-            html.contains(r#"href="/tmp/50%25off.txt""#),
-            "html was: {html}"
-        );
+        assert!(html.contains(r#"href="/tmp/50%25off.txt""#), "html was: {html}");
     }
 }

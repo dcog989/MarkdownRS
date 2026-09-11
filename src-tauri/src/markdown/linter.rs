@@ -77,10 +77,7 @@ pub fn lint_content(
     };
 
     if harper_options.enabled {
-        diagnostics.extend(harper::lint_grammar(
-            content,
-            &harper_options.linter_overrides,
-        ));
+        diagnostics.extend(harper::lint_grammar(content, &harper_options.linter_overrides));
     }
 
     // Sources report in their own order; sort so callers see document order.
@@ -152,11 +149,7 @@ mod tests {
         )
         .unwrap();
         let fixable = result.iter().any(|d| d.fixable);
-        assert!(
-            fixable,
-            "expected at least one fixable diagnostic, got {:?}",
-            result
-        );
+        assert!(fixable, "expected at least one fixable diagnostic, got {:?}", result);
         fs::remove_dir_all(&dir).unwrap();
     }
 

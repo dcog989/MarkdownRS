@@ -30,10 +30,7 @@ static ALL_EXTRA_DICTS: &[DictEntry] = &[
     },
     DictEntry {
         id: "scientific-terms-us",
-        url: cspell_url!(
-            "main",
-            "/scientific_terms_US/src/custom_scientific_US.dic.txt"
-        ),
+        url: cspell_url!("main", "/scientific_terms_US/src/custom_scientific_US.dic.txt"),
         category: Scientific,
     },
     DictEntry {
@@ -147,11 +144,7 @@ mod tests {
         for id in list_technical_ids() {
             let url = resolve_technical_url(&id);
             assert!(url.is_some(), "Technical dictionary '{}' has no URL", id);
-            assert!(
-                is_valid_url(url.unwrap()),
-                "Technical URL for '{}' is invalid",
-                id
-            );
+            assert!(is_valid_url(url.unwrap()), "Technical URL for '{}' is invalid", id);
         }
     }
 
@@ -160,11 +153,7 @@ mod tests {
         for id in list_scientific_ids() {
             let url = resolve_technical_url(&id);
             assert!(url.is_some(), "Scientific dictionary '{}' has no URL", id);
-            assert!(
-                is_valid_url(url.unwrap()),
-                "Scientific URL for '{}' is invalid",
-                id
-            );
+            assert!(is_valid_url(url.unwrap()), "Scientific URL for '{}' is invalid", id);
         }
     }
 

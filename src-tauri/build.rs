@@ -1,8 +1,8 @@
 fn main() {
     tauri_build::build();
 
-    let themes_dir = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("../src/styles/themes");
+    let themes_dir =
+        std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("../src/styles/themes");
 
     let mut entries: Vec<String> = Vec::new();
 
@@ -27,9 +27,7 @@ fn main() {
     for name in &entries {
         theme_entries.push_str(r#"    (""#);
         theme_entries.push_str(name);
-        theme_entries.push_str(
-            r#"", include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/"#,
-        );
+        theme_entries.push_str(r#"", include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/"#);
         theme_entries.push_str(name);
         theme_entries.push_str(
             r#".css"))),
@@ -41,9 +39,7 @@ fn main() {
     for name in &entries {
         lookup_arms.push_str(r#"        ""#);
         lookup_arms.push_str(name);
-        lookup_arms.push_str(
-            r#"" => Some(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/"#,
-        );
+        lookup_arms.push_str(r#"" => Some(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/"#);
         lookup_arms.push_str(name);
         lookup_arms.push_str(
             r#".css"))),

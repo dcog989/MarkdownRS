@@ -24,10 +24,7 @@ pub struct SpellcheckProgress {
 }
 
 fn emit_progress(app_handle: &tauri::AppHandle, phase: &'static str, done: usize, total: usize) {
-    let _ = app_handle.emit(
-        SPELLCHECK_PROGRESS_EVENT,
-        SpellcheckProgress { phase, done, total },
-    );
+    let _ = app_handle.emit(SPELLCHECK_PROGRESS_EVENT, SpellcheckProgress { phase, done, total });
 }
 
 fn is_current_generation(state: &AppState, generation_id: u64) -> bool {
@@ -35,12 +32,7 @@ fn is_current_generation(state: &AppState, generation_id: u64) -> bool {
 }
 
 /// Applies `status` unless a newer init request superseded this build.
-fn finish_init(
-    app_handle: &tauri::AppHandle,
-    state: &AppState,
-    generation_id: u64,
-    status: SpellcheckStatus,
-) {
+fn finish_init(app_handle: &tauri::AppHandle, state: &AppState, generation_id: u64, status: SpellcheckStatus) {
     if !is_current_generation(state, generation_id) {
         log::info!("[SPELLCHECK-RUST] Init superseded, discarding result");
         return;
@@ -78,8 +70,7 @@ fn build_spellbook_dictionaries(
     }
 
     if !technical_words.is_empty()
-        && let Some((combined_dic, _)) =
-            super::download::build_combined_dic_string(&technical_words)
+        && let Some((combined_dic, _)) = super::download::build_combined_dic_string(&technical_words)
         && let Ok(dict) = Dictionary::new("", &combined_dic)
     {
         dictionaries.push(dict);
@@ -129,10 +120,7 @@ async fn run_spellcheck_init(
     if !spec_codes.is_empty()
         && let Err(e) = tokio::fs::create_dir_all(&tech_cache_dir).await
     {
-        log::warn!(
-            "Failed to create technical dictionary cache directory: {}",
-            e
-        );
+        log::warn!("Failed to create technical dictionary cache directory: {}", e);
     }
 
     let client = super::download::build_http_client();
@@ -169,10 +157,8 @@ async fn run_spellcheck_init(
         return;
     }
 
-    let dictionaries_result = tokio::task::spawn_blocking(move || {
-        build_spellbook_dictionaries(language_dicts, technical_words)
-    })
-    .await;
+    let dictionaries_result =
+        tokio::task::spawn_blocking(move || build_spellbook_dictionaries(language_dicts, technical_words)).await;
 
     match dictionaries_result {
         Ok(dictionaries) if !dictionaries.is_empty() => {
@@ -221,17 +207,12 @@ pub async fn init_spellchecker(
         let status = state.spellcheck_status.lock_or_recover();
         let loaded = state.loaded_spellcheck_config.lock_or_recover();
         if loaded.as_ref() == Some(&requested) && *status != SpellcheckStatus::Failed {
-            log::info!(
-                "[SPELLCHECK-RUST] Spellchecker already initializing or ready for requested dictionaries"
-            );
+            log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready for requested dictionaries");
             return Ok(());
         }
     }
 
-    let generation_id = state
-        .spellcheck_init_gen
-        .fetch_add(1, Ordering::SeqCst)
-        .wrapping_add(1);
+    let generation_id = state.spellcheck_init_gen.fetch_add(1, Ordering::SeqCst).wrapping_add(1);
     state.spellcheck_cancel.store(false, Ordering::SeqCst);
 
     {
@@ -249,10 +230,7 @@ pub async fn init_spellchecker(
         enable_science
     );
 
-    let local_dir = app_handle
-        .path()
-        .app_local_data_dir()
-        .map_err(|e| e.to_string())?;
+    let local_dir = app_handle.path().app_local_data_dir().map_err(|e| e.to_string())?;
     let config_dir = utils::app_config_dir(&app_handle).map_err(|e| e.to_string())?;
 
     let handle = tauri::async_runtime::spawn(run_spellcheck_init(

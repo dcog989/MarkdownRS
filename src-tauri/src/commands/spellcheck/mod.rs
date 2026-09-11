@@ -21,10 +21,7 @@ pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Re
 }
 
 #[tauri::command]
-pub async fn add_words_to_dictionary(
-    app_handle: tauri::AppHandle,
-    words: Vec<String>,
-) -> Result<(), String> {
+pub async fn add_words_to_dictionary(app_handle: tauri::AppHandle, words: Vec<String>) -> Result<(), String> {
     user_dict::add_words_to_dictionary_inner(app_handle, words)
         .await
         .to_tauri_result()
@@ -38,10 +35,7 @@ pub async fn load_user_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<St
 }
 
 #[tauri::command]
-pub async fn check_words(
-    state: State<'_, AppState>,
-    words: Vec<String>,
-) -> Result<Vec<String>, String> {
+pub async fn check_words(state: State<'_, AppState>, words: Vec<String>) -> Result<Vec<String>, String> {
     log::debug!("check_words called with {} words", words.len());
 
     let custom_snapshot = {
@@ -72,10 +66,7 @@ pub async fn check_words(
 
             // The frontend strips possessive suffixes before calling, so this
             // only guards against a possessive word arriving directly.
-            if lower
-                .strip_suffix("'s")
-                .is_some_and(|b| custom_snapshot.contains(b))
-            {
+            if lower.strip_suffix("'s").is_some_and(|b| custom_snapshot.contains(b)) {
                 continue;
             }
 
@@ -89,25 +80,16 @@ pub async fn check_words(
     .await
     .map_err(|e| handle_error(None, "check spelling", e))?;
 
-    log::debug!(
-        "check_words returning {} misspelled words",
-        misspelled.len()
-    );
+    log::debug!("check_words returning {} misspelled words", misspelled.len());
     if !misspelled.is_empty() {
-        log::debug!(
-            "Sample misspelled: {:?}",
-            &misspelled[..misspelled.len().min(5)]
-        );
+        log::debug!("Sample misspelled: {:?}", &misspelled[..misspelled.len().min(5)]);
     }
 
     Ok(misspelled)
 }
 
 #[tauri::command]
-pub async fn get_spelling_suggestions(
-    state: State<'_, AppState>,
-    word: String,
-) -> Result<Vec<String>, String> {
+pub async fn get_spelling_suggestions(state: State<'_, AppState>, word: String) -> Result<Vec<String>, String> {
     let speller = state.speller.clone();
 
     let custom_snapshot = {
@@ -154,10 +136,7 @@ pub async fn get_spellcheck_status(state: State<'_, AppState>) -> Result<Spellch
 }
 
 #[tauri::command]
-pub async fn cancel_spellcheck_init(
-    app_handle: tauri::AppHandle,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
+pub async fn cancel_spellcheck_init(app_handle: tauri::AppHandle, state: State<'_, AppState>) -> Result<(), String> {
     let cancelled = state.spellcheck_cancel.swap(true, Ordering::SeqCst);
     if !cancelled {
         log::info!("[SPELLCHECK-RUST] Spellcheck init cancellation requested");
