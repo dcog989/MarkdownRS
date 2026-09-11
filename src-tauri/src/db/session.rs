@@ -40,6 +40,8 @@ pub struct TabState {
     pub encoding: Option<String>,
     #[serde(default)]
     pub has_bom: bool,
+    #[serde(default)]
+    pub preferred_extension: Option<String>,
 }
 
 impl TabState {
@@ -110,9 +112,7 @@ impl SessionStore {
                 table
             );
             let mut stmt = conn.prepare(&sql)?;
-            Ok(stmt
-                .query_map([], map_tab_state)?
-                .collect::<Result<Vec<_>, _>>()?)
+            Ok(stmt.query_map([], map_tab_state)?.collect::<Result<Vec<_>, _>>()?)
         }
 
         let active_tabs = load_tabs(&conn, "tabs")?;
@@ -167,6 +167,7 @@ fn map_tab_state(row: &rusqlite::Row) -> rusqlite::Result<TabState> {
         line_ending: row.get(col("line_ending"))?,
         encoding: row.get(col("encoding"))?,
         has_bom: row.get::<_, i32>(col("has_bom"))? != 0,
+        preferred_extension: row.get(col("preferred_extension"))?,
     })
 }
 
@@ -181,15 +182,9 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
         .map(|i| format!("?{}", i))
         .collect::<Vec<_>>()
         .join(",");
-    let delete_sql = format!(
-        "DELETE FROM {} WHERE id NOT IN ({})",
-        table_name, placeholders
-    );
+    let delete_sql = format!("DELETE FROM {} WHERE id NOT IN ({})", table_name, placeholders);
     let mut delete_stmt = tx.prepare(&delete_sql)?;
-    let ids: Vec<&dyn rusqlite::types::ToSql> = tabs
-        .iter()
-        .map(|t| &t.id as &dyn rusqlite::types::ToSql)
-        .collect();
+    let ids: Vec<&dyn rusqlite::types::ToSql> = tabs.iter().map(|t| &t.id as &dyn rusqlite::types::ToSql).collect();
     delete_stmt.execute(ids.as_slice())?;
 
     let insert_placeholders = (1..=schema::TAB_COLUMNS.len())
@@ -229,6 +224,7 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
         let file_check_failed: i32 = tab.file_check_failed as i32;
         let file_check_performed: i32 = tab.file_check_performed as i32;
         let has_bom: i32 = tab.has_bom as i32;
+        let preferred_extension = tab.preferred_extension.as_deref();
 
         upsert_stmt.execute(rusqlite::params![
             &tab.id,
@@ -251,6 +247,7 @@ fn save_tabs(tx: &rusqlite::Transaction, tabs: &[TabState], table_name: &str) ->
             &tab.line_ending,
             &tab.encoding,
             &has_bom,
+            &preferred_extension,
         ])?;
     }
 
@@ -281,6 +278,7 @@ mod tests {
             line_ending: Some("LF".to_string()),
             encoding: Some("UTF-8".to_string()),
             has_bom: false,
+            preferred_extension: Some("txt".to_string()),
             created: Some("2026-01-01".to_string()),
             modified: None,
             is_pinned: false,
@@ -316,6 +314,7 @@ mod tests {
         assert_eq!(t.line_ending.as_deref(), Some("LF"));
         assert_eq!(t.encoding.as_deref(), Some("UTF-8"));
         assert!(!t.has_bom);
+        assert_eq!(t.preferred_extension.as_deref(), Some("txt"));
         assert_eq!(t.created.as_deref(), Some("2026-01-01"));
         assert!(!t.is_pinned);
         assert_eq!(t.custom_title.as_deref(), Some("Tab"));
@@ -329,9 +328,7 @@ mod tests {
     #[test]
     fn save_keeps_existing_content_when_incoming_content_is_null() {
         let db = open_db();
-        db.session()
-            .save_session(&[tab("a", Some("body"))], &[])
-            .unwrap();
+        db.session().save_session(&[tab("a", Some("body"))], &[]).unwrap();
 
         let mut without_content = tab("a", None);
         without_content.is_dirty = false;

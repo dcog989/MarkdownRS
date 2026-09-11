@@ -109,6 +109,11 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
         ddl: "INTEGER NOT NULL DEFAULT 0",
         preserve_old_on_null: false,
     },
+    TabColumn {
+        name: "preferred_extension",
+        ddl: "TEXT",
+        preserve_old_on_null: false,
+    },
 ];
 
 /// Column list for `CREATE TABLE`.
@@ -122,11 +127,7 @@ pub(super) fn tab_columns_ddl() -> String {
 
 /// Full comma-separated column list for `INSERT`/`SELECT` statements.
 pub(super) fn tab_columns_sql() -> String {
-    TAB_COLUMNS
-        .iter()
-        .map(|c| c.name)
-        .collect::<Vec<_>>()
-        .join(", ")
+    TAB_COLUMNS.iter().map(|c| c.name).collect::<Vec<_>>().join(", ")
 }
 
 /// `SELECT` column list for session restore; skips the `content` blob, which is

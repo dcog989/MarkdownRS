@@ -47,6 +47,7 @@ type RustTabState = {
   line_ending?: string | null;
   encoding?: string | null;
   has_bom?: boolean;
+  preferred_extension?: string | null;
 };
 
 let saveInProgress = false;
@@ -87,6 +88,7 @@ function toRustTabState(
     line_ending: tab.lineEnding,
     encoding: tab.encoding,
     has_bom: tab.hasBom,
+    preferred_extension: tab.preferredExtension ?? null,
   };
 }
 
@@ -227,6 +229,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     encoding: t.encoding ? t.encoding.toUpperCase() : "UTF-8",
     hasBom: t.has_bom || false,
     fileCheckFailed: t.file_check_failed || false,
+    preferredExtension:
+      t.preferred_extension === "md" || t.preferred_extension === "txt" ? t.preferred_extension : undefined,
     contentLoaded,
   };
 
