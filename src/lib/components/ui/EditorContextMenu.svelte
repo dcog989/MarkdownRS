@@ -31,6 +31,10 @@ function opShortcut(opId: string): string {
   return shortcutManager.getShortcutDisplay(`textop.${opId}`);
 }
 
+const cutShortcut = shortcutManager.formatKeyDisplay("ctrl+x");
+const copyShortcut = shortcutManager.formatKeyDisplay("ctrl+c");
+const pasteShortcut = shortcutManager.formatKeyDisplay("ctrl+v");
+
 let {
   x,
   y,
@@ -335,7 +339,7 @@ async function handleSendToBrowser() {
                     }}
         >
           <Scissors size={14} /><span>{$_('editorContextMenu.cut')}</span
-          ><span class="text-ui-sm ml-auto opacity-50">Ctrl+X</span>
+          ><span class="text-ui-sm ml-auto opacity-50">{cutShortcut}</span>
         </button>
         <button
           type="button"
@@ -346,7 +350,7 @@ async function handleSendToBrowser() {
                     }}
         >
           <ClipboardCopy size={14} /><span>{$_('editorContextMenu.copy')}</span
-          ><span class="text-ui-sm ml-auto opacity-50">Ctrl+C</span>
+          ><span class="text-ui-sm ml-auto opacity-50">{copyShortcut}</span>
         </button>
       {/if}
       <button
@@ -358,7 +362,7 @@ async function handleSendToBrowser() {
                 }}
       >
         <ClipboardPaste size={14} /><span>{$_('editorContextMenu.paste')}</span
-        ><span class="text-ui-sm ml-auto opacity-50">Ctrl+V</span>
+        ><span class="text-ui-sm ml-auto opacity-50">{pasteShortcut}</span>
       </button>
     </div>
 

@@ -5,7 +5,8 @@ import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";
 import { createNewFile } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { closeManyTabs, saveCurrentFile } from "$lib/utils/fileSystem";
+import { closeManyTabs, saveAllFiles } from "$lib/utils/fileSystem";
+import { shortcutManager } from "$lib/utils/shortcuts";
 
 let { x, y, onClose } = $props<{
   x: number;
@@ -14,6 +15,8 @@ let { x, y, onClose } = $props<{
 }>();
 
 let activeSubmenu = $state<"close" | null>(null);
+let newTabShortcut = $derived(shortcutManager.getShortcutDisplay("file.new"));
+let saveAllShortcut = $derived(shortcutManager.getShortcutDisplay("file.saveAll"));
 
 let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
 let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
@@ -26,18 +29,7 @@ async function handleCloseMany(mode: "saved" | "unsaved" | "all" | "unpinned") {
 }
 
 async function handleSaveAll() {
-  const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
-  const previousActiveId = appContext.app.activeTabId;
-
-  for (const tab of dirtyTabs) {
-    appContext.app.activeTabId = tab.id;
-    await saveCurrentFile();
-  }
-
-  if (previousActiveId) {
-    appContext.app.activeTabId = previousActiveId;
-  }
-
+  await saveAllFiles();
   onClose();
 }
 
@@ -56,8 +48,10 @@ async function handleNewTab() {
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={handleNewTab}
       >
-        <FilePlus size={14} class="opacity-70" /><span>{$_('tabBarContextMenu.newTab')}</span
-        ><span class="text-ui-sm ml-auto opacity-50">Ctrl+N</span>
+        <FilePlus size={14} class="opacity-70" /><span class="flex-1">{$_('tabBarContextMenu.newTab')}</span>
+        {#if newTabShortcut}
+          <span class="text-xs opacity-40">{newTabShortcut}</span>
+        {/if}
       </button>
 
       <div class="bg-border-main my-1 h-px"></div>
@@ -68,8 +62,10 @@ async function handleNewTab() {
         disabled={!hasUnsavedTabs}
         onclick={handleSaveAll}
       >
-        <Save size={14} class="opacity-70" /><span>{$_('tabBarContextMenu.saveAll')}</span
-        ><span class="text-ui-sm ml-auto opacity-50">Ctrl+Shift+S</span>
+        <Save size={14} class="opacity-70" /><span class="flex-1">{$_('tabBarContextMenu.saveAll')}</span>
+        {#if saveAllShortcut}
+          <span class="text-xs opacity-40">{saveAllShortcut}</span>
+        {/if}
       </button>
 
       <div class="bg-border-main my-1 h-px"></div>

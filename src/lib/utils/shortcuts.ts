@@ -18,6 +18,10 @@ export class KeyboardShortcutManager {
     const cmd = this.commands.get(id);
     const customShortcuts = appContext.settings.customShortcuts;
     const key = customShortcuts[id] || cmd?.defaultKey;
+    return this.formatKeyDisplay(key);
+  }
+
+  formatKeyDisplay(key: string | undefined): string {
     if (!key) return "";
     return key
       .split("+")

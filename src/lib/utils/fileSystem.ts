@@ -102,6 +102,20 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
   }
 }
 
+export async function saveAllFiles(): Promise<void> {
+  const previousActiveId = appContext.app.activeTabId;
+  const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
+
+  for (const tab of dirtyTabs) {
+    appContext.app.activeTabId = tab.id;
+    await saveCurrentFile();
+  }
+
+  if (previousActiveId) {
+    appContext.app.activeTabId = previousActiveId;
+  }
+}
+
 export async function requestCloseTab(id: string, force = false): Promise<void> {
   const tab = appContext.editor.tabs.find((t) => t.id === id);
   if (!tab || (tab.isPinned && !force)) return;

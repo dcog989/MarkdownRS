@@ -5,6 +5,7 @@ import { appContext } from "$lib/stores/state.svelte";
 import {
   openFile,
   requestCloseTab,
+  saveAllFiles,
   saveCurrentFile,
   saveCurrentFileAs,
   triggerReopenClosedTab,
@@ -46,6 +47,14 @@ export const fileCommands: Command[] = [
     defaultKey: "ctrl+shift+s",
     global: true,
     handler: saveCurrentFileAs,
+  },
+  {
+    id: "file.saveAll",
+    label: "File: Save All",
+    category: "File",
+    defaultKey: "ctrl+alt+s",
+    global: true,
+    handler: () => saveAllFiles(),
   },
   {
     id: "file.closeTab",
