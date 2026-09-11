@@ -73,6 +73,56 @@ OxfordComma = false      # disable a rule
 LongSentences = true     # force a rule on
 ```
 
+## Installation
+
+Prebuilt Linux and Windows binaries are available on the [GitHub Releases](https://github.com/dcog989/MarkdownRS/releases/latest) page.
+
+### Linux
+
+#### AppImage
+
+```sh
+chmod +x MarkdownRS_*.AppImage
+./MarkdownRS_*.AppImage
+```
+
+To add it to your application menu and file associations, use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) or [GearLever](https://github.com/mijorus/gearlever).
+
+#### Debian / Ubuntu
+
+```sh
+sudo apt install ./MarkdownRS_*.deb
+```
+
+#### Fedora / RHEL
+
+```sh
+sudo dnf install ./MarkdownRS-*.rpm
+```
+
+#### Arch / CachyOS
+
+Install the prebuilt package from the latest release:
+
+```sh
+sudo pacman -U MarkdownRS-*.pkg.tar.zst
+```
+
+Or build and install locally from the included `PKGBUILD`:
+
+```sh
+bun install
+bun run package
+```
+
+### Windows
+
+Download and run the NSIS `.exe` installer from the [latest release](https://github.com/dcog989/MarkdownRS/releases/latest).
+
+### Build from Source
+
+See [Development](#development). You'll need [Rust](https://rustup.rs/), [bun](https://bun.com/), and the platform [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+
 ---
 
 ## Code / Dev Stack
