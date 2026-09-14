@@ -494,6 +494,7 @@ function onTrackMouseDown(e: MouseEvent) {
 
   const sd = view.scrollDOM;
   const doc = view.state.doc;
+  const editorView = view;
   const layout = minimapLayout;
   const canvasRect = canvasRef.getBoundingClientRect();
   if (canvasRect.height === 0) return;
@@ -510,7 +511,7 @@ function onTrackMouseDown(e: MouseEvent) {
   function scrollToLine(line0: number) {
     const safeLine = Math.max(0, Math.min(line0, doc.lines - 1));
     const maxScroll = Math.max(0, sd.scrollHeight - sd.clientHeight);
-    const target = view.lineBlockAt(doc.line(safeLine + 1).from).top;
+    const target = editorView.lineBlockAt(doc.line(safeLine + 1).from).top;
     sd.scrollTop = Math.max(0, Math.min(maxScroll, target));
   }
 
