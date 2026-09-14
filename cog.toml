@@ -7,8 +7,12 @@ tag_prefix = "v"
 
 # Sync the version across all manifests before the bump commit is created.
 # `{{version}}` is replaced by cog with the target version before the hooks run.
+# The full check runs here, before the commit and tag exist, so a failed check
+# aborts the bump instead of rejecting the post-bump push and stranding a tag.
 pre_bump_hooks = [
   "cog check --from-latest-tag",
+  "bun run check",
+  "bun run test",
   "./scripts/sync_version.sh {{version}}",
 ]
 
