@@ -22,6 +22,7 @@ const MIN_LINE_HEIGHT = 1;
 const CHARS_TO_PX = 0.75;
 const VIEWPORT_UNHOVERED_DIM = 0.75;
 const CONTENT_RENDER_DEBOUNCE_MS = 150;
+const COMPRESS_SPACING = 1;
 
 function fitLines(
   availableHeight: number,
@@ -38,6 +39,42 @@ function fitLines(
   const gap = Math.min(maxGap, shrinkGap);
   const lineH = (availableHeight - gap * (lineCount - 1)) / lineCount;
   return { lineH, gap };
+}
+
+interface MinimapLayout {
+  totalLines: number;
+  compressed: boolean;
+  lineH: number;
+  gap: number;
+  totalBars: number;
+  linesPerBar: number;
+}
+
+/** Current content layout, shared by rendering and pointer hit-testing so the
+ *  viewport rect and drag map through the same source-line positions used to
+ *  draw the content (rather than `scrollHeight`, whose estimate shifts as
+ *  CodeMirror measures off-screen lines). */
+let minimapLayout: MinimapLayout | null = null;
+
+function lineToY(layout: MinimapLayout, line0: number): number {
+  if (layout.compressed) {
+    const bar = Math.min(Math.floor(line0 / layout.linesPerBar), layout.totalBars - 1);
+    return bar * COMPRESS_SPACING;
+  }
+  return line0 * (layout.lineH + layout.gap);
+}
+
+function yToLine(layout: MinimapLayout, y: number): number {
+  if (layout.compressed) {
+    const bar = Math.max(0, Math.min(Math.floor(y / COMPRESS_SPACING), layout.totalBars - 1));
+    return Math.min(layout.totalLines - 1, Math.floor(bar * layout.linesPerBar));
+  }
+  const index = Math.floor(y / (layout.lineH + layout.gap));
+  return Math.max(0, Math.min(layout.totalLines - 1, index));
+}
+
+function minimapLineHeight(layout: MinimapLayout): number {
+  return layout.compressed ? COMPRESS_SPACING : layout.lineH;
 }
 
 interface MinimapColors {
@@ -298,6 +335,18 @@ function renderMinimap() {
   const contentH = Math.min(trackHeight, Math.max(1, totalLines * (LINE_HEIGHT + LINE_GAP)));
   const { lineH, gap } = fitLines(contentH, totalLines, LINE_HEIGHT, LINE_GAP);
 
+  const compressed = lineH < 1;
+  const totalBars = compressed ? Math.max(1, Math.floor(contentH / COMPRESS_SPACING)) : 1;
+  const layout: MinimapLayout = {
+    totalLines,
+    compressed,
+    lineH,
+    gap,
+    totalBars,
+    linesPerBar: compressed ? totalLines / totalBars : totalLines,
+  };
+  minimapLayout = layout;
+
   canvas.width = MINIMAP_WIDTH * dpr;
   canvas.height = contentH * dpr;
   canvas.style.width = `${MINIMAP_WIDTH}px`;
@@ -314,13 +363,15 @@ function renderMinimap() {
 
   const scrollDOM = view.scrollDOM;
   const scrollTop = scrollDOM.scrollTop;
-  const scrollHeight = scrollDOM.scrollHeight;
   const clientHeight = scrollDOM.clientHeight;
+  const canScroll = scrollDOM.scrollHeight > clientHeight;
 
-  const viewportTop = scrollHeight > 0 ? (scrollTop / scrollHeight) * contentH : 0;
-  const viewportBottom = scrollHeight > 0 ? ((scrollTop + clientHeight) / scrollHeight) * contentH : contentH;
+  const topLine = doc.lineAt(view.lineBlockAtHeight(scrollTop).from).number - 1;
+  const bottomLine = doc.lineAt(view.lineBlockAtHeight(scrollTop + clientHeight).from).number - 1;
+  const viewportTop = lineToY(layout, topLine);
+  const viewportBottom = lineToY(layout, bottomLine) + minimapLineHeight(layout);
 
-  if (scrollHeight > clientHeight) {
+  if (canScroll) {
     ctx.fillStyle = hovered ? "rgba(128, 128, 128, 0.35)" : "rgba(80, 80, 80, 0.35)";
     ctx.fillRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
 
@@ -332,14 +383,10 @@ function renderMinimap() {
   const paddingX = 2;
   const barWidth = MINIMAP_WIDTH - paddingX * 2;
 
-  const COMPRESS_SPACING = 1;
-  const needsCompression = lineH < 1;
   let inCodeBlock = false;
   const calloutTypes = computeCalloutTypes(doc);
 
-  if (needsCompression) {
-    const totalBars = Math.max(1, Math.floor(contentH / COMPRESS_SPACING));
-    const linesPerBar = totalLines / totalBars;
+  if (compressed) {
     let currentBarIdx = -1;
     let counts: Record<string, number> = {};
     let barMaxLen = 0;
@@ -354,7 +401,7 @@ function renderMinimap() {
 
     for (let i = 1; i <= totalLines; i++) {
       const line = doc.line(i).text;
-      const barIdx = Math.min(Math.floor((i - 1) / linesPerBar), totalBars - 1);
+      const barIdx = Math.min(Math.floor((i - 1) / layout.linesPerBar), layout.totalBars - 1);
 
       if (barIdx !== currentBarIdx) {
         if (currentBarIdx >= 0) drawCompressedBar(currentBarIdx, pickBarKind(counts));
@@ -442,42 +489,44 @@ function scheduleRender() {
 }
 
 function onTrackMouseDown(e: MouseEvent) {
-  if (!trackRef || !view) return;
+  if (!trackRef || !view || !canvasRef || !minimapLayout) return;
   e.preventDefault();
 
   const sd = view.scrollDOM;
-  const cv = canvasRef;
-  const canvasH = cv?.clientHeight ?? 0;
-  if (canvasH === 0) return;
-  const startY = e.clientY;
-  const startScrollTop = sd.scrollTop;
-  const maxScroll = sd.scrollHeight - sd.clientHeight;
+  const doc = view.state.doc;
+  const layout = minimapLayout;
+  const canvasRect = canvasRef.getBoundingClientRect();
+  if (canvasRect.height === 0) return;
+
+  // Keep the grabbed point of the viewport rect under the cursor: record where
+  // the pointer sits inside the rect (in minimap coordinates) and preserve it
+  // while dragging.
+  const startTopLine = doc.lineAt(view.lineBlockAtHeight(sd.scrollTop).from).number - 1;
+  const grabOffset = e.clientY - canvasRect.top - lineToY(layout, startTopLine);
   let moved = false;
 
-  function onMouseMove(e: MouseEvent) {
-    moved = true;
-    const dy = e.clientY - startY;
-    const scrollDelta = (dy / canvasH) * sd.scrollHeight;
-    sd.scrollTop = Math.max(0, Math.min(maxScroll, startScrollTop + scrollDelta));
+  // Map a source line to its real document offset so the drag matches the line
+  // layout that was drawn, not the (estimated, shifting) `scrollHeight`.
+  function scrollToLine(line0: number) {
+    const safeLine = Math.max(0, Math.min(line0, doc.lines - 1));
+    const maxScroll = Math.max(0, sd.scrollHeight - sd.clientHeight);
+    const target = view.lineBlockAt(doc.line(safeLine + 1).from).top;
+    sd.scrollTop = Math.max(0, Math.min(maxScroll, target));
   }
 
-  function onMouseUp(e: MouseEvent) {
+  function onMouseMove(ev: MouseEvent) {
+    moved = true;
+    const targetTopY = ev.clientY - canvasRect.top - grabOffset;
+    scrollToLine(yToLine(layout, targetTopY));
+  }
+
+  function onMouseUp(ev: MouseEvent) {
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
     document.body.style.userSelect = "";
 
-    if (!moved && canvasRef) {
-      const rect = canvasRef.getBoundingClientRect();
-      const clickY = e.clientY - rect.top;
-      const canvasH = rect.height;
-      let ratio = Math.max(0, Math.min(1, clickY / canvasH));
-
-      const viewportH = (sd.clientHeight / sd.scrollHeight) * canvasH;
-      const edgeSnap = viewportH / canvasH;
-      if (ratio < edgeSnap) ratio = 0;
-      else if (ratio > 1 - edgeSnap) ratio = 1;
-
-      sd.scrollTop = ratio * (sd.scrollHeight - sd.clientHeight);
+    if (!moved) {
+      scrollToLine(yToLine(layout, ev.clientY - canvasRect.top));
     }
   }
 
