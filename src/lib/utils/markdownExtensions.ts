@@ -1,5 +1,5 @@
 import { syntaxTree } from "@codemirror/language";
-import { EditorSelection, type Extension, type Line, Prec, type Range } from "@codemirror/state";
+import { type Extension, type Line, Prec, type Range } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -10,8 +10,9 @@ import {
   WidgetType,
 } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
-import { imageWidgetClickHandler, imageWidgetDecoration } from "./markdownImageWidget";
-import { collectTableSpans, createTableWidgetField, tableWidgetClickHandler } from "./markdownTableWidget";
+import { imageWidgetDecoration, imageWidgetPointer } from "./markdownImageWidget";
+import { collectTableSpans, createTableWidgetField, tableWidgetPointer } from "./markdownTableWidget";
+import { type PointerResolver, renderedPointerHandler } from "./renderedPointer";
 import { resolveImageSrc } from "./resolveImagePath";
 
 /** Resolves the base directory of the tab a view belongs to (for image sources). */
@@ -321,14 +322,6 @@ export const renderedCopyHandler = EditorView.domEventHandlers({
   },
 });
 
-interface PendingMaskedClick {
-  target: number;
-  x: number;
-  y: number;
-}
-
-const pendingMaskedClick = new WeakMap<EditorView, PendingMaskedClick>();
-
 /**
  * Returns the caret position a click on a masked link should land at, or null
  * when the click is not on a masked URL region.
@@ -369,31 +362,16 @@ function maskedLinkClickTarget(view: EditorView, pos: number): number | null {
 /**
  * Clicking a masked URL region should place the caret at a sensible spot, but
  * must not swallow mousedown so that drag-selections starting on the URL (e.g.
- * an autolink closing a line) still work. So mousedown only remembers the
- * intended caret; a plain click (no drag, no range produced) applies it on
- * mouseup, letting the core mouse-selection drive any real drag in between.
+ * an autolink closing a line) still work. Deferring to mouseup lets the core
+ * mouse-selection drive any real drag in between.
  */
-export const linkBoundaryClickHandler = EditorView.domEventHandlers({
-  mousedown: (event, view) => {
-    pendingMaskedClick.delete(view);
-    if (event.button !== 0 || event.shiftKey) return false;
-    const pos = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
-    if (pos == null) return false;
-    const target = maskedLinkClickTarget(view, pos.pos);
-    if (target == null) return false;
-    pendingMaskedClick.set(view, { target, x: event.clientX, y: event.clientY });
-    return false;
-  },
-  mouseup: (event, view) => {
-    const pending = pendingMaskedClick.get(view);
-    if (!pending) return false;
-    pendingMaskedClick.delete(view);
-    if (!view.state.selection.main.empty) return false;
-    if (Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10) return false;
-    view.dispatch({ selection: { anchor: pending.target }, scrollIntoView: false });
-    return true;
-  },
-});
+const maskedLinkPointer: PointerResolver = (view, event) => {
+  if (event.shiftKey) return null;
+  const pos = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
+  if (pos == null) return null;
+  const target = maskedLinkClickTarget(view, pos.pos);
+  return target == null ? null : { target, apply: "mouseup" };
+};
 
 const MASKED_MARKER_NODES = new Set(["CodeMark", "EmphasisMark", "LinkMark", "HeaderMark", "QuoteMark"]);
 
@@ -453,26 +431,17 @@ function wrappedLineEnd(view: EditorView, pos: number, clientY: number): number 
 
 /**
  * Clicking just past a masked marker that begins a wrapped row puts the caret
- * on the next row and reveals the marker. Correct it in a microtask: that runs
- * after CodeMirror has applied its own selection but before the browser paints,
- * so the reveal is never shown, and a following drag simply overrides it.
+ * on the next row and reveals the marker. The microtask runs after CodeMirror
+ * has applied its own selection but before the browser paints, so the reveal is
+ * never shown, and a following drag simply overrides it.
  */
-export const wrapBoundaryClickHandler = EditorView.domEventHandlers({
-  mousedown: (event, view) => {
-    if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey) return false;
-    const hit = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
-    if (hit == null) return false;
-    const target = wrappedLineEnd(view, hit.pos, event.clientY);
-    if (target == null) return false;
-    queueMicrotask(() => {
-      const sel = view.state.selection.main;
-      if (sel.empty && sel.head === hit.pos) {
-        view.dispatch({ selection: EditorSelection.cursor(target, -1), scrollIntoView: false });
-      }
-    });
-    return false;
-  },
-});
+const wrapBoundaryPointer: PointerResolver = (view, event) => {
+  if (event.shiftKey || event.ctrlKey || event.metaKey) return null;
+  const hit = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
+  if (hit == null) return null;
+  const target = wrappedLineEnd(view, hit.pos, event.clientY);
+  return target == null ? null : { target, assoc: -1, apply: "microtask", expectedHead: hit.pos };
+};
 
 function findHiddenMarkers(
   view: EditorView,
@@ -952,10 +921,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean, getTabDirecto
     ...(rendered
       ? [
           createTableWidgetField(),
-          tableWidgetClickHandler,
-          imageWidgetClickHandler,
-          linkBoundaryClickHandler,
-          wrapBoundaryClickHandler,
+          renderedPointerHandler([tableWidgetPointer, imageWidgetPointer, maskedLinkPointer, wrapBoundaryPointer]),
           renderedCopyHandler,
           renderedModeKeymap,
         ]

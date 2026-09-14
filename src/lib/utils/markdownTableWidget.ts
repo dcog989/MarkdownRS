@@ -2,7 +2,8 @@ import { syntaxTree } from "@codemirror/language";
 import type { Range } from "@codemirror/state";
 import { type EditorState, StateField } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
-import { handleWidgetClick } from "./editorWidgetClick";
+import { widgetPointerAction } from "./editorWidgetClick";
+import type { PointerResolver } from "./renderedPointer";
 
 export type TableAlignment = "left" | "center" | "right" | "none";
 
@@ -247,49 +248,47 @@ function tableRowToSourcePos(
   return from + lineOffset + prefix.length + cell.start;
 }
 
-export const tableWidgetClickHandler = EditorView.domEventHandlers({
-  mousedown: (event, view) =>
-    handleWidgetClick(view, event, ".cm-table-widget", (widget, element) => {
-      const from = Number(widget.dataset.from);
-      const to = Number(widget.dataset.to);
-      if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+export const tableWidgetPointer: PointerResolver = (view, event) =>
+  widgetPointerAction(event, ".cm-table-widget", (widget, element) => {
+    const from = Number(widget.dataset.from);
+    const to = Number(widget.dataset.to);
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
 
-      const cell = element.closest<HTMLElement>("td, th");
+    const cell = element.closest<HTMLElement>("td, th");
 
-      let anchor: number | null;
-      if (cell) {
-        const row = cell.closest("tr");
-        const table = cell.closest("table");
-        if (!row || !table) return null;
+    let anchor: number | null;
+    if (cell) {
+      const row = cell.closest("tr");
+      const table = cell.closest("table");
+      if (!row || !table) return null;
 
-        // The widget renders the header row (source row 0) as thead and the body
-        // rows (source rows 2+) as tbody; source row 1 is the delimiter row.
-        const headRows = Array.from(table.querySelectorAll("thead > tr"));
-        const bodyRows = Array.from(table.querySelectorAll("tbody > tr"));
+      // The widget renders the header row (source row 0) as thead and the body
+      // rows (source rows 2+) as tbody; source row 1 is the delimiter row.
+      const headRows = Array.from(table.querySelectorAll("thead > tr"));
+      const bodyRows = Array.from(table.querySelectorAll("tbody > tr"));
 
-        let sourceRowIndex: number;
-        if (headRows.includes(row)) {
-          sourceRowIndex = 0;
-        } else {
-          const bodyIndex = bodyRows.indexOf(row);
-          if (bodyIndex < 0) return null;
-          sourceRowIndex = bodyIndex + 2;
-        }
-
-        const cellIndex = Array.from(row.children).indexOf(cell);
-        if (cellIndex < 0) return null;
-
-        anchor = tableRowToSourcePos(view, from, to, sourceRowIndex, cellIndex);
-        if (anchor == null) return null;
+      let sourceRowIndex: number;
+      if (headRows.includes(row)) {
+        sourceRowIndex = 0;
       } else {
-        // Clicked the widget chrome (padding or an empty row), not a cell; drop
-        // the caret at the table start instead of guessing from pixels.
-        anchor = from;
+        const bodyIndex = bodyRows.indexOf(row);
+        if (bodyIndex < 0) return null;
+        sourceRowIndex = bodyIndex + 2;
       }
 
-      return anchor;
-    }),
-});
+      const cellIndex = Array.from(row.children).indexOf(cell);
+      if (cellIndex < 0) return null;
+
+      anchor = tableRowToSourcePos(view, from, to, sourceRowIndex, cellIndex);
+      if (anchor == null) return null;
+    } else {
+      // Clicked the widget chrome (padding or an empty row), not a cell; drop
+      // the caret at the table start instead of guessing from pixels.
+      anchor = from;
+    }
+
+    return anchor;
+  });
 
 export function createTableWidgetField(): StateField<DecorationSet> {
   return StateField.define<DecorationSet>({

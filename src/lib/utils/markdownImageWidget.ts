@@ -1,6 +1,7 @@
 import type { Range } from "@codemirror/state";
-import { Decoration, EditorView, WidgetType } from "@codemirror/view";
-import { handleWidgetClick } from "./editorWidgetClick";
+import { Decoration, WidgetType } from "@codemirror/view";
+import { widgetPointerAction } from "./editorWidgetClick";
+import type { PointerResolver } from "./renderedPointer";
 
 export class ImageWidget extends WidgetType {
   constructor(
@@ -35,10 +36,8 @@ export function imageWidgetDecoration(from: number, to: number, src: string, alt
   return Decoration.replace({ widget: new ImageWidget(from, src, alt) }).range(from, to);
 }
 
-export const imageWidgetClickHandler = EditorView.domEventHandlers({
-  mousedown: (event, view) =>
-    handleWidgetClick(view, event, ".cm-image-widget", (img) => {
-      const from = Number(img.dataset.from);
-      return Number.isFinite(from) ? from : null;
-    }),
-});
+export const imageWidgetPointer: PointerResolver = (_view, event) =>
+  widgetPointerAction(event, ".cm-image-widget", (img) => {
+    const from = Number(img.dataset.from);
+    return Number.isFinite(from) ? from : null;
+  });
