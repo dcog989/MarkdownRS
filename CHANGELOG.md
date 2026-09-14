@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.61.0 - 2026-09-14
+
+#### Features
+
+- (255c20e) add save-all command and make context-menu hints platform-aware - dcog989
+
+#### Bug Fixes
+
+- (2a6ce4a) map viewport rect and drag through source-line layout - dcog989
+
+- (6a29434) use deleteGroupForwardWin so ctrl+delete consumes next line indentation - dcog989
+
+- (c75270d) show shortcut hints for add-bookmark and reopen-closed - dcog989
+
+- (5184295) persist unsaved tab file type across restarts - dcog989
+
+- (e78bd6b) match inline code styling in rendered tables to body code - dcog989
+
+#### Refactoring
+
+- (4e191c0) restore sync scroll with EditorView.scrollSnapshot - dcog989
+
+- (0db490c) drop custom selection drag-scroll in favor of CodeMirror's built-in - dcog989
+
+- (974d149) use MatchDecorator for path, URL and wikilink decorations - dcog989
+
+- (e25e58e) reuse CodeMirror indentMore/indentLess for tab indentation - dcog989
+
+- - -
+
 ## v1.60.4 - 2026-09-10
 
 #### Bug Fixes
