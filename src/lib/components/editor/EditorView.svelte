@@ -22,7 +22,7 @@ import { TabSyncManager } from "$lib/components/editor/logic/tabSync";
 import { createUpdateListener } from "$lib/components/editor/logic/updateListener";
 import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { restoreScrollByTopLine, ScrollManager } from "$lib/utils/cmScroll";
+import { restoreScrollByTopLine } from "$lib/utils/cmScroll";
 import { getActiveEditorView, setActiveEditorView } from "$lib/utils/editorCommands";
 import { newlinePlugin, selectionWhitespacePlugin } from "$lib/utils/editorPlugins";
 import { generateDynamicTheme } from "$lib/utils/editorTheme";
@@ -86,8 +86,7 @@ let {
 let editorContainer = $state<HTMLDivElement>();
 let view = $state<AppEditorView>();
 
-let scrollManager = new ScrollManager();
-let tabSync = new TabSyncManager(scrollManager);
+let tabSync = new TabSyncManager();
 let gutterObserver: ResizeObserver | null = null;
 
 function setupGutterObserver() {

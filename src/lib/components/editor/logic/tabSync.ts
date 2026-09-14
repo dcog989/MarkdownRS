@@ -6,7 +6,6 @@ import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { getHistoryState, getTransientState, updateContent, updateHistoryState } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import type { ScrollManager } from "$lib/utils/cmScroll";
 import { restoreScrollByTopLine } from "$lib/utils/cmScroll";
 import { CONFIG } from "$lib/utils/config";
 import { setActiveEditorView } from "$lib/utils/editorCommands";
@@ -25,8 +24,6 @@ export class TabSyncManager {
   };
   lastForceSyncCounter = 0;
   isRestoring = false;
-
-  constructor(private scrollManager: ScrollManager) {}
 
   flushPending(
     view: AppEditorView,
@@ -187,19 +184,23 @@ export class TabSyncManager {
     const diff = computeContentDiff(currentDoc, storeContent);
     if (!diff) return;
 
-    this.scrollManager.capture(view, "Sync");
-    view.dispatch({ changes: diff, userEvent: "input.type.sync" });
-    requestAnimationFrame(() => {
-      if (view && view._currentTabId === tabId) {
-        if (isInitialPopulate) {
+    // Keep the viewport stable across the programmatic content replacement by
+    // anchoring to the current scroll position and mapping it through the edit.
+    const changes = view.state.changes(diff);
+    view.dispatch({
+      changes,
+      effects: isInitialPopulate ? undefined : view.scrollSnapshot().map(changes),
+      userEvent: "input.type.sync",
+    });
+
+    if (isInitialPopulate) {
+      requestAnimationFrame(() => {
+        if (view && view._currentTabId === tabId) {
           const tabTs = getTransientState(tabId);
           restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0, tabTs?.scrollPercentage ?? 0);
-        } else {
-          view.requestMeasure();
-          this.scrollManager.restore(view, "anchor");
         }
-      }
-    });
+      });
+    }
 
     if (isForcedSync) {
       this.lastForceSyncCounter = forceSyncCounter;
