@@ -386,17 +386,33 @@ function wrappedLineEnd(view: EditorView, pos: number, clientY: number): number 
   if (pos === 0) return null;
 
   const tree = syntaxTree(view.state);
-  // The bug's signature: the caret resolved just past a zero-width masked
+  const doc = view.state.doc;
+  const line = doc.lineAt(pos);
+
+  // Forward correction: the click landed on the start of a masked marker that
+  // closes out its logical line (e.g. the closing backtick of an inline code
+  // span at the end of a list item). The zero-width replace widget maps the
+  // click to the marker's start instead of past it, so snap the caret forward
+  // to just after the marker.
+  const atMarker = tree.resolveInner(pos, 1);
+  if (MASKED_MARKER_NODES.has(atMarker.name) && atMarker.from === pos && atMarker.to === line.to) {
+    return atMarker.to;
+  }
+
+  // Backward correction: the caret resolved just past a zero-width masked
   // marker, i.e. the marker starts immediately before it.
   const marker = tree.resolveInner(pos - 1, 1);
   if (!MASKED_MARKER_NODES.has(marker.name) || marker.to !== pos) return null;
+
+  // A marker that closes out its logical line cannot be an opening marker at
+  // the start of a wrapped row; a click past it already lands after the
+  // construct, so there is nothing to correct.
+  if (marker.to === line.to) return null;
 
   // ...and the position it resolved to is on a row below the pointer.
   const after = view.coordsAtPos(pos, 1);
   if (!after || clientY >= after.top) return null;
 
-  const doc = view.state.doc;
-  const line = doc.lineAt(pos);
   // A caret on a later logical line can only be reached by crossing one line
   // break while searching the clicked row.
   const crossNewline = pos === line.from;
