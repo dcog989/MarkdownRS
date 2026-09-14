@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.61.1 - 2026-09-14
+
+#### Bug Fixes
+
+- (1c0b32c) import Extension from @codemirror/state - dcog989
+
+- (4c7bcc8) correct wrapped-line-end clicks before paint - dcog989
+
+- (576d29b) keep clicks at the end of a wrapped rendered line on that line - dcog989
+
+- (7505355) resolve nullable view type error in drag handler - dcog989
+
+#### Refactoring
+
+- (b191539) unify rendered click-to-caret handlers into one extension - dcog989
+
+- - -
+
 ## v1.61.0 - 2026-09-14
 
 #### Features
