@@ -6,7 +6,7 @@ import {
   completeAnyWord,
   completionKeymap,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, deleteGroupForwardWin, historyKeymap } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
 import { commands } from "$lib/commands/commands";
@@ -208,8 +208,9 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     ...(completionKeymap as KeyBinding[]),
     ...(historyKeymap as KeyBinding[]),
     ...(closeBracketsKeymap as KeyBinding[]),
+    { key: "Mod-Delete", mac: "Alt-Delete", run: deleteGroupForwardWin, preventDefault: true },
     ...(defaultKeymap.filter(
-      (binding) => binding.key !== "Tab" && !filteredKeys.has(binding.key ?? ""),
+      (binding) => binding.key !== "Tab" && binding.key !== "Mod-Delete" && !filteredKeys.has(binding.key ?? ""),
     ) as KeyBinding[]),
     { key: "Tab", run: handleTabKey, shift: handleShiftTab },
   ]);
