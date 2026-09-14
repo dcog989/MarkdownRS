@@ -18,7 +18,6 @@ import {
   resolveFileLanguage,
 } from "$lib/components/editor/logic/extensions";
 import { setupModifierKeyHandler } from "$lib/components/editor/logic/modifierKeys";
-import { setupSelectionDragScroll } from "$lib/components/editor/logic/selectionScroll";
 import { TabSyncManager } from "$lib/components/editor/logic/tabSync";
 import { createUpdateListener } from "$lib/components/editor/logic/updateListener";
 import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
@@ -340,7 +339,6 @@ onMount(() => {
   restoreScrollByTopLine(viewInstance, initialTopLine, initialScrollTop, initialScrollPercentage);
 
   const cleanupModifier = setupModifierKeyHandler(viewInstance);
-  const cleanupSelScroll = setupSelectionDragScroll(viewInstance);
 
   setupGutterObserver();
 
@@ -359,7 +357,6 @@ onMount(() => {
     tabSync.cleanup();
     gutterObserver?.disconnect();
     cleanupModifier();
-    cleanupSelScroll();
     if (getActiveEditorView() === view) setActiveEditorView(undefined);
     const v = view;
     if (onHistoryUpdate && v?.getHistoryState) onHistoryUpdate(v.getHistoryState());
