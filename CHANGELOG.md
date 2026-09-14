@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.61.1 - 2026-09-14
+
+#### Bug Fixes
+
+- (7505355) resolve nullable view type error in drag handler - dcog989
+
+- - -
+
 ## v1.61.0 - 2026-09-14
 
 #### Features
