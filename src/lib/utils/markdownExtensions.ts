@@ -395,13 +395,6 @@ export const linkBoundaryClickHandler = EditorView.domEventHandlers({
   },
 });
 
-interface PendingWrapClick {
-  x: number;
-  y: number;
-}
-
-const pendingWrapClick = new WeakMap<EditorView, PendingWrapClick>();
-
 const MASKED_MARKER_NODES = new Set(["CodeMark", "EmphasisMark", "LinkMark", "HeaderMark", "QuoteMark"]);
 
 /**
@@ -411,17 +404,21 @@ const MASKED_MARKER_NODES = new Set(["CodeMark", "EmphasisMark", "LinkMark", "He
  * Returns the end of the pointer's visual row (before the wrapping whitespace
  * and any masked markers) so the caret stays on the row that was clicked.
  */
-function wrappedLineEnd(view: EditorView, pos: number, assoc: number, clientY: number): number | null {
+function wrappedLineEnd(view: EditorView, pos: number, clientY: number): number | null {
   if (pos === 0) return null;
 
-  // Only correct when the caret is actually drawn below the pointer's row;
-  // engines that hit-test correctly are left untouched.
-  const drawn = view.coordsAtPos(pos, assoc || 1);
-  if (!drawn || drawn.top <= clientY) return null;
+  const tree = syntaxTree(view.state);
+  // The bug's signature: the caret resolved just past a zero-width masked
+  // marker, i.e. the marker starts immediately before it.
+  const marker = tree.resolveInner(pos - 1, 1);
+  if (!MASKED_MARKER_NODES.has(marker.name) || marker.to !== pos) return null;
+
+  // ...and the position it resolved to is on a row below the pointer.
+  const after = view.coordsAtPos(pos, 1);
+  if (!after || clientY >= after.top) return null;
 
   const doc = view.state.doc;
   const line = doc.lineAt(pos);
-  const tree = syntaxTree(view.state);
   // A caret on a later logical line can only be reached by crossing one line
   // break while searching the clicked row.
   const crossNewline = pos === line.from;
@@ -455,28 +452,25 @@ function wrappedLineEnd(view: EditorView, pos: number, assoc: number, clientY: n
 }
 
 /**
- * Mirrors `linkBoundaryClickHandler`: mousedown only remembers the press so
- * in-progress drag selections are left to CodeMirror; a plain click applies
- * the corrected position on mouseup.
+ * Clicking just past a masked marker that begins a wrapped row puts the caret
+ * on the next row and reveals the marker. Correct it in a microtask: that runs
+ * after CodeMirror has applied its own selection but before the browser paints,
+ * so the reveal is never shown, and a following drag simply overrides it.
  */
 export const wrapBoundaryClickHandler = EditorView.domEventHandlers({
   mousedown: (event, view) => {
-    pendingWrapClick.delete(view);
     if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey) return false;
-    pendingWrapClick.set(view, { x: event.clientX, y: event.clientY });
-    return false;
-  },
-  mouseup: (event, view) => {
-    const pending = pendingWrapClick.get(view);
-    if (!pending) return false;
-    pendingWrapClick.delete(view);
-    const main = view.state.selection.main;
-    if (!main.empty) return false;
-    if (Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10) return false;
-    const target = wrappedLineEnd(view, main.head, main.assoc, event.clientY);
+    const hit = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
+    if (hit == null) return false;
+    const target = wrappedLineEnd(view, hit.pos, event.clientY);
     if (target == null) return false;
-    view.dispatch({ selection: EditorSelection.cursor(target, -1), scrollIntoView: false });
-    return true;
+    queueMicrotask(() => {
+      const sel = view.state.selection.main;
+      if (sel.empty && sel.head === hit.pos) {
+        view.dispatch({ selection: EditorSelection.cursor(target, -1), scrollIntoView: false });
+      }
+    });
+    return false;
   },
 });
 
