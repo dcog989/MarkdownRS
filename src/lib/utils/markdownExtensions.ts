@@ -1,5 +1,5 @@
 import { syntaxTree } from "@codemirror/language";
-import { type Extension, type Line, Prec, type Range } from "@codemirror/state";
+import { EditorSelection, type Extension, type Line, Prec, type Range } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -391,6 +391,91 @@ export const linkBoundaryClickHandler = EditorView.domEventHandlers({
     if (!view.state.selection.main.empty) return false;
     if (Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10) return false;
     view.dispatch({ selection: { anchor: pending.target }, scrollIntoView: false });
+    return true;
+  },
+});
+
+interface PendingWrapClick {
+  x: number;
+  y: number;
+}
+
+const pendingWrapClick = new WeakMap<EditorView, PendingWrapClick>();
+
+const MASKED_MARKER_NODES = new Set(["CodeMark", "EmphasisMark", "LinkMark", "HeaderMark", "QuoteMark"]);
+
+/**
+ * A rendered inline marker (e.g. the opening backtick of an inline code span)
+ * often sits at the start of a soft-wrapped visual row. Its zero-width replace
+ * widget makes `posAtCoords` resolve a click just past it, onto the next row.
+ * Returns the end of the pointer's visual row (before the wrapping whitespace
+ * and any masked markers) so the caret stays on the row that was clicked.
+ */
+function wrappedLineEnd(view: EditorView, pos: number, assoc: number, clientY: number): number | null {
+  if (pos === 0) return null;
+
+  // Only correct when the caret is actually drawn below the pointer's row;
+  // engines that hit-test correctly are left untouched.
+  const drawn = view.coordsAtPos(pos, assoc || 1);
+  if (!drawn || drawn.top <= clientY) return null;
+
+  const doc = view.state.doc;
+  const line = doc.lineAt(pos);
+  const tree = syntaxTree(view.state);
+  // A caret on a later logical line can only be reached by crossing one line
+  // break while searching the clicked row.
+  const crossNewline = pos === line.from;
+  let crossed = false;
+  let target = pos;
+  while (target > 0) {
+    const prev = doc.sliceString(target - 1, target);
+    if (prev === "\n") {
+      if (!crossNewline || crossed) break;
+      crossed = true;
+      target--;
+      continue;
+    }
+    if (/[ \t]/.test(prev)) {
+      target--;
+      continue;
+    }
+    // Side 1 so the marker node that starts at this offset is returned.
+    const node = tree.resolveInner(target - 1, 1);
+    if (MASKED_MARKER_NODES.has(node.name) && node.to === target) {
+      target = node.from;
+      continue;
+    }
+    break;
+  }
+  if (target === pos) return null;
+  // Reached the start of the logical line without crossing its break: the row
+  // above is on the previous logical line, which this click should not enter.
+  if (!crossNewline && target === line.from) return null;
+  return target;
+}
+
+/**
+ * Mirrors `linkBoundaryClickHandler`: mousedown only remembers the press so
+ * in-progress drag selections are left to CodeMirror; a plain click applies
+ * the corrected position on mouseup.
+ */
+export const wrapBoundaryClickHandler = EditorView.domEventHandlers({
+  mousedown: (event, view) => {
+    pendingWrapClick.delete(view);
+    if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey) return false;
+    pendingWrapClick.set(view, { x: event.clientX, y: event.clientY });
+    return false;
+  },
+  mouseup: (event, view) => {
+    const pending = pendingWrapClick.get(view);
+    if (!pending) return false;
+    pendingWrapClick.delete(view);
+    const main = view.state.selection.main;
+    if (!main.empty) return false;
+    if (Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10) return false;
+    const target = wrappedLineEnd(view, main.head, main.assoc, event.clientY);
+    if (target == null) return false;
+    view.dispatch({ selection: EditorSelection.cursor(target, -1), scrollIntoView: false });
     return true;
   },
 });
@@ -876,6 +961,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean, getTabDirecto
           tableWidgetClickHandler,
           imageWidgetClickHandler,
           linkBoundaryClickHandler,
+          wrapBoundaryClickHandler,
           renderedCopyHandler,
           renderedModeKeymap,
         ]
