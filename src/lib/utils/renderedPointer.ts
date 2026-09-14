@@ -1,5 +1,5 @@
-import { EditorSelection } from "@codemirror/state";
-import { EditorView, type Extension } from "@codemirror/view";
+import { EditorSelection, type Extension } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 
 /** How a resolved pointer action should be applied to the selection. */
 export type PointerApply =
