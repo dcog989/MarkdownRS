@@ -1,5 +1,12 @@
-import type { Extension, Range } from "@codemirror/state";
-import { Decoration, type EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import type { Extension } from "@codemirror/state";
+import {
+  Decoration,
+  type DecorationSet,
+  type EditorView,
+  MatchDecorator,
+  ViewPlugin,
+  type ViewUpdate,
+} from "@codemirror/view";
 
 const PATH_REGEX =
   /(['"`])((?!https?:\/\/|www\.)(?:[a-zA-Z]:[/\\]|(?:\.\.?|~)[/\\]|\/(?:[^/\s'"`\r\n]+[/\\])+[^'"`\r\n]*|[^'"`\r\n]+?\.[a-zA-Z0-9]{1,10}))\1|(?:https?:\/\/|www\.)[^\s"'`(){}[\]<>]+|(?:[a-zA-Z]:[/\\]|(?:\.{1,2}|~)[/\\]|(?:\/(?:[^/\s"'\r\n(){}[\]<>]+[/\\])+))(?:[^"'\r\n(){}[\]<>]+?\.[a-zA-Z0-9]{1,10}(?=[\s)\]}>.,;:?!]|$)|[^\s"'(){}[\]<>]+)/g;
@@ -65,100 +72,51 @@ const filePathMark = Decoration.mark({ class: "cm-file-path" });
 const urlMark = Decoration.mark({ class: "cm-url" });
 const wikilinkMark = Decoration.mark({ class: "cm-wikilink" });
 
-function findWikilinks(view: EditorView) {
-  const ranges: Range<Decoration>[] = [];
-  const doc = view.state.doc;
-
-  for (const { from, to } of view.visibleRanges) {
-    for (let pos = from; pos <= to; ) {
-      const line = doc.lineAt(pos);
-      const lineText = line.text;
-
-      WIKILINK_REGEX.lastIndex = 0;
-      let match: RegExpExecArray | null;
-
-      while (true) {
-        match = WIKILINK_REGEX.exec(lineText);
-        if (match === null) break;
-
-        const start = line.from + match.index + 2;
-        const end = line.from + match.index + match[0].length - 2;
-        if (end > start) {
-          ranges.push(wikilinkMark.range(start, end));
-        }
+function createMatcherPlugin(matcher: MatchDecorator): Extension {
+  return ViewPlugin.fromClass(
+    class {
+      decorations: DecorationSet;
+      constructor(view: EditorView) {
+        this.decorations = matcher.createDeco(view);
       }
-
-      pos = line.to + 1;
-    }
-  }
-
-  return ranges;
+      update(update: ViewUpdate) {
+        this.decorations = matcher.updateDeco(update, this.decorations);
+      }
+    },
+    { decorations: (v) => v.decorations },
+  );
 }
 
-function findLinks(view: EditorView) {
-  const ranges: Range<Decoration>[] = [];
-  const doc = view.state.doc;
-
-  for (const { from, to } of view.visibleRanges) {
-    for (let pos = from; pos <= to; ) {
-      const line = doc.lineAt(pos);
-      const lineText = line.text;
-
-      PATH_REGEX.lastIndex = 0;
-      let match: RegExpExecArray | null;
-
-      while (true) {
-        match = PATH_REGEX.exec(lineText);
-        if (match === null) break;
-
-        if (match[1]) {
-          const content = match[2];
-          const start = line.from + match.index + 1;
-          if (content.length > 0) {
-            ranges.push(filePathMark.range(start, start + content.length));
-          }
-        } else {
-          const raw = match[0];
-          const isUrl = raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("www.");
-          if (isUrl) {
-            const clean = stripTrailingPunctuation(raw);
-            const start = line.from + match.index;
-            if (clean.length > 0) {
-              ranges.push(urlMark.range(start, start + clean.length));
-            }
-          } else {
-            if (match.index > 0 && /[\w-]/.test(lineText[match.index - 1])) continue;
-            const clean = stripTrailingPunctuation(raw);
-            const start = line.from + match.index;
-            if (clean.length > 0) {
-              ranges.push(filePathMark.range(start, start + clean.length));
-            }
-          }
-        }
-      }
-
-      pos = line.to + 1;
-    }
-  }
-
-  return Decoration.set(ranges, true);
-}
-
-export const linkPlugin: Extension = ViewPlugin.fromClass(
-  class {
-    decorations;
-
-    constructor(view: EditorView) {
-      this.decorations = findLinks(view).update({ add: findWikilinks(view) });
+const pathMatcher = new MatchDecorator({
+  regexp: PATH_REGEX,
+  decorate: (add, from, _to, match, view) => {
+    if (match[1]) {
+      const content = match[2];
+      if (content.length > 0) add(from + 1, from + 1 + content.length, filePathMark);
+      return;
     }
 
-    update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = findLinks(update.view).update({ add: findWikilinks(update.view) });
-      }
+    const raw = match[0];
+    const isUrl = raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("www.");
+    if (isUrl) {
+      const clean = stripTrailingPunctuation(raw);
+      if (clean.length > 0) add(from, from + clean.length, urlMark);
+      return;
     }
+
+    if (from > 0 && /[\w-]/.test(view.state.sliceDoc(from - 1, from))) return;
+    const clean = stripTrailingPunctuation(raw);
+    if (clean.length > 0) add(from, from + clean.length, filePathMark);
   },
-  {
-    decorations: (v) => v.decorations,
+});
+
+const wikilinkMatcher = new MatchDecorator({
+  regexp: WIKILINK_REGEX,
+  decorate: (add, from, _to, match) => {
+    const start = from + 2;
+    const end = from + match[0].length - 2;
+    if (end > start) add(start, end, wikilinkMark);
   },
-);
+});
+
+export const linkPlugin: Extension = [createMatcherPlugin(pathMatcher), createMatcherPlugin(wikilinkMatcher)];
