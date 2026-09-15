@@ -25,6 +25,11 @@
   --color-callout-tip: #9be69a;
   --color-callout-warning: #ffc46a;
 
+  /* Status Hue Bases (OKLCH source hues for functional states) */
+  --color-status-danger: #e06c75;
+  --color-status-success: #98c379;
+  --color-status-warning: #e0a458;
+
   /* Perceptual Lightness Scale (OKLCH L) for the content family */
   --l-content: 0.72;
   --l-content-hover: 0.8;
@@ -66,18 +71,18 @@
   --accent-url-hover: oklch(from var(--color-brand-url) var(--l-content-hover) c h);
   --accent-url: oklch(from var(--color-brand-url) var(--l-content) c h);
 
-  /* Functional System */
+  /* Functional System (status colors pinned to the content lightness scale) */
   --active-line-bg: rgba(255, 255, 255, 0.06);
-  --danger-hover: #e8757f;
-  --danger-text: #e06c75;
-  --danger: #e06c75;
-  --dirty-indicator: #98c379;
+  --danger: oklch(from var(--color-status-danger) var(--l-content) c h);
+  --danger-hover: oklch(from var(--color-status-danger) var(--l-content-hover) c h);
+  --danger-text: var(--danger);
+  --dirty-indicator: var(--success);
   --highlight-line: #e5c07b;
   --selection-bg: #4c3947;
   --selection-match-bg: oklch(0.68 0.1 60 / 0.35);
-  --success-hover: #a8cf8b;
-  --success: #98c379;
-  --warning: #e0a458;
+  --success: oklch(from var(--color-status-success) var(--l-content) c h);
+  --success-hover: oklch(from var(--color-status-success) var(--l-content-hover) c h);
+  --warning: oklch(from var(--color-status-warning) var(--l-content) c h);
 
   /* Animation & Transitions */
   --transition-fast: 100ms;
@@ -140,8 +145,8 @@
   --editor-selection-bg: hsl(from var(--editor-bg) h s calc(l + 18));
   --editor-selection-match-bg: oklch(0.68 0.1 60 / 0.35);
   --editor-highlight-line: #e5c07b;
-  --editor-danger: #e06c75;
-  --editor-danger-fg: #e06c75;
+  --editor-danger: var(--danger);
+  --editor-danger-fg: var(--danger-text);
   --editor-accent: var(--accent-secondary);
   --editor-link: var(--accent-link);
   --editor-link-hover: var(--accent-link-hover);
@@ -194,6 +199,11 @@
   /* Content hue base differs by theme (dark code is green, light is amber) */
   --color-content-code: #b45309;
 
+  /* Status hue bases differ by theme (light variants are more saturated) */
+  --color-status-danger: #c62828;
+  --color-status-success: #2e7d32;
+  --color-status-warning: #b45309;
+
   /* Surface System - Light Theme */
   --surface-1: #fcfcfc;
   --surface-2: #f2f2f2;
@@ -229,17 +239,11 @@
   --accent-url-hover: oklch(from var(--color-brand-url) var(--l-content-hover) c h);
   --accent-url: oklch(from var(--color-brand-url) var(--l-content) c h);
 
-  /* Functional System - Light Theme */
+  /* Functional System - Light Theme (status colors derive from the light
+     content scale; only the selection tints differ) */
   --active-line-bg: rgba(0, 0, 0, 0.04);
-  --danger-hover: #b71c1c;
-  --danger-text: #c62828;
-  --danger: #c62828;
-  --dirty-indicator: #2e7d32;
   --selection-bg: oklch(from var(--color-brand-accent) 0.6 0.08 h / 0.2);
   --selection-match-bg: oklch(0.68 0.12 62 / 0.35);
-  --success-hover: #1b5e20;
-  --success: #2e7d32;
-  --warning: #b45309;
 
   /* Editor & Content Colors - Light Theme (codes/quote derive from the
      light content scale; only the tinted backgrounds differ) */
@@ -269,8 +273,6 @@
   --editor-tooltip-accent-fg: var(--text-inverse);
   --editor-selection-bg: hsl(from var(--editor-bg) h s calc(l + 18));
   --editor-selection-match-bg: oklch(0.68 0.12 62 / 0.35);
-  --editor-danger: #c62828;
-  --editor-danger-fg: #c62828;
   --editor-accent: var(--accent-secondary);
   --editor-link: var(--accent-link);
   --editor-link-hover: var(--accent-link-hover);
