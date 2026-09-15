@@ -9,6 +9,7 @@ import { forceMarkdownRelint } from "$lib/utils/markdownLintExtension.svelte";
 import { extractSmartTitle, getBaseTitle } from "$lib/utils/smartTitle";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 import { invalidateSpellcheckCache, triggerImmediateLint } from "$lib/utils/spellcheckExtension.svelte";
+import { BUILTIN_THEME_NAME } from "$lib/utils/themes";
 
 export function reloadSpellcheck() {
   spellcheckState.clear();
@@ -33,7 +34,7 @@ export function onLogLevelChange(newValue: unknown) {
 }
 
 export function onThemeChange(newValue: unknown) {
-  if (newValue === "System") {
+  if (newValue === BUILTIN_THEME_NAME) {
     settingsState.themeMode = "auto";
   }
   syncThemeFromSystem();

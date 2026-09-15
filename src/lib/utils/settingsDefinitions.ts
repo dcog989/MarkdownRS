@@ -6,6 +6,7 @@ import {
   onThemeChange,
   reloadSpellcheck,
 } from "./settingsHandlers";
+import { BUILTIN_THEME_NAME } from "./themes";
 
 export type SettingDef = {
   key: string;
@@ -52,7 +53,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: "settings.theme",
       type: "select",
       category: "settings.category.interface",
-      defaultValue: "System",
+      defaultValue: BUILTIN_THEME_NAME,
       options: availableThemes,
       tooltip: "settings.themeTooltip",
       onChange: onThemeChange,

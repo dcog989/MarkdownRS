@@ -1,7 +1,10 @@
 import { translate } from "$lib/i18n";
 import { callBackendSafe } from "./backend";
 
-export const LEGACY_THEME_NAMES = ["default-dark", "default-light", "rs-dark", "rs-light"];
+/** Built-in theme entry. Follows the OS light/dark mode only; its palette is
+ *  the bundled app colors, not the user's OS colors. Not backed by a theme CSS
+ *  file, so it must not collide with a user theme of the same name. */
+export const BUILTIN_THEME_NAME = "Auto (Light/Dark)";
 
 export const DEFAULT_THEME_NAMES = [
   "Catppuccin",

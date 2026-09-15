@@ -13,7 +13,7 @@ import { logger } from "$lib/utils/logger";
 import { saveSettings } from "$lib/utils/settings";
 import { getSettingDefinitions, type SettingDef } from "$lib/utils/settingsDefinitions";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { DEFAULT_THEME_NAMES, keyed, LEGACY_THEME_NAMES } from "$lib/utils/themes";
+import { BUILTIN_THEME_NAME, DEFAULT_THEME_NAMES, keyed } from "$lib/utils/themes";
 import Modal from "./Modal.svelte";
 import ModalSearchHeader from "./ModalSearchHeader.svelte";
 import SettingInput from "./SettingInput.svelte";
@@ -56,20 +56,17 @@ $effect(() => {
         if (!customThemes) return;
         const defaults = DEFAULT_THEME_NAMES;
         const customs = customThemes
-          .filter(
-            (t) =>
-              !defaults.some((d) => keyed(d) === keyed(t)) && !LEGACY_THEME_NAMES.some((l) => keyed(l) === keyed(t)),
-          )
+          .filter((t) => keyed(t) !== keyed(BUILTIN_THEME_NAME) && !defaults.some((d) => keyed(d) === keyed(t)))
           .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-        appContext.settings.availableThemes = ["System", ...defaults, ...customs];
+        appContext.settings.availableThemes = [BUILTIN_THEME_NAME, ...defaults, ...customs];
 
         if (!appContext.settings.availableThemes.includes(appContext.settings.activeTheme)) {
-          appContext.settings.activeTheme = "System";
+          appContext.settings.activeTheme = BUILTIN_THEME_NAME;
           saveSettings();
         }
       })
       .catch(() => {
-        appContext.settings.availableThemes = DEFAULT_THEME_NAMES;
+        appContext.settings.availableThemes = [BUILTIN_THEME_NAME, ...DEFAULT_THEME_NAMES];
       });
   } else {
     searchQuery = "";

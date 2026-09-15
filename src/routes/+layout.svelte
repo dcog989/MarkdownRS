@@ -10,7 +10,7 @@ import { syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { logger } from "$lib/utils/logger";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { buildCustomAccentCss, getThemeCss } from "$lib/utils/themes";
+import { BUILTIN_THEME_NAME, buildCustomAccentCss, getThemeCss } from "$lib/utils/themes";
 import "../app.css";
 
 let { children } = $props();
@@ -31,7 +31,7 @@ $effect(() => {
 
 $effect(() => {
   const themeName = appContext.settings.activeTheme;
-  if (!themeName || themeName === "System") {
+  if (!themeName || themeName === BUILTIN_THEME_NAME) {
     const existing = document.getElementById("user-theme-styles");
     if (existing) existing.remove();
     return;

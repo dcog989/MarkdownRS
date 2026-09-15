@@ -1,10 +1,12 @@
+import { BUILTIN_THEME_NAME } from "$lib/utils/themes";
+
 export const settingsState = $state({
   splitView: true,
   locale: "system",
   theme: "dark" as "dark" | "light",
   themeMode: "auto" as "auto" | "dark" | "light",
-  activeTheme: "System",
-  availableThemes: ["System"] as string[],
+  activeTheme: BUILTIN_THEME_NAME,
+  availableThemes: [BUILTIN_THEME_NAME] as string[],
   customAccentColor: "",
   splitPercentage: 0.5,
   splitOrientation: "vertical" as "vertical" | "horizontal",
@@ -67,7 +69,7 @@ export function toggleSplitView() {
 }
 
 export function setTheme(newTheme: "dark" | "light") {
-  settingsState.activeTheme = "System";
+  settingsState.activeTheme = BUILTIN_THEME_NAME;
   settingsState.themeMode = newTheme;
   settingsState.theme = newTheme;
 }
