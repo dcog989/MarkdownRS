@@ -158,7 +158,9 @@
   color: var(--editor-url);
 }
 
-.markdown-mode .cm-link {
+/* URLs inside a link carry both `cm-link` and `cm-url` (the parser tags the
+   whole Link subtree as link); exclude them so the URL keeps its own hue. */
+.markdown-mode .cm-link:not(.cm-url) {
   color: var(--editor-link);
 }
 
