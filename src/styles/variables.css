@@ -4,10 +4,25 @@
   /* Brand Bases */
   --color-brand-accent: #7c5a73;
   --color-brand-file: #e5c07b;
-  --color-brand-filepath: #98c379;
+  --color-brand-filepath: #00ffff;
   --color-brand-link: #56b6c2;
   --color-brand-quote: #c679e1;
-  --color-brand-url: #56b6c2;
+  --color-brand-url: #0000ff;
+
+  /* Content Hue Bases (OKLCH source hues for syntax/preview content) */
+  --color-content-atom: #d19a66;
+  --color-content-code: #92b975;
+  --color-content-comment: #9e9e9e;
+  --color-content-emphasis: #61afef;
+  --color-content-heading: #e06c75;
+  --color-content-keyword: #c678dd;
+  --color-content-note: #87cefa;
+  --color-content-string: #98c379;
+
+  /* Perceptual Lightness Scale (OKLCH L) for the content family */
+  --l-content: 0.72;
+  --l-content-hover: 0.8;
+  --l-content-muted: 0.66;
 
   /* Surface System */
   --surface-1: #1e1e1e;
@@ -33,17 +48,17 @@
   --border-secondary: #4b4b4b;
   --border-focus: #9c658f;
 
-  /* Accent System - derived from Brand */
-  --accent-file: oklch(from var(--color-brand-file) 0.8 c h);
-  --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.85 c h);
-  --accent-filepath: oklch(from var(--color-brand-filepath) 0.75 c h);
-  --accent-link-hover: oklch(from var(--color-brand-link) 0.75 c h);
-  --accent-link: oklch(from var(--color-brand-link) 0.65 c h);
+  /* Accent System - derived from Brand, pinned to the content lightness scale */
+  --accent-file: oklch(from var(--color-brand-file) var(--l-content) c h);
+  --accent-filepath-hover: oklch(from var(--color-brand-filepath) var(--l-content-hover) c h);
+  --accent-filepath: oklch(from var(--color-brand-filepath) var(--l-content) c h);
+  --accent-link-hover: oklch(from var(--color-brand-link) var(--l-content-hover) c h);
+  --accent-link: oklch(from var(--color-brand-link) var(--l-content) c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.75 c h);
   --content-accent: oklch(from var(--color-brand-accent) 0.75 c h);
-  --accent-url-hover: oklch(from var(--color-brand-url) 0.75 c h);
-  --accent-url: oklch(from var(--color-brand-url) 0.65 c h);
+  --accent-url-hover: oklch(from var(--color-brand-url) var(--l-content-hover) c h);
+  --accent-url: oklch(from var(--color-brand-url) var(--l-content) c h);
 
   /* Functional System */
   --active-line-bg: rgba(255, 255, 255, 0.06);
@@ -65,25 +80,25 @@
 
   /* Editor & Content Colors */
   --code-bg: oklch(0.72 0.1 145 / 0.06);
-  --code-fg: #92b975;
+  --code-fg: oklch(from var(--color-content-code) var(--l-content) c h);
   --highlight-bg: oklch(0.8 0.12 85 / 0.3);
   --hr-color: #666666;
   --pre-bg: #171b21;
   --pre-fg: #d4d4d4;
   --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.08);
-  --quote-fg: oklch(from var(--color-brand-quote) 0.65 c h);
+  --quote-fg: oklch(from var(--color-brand-quote) var(--l-content) c h);
 
-  /* Syntax Colors */
-  --syntax-atom: #d19a66;
-  --syntax-comment: #9e9e9e;
-  --syntax-heading: #e06c75;
-  --syntax-keyword: #c678dd;
-  --syntax-string: #98c379;
-  --syntax-emphasis: #61afef;
-  --syntax-strong: #e5c07b;
+  /* Syntax Colors - OKLCH content scale (equal perceptual lightness) */
+  --syntax-atom: oklch(from var(--color-content-atom) var(--l-content) c h);
+  --syntax-comment: oklch(from var(--color-content-comment) var(--l-content-muted) c h);
+  --syntax-emphasis: oklch(from var(--color-content-emphasis) var(--l-content) c h);
+  --syntax-heading: oklch(from var(--color-content-heading) var(--l-content) c h);
+  --syntax-keyword: oklch(from var(--color-content-keyword) var(--l-content) c h);
+  --syntax-strong: oklch(from var(--color-brand-file) var(--l-content) c h);
+  --syntax-string: oklch(from var(--color-content-string) var(--l-content) c h);
 
   /* Callout Accents (GitHub-style alerts) */
-  --callout-note-accent: oklch(0.6 0.15 250);
+  --callout-note-accent: oklch(from var(--color-content-note) var(--l-content) c h);
   --callout-tip-accent: oklch(0.62 0.16 150);
   --callout-important-accent: oklch(0.55 0.18 288);
   --callout-warning-accent: oklch(0.65 0.14 75);
@@ -98,8 +113,8 @@
   --preview-border-quote: var(--quote-fg);
   --preview-fg-body: var(--text-primary);
   --preview-fg-code: var(--code-fg);
-  --preview-fg-heading: #e06c75;
-  --preview-fg-link: #56b6c2;
+  --preview-fg-heading: var(--syntax-heading);
+  --preview-fg-link: var(--accent-link);
   --preview-fg-quote: var(--quote-fg);
   --preview-surface-2: var(--surface-2);
 
@@ -129,29 +144,29 @@
   --editor-file: var(--accent-file);
   --editor-filepath: var(--accent-filepath);
   --editor-filepath-hover: var(--accent-filepath-hover);
-  --editor-syntax-heading: #e06c75;
-  --editor-syntax-keyword: #c678dd;
-  --editor-syntax-atom: #d19a66;
-  --editor-syntax-string: #98c379;
-  --editor-syntax-comment: #9e9e9e;
-  --editor-syntax-emphasis: #61afef;
-  --editor-syntax-strong: #e5c07b;
-  --editor-code-bg: oklch(0.72 0.1 145 / 0.06);
-  --editor-code-fg: #92b975;
+  --editor-syntax-heading: var(--syntax-heading);
+  --editor-syntax-keyword: var(--syntax-keyword);
+  --editor-syntax-atom: var(--syntax-atom);
+  --editor-syntax-string: var(--syntax-string);
+  --editor-syntax-comment: var(--syntax-comment);
+  --editor-syntax-emphasis: var(--syntax-emphasis);
+  --editor-syntax-strong: var(--syntax-strong);
+  --editor-code-bg: var(--code-bg);
+  --editor-code-fg: var(--code-fg);
   --editor-pre-bg: #171b21;
   --editor-pre-fg: #d4d4d4;
   --editor-quote-bg: oklch(from var(--color-brand-quote) l c h / 0.08);
-  --editor-quote-fg: oklch(from var(--color-brand-quote) 0.65 c h);
+  --editor-quote-fg: var(--quote-fg);
   --editor-hr-color: #666666;
-  --editor-callout-note-accent: oklch(0.6 0.15 250);
+  --editor-callout-note-accent: var(--callout-note-accent);
   --editor-callout-tip-accent: oklch(0.62 0.16 150);
   --editor-callout-important-accent: oklch(0.55 0.18 288);
   --editor-callout-warning-accent: oklch(0.65 0.14 75);
   --editor-callout-caution-accent: oklch(0.62 0.18 25);
   --editor-preview-bg: #1e1e1e;
   --editor-preview-fg-body: var(--editor-fg);
-  --editor-preview-fg-heading: #e06c75;
-  --editor-preview-fg-link: #56b6c2;
+  --editor-preview-fg-heading: var(--syntax-heading);
+  --editor-preview-fg-link: var(--accent-link);
   --editor-preview-fg-code: var(--editor-code-fg);
   --editor-preview-fg-pre: var(--editor-pre-fg);
   --editor-preview-fg-quote: var(--editor-quote-fg);
@@ -165,6 +180,14 @@
 
 /* Light Theme - Layer 3: Theme-specific overrides */
 [data-theme="light"] {
+  /* Perceptual Lightness Scale (OKLCH L) - Light Theme */
+  --l-content: 0.48;
+  --l-content-hover: 0.38;
+  --l-content-muted: 0.56;
+
+  /* Content hue base differs by theme (dark code is green, light is amber) */
+  --color-content-code: #b45309;
+
   /* Surface System - Light Theme */
   --surface-1: #fcfcfc;
   --surface-2: #f2f2f2;
@@ -188,17 +211,17 @@
   --border-primary: #c7c7c7;
   --border-secondary: #a8a8a8;
 
-  /* Accent System - Light Theme (darker variants for light bg) */
-  --accent-file: oklch(from var(--color-brand-file) 0.45 c h);
-  --accent-filepath-hover: oklch(from var(--color-brand-filepath) 0.38 c h);
-  --accent-filepath: oklch(from var(--color-brand-filepath) 0.45 c h);
-  --accent-link-hover: oklch(from var(--color-brand-link) 0.35 c h);
-  --accent-link: oklch(from var(--color-brand-link) 0.45 c h);
+  /* Accent System - Light Theme (pinned to the light content lightness scale) */
+  --accent-file: oklch(from var(--color-brand-file) var(--l-content) c h);
+  --accent-filepath-hover: oklch(from var(--color-brand-filepath) var(--l-content-hover) c h);
+  --accent-filepath: oklch(from var(--color-brand-filepath) var(--l-content) c h);
+  --accent-link-hover: oklch(from var(--color-brand-link) var(--l-content-hover) c h);
+  --accent-link: oklch(from var(--color-brand-link) var(--l-content) c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.45 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
   --content-accent: oklch(from var(--color-brand-accent) 0.35 c h);
-  --accent-url-hover: oklch(from var(--color-brand-url) 0.35 c h);
-  --accent-url: oklch(from var(--color-brand-url) 0.45 c h);
+  --accent-url-hover: oklch(from var(--color-brand-url) var(--l-content-hover) c h);
+  --accent-url: oklch(from var(--color-brand-url) var(--l-content) c h);
 
   /* Functional System - Light Theme */
   --active-line-bg: rgba(0, 0, 0, 0.04);
@@ -212,29 +235,17 @@
   --success: #2e7d32;
   --warning: #b45309;
 
-  /* Editor & Content Colors - Light Theme */
+  /* Editor & Content Colors - Light Theme (codes/quote derive from the
+     light content scale; only the tinted backgrounds differ) */
   --code-bg: oklch(0.76 0.14 70 / 0.15);
-  --code-fg: #b45309;
   --highlight-bg: oklch(0.8 0.12 85 / 0.4);
   --hr-color: #6c6c6c;
   --pre-bg: #f0f0f0;
   --pre-fg: #1a1a1a;
   --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.05);
-  --quote-fg: oklch(from var(--color-brand-quote) 0.45 c h);
-
-  /* Syntax Colors - Light Theme (darker variants for light bg) */
-  --syntax-atom: #b32d05;
-  --syntax-comment: #5f6775;
-  --syntax-heading: #b71c1c;
-  --syntax-keyword: #6a1b9a;
-  --syntax-string: #2a6d2c;
-  --syntax-emphasis: #1565c0;
-  --syntax-strong: #7d5a00;
 
   /* Preview - Light Theme (only values that differ from dark) */
   --preview-border-quote: var(--quote-fg);
-  --preview-fg-heading: #b71c1c;
-  --preview-fg-link: #006a75;
   --preview-fg-quote: var(--text-secondary);
 
   /* Editor Content (theme-scoped) - Light Theme */
@@ -262,24 +273,13 @@
   --editor-file: var(--accent-file);
   --editor-filepath: var(--accent-filepath);
   --editor-filepath-hover: var(--accent-filepath-hover);
-  --editor-syntax-heading: #b71c1c;
-  --editor-syntax-keyword: #6a1b9a;
-  --editor-syntax-atom: #b32d05;
-  --editor-syntax-string: #2a6d2c;
-  --editor-syntax-comment: #5f6775;
-  --editor-syntax-emphasis: #1565c0;
-  --editor-syntax-strong: #7d5a00;
   --editor-code-bg: oklch(0.76 0.14 70 / 0.15);
-  --editor-code-fg: #b45309;
   --editor-pre-bg: #f0f0f0;
   --editor-pre-fg: #1a1a1a;
   --editor-quote-bg: oklch(from var(--color-brand-quote) l c h / 0.05);
-  --editor-quote-fg: oklch(from var(--color-brand-quote) 0.45 c h);
   --editor-hr-color: #6c6c6c;
   --editor-preview-bg: #ffffff;
   --editor-preview-fg-body: var(--editor-fg);
-  --editor-preview-fg-heading: #b71c1c;
-  --editor-preview-fg-link: #006a75;
   --editor-preview-fg-code: var(--editor-code-fg);
   --editor-preview-fg-pre: var(--editor-pre-fg);
   --editor-preview-fg-quote: var(--editor-fg-secondary);
