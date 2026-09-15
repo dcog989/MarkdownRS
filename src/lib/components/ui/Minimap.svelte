@@ -504,6 +504,8 @@ function onTrackMouseDown(e: MouseEvent) {
   // while dragging.
   const startTopLine = doc.lineAt(view.lineBlockAtHeight(sd.scrollTop).from).number - 1;
   const grabOffset = e.clientY - canvasRect.top - lineToY(layout, startTopLine);
+  const startBottomLine = doc.lineAt(view.lineBlockAtHeight(sd.scrollTop + sd.clientHeight).from).number - 1;
+  const viewportHeightPx = lineToY(layout, startBottomLine) + minimapLineHeight(layout) - lineToY(layout, startTopLine);
   let moved = false;
 
   // Map a source line to its real document offset so the drag matches the line
@@ -527,7 +529,18 @@ function onTrackMouseDown(e: MouseEvent) {
     document.body.style.userSelect = "";
 
     if (!moved) {
-      scrollToLine(yToLine(layout, ev.clientY - canvasRect.top));
+      const clickY = ev.clientY - canvasRect.top;
+      // Snap a click inside the viewport-height band at either edge to the
+      // document extremes, so the top/bottom of the minimap are easy to hit.
+      let clickedLine: number;
+      if (clickY < viewportHeightPx) {
+        clickedLine = 0;
+      } else if (clickY > canvasRect.height - viewportHeightPx) {
+        clickedLine = layout.totalLines - 1;
+      } else {
+        clickedLine = yToLine(layout, clickY);
+      }
+      scrollToLine(clickedLine);
     }
   }
 
