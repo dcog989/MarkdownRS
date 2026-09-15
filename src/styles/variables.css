@@ -3,20 +3,20 @@
 :root {
   /* Brand Bases */
   --color-brand-accent: #7c5a73;
-  --color-brand-file: #e5c07b;
-  --color-brand-filepath: #00ffff;
-  --color-brand-link: #56b6c2;
-  --color-brand-quote: #c679e1;
-  --color-brand-url: #0000ff;
+  --color-brand-file: #ecbe65;
+  --color-brand-filepath: #5efbfa;
+  --color-brand-link: #1bbacb;
+  --color-brand-quote: #be83d3;
+  --color-brand-url: #2f519d;
 
   /* Content Hue Bases (OKLCH source hues for syntax/preview content) */
-  --color-content-atom: #d19a66;
-  --color-content-code: #92b975;
-  --color-content-comment: #9e9e9e;
-  --color-content-emphasis: #61afef;
-  --color-content-heading: #e06c75;
-  --color-content-keyword: #c678dd;
-  --color-content-string: #98c379;
+  --color-content-atom: #db9650;
+  --color-content-code: #8dbb6a;
+  --color-content-comment: #989898;
+  --color-content-emphasis: #2fc0ad;
+  --color-content-heading: #d97178;
+  --color-content-keyword: #be81d0;
+  --color-content-string: #95c473;
 
   /* Callout Hue Bases (OKLCH source hues for GitHub-style alerts) */
   --color-callout-caution: #ffafa0;
@@ -26,9 +26,9 @@
   --color-callout-warning: #ffc46a;
 
   /* Status Hue Bases (OKLCH source hues for functional states) */
-  --color-status-danger: #e06c75;
-  --color-status-success: #98c379;
-  --color-status-warning: #e0a458;
+  --color-status-danger: #e26a74;
+  --color-status-success: #93c56d;
+  --color-status-warning: #e5a24a;
 
   /* Perceptual Lightness Scale (OKLCH L) for the content family */
   --l-content: 0.72;
