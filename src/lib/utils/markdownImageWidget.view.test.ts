@@ -54,7 +54,7 @@ describe("image widget integration", () => {
     const { view, parent } = createEditor(IMAGE_SOURCE, 0);
     await nextFrame();
 
-    const img = parent.querySelector<HTMLImageElement>(".cm-image-widget");
+    const img = parent.querySelector<HTMLImageElement>(".cm-image-widget img");
     expect(img).not.toBeNull();
     expect(img?.alt).toBe("photo");
     view.destroy();
@@ -86,11 +86,11 @@ describe("image widget integration", () => {
     const { view, parent } = createEditor(IMAGE_SOURCE, 0);
     await nextFrame();
 
-    const img = parent.querySelector<HTMLElement>(".cm-image-widget");
-    expect(img).not.toBeNull();
-    const from = Number(img?.dataset.from);
+    const widget = parent.querySelector<HTMLElement>(".cm-image-widget");
+    expect(widget).not.toBeNull();
+    const from = Number(widget?.dataset.from);
 
-    img?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: 400, clientY: 100 }));
+    widget?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: 400, clientY: 100 }));
     await nextFrame();
 
     expect(parent.querySelector(".cm-image-widget")).toBeNull();
@@ -104,7 +104,7 @@ describe("image widget integration", () => {
     const { view, parent } = createEditor(source, 0);
     await nextFrame();
 
-    const img = parent.querySelector<HTMLImageElement>(".cm-image-widget");
+    const img = parent.querySelector<HTMLImageElement>(".cm-image-widget img");
     expect(img).not.toBeNull();
     expect(img?.src).toBe("https://example.com/a.png");
     view.destroy();
