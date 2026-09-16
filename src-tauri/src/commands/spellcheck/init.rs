@@ -98,10 +98,10 @@ async fn run_spellcheck_init(
     dict_codes: Vec<String>,
     enable_technical: bool,
     enable_science: bool,
-    local_dir: PathBuf,
+    cache_root: PathBuf,
     config_dir: PathBuf,
 ) {
-    let cache_dir = local_dir.join("spellcheck_cache");
+    let cache_dir = cache_root.join("spellcheck");
     let tech_cache_dir = cache_dir.join("technical");
     let custom_path = utils::custom_dict_path(&config_dir);
 
@@ -230,7 +230,7 @@ pub async fn init_spellchecker(
         enable_science
     );
 
-    let local_dir = app_handle.path().app_local_data_dir().map_err(|e| e.to_string())?;
+    let cache_root = app_handle.path().app_cache_dir().map_err(|e| e.to_string())?;
     let config_dir = utils::app_config_dir(&app_handle).map_err(|e| e.to_string())?;
 
     let handle = tauri::async_runtime::spawn(run_spellcheck_init(
@@ -239,7 +239,7 @@ pub async fn init_spellchecker(
         dict_codes,
         enable_technical,
         enable_science,
-        local_dir,
+        cache_root,
         config_dir,
     ));
 

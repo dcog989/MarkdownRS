@@ -27,7 +27,7 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
         .unwrap_or_default();
     let path = app_handle.path();
     let data_path = path_or_default(path.app_config_dir(), |p| p.to_string_lossy().to_string());
-    let cache_path = path_or_default(path.app_local_data_dir(), |p| p.to_string_lossy().to_string());
+    let cache_path = path_or_default(path.app_cache_dir(), |p| p.to_string_lossy().to_string());
     let logs_path = path_or_default(path.app_local_data_dir(), |p| {
         p.join(LOGS_DIR).to_string_lossy().to_string()
     });

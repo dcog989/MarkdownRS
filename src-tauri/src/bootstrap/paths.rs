@@ -6,6 +6,7 @@ use tauri::Manager;
 
 pub struct AppPaths {
     pub local_dir: PathBuf,
+    pub cache_dir: PathBuf,
     pub config_dir: PathBuf,
     pub db_dir: PathBuf,
     pub log_dir: PathBuf,
@@ -19,6 +20,10 @@ pub fn resolve_app_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, Box<
         .path()
         .app_local_data_dir()
         .map_err(|e| format!("Failed to get local data dir: {}", e))?;
+    let cache_dir = app_handle
+        .path()
+        .app_cache_dir()
+        .map_err(|e| format!("Failed to get cache dir: {}", e))?;
     let config_dir = utils::app_config_dir(app_handle).map_err(|e| format!("Failed to get app config dir: {}", e))?;
     Ok(AppPaths {
         db_dir: config_dir.join("Database"),
@@ -27,6 +32,7 @@ pub fn resolve_app_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, Box<
         config_path: config_dir.join("settings.toml"),
         dict_path: utils::custom_dict_path(&config_dir),
         local_dir,
+        cache_dir,
         config_dir,
     })
 }
@@ -34,6 +40,7 @@ pub fn resolve_app_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, Box<
 pub fn ensure_directories(paths: &AppPaths) {
     for dir in [
         &paths.local_dir,
+        &paths.cache_dir,
         &paths.config_dir,
         &paths.db_dir,
         &paths.log_dir,
