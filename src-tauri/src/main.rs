@@ -14,8 +14,6 @@ use tauri::Emitter;
 use tauri::Manager;
 
 fn main() {
-    migration::migrate_data_dir_if_needed();
-
     let portable_config = portable::detect_portable_mode();
     let is_portable = portable_config.is_portable();
     let portable_data_dir_path = portable_config.data_dir().cloned();
@@ -25,8 +23,16 @@ fn main() {
         unsafe {
             std::env::set_var("APPDATA", data_dir.as_os_str());
             std::env::set_var("LOCALAPPDATA", data_dir.as_os_str());
+            #[cfg(target_os = "linux")]
+            {
+                std::env::set_var("XDG_CONFIG_HOME", data_dir.as_os_str());
+                std::env::set_var("XDG_DATA_HOME", data_dir.as_os_str());
+                std::env::set_var("XDG_CACHE_HOME", data_dir.as_os_str());
+            }
         }
     }
+
+    migration::migrate_data_dir_if_needed();
 
     #[cfg(target_os = "windows")]
     {
