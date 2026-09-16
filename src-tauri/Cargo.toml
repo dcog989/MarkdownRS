@@ -1,6 +1,6 @@
 [package]
 name = "markdown-rs"
-version = "1.61.1"
+version = "1.61.2"
 edition = "2024"
 description = "The only Markdown editor you need."
 license = "GPL-3.0-only"

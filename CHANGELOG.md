@@ -3,6 +3,48 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.61.2 - 2026-09-16
+
+#### Bug Fixes
+
+- (e9df9b2) stop migrating themes and custom dictionary to the config dir - dcog989
+
+- (aaff6ef) detect the .portable marker next to AppImages - dcog989
+
+- (30a089c) store themes and custom dictionary in the data directory - dcog989
+
+- (e49f531) store the database in the application data directory - dcog989
+
+- (fd8647e) redirect XDG directories in Linux portable mode - dcog989
+
+- (d3951b0) clean stale temp files from the app cache directory - dcog989
+
+- (020abd8) color markdown link targets with the URL color - dcog989
+
+- (2bb37c5) render a fixed-size placeholder for missing rendered images - dcog989
+
+- (86ffcc2) don't snap fragment selections inside rendered images to the full image syntax - dcog989
+
+- (02e1dfc) snap edge clicks to document top/bottom - dcog989
+
+- (f04376f) snap end-of-line clicks past a closing masked marker - dcog989
+
+#### Refactoring
+
+- (2d49887) store spellcheck dictionaries in app cache dir - dcog989
+
+- (656fbd0) tweak color chroma - dcog989
+
+- (dd4bf53) derive functional status colors from OKLCH scale - dcog989
+
+- (f872d86) derive all GFM callout accents from source hues - dcog989
+
+- (f11034d) normalize auto theme content lightness with OKLCH - dcog989
+
+- (c188ce7) rename built-in "System" theme to "Auto (Light/Dark)" - dcog989
+
+- - -
+
 ## v1.61.1 - 2026-09-14
 
 #### Bug Fixes
