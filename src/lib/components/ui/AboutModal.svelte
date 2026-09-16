@@ -26,6 +26,7 @@ let appInfo = $state<AppInfo>({
   version: "...",
   install_path: "",
   data_path: "",
+  config_path: "",
   cache_path: "",
   logs_path: "",
   log_file_path: "",
@@ -135,6 +136,20 @@ async function checkForUpdates() {
           type="button"
           class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.data_path)}
+        >
+          {$_('common.copy')}
+        </button>
+      </div>
+
+      <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.config')}</span>
+        <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.config_path}
+          >{appInfo.config_path}</span
+        >
+        <button
+          type="button"
+          class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          onclick={() => copyToClipboard(appInfo.config_path)}
         >
           {$_('common.copy')}
         </button>

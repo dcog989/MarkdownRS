@@ -7,6 +7,7 @@ export interface AppInfo {
   version: string;
   install_path: string;
   data_path: string;
+  config_path: string;
   cache_path: string;
   logs_path: string;
   log_file_path: string;

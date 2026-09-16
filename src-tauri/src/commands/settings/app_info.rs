@@ -15,6 +15,7 @@ pub struct AppInfo {
     pub version: String,
     pub install_path: String,
     pub data_path: String,
+    pub config_path: String,
     pub cache_path: String,
     pub logs_path: String,
     pub log_file_path: String,
@@ -26,7 +27,8 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
         .map(|p| p.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default())
         .unwrap_or_default();
     let path = app_handle.path();
-    let data_path = path_or_default(path.app_config_dir(), |p| p.to_string_lossy().to_string());
+    let data_path = path_or_default(path.app_local_data_dir(), |p| p.to_string_lossy().to_string());
+    let config_path = path_or_default(path.app_config_dir(), |p| p.to_string_lossy().to_string());
     let cache_path = path_or_default(path.app_cache_dir(), |p| p.to_string_lossy().to_string());
     let logs_path = path_or_default(path.app_local_data_dir(), |p| {
         p.join(LOGS_DIR).to_string_lossy().to_string()
@@ -49,6 +51,7 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
         version: env!("CARGO_PKG_VERSION").to_string(),
         install_path,
         data_path,
+        config_path,
         cache_path,
         logs_path,
         log_file_path,

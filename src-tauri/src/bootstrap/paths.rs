@@ -26,7 +26,7 @@ pub fn resolve_app_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, Box<
         .map_err(|e| format!("Failed to get cache dir: {}", e))?;
     let config_dir = utils::app_config_dir(app_handle).map_err(|e| format!("Failed to get app config dir: {}", e))?;
     Ok(AppPaths {
-        db_dir: config_dir.join("Database"),
+        db_dir: local_dir.join("Database"),
         log_dir: local_dir.join("Logs"),
         themes_dir: config_dir.join("Themes"),
         config_path: config_dir.join("settings.toml"),

@@ -308,6 +308,7 @@ export const en = {
     upToDate: "You are up to date.",
     checkFailed: "Failed to check for updates.",
     data: "Data",
+    config: "Config",
     cache: "Cache",
     logs: "Logs",
     openLogFile: "Open Current Log File",

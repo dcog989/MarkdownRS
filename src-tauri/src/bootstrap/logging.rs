@@ -78,6 +78,7 @@ pub fn apply_log_level(level: &str) {
 
 pub fn log_runtime_info(paths: &AppPaths) {
     log::info!("Portable Mode: {}", crate::portable::is_portable_mode());
+    log::info!("Data Directory: {:?}", paths.local_dir);
     log::info!("Config Directory: {:?}", paths.config_dir);
     log::info!("Cache Directory: {:?}", paths.cache_dir);
 }

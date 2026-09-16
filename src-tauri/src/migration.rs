@@ -35,7 +35,6 @@ pub fn migrate_to_config(local_dir: &Path, config_dir: &Path) {
             local_dir.join("custom-spelling.dic"),
             config_dir.join("custom-spelling.dic"),
         ),
-        (local_dir.join("Database"), config_dir.join("Database")),
         (local_dir.join("Themes"), config_dir.join("Themes")),
     ] {
         if old.exists()
