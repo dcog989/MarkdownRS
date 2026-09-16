@@ -52,14 +52,13 @@ pub fn ensure_directories(paths: &AppPaths) {
     }
 }
 
-pub fn schedule_temp_cleanup(local_dir: PathBuf, config_dir: PathBuf) {
+pub fn schedule_temp_cleanup(dirs: Vec<PathBuf>) {
     tauri::async_runtime::spawn(async move {
         let one_hour = std::time::Duration::from_secs(3600);
-        if let Err(e) = utils::cleanup_stale_temp_files(&local_dir, one_hour).await {
-            log::warn!("Failed to cleanup temp files in local dir: {}", e);
-        }
-        if let Err(e) = utils::cleanup_stale_temp_files(&config_dir, one_hour).await {
-            log::warn!("Failed to cleanup temp files in config dir: {}", e);
+        for dir in dirs {
+            if let Err(e) = utils::cleanup_stale_temp_files(&dir, one_hour).await {
+                log::warn!("Failed to cleanup temp files in {:?}: {}", dir, e);
+            }
         }
     });
 }

@@ -20,7 +20,11 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     logging::init(app_handle, &paths.config_path, &paths.log_dir)?;
     migration::migrate_to_config(&paths.local_dir, &paths.config_dir);
     paths::ensure_directories(&paths);
-    paths::schedule_temp_cleanup(paths.local_dir.clone(), paths.config_dir.clone());
+    paths::schedule_temp_cleanup(vec![
+        paths.local_dir.clone(),
+        paths.config_dir.clone(),
+        paths.cache_dir.clone(),
+    ]);
     logging::log_runtime_info(&paths);
     themes::seed_default_themes(paths.themes_dir);
     paths::ensure_dictionary_file(&paths.dict_path);
