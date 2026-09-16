@@ -27,21 +27,14 @@ pub fn migrate_data_dir_if_needed() {
 #[cfg(not(target_os = "linux"))]
 pub fn migrate_data_dir_if_needed() {}
 
-/// Migrate persistent data from old `.local/share` to `.config`.
+/// Migrate settings from the old `.local/share` location to `.config`.
 pub fn migrate_to_config(local_dir: &Path, config_dir: &Path) {
-    for (old, new) in [
-        (local_dir.join("settings.toml"), config_dir.join("settings.toml")),
-        (
-            local_dir.join("custom-spelling.dic"),
-            config_dir.join("custom-spelling.dic"),
-        ),
-        (local_dir.join("Themes"), config_dir.join("Themes")),
-    ] {
-        if old.exists()
-            && !new.exists()
-            && let Err(e) = fs::rename(&old, &new)
-        {
-            log::warn!("Failed to migrate {:?} to {:?}: {}", old, new, e);
-        }
+    let old = local_dir.join("settings.toml");
+    let new = config_dir.join("settings.toml");
+    if old.exists()
+        && !new.exists()
+        && let Err(e) = fs::rename(&old, &new)
+    {
+        log::warn!("Failed to migrate {:?} to {:?}: {}", old, new, e);
     }
 }
