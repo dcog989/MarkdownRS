@@ -1,9 +1,10 @@
+use std::path::PathBuf;
 use std::sync::OnceLock;
 
 #[derive(Debug)]
 pub struct PortableConfig {
     is_portable: bool,
-    data_dir: Option<std::path::PathBuf>,
+    data_dir: Option<PathBuf>,
 }
 
 impl PortableConfig {
@@ -11,7 +12,7 @@ impl PortableConfig {
         self.is_portable
     }
 
-    pub fn data_dir(&self) -> Option<&std::path::PathBuf> {
+    pub fn data_dir(&self) -> Option<&PathBuf> {
         self.data_dir.as_ref()
     }
 }
@@ -22,37 +23,35 @@ pub fn is_portable_mode() -> bool {
     PORTABLE_CONFIG.get().is_some_and(|c| c.is_portable)
 }
 
+/// Directory portable mode treats as the application's install location.
+///
+/// An AppImage runs from a temporary squashfs mount (`/tmp/.mount_*`), so
+/// `current_exe()` does not point at the file the user installed. The AppImage
+/// runtime exposes its real path through the `APPIMAGE` environment variable.
+fn install_dir() -> Option<PathBuf> {
+    if let Some(appimage) = std::env::var_os("APPIMAGE") {
+        let appimage = PathBuf::from(appimage);
+        if appimage.is_file() {
+            return appimage.parent().map(PathBuf::from);
+        }
+    }
+    std::env::current_exe().ok()?.parent().map(PathBuf::from)
+}
+
 pub fn detect_portable_mode() -> PortableConfig {
-    let exe_path = match std::env::current_exe() {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!(
-                "[WARN] Could not determine executable path: {} — portable mode disabled",
-                e
-            );
-            return PortableConfig {
-                is_portable: false,
-                data_dir: None,
-            };
-        },
+    let Some(install_dir) = install_dir() else {
+        eprintln!("[WARN] Could not determine install directory — portable mode disabled");
+        return PortableConfig {
+            is_portable: false,
+            data_dir: None,
+        };
     };
-    let exe_dir = match exe_path.parent() {
-        Some(d) => d,
-        None => {
-            eprintln!("[WARN] Executable has no parent directory — portable mode disabled");
-            return PortableConfig {
-                is_portable: false,
-                data_dir: None,
-            };
-        },
-    };
-    let portable_marker = exe_dir.join(".portable");
+    let portable_marker = install_dir.join(".portable");
 
     if portable_marker.exists() {
-        let portable_data_dir = exe_dir.join("Data");
         PortableConfig {
             is_portable: true,
-            data_dir: Some(portable_data_dir),
+            data_dir: Some(install_dir.join("Data")),
         }
     } else {
         PortableConfig {
