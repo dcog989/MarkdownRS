@@ -28,9 +28,9 @@ pub fn resolve_app_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, Box<
     Ok(AppPaths {
         db_dir: local_dir.join("Database"),
         log_dir: local_dir.join("Logs"),
-        themes_dir: config_dir.join("Themes"),
+        themes_dir: utils::themes_dir(&local_dir),
         config_path: config_dir.join("settings.toml"),
-        dict_path: utils::custom_dict_path(&config_dir),
+        dict_path: utils::custom_dict_path(&local_dir),
         local_dir,
         cache_dir,
         config_dir,

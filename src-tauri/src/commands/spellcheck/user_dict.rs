@@ -13,12 +13,11 @@ pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String)
 }
 
 pub async fn add_words_to_dictionary_inner(app_handle: tauri::AppHandle, words: Vec<String>) -> Result<()> {
-    let config_dir =
-        utils::app_config_dir(&app_handle).map_err(|e| anyhow!("Failed to get app config directory: {}", e))?;
-    let dict_path = utils::custom_dict_path(&config_dir);
+    let data_dir = utils::app_data_dir(&app_handle).map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
+    let dict_path = utils::custom_dict_path(&data_dir);
 
-    if !config_dir.exists()
-        && let Err(e) = fs::create_dir_all(&config_dir).await
+    if !data_dir.exists()
+        && let Err(e) = fs::create_dir_all(&data_dir).await
     {
         log::warn!("Failed to create app directory: {}", e);
     }
@@ -83,9 +82,8 @@ pub async fn add_words_to_dictionary_inner(app_handle: tauri::AppHandle, words: 
 }
 
 pub async fn load_user_dictionary_inner(app_handle: tauri::AppHandle) -> Result<Vec<String>> {
-    let config_dir =
-        utils::app_config_dir(&app_handle).map_err(|e| anyhow!("Failed to get app config directory: {}", e))?;
-    let dict_path = utils::custom_dict_path(&config_dir);
+    let data_dir = utils::app_data_dir(&app_handle).map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
+    let dict_path = utils::custom_dict_path(&data_dir);
 
     if !dict_path.exists() {
         return Ok(Vec::new());

@@ -15,6 +15,10 @@ pub(super) fn app_config_path(app: &tauri::AppHandle) -> Result<PathBuf, String>
     crate::utils::app_config_dir(app).map_err(|e| handle_error(None, "get app config directory", e))
 }
 
+pub(super) fn app_data_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    crate::utils::app_data_dir(app).map_err(|e| handle_error(None, "get app data directory", e))
+}
+
 #[tauri::command]
 pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, String> {
     Ok(app_info::collect(&app_handle))

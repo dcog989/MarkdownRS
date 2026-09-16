@@ -36,8 +36,7 @@ pub fn default_css(theme: &str) -> Option<&'static str> {
 }
 
 pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, String> {
-    let config_dir = super::app_config_path(app_handle)?;
-    let themes_dir = config_dir.join("Themes");
+    let themes_dir = crate::utils::themes_dir(&super::app_data_path(app_handle)?);
 
     let mut themes = Vec::new();
     match fs::read_dir(&themes_dir).await {
@@ -65,8 +64,7 @@ pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, St
 }
 
 pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result<String, String> {
-    let config_dir = super::app_config_path(app_handle)?;
-    let themes_dir = config_dir.join("Themes");
+    let themes_dir = crate::utils::themes_dir(&super::app_data_path(app_handle)?);
 
     let theme_path = {
         let exact = themes_dir.join(format!("{}.css", theme_name));
