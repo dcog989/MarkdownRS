@@ -1,27 +1,28 @@
 import { syntaxTree } from "@codemirror/language";
-import { type Extension, type Line, Prec, type Range } from "@codemirror/state";
-import {
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  keymap,
-  ViewPlugin,
-  type ViewUpdate,
-  WidgetType,
-} from "@codemirror/view";
+import type { Extension, Line, Range } from "@codemirror/state";
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
+import {
+  collectCalloutDecorations,
+  collectCalloutLine,
+  collectCallouts,
+  collectRawCalloutDecorations,
+} from "./markdownCallout";
+import { renderedCopyHandler } from "./markdownCopy";
+import {
+  type CalloutInfo,
+  type DecorationWalk,
+  type GetTabDirectory,
+  isHrLineRevealed,
+  isRevealed,
+  isVisibleInCodeBlock,
+} from "./markdownDecorationCore";
 import { imageWidgetDecoration, imageWidgetPointer } from "./markdownImageWidget";
+import { renderedModeKeymap } from "./markdownListKeymap";
+import { maskedLinkPointer, wrapBoundaryPointer } from "./markdownPointerResolvers";
 import { collectTableSpans, createTableWidgetField, tableWidgetPointer } from "./markdownTableWidget";
-import { type PointerResolver, renderedPointerHandler } from "./renderedPointer";
+import { renderedPointerHandler } from "./renderedPointer";
 import { resolveImageSrc } from "./resolveImagePath";
-
-/** Resolves the base directory of the tab a view belongs to (for image sources). */
-export type GetTabDirectory = (view: EditorView) => string;
-
-export interface CodeBlockCopyDeps {
-  translate: (key: string) => string;
-  showToast: (type: "info" | "success" | "warning" | "error", message: string) => void;
-}
 
 const HEADING_NODE_NAMES = new Set([
   "ATXHeading1",
@@ -84,105 +85,6 @@ const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)-\s/;
 const stRegex = /~~([^~]+)~~/g;
 
-const CALLOUT_STYLES: Record<string, { title: string; icon: string }> = {
-  note: {
-    title: "Note",
-    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
-  },
-  tip: {
-    title: "Tip",
-    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>',
-  },
-  important: {
-    title: "Important",
-    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
-  },
-  warning: {
-    title: "Warning",
-    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.7 18.5 13.5 4.4a1.9 1.9 0 0 0-3 0L2.3 18.5A1.9 1.9 0 0 0 4 21h16a1.9 1.9 0 0 0 1.7-2.5z"/><path d="M12 9v4M12 17h.01"/></svg>',
-  },
-  caution: {
-    title: "Caution",
-    icon: '<svg class="callout-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 2h8.2L22 7.9v8.2l-5.9 5.9H7.9L2 16.1V7.9z"/><path d="M12 8v4M12 16h.01"/></svg>',
-  },
-};
-
-const calloutMatchRe = /^(\s*>\s*)(\[!(note|tip|important|warning|caution)\])(.*)$/i;
-
-export function matchCalloutLine(text: string): { start: number; raw: string; kind: string } | null {
-  const m = calloutMatchRe.exec(text);
-  if (!m) return null;
-  return { start: m[1].length, raw: m[2], kind: m[3].toLowerCase() };
-}
-
-class CalloutTitleWidget extends WidgetType {
-  constructor(
-    private readonly kind: string,
-    private readonly title: string,
-  ) {
-    super();
-  }
-
-  eq(other: CalloutTitleWidget): boolean {
-    return other.kind === this.kind && other.title === this.title;
-  }
-
-  toDOM(): HTMLElement {
-    const span = document.createElement("span");
-    span.className = `cm-callout-title cm-callout-${this.kind}`;
-    span.innerHTML = `${CALLOUT_STYLES[this.kind].icon}<span class="cm-callout-title-text">${this.title}</span>`;
-    return span;
-  }
-
-  ignoreEvent(): boolean {
-    return true;
-  }
-}
-
-/**
- * Finds callout blockquotes in the visible ranges. Returns the marker text
- * spans (for coloring/replacement) and the map of callout line numbers to
- * their type. Callouts are always decorated (even under the cursor) so they
- * keep their styled appearance while being edited.
- */
-interface CalloutInfo {
-  markers: { from: number; to: number; kind: string; active: boolean }[];
-  lines: Map<number, string>;
-}
-
-function collectCallouts(view: EditorView): CalloutInfo {
-  const markers: { from: number; to: number; kind: string; active: boolean }[] = [];
-  const lines = new Map<number, string>();
-  const tree = syntaxTree(view.state);
-
-  for (const { from, to } of view.visibleRanges) {
-    tree.iterate({
-      from,
-      to,
-      enter: (node) => {
-        if (node.name !== "Blockquote") return;
-        const fromLine = view.state.doc.lineAt(node.from);
-        const callout = matchCalloutLine(fromLine.text);
-        if (!callout) return;
-        const markerStart = fromLine.from + callout.start;
-        const active = isRevealed(view, node.from, node.to);
-        markers.push({
-          from: markerStart,
-          to: markerStart + callout.raw.length,
-          kind: callout.kind,
-          active,
-        });
-        const toLine = view.state.doc.lineAt(node.to);
-        for (let i = fromLine.number; i <= toLine.number; i++) {
-          lines.set(i, callout.kind);
-        }
-      },
-    });
-  }
-
-  return { markers, lines };
-}
-
 function findCursorHeadingLines(view: EditorView): Set<number> {
   const headings = new Set<number>();
   const tree = syntaxTree(view.state);
@@ -203,252 +105,6 @@ function findCursorHeadingLines(view: EditorView): Set<number> {
   }
   return headings;
 }
-
-/**
- * Reveals (paints raw) a node when the caret sits inside it, at either edge, or
- * when any selection range overlaps it. Range overlap keeps a node unpainted
- * while the user drags a selection through it or edits with multiple carets.
- * Including both edges means the raw markers stay visible the moment the caret
- * stops right before or right after a construct (e.g. `*Italics*`), matching
- * WYSIWYG editing expectations.
- */
-function isRevealed(view: EditorView, from: number, to: number): boolean {
-  return view.state.selection.ranges.some((r) => {
-    if (r.from !== r.to) return r.from < to && r.to > from;
-    const caret = r.from;
-    return caret >= from && caret <= to;
-  });
-}
-
-/**
- * Horizontal rules are their own line, so any caret on the line (edges
- * included) keeps the rule visible as raw text instead of flipping it under
- * the caret. Uses the node's block span, not a nested inline construct.
- */
-function isHrLineRevealed(view: EditorView, lineFrom: number, lineTo: number): boolean {
-  return view.state.selection.ranges.some((r) =>
-    r.from === r.to ? r.from >= lineFrom && r.from <= lineTo : r.from < lineTo && r.to > lineFrom,
-  );
-}
-
-/**
- * In rendered mode, Backspace on an empty list line (e.g. the `- ` item
- * auto-created by Enter) should reveal the raw marker on the first press and
- * remove it on the second, instead of lang-markdown's default of blanking the
- * whole marker into invisible spaces on the first press.
- */
-function listMarkerBackspace(view: EditorView): boolean {
-  const { state } = view;
-  const { head, empty } = state.selection.main;
-  if (!empty || head === 0) return false;
-  const line = state.doc.lineAt(head);
-  if (head !== line.to) return false;
-  // Code-block content is never a WYSIWYG list item; leave Backspace to the
-  // default handler so the literal `- ` text is edited normally.
-  if (isVisibleInCodeBlock(syntaxTree(state), line.from)) return false;
-
-  const match = /^(\s*)-\s?$/.exec(line.text);
-  if (!match) return false;
-
-  const dashStart = line.from + match[1].length;
-  const dashEnd = dashStart + 1;
-  const hasTrailingSpace = dashEnd < line.to;
-
-  view.dispatch({
-    changes: hasTrailingSpace ? { from: dashEnd, to: line.to } : { from: dashStart, to: dashEnd },
-    selection: { anchor: hasTrailingSpace ? dashEnd : dashStart },
-  });
-  return true;
-}
-
-const renderedModeKeymap = Prec.highest(keymap.of([{ key: "Backspace", run: listMarkerBackspace }]));
-
-function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
-  const node = tree.resolveInner(pos, 1);
-  // Fenced code content resolves to CodeText (child of FencedCode); CodeBlock is
-  // indented code, and InlineCode covers inline backtick spans.
-  return (
-    node.name === "FencedCode" || node.name === "CodeText" || node.name === "CodeBlock" || node.name === "InlineCode"
-  );
-}
-
-const COPY_SNAP_NODES = new Set(["Emphasis", "StrongEmphasis", "Link", "Image", "InlineCode"]);
-
-/**
- * Expands a selection to cover any inline Markdown construct it partially
- * touches, so copying always yields the full raw source (e.g. `**bold**`
- * instead of `bold` or a half-marker fragment) regardless of how the painted
- * selection edges align with the underlying document.
- */
-export function snapToMarkdownConstruct(view: EditorView, from: number, to: number): { from: number; to: number } {
-  let snapFrom = from;
-  let snapTo = to;
-  syntaxTree(view.state).iterate({
-    from,
-    to,
-    enter: (node) => {
-      if (!COPY_SNAP_NODES.has(node.name)) return;
-      // Selecting text fully inside a construct that renders as literal content
-      // copies only that fragment. The markers are visible while the selection
-      // exists, so snapping would drag unseen delimiters (inline-code ticks) or
-      // the whole `![alt](url)` into the clipboard.
-      if ((node.name === "InlineCode" || node.name === "Image") && node.from < from && to < node.to) return;
-      if (node.from < from || node.to > to) {
-        snapFrom = Math.min(snapFrom, node.from);
-        snapTo = Math.max(snapTo, node.to);
-      }
-    },
-  });
-  return { from: snapFrom, to: snapTo };
-}
-
-export const renderedCopyHandler = EditorView.domEventHandlers({
-  copy: (event, view) => {
-    const selection = view.state.selection.main;
-    if (selection.empty) return false;
-    const { from, to } = snapToMarkdownConstruct(view, selection.from, selection.to);
-    event.preventDefault();
-    navigator.clipboard.writeText(view.state.sliceDoc(from, to));
-    return true;
-  },
-});
-
-/**
- * Returns the caret position a click on a masked link should land at, or null
- * when the click is not on a masked URL region.
- */
-function maskedLinkClickTarget(view: EditorView, pos: number): number | null {
-  const doc = view.state.doc;
-  const cursor = view.state.selection.main.head;
-  const line = doc.lineAt(pos);
-  let target: number | null = null;
-
-  syntaxTree(view.state).iterate({
-    from: line.from,
-    to: line.to,
-    enter: (node) => {
-      if (target != null) return;
-      if (node.name === "Autolink") {
-        if (cursor > node.from && cursor < node.to) return;
-        const linkMarks = node.node.getChildren("LinkMark");
-        const maskStart = linkMarks[linkMarks.length - 1]?.from ?? node.to;
-        if (pos >= maskStart && pos <= node.to) target = node.to;
-        return;
-      }
-      if (node.name !== "Link") return;
-      const urlNode = node.node.getChild("URL");
-      if (!urlNode) return;
-      if (cursor > node.from && cursor < node.to) return;
-      const linkMarks = node.node.getChildren("LinkMark");
-      const textEnd = linkMarks[1]?.from ?? urlNode.from;
-      const after = doc.sliceString(urlNode.to, urlNode.to + 1);
-      const hideEnd = after === ")" ? urlNode.to + 1 : urlNode.to;
-      if (pos >= textEnd && pos < hideEnd) target = hideEnd;
-    },
-  });
-
-  return target;
-}
-
-/**
- * Clicking a masked URL region should place the caret at a sensible spot, but
- * must not swallow mousedown so that drag-selections starting on the URL (e.g.
- * an autolink closing a line) still work. Deferring to mouseup lets the core
- * mouse-selection drive any real drag in between.
- */
-const maskedLinkPointer: PointerResolver = (view, event) => {
-  if (event.shiftKey) return null;
-  const pos = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
-  if (pos == null) return null;
-  const target = maskedLinkClickTarget(view, pos.pos);
-  return target == null ? null : { target, apply: "mouseup" };
-};
-
-const MASKED_MARKER_NODES = new Set(["CodeMark", "EmphasisMark", "LinkMark", "HeaderMark", "QuoteMark"]);
-
-/**
- * A rendered inline marker (e.g. the opening backtick of an inline code span)
- * often sits at the start of a soft-wrapped visual row. Its zero-width replace
- * widget makes `posAtCoords` resolve a click just past it, onto the next row.
- * Returns the end of the pointer's visual row (before the wrapping whitespace
- * and any masked markers) so the caret stays on the row that was clicked.
- */
-function wrappedLineEnd(view: EditorView, pos: number, clientY: number): number | null {
-  if (pos === 0) return null;
-
-  const tree = syntaxTree(view.state);
-  const doc = view.state.doc;
-  const line = doc.lineAt(pos);
-
-  // Forward correction: the click landed on the start of a masked marker that
-  // closes out its logical line (e.g. the closing backtick of an inline code
-  // span at the end of a list item). The zero-width replace widget maps the
-  // click to the marker's start instead of past it, so snap the caret forward
-  // to just after the marker.
-  const atMarker = tree.resolveInner(pos, 1);
-  if (MASKED_MARKER_NODES.has(atMarker.name) && atMarker.from === pos && atMarker.to === line.to) {
-    return atMarker.to;
-  }
-
-  // Backward correction: the caret resolved just past a zero-width masked
-  // marker, i.e. the marker starts immediately before it.
-  const marker = tree.resolveInner(pos - 1, 1);
-  if (!MASKED_MARKER_NODES.has(marker.name) || marker.to !== pos) return null;
-
-  // A marker that closes out its logical line cannot be an opening marker at
-  // the start of a wrapped row; a click past it already lands after the
-  // construct, so there is nothing to correct.
-  if (marker.to === line.to) return null;
-
-  // ...and the position it resolved to is on a row below the pointer.
-  const after = view.coordsAtPos(pos, 1);
-  if (!after || clientY >= after.top) return null;
-
-  // A caret on a later logical line can only be reached by crossing one line
-  // break while searching the clicked row.
-  const crossNewline = pos === line.from;
-  let crossed = false;
-  let target = pos;
-  while (target > 0) {
-    const prev = doc.sliceString(target - 1, target);
-    if (prev === "\n") {
-      if (!crossNewline || crossed) break;
-      crossed = true;
-      target--;
-      continue;
-    }
-    if (/[ \t]/.test(prev)) {
-      target--;
-      continue;
-    }
-    // Side 1 so the marker node that starts at this offset is returned.
-    const node = tree.resolveInner(target - 1, 1);
-    if (MASKED_MARKER_NODES.has(node.name) && node.to === target) {
-      target = node.from;
-      continue;
-    }
-    break;
-  }
-  if (target === pos) return null;
-  // Reached the start of the logical line without crossing its break: the row
-  // above is on the previous logical line, which this click should not enter.
-  if (!crossNewline && target === line.from) return null;
-  return target;
-}
-
-/**
- * Clicking just past a masked marker that begins a wrapped row puts the caret
- * on the next row and reveals the marker. The microtask runs after CodeMirror
- * has applied its own selection but before the browser paints, so the reveal is
- * never shown, and a following drag simply overrides it.
- */
-const wrapBoundaryPointer: PointerResolver = (view, event) => {
-  if (event.shiftKey || event.ctrlKey || event.metaKey) return null;
-  const hit = view.posAndSideAtCoords({ x: event.clientX, y: event.clientY }, false);
-  if (hit == null) return null;
-  const target = wrappedLineEnd(view, hit.pos, event.clientY);
-  return target == null ? null : { target, assoc: -1, apply: "microtask", expectedHead: hit.pos };
-};
 
 function findHiddenMarkers(
   view: EditorView,
@@ -507,27 +163,6 @@ function findHiddenMarkers(
       },
     });
   }
-}
-
-/**
- * Shared state threaded through the single decoration pass. Each per-construct
- * collector reads/writes only its own slice, keeping buildDecorations a thin
- * orchestrator over one tree walk and one line walk.
- */
-interface DecorationWalk {
-  view: EditorView;
-  tree: ReturnType<typeof syntaxTree>;
-  ranges: Range<Decoration>[];
-  getTabDirectory: GetTabDirectory;
-  calloutMarkers: CalloutInfo["markers"];
-  calloutLines: CalloutInfo["lines"];
-  tableSpans: Array<{ from: number; to: number }>;
-  cursorHeadingLines: Set<number>;
-  tableLines: Set<number>;
-  frontmatterLines: Set<number>;
-  codeBlockLines: Set<number>;
-  parserHrs: Set<number>;
-  blockquoteLines: Set<number>;
 }
 
 function collectFrontmatterLines(walk: DecorationWalk, node: SyntaxNodeRef): void {
@@ -690,13 +325,6 @@ function collectBlockquoteLine(walk: DecorationWalk, line: Line): void {
   }
 }
 
-function collectCalloutLine(walk: DecorationWalk, line: Line): void {
-  const calloutKind = walk.calloutLines.get(line.number);
-  if (calloutKind) {
-    walk.ranges.push(Decoration.line({ class: `cm-callout cm-callout-${calloutKind}` }).range(line.from));
-  }
-}
-
 function collectBulletPoint(walk: DecorationWalk, line: Line): void {
   const bulletMatch = bulletMatchRe.exec(line.text);
   if (!bulletMatch) return;
@@ -734,30 +362,6 @@ function collectRawHorizontalRule(walk: DecorationWalk, line: Line): void {
   if (isVisibleInCodeBlock(walk.tree, line.from)) return;
   if (!walk.parserHrs.has(line.from) && line.text.trim() !== "---") return;
   walk.ranges.push(horizontalRuleDeco.range(line.from, line.to));
-}
-
-function collectCalloutDecorations(walk: DecorationWalk): void {
-  for (const m of walk.calloutMarkers) {
-    if (m.active) {
-      walk.ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
-    } else {
-      walk.ranges.push(
-        Decoration.replace({ widget: new CalloutTitleWidget(m.kind, CALLOUT_STYLES[m.kind].title) }).range(
-          m.from,
-          m.to,
-        ),
-      );
-    }
-  }
-}
-
-function collectRawCalloutDecorations(view: EditorView, callouts: CalloutInfo, ranges: Range<Decoration>[]): void {
-  for (const m of callouts.markers) {
-    ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
-  }
-  for (const [lineNo, kind] of callouts.lines) {
-    ranges.push(Decoration.line({ class: `cm-callout cm-callout-${kind}` }).range(view.state.doc.line(lineNo).from));
-  }
 }
 
 /**
@@ -922,37 +526,8 @@ export function createMarkdownDecorationsPlugin(rendered: boolean, getTabDirecto
   ];
 }
 
-export function createCodeBlockCopyHandler(deps: CodeBlockCopyDeps): Extension {
-  return EditorView.domEventHandlers({
-    mousedown: (event, view) => {
-      const target = event.target as HTMLElement;
-      if (!target.classList.contains("cm-code-info")) return false;
-
-      const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-      if (pos === null) return false;
-
-      const tree = syntaxTree(view.state);
-      let node: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
-      while (node && node.name !== "FencedCode") {
-        node = node.parent;
-      }
-      if (!node) return false;
-
-      const fencedNode = node;
-
-      const doc = view.state.doc;
-      const startLine = doc.lineAt(fencedNode.from);
-      const endLine = doc.lineAt(fencedNode.to);
-
-      let codeEnd = fencedNode.to;
-      if (endLine.number > startLine.number && /^```\s*$/.test(endLine.text)) {
-        codeEnd = endLine.from;
-      }
-
-      const code = doc.sliceString(startLine.to + 1, codeEnd).replace(/\n$/, "");
-      navigator.clipboard.writeText(code).then(() => deps.showToast("success", deps.translate("preview.codeCopied")));
-
-      return true;
-    },
-  });
-}
+export { matchCalloutLine } from "./markdownCallout";
+export type { CodeBlockCopyDeps } from "./markdownCopy";
+export { createCodeBlockCopyHandler, snapToMarkdownConstruct } from "./markdownCopy";
+export type { GetTabDirectory };
+export { renderedCopyHandler };
