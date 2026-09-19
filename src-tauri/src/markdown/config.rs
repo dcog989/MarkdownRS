@@ -88,6 +88,9 @@ impl MarkdownFlavor {
             parse: Parse {
                 smart: true,
                 default_info_string: None,
+                // A bare `---` under a line is a thematic break, not a setext H2.
+                // Keeps rendering in step with the editor's disabled setext parser.
+                ignore_setext: true,
                 ..Default::default()
             },
             render: Render {

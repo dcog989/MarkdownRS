@@ -18,9 +18,7 @@ function matchDelimiter(text: string): string | null {
 
 /**
  * Parses a leading frontmatter block (`---`, `+++`, `;;;`, or `{...}`) as a
- * single `Frontmatter` node. Without this, a YAML block's closing `---` line is
- * interpreted as a setext heading underline, styling the whole block as a
- * header in the editor.
+ * single `Frontmatter` node so its body is not rendered as document content.
  */
 export const frontmatterExtension: MarkdownExtension = {
   defineNodes: [{ name: "Frontmatter", block: true }],
@@ -51,3 +49,11 @@ export const frontmatterExtension: MarkdownExtension = {
     },
   ],
 };
+
+/**
+ * Editor parser extensions. Setext headings are disabled so a bare `---` under
+ * a line is always a thematic break (horizontal rule); without this, typing
+ * above a rule turns the preceding text into an H2. Matches the renderer, which
+ * sets comrak's `parse.ignore_setext`.
+ */
+export const editorMarkdownExtensions: MarkdownExtension = [frontmatterExtension, { remove: ["SetextHeading"] }];

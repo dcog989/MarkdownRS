@@ -30,24 +30,13 @@ const HEADING_NODE_NAMES = new Set([
   "ATXHeading4",
   "ATXHeading5",
   "ATXHeading6",
-  "SetextHeading1",
-  "SetextHeading2",
 ]);
 
 const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
   { marker: "EmphasisMark", parents: new Set(["Emphasis", "StrongEmphasis"]) },
   {
     marker: "HeaderMark",
-    parents: new Set([
-      "ATXHeading1",
-      "ATXHeading2",
-      "ATXHeading3",
-      "ATXHeading4",
-      "ATXHeading5",
-      "ATXHeading6",
-      "SetextHeading1",
-      "SetextHeading2",
-    ]),
+    parents: new Set(["ATXHeading1", "ATXHeading2", "ATXHeading3", "ATXHeading4", "ATXHeading5", "ATXHeading6"]),
   },
   { marker: "LinkMark", parents: new Set(["Autolink"]) },
   { marker: "QuoteMark", parents: new Set(["Blockquote"]) },
@@ -733,22 +722,9 @@ function collectStrikethrough(walk: DecorationWalk, line: Line): void {
   }
 }
 
-/** Setext heading underlines (`Title\n---`) are heading markers, not thematic breaks. */
-function isSetextUnderline(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
-  let current: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(pos, 1);
-  while (current) {
-    if (current.name === "SetextHeading1" || current.name === "SetextHeading2") return true;
-    current = current.parent;
-  }
-  return false;
-}
-
 function collectHorizontalRule(walk: DecorationWalk, line: Line): void {
   if (isVisibleInCodeBlock(walk.tree, line.from)) return;
   if (!walk.parserHrs.has(line.from) && line.text.trim() !== "---") return;
-  // A `---` line can be a setext heading underline; its HeaderMark is masked by
-  // findHiddenMarkers, so it must not also be painted as a horizontal rule.
-  if (isSetextUnderline(walk.tree, line.from)) return;
   const onLine = isHrLineRevealed(walk.view, line.from, line.to);
   walk.ranges.push((onLine ? horizontalRuleDeco : horizontalRuleMaskedDeco).range(line.from, line.to));
 }
@@ -757,7 +733,6 @@ function collectHorizontalRule(walk: DecorationWalk, line: Line): void {
 function collectRawHorizontalRule(walk: DecorationWalk, line: Line): void {
   if (isVisibleInCodeBlock(walk.tree, line.from)) return;
   if (!walk.parserHrs.has(line.from) && line.text.trim() !== "---") return;
-  if (isSetextUnderline(walk.tree, line.from)) return;
   walk.ranges.push(horizontalRuleDeco.range(line.from, line.to));
 }
 

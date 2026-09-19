@@ -4,7 +4,7 @@ import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { tags as t } from "@lezer/highlight";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { frontmatterExtension } from "./frontmatterExtension";
+import { editorMarkdownExtensions, frontmatterExtension } from "./frontmatterExtension";
 import { createMarkdownDecorationsPlugin, matchCalloutLine } from "./markdownExtensions";
 
 describe("frontmatterExtension", () => {
@@ -102,7 +102,7 @@ function createCalloutView(doc: string, rendered: boolean, cursorPos?: number) {
     doc,
     selection: { anchor: cursorPos ?? doc.length },
     extensions: [
-      markdown({ base: markdownLanguage, extensions: frontmatterExtension }),
+      markdown({ base: markdownLanguage, extensions: editorMarkdownExtensions }),
       syntaxHighlighting(highlightStyle),
       createMarkdownDecorationsPlugin(rendered, () => ""),
     ],
@@ -203,10 +203,11 @@ describe("horizontal rule decorations", () => {
     view.destroy();
   });
 
-  it("does not treat a setext heading underline as a horizontal rule", async () => {
+  it("treats a --- line under text as a horizontal rule, not a setext heading", async () => {
     const { view, parent } = createCalloutView("Title\n---\nBody\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(parent.querySelector(".cm-hr")).toBeNull();
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).not.toBeNull();
+    expect(parent.querySelector(".cm-h2")).toBeNull();
     view.destroy();
   });
 
@@ -231,10 +232,10 @@ describe("horizontal rule decorations", () => {
     view.destroy();
   });
 
-  it("does not style a setext heading underline as a horizontal rule in raw mode", async () => {
+  it("treats a --- line under text as a horizontal rule in raw mode", async () => {
     const { view, parent } = createCalloutView("Title\n---\nBody\n", false);
     await new Promise((r) => setTimeout(r, 50));
-    expect(parent.querySelector(".cm-hr")).toBeNull();
+    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).not.toBeNull();
     view.destroy();
   });
 

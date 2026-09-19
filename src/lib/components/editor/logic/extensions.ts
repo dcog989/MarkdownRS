@@ -24,7 +24,7 @@ import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from "$lib/util
 import { generateDynamicTheme } from "$lib/utils/editorTheme";
 import { linkPlugin } from "$lib/utils/filePathExtension";
 import { createFoldExtensions } from "$lib/utils/foldExtension";
-import { frontmatterExtension } from "$lib/utils/frontmatterExtension";
+import { editorMarkdownExtensions } from "$lib/utils/frontmatterExtension";
 import { createImagePasteExtension } from "$lib/utils/imagePaste";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 import { createCodeBlockCopyHandler, createMarkdownDecorationsPlugin } from "$lib/utils/markdownExtensions";
@@ -38,7 +38,7 @@ const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
 });
 
 export const markdownExtensions = [
-  markdown({ base: markdownLanguage, extensions: frontmatterExtension, codeLanguages: languages }),
+  markdown({ base: markdownLanguage, extensions: editorMarkdownExtensions, codeLanguages: languages }),
 ];
 
 /** Base directory of the tab a view belongs to, for resolving relative image sources. */

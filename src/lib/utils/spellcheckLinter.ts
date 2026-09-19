@@ -33,8 +33,6 @@ export const createSpellCheckLinter = () => {
         "StrongEmphasis",
         "ListItem",
         "HeaderMark",
-        "SetextHeading1",
-        "SetextHeading2",
         "ATXHeading1",
         "ATXHeading2",
         "ATXHeading3",

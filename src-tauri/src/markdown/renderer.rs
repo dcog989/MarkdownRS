@@ -199,6 +199,16 @@ mod tests {
     }
 
     #[test]
+    fn setext_underline_under_text_renders_as_thematic_break() {
+        // `Title\n---` is a paragraph followed by a horizontal rule, not a setext
+        // H2 — matched by the editor's disabled setext parser (`ignore_setext`).
+        let html = render_gfm("Title\n---\nBody\n");
+        assert!(!html.contains("<h2"), "html was: {html}");
+        assert!(html.contains("<hr"), "html was: {html}");
+        assert!(html.contains("Title"), "html was: {html}");
+    }
+
+    #[test]
     fn frontmatter_only_document_renders_empty_body() {
         let result = render_markdown(
             "---\ntitle: Test\n---\n",

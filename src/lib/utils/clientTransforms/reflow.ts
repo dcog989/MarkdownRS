@@ -1,6 +1,6 @@
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import type { SyntaxNode } from "@lezer/common";
-import { frontmatterExtension } from "$lib/utils/frontmatterExtension";
+import { editorMarkdownExtensions } from "$lib/utils/frontmatterExtension";
 
 /**
  * Markdown parser configured like the editor's own, so structure detection
@@ -8,7 +8,7 @@ import { frontmatterExtension } from "$lib/utils/frontmatterExtension";
  */
 const markdownParser = markdown({
   base: markdownLanguage,
-  extensions: [frontmatterExtension],
+  extensions: editorMarkdownExtensions,
 }).language.parser;
 
 /**
