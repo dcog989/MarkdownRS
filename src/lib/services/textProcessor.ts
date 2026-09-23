@@ -22,8 +22,8 @@ class TextProcessor {
     // --- Sort & Order ---
     this.strategies.set("sort-asc", (t) => ClientLogic.sortLines(t, "asc"));
     this.strategies.set("sort-desc", (t) => ClientLogic.sortLines(t, "desc"));
-    this.strategies.set("sort-case-insensitive-asc", (t) => ClientLogic.sortLines(t, "case-insensitive-asc"));
-    this.strategies.set("sort-case-insensitive-desc", (t) => ClientLogic.sortLines(t, "case-insensitive-desc"));
+    this.strategies.set("sort-case-sensitive-asc", (t) => ClientLogic.sortLines(t, "case-sensitive-asc"));
+    this.strategies.set("sort-case-sensitive-desc", (t) => ClientLogic.sortLines(t, "case-sensitive-desc"));
     this.strategies.set("sort-numeric-asc", (t) => ClientLogic.sortLines(t, "numeric-asc"));
     this.strategies.set("sort-numeric-desc", (t) => ClientLogic.sortLines(t, "numeric-desc"));
     this.strategies.set("sort-length-asc", (t) => ClientLogic.sortLines(t, "length-asc"));

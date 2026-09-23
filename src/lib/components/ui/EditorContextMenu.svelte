@@ -70,13 +70,13 @@ type MenuOption = {
 };
 
 const sortOps: MenuOption[] = [
-  { id: "sort-asc", label: "Ascending (A-Z)" },
-  { id: "sort-case-insensitive-asc", label: "Ascending (Ignore Case)" },
+  { id: "sort-asc", label: "Ascending" },
+  { id: "sort-case-sensitive-asc", label: "Ascending (Case Sensitive)" },
   { id: "sort-numeric-asc", label: "Ascending (Numeric)" },
   { id: "sort-length-asc", label: "Ascending (By Length)" },
   { divider: true },
-  { id: "sort-desc", label: "Descending (Z-A)" },
-  { id: "sort-case-insensitive-desc", label: "Descending (Ignore Case)" },
+  { id: "sort-desc", label: "Descending" },
+  { id: "sort-case-sensitive-desc", label: "Descending (Case Sensitive)" },
   { id: "sort-numeric-desc", label: "Descending (Numeric)" },
   { id: "sort-length-desc", label: "Descending (By Length)" },
   { divider: true },
@@ -235,15 +235,22 @@ async function handleSendToBrowser() {
 </script>
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
-  {#snippet children({ submenuSide: _submenuSide })}
-    {#snippet opSubmenu(IconCmp: typeof ArrowUpDown, label: string, key: 'sort' | 'case' | 'format' | 'transform', ops: MenuOption[])}
+  {#snippet children({
+  submenuSide: _submenuSide,
+})}
+    {#snippet opSubmenu(
+  IconCmp: typeof ArrowUpDown,
+  label: string,
+  key: "sort" | "case" | "format" | "transform",
+  ops: MenuOption[],
+)}
       <Submenu
         show={activeSubmenu === key}
         side={_submenuSide}
         onOpen={() => (activeSubmenu = key)}
         onClose={() => {
-                    if (activeSubmenu === key) activeSubmenu = null;
-                }}
+  if (activeSubmenu === key) activeSubmenu = null;
+}}
       >
         {#snippet trigger()}
           <button type="button" class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
@@ -254,13 +261,13 @@ async function handleSendToBrowser() {
           {#if op.divider}
             <div class="bg-border-main my-1 h-px"></div>
           {:else}
-            {@const id = op.id}
+            {@const (id = op.id)}
             <button
               type="button"
               class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
               onclick={() => handleOp(id)}
             >
-              <span class="flex-1">{translate(op.label ?? '')}</span>
+              <span class="flex-1">{translate(op.label ?? "")}</span>
               {#if id && opShortcut(id)}
                 <span class="text-xs opacity-40">{opShortcut(id)}</span>
               {/if}
@@ -273,13 +280,13 @@ async function handleSendToBrowser() {
     {#if suggestions.length > 0 || isLoadingSuggestions || canAddSingle || canAddAll}
       {#if suggestions.length > 0 || isLoadingSuggestions}
         <div class="text-ui-sm text-fg-muted px-3 py-1 font-bold uppercase opacity-50">
-          {$_('editorContextMenu.suggestions')}
+          {$_("editorContextMenu.suggestions")}
         </div>
       {/if}
       {#if isLoadingSuggestions}
         <div class="text-ui-sm flex w-full items-center gap-2 px-3 py-1.5 text-left opacity-70">
           <Sparkles size={14} class="text-accent-secondary animate-spin" />
-          <span>{$_('editorContextMenu.loadingSuggestions')}</span>
+          <span>{$_("editorContextMenu.loadingSuggestions")}</span>
         </div>
       {:else}
         {#each suggestions as s, i (i)}
@@ -297,21 +304,18 @@ async function handleSendToBrowser() {
             type="button"
             class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={async () => {
-                            const newDict = new SvelteSet([
-                                ...spellcheckState.customDictionary,
-                                targetWord.toLowerCase(),
-                            ]);
-                            spellcheckState.customDictionary = newDict;
+  const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
+  spellcheckState.customDictionary = newDict;
 
-                            spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
+  spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
 
-                            onDictionaryUpdate?.();
-                            closeMenuAndReset();
-                            await addToDictionary(targetWord);
-                        }}
+  onDictionaryUpdate?.();
+  closeMenuAndReset();
+  await addToDictionary(targetWord);
+}}
           >
             <BookPlus size={14} />
-            <span class="truncate">{$_('editorContextMenu.addToDictionary', { values: { word: targetWord } })}</span
+            <span class="truncate">{$_("editorContextMenu.addToDictionary", { values: { word: targetWord } })}</span
             ><span class="text-ui-sm ml-auto opacity-50">F8</span>
           </button>
         {/if}
@@ -321,7 +325,7 @@ async function handleSendToBrowser() {
             class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={handleAddAll}
           >
-            <BookText size={14} /><span>{$_('editorContextMenu.addAllInvalid')}</span>
+            <BookText size={14} /><span>{$_("editorContextMenu.addAllInvalid")}</span>
           </button>
         {/if}
       {/if}
@@ -334,22 +338,22 @@ async function handleSendToBrowser() {
           type="button"
           class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={() => {
-                        onCut?.();
-                        closeMenuAndReset();
-                    }}
+  onCut?.();
+  closeMenuAndReset();
+}}
         >
-          <Scissors size={14} /><span>{$_('editorContextMenu.cut')}</span
+          <Scissors size={14} /><span>{$_("editorContextMenu.cut")}</span
           ><span class="text-ui-sm ml-auto opacity-50">{cutShortcut}</span>
         </button>
         <button
           type="button"
           class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={() => {
-                        onCopy?.();
-                        closeMenuAndReset();
-                    }}
+  onCopy?.();
+  closeMenuAndReset();
+}}
         >
-          <ClipboardCopy size={14} /><span>{$_('editorContextMenu.copy')}</span
+          <ClipboardCopy size={14} /><span>{$_("editorContextMenu.copy")}</span
           ><span class="text-ui-sm ml-auto opacity-50">{copyShortcut}</span>
         </button>
       {/if}
@@ -357,11 +361,11 @@ async function handleSendToBrowser() {
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={() => {
-                    onPaste?.();
-                    closeMenuAndReset();
-                }}
+  onPaste?.();
+  closeMenuAndReset();
+}}
       >
-        <ClipboardPaste size={14} /><span>{$_('editorContextMenu.paste')}</span
+        <ClipboardPaste size={14} /><span>{$_("editorContextMenu.paste")}</span
         ><span class="text-ui-sm ml-auto opacity-50">{pasteShortcut}</span>
       </button>
     </div>
@@ -371,23 +375,23 @@ async function handleSendToBrowser() {
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-      onclick={() => handleOp('format-document')}
+      onclick={() => handleOp("format-document")}
     >
       <WandSparkles size={14} />
       <span class="flex-1"
-        >{selectedText ? $_('editorContextMenu.formatSelection') : $_('editorContextMenu.formatDocument')}</span
+        >{selectedText ? $_("editorContextMenu.formatSelection") : $_("editorContextMenu.formatDocument")}</span
       >
-      {#if opShortcut('format-document')}
-        <span class="text-xs opacity-40">{opShortcut('format-document')}</span>
+      {#if opShortcut("format-document")}
+        <span class="text-xs opacity-40">{opShortcut("format-document")}</span>
       {/if}
     </button>
 
     {#if selectedText}
       <div class="bg-border-main my-1 h-px"></div>
-      {@render opSubmenu(CaseSensitive, $_('editorContextMenu.changeCase'), 'case', caseOps)}
-      {@render opSubmenu(TextAlignStart, $_('editorContextMenu.formatLines'), 'format', formatOps)}
-      {@render opSubmenu(ArrowUpDown, $_('editorContextMenu.sortLines'), 'sort', sortOps)}
-      {@render opSubmenu(Rotate3d, $_('editorContextMenu.transformLines'), 'transform', transformOps)}
+      {@render opSubmenu(CaseSensitive, $_("editorContextMenu.changeCase"), "case", caseOps)}
+      {@render opSubmenu(TextAlignStart, $_("editorContextMenu.formatLines"), "format", formatOps)}
+      {@render opSubmenu(ArrowUpDown, $_("editorContextMenu.sortLines"), "sort", sortOps)}
+      {@render opSubmenu(Rotate3d, $_("editorContextMenu.transformLines"), "transform", transformOps)}
     {/if}
 
     <div class="bg-border-main my-1 h-px"></div>
@@ -395,12 +399,12 @@ async function handleSendToBrowser() {
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-      onclick={() => handleOp('generate-toc')}
+      onclick={() => handleOp("generate-toc")}
     >
       <List size={14} />
-      <span class="flex-1">{$_('editorContextMenu.generateToc')}</span>
-      {#if opShortcut('generate-toc')}
-        <span class="text-xs opacity-40">{opShortcut('generate-toc')}</span>
+      <span class="flex-1">{$_("editorContextMenu.generateToc")}</span>
+      {#if opShortcut("generate-toc")}
+        <span class="text-xs opacity-40">{opShortcut("generate-toc")}</span>
       {/if}
     </button>
 
@@ -412,7 +416,7 @@ async function handleSendToBrowser() {
         onclick={handleSendToBrowser}
       >
         <Search size={14} />
-        <span>{$_('editorContextMenu.sendToBrowser')}</span>
+        <span>{$_("editorContextMenu.sendToBrowser")}</span>
       </button>
     {/if}
   {/snippet}

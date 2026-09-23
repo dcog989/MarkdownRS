@@ -4,13 +4,13 @@ export function sortLines(text: string, mode: string): string {
   const lines = text.split("\n");
   switch (mode) {
     case "asc":
-      return lines.sort().join("\n");
-    case "desc":
-      return lines.sort().reverse().join("\n");
-    case "case-insensitive-asc":
       return lines.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("\n");
-    case "case-insensitive-desc":
+    case "desc":
       return lines.sort((a, b) => b.localeCompare(a, undefined, { sensitivity: "base" })).join("\n");
+    case "case-sensitive-asc":
+      return lines.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "variant" })).join("\n");
+    case "case-sensitive-desc":
+      return lines.sort((a, b) => b.localeCompare(a, undefined, { sensitivity: "variant" })).join("\n");
     case "numeric-asc":
       return lines.sort((a, b) => extractNumber(a) - extractNumber(b)).join("\n");
     case "numeric-desc":

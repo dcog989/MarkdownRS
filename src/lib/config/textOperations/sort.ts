@@ -6,11 +6,11 @@ import type { TextOperation } from "./types";
  */
 export type SortOperationId =
   | "sort-asc"
-  | "sort-case-insensitive-asc"
+  | "sort-case-sensitive-asc"
   | "sort-numeric-asc"
   | "sort-length-asc"
   | "sort-desc"
-  | "sort-case-insensitive-desc"
+  | "sort-case-sensitive-desc"
   | "sort-numeric-desc"
   | "sort-length-desc"
   | "reverse"
@@ -23,15 +23,15 @@ export const SORT_OPERATIONS: Record<SortOperationId, TextOperation<SortOperatio
   "sort-asc": {
     id: "sort-asc",
     label: "Ascending",
-    description: "Sort lines alphabetically A to Z",
+    description: "Sort lines ascending, case-insensitive",
     icon: ArrowDownAZ,
     category: "sort",
     execution: "client",
   },
-  "sort-case-insensitive-asc": {
-    id: "sort-case-insensitive-asc",
-    label: "Ascending (Ignore Case)",
-    description: "Sort A to Z ignoring case",
+  "sort-case-sensitive-asc": {
+    id: "sort-case-sensitive-asc",
+    label: "Ascending (Case Sensitive)",
+    description: "Sort lines ascending, case-sensitive",
     icon: ArrowDownAZ,
     category: "sort",
     execution: "client",
@@ -39,7 +39,7 @@ export const SORT_OPERATIONS: Record<SortOperationId, TextOperation<SortOperatio
   "sort-numeric-asc": {
     id: "sort-numeric-asc",
     label: "Ascending (Numeric)",
-    description: "Sort lines numerically (0-9)",
+    description: "Sort lines ascending, numerically",
     icon: ArrowDown01,
     category: "sort",
     execution: "client",
@@ -47,7 +47,7 @@ export const SORT_OPERATIONS: Record<SortOperationId, TextOperation<SortOperatio
   "sort-length-asc": {
     id: "sort-length-asc",
     label: "Ascending (By Length)",
-    description: "Sort by line length ascending",
+    description: "Sort lines ascending, by length",
     icon: ArrowDownAZ,
     category: "sort",
     execution: "client",
@@ -55,15 +55,15 @@ export const SORT_OPERATIONS: Record<SortOperationId, TextOperation<SortOperatio
   "sort-desc": {
     id: "sort-desc",
     label: "Descending",
-    description: "Sort lines alphabetically Z to A",
+    description: "Sort lines descending, case-insensitive",
     icon: ArrowDownZA,
     category: "sort",
     execution: "client",
   },
-  "sort-case-insensitive-desc": {
-    id: "sort-case-insensitive-desc",
-    label: "Descending (Ignore Case)",
-    description: "Sort Z to A ignoring case",
+  "sort-case-sensitive-desc": {
+    id: "sort-case-sensitive-desc",
+    label: "Descending (Case Sensitive)",
+    description: "Sort lines descending, case-sensitive",
     icon: ArrowDownZA,
     category: "sort",
     execution: "client",
@@ -71,7 +71,7 @@ export const SORT_OPERATIONS: Record<SortOperationId, TextOperation<SortOperatio
   "sort-numeric-desc": {
     id: "sort-numeric-desc",
     label: "Descending (Numeric)",
-    description: "Sort lines numerically (9-0)",
+    description: "Sort lines descending, numerically",
     icon: ArrowDown10,
     category: "sort",
     execution: "client",
@@ -79,7 +79,7 @@ export const SORT_OPERATIONS: Record<SortOperationId, TextOperation<SortOperatio
   "sort-length-desc": {
     id: "sort-length-desc",
     label: "Descending (By Length)",
-    description: "Sort by line length descending",
+    description: "Sort lines descending, by length",
     icon: ArrowDownZA,
     category: "sort",
     execution: "client",
