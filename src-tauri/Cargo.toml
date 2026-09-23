@@ -15,6 +15,7 @@ dunce = "1"
 encoding_rs = "0.8"
 harper-core = "2.11"
 log = "0.4"
+office_oxide = { version = "=0.1.11", default-features = false, optional = true }
 pdf_oxide = { version = "0.3", optional = true }
 regex = "1.13"
 reqwest = { version = "0.13", optional = true }
@@ -33,7 +34,7 @@ tauri-plugin-opener = "2.5"
 tauri-plugin-shell = "2.3"
 tauri-plugin-single-instance = "2.4"
 tauri-plugin-store = "2.4"
-tauri-plugin-updater = "2.11"
+tauri-plugin-updater = "2.12"
 tauri-plugin-window-state = "2.4"
 tokio = { version = "1", features = ["fs", "io-util", "sync"] }
 toml = "1.1"
@@ -56,7 +57,7 @@ winreg = "0.56"
 
 [features]
 default = ["pdf-export", "spellcheck"]
-pdf-export = ["dep:pdf_oxide"]
+pdf-export = ["dep:pdf_oxide", "dep:office_oxide"]
 spellcheck = ["dep:reqwest"]
 
 [profile.release]
