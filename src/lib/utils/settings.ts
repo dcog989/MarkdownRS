@@ -10,18 +10,21 @@ const SETTINGS_EXCLUDED_KEYS = new Set([
   "osPlatform",
   "availableThemes",
   "writerMode",
-  "commandUsage",
-  "commandUsageCounts",
 ]);
+
+// Runtime analytics are persisted, but changes to them alone never trigger a
+// save. They ride along with the next settings save and are force-flushed on
+// close (saveSettingsNow).
+const SETTINGS_RUNTIME_KEYS = new Set(["commandUsage", "commandUsageCounts"]);
 
 let lastSavedState: string = "";
 
-function getSettingsObject(): Record<string, unknown> {
+function getSettingsObject(includeRuntime: boolean): Record<string, unknown> {
   const settings: Record<string, unknown> = {};
   for (const key in settingsState) {
-    if (!SETTINGS_EXCLUDED_KEYS.has(key)) {
-      settings[key] = (settingsState as Record<string, unknown>)[key];
-    }
+    if (SETTINGS_EXCLUDED_KEYS.has(key)) continue;
+    if (!includeRuntime && SETTINGS_RUNTIME_KEYS.has(key)) continue;
+    settings[key] = (settingsState as Record<string, unknown>)[key];
   }
   return settings;
 }
@@ -97,11 +100,11 @@ export async function initSettings() {
 
   syncThemeFromSystem();
 
-  lastSavedState = JSON.stringify(getSettingsObject());
+  lastSavedState = JSON.stringify(getSettingsObject(false));
 }
 
-async function saveSettingsImmediate() {
-  const settingsToSave = getSettingsObject();
+async function saveSettingsImmediate(): Promise<void> {
+  const settingsToSave = getSettingsObject(true);
   const serialized = JSON.stringify(settingsToSave);
 
   if (serialized === lastSavedState) {
@@ -115,5 +118,12 @@ async function saveSettingsImmediate() {
   lastSavedState = serialized;
 }
 
+// Persists user-visible settings. Runtime analytics (command usage) are omitted
+// so a command run alone does not trigger a write; they are included when
+// `saveSettingsNow` is used (window close/teardown).
 export const saveSettings = debounce(saveSettingsImmediate, 500);
-export const saveSettingsNow = saveSettingsImmediate;
+
+export function saveSettingsNow(): Promise<void> {
+  (saveSettings as { clear?: () => void }).clear?.();
+  return saveSettingsImmediate();
+}

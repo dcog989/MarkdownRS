@@ -1,8 +1,16 @@
-export function createListNavigation(getLength: () => number, onEnter: (index: number) => void, columns = 1) {
+const NAV_KEYS = ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Enter", "PageDown", "PageUp"];
+const DEFAULT_PAGE_SIZE = 10;
+
+export function createListNavigation(
+  getLength: () => number,
+  onEnter: (index: number) => void,
+  columns = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+) {
   let selectedIndex = $state(0);
 
   function handleKeydown(e: KeyboardEvent) {
-    if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Enter"].includes(e.key)) return;
+    if (!NAV_KEYS.includes(e.key)) return;
 
     const len = getLength();
     if (len === 0) return;
@@ -17,6 +25,10 @@ export function createListNavigation(getLength: () => number, onEnter: (index: n
       selectedIndex = Math.min(selectedIndex + 1, len - 1);
     } else if (e.key === "ArrowLeft") {
       selectedIndex = Math.max(selectedIndex - 1, 0);
+    } else if (e.key === "PageDown") {
+      selectedIndex = Math.min(selectedIndex + pageSize, len - 1);
+    } else if (e.key === "PageUp") {
+      selectedIndex = Math.max(selectedIndex - pageSize, 0);
     } else if (e.key === "Enter") {
       onEnter(selectedIndex);
     }
