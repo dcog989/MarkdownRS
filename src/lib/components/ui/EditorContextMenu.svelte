@@ -79,6 +79,9 @@ const sortOps: MenuOption[] = [
   { id: "sort-case-sensitive-desc", label: "Descending (Case Sensitive)" },
   { id: "sort-numeric-desc", label: "Descending (Numeric)" },
   { id: "sort-length-desc", label: "Descending (By Length)" },
+  { divider: true },
+  { id: "reverse", label: "Reverse" },
+  { id: "shuffle", label: "Shuffle" },
 ];
 
 const caseOps: MenuOption[] = [
@@ -135,9 +138,6 @@ const transformOps: MenuOption[] = [
   { divider: true },
   { id: "remove-blank", label: "Remove Blank Lines" },
   { id: "remove-all-spaces", label: "Remove All Spaces" },
-  { divider: true },
-  { id: "reverse", label: "Reverse Lines" },
-  { id: "shuffle", label: "Shuffle Lines" },
 ];
 
 $effect(() => {
