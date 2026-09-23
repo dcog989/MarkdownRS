@@ -1,4 +1,6 @@
 import type { Command } from "$lib/commands/commands";
+import { commandLabel } from "$lib/commands/helpers";
+import { translate } from "$lib/i18n";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 
 export type SortMode = "alphabetical" | "recent" | "most-used" | "categories";
@@ -17,6 +19,14 @@ export function cycleSortMode() {
   settingsState.commandPaletteSort = SORT_MODES[(idx + 1) % SORT_MODES.length];
 }
 
+function byLabel(a: Command, b: Command): number {
+  return translate(commandLabel(a)).localeCompare(translate(commandLabel(b)));
+}
+
+function byCategory(a: Command, b: Command): number {
+  return translate(a.category).localeCompare(translate(b.category));
+}
+
 export function sortCommands(
   commands: Command[],
   mode: SortMode,
@@ -26,27 +36,25 @@ export function sortCommands(
   const sorted = [...commands];
 
   if (mode === "alphabetical") {
-    sorted.sort((a, b) => a.label.localeCompare(b.label));
+    sorted.sort(byLabel);
   } else if (mode === "categories") {
     sorted.sort((a, b) => {
-      const catA = a.category;
-      const catB = b.category;
-      if (catA !== catB) return catA.localeCompare(catB);
-      return a.label.localeCompare(b.label);
+      const cat = byCategory(a, b);
+      return cat !== 0 ? cat : byLabel(a, b);
     });
   } else if (mode === "recent") {
     sorted.sort((a, b) => {
       const timeA = usage[a.id] ?? 0;
       const timeB = usage[b.id] ?? 0;
       if (timeB !== timeA) return timeB - timeA;
-      return a.label.localeCompare(b.label);
+      return byLabel(a, b);
     });
   } else if (mode === "most-used") {
     sorted.sort((a, b) => {
       const countA = usageCounts[a.id] ?? 0;
       const countB = usageCounts[b.id] ?? 0;
       if (countB !== countA) return countB - countA;
-      return a.label.localeCompare(b.label);
+      return byLabel(a, b);
     });
   }
 

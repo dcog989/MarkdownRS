@@ -11,8 +11,9 @@ import type { Command } from "./types";
 export const viewCommands: Command[] = [
   {
     id: "theme.dark",
-    label: "Theme: Dark",
-    category: "Theme",
+    label: "Dark",
+    labelKey: "command.themeDark",
+    category: "commandCategory.theme",
     handler: () => {
       setTheme("dark");
       saveSettings();
@@ -20,8 +21,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "theme.light",
-    label: "Theme: Light",
-    category: "Theme",
+    label: "Light",
+    labelKey: "command.themeLight",
+    category: "commandCategory.theme",
     handler: () => {
       setTheme("light");
       saveSettings();
@@ -29,8 +31,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleSplitView",
-    label: "View: Toggle Split Preview",
-    category: "View",
+    label: "Toggle Split Preview",
+    labelKey: "command.toggleSplitPreview",
+    category: "commandCategory.view",
     defaultKey: "ctrl+\\",
     global: true,
     handler: (e) => {
@@ -46,8 +49,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleWriterMode",
-    label: "View: Toggle Writer Mode",
-    category: "View",
+    label: "Toggle Writer Mode",
+    labelKey: "command.toggleWriterMode",
+    category: "commandCategory.view",
     defaultKey: "f9",
     global: true,
     handler: () => {
@@ -56,8 +60,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleFileTree",
-    label: "View: Toggle File Tree",
-    category: "View",
+    label: "Toggle File Tree",
+    labelKey: "command.toggleFileTree",
+    category: "commandCategory.view",
     defaultKey: "ctrl+`",
     global: true,
     handler: () => {
@@ -67,8 +72,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.refreshFileTree",
-    label: "View: Refresh File Tree",
-    category: "View",
+    label: "Refresh File Tree",
+    labelKey: "command.refreshFileTree",
+    category: "commandCategory.view",
     defaultKey: "f5",
     global: true,
     handler: (e): boolean => {
@@ -85,8 +91,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleViewMode",
-    label: "View: Toggle Raw/Rendered Mode",
-    category: "View",
+    label: "Toggle Raw/Rendered Mode",
+    labelKey: "command.toggleViewMode",
+    category: "commandCategory.view",
     defaultKey: "ctrl+shift+r",
     handler: () => {
       toggleViewMode();
@@ -94,8 +101,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleWhitespace",
-    label: "View: Toggle Whitespace",
-    category: "View",
+    label: "Toggle Whitespace",
+    labelKey: "command.toggleWhitespace",
+    category: "commandCategory.view",
     defaultKey: "ctrl+shift+8",
     handler: () => {
       appContext.settings.showWhitespace = !appContext.settings.showWhitespace;
@@ -104,8 +112,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.zoomIn",
-    label: "View: Zoom In",
-    category: "View",
+    label: "Zoom In",
+    labelKey: "command.zoomIn",
+    category: "commandCategory.view",
     showInPalette: false,
     defaultKey: "ctrl+=",
     handler: (e) => {
@@ -115,8 +124,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.zoomOut",
-    label: "View: Zoom Out",
-    category: "View",
+    label: "Zoom Out",
+    labelKey: "command.zoomOut",
+    category: "commandCategory.view",
     showInPalette: false,
     defaultKey: "ctrl+-",
     handler: (e) => {
@@ -126,8 +136,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.resetZoom",
-    label: "View: Reset Zoom",
-    category: "View",
+    label: "Reset Zoom",
+    labelKey: "command.resetZoom",
+    category: "commandCategory.view",
     showInPalette: false,
     defaultKey: "ctrl+0",
     handler: (e) => {
@@ -137,8 +148,9 @@ export const viewCommands: Command[] = [
   },
   {
     id: "escape",
-    label: "View: Escape / Exit Writer Mode",
-    category: "View",
+    label: "Escape / Exit Writer Mode",
+    labelKey: "command.escapeWriterMode",
+    category: "commandCategory.view",
     showInPalette: false,
     defaultKey: "escape",
     global: true,

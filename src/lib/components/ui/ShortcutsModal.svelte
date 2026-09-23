@@ -3,6 +3,7 @@ import { Keyboard, RotateCcw } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 
 import type { Command } from "$lib/commands/commands";
+import { commandCategoryKey, commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
@@ -113,8 +114,8 @@ const categories = $derived.by(() => {
           query.length < 1
             ? defs
             : defs.filter((def) => {
-                const descriptionMatch = translate(def.label).toLowerCase().includes(query);
-                const categoryMatch = translate(def.category).toLowerCase().includes(query);
+                const descriptionMatch = translate(commandLabel(def)).toLowerCase().includes(query);
+                const categoryMatch = translate(commandCategoryKey(def.category)).toLowerCase().includes(query);
                 const commandMatch = def.id.toLowerCase().includes(query);
                 const shortcutMatch = shortcutManager.getShortcutDisplay(def.id).toLowerCase().includes(query);
                 return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
@@ -159,12 +160,15 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
             <h3 class="text-fg-default mb-4 text-base font-semibold">{$_('shortcuts.conflictTitle')}</h3>
             <p class="text-fg-muted mb-3 text-sm leading-relaxed">
               <span class="text-fg-default font-mono text-sm">{conflict.key}</span>
-              {$_('shortcuts.alreadyAssigned')} <strong>{translate(conflict.command.label)}</strong>.
+              {$_('shortcuts.alreadyAssigned')} <strong>{translate(commandLabel(conflict.command))}</strong>.
             </p>
             <p class="text-fg-muted mb-5 text-sm leading-relaxed">
               {$_('shortcuts.reassignTo')}
               <strong
-                >{translate(shortcutManager.getDefinitions().find((c) => c.id === conflict.targetId)?.label ?? '')}</strong
+                >{(() => {
+                  const c = shortcutManager.getDefinitions().find((d) => d.id === conflict.targetId);
+                  return c ? translate(commandLabel(c)) : '';
+                })()}</strong
               >?
             </p>
             <div class="flex justify-end gap-3">
@@ -187,7 +191,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
             <h3
               class="text-ui text-accent-secondary border-t-accent-secondary mb-2 border-b pb-1 font-bold tracking-widest uppercase"
             >
-              {translate(category)}
+              {translate(commandCategoryKey(category))}
             </h3>
             <div class="divide-border-main/30 divide-y">
               {#each defs as def (def.id)}
@@ -213,7 +217,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                                             : 'var(--text-primary)'}
                     onclick={() => startRecording(def.id)}
                   >
-                    {translate(def.label)}
+                    {translate(commandLabel(def))}
                   </button>
                   <div class="flex items-center gap-2">
                     <button

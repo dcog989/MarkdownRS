@@ -16,8 +16,8 @@ function cycleTab(direction: 1 | -1): void {
 function tabSwitch(index: number): Command {
   return {
     id: `nav.tab${index + 1}`,
-    label: `Navigation: Go to Tab ${index + 1}`,
-    category: "Navigation",
+    label: `Go to Tab ${index + 1}`,
+    category: "commandCategory.navigation",
     showInPalette: false,
     defaultKey: `ctrl+${index + 1}`,
     handler: () => {
@@ -30,8 +30,9 @@ function tabSwitch(index: number): Command {
 export const navigationCommands: Command[] = [
   {
     id: "nav.nextTab",
-    label: "Navigation: Next Tab",
-    category: "Navigation",
+    label: "Next Tab",
+    labelKey: "command.nextTab",
+    category: "commandCategory.navigation",
     showInPalette: false,
     defaultKey: "ctrl+pagedown",
     global: true,
@@ -39,8 +40,9 @@ export const navigationCommands: Command[] = [
   },
   {
     id: "nav.prevTab",
-    label: "Navigation: Previous Tab",
-    category: "Navigation",
+    label: "Previous Tab",
+    labelKey: "command.previousTab",
+    category: "commandCategory.navigation",
     showInPalette: false,
     defaultKey: "ctrl+pageup",
     global: true,
@@ -49,8 +51,9 @@ export const navigationCommands: Command[] = [
   ...Array.from({ length: 5 }, (_, i) => tabSwitch(i)),
   {
     id: "nav.lastTab",
-    label: "Navigation: Go to Last Tab",
-    category: "Navigation",
+    label: "Go to Last Tab",
+    labelKey: "command.lastTab",
+    category: "commandCategory.navigation",
     showInPalette: false,
     defaultKey: "ctrl+9",
     handler: () => {

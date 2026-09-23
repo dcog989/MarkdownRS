@@ -3,6 +3,7 @@ import { ArrowUpDown, Zap } from "lucide-svelte";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import type { Command } from "$lib/commands/commands";
+import { commandCategoryKey, commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
@@ -26,25 +27,12 @@ let {
 let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
-const CATEGORY_LABEL_KEYS: Record<string, string> = {
-  Edit: "commandPalette.category.edit",
-  Editor: "commandPalette.category.editor",
-  Export: "commandPalette.category.export",
-  File: "commandPalette.category.file",
-  Insert: "commandPalette.category.insert",
-  Markdown: "commandPalette.category.markdown",
-  Navigation: "commandPalette.category.navigation",
-  Theme: "commandPalette.category.theme",
-  View: "commandPalette.category.view",
-  Window: "commandPalette.category.window",
-};
-
 function categoryLabel(category: string): string {
-  return translate(CATEGORY_LABEL_KEYS[category] ?? category);
+  return translate(commandCategoryKey(category));
 }
 
 let filteredCommands = $derived(
-  commands.filter((c: Command) => translate(c.label).toLowerCase().includes(query.toLowerCase())),
+  commands.filter((c: Command) => translate(commandLabel(c)).toLowerCase().includes(query.toLowerCase())),
 );
 
 let flatOps = $derived(
@@ -169,7 +157,7 @@ function close() {
                 onclick={() => execute(command)}
               >
                 <div class="min-w-0 flex-1">
-                  <div class="text-sm font-medium whitespace-nowrap">{translate(command.label)}</div>
+                  <div class="text-sm font-medium whitespace-nowrap">{translate(commandLabel(command))}</div>
                   {#if shortcut}
                     <div
                       class="mt-0.5 truncate text-xs"

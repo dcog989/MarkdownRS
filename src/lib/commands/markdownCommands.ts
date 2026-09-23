@@ -4,8 +4,9 @@ import type { Command } from "./types";
 export const markdownCommands: Command[] = [
   {
     id: "markdown.editRumdlConfig",
-    label: "Markdown: Edit rumdl Config",
-    category: "Markdown",
+    label: "Edit rumdl Config",
+    labelKey: "command.editRumdlConfig",
+    category: "commandCategory.markdown",
     handler: toggleRumdlConfig,
   },
 ];
