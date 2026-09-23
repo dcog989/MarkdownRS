@@ -79,9 +79,6 @@ const sortOps: MenuOption[] = [
   { id: "sort-case-sensitive-desc", label: "Descending (Case Sensitive)" },
   { id: "sort-numeric-desc", label: "Descending (Numeric)" },
   { id: "sort-length-desc", label: "Descending (By Length)" },
-  { divider: true },
-  { id: "reverse", label: "Reverse" },
-  { id: "shuffle", label: "Shuffle" },
 ];
 
 const caseOps: MenuOption[] = [
