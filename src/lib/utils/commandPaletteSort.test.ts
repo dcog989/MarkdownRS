@@ -11,8 +11,13 @@ const commands: Command[] = [
 ];
 
 describe("sortCommands", () => {
-  it("sorts by category then label alphabetically", () => {
+  it("sorts alphabetically by label", () => {
     const sorted = sortCommands(commands, "alphabetical", {}, {});
+    expect(sorted.map((c) => c.label)).toEqual(["Open", "Save", "Toggle Preview", "Undo"]);
+  });
+
+  it("sorts by category then label", () => {
+    const sorted = sortCommands(commands, "categories", {}, {});
     expect(sorted.map((c) => c.label)).toEqual(["Undo", "Open", "Save", "Toggle Preview"]);
   });
 
@@ -30,7 +35,7 @@ describe("sortCommands", () => {
 
   it("does not mutate the input array", () => {
     const before = commands.map((c) => c.id);
-    sortCommands(commands, "alphabetical", {}, {});
+    sortCommands(commands, "categories", {}, {});
     expect(commands.map((c) => c.id)).toEqual(before);
   });
 
@@ -45,11 +50,13 @@ describe("cycleSortMode", () => {
     settingsState.commandPaletteSort = "alphabetical";
   });
 
-  it("cycles through alphabetical, recent, most-used and back", () => {
+  it("cycles through alphabetical, recent, most-used, categories and back", () => {
     cycleSortMode();
     expect(settingsState.commandPaletteSort).toBe("recent");
     cycleSortMode();
     expect(settingsState.commandPaletteSort).toBe("most-used");
+    cycleSortMode();
+    expect(settingsState.commandPaletteSort).toBe("categories");
     cycleSortMode();
     expect(settingsState.commandPaletteSort).toBe("alphabetical");
   });

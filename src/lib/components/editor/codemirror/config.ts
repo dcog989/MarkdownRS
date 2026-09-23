@@ -11,6 +11,7 @@ import { indentUnit } from "@codemirror/language";
 import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
 import { commands } from "$lib/commands/commands";
 import { cmHandlerMap } from "$lib/components/editor/codemirror/editorBindings";
+import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { emojiAutocompleteKeymap, emojiCompletion } from "$lib/utils/emojiCompletion";
 import { fenceCursorPlugin, fenceLanguageCompletion } from "$lib/utils/fenceLanguageCompletion";
@@ -127,7 +128,14 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     const customKey = appContext.settings.customShortcuts[def.registryKey];
     const cmKey = customKey ? toCmKey(customKey) : toCmKey(commandDefaultKeys.get(def.registryKey) ?? "");
 
-    cmBindings.push({ key: cmKey, run: def.handler, preventDefault: true });
+    cmBindings.push({
+      key: cmKey,
+      run: (view) => {
+        recordCommandUsage(def.registryKey);
+        return def.handler(view);
+      },
+      preventDefault: true,
+    });
     filteredKeys.add(cmKey);
 
     const lastChar = cmKey.at(-1);

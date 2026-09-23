@@ -1,18 +1,20 @@
 import type { Command } from "$lib/commands/commands";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 
-export type SortMode = "alphabetical" | "recent" | "most-used";
+export type SortMode = "alphabetical" | "recent" | "most-used" | "categories";
 
-export const SORT_LABELS: Record<SortMode, string> = {
-  alphabetical: "A-Z",
-  recent: "Recent",
-  "most-used": "Most Used",
+export const SORT_MODES: SortMode[] = ["alphabetical", "recent", "most-used", "categories"];
+
+export const SORT_LABEL_KEYS: Record<SortMode, string> = {
+  alphabetical: "commandPalette.sortAZ",
+  recent: "commandPalette.sortRecent",
+  "most-used": "commandPalette.sortMostUsed",
+  categories: "commandPalette.sortCategories",
 };
 
 export function cycleSortMode() {
-  const modes: SortMode[] = ["alphabetical", "recent", "most-used"];
-  const idx = modes.indexOf(settingsState.commandPaletteSort);
-  settingsState.commandPaletteSort = modes[(idx + 1) % modes.length];
+  const idx = SORT_MODES.indexOf(settingsState.commandPaletteSort);
+  settingsState.commandPaletteSort = SORT_MODES[(idx + 1) % SORT_MODES.length];
 }
 
 export function sortCommands(
@@ -24,6 +26,8 @@ export function sortCommands(
   const sorted = [...commands];
 
   if (mode === "alphabetical") {
+    sorted.sort((a, b) => a.label.localeCompare(b.label));
+  } else if (mode === "categories") {
     sorted.sort((a, b) => {
       const catA = a.category;
       const catB = b.category;

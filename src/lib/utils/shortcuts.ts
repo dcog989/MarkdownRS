@@ -1,4 +1,5 @@
 import type { Command } from "$lib/commands/commands";
+import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 
 // The registry's `ctrl` prefix means the platform's primary modifier:
@@ -79,6 +80,7 @@ export class KeyboardShortcutManager {
           continue;
         }
         const result = await cmd.handler(e);
+        recordCommandUsage(cmd.id);
         if (result === true) {
           e.preventDefault();
           e.stopPropagation();

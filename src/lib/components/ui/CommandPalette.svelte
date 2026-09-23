@@ -7,8 +7,8 @@ import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
-import { settingsState } from "$lib/stores/settingsState.svelte";
-import { cycleSortMode, SORT_LABELS, sortCommands } from "$lib/utils/commandPaletteSort";
+import { recordCommandUsage, settingsState } from "$lib/stores/settingsState.svelte";
+import { cycleSortMode, SORT_LABEL_KEYS, sortCommands } from "$lib/utils/commandPaletteSort";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
 import { shortcutManager } from "$lib/utils/shortcuts";
@@ -26,6 +26,23 @@ let {
 let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  Edit: "commandPalette.category.edit",
+  Editor: "commandPalette.category.editor",
+  Export: "commandPalette.category.export",
+  File: "commandPalette.category.file",
+  Insert: "commandPalette.category.insert",
+  Markdown: "commandPalette.category.markdown",
+  Navigation: "commandPalette.category.navigation",
+  Theme: "commandPalette.category.theme",
+  View: "commandPalette.category.view",
+  Window: "commandPalette.category.window",
+};
+
+function categoryLabel(category: string): string {
+  return translate(CATEGORY_LABEL_KEYS[category] ?? category);
+}
+
 let filteredCommands = $derived(
   commands.filter((c: Command) => translate(c.label).toLowerCase().includes(query.toLowerCase())),
 );
@@ -41,8 +58,11 @@ let flatOps = $derived(
 
 let flatOpsIndex = $derived(new Map(flatOps.map((c: Command, i: number) => [c, i])));
 
-let groupedCommands = $derived(
+let displayGroups = $derived(
   (() => {
+    if (settingsState.commandPaletteSort !== "categories") {
+      return [{ category: null as string | null, commands: flatOps }];
+    }
     const byCategory = new Map<string, Command[]>();
     for (const c of flatOps) {
       let list = byCategory.get(c.category);
@@ -52,14 +72,17 @@ let groupedCommands = $derived(
       }
       list.push(c);
     }
-    return [...byCategory.entries()].map(([category, commands]) => ({ category, commands }));
+    return [...byCategory.entries()].map(([category, commands]) => ({
+      category,
+      commands,
+    }));
   })(),
 );
 
 const nav = createListNavigation(
   () => flatOps.length,
   (index) => execute(flatOps[index]),
-  2,
+  1,
 );
 
 $effect(() => {
@@ -81,8 +104,7 @@ $effect(() => {
 function execute(command: Command) {
   if (!command) return;
   command.handler?.();
-  settingsState.commandUsage[command.id] = Date.now();
-  settingsState.commandUsageCounts[command.id] = (settingsState.commandUsageCounts[command.id] ?? 0) + 1;
+  recordCommandUsage(command.id);
   close();
 }
 
@@ -106,27 +128,29 @@ function close() {
         <button
           type="button"
           class="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-fg-muted transition-colors outline-none hover-surface"
-          title={settingsState.commandPaletteSort}
+          title={translate(SORT_LABEL_KEYS[settingsState.commandPaletteSort])}
           onclick={cycleSortMode}
         >
           <ArrowUpDown size={14} />
-          {translate(SORT_LABELS[settingsState.commandPaletteSort])}
+          {translate(SORT_LABEL_KEYS[settingsState.commandPaletteSort])}
         </button>
       {/snippet}
     </ModalSearchHeader>
   {/snippet}
 
   <div class="space-y-6 p-4">
-    {#if groupedCommands.length > 0}
-      {#each groupedCommands as group (group.category)}
+    {#if flatOps.length > 0}
+      {#each displayGroups as group (group.category ?? "__all__")}
         <div>
-          <div class="mb-3 flex items-center gap-2">
-            <Zap size={16} class="text-accent-primary" />
-            <h3 class="text-fg-default text-sm font-semibold tracking-wide uppercase">
-              {translate(group.category)}
-            </h3>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
+          {#if group.category}
+            <div class="mb-3 flex items-center gap-2">
+              <Zap size={16} class="text-accent-primary" />
+              <h3 class="text-fg-default text-sm font-semibold tracking-wide uppercase">
+                {categoryLabel(group.category)}
+              </h3>
+            </div>
+          {/if}
+          <div class="flex flex-col gap-2">
             {#each group.commands as command (command.id)}
               {@const globalIndex = flatOpsIndex.get(command)}
               {@const isSelected = globalIndex === nav.selectedIndex}

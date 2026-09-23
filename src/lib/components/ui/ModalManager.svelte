@@ -10,21 +10,10 @@ import PromptModal from "$lib/components/ui/PromptModal.svelte";
 import RumdlConfigModal from "$lib/components/ui/RumdlConfigModal.svelte";
 import SettingsModal from "$lib/components/ui/SettingsModal.svelte";
 import ShortcutsModal from "$lib/components/ui/ShortcutsModal.svelte";
-import { settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { sortCommands } from "$lib/utils/commandPaletteSort";
 import { openFileByPath } from "$lib/utils/fileSystem";
 
-const basePaletteCommands: Command[] = commands.filter((c) => c.showInPalette !== false);
-
-const paletteCommands = $derived(
-  sortCommands(
-    basePaletteCommands,
-    settingsState.commandPaletteSort,
-    settingsState.commandUsage,
-    settingsState.commandUsageCounts,
-  ),
-);
+const paletteCommands: Command[] = commands.filter((c) => c.showInPalette !== false);
 </script>
 
 <CommandPalette

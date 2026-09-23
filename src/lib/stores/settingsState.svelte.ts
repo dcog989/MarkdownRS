@@ -59,10 +59,15 @@ export const settingsState = $state({
   fileTreeShowMarkdownOnly: false,
   fileTreeLocked: false,
   fileTreeLockedRoot: "",
-  commandPaletteSort: "alphabetical" as "alphabetical" | "recent" | "most-used",
+  commandPaletteSort: "categories" as "alphabetical" | "recent" | "most-used" | "categories",
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
 });
+
+export function recordCommandUsage(commandId: string): void {
+  settingsState.commandUsage[commandId] = Date.now();
+  settingsState.commandUsageCounts[commandId] = (settingsState.commandUsageCounts[commandId] ?? 0) + 1;
+}
 
 export function toggleSplitView() {
   settingsState.splitView = !settingsState.splitView;

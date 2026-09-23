@@ -24,6 +24,7 @@ import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { translate } from "$lib/i18n";
 import { addToDictionary } from "$lib/services/dictionaryService";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
+import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 
@@ -204,6 +205,7 @@ async function handleAddAll() {
 function handleOp(type: OperationId | undefined) {
   if (type) {
     performTextTransform(type);
+    recordCommandUsage(`textop.${type}`);
     onClose();
   }
 }
