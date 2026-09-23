@@ -191,15 +191,4 @@ function close() {
       </div>
     {/if}
   </div>
-
-  {#snippet footer()}
-    <p class="text-fg-muted mr-auto text-xs"></p>
-    <button
-      type="button"
-      class="btn-base bg-accent-primary text-fg-inverse border-transparent font-medium hover:opacity-80"
-      onclick={close}
-    >
-      {$_('commandPalette.close')}
-    </button>
-  {/snippet}
 </Modal>

@@ -152,7 +152,6 @@ export const en = {
     title: "Commands",
     placeholder: "Search Commands...",
     noMatch: "No commands match your search",
-    close: "Close",
     sortAZ: "A-Z",
     sortRecent: "Recent",
     sortMostUsed: "Most Used",
