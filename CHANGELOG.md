@@ -3,6 +3,48 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.62.0 - 2026-09-23
+
+#### Features
+
+- (09ad7cc) localize command palette labels, categories, and text operations - dcog989
+
+- (a963ce2) persist command usage on app close - dcog989
+
+- (fcdcdd2) make line sorting case-insensitive by default, add case-sensitive option - dcog989
+
+#### Bug Fixes
+
+- (e0ae1fd) record usage from all command invocation paths - dcog989
+
+- (a7e035c) correct invalid @const syntax in EditorContextMenu - dcog989
+
+- (5b03e5c) correct invalid @const syntax in EditorContextMenu - dcog989
+
+- (bfe3417) correct invalid @const syntax in EditorContextMenu - dcog989
+
+- (802b402) render `---` under text as a horizontal rule, not a setext heading - dcog989
+
+#### Refactoring
+
+- (9765f76) remove footer close button - dcog989
+
+- (abc23ec) move Reverse/Shuffle into sort submenu - dcog989
+
+- (8e58ed8) drop Reverse/Shuffle from sort submenu - dcog989
+
+- (1402f39) split config.rs into flavor and rumdl modules - dcog989
+
+- (f3eaa3f) split config.rs into flavor and rumdl modules - dcog989
+
+- (1c48073) split files.rs into a files module directory - dcog989
+
+- (7997147) split minimap logic out of Minimap.svelte - dcog989
+
+- (c07a7d3) split markdown decorations into focused modules - dcog989
+
+- - -
+
 ## v1.61.2 - 2026-09-16
 
 #### Bug Fixes
