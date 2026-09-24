@@ -6,7 +6,7 @@
 #### {{ title }}
 {%- for commit in group %}
 
-- ({{ commit.id | truncate(length=7, end="") }}) {{ commit.summary }} - {{ commit.signature }}
+- ({{ commit.id | truncate(length=7, end="") }}) {{ commit.summary | replace(from="@", to="&#64;") }} - {{ commit.signature }}
 {%- endfor -%}
 {%- endif -%}
 {%- endfor %}
