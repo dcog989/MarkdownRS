@@ -17,7 +17,7 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let paths = paths::resolve_app_paths(app_handle)?;
     fs::create_dir_all(&paths.log_dir)?;
-    logging::init(app_handle, &paths.config_path, &paths.log_dir)?;
+    logging::init(&paths.config_path, &paths.log_dir)?;
     migration::migrate_to_config(&paths.local_dir, &paths.config_dir);
     paths::ensure_directories(&paths);
     paths::schedule_temp_cleanup(vec![

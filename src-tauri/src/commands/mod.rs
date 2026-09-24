@@ -5,6 +5,7 @@ pub mod directory;
 #[cfg(feature = "pdf-export")]
 pub mod export;
 pub mod files;
+pub mod logging;
 pub mod markdown;
 pub mod session;
 pub mod settings;

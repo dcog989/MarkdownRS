@@ -1,8 +1,7 @@
-import { error as logError } from "@tauri-apps/plugin-log";
 import { translate } from "$lib/i18n";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { getFilename } from "./fileValidation";
-import { logger } from "./logger";
+import { logger, logToBackend } from "./logger";
 
 export type ErrorContext =
   | "Session:Save"
@@ -144,7 +143,7 @@ export class AppError extends Error {
     if (toDisk) {
       try {
         const diskMessage = this.formatForDiskLog();
-        await logError(diskMessage);
+        await logToBackend("error", diskMessage);
       } catch (_e) {}
     }
   }

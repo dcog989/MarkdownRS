@@ -1,10 +1,18 @@
 use crate::bootstrap::paths::AppPaths;
 use crate::utils;
+use flexi_logger::{Age, Cleanup, Criterion, Duplicate, FileSpec, LogSpecification, Logger, LoggerHandle, Naming};
 use log::LevelFilter;
-use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
+use std::sync::OnceLock;
+
+const KEPT_LOG_FILES: usize = 9;
+const LOG_FILE_BASENAME: &str = "markdown-rs";
+const LOG_FILE_SUFFIX: &str = "log";
+const DEFAULT_LOG_LEVEL: &str = "info";
+
+static LOGGER_HANDLE: OnceLock<LoggerHandle> = OnceLock::new();
 
 fn default_log_level() -> String {
-    "info".to_string()
+    DEFAULT_LOG_LEVEL.to_string()
 }
 
 fn read_log_level_from_settings(config_path: &std::path::Path) -> String {
@@ -29,51 +37,51 @@ fn parse_log_level(level: &str) -> LevelFilter {
     }
 }
 
-pub fn init(
-    app_handle: &tauri::AppHandle,
-    config_path: &std::path::Path,
-    log_dir: &std::path::Path,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn build_log_spec(level: &str) -> LogSpecification {
+    let mut builder = LogSpecification::builder();
+    builder
+        .default(parse_log_level(level))
+        .module("tao", LevelFilter::Error)
+        .module("wry", LevelFilter::Error);
+    builder.build()
+}
+
+pub fn init(config_path: &std::path::Path, log_dir: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
     let settings_level = read_log_level_from_settings(config_path);
-    let log_level = parse_log_level(&settings_level);
 
     eprintln!(
         "[INFO] Initializing logger with level: {:?} (source: '{}')",
-        log_level, settings_level
+        parse_log_level(&settings_level),
+        settings_level
     );
 
-    app_handle.plugin(
-        tauri_plugin_log::Builder::default()
-            // Permissive dispatch so the effective level can be raised/lowered
-            // at runtime via `log::set_max_level`; the global gate is restored
-            // to the configured level right after registration.
-            .level(LevelFilter::Trace)
-            .level_for("tao", LevelFilter::Error)
-            .level_for("wry", LevelFilter::Error)
-            .max_file_size(2 * 1024 * 1024)
-            .rotation_strategy(RotationStrategy::KeepSome(9))
-            .targets([
-                Target::new(TargetKind::Stdout),
-                Target::new(TargetKind::Folder {
-                    path: log_dir.to_path_buf(),
-                    file_name: Some("markdown-rs".into()),
-                }),
-                Target::new(TargetKind::Webview),
-            ])
-            .build(),
-    )?;
+    let handle = Logger::with(build_log_spec(&settings_level))
+        .log_to_file(
+            FileSpec::default()
+                .directory(log_dir)
+                .basename(LOG_FILE_BASENAME)
+                .suffix(LOG_FILE_SUFFIX),
+        )
+        .duplicate_to_stdout(Duplicate::All)
+        .rotate(
+            Criterion::Age(Age::Day),
+            Naming::Timestamps,
+            Cleanup::KeepLogFiles(KEPT_LOG_FILES),
+        )
+        .append()
+        .start()?;
 
-    log::set_max_level(log_level);
+    let _ = LOGGER_HANDLE.set(handle);
 
     Ok(())
 }
 
-/// Applies a new effective log level at runtime. The plugin's dispatch filter
-/// is permissive (Trace), so the global `log::set_max_level` gate fully
-/// controls what is emitted; `tao`/`wry` stay capped at error by their
-/// per-target filters.
+/// Applies a new effective log level at runtime. The spec is rebuilt with the
+/// same `tao`/`wry` caps and handed to the running logger.
 pub fn apply_log_level(level: &str) {
-    log::set_max_level(parse_log_level(level));
+    if let Some(handle) = LOGGER_HANDLE.get() {
+        handle.set_new_spec(build_log_spec(level));
+    }
 }
 
 pub fn log_runtime_info(paths: &AppPaths) {

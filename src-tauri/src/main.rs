@@ -96,6 +96,7 @@ fn main() {
             commands::directory::list_directory,
             commands::directory::get_directory_mtime,
             commands::settings::get_app_info,
+            commands::logging::log_frontend,
             #[cfg(feature = "spellcheck")]
             commands::spellcheck::add_to_dictionary,
             #[cfg(feature = "spellcheck")]

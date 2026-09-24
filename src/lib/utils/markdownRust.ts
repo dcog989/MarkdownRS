@@ -1,10 +1,10 @@
-import { error } from "@tauri-apps/plugin-log";
 import DOMPurify from "dompurify";
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import type { RenderResult } from "$lib/types/markdown";
 import { callBackendSafe } from "./backend";
 import { renderMathInHtml } from "./katexRenderer";
+import { logToBackend } from "./logger";
 import { resolveImageSrc } from "./resolveImagePath";
 
 function getActiveTabDirectory(): string {
@@ -22,12 +22,12 @@ export async function renderMarkdown(
   const result = await callBackendSafe("render_markdown", { content, flavor }, "Markdown:Render", {
     showToast: false,
     onError: async (e) => {
-      await error(`[Markdown] Render error: ${e}`);
+      await logToBackend("error", `[Markdown] Render error: ${e}`);
     },
   });
 
   if (!result) {
-    await error(`[Markdown] Render error: Rendering returned null`);
+    await logToBackend("error", `[Markdown] Render error: Rendering returned null`);
     return {
       html: `<div class="p-4 border border-danger text-danger"><strong>${translate("preview.renderFailed")}:</strong><br/>${translate("preview.renderNull")}</div>`,
       word_count: 0,

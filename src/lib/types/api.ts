@@ -300,6 +300,10 @@ export interface BackendCommands {
     args: { level: string };
     return: undefined;
   };
+  log_frontend: {
+    args: { level: string; message: string };
+    return: undefined;
+  };
   set_context_menu_item: {
     args: { enable: boolean };
     return: undefined;

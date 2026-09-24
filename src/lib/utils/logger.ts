@@ -1,4 +1,4 @@
-import { debug, error, info, warn } from "@tauri-apps/plugin-log";
+import { invoke } from "@tauri-apps/api/core";
 
 /**
  * Frontend Logging Utility
@@ -8,6 +8,18 @@ import { debug, error, info, warn } from "@tauri-apps/plugin-log";
  */
 
 type LogLevel = "debug" | "info" | "warn" | "error";
+
+/**
+ * Send a single log record to the backend, bypassing the batching buffer.
+ * Uses `invoke` directly to avoid recursing through `callBackend` error handling.
+ */
+export async function logToBackend(level: LogLevel, message: string): Promise<void> {
+  try {
+    await invoke("log_frontend", { level, message });
+  } catch (e) {
+    console.error("[Logger] Backend log failed:", e);
+  }
+}
 
 interface LogMetadata {
   [key: string]: string | number | boolean | undefined | null;
@@ -89,24 +101,7 @@ class Logger {
 
     for (const [level, messages] of Object.entries(grouped)) {
       const combined = messages.join("\n");
-      try {
-        switch (level as LogLevel) {
-          case "debug":
-            await debug(combined);
-            break;
-          case "info":
-            await info(combined);
-            break;
-          case "warn":
-            await warn(combined);
-            break;
-          case "error":
-            await error(combined);
-            break;
-        }
-      } catch (e) {
-        console.error("[Logger] Flush failed:", e);
-      }
+      await logToBackend(level as LogLevel, combined);
     }
   }
 
