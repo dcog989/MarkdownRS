@@ -8,7 +8,6 @@ const KEPT_LOG_FILES: usize = 9;
 const LOG_FILE_BASENAME: &str = "markdown-rs";
 const LOG_FILE_SUFFIX: &str = "log";
 const LOG_DATE_FORMAT: &str = "%Y-%m-%d";
-const CURRENT_LOG_INFIX: &str = "";
 const DEFAULT_LOG_LEVEL: &str = "info";
 
 static LOGGER_HANDLE: OnceLock<LoggerHandle> = OnceLock::new();
@@ -62,22 +61,13 @@ pub fn init(config_path: &std::path::Path, log_dir: &std::path::Path) -> Result<
         .basename(LOG_FILE_BASENAME)
         .suffix(LOG_FILE_SUFFIX);
 
-    if let Err(e) = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .open(file_spec.as_pathbuf(Some(CURRENT_LOG_INFIX)))
-    {
-        eprintln!("[WARN] Failed to create log file: {}", e);
-    }
-
     let handle = Logger::with(build_log_spec(&settings_level))
         .log_to_file(file_spec)
         .duplicate_to_stdout(Duplicate::All)
         .rotate(
             Criterion::Age(Age::Day),
             Naming::TimestampsCustomFormat {
-                current_infix: Some(CURRENT_LOG_INFIX),
+                current_infix: Some(""),
                 format: LOG_DATE_FORMAT,
             },
             Cleanup::KeepLogFiles(KEPT_LOG_FILES),
